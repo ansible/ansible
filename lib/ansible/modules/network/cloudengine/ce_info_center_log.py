@@ -33,53 +33,40 @@ options:
     log_time_stamp:
         description:
             - Sets the timestamp format of logs.
-        required: false
-        default: null
         choices: ['date_boot', 'date_second', 'date_tenthsecond', 'date_millisecond',
                   'shortdate_second', 'shortdate_tenthsecond', 'shortdate_millisecond',
                   'formatdate_second', 'formatdate_tenthsecond', 'formatdate_millisecond']
     log_buff_enable:
         description:
             - Enables the Switch to send logs to the log buffer.
-        required: false
         default: no_use
         choices: ['no_use','true', 'false']
     log_buff_size:
         description:
             - Specifies the maximum number of logs in the log buffer.
               The value is an integer that ranges from 0 to 10240. If logbuffer-size is 0, logs are not displayed.
-        required: false
-        default: null
     module_name:
         description:
             - Specifies the name of a module.
               The value is a module name in registration logs.
-        required: false
-        default: null
     channel_id:
         description:
             - Specifies a channel ID.
               The value is an integer ranging from 0 to 9.
-        required: false
-        default: null
     log_enable:
         description:
             - Indicates whether log filtering is enabled.
-        required: false
         default: no_use
         choices: ['no_use','true', 'false']
     log_level:
         description:
             - Specifies a log severity.
-        required: false
-        default: null
         choices: ['emergencies', 'alert', 'critical', 'error',
                   'warning', 'notification', 'informational', 'debugging']
     state:
         description:
             - Determines whether the config should be present or not
               on the device.
-        required: false
         default: present
         choices: ['present', 'absent']
 """

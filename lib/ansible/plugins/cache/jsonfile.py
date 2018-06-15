@@ -12,7 +12,7 @@ DOCUMENTATION = '''
     description:
         - This cache uses JSON formatted, per host, files saved to the filesystem.
     version_added: "1.9"
-    author: Ansible Core
+    author: Ansible Core (@ansible-core)
     options:
       _uri:
         required: True
@@ -30,7 +30,7 @@ DOCUMENTATION = '''
           - name: ANSIBLE_CACHE_PLUGIN_PREFIX
         ini:
           - key: fact_caching_prefix
-          - section: defaults
+            section: defaults
       _timeout:
         default: 86400
         description: Expiration timeout for the cache plugin data
@@ -43,13 +43,9 @@ DOCUMENTATION = '''
 '''
 
 import codecs
+import json
 
-try:
-    import simplejson as json
-except ImportError:
-    import json
-
-from ansible.parsing.utils.jsonify import jsonify
+from ansible.parsing.ajson import AnsibleJSONEncoder, AnsibleJSONDecoder
 from ansible.plugins.cache import BaseFileCacheModule
 
 
@@ -61,8 +57,8 @@ class CacheModule(BaseFileCacheModule):
     def _load(self, filepath):
         # Valid JSON is always UTF-8 encoded.
         with codecs.open(filepath, 'r', encoding='utf-8') as f:
-            return json.load(f)
+            return json.load(f, cls=AnsibleJSONDecoder)
 
     def _dump(self, value, filepath):
         with codecs.open(filepath, 'w', encoding='utf-8') as f:
-            f.write(jsonify(value, format=True))
+            f.write(json.dumps(value, cls=AnsibleJSONEncoder, sort_keys=True, indent=4))

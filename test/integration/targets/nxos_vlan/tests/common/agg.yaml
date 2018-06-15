@@ -8,7 +8,6 @@
     lines:
       - no vlan 102
       - no vlan 103
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 
@@ -19,7 +18,6 @@
       - { name: app03, vlan_id: 103 }
     vlan_state: active
     admin_state: up
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -45,7 +43,6 @@
       - { name: app03, vlan_id: 103 }
     vlan_state: active
     admin_state: down
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -57,6 +54,26 @@
 
 - name: conf2 - Idempotence
   nxos_vlan: *conf2
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: purge
+  nxos_vlan: &purge
+    vlan_id: 1
+    purge: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"no vlan 102" in result.commands'
+      - '"no vlan 103" in result.commands'
+
+- name: purge - Idempotence
+  nxos_vlan: *purge
   register: result
 
 - assert:

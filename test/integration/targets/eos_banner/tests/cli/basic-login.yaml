@@ -4,19 +4,15 @@
 - name: Remove previous login banner
   eos_config:
     lines: no banner login
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
 
 - name: Create login banner
-  eos_banner:
+  eos_banner: &multiline
     banner: login
     text: |
       Junk login banner
       over multiple lines
     state: present
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -28,14 +24,7 @@
       - "'ansible_1' in result.session_name"
 
 - name: Create login banner again (idempotent)
-  eos_banner:
-    banner: login
-    text: |
-      Junk login banner
-      over multiple lines
-    state: present
-    authorize: yes
-    provider: "{{ cli }}"
+  eos_banner: *multiline
   become: yes
   register: result
 
@@ -45,13 +34,11 @@
       - "result.commands | length == 0"
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "result.session_name is not defined"
-  
-- name: remove login
-  eos_banner:
+
+- name: Remove login
+  eos_banner: &remove
     banner: login
     state: absent
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -62,12 +49,8 @@
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "'ansible_1' in result.session_name"
 
-- name: remove login (idempotent)
-  eos_banner:
-    banner: login
-    state: absent
-    authorize: yes
-    provider: "{{ cli }}"
+- name: Remove login again (idempotent)
+  eos_banner: *remove
   become: yes
   register: result
 
@@ -77,7 +60,6 @@
       - "result.commands | length == 0"
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "result.session_name is not defined"
-
 
 # FIXME add in tests for everything defined in docs
 # FIXME Test state:absent + test:

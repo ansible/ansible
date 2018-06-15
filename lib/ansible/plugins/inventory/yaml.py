@@ -7,7 +7,7 @@ __metaclass__ = type
 DOCUMENTATION = '''
     inventory: yaml
     version_added: "2.4"
-    short_description: Uses a specifically YAML file as inventory source.
+    short_description: Uses a specific YAML file as an inventory source.
     description:
         - "YAML based inventory, starts with the 'all' group and has hosts/vars/children entries."
         - Host entries can have sub-entries defined, which will be treated as variables.
@@ -91,7 +91,7 @@ class InventoryModule(BaseFileInventoryPlugin):
         super(InventoryModule, self).parse(inventory, loader, path)
 
         try:
-            data = self.loader.load_from_file(path)
+            data = self.loader.load_from_file(path, cache=False)
         except Exception as e:
             raise AnsibleParserError(e)
 
@@ -112,9 +112,10 @@ class InventoryModule(BaseFileInventoryPlugin):
 
     def _parse_group(self, group, group_data):
 
-        self.inventory.add_group(group)
-
         if isinstance(group_data, MutableMapping):
+
+            self.inventory.add_group(group)
+
             # make sure they are dicts
             for section in ['vars', 'children', 'hosts']:
                 if section in group_data:
@@ -143,6 +144,9 @@ class InventoryModule(BaseFileInventoryPlugin):
                 else:
                     self.display.warning('Skipping unexpected key (%s) in group (%s), only "vars", "children" and "hosts" are valid' % (key, group))
 
+        else:
+            self.display.warning("Skipping '%s' as this is not a valid group definition" % group)
+
     def _parse_host(self, host_pattern):
         '''
         Each host key can be a pattern, try to process it and add variables as needed
@@ -161,7 +165,7 @@ class InventoryModule(BaseFileInventoryPlugin):
 
         try:
             (pattern, port) = parse_address(hostpattern, allow_ranges=True)
-        except:
+        except Exception:
             # not a recognizable host pattern
             pattern = hostpattern
             port = None

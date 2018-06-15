@@ -26,37 +26,28 @@ options:
   dest:
     description:
       - Path to the interfaces file
-    required: false
     default: /etc/network/interfaces
   iface:
     description:
       - Name of the interface, required for value changes or option remove
-    required: false
-    default: null
   option:
     description:
       - Name of the option, required for value changes or option remove
-    required: false
-    default: null
   value:
     description:
       - If I(option) is not presented for the I(interface) and I(state) is C(present) option will be added.
         If I(option) already exists and is not C(pre-up), C(up), C(post-up) or C(down), it's value will be updated.
         C(pre-up), C(up), C(post-up) and C(down) options can't be updated, only adding new options, removing existing
         ones or cleaning the whole option set are supported
-    required: false
-    default: null
   backup:
     description:
       - Create a backup file including the timestamp information so you can get
         the original file back if you somehow clobbered it incorrectly.
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   state:
     description:
       - If set to C(absent) the option or section will be removed if present instead of created.
-    required: false
     default: "present"
     choices: [ "present", "absent" ]
 
@@ -150,6 +141,7 @@ import re
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_bytes
 
 
 def lineDict(line):
@@ -201,6 +193,9 @@ def read_interfaces_lines(module, line_strings):
         elif words[0] == "source-dir":
             lines.append(lineDict(line))
             currently_processing = "NONE"
+        elif words[0] == "source-directory":
+            lines.append(lineDict(line))
+            currently_processing = "NONE"
         elif words[0] == "iface":
             currif = {
                 "pre-up": [],
@@ -224,7 +219,7 @@ def read_interfaces_lines(module, line_strings):
         elif words[0] == "auto":
             lines.append(lineDict(line))
             currently_processing = "NONE"
-        elif words[0] == "allow-":
+        elif words[0].startswith("allow-"):
             lines.append(lineDict(line))
             currently_processing = "NONE"
         elif words[0] == "no-auto-down":
@@ -298,11 +293,11 @@ def setInterfaceOption(module, lines, iface, option, raw_value, state):
             if option in ["pre-up", "up", "down", "post-up"] and value is not None and value != "None":
                 for target_option in filter(lambda i: i['value'] == value, target_options):
                     changed = True
-                    lines = list(filter(lambda l: l != target_option, lines))
+                    lines = list(filter(lambda ln: ln != target_option, lines))
             else:
                 changed = True
                 for target_option in target_options:
-                    lines = list(filter(lambda l: l != target_option, lines))
+                    lines = list(filter(lambda ln: ln != target_option, lines))
     else:
         module.fail_json(msg="Error: unsupported state %s, has to be either present or absent" % state)
 
@@ -310,6 +305,14 @@ def setInterfaceOption(module, lines, iface, option, raw_value, state):
 
 
 def addOptionAfterLine(option, value, iface, lines, last_line_dict, iface_options):
+    # Changing method of interface is not an addition
+    if option == 'method':
+        for ln in lines:
+            if ln.get('line_type', '') == 'iface' and ln.get('iface', '') == iface:
+                ln['line'] = re.sub(ln.get('params', {}).get('method', '') + '$', value, ln.get('line'))
+                ln['params']['method'] = value
+        return lines
+
     last_line = last_line_dict['line']
     prefix_start = last_line.find(last_line.split()[0])
     suffix_start = last_line.rfind(last_line.split()[-1]) + len(last_line.split()[-1])
@@ -330,7 +333,7 @@ def write_changes(module, lines, dest):
 
     tmpfd, tmpfile = tempfile.mkstemp()
     f = os.fdopen(tmpfd, 'wb')
-    f.writelines(lines)
+    f.write(to_bytes(''.join(lines), errors='surrogate_or_strict'))
     f.close()
     module.atomic_move(tmpfile, os.path.realpath(dest))
 

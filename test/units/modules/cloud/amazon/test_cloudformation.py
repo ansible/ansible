@@ -18,7 +18,7 @@
 import pytest
 from mock import patch
 
-from .placebo_fixtures import placeboify, maybe_sleep
+from units.utils.amazon_placebo_fixtures import placeboify, maybe_sleep
 from ansible.modules.cloud.amazon import cloudformation as cfn_module
 
 basic_yaml_tpl = """

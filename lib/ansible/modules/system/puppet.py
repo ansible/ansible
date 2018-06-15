@@ -25,7 +25,6 @@ options:
   puppetmaster:
     description:
       - The hostname of the puppetmaster to contact.
-    default: None
   modulepath:
     description:
       - Path to an alternate location for puppet modules.
@@ -111,16 +110,16 @@ def _get_facter_dir():
 def _write_structured_data(basedir, basename, data):
     if not os.path.exists(basedir):
         os.makedirs(basedir)
-        file_path = os.path.join(basedir, "{0}.json".format(basename))
-        # This is more complex than you might normally expect because we want to
-        # open the file with only u+rw set. Also, we use the stat constants
-        # because ansible still supports python 2.4 and the octal syntax changed
-        out_file = os.fdopen(
-            os.open(
-                file_path, os.O_CREAT | os.O_WRONLY,
-                stat.S_IRUSR | stat.S_IWUSR), 'w')
-        out_file.write(json.dumps(data).encode('utf8'))
-        out_file.close()
+    file_path = os.path.join(basedir, "{0}.json".format(basename))
+    # This is more complex than you might normally expect because we want to
+    # open the file with only u+rw set. Also, we use the stat constants
+    # because ansible still supports python 2.4 and the octal syntax changed
+    out_file = os.fdopen(
+        os.open(
+            file_path, os.O_CREAT | os.O_WRONLY,
+            stat.S_IRUSR | stat.S_IWUSR), 'w')
+    out_file.write(json.dumps(data).encode('utf8'))
+    out_file.close()
 
 
 def main():

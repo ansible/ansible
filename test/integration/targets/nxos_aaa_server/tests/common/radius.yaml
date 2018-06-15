@@ -10,7 +10,6 @@
     server_timeout: default
     directed_request: default
     state: default
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - block:
@@ -18,7 +17,6 @@
     nxos_aaa_server: &configure_default_radius
       server_type: radius
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - name: "Check Idempotence"
@@ -36,7 +34,6 @@
       deadtime: 20
       directed_request: enabled
       state: present
-      provider: "{{ connection }}"
     register: result
   
   - assert: &true
@@ -61,7 +58,6 @@
       encrypt_type: 7
       global_key: test_key
       state: present
-      provider: "{{ connection }}"
     register: result
    
   - assert: *true
@@ -73,17 +69,22 @@
   - assert: *false
 
   - name: "Remove radius server configuration"
-    nxos_aaa_server:
+    nxos_aaa_server: &rad_def
       server_type: radius
       deadtime: default
       server_timeout: default
       global_key: default
       directed_request: default
       state: default
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_aaa_server: *rad_def
+    register: result
+
+  - assert: *false
 
   rescue:
 
@@ -94,4 +95,4 @@
     nxos_aaa_server: *remove
     register: result
 
-  - debug: msg="END connection={{ ansible_connection }} nxos_aaa_server radius.yaml sanity test"  
+- debug: msg="END connection={{ ansible_connection }} nxos_aaa_server radius.yaml sanity test"

@@ -49,7 +49,7 @@ options:
               See examples.
     autostart:
         required: false
-        choices: ["yes", "no"]
+        type: bool
         description:
             - Specify if a given storage pool should be started automatically on system boot.
     uri:

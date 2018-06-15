@@ -45,7 +45,7 @@ options:
     - The rights/permissions that are to be allowed/denied for the specified
       user or group for the item at C(path).
     - If C(path) is a file or directory, rights can be any right under MSDN
-      FileSystemRights U(https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.filesystemrights=.aspx).
+      FileSystemRights U(https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.filesystemrights.aspx).
     - If C(path) is a registry key, rights can be any right under MSDN
       RegistryRights U(https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.registryrights.aspx).
     required: yes
@@ -56,8 +56,8 @@ options:
       C(ObjectInherit).
     - For more information on the choices see MSDN InheritanceFlags enumeration
       at U(https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.inheritanceflags.aspx).
-    choices: [ ContainerInherit, None, ObjectInherit ]
-    default: For Leaf File, 'None'; For Directory, 'ContainerInherit, ObjectInherit';
+    - Defaults to C(ContainerInherit, ObjectInherit) for Directories.
+    choices: [ ContainerInherit, ObjectInherit ]
   propagation:
     description:
     - Propagation flag on the ACL rules.

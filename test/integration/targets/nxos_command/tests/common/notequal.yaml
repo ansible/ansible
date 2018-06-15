@@ -1,0 +1,32 @@
+---
+- debug: msg="START common/notequal.yaml on connection={{ ansible_connection }}"
+
+- name: test neq operator
+  nxos_command:
+    commands:
+      - show version
+      - show interface mgmt0 | json
+    wait_for:
+      - "result[1].TABLE_interface.ROW_interface.state neq down"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.stdout is defined"
+
+- name: test != operator
+  nxos_command:
+    commands:
+      - show version
+      - show interface mgmt0 | json
+    wait_for:
+      - "result[1].TABLE_interface.ROW_interface.state != down"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.stdout is defined"
+
+- debug: msg="END common/notequal.yaml on connection={{ ansible_connection }}"

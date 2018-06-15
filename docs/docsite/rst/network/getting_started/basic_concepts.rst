@@ -24,7 +24,7 @@ A list of managed nodes. An inventory file is also sometimes called a "hostfile"
 Modules
 ================================================================================
 
-The units of code Ansible executes. Each module has a particular use, from administering users on a specific type of database to managing VLAN interfaces on a specific type of network device. You can invoke a single module with a task, or invoke several different modules in a playbook. For an idea of how many modules Ansible includes, take a look at the :doc:`list of all modules<../../modules/modules_by_category>` or the :doc:`list of network modules<../../modules/list_of_network_modules>`.
+The units of code Ansible executes. Each module has a particular use, from administering users on a specific type of database to managing VLAN interfaces on a specific type of network device. You can invoke a single module with a task, or invoke several different modules in a playbook. For an idea of how many modules Ansible includes, take a look at the :doc:`list of all modules<../../modules/modules_by_category>` or the :ref:`list of network modules<network_modules>`.
 
 Tasks
 ================================================================================

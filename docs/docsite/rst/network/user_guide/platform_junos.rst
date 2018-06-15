@@ -4,7 +4,7 @@
 Junos OS Platform Options
 ***************************************
 
-Juniper Junos OS supports multiple connections. This page offers details on how each connection works in Ansible 2.5 and how to use it. 
+Juniper Junos OS supports multiple connections. This page offers details on how each connection works in Ansible 2.6 and how to use it. 
 
 .. contents:: Topics
 
@@ -32,21 +32,22 @@ Connections Available
 | |                          | |                                                      | | xml: ``result[1].rpc-reply.interface-information[0].physical-interface[0].name[0].data foo lo0`` |
 +----------------------------+--------------------------------------------------------+----------------------------------------------------------------------------------------------------+
 
-For legacy playbooks, Ansible still supports ``ansible_connection: local`` on all JUNOS modules. We recommend modernizing to use ``ansible_connection: netconf`` or ``ansible_connection: network_cli`` as soon as possible.
+For legacy playbooks, Ansible still supports ``ansible_connection=local`` on all JUNOS modules. We recommend modernizing to use ``ansible_connection=netconf`` or ``ansible_connection=network_cli`` as soon as possible.
 
-Using CLI in Ansible 2.5
+Using CLI in Ansible 2.6
 ================================================================================
 
-Example CLI ``group_vars/junos.yml``
-------------------------------------
+Example CLI inventory ``[junos:vars]``
+--------------------------------------
 
 .. code-block:: yaml
 
-   ansible_connection: network_cli
-   ansible_network_os: junos
-   ansible_user: myuser
-   ansible_ssh_pass: !vault...
-   ansible_ssh_common_args: '-o ProxyCommand="ssh -W %h:%p -q bastion01"'
+   [junos:vars]
+   ansible_connection=network_cli
+   ansible_network_os=junos
+   ansible_user=myuser
+   ansible_ssh_pass=!vault...
+   ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q bastion01"'
 
 
 - If you are using SSH keys (including an ssh-agent) you can remove the ``ansible_ssh_pass`` configuration.
@@ -58,14 +59,13 @@ Example CLI Task
 
 .. code-block:: yaml
 
-   - name: Backup current switch config (junos)
-     junos_config:
-       backup: yes
-     register: backup_junos_location
+   - name: Retrieve Junos OS version
+     junos_command:
+       commands: show version
      when: ansible_network_os == 'junos'
 
 
-Using NETCONF in Ansible 2.5
+Using NETCONF in Ansible 2.6
 ================================================================================
 
 Enabling NETCONF
@@ -76,26 +76,28 @@ Before you can use NETCONF to connect to a switch, you must:
 - install the ``ncclient`` python package on your control node(s) with ``pip install ncclient``
 - enable NETCONF on the Junos OS device(s)
 
-To enable NETCONF on a new switch via Ansible, use the ``junos_netconf`` module via the CLI connection. Set up group_vars/junos.yml just like in the CLI example above, then run a playbook task like this:
+To enable NETCONF on a new switch via Ansible, use the ``junos_netconf`` module via the CLI connection. Set up your platform-level variables just like in the CLI example above, then run a playbook task like this:
 
 .. code-block:: yaml
 
    - name: Enable NETCONF
-      junos_netconf:
-      when: ansible_network_os == 'junos'
+     connection: network_cli
+     junos_netconf:
+     when: ansible_network_os == 'junos'
 
-Once NETCONF is enabled, change your ``group_vars/junos.yml`` to use the NETCONF connection.
+Once NETCONF is enabled, change your variables to use the NETCONF connection.
 
-Example NETCONF ``group_vars/junos.yml``
-----------------------------------------
+Example NETCONF inventory ``[junos:vars]``
+------------------------------------------
 
 .. code-block:: yaml
 
-   ansible_connection: netconf
-   ansible_network_os: junos
-   ansible_user: myuser
-   ansible_ssh_pass: !vault | 
-   ansible_ssh_common_args: '-o ProxyCommand="ssh -W %h:%p -q bastion01"'
+   [junos:vars]
+   ansible_connection=netconf
+   ansible_network_os=junos
+   ansible_user=myuser
+   ansible_ssh_pass=!vault | 
+   ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q bastion01"'
 
 
 Example NETCONF Task
@@ -110,4 +112,4 @@ Example NETCONF Task
      when: ansible_network_os == 'junos'
 
 
-.. include:: shared_snippets/SSH_warning.rst
+.. include:: shared_snippets/SSH_warning.txt

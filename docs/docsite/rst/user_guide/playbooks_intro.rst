@@ -34,7 +34,7 @@ index after you're done with this section.
 Playbook Language Example
 `````````````````````````
 
-Playbooks are expressed in YAML format (see :doc:`YAMLSyntax`) and have a minimum of syntax, which intentionally
+Playbooks are expressed in YAML format (see :ref:`yaml_syntax`) and have a minimum of syntax, which intentionally
 tries to not be a programming language or script, but rather a model of a configuration or a process.
 
 Each playbook is composed of one or more 'plays' in a list.
@@ -53,39 +53,6 @@ to do different things.  It's not as if you were just defining one particular st
 can run different plays at different times.
 
 For starters, here's a playbook that contains just one play::
-
-    ---
-    - hosts: webservers
-      vars:
-        http_port: 80
-        max_clients: 200
-      remote_user: root
-      tasks:
-      - name: ensure apache is at the latest version
-        yum: 
-          name: httpd
-          state: latest
-      - name: write the apache config file
-        template:
-          src: /srv/httpd.j2
-          dest: /etc/httpd.conf
-        notify:
-        - restart apache
-      - name: ensure apache is running (and enable it at boot)
-        service:
-          name: httpd
-          state: started
-          enabled: yes
-      handlers:
-        - name: restart apache
-          service:
-            name: httpd
-            state: restarted
-
-When working with tasks that have really long parameters or modules that take 
-many parameters, you can break tasks items over multiple lines to improve the 
-structure. Below is another version of the above example but using
-YAML dictionaries to supply the modules with their ``key=value`` arguments.::
 
     ---
     - hosts: webservers
@@ -525,17 +492,15 @@ can do this::
 
 .. seealso::
 
-   :doc:`YAMLSyntax`
+   :ref:`yaml_syntax`
        Learn about YAML syntax
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Various tips about managing playbooks in the real world
-   :doc:`index`
-       Hop back to the documentation index for a lot of special topics about playbooks
-   :doc:`modules`
+   :ref:`all_modules`
        Learn about available modules
-   :doc:`dev_guide/developing_modules`
+   :ref:`developing_modules`
        Learn how to extend Ansible by writing your own modules
-   :doc:`intro_patterns`
+   :ref:`intro_patterns`
        Learn about how to select hosts
    `Github examples directory <https://github.com/ansible/ansible-examples>`_
        Complete end-to-end playbook examples

@@ -38,16 +38,10 @@ options:
       required: True
     return_fields:
       description: The list of field names to return for the specified object.
-      required: False
-      default: null
     filter:
       description: a dict object that is used to filter the return objects
-      required: False
-      default: null
     extattrs:
       description: a dict object that is used to filter on extattrs
-      required: false
-      default: null
 """
 
 EXAMPLES = """
@@ -75,7 +69,7 @@ EXAMPLES = """
 
 - name: get a host record
   set_fact:
-    host: "{{ lookup('nios', 'record:host', filter={'name': 'hostname.ansible.com'}) }}
+    host: "{{ lookup('nios', 'record:host', filter={'name': 'hostname.ansible.com'}) }}"
 
 - name: get the authoritative zone from a non default dns view
   set_fact:
@@ -113,8 +107,11 @@ class LookupModule(LookupBase):
         extattrs = normalize_extattrs(kwargs.pop('extattrs', {}))
         provider = kwargs.pop('provider', {})
         wapi = WapiLookup(provider)
-        res = wapi.get_object(obj_type, filter_data, return_fields=return_fields)
-        for obj in res:
-            if 'extattrs' in obj:
-                obj['extattrs'] = flatten_extattrs(obj['extattrs'])
+        res = wapi.get_object(obj_type, filter_data, return_fields=return_fields, extattrs=extattrs)
+        if res is not None:
+            for obj in res:
+                if 'extattrs' in obj:
+                    obj['extattrs'] = flatten_extattrs(obj['extattrs'])
+        else:
+            res = []
         return res

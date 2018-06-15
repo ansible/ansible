@@ -59,7 +59,7 @@ options:
         self-signed certificates.
     required: false
     default: 'yes'
-    choices: ['yes', 'no']
+    type: bool
 '''
 
 EXAMPLES = '''

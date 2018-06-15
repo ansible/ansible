@@ -47,7 +47,7 @@ options:
       - wait for the datacenter to be created before returning
     required: false
     default: "yes"
-    choices: [ "yes", "no" ]
+    type: bool
   wait_timeout:
     description:
       - how long before wait gives up, in seconds

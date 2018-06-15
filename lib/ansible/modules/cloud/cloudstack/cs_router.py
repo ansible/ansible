@@ -40,34 +40,23 @@ options:
   service_offering:
     description:
       - Name or id of the service offering of the router.
-    required: false
-    default: null
   domain:
     description:
       - Domain the router is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the router is related to.
-    required: false
-    default: null
   project:
     description:
       - Name of the project the router is related to.
-    required: false
-    default: null
   zone:
     description:
       - Name of the zone the router is deployed in.
       - If not set, all zones are used.
-    required: false
-    default: null
     version_added: "2.4"
   state:
     description:
       - State of the router.
-    required: false
     default: 'present'
     choices: [ 'present', 'absent', 'started', 'stopped', 'restarted' ]
   poll_async:
@@ -222,7 +211,8 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
                 'projectid': self.get_project(key='id'),
                 'account': self.get_account(key='name'),
                 'domainid': self.get_domain(key='id'),
-                'listall': True
+                'listall': True,
+                'fetch_list': True,
             }
 
             if self.module.params.get('zone'):
@@ -230,7 +220,7 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
 
             routers = self.query_api('listRouters', **args)
             if routers:
-                for r in routers['router']:
+                for r in routers:
                     if router.lower() in [r['name'].lower(), r['id']]:
                         self.router = r
                         break

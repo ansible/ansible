@@ -1,0 +1,59 @@
+- name: stop py1 service
+  supervisorctl:
+    name: 'pys:py1'
+    state: stopped
+    # test with 'server_url' parameter
+    server_url: 'unix://{{ remote_dir }}/supervisord.sock'
+  register: result
+  when: credentials.username == ''
+
+- name: stop py1 service
+  supervisorctl:
+    name: 'pys:py1'
+    state: stopped
+    # test with unix socket
+    server_url: 'unix://{{ remote_dir }}/supervisord.sock'
+    username: '{{ credentials.username }}'
+    password: '{{ credentials.password }}'
+  register: result_with_auth
+  when: credentials.username != ''
+
+- command: "supervisorctl -c {{ remote_dir }}/supervisord.conf {% if credentials.username %}-u {{ credentials.username }} -p {{ credentials.password }}{% endif %} status"
+
+- name: check that service is stopped
+  assert:
+    that:
+      - (result is success and result_with_auth is skip) or (result is skip and result_with_auth is success)
+      - (result is changed and result_with_auth is skip) or (result is skip and result_with_auth is changed)
+
+- name: "check that service isn't running"
+  script: "files/sendProcessStdin.py 'pys:py1' 1 \
+    '{{ credentials.username }}' '{{ credentials.password }}'"
+  register: is_py1_alive
+  failed_when: is_py1_alive is success
+
+- name: try again to stop py1 service (without auth)
+  supervisorctl:
+    name: pys:py1
+    state: stopped
+    # test with 'server_url' parameter
+    server_url: 'unix://{{ remote_dir }}/supervisord.sock'
+  register: result
+  when: credentials.username == ''
+
+- name: try again to stop py1 service (with auth)
+  supervisorctl:
+    name: pys:py1
+    state: stopped
+    # test with unix socket
+    server_url: 'unix://{{ remote_dir }}/supervisord.sock'
+    username: '{{ credentials.username }}'
+    password: '{{ credentials.password }}'
+  register: result_with_auth
+  when: credentials.username != ''
+
+- name: check that service is already stopped
+  assert:
+    that:
+      - (result is success and result_with_auth is skip) or (result is skip and result_with_auth is success)
+      - (result is not changed and result_with_auth is skip) or (result is skip and result_with_auth is not changed)

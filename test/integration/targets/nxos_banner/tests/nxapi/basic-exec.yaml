@@ -6,7 +6,6 @@
       nxos_banner: &remove
         banner: exec
         state: absent
-        provider: "{{ nxapi }}"
 
     - name: Set exec
       nxos_banner: &exec
@@ -16,7 +15,6 @@
           that has a multiline
           string
         state: present
-        provider: "{{ nxapi }}"
       register: result
 
     - assert:

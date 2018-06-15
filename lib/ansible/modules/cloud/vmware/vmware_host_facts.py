@@ -1,22 +1,26 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 # Copyright: (c) 2017, Wei Gao <gaowei3@qq.com>
+# Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 DOCUMENTATION = '''
 ---
 module: vmware_host_facts
-short_description: Gathers facts about remote vmware host
+short_description: Gathers facts about remote ESXi hostsystem
 description:
-    - Gathers facts about remote vmware host.
+    - This module can be used to gathers facts like CPU, memory, datastore, network and system etc. about ESXi host system.
+    - Please specify hostname or IP address of ESXi host system as C(hostname).
+    - If hostname or IP address of vCenter is provided as C(hostname), then information about first ESXi hostsystem is returned.
 version_added: 2.5
 author:
     - Wei Gao (@woshihaoren)
@@ -41,112 +45,147 @@ ansible_facts:
   description: system info about the host machine
   returned: always
   type: dict
+  sample:
+    {
+        "ansible_all_ipv4_addresses": [
+            "10.76.33.200"
+        ],
+        "ansible_bios_date": "2011-01-01T00:00:00+00:00",
+        "ansible_bios_version": "0.5.1",
+        "ansible_datastore": [
+            {
+                "free": "11.63 GB",
+                "name": "datastore1",
+                "total": "12.50 GB"
+            }
+        ],
+        "ansible_distribution": "VMware ESXi",
+        "ansible_distribution_build": "4887370",
+        "ansible_distribution_version": "6.5.0",
+        "ansible_hostname": "10.76.33.100",
+        "ansible_interfaces": [
+            "vmk0"
+        ],
+        "ansible_memfree_mb": 2702,
+        "ansible_memtotal_mb": 4095,
+        "ansible_os_type": "vmnix-x86",
+        "ansible_processor": "Intel Xeon E312xx (Sandy Bridge)",
+        "ansible_processor_cores": 2,
+        "ansible_processor_count": 2,
+        "ansible_processor_vcpus": 2,
+        "ansible_product_name": "KVM",
+        "ansible_product_serial": "NA",
+        "ansible_system_vendor": "Red Hat",
+        "ansible_vmk0": {
+            "device": "vmk0",
+            "ipv4": {
+                "address": "10.76.33.100",
+                "netmask": "255.255.255.0"
+            },
+            "macaddress": "52:54:00:56:7d:59",
+            "mtu": 1500
+        }
+    }
 '''
 
 from ansible.module_utils.basic import AnsibleModule, bytes_to_human
-from ansible.module_utils.vmware import connect_to_api, vmware_argument_spec, find_obj
+from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, find_obj
 
 try:
     from pyVmomi import vim, vmodl
-    HAS_PYVMOMI = True
 except ImportError:
-    HAS_PYVMOMI = False
+    pass
 
 
-def get_cpu_facts(host):
-    facts = {
-        'ansible_processor': host.summary.hardware.cpuModel,
-        'ansible_processor_cores': host.summary.hardware.numCpuCores,
-        'ansible_processor_count': host.summary.hardware.numCpuPkgs,
-        'ansible_processor_vcpus': host.summary.hardware.numCpuThreads,
-    }
-    return facts
+class VMwareHostFactManager(PyVmomi):
+    def __init__(self, module):
+        super(VMwareHostFactManager, self).__init__(module)
+        self.host = find_obj(self.content, [vim.HostSystem], None)
+        if self.host is None:
+            self.module.fail_json(msg="Failed to find host system.")
 
+    def all_facts(self):
+        ansible_facts = {}
+        ansible_facts.update(self.get_cpu_facts())
+        ansible_facts.update(self.get_memory_facts())
+        ansible_facts.update(self.get_datastore_facts())
+        ansible_facts.update(self.get_network_facts())
+        ansible_facts.update(self.get_system_facts())
+        self.module.exit_json(changed=False, ansible_facts=ansible_facts)
 
-def get_memory_facts(host):
-    facts = {
-        'ansible_memfree_mb': host.hardware.memorySize // 1024 // 1024 - host.summary.quickStats.overallMemoryUsage,
-        'ansible_memtotal_mb': host.hardware.memorySize // 1024 // 1024,
-    }
-    return facts
-
-
-def get_datastore_facts(host):
-    facts = {}
-    facts['ansible_datastore'] = []
-    for store in host.datastore:
-        _tmp = {
-            'name': store.summary.name,
-            'total': bytes_to_human(store.summary.capacity),
-            'free': bytes_to_human(store.summary.freeSpace),
+    def get_cpu_facts(self):
+        return {
+            'ansible_processor': self.host.summary.hardware.cpuModel,
+            'ansible_processor_cores': self.host.summary.hardware.numCpuCores,
+            'ansible_processor_count': self.host.summary.hardware.numCpuPkgs,
+            'ansible_processor_vcpus': self.host.summary.hardware.numCpuThreads,
         }
-        facts['ansible_datastore'].append(_tmp)
-    return facts
 
-
-def get_network_facts(host):
-    facts = {}
-    facts['ansible_interfaces'] = []
-    facts['ansible_all_ipv4_addresses'] = []
-    for nic in host.config.network.vnic:
-        device = nic.device
-        facts['ansible_interfaces'].append(device)
-        facts['ansible_all_ipv4_addresses'].append(nic.spec.ip.ipAddress)
-        _tmp = {
-            'device': device,
-            'ipv4': {
-                'address': nic.spec.ip.ipAddress,
-                'netmask': nic.spec.ip.subnetMask,
-            },
-            'macaddress': nic.spec.mac,
-            'mtu': nic.spec.mtu,
+    def get_memory_facts(self):
+        return {
+            'ansible_memfree_mb': self.host.hardware.memorySize // 1024 // 1024 - self.host.summary.quickStats.overallMemoryUsage,
+            'ansible_memtotal_mb': self.host.hardware.memorySize // 1024 // 1024,
         }
-        facts['ansible_' + device] = _tmp
-    return facts
 
+    def get_datastore_facts(self):
+        facts = dict()
+        facts['ansible_datastore'] = []
+        for store in self.host.datastore:
+            _tmp = {
+                'name': store.summary.name,
+                'total': bytes_to_human(store.summary.capacity),
+                'free': bytes_to_human(store.summary.freeSpace),
+            }
+            facts['ansible_datastore'].append(_tmp)
+        return facts
 
-def get_system_facts(host):
-    sn = 'NA'
-    for info in host.hardware.systemInfo.otherIdentifyingInfo:
-        if info.identifierType.key == 'ServiceTag':
-            sn = info.identifierValue
-    facts = {
-        'ansible_distribution': host.config.product.name,
-        'ansible_distribution_version': host.config.product.version,
-        'ansible_distribution_build': host.config.product.build,
-        'ansible_os_type': host.config.product.osType,
-        'ansible_system_vendor': host.hardware.systemInfo.vendor,
-        'ansible_hostname': host.summary.config.name,
-        'ansible_product_name': host.hardware.systemInfo.model,
-        'ansible_product_serial': sn,
-        'ansible_bios_date': host.hardware.biosInfo.releaseDate,
-        'ansible_bios_version': host.hardware.biosInfo.biosVersion,
-    }
-    return facts
+    def get_network_facts(self):
+        facts = dict()
+        facts['ansible_interfaces'] = []
+        facts['ansible_all_ipv4_addresses'] = []
+        for nic in self.host.config.network.vnic:
+            device = nic.device
+            facts['ansible_interfaces'].append(device)
+            facts['ansible_all_ipv4_addresses'].append(nic.spec.ip.ipAddress)
+            _tmp = {
+                'device': device,
+                'ipv4': {
+                    'address': nic.spec.ip.ipAddress,
+                    'netmask': nic.spec.ip.subnetMask,
+                },
+                'macaddress': nic.spec.mac,
+                'mtu': nic.spec.mtu,
+            }
+            facts['ansible_' + device] = _tmp
+        return facts
 
-
-def all_facts(content):
-    host = find_obj(content, [vim.HostSystem], None)
-    ansible_facts = {}
-    ansible_facts.update(get_cpu_facts(host))
-    ansible_facts.update(get_memory_facts(host))
-    ansible_facts.update(get_datastore_facts(host))
-    ansible_facts.update(get_network_facts(host))
-    ansible_facts.update(get_system_facts(host))
-    return ansible_facts
+    def get_system_facts(self):
+        sn = 'NA'
+        for info in self.host.hardware.systemInfo.otherIdentifyingInfo:
+            if info.identifierType.key == 'ServiceTag':
+                sn = info.identifierValue
+        facts = {
+            'ansible_distribution': self.host.config.product.name,
+            'ansible_distribution_version': self.host.config.product.version,
+            'ansible_distribution_build': self.host.config.product.build,
+            'ansible_os_type': self.host.config.product.osType,
+            'ansible_system_vendor': self.host.hardware.systemInfo.vendor,
+            'ansible_hostname': self.host.summary.config.name,
+            'ansible_product_name': self.host.hardware.systemInfo.model,
+            'ansible_product_serial': sn,
+            'ansible_bios_date': self.host.hardware.biosInfo.releaseDate,
+            'ansible_bios_version': self.host.hardware.biosInfo.biosVersion,
+        }
+        return facts
 
 
 def main():
-
     argument_spec = vmware_argument_spec()
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
-    if not HAS_PYVMOMI:
-        module.fail_json(msg='pyvmomi is required for this module')
-
-    content = connect_to_api(module)
-    data = all_facts(content)
-    module.exit_json(changed=False, ansible_facts=data)
+    vm_host_manager = VMwareHostFactManager(module)
+    vm_host_manager.all_facts()
 
 
 if __name__ == '__main__':

@@ -28,7 +28,7 @@ Lookups are an Ansible-specific extension to the Jinja2 templating language.
 Enabling Lookup Plugins
 +++++++++++++++++++++++
 
-You can activate a custom lookup by either dropping it into a ``lookup_plugins`` directory adjacent to your play, inside a role, or by putting it in one of the lookup directory sources configured in :doc:`ansible.cfg <../config>`.
+You can activate a custom lookup by either dropping it into a ``lookup_plugins`` directory adjacent to your play, inside a role, or by putting it in one of the lookup directory sources configured in :ref:`ansible.cfg <ansible_configuration_settings>`.
 
 
 .. _using_lookup:
@@ -36,7 +36,7 @@ You can activate a custom lookup by either dropping it into a ``lookup_plugins``
 Using Lookup Plugins
 ++++++++++++++++++++
 
-Lookup plugins can be used anywhere you can use templating in Ansible: in a play, in variables file, or in a Jinja2 template for the :doc:`template <../template_module>` module.
+Lookup plugins can be used anywhere you can use templating in Ansible: in a play, in variables file, or in a Jinja2 template for the :ref:`template <template_module>` module.
 
 .. code-block:: yaml
 
@@ -53,7 +53,7 @@ This is also the reason most lookups output lists and take lists as input; for e
       debug: msg={{item}}
       with_items: [1, 2, 3]
 
-You can combine lookups with :doc:`../playbooks_filters`, :doc:`../playbooks_tests` and even each other to do some complex data generation and maniplulation. For example:
+You can combine lookups with :ref:`playbooks_filters`, :ref:`playbooks_tests` and even each other to do some complex data generation and manipulation. For example:
 
 .. code-block:: yaml
 
@@ -64,6 +64,70 @@ You can combine lookups with :doc:`../playbooks_filters`, :doc:`../playbooks_tes
         - "{{lookup('consul_kv', 'bcs/' + lookup('file', '/the/question') + ', host=localhost, port=2000')|shuffle}}"
         - "{{lookup('sequence', 'end=42 start=2 step=2')|map('log', 4)|list)}}"
         - ['a', 'c', 'd', 'c']
+
+.. versionadded:: 2.6
+
+You can now control how errors behave in all lookup plugins by setting ``errors`` to ``ignore``, ``warn``, or ``strict``. The default setting is ``strict``, which causes the task to fail. For example:
+
+To ignore errors::
+
+    - name: file doesnt exist, but i dont care .. file plugin itself warns anyways ...
+      debug: msg="{{ lookup('file', '/idontexist', errors='ignore') }}"
+
+    [WARNING]: Unable to find '/idontexist' in expected paths (use -vvvvv to see paths)
+
+    ok: [localhost] => {
+        "msg": ""
+    }
+
+
+To get a warning instead of a failure::
+
+    - name: file doesnt exist, let me know, but continue
+      debug: msg="{{ lookup('file', '/idontexist', errors='warn') }}"
+
+    [WARNING]: Unable to find '/idontexist' in expected paths (use -vvvvv to see paths)
+
+    [WARNING]: An unhandled exception occurred while running the lookup plugin 'file'. Error was a <class 'ansible.errors.AnsibleError'>, original message: could not locate file in lookup: /idontexist
+
+    ok: [localhost] => {
+        "msg": ""
+    }
+
+
+Fatal error (the default)::
+
+    - name: file doesnt exist, FAIL (this is the default)
+      debug: msg="{{ lookup('file', '/idontexist', errors='strict') }}"
+
+    [WARNING]: Unable to find '/idontexist' in expected paths (use -vvvvv to see paths)
+
+    fatal: [localhost]: FAILED! => {"msg": "An unhandled exception occurred while running the lookup plugin 'file'. Error was a <class 'ansible.errors.AnsibleError'>, original message: could not locate file in lookup: /idontexist"}
+
+
+.. _query:
+
+query
++++++
+
+.. versionadded:: 2.5
+
+In Ansible 2.5, a new jinja2 function called ``query`` was added for invoking lookup plugins. The difference between ``lookup`` and ``query`` is largely that ``query`` will always return a list.
+The default behavior of ``lookup`` is to return a string of comma separated values. ``lookup`` can be explicitly configured to return a list using ``wantlist=True``.
+
+This was done primarily to provide an easier and more consistent interface for interacting with the new ``loop`` keyword, while maintaining backwards compatibiltiy with other uses of ``lookup``.
+
+The following examples are equivalent::
+
+    lookup('dict', dict_variable, wantlist=True)
+
+    query('dict', dict_variable)
+
+As demonstrated above the behavior of ``wantlist=True`` is implicit when using ``query``.
+
+Additionally, ``q`` was introduced as a shortform of ``query``::
+
+    q('dict', dict_variable)
 
 
 .. _lookup_plugins_list:
@@ -81,17 +145,17 @@ You can use ``ansible-doc -t lookup -l`` to see the list of available plugins. U
 
 .. seealso::
 
-   :doc:`../playbooks`
+   :ref:`about_playbooks`
        An introduction to playbooks
    :doc:`inventory`
        Ansible inventory plugins
    :doc:`callback`
        Ansible callback plugins
-   :doc:`../playbooks_filters`
+   :ref:`playbooks_filters`
        Jinja2 filter plugins
-   :doc:`../playbooks_tests`
+   :ref:`playbooks_tests`
        Jinja2 test plugins
-   :doc:`../playbooks_lookups`
+   :ref:`playbooks_lookups`
        Jinja2 lookup plugins
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

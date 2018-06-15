@@ -7,6 +7,7 @@ __metaclass__ = type
 
 from copy import deepcopy
 
+from ansible import constants as C
 from ansible.parsing.dataloader import DataLoader
 from ansible.vars.clean import strip_internal_keys
 
@@ -66,16 +67,17 @@ class TaskResult:
 
     def needs_debugger(self, globally_enabled=False):
         _debugger = self._task_fields.get('debugger')
+        _ignore_errors = C.TASK_DEBUGGER_IGNORE_ERRORS and self._task_fields.get('ignore_errors')
 
         ret = False
-        if globally_enabled and (self.is_failed() or self.is_unreachable()):
+        if globally_enabled and ((self.is_failed() and not _ignore_errors) or self.is_unreachable()):
             ret = True
 
         if _debugger in ('always',):
             ret = True
         elif _debugger in ('never',):
             ret = False
-        elif _debugger in ('on_failed',) and self.is_failed():
+        elif _debugger in ('on_failed',) and self.is_failed() and not _ignore_errors:
             ret = True
         elif _debugger in ('on_unreachable',) and self.is_unreachable():
             ret = True
@@ -110,7 +112,7 @@ class TaskResult:
         else:
             ignore = _IGNORE
 
-        if self._result.get('_ansible_no_log', False):
+        if self._task.no_log or self._result.get('_ansible_no_log', False):
             x = {"censored": "the output has been hidden due to the fact that 'no_log: true' was specified for this result"}
             for preserve in _PRESERVE:
                 if preserve in self._result:

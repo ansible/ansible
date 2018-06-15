@@ -30,149 +30,83 @@ options:
     state:
         description:
             - A value of present sets the quota and a value of absent resets the quota to system defaults.
-        required: False
         default: present
     backup_gigabytes:
-        required: False
-        default: None
         description: Maximum size of backups in GB's.
     backups:
-        required: False
-        default: None
         description: Maximum number of backups allowed.
     cores:
-        required: False
-        default: None
         description: Maximum number of CPU's per project.
     fixed_ips:
-        required: False
-        default: None
         description: Number of fixed IP's to allow.
     floating_ips:
-        required: False
-        default: None
         description: Number of floating IP's to allow in Compute.
         aliases: ['compute_floating_ips']
     floatingip:
-        required: False
-        default: None
         description: Number of floating IP's to allow in Network.
         aliases: ['network_floating_ips']
     gigabytes:
-        required: False
-        default: None
         description: Maximum volume storage allowed for project.
     gigabytes_lvm:
-        required: False
-        default: None
         description: Maximum size in GB's of individual lvm volumes.
     injected_file_size:
-        required: False
-        default: None
         description: Maximum file size in bytes.
     injected_files:
-        required: False
-        default: None
         description: Number of injected files to allow.
     injected_path_size:
-        required: False
-        default: None
         description: Maximum path size.
     instances:
-        required: False
-        default: None
         description: Maximum number of instances allowed.
     key_pairs:
-        required: False
-        default: None
         description: Number of key pairs to allow.
     loadbalancer:
-        required: False
-        default: None
         description: Number of load balancers to allow.
         version_added: "2.4"
     network:
-        required: False
-        default: None
         description: Number of networks to allow.
     per_volume_gigabytes:
-        required: False
-        default: None
         description: Maximum size in GB's of individual volumes.
     pool:
-        required: False
-        default: None
         description: Number of load balancer pools to allow.
         version_added: "2.4"
     port:
-        required: False
-        default: None
         description: Number of Network ports to allow, this needs to be greater than the instances limit.
     properties:
-        required: False
-        default: None
         description: Number of properties to allow.
     ram:
-        required: False
-        default: None
         description: Maximum amount of ram in MB to allow.
     rbac_policy:
-        required: False
-        default: None
         description: Number of policies to allow.
     router:
-        required: False
-        default: None
         description: Number of routers to allow.
     security_group_rule:
-        required: False
-        default: None
         description: Number of rules per security group to allow.
     security_group:
-        required: False
-        default: None
         description: Number of security groups to allow.
     server_group_members:
-        required: False
-        default: None
         description: Number of server group members to allow.
     server_groups:
-        required: False
-        default: None
         description: Number of server groups to allow.
     snapshots:
-        required: False
-        default: None
         description: Number of snapshots to allow.
     snapshots_lvm:
-        required: False
-        default: None
         description: Number of LVM snapshots to allow.
     subnet:
-        required: False
-        default: None
         description: Number of subnets to allow.
     subnetpool:
-        required: False
-        default: None
         description: Number of subnet pools to allow.
     volumes:
-        required: False
-        default: None
         description: Number of volumes to allow.
     volumes_lvm:
-        required: False
-        default: None
         description: Number of LVM volumes to allow.
     availability_zone:
       description:
         - Ignored. Present for backwards compatibility
-      required: false
 
 
 requirements:
-    - "python >= 2.6"
-    - "shade > 1.9.0"
+    - "python >= 2.7"
+    - "openstacksdk >= 0.13.0"
 '''
 
 EXAMPLES = '''
@@ -310,17 +244,17 @@ def _get_compute_quotas(cloud, project):
     return cloud.get_compute_quotas(project)
 
 
-def _get_quotas(shade, module, cloud, project):
+def _get_quotas(sdk, module, cloud, project):
 
     quota = {}
     try:
         quota['volume'] = _get_volume_quotas(cloud, project)
-    except shade.OpenStackCloudURINotFound:
+    except sdk.exceptions.OpenStackCloudURINotFound:
         module.warn("No public endpoint for volumev2 service was found. Ignoring volume quotas.")
 
     try:
         quota['network'] = _get_network_quotas(cloud, project)
-    except shade.OpenStackCloudURINotFound:
+    except sdk.exceptions.OpenStackCloudURINotFound:
         module.warn("No public endpoint for network service was found. Ignoring network quotas.")
 
     quota['compute'] = _get_compute_quotas(cloud, project)
@@ -430,7 +364,7 @@ def main():
                            supports_check_mode=True
                            )
 
-    shade, cloud = openstack_cloud_from_module(module)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         cloud_params = dict(module.params)
 
@@ -447,7 +381,7 @@ def main():
 
         # Get current quota values
         project_quota_output = _get_quotas(
-            shade, module, cloud, cloud_params['name'])
+            sdk, module, cloud, cloud_params['name'])
         changes_required = False
 
         if module.params['state'] == "absent":
@@ -458,7 +392,7 @@ def main():
                 module.exit_json(changed=True)
 
             # Calling delete_network_quotas when a quota has not been set results
-            # in an error, according to the shade docs it should return the
+            # in an error, according to the sdk docs it should return the
             # current quota.
             # The following error string is returned:
             # network client call failed: Quota for tenant 69dd91d217e949f1a0b35a4b901741dc could not be found.
@@ -469,7 +403,7 @@ def main():
                 quota_call = getattr(cloud, 'delete_%s_quotas' % (quota_type))
                 try:
                     quota_call(cloud_params['name'])
-                except shade.OpenStackCloudException as e:
+                except sdk.exceptions.OpenStackCloudException as e:
                     error_msg = str(e)
                     if error_msg.find(neutron_msg1) > -1 and error_msg.find(neutron_msg2) > -1:
                         pass
@@ -477,7 +411,7 @@ def main():
                         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
             project_quota_output = _get_quotas(
-                shade, module, cloud, cloud_params['name'])
+                sdk, module, cloud, cloud_params['name'])
             changes_required = True
 
         elif module.params['state'] == "present":
@@ -496,7 +430,7 @@ def main():
 
                 # Get quota state post changes for validation
                 project_quota_update = _get_quotas(
-                    shade, module, cloud, cloud_params['name'])
+                    sdk, module, cloud, cloud_params['name'])
 
                 if project_quota_output == project_quota_update:
                     module.fail_json(msg='Could not apply quota update')
@@ -507,7 +441,7 @@ def main():
                          openstack_quotas=project_quota_output
                          )
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
 

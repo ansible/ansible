@@ -27,6 +27,7 @@ description:
     Please use M(iosxr_config) to configure iosxr devices.
 extends_documentation_fragment: iosxr
 notes:
+  - This module does not support netconf connection
   - Tested against IOS XR 6.1.2
 options:
   commands:
@@ -44,8 +45,6 @@ options:
         before moving forward. If the conditional is not true
         within the configured number of retries, the task fails.
         See examples.
-    required: false
-    default: null
     aliases: ['waitfor']
     version_added: "2.2"
   match:
@@ -56,7 +55,6 @@ options:
         then all conditionals in the wait_for must be satisfied.  If
         the value is set to C(any) then only one of the values must be
         satisfied.
-    required: false
     default: all
     choices: ['any', 'all']
     version_added: "2.2"
@@ -66,7 +64,6 @@ options:
         before it is considered failed. The command is run on the
         target device every retry and evaluated against the
         I(wait_for) conditions.
-    required: false
     default: 10
   interval:
     description:
@@ -74,7 +71,6 @@ options:
         of the command. If the command does not pass the specified
         conditions, the interval indicates how long to wait before
         trying the command again.
-    required: false
     default: 1
 """
 

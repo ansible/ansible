@@ -1,3 +1,5 @@
+.. _working_with_modules:
+
 Working With Modules
 ====================
 
@@ -5,7 +7,7 @@ Working With Modules
    :maxdepth: 1
 
    modules_intro
-   common_return_values
+   ../reference_appendices/common_return_values
    modules_support
    ../modules/modules_by_category
 

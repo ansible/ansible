@@ -65,7 +65,7 @@ options:
       - The approve argument instruct the module to convert a device in quarantine
         mode into approved mode.
     default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
   location:
     description:
       - When approving a device using the I(approve) argument, it's possible

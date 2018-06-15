@@ -1,0 +1,21 @@
+- name: Test pause
+  hosts: testhost
+  gather_facts: no
+  become: no
+
+  tasks:
+    - pause:
+        seconds: 1
+      register: results
+
+    - assert:
+        that:
+          - results.stdout is search('Paused for \d+\.\d+ seconds')
+
+    - pause:
+        minutes: 1
+      register: results
+
+    - assert:
+        that:
+          - results.stdout is search('Paused for \d+\.\d+ minutes')

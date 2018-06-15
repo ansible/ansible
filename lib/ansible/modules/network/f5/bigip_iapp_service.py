@@ -18,7 +18,11 @@ module: bigip_iapp_service
 short_description: Manages TCL iApp services on a BIG-IP
 description:
   - Manages TCL iApp services on a BIG-IP.
-version_added: "2.4"
+  - If you are looking for the API that is communicated with on the BIG-IP,
+    the one the is used is C(/mgmt/tm/sys/application/service/). There are a
+    couple of APIs in a BIG-IP that might seem like they are relevant to iApp
+    Services, but the API mentioned here is the one that is used.
+version_added: 2.4
 options:
   name:
     description:
@@ -46,6 +50,7 @@ options:
         This option is equivalent to re-configuring the iApp if that template
         has changed.
     default: no
+    type: bool
   state:
     description:
       - When C(present), ensures that the iApp service is created and running.
@@ -72,6 +77,7 @@ options:
         over any similar setting in the iApp Server payload that you provide in
         the C(parameters) field.
     default: yes
+    type: bool
     version_added: 2.5
   traffic_group:
     description:
@@ -214,30 +220,25 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.six import iteritems
 
-HAS_DEVEL_IMPORTS = False
-
 try:
-    # Sideband repository used for dev
     from library.module_utils.network.f5.bigip import HAS_F5SDK
     from library.module_utils.network.f5.bigip import F5Client
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
+    from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    # Upstream Ansible
     from ansible.module_utils.network.f5.bigip import HAS_F5SDK
     from ansible.module_utils.network.f5.bigip import F5Client
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
+    from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
@@ -250,18 +251,16 @@ class Parameters(AnsibleF5Parameters):
         'strictUpdates': 'strict_updates',
         'trafficGroup': 'traffic_group',
     }
+
     returnables = []
+
     api_attributes = [
         'tables', 'variables', 'template', 'lists', 'deviceGroup',
         'inheritedDevicegroup', 'inheritedTrafficGroup', 'trafficGroup',
         'strictUpdates'
     ]
-    updatables = ['tables', 'variables', 'lists', 'strict_updates', 'traffic_group']
 
-    def _fqdn_name(self, value):
-        if value is not None and not value.startswith('/'):
-            return '/{0}/{1}'.format(self.partition, value)
-        return value
+    updatables = ['tables', 'variables', 'lists', 'strict_updates', 'traffic_group']
 
     def to_return(self):
         result = {}
@@ -388,7 +387,7 @@ class Parameters(AnsibleF5Parameters):
     def template(self):
         if self._values['template'] is None:
             return None
-        return self._fqdn_name(self._values['template'])
+        return fq_name(self.partition, self._values['template'])
 
     @template.setter
     def template(self, value):
@@ -419,14 +418,14 @@ class Parameters(AnsibleF5Parameters):
 
         # Specifying the value overrides any associated value in the payload
         elif self._values['traffic_group']:
-            result = self._fqdn_name(self._values['traffic_group'])
+            result = fq_name(self.partition, self._values['traffic_group'])
 
         # This will be automatically `None` if it was not set by the
         # `parameters` setter
         elif self.trafficGroup:
-            result = self._fqdn_name(self.trafficGroup)
+            result = fq_name(self.partition, self.trafficGroup)
         else:
-            result = self._fqdn_name(self._values['traffic_group'])
+            result = fq_name(self.partition, self._values['traffic_group'])
         if result.startswith('/Common/'):
             return result
         else:
@@ -620,7 +619,8 @@ class ArgumentSpec(object):
                 type='bool'
             ),
             strict_updates=dict(
-                type='bool'
+                type='bool',
+                default='yes'
             ),
             traffic_group=dict(),
             partition=dict(

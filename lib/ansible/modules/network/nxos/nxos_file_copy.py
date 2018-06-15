@@ -28,7 +28,8 @@ version_added: "2.2"
 short_description: Copy a file to a remote NXOS device over SCP.
 description:
   - Copy a file to the flash (or bootflash) remote network device
-    on NXOS devices.
+    on NXOS devices. This module only supports the use of connection
+    C(network_cli) or C(Cli) transport with connection C(local).
 author:
   - Jason Edelman (@jedelman8)
   - Gabriele Gerbino (@GGabriele)
@@ -49,19 +50,14 @@ options:
     description:
       - Remote file path of the copy. Remote directories must exist.
         If omitted, the name of the local file will be used.
-    required: false
-    default: null
   file_system:
     description:
       - The remote file system of the device. If omitted,
         devices that support a I(file_system) parameter will use
         their default values.
-    required: false
-    default: null
   connect_ssh_port:
     description:
       - SSH port to connect to server during transfer of file
-    required: false
     default: 22
     version_added: "2.5"
 '''
@@ -70,8 +66,6 @@ EXAMPLES = '''
 - nxos_file_copy:
     local_file: "./test_file.txt"
     remote_file: "test_file.txt"
-    provider: "{{ cli }}"
-    connect_ssh_port: "{{ ansible_ssh_port }}"
 '''
 
 RETURN = '''
@@ -158,12 +152,10 @@ def transfer_file(module, dest):
     if not enough_space(module):
         module.fail_json(msg='Could not transfer file. Not enough space on device.')
 
-    provider = module.params['provider']
-
-    hostname = module.params.get('host') or provider.get('host')
-    username = module.params.get('username') or provider.get('username')
-    password = module.params.get('password') or provider.get('password')
-    port = module.params.get('connect_ssh_port')
+    hostname = module.params['host']
+    username = module.params['username']
+    password = module.params['password']
+    port = module.params['connect_ssh_port']
 
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())

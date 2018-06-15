@@ -306,14 +306,8 @@ EXAMPLES = '''
 
 import os
 
-# Python3 compat. six.moves.shlex_quote will be available once we're free to
-# upgrade beyond six-1.4 module-side.
-try:
-    from shlex import quote as shlex_quote
-except ImportError:
-    from pipes import quote as shlex_quote
-
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import shlex_quote
 
 
 client_addr = None
@@ -372,7 +366,7 @@ def main():
             group=dict(type='bool'),
             set_remote_user=dict(type='bool', default=True),
             rsync_timeout=dict(type='int', default=0),
-            rsync_opts=dict(type='list'),
+            rsync_opts=dict(type='list', default=[]),
             ssh_args=dict(type='str'),
             partial=dict(type='bool', default=False),
             verify_host=dict(type='bool', default=False),
@@ -468,20 +462,30 @@ def main():
         module.fail_json(msg='either src or dest must be a localhost', rc=1)
 
     if is_rsh_needed(source, dest):
-        ssh_cmd = [module.get_bin_path('ssh', required=True), '-S', 'none']
-        if private_key is not None:
-            ssh_cmd.extend(['-i', private_key])
-        # If the user specified a port value
-        # Note:  The action plugin takes care of setting this to a port from
-        # inventory if the user didn't specify an explicit dest_port
-        if dest_port is not None:
-            ssh_cmd.extend(['-o', 'Port=%s' % dest_port])
-        if not verify_host:
-            ssh_cmd.extend(['-o', 'StrictHostKeyChecking=no', '-o', 'UserKnownHostsFile=/dev/null'])
-        ssh_cmd_str = ' '.join(shlex_quote(arg) for arg in ssh_cmd)
-        if ssh_args:
-            ssh_cmd_str += ' %s' % ssh_args
-        cmd.append('--rsh=%s' % ssh_cmd_str)
+
+        # https://github.com/ansible/ansible/issues/15907
+        has_rsh = False
+        for rsync_opt in rsync_opts:
+            if '--rsh' in rsync_opt:
+                has_rsh = True
+                break
+
+        # if the user has not supplied an --rsh option go ahead and add ours
+        if not has_rsh:
+            ssh_cmd = [module.get_bin_path('ssh', required=True), '-S', 'none']
+            if private_key is not None:
+                ssh_cmd.extend(['-i', private_key])
+            # If the user specified a port value
+            # Note:  The action plugin takes care of setting this to a port from
+            # inventory if the user didn't specify an explicit dest_port
+            if dest_port is not None:
+                ssh_cmd.extend(['-o', 'Port=%s' % dest_port])
+            if not verify_host:
+                ssh_cmd.extend(['-o', 'StrictHostKeyChecking=no', '-o', 'UserKnownHostsFile=/dev/null'])
+            ssh_cmd_str = ' '.join(shlex_quote(arg) for arg in ssh_cmd)
+            if ssh_args:
+                ssh_cmd_str += ' %s' % ssh_args
+            cmd.append('--rsh=%s' % ssh_cmd_str)
 
     if rsync_path:
         cmd.append('--rsync-path=%s' % rsync_path)

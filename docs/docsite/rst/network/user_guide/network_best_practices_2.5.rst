@@ -1,4 +1,4 @@
-.. network-best-practices:
+.. _network-best-practices:
 
 **************************************
 Network Best Practices for Ansible 2.5
@@ -45,67 +45,76 @@ The examples on this page use the following structure:
 
    .
    ├── facts-demo.yml
-   ├── group_vars
-   │   ├── eos.yml
-   │   └── ios.yml
    └── inventory
 
 
-Inventory
----------
+Inventory, Connections, Credentials: Grouping Devices and Variables
+-------------------------------------------------------------------
 
 An ``inventory`` file is an INI-like configuration file that defines the mapping of hosts into groups.
 
 In our example, the inventory file defines the groups ``eos``, ``ios``, ``vyos`` and a "group of groups" called ``switches``. Further details about subgroups and inventory files can be found in the :ref:`Ansible inventory Group documentation <subgroups>`.
 
+Because Ansible is a flexible tool, there are a number of ways to specify connection information and credentials. We recommend using the ``[my_group:vars]`` capability in your inventory file. Here's what it would look like if you specified your ssh passwords (encrypted with Ansible Vault) among your variables:
 
-Connection & Credentials (group_vars)
--------------------------------------
+.. code-block:: ini
 
-Because Ansible is a flexible tool, there are a number of ways to specify connection information and credentials. We recommend using ``group_vars``.
+   [all:vars]
+   # these defaults can be overridden for any group in the [group:vars] section
+   ansible_connection=network_cli
+   ansible_user=ansible
 
-**group_vars/eos.yml**
+   [switches:children]
+   eos
+   ios
+   vyos
 
-.. code-block:: yaml
+   [eos]
+   veos01 ansible_host=veos-01.example.net
+   veos02 ansible_host=veos-02.example.net
+   veos03 ansible_host=veos-03.example.net
+   veos04 ansible_host=veos-04.example.net
 
-   ansible_connection: network_cli
-   ansible_network_os: eos
-   ansible_user: myuser
-   ansible_ssh_pass: !vault |
+   [eos:vars]
+   ansible_become=yes
+   ansible_become_method=enable
+   ansible_network_os=eos
+   ansible_user=my_eos_user
+   ansible_ssh_pass= !vault |
                      $ANSIBLE_VAULT;1.1;AES256
                      37373735393636643261383066383235363664386633386432343236663533343730353361653735
                      6131363539383931353931653533356337353539373165320a316465383138636532343463633236
                      37623064393838353962386262643230303438323065356133373930646331623731656163623333
                      3431353332343530650a373038366364316135383063356531633066343434623631303166626532
                      9562
-   ansible_become: yes
-   ansible_become_method: enable
 
-**group_vars/ios.yml**
+   [ios]
+   ios01 ansible_host=ios-01.example.net
+   ios02 ansible_host=ios-02.example.net
+   ios03 ansible_host=ios-03.example.net
 
-.. code-block:: yaml
-
-   ansible_connection: network_cli
-   ansible_network_os: ios
-   ansible_user: myiosuser
-   ansible_ssh_pass: !vault |
+   [ios:vars]
+   ansible_become=yes
+   ansible_become_method=enable
+   ansible_network_os=ios
+   ansible_user=my_ios_user
+   ansible_ssh_pass= !vault |
                      $ANSIBLE_VAULT;1.1;AES256
                      34623431313336343132373235313066376238386138316466636437653938623965383732373130
                      3466363834613161386538393463663861636437653866620a373136356366623765373530633735
                      34323262363835346637346261653137626539343534643962376139366330626135393365353739
                      3431373064656165320a333834613461613338626161633733343566666630366133623265303563
                      8472
-   ansible_become: yes
-   ansible_become_method: enable
 
-**group_vars/vyos.yml**
+   [vyos]
+   vyos01 ansible_host=vyos-01.example.net
+   vyos02 ansible_host=vyos-02.example.net
+   vyos03 ansible_host=vyos-03.example.net
 
-.. code-block:: yaml
-
-   ansible_connection: network_cli
-   ansible_network_os: vyos
-   ansible_user: myvyosuser
-   ansible_ssh_pass: !vault |
+   [vyos:vars]
+   ansible_network_os=vyos
+   ansible_user=my_vyos_user
+   ansible_ssh_pass= !vault |
                      $ANSIBLE_VAULT;1.1;AES256
                      39336231636137663964343966653162353431333566633762393034646462353062633264303765
                      6331643066663534383564343537343334633031656538370a333737656236393835383863306466
@@ -113,6 +122,7 @@ Because Ansible is a flexible tool, there are a number of ways to specify connec
                      3665626431626532630a353564323566316162613432373738333064366130303637616239396438
                      9853
 
+If you use ssh-agent, you do not need the ``ansible_ssh_pass`` lines. If you use ssh keys, but not ssh-agent, and you have multiple keys, specify the key to use for each connection in the ``[group:vars]`` section with ``ansible_ssh_private_key_file=/path/to/correct/key``. For more information on ``ansible_ssh_`` options see the :ref:`behavioral_parameters`.
 
 .. FIXME FUTURE Gundalow - Link to network auth & proxy page (to be written)
 
@@ -139,14 +149,13 @@ Privilege escalation
 
 Certain network platforms, such as eos and ios, have the concept of different privilege modes. Certain network modules, such as those that modify system state including users, will only work in high privilege states. Ansible version 2.5 added support for ``become`` when using ``connection: network_cli``. This allows privileges to be raised for the specific tasks that need them. Adding ``become: yes`` and ``become_method: enable`` informs Ansible to go into privilege mode before executing the task, as shown here:
 
-**group_vars/eos.yml**
+.. code-block:: ini
 
-.. code-block:: yaml
-
-   ansible_connection: network_cli
-   ansible_network_os: eos
-   ansible_become: yes
-   ansible_become_method: enable
+   [eos:vars]
+   ansible_connection=network_cli
+   ansible_network_os=eos
+   ansible_become=yes
+   ansible_become_method=enable
 
 For more information, see the :ref:`using become with network modules<become-network>` guide.
 
@@ -164,9 +173,9 @@ Collect data
 
 Ansible facts modules gather system information 'facts' that are available to the rest of your playbook.
 
-Ansible Networking ships with a number of network-specific facts modules. In this example, we use the ``_facts`` modules :ref:`eos_facts <eos_facts>`, :ref:`ios_facts <ios_facts>` and :ref:`vyos_facts <vyos_facts>` to connect to the remote networking device. As the credentials are not explicitly passed via module arguments, Ansible uses the username and password from the inventory file.
+Ansible Networking ships with a number of network-specific facts modules. In this example, we use the ``_facts`` modules :ref:`eos_facts <eos_facts_module>`, :ref:`ios_facts <ios_facts_module>` and :ref:`vyos_facts <vyos_facts_module>` to connect to the remote networking device. As the credentials are not explicitly passed via module arguments, Ansible uses the username and password from the inventory file.
 
-Ansible's "Network Fact modules" gather information from the system and store the results in facts prefixed with ``ansible_net_``. The data collected by these modules is documented in the `Return Values` section of the module docs, in this case :ref:`eos_facts <eos_facts>` and :ref:`vyos_facts <vyos_facts>`. We can use the facts, such as ``ansible_net_version`` late on in the "Display some facts" task.
+Ansible's "Network Fact modules" gather information from the system and store the results in facts prefixed with ``ansible_net_``. The data collected by these modules is documented in the `Return Values` section of the module docs, in this case :ref:`eos_facts <eos_facts_module>` and :ref:`vyos_facts <vyos_facts_module>`. We can use the facts, such as ``ansible_net_version`` late on in the "Display some facts" task.
 
 To ensure we call the correct mode (``*_facts``) the task is conditionally run based on the group defined in the inventory file, for more information on the use of conditionals in Ansible Playbooks see :ref:`the_when_statement`.
 
@@ -240,7 +249,7 @@ Next, create a playbook file called ``facts-demo.yml`` containing the following:
              #jinja2: lstrip_blocks: True
              EOS device info:
                {% for host in groups['eos'] %}
-               Hostname: {{ hostvars[host].ansible_net_version }}
+               Hostname: {{ hostvars[host].ansible_net_hostname }}
                Version: {{ hostvars[host].ansible_net_version }}
                Model: {{ hostvars[host].ansible_net_model }}
                Serial: {{ hostvars[host].ansible_net_serialnum }}
@@ -248,7 +257,7 @@ Next, create a playbook file called ``facts-demo.yml`` containing the following:
 
              IOS device info:
                {% for host in groups['ios'] %}
-               Hostname: {{ hostvars[host].ansible_net_version }}
+               Hostname: {{ hostvars[host].ansible_net_hostname }}
                Version: {{ hostvars[host].ansible_net_version }}
                Model: {{ hostvars[host].ansible_net_model }}
                Serial: {{ hostvars[host].ansible_net_serialnum }}
@@ -256,7 +265,7 @@ Next, create a playbook file called ``facts-demo.yml`` containing the following:
 
              VyOS device info:
                {% for host in groups['vyos'] %}
-               Hostname: {{ hostvars[host].ansible_net_version }}
+               Hostname: {{ hostvars[host].ansible_net_hostname }}
                Version: {{ hostvars[host].ansible_net_version }}
                Model: {{ hostvars[host].ansible_net_model }}
                Serial: {{ hostvars[host].ansible_net_serialnum }}
@@ -348,7 +357,7 @@ For more information, see :ref:`magic_variables_and_hostvars`.
 Get running configuration
 -------------------------
 
-The :ref:`eos_config <eos_config>` and :ref:`vyos_config <vyos_config>` modules have a ``backup:`` option that when set will cause the module to create a full backup of the current ``running-config`` from the remote device before any changes are made. The backup file is written to the ``backup`` folder in the playbook root directory. If the directory does not exist, it is created.
+The :ref:`eos_config <eos_config_module>` and :ref:`vyos_config <vyos_config_module>` modules have a ``backup:`` option that when set will cause the module to create a full backup of the current ``running-config`` from the remote device before any changes are made. The backup file is written to the ``backup`` folder in the playbook root directory. If the directory does not exist, it is created.
 
 To demonstrate how we can move the backup file to a different location, we register the result and move the file to the path stored in ``backup_path``.
 

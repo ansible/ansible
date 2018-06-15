@@ -1,0 +1,6 @@
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - command: whoami
+      tags: foo

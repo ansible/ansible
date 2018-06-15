@@ -28,35 +28,25 @@ options:
     mac:
       description:
         - unique mac address that is used to attempt to identify the host.
-      required: false
-      default: None
     uuid:
       description:
         - globally unique identifier (UUID) to identify the host.
-      required: false
-      default: None
     name:
       description:
         - unique name identifier to identify the host in Ironic.
-      required: false
-      default: None
     ironic_url:
       description:
         - If noauth mode is utilized, this is required to be set to the endpoint URL for the Ironic API.
           Use with "auth" and "auth_type" settings set to None.
-      required: false
-      default: None
     timeout:
       description:
         - A timeout in seconds to tell the role to wait for the node to complete introspection if wait is set to True.
-      required: false
       default: 1200
     availability_zone:
       description:
         - Ignored. Present for backwards compatibility
-      required: false
 
-requirements: ["shade"]
+requirements: ["openstacksdk"]
 '''
 
 RETURN = '''
@@ -124,10 +114,8 @@ def main():
             endpoint=module.params['ironic_url']
         )
 
-    shade, cloud = openstack_cloud_from_module(
-        module, min_version='1.0.0')
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-
         if module.params['name'] or module.params['uuid']:
             server = cloud.get_machine(_choose_id_value(module))
         elif module.params['mac']:
@@ -148,7 +136,7 @@ def main():
         else:
             module.fail_json(msg="node not found.")
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

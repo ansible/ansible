@@ -28,28 +28,23 @@ options:
   password:
     description:
       - set the user's password.
-    required: false
-    default: null
   encrypted:
     description:
       - Indicate that the 'password' field is a `mysql_native_password` hash
-    required: false
-    choices: [ "yes", "no" ]
-    default: "no"
+    type: bool
+    default: 'no'
     version_added: "2.0"
   host:
     description:
       - the 'host' part of the MySQL username
-    required: false
     default: localhost
   host_all:
     description:
       - override the host option, making ansible apply changes to
         all hostnames for a given user.  This option cannot be used
         when creating users
-    required: false
-    choices: [ "yes", "no" ]
-    default: "no"
+    type: bool
+    default: 'no'
     version_added: "2.1"
   priv:
     description:
@@ -62,39 +57,32 @@ options:
         exactly as returned by a C(SHOW GRANT) statement. If not followed,
         the module will always report changes. It includes grouping columns
         by permission (C(SELECT(col1,col2)) instead of C(SELECT(col1),SELECT(col2))).
-    required: false
-    default: null
   append_privs:
     description:
       - Append the privileges defined by priv to the existing ones for this
         user instead of overwriting existing ones.
-    required: false
-    choices: [ "yes", "no" ]
-    default: "no"
+    type: bool
+    default: 'no'
     version_added: "1.4"
   sql_log_bin:
     description:
       - Whether binary logging should be enabled or disabled for the connection.
-    required: false
-    choices: ["yes", "no" ]
-    default: "yes"
+    type: bool
+    default: 'yes'
     version_added: "2.1"
   state:
     description:
       - Whether the user should exist.  When C(absent), removes
         the user.
-    required: false
     default: present
     choices: [ "present", "absent" ]
   check_implicit_admin:
     description:
       - Check if mysql allows login as root/nopassword before trying supplied credentials.
-    required: false
-    choices: [ "yes", "no" ]
-    default: "no"
+    type: bool
+    default: 'no'
     version_added: "1.3"
   update_password:
-    required: false
     default: always
     choices: ['always', 'on_create']
     version_added: "2.0"

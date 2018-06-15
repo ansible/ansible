@@ -1,3 +1,5 @@
+.. _community_development_process:
+
 The Ansible Development Process
 ===============================
 
@@ -8,7 +10,7 @@ This section discusses how the Ansible development and triage process works.
 Road Maps
 =========
 
-The Ansible Core team provides a road map for each upcoming release. These road maps can be found `here <http://docs.ansible.com/ansible/devel/roadmap/>`_.
+The Ansible Core team provides a road map for each upcoming release. These road maps can be found :ref:`here <roadmaps>`.
 
 .. Roadmaps are User-oriented.  We should also list the Roadmap Projects and the Blocker Bug
    Projects here
@@ -151,7 +153,7 @@ Workflow Labels
 -  **community_review**: Pull requests for modules that are currently awaiting review by their maintainers in the Ansible community.
 -  **core_review**: Pull requests for modules that are currently awaiting review by their maintainers on the Ansible Core team.
 -  **needs_info**: Waiting on info from the submitter.
--  **needs_rebase**: Waiting on the submitter to rebase. (Note: no longer used by the bot.)
+-  **needs_rebase**: Waiting on the submitter to rebase.
 -  **needs_revision**: Waiting on the submitter to make changes.
 -  **shipit**: Waiting for final review by the core team for potential merge.
 

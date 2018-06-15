@@ -42,17 +42,12 @@ options:
     addr:
         description:
             - IPv4 or IPv6 Address.
-        required: false
-        default: null
     mask:
         description:
             - Subnet mask for IPv4 or IPv6 Address in decimal format.
-        required: false
-        default: null
     version:
         description:
             - IP address version.
-        required: false
         default: v4
         choices: ['v4','v6']
     ipv4_type:
@@ -61,13 +56,11 @@ options:
               The value is an enumerated type.
               main, primary IP address.
               sub, secondary IP address.
-        required: false
         default: main
         choices: ['main','sub']
     state:
         description:
             - Specify desired state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''

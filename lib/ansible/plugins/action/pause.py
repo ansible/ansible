@@ -19,14 +19,16 @@ __metaclass__ = type
 
 import datetime
 import signal
+import sys
 import termios
 import time
 import tty
 
 from os import isatty
 from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import PY3
-from ansible.module_utils._text import to_text
 from ansible.plugins.action import ActionBase
 
 try:
@@ -35,6 +37,20 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+try:
+    import curses
+    curses.setupterm()
+    HAS_CURSES = True
+except (ImportError, curses.error):
+    HAS_CURSES = False
+
+if HAS_CURSES:
+    MOVE_TO_BOL = curses.tigetstr('cr')
+    CLEAR_TO_EOL = curses.tigetstr('el')
+else:
+    MOVE_TO_BOL = b'\r'
+    CLEAR_TO_EOL = b'\x1b[K'
+
 
 class AnsibleTimeoutExceeded(Exception):
     pass
@@ -42,6 +58,11 @@ class AnsibleTimeoutExceeded(Exception):
 
 def timeout_handler(signum, frame):
     raise AnsibleTimeoutExceeded
+
+
+def clear_line(stdout):
+    stdout.write(b'\x1b[%s' % MOVE_TO_BOL)
+    stdout.write(b'\x1b[%s' % CLEAR_TO_EOL)
 
 
 class ActionModule(ActionBase):
@@ -81,10 +102,11 @@ class ActionModule(ActionBase):
 
         # Should keystrokes be echoed to stdout?
         if 'echo' in self._task.args:
-            echo = self._task.args['echo']
-            if not type(echo) == bool:
+            try:
+                echo = boolean(self._task.args['echo'])
+            except TypeError as e:
                 result['failed'] = True
-                result['msg'] = "'%s' is not a valid setting for 'echo'." % self._task.args['echo']
+                result['msg'] = to_native(e)
                 return result
 
             # Add a note saying the output is hidden if echo is disabled
@@ -96,7 +118,7 @@ class ActionModule(ActionBase):
             prompt = "[%s]\n%s%s:" % (self._task.get_name().strip(), self._task.args['prompt'], echo_prompt)
         else:
             # If no custom prompt is specified, set a default prompt
-            prompt = "[%s]\n%s%s:" % (self._task.get_name().strip(), 'Press enter to continue', echo_prompt)
+            prompt = "[%s]\n%s%s:" % (self._task.get_name().strip(), 'Press enter to continue, Ctrl+C to interrupt', echo_prompt)
 
         # Are 'minutes' or 'seconds' keys that exist in 'args'?
         if 'minutes' in self._task.args or 'seconds' in self._task.args:
@@ -149,65 +171,83 @@ class ActionModule(ActionBase):
             try:
                 if PY3:
                     stdin = self._connection._new_stdin.buffer
+                    stdout = sys.stdout.buffer
                 else:
                     stdin = self._connection._new_stdin
+                    stdout = sys.stdout
                 fd = stdin.fileno()
             except (ValueError, AttributeError):
                 # ValueError: someone is using a closed file descriptor as stdin
                 # AttributeError: someone is using a null file descriptor as stdin on windoez
                 stdin = None
+
             if fd is not None:
                 if isatty(fd):
+
+                    # grab actual Ctrl+C sequence
+                    try:
+                        intr = termios.tcgetattr(fd)[6][termios.VINTR]
+                    except Exception:
+                        # unsupported/not present, use default
+                        intr = b'\x03'  # value for Ctrl+C
+
+                    # get backspace sequences
+                    try:
+                        backspace = termios.tcgetattr(fd)[6][termios.VERASE]
+                    except Exception:
+                        backspace = [b'\x7f', b'\x08']
+
                     old_settings = termios.tcgetattr(fd)
                     tty.setraw(fd)
+                    tty.setraw(stdout.fileno())
 
-                    # Enable a few things turned off by tty.setraw()
-                    # ICANON -> Allows characters to be deleted and hides things like ^M.
-                    # ICRNL -> Makes the return key work when ICANON is enabled, otherwise
-                    #          you get stuck at the prompt with no way to get out of it.
-                    # See man termios for details on these flags
-                    if not seconds:
+                    # Only echo input if no timeout is specified
+                    if not seconds and echo:
                         new_settings = termios.tcgetattr(fd)
-                        new_settings[0] = new_settings[0] | termios.ICRNL
-                        new_settings[3] = new_settings[3] | termios.ICANON
+                        new_settings[3] = new_settings[3] | termios.ECHO
                         termios.tcsetattr(fd, termios.TCSANOW, new_settings)
-
-                        if echo:
-                            # Enable ECHO since tty.setraw() disables it
-                            new_settings = termios.tcgetattr(fd)
-                            new_settings[3] = new_settings[3] | termios.ECHO
-                            termios.tcsetattr(fd, termios.TCSANOW, new_settings)
 
                     # flush the buffer to make sure no previous key presses
                     # are read in below
                     termios.tcflush(stdin, termios.TCIFLUSH)
+
             while True:
                 try:
                     if fd is not None:
                         key_pressed = stdin.read(1)
-
-                        if seconds:
-                            if key_pressed == b'\x03':
-                                raise KeyboardInterrupt
+                        if key_pressed == intr:  # value for Ctrl+C
+                            clear_line(stdout)
+                            raise KeyboardInterrupt
 
                     if not seconds:
                         if fd is None or not isatty(fd):
-                            display.warning("Not waiting from prompt as stdin is not interactive")
+                            display.warning("Not waiting for response to prompt as stdin is not interactive")
                             break
+
                         # read key presses and act accordingly
                         if key_pressed in (b'\r', b'\n'):
+                            clear_line(stdout)
                             break
+                        elif key_pressed in backspace:
+                            # delete a character if backspace is pressed
+                            result['user_input'] = result['user_input'][:-1]
+                            clear_line(stdout)
+                            if echo:
+                                stdout.write(result['user_input'])
+                            stdout.flush()
                         else:
                             result['user_input'] += key_pressed
 
                 except KeyboardInterrupt:
-                    if seconds is not None:
-                        signal.alarm(0)
+                    signal.alarm(0)
                     display.display("Press 'C' to continue the play or 'A' to abort \r"),
                     if self._c_or_a(stdin):
+                        clear_line(stdout)
                         break
-                    else:
-                        raise AnsibleError('user requested abort!')
+
+                    clear_line(stdout)
+
+                    raise AnsibleError('user requested abort!')
 
         except AnsibleTimeoutExceeded:
             # this is the exception we expect when the alarm signal

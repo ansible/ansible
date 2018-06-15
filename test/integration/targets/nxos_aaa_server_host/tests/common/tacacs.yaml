@@ -7,14 +7,12 @@
   nxos_feature:
     feature: tacacs+
     state: enabled
-    provider: "{{ connection }}"
 
 - name: "Setup"
   nxos_aaa_server_host: &remove
     server_type: tacacs
     address: 8.8.8.8
     state: absent
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - block:
@@ -24,7 +22,6 @@
       server_type: tacacs
       address: 8.8.8.8
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -58,9 +55,8 @@
       host_timeout: 25
       tacacs_port: 89
       state: present
-      provider: "{{ connection }}"
     register: result
-  
+ 
   - assert: *true
 
   - name: "Check Idempotence"
@@ -69,22 +65,32 @@
 
   - assert: *false
 
-  - name: "Remove tacacs server configuration"
-    nxos_aaa_server_host: *remove
+  - name: "Configure some defaults on tacacs server"
+    nxos_aaa_server_host: &configure_some_tacacs_default
+      server_type: tacacs
+      address: 8.8.8.8
+      host_timeout: default
+      tacacs_port: 100
+      state: present
     register: result
 
   - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_aaa_server_host: *configure_some_tacacs_default
+    register: result
+
+  - assert: *false
 
   - name: "Configure tacacs server with clear text pwd"
     nxos_aaa_server_host: &configure_tacacs_clear_text
       server_type: tacacs
       address: 8.8.8.8
       host_timeout: 25
-      tacacs_port: 89
+      tacacs_port: default
       encrypt_type: 0
       key: hello
       state: present
-      provider: "{{ connection }}"
     register: result
    
   - assert: *true
@@ -110,7 +116,6 @@
       encrypt_type: 7
       key: hello
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -119,7 +124,44 @@
     nxos_aaa_server_host: *configure_tacacs_type7
     register: result
 
+  - assert: *false
+
+  - name: "Configure tacacs server with default key"
+    nxos_aaa_server_host: &configure_tacacs_defkey
+      server_type: tacacs
+      address: 8.8.8.8
+      host_timeout: default
+      tacacs_port: 89
+      encrypt_type: 7
+      key: default
+      state: present
+    register: result
+
   - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_aaa_server_host: *configure_tacacs_defkey
+    register: result
+
+  - assert: *false
+
+  - name: "Configure tacacs server with all def"
+    nxos_aaa_server_host: &configure_tacacs_alldef
+      server_type: tacacs
+      address: 8.8.8.8
+      host_timeout: default
+      tacacs_port: default
+      key: default
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_aaa_server_host: *configure_tacacs_alldef
+    register: result
+
+  - assert: *false
 
   rescue:
 
@@ -131,10 +173,9 @@
     nxos_aaa_server_host: *remove
     register: result
 
-  - name: "Enable feature tacacs+"
+  - name: "Disable feature tacacs+"
     nxos_feature:
       feature: tacacs+
       state: disabled
-      provider: "{{ connection }}"
 
   - debug: msg="END connection={{ ansible_connection }} nxos_aaa_server_host tacacs.yaml sanity test"  

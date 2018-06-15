@@ -1,3 +1,5 @@
+.. _testing_running_locally:
+
 ***************
 Testing Ansible
 ***************

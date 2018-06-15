@@ -1,3 +1,5 @@
+.. _playbooks_tests:
+
 Tests
 -----
 
@@ -72,7 +74,7 @@ The ``version`` test can also be used to evaluate the ``ansible_distribution_ver
 
     {{ ansible_distribution_version is version('12.04', '>=') }}
 
-If ``ansible_distribution_version`` is greater than or equal to 12, this test returns True, otherwise False.
+If ``ansible_distribution_version`` is greater than or equal to 12.04, this test returns True, otherwise False.
 
 The ``version`` test accepts the following operators::
 

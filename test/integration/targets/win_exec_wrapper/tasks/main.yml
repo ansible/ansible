@@ -32,7 +32,7 @@
     - '"This module cannot run as it requires a minimum PowerShell version of 20.0.0.0, actual was " in invalid_ps_version.msg'
 
 - name: test out environment block for task
-  win_shell: set | more
+  win_shell: set
   args:
     executable: cmd.exe
   environment:

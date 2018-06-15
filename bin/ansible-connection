@@ -20,6 +20,8 @@ import traceback
 import errno
 import json
 
+from contextlib import contextmanager
+
 from ansible import constants as C
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import PY3
@@ -31,6 +33,21 @@ from ansible.plugins.loader import connection_loader
 from ansible.utils.path import unfrackpath, makedirs_safe
 from ansible.utils.display import Display
 from ansible.utils.jsonrpc import JsonRpcServer
+
+
+@contextmanager
+def file_lock(lock_path):
+    """
+    Uses contextmanager to create and release a file lock based on the
+    given path. This allows us to create locks using `with file_lock()`
+    to prevent deadlocks related to failure to unlock properly.
+    """
+
+    lock_fd = os.open(lock_path, os.O_RDWR | os.O_CREAT, 0o600)
+    fcntl.lockf(lock_fd, fcntl.LOCK_EX)
+    yield
+    fcntl.lockf(lock_fd, fcntl.LOCK_UN)
+    os.close(lock_fd)
 
 
 class ConnectionProcess(object):
@@ -52,7 +69,7 @@ class ConnectionProcess(object):
         self.connection = None
         self._ansible_playbook_pid = ansible_playbook_pid
 
-    def start(self):
+    def start(self, variables):
         try:
             messages = list()
             result = {}
@@ -66,7 +83,7 @@ class ConnectionProcess(object):
                 self.play_context.private_key_file = os.path.join(self.original_path, self.play_context.private_key_file)
             self.connection = connection_loader.get(self.play_context.connection, self.play_context, '/dev/null',
                                                     ansible_playbook_pid=self._ansible_playbook_pid)
-            self.connection.set_options()
+            self.connection.set_options(var_options=variables)
             self.connection._connect()
             self.connection._socket_path = self.socket_path
             self.srv.register(self.connection)
@@ -90,7 +107,7 @@ class ConnectionProcess(object):
             while self.connection.connected:
                 signal.signal(signal.SIGALRM, self.connect_timeout)
                 signal.signal(signal.SIGTERM, self.handler)
-                signal.alarm(C.PERSISTENT_CONNECT_TIMEOUT)
+                signal.alarm(self.connection.get_option('persistent_connect_timeout'))
 
                 self.exception = None
                 (s, addr) = self.sock.accept()
@@ -124,7 +141,8 @@ class ConnectionProcess(object):
             self.shutdown()
 
     def connect_timeout(self, signum, frame):
-        display.display('persistent connection idle timeout triggered, timeout value is %s secs' % C.PERSISTENT_CONNECT_TIMEOUT, log_only=True)
+        display.display('persistent connection idle timeout triggered, timeout value is %s secs'
+                        % self.connection.get_option('persistent_connect_timeout'), log_only=True)
         self.shutdown()
 
     def command_timeout(self, signum, frame):
@@ -183,10 +201,21 @@ def main():
             init_data += cur_line
             cur_line = stdin.readline()
 
+        cur_line = stdin.readline()
+        vars_data = b''
+
+        while cur_line.strip() != b'#END_VARS#':
+            if cur_line == b'':
+                raise Exception("EOF found before vars data was complete")
+            vars_data += cur_line
+            cur_line = stdin.readline()
+
         if PY3:
             pc_data = cPickle.loads(init_data, encoding='bytes')
+            variables = cPickle.loads(vars_data, encoding='bytes')
         else:
             pc_data = cPickle.loads(init_data)
+            variables = cPickle.loads(vars_data)
 
         play_context = PlayContext()
         play_context.deserialize(pc_data)
@@ -209,60 +238,54 @@ def main():
         tmp_path = unfrackpath(C.PERSISTENT_CONTROL_PATH_DIR)
         makedirs_safe(tmp_path)
 
-        lock_path = unfrackpath("%s/.ansible_pc_lock" % tmp_path)
+        lock_path = unfrackpath("%s/.ansible_pc_lock_%s" % (tmp_path, play_context.remote_addr))
         socket_path = unfrackpath(cp % dict(directory=tmp_path))
 
-        # if the socket file doesn't exist, spin up the daemon process
-        lock_fd = os.open(lock_path, os.O_RDWR | os.O_CREAT, 0o600)
-        fcntl.lockf(lock_fd, fcntl.LOCK_EX)
+        with file_lock(lock_path):
+            if not os.path.exists(socket_path):
+                messages.append('local domain socket does not exist, starting it')
+                original_path = os.getcwd()
+                r, w = os.pipe()
+                pid = fork_process()
 
-        if not os.path.exists(socket_path):
-            messages.append('local domain socket does not exist, starting it')
-            original_path = os.getcwd()
-            r, w = os.pipe()
-            pid = fork_process()
+                if pid == 0:
+                    try:
+                        os.close(r)
+                        wfd = os.fdopen(w, 'w')
+                        process = ConnectionProcess(wfd, play_context, socket_path, original_path, ansible_playbook_pid)
+                        process.start(variables)
+                    except Exception:
+                        messages.append(traceback.format_exc())
+                        rc = 1
 
-            if pid == 0:
-                try:
-                    os.close(r)
-                    wfd = os.fdopen(w, 'w')
-                    process = ConnectionProcess(wfd, play_context, socket_path, original_path, ansible_playbook_pid)
-                    process.start()
-                except Exception:
-                    messages.append(traceback.format_exc())
-                    rc = 1
+                    if rc == 0:
+                        process.run()
 
-                fcntl.lockf(lock_fd, fcntl.LOCK_UN)
-                os.close(lock_fd)
+                    sys.exit(rc)
 
-                if rc == 0:
-                    process.run()
-
-                sys.exit(rc)
+                else:
+                    os.close(w)
+                    rfd = os.fdopen(r, 'r')
+                    data = json.loads(rfd.read())
+                    messages.extend(data.pop('messages'))
+                    result.update(data)
 
             else:
-                os.close(w)
-                rfd = os.fdopen(r, 'r')
-                data = json.loads(rfd.read())
-                messages.extend(data.pop('messages'))
-                result.update(data)
-
-        else:
-            messages.append('found existing local domain socket, using it!')
-            conn = Connection(socket_path)
-            pc_data = to_text(init_data)
-            try:
-                messages.extend(conn.update_play_context(pc_data))
-            except Exception as exc:
-                # Only network_cli has update_play context, so missing this is
-                # not fatal e.g. netconf
-                if isinstance(exc, ConnectionError) and getattr(exc, 'code', None) == -32601:
-                    pass
-                else:
-                    result.update({
-                        'error': to_text(exc),
-                        'exception': traceback.format_exc()
-                    })
+                messages.append('found existing local domain socket, using it!')
+                conn = Connection(socket_path)
+                pc_data = to_text(init_data)
+                try:
+                    messages.extend(conn.update_play_context(pc_data))
+                except Exception as exc:
+                    # Only network_cli has update_play context, so missing this is
+                    # not fatal e.g. netconf
+                    if isinstance(exc, ConnectionError) and getattr(exc, 'code', None) == -32601:
+                        pass
+                    else:
+                        result.update({
+                            'error': to_text(exc),
+                            'exception': traceback.format_exc()
+                        })
 
     messages.append(sys.stdout.getvalue())
     result.update({

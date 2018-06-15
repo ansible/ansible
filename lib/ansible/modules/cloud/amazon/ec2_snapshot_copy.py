@@ -28,29 +28,27 @@ options:
   description:
     description:
       - An optional human-readable string describing purpose of the new Snapshot.
-    required: false
-    default: null
   encrypted:
     description:
       - Whether or not the destination Snapshot should be encrypted.
-    required: false
-    default: False
+    type: bool
+    default: 'no'
   kms_key_id:
     description:
       - KMS key id used to encrypt snapshot. If not specified, defaults to EBS Customer Master Key (CMK) for that account.
-    required: false
-    default: null
   wait:
     description:
       - Wait for the copied Snapshot to be in 'Available' state before returning.
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
+  wait_timeout:
+    version_added: "2.6"
+    description:
+      - How long before wait gives up, in seconds.
+    default: 600
   tags:
     description:
       - A hash/dictionary of tags to add to the new Snapshot; '{"key":"value"}' and '{"key":"value","key":"value"}'
-    required: false
-    default: null
 author: "Deepak Kothandan <deepak.kdy@gmail.com>"
 extends_documentation_fragment:
     - aws
@@ -72,6 +70,7 @@ EXAMPLES = '''
     region: eu-west-1
     source_snapshot_id: snap-xxxxxxx
     wait: yes
+    wait_timeout: 1200   # Default timeout is 600
   register: snapshot_id
 
 # Tagged Snapshot copy
@@ -142,7 +141,14 @@ def copy_snapshot(module, ec2):
     try:
         snapshot_id = ec2.copy_snapshot(**params)['SnapshotId']
         if module.params.get('wait'):
-            ec2.get_waiter('snapshot_completed').wait(SnapshotIds=[snapshot_id])
+            delay = 15
+            # Add one to max_attempts as wait() increment
+            # its counter before assessing it for time.sleep()
+            max_attempts = (module.params.get('wait_timeout') // delay) + 1
+            ec2.get_waiter('snapshot_completed').wait(
+                SnapshotIds=[snapshot_id],
+                WaiterConfig=dict(Delay=delay, MaxAttempts=max_attempts)
+            )
         if module.params.get('tags'):
             ec2.create_tags(
                 Resources=[snapshot_id],
@@ -150,9 +156,9 @@ def copy_snapshot(module, ec2):
             )
 
     except WaiterError as we:
-        module.fail_json(msg='An error occurred (%s) waiting for the snapshot to become available. (%s)' % (we.message, we.reason))
+        module.fail_json(msg='An error occurred waiting for the snapshot to become available. (%s)' % str(we), exception=traceback.format_exc())
     except ClientError as ce:
-        module.fail_json(msg=ce.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(ce.response))
+        module.fail_json(msg=str(ce), exception=traceback.format_exc(), **camel_dict_to_snake_dict(ce.response))
 
     module.exit_json(changed=True, snapshot_id=snapshot_id)
 
@@ -166,6 +172,7 @@ def main():
         encrypted=dict(type='bool', default=False, required=False),
         kms_key_id=dict(type='str', required=False),
         wait=dict(type='bool', default=False),
+        wait_timeout=dict(type='int', default=600),
         tags=dict(type='dict')))
 
     module = AnsibleModule(argument_spec=argument_spec)

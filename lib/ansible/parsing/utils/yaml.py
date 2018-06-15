@@ -13,10 +13,10 @@ from yaml import YAMLError
 
 from ansible.errors import AnsibleParserError
 from ansible.errors.yaml_strings import YAML_SYNTAX_ERROR
-from ansible.module_utils.six import text_type
 from ansible.module_utils._text import to_native
 from ansible.parsing.yaml.loader import AnsibleLoader
-from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleUnicode
+from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
+from ansible.parsing.ajson import AnsibleJSONDecoder
 
 
 __all__ = ('from_yaml',)
@@ -61,31 +61,18 @@ def from_yaml(data, file_name='<string>', show_content=True, vault_secrets=None)
     '''
     new_data = None
 
-    if isinstance(data, AnsibleUnicode):
-        # The PyYAML's libyaml bindings use PyUnicode_CheckExact so
-        # they are unable to cope with our subclass.
-        # Unwrap and re-wrap the unicode so we can keep track of line
-        # numbers
-        # Note: Cannot use to_text() because AnsibleUnicode is a subclass of the text_type.
-        # Should not have to worry about tracebacks because python's text constructors (unicode() on
-        # python2 and str() on python3) can handle a subtype of themselves.
-        in_data = text_type(data)
-    else:
-        in_data = data
-
     try:
-        # we first try to load this data as JSON.  Fixes issues with extra vars json strings not
-        # being parsed correctly by the yaml parser
-        new_data = json.loads(in_data)
+        # in case we have to deal with vaults
+        AnsibleJSONDecoder.set_secrets(vault_secrets)
+
+        # we first try to load this data as JSON.
+        # Fixes issues with extra vars json strings not being parsed correctly by the yaml parser
+        new_data = json.loads(data, cls=AnsibleJSONDecoder)
     except Exception:
         # must not be JSON, let the rest try
         try:
-            new_data = _safe_load(in_data, file_name=file_name, vault_secrets=vault_secrets)
+            new_data = _safe_load(data, file_name=file_name, vault_secrets=vault_secrets)
         except YAMLError as yaml_exc:
             _handle_error(yaml_exc, file_name, show_content)
-
-        if isinstance(data, AnsibleUnicode):
-            new_data = AnsibleUnicode(new_data)
-            new_data.ansible_pos = data.ansible_pos
 
     return new_data

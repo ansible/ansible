@@ -45,12 +45,9 @@ options:
     description:
       - The name of the target VLAN.
       - Required if C(state) is C(present).
-    required: false
   description:
     description:
       - A description of the VLAN.
-    required: false
-    default: null
   network_domain:
     description:
       - The Id or name of the target network domain.
@@ -58,12 +55,10 @@ options:
   private_ipv4_base_address:
     description:
         - The base address for the VLAN's IPv4 network (e.g. 192.168.1.0).
-    required: false
   private_ipv4_prefix_size:
     description:
         - The size of the IPv4 address space, e.g 24.
         - Required, if C(private_ipv4_base_address) is specified.
-    required: false
   state:
     description:
       - The desired state for the target VLAN.
@@ -75,8 +70,8 @@ options:
       - Permit expansion of the target VLAN's network if the module parameters specify a larger network than the VLAN currently posesses?
       - If C(False), the module will fail under these conditions.
       - This is intended to prevent accidental expansion of a VLAN's network (since this operation is not reversible).
-    required: false
-    default: False
+    type: bool
+    default: 'no'
 '''
 
 EXAMPLES = '''

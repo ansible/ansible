@@ -42,13 +42,10 @@ options:
   description:
     description:
       - The description of the load balancer rule.
-    required: false
-    default: null
   algorithm:
     description:
       - Load balancer algorithm
       - Required when using C(state=present).
-    required: false
     choices: [ 'source', 'roundrobin', 'leastconn' ]
     default: 'source'
   private_port:
@@ -56,15 +53,12 @@ options:
       - The private port of the private ip address/virtual machine where the network traffic will be load balanced to.
       - Required when using C(state=present).
       - Can not be changed once the rule exists due API limitation.
-    required: false
-    default: null
   public_port:
     description:
       - The public port from where the network traffic will be load balanced from.
       - Required when using C(state=present).
       - Can not be changed once the rule exists due API limitation.
     required: true
-    default: null
   ip_address:
     description:
       - Public IP address from where the network traffic will be load balanced from.
@@ -74,45 +68,32 @@ options:
     description:
       - Whether the firewall rule for public port should be created, while creating the new rule.
       - Use M(cs_firewall) for managing firewall rules.
-    required: false
-    default: false
+    type: bool
+    default: 'no'
   cidr:
     description:
       - CIDR (full notation) to be used for firewall rule if required.
-    required: false
-    default: null
   protocol:
     description:
       - The protocol to be used on the load balancer
-    required: false
-    default: null
   project:
     description:
       - Name of the project the load balancer IP address is related to.
-    required: false
-    default: null
   state:
     description:
       - State of the rule.
-    required: true
     default: 'present'
     choices: [ 'present', 'absent' ]
   domain:
     description:
       - Domain the rule is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the rule is related to.
-    required: false
-    default: null
   zone:
     description:
       - Name of the zone in which the rule should be created.
       - If not set, default zone is used.
-    required: false
-    default: null
 extends_documentation_fragment: cloudstack
 '''
 

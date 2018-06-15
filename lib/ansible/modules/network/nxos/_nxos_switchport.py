@@ -47,45 +47,32 @@ options:
   interface:
     description:
       - Full name of the interface, i.e. Ethernet1/1.
-    required: true
-    default: null
   mode:
     description:
       - Mode for the Layer 2 port.
-    required: false
-    default: null
     choices: ['access','trunk']
   access_vlan:
     description:
       - If C(mode=access), used as the access VLAN ID.
-    required: false
-    default: null
   native_vlan:
     description:
       - If C(mode=trunk), used as the trunk native VLAN ID.
-    required: false
-    default: null
   trunk_vlans:
     description:
       - If C(mode=trunk), used as the VLAN range to ADD or REMOVE
         from the trunk.
     aliases:
       - trunk_add_vlans
-    required: false
-    default: null
   state:
     description:
       - Manage the state of the resource.
-    required: false
     default:  present
     choices: ['present','absent', 'unconfigured']
   trunk_allowed_vlans:
     description:
       - if C(mode=trunk), these are the only VLANs that will be
         configured on the trunk, i.e. "2-10,15".
-    required: false
     version_added: 2.2
-    default: null
 '''
 
 EXAMPLES = '''
@@ -132,32 +119,8 @@ commands:
 
 from ansible.module_utils.network.nxos.nxos import load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
+from ansible.module_utils.network.nxos.nxos import get_interface_type
 from ansible.module_utils.basic import AnsibleModule
-
-
-def get_interface_type(interface):
-    """Gets the type of interface
-    Args:
-        interface (str): full name of interface, i.e. Ethernet1/1, loopback10,
-            port-channel20, vlan20
-    Returns:
-        type of interface: ethernet, svi, loopback, management, portchannel,
-         or unknown
-    """
-    if interface.upper().startswith('ET'):
-        return 'ethernet'
-    elif interface.upper().startswith('VL'):
-        return 'svi'
-    elif interface.upper().startswith('LO'):
-        return 'loopback'
-    elif interface.upper().startswith('MG'):
-        return 'management'
-    elif interface.upper().startswith('MA'):
-        return 'management'
-    elif interface.upper().startswith('PO'):
-        return 'portchannel'
-    else:
-        return 'unknown'
 
 
 def get_interface_mode(interface, module):
@@ -269,18 +232,23 @@ def remove_switchport_config_commands(interface, existing, proposed, module):
             commands.append(command)
 
     elif mode == 'trunk':
-        tv_check = existing.get('trunk_vlans_list') == proposed.get('trunk_vlans_list')
 
-        if tv_check:
-            existing_vlans = existing.get('trunk_vlans_list')
-            proposed_vlans = proposed.get('trunk_vlans_list')
-            vlans_to_remove = set(proposed_vlans).intersection(existing_vlans)
+        # Supported Remove Scenarios for trunk_vlans_list
+        # 1) Existing: 1,2,3 Proposed: 1,2,3 - Remove all
+        # 2) Existing: 1,2,3 Proposed: 1,2   - Remove 1,2 Leave 3
+        # 3) Existing: 1,2,3 Proposed: 2,3   - Remove 2,3 Leave 1
+        # 4) Existing: 1,2,3 Proposed: 4,5,6 - None removed.
+        # 5) Existing: None  Proposed: 1,2,3 - None removed.
 
-            if vlans_to_remove:
-                proposed_allowed_vlans = proposed.get('trunk_allowed_vlans')
-                remove_trunk_allowed_vlans = proposed.get('trunk_vlans', proposed_allowed_vlans)
-                command = 'switchport trunk allowed vlan remove {0}'.format(remove_trunk_allowed_vlans)
-                commands.append(command)
+        existing_vlans = existing.get('trunk_vlans_list')
+        proposed_vlans = proposed.get('trunk_vlans_list')
+        vlans_to_remove = set(proposed_vlans).intersection(existing_vlans)
+
+        if vlans_to_remove:
+            proposed_allowed_vlans = proposed.get('trunk_allowed_vlans')
+            remove_trunk_allowed_vlans = proposed.get('trunk_vlans', proposed_allowed_vlans)
+            command = 'switchport trunk allowed vlan remove {0}'.format(remove_trunk_allowed_vlans)
+            commands.append(command)
 
         native_check = existing.get('native_vlan') == proposed.get('native_vlan')
         if native_check and proposed.get('native_vlan'):

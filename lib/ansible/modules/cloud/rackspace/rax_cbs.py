@@ -22,21 +22,17 @@ options:
   description:
     description:
       - Description to give the volume being created
-    default: null
   image:
     description:
       - image to use for bootable volumes. Can be an C(id), C(human_id) or
         C(name). This option requires C(pyrax>=1.9.3)
-    default: null
     version_added: 1.9
   meta:
     description:
       - A hash of metadata to associate with the volume
-    default: null
   name:
     description:
       - Name to give the volume being created
-    default: null
     required: true
   size:
     description:
@@ -46,7 +42,6 @@ options:
   snapshot_id:
     description:
       - The id of the snapshot to create the volume from
-    default: null
   state:
     description:
       - Indicate desired state of the resource
@@ -66,10 +61,8 @@ options:
   wait:
     description:
       - wait for the volume to be in state 'available' before returning
-    default: "no"
-    choices:
-      - "yes"
-      - "no"
+    type: bool
+    default: 'no'
   wait_timeout:
     description:
       - how long before wait gives up, in seconds

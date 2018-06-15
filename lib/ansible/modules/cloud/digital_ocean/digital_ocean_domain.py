@@ -137,7 +137,8 @@ class DoManager(DigitalOceanHelper, object):
     def edit_domain_record(self):
         params = {'name': self.domain_name}
         resp = self.put('domains/%s/records/%s' % (self.domain_name, self.domain_id), data=params)
-        return resp['domain_record']
+        status, json = self.jsonify(resp)
+        return json['domain_record']
 
 
 def core(module):
@@ -167,7 +168,7 @@ def core(module):
 
     elif state == 'absent':
         if not domain:
-            module.fail_json(changed=False, msg="Domain not found")
+            module.exit_json(changed=False, msg="Domain not found")
         else:
             delete_event = do_manager.destroy_domain()
             if not delete_event:

@@ -50,7 +50,7 @@ options:
         choices:
             - public
             - none
-        default: None
+        default: 'none'
     ports:
         description:
             - List of ports exposed within the container group.
@@ -93,7 +93,7 @@ options:
         description:
             - Force update of existing container instance. Any update will result in deletion and recreation of existing containers.
         type: bool
-        default: False
+        default: 'no'
 
 extends_documentation_fragment:
     - azure
@@ -145,6 +145,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
+    from msrestazure.azure_operation import AzureOperationPoller
     from azure.mgmt.containerinstance import ContainerInstanceManagementClient
 except ImportError:
     # This is handled in azure_rm_common
@@ -382,6 +383,9 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         response = self.client.container_groups.create_or_update(resource_group_name=self.resource_group,
                                                                  container_group_name=self.name,
                                                                  container_group=parameters)
+
+        if isinstance(response, AzureOperationPoller):
+            response = self.get_poller_result(response)
 
         return response.as_dict()
 

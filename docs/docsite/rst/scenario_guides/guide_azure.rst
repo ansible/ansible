@@ -84,7 +84,16 @@ To pass Active Directory username/password via the environment, define the follo
 
 * AZURE_AD_USER
 * AZURE_PASSWORD
-* AZURE_SUBSCRIPTION_ID
+
+To pass Active Directory username/password in ADFS via the environment, define the following variables:
+
+* AZURE_AD_USER
+* AZURE_PASSWORD
+* AZURE_CLIENT_ID
+* AZURE_TENANT
+* AZURE_ADFS_AUTHORITY_URL
+
+"AZURE_ADFS_AUTHORITY_URL" is optional. It's necessary only when you have own ADFS authority like https://xxx.com/adfs.
 
 Storing in a File
 `````````````````
@@ -118,7 +127,16 @@ Or, pass the following parameters for Active Directory username/password:
 
 * ad_user
 * password
-* subscription_id
+
+Or, pass the following parameters for ADFS username/pasword:
+
+* ad_user
+* password
+* client_id
+* tenant
+* adfs_authority_url
+
+"adfs_authority_url" is optional. It's necessary only when you have own ADFS authority like https://xxx.com/adfs.
 
 
 Other Cloud Environments
@@ -238,7 +256,7 @@ virtual network already with an existing subnet, you can run the following to cr
 Dynamic Inventory Script
 ------------------------
 
-If you are not familiar with Ansible's dynamic inventory scripts, check out `Intro to Dynamic Inventory <http://docs.ansible.com/ansible/intro_dynamic_inventory.html>`_.
+If you are not familiar with Ansible's dynamic inventory scripts, check out :ref:`Intro to Dynamic Inventory <intro_dynamic_inventory>`.
 
 The Azure Resource Manager inventory script is called azure_rm.py. It authenticates with the Azure API exactly the same as the
 Azure modules, which means you will either define the same environment variables described above in `Using Environment Variables`_,

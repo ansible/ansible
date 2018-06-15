@@ -181,7 +181,7 @@ class CloudFrontInvalidationServiceManager(object):
         # find all invalidations for the distribution
         try:
             paginator = self.client.get_paginator('list_invalidations')
-            invalidations = paginator.paginate(DistributionId=distribution_id).build_full_result()['InvalidationList'].get('Items', [])
+            invalidations = paginator.paginate(DistributionId=distribution_id).build_full_result().get('InvalidationList', {}).get('Items', [])
             invalidation_ids = [inv['Id'] for inv in invalidations]
         except (BotoCoreError, ClientError) as e:
             self.module.fail_json_aws(e, msg="Error listing CloudFront invalidations.")

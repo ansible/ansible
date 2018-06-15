@@ -41,7 +41,6 @@ options:
       - Configures the device platform network operating system.  This value is
         used to load the correct terminal and cliconf plugins to communicate
         with the remote device
-    default: null
     vars:
       - name: ansible_network_os
   remote_user:
@@ -62,7 +61,8 @@ options:
       - Configures the user password used to authenticate to the remote device
         when first establishing the SSH connection.
     vars:
-      - name: ansible_pass
+      - name: ansible_password
+      - name: ansible_ssh_pass
   private_key_file:
     description:
       - The private SSH key or certificate file used to to authenticate to the
@@ -138,8 +138,8 @@ options:
         will fail
     default: 30
     ini:
-      section: persistent_connection
-      key: persistent_connect_timeout
+      - section: persistent_connection
+        key: connect_timeout
     env:
       - name: ANSIBLE_PERSISTENT_CONNECT_TIMEOUT
   persistent_command_timeout:
@@ -151,12 +151,13 @@ options:
         close
     default: 10
     ini:
-      section: persistent_connection
-      key: persistent_command_timeout
+      - section: persistent_connection
+        key: command_timeout
     env:
       - name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT
 """
 
+import getpass
 import json
 import logging
 import re
@@ -187,6 +188,8 @@ class Connection(ConnectionBase):
     transport = 'network_cli'
     has_pipelining = True
     force_persistence = True
+    # Do not use _remote_is_local in other connections
+    _remote_is_local = True
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
@@ -220,6 +223,11 @@ class Connection(ConnectionBase):
             if name.startswith('_'):
                 raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
             return getattr(self._cliconf, name)
+
+    def _get_log_channel(self):
+        name = "p=%s u=%s | " % (os.getpid(), getpass.getuser())
+        name += "paramiko [%s]" % self._play_context.remote_addr
+        return name
 
     def get_prompt(self):
         """Returns the current prompt from the device"""
@@ -274,6 +282,10 @@ class Connection(ConnectionBase):
             messages.append('deauthorizing connection')
 
         self._play_context = play_context
+
+        self.reset_history()
+        self.disable_response_logging()
+
         return messages
 
     def _connect(self):
@@ -284,6 +296,7 @@ class Connection(ConnectionBase):
             return
 
         self.paramiko_conn = connection_loader.get('paramiko', self._play_context, '/dev/null')
+        self.paramiko_conn._set_log_channel(self._get_log_channel())
         self.paramiko_conn.set_options(direct={'look_for_keys': not bool(self._play_context.password and not self._play_context.private_key_file)})
         self.paramiko_conn.force_persistence = self.force_persistence
         ssh = self.paramiko_conn._connect()
@@ -291,7 +304,7 @@ class Connection(ConnectionBase):
         display.vvvv('ssh connection done, setting terminal', host=self._play_context.remote_addr)
 
         self._ssh_shell = ssh.ssh.invoke_shell()
-        self._ssh_shell.settimeout(self._play_context.timeout)
+        self._ssh_shell.settimeout(self.get_option('persistent_command_timeout'))
 
         network_os = self._play_context.network_os
         if not network_os:
@@ -312,7 +325,8 @@ class Connection(ConnectionBase):
         else:
             display.vvvv('unable to load cliconf for network_os %s' % network_os)
 
-        self.receive()
+        self.receive(prompts=self._terminal.terminal_initial_prompt, answer=self._terminal.terminal_initial_answer,
+                     newline=self._terminal.terminal_inital_prompt_newline)
 
         display.vvvv('firing event: on_open_shell()', host=self._play_context.remote_addr)
         self._terminal.on_open_shell()
@@ -362,15 +376,18 @@ class Connection(ConnectionBase):
         '''
         # only close the connection if its connected.
         if self._connected:
-            display.debug("closing ssh connection to device")
+            display.debug("closing ssh connection to device", host=self._play_context.remote_addr)
             if self._ssh_shell:
                 display.debug("firing event: on_close_shell()")
                 self._terminal.on_close_shell()
                 self._ssh_shell.close()
                 self._ssh_shell = None
                 display.debug("cli session is now closed")
+
+                self.paramiko_conn.close()
+                self.paramiko_conn = None
+                display.debug("ssh connection has been closed successfully")
             self._connected = False
-            display.debug("ssh connection has been closed successfully")
 
     def receive(self, command=None, prompts=None, answer=None, newline=True, prompt_retry_check=False):
         '''

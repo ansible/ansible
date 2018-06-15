@@ -31,26 +31,18 @@ options:
      description:
         - Zone type
      choices: [primary, secondary]
-     default: None
    email:
      description:
         - Email of the zone owner (only applies if zone_type is primary)
-     required: false
    description:
      description:
         - Zone description
-     required: false
-     default: None
    ttl:
      description:
         -  TTL (Time To Live) value in seconds
-     required: false
-     default: None
    masters:
      description:
         - Master nameservers (only applies if zone_type is secondary)
-     required: false
-     default: None
    state:
      description:
        - Should the resource be present or absent.
@@ -59,10 +51,9 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -166,7 +157,7 @@ def main():
     name = module.params.get('name')
     state = module.params.get('state')
 
-    shade, cloud = openstack_cloud_from_module(module, min_version='1.8.0')
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         zone = cloud.get_zone(name)
 
@@ -215,7 +206,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

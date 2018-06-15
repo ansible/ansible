@@ -37,7 +37,7 @@ options:
               do not persist across reboots.
         required: false
         default: false
-        choices: [ "true", "false" ]
+        type: bool
     mac:
         description:
             - Sets the VNIC's MAC address. Must be valid unicast MAC address.

@@ -10,21 +10,19 @@
   nxos_feature: &disable_bgp
     feature: bgp
     state: disabled
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Enable feature BGP"
   nxos_feature:
     feature: bgp
     state: enabled
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - block:
   - name: "Configure BGP neighbor address-family"
     nxos_bgp_neighbor_af: &configure1
       asn: 65535
-      neighbor: '3.3.3.3'
+      neighbor: '192.0.2.3'
       afi: ipv4
       safi: unicast
       additional_paths_receive: 'enable'
@@ -48,7 +46,6 @@
       unsuppress_map: 'unsup_map'
       weight: '30'
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -66,7 +63,7 @@
   - name: "Configure BGP neighbor address-family def1"
     nxos_bgp_neighbor_af: &configure_def1
       asn: 65535
-      neighbor: '3.3.3.3'
+      neighbor: '192.0.2.3'
       afi: ipv4
       safi: unicast
       additional_paths_receive: 'inherit'
@@ -90,7 +87,6 @@
       unsuppress_map: default
       weight: default
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -104,11 +100,10 @@
   - name: "Setup: Remove BGP config"
     nxos_bgp_neighbor_af: &removenaf
       asn: 65535
-      neighbor: '3.3.3.3'
+      neighbor: '192.0.2.3'
       afi: ipv4
       safi: unicast
       state: absent
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -122,7 +117,7 @@
   - name: "Configure BGP neighbor address-family"
     nxos_bgp_neighbor_af: &configure2
       asn: 65535
-      neighbor: '3.3.3.3'
+      neighbor: '192.0.2.3'
       afi: ipv4
       safi: unicast
       allowas_in_max: '5'
@@ -134,7 +129,6 @@
       route_map_in: 'rm_in'
       route_map_out: 'rm_out'
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -148,7 +142,7 @@
   - name: "Configure BGP neighbor address-family def2"
     nxos_bgp_neighbor_af: &configure_def2
       asn: 65535
-      neighbor: '3.3.3.3'
+      neighbor: '192.0.2.3'
       afi: ipv4
       safi: unicast
       allowas_in_max: default
@@ -160,7 +154,6 @@
       route_map_in: default
       route_map_out: default
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -187,15 +180,14 @@
     nxos_bgp_neighbor:
       asn: 65535
       vrf: 'blue'
-      neighbor: '3.3.3.3'
+      neighbor: '192.0.2.3'
       remote_as: 2
-      provider: "{{ connection }}"
 
   - name: "Configure BGP neighbor 3"
     nxos_bgp_neighbor_af: &configure3
       asn: 65535
       vrf: 'blue'
-      neighbor: '3.3.3.3'
+      neighbor: '192.0.2.3'
       afi: ipv4
       safi: unicast
       additional_paths_receive: 'disable'
@@ -205,7 +197,6 @@
       soft_reconfiguration_in: "{{soft_reconfiguration_ina|default(omit)}}"
       soo: '3:3'
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -220,7 +211,7 @@
     nxos_bgp_neighbor_af: &configure_def3
       asn: 65535
       vrf: 'blue'
-      neighbor: '3.3.3.3'
+      neighbor: '192.0.2.3'
       afi: ipv4
       safi: unicast
       additional_paths_receive: 'inherit'
@@ -229,7 +220,6 @@
       send_community: default
       soo: default
       state: present
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -244,7 +234,6 @@
     nxos_bgp: &remove
       asn: 65535
       state: absent
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -252,18 +241,16 @@
   - name: "Configure BGP neighbor af route_reflector_client"
     nxos_bgp_neighbor:
       asn: 65535
-      neighbor: '2.2.2.2'
+      neighbor: '192.0.2.2'
       remote_as: 65535
-      provider: "{{ connection }}"
 
   - name: "Configure BGP neighbor 4"
     nxos_bgp_neighbor_af: &configure4
       asn: 65535
-      neighbor: '2.2.2.2'
+      neighbor: '192.0.2.2'
       afi: ipv4
       safi: unicast
       route_reflector_client: 'true'
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -277,11 +264,10 @@
   - name: "Configure BGP neighbor def4"
     nxos_bgp_neighbor_af: &configure_def4
       asn: 65535
-      neighbor: '2.2.2.2'
+      neighbor: '192.0.2.2'
       afi: ipv4
       safi: unicast
       route_reflector_client: False
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true

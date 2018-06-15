@@ -10,7 +10,6 @@
 - name: "Setup vlans"
   nxos_vlan:
     vlan_range: "6,15"
-    provider: "{{ connection }}"
 
 - name: Setup - Ensure interfaces are layer2
   nxos_interface:
@@ -25,7 +24,6 @@
       - { name: "{{ intname1 }}", mode: access, access_vlan: 6 }
       - { name: "{{ intname2 }}", mode: access, access_vlan: 15 }
     state: absent
-    provider: "{{ connection }}"
 
 - name: Sleep for 2 seconds on Fretta Platform
   wait_for: timeout=2
@@ -37,7 +35,6 @@
       aggregate:
         - { name: "{{ intname1 }}", mode: access, access_vlan: 6 }
         - { name: "{{ intname2 }}", mode: access, access_vlan: 15 }
-      provider: "{{ connection }}"
     register: result
 
   - assert:
@@ -61,7 +58,6 @@
       aggregate:
         - { name: "{{ intname1 }}", mode: access, access_vlan: 6 }
         - { name: "{{ intname2 }}", mode: access, access_vlan: 15 }
-      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -86,7 +82,6 @@
     nxos_vlan:
       vlan_range: "6,15"
       state: absent
-      provider: "{{ connection }}"
     ignore_errors: yes
 
   - name: "Remove interface aggregate after testing"
@@ -95,7 +90,6 @@
         - { name: "{{ intname1 }}", mode: access, access_vlan: 6 }
         - { name: "{{ intname2 }}", mode: access, access_vlan: 15 }
       state: absent
-      provider: "{{ connection }}"
     ignore_errors: yes
 
 - debug: msg="END connection={{ ansible_connection }} nxos_l2_interface aggregate test"

@@ -37,42 +37,30 @@ options:
             - Specifies the number of the AS, in integer format.
               The value is an integer that ranges from 1 to 4294967295.
         required: true
-        default: null
     bgp_instance:
         description:
             - Specifies the name of a BGP instance.
               The value of instance-name can be an integer 1 or a string of 1 to 31.
-        required: false
-        default: null
     bgp_evpn_enable:
         description:
             - Enable or disable the BGP-EVPN address family.
-        required: false
         choices: ['enable','disable']
         default: 'enable'
     peer_type:
         description:
             - Specify the peer type.
-        required: false
         choices: ['group_name','ipv4_address']
-        default: null
     peer:
         description:
             - Specifies the IPv4 address or the group name of a peer.
-        required: false
-        default: null
     reflect_client:
         description:
             - Configure the local device as the route reflector and the peer or peer group as the client of the route reflector.
-        required: false
         choices: ['enable','disable']
-        default: null
     policy_vpn_target:
         description:
             - Enable or disable the VPN-Target filtering.
-        required: false
         choices: ['enable','disable']
-        default: null
 '''
 
 EXAMPLES = '''

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright 2013 Dag Wieers <dag@wieers.com>
+# Copyright: (c) 2013, Dag Wieers (@dagwieers) <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -15,7 +15,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-author: "Dag Wieers (@dagwieers)"
+author:
+- Dag Wieers (@dagwieers)
 module: set_fact
 short_description: Set host facts from a task
 description:
@@ -23,7 +24,7 @@ description:
     - These variables will be available to subsequent plays during an ansible-playbook run, but will not be saved across executions even if you use
       a fact cache.
     - Per the standard Ansible variable precedence rules, many other types of variables have a higher priority, so this value may be overridden.
-      See U(http://docs.ansible.com/ansible/playbooks_variables.html#variable-precedence-where-should-i-put-a-variable) for more information.
+      See L(Variable Precedence Guide,../user_guide/playbooks_variables.html#variable-precedence-where-should-i-put-a-variable) for more information.
     - This module is also supported for Windows targets.
 options:
   key_value:
@@ -32,13 +33,12 @@ options:
         in the playbook scope. Or alternatively, accepts complex arguments
         using the C(args:) statement.
     required: true
-    default: null
   cacheable:
     description:
       - This boolean indicates if the facts set will also be added to the
         fact cache, if fact caching is enabled.
-    required: false
-    default: false
+    type: bool
+    default: 'no'
     version_added: "2.4"
 version_added: "1.2"
 notes:

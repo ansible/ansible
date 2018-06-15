@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
+# Copyright: (c) 2018, Ansible Project
 # This module is also sponsored by E.T.A.I. (www.etai.fr)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -16,109 +16,112 @@ DOCUMENTATION = '''
 module: vmware_guest_snapshot
 short_description: Manages virtual machines snapshots in vCenter
 description:
-    - Create virtual machines snapshots
+    - This module can be used to create, delete and update snapshot(s) of the given virtual machine.
+    - All parameters and VMware object names are case sensitive.
 version_added: 2.3
 author:
-    - James Tanner (@jctanner) <tanner.jc@gmail.com>
     - Loic Blot (@nerzhul) <loic.blot@unix-experience.fr>
 notes:
-    - Tested on vSphere 5.5, 6.0
+    - Tested on vSphere 5.5, 6.0 and 6.5
 requirements:
     - "python >= 2.6"
     - PyVmomi
 options:
    state:
-        description:
-            - Manage snapshots attached to a specific virtual machine.
-        required: True
-        choices: ['present', 'absent', 'revert', 'remove_all']
-        default: 'present'
+     description:
+     - Manage snapshot(s) attached to a specific virtual machine.
+     - If set to C(present) and snapshot absent, then will create a new snapshot with the given name.
+     - If set to C(present) and snapshot present, then no changes are made.
+     - If set to C(absent) and snapshot present, then snapshot with the given name is removed.
+     - If set to C(absent) and snapshot absent, then no changes are made.
+     - If set to C(revert) and snapshot present, then virtual machine state is reverted to the given snapshot.
+     - If set to C(revert) and snapshot absent, then no changes are made.
+     - If set to C(remove_all) and snapshot(s) present, then all snapshot(s) will be removed.
+     - If set to C(remove_all) and snapshot(s) absent, then no changes are made.
+     required: True
+     choices: ['present', 'absent', 'revert', 'remove_all']
+     default: 'present'
    name:
-        description:
-            - Name of the VM to work with
-            - This is required if uuid is not supplied.
+     description:
+     - Name of the virtual machine to work with.
+     - This is required parameter, if C(uuid) is not supplied.
    name_match:
-        description:
-            - If multiple VMs matching the name, use the first or last found
-        default: 'first'
-        choices: ['first', 'last']
+     description:
+     - If multiple VMs matching the name, use the first or last found.
+     default: 'first'
+     choices: ['first', 'last']
    uuid:
-        description:
-            - UUID of the instance to manage if known, this is VMware's unique identifier.
-            - This is required if name is not supplied.
+     description:
+     - UUID of the instance to manage if known, this is VMware's unique identifier.
+     - This is required parameter, if C(name) is not supplied.
    folder:
-        description:
-            - Destination folder, absolute or relative path to find an existing guest.
-            - This is required if name is supplied.
-            - The folder should include the datacenter. ESX's datacenter is ha-datacenter
-            - 'Examples:'
-            - '   folder: /ha-datacenter/vm'
-            - '   folder: ha-datacenter/vm'
-            - '   folder: /datacenter1/vm'
-            - '   folder: datacenter1/vm'
-            - '   folder: /datacenter1/vm/folder1'
-            - '   folder: datacenter1/vm/folder1'
-            - '   folder: /folder1/datacenter1/vm'
-            - '   folder: folder1/datacenter1/vm'
-            - '   folder: /folder1/datacenter1/vm/folder2'
-            - '   folder: vm/folder2'
-            - '   folder: folder2'
+     description:
+     - Destination folder, absolute or relative path to find an existing guest.
+     - This is required parameter, if C(name) is supplied.
+     - The folder should include the datacenter. ESX's datacenter is ha-datacenter.
+     - 'Examples:'
+     - '   folder: /ha-datacenter/vm'
+     - '   folder: ha-datacenter/vm'
+     - '   folder: /datacenter1/vm'
+     - '   folder: datacenter1/vm'
+     - '   folder: /datacenter1/vm/folder1'
+     - '   folder: datacenter1/vm/folder1'
+     - '   folder: /folder1/datacenter1/vm'
+     - '   folder: folder1/datacenter1/vm'
+     - '   folder: /folder1/datacenter1/vm/folder2'
+     - '   folder: vm/folder2'
+     - '   folder: folder2'
    datacenter:
-        description:
-            - Destination datacenter for the deploy operation
-        required: True
+     description:
+     - Destination datacenter for the deploy operation.
+     required: True
    snapshot_name:
-        description:
-        - Sets the snapshot name to manage.
-        - This param is required only if state is not C(remove_all)
+     description:
+     - Sets the snapshot name to manage.
+     - This param is required only if state is not C(remove_all)
    description:
-        description:
-        - Define an arbitrary description to attach to snapshot.
-        default: ''
+     description:
+     - Define an arbitrary description to attach to snapshot.
+     default: ''
    quiesce:
-        description:
-            - If set to C(true) and virtual machine is powered on, it will quiesce the
-              file system in virtual machine.
-            - Note that VMWare Tools are required for this flag.
-            - If virtual machine is powered off or VMware Tools are not available, then
-              this flag is set to C(false).
-            - If virtual machine does not provide capability to take quiesce snapshot, then
-              this flag is set to C(false).
-        required: False
-        version_added: "2.4"
-        type: bool
-        default: False
+     description:
+     - If set to C(true) and virtual machine is powered on, it will quiesce the file system in virtual machine.
+     - Note that VMWare Tools are required for this flag.
+     - If virtual machine is powered off or VMware Tools are not available, then this flag is set to C(false).
+     - If virtual machine does not provide capability to take quiesce snapshot, then this flag is set to C(false).
+     required: False
+     version_added: "2.4"
+     type: bool
+     default: False
    memory_dump:
-        description:
-            - If set to C(true), memory dump of virtual machine is also included in snapshot.
-            - Note that memory snapshots take time and resources, this will take longer time to create.
-            - If virtual machine does not provide capability to take memory snapshot, then
-              this flag is set to C(false).
-        required: False
-        version_added: "2.4"
-        type: bool
-        default: False
+     description:
+     - If set to C(true), memory dump of virtual machine is also included in snapshot.
+     - Note that memory snapshots take time and resources, this will take longer time to create.
+     - If virtual machine does not provide capability to take memory snapshot, then this flag is set to C(false).
+     required: False
+     version_added: "2.4"
+     type: bool
+     default: False
    remove_children:
-        description:
-            - If set to C(true) and state is set to C(absent), then entire snapshot subtree is set
-              for removal.
-        required: False
-        version_added: "2.4"
-        type: bool
-        default: False
+     description:
+     - If set to C(true) and state is set to C(absent), then entire snapshot subtree is set for removal.
+     required: False
+     version_added: "2.4"
+     type: bool
+     default: False
    new_snapshot_name:
-        description:
-             - Value to rename the existing snapshot to
-        version_added: 2.5
+     description:
+     - Value to rename the existing snapshot to.
+     version_added: "2.5"
    new_description:
-        description:
-             - Value to change the description of an existing snapshot to
-        version_added: 2.5
+     description:
+     - Value to change the description of an existing snapshot to.
+     version_added: "2.5"
 extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-  - name: Create snapshot
+  - name: Create a snapshot
     vmware_guest_snapshot:
       hostname: 192.168.1.209
       username: administrator@vsphere.local
@@ -139,7 +142,7 @@ EXAMPLES = '''
       name: dummy_vm
       datacenter: datacenter_name
       folder: /myfolder
-      state: remove
+      state: absent
       snapshot_name: snap1
     delegate_to: localhost
 
@@ -184,7 +187,7 @@ EXAMPLES = '''
       username: administrator@vsphere.local
       password: vmware
       name: dummy_vm
-      state: remove
+      state: absent
       remove_children: True
       snapshot_name: snap1
     delegate_to: localhost
@@ -204,7 +207,7 @@ EXAMPLES = '''
 
 RETURN = """
 instance:
-    description: metadata about the new virtualmachine
+    description: metadata about the new virtual machine snapshot
     returned: always
     type: dict
     sample: None
@@ -267,15 +270,17 @@ class PyVmomiHelper(PyVmomi):
                                      memory_dump,
                                      quiesce)
         except vim.fault.RestrictedVersion as exc:
-            self.module.fail_json(msg="Failed to take snapshot due to VMware Licence: %s" % to_native(exc.msg))
+            self.module.fail_json(msg="Failed to take snapshot due to VMware Licence"
+                                      " restriction : %s" % to_native(exc.msg))
         except Exception as exc:
-            self.module.fail_json(msg="Failed to create snapshot of VM %s due to %s" % (self.module.params['name'], to_native(exc)))
+            self.module.fail_json(msg="Failed to create snapshot of virtual machine"
+                                      " %s due to %s" % (self.module.params['name'], to_native(exc)))
         return task
 
     def rename_snapshot(self, vm):
         if vm.snapshot is None:
-            self.module.exit_json(msg="VM - %s doesn't have any snapshots" %
-                                  self.module.params.get('uuid') or self.module.params.get('name'))
+            self.module.fail_json(msg="virtual machine - %s doesn't have any"
+                                      " snapshots" % (self.module.params.get('uuid') or self.module.params.get('name')))
 
         snap_obj = self.get_snapshots_by_name_recursively(vm.snapshot.rootSnapshotList,
                                                           self.module.params["snapshot_name"])
@@ -298,8 +303,12 @@ class PyVmomiHelper(PyVmomi):
 
     def remove_or_revert_snapshot(self, vm):
         if vm.snapshot is None:
-            self.module.exit_json(msg="VM - %s doesn't have any snapshots" %
-                                  self.module.params.get('uuid') or self.module.params.get('name'))
+            vm_name = (self.module.params.get('uuid') or self.module.params.get('name'))
+            if self.module.params.get('state') == 'revert':
+                self.module.fail_json(msg="virtual machine - %s does not"
+                                          " have any snapshots to revert to." % vm_name)
+            self.module.exit_json(msg="virtual machine - %s doesn't have any"
+                                      " snapshots to remove." % vm_name)
 
         snap_obj = self.get_snapshots_by_name_recursively(vm.snapshot.rootSnapshotList,
                                                           self.module.params["snapshot_name"])
@@ -313,10 +322,9 @@ class PyVmomiHelper(PyVmomi):
             elif self.module.params["state"] == "revert":
                 task = snap_obj.RevertToSnapshot_Task()
         else:
-            self.module.exit_json(
-                msg="Couldn't find any snapshots with specified name: %s on VM: %s" %
-                    (self.module.params["snapshot_name"],
-                     self.module.params.get('uuid') or self.module.params.get('name')))
+            self.module.exit_json(msg="Couldn't find any snapshots with"
+                                      " specified name: %s on VM: %s" % (self.module.params["snapshot_name"],
+                                                                         self.module.params.get('uuid') or self.module.params.get('name')))
 
         return task
 

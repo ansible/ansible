@@ -33,22 +33,10 @@ description:
 author: "Luigi Mori (@jtschichold), Ivan Bojer (@ivanbojer)"
 version_added: "2.3"
 requirements:
-    - pan-python can be obtained from PyPi U(https://pypi.python.org/pypi/pan-python)
+    - pan-python can be obtained from PyPi U(https://pypi.org/project/pan-python/)
 notes:
     - Checkmode is not supported.
 options:
-    ip_address:
-        description:
-            - IP address (or hostname) of PAN-OS device being configured.
-        required: true
-    username:
-        description:
-            - Username credentials to use for auth.
-        default: "admin"
-    password:
-        description:
-            - Password credentials to use for auth.
-        required: true
     if_name:
         description:
             - Name of the interface to configure.
@@ -66,6 +54,7 @@ options:
         description:
             - Commit if changed
         default: true
+extends_documentation_fragment: panos
 '''
 
 EXAMPLES = '''

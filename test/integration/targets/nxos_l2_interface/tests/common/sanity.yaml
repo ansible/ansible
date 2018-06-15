@@ -13,7 +13,6 @@
   nxos_config: &default
     lines:
       - "default interface {{ intname }}"
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: Setup - Ensure interface is layer2
@@ -24,21 +23,18 @@
 - name: "Setup vlans"
   nxos_vlan:
     vlan_range: "5-10,20"
-    provider: "{{ connection }}"
 
 - block:
   - name: Ensure interface is in its default switchport state
     nxos_l2_interface: &def_swi
       name: "{{ intname }}"
       state: unconfigured
-      provider: "{{ connection }}"
 
   - name: Ensure interface is configured for access vlan 20
     nxos_l2_interface: &acc_vl
       name: "{{ intname }}"
       mode: access
       access_vlan: 20
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -63,7 +59,6 @@
       mode: trunk
       native_vlan: 10
       trunk_allowed_vlans: 5-10
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -80,7 +75,6 @@
       mode: trunk
       native_vlan: 10
       trunk_vlans: 2-50
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -91,19 +85,46 @@
 
   - assert: *false
 
-  - name: Ensure these VLANs are not being tagged on the trunk
+  - name: Remove full trunk vlan range 2-50
     nxos_l2_interface: &no_tag
       name: "{{ intname }}"
       mode: trunk
       trunk_vlans: 2-50
       state: absent
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
 
-  - name: "no tag vlan Idempotence"
+  - name: Check Idempotence Remove full trunk vlan range 2-50
     nxos_l2_interface: *no_tag
+    register: result
+
+  - assert: *false
+
+  - name: Reconfigure interface trunk port and ensure 2-50 are being tagged
+    nxos_l2_interface: *tag
+    register: result
+
+  - assert: *true
+
+  - name: Check Idempotence Reconfigure interface trunk port and ensure 2-50 are being tagged
+    nxos_l2_interface: *tag
+    register: result
+
+  - assert: *false
+
+  - name: Remove partial trunk vlan range 30-4094 are removed
+    nxos_l2_interface: &partial
+      name: "{{ intname }}"
+      mode: trunk
+      trunk_vlans: 30-4094
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - name: Check Idempotence Remove partial trunk vlan range 30-4094 are removed
+    nxos_l2_interface: *partial
     register: result
 
   - assert: *false
@@ -125,7 +146,6 @@
     nxos_vlan:
       vlan_range: "5-10,20"
       state: absent
-      provider: "{{ connection }}"
     ignore_errors: yes
 
   - name: "default interface"

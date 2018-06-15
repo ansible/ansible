@@ -32,7 +32,7 @@ options:
     choices: [ "status", "cleanup" ]
     default: "status"
 notes:
-    - See also U(http://docs.ansible.com/playbooks_async.html)
+    - See also U(https://docs.ansible.com/playbooks_async.html)
     - This module is also supported for Windows targets.
 author:
     - "Ansible Core Team"

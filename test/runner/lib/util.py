@@ -3,6 +3,7 @@
 from __future__ import absolute_import, print_function
 
 import atexit
+import contextlib
 import errno
 import filecmp
 import fcntl
@@ -14,6 +15,7 @@ import pkgutil
 import random
 import re
 import shutil
+import socket
 import stat
 import string
 import subprocess
@@ -61,51 +63,6 @@ def remove_file(path):
     """
     if os.path.isfile(path):
         os.remove(path)
-
-
-def find_pip(path=None, version=None):
-    """
-    :type path: str | None
-    :type version: str | None
-    :rtype: str
-    """
-    if version:
-        version_info = version.split('.')
-        python_bin = find_executable('python%s' % version, path=path)
-    else:
-        version_info = sys.version_info
-        python_bin = sys.executable
-
-    choices = (
-        'pip%s' % '.'.join(str(i) for i in version_info[:2]),
-        'pip%s' % version_info[0],
-        'pip',
-    )
-
-    pip = None
-
-    for choice in choices:
-        pip = find_executable(choice, required=False, path=path)
-
-        if pip:
-            break
-
-    if not pip:
-        raise ApplicationError('Required program not found: %s' % ', '.join(choices))
-
-    with open(pip) as pip_fd:
-        shebang = pip_fd.readline().strip()
-
-    if not shebang.startswith('#!') or ' ' in shebang:
-        raise ApplicationError('Unexpected shebang in "%s": %s' % (pip, shebang))
-
-    our_python = os.path.realpath(python_bin)
-    pip_python = os.path.realpath(shebang[2:])
-
-    if our_python != pip_python and not filecmp.cmp(our_python, pip_python, False):
-        raise ApplicationError('Current interpreter "%s" does not match "%s" interpreter "%s".' % (our_python, pip, pip_python))
-
-    return pip
 
 
 def find_executable(executable, cwd=None, path=None, required=True):
@@ -160,6 +117,30 @@ def find_executable(executable, cwd=None, path=None, required=True):
     return match
 
 
+def find_python(version, path=None):
+    """
+    :type version: str
+    :type path: str | None
+    :rtype: str
+    """
+    version_info = tuple(int(n) for n in version.split('.'))
+
+    if not path and version_info == sys.version_info[:len(version_info)]:
+        python_bin = sys.executable
+    else:
+        python_bin = find_executable('python%s' % version, path=path)
+
+    return python_bin
+
+
+def generate_pip_command(python):
+    """
+    :type python: str
+    :rtype: list[str]
+    """
+    return [python, '-m', 'pip.__main__']
+
+
 def intercept_command(args, cmd, target_name, capture=False, env=None, data=None, cwd=None, python_version=None, path=None):
     """
     :type args: TestConfig
@@ -180,7 +161,7 @@ def intercept_command(args, cmd, target_name, capture=False, env=None, data=None
     inject_path = get_coverage_path(args)
     config_path = os.path.join(inject_path, 'injector.json')
     version = python_version or args.python_version
-    interpreter = find_executable('python%s' % version, path=path)
+    interpreter = find_python(version, path)
     coverage_file = os.path.abspath(os.path.join(inject_path, '..', 'output', '%s=%s=%s=%s=coverage' % (
         args.command, target_name, args.coverage_label or 'local-%s' % version, 'python-%s' % version)))
 
@@ -348,7 +329,7 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
 
     if communicate:
         encoding = 'utf-8'
-        data_bytes = data.encode(encoding) if data else None
+        data_bytes = data.encode(encoding, 'surrogateescape') if data else None
         stdout_bytes, stderr_bytes = process.communicate(data_bytes)
         stdout_text = stdout_bytes.decode(encoding, str_errors) if stdout_bytes else u''
         stderr_text = stderr_bytes.decode(encoding, str_errors) if stderr_bytes else u''
@@ -462,6 +443,55 @@ def is_binary_file(path):
     :type path: str
     :rtype: bool
     """
+    assume_text = set([
+        '.cfg',
+        '.conf',
+        '.crt',
+        '.css',
+        '.html',
+        '.ini',
+        '.j2',
+        '.js',
+        '.json',
+        '.md',
+        '.pem',
+        '.ps1',
+        '.psm1',
+        '.py',
+        '.rst',
+        '.sh',
+        '.txt',
+        '.xml',
+        '.yaml',
+        '.yml',
+    ])
+
+    assume_binary = set([
+        '.bin',
+        '.eot',
+        '.gz',
+        '.ico',
+        '.iso',
+        '.jpg',
+        '.otf',
+        '.p12',
+        '.png',
+        '.pyc',
+        '.rpm',
+        '.ttf',
+        '.woff',
+        '.woff2',
+        '.zip',
+    ])
+
+    ext = os.path.splitext(path)[1]
+
+    if ext in assume_text:
+        return False
+
+    if ext in assume_binary:
+        return True
+
     with open(path, 'rb') as path_fd:
         return b'\0' in path_fd.read(1024)
 
@@ -690,6 +720,18 @@ def parse_to_dict(pattern, value):
         raise Exception('Pattern "%s" did not match value: %s' % (pattern, value))
 
     return match.groupdict()
+
+
+def get_available_port():
+    """
+    :rtype: int
+    """
+    # this relies on the kernel not reusing previously assigned ports immediately
+    socket_fd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    with contextlib.closing(socket_fd):
+        socket_fd.bind(('', 0))
+        return socket_fd.getsockname()[1]
 
 
 def get_subclasses(class_type):

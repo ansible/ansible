@@ -38,7 +38,6 @@ options:
     timeout:
       description:
         - Maximum time in seconds to wait for a job to finish.
-      default: null
 extends_documentation_fragment: tower
 '''
 

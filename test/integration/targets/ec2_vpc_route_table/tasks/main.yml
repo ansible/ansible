@@ -25,7 +25,7 @@
       state: present
       tags:
         Public: "{{ item.public|string }}"
-        Name: "{{ item.public|ternary('public', 'private') }}-{{ item.az }}"
+        Name: "{{ (item.public|bool)|ternary('public', 'private') }}-{{ item.az }}"
       <<: *aws_connection_info
     with_items:
       - cidr: 10.228.228.0/24
@@ -337,6 +337,78 @@
       that:
         - check_mode_results.changed
 
+  - name: add subnets by cidr to public route table
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      routes:
+      - dest: 0.0.0.0/0
+        gateway_id: igw
+      subnets: "{{ vpc_subnets|json_query('subnets[?tags.Public == `True`].cidr_block') }}"
+      lookup: id
+      route_table_id: "{{ create_public_table.route_table.id }}"
+      <<: *aws_connection_info
+    register: add_subnets_cidr
+
+  - name: assert route table contains subnets added by cidr
+    assert:
+      that:
+        - add_subnets_cidr.changed
+        - add_subnets_cidr.route_table.associations|length == 2
+
+  - name: purge subnets added by cidr
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      routes:
+      - dest: 0.0.0.0/0
+        gateway_id: igw
+      subnets: []
+      lookup: id
+      route_table_id: "{{ create_public_table.route_table.id }}"
+      <<: *aws_connection_info
+    register: purge_subnets_cidr
+
+  - name: assert purge subnets added by cidr worked
+    assert:
+      that:
+        - purge_subnets_cidr.changed
+        - purge_subnets_cidr.route_table.associations|length == 0
+
+  - name: add subnets by name to public route table
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      routes:
+      - dest: 0.0.0.0/0
+        gateway_id: igw
+      subnets: "{{ vpc_subnets|json_query('subnets[?tags.Public == `True`].tags.Name') }}"
+      lookup: id
+      route_table_id: "{{ create_public_table.route_table.id }}"
+      <<: *aws_connection_info
+    register: add_subnets_name
+
+  - name: assert route table contains subnets added by name
+    assert:
+      that:
+        - add_subnets_name.changed
+        - add_subnets_name.route_table.associations|length == 2
+
+  - name: purge subnets added by name
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      routes:
+      - dest: 0.0.0.0/0
+        gateway_id: igw
+      subnets: []
+      lookup: id
+      route_table_id: "{{ create_public_table.route_table.id }}"
+      <<: *aws_connection_info
+    register: purge_subnets_name
+
+  - name: assert purge subnets added by name worked
+    assert:
+      that:
+        - purge_subnets_name.changed
+        - purge_subnets_name.route_table.associations|length == 0
+
   - name: purge routes
     ec2_vpc_route_table:
       vpc_id: "{{ vpc.vpc.id }}"
@@ -545,10 +617,55 @@
         - recreate_private_table.changed
         - recreate_private_table.route_table.id != create_public_table.route_table.id
 
+  - name: create a VPC endpoint to test ec2_vpc_route_table ignores it
+    ec2_vpc_endpoint:
+      state: present
+      vpc_id: "{{ vpc.vpc.id }}"
+      service: "com.amazonaws.{{ aws_region }}.s3"
+      route_table_ids:
+        - "{{ recreate_private_table.route_table.route_table_id }}"
+      <<: *aws_connection_info
+    register: vpc_endpoint
+
+  - name: purge routes
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      tags:
+        Public: "false"
+        Name: "Private route table"
+      routes:
+      - nat_gateway_id: "{{ nat_gateway.nat_gateway_id }}"
+        dest: 0.0.0.0/0
+      subnets: "{{ vpc_subnets|json_query('subnets[?tags.Public == `False`].id') }}"
+      purge_routes: true
+      <<: *aws_connection_info
+    register: result
+
+  - name: Get endpoint facts to verify that it wasn't purged from the route table
+    ec2_vpc_endpoint_facts:
+      query: endpoints
+      vpc_endpoint_ids:
+        - "{{ vpc_endpoint.result.vpc_endpoint_id }}"
+      <<: *aws_connection_info
+    register: endpoint_details
+
+  - name: assert the route table is associated with the VPC endpoint
+    assert:
+      that:
+        - endpoint_details.vpc_endpoints[0].route_table_ids[0] == recreate_private_table.route_table.route_table_id
+
   always:
   #############################################################################
   # TEAR DOWN STARTS HERE
   #############################################################################
+  - name: remove the VPC endpoint
+    ec2_vpc_endpoint:
+      state: absent
+      vpc_endpoint_id: "{{ vpc_endpoint.result.vpc_endpoint_id }}"
+      <<: *aws_connection_info
+    when: vpc_endpoint is defined
+    ignore_errors: yes
+
   - name: destroy route tables
     ec2_vpc_route_table:
       route_table_id: "{{ item.route_table.id }}"

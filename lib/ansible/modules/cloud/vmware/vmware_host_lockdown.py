@@ -24,7 +24,7 @@ description:
 - Please specify C(hostname) as vCenter IP or hostname only, as lockdown operations are not possible from standalone ESXi server.
 version_added: '2.5'
 author:
-- Abhijeet Kasurde (@akasurde)
+- Abhijeet Kasurde (@Akasurde)
 notes:
 - Tested on vSphere 6.5
 requirements:
@@ -189,7 +189,7 @@ def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(
         cluster_name=dict(type='str', required=False),
-        esxi_hostname=dict(type='str', required=False),
+        esxi_hostname=dict(type='list', required=False),
         state=dict(str='str', default='present', choices=['present', 'absent'], required=False),
     )
 

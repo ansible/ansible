@@ -26,7 +26,7 @@ version_added: 2.0
 author:
 - Joseph Callen (@jcpowermac)
 - Russell Teague (@mtnbikenc)
-- Abhijeet Kasurde (@akasurde) <akasurde@redhat.com>
+- Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
 notes:
     - Tested on vSphere 5.5, 6.5
 requirements:
@@ -188,7 +188,13 @@ class PyVmomiHelper(PyVmomi):
         self.vlan_id = self.params['vlan_id']
 
         self.esxi_host_name = self.params['esxi_hostname']
-        self.esxi_host_obj = self.get_all_host_objs(esxi_host_name=self.esxi_host_name)[0]
+
+        hosts = self.get_all_host_objs(esxi_host_name=self.esxi_host_name)
+        if hosts:
+            self.esxi_host_obj = hosts[0]
+        else:
+            self.module.fail_json("Failed to get details of ESXi server."
+                                  " Please specify esxi_hostname.")
 
         self.port_group_obj = self.get_port_group_by_name(host_system=self.esxi_host_obj, portgroup_name=self.port_group_name)
         if not self.port_group_obj:

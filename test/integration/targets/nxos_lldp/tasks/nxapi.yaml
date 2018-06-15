@@ -1,14 +1,16 @@
 ---
-- name: collect common nxapi test cases
+- name: collect common test cases
   find:
     paths: "{{ role_path }}/tests/common"
     patterns: "{{ testcase }}.yaml"
+  connection: local
   register: test_cases
 
 - name: collect nxapi test cases
   find:
     paths: "{{ role_path }}/tests/nxapi"
     patterns: "{{ testcase }}.yaml"
+  connection: local
   register: nxapi_cases
 
 - set_fact:
@@ -18,8 +20,14 @@
 - name: set test_items
   set_fact: test_items="{{ test_cases.files | map(attribute='path') | list }}"
 
-- name: run test case
-  include: "{{ test_case_to_run }} connection={{ nxapi }}"
+- name: run test cases (connection=httpapi)
+  include: "{{ test_case_to_run }} ansible_connection=httpapi connection={{ nxapi }}"
+  with_items: "{{ test_items }}"
+  loop_control:
+    loop_var: test_case_to_run
+
+- name: run test cases (connection=local)
+  include: "{{ test_case_to_run }} ansible_connection=local connection={{ nxapi }}"
   with_items: "{{ test_items }}"
   loop_control:
     loop_var: test_case_to_run

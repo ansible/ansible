@@ -4,11 +4,10 @@
   when: ansible_connection == "local"
 
 - name: Set up console logging
-  nxos_logging:
+  nxos_logging: &clog
     dest: console
     dest_level: 0
     state: present
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -17,74 +16,92 @@
       - '"logging console 0" in result.commands'
 
 - name: Set up console logging again (idempotent)
-  nxos_logging:
-    dest: console
-    dest_level: 0
-    state: present
-    provider: "{{ connection }}"
+  nxos_logging: *clog
   register: result
 
-- assert:
-    that:
-      - 'result.changed == false'
-
-- name: Delete/disable console logging
-  nxos_logging:
-    dest: console
-    dest_level: 0
-    state: absent
-    provider: "{{ connection }}"
-  register: result
-
-- assert:
-    that:
-      - 'result.changed == true'
-      - '"no logging console" in result.commands'
-
-- name: Delete/disable console logging (idempotent)
-  nxos_logging:
-    dest: console
-    dest_level: 0
-    state: absent
-    provider: "{{ connection }}"
-  register: result
-
-- assert:
+- assert: &false
     that:
       - 'result.changed == false'
 
 - name: Logfile logging with level
-  nxos_logging:
+  nxos_logging: &llog
     dest: logfile
     name: test
-    dest_level: 0
+    dest_level: 1
     state: present
-    provider: "{{ connection }}"
   register: result
 
 - assert:
     that:
       - 'result.changed == true'
-      - '"logging logfile test 0" in result.commands'
+      - '"logging logfile test 1" in result.commands'
+
+- name: Logfile logging with level (idempotent)
+  nxos_logging: *llog
+  register: result
+
+- assert: *false
+
+- name: Configure module with level
+  nxos_logging: &molog
+    dest: module
+    dest_level: 2
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging module 2" in result.commands'
+
+- name: Configure module with level (idempotent)
+  nxos_logging: *molog
+  register: result
+
+- assert: *false
+
+- name: Configure monitor with level
+  nxos_logging: &mlog
+    dest: monitor
+    dest_level: 3
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging monitor 3" in result.commands'
+
+- name: Configure monitor with level (idempotent)
+  nxos_logging: *mlog
+  register: result
+
+- assert: *false
 
 - name: Configure facility with level
-  nxos_logging:
+  nxos_logging: &flog
     facility: daemon
-    facility_level: 0
-    provider: "{{ connection }}"
+    facility_level: 4
   register: result
 
 - assert:
     that:
       - 'result.changed == true'
-      - '"logging level daemon 0" in result.commands'
+      - '"logging level daemon 4" in result.commands'
+
+- name: Configure facility with level (idempotent)
+  nxos_logging: *flog
+  register: result
+
+- assert: *false
 
 - name: remove logging as collection tearDown
-  nxos_logging:
+  nxos_logging: &agg
     aggregate:
-      - { dest: logfile, name: test, dest_level: 0, state: absent }
-      - { facility: daemon, facility_level: 0, state: absent }
-    provider: "{{ connection }}"
+      - { dest: console, dest_level: 0 }
+      - { dest: module, dest_level: 2 }
+      - { dest: monitor, dest_level: 3 }
+      - { dest: logfile, dest_level: 1, name: test }
+      - { facility: daemon, facility_level: 4 }
+    state: absent
   register: result
 
 - assert:
@@ -92,5 +109,13 @@
       - 'result.changed == true'
       - '"no logging logfile" in result.commands'
       - '"no logging level daemon" in result.commands'
+      - '"no logging monitor" in result.commands'
+      - '"no logging module" in result.commands'
+
+- name: remove aggregate logging (idempotent)
+  nxos_logging: *agg
+  register: result
+
+- assert: *false
 
 - debug: msg="END connection={{ ansible_connection }} nxos_logging basic test"

@@ -36,7 +36,8 @@ except NameError:
 nso_argument_spec = dict(
     url=dict(required=True),
     username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME']), required=True),
-    password=dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), required=True, no_log=True)
+    password=dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), required=True, no_log=True),
+    timeout=dict(default=300, type=int)
 )
 
 
@@ -66,13 +67,15 @@ class NsoException(Exception):
 
 
 class JsonRpc(object):
-    def __init__(self, url):
+    def __init__(self, url, timeout):
         self._url = url
+        self._timeout = timeout
 
         self._id = 0
         self._trans = {}
         self._headers = {'Content-Type': 'application/json'}
         self._conn = None
+        self._system_settings = {}
 
     def login(self, user, passwd):
         payload = {
@@ -87,9 +90,11 @@ class JsonRpc(object):
         self._call(payload)
 
     def get_system_setting(self, setting):
-        payload = {'method': 'get_system_setting', 'params': {'operation': setting}}
-        resp, resp_json = self._call(payload)
-        return resp_json['result']
+        if setting not in self._system_settings:
+            payload = {'method': 'get_system_setting', 'params': {'operation': setting}}
+            resp, resp_json = self._call(payload)
+            self._system_settings[setting] = resp_json['result']
+        return self._system_settings[setting]
 
     def new_trans(self, **kwargs):
         payload = {'method': 'new_trans', 'params': kwargs}
@@ -193,10 +198,15 @@ class JsonRpc(object):
         if params is None:
             params = {}
 
+        if is_version(self, [(4, 5), (4, 4, 3)]):
+            result_format = 'json'
+        else:
+            result_format = 'normal'
+
         payload = {
             'method': 'run_action',
             'params': {
-                'format': 'normal',
+                'format': result_format,
                 'path': path,
                 'params': params
             }
@@ -207,7 +217,16 @@ class JsonRpc(object):
             payload['params']['th'] = th
             resp, resp_json = self._call(payload)
 
-        return resp_json['result']
+        if result_format == 'normal':
+            # this only works for one-level results, list entries,
+            # containers etc will have / in their name.
+            result = {}
+            for info in resp_json['result']:
+                result[info['name']] = info['value']
+        else:
+            result = resp_json['result']
+
+        return result
 
     def _call(self, payload):
         self._id += 1
@@ -219,7 +238,8 @@ class JsonRpc(object):
 
         data = json.dumps(payload)
         resp = open_url(
-            self._url, method='POST', data=data, headers=self._headers)
+            self._url, timeout=self._timeout,
+            method='POST', data=data, headers=self._headers)
         if resp.code != 200:
             raise NsoException(
                 'NSO returned HTTP code {0}, expected 200'.format(resp.status), {})
@@ -300,15 +320,16 @@ class ValueBuilder(object):
             return 'Value<path={0}, state={1}, value={2}>'.format(
                 self.path, self.state, self.value)
 
-    def __init__(self, client):
+    def __init__(self, client, mode='config'):
         self._client = client
+        self._mode = mode
         self._schema_cache = {}
         self._module_prefix_map_cache = None
         self._values = []
         self._values_dirty = False
 
     def build(self, parent, maybe_qname, value, schema=None):
-        qname, name = self._get_prefix_name(maybe_qname)
+        qname, name = self.get_prefix_name(maybe_qname)
         if name is None:
             path = parent
         else:
@@ -329,16 +350,16 @@ class ValueBuilder(object):
                     self._add_value(path, State.PRESENT, None, deps)
             else:
                 if maybe_qname is None:
-                    value_type = self._get_type(path)
+                    value_type = self.get_type(path)
                 else:
                     value_type = self._get_child_type(parent, qname)
 
                 if 'identityref' in value_type:
                     if isinstance(value, list):
                         value = [ll_v for ll_v, t_ll_v
-                                 in [self._get_prefix_name(v) for v in value]]
+                                 in [self.get_prefix_name(v) for v in value]]
                     else:
-                        value, t_value = self._get_prefix_name(value)
+                        value, t_value = self.get_prefix_name(value)
                 self._add_value(path, State.SET, value, deps)
         elif isinstance(value, dict):
             self._build_dict(path, schema, value)
@@ -420,7 +441,7 @@ class ValueBuilder(object):
     def _build_dict(self, path, schema, value):
         keys = schema.get('key', [])
         for dict_key, dict_value in value.items():
-            qname, name = self._get_prefix_name(dict_key)
+            qname, name = self.get_prefix_name(dict_key)
             if dict_key in ('__state', ) or name in keys:
                 continue
 
@@ -429,16 +450,25 @@ class ValueBuilder(object):
 
     def _build_leaf_list(self, path, schema, value):
         deps = schema.get('deps', [])
-        entry_type = self._get_type(path, schema)
-        # remove leaf list if treated as a list and then re-create the
-        # expected list entries.
-        self._add_value(path, State.ABSENT, None, deps)
+        entry_type = self.get_type(path, schema)
 
-        for entry in value:
-            if 'identityref' in entry_type:
-                entry, t_entry = self._get_prefix_name(entry)
-            entry_path = '{0}{{{1}}}'.format(path, entry)
-            self._add_value(entry_path, State.PRESENT, None, deps)
+        if self._mode == 'verify':
+            for entry in value:
+                if 'identityref' in entry_type:
+                    entry, t_entry = self.get_prefix_name(entry)
+                entry_path = '{0}{{{1}}}'.format(path, entry)
+                if not self._client.exists(entry_path):
+                    self._add_value(entry_path, State.ABSENT, None, deps)
+        else:
+            # remove leaf list if treated as a list and then re-create the
+            # expected list entries.
+            self._add_value(path, State.ABSENT, None, deps)
+
+            for entry in value:
+                if 'identityref' in entry_type:
+                    entry, t_entry = self.get_prefix_name(entry)
+                entry_path = '{0}{{{1}}}'.format(path, entry)
+                self._add_value(entry_path, State.PRESENT, None, deps)
 
     def _build_list(self, path, schema, value):
         deps = schema.get('deps', [])
@@ -470,7 +500,7 @@ class ValueBuilder(object):
 
             value_type = self._get_child_type(path, key)
             if 'identityref' in value_type:
-                value, t_value = self._get_prefix_name(value)
+                value, t_value = self.get_prefix_name(value)
             key_parts.append(self._quote_key(value))
         return ' '.join(key_parts)
 
@@ -513,7 +543,7 @@ class ValueBuilder(object):
         self._values.append(ValueBuilder.Value(path, state, value, deps))
         self._values_dirty = True
 
-    def _get_prefix_name(self, qname):
+    def get_prefix_name(self, qname):
         if not isinstance(qname, (str, unicode)):
             return qname, None
         if ':' not in qname:
@@ -536,9 +566,9 @@ class ValueBuilder(object):
         parent_schema = all_schema['data']
         meta = all_schema['meta']
         schema = self._find_child(parent_path, parent_schema, key)
-        return self._get_type(parent_path, schema, meta)
+        return self.get_type(parent_path, schema, meta)
 
-    def _get_type(self, path, schema=None, meta=None):
+    def get_type(self, path, schema=None, meta=None):
         if schema is None or meta is None:
             all_schema = self._ensure_schema_cached(path)
             schema = all_schema['data']
@@ -620,15 +650,12 @@ class ValueBuilder(object):
 
 
 def connect(params):
-    client = JsonRpc(params['url'])
+    client = JsonRpc(params['url'], params['timeout'])
     client.login(params['username'], params['password'])
     return client
 
 
-def verify_version(client, required_versions=None):
-    if required_versions is None:
-        required_versions = [(4, 5), (4, 4, 3)]
-
+def verify_version(client, required_versions):
     version_str = client.get_system_setting('version')
     if not verify_version_str(version_str, required_versions):
         supported_versions = ', '.join(
@@ -669,7 +696,8 @@ def verify_version_str(version_str, required_versions):
 def normalize_value(expected_value, value, key):
     if value is None:
         return None
-    if isinstance(expected_value, bool):
+    if (isinstance(expected_value, bool) and
+            isinstance(value, (str, unicode))):
         return value == 'true'
     if isinstance(expected_value, int):
         try:

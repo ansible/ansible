@@ -1,0 +1,27 @@
+- name: Create an SCM Credential
+  tower_credential:
+    name: SCM Credential for Project
+    organization: Default
+    kind: scm
+
+- name: Create a Project
+  tower_project:
+    name: my-project
+    organization: Default
+    state: present
+    scm_credential: SCM Credential for Project
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Delete a Project
+  tower_project:
+    name: my-project
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - "result is changed"

@@ -22,8 +22,7 @@ and vCenter infrastcture. You can install pyVmomi using pip:
 vmware_guest module
 ```````````````````
 
-The :ref:vmware_guest <vmware_guest>module is used to manage various operations related to virtual machines in
-the given ESXi or vCenter server.
+The :ref:`vmware_guest<vmware_guest_module>` module manages various operations related to virtual machines in the given ESXi or vCenter server.
 
 Prior to Ansible version 2.5, ``folder`` was an optional parameter with a default value of ``/vm``. The folder parameter
  was used to discover information about virtual machines in the given infrastructure.
@@ -55,6 +54,6 @@ When debugging or creating a new issue, you will need information about your VMw
         The issue tracker for the pyVmomi project
     `govc <https://github.com/vmware/govmomi/tree/master/govc>`_
         govc is a vSphere CLI built on top of govmomi
-    :doc:`playbooks`
+    :ref:`working_with_playbooks`
         An introduction to playbooks
 

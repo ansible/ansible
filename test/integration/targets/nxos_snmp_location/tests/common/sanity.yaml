@@ -5,20 +5,14 @@
 
 - name: Setup - Remove snmp_location if configured
   nxos_snmp_location: &remove
-    location: Test
+    location: Test 
     state: absent
-    timeout: 60
-    provider: "{{ connection }}"
-  ignore_errors: yes
 
 - block:
-
-  - name: Configure snmp host
+  - name: Configure snmp location 
     nxos_snmp_location: &config
-      location: Test
+      location: Testing
       state: present
-      timeout: 60
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -33,17 +27,35 @@
       that:
         - "result.changed == false"
 
-  always:
-  - name: Cleanup
+  - name: Change snmp location 
+    nxos_snmp_location: &config1
+      location: Test
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: Idempotence Check
+    nxos_snmp_location: *config1
+    register: result
+
+  - assert: *false
+
+  - name: remove snmp location
     nxos_snmp_location: *remove
     register: result
 
   - assert: *true
 
-  - name: Cleanup Idempotence
+  - name: Remove Idempotence
     nxos_snmp_location: *remove
     register: result
 
   - assert: *false
+
+  always:
+  - name: Cleanup
+    nxos_snmp_location: *remove
+    register: result
 
   - debug: msg="END connection={{ ansible_connection }} nxos_snmp_location sanity test"

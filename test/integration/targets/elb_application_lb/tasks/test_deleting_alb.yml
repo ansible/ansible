@@ -1,0 +1,52 @@
+- block:
+
+  - name: set connection information for all tasks
+    set_fact:
+      aws_connection_info: &aws_connection_info
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region }}"
+    no_log: yes
+
+  - name: destroy ALB with listener
+    elb_application_lb:
+      name: "{{ alb_name }}"
+      subnets: "{{ alb_subnets }}"
+      security_groups: "{{ sec_group.group_id }}"
+      state: absent
+      listeners:
+        - Protocol: HTTP
+          Port: 80
+          DefaultActions:
+            - Type: forward
+              TargetGroupName: "{{ tg_name }}"
+      <<: *aws_connection_info
+      wait: yes
+      wait_timeout: 300
+    register: alb
+
+  - assert:
+      that:
+        - alb.changed
+
+  - name: test idempotence
+    elb_application_lb:
+      name: "{{ alb_name }}"
+      subnets: "{{ alb_subnets }}"
+      security_groups: "{{ sec_group.group_id }}"
+      state: absent
+      listeners:
+        - Protocol: HTTP
+          Port: 80
+          DefaultActions:
+            - Type: forward
+              TargetGroupName: "{{ tg_name }}"
+      <<: *aws_connection_info
+      wait: yes
+      wait_timeout: 300
+    register: alb
+
+  - assert:
+      that:
+        - not alb.changed

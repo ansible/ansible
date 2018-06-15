@@ -23,7 +23,7 @@ description:
     the description, and things unrelated to the policy rules themselves.
     It is also the first module that should be used when creating rules as
     the C(bigip_policy_rule) module requires a policy parameter.
-version_added: "2.5"
+version_added: 2.5
 options:
   description:
     description:
@@ -47,6 +47,7 @@ options:
       - present
       - absent
       - draft
+    default: present
   strategy:
     description:
       - Specifies the method to determine which actions get executed in the
@@ -168,30 +169,23 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 from distutils.version import LooseVersion
 
-HAS_DEVEL_IMPORTS = False
-
 try:
-    # Sideband repository used for dev
     from library.module_utils.network.f5.bigip import HAS_F5SDK
     from library.module_utils.network.f5.bigip import F5Client
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
     from library.module_utils.network.f5.common import f5_argument_spec
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    # Upstream Ansible
     from ansible.module_utils.network.f5.bigip import HAS_F5SDK
     from ansible.module_utils.network.f5.bigip import F5Client
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError

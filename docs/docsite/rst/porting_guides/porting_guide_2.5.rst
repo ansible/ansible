@@ -27,8 +27,7 @@ static ``import_*`` would be inherited by the tasks within.
 
 This separation was only partially implemented in Ansible version 2.4. As of Ansible version 2.5, this work is complete and the separation now behaves as designed; attributes applied to an ``include_*`` task will not be inherited by the tasks within.
 
-To achieve an outcome similar to how Ansible worked prior to version 2.5, playbooks
-should use an explicit application of the attribute on the needed tasks, or use blocks to apply the attribute to many tasks. Another option is to use a static ``import_*`` when possible instead of a dynamic task.
+To achieve an outcome similar to how Ansible worked prior to version 2.5, playbooks should use an explicit application of the attribute on the needed tasks, or use blocks to apply the attribute to many tasks. Another option is to use a static ``import_*`` when possible instead of a dynamic task.
 
 **OLD** In Ansible 2.4:
 
@@ -38,6 +37,17 @@ should use an explicit application of the attribute on the needed tasks, or use 
       tags:
         - distro_include
 
+Included file:
+
+.. code-block:: yaml
+
+    - block:
+        - debug:
+            msg: "In included file"
+
+        - apt:
+            name: nginx
+            state: latest
 
 **NEW** In Ansible 2.5:
 
@@ -63,6 +73,30 @@ Included file:
       tags:
         - distro_include
 
+The relevant change in those examples is, that in Ansible 2.5, the included file defines the tag ``distro_include`` again. The tag is not inherited automatically.
+
+Fixed handling of keywords and inline variables
+-----------------------------------------------
+
+We made several fixes to how we handle keywords and 'inline variables', to avoid conflating the two. Unfortunately these changes mean you must specify whether `name` is a keyword or a variable when calling roles. If you have playbooks that look like this::
+
+    roles:
+        - { role: myrole, name: Justin, othervar: othervalue, become: True}
+
+You will run into errors because Ansible reads name in this context as a keyword. Beginning in 2.5, if you want to use a variable name that is also a keyword, you must explicitly declare it as a variable for the role::
+
+    roles:
+        - { role: myrole, vars: {name: Justin, othervar: othervalue}, become: True}
+
+
+For a full list of keywords see ::ref::`Playbook Keywords`.
+
+Migrating from with_X to loop
+-----------------------------
+
+.. include:: ../user_guide/shared_snippets/with2loop.txt
+
+
 Deprecated
 ==========
 
@@ -71,7 +105,7 @@ Jinja tests used as filters
 
 Using Ansible-provided jinja tests as filters will be removed in Ansible 2.9.
 
-Prior to Ansible 2.5, jinja tests included within Ansible were most often used as filters. The large difference in use is that filters are referenced as ``variable | filter_name`` where as jinja tests are refereced as ``variable is test_name``.
+Prior to Ansible 2.5, jinja tests included within Ansible were most often used as filters. The large difference in use is that filters are referenced as ``variable | filter_name`` while jinja tests are referenced as ``variable is test_name``.
 
 Jinja tests are used for comparisons, while filters are used for data manipulation and have different applications in jinja. This change is to help differentiate the concepts for a better understanding of jinja, and where each can be appropriately used.
 
@@ -99,7 +133,7 @@ In addition to the deprecation warnings, many new tests have been introduced tha
 
     when: result is successful
 
-See :doc:`playbooks_tests` for more information.
+See :ref:`playbooks_tests` for more information.
 
 Additionally, a script was created to assist in the conversion for tests using filter syntax to proper jinja test syntax. This script has been used to convert all of the Ansible integration tests to the correct format. There are a few limitations documented, and all changes made by this script should be evaluated for correctness before executing the modified playbooks. The script can be found at `https://github.com/ansible/ansible/blob/devel/hacking/fix_test_syntax.py <https://github.com/ansible/ansible/blob/devel/hacking/fix_test_syntax.py>`_.
 
@@ -120,41 +154,60 @@ Modules removed
 
 The following modules no longer exist:
 
-* :ref:`nxos_mtu <nxos_mtu>` use :ref:`nxos_system <nxos_system>`'s ``system_mtu`` option or :ref:`nxos_interface <nxos_interface>` instead
-* :ref:`cl_interface_policy <cl_interface_policy>` use :ref:`nclu <nclu>` instead
-* :ref:`cl_bridge <cl_bridge>` use :ref:`nclu <nclu>` instead
-* :ref:`cl_img_install <cl_img_install>` use :ref:`nclu <nclu>` instead
-* :ref:`cl_ports <cl_ports>` use :ref:`nclu <nclu>` instead
-* :ref:`cl_license <cl_license>` use :ref:`nclu <nclu>` instead
-* :ref:`cl_interface <cl_interface>` use :ref:`nclu <nclu>` instead
-* :ref:`cl_bond <cl_bond>` use :ref:`nclu <nclu>` instead
-* :ref:`ec2_vpc <ec2_vpc>` use :ref:`ec2_vpc_net <ec2_vpc_net>` along with supporting modules :ref:`ec2_vpc_igw <ec2_vpc_igw>`, :ref:`ec2_vpc_route_table <ec2_vpc_route_table>`, :ref:`ec2_vpc_subnet <ec2_vpc_subnet>`, :ref:`ec2_vpc_dhcp_options <ec2_vpc_dhcp_options>`, :ref:`ec2_vpc_nat_gateway <ec2_vpc_nat_gateway>`, :ref:`ec2_vpc_nacl <ec2_vpc_nacl>` instead.
-* :ref:`ec2_ami_search <ec2_ami_search>` use :ref:`ec2_ami_facts <ec2_ami_facts>` instead
-* :ref:`docker <docker>` use :ref:`docker_container <docker_container>` and :ref:`docker_image <docker_image>` instead
+* :ref:`nxos_mtu <nxos_mtu_module>` use :ref:`nxos_system <nxos_system_module>`'s ``system_mtu`` option or :ref:`nxos_interface <nxos_interface_module>` instead
+* :ref:`cl_interface_policy <cl_interface_policy_module>` use :ref:`nclu <nclu_module>` instead
+* :ref:`cl_bridge <cl_bridge_module>` use :ref:`nclu <nclu_module>` instead
+* :ref:`cl_img_install <cl_img_install_module>` use :ref:`nclu <nclu_module>` instead
+* :ref:`cl_ports <cl_ports_module>` use :ref:`nclu <nclu_module>` instead
+* :ref:`cl_license <cl_license_module>` use :ref:`nclu <nclu_module>` instead
+* :ref:`cl_interface <cl_interface_module>` use :ref:`nclu <nclu_module>` instead
+* :ref:`cl_bond <cl_bond_module>` use :ref:`nclu <nclu_module>` instead
+* :ref:`ec2_vpc <ec2_vpc_module>` use :ref:`ec2_vpc_net <ec2_vpc_net_module>` along with supporting modules :ref:`ec2_vpc_igw <ec2_vpc_igw_module>`, :ref:`ec2_vpc_route_table <ec2_vpc_route_table_module>`, :ref:`ec2_vpc_subnet <ec2_vpc_subnet_module>`, :ref:`ec2_vpc_dhcp_option <ec2_vpc_dhcp_option_module>`, :ref:`ec2_vpc_nat_gateway <ec2_vpc_nat_gateway_module>`, :ref:`ec2_vpc_nacl <ec2_vpc_nacl_module>` instead.
+* :ref:`ec2_ami_search <ec2_ami_search_module>` use :ref:`ec2_ami_facts <ec2_ami_facts_module>` instead
+* :ref:`docker <docker_module>` use :ref:`docker_container <docker_container_module>` and :ref:`docker_image <docker_image_module>` instead
 
 Deprecation notices
 -------------------
 
-The following modules will be removed in Ansible 2.9. Please update update your playbooks accordingly.
+The following modules will be removed in Ansible 2.9. Please update your playbooks accordingly.
 
 * Apstra's ``aos_*`` modules are deprecated as they do not work with AOS 2.1 or higher. See new modules at `https://github.com/apstra <https://github.com/apstra>`_.
-* :ref:`nxos_ip_interface <nxos_ip_interface>` use :ref:`nxos_l3_interface <nxos_l3_interface>` instead.
-* :ref:`nxos_portchannel <nxos_portchannel>` use :ref:`nxos_linkagg <nxos_linkagg>` instead.
-* :ref:`nxos_switchport <nxos_switchport>` use :ref:`nxos_l2_interface <nxos_l2_interface>` instead.
-* :ref:`panos_security_policy <panos_security_policy>` use :ref:`panos_security_rule <panos_security_rule>` instead.
-* :ref:`panos_nat_policy <panos_nat_policy>` use :ref:`panos_nat_rule <panos_nat_rule>` instead.
-* :ref:`vsphere_guest <vsphere_guest>` use :ref:`vmware_guest <vmware_guest>` instead.
+* :ref:`nxos_ip_interface <nxos_ip_interface_module>` use :ref:`nxos_l3_interface <nxos_l3_interface_module>` instead.
+* :ref:`nxos_portchannel <nxos_portchannel_module>` use :ref:`nxos_linkagg <nxos_linkagg_module>` instead.
+* :ref:`nxos_switchport <nxos_switchport_module>` use :ref:`nxos_l2_interface <nxos_l2_interface_module>` instead.
+* :ref:`panos_security_policy <panos_security_policy_module>` use :ref:`panos_security_rule <panos_security_rule_module>` instead.
+* :ref:`panos_nat_policy <panos_nat_policy_module>` use :ref:`panos_nat_rule <panos_nat_rule_module>` instead.
+* :ref:`vsphere_guest <vsphere_guest_module>` use :ref:`vmware_guest <vmware_guest_module>` instead.
 
 Noteworthy module changes
 -------------------------
 
-* The :ref:`stat <stat>` and :ref:`win_stat <win_stat>` modules have changed the default of the option ``get_md5`` from ``true`` to ``false``.
+* The :ref:`stat <stat_module>` and :ref:`win_stat <win_stat_module>` modules have changed the default of the option ``get_md5`` from ``true`` to ``false``.
 
 This option will be removed starting with Ansible version 2.9. The options ``get_checksum: True``
 and ``checksum_algorithm: md5`` can still be used if an MD5 checksum is
 desired.
 
-* ``osx_say`` module was renamed into :ref:`say <say>`.
+* ``osx_say`` module was renamed into :ref:`say <say_module>`.
+* Several modules which could deal with symlinks had the default value of their ``follow`` option
+  changed as part of a feature to `standardize the behavior of follow
+  <https://github.com/ansible/proposals/issues/69>`_:
+
+  * The :ref:`file module <file_module>` changed from ``follow=False`` to ``follow=True`` because
+    its purpose is to modify the attributes of a file and most systems do not allow attributes to be
+    applied to symlinks, only to real files.
+  * The :ref:`replace module <replace_module>` had its ``follow`` parameter removed because it
+    inherently modifies the content of an existing file so it makes no sense to operate on the link
+    itself.
+  * The :ref:`blockinfile module <blockinfile_module>` had its ``follow`` parameter removed because
+    it inherently modifies the content of an existing file so it makes no sense to operate on the
+    link itself.
+  * In Ansible-2.5.3, the :ref:`template module <template_module>` became more strict about its
+    ``src`` file being proper utf-8.  Previously, non-utf8 contents in a template module src file
+    would result in a mangled output file (the non-utf8 characters would be replaced with a unicode
+    replacement character).  Now, on Python2, the module will error out with the message, "Template
+    source files must be utf-8 encoded".  On Python3, the module will first attempt to pass the
+    non-utf8 characters through verbatim and fail if that does not succeed.
 
 Plugins
 =======
@@ -168,7 +221,7 @@ Inventory plugins have been fine tuned, and we have started to add some common f
 
 * The ability to use a cache plugin to avoid costly API/DB queries is disabled by default.
   If using inventory scripts, some may already support a cache, but it is outside of Ansible's knowledge and control.
-  Moving to the interal cache will allow you to use Ansible's existing cache refresh/invalidation mechanisms.
+  Moving to the internal cache will allow you to use Ansible's existing cache refresh/invalidation mechanisms.
 
 * A new 'auto' plugin, enabled by default, that can automatically detect the correct plugin to use IF that plugin is using our 'common YAML configuration format'.
   The previous host_list, script, yaml and ini plugins still work as they did, the auto plugin is now the last one we attempt to use.
@@ -181,7 +234,7 @@ Shell plugins have been migrated to the new plugin configuration framework. It i
 
 For example, ``system_temps`` is a new setting that allows you to control what Ansible will consider a 'system temporary dir'. This is used when escalating privileges for a non-administrative user. Previously this was hardcoded to '/tmp', which some systems cannot use for privilege escalation. This setting now defaults to ``[ '/var/tmp', '/tmp']``.
 
-Another new setting is ``admin_users`` which allows you to specify a list of users to be considered 'administrators'. Previouslu this was hardcoded to ``root``. It now it defaults to ``[root, toor, admin]``.  This information is used when choosing between your ``remote_temp`` and ``system_temps`` directory.
+Another new setting is ``admin_users`` which allows you to specify a list of users to be considered 'administrators'. Previously this was hardcoded to ``root``. It now it defaults to ``[root, toor, admin]``.  This information is used when choosing between your ``remote_temp`` and ``system_temps`` directory.
 
 For a full list, check the shell plugin you are using, the default shell plugin is ``sh``.
 
@@ -194,17 +247,32 @@ Filter
 The lookup plugin API now throws an error if a non-iterable value is returned from a plugin. Previously, numbers or
 other non-iterable types returned by a plugin were accepted without error or warning. This change was made because plugins should always return a list. Please note that plugins that return strings and other non-list iterable values will not throw an error, but may cause unpredictable behavior. If you have a custom lookup plugin that does not return a list, you should modify it to wrap the return values in a list.
 
+Lookup
+-------
+
+A new option was added to lookup plugins globally named ``error`` which allows you to control how errors produced by the lookup are handled, before this option they were always fatal. Valid values for this option are ``warn``, ``ignore`` and ``strict``. See the :doc:`lookup <../plugins/lookup>` page for more details.
+
+
 Porting custom scripts
 ======================
 
 No notable changes.
 
-Networking
-==========
+Network
+=======
 
+Expanding documentation
+-----------------------
 
-Change in deprecation notice of top-level connection arguments
---------------------------------------------------------------
+We're expanding the network documentation. There's new content and a :ref:`new Ansible Network landing page<network_guide>`. We will continue to build the network-related documentation moving forward.
+
+Top-level connection arguments will be removed in 2.9
+-----------------------------------------------------
+
+Top-level connection arguments like ``username``, ``host``, and ``password`` are deprecated and will be removed in version 2.9.
+
+**OLD** In Ansible < 2.4
+
 .. code-block:: yaml
 
     - name: example of using top-level options for connection properties
@@ -216,19 +284,7 @@ Change in deprecation notice of top-level connection arguments
         authorize: yes
         auth_pass: cisco
 
-**OLD** In Ansible 2.4:
-
-Will result in:
-
-.. code-block:: yaml
-
-   [WARNING]: argument username has been deprecated and will be removed in a future version
-   [WARNING]: argument host has been deprecated and will be removed in a future version
-   [WARNING]: argument password has been deprecated and will be removed in a future version
-
-
-**NEW** In Ansible 2.5:
-
+The deprecation warnings reflect this schedule. The task above, run in Ansible 2.5, will result in:
 
 .. code-block:: yaml
 
@@ -239,13 +295,51 @@ Will result in:
    [DEPRECATION WARNING]: Param 'host' is deprecated. See the module docs for more information. This feature will be removed in version 2.9.
    Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.
 
-Notice when using provider dictionary with new persistent connection types
---------------------------------------------------------------------------
+We recommend using the new connection types ``network_cli`` and ``netconf`` (see below), using standard Ansible connection properties, and setting those properties in inventory by group. As you update your playbooks and inventory files, you can easily make the change to ``become`` for privilege escalation (on platforms that support it). For more information, see the :ref:`using become with network modules<become-network>` guide and the :ref:`platform documentation<platform_options>`.
 
-Using a provider dictionary with one of the new persistent connection types for networking
-(network_cli, netconf, etc.) will result in a warning. When using these connections
-the standard Ansible infrastructure for controlling connections should be used.
-(Link to basic inventory documentation?)
+Adding persistent connection types ``network_cli`` and ``netconf``
+------------------------------------------------------------------
+
+Ansible 2.5 introduces two top-level persistent connection types, ``network_cli`` and ``netconf``. With ``connection: local``, each task passed the connection parameters, which had to be stored in your playbooks. With ``network_cli`` and ``netconf`` the playbook passes the connection parameters once, so you can pass them at the command line if you prefer. We recommend you use ``network_cli`` and ``netconf`` whenever possible.
+Note that eAPI and NX-API still require ``local`` connections with ``provider`` dictionaries. See the :ref:`platform documentation<platform_options>` for more information. Unless you need a ``local`` connection, update your playbooks to use ``network_cli`` or ``netconf`` and to specify your connection variables with standard Ansible connection variables:
+
+**OLD** In Ansible 2.4
+
+.. code-block:: yaml
+
+   ---
+   vars:
+       cli:
+          host: "{{ inventory_hostname }}"
+          username: operator
+          password: secret
+          transport: cli
+
+   tasks:
+   - nxos_config:
+       src: config.j2
+       provider: "{{ cli }}"
+       username: admin
+       password: admin
+
+**NEW** In Ansible 2.5
+
+.. code-block:: ini
+
+   [nxos:vars]
+   ansible_connection=network_cli
+   ansible_network_os=nxos
+   ansible_user=operator
+   ansible_password=secret
+
+.. code-block:: yaml
+
+   tasks:
+   - nxos_config:
+       src: config.j2
+
+Using a provider dictionary with either ``network_cli`` or ``netconf`` will result in a warning.
+
 
 Developers: Shared Module Utilities Moved
 -----------------------------------------
@@ -258,17 +352,17 @@ Beginning with Ansible 2.5, shared module utilities for network modules moved to
 
 If your module uses shared module utilities, you must update all references. For example, change:
 
-OLD In Ansible 2.4
+**OLD** In Ansible 2.4
 
 .. code-block:: python
 
    from ansible.module_utils.vyos import get_config, load_config
 
-NEW In Ansible 2.5
+**NEW** In Ansible 2.5
 
 .. code-block:: python
 
    from ansible.module_utils.network.vyos.vyos import get_config, load_config
 
 
-See the module utilities developer guide see :doc:`dev_guide/developing_module_utilities` for more information.
+See the module utilities developer guide see :ref:`appendix_module_utilities` for more information.

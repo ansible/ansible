@@ -6,12 +6,26 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    author: Ansible Core Team
-    connection: persistent
-    short_description: Use a persistent unix socket for connection
+author: Ansible Core Team
+connection: persistent
+short_description: Use a persistent unix socket for connection
+description:
+  - This is a helper plugin to allow making other connections persistent.
+version_added: "2.3"
+options:
+  persistent_command_timeout:
+    type: int
     description:
-        - This is a helper plugin to allow making other connections persistent.
-    version_added: "2.3"
+      - Configures, in seconds, the amount of time to wait for a command to
+        return from the remote device.  If this timer is exceeded before the
+        command returns, the connection plugin will raise an exception and
+        close
+    default: 10
+    ini:
+      - section: persistent_connection
+        key: command_timeout
+    env:
+      - name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT
 """
 import os
 import pty
@@ -78,9 +92,21 @@ class Connection(ConnectionBase):
         master, slave = pty.openpty()
 
         python = sys.executable
-        # Assume ansible-connection is in the same dir as sys.argv[0]
-        ansible_connection = os.path.join(os.path.dirname(sys.argv[0]), 'ansible-connection')
-        p = subprocess.Popen([python, ansible_connection, to_text(os.getppid())], stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        def find_file_in_path(filename):
+            # Check $PATH first, followed by same directory as sys.argv[0]
+            paths = os.environ['PATH'].split(os.pathsep) + [os.path.dirname(sys.argv[0])]
+            for dirname in paths:
+                fullpath = os.path.join(dirname, filename)
+                if os.path.isfile(fullpath):
+                    return fullpath
+
+            raise AnsibleError("Unable to find location of '%s'" % filename)
+
+        p = subprocess.Popen(
+            [python, find_file_in_path('ansible-connection'), to_text(os.getppid())],
+            stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
         stdin = os.fdopen(master, 'wb', 0)
         os.close(slave)
 
@@ -91,8 +117,12 @@ class Connection(ConnectionBase):
         # that means only protocol=0 will work.
         src = cPickle.dumps(self._play_context.serialize(), protocol=0)
         stdin.write(src)
-
         stdin.write(b'\n#END_INIT#\n')
+
+        src = cPickle.dumps({}, protocol=0)
+        stdin.write(src)
+        stdin.write(b'\n#END_VARS#\n')
+
         stdin.flush()
 
         (stdout, stderr) = p.communicate()
@@ -103,7 +133,8 @@ class Connection(ConnectionBase):
         else:
             try:
                 result = json.loads(to_text(stderr, errors='surrogate_then_replace'))
-            except json.decoder.JSONDecodeError:
+            except getattr(json.decoder, 'JSONDecodeError', ValueError):
+                # JSONDecodeError only available on Python 3.5+
                 result = {'error': to_text(stderr, errors='surrogate_then_replace')}
 
         if 'messages' in result:

@@ -4,32 +4,124 @@
   when: ansible_connection == "local"
 
 - block:
+  - name: remove configuration
+    nxos_system: &remove
+      state: absent
+    register: result
+    ignore_errors: yes
+
+  - name: configure domain lookup
+    nxos_system: &dlo
+      domain_lookup: true
+      state: present
+    register: result
+
   - name: configure hostname and domain-name
     nxos_system: &hostname
       hostname: switch
       domain_name: test.example.com
-      provider: "{{ connection }}"
+    register: result
 
-  - name: remove configuration
-    nxos_system:
-      state: absent
-      provider: "{{ connection }}"
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: Idempotence check
+    nxos_system: *hostname
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
 
   - name: configure name servers
-    nxos_system:
+    nxos_system: &ns
       name_servers:
         - 8.8.8.8
         - 8.8.4.4
-      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: Idempotence check
+    nxos_system: *ns
+    register: result
+
+  - assert: *false
 
   - name: configure name servers with VRF support
-    nxos_system:
+    nxos_system: &nsv
       name_servers:
         - { server: 8.8.8.8, vrf: management }
         - { server: 8.8.4.4, vrf: management }
-      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: Idempotence check
+    nxos_system: *nsv
+    register: result
+
+  - assert: *false
+
+  - name: configure domain lookup1
+    nxos_system: &ndlo
+      domain_lookup: false
+    register: result
+
+  - assert: *true
+
+  - name: Idempotence check
+    nxos_system: *ndlo
+    register: result
+
+  - assert: *false
+
+  - name: configure domain lookup2
+    nxos_system: *dlo
+    register: result
+
+  - assert: *true
+
+  - name: Idempotence check
+    nxos_system: *dlo
+    register: result
+
+  - assert: *false
+
+  - name: configure system mtu
+    nxos_system: &sysmtu
+      system_mtu: 3000
+    register: result
+
+  - assert: *true
+
+  - name: Idempotence check
+    nxos_system: *sysmtu
+    register: result
+
+  - assert: *false
+
+  - name: default configuration
+    nxos_system: &default
+      hostname: default
+      domain_name: default
+      name_servers: default
+      system_mtu: default
+    register: result
+
+  - assert: *true
+
+  - name: Idempotence check
+    nxos_system: *default
+    register: result
+
+  - assert: *false
 
   always:
+  - name: remove configuration
+    nxos_system: *remove
+
   - name: Re-configure hostname
     nxos_system: *hostname
 

@@ -73,12 +73,30 @@ EXAMPLES = '''
     commit: true
     description: "Ansible - add swps1-48"
 
+- name: Fetch Details From All Interfaces In JSON Format
+  nclu:
+    commands:
+        - show interface json
+  register: output
+- name: Print Interface Details
+  debug:
+    var: output["msg"]
+
 - name: Atomically add an interface
   nclu:
     commands:
         - add int swp1
     atomic: true
     description: "Ansible - add swp1"
+
+- name: Configure BGP AS and add 2 EBGP neighbors using BGP Unnumbered
+  nclu:
+    commands:
+        - add bgp autonomous-system 65000
+        - add bgp neighbor swp51 interface remote-as external
+        - add bgp neighbor swp52 interface remote-as external
+    commit: true
+
 '''
 
 RETURN = '''

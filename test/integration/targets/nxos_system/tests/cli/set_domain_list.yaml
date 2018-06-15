@@ -7,14 +7,12 @@
       - no ip domain-list ansible.com
       - no ip domain-list redhat.com
     match: none
-    provider: "{{ cli }}"
 
 - name: configure domain_list
   nxos_system:
     domain_search:
       - ansible.com
       - redhat.com
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -28,7 +26,6 @@
     domain_search:
       - ansible.com
       - redhat.com
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -39,7 +36,6 @@
   nxos_system:
     domain_search:
       - ansible.com
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -51,7 +47,6 @@
   nxos_system:
     domain_search:
       - ansible.com
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -63,7 +58,6 @@
     domain_search:
       - ansible.com
       - redhat.com
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -76,7 +70,6 @@
     domain_search:
       - ansible.com
       - redhat.com
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -88,7 +81,6 @@
     domain_search:
       - ansible.com
       - eng.ansible.com
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -103,7 +95,6 @@
     domain_search:
       - ansible.com
       - eng.ansible.com
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -117,6 +108,5 @@
       - no ip domain-list redhat.com
       - no ip domain-list eng.ansible.com
     match: none
-    provider: "{{ cli }}"
 
 - debug: msg="END cli/set_domain_search.yaml"

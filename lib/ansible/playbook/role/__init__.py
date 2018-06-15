@@ -223,57 +223,45 @@ class Role(Base, Become, Conditional, Taggable):
                                          obj=handler_data, orig_exc=e)
 
         # vars and default vars are regular dictionaries
-        self._role_vars = self._load_role_yaml('vars', main=self._from_files.get('vars'))
+        self._role_vars = self._load_role_yaml('vars', main=self._from_files.get('vars'), allow_dir=True)
         if self._role_vars is None:
             self._role_vars = dict()
         elif not isinstance(self._role_vars, dict):
             raise AnsibleParserError("The vars/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
 
-        self._default_vars = self._load_role_yaml('defaults', main=self._from_files.get('defaults'))
+        self._default_vars = self._load_role_yaml('defaults', main=self._from_files.get('defaults'), allow_dir=True)
         if self._default_vars is None:
             self._default_vars = dict()
         elif not isinstance(self._default_vars, dict):
             raise AnsibleParserError("The defaults/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
 
-    def _load_role_yaml(self, subdir, main=None):
+    def _load_role_yaml(self, subdir, main=None, allow_dir=False):
         file_path = os.path.join(self._role_path, subdir)
         if self._loader.path_exists(file_path) and self._loader.is_directory(file_path):
-            main_file = self._resolve_main(file_path, main)
-            if self._loader.path_exists(main_file):
-                return self._loader.load_from_file(main_file)
+            # Valid extensions and ordering for roles is hard-coded to maintain
+            # role portability
+            extensions = ['.yml', '.yaml', '.json']
+            # If no <main> is specified by the user, look for files with
+            # extensions before bare name. Otherwise, look for bare name first.
+            if main is None:
+                _main = 'main'
+                extensions.append('')
+            else:
+                _main = main
+                extensions.insert(0, '')
+            found_files = self._loader.find_vars_files(file_path, _main, extensions, allow_dir)
+            if found_files:
+                data = {}
+                for found in found_files:
+                    new_data = self._loader.load_from_file(found)
+                    if new_data and allow_dir:
+                        data = combine_vars(data, new_data)
+                    else:
+                        data = new_data
+                    return data
             elif main is not None:
                 raise AnsibleParserError("Could not find specified file in role: %s/%s" % (subdir, main))
         return None
-
-    def _resolve_main(self, basepath, main=None):
-        ''' flexibly handle variations in main filenames '''
-
-        post = False
-        # allow override if set, otherwise use default
-        if main is None:
-            main = 'main'
-            post = True
-
-        bare_main = os.path.join(basepath, main)
-
-        possible_mains = (
-            os.path.join(basepath, '%s.yml' % main),
-            os.path.join(basepath, '%s.yaml' % main),
-            os.path.join(basepath, '%s.json' % main),
-        )
-
-        if post:
-            possible_mains = possible_mains + (bare_main,)
-        else:
-            possible_mains = (bare_main,) + possible_mains
-
-        if sum([self._loader.is_file(x) for x in possible_mains]) > 1:
-            raise AnsibleError("found multiple main files at %s, only one allowed" % (basepath))
-        else:
-            for m in possible_mains:
-                if self._loader.is_file(m):
-                    return m  # exactly one main file
-            return possible_mains[0]  # zero mains (we still need to return something)
 
     def _load_dependencies(self):
         '''
@@ -422,9 +410,7 @@ class Role(Base, Become, Conditional, Taggable):
             block_list.extend(dep_blocks)
 
         for idx, task_block in enumerate(self._task_blocks):
-            new_task_block = task_block.copy(exclude_parent=True)
-            if task_block._parent:
-                new_task_block._parent = task_block._parent.copy()
+            new_task_block = task_block.copy()
             new_task_block._dep_chain = new_dep_chain
             new_task_block._play = play
             if idx == len(self._task_blocks) - 1:

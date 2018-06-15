@@ -1,0 +1,43 @@
+---
+- debug: msg="START ios cli/net_get.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+
+- name: setup
+  ios_config:
+    lines:
+      - ip ssh version 2
+      - ip scp server enable
+      - username {{ ansible_ssh_user }} privilege 15
+    match: none
+
+- name: setup (copy file to be fetched from device)
+  net_put:
+    src: ios1.cfg
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+
+- name: get the file from device with dest unspecified
+  net_get:
+    src: ios1.cfg
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+
+- name: get the file from device with relative destination
+  net_get:
+    src: ios1.cfg
+    dest: 'ios_{{ ansible_host }}.cfg'
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+
+- debug: msg="END ios cli/net_get.yaml on connection={{ ansible_connection }}"

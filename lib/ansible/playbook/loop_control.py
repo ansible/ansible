@@ -20,11 +20,10 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.playbook.attribute import FieldAttribute
-from ansible.playbook.base import Base
+from ansible.playbook.base import FieldAttributeBase
 
 
-# FIXME: loopcontrol should not inherit attributes from base, just uses it for load
-class LoopControl(Base):
+class LoopControl(FieldAttributeBase):
 
     _loop_var = FieldAttribute(isa='str', default='item')
     _index_var = FieldAttribute(isa='str')

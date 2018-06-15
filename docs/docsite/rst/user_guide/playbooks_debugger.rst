@@ -1,3 +1,5 @@
+.. _playbook_debugger:
+
 Playbook Debugger
 =================
 
@@ -89,7 +91,7 @@ As a Strategy
 
 .. note::
      This is a backwards compatible method, to match Ansible versions before 2.5,
-     and may be remoevd in a future release
+     and may be removed in a future release
 
 To use the ``debug`` strategy, change the ``strategy`` attribute like this::
 

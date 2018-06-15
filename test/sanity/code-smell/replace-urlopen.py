@@ -10,6 +10,8 @@ def main():
         'test/sanity/code-smell/%s' % os.path.basename(__file__),
         'lib/ansible/module_utils/six/__init__.py',
         'lib/ansible/module_utils/urls.py',
+        'test/units/module_utils/urls/test_Request.py',
+        'test/units/module_utils/urls/test_fetch_url.py',
     ])
 
     for path in sys.argv[1:] or sys.stdin.read().splitlines():

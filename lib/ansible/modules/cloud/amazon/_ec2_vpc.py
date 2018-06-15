@@ -22,30 +22,26 @@ deprecated:
   removed_in: "2.5"
   why: Replaced by dedicated modules.
   alternative: Use M(ec2_vpc_net) along with supporting modules including M(ec2_vpc_igw), M(ec2_vpc_route_table), M(ec2_vpc_subnet),
-               M(ec2_vpc_dhcp_options), M(ec2_vpc_nat_gateway), M(ec2_vpc_nacl).
+               M(ec2_vpc_dhcp_option), M(ec2_vpc_nat_gateway), M(ec2_vpc_nacl).
 options:
   cidr_block:
     description:
       - "The cidr block representing the VPC, e.g. C(10.0.0.0/16), required when I(state=present)."
-    required: false
   instance_tenancy:
     description:
       - "The supported tenancy options for instances launched into the VPC."
-    required: false
     default: "default"
     choices: [ "default", "dedicated" ]
   dns_support:
     description:
       - Toggles the "Enable DNS resolution" flag.
-    required: false
-    default: "yes"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'yes'
   dns_hostnames:
     description:
       - Toggles the "Enable DNS hostname support for instances" flag.
-    required: false
-    default: "yes"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'yes'
   subnets:
     description:
       - 'A dictionary array of subnets to add of the form C({ cidr: ..., az: ... , resource_tags: ... }).'
@@ -54,13 +50,9 @@ options:
       - C(resource_tags) see resource_tags for VPC below. The main difference is subnet tags not specified here will be deleted.
       - All VPC subnets not in this list will be removed as well.
       - As of 1.8, if the subnets parameter is not specified, no existing subnets will be modified.'
-    required: false
-    default: null
   vpc_id:
     description:
       - A VPC id to terminate when I(state=absent).
-    required: false
-    default: null
   resource_tags:
     description:
       - 'A dictionary array of resource tags of the form C({ tag1: value1, tag2: value2 }).
@@ -72,9 +64,8 @@ options:
   internet_gateway:
     description:
       - Toggle whether there should be an Internet gateway attached to the VPC.
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   route_tables:
     description:
       - >
@@ -86,14 +77,11 @@ options:
         This module is currently unable to affect the "main" route table due to some limitations in boto, so you must explicitly define the associated
         subnets or they will be attached to the main table implicitly. As of 1.8, if the route_tables parameter is not specified, no existing routes
         will be modified.
-    required: false
-    default: null
   wait:
     description:
       - Wait for the VPC to be in state 'available' before returning.
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   wait_timeout:
     description:
       - How long before wait gives up, in seconds.

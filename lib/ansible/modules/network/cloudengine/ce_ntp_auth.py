@@ -43,39 +43,30 @@ options:
     auth_pwd:
         description:
             - Plain text with length of 1 to 255, encrypted text with length of 20 to 392.
-        required: false
-        default: null
     auth_mode:
         description:
             - Specify authentication algorithm.
-        required: false
-        default: null
         choices: ['hmac-sha256', 'md5']
     auth_type:
         description:
             - Whether the given password is in cleartext or
               has been encrypted. If in cleartext, the device
               will encrypt it before storing it.
-        required: false
         default: encrypt
         choices: ['text', 'encrypt']
     trusted_key:
         description:
             - Whether the given key is required to be supplied by a time source
               for the device to synchronize to the time source.
-        required: false
         default: 'disable'
         choices: ['enable', 'disable']
     authentication:
         description:
             - Configure ntp authentication enable or unconfigure ntp authentication enable.
-        required: false
-        default: null
         choices: ['enable', 'disable']
     state:
         description:
             - Manage the state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''

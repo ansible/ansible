@@ -52,7 +52,6 @@ options:
     - If an empty list is passed all assigned privileges will be removed.
     - If option is omitted privileges will not be checked or changed.
     - If option is passed all assigned privileges that are not passed will be removed.
-    default: None
     version_added: "2.4"
   service:
     description:

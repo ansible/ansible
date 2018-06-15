@@ -63,7 +63,7 @@ options:
             - Specifies if the unmount should be forced.
         required: false
         default: false
-        choices: [ "true", "false" ]
+        type: bool
 '''
 
 EXAMPLES = '''

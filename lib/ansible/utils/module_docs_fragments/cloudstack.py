@@ -56,6 +56,6 @@ notes:
     Optionally multiple credentials and endpoints can be specified using ini sections in C(cloudstack.ini).
     Use the argument C(api_region) to select the section name, default section is C(cloudstack).
     See https://github.com/exoscale/cs for more information.
-  - A detailed guide about cloudstack modules can be found on http://docs.ansible.com/ansible/guide_cloudstack.html.
+  - A detailed guide about cloudstack modules can be found in the L(CloudStack Cloud Guide,../scenario_guides/guide_cloudstack.html).
   - This module supports check mode.
 '''

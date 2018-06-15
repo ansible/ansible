@@ -22,13 +22,14 @@ description:
 version_added: "1.2"
 options:
   fstype:
-    choices: [ btrfs, ext2, ext3, ext4, ext4dev, lvm, reiserfs, xfs, vfat ]
+    choices: [ btrfs, ext2, ext3, ext4, ext4dev, lvm, reiserfs, xfs, vfat, ocfs2 ]
     description:
     - Filesystem type to be created.
     - reiserfs support was added in 2.2.
     - lvm support was added in 2.5.
     - since 2.5, I(dev) can be an image file.
     - vfat support was added in 2.5
+    - ocfs2 support was added in 2.6
     required: yes
     aliases: [type]
   dev:
@@ -227,6 +228,11 @@ class Btrfs(Filesystem):
             self.module.warn('Unable to identify mkfs.btrfs version (%r, %r)' % (stdout, stderr))
 
 
+class Ocfs2(Filesystem):
+    MKFS = 'mkfs.ocfs2'
+    MKFS_FORCE_FLAGS = '-Fx'
+
+
 class VFAT(Filesystem):
     if get_platform() == 'FreeBSD':
         MKFS = "newfs_msdos"
@@ -269,6 +275,7 @@ FILESYSTEMS = {
     'xfs': XFS,
     'btrfs': Btrfs,
     'vfat': VFAT,
+    'ocfs2': Ocfs2,
     'LVM2_member': LVM,
 }
 

@@ -37,8 +37,6 @@ options:
       - The C(args) argument provides a set of arguments for the RPC
         call and are encoded in the request message.  This argument
         accepts a set of key=value arguments.
-    required: false
-    default: null
   attrs:
     description:
       - The C(attrs) arguments defines a list of attributes and their values
@@ -50,7 +48,6 @@ options:
         return data.  This argument accepts one of C(xml), C(text),
         or C(json).  For C(json), the JUNOS device must be running a
         version of software that supports native JSON output.
-    required: false
     default: xml
 requirements:
   - ncclient (>=v0.5.2)
@@ -58,6 +55,8 @@ notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
   - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
+  - Recommended connection is C(netconf). See L(the Junos OS Platform Options,../network/user_guide/platform_junos.html).
+  - This module also works with C(local) connections for legacy playbooks.
 """
 
 EXAMPLES = """

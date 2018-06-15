@@ -19,7 +19,7 @@ description:
 - Requires PowerShell version 5.0 or newer.
 - Most of the options for this module are dynamic and will vary depending on
   the DSC Resource specified in I(resource_name).
-- See :doc:`windows_dsc` for more information on how to use this module.
+- See :doc:`/user_guide/windows_dsc` for more information on how to use this module.
 options:
   resource_name:
     description:

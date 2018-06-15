@@ -16,6 +16,7 @@ from lib.util import (
     SubprocessError,
     run_command,
     display,
+    find_python,
 )
 
 from lib.config import (
@@ -34,7 +35,7 @@ class CompileTest(SanityMultipleVersion):
         :type args: SanityConfig
         :type targets: SanityTargets
         :type python_version: str
-        :rtype: SanityResult
+        :rtype: TestResult
         """
         # optional list of regex patterns to exclude from tests
         skip_file = 'test/sanity/compile/python%s-skip.txt' % python_version
@@ -50,7 +51,7 @@ class CompileTest(SanityMultipleVersion):
         if not paths:
             return SanitySkipped(self.name, python_version=python_version)
 
-        cmd = ['python%s' % python_version, 'test/sanity/compile/compile.py']
+        cmd = [find_python(python_version), 'test/sanity/compile/compile.py']
 
         data = '\n'.join(paths)
 

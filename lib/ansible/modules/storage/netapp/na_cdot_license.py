@@ -30,19 +30,18 @@ options:
   remove_unused:
     description:
     - Remove licenses that have no controller affiliation in the cluster.
-    choices: ['true', 'false']
+    type: bool
 
   remove_expired:
     description:
     - Remove licenses that have expired in the cluster.
-    choices: ['true', 'false']
+    type: bool
 
   serial_number:
     description:
     - Serial number of the node associated with the license.
     - This parameter is used primarily when removing license for a specific service.
     - If this parameter is not provided, the cluster serial number is used by default.
-    default: None
 
   licenses:
     description:

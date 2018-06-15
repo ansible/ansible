@@ -28,29 +28,24 @@ options:
     description:
       - The host to add or remove (must match a host specified in key). It will be converted to lowercase so that ssh-keygen can find it.
     required: true
-    default: null
   key:
     description:
       - The SSH public host key, as a string (required if state=present, optional when state=absent, in which case all keys for the host are removed).
         The key must be in the right format for ssh (see sshd(8), section "SSH_KNOWN_HOSTS FILE FORMAT")
-    required: false
-    default: null
   path:
     description:
       - The known_hosts file to edit
-    required: no
     default: "(homedir)+/.ssh/known_hosts"
   hash_host:
     description:
       - Hash the hostname in the known_hosts file
-    required: no
-    default: no
+    type: bool
+    default: 'no'
     version_added: "2.3"
   state:
     description:
       - I(present) to add the host key, I(absent) to remove it.
     choices: [ "present", "absent" ]
-    required: no
     default: present
 requirements: [ ]
 author: "Matthew Vernon (@mcv21)"
@@ -179,6 +174,11 @@ def sanity_check(module, host, key, sshkeygen):
 
     # The approach is to write the key to a temporary file,
     # and then attempt to look up the specified host in that file.
+
+    if re.search(r'\S+(\s+)?,(\s+)?', host):
+        module.fail_json(msg="Comma separated list of names is not supported. "
+                             "Please pass a single name to lookup in the known_hosts file.")
+
     try:
         outf = tempfile.NamedTemporaryFile(mode='w+')
         outf.write(key)
@@ -188,7 +188,7 @@ def sanity_check(module, host, key, sshkeygen):
                              (outf.name, to_native(e)))
 
     sshkeygen_command = [sshkeygen, '-F', host, '-f', outf.name]
-    rc, stdout, stderr = module.run_command(sshkeygen_command, check_rc=True)
+    rc, stdout, stderr = module.run_command(sshkeygen_command)
     try:
         outf.close()
     except:

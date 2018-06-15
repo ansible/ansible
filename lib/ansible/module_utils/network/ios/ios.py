@@ -29,7 +29,7 @@ import json
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network.common.utils import to_list, ComplexList
-from ansible.module_utils.connection import Connection
+from ansible.module_utils.connection import Connection, ConnectionError
 
 _DEVICE_CONFIGS = {}
 
@@ -114,7 +114,7 @@ def get_config(module, flags=None):
         return _DEVICE_CONFIGS[flag_str]
     except KeyError:
         connection = get_connection(module)
-        out = connection.get_config(flags=flags)
+        out = connection.get_config(filter=flags)
         cfg = to_text(out, errors='surrogate_then_replace').strip()
         _DEVICE_CONFIGS[flag_str] = cfg
         return cfg
@@ -144,7 +144,13 @@ def run_commands(module, commands, check_rc=True):
             prompt = None
             answer = None
 
-        out = connection.get(command, prompt, answer)
+        try:
+            out = connection.get(command, prompt, answer)
+        except ConnectionError as exc:
+            if check_rc:
+                module.fail_json(msg=to_text(exc))
+            else:
+                out = exc
 
         try:
             out = to_text(out, errors='surrogate_or_strict')
@@ -159,4 +165,7 @@ def run_commands(module, commands, check_rc=True):
 def load_config(module, commands):
     connection = get_connection(module)
 
-    out = connection.edit_config(commands)
+    try:
+        return connection.edit_config(commands)
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc))

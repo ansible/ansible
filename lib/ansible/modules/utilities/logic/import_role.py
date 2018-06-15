@@ -24,7 +24,7 @@ description:
     between other tasks of the play.
   - Most keywords, loops and conditionals will only be applied to the imported tasks, not to this statement itself. If
     you want the opposite behavior, use M(include_role) instead. To better understand the difference you can read
-    U(https://docs.ansible.com/ansible/latest/playbooks_reuse_includes.html).
+    the L(Including and Importing Guide,../user_guide/playbooks_reuse_includes.html).
 version_added: "2.4"
 options:
   name:
@@ -34,28 +34,26 @@ options:
   tasks_from:
     description:
       - File to load from a role's C(tasks/) directory.
-    required: False
     default: main
   vars_from:
     description:
       - File to load from a role's C(vars/) directory.
-    required: False
     default: main
   defaults_from:
     description:
       - File to load from a role's C(defaults/) directory.
-    required: False
     default: main
   allow_duplicates:
     description:
       - Overrides the role's metadata setting to allow using a role more than once with the same parameters.
-    required: False
-    default: True
+    type: bool
+    default: 'yes'
   private:
     description:
-      - If C(True) the variables from C(defaults/) and C(vars/) in a role will not be made available to the rest of the
-        play.
-    default: None
+      - This option is a no op, and the functionality described in previous versions was not implemented. This
+        option will be removed in Ansible v2.8.
+    type: bool
+    default: 'no'
 notes:
   - Handlers are made available to the whole play.
 '''
@@ -76,15 +74,6 @@ EXAMPLES = """
         name: myrole
       vars:
         rolevar1: value from task
-
-    - name: Apply loop to each task in role
-      import_role:
-        name: myrole
-      with_items:
-        - '{{ roleinput1 }}'
-        - '{{ roleinput2 }}'
-      loop_control:
-        loop_var: roleinputvar
 
     - name: Apply condition to each task in role
       import_role:

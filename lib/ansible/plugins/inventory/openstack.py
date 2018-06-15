@@ -22,8 +22,8 @@ DOCUMENTATION = '''
     options:
         show_all:
             description: toggles showing all vms vs only those with a working IP
-            type: boolean
-            default: False
+            type: bool
+            default: 'no'
         inventory_hostname:
             description: |
                 What to register as the inventory hostname.
@@ -46,16 +46,16 @@ DOCUMENTATION = '''
                 neutron and can be expensive for people with many hosts.
                 (Note, the default value of this is opposite from the default
                 old openstack.py inventory script's option expand_hostvars)
-            type: boolean
-            default: False
+            type: bool
+            default: 'no'
         private:
             description: |
                 Use the private interface of each server, if it has one, as
                 the host's IP in the inventory. This can be useful if you are
                 running ansible inside a server in the cloud and would rather
                 communicate to your servers over the private network.
-            type: boolean
-            default: False
+            type: bool
+            default: 'no'
         only_clouds:
             description: |
                 List of clouds from clouds.yaml to use, instead of using
@@ -70,8 +70,8 @@ DOCUMENTATION = '''
                 it can from as many clouds as it can contact. (Note, the
                 default value of this is opposite from the old openstack.py
                 inventory script's option fail_on_errors)
-            type: boolean
-            default: False
+            type: bool
+            default: 'no'
         clouds_yaml_path:
             description: |
                 Override path to clouds.yaml file. If this value is given it
@@ -80,7 +80,6 @@ DOCUMENTATION = '''
                 /etc/ansible/openstack.yml to the regular locations documented
                 at https://docs.openstack.org/os-client-config/latest/user/configuration.html#config-files
             type: string
-            default: None
         compose:
             description: Create vars from jinja2 expressions.
             type: dictionary
@@ -94,11 +93,9 @@ DOCUMENTATION = '''
 EXAMPLES = '''
 # file must be named openstack.yaml or openstack.yml
 # Make the plugin behave like the default behavior of the old script
-simple_config_file:
-    plugin: openstack
-    inventory_hostname: 'name'
-    expand_hostvars: true
-    fail_on_errors: true
+plugin: openstack
+expand_hostvars: yes
+fail_on_errors: yes
 '''
 
 import collections
@@ -107,12 +104,14 @@ from ansible.errors import AnsibleParserError
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 
 try:
-    import os_client_config
-    import shade
-    import shade.inventory
-    HAS_SHADE = True
+    # Due to the name shadowing we should import other way
+    import importlib
+    sdk = importlib.import_module('openstack')
+    sdk_inventory = importlib.import_module('openstack.cloud.inventory')
+    client_config = importlib.import_module('openstack.config.loader')
+    HAS_SDK = True
 except ImportError:
-    HAS_SHADE = False
+    HAS_SDK = False
 
 
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
@@ -136,8 +135,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             msg = 'plugin config file, but not for us: %s' % self._config_data['plugin']
         elif 'plugin' not in self._config_data and 'clouds' not in self._config_data:
             msg = "it's not a plugin configuration nor a clouds.yaml file"
-        elif not HAS_SHADE:
-            msg = "shade is required for the OpenStack inventory plugin. OpenStack inventory sources will be skipped."
+        elif not HAS_SDK:
+            msg = "openstacksdk is required for the OpenStack inventory plugin. OpenStack inventory sources will be skipped."
 
         if msg:
             raise AnsibleParserError(msg)
@@ -158,14 +157,14 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             clouds_yaml_path = self._config_data.get('clouds_yaml_path')
             if clouds_yaml_path:
                 config_files = (clouds_yaml_path +
-                                os_client_config.config.CONFIG_FILES)
+                                client_config.CONFIG_FILES)
             else:
                 config_files = None
 
             # TODO(mordred) Integrate shade's logging with ansible's logging
-            shade.simple_logging()
+            sdk.enable_logging()
 
-            cloud_inventory = shade.inventory.OpenStackInventory(
+            cloud_inventory = sdk_inventory.OpenStackInventory(
                 config_files=config_files,
                 private=self._config_data.get('private', False))
             only_clouds = self._config_data.get('only_clouds', [])

@@ -50,7 +50,7 @@ options:
             - When the ETag Validation is enabled, the request will be conditionally processed only if the current ETag
                 for the resource matches the ETag provided in the data.
         default: true
-        choices: ['true', 'false']
+        type: bool
 '''
 
     FACTSPARAMS = '''

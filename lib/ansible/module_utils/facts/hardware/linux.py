@@ -31,7 +31,7 @@ from ansible.module_utils.basic import bytes_to_human
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
 from ansible.module_utils.facts.utils import get_file_content, get_file_lines, get_mount_size
 
-# import this as a module to ensure we get the same module isntance
+# import this as a module to ensure we get the same module instance
 from ansible.module_utils.facts import timeout
 
 
@@ -78,6 +78,7 @@ class LinuxHardware(Hardware):
 
     def populate(self, collected_facts=None):
         hardware_facts = {}
+        self.module.run_command_environ_update = {'LANG': 'C', 'LC_ALL': 'C', 'LC_NUMERIC': 'C'}
 
         cpu_facts = self.get_cpu_facts(collected_facts=collected_facts)
         memory_facts = self.get_memory_facts()
@@ -602,9 +603,6 @@ class LinuxHardware(Hardware):
                     if serial:
                         d['serial'] = serial.group(1)
 
-            for key in ['vendor', 'model']:
-                d[key] = get_file_content(sysdir + "/device/" + key)
-
             for key, test in [('removable', '/removable'),
                               ('support_discard', '/queue/discard_granularity'),
                               ]:
@@ -615,7 +613,7 @@ class LinuxHardware(Hardware):
 
             d['partitions'] = {}
             for folder in os.listdir(sysdir):
-                m = re.search("(" + diskname + r"\d+)", folder)
+                m = re.search("(" + diskname + r"[p]?\d+)", folder)
                 if m:
                     part = {}
                     partname = m.group(1)

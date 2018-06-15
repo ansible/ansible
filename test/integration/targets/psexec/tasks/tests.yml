@@ -1,0 +1,231 @@
+---
+- name: fail when process_password is not set with process_username
+  psexec:
+    hostname: '{{psexec_hostname}}'
+    connection_username: '{{psexec_username}}'
+    connection_password: '{{psexec_password}}'
+    encrypt: '{{psexec_encrypt}}'
+    executable: hostname.exe
+    process_username: '{{psexec_username}}'
+  delegate_to: localhost
+  register: fail_no_process_pass
+  failed_when: 'fail_no_process_pass.msg != "parameters are required together when not running as System: process_username, process_password"'
+
+- name: get current host
+  win_command: hostname.exe
+  register: actual_hostname
+
+- name: run basic psexec command
+  psexec:
+    hostname: '{{psexec_hostname}}'
+    connection_username: '{{psexec_username}}'
+    connection_password: '{{psexec_password}}'
+    encrypt: '{{psexec_encrypt}}'
+    executable: hostname.exe
+  delegate_to: localhost
+  register: psexec_hostname_actual
+
+- name: assert basic psexec command matches expected output
+  assert:
+    that:
+    - psexec_hostname_actual is changed
+    - psexec_hostname_actual.rc == 0
+    - psexec_hostname_actual.stderr == ''
+    - psexec_hostname_actual.stdout == actual_hostname.stdout
+
+- name: get output for executable with arguments
+  win_command: hostname.exe /?
+  register: actual_hostname_help
+  failed_when: actual_hostname_help.rc != 1
+
+- name: run psexec command with arguments
+  psexec:
+    hostname: '{{psexec_hostname}}'
+    connection_username: '{{psexec_username}}'
+    connection_password: '{{psexec_password}}'
+    encrypt: '{{psexec_encrypt}}'
+    executable: hostname.exe
+    arguments: /?
+  delegate_to: localhost
+  register: psexec_hostname_help
+  failed_when: psexec_hostname_help.rc != 1
+
+- name: assert basic pesexec command with arguments matches expected output
+  assert:
+    that:
+    - psexec_hostname_help is changed
+    - psexec_hostname_help.rc == 1
+    - psexec_hostname_help.stderr == actual_hostname_help.stderr
+    - psexec_hostname_help.stdout == actual_hostname_help.stdout
+
+- name: run psexec command and send data through stdin
+  psexec:
+    hostname: '{{psexec_hostname}}'
+    connection_username: '{{psexec_username}}'
+    connection_password: '{{psexec_password}}'
+    encrypt: '{{psexec_encrypt}}'
+    executable: powershell.exe
+    arguments: '-'
+    stdin: |
+      Write-Host hello world
+      Write-Host this is another message
+      exit 0
+  delegate_to: localhost
+  register: psexec_stdin
+
+- name: assert psexec ommand and send data through stdin
+  assert:
+    that:
+    - psexec_stdin is changed
+    - psexec_stdin.rc == 0
+    - psexec_stdin.stderr == ''
+    - psexec_stdin.stdout == 'hello world\nthis is another message\n'
+
+- name: run psexec command with specific process username
+  psexec:
+    hostname: '{{psexec_hostname}}'
+    connection_username: '{{psexec_username}}'
+    connection_password: '{{psexec_password}}'
+    encrypt: '{{psexec_encrypt}}'
+    load_profile: no  # on Azure, the profile does not exist yet so we don't load it for this task
+    executable: powershell.exe
+    arguments: '-'
+    stdin: |
+      ((Get-CimInstance Win32_Process -filter "processid = $pid") | Get-CimAssociatedInstance -Association Win32_SessionProcess).LogonType
+      exit 0
+    process_username: '{{psexec_username}}'
+    process_password: '{{psexec_password}}'
+  delegate_to: localhost
+  register: psexec_process_username
+
+- name: assert psexec command with specific process username
+  assert:
+    that:
+    - psexec_process_username is changed
+    - psexec_process_username.rc == 0
+    - psexec_process_username.stderr == ''
+    - psexec_process_username.stdout_lines[0] != '3'  # 3 is Network Logon Type, we assert we are not a network logon with process credentials
+
+- name: run psexec command with both stderr and stdout
+  psexec:
+    hostname: '{{psexec_hostname}}'
+    connection_username: '{{psexec_username}}'
+    connection_password: '{{psexec_password}}'
+    encrypt: '{{psexec_encrypt}}'
+    executable: cmd.exe
+    arguments: /c echo first && echo second 1>&2 && echo third
+  delegate_to: localhost
+  register: psexec_process_stderr
+
+- name: assert psexec command with both stderr and stdout
+  assert:
+    that:
+    - psexec_process_stderr is changed
+    - psexec_process_stderr.rc == 0
+    - psexec_process_stderr.stderr == 'second  \r\n'
+    - psexec_process_stderr.stdout == 'first \r\nthird\r\n'
+
+- name: run process asynchronously
+  psexec:
+    hostname: '{{psexec_hostname}}'
+    connection_username: '{{psexec_username}}'
+    connection_password: '{{psexec_password}}'
+    encrypt: '{{psexec_encrypt}}'
+    executable: powershell.exe
+    arguments: Start-Sleep -Seconds 30
+    asynchronous: yes
+  delegate_to: localhost
+  register: psexec_process_async
+
+- name: check if process is still running
+  win_shell: (Get-Process -ID {{psexec_process_async.pid}}).ProcessName
+  register: psexec_process_async_actual
+
+- name: assert run process asynchronously
+  assert:
+    that:
+    - psexec_process_async is changed
+    - psexec_process_async.rc is not defined
+    - psexec_process_async.pid is defined
+    - psexec_process_async.stdout is not defined
+    - psexec_process_async.stderr is not defined
+    - psexec_process_async_actual.stdout_lines[0] == 'powershell'
+
+- name: run process interactively
+  psexec:
+    hostname: '{{psexec_hostname}}'
+    connection_username: '{{psexec_username}}'
+    connection_password: '{{psexec_password}}'
+    encrypt: '{{psexec_encrypt}}'
+    executable: powershell.exe
+    arguments: Write-Host hi
+    interactive: yes
+  delegate_to: localhost
+  register: psexec_process_interactive
+
+- name: assert run process interactively
+  assert:
+    that:
+    - psexec_process_interactive is changed
+    - psexec_process_interactive.rc == 0
+    - psexec_process_interactive.stdout is not defined
+    - psexec_process_interactive.stderr is not defined
+
+- name: run process with timeout
+  psexec:
+    hostname: '{{psexec_hostname}}'
+    connection_username: '{{psexec_username}}'
+    connection_password: '{{psexec_password}}'
+    encrypt: '{{psexec_encrypt}}'
+    executable: powershell.exe
+    arguments: Start-Sleep -Seconds 30
+    process_timeout: 5
+  delegate_to: localhost
+  register: psexec_process_timeout
+  failed_when: psexec_process_timeout.rc == 0
+
+- name: assert psexec process with timeout
+  assert:
+    that:
+    - psexec_process_timeout.rc != 0
+    - psexec_process_timeout.stdout == ''
+    - psexec_process_timeout.stderr == ''
+
+- name: run process as system
+  psexec:
+    hostname: '{{psexec_hostname}}'
+    connection_username: '{{psexec_username}}'
+    connection_password: '{{psexec_password}}'
+    encrypt: '{{psexec_encrypt}}'
+    executable: whoami.exe
+    process_username: System
+  delegate_to: localhost
+  register: psexec_process_system
+
+- name: assert run process as system
+  assert:
+    that:
+    - psexec_process_system is changed
+    - psexec_process_system.rc == 0
+    - psexec_process_system.stderr == ''
+    - psexec_process_system.stdout == 'nt authority\system\r\n'
+
+- name: run process with different chdir
+  psexec:
+    hostname: '{{psexec_hostname}}'
+    connection_username: '{{psexec_username}}'
+    connection_password: '{{psexec_password}}'
+    encrypt: '{{psexec_encrypt}}'
+    executable: powershell.exe
+    arguments: (pwd).Path
+    working_directory: C:\Windows
+  delegate_to: localhost
+  register: psexec_process_working_dir
+
+- name: assert run process with different chdir
+  assert:
+    that:
+    - psexec_process_working_dir is changed
+    - psexec_process_working_dir.rc == 0
+    - psexec_process_working_dir.stderr == ''
+    - psexec_process_working_dir.stdout == 'C:\Windows\r\n'

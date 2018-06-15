@@ -41,7 +41,6 @@ options:
   state:
     description:
       - absent - user should not exist, present - user should be.
-    required: False
     choices: ['absent', 'present']
     default: 'present'
   userid:
@@ -51,25 +50,16 @@ options:
   name:
     description:
       - The users' full name.
-    required: false
-    default: null
   password:
     description:
       - The users' password.
-    required: false
-    default: null
   group:
     description:
       - The name of the group to which the user belongs.
-    required: false
-    default: null
   email:
     description:
       - The users' E-mail address.
-    required: false
-    default: null
   update_password:
-    required: false
     default: always
     choices: ['always', 'on_create']
     description:

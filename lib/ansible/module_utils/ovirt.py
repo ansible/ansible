@@ -89,7 +89,7 @@ def get_dict_of_struct(struct, connection=None, fetch_nested=False, attributes=N
                             (attr, convert_value(getattr(i, attr)))
                             for attr in attributes if getattr(i, attr, None)
                         )
-                        nested_obj['id'] = getattr(i, 'id', None),
+                        nested_obj['id'] = getattr(i, 'id', None)
                         ret.append(nested_obj)
                 elif isinstance(i, Enum):
                     ret.append(str(i))
@@ -135,8 +135,12 @@ def create_connection(auth):
     :return: Python SDK connection
     """
 
+    url = auth.get('url')
+    if url is None and auth.get('hostname') is not None:
+        url = 'https://{0}/ovirt-engine/api'.format(auth.get('hostname'))
+
     return sdk.Connection(
-        url=auth.get('url'),
+        url=url,
         username=auth.get('username'),
         password=auth.get('password'),
         ca_file=auth.get('ca_file', None),
@@ -338,6 +342,7 @@ def wait(
 
 def __get_auth_dict():
     OVIRT_URL = os.environ.get('OVIRT_URL')
+    OVIRT_HOSTNAME = os.environ.get('OVIRT_HOSTNAME')
     OVIRT_USERNAME = os.environ.get('OVIRT_USERNAME')
     OVIRT_PASSWORD = os.environ.get('OVIRT_PASSWORD')
     OVIRT_TOKEN = os.environ.get('OVIRT_TOKEN')
@@ -345,6 +350,8 @@ def __get_auth_dict():
     OVIRT_INSECURE = OVIRT_CAFILE is None
 
     env_vars = None
+    if OVIRT_URL is None and OVIRT_HOSTNAME is not None:
+        OVIRT_URL = 'https://{0}/ovirt-engine/api'.format(OVIRT_HOSTNAME)
     if OVIRT_URL and ((OVIRT_USERNAME and OVIRT_PASSWORD) or OVIRT_TOKEN):
         env_vars = {
             'url': OVIRT_URL,
@@ -581,29 +588,30 @@ class BaseModule(object):
                 self.post_create(entity)
             self.changed = True
 
-        # Wait for the entity to be created and to be in the defined state:
-        entity_service = self._service.service(entity.id)
-
-        def state_condition(entity):
-            return entity
-
-        if result_state:
+        if not self._module.check_mode:
+            # Wait for the entity to be created and to be in the defined state:
+            entity_service = self._service.service(entity.id)
 
             def state_condition(entity):
-                return entity and entity.status == result_state
+                return entity
 
-        wait(
-            service=entity_service,
-            condition=state_condition,
-            fail_condition=fail_condition,
-            wait=self._module.params['wait'],
-            timeout=self._module.params['timeout'],
-            poll_interval=self._module.params['poll_interval'],
-        )
+            if result_state:
+
+                def state_condition(entity):
+                    return entity and entity.status == result_state
+
+            wait(
+                service=entity_service,
+                condition=state_condition,
+                fail_condition=fail_condition,
+                wait=self._module.params['wait'],
+                timeout=self._module.params['timeout'],
+                poll_interval=self._module.params['poll_interval'],
+            )
 
         return {
             'changed': self.changed,
-            'id': entity.id,
+            'id': getattr(entity, 'id', None),
             type(entity).__name__.lower(): get_dict_of_struct(
                 struct=entity,
                 connection=self._connection,

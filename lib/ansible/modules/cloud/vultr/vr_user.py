@@ -36,12 +36,12 @@ options:
     description:
       - Password will only be changed with enforcement.
     default: no
-    choices: [ yes, no ]
+    type: bool
   api_enabled:
     description:
       - Whether the API is enabled or not.
     default: yes
-    choices: [ yes, no ]
+    type: bool
   acls:
     description:
       - List of ACLs this users should have, see U(https://www.vultr.com/api/#user_user_list).

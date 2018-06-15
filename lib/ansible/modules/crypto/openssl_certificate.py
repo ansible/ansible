@@ -423,6 +423,7 @@ class SelfSignedCertificate(Certificate):
         self.notAfter = module.params['selfsigned_notAfter']
         self.digest = module.params['selfsigned_digest']
         self.version = module.params['selfsigned_version']
+        self.serial_number = randint(1000, 99999)
         self.csr = crypto_utils.load_certificate_request(self.csr_path)
         self.privatekey = crypto_utils.load_privatekey(
             self.privatekey_path, self.privatekey_passphrase
@@ -442,7 +443,7 @@ class SelfSignedCertificate(Certificate):
 
         if not self.check(module, perms_required=False) or self.force:
             cert = crypto.X509()
-            cert.set_serial_number(randint(1000, 99999))
+            cert.set_serial_number(self.serial_number)
             if self.notBefore:
                 cert.set_notBefore(self.notBefore)
             else:
@@ -474,17 +475,29 @@ class SelfSignedCertificate(Certificate):
         if module.set_fs_attributes_if_different(file_args, False):
             self.changed = True
 
-    def dump(self):
+    def dump(self, check_mode=False):
 
         result = {
             'changed': self.changed,
             'filename': self.path,
             'privatekey': self.privatekey_path,
-            'csr': self.csr_path,
-            'notBefore': self.cert.get_notBefore(),
-            'notAfter': self.cert.get_notAfter(),
-            'serial_number': self.cert.get_serial_number(),
+            'csr': self.csr_path
         }
+
+        if check_mode:
+            now = datetime.datetime.utcnow()
+            ten = now.replace(now.year + 10)
+            result.update({
+                'notBefore': self.notBefore if self.notBefore else now.strftime("%Y%m%d%H%M%SZ"),
+                'notAfter': self.notAfter if self.notAfter else ten.strftime("%Y%m%d%H%M%SZ"),
+                'serial_number': self.serial_number,
+            })
+        else:
+            result.update({
+                'notBefore': self.cert.get_notBefore(),
+                'notAfter': self.cert.get_notAfter(),
+                'serial_number': self.cert.get_serial_number(),
+            })
 
         return result
 
@@ -648,7 +661,7 @@ class AssertOnlyCertificate(Certificate):
 
         def _validate_valid_at():
             if self.valid_at:
-                if not (self.valid_at >= self.cert.get_notBefore() and self.valid_at <= self.cert.get_notAfter()):
+                if not (self.cert.get_notBefore() <= self.valid_at <= self.cert.get_notAfter()):
                     self.message.append(
                         'Certificate is not valid for the specified date (%s) - notBefore: %s - notAfter: %s' % (self.valid_at,
                                                                                                                  self.cert.get_notBefore(),
@@ -667,8 +680,8 @@ class AssertOnlyCertificate(Certificate):
         def _validate_valid_in():
             if self.valid_in:
                 valid_in_date = datetime.datetime.utcnow() + datetime.timedelta(seconds=self.valid_in)
-                valid_in_date = valid_in_date.strftime('%Y%m%d%H%M%SZ')
-                if not (valid_in_date >= self.cert.get_notBefore() and valid_in_date <= self.cert.get_notAfter()):
+                valid_in_date = to_bytes(valid_in_date.strftime('%Y%m%d%H%M%SZ'), errors='surrogate_or_strict')
+                if not (self.cert.get_notBefore() <= valid_in_date <= self.cert.get_notAfter()):
                     self.message.append(
                         'Certificate is not valid in %s seconds from now (%s) - notBefore: %s - notAfter: %s' % (self.valid_in,
                                                                                                                  valid_in_date,
@@ -708,7 +721,7 @@ class AssertOnlyCertificate(Certificate):
 
         return parent_check and assertonly_check
 
-    def dump(self):
+    def dump(self, check_mode=False):
 
         result = {
             'changed': self.changed,
@@ -766,6 +779,7 @@ class AcmeCertificate(Certificate):
                                          check_rc=True)[1]
                 with open(self.path, 'wb') as certfile:
                     certfile.write(to_bytes(crt))
+                self.changed = True
             except OSError as exc:
                 raise CertificateError(exc)
 
@@ -773,7 +787,7 @@ class AcmeCertificate(Certificate):
         if module.set_fs_attributes_if_different(file_args, False):
             self.changed = True
 
-    def dump(self):
+    def dump(self, check_mode=False):
 
         result = {
             'changed': self.changed,
@@ -859,7 +873,7 @@ def main():
     if module.params['state'] == 'present':
 
         if module.check_mode:
-            result = certificate.dump()
+            result = certificate.dump(check_mode=True)
             result['changed'] = module.params['force'] or not certificate.check(module)
             module.exit_json(**result)
 
@@ -870,7 +884,7 @@ def main():
     else:
 
         if module.check_mode:
-            result = certificate.dump()
+            result = certificate.dump(check_mode=True)
             result['changed'] = os.path.exists(module.params['path'])
             module.exit_json(**result)
 

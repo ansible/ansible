@@ -34,8 +34,6 @@ options:
         the device configuration.  This argument is mutually exclusive with
         the name argument.
     version_added: "2.4"
-    required: False
-    default: null
     aliases: ['users', 'collection']
   name:
     description:
@@ -43,37 +41,30 @@ options:
         on the system.  This argument must follow appropriate usernaming
         conventions for the target device running JUNOS.  This argument is
         mutually exclusive with the C(aggregate) argument.
-    required: false
-    default: null
   full_name:
     description:
       - The C(full_name) argument provides the full name of the user
         account to be created on the remote device.  This argument accepts
         any text string value.
-    required: false
-    default: null
   role:
     description:
       - The C(role) argument defines the role of the user account on the
         remote system.  User accounts can have more than one role
         configured.
-    required: false
     choices: ['operator', 'read-only', 'super-user', 'unauthorized']
   sshkey:
     description:
       - The C(sshkey) argument defines the public SSH key to be configured
         for the user account on the remote system.  This argument must
         be a valid SSH key
-    required: false
-    default: null
   purge:
     description:
       - The C(purge) argument instructs the module to consider the
         users definition absolute.  It will remove any previously configured
         users on the device with the exception of the current defined
         set of aggregate.
-    required: false
-    default: false
+    type: bool
+    default: 'no'
   state:
     description:
       - The C(state) argument configures the state of the user definitions
@@ -81,14 +72,13 @@ options:
         to I(present), the user should be configured in the device active
         configuration and when set to I(absent) the user should not be
         in the device active configuration
-    required: false
     default: present
     choices: ['present', 'absent']
   active:
     description:
       - Specifies whether or not the configuration is active or deactivated
-    default: True
-    choices: [True, False]
+    type: bool
+    default: 'yes'
     version_added: "2.4"
 requirements:
   - ncclient (>=v0.5.2)
@@ -96,6 +86,8 @@ notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
   - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
+  - Recommended connection is C(netconf). See L(the Junos OS Platform Options,../network/user_guide/platform_junos.html).
+  - This module also works with C(local) connections for legacy playbooks.
 """
 
 EXAMPLES = """

@@ -20,8 +20,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.onyx import onyx_vlan
 from units.modules.utils import set_module_args
@@ -42,15 +40,21 @@ class TestOnyxVlanModule(TestOnyxModule):
             'ansible.module_utils.network.onyx.onyx.load_config')
         self.load_config = self.mock_load_config.start()
 
+        self.mock_get_version = patch.object(
+            onyx_vlan.OnyxVlanModule, "_get_os_version")
+        self.get_version = self.mock_get_version.start()
+
     def tearDown(self):
         super(TestOnyxVlanModule, self).tearDown()
         self.mock_get_config.stop()
         self.mock_load_config.stop()
+        self.mock_get_version.stop()
 
     def load_fixtures(self, commands=None, transport='cli'):
         config_file = 'onyx_vlan_show.cfg'
         self.get_config.return_value = load_fixture(config_file)
         self.load_config.return_value = None
+        self.get_version.return_value = "3.6.5000"
 
     def test_vlan_no_change(self):
         set_module_args(dict(vlan_id=20))

@@ -21,8 +21,8 @@ __metaclass__ = type
 
 import os
 
-from ansible.errors import AnsibleParserError, AnsibleError, AnsibleAssertionError
-from ansible.module_utils.six import iteritems
+from ansible.errors import AnsibleParserError, AnsibleAssertionError
+from ansible.module_utils.six import iteritems, string_types
 from ansible.parsing.splitter import split_args, parse_kv
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.playbook.attribute import FieldAttribute
@@ -69,7 +69,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
         if not os.path.isabs(file_name):
             file_name = os.path.join(basedir, file_name)
 
-        pb._load_playbook_data(file_name=file_name, variable_manager=variable_manager)
+        pb._load_playbook_data(file_name=file_name, variable_manager=variable_manager, vars=self.vars.copy())
 
         # finally, update each loaded playbook entry with any variables specified
         # on the included playbook and/or any tags which may have been set
@@ -135,6 +135,8 @@ class PlaybookInclude(Base, Conditional, Taggable):
 
         if v is None:
             raise AnsibleParserError("playbook import parameter is missing", obj=ds)
+        elif not isinstance(v, string_types):
+            raise AnsibleParserError("playbook import parameter must be a string indicating a file path, got %s instead" % type(v), obj=ds)
 
         # The import_playbook line must include at least one item, which is the filename
         # to import. Anything after that should be regarded as a parameter to the import

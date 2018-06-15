@@ -25,6 +25,9 @@ description:
     module will always collect a base set of facts from the device
     and can enable or disable collection of additional facts.
 extends_documentation_fragment: iosxr
+notes:
+  - Tested against IOS XRv 6.1.2
+  - This module does not support netconf connection
 options:
   gather_subset:
     description:
@@ -133,12 +136,12 @@ class FactsBase(object):
 class Default(FactsBase):
 
     def commands(self):
-        return(['show version brief'])
+        return(['show version | utility head -n 20'])
 
     def populate(self, results):
-        self.facts['version'] = self.parse_version(results['show version brief'])
-        self.facts['image'] = self.parse_image(results['show version brief'])
-        self.facts['hostname'] = self.parse_hostname(results['show version brief'])
+        self.facts['version'] = self.parse_version(results['show version | utility head -n 20'])
+        self.facts['image'] = self.parse_image(results['show version | utility head -n 20'])
+        self.facts['hostname'] = self.parse_hostname(results['show version | utility head -n 20'])
 
     def parse_version(self, data):
         match = re.search(r'Version (\S+)$', data, re.M)
@@ -304,7 +307,7 @@ class Interfaces(FactsBase):
             return int(match.group(1))
 
     def parse_duplex(self, data):
-        match = re.search(r'(\w+) Duplex', data, re.M)
+        match = re.search(r'(\w+)(?: D|-d)uplex', data, re.M)
         if match:
             return match.group(1)
 

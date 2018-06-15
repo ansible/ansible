@@ -12,8 +12,8 @@ module: aws_batch_job_definition
 short_description: Manage AWS Batch Job Definitions
 description:
     - This module allows the management of AWS Batch Job Definitions.
-      It is idempotent and supports "Check" mode.  Use module M(batch_compute_environment) to manage the compute
-      environment, M(batch_job_queue) to manage job queues, M(batch_job_definition) to manage job definitions.
+      It is idempotent and supports "Check" mode.  Use module M(aws_batch_compute_environment) to manage the compute
+      environment, M(aws_batch_job_queue) to manage job queues, M(aws_batch_job_definition) to manage job definitions.
 
 version_added: "2.5"
 

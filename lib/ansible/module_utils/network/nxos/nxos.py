@@ -49,6 +49,9 @@ nxos_provider_spec = {
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE'])),
 
+    'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
+    'auth_pass': dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS'])),
+
     'use_ssl': dict(type='bool'),
     'use_proxy': dict(default=True, type='bool'),
     'validate_certs': dict(type='bool'),
@@ -67,6 +70,9 @@ nxos_top_spec = {
     'username': dict(removed_in_version=2.9),
     'password': dict(removed_in_version=2.9, no_log=True),
     'ssh_keyfile': dict(removed_in_version=2.9),
+
+    'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
+    'auth_pass': dict(removed_in_version=2.9, no_log=True),
 
     'use_ssl': dict(removed_in_version=2.9, type='bool'),
     'validate_certs': dict(removed_in_version=2.9, type='bool'),
@@ -140,47 +146,12 @@ class Cli:
     def run_commands(self, commands, check_rc=True):
         """Run list of commands on remote device and return results
         """
-        responses = list()
         connection = self._get_connection()
 
-        for item in to_list(commands):
-            if item['output'] == 'json' and not is_json(item['command']):
-                cmd = '%s | json' % item['command']
-            elif item['output'] == 'text' and is_json(item['command']):
-                cmd = item['command'].rsplit('|', 1)[0]
-            else:
-                cmd = item['command']
-
-            out = ''
-            try:
-                out = connection.get(cmd)
-                code = 0
-            except ConnectionError as e:
-                code = getattr(e, 'code', 1)
-                message = getattr(e, 'err', e)
-                err = to_text(message, errors='surrogate_then_replace')
-
-            try:
-                out = to_text(out, errors='surrogate_or_strict')
-            except UnicodeError:
-                self._module.fail_json(msg=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))
-
-            if check_rc and code != 0:
-                self._module.fail_json(msg=err)
-
-            if not check_rc and code != 0:
-                try:
-                    out = self._module.from_json(err)
-                except ValueError:
-                    out = to_text(message).strip()
-            else:
-                try:
-                    out = self._module.from_json(out)
-                except ValueError:
-                    out = to_text(out).strip()
-
-            responses.append(out)
-        return responses
+        try:
+            return connection.run_commands(commands, check_rc)
+        except ConnectionError as exc:
+            self._module.fail_json(msg=to_text(exc))
 
     def load_config(self, config, return_error=False, opts=None):
         """Sends configuration commands to the remote device
@@ -193,8 +164,7 @@ class Cli:
         msgs = []
         try:
             responses = connection.edit_config(config)
-            out = json.loads(responses)[1:-1]
-            msg = out
+            msg = json.loads(responses)
         except ConnectionError as e:
             code = getattr(e, 'code', 1)
             message = getattr(e, 'err', e)
@@ -472,3 +442,64 @@ def load_config(module, config, return_error=False, opts=None):
 def get_capabilities(module):
     conn = get_connection(module)
     return conn.get_capabilities()
+
+
+def normalize_interface(name):
+    """Return the normalized interface name
+    """
+    if not name:
+        return
+
+    def _get_number(name):
+        digits = ''
+        for char in name:
+            if char.isdigit() or char in '/.':
+                digits += char
+        return digits
+
+    if name.lower().startswith('et'):
+        if_type = 'Ethernet'
+    elif name.lower().startswith('vl'):
+        if_type = 'Vlan'
+    elif name.lower().startswith('lo'):
+        if_type = 'loopback'
+    elif name.lower().startswith('po'):
+        if_type = 'port-channel'
+    elif name.lower().startswith('nv'):
+        if_type = 'nve'
+    else:
+        if_type = None
+
+    number_list = name.split(' ')
+    if len(number_list) == 2:
+        number = number_list[-1].strip()
+    else:
+        number = _get_number(name)
+
+    if if_type:
+        proper_interface = if_type + number
+    else:
+        proper_interface = name
+
+    return proper_interface
+
+
+def get_interface_type(interface):
+    """Gets the type of interface
+    """
+    if interface.upper().startswith('ET'):
+        return 'ethernet'
+    elif interface.upper().startswith('VL'):
+        return 'svi'
+    elif interface.upper().startswith('LO'):
+        return 'loopback'
+    elif interface.upper().startswith('MG'):
+        return 'management'
+    elif interface.upper().startswith('MA'):
+        return 'management'
+    elif interface.upper().startswith('PO'):
+        return 'portchannel'
+    elif interface.upper().startswith('NV'):
+        return 'nve'
+    else:
+        return 'unknown'

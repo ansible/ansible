@@ -109,6 +109,7 @@ class OnyxLinkAggModule(BaseOnyxModule):
     CHANNEL_GROUP = 'channel-group'
     MLAG_PORT_CHANNEL = 'mlag-port-channel'
     MLAG_CHANNEL_GROUP = 'mlag-channel-group'
+    MLAG_SUMMARY = 'MLAG Port-Channel Summary'
 
     LAG_TYPE = 'lag'
     MLAG_TYPE = 'mlag'
@@ -225,7 +226,21 @@ class OnyxLinkAggModule(BaseOnyxModule):
 
     def _parse_port_channels_summary(self, lag_type, lag_summary):
         if lag_type == self.MLAG_TYPE:
-            lag_summary = lag_summary.get('MLAG Port-Channel Summary', {})
+            if self._os_version >= self.ONYX_API_VERSION:
+                found_summary = False
+                for summary_item in lag_summary:
+                    if self.MLAG_SUMMARY in summary_item:
+                        lag_summary = summary_item[self.MLAG_SUMMARY]
+                        if lag_summary:
+                            lag_summary = lag_summary[0]
+                        else:
+                            lag_summary = dict()
+                        found_summary = True
+                        break
+                if not found_summary:
+                    lag_summary = dict()
+            else:
+                lag_summary = lag_summary.get(self.MLAG_SUMMARY, dict())
         for lag_key, lag_data in iteritems(lag_summary):
             lag_name, state = self._extract_lag_name(lag_key)
             if not lag_name:
@@ -240,15 +255,13 @@ class OnyxLinkAggModule(BaseOnyxModule):
 
     def load_current_config(self):
         self._current_config = dict()
+        self._os_version = self._get_os_version()
         lag_types = set([lag_obj['type'] for lag_obj in self._required_config])
         for lag_type in lag_types:
             if_type = self.IF_TYPE_MAP[lag_type]
             lag_summary = self._get_port_channels(if_type)
             if lag_summary:
                 self._parse_port_channels_summary(lag_type, lag_summary)
-        with open('/tmp/linagg.txt', 'w') as fp:
-            fp.write('current_config: %s\n' % self._current_config)
-            fp.write('required_config: %s\n' % self._required_config)
 
     def _get_interface_command_suffix(self, if_name):
         if if_name.startswith('Eth'):

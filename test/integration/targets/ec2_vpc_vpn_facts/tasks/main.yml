@@ -1,0 +1,124 @@
+---
+- block:
+
+  # ============================================================
+  - name: set up aws connection info
+    set_fact:
+      aws_connection_info: &aws_connection_info
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region }}"
+    no_log: yes
+
+  # ============================================================
+  - name: create a VPC
+    ec2_vpc_net:
+      name: "{{ resource_prefix }}-vpc"
+      state: present
+      cidr_block: "10.0.0.0/26"
+      <<: *aws_connection_info
+      tags:
+        Name: "{{ resource_prefix }}-vpc"
+        Description: "Created by ansible-test"
+    register: vpc_result
+
+  - name: create vpn gateway and attach it to vpc
+    ec2_vpc_vgw:
+      state: present
+      vpc_id: '{{ vpc_result.vpc.id }}'
+      name: "{{ resource_prefix }}-vgw"
+      <<: *aws_connection_info
+    register: vgw
+
+  - name: create customer gateway
+    ec2_customer_gateway:
+      bgp_asn: 12345
+      ip_address: 1.2.3.4
+      name: testcgw
+      <<: *aws_connection_info
+    register: cgw
+
+  - name: create vpn connection, with customer gateway
+    ec2_vpc_vpn:
+      customer_gateway_id: '{{ cgw.gateway.customer_gateway.customer_gateway_id }}'
+      vpn_gateway_id: '{{ vgw.vgw.id }}'
+      state: present
+      <<: *aws_connection_info
+    register: vpn
+
+  # ============================================================
+  - name: test success with no parameters
+    ec2_vpc_vpn_facts:
+      <<: *aws_connection_info
+    register: result
+
+  - name: assert success with no parameters
+    assert:
+      that:
+        - 'result.changed == false'
+        - 'result.vpn_connections != []'
+
+  - name: test success with customer gateway id as a filter
+    ec2_vpc_vpn_facts:
+      filters:
+        customer-gateway-id: '{{ cgw.gateway.customer_gateway.customer_gateway_id }}'
+        vpn-connection-id: '{{ vpn.vpn_connection_id }}'
+      <<: *aws_connection_info
+    register: result
+
+  - name: assert success with customer gateway id as filter
+    assert:
+      that:
+        - 'result.changed == false'
+        - 'result.vpn_connections != []'
+
+  # ============================================================
+  always:
+
+  - name: delete vpn connection
+    ec2_vpc_vpn:
+      state: absent
+      vpn_connection_id: '{{ vpn.vpn_connection_id }}'
+      <<: *aws_connection_info
+    register: result
+    retries: 10
+    delay: 3
+    until: result is not failed
+    ignore_errors: true
+
+  - name: delete customer gateway
+    ec2_customer_gateway:
+      state: absent
+      ip_address: 1.2.3.4
+      name: testcgw
+      bgp_asn: 12345
+      <<: *aws_connection_info
+    register: result
+    retries: 10
+    delay: 3
+    until: result is not failed
+    ignore_errors: true
+
+  - name: delete vpn gateway
+    ec2_vpc_vgw:
+      state: absent
+      vpn_gateway_id: '{{ vgw.vgw.id }}'
+      <<: *aws_connection_info
+    register: result
+    retries: 10
+    delay: 3
+    until: result is not failed
+    ignore_errors: true
+
+  - name: delete vpc
+    ec2_vpc_net:
+      name: "{{ resource_prefix }}-vpc"
+      state: absent
+      cidr_block: "10.0.0.0/26"
+      <<: *aws_connection_info
+    register: result
+    retries: 10
+    delay: 3
+    until: result is not failed
+    ignore_errors: true

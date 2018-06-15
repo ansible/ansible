@@ -5,8 +5,7 @@ from __future__ import absolute_import, print_function
 import os
 import pipes
 import tempfile
-
-from time import sleep
+import time
 
 import lib.pytar
 
@@ -50,13 +49,12 @@ class ManageWindowsCI(object):
         env = ansible_environment(self.core_ci.args)
         cmd = ['ansible', '-m', 'win_ping', '-i', '%s,' % name, name, '-e', ' '.join(extra_vars)]
 
-        for _ in range(1, 120):
+        for dummy in range(1, 120):
             try:
                 intercept_command(self.core_ci.args, cmd, 'ping', env=env)
                 return
             except SubprocessError:
-                sleep(10)
-                continue
+                time.sleep(10)
 
         raise ApplicationError('Timeout waiting for %s/%s instance %s.' %
                                (self.core_ci.platform, self.core_ci.version, self.core_ci.instance_id))
@@ -92,13 +90,12 @@ class ManageNetworkCI(object):
             name,
         ]
 
-        for _ in range(1, 90):
+        for dummy in range(1, 90):
             try:
                 intercept_command(self.core_ci.args, cmd, 'ping', env=env)
                 return
             except SubprocessError:
-                sleep(10)
-                continue
+                time.sleep(10)
 
         raise ApplicationError('Timeout waiting for %s/%s instance %s.' %
                                (self.core_ci.platform, self.core_ci.version, self.core_ci.instance_id))
@@ -144,13 +141,12 @@ class ManagePosixCI(object):
 
     def wait(self):
         """Wait for instance to respond to SSH."""
-        for _ in range(1, 90):
+        for dummy in range(1, 90):
             try:
                 self.ssh('id')
                 return
             except SubprocessError:
-                sleep(10)
-                continue
+                time.sleep(10)
 
         raise ApplicationError('Timeout waiting for %s/%s instance %s.' %
                                (self.core_ci.platform, self.core_ci.version, self.core_ci.instance_id))
@@ -209,6 +205,13 @@ class ManagePosixCI(object):
         :type src: str
         :type dst: str
         """
-        run_command(self.core_ci.args,
-                    ['scp'] + self.ssh_args +
-                    ['-P', str(self.core_ci.connection.port), '-q', '-r', src, dst])
+        for dummy in range(1, 10):
+            try:
+                run_command(self.core_ci.args,
+                            ['scp'] + self.ssh_args +
+                            ['-P', str(self.core_ci.connection.port), '-q', '-r', src, dst])
+                return
+            except SubprocessError:
+                time.sleep(10)
+
+        raise ApplicationError('Failed transfer: %s -> %s' % (src, dst))

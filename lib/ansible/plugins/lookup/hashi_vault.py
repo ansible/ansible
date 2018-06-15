@@ -115,12 +115,14 @@ class HashiVault:
         if s is None:
             raise AnsibleError("No secret specified for hashi_vault lookup")
 
-        s_f = s.split(':')
+        s_f = s.rsplit(':', 1)
         self.secret = s_f[0]
         if len(s_f) >= 2:
             self.secret_field = s_f[1]
         else:
             self.secret_field = ''
+
+        self.verify = self.boolean_or_cacert(kwargs.get('validate_certs', True), kwargs.get('cacert', ''))
 
         # If a particular backend is asked for (and its method exists) we call it, otherwise drop through to using
         # token auth. This means if a particular auth backend is requested and a token is also given, then we
@@ -149,8 +151,6 @@ class HashiVault:
 
             if self.token is None:
                 raise AnsibleError("No Vault Token specified")
-
-            self.verify = self.boolean_or_cacert(kwargs.get('validate_certs', True), kwargs.get('cacert', ''))
 
             self.client = hvac.Client(url=self.url, token=self.token, verify=self.verify)
 

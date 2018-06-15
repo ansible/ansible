@@ -32,13 +32,11 @@ options:
     description:
       - Specifies the type of banner to configure on remote device.
     required: true
-    default: null
     choices: ['login', 'motd']
   text:
     description:
       - Banner text to be configured. Accepts multiline string,
         without empty lines. Requires I(state=present).
-    default: null
   state:
     description:
       - Existential state of the configuration on the device.

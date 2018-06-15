@@ -1,3 +1,5 @@
+.. _intro_patterns:
+
 Working with Patterns
 =====================
 

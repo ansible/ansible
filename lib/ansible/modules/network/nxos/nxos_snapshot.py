@@ -45,82 +45,58 @@ options:
         description:
             - Define what snapshot action the module would perform.
         required: true
-        choices: ['create','add','compare','delete']
+        choices: [ add, compare, create, delete, delete_all ]
     snapshot_name:
         description:
             - Snapshot name, to be used when C(action=create)
               or C(action=delete).
-        required: false
-        default: null
     description:
         description:
             - Snapshot description to be used when C(action=create).
-        required: false
-        default: null
     snapshot1:
         description:
             - First snapshot to be used when C(action=compare).
-        required: false
-        default: null
     snapshot2:
         description:
             - Second snapshot to be used when C(action=compare).
-        required: false
-        default: null
     comparison_results_file:
         description:
             - Name of the file where snapshots comparison will be stored when C(action=compare).
-        required: false
-        default: null
     compare_option:
         description:
             - Snapshot options to be used when C(action=compare).
-        required: false
-        default: null
         choices: ['summary','ipv4routes','ipv6routes']
     section:
         description:
             - Used to name the show command output, to be used
               when C(action=add).
-        required: false
-        default: null
     show_command:
         description:
             - Specify a new show command, to be used when C(action=add).
-        required: false
-        default: null
     row_id:
         description:
             - Specifies the tag of each row entry of the show command's
               XML output, to be used when C(action=add).
-        required: false
-        default: null
     element_key1:
         description:
             - Specify the tags used to distinguish among row entries,
               to be used when C(action=add).
-        required: false
-        default: null
     element_key2:
         description:
             - Specify the tags used to distinguish among row entries,
               to be used when C(action=add).
-        required: false
-        default: null
     save_snapshot_locally:
         description:
             - Specify to locally store a new created snapshot,
               to be used when C(action=create).
-        required: false
-        default: false
-        choices: ['true','false']
+        type: bool
+        default: 'no'
     path:
         description:
             - Specify the path of the file where new created snapshot or
               snapshots comparison will be stored, to be used when
               C(action=create) and C(save_snapshot_locally=true) or
               C(action=compare).
-        required: false
         default: './'
 '''
 
@@ -313,12 +289,6 @@ def invoke(name, *args, **kwargs):
         return func(*args, **kwargs)
 
 
-def get_snapshot(module):
-    command = 'show snapshot dump {0}'.format(module.params['snapshot_name'])
-    body = execute_show_command(command, module)[0]
-    return body
-
-
 def write_on_file(content, filename, module):
     path = module.params['path']
     if path[-1] != '/':
@@ -386,7 +356,9 @@ def main():
                 snapshot1 = module.params['snapshot1']
                 snapshot2 = module.params['snapshot2']
                 compare_option = module.params['compare_option']
-                command = 'show snapshot compare {0} {1} {2}'.format(snapshot1, snapshot2, compare_option)
+                command = 'show snapshot compare {0} {1}'.format(snapshot1, snapshot2)
+                if compare_option:
+                    command += ' {0}'.format(compare_option)
                 content = execute_show_command(command, module)[0]
                 if content:
                     write_on_file(content, comparison_results_file, module)
@@ -396,11 +368,11 @@ def main():
                 result['commands'] = action_results
                 result['changed'] = True
 
-            if action == 'create' and module.params['path']:
-                command = 'show snapshot | include {}'.format(module.params['snapshot_name'])
+            if action == 'create' and module.params['path'] and module.params['save_snapshot_locally']:
+                command = 'show snapshot dump {} | json'.format(module.params['snapshot_name'])
                 content = execute_show_command(command, module)[0]
                 if content:
-                    write_on_file(content, module.params['snapshot_name'], module)
+                    write_on_file(str(content), module.params['snapshot_name'], module)
 
     module.exit_json(**result)
 

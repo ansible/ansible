@@ -33,7 +33,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: cnos_vlan
-author: "Dave Kasberg (@dkasberg)"
+author: "Anil Kumar Muraleedharan (@amuraleedhar)"
 short_description: Manage VLAN resources and attributes on devices running Lenovo CNOS
 description:
     - This module allows you to work with VLAN related configurations. The
@@ -57,35 +57,26 @@ options:
     description:
       - This is an overloaded vlan first argument. Usage of this argument can be found is the User Guide referenced above.
     required: true
-    default: null
     choices: [access-map, dot1q, filter, <1-3999> VLAN ID 1-3999 or range]
   vlanArg2:
     description:
       - This is an overloaded vlan second argument. Usage of this argument can be found is the User Guide referenced above.
-    required: false
-    default: null
     choices: [VLAN Access Map name,egress-only,name, flood,state, ip]
   vlanArg3:
     description:
       - This is an overloaded vlan third argument. Usage of this argument can be found is the User Guide referenced above.
-    required: false
-    default: null
     choices: [action, match, statistics, enter VLAN id or range of vlan, ascii name for the VLAN, ipv4 or ipv6, active or suspend, fast-leave,
     last-member-query-interval, mrouter, querier, querier-timeout, query-interval, query-max-response-time, report-suppression,
     robustness-variable, startup-query-count, startup-query-interval, static-group]
   vlanArg4:
     description:
       - This is an overloaded vlan fourth argument. Usage of this argument can be found is the User Guide referenced above.
-    required: false
-    default: null
     choices: [drop or forward or redirect, ip or mac,Interval in seconds,ethernet, port-aggregation, Querier IP address,
     Querier Timeout in seconds, Query Interval in seconds, Query Max Response Time in seconds,  Robustness Variable value,
     Number of queries sent at startup, Query Interval at startup]
   vlanArg5:
     description:
       - This is an overloaded vlan fifth argument. Usage of this argument can be found is the User Guide referenced above.
-    required: false
-    default: null
     choices: [access-list name, Slot/chassis number, Port Aggregation Number]
 
 '''
@@ -96,8 +87,8 @@ Tasks: The following are examples of using the module cnos_vlan. These are writt
 - name: Test Vlan - Create a vlan, name it
   cnos_vlan:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_vlan_{{ inventory_hostname }}_output.txt"
@@ -108,8 +99,8 @@ Tasks: The following are examples of using the module cnos_vlan. These are writt
 - name: Test Vlan - Create a vlan, Flood configuration
   cnos_vlan:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_vlan_{{ inventory_hostname }}_output.txt"
@@ -120,8 +111,8 @@ Tasks: The following are examples of using the module cnos_vlan. These are writt
 - name: Test Vlan - Create a vlan, State configuration
   cnos_vlan:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_vlan_{{ inventory_hostname }}_output.txt"
@@ -132,8 +123,8 @@ Tasks: The following are examples of using the module cnos_vlan. These are writt
 - name: Test Vlan - VLAN Access map1
   cnos_vlan:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_vlan_{{ inventory_hostname }}_output.txt"
@@ -144,8 +135,8 @@ Tasks: The following are examples of using the module cnos_vlan. These are writt
 - name: Test Vlan - VLAN Accep Map2
   cnos_vlan:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_vlan_{{ inventory_hostname }}_output.txt"
@@ -157,8 +148,8 @@ Tasks: The following are examples of using the module cnos_vlan. These are writt
 - name: Test Vlan - ip igmp snooping query interval
   cnos_vlan:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_vlan_{{ inventory_hostname }}_output.txt"
@@ -170,8 +161,8 @@ Tasks: The following are examples of using the module cnos_vlan. These are writt
 - name: Test Vlan - ip igmp snooping mrouter interface port-aggregation 23
   cnos_vlan:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_vlan_{{ inventory_hostname }}_output.txt"
@@ -275,7 +266,7 @@ def main():
 
     # Go to config mode
     output = output + \
-        cnos.waitForDeviceResponse("conf d\n", "(config)#", 2, remote_conn)
+        cnos.waitForDeviceResponse("configure device\n", "(config)#", 2, remote_conn)
 
     # Send the CLi command
     output = output + \

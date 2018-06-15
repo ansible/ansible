@@ -36,7 +36,7 @@ options:
     mode:
         description:
             - The octal mode for newly created files in sources.list.d
-        default: 0644
+        default: '0644'
         version_added: "1.6"
     update_cache:
         description:
@@ -502,6 +502,9 @@ def main():
             install_python_apt(module)
         else:
             module.fail_json(msg='%s is not installed, and install_python_apt is False' % PYTHON_APT)
+
+    if not repo:
+        module.fail_json(msg='Please set argument \'repo\' to a non-empty value')
 
     if isinstance(distro, aptsources_distro.Distribution):
         sourceslist = UbuntuSourcesList(module, add_ppa_signing_keys_callback=get_add_ppa_signing_key_callback(module))

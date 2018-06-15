@@ -1,3 +1,5 @@
+.. _intro_adhoc:
+
 Introduction To Ad-Hoc Commands
 ===============================
 
@@ -75,13 +77,13 @@ It is also possible to become a user other than root using
     Rarely, some users have security rules where they constrain their sudo/pbrun/doas environment to running specific command paths only.
     This does not work with ansible's no-bootstrapping philosophy and hundreds of different modules.
     If doing this, use Ansible from a special account that does not have this constraint.
-    One way of doing this without sharing access to unauthorized users would be gating Ansible with :doc:`tower`, which
+    One way of doing this without sharing access to unauthorized users would be gating Ansible with :ref:`ansible_tower`, which
     can hold on to an SSH credential and let members of certain organizations use it on their behalf without having direct access.
 
-Ok, so those are basics.  If you didn't read about patterns and groups yet, go back and read :doc:`intro_patterns`.
+Ok, so those are basics.  If you didn't read about patterns and groups yet, go back and read :ref:`intro_patterns`.
 
 The ``-f 10`` in the above specifies the usage of 10 simultaneous
-processes to use.   You can also set this in :doc:`intro_configuration` to avoid setting it again.  The default is actually 5, which
+processes to use.   You can also set this in :ref:`intro_configuration` to avoid setting it again.  The default is actually 5, which
 is really small and conservative.  You are probably going to want to talk to a lot more simultaneous hosts so feel free
 to crank this up.  If you have more hosts than the value set for the fork count, Ansible will talk to them, but it will
 take a little longer.  Feel free to push this value as high as your system can handle!
@@ -92,11 +94,12 @@ specify that all of the time.  We'll use ``-m`` in later examples to
 run some other :doc:`modules`.
 
 .. note::
-   The :ref:`command` module does not support extended shell syntax like piping and redirects (although
-   shell variables will always work). If your command requires shell-specific syntax, use the `shell` module
-   instead. Read more about the differences on the :doc:`modules` page.
+   The :ref:`command module <command_module>` does not support extended shell syntax like piping and
+   redirects (although shell variables will always work). If your command requires shell-specific
+   syntax, use the `shell` module instead. Read more about the differences on the
+   :ref:`working_with_modules` page.
 
-Using the :ref:`shell` module looks like this::
+Using the :ref:`shell module <shell_module>` looks like this::
 
     $ ansible raleigh -m shell -a 'echo $TERM'
 
@@ -266,11 +269,11 @@ Read more about facts at :doc:`playbooks_variables` once you're ready to read up
 
 .. seealso::
 
-   :doc:`intro_configuration`
+   :ref:`intro_configuration`
        All about the Ansible config file
-   :doc:`modules`
+   :ref:`all_modules`
        A list of available modules
-   :doc:`playbooks`
+   :ref:`working_with_playbooks`
        Using Ansible for configuration management & deployment
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups

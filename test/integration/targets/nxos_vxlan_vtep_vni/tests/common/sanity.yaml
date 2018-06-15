@@ -12,21 +12,18 @@
     nxos_config: 
       commands:
         - feature nv overlay
-      provider: "{{ connection }}"
       match: none
 
   - name: configure vxlan_vtep
     nxos_vxlan_vtep:
       interface: nve1
       host_reachability: True
-      provider: "{{ connection }}"
 
   - name: configure vxlan_vtep_vni assoc-vrf
     nxos_vxlan_vtep_vni: &conf1
       interface: nve1
       vni: 6000
       assoc_vrf: True
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -47,13 +44,11 @@
       vni: 6000
       assoc_vrf: True
       state: absent
-      provider: "{{ connection }}"
 
   - name: configure vxlan_vtep_vni
     nxos_vxlan_vtep_vni: &conf2
       interface: nve1
       vni: 8000
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -63,7 +58,6 @@
       interface: nve1
       vni: 8000
       multicast_group: 224.1.1.1
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -79,7 +73,6 @@
       interface: nve1
       vni: 8000
       multicast_group: default
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -95,20 +88,17 @@
       interface: nve1
       vni: 8000
       state: absent
-      provider: "{{ connection }}"
 
   - name: configure vxlan_vtep
     nxos_vxlan_vtep:
       interface: nve1
       host_reachability: False
-      provider: "{{ connection }}"
 
   - block:
     - name: configure vxlan_vtep_vni
       nxos_vxlan_vtep_vni: &conf5
         interface: nve1
         vni: 8000
-        provider: "{{ connection }}"
       register: result
   
     - assert: *true
@@ -118,23 +108,36 @@
         interface: nve1
         vni: 8000
         ingress_replication: static
-        provider: "{{ connection }}"
       register: result
   
     - assert: *true
 
-    - name: "Conf 6 Idempotence"
+    - name: check configure vxlan_vtep_vni ingress static idempotence check
       nxos_vxlan_vtep_vni: *conf6
       register: result
 
     - assert: *false
+
+    - name: Remove and reconfigure vxlan_vtep
+      nxos_vxlan_vtep: &remove_vtep
+        interface: nve1
+        state: absent
+
+    - name: Configure vxlan_vtep with host reachability bgp
+      nxos_vxlan_vtep:
+        interface: nve1
+        host_reachability: True
+
+    - name: configure vxlan_vtep_vni
+      nxos_vxlan_vtep_vni: &config_vni
+        interface: nve1
+        vni: 8000
 
     - name: configure vxlan_vtep_vni ingress bgp
       nxos_vxlan_vtep_vni: &conf7
         interface: nve1
         vni: 8000
         ingress_replication: bgp
-        provider: "{{ connection }}"
       register: result
   
     - assert: *true
@@ -150,7 +153,6 @@
         interface: nve1
         vni: 8000
         ingress_replication: default
-        provider: "{{ connection }}"
       register: result
   
     - assert: *true
@@ -161,17 +163,27 @@
 
     - assert: *false
 
+    - name: Remove and reconfigure vxlan_vtep
+      nxos_vxlan_vtep: *remove_vtep
+
+    - name: Configure vxlan_vtep with host reachability static
+      nxos_vxlan_vtep:
+        interface: nve1
+        host_reachability: False
+
+    - name: configure vxlan_vtep_vni
+      nxos_vxlan_vtep_vni: *config_vni
+
     - name: configure vxlan_vtep_vni peer-list
       nxos_vxlan_vtep_vni: &conf9
         interface: nve1
         vni: 8000
         peer_list: 
-          - 1.1.1.1
-          - 2.2.2.2
-          - 3.3.3.3
-          - 4.4.4.4
+          - 192.0.2.1
+          - 192.0.2.2
+          - 192.0.2.3
+          - 192.0.2.4
         ingress_replication: static
-        provider: "{{ connection }}"
       register: result
   
     - assert: *true
@@ -188,7 +200,6 @@
         vni: 8000
         peer_list: default
         ingress_replication: static
-        provider: "{{ connection }}"
       register: result
   
     - assert: *true
@@ -231,14 +242,12 @@
       interface: nve1
       shutdown: true
       state: absent
-      provider: "{{ connection }}"
     ignore_errors: yes
 
   - name: "Disable feature nv overlay"
     nxos_feature: 
       feature: nve
       state: disabled
-      provider: "{{ connection }}"
     ignore_errors: yes
 
 - debug: msg="END connection={{ ansible_connection }} nxos_vxlan_vtep_vni sanity test"

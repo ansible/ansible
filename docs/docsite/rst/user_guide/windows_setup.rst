@@ -32,10 +32,10 @@ requirement. You can use the `Upgrade-PowerShell.ps1 <https://github.com/jborean
 
 This is an example of how to run this script from PowerShell:
 
-.. code-block:: powershell
+.. code-block:: guess
 
     $url = "https://raw.githubusercontent.com/jborean93/ansible-windows/master/scripts/Upgrade-PowerShell.ps1"
-    $file = "$env:TEMP\Upgrade-PowerShell.ps1"
+    $file = "$env:temp\Upgrade-PowerShell.ps1"
     $username = "Administrator"
     $password = "Password"
 
@@ -49,7 +49,7 @@ Once completed, you will need to remove auto logon
 and set the execution policy back to the default of ``Restricted``. You can
 do this with the following PowerShell commands:
 
-.. code-block:: powershell
+.. code-block:: guess
 
     # this isn't needed but is a good security practice to complete
     Set-ExecutionPolicy -ExecutionPolicy Restricted -Force
@@ -90,10 +90,10 @@ imaging process. The script `Install-WMF3Hotfix.ps1 <https://github.com/jborean9
 
 The following PowerShell command will install the hotfix:
 
-.. code-block:: powershell
+.. code-block:: guess
 
     $url = "https://raw.githubusercontent.com/jborean93/ansible-windows/master/scripts/Install-WMF3Hotfix.ps1"
-    $file = "$env:SystemDrive\temp\Install-WMF3Hotfix.ps1"
+    $file = "$env:temp\Install-WMF3Hotfix.ps1"
 
     (New-Object -TypeName System.Net.WebClient).DownloadFile($url, $file)
     powershell.exe -ExecutionPolicy ByPass -File $file -Verbose
@@ -113,10 +113,10 @@ authentication option on the service.
 
 To use this script, run the following in PowerShell:
 
-.. code-block:: powershell
+.. code-block:: guess
 
     $url = "https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/ConfigureRemotingForAnsible.ps1"
-    $file = "$env:SystemDrive\temp\ConfigureRemotingForAnsible.ps1"
+    $file = "$env:temp\ConfigureRemotingForAnsible.ps1"
 
     (New-Object -TypeName System.Net.WebClient).DownloadFile($url, $file)
 
@@ -186,7 +186,7 @@ the key options that are useful to understand are:
   in the connection. To get the details of the certificate itself, run this
   command with the relevant certificate thumbprint in PowerShell:
 
-  .. code-block:: powershell
+  .. code-block:: guess
     
     $thumbprint = "E6CDAA82EEAF2ECE8546E05DB7F3E01AA47D76CE"
     Get-ChildItem -Path cert:\LocalMachine\My -Recurse | Where-Object { $_.Thumbprint -eq $thumbprint } | Select-Object *
@@ -209,7 +209,7 @@ There are three ways to set up a WinRM listener:
 * Using PowerShell to create the listener with a specific configuration. This
   can be done by running the following PowerShell commands:
 
-  .. code-block:: powershell
+  .. code-block:: guess
 
       $selector_set = @{
           Address = "*"
@@ -232,7 +232,7 @@ Delete WinRM Listener
 +++++++++++++++++++++
 To remove a WinRM listener:
 
-.. code-block:: powershell
+.. code-block:: guess
 
     # remove all listeners
     Remove-Item -Path WSMan:\localhost\Listener\* -Recurse -Force
@@ -326,7 +326,7 @@ options are:
 To modify a setting under the ``Service`` key in PowerShell, the following
 command can be used:
 
-.. code-block:: powershell
+.. code-block:: guess
 
     # substitute {path} with the path to the option after winrm/config/Service
     Set-Item -Path WSMan:\localhost\Service\{path} -Value "value here"
@@ -337,7 +337,7 @@ command can be used:
 To modify a setting under the ``Winrs`` key in PowerShell, the following
 command can be used:
 
-.. code-block:: powershell
+.. code-block:: guess
 
     # substitute {path} with the path to the option after winrm/config/Winrs
     Set-Item -Path WSMan:\localhost\Shell\{path} -Value "value here"
@@ -447,7 +447,7 @@ Windows host.
        An introduction to playbooks
    :doc:`playbooks_best_practices`
        Best practices advice
-   `List of Windows Modules <http://docs.ansible.com/list_of_windows_modules.html>`_
+   :ref:`List of Windows Modules <windows_modules>`
        Windows specific module list, all implemented in PowerShell
    `User Mailing List <http://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!

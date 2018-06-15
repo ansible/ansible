@@ -9,6 +9,7 @@
 $ErrorActionPreference = "Stop"
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
+$_remote_tmp = Get-AnsibleParam $params "_ansible_remote_tmp" -type "path" -default $env:TMP
 
 $paths = Get-AnsibleParam -obj $params -name 'paths' -failifempty $true
 
@@ -70,7 +71,13 @@ namespace Ansible.Command {
     }
 }
 "@
+$original_tmp = $env:TMP
+$original_temp = $env:TEMP
+$env:TMP = $_remote_tmp
+$env:TEMP = $_remote_tmp
 Add-Type -TypeDefinition $symlink_util
+$env:TMP = $original_tmp
+$env:TEMP = $original_temp
 
 Function Assert-Age($info) {
     $valid_match = $true

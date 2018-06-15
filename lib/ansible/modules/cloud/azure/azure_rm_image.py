@@ -135,13 +135,12 @@ class AzureRMImage(AzureRMModuleBase):
         self.source = None
         self.data_disk_sources = None
         self.os_type = None
-        self.tags = None
 
         super(AzureRMImage, self).__init__(self.module_arg_spec, supports_check_mode=True, required_if=required_if)
 
     def exec_module(self, **kwargs):
 
-        for key in self.module_arg_spec:
+        for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
 
         results = None
@@ -158,7 +157,11 @@ class AzureRMImage(AzureRMModuleBase):
         if image:
             self.check_provisioning_state(image, self.state)
             results = image.id
-            # update is not supported
+            # update is not supported except for tags
+            update_tags, tags = self.update_tags(image.tags)
+            if update_tags:
+                changed = True
+                self.tags = tags
             if self.state == 'absent':
                 changed = True
         # the image does not exist and create a new one
@@ -176,7 +179,7 @@ class AzureRMImage(AzureRMModuleBase):
                 if vm:
                     if self.data_disk_sources:
                         self.fail('data_disk_sources is not allowed when capturing image from vm')
-                    image_instance = self.compute_models.Image(self.location, source_virtual_machine=self.compute_models.SubResource(vm.id))
+                    image_instance = self.compute_models.Image(self.location, source_virtual_machine=self.compute_models.SubResource(vm.id), tags=self.tags)
                 else:
                     if not self.os_type:
                         self.fail('os_type is required to create the image')

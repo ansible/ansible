@@ -1,0 +1,9 @@
+- name: start supervisord
+  command: 'supervisord -c {{ remote_dir }}/supervisord.conf'
+
+- name: wait_for supervisord
+  wait_for:
+    port: 9001
+    host: 127.0.0.1
+    timeout: 15
+    state: started

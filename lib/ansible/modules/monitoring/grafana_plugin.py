@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
-# Copyright 2017, Thierry Sallé (@tsalle)
+
+# Copyright: (c) 2017, Thierry Sallé (@seuf)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -16,20 +16,20 @@ DOCUMENTATION = '''
 ---
 module: grafana_plugin
 author:
-  - "Thierry Sallé (@tsalle)"
+  - Thierry Sallé (@tsalle)
 version_added: "2.5"
 short_description: Manage Grafana plugins via grafana-cli
 description:
   - Install and remove Grafana plugins.
 options:
   name:
-    required: true
     description:
       - Name of the plugin.
+    required: true
   version:
     description:
       - Version of the plugin to install.
-      - Default to latest
+      - Default to latest.
   grafana_plugins_dir:
     description:
       - Directory where Grafana plugin will be installed.
@@ -38,19 +38,19 @@ options:
       - Grafana repository. If not set, gafana-cli will use the default value C(https://grafana.net/api/plugins).
   grafana_plugin_url:
     description:
-      - Custom Grafana plugin URL
-      - Require grafana 4.6.x or later
+      - Custom Grafana plugin URL.
+      - Requires grafana 4.6.x or later.
   state:
-    default: present
-    choices: [present, absent]
     description:
       - Status of the Grafana plugin.
       - If latest is set, the version parameter will be ignored.
+    choices: [ absent, present ]
+    default: present
 '''
 
 EXAMPLES = '''
 ---
-- name: install - update Grafana piechart panel plugin
+- name: Install - update Grafana piechart panel plugin
   grafana_plugin:
     name: grafana-piechart-panel
     version: latest
@@ -178,7 +178,11 @@ def grafana_plugin(module, params):
         stdout_lines = stdout.split("\n")
         for line in stdout_lines:
             if line.find(params['name']):
-                plugin_name, plugin_version = line.split(' @ ')
+                if line.find(' @ ') != -1:
+                    line = line.rstrip()
+                    plugin_name, plugin_version = line.split(' @ ')
+                else:
+                    plugin_version = None
                 return {'msg': 'Grafana plugin {} installed : {}'.format(params['name'], cmd),
                         'changed': True,
                         'version': plugin_version}

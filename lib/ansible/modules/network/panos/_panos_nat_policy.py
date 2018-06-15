@@ -50,7 +50,6 @@ options:
     username:
         description:
             - username for authentication
-        required: false
         default: "admin"
     rule_name:
         description:
@@ -67,63 +66,48 @@ options:
     source:
         description:
             - list of source addresses
-        required: false
         default: ["any"]
     destination:
         description:
             - list of destination addresses
-        required: false
         default: ["any"]
     service:
         description:
             - service
-        required: false
         default: "any"
     snat_type:
         description:
             - type of source translation
-        required: false
-        default: None
     snat_address:
         description:
             - snat translated address
-        required: false
-        default: None
     snat_interface:
         description:
             - snat interface
-        required: false
-        default: None
     snat_interface_address:
         description:
             - snat interface address
-        required: false
-        default: None
     snat_bidirectional:
         description:
             - bidirectional flag
-        required: false
-        default: "false"
+        type: bool
+        default: 'no'
     dnat_address:
         description:
             - dnat translated address
-        required: false
-        default: None
     dnat_port:
         description:
             - dnat translated port
-        required: false
-        default: None
     override:
         description:
             - attempt to override rule if one with the same name already exists
-        required: false
-        default: "false"
+        type: bool
+        default: 'no'
     commit:
         description:
             - commit if changed
-        required: false
-        default: true
+        type: bool
+        default: 'yes'
 '''
 
 EXAMPLES = '''

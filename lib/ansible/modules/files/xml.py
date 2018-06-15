@@ -40,7 +40,6 @@ options:
     description:
     - A valid XPath expression describing the item(s) you want to manipulate.
     - Operates on the document root, C(/), by default.
-    default: /
   namespaces:
     description:
     - The namespace C(prefix:uri) mapping for the XPath expression.
@@ -178,7 +177,7 @@ EXAMPLES = r'''
     attribute: validatedon
     value: 1976-08-05
 
-# How to read an attrribute value and access it in Ansible
+# How to read an attribute value and access it in Ansible
 - name: Read attribute value
   xml:
     path: /foo/bar.xml

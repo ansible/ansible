@@ -67,7 +67,7 @@ options:
           specified. If no tags are specified, it removes all existing tags for the distribution. When I(purge_tags=no), existing tags are kept and I(tags)
           are added, if specified.
       default: 'no'
-      choices: ['yes', 'no']
+      type: bool
 
     alias:
       description:
@@ -85,7 +85,7 @@ options:
         - Specifies whether existing aliases will be removed before adding new aliases. When I(purge_aliases=yes), existing aliases are removed and I(aliases)
           are added.
       default: 'no'
-      choices: ['yes', 'no']
+      type: bool
 
     default_root_object:
       description:
@@ -245,7 +245,7 @@ options:
       description:
         - A boolean value that specifies whether the distribution is enabled or disabled.
       default: 'yes'
-      choices: ['yes', 'no']
+      type: bool
 
     viewer_certificate:
       description:
@@ -280,13 +280,13 @@ options:
     ipv6_enabled:
       description:
         - Determines whether IPv6 support is enabled or not.
-      choices: ['yes', 'no']
+      type: bool
       default: 'no'
 
     wait:
       description:
         - Specifies whether the module waits until the distribution has completed processing the creation or update.
-      choices: ['yes', 'no']
+      type: bool
       default: 'no'
 
     wait_timeout:
@@ -1319,7 +1319,10 @@ class CloudFrontValidationManager(object):
         ])
         self.__valid_viewer_certificate_minimum_protocol_versions = set([
             'SSLv3',
-            'TLSv1'
+            'TLSv1',
+            'TLSv1_2016',
+            'TLSv1.1_2016',
+            'TLSv1.2_2018'
         ])
         self.__valid_viewer_certificate_certificate_sources = set([
             'cloudfront',
@@ -1405,10 +1408,10 @@ class CloudFrontValidationManager(object):
                 all_origins[origin['domain_name']] = origin
                 new_domains.append(origin['domain_name'])
             if purge_origins:
-                for domain in all_origins:
+                for domain in list(all_origins.keys()):
                     if domain not in new_domains:
                         del(all_origins[domain])
-            return ansible_list_to_cloudfront_list(all_origins.values())
+            return ansible_list_to_cloudfront_list(list(all_origins.values()))
         except Exception as e:
             self.module.fail_json_aws(e, msg="Error validating distribution origins")
 
@@ -1418,7 +1421,7 @@ class CloudFrontValidationManager(object):
         if not origin['s3_origin_access_identity_enabled']:
             return None
         try:
-            comment = "Origin Access Identity created by Ansible at %s" % self.__default_datetime_string
+            comment = "access-identity-by-ansible-%s-%s" % (origin.get('domain_name'), self.__default_datetime_string)
             cfoai_config = dict(CloudFrontOriginAccessIdentityConfig=dict(CallerReference=self.__default_datetime_string,
                                                                           Comment=comment))
             oai = client.create_cloud_front_origin_access_identity(**cfoai_config)['CloudFrontOriginAccessIdentity']['Id']
@@ -1488,7 +1491,7 @@ class CloudFrontValidationManager(object):
             if purge_cache_behaviors:
                 for target_origin_id in set(all_cache_behaviors.keys()) - set([cb['path_pattern'] for cb in cache_behaviors]):
                     del(all_cache_behaviors[target_origin_id])
-            return ansible_list_to_cloudfront_list(all_cache_behaviors.values())
+            return ansible_list_to_cloudfront_list(list(all_cache_behaviors.values()))
         except Exception as e:
             self.module.fail_json_aws(e, msg="Error validating distribution cache behaviors")
 
@@ -1540,6 +1543,8 @@ class CloudFrontValidationManager(object):
                 forwarded_values = dict()
             existing_config = config.get('forwarded_values', {})
             headers = forwarded_values.get('headers', existing_config.get('headers', {}).get('items'))
+            if headers:
+                headers.sort()
             forwarded_values['headers'] = ansible_list_to_cloudfront_list(headers)
             if 'cookies' not in forwarded_values:
                 forward = existing_config.get('cookies', {}).get('forward', self.__default_cache_behavior_forwarded_values_forward_cookies)
@@ -1689,7 +1694,7 @@ class CloudFrontValidationManager(object):
                                               rest not in geo_restriction_items])
             valid_restrictions = ansible_list_to_cloudfront_list(geo_restriction_items)
             valid_restrictions['restriction_type'] = geo_restriction.get('restriction_type')
-            return valid_restrictions
+            return {'geo_restriction': valid_restrictions}
         except Exception as e:
             self.module.fail_json_aws(e, msg="Error validating restrictions")
 

@@ -8,18 +8,15 @@
     nxos_feature: 
       feature: interface-vlan
       state: enabled
-      provider: "{{ connection }}"
 
   - name: "Enable vrrp"
     nxos_feature: 
       feature: vrrp
       state: enabled
-      provider: "{{ connection }}"
 
   - name: "create int vlan 10"
     nxos_config: 
       commands: "int vlan 10"
-      provider: "{{ connection }}"
 
   - name: Ensure vrrp group 100 and vip 10.1.100.1 is on vlan10
     nxos_vrrp: &configure
@@ -27,7 +24,6 @@
       group: 100
       vip: 10.1.100.1
       admin_state: 'no shutdown'
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -48,7 +44,6 @@
       group: 100
       vip: default
       admin_state: default
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -64,7 +59,6 @@
       interface: vlan10
       group: 100
       state: absent
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -90,7 +84,6 @@
       interval: 10
       priority: 130
       authentication: AUTHKEY
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -110,7 +103,6 @@
       interval: default
       priority: default
       authentication: default
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -130,7 +122,6 @@
       nxos_config: 
         commands:
           - no feature interface-vlan
-        provider: "{{ connection }}"
         match: none
       ignore_errors: yes
 
@@ -138,7 +129,6 @@
       nxos_feature: 
         feature: vrrp
         state: disabled
-        provider: "{{ connection }}"
       ignore_errors: yes
 
 - debug: msg="END connection={{ ansible_connection }} nxos_vrrp sanity test"
