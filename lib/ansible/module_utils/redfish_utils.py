@@ -412,7 +412,7 @@ class RedfishUtils(object):
         result['ret'] = True
         return result
 
-    def list_users(self, user):
+    def list_users(self):
         # listing all users has always been slower than other operations, why?
         result = {}
         allusers = []

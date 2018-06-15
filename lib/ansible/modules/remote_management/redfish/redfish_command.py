@@ -13,13 +13,12 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = '''
 ---
-module: redfish
+module: redfish_command
 version_added: "2.7"
 short_description: Manages Out-Of-Band controllers using Redfish APIs
 description:
   - Builds Redfish URIs locally and sends them to remote OOB controllers to
-    get information back or perform an action.
-  - When receiving information, it is placed in location specified by user.
+    perform an action.
 options:
   category:
     required: true
@@ -62,55 +61,13 @@ options:
     required: false
     description:
       - bootdevice when setting boot configuration
-  bios_attr_name:
-    required: false
-    description:
-      - name of BIOS attribute to update
-  bios_attr_value:
-    required: false
-    description:
-      - value of BIOS attribute to update to
-  mgr_attr_name:
-    required: false
-    description:
-      - name of Manager attribute to update
-  mgr_attr_value:
-    required: false
-    description:
-      - value of Manager attribute to update to
 
 author: "Jose Delarosa (github: jose-delarosa)"
 '''
 
 EXAMPLES = '''
-  - name: Getting system inventory
-    redfish:
-      category: Inventory
-      command: GetSystemInventory
-      baseuri: "{{ baseuri }}"
-      user: "{{ user }}"
-      password: "{{ password }}"
-
-  - name: Get CPU Inventory
-    redfish:
-      category: Inventory
-      command: GetCpuInventory
-      baseuri: "{{ baseuri }}"
-      user: "{{ user}}"
-      password: "{{ password }}"
-
-  - name: Enable PXE Boot for NIC1
-    redfish:
-      category: System
-      command: SetBiosAttributes
-      bios_attr_name: PxeDev1EnDis
-      bios_attr_value: Enabled
-      baseuri: "{{ baseuri }}"
-      user: "{{ user }}"
-      password: "{{ password }}"
-
   - name: Set one-time boot device to {{ bootdevice }}
-    redfish:
+    redfish_command:
       category: System
       command: SetOneTimeBoot
       bootdevice: "{{ bootdevice }}"
@@ -119,7 +76,7 @@ EXAMPLES = '''
       password: "{{ password }}"
 
   - name: Turn system power on
-    redfish:
+    redfish_command:
       category: System
       command: PowerOn
       baseuri: "{{ baseuri }}"
@@ -127,7 +84,7 @@ EXAMPLES = '''
       password: "{{ password }}"
 
   - name: Add user
-    redfish:
+    redfish_command:
       category: Accounts
       command: AddUser
       baseuri: "{{ baseuri }}"
@@ -139,21 +96,13 @@ EXAMPLES = '''
       userrole: "{{ userrole }}"
 
   - name: Enable user
-    redfish:
+    redfish_command:
       category: Accounts
       command: EnableUser
       baseuri: "{{ baseuri }}"
       user: "{{ user }}"
       password: "{{ password }}"
       userid: "{{ userid }}"
-
-  - name: Get attributes
-    redfish:
-      category: System
-      command: GetBiosAttributes
-      baseuri: "{{ baseuri }}"
-      user: "{{ user }}"
-      password: "{{ password }}"
 '''
 
 RETURN = '''
@@ -184,10 +133,6 @@ def main():
             userpswd=dict(no_log=True),
             userrole=dict(),
             bootdevice=dict(),
-            mgr_attr_name=dict(),
-            mgr_attr_value=dict(),
-            bios_attr_name=dict(),
-            bios_attr_value=dict(),
         ),
         supports_check_mode=False
     )
@@ -206,63 +151,19 @@ def main():
             'userpswd': module.params['userpswd'],
             'userrole': module.params['userrole']}
 
-    # Manager attributes to update
-    mgr_attributes = {'mgr_attr_name': module.params['mgr_attr_name'],
-                      'mgr_attr_value': module.params['mgr_attr_value']}
-    # BIOS attributes to update
-    bios_attributes = {'bios_attr_name': module.params['bios_attr_name'],
-                       'bios_attr_value': module.params['bios_attr_value']}
-
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
     rf_uri = "/redfish/v1"
     rf_utils = RedfishUtils(creds, root_uri)
 
     # Organize by Categories / Commands
-    if category == "Inventory":
-        # execute only if we find a System resource
-        result = rf_utils._find_systems_resource(rf_uri)
-        if result['ret'] is False:
-            module.fail_json(msg=result['msg'])
-
-        # General
-        if command == "GetSystemInventory":
-            result = rf_utils.get_system_inventory()
-
-        # Components
-        elif command == "GetPsuInventory":
-            result = rf_utils.get_psu_inventory()
-        elif command == "GetCpuInventory":
-            result = rf_utils.get_cpu_inventory()
-        elif command == "GetNicInventory":
-            result = rf_utils.get_nic_inventory()
-
-        # Storage
-        elif command == "GetStorageControllerInventory":
-            result = rf_utils.get_storage_controller_inventory()
-        elif command == "GetDiskInventory":
-            result = rf_utils.get_disk_inventory()
-
-        # Chassis
-        elif command == "GetFanInventory":
-            # execute only if we find Chassis resource
-            result = rf_utils._find_chassis_resource(rf_uri)
-            if result['ret'] is False:
-                module.fail_json(msg=result['msg'])
-            result = rf_utils.get_fan_inventory()
-
-        else:
-            result = {'ret': False, 'msg': 'Invalid Command'}
-
-    elif category == "Accounts":
+    if category == "Accounts":
         # execute only if we find an Account service resource
         result = rf_utils._find_accountservice_resource(rf_uri)
         if result['ret'] is False:
             module.fail_json(msg=result['msg'])
 
-        if command == "ListUsers":
-            result = rf_utils.list_users(user)
-        elif command == "AddUser":
+        if command == "AddUser":
             result = rf_utils.add_user(user)
         elif command == "EnableUser":
             result = rf_utils.enable_user(user)
@@ -287,33 +188,14 @@ def main():
                 or command == "PowerGracefulRestart" \
                 or command == "PowerGracefulShutdown":
             result = rf_utils.manage_system_power(command)
-        elif command == "GetBiosAttributes":
-            result = rf_utils.get_bios_attributes()
-        elif command == "GetBiosBootOrder":
-            result = rf_utils.get_bios_boot_order()
         elif command == "SetOneTimeBoot":
             result = rf_utils.set_one_time_boot_device(bootdevice)
-        elif command == "SetBiosDefaultSettings":
-            result = rf_utils.set_bios_default_settings()
-        elif command == "SetBiosAttributes":
-            result = rf_utils.set_bios_attributes(bios_attributes)
         elif command == "CreateBiosConfigJob":
             # execute only if we find a Managers resource
             result = rf_utils._find_managers_resource(rf_uri)
             if result['ret'] is False:
                 module.fail_json(msg=result['msg'])
             result = rf_utils.create_bios_config_job()
-        else:
-            result = {'ret': False, 'msg': 'Invalid Command'}
-
-    elif category == "Update":
-        # execute only if we find UpdateService resources
-        result = rf_utils._find_updateservice_resource(rf_uri)
-        if result['ret'] is False:
-            module.fail_json(msg=result['msg'])
-
-        if command == "GetFirmwareInventory":
-            result = rf_utils.get_firmware_inventory()
         else:
             result = {'ret': False, 'msg': 'Invalid Command'}
 
@@ -325,14 +207,6 @@ def main():
 
         if command == "GracefulRestart":
             result = rf_utils.restart_manager_gracefully()
-        elif command == "GetAttributes":
-            result = rf_utils.get_manager_attributes()
-        elif command == "SetAttributes":
-            result = rf_utils.set_manager_attributes(mgr_attributes)
-
-        # Logs
-        elif command == "GetLogs":
-            result = rf_utils.get_logs()
         elif command == "ClearLogs":
             result = rf_utils.clear_logs()
         else:
