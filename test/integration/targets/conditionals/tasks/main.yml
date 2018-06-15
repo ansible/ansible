@@ -359,3 +359,16 @@
   assert:
     that:
       - "result.failed == false"
+
+- name: test a variable is undefined when assigned to a variable that itself is undefined
+  var:
+    var_a: "{{ undef_var }}"
+    var_b: "{{ var_a }}"
+  debug: msg="this should print"
+  when: var_b is undefined and var_b is not defined
+  register: result
+
+- name: assert the task did not fail
+  assert:
+    that:
+      - "result.failed == false"
