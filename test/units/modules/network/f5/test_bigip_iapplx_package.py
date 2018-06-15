@@ -84,7 +84,7 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             content='fixtures/MyApp-0.1.0-0001.noarch.rpm',
             state='present',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
