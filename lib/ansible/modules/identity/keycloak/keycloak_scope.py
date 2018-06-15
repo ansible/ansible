@@ -305,14 +305,16 @@ def main():
         client_id=dict(type='str'),
         state=dict(default='present', choices=['present', 'absent', 'exclusive']),
         type=dict(default='realm', choices=['realm', 'client']),
-        roles=dict(type='list', elements='dict'),
-        clientroles=dict(type='dict'),
+        roles=dict(type='list', elements='dict', default=list()),
+        clientroles=dict(type='dict', default=dict()),
     )
     argument_spec.update(meta_args)
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True,
-                           required_one_of=([['id', 'name', 'client_id'], ['roles', 'clientroles']]))
+                           required_one_of=[['id', 'name', 'client_id']],
+                           required_if=[['type', 'realm', ['roles']], ['type', 'client', ['clientroles']]],
+                           mutually_exclusive=[['roles', 'clientroles']])
 
     result = dict(changed=False, msg='', diff={}, proposed={}, existing={}, end_state={})
 
@@ -326,16 +328,6 @@ def main():
     roletype = module.params.get('type')
     roles = module.params.get('roles')
     clientroles = module.params.get('clientroles')
-
-    if roletype == 'realm' and clientroles is not None:
-        module.fail_json(msg='You cannot specify clientroles when type is "realm"')
-    if roletype == 'client' and roles is not None:
-        module.fail_json(msg='You cannot specify roles when type is "client"')
-
-    if roles is None:
-        roles = []
-    if clientroles is None:
-        clientroles = {}
 
     for role in roles:
         checkresult, msg = check_role_representation(role)
@@ -397,9 +389,6 @@ def main():
         else:
             scope_client_id = scope_client
 
-        if roles is None:
-            roles = []
-
         # obtain current roles
         current = kc.get_scope_mapping(cid, id_client=scope_client_id, target=target, realm=realm)
         proposed = deepcopy(current)
@@ -413,7 +402,6 @@ def main():
                     proposed = [x for x in proposed if x['name'] != role['name']]
 
         if state == 'exclusive':
-            to_delete = []
             for role in current:
                 if not contains_role(roles, role['name']):
                     to_delete.append(role)
