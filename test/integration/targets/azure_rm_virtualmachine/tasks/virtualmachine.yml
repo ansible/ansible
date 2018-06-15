@@ -113,7 +113,7 @@
   wait_for:
       host: '{{ hostvars["new_azure_vm"].ansible_host }}'
       port: 22
-      timeout: 60
+      timeout: 240
       state: started
 
 - block:
