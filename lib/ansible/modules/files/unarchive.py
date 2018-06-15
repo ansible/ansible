@@ -586,7 +586,7 @@ class ZipArchive(object):
             cmd.extend(['-x'] + self.excludes)
         cmd.extend(['-d', self.dest])
         if self.password:
-           if not HAS_PEXPECT:
+            if not HAS_PEXPECT:
                 self.module.fail_json(msg="The pexpect python module is required for password option")
             out = ""
             rc = 0
