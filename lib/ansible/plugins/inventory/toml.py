@@ -20,28 +20,29 @@ DOCUMENTATION = '''
 
 '''
 EXAMPLES = '''
-[all.vars]
-group_var1 = "value2"
+example1: |
+    [all.vars]
+    group_var1 = "value2"
 
-[all.hosts.test1]
+    [all.hosts.test1]
 
-[all.hosts.test2]
-var1 = "value1"
+    [all.hosts.test2]
+    var1 = "value1"
 
-[all.children.last_group]
-hosts = "test1"
+    [all.children.last_group]
+    hosts = "test1"
 
-[all.children.other_group.vars]
-g2_var2 = "value3"
+    [all.children.other_group.vars]
+    g2_var2 = "value3"
 
-[all.children.last_group.vars]
-last_var = "MYVALUE"
+    [all.children.last_group.vars]
+    last_var = "MYVALUE"
 
-[all.children.other_group.children.group_x]
-hosts = "test5"
+    [all.children.other_group.children.group_x]
+    hosts = "test5"
 
-[all.children.other_group.hosts.test4]
-ansible_host = "127.0.0.1"
+    [all.children.other_group.hosts.test4]
+    ansible_host = "127.0.0.1"
 '''
 
 import os
