@@ -567,7 +567,7 @@ class AzureRMWebApps(AzureRMModuleBase):
                             self.fail('Unsupported framework {0} for Windows web app.'.format(fx.get('name')))
                         else:
                             self.site_config[fx.get('name') + '_version'] = fx.get('version')
-                
+
                 for fx in self.frameworks:
                     if 'settings' in fx:
                         for setting in fx['settings']:
