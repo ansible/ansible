@@ -148,11 +148,10 @@ class Parameters(AnsibleF5Parameters):
         :return:
         """
         cmd = ['rpm', '-qp', '--queryformat', '%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}', self.package]
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        stdout, stderr = p.communicate()
-        if not stdout:
+        rc, out, err = self._module.run_command(cmd)
+        if not out:
             return str(self.package_file)
-        return stdout.decode('utf-8')
+        return out
 
     @property
     def package_root(self):
@@ -177,7 +176,7 @@ class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
         self.client = kwargs.get('client', None)
-        self.want = Parameters(params=self.module.params)
+        self.want = Parameters(module=self.module, params=self.module.params)
         self.changes = Parameters()
 
     def exec_module(self):
