@@ -105,7 +105,7 @@ options:
         - Become password. Use ASK for prompting.
     vault_password:
       description:
-        - Valut password. Use ASK for prompting.
+        - Vault password. Use ASK for prompting.
     state:
       description:
         - Desired state of the resource.
