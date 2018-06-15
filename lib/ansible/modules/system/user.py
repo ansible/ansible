@@ -12,7 +12,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'core'}
 
 DOCUMENTATION = '''
----
 module: user
 author:
 - Stephen Fromm (@sfromm)
@@ -60,13 +59,16 @@ options:
             - Optionally sets the user's primary group (takes a group name).
     groups:
         description:
-            - Puts the user in  list of groups. When set to the empty string ('groups='),
-              the user is removed from all groups except the primary group.
-            - Before version 2.3, the only input format allowed was a 'comma separated string',
-              now it should be able to accept YAML lists also.
+            - List of groups user will be added to. When set to an empty string C(''),
+              C(null), or C(~), the user is removed from all groups except the
+              primary group. (C(~) means C(null) in YAML)
+            - Before version 2.3, the only input format allowed was a comma separated string.
+              Now this parameter accepts a list as well as a comma separated string.
     append:
         description:
-            - If C(yes), will only add groups, not set them to just the list in I(groups).
+            - If C(yes), add the user to the groups specified in C(groups).
+            - If C(no), user will only be added to the groups specified in C(groups),
+              removing them from all other groups.
         type: bool
         default: "no"
     shell:
@@ -233,8 +235,109 @@ EXAMPLES = '''
   user:
     name: james18
     expires: -1
-
 '''
+
+RETURN = '''
+append:
+  description: Whether or not to append the user to groups
+  returned: When state is 'present' and the user exists
+  type: bool
+  sample: True
+comment:
+  description: Comment section from passwd file, usually the user name
+  returned: When user exists
+  type: string
+  sample: Agent Smith
+create_home:
+  description: Whether or not to create the home directory
+  returned: When user does not exist and not check mode
+  type: bool
+  sample: True
+force:
+  description: Whether or not a user account was forcibly deleted
+  returned: When state is 'absent' and user exists
+  type: bool
+  sample: False
+group:
+  description: Primary user group ID
+  returned: When user exists
+  type: int
+  sample: 1001
+groups:
+  description: List of groups of which the user is a member
+  returned: When C(groups) is not empty and C(state) is 'present'
+  type: string
+  sample: 'chrony,apache'
+home:
+  description: "Path to user's home directory"
+  returned: When C(state) is 'present'
+  type: string
+  sample: '/home/asmith'
+move_home:
+  description: Whether or not to move an existing home directory
+  returned: When C(state) is 'present' and user exists
+  type: bool
+  sample: False
+name:
+  description: User account name
+  returned: always
+  type: string
+  sample: asmith
+password:
+  description: Masked value of the password
+  returned: When C(state) is 'present' and C(password) is not empty
+  type: string
+  sample: 'NOT_LOGGING_PASSWORD'
+remove:
+  description: Whether or not to remove the user account
+  returned: When C(state) is 'absent' and user exists
+  type: bool
+  sample: True
+shell:
+  description: User login shell
+  returned: When C(state) is 'present'
+  type: string
+  sample: '/bin/bash'
+ssh_fingerprint:
+  description: Fingerprint of generated SSH key
+  returned: When C(generate_ssh_key) is C(True)
+  type: string
+  sample: '2048 SHA256:aYNHYcyVm87Igh0IMEDMbvW0QDlRQfE0aJugp684ko8 ansible-generated on host (RSA)'
+ssh_key_file:
+  description: Path to generated SSH public key file
+  returned: When C(generate_ssh_key) is C(True)
+  type: string
+  sample: /home/asmith/.ssh/id_rsa
+ssh_public_key:
+  description: Generated SSH public key file
+  returned: When C(generate_ssh_key) is C(True)
+  type: string
+  sample: >
+    'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC95opt4SPEC06tOYsJQJIuN23BbLMGmYo8ysVZQc4h2DZE9ugbjWWGS1/pweUGjVstgzMkBEeBCByaEf/RJKNecKRPeGd2Bw9DCj/bn5Z6rGfNENKBmo
+    618mUJBvdlEgea96QGjOwSB7/gmonduC7gsWDMNcOdSE3wJMTim4lddiBx4RgC9yXsJ6Tkz9BHD73MXPpT5ETnse+A3fw3IGVSjaueVnlUyUmOBf7fzmZbhlFVXf2Zi2rFTXqvbdGHKkzpw1U8eB8xFPP7y
+    d5u1u0e6Acju/8aZ/l17IDFiLke5IzlqIMRTEbDwLNeO84YQKWTm9fODHzhYe0yvxqLiK07 ansible-generated on host'
+stderr:
+  description: Standard error from running commands
+  returned: When stderr is returned by a command that is run
+  type: string
+  sample: Group wheels does not exist
+stdout:
+  description: Standard output from running commands
+  returned: When standard output is returned by the command that is run
+  type: string
+  sample:
+system:
+  description: Whether or not the account is a system account
+  returned: When C(system) is passed to the module and the account does not exist
+  type: bool
+  sample: True
+uid:
+  description: User ID of the user account
+  returned: When C(UID) is passed to the module
+  type: int
+  sample: 1044
+'''
+
 
 import errno
 import grp
