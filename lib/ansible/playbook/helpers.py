@@ -377,3 +377,27 @@ def load_list_of_roles(ds, play, current_role_path=None, variable_manager=None, 
         roles.append(i)
 
     return roles
+
+
+def _find_nested_var_assignment(var, iterbl):
+    '''
+        Helper function for the finding arbitrarily deeply nested keys in objects.
+
+        i.e
+        _find_nested_var_assignment('target', { 'a':[{ 'b':{ 'c':{'target': 'you found me'}}}]}) => 'you found me'
+        _find_nested_var_assignment('target', None) => None
+
+    '''
+    if type(iterbl) == type({}) and var in iterbl:
+        return iterbl[var]
+    elif type(iterbl) == type({}):
+        for i in iterbl:
+            val = _find_nested_var_assignment(var, iterbl[i])
+            if val:
+                return val
+    elif type(iterbl) == type([]):
+        for i in iterbl:
+            val = _find_nested_var_assignment(var, i)
+            if val:
+                return val
+    return None
