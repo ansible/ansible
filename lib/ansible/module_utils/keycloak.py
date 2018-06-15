@@ -34,6 +34,7 @@ import json
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.six.moves.urllib.error import HTTPError
+from ansible.module_utils._text import to_native
 
 URL_TOKEN = "{url}/realms/{realm}/protocol/openid-connect/token"
 URL_CLIENT = "{url}/admin/realms/{realm}/clients/{id}"
@@ -362,10 +363,10 @@ class KeycloakAPI(object):
                 self.module.fail_json(msg='Could not obtain realm representation for realm %s: %s' % (realm, str(e)))
         except ValueError as e:
             self.module.fail_json(msg='API returned incorrect JSON when trying to obtain realm representation for realm %s: %s'
-                                      % (realm, str(e)))
+                                      % (realm, to_native(e)))
         except Exception as e:
             self.module.fail_json(msg='Could not obtain realm representation for realm %s: %s'
-                                      % (realm, str(e)))
+                                      % (realm, to_native(e)))
 
     def create_realm(self, realmrep):
         """ Create a realm in keycloak
@@ -380,7 +381,7 @@ class KeycloakAPI(object):
                             data=json.dumps(realmrep), validate_certs=self.validate_certs)
         except Exception as e:
             self.module.fail_json(msg='Could not create realm: %s'
-                                      % str(e))
+                                      % to_native(e))
 
     def update_realm(self, realmrep, realm):
         """ Update an existing realm
@@ -396,7 +397,7 @@ class KeycloakAPI(object):
                             data=json.dumps(realmrep), validate_certs=self.validate_certs)
         except Exception as e:
             self.module.fail_json(msg='Could not update realm %s: %s'
-                                      % (realm, str(e)))
+                                      % (realm, to_native(e)))
 
     def delete_realm(self, realm):
         """ Delete a realm from Keycloak
@@ -411,4 +412,4 @@ class KeycloakAPI(object):
                             validate_certs=self.validate_certs)
         except Exception as e:
             self.module.fail_json(msg='Could not delete realm %s: %s'
-                                      % (realm, str(e)))
+                                      % (realm, to_native(e)))

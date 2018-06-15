@@ -47,7 +47,6 @@ options:
             - Name of the realm to be acted on. Either this or I(realm) is required. If both are
               given, I(name) specifies the current name of the realm, while I(realm) specifies the
               new name thereof.
-        required: True
 
     realm:
         description:
@@ -847,89 +846,89 @@ def main():
 
     meta_args = dict(
         state=dict(default='present', choices=['present', 'absent']),
-        name=dict(type='str'),
-        realm=dict(type='str'),
+        name=dict(),
+        realm=dict(),
         access_code_lifespan=dict(type='int', aliases=['accessCodeLifespan']),
         access_code_lifespan_login=dict(type='int', aliases=['accessCodeLifespanLogin']),
         access_code_lifespan_user_action=dict(type='int', aliases=['accessCodeLifespanUserAction']),
         access_token_lifespan=dict(type='int', aliases=['accessTokenLifespan']),
         access_token_lifespan_for_implicit_flow=dict(type='int', aliases=['accessTokenLifespanForImplicitFlow']),
-        account_theme=dict(type='str', aliases=['accountTheme']),
+        account_theme=dict(aliases=['accountTheme']),
         action_token_generated_by_admin_lifespan=dict(type='int', aliases=['actionTokenGeneratedByAdminLifespan']),
         action_token_generated_by_user_lifespan=dict(type='int', aliases=['actionTokenGeneratedByUserLifespan']),
         admin_events_details_enabled=dict(type='bool', aliases=['adminEventsDetailsEnabled']),
         admin_events_enabled=dict(type='bool', aliases=['adminEventsEnabled']),
-        admin_theme=dict(type='str', aliases=['adminTheme']),
+        admin_theme=dict(aliases=['adminTheme']),
         attributes=dict(type='dict'),
-        browser_flow=dict(type='str', aliases=['browserFlow']),
+        browser_flow=dict(aliases=['browserFlow']),
         browser_security_headers=dict(type='dict', aliases=['browserSecurityHeaders'], options=dict(
-            contentSecurityPolicy=dict(type='str'),
-            xContentTypeOptions=dict(type='str'),
-            xFrameOptions=dict(type='str'),
-            xRobotsTag=dict(type='str'),
-            xXSSProtection=dict(type='str'),
-            strictTransportSecurity=dict(type='str'),
+            contentSecurityPolicy=dict(),
+            xContentTypeOptions=dict(),
+            xFrameOptions=dict(),
+            xRobotsTag=dict(),
+            xXSSProtection=dict(),
+            strictTransportSecurity=dict(),
         )),
         brute_force_protected=dict(type='bool', aliases=['bruteForceProtected']),
-        client_authentication_flow=dict(type='str', aliases=['clientAuthenticationFlow']),
-        default_groups=dict(type='list', aliases=['defaultGroups']),
-        default_locale=dict(type='str', aliases=['defaultLocale']),
+        client_authentication_flow=dict(aliases=['clientAuthenticationFlow']),
+        default_groups=dict(type='list', elements='str', aliases=['defaultGroups']),
+        default_locale=dict(aliases=['defaultLocale']),
         default_roles=dict(type='list', elements='str', aliases=['defaultRoles']),
-        direct_grant_flow=dict(type='str', aliases=['directGrantFlow']),
-        display_name=dict(type='str', aliases=['displayName']),
-        display_name_html=dict(type='str', aliases=['displayNameHtml']),
-        docker_authentication_flow=dict(type='str', aliases=['dockerAuthenticationFlow']),
+        direct_grant_flow=dict(aliases=['directGrantFlow']),
+        display_name=dict(aliases=['displayName']),
+        display_name_html=dict(aliases=['displayNameHtml']),
+        docker_authentication_flow=dict(aliases=['dockerAuthenticationFlow']),
         duplicate_emails_allowed=dict(type='bool', aliases=['duplicateEmailsAllowed']),
         edit_username_allowed=dict(type='bool', aliases=['editUsernameAllowed']),
-        email_theme=dict(type='str', aliases=['emailTheme']),
+        email_theme=dict(aliases=['emailTheme']),
         enabled=dict(type='bool'),
         enabled_event_types=dict(type='list', elements='str', aliases=['enabledEventTypes']),
         events_enabled=dict(type='bool', aliases=['eventsEnabled']),
         events_expiration=dict(type='int', aliases=['eventsExpiration']),
         events_listeners=dict(type='list', elements='str', aliases=['eventsListeners']),
         failure_factor=dict(type='int', aliases=['failureFactor']),
-        id=dict(type='str'),
+        id=dict(),
         internationalization_enabled=dict(type='bool', aliases=['internationalizationEnabled']),
-        login_theme=dict(type='str', aliases=['loginTheme']),
+        login_theme=dict(aliases=['loginTheme']),
         login_with_email_allowed=dict(type='bool', aliases=['loginWithEmailAllowed']),
         max_delta_time_seconds=dict(type='int', aliases=['maxDeltaTimeSeconds']),
         max_failure_wait_seconds=dict(type='int', aliases=['maxFailureWaitSeconds']),
         minimum_quick_login_wait_seconds=dict(type='int', aliases=['minimumQuickLoginWaitSeconds']),
         not_before=dict(type='int', aliases=['notBefore']),
         offline_session_idle_timeout=dict(type='int', aliases=['offlineSessionIdleTimeout']),
-        otp_policy_algorithm=dict(type='str', aliases=['otpPolicyAlgorithm'], choices=['HmacSHA1', 'HmacSHA256', 'HmacSHA512']),
+        otp_policy_algorithm=dict(aliases=['otpPolicyAlgorithm'], choices=['HmacSHA1', 'HmacSHA256', 'HmacSHA512']),
         otp_policy_digits=dict(type='int', aliases=['otpPolicyDigits'], choices=[6, 8]),
         otp_policy_initial_counter=dict(type='int', aliases=['otpPolicyInitialCounter']),
         otp_policy_look_ahead_window=dict(type='int', aliases=['otpPolicyLookAheadWindow']),
         otp_policy_period=dict(type='int', aliases=['otpPolicyPeriod']),
-        otp_policy_type=dict(type='str', aliases=['otpPolicyType'], choices=['totp', 'hotp']),
-        password_policy=dict(type='str', aliases=['passwordPolicy']),
+        otp_policy_type=dict(aliases=['otpPolicyType'], choices=['totp', 'hotp']),
+        password_policy=dict(aliases=['passwordPolicy']),
         permanent_lockout=dict(type='bool', aliases=['permanentLockout']),
         quick_login_check_milli_seconds=dict(type='int', aliases=['quickLoginCheckMilliSeconds']),
         refresh_token_max_reuse=dict(type='int', aliases=['refreshTokenMaxReuse']),
         registration_allowed=dict(type='bool', aliases=['registrationAllowed']),
         registration_email_as_username=dict(type='bool', aliases=['registrationEmailAsUsername']),
-        registration_flow=dict(type='str', aliases=['registrationFlow']),
+        registration_flow=dict(aliases=['registrationFlow']),
         remember_me=dict(type='bool', aliases=['rememberMe']),
         required_credentials=dict(type='list', elements='str', aliases=['requiredCredentials']),
-        reset_credentials_flow=dict(type='str', aliases=['resetCredentialsFlow']),
+        reset_credentials_flow=dict(aliases=['resetCredentialsFlow']),
         reset_password_allowed=dict(type='bool', aliases=['resetPasswordAllowed']),
         revoke_refresh_token=dict(type='bool', aliases=['revokeRefreshToken']),
         smtp_server=dict(type='dict', aliases=['smtpServer'], options={
             'auth': dict(type='bool'),
-            'envelopeFrom': dict(type='str'),
-            'from': dict(type='str', required=True),
-            'fromDisplayName': dict(type='str'),
-            'host': dict(type='str', required=True),
-            'password': dict(type='str', no_log=True),
+            'envelopeFrom': dict(),
+            'from': dict(required=True),
+            'fromDisplayName': dict(),
+            'host': dict(required=True),
+            'password': dict(no_log=True),
             'port': dict(type='int'),
-            'replyTo': dict(type='str'),
-            'replyToDisplayName': dict(type='str'),
+            'replyTo': dict(),
+            'replyToDisplayName': dict(),
             'ssl': dict(type='bool'),
             'starttls': dict(type='bool'),
-            'user': dict(type='str'),
+            'user': dict(),
         }),
-        ssl_required=dict(type='str', aliases=['sslRequired'], choices=['none', 'all', 'external']),
+        ssl_required=dict(aliases=['sslRequired'], choices=['none', 'all', 'external']),
         sso_session_idle_timeout=dict(type='int', aliases=['ssoSessionIdleTimeout']),
         sso_session_max_lifespan=dict(type='int', aliases=['ssoSessionMaxLifespan']),
         supported_locales=dict(type='list', elements='str', aliases=['supportedLocales']),
@@ -955,10 +954,6 @@ def main():
                     if x not in list(keycloak_argument_spec().keys()) + ['state', 'name'] and
                     module.params.get(x) is not None]
 
-    # If the I(realm) is not set, assume I(name) as the default.
-    if module.params.get('realm') is None:
-        realm_params['realm'] = realm
-
     before_realm = kc.get_realm_by_name(realm)
     before_realm = {} if before_realm is None else before_realm
 
@@ -969,11 +964,12 @@ def main():
         # lists in the Keycloak API are sorted
         new_param_value = module.params.get(realm_param)
         if isinstance(new_param_value, list):
-            try:
-                new_param_value = sorted(new_param_value)
-            except TypeError:
-                pass
+            new_param_value = sorted(new_param_value)
         changeset[camel(realm_param)] = new_param_value
+
+    # If the I(realm) is not set, assume I(name) as the default.
+    if module.params.get('realm') is None:
+        changeset['realm'] = realm
 
     # Whether creating or updating a realm, take the before-state and merge the changeset into it
     updated_realm = before_realm.copy()
