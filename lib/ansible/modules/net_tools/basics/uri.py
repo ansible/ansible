@@ -276,7 +276,7 @@ JSON_CANDIDATES = ('text', 'json', 'javascript')
 
 def write_file(module, url, dest, content):
     # create a tempfile with some test content
-    fd, tmpsrc = tempfile.mkstemp(dir=getattr(module, 'tmpdir', None))
+    fd, tmpsrc = tempfile.mkstemp()
     f = open(tmpsrc, 'wb')
     try:
         f.write(content)
