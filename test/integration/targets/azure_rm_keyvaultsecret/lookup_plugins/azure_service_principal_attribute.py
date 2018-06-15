@@ -22,10 +22,8 @@ description:
 options:
   azure_client_id:
     description: azure service principal client id.
-    required: True
   azure_secret:
     description: azure service principal secret
-    required: True
   azure_tenant:
     description: azure tenant
   azure_cloud_environment:
