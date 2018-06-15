@@ -131,6 +131,19 @@ requires Python 2, you can also report a bug on our `bug tracker
 
 Do not replace the shebang lines of your python modules.  Ansible will do this for you automatically at deploy time.
 
+.. _installation_faqs:
+
+How do I handle the package dependencies required by Ansible package dependencies during Ansible installation ?
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+While installing Ansible, sometimes you may encounter errors such as `No package 'libffi' found` or `fatal error: Python.h: No such file or directory`
+These errors are generally caused by the missing packages which are dependencies of the packages required by Ansible.
+For example, `libffi` package is dependency of `pynacl` and `paramiko` (Ansible -> paramiko -> pynacl -> libffi).
+
+In order to solve these kinds of dependency issue, you may need to install required packages using the OS native package managers (e.g., `yum`, `dnf` or `apt`) or as mentioned in the package installation guide.
+
+Please refer the documentation of the respective package for such dependencies and their installation methods.
+
 Common Platform Issues
 ++++++++++++++++++++++
 

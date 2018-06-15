@@ -159,7 +159,7 @@ Debian/Ubuntu packages can also be built from the source checkout, run:
 
     $ make deb
 
-You may also wish to run from source to get the latest, which is covered above.
+You may also wish to run from source to get the latest, which is covered below.
 
 Latest Releases Via Apt (Debian)
 ++++++++++++++++++++++++++++++++
@@ -395,6 +395,8 @@ bugs and feature ideas.
        Examples of basic commands
    :ref:`working_with_playbooks`
        Learning ansible's configuration management language
+   :ref:`installation_faqs`
+       Ansible Installation related to FAQs
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
