@@ -49,8 +49,7 @@ options:
   tmp_dest:
     description:
       - Absolute path of where temporary file is downloaded to.
-      - When run on Ansible 2.5 or greater, path defaults to ansible's remote_tmp setting
-      - When run on Ansible prior to 2.5, it defaults to C(TMPDIR), C(TEMP) or C(TMP) env variables or a platform specific value.
+      - Defaults to C(TMPDIR), C(TEMP) or C(TMP) env variables or a platform specific value.
       - U(https://docs.python.org/2/library/tempfile.html#tempfile.tempdir)
     version_added: '2.1'
   force:
@@ -341,17 +340,18 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
                 module.fail_json(msg="%s is a file but should be a directory." % tmp_dest)
             else:
                 module.fail_json(msg="%s directory does not exist." % tmp_dest)
-    else:
-        tmp_dest = getattr(module, 'tmpdir', None)
 
-    fd, tempname = tempfile.mkstemp(dir=tmp_dest)
+        fd, tempname = tempfile.mkstemp(dir=tmp_dest)
+    else:
+        fd, tempname = tempfile.mkstemp()
 
     f = os.fdopen(fd, 'wb')
     try:
         shutil.copyfileobj(rsp, f)
     except Exception as e:
         os.remove(tempname)
-        module.fail_json(msg="failed to create temporary content file: %s" % to_native(e), exception=traceback.format_exc())
+        module.fail_json(msg="failed to create temporary content file: %s" % to_native(e),
+                         exception=traceback.format_exc())
     f.close()
     rsp.close()
     return tempname, info
