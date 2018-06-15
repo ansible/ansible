@@ -134,6 +134,12 @@ import re
 import stat
 import time
 import traceback
+try:
+    import pexpect
+    HAS_PEXPECT = True
+except ImportError:
+    HAS_PEXPECT = False
+
 from zipfile import ZipFile, BadZipfile
 
 from ansible.module_utils.basic import AnsibleModule
@@ -580,16 +586,14 @@ class ZipArchive(object):
             cmd.extend(['-x'] + self.excludes)
         cmd.extend(['-d', self.dest])
         if self.password:
-            try:
-                import pexpect
-            except ImportError:
+           if not HAS_PEXPECT:
                 self.module.fail_json(msg="The pexpect python module is required for password option")
             out = ""
             rc = 0
             try:
                 (out, rc) = pexpect.run(" ".join(cmd), withexitstatus=1, events={'(?i)password': self.password + '\n'})
-            except:
-                return dict(cmd=cmd, rc=82, out=out, err='failed to unzip package')
+            except OSError as e:
+                return dict(cmd=cmd, rc=e.errno, out=out, err='failed to unzip package')
             return dict(cmd=cmd, rc=rc, out=out, err='')
         else:
             rc, out, err = self.module.run_command(cmd)
