@@ -107,7 +107,7 @@ EXAMPLES = '''
     state: absent
 
 # Upgrade package baz
-- pkgng
+- pkgng:
     name: baz
     state: latest
 '''
