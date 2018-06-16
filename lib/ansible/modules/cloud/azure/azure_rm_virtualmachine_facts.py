@@ -1,6 +1,8 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2018 Gustavo Muniz do Carmo <gustavo@esign.com.br>
+# Copyright (c) 2018
+# Gustavo Muniz do Carmo <gustavo@esign.com.br>
+# Zim Kalinowski <zikalino@microsoft.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -17,7 +19,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_virtualmachine_facts
 
-version_added: "2.6"
+version_added: "2.7"
 
 short_description: Get virtual machine facts.
 
@@ -50,6 +52,7 @@ extends_documentation_fragment:
 
 author:
   - "Gustavo Muniz do Carmo (@gustavomcarmo)"
+  - "Zim Kalinowski (@zikalino)"
 
 '''
 
@@ -395,11 +398,11 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
             new_result['state'] = 'present'
             new_result['location'] = vm.location
             new_result['vm_size'] = result['properties']['hardwareProfile']['vmSize']
-            new_result['admin_username'] = result['properties']['osProfile']['adminUsername'] 
+            new_result['admin_username'] = result['properties']['osProfile']['adminUsername']
             # admin_password (probably not available)
             # ssh_password_enabled
             # ssh_public_keys
-            image =  result['properties']['storageProfile'].get('imageReference')
+            image = result['properties']['storageProfile'].get('imageReference')
             if image is not None:
                 new_result['image'] = {
                     'publisher': image['publisher'],
@@ -421,7 +424,7 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
             new_result['os_type'] = result['properties']['storageProfile']['osDisk']['osType']
             # data_disks
             new_result['data_disks'] = []
-            disks = result['properties']['storageProfile']['dataDisks'] 
+            disks = result['properties']['storageProfile']['dataDisks']
             for disk_index in range(len(disks)):
                 new_result['data_disks'].append({
                     'lun': disks[disk_index]['lun'],
@@ -439,10 +442,8 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
             nics = result['properties']['networkProfile']['networkInterfaces']
             for nic_index in range(len(nics)):
                 new_result['network_interface_names'].append(re.sub('.*networkInterfaces/', '', nics[nic_index]['id']))
-            
 
             nic = self.get_network_interface(new_result['network_interface_names'][0])
-            
 
             # virtual_network_resource_group
             # virtual_network_name
@@ -450,9 +451,8 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
             # remove_on_absent
             # plan
 
-
             # not needed
-            #result['type'] = vm.type
+            # result['type'] = vm.type
             new_result['tags'] = vm.tags
             return new_result
         else:
@@ -477,11 +477,9 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
                     if config['properties'].get('publicIPAddress'):
                         pipid_dict = azure_id_to_dict(config['properties']['publicIPAddress']['id'])
                         try:
-                            pip = self.network_client.public_ip_addresses.get(self.resource_group,
-                                                                            pipid_dict['publicIPAddresses'])
+                            pip = self.network_client.public_ip_addresses.get(self.resource_group, pipid_dict['publicIPAddresses'])
                         except Exception as exc:
-                            self.fail("Error fetching public ip {0} - {1}".format(pipid_dict['publicIPAddresses'],
-                                                                                str(exc)))
+                            self.fail("Error fetching public ip {0} - {1}".format(pipid_dict['publicIPAddresses'], str(exc)))
                         pip_dict = self.serialize_obj(pip, 'PublicIPAddress')
                         config['properties']['publicIPAddress']['name'] = pipid_dict['publicIPAddresses']
                         config['properties']['publicIPAddress']['properties'] = pip_dict['properties']
