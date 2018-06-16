@@ -24,6 +24,7 @@ from ansible.errors import AnsibleError
 from ansible.module_utils.six import string_types
 from ansible.plugins.action import ActionBase
 from ansible.parsing.utils.addresses import parse_address
+from ansible.plugins.inventory import detect_range, expand_hostname_range
 
 try:
     from __main__ import display
@@ -44,6 +45,8 @@ class ActionModule(ActionBase):
         self._supports_check_mode = True
 
         result = super(ActionModule, self).run(tmp, task_vars)
+        result['add_host'] = []
+        single_host = True
         del tmp  # tmp no longer has any effect
 
         # Parse out any hostname:port patterns
@@ -54,40 +57,52 @@ class ActionModule(ActionBase):
             result['msg'] = 'name or hostname arg needs to be provided'
             return result
 
-        display.vv("creating host via 'add_host': hostname=%s" % new_name)
-
         try:
-            name, port = parse_address(new_name, allow_ranges=False)
+            name, port = parse_address(new_name, allow_ranges=True)
         except:
             # not a parsable hostname, but might still be usable
             name = new_name
             port = None
 
-        if port:
-            self._task.args['ansible_ssh_port'] = port
+        if detect_range(name):
+            hostnames = expand_hostname_range(name)
+            single_host = False
+        else:
+            hostnames = [name]
 
-        groups = self._task.args.get('groupname', self._task.args.get('groups', self._task.args.get('group', '')))
-        # add it to the group if that was specified
-        new_groups = []
-        if groups:
-            if isinstance(groups, list):
-                group_list = groups
-            elif isinstance(groups, string_types):
-                group_list = groups.split(",")
-            else:
-                raise AnsibleError("Groups must be specified as a list.", obj=self._task)
+        for name in hostnames:
 
-            for group_name in group_list:
-                if group_name not in new_groups:
-                    new_groups.append(group_name.strip())
+            display.vv("creating host via 'add_host': hostname=%s" % name)
 
-        # Add any variables to the new_host
-        host_vars = dict()
-        special_args = frozenset(('name', 'hostname', 'groupname', 'groups'))
-        for k in self._task.args.keys():
-            if k not in special_args:
-                host_vars[k] = self._task.args[k]
+            if port:
+                self._task.args['ansible_ssh_port'] = port
+
+            groups = self._task.args.get('groupname', self._task.args.get('groups', self._task.args.get('group', '')))
+            # add it to the group if that was specified
+            new_groups = []
+            if groups:
+                if isinstance(groups, list):
+                    group_list = groups
+                elif isinstance(groups, string_types):
+                    group_list = groups.split(",")
+                else:
+                    raise AnsibleError("Groups must be specified as a list.", obj=self._task)
+
+                for group_name in group_list:
+                    if group_name not in new_groups:
+                        new_groups.append(group_name.strip())
+
+            # Add any variables to the new_host
+            host_vars = dict()
+            special_args = frozenset(('name', 'hostname', 'groupname', 'groups'))
+            for k in self._task.args.keys():
+                if k not in special_args:
+                    host_vars[k] = self._task.args[k]
+
+            result['add_host'].append(dict(host_name=name, groups=new_groups, host_vars=host_vars))
 
         result['changed'] = True
-        result['add_host'] = dict(host_name=name, groups=new_groups, host_vars=host_vars)
+        if single_host:
+            result['add_host'] = result['add_host'][0]
+
         return result
