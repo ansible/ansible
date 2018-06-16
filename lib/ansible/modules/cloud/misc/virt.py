@@ -528,7 +528,7 @@ def core(module):
                     domain_name = found_name[0]
                 else:
                     module.fail_json(msg="Could not find domain 'name' in xml")
-                    
+
                 # From libvirt docs (https://libvirt.org/html/libvirt-libvirt-domain.html#virDomainDefineXML):
                 # -- A previous definition for this domain would be overridden if it already exists.
                 #
@@ -537,7 +537,6 @@ def core(module):
                 # operation failed: domain '<name>' already exists with <uuid>
                 #
                 # In case a domain would be indeed overwritten, we should protect idempotency:
-
                 try:
                     existing_domain = v.get_vm(domain_name)
                 except VMNotFound:
