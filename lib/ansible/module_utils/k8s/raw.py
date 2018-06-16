@@ -66,6 +66,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
 
     def execute_module(self):
         changed = False
+        facts = False
         results = []
         self.client = self.get_api_client()
         for definition in self.resource_definitions:
@@ -73,11 +74,12 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             search_kind = kind
             if kind.lower().endswith('list'):
                 search_kind = kind[:-4]
+                facts = True
             api_version = definition.get('apiVersion')
             resource = self.find_resource(search_kind, api_version, fail=True)
             definition['kind'] = resource.kind
             definition['apiVersion'] = resource.group_version
-            result = self.perform_action(resource, definition)
+            result = self.perform_action(resource, definition, facts=facts)
             changed = changed or result['changed']
             results.append(result)
 
@@ -91,7 +93,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             }
         })
 
-    def perform_action(self, resource, definition):
+    def perform_action(self, resource, definition, facts=False):
         result = {'changed': False, 'result': {}}
         state = self.params.pop('state', None)
         force = self.params.pop('force', False)
@@ -101,8 +103,12 @@ class KubernetesRawModule(KubernetesAnsibleModule):
 
         self.remove_aliases()
 
-        if definition['kind'].endswith('list'):
-            result['result'] = resource.get(namespace=namespace).to_dict()
+        if facts:
+            response = resource.get(namespace=namespace, name=name).to_dict()
+            if 'items' in response:
+                result['result'] = response
+            else:
+                result['result'] = dict(items=[response])
             result['changed'] = False
             result['method'] = 'get'
             return result
