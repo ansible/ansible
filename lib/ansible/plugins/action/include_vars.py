@@ -100,7 +100,7 @@ class ActionModule(ActionBase):
             elif arg in self.VALID_ALL:
                 pass
             else:
-                raise AnsibleError('{0} is not a valid option in debug'.format(arg))
+                raise AnsibleError('{0} is not a valid option in include_vars'.format(arg))
 
         if dirs and files:
             raise AnsibleError("Your are mixing file only and dir only arguments, these are incompatible")
