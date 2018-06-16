@@ -23,7 +23,7 @@ version_added: "0.2"
 options:
   name:
     description:
-      - name of the guest VM being managed. Almost always required (see examples). When defining a new VM, 
+      - name of the guest VM being managed. Almost always required (see examples). When defining a new VM,
         name is taken from xml.
   state:
     description:
@@ -88,10 +88,10 @@ EXAMPLES = '''
     name: foo
     autostart: yes
 
-# Defining a VM and making is autostart with host. VM will be off after this task 
+# Defining a VM and making is autostart with host. VM will be off after this task
 - name: define vm from xml and set autostart
   virt:
-    command: define 
+    command: define
     xml: "{{ lookup('template', 'vm_template.xml.j2') }}"
     autostart: yes
 
@@ -546,7 +546,7 @@ def core(module):
                     else:
                         res = {'changed': True, 'created': domain.name()}
                 except libvirtError as e:
-                    if e.get_error_code() != 9: # 9 means 'domain already exists' error
+                    if e.get_error_code() != 9:  # 9 means 'domain already exists' error
                         module.fail_json(msg='libvirtError: %s' % e.message)
                 if autostart is not None and v.autostart(domain_name, autostart):
                     res = {'changed': True, 'change_reason': 'autostart'}
