@@ -9,6 +9,15 @@
     lbname_d: "lbd{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
   run_once: yes
 
+
+- name: get all public ip addresses
+  azure_rm_publicipaddress_facts:
+  register: output
+
+- name: DUMP ALL PUBLIC IP ADDRESSES IN SUBSCRIPTION
+  debug:
+    var: output
+
 - name: create public ip
   azure_rm_publicipaddress:
     name: "{{ pipbname }}"

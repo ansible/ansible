@@ -3,6 +3,14 @@
       domain_name: "ansible-{{ resource_group | hash('md5') | truncate(24, True, '') }}"
       rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
 
+- name: get all public ip addresses
+  azure_rm_publicipaddress_facts:
+  register: output
+
+- name: DUMP ALL PUBLIC IP ADDRESSES IN SUBSCRIPTION
+  debug:
+    var: output
+
 - name: Remove public ip
   azure_rm_publicipaddress:
       resource_group: "{{ resource_group }}"
