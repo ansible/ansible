@@ -107,6 +107,7 @@ import traceback
 
 try:
     import libvirt
+    from libvirt import libvirtError
 except ImportError:
     HAS_VIRT = False
 else:
@@ -447,8 +448,13 @@ def core(module):
         return VIRT_SUCCESS, res
 
     if autostart is not None and command != 'define':
-        if v.autostart(guest, autostart):
-            res['changed'] = True
+        if not guest:
+            module.fail_json(msg="autostart requires 1 argument: name")
+        try:
+            v.get_vm(guest)
+        except VMNotFound:
+            module.fail_json(msg="domain %s not found" % guest)
+        res['changed'] = v.autostart(guest, autostart)
         if not command and not state:
             return VIRT_SUCCESS, res
 
@@ -482,22 +488,54 @@ def core(module):
 
     if command:
         if command in VM_COMMANDS:
-            if not guest:
-                module.fail_json(msg="%s requires 1 argument: guest" % command)
             if command == 'define':
                 if not xml:
                     module.fail_json(msg="define requires xml argument")
+                if guest:
+                    # there might be a mismatch between quest 'name' in the module and in the xml
+                    module.warn("'xml' is given - ignoring 'name'")
+                # Is there a better way to get 'name' ?
+                import re
+                found_name = re.search('<name>(.*)</name>', xml).groups()
+                if found_name:
+                    domain_name = found_name[0]
+                else:
+                    module.fail_json(msg="Could not find domain 'name' in xml")
+                    
+                # From libvirt docs (https://libvirt.org/html/libvirt-libvirt-domain.html#virDomainDefineXML):
+                # -- A previous definition for this domain would be overridden if it already exists.
+                #
+                # In real world testing with libvirt versions 1.2.17-13, 2.0.0-10 and 3.9.0-14
+                # on qemu and lxc domains results in:
+                # operation failed: domain '<name>' already exists with <uuid>
+                #
+                # In case a domain would be indeed overwritten, we should protect idempotency:
+
                 try:
-                    v.get_vm(guest)
+                    existing_domain = v.get_vm(domain_name)
                 except VMNotFound:
-                    v.define(xml)
-                    res = {'changed': True, 'created': guest}
-                if autostart is not None and v.autostart(guest, autostart):
-                    res['changed'] = True
-                return VIRT_SUCCESS, res
-            res = getattr(v, command)(guest)
-            if not isinstance(res, dict):
-                res = {command: res}
+                    existing_domain = None
+                try:
+                    domain = v.define(xml)
+                    if existing_domain:
+                        # if we are here, then libvirt redefined existing domain as the doc promised
+                        if existing_domain.XMLDesc() != domain.XMLDesc():
+                            res = {'changed': True, 'change_reason': 'config changed'}
+                    else:
+                        res = {'changed': True, 'created': domain.name()}
+                except libvirtError as e:
+                    if e.get_error_code() != 9: # 9 means 'domain already exists' error
+                        module.fail_json(msg='libvirtError: %s' % e.message)
+                if autostart is not None and v.autostart(domain_name, autostart):
+                    res = {'changed': True, 'change_reason': 'autostart'}
+
+            elif not guest:
+                module.fail_json(msg="%s requires 1 argument: guest" % command)
+            else:
+                res = getattr(v, command)(guest)
+                if not isinstance(res, dict):
+                    res = {command: res}
+
             return VIRT_SUCCESS, res
 
         elif hasattr(v, command):
