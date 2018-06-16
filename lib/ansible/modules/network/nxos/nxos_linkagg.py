@@ -327,7 +327,7 @@ def map_config_to_obj(module):
 
     try:
         channels = output['TABLE_channel']['ROW_channel']
-    except KeyError:
+    except (TypeError, KeyError):
         return objs
 
     if channels:
