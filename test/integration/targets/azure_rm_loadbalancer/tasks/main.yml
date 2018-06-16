@@ -24,13 +24,11 @@
     sku: Standard
     allocation_method: Static
     resource_group: '{{ resource_group }}'
-    location: westus
 
 - name: create public ip
   azure_rm_publicipaddress:
     name: "{{ pipaname }}"
     resource_group: '{{ resource_group }}'
-    location: westus
 
 - name: clear load balancer
   azure_rm_loadbalancer:
