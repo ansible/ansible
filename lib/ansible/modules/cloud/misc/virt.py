@@ -70,46 +70,42 @@ EXAMPLES = '''
 # ansible host -m virt -a "name=alpha command=get_xml"
 # ansible host -m virt -a "name=alpha command=create uri=lxc:///"
 
----
-# a playbook example of defining and launching an LXC guest
-tasks:
-  - name: define vm
-    virt:
-        command: define
-        xml: "{{ lookup('template', 'container-template.xml.j2') }}"
-        uri: 'lxc:///'
-  - name: start vm
-    virt:
-        name: foo
-        state: running
-        uri: 'lxc:///'
+# defining and launching an LXC guest
+- name: define vm
+  virt:
+    command: define
+    xml: "{{ lookup('template', 'container-template.xml.j2') }}"
+    uri: 'lxc:///'
+- name: start vm
+  virt:
+    name: foo
+    state: running
+    uri: 'lxc:///'
 
 # setting autostart on a qemu VM (default uri)
-tasks:
-  - name: set autostart for a VM
-    virt:
-        name: foo
-        autostart: yes
+- name: set autostart for a VM
+  virt:
+    name: foo
+    autostart: yes
 
 # Defining a VM and making is autostart with host. VM will be off after this task 
-tasks:
-  - name: define vm from xml and set autostart
-    virt:
-        command: define 
-        xml: "{{ lookup('template', 'vm_template.xml.j2') }}"
-        autostart: yes
+- name: define vm from xml and set autostart
+  virt:
+    command: define 
+    xml: "{{ lookup('template', 'vm_template.xml.j2') }}"
+    autostart: yes
 
 # Listing VMs
-tasks:
-  - name: list all VMs
-    virt:
-        command: list_vms
-    register: all_vms
-  - name: list only running VMs
-    virt:
-        command: list_vms
-        state: running
-    register: running_vms
+- name: list all VMs
+  virt:
+    command: list_vms
+  register: all_vms
+
+- name: list only running VMs
+  virt:
+    command: list_vms
+    state: running
+  register: running_vms
 '''
 
 RETURN = '''
