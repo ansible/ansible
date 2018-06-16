@@ -104,7 +104,7 @@ class MerakiModule(object):
         if self.module._debug or self.params['output_level'] == 'debug':
             self.module.warn('Enable debug output because ANSIBLE_DEBUG was set or output_level is set to debug.')
 
-        # TODO: This should be removed as org_name isn't always requireds
+        # TODO: This should be removed as org_name isn't always required
         self.module.required_if = [('state', 'present', ['org_name']),
                                    ('state', 'absent', ['org_name']),
                                    ]
