@@ -577,7 +577,7 @@ class StrategyBase:
                                         display.warning(msg)
 
                     if 'add_host' in result_item:
-                        if isinstance(result_item['add_host'],list):
+                        if isinstance(result_item['add_host'], list):
                             for new_host_info in result_item['add_host']:
                                 self._add_host(new_host_info, iterator)
                         else:
