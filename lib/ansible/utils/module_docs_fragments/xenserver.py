@@ -30,6 +30,6 @@ options:
       description:
       - Allows connection when SSL certificates are not valid. Set to C(false) when certificates are not trusted.
       - If the value is not specified in the task, the value of environment variable C(XENSERVER_VALIDATE_CERTS) will be used instead.
-      default: 'True'
+      default: 'yes'
       type: bool
 '''

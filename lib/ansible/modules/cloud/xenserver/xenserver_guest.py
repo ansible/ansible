@@ -25,10 +25,24 @@ author:
 notes:
 - Minimal supported version of XenServer is 5.6
 - Module was tested with XenServer 6.5, 7.1 and 7.2
-- 'If no scheme is specified in C(hostname), module defaults to http:// because https:// is problematic in most setups. Make sure you are
-   accessing XenServer host in trusted environment or use https:// scheme explicitly.'
-- 'To use https:// scheme for C(hostname) you have to either import host certificate to your OS certificate store or use C(validate_certs: no)
+- 'If no scheme is specified in C(hostname), module defaults to C(http://) because C(https://) is problematic in most setups. Make sure you are
+   accessing XenServer host in trusted environment or use C(https://) scheme explicitly.'
+- 'To use C(https://) scheme for C(hostname) you have to either import host certificate to your OS certificate store or use C(validate_certs: no)
    which requires XenAPI.py from XenServer 7.2 SDK or newer and Python 2.7.9 or newer.'
+- 'Network configuration inside a guest OS, by using C(networks.type), C(networks.ip), C(networks.gateway) etc. parameters, is supported on
+  XenServer 7.0 or newer for Windows guests by using official XenServer Guest agent support for network configuration. The module will try to
+  detect if such support is available and utilize it, else it will use a custom method of configuration via xenstore. Since XenServer Guest
+  agent only support None and Static types of network configuration, where None means DHCP configured interface, C(networks.type) and C(networks.type6)
+  values C(none) and C(dhcp) have same effect.
+  More info here: https://xenserver.org/blog/entry/set-windows-guest-vm-static-ip-address-in-xenserver.html'
+- 'On platforms without official support for network configuration inside a guest OS, network parameters will be written to xenstore
+  C(vm-data/networks/<vif_device>) key. Parameters can be inspected by using C(xenstore ls) and C(xenstore read) tools on \*nix guests or trough
+  WMI interface on Windows guests. They can also be found in VM facts C(instance.xenstore_data) key as returned by the module. It is up to the user
+  to implement a boot time scripts or custom agent that will read the parameters from xenstore and configure network with given parameters.
+  Take note that for xenstore data to become available inside a guest, a VM restart is needed hence module will require VM restart if any
+  parameter is changed. This is a limitation of XenAPI and xenstore. Considering these limitations, network configuration trough xenstore is most
+  useful for bootstraping newly deployed VMs, much less for reconfiguring existing ones.
+  More info here: https://support.citrix.com/article/CTX226713'
 requirements:
 - python >= 2.6
 - XenAPI
@@ -98,7 +112,7 @@ options:
     - 'Optional parameters per entry:'
     - ' - C(name) (string): Disk name. You can also use C(name_label) as an alias.'
     - ' - C(name_desc) (string): Disk description.'
-    - ' - C(sr) (string): Storage Repository to create disk on. If not specified, will use default SR. Can not be used for moving disk to other SR.'
+    - ' - C(sr) (string): Storage Repository to create disk on. If not specified, will use default SR. Cannot be used for moving disk to other SR.'
     - ' - C(sr_uuid) (string): UUID of a SR to create disk on. Use if SR name is not unique.'
     aliases: [ 'disk' ]
   cdrom:
@@ -107,15 +121,26 @@ options:
     - All parameters case sensitive.
     - 'Valid parameters are:'
     - ' - C(type) (string): The type of CD-ROM, valid options are C(none) or C(iso). With C(none) the CD-ROM device will be present but empty.'
-    - ' - C(iso_name) (string): The file name of an ISO image from one of the XenServer ISO Libraries. Required if C(type) is set to C(iso).'
+    - ' - C(iso_name) (string): The file name of an ISO image from one of the XenServer ISO Libraries (implies C(type: iso)).
+          Required if C(type) is set to C(iso).'
   networks:
     description:
     - A list of networks (in the order of the NICs).
     - All parameters are case sensetive.
     - 'Required parameters per entry:'
     - ' - C(name) (string): Name of a XenServer network to attach the network interface to. You can also use C(name_label) as an alias.'
-    - 'Optional parameters per entry:'
+    - 'Optional parameters per entry (used for VM hardware):'
     - ' - C(mac) (string): Customize MAC address of the interface.'
+    - 'Optional parameters per entry (used for OS customization):'
+    - ' - C(type) (string): Type of IPv4 assignment, valid options are C(none), C(dhcp) or C(static). Value C(none) means whatever is default for OS.
+          On some operating systems it could be DHCP configured (e.g. Windows) or unconfigured interface (e.g. Linux).'
+    - ' - C(ip) (string): Static IPv4 address (implies C(type: static)). Can include prefix in format <IPv4 address>/<prefix> instead of using C(netmask).'
+    - ' - C(netmask) (string): Static IPv4 netmask required for C(ip) if prefix is not specified.'
+    - ' - C(gateway) (string): Static IPv4 gateway.'
+    - ' - C(type6) (string): Type of IPv6 assignment, valid options are C(none), C(dhcp) or C(static). Value C(none) means whatever is default for OS.
+          On some operating systems it could be DHCP configured (e.g. Windows) or unconfigured interface (e.g. Linux).'
+    - ' - C(ip6) (string): Static IPv6 address (implies C(type6: static)) with prefix in format <IPv6 address>/<prefix>.'
+    - ' - C(gateway6) (string): Static IPv6 gateway.'
     aliases: [ 'network' ]
   home_server:
     description:
@@ -227,18 +252,164 @@ EXAMPLES = r'''
     - key: HVM_boot_params
       value: { "order": "ndc" }
   delegate_to: localhost
+
+- name: Customize network parameters
+  xenserver_guest:
+    hostname: 192.168.1.209
+    username: root
+    password: xenserver
+    name: testvm_10
+    networks:
+    - name: VM Network
+      ip: 192.168.1.100/24
+      gateway: 192.168.1.1
+    - type: dhcp
+  delegate_to: localhost
 '''
 
 RETURN = r'''
 instance:
-    description: metadata about the new virtual machine
+    description: Metadata about the VM
     returned: always
     type: dict
-    sample: None
+    sample: {
+        "cdrom": {
+            "type": "none"
+        },
+        "customization_agent": "native",
+        "disks": [
+            {
+                "name": "windows-template-testing-0",
+                "name_desc": "",
+                "os_device": "xvda",
+                "size": 42949672960,
+                "sr": "Local storage",
+                "sr_uuid": "0af1245e-bdb0-ba33-1446-57a962ec4075",
+                "vbd_userdevice": "0"
+            },
+            {
+                "name": "windows-template-testing-1",
+                "name_desc": "",
+                "os_device": "xvdb",
+                "size": 42949672960,
+                "sr": "Local storage",
+                "sr_uuid": "0af1245e-bdb0-ba33-1446-57a962ec4075",
+                "vbd_userdevice": "1"
+            }
+        ],
+        "domid": "56",
+        "folder": "",
+        "hardware": {
+            "memory_mb": 8192,
+            "num_cpu_cores_per_socket": 2,
+            "num_cpus": 4
+        },
+        "home_server": "",
+        "is_template": false,
+        "name": "windows-template-testing",
+        "name_desc": "",
+        "networks": [
+            {
+                "gateway": "192.168.0.254",
+                "gateway6": "fc00::fffe",
+                "ip": "192.168.0.200",
+                "ip6": [
+                    "fe80:0000:0000:0000:e9cb:625a:32c5:c291",
+                    "fc00:0000:0000:0000:0000:0000:0000:0001"
+                ],
+                "mac": "ba:91:3a:48:20:76",
+                "mtu": "1500",
+                "name": "Pool-wide network associated with eth1",
+                "netmask": "255.255.255.128",
+                "prefix": "25",
+                "prefix6": "64",
+                "vif_device": "0"
+            }
+        ],
+        "other_config": {
+            "base_template_name": "Windows Server 2016 (64-bit)",
+            "import_task": "OpaqueRef:e43eb71c-45d6-5351-09ff-96e4fb7d0fa5",
+            "install-methods": "cdrom",
+            "instant": "true",
+            "mac_seed": "f83e8d8a-cfdc-b105-b054-ef5cb416b77e"
+        },
+        "platform": {
+            "acpi": "1",
+            "apic": "true",
+            "cores-per-socket": "2",
+            "device_id": "0002",
+            "hpet": "true",
+            "nx": "true",
+            "pae": "true",
+            "timeoffset": "-25200",
+            "vga": "std",
+            "videoram": "8",
+            "viridian": "true",
+            "viridian_reference_tsc": "true",
+            "viridian_time_ref_count": "true"
+        },
+        "state": "poweredon",
+        "uuid": "e3c0b2d5-5f05-424e-479c-d3df8b3e7cda",
+        "xenstore_data": {
+            "vm-data": ""
+        }
+    }
+changes:
+    description: Detected or made changes to VM
+    returned: always
+    type: list
+    sample: [
+        {
+            "hardware": [
+                "num_cpus"
+            ]
+        },
+        {
+            "disks_changed": [
+                [],
+                [
+                    "size"
+                ]
+            ]
+        },
+        {
+            "disks_new": [
+                {
+                    "name": "new-disk",
+                    "name_desc": "",
+                    "position": 2,
+                    "size_gb": "4",
+                    "vbd_userdevice": "2"
+                }
+            ]
+        },
+        {
+            "cdrom": [
+                "type",
+                "iso_name"
+            ]
+        },
+        {
+            "networks_changed": [
+                [
+                    "mac"
+                ],
+            ]
+        },
+        {
+            "networks_new": [
+                {
+                    "name": "Pool-wide network associated with eth2",
+                    "position": 1,
+                    "vif_device": "1"
+                }
+            ]
+        },
+        "need_poweredoff"
+    ]
 '''
 
 import re
-import time
 
 HAS_XENAPI = False
 try:
@@ -251,38 +422,70 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils import six
 from ansible.module_utils.xenserver import (xenserver_common_argument_spec, XAPI, XenServerObject, get_object_ref,
-                                            gather_vm_params, gather_vm_facts, set_vm_power_state, wait_for_vm_ip_address)
+                                            gather_vm_params, gather_vm_facts, set_vm_power_state, wait_for_vm_ip_address,
+                                            is_valid_mac_addr, is_valid_ip_addr, is_valid_ip_netmask, is_valid_ip_prefix,
+                                            ip_prefix_to_netmask, ip_netmask_to_prefix,
+                                            is_valid_ip6_addr, is_valid_ip6_prefix)
 
 
 class XenServerVM(XenServerObject):
+    """Class for managing XenServer VM.
+
+    Attributes:
+        vm_ref (str): XAPI reference to VM.
+        vm_params (dict): A dictionary with VM parameters as returned
+            by gather_vm_params() function.
+        customization_agent (str): Detected VM customization agent
+            either 'native' or 'custom'.
+    """
+
     def __init__(self, module):
+        """Inits XenServerVM using module parameters.
+
+        Args:
+            module: Reference to Ansible module object.
+        """
         super(XenServerVM, self).__init__(module)
 
         self.vm_ref = get_object_ref(self.module, self.module.params['name'], self.module.params['uuid'], obj_type="VM", fail=False, msg_prefix="VM search: ")
         self.vm_params = gather_vm_params(self.module, self.vm_ref)
 
+        # Do we have native support for IP reconfiguration? It's supported in
+        # XenServer 7.0 and later for Windows guests.
+        if (int(self.xenserver_version[0]) >= 7 and int(self.xenserver_version[1]) >= 0 and self.vm_params['guest_metrics'] and
+                "feature-static-ip-setting" in self.vm_params['guest_metrics']['other']):
+            self.customization_agent = "native"
+        else:
+            self.customization_agent = "custom"
+
     def exists(self):
+        """Returns True if VM exists, else False."""
         return True if self.vm_ref is not None else False
 
     def gather_params(self):
+        """Gathers all VM parameters available in XAPI database."""
         self.vm_params = gather_vm_params(self.module, self.vm_ref)
 
     def gather_facts(self):
+        """Gathers and returns VM facts."""
         return gather_vm_facts(self.module, self.vm_params)
 
     def set_power_state(self, power_state):
+        """Controls VM power state."""
         state_changed, current_state = set_vm_power_state(self.module, self.vm_ref, power_state, self.module.params['state_change_timeout'])
 
         # If state has changed, update vm_params.
         if state_changed:
-            self.vm_params['power_state'] = current_state
+            self.vm_params['power_state'] = current_state.capitalize()
 
         return state_changed
 
     def wait_for_ip_address(self):
+        """Waits for VM to acquire an IP address."""
         self.vm_params['guest_metrics'] = wait_for_vm_ip_address(self.module, self.vm_ref, self.module.params['state_change_timeout'])
 
     def deploy(self):
+        """Deploys new VM from template."""
         # Safety check.
         if self.exists():
             self.module.fail_json(msg="Called deploy on existing VM!")
@@ -291,12 +494,12 @@ class XenServerVM(XenServerObject):
             templ_ref = get_object_ref(self.module, self.module.params['template'], self.module.params['template_uuid'], obj_type="template", fail=True,
                                        msg_prefix="VM deploy: ")
 
-            # Is this really an existing running VM?
+            # Is this an existing running VM?
             if self.xapi_session.xenapi.VM.get_power_state(templ_ref).lower() != 'halted':
                 self.module.fail_json(msg="VM deploy: running VM cannot be used as a template!")
 
-            # Find a SR we can use for VM.copy. We use SR of the first disk if
-            # specified or default SR if not specified.
+            # Find a SR we can use for VM.copy(). We use SR of the first disk
+            # if specified or default SR if not specified.
             disk_params_list = self.module.params['disks']
 
             sr_ref = None
@@ -317,7 +520,7 @@ class XenServerVM(XenServerObject):
                 else:
                     self.module.fail_json(msg="VM deploy disks[0]: no default SR found! You must specify SR explicitely.")
 
-            # Support for ansible check mode.
+            # Support for Ansible check mode.
             if self.module.check_mode:
                 return
 
@@ -343,12 +546,12 @@ class XenServerVM(XenServerObject):
 
             if "default_template" in templ_other_config and templ_other_config['default_template']:
                 # other_config of built-in XenServer templates have a key called
-                # disks with the following content:
+                # 'disks' with the following content:
                 #   disks: <provision><disk bootable="true" device="0" size="10737418240" sr="" type="system"/></provision>
-                # This value oof other_data is copied to cloned or copied VM and
+                # This value of other_data is copied to cloned or copied VM and
                 # it prevents provisioning of VM because sr is not specified and
                 # XAPI returns an error. To get around this, we remove the
-                # disks key and add disks to VM later ourselves.
+                # 'disks' key and add disks to VM later ourselves.
                 vm_other_config = self.xapi_session.xenapi.VM.get_other_config(self.vm_ref)
 
                 if "disks" in vm_other_config:
@@ -373,6 +576,11 @@ class XenServerVM(XenServerObject):
             self.module.fail_json(msg="XAPI ERROR: %s" % f.details)
 
     def reconfigure(self):
+        """Reconfigures an existing VM.
+
+        Returns:
+            list: parameters that were reconfigured.
+        """
         # Safety check.
         if not self.exists():
             self.module.fail_json(msg="Called reconfigure on non existing VM!")
@@ -387,7 +595,7 @@ class XenServerVM(XenServerObject):
             else:
                 self.module.fail_json(msg="VM reconfigure: VM has to be in powered off state to reconfigure but force was not specified!")
 
-        # Support for ansible check mode.
+        # Support for Ansible check mode.
         if self.module.check_mode:
             return config_changes
 
@@ -414,22 +622,22 @@ class XenServerVM(XenServerObject):
                     if change.get('hardware'):
                         for hardware_change in change['hardware']:
                             if hardware_change == "num_cpus":
-                                num_cpus = int(self.module.params['hardware'].get('num_cpus'))
+                                num_cpus = int(self.module.params['hardware']['num_cpus'])
 
                                 if num_cpus < int(self.vm_params['VCPUs_at_startup']):
-                                    self.xapi_session.xenapi.VM.set_VCPUs_at_startup(self.vm_ref, str(self.module.params['hardware'].get('num_cpus')))
-                                    self.xapi_session.xenapi.VM.set_VCPUs_max(self.vm_ref, str(self.module.params['hardware'].get('num_cpus')))
+                                    self.xapi_session.xenapi.VM.set_VCPUs_at_startup(self.vm_ref, str(num_cpus))
+                                    self.xapi_session.xenapi.VM.set_VCPUs_max(self.vm_ref, str(num_cpus))
                                 else:
-                                    self.xapi_session.xenapi.VM.set_VCPUs_max(self.vm_ref, str(self.module.params['hardware'].get('num_cpus')))
-                                    self.xapi_session.xenapi.VM.set_VCPUs_at_startup(self.vm_ref, str(self.module.params['hardware'].get('num_cpus')))
+                                    self.xapi_session.xenapi.VM.set_VCPUs_max(self.vm_ref, str(num_cpus))
+                                    self.xapi_session.xenapi.VM.set_VCPUs_at_startup(self.vm_ref, str(num_cpus))
                             elif hardware_change == "num_cpu_cores_per_socket":
                                 self.xapi_session.xenapi.VM.remove_from_platform(self.vm_ref, 'cores-per-socket')
-                                num_cpu_cores_per_socket = self.module.params['hardware'].get('num_cpu_cores_per_socket')
+                                num_cpu_cores_per_socket = int(self.module.params['hardware']['num_cpu_cores_per_socket'])
 
-                                if int(num_cpu_cores_per_socket) > 1:
+                                if num_cpu_cores_per_socket > 1:
                                     self.xapi_session.xenapi.VM.add_to_platform(self.vm_ref, 'cores-per-socket', str(num_cpu_cores_per_socket))
                             elif hardware_change == "memory_mb":
-                                memory_b = str(int(self.module.params['hardware'].get('memory_mb')) * 1048576)
+                                memory_b = str(int(self.module.params['hardware']['memory_mb']) * 1048576)
                                 vm_memory_static_min_b = str(min(int(memory_b), int(self.vm_params['memory_static_min'])))
 
                                 self.xapi_session.xenapi.VM.set_memory_limits(self.vm_ref, vm_memory_static_min_b, memory_b, memory_b, memory_b)
@@ -446,25 +654,31 @@ class XenServerVM(XenServerObject):
                                 elif disk_change == "name_desc":
                                     self.xapi_session.xenapi.VDI.set_name_description(vdi_ref, self.module.params['disks'][position]['name_desc'])
                                 elif disk_change == "size":
-                                    self.xapi_session.xenapi.VDI.resize(vdi_ref, str(self.get_normalized_disk_size(self.module.params['disks'], position)))
+                                    self.xapi_session.xenapi.VDI.resize(vdi_ref, str(self.get_normalized_disk_size(self.module.params['disks'][position],
+                                                                                                                   "VM reconfigure disks[%s]: " % position)))
 
                             position += 1
                     elif change.get('disks_new'):
                         for position, disk_userdevice in change['disks_new']:
                             disk_params = self.module.params['disks'][position]
 
-                            if disk_params['sr_uuid']:
+                            disk_name = disk_params['name'] if disk_params.get('name') else "%s-%s" % (self.vm_params['name_label'], position)
+                            disk_name_desc = disk_params['name_desc'] if disk_params.get('name_desc') else ""
+
+                            if disk_params.get('sr_uuid'):
                                 sr_ref = self.xapi_session.xenapi.SR.get_by_uuid(disk_params['sr_uuid'])
-                            elif disk_params['sr']:
+                            elif disk_params.get('sr'):
                                 sr_ref = self.xapi_session.xenapi.SR.get_by_name_label(disk_params['sr'])[0]
                             else:
                                 sr_ref = self.default_sr_ref
 
+                            disk_size = str(self.get_normalized_disk_size(self.module.params['disks'][position], "VM reconfigure disks[%s]: " % position))
+
                             new_disk_vdi = {
-                                "name_label": disk_params['name'] if disk_params['name'] is not None else "%s-%s" % (self.vm_params['name_label'], position),
-                                "name_description": disk_params['name_desc'] if disk_params['name_desc'] is not None else "",
+                                "name_label": disk_name,
+                                "name_description": disk_name_desc,
                                 "SR": sr_ref,
-                                "virtual_size": str(self.get_normalized_disk_size(self.module.params['disks'], position)),
+                                "virtual_size": disk_size,
                                 "type": "user",
                                 "sharable": False,
                                 "read_only": False,
@@ -540,58 +754,167 @@ class XenServerVM(XenServerObject):
                         position = 0
 
                         for network_change_list in change['networks_changed']:
-                            vm_vif_params = self.vm_params['VIFs'][position]
-                            vif_ref = self.xapi_session.xenapi.VIF.get_by_uuid(vm_vif_params['uuid'])
-                            network_ref = self.xapi_session.xenapi.network.get_by_uuid(vm_vif_params['network']['uuid'])
-
-                            # Copy all old parameters to new VIF record.
-                            vif = {
-                                "device": vm_vif_params['device'],
-                                "network": network_ref,
-                                "VM": vm_vif_params['VM'],
-                                "MAC": vm_vif_params['MAC'],
-                                "MTU": vm_vif_params['MTU'],
-                                "other_config": vm_vif_params['other_config'],
-                                "qos_algorithm_type": vm_vif_params['qos_algorithm_type'],
-                                "qos_algorithm_params": vm_vif_params['qos_algorithm_params'],
-                                "locking_mode": vm_vif_params['locking_mode'],
-                                "ipv4_allowed": vm_vif_params['ipv4_allowed'],
-                                "ipv6_allowed": vm_vif_params['ipv6_allowed'],
-                            }
-
-                            for network_change in network_change_list:
-
-                                if network_change == "name":
-                                    network_ref_new = self.xapi_session.xenapi.network.get_by_name_label(self.module.params['networks'][position]['name'])[0]
-                                    vif['network'] = network_ref_new
-                                    vif['MTU'] = self.xapi_session.xenapi.network.get_MTU(network_ref_new)
-                                elif network_change == "mac":
-                                    vif['MAC'] = self.module.params['networks'][position]['mac'].lower()
-
                             if network_change_list:
-                                # We destroy old VIF and then create a new one
-                                # with changed parameters. That's how XenCenter
-                                # does it.
-                                if self.vm_params['power_state'] == "running":
-                                    self.xapi_session.xenapi.VIF.unplug(vif_ref)
+                                vm_vif_params = self.vm_params['VIFs'][position]
+                                network_params = self.module.params['networks'][position]
 
-                                self.xapi_session.xenapi.VIF.destroy(vif_ref)
-                                vif_ref_new = self.xapi_session.xenapi.VIF.create(vif)
+                                vif_ref = self.xapi_session.xenapi.VIF.get_by_uuid(vm_vif_params['uuid'])
+                                network_ref = self.xapi_session.xenapi.network.get_by_uuid(vm_vif_params['network']['uuid'])
 
-                                if self.vm_params['power_state'] == "running":
-                                    self.xapi_session.xenapi.VIF.plug(vif_ref_new)
+                                vif_recreated = False
+
+                                if "name" in network_change_list or "mac" in network_change_list:
+                                    # To change network or MAC, we destroy old
+                                    # VIF and then create a new one with changed
+                                    # parameters. That's how XenCenter does it.
+
+                                    # Copy all old parameters to new VIF record.
+                                    vif = {
+                                        "device": vm_vif_params['device'],
+                                        "network": network_ref,
+                                        "VM": vm_vif_params['VM'],
+                                        "MAC": vm_vif_params['MAC'],
+                                        "MTU": vm_vif_params['MTU'],
+                                        "other_config": vm_vif_params['other_config'],
+                                        "qos_algorithm_type": vm_vif_params['qos_algorithm_type'],
+                                        "qos_algorithm_params": vm_vif_params['qos_algorithm_params'],
+                                        "locking_mode": vm_vif_params['locking_mode'],
+                                        "ipv4_allowed": vm_vif_params['ipv4_allowed'],
+                                        "ipv6_allowed": vm_vif_params['ipv6_allowed'],
+                                    }
+
+                                    if "name" in network_change_list:
+                                        network_ref_new = self.xapi_session.xenapi.network.get_by_name_label(network_params['name'])[0]
+                                        vif['network'] = network_ref_new
+                                        vif['MTU'] = self.xapi_session.xenapi.network.get_MTU(network_ref_new)
+
+                                    if "mac" in network_change_list:
+                                        vif['MAC'] = network_params['mac'].lower()
+
+                                    if self.vm_params['power_state'].lower() == "running":
+                                        self.xapi_session.xenapi.VIF.unplug(vif_ref)
+
+                                    self.xapi_session.xenapi.VIF.destroy(vif_ref)
+                                    vif_ref_new = self.xapi_session.xenapi.VIF.create(vif)
+
+                                    if self.vm_params['power_state'].lower() == "running":
+                                        self.xapi_session.xenapi.VIF.plug(vif_ref_new)
+
+                                    vif_ref = vif_ref_new
+                                    vif_recreated = True
+
+                                if self.customization_agent == "native":
+                                    vif_reconfigure_needed = False
+
+                                    if "type" in network_change_list:
+                                        network_type = network_params['type'].capitalize()
+                                        vif_reconfigure_needed = True
+                                    else:
+                                        network_type = vm_vif_params['ipv4_configuration_mode']
+
+                                    if "ip" in network_change_list:
+                                        network_ip = network_params['ip']
+                                        vif_reconfigure_needed = True
+                                    elif vm_vif_params['ipv4_addresses']:
+                                        network_ip = vm_vif_params['ipv4_addresses'][0].split('/')[0]
+                                    else:
+                                        network_ip = ""
+
+                                    if "prefix" in network_change_list:
+                                        network_prefix = "/%s" % network_params['prefix']
+                                        vif_reconfigure_needed = True
+                                    elif vm_vif_params['ipv4_addresses'] and vm_vif_params['ipv4_addresses'][0]:
+                                        network_prefix = "/%s" % vm_vif_params['ipv4_addresses'][0].split('/')[1]
+                                    else:
+                                        network_prefix = ""
+
+                                    if "gateway" in network_change_list:
+                                        network_gateway = network_params['gateway']
+                                        vif_reconfigure_needed = True
+                                    else:
+                                        network_gateway = vm_vif_params['ipv4_gateway']
+
+                                    if vif_recreated or vif_reconfigure_needed:
+                                        self.xapi_session.xenapi.VIF.configure_ipv4(vif_ref, network_type,
+                                                                                    "%s%s" % (network_ip, network_prefix), network_gateway)
+
+                                    vif_reconfigure_needed = False
+
+                                    if "type6" in network_change_list:
+                                        network_type6 = network_params['type6'].capitalize()
+                                        vif_reconfigure_needed = True
+                                    else:
+                                        network_type6 = vm_vif_params['ipv6_configuration_mode']
+
+                                    if "ip6" in network_change_list:
+                                        network_ip6 = network_params['ip6']
+                                        vif_reconfigure_needed = True
+                                    elif vm_vif_params['ipv6_addresses']:
+                                        network_ip6 = vm_vif_params['ipv6_addresses'][0].split('/')[0]
+                                    else:
+                                        network_ip6 = ""
+
+                                    if "prefix6" in network_change_list:
+                                        network_prefix6 = "/%s" % network_params['prefix6']
+                                        vif_reconfigure_needed = True
+                                    elif vm_vif_params['ipv6_addresses'] and vm_vif_params['ipv6_addresses'][0]:
+                                        network_prefix6 = "/%s" % vm_vif_params['ipv6_addresses'][0].split('/')[1]
+                                    else:
+                                        network_prefix6 = ""
+
+                                    if "gateway6" in network_change_list:
+                                        network_gateway6 = network_params['gateway6']
+                                        vif_reconfigure_needed = True
+                                    else:
+                                        network_gateway6 = vm_vif_params['ipv6_gateway']
+
+                                    if vif_recreated or vif_reconfigure_needed:
+                                        self.xapi_session.xenapi.VIF.configure_ipv6(vif_ref, network_type6,
+                                                                                    "%s%s" % (network_ip6, network_prefix6), network_gateway6)
+
+                                elif self.customization_agent == "custom":
+                                    vif_device = vm_vif_params['device']
+
+                                    # A user could manually change network or
+                                    # mac e.g. trough XenCenter and then also
+                                    # make those changes in playbook manually.
+                                    # In that case, module will not detect any
+                                    # changes and info in xenstore_data will
+                                    # become stale. For that reason we always
+                                    # update name and mac in xenstore_data.
+                                    network_change_list_updated = network_change_list + ['name', 'mac']
+
+                                    for network_change in network_change_list_updated:
+                                        self.xapi_session.xenapi.VM.remove_from_xenstore_data(self.vm_ref,
+                                                                                              "vm-data/networks/%s/%s" % (vif_device, network_change))
+                                        self.xapi_session.xenapi.VM.add_to_xenstore_data(self.vm_ref,
+                                                                                         "vm-data/networks/%s/%s" % (vif_device, network_change),
+                                                                                         network_params[network_change])
 
                             position += 1
                     elif change.get('networks_new'):
                         for position, vif_device in change['networks_new']:
-                            network_ref = self.xapi_session.xenapi.network.get_by_name_label(self.module.params['networks'][position]['name'])[0]
-                            vif_mac = self.module.params['networks'][position].get('mac', '')
+                            network_params = self.module.params['networks'][position]
+
+                            network_ref = self.xapi_session.xenapi.network.get_by_name_label(network_params['name'])[0]
+
+                            network_name = network_params['name']
+                            network_mac = network_params['mac'] if network_params.get('mac') else ""
+                            network_type = network_params.get('type')
+                            network_ip = network_params['ip'] if network_params.get('ip') else ""
+                            network_prefix = network_params['prefix'] if network_params.get('prefix') else ""
+                            network_netmask = network_params['netmask'] if network_params.get('netmask') else ""
+                            network_gateway = network_params['gateway'] if network_params.get('gateway') else ""
+                            network_type6 = network_params.get('type6')
+                            network_ip6 = network_params['ip6'] if network_params.get('ip6') else ""
+                            network_prefix6 = network_params['prefix6'] if network_params.get('prefix6') else ""
+                            network_gateway6 = network_params['gateway6'] if network_params.get('gateway6') else ""
 
                             vif = {
                                 "device": vif_device,
                                 "network": network_ref,
                                 "VM": self.vm_ref,
-                                "MAC": vif_mac if vif_mac is not None else "",
+                                "MAC": network_mac,
                                 "MTU": self.xapi_session.xenapi.network.get_MTU(network_ref),
                                 "other_config": {},
                                 "qos_algorithm_type": "",
@@ -600,8 +923,66 @@ class XenServerVM(XenServerObject):
 
                             vif_ref_new = self.xapi_session.xenapi.VIF.create(vif)
 
-                            if self.vm_params['power_state'] == "running":
+                            if self.vm_params['power_state'].lower() == "running":
                                 self.xapi_session.xenapi.VIF.plug(vif_ref_new)
+
+                            if self.customization_agent == "native":
+                                if network_type and network_type == "static":
+                                    self.xapi_session.xenapi.VIF.configure_ipv4(vif_ref_new, "Static",
+                                                                                "%s/%s" % (network_ip, network_prefix), network_gateway)
+
+                                if network_type6 and network_type6 == "static":
+                                    self.xapi_session.xenapi.VIF.configure_ipv6(vif_ref_new, "Static",
+                                                                                "%s/%s" % (network_ip6, network_prefix6), network_gateway6)
+                            elif self.customization_agent == "custom":
+                                # We first have to remove any existing data
+                                # from xenstore_data because there could be
+                                # some old leftover data from some interface
+                                # that once occupied same device location as
+                                # our new interface.
+                                self.xapi_session.xenapi.VM.remove_from_xenstore_data(self.vm_ref, "vm-data/networks/%s/name" % vif_device)
+                                self.xapi_session.xenapi.VM.remove_from_xenstore_data(self.vm_ref, "vm-data/networks/%s/mac" % vif_device)
+                                self.xapi_session.xenapi.VM.remove_from_xenstore_data(self.vm_ref, "vm-data/networks/%s/type" % vif_device)
+                                self.xapi_session.xenapi.VM.remove_from_xenstore_data(self.vm_ref, "vm-data/networks/%s/ip" % vif_device)
+                                self.xapi_session.xenapi.VM.remove_from_xenstore_data(self.vm_ref, "vm-data/networks/%s/prefix" % vif_device)
+                                self.xapi_session.xenapi.VM.remove_from_xenstore_data(self.vm_ref, "vm-data/networks/%s/netmask" % vif_device)
+                                self.xapi_session.xenapi.VM.remove_from_xenstore_data(self.vm_ref, "vm-data/networks/%s/gateway" % vif_device)
+                                self.xapi_session.xenapi.VM.remove_from_xenstore_data(self.vm_ref, "vm-data/networks/%s/type6" % vif_device)
+                                self.xapi_session.xenapi.VM.remove_from_xenstore_data(self.vm_ref, "vm-data/networks/%s/ip6" % vif_device)
+                                self.xapi_session.xenapi.VM.remove_from_xenstore_data(self.vm_ref, "vm-data/networks/%s/prefix6" % vif_device)
+                                self.xapi_session.xenapi.VM.remove_from_xenstore_data(self.vm_ref, "vm-data/networks/%s/gateway6" % vif_device)
+
+                                self.xapi_session.xenapi.VM.add_to_xenstore_data(self.vm_ref, "vm-data/networks/%s/name" % vif_device, network_name)
+
+                                # We get MAC from VIF itself instead of
+                                # networks.mac because it could be
+                                # autogenerated.
+                                vm_vif_mac = self.xapi_session.xenapi.VIF.get_MAC(vif_ref_new)
+                                self.xapi_session.xenapi.VM.add_to_xenstore_data(self.vm_ref, "vm-data/networks/%s/mac" % vif_device, vm_vif_mac)
+
+                                if network_type:
+                                    self.xapi_session.xenapi.VM.add_to_xenstore_data(self.vm_ref, "vm-data/networks/%s/type" % vif_device, network_type)
+
+                                    if network_type == "static":
+                                        self.xapi_session.xenapi.VM.add_to_xenstore_data(self.vm_ref,
+                                                                                         "vm-data/networks/%s/ip" % vif_device, network_ip)
+                                        self.xapi_session.xenapi.VM.add_to_xenstore_data(self.vm_ref,
+                                                                                         "vm-data/networks/%s/prefix" % vif_device, network_prefix)
+                                        self.xapi_session.xenapi.VM.add_to_xenstore_data(self.vm_ref,
+                                                                                         "vm-data/networks/%s/netmask" % vif_device, network_netmask)
+                                        self.xapi_session.xenapi.VM.add_to_xenstore_data(self.vm_ref,
+                                                                                         "vm-data/networks/%s/gateway" % vif_device, network_gateway)
+
+                                if network_type6:
+                                    self.xapi_session.xenapi.VM.add_to_xenstore_data(self.vm_ref, "vm-data/networks/%s/type6" % vif_device, network_type6)
+
+                                    if network_type6 == "static":
+                                        self.xapi_session.xenapi.VM.add_to_xenstore_data(self.vm_ref,
+                                                                                         "vm-data/networks/%s/ip6" % vif_device, network_ip6)
+                                        self.xapi_session.xenapi.VM.add_to_xenstore_data(self.vm_ref,
+                                                                                         "vm-data/networks/%s/prefix6" % vif_device, network_prefix6)
+                                        self.xapi_session.xenapi.VM.add_to_xenstore_data(self.vm_ref,
+                                                                                         "vm-data/networks/%s/gateway6" % vif_device, network_gateway6)
 
                     elif change.get('custom_params'):
                         for position in change['custom_params']:
@@ -609,7 +990,7 @@ class XenServerVM(XenServerObject):
                             custom_param_value = self.module.params['custom_params'][position]['value']
                             self.xapi_session.xenapi_request("VM.set_%s" % custom_param_key, (self.vm_ref, custom_param_value))
 
-            if self.module.params.get('is_template'):
+            if self.module.params['is_template']:
                 self.xapi_session.xenapi.VM.set_is_a_template(self.vm_ref, True)
             elif "need_poweredoff" in config_changes and self.module.params['force'] and vm_power_state_save != 'halted':
                 self.set_power_state("poweredon")
@@ -623,6 +1004,7 @@ class XenServerVM(XenServerObject):
         return config_changes
 
     def destroy(self):
+        """Removes an existing VM with associated disks"""
         # Safety check.
         if not self.exists():
             self.module.fail_json(msg="Called destroy on non existing VM!")
@@ -633,7 +1015,7 @@ class XenServerVM(XenServerObject):
             else:
                 self.module.fail_json(msg="VM destroy: VM has to be in powered off state to destroy but force was not specified!")
 
-        # Support for ansible check mode.
+        # Support for Ansible check mode.
         if self.module.check_mode:
             return
 
@@ -652,16 +1034,23 @@ class XenServerVM(XenServerObject):
         except XenAPI.Failure as f:
             self.module.fail_json(msg="XAPI ERROR: %s" % f.details)
 
-        self.vm_params['power_state'] == "halted"
-
     def get_changes(self):
+        """Finds VM parameters that differ from specified ones.
+
+        This method builds a dictionary with hierarchy of VM parameters
+        that differ from those specified in module parameters.
+
+        Returns:
+            list: VM parameters that differ from those specified in
+            module parameters.
+        """
         # Safety check.
         if not self.exists():
             self.module.fail_json(msg="Called get_changes on non existing VM!")
 
         need_poweredoff = False
 
-        if self.module.params.get('is_template'):
+        if self.module.params['is_template']:
             need_poweredoff = True
 
         try:
@@ -682,7 +1071,7 @@ class XenServerVM(XenServerObject):
                 if self.module.params['name']:
                     config_changes.append('name')
                 else:
-                    self.module.fail_json(msg="VM check name: empty string not allowed!")
+                    self.module.fail_json(msg="VM check name: VM name cannot be an empty string!")
 
             if self.module.params['name_desc'] is not None and self.module.params['name_desc'] != self.vm_params['name_description']:
                 config_changes.append('name_desc')
@@ -712,8 +1101,15 @@ class XenServerVM(XenServerObject):
                 num_cpus = self.module.params['hardware'].get('num_cpus')
 
                 if num_cpus is not None:
+                    # Kept for compatibility with older Ansible versions that
+                    # do not support subargument specs.
+                    try:
+                        num_cpus = int(num_cpus)
+                    except ValueError as e:
+                        self.module.fail_json(msg="VM check hardware.num_cpus: parameter should be an integer value!")
+
                     if num_cpus < 1:
-                        self.module.fail_json(msg="VM check hardware.num_cpus: attribute should be greater than zero!")
+                        self.module.fail_json(msg="VM check hardware.num_cpus: parameter should be greater than zero!")
 
                     # We can use VCPUs_at_startup or VCPUs_max parameter. I'd
                     # say the former is the way to go but this needs
@@ -727,11 +1123,18 @@ class XenServerVM(XenServerObject):
                 num_cpu_cores_per_socket = self.module.params['hardware'].get('num_cpu_cores_per_socket')
 
                 if num_cpu_cores_per_socket is not None:
+                    # Kept for compatibility with older Ansible versions that
+                    # do not support subargument specs.
+                    try:
+                        num_cpu_cores_per_socket = int(num_cpu_cores_per_socket)
+                    except ValueError as e:
+                        self.module.fail_json(msg="VM check hardware.num_cpu_cores_per_socket: parameter should be an integer value.")
+
                     if num_cpu_cores_per_socket < 1:
-                        self.module.fail_json(msg="VM check hardware.num_cpu_cores_per_socket: attribute should be greater than zero!")
+                        self.module.fail_json(msg="VM check hardware.num_cpu_cores_per_socket: parameter should be greater than zero!")
 
                     if num_cpus and num_cpus % num_cpu_cores_per_socket != 0:
-                        self.module.fail_json(msg="VM check hardware.num_cpus: attribute should be a multiple of hardware.num_cpu_cores_per_socket.")
+                        self.module.fail_json(msg="VM check hardware.num_cpus: parameter should be a multiple of hardware.num_cpu_cores_per_socket.")
 
                     vm_platform = self.vm_params['platform']
                     vm_cores_per_socket = int(vm_platform.get('cores-per-socket', 1))
@@ -745,8 +1148,15 @@ class XenServerVM(XenServerObject):
                 memory_mb = self.module.params['hardware'].get('memory_mb')
 
                 if memory_mb is not None:
+                    # Kept for compatibility with older Ansible versions that
+                    # do not support subargument specs.
+                    try:
+                        memory_mb = int(memory_mb)
+                    except ValueError as e:
+                        self.module.fail_json(msg="VM check hardware.memory_mb: parameter should be an integer value.")
+
                     if memory_mb < 1:
-                        self.module.fail_json(msg="VM check hardware.memory_mb: attribute should be greater than zero!")
+                        self.module.fail_json(msg="VM check hardware.memory_mb: parameter should be greater than zero!")
 
                     # There are multiple memory parameters:
                     #     - memory_dynamic_max
@@ -804,7 +1214,7 @@ class XenServerVM(XenServerObject):
 
                     disk_params = self.module.params['disks'][position]
 
-                    disk_size = self.get_normalized_disk_size(self.module.params['disks'], position)
+                    disk_size = self.get_normalized_disk_size(self.module.params['disks'][position], "VM check disks[%s]: " % position)
 
                     disk_name = disk_params.get('name')
 
@@ -856,7 +1266,7 @@ class XenServerVM(XenServerObject):
                         # placed existing disk to maintain relative disk
                         # positions pairable with disk specifications in
                         # module params. That place must not be occupied by
-                        # some other device like CDROM.
+                        # some other device like CD-ROM.
                         for userdevice in vbd_userdevices_allowed:
                             if int(userdevice) > int(vm_disk_userdevice_highest):
                                 disk_userdevice = userdevice
@@ -884,32 +1294,46 @@ class XenServerVM(XenServerObject):
             config_changes_cdrom = []
 
             if self.module.params['cdrom']:
-                # Get the list of all CDROMs. Filter out any regular disks
-                # found. If we found no existing CDROM, we will create it
+                # Get the list of all CD-ROMs. Filter out any regular disks
+                # found. If we found no existing CD-ROM, we will create it
                 # later else take the first one found.
                 vm_cdrom_params_list = [cdrom_params for cdrom_params in self.vm_params['VBDs'] if cdrom_params['type'] == "CD"]
 
-                # If no existing CDROM is found, we will need to add one.
+                # If no existing CD-ROM is found, we will need to add one.
                 # We need to check if there is any userdevice allowed.
                 if not vm_cdrom_params_list and not vbd_userdevices_allowed:
                     self.module.fail_json(msg="VM check cdrom: maximum number of devices reached!")
 
+                cdrom_type = self.module.params['cdrom'].get('type')
+                cdrom_iso_name = self.module.params['cdrom'].get('iso_name')
+
+                # If cdrom.iso_name is specified but cdrom.type is not,
+                # then set cdrom.type to 'iso', unless cdrom.iso_name is
+                # an empty string, in that case set cdrom.type to 'none'.
+                if not cdrom_type:
+                    if cdrom_iso_name:
+                        cdrom_type = "iso"
+                    elif cdrom_iso_name is not None:
+                        cdrom_type = "none"
+
+                    self.module.params['cdrom']['type'] = cdrom_type
+
                 # If type changed.
-                if not vm_cdrom_params_list or self.module.params['cdrom']['type'] != self.get_cdrom_type(vm_cdrom_params_list[0]):
+                if cdrom_type and (not vm_cdrom_params_list or cdrom_type != self.get_cdrom_type(vm_cdrom_params_list[0])):
                     config_changes_cdrom.append('type')
 
-                # Is ISO image changed?
-                if (self.module.params['cdrom']['type'] == "iso" and
-                        (not vm_cdrom_params_list or
-                         not vm_cdrom_params_list[0]['VDI'] or
-                         self.module.params['cdrom']['iso_name'] != vm_cdrom_params_list[0]['VDI']['name_label'])):
-                    config_changes_cdrom.append('iso_name')
-
-                # Check if ISO exists.
-                if self.module.params['cdrom']['type'] == "iso":
+                if cdrom_type == "iso":
+                    # Check if ISO exists.
                     # Check existance only. Ignore return value.
-                    get_object_ref(self.module, self.module.params['cdrom']['iso_name'], uuid=None, obj_type="ISO image", fail=True,
-                                   msg_prefix="VM check cdrom.iso: ")
+                    get_object_ref(self.module, cdrom_iso_name, uuid=None, obj_type="ISO image", fail=True,
+                                   msg_prefix="VM check cdrom.iso_name: ")
+
+                    # Is ISO image changed?
+                    if (cdrom_iso_name and
+                            (not vm_cdrom_params_list or
+                             not vm_cdrom_params_list[0]['VDI'] or
+                             cdrom_iso_name != vm_cdrom_params_list[0]['VDI']['name_label'])):
+                        config_changes_cdrom.append('iso_name')
 
             if config_changes_cdrom:
                 config_changes.append({"cdrom": config_changes_cdrom})
@@ -957,8 +1381,112 @@ class XenServerVM(XenServerObject):
                     if network_mac is not None:
                         network_mac = network_mac.lower()
 
-                        if not self.is_valid_mac_addr(network_mac):
+                        if not is_valid_mac_addr(network_mac):
                             self.module.fail_json(msg="VM check networks[%s]: specified MAC address '%s' is not valid!" % (position, network_mac))
+
+                    # IPv4 reconfiguration.
+                    network_type = network_params.get('type')
+                    network_ip = network_params.get('ip')
+                    network_netmask = network_params.get('netmask')
+                    network_prefix = None
+
+                    # If networks.ip is specified and networks.type is not,
+                    # then set networks.type to 'static'.
+                    if not network_type and network_ip:
+                        network_type = "static"
+
+                    # XenServer natively supports only 'none' and 'static'
+                    # type with 'none' being the same as 'dhcp'.
+                    if self.customization_agent == "native" and network_type and network_type == "dhcp":
+                        network_type = "none"
+
+                    if network_type and network_type == "static":
+                        if network_ip is not None:
+                            network_ip_split = network_ip.split('/')
+                            network_ip = network_ip_split[0]
+
+                            if network_ip and not is_valid_ip_addr(network_ip):
+                                self.module.fail_json(msg="VM check networks[%s]: specified IPv4 address '%s' is not valid!" % (position, network_ip))
+
+                            if len(network_ip_split) > 1:
+                                network_prefix = network_ip_split[1]
+
+                                if not is_valid_ip_prefix(network_prefix):
+                                    self.module.fail_json(msg="VM check networks[%s]: specified IPv4 prefix '%s' is not valid!" % (position, network_prefix))
+
+                        if network_netmask is not None:
+                            if not is_valid_ip_netmask(network_netmask):
+                                self.module.fail_json(msg="VM check networks[%s]: specified IPv4 netmask '%s' is not valid!" % (position, network_netmask))
+
+                            network_prefix = ip_netmask_to_prefix(network_netmask, skip_check=True)
+                        elif network_prefix is not None:
+                            network_netmask = ip_prefix_to_netmask(network_prefix, skip_check=True)
+
+                    # If any parameter is overridden at this point, update it.
+                    if network_type:
+                        network_params['type'] = network_type
+
+                    if network_ip:
+                        network_params['ip'] = network_ip
+
+                    if network_netmask:
+                        network_params['netmask'] = network_netmask
+
+                    if network_prefix:
+                        network_params['prefix'] = network_prefix
+
+                    network_gateway = network_params.get('gateway')
+
+                    # Gateway can be an empty string (when removing gateway
+                    # configuration) but if it is not, it should be validated.
+                    if network_gateway and not is_valid_ip_addr(network_gateway):
+                        self.module.fail_json(msg="VM check networks[%s]: specified IPv4 gateway '%s' is not valid!" % (position, network_gateway))
+
+                    # IPv6 reconfiguration.
+                    network_type6 = network_params.get('type6')
+                    network_ip6 = network_params.get('ip6')
+                    network_prefix6 = None
+
+                    # If networks.ip6 is specified and networks.type6 is not,
+                    # then set networks.type6 to 'static'.
+                    if not network_type6 and network_ip6:
+                        network_type6 = "static"
+
+                    # XenServer natively supports only 'none' and 'static'
+                    # type with 'none' being the same as 'dhcp'.
+                    if self.customization_agent == "native" and network_type6 and network_type6 == "dhcp":
+                        network_type6 = "none"
+
+                    if network_type6 and network_type6 == "static":
+                        if network_ip6 is not None:
+                            network_ip6_split = network_ip6.split('/')
+                            network_ip6 = network_ip6_split[0]
+
+                            if network_ip6 and not is_valid_ip6_addr(network_ip6):
+                                self.module.fail_json(msg="VM check networks[%s]: specified IPv6 address '%s' is not valid!" % (position, network_ip6))
+
+                            if len(network_ip6_split) > 1:
+                                network_prefix6 = network_ip6_split[1]
+
+                                if not is_valid_ip6_prefix(network_prefix6):
+                                    self.module.fail_json(msg="VM check networks[%s]: specified IPv6 prefix '%s' is not valid!" % (position, network_prefix6))
+
+                    # If any parameter is overridden at this point, update it.
+                    if network_type6:
+                        network_params['type6'] = network_type6
+
+                    if network_ip6:
+                        network_params['ip6'] = network_ip6
+
+                    if network_prefix6:
+                        network_params['prefix6'] = network_prefix6
+
+                    network_gateway6 = network_params.get('gateway6')
+
+                    # Gateway can be an empty string (when removing gateway
+                    # configuration) but if it is not, it should be validated.
+                    if network_gateway6 and not is_valid_ip6_addr(network_gateway6):
+                        self.module.fail_json(msg="VM check networks[%s]: specified IPv6 gateway '%s' is not valid!" % (position, network_gateway6))
 
                     # If this is an existing VIF.
                     if vm_vif_params and vm_vif_params['network']:
@@ -970,11 +1498,102 @@ class XenServerVM(XenServerObject):
                         if network_mac and network_mac != vm_vif_params['MAC'].lower():
                             network_changes.append('mac')
 
+                        if self.customization_agent == "native":
+                            if network_type and network_type != vm_vif_params['ipv4_configuration_mode'].lower():
+                                network_changes.append('type')
+
+                            if network_type and network_type == "static":
+                                if network_ip and (not vm_vif_params['ipv4_addresses'] or
+                                                   not vm_vif_params['ipv4_addresses'][0] or
+                                                   network_ip != vm_vif_params['ipv4_addresses'][0].split('/')[0]):
+                                    network_changes.append('ip')
+
+                                if network_prefix and (not vm_vif_params['ipv4_addresses'] or
+                                                       not vm_vif_params['ipv4_addresses'][0] or
+                                                       network_prefix != vm_vif_params['ipv4_addresses'][0].split('/')[1]):
+                                    network_changes.append('prefix')
+                                    network_changes.append('netmask')
+
+                                if network_gateway is not None and network_gateway != vm_vif_params['ipv4_gateway']:
+                                    network_changes.append('gateway')
+
+                            if network_type6 and network_type6 != vm_vif_params['ipv6_configuration_mode'].lower():
+                                network_changes.append('type6')
+
+                            if network_type6 and network_type6 == "static":
+                                if network_ip6 and (not vm_vif_params['ipv6_addresses'] or
+                                                    not vm_vif_params['ipv6_addresses'][0] or
+                                                    network_ip6 != vm_vif_params['ipv6_addresses'][0].split('/')[0]):
+                                    network_changes.append('ip6')
+
+                                if network_prefix6 and (not vm_vif_params['ipv6_addresses'] or
+                                                        not vm_vif_params['ipv6_addresses'][0] or
+                                                        network_prefix6 != vm_vif_params['ipv6_addresses'][0].split('/')[1]):
+                                    network_changes.append('prefix6')
+
+                                if network_gateway6 is not None and network_gateway6 != vm_vif_params['ipv6_gateway']:
+                                    network_changes.append('gateway6')
+
+                        elif self.customization_agent == "custom":
+                            vm_xenstore_data = self.vm_params['xenstore_data']
+
+                            if network_type and network_type != vm_xenstore_data.get('vm-data/networks/%s/type' % vm_vif_params['device'], ""):
+                                network_changes.append('type')
+                                need_poweredoff = True
+
+                            if network_type and network_type == "static":
+                                if network_ip and network_ip != vm_xenstore_data.get('vm-data/networks/%s/ip' % vm_vif_params['device'], ""):
+                                    network_changes.append('ip')
+                                    need_poweredoff = True
+
+                                if network_prefix and network_prefix != vm_xenstore_data.get('vm-data/networks/%s/prefix' % vm_vif_params['device'], ""):
+                                    network_changes.append('prefix')
+                                    network_changes.append('netmask')
+                                    need_poweredoff = True
+
+                                if network_gateway is not None and network_gateway != vm_xenstore_data.get('vm-data/networks/%s/gateway' %
+                                                                                                           vm_vif_params['device'], ""):
+                                    network_changes.append('gateway')
+                                    need_poweredoff = True
+
+                            if network_type6 and network_type6 != vm_xenstore_data.get('vm-data/networks/%s/type6' % vm_vif_params['device'], ""):
+                                network_changes.append('type6')
+                                need_poweredoff = True
+
+                            if network_type6 and network_type6 == "static":
+                                if network_ip6 and network_ip6 != vm_xenstore_data.get('vm-data/networks/%s/ip6' % vm_vif_params['device'], ""):
+                                    network_changes.append('ip6')
+                                    need_poweredoff = True
+
+                                if network_prefix6 and network_prefix6 != vm_xenstore_data.get('vm-data/networks/%s/prefix6' % vm_vif_params['device'], ""):
+                                    network_changes.append('prefix6')
+                                    need_poweredoff = True
+
+                                if network_gateway6 is not None and network_gateway6 != vm_xenstore_data.get('vm-data/networks/%s/gateway6' %
+                                                                                                             vm_vif_params['device'], ""):
+                                    network_changes.append('gateway6')
+                                    need_poweredoff = True
+
                         config_changes_networks.append(network_changes)
                     # If this is a new VIF.
                     else:
                         if not network_name:
-                            self.module.fail_json(msg="VM check networks[%s]: network name not specified!" % position)
+                            self.module.fail_json(msg="VM check networks[%s]: network name is required for new network interface!" % position)
+
+                        if network_type and network_type == "static" and network_ip and not network_netmask:
+                            self.module.fail_json(msg="VM check networks[%s]: IPv4 netmask or prefix is required for new network interface!" % position)
+
+                        if network_type6 and network_type6 == "static" and network_ip6 and not network_prefix6:
+                            self.module.fail_json(msg="VM check networks[%s]: IPv6 prefix is required for new network interface!" % position)
+
+                        # Restart is needed if we are adding new network
+                        # interface with IP/gateway parameters specified
+                        # and custom agent is used.
+                        if self.customization_agent == "custom":
+                            for parameter in ['type', 'ip', 'prefix', 'gateway', 'type6', 'ip6', 'prefix6', 'gateway6']:
+                                if parameter in network_params:
+                                    need_poweredoff = True
+                                    break
 
                         # We need to place a new network interface right above the
                         # highest placed existing interface to maintain relative
@@ -1027,9 +1646,21 @@ class XenServerVM(XenServerObject):
         except XenAPI.Failure as f:
             self.module.fail_json(msg="XAPI ERROR: %s" % f.details)
 
-    def get_normalized_disk_size(self, disk_params_list, position):
-        disk_params = disk_params_list[position]
+    def get_normalized_disk_size(self, disk_params, msg_prefix=""):
+        """Parses disk size parameters and returns disk size in bytes.
 
+        This method tries to parse disk size module parameters. It fails
+        with an error message if size cannot be parsed.
+
+        Args:
+            disk_params (dist): A dictionary with disk parameters.
+            msg_prefix (str): A string error messages should be prefixed
+                with (default: "").
+
+        Returns:
+            int: disk size in bytes if disk size is successfully parsed or
+            None if no disk size parameters were found.
+        """
         # There should be only single size spec but we make a list of all size
         # specs just in case. Priority is given to 'size' but if not found, we
         # check for 'size_tb', 'size_gb', 'size_mb' etc. and use first one
@@ -1040,7 +1671,7 @@ class XenServerVM(XenServerObject):
             try:
                 # size
                 if "size" in disk_size_spec:
-                    size_regex = re.compile(r'(\d+(?:\.\d+)?)\s*([tgmkTGMK]?[bB]?)')
+                    size_regex = re.compile(r'(\d+(?:\.\d+)?)\s*(.*)')
                     disk_size_m = size_regex.match(disk_params['size'])
 
                     if disk_size_m:
@@ -1074,38 +1705,27 @@ class XenServerVM(XenServerObject):
 
             except (TypeError, ValueError, NameError):
                 # Common failure
-                self.module.fail_json(msg="VM check disks[%s]: failed to parse disk size. Please review value provided using documentation." % position)
+                self.module.fail_json(msg="%sfailed to parse disk size. Please review value provided using documentation." % msg_prefix)
 
             disk_units = dict(tb=4, gb=3, mb=2, kb=1, b=0)
 
             if unit in disk_units:
                 return int(size * (1024 ** disk_units[unit]))
             else:
-                self.module.fail_json(msg="VM check disks[%s]: '%s' is not a supported unit for disk size. Supported units are ['%s']." %
-                                      (position, unit, "', '".join(sorted(disk_units.keys(), key=lambda key: disk_units[key]))))
+                self.module.fail_json(msg="%s'%s' is not a supported unit for disk size. Supported units are ['%s']." %
+                                      (msg_prefix, unit, "', '".join(sorted(disk_units.keys(), key=lambda key: disk_units[key]))))
         else:
             return None
 
     @staticmethod
     def get_cdrom_type(vm_cdrom_params):
+        """Returns VM CD-ROM type."""
         # TODO: implement support for detecting type host. No server to test
         # this on at the moment.
         if vm_cdrom_params['empty']:
             return "none"
         else:
             return "iso"
-
-    @staticmethod
-    def is_valid_mac_addr(mac_addr):
-        """
-        Function to validate MAC address for given string
-        Args:
-            mac_addr: string to validate as MAC address
-
-        Returns: (Boolean) True if string is valid MAC address, otherwise False
-        """
-        mac_addr_regex = re.compile('[0-9a-f]{2}([-:])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$')
-        return bool(mac_addr_regex.match(mac_addr))
 
 
 def main():
@@ -1127,7 +1747,6 @@ def main():
                 num_cpu_cores_per_socket=dict(type='int'),
                 memory_mb=dict(type='int'),
             ),
-            default=dict(),
         ),
         disks=dict(
             type='list',
@@ -1144,7 +1763,6 @@ def main():
                 sr=dict(type='str'),
                 sr_uuid=dict(type='str'),
             ),
-            default=[],
             aliases=['disk'],
             mutually_exclusive=[
                 ['size', 'size_tb', 'size_gb', 'size_mb', 'size_kb', 'size_b'],
@@ -1154,7 +1772,7 @@ def main():
         cdrom=dict(
             type='dict',
             options=dict(
-                type=dict(type='str', required=True, choices=['none', 'host', 'iso']),
+                type=dict(type='str', choices=['none', 'iso']),
                 iso_name=dict(type='str'),
             ),
             required_if=[
@@ -1167,9 +1785,19 @@ def main():
             options=dict(
                 name=dict(type='str', aliases=['name_label']),
                 mac=dict(type='str'),
+                type=dict(type='str', choices=['none', 'dhcp', 'static']),
+                ip=dict(type='str'),
+                netmask=dict(type='str'),
+                gateway=dict(type='str'),
+                type6=dict(type='str', choices=['none', 'dhcp', 'static']),
+                ip6=dict(type='str'),
+                gateway6=dict(type='str'),
             ),
-            default=[],
             aliases=['network'],
+            required_if=[
+                ['type', 'static', ['ip']],
+                ['type6', 'static', ['ip6']],
+            ],
         ),
         home_server=dict(type='str'),
         custom_params=dict(
@@ -1179,7 +1807,6 @@ def main():
                 key=dict(type='str', required=True),
                 value=dict(type='raw', required=True),
             ),
-            default=[],
         ),
         wait_for_ip_address=dict(type='bool', default=False),
         state_change_timeout=dict(type='int', default=0),
@@ -1212,10 +1839,44 @@ def main():
             if config_changes:
                 result['changed'] = True
 
-            if module.check_mode:
-                result['changes'] = config_changes
+                # Make new disk and network changes more user friendly
+                # and informative.
+                for change in config_changes:
+                    if isinstance(change, dict):
+                        if change.get('disks_new'):
+                            disks_new = []
 
-            result['instance'] = vm.gather_facts()
+                            for position, userdevice in change['disks_new']:
+                                disk_new_params = {"position": position, "vbd_userdevice": userdevice}
+                                disk_params = module.params['disks'][position]
+
+                                for k in disk_params.keys():
+                                    if disk_params[k] is not None:
+                                        disk_new_params[k] = disk_params[k]
+
+                                disks_new.append(disk_new_params)
+
+                            if disks_new:
+                                change['disks_new'] = disks_new
+
+                        elif change.get('networks_new'):
+                            networks_new = []
+
+                            for position, device in change['networks_new']:
+                                network_new_params = {"position": position, "vif_device": device}
+                                network_params = module.params['networks'][position]
+
+                                for k in network_params.keys():
+                                    if network_params[k] is not None:
+                                        network_new_params[k] = network_params[k]
+
+                                networks_new.append(network_new_params)
+
+                            if networks_new:
+                                change['networks_new'] = networks_new
+
+            result['changes'] = config_changes
+
         elif module.params['state'] in ["poweredon", "poweredoff", "restarted", "shutdownguest", "rebootguest", "suspended"]:
             result['changed'] = vm.set_power_state(module.params['state'])
     elif module.params['state'] != "absent":
