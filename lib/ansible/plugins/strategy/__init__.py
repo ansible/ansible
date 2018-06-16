@@ -577,9 +577,13 @@ class StrategyBase:
                                         display.warning(msg)
 
                     if 'add_host' in result_item:
-                        # this task added a new host (add_host module)
-                        new_host_info = result_item.get('add_host', dict())
-                        self._add_host(new_host_info, iterator)
+                        if isinstance(result_item['add_host'],list):
+                            for new_host_info in result_item['add_host']:
+                                self._add_host(new_host_info, iterator)
+                        else:
+                            # this task added a new host (add_host module)
+                            new_host_info = result_item.get('add_host', dict())
+                            self._add_host(new_host_info, iterator)
 
                     elif 'add_group' in result_item:
                         # this task added a new group (group_by module)
