@@ -267,7 +267,6 @@ class MerakiModule(object):
             pass
 
     def exit_json(self, **kwargs):
-
         """Custom written method to exit from module."""
         self.result['response'] = self.response
         self.result['status'] = self.status
