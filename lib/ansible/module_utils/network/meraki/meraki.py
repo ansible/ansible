@@ -154,7 +154,7 @@ class MerakiModule(object):
 
     def is_org_valid(self, data, org_name=None, org_id=None):
         """Checks whether a specific org exists and is duplicated.
-        
+
         If 0, doesn't exist. 1, exists and not duplicated. >1 duplicated.
         """
         org_count = 0
