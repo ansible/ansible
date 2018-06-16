@@ -23,14 +23,15 @@ version_added: "0.2"
 options:
   name:
     description:
-      - name of the guest VM being managed. Note that VM must be previously
-        defined with xml.
-    required: true
+      - name of the guest VM being managed. Almost always required (see examples). When defining a new VM, 
+        name is taken from xml.
   state:
     description:
       - Note that there may be some lag for state requests like C(shutdown)
         since these refer only to VM states. After starting a guest, it may not
         be immediately accessible.
+        state and command are mutually exclusive except when command=list_vms. In
+        this case all VMs in specified state will be listed.
     choices: [ destroyed, paused, running, shutdown ]
   command:
     description:
@@ -74,7 +75,6 @@ EXAMPLES = '''
 tasks:
   - name: define vm
     virt:
-        name: foo
         command: define
         xml: "{{ lookup('template', 'container-template.xml.j2') }}"
         uri: 'lxc:///'
@@ -83,6 +83,33 @@ tasks:
         name: foo
         state: running
         uri: 'lxc:///'
+
+# setting autostart on a qemu VM (default uri)
+tasks:
+  - name: set autostart for a VM
+    virt:
+        name: foo
+        autostart: yes
+
+# Defining a VM and making is autostart with host. VM will be off after this task 
+tasks:
+  - name: define vm from xml and set autostart
+    virt:
+        command: define 
+        xml: "{{ lookup('template', 'vm_template.xml.j2') }}"
+        autostart: yes
+
+# Listing VMs
+tasks:
+  - name: list all VMs
+    virt:
+        command: list_vms
+    register: all_vms
+  - name: list only running VMs
+    virt:
+        command: list_vms
+        state: running
+    register: running_vms
 '''
 
 RETURN = '''
