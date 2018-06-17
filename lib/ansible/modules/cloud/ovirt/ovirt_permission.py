@@ -70,6 +70,9 @@ options:
     namespace:
         description:
             - Namespace of the authorization provider, where user/group resides.
+     quota_name:
+        description:
+            - Name of the quota which you want to work with.
 extends_documentation_fragment: ovirt
 '''
 
@@ -164,6 +167,7 @@ def _object_service(connection, module):
         quotas_service = object_service.quotas_service()
         return quotas_service.quota_service(get_id_by_name(quotas_service, module.params['quota_name']))
     return object_service
+
 
 def _permission(module, permissions_service, connection):
     for permission in permissions_service.list():
