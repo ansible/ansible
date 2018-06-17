@@ -100,7 +100,9 @@ class CallbackModule(CallbackBase):
         else:
             self._clean_results(result._result, result._task.action)
 
-            if (self._display.verbosity > 0 or result._task.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
+            if (self._display.verbosity > 0 or
+                    result._task.verbosity > 0 or
+                    '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
                 msg += " => %s" % (self._dump_results(result._result),)
             self._display.display(msg, color=color)
 
@@ -119,7 +121,9 @@ class CallbackModule(CallbackBase):
                 self._process_items(result)
             else:
                 msg = "skipping: [%s]" % result._host.get_name()
-                if (self._display.verbosity > 0 or result._task.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
+                if (self._display.verbosity > 0 or
+                        result._task.verbosity > 0 or
+                        '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
                     msg += " => %s" % self._dump_results(result._result)
                 self._display.display(msg, color=C.COLOR_SKIP)
 
@@ -222,7 +226,9 @@ class CallbackModule(CallbackBase):
 
         msg += " => (item=%s)" % (self._get_item(result._result),)
 
-        if (self._display.verbosity > 0 or result._task.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
+        if (self._display.verbosity > 0 or
+                result._task.verbosity > 0 or
+                '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
             msg += " => %s" % self._dump_results(result._result)
         self._display.display(msg, color=color)
 
@@ -250,7 +256,9 @@ class CallbackModule(CallbackBase):
         if self._plugin_options.get('show_skipped_hosts', C.DISPLAY_SKIPPED_HOSTS):  # fallback on constants for inherited plugins missing docs
             self._clean_results(result._result, result._task.action)
             msg = "skipping: [%s] => (item=%s) " % (result._host.get_name(), self._get_item(result._result))
-            if (self._display.verbosity > 0 or result._task.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
+            if (self._display.verbosity > 0 or
+                    result._task.verbosity > 0 or
+                    '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
                 msg += " => %s" % self._dump_results(result._result)
             self._display.display(msg, color=C.COLOR_SKIP)
 
@@ -319,7 +327,9 @@ class CallbackModule(CallbackBase):
     def v2_runner_retry(self, result):
         task_name = result.task_name or result._task
         msg = "FAILED - RETRYING: %s (%d retries left)." % (task_name, result._result['retries'] - result._result['attempts'])
-        if (self._display.verbosity > 2 or result._task.verbosity > 2 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
+        if (self._display.verbosity > 2 or
+                result._task.verbosity > 2 or
+                '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
             msg += "Result was: %s" % self._dump_results(result._result)
         self._display.display(msg, color=C.COLOR_DEBUG)
 
