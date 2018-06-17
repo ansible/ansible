@@ -81,6 +81,7 @@ import pwd
 import platform
 import errno
 import datetime
+import fcntl
 from itertools import chain, repeat
 
 try:
@@ -242,6 +243,8 @@ FILE_COMMON_ARGUMENTS = dict(
     delimiter=dict(),  # used by assemble
     directory_mode=dict(),  # used by copy
     unsafe_writes=dict(type='bool'),  # should be available to any module using atomic_move
+    lock=dict(type='bool', default=False),
+    lock_timeout=dict(type='int', default=0)
 )
 
 PASSWD_ARG_RE = re.compile(r'^[-]{0,2}pass[-]?(word|wd)?')
@@ -2497,6 +2500,48 @@ class AnsibleModule(object):
         current_attribs = self.get_file_attributes(src)
         current_attribs = current_attribs.get('attr_flags', '')
         self.set_attributes_if_different(dest, current_attribs, True)
+
+    def lock_file(self, filename, lock_timeout=0):
+        if self.check_mode:
+            return True
+
+        self.lockfd = None
+        tmpdir = None
+        if not tmpdir:
+            tmpdir = tempfile.gettempdir()
+
+        lock_file = os.path.join(tmpdir, 'ansible-{0}.lock'.format(os.path.basename(filename)))
+        l_wait = 0.2
+        if lock_timeout > 0:
+            e_secs=0
+            while e_secs < lock_timeout:
+                try:
+                    self.lockfd = open(lock_file, 'w')
+                    fcntl.flock(self.lockfd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    return True
+                except BlockingIOError:
+                    time.sleep(l_wait)
+                    e_secs += l_wait
+                    continue
+            return False
+
+        self.lockfd = open(lock_file, 'w')
+        fcntl.flock(self.lockfd, fcntl.LOCK_EX)
+        return True
+
+    def unlock_file(self):
+        if not self.lockfd or self.check_mode:
+            return True
+
+        fcntl.flock(self.lockfd, fcntl.LOCK_UN)
+        lock_file = self.lockfd.name
+        self.lockfd.close()
+        try:
+            os.remove(lock_file)
+        except (FileNotFoundError, PermissionError):
+            pass  # gracefully accept that the file is lost
+
+        return True
 
     def atomic_move(self, src, dest, unsafe_writes=False):
         '''atomically move src to dest, copying attributes from dest, returns true on success
