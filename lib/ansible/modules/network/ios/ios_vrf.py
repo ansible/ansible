@@ -103,6 +103,10 @@ options:
     description:
       - Adds an import list of extended route target communities to the VRF.
     version_added: "2.5"
+  mode:
+    description:
+      - Configure the VRF in .
+    version_added: "2.5"
 
 """
 EXAMPLES = """
@@ -220,7 +224,6 @@ def add_command_to_vrf(name, cmd, commands):
 
 def map_obj_to_commands(updates, module):
     commands = list()
-    state = module.params['state']  # FIXME NOT USED
 
     for update in updates:
         want, have = update
@@ -260,6 +263,60 @@ def map_obj_to_commands(updates, module):
         if needs_update(want, have, 'route_both'):
             for route in want['route_both']:
                 cmd = 'route-target both %s' % route
+                add_command_to_vrf(want['name'], cmd, commands)
+
+        if needs_update(want, have, 'route_import_ipv4'):
+                cmd = 'address-family ipv4'
+                add_command_to_vrf(want['name'], cmd, commands)
+                for route in want['route_import_ipv4']:
+                    cmd = 'route-target import %s' % route
+                    add_command_to_vrf(want['name'], cmd, commands)
+                cmd = 'exit-address-family'
+                add_command_to_vrf(want['name'], cmd, commands)
+
+        if needs_update(want, have, 'route_export_ipv4'):
+                cmd = 'address-family ipv4'
+                add_command_to_vrf(want['name'], cmd, commands)
+                for route in want['route_export_ipv4']:
+                    cmd = 'route-target export %s' % route
+                    add_command_to_vrf(want['name'], cmd, commands)
+                cmd = 'exit-address-family'
+                add_command_to_vrf(want['name'], cmd, commands)
+
+        if needs_update(want, have, 'route_both_ipv4'):
+                cmd = 'address-family ipv4'
+                add_command_to_vrf(want['name'], cmd, commands)
+                for route in want['route_both_ipv4']:
+                    cmd = 'route-target both %s' % route
+                    add_command_to_vrf(want['name'], cmd, commands)
+                cmd = 'exit-address-family'
+                add_command_to_vrf(want['name'], cmd, commands)
+
+        if needs_update(want, have, 'route_import_ipv6'):
+                cmd = 'address-family ipv6'
+                add_command_to_vrf(want['name'], cmd, commands)
+                for route in want['route_import_ipv6']:
+                    cmd = 'route-target import %s' % route
+                    add_command_to_vrf(want['name'], cmd, commands)
+                cmd = 'exit-address-family'
+                add_command_to_vrf(want['name'], cmd, commands)
+
+        if needs_update(want, have, 'route_export_ipv6'):
+                cmd = 'address-family ipv6'
+                add_command_to_vrf(want['name'], cmd, commands)
+                for route in want['route_export_ipv6']:
+                    cmd = 'route-target export %s' % route
+                    add_command_to_vrf(want['name'], cmd, commands)
+                cmd = 'exit-address-family'
+                add_command_to_vrf(want['name'], cmd, commands)
+
+        if needs_update(want, have, 'route_both_ipv6'):
+                cmd = 'address-family ipv6'
+                add_command_to_vrf(want['name'], cmd, commands)
+                for route in want['route_both_ipv6']:
+                    cmd = 'route-target both %s' % route
+                    add_command_to_vrf(want['name'], cmd, commands)
+                cmd = 'exit-address-family'
                 add_command_to_vrf(want['name'], cmd, commands)
 
         if want['interfaces'] is not None:
@@ -333,6 +390,56 @@ def parse_both(configobj, name):
     return matches
 
 
+def parse_import_ipv4(configobj, name):
+    cfg = configobj['vrf definition %s' % name]
+    subcfg = cfg['address-family ipv4']
+    subcfg = '\n'.join(subcfg.children)
+    matches = re.findall(r'route-target\s+import\s+(.+)', subcfg, re.M)
+    return matches
+
+
+def parse_export_ipv4(configobj, name):
+    cfg = configobj['vrf definition %s' % name]
+    subcfg = cfg['address-family ipv4']
+    subcfg = '\n'.join(subcfg.children)
+    matches = re.findall(r'route-target\s+export\s+(.+)', subcfg, re.M)
+    return matches
+
+
+def parse_both_ipv4(configobj, name):
+    matches = list()
+    export_match = parse_export_ipv4(configobj, name)
+    import_match = parse_import_ipv4(configobj, name)
+    matches.extend(export_match)
+    matches.extend(import_match)
+    return matches
+
+
+def parse_import_ipv6(configobj, name):
+    cfg = configobj['vrf definition %s' % name]
+    subcfg = cfg['address-family ipv6']
+    subcfg = '\n'.join(subcfg.children)
+    matches = re.findall(r'route-target\s+import\s+(.+)', subcfg, re.M)
+    return matches
+
+
+def parse_export_ipv6(configobj, name):
+    cfg = configobj['vrf definition %s' % name]
+    subcfg = cfg['address-family ipv6']
+    subcfg = '\n'.join(subcfg.children)
+    matches = re.findall(r'route-target\s+export\s+(.+)', subcfg, re.M)
+    return matches
+
+
+def parse_both_ipv6(configobj, name):
+    matches = list()
+    export_match = parse_export_ipv6(configobj, name)
+    import_match = parse_import_ipv6(configobj, name)
+    matches.extend(export_match)
+    matches.extend(import_match)
+    return matches
+
+
 def map_config_to_obj(module):
     config = get_config(module)
     configobj = NetworkConfig(indent=1, contents=config)
@@ -341,7 +448,6 @@ def map_config_to_obj(module):
         return list()
 
     instances = list()
-
     for item in set(match):
         obj = {
             'name': item,
@@ -351,7 +457,13 @@ def map_config_to_obj(module):
             'interfaces': parse_interfaces(configobj, item),
             'route_import': parse_import(configobj, item),
             'route_export': parse_export(configobj, item),
-            'route_both': parse_both(configobj, item)
+            'route_both': parse_both(configobj, item),
+            'route_import_ipv4': parse_import_ipv4(configobj, item),
+            'route_export_ipv4': parse_export_ipv4(configobj, item),
+            'route_both_ipv4': parse_both_ipv4(configobj, item),
+            'route_import_ipv6': parse_import_ipv6(configobj, item),
+            'route_export_ipv6': parse_export_ipv6(configobj, item),
+            'route_both_ipv6': parse_both_ipv6(configobj, item),
         }
         instances.append(obj)
     return instances
@@ -406,6 +518,12 @@ def map_params_to_obj(module):
         item['route_import'] = get_value('route_import')
         item['route_export'] = get_value('route_export')
         item['route_both'] = get_value('route_both')
+        item['route_import_ipv4'] = get_value('route_import_ipv4')
+        item['route_export_ipv4'] = get_value('route_export_ipv4')
+        item['route_both_ipv4'] = get_value('route_both_ipv4')
+        item['route_import_ipv6'] = get_value('route_import_ipv6')
+        item['route_export_ipv6'] = get_value('route_export_ipv6')
+        item['route_both_ipv6'] = get_value('route_both_ipv6')
         item['associated_interfaces'] = get_value('associated_interfaces')
         objects.append(item)
 
@@ -469,6 +587,13 @@ def main():
         route_export=dict(type='list'),
         route_import=dict(type='list'),
         route_both=dict(type='list'),
+        route_export_ipv4=dict(type='list'),
+        route_import_ipv4=dict(type='list'),
+        route_both_ipv4=dict(type='list'),
+        route_export_ipv6=dict(type='list'),
+        route_import_ipv6=dict(type='list'),
+        route_both_ipv6=dict(type='list'),
+
 
         interfaces=dict(type='list'),
         associated_interfaces=dict(type='list'),
@@ -480,7 +605,9 @@ def main():
 
     argument_spec.update(ios_argument_spec)
 
-    mutually_exclusive = [('name', 'vrfs'), ('route_import', 'route_both'), ('route_export', 'route_both')]
+    mutually_exclusive = [('name', 'vrfs'), ('route_import', 'route_both'), ('route_export', 'route_both'),
+                          ('route_import_ipv4', 'route_both_ipv4'),('route_export_ipv4', 'route_both_ipv4'),
+                          ('route_import_ipv6', 'route_both_ipv6'), ('route_export_ipv6', 'route_both_ipv6')]
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
@@ -493,7 +620,6 @@ def main():
 
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
-
     commands = map_obj_to_commands(update_objects(want, have), module)
 
     if module.params['purge']:
