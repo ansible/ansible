@@ -14,7 +14,7 @@
       validate_certs: no
     register: check_controller_started
     until: check_controller_started is success
-    retries: 20
+    retries: 5
     delay: 1
     ignore_errors: yes
   - name: Wait until Pebble is up and running
@@ -23,7 +23,7 @@
       validate_certs: no
     register: check_pebble_started
     until: check_pebble_started is success
-    retries: 20
+    retries: 5
     delay: 1
     ignore_errors: yes
 
