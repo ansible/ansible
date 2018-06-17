@@ -42,9 +42,19 @@ def tower_auth_config(module):
     '''tower_auth_config attempts to load the tower-cli.cfg file
     specified from the `tower_config_file` parameter. If found,
     if returns the contents of the file as a dictionary, else
-    it will attempt to fetch values from the module pararms and
-    only pass those values that have been set.
+    it will attempt to pop the values from the module parameters.
+    It will only pass the values that might have been set and will clean
+    the dictionary from the tower keys created in tower_argument_spec,
+    so that when this function completes, the module.params dictionary will
+    not contain any keys related to the tower authentication.
     '''
+    tower_auth_args = [
+        'tower_host',
+        'tower_username',
+        'tower_password',
+        'tower_verify_ssl',
+        'tower_config_file',
+    ]
     config_file = module.params.pop('tower_config_file', None)
     if config_file:
         config_file = os.path.expanduser(config_file)
@@ -52,23 +62,17 @@ def tower_auth_config(module):
             module.fail_json(msg='file not found: %s' % config_file)
         if os.path.isdir(config_file):
             module.fail_json(msg='directory can not be used as config file: %s' % config_file)
-
+        for arg in tower_auth_args:
+            module.params.pop(arg, None)
         with open(config_file, 'rb') as f:
             return parser.string_to_dict(f.read())
     else:
         auth_config = {}
-        host = module.params.pop('tower_host', None)
-        if host:
-            auth_config['host'] = host
-        username = module.params.pop('tower_username', None)
-        if username:
-            auth_config['username'] = username
-        password = module.params.pop('tower_password', None)
-        if password:
-            auth_config['password'] = password
-        verify_ssl = module.params.pop('tower_verify_ssl', None)
-        if verify_ssl is not None:
-            auth_config['verify_ssl'] = verify_ssl
+        for arg in tower_auth_args:
+            argk = arg.replace('tower_', '', 1)
+            argv = module.params.pop(arg, None)
+            if argv is not None:
+                auth_config[argk] = argv
         return auth_config
 
 
@@ -83,6 +87,11 @@ def tower_check_mode(module):
 
 
 def tower_argument_spec():
+    '''tower_argument_spec provides the set of keys that might be used
+    for the authentication.
+    tower_auth_config should be used to fulfill those keys and to remove
+    the unsused ones.
+    '''
     return dict(
         tower_host=dict(),
         tower_username=dict(),
