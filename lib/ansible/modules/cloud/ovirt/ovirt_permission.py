@@ -70,7 +70,7 @@ options:
     namespace:
         description:
             - Namespace of the authorization provider, where user/group resides.
-     quota_name:
+    quota_name:
         description:
             - Name of the quota which you want to work with.
 extends_documentation_fragment: ovirt
