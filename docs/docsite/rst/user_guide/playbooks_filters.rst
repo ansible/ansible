@@ -910,6 +910,9 @@ To replace text in a string with regex, use the "regex_replace" filter::
 
     # convert "localhost:80" to "localhost"
     {{ 'localhost:80' | regex_replace(':80') }}
+    
+    # add "https://" prefix to each item in a list
+    {{ hosts | map('regex_replace', '^(.*)$', 'https://\\1') | list }}
 
 .. note:: Prior to ansible 2.0, if "regex_replace" filter was used with variables inside YAML arguments (as opposed to simpler 'key=value' arguments),
    then you needed to escape backreferences (e.g. ``\\1``) with 4 backslashes (``\\\\``) instead of 2 (``\\``).
