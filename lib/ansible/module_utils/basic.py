@@ -2513,7 +2513,7 @@ class AnsibleModule(object):
         lock_file = os.path.join(tmpdir, 'ansible-{0}.lock'.format(os.path.basename(filename)))
         l_wait = 0.2
         if lock_timeout > 0:
-            e_secs=0
+            e_secs = 0
             while e_secs < lock_timeout:
                 try:
                     self.lockfd = open(lock_file, 'w')
