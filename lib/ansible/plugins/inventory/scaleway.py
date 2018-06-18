@@ -137,7 +137,6 @@ class InventoryModule(BaseInventoryPlugin):
         for server_info in all_servers:
 
             groups = self.match_groups(server_info)
-            print(groups)
             server_id = server_info["id"]
 
             for group in groups:
