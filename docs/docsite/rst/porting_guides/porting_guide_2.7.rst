@@ -17,7 +17,14 @@ This document is part of a collection on porting. The complete list of porting g
 Playbook
 ========
 
-No notable changes.
+Role Precedence Fix during Role Loading
+---------------------------------------
+
+Ansible 2.7 makes a small change to variable precedence when loading roles, resolving a bug, ensuring that role loading matches :ref:`variable precedence expectations <ansible_variable_precedence>`.
+
+Before Ansible 2.7, when loading a role, the variables defined in the role's ``vars/main.yml`` and ``defaults/main.yml`` were not available when parsing the role's ``tasks/main.yml`` file. This prevented the role from utilizing these variables when being parsed. The problem manifested when ``import_tasks`` or ``import_role`` was used with a variable defined in the role's vars or defaults.
+
+In Ansible 2.7, role ``vars`` and ``defaults`` are now parsed before ``tasks/main.yml``. This can cause a change in behavior if the same variable is defined at the play level and the role level with different values, and leveraged in ``import_tasks`` or ``import_role`` to define the role or file to import.
 
 Deprecated
 ==========
