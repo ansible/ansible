@@ -40,6 +40,11 @@ options:
     description:
      - Scaleway region to use (for example par1).
     required: true
+    choices:
+      - ams1
+      - EMEA-NL-EVS
+      - par1
+      - EMEA-FR-PAR1 
   name:
     description:
      - Name used to identify the volume.
