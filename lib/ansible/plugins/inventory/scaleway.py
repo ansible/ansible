@@ -52,6 +52,7 @@ from ansible.errors import AnsibleError
 from ansible.plugins.inventory import BaseInventoryPlugin
 from ansible.module_utils.scaleway import SCALEWAY_LOCATION
 from ansible.module_utils.urls import open_url
+from ansible.module_utils._text import to_native
 
 
 def _fetch_information(token, url):
@@ -59,8 +60,8 @@ def _fetch_information(token, url):
         response = open_url(url,
                             headers={'X-Auth-Token': token,
                                      'Content-type': 'application/json'})
-    except Exception:
-        raise AnsibleError("Error while fetching %s" % url)
+    except Exception as e:
+        raise AnsibleError("Error while fetching %s: %s" % (url, to_native(e)))
 
     try:
         raw_json = json.loads(response.read())
