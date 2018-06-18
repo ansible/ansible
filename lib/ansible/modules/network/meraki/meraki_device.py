@@ -166,7 +166,6 @@ EXAMPLES = r'''
     lat: 41.948038
     lng: -87.65568
     tags: recently-added
-    state: present
   delegate_to: localhost
 
 - name: Claim a deivce into a network.
