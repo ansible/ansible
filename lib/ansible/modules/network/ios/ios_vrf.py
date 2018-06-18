@@ -138,11 +138,43 @@ EXAMPLES = """
       - 1:100
       - 3:100
 
+- name: Creates a list of import RTs in address-family configuration submode for the VRF with the same parameters
+  ios_vrf:
+    name: test_import_ipv4
+    rd: 1:100
+    route_import_ipv4:
+      - 1:100
+      - 3:100
+
+- name: Creates a list of import RTs in address-family configuration submode for the VRF with the same parameters
+  ios_vrf:
+    name: test_import_ipv6
+    rd: 1:100
+    route_import_ipv6:
+      - 1:100
+      - 3:100
+
 - name: Creates a list of export RTs for the VRF with the same parameters
   ios_vrf:
     name: test_export
     rd: 1:100
     route_export:
+      - 1:100
+      - 3:100
+      
+- name: Creates a list of export RTs in address-family configuration submode for the VRF with the same parameters
+  ios_vrf:
+    name: test_export_ipv4
+    rd: 1:100
+    route_export_ipv4:
+      - 1:100
+      - 3:100
+
+- name: Creates a list of export RTs in address-family configuration submode for the VRF with the same parameters
+  ios_vrf:
+    name: test_export_ipv6
+    rd: 1:100
+    route_export_ipv6:
       - 1:100
       - 3:100
 
@@ -153,6 +185,23 @@ EXAMPLES = """
     route_both:
       - 1:100
       - 3:100
+      
+- name: Creates a list of import and export route targets in address-family configuration submode for the VRF with the same parameters
+  ios_vrf:
+    name: test_both_ipv4
+    rd: 1:100
+    route_both_ipv4:
+      - 1:100
+      - 3:100
+
+- name: Creates a list of import and export route targets in address-family configuration submode for the VRF with the same parameters
+  ios_vrf:
+    name: test_both_ipv6
+    rd: 1:100
+    route_both_ipv6:
+      - 1:100
+      - 3:100
+    
 """
 
 RETURN = """
@@ -261,7 +310,7 @@ def map_obj_to_commands(updates, module):
                 add_command_to_vrf(want['name'], cmd, commands)
 
         if needs_update(want, have, 'route_both'):
-            for route in want['route_both']:
+            for route in list(set(want['route_both'])):
                 cmd = 'route-target both %s' % route
                 add_command_to_vrf(want['name'], cmd, commands)
 
@@ -286,7 +335,7 @@ def map_obj_to_commands(updates, module):
         if needs_update(want, have, 'route_both_ipv4'):
                 cmd = 'address-family ipv4'
                 add_command_to_vrf(want['name'], cmd, commands)
-                for route in want['route_both_ipv4']:
+                for route in list(set(want['route_both_ipv4'])):
                     cmd = 'route-target both %s' % route
                     add_command_to_vrf(want['name'], cmd, commands)
                 cmd = 'exit-address-family'
@@ -313,7 +362,7 @@ def map_obj_to_commands(updates, module):
         if needs_update(want, have, 'route_both_ipv6'):
                 cmd = 'address-family ipv6'
                 add_command_to_vrf(want['name'], cmd, commands)
-                for route in want['route_both_ipv6']:
+                for route in list(set(want['route_both_ipv6'])):
                     cmd = 'route-target both %s' % route
                     add_command_to_vrf(want['name'], cmd, commands)
                 cmd = 'exit-address-family'
@@ -519,19 +568,19 @@ def map_params_to_obj(module):
         item['route_export'] = get_value('route_export')
         item['route_both'] = get_value('route_both')
         if item['route_both']:
-            # The parsing will have import and export aggregated
+            # The parsing will have the import and the export aggregated
             item['route_both'].extend(get_value('route_both'))
         item['route_import_ipv4'] = get_value('route_import_ipv4')
         item['route_export_ipv4'] = get_value('route_export_ipv4')
         item['route_both_ipv4'] = get_value('route_both_ipv4')
         if item['route_both_ipv4']:
-            # The parsing will have import and export aggregated
+            # The parsing will have the import and the export aggregated
             item['route_both_ipv4'].extend(get_value('route_both_ipv4'))
         item['route_import_ipv6'] = get_value('route_import_ipv6')
         item['route_export_ipv6'] = get_value('route_export_ipv6')
         item['route_both_ipv6'] = get_value('route_both_ipv6')
         if item['route_both_ipv6']:
-            # The parsing will have import and export aggregated
+            # The parsing will have the import and the export aggregated
             item['route_both_ipv6'].extend(get_value('route_both_ipv6'))
         item['associated_interfaces'] = get_value('associated_interfaces')
         objects.append(item)
@@ -548,13 +597,16 @@ def update_objects(want, have):
         else:
             for key, value in iteritems(entry):
                 if value:
-                    if isinstance(value, list):
-                        if sorted(value) != sorted(item[key]):
+                    try:
+                        if isinstance(value, list):
+                            if sorted(value) != sorted(item[key]):
+                                if (entry, item) not in updates:
+                                    updates.append((entry, item))
+                        elif value != item[key]:
                             if (entry, item) not in updates:
                                 updates.append((entry, item))
-                    elif value != item[key]:
-                        if (entry, item) not in updates:
-                            updates.append((entry, item))
+                    except TypeError:
+                        pass
     return updates
 
 
