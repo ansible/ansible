@@ -269,7 +269,7 @@ def main():
     """ main entry point for module execution
     """
     element_spec = dict(
-        vlan_id=dict(type='int', required=True),
+        vlan_id=dict(type='int'),
         name=dict(),
         address=dict(),
         interfaces=dict(type='list'),
@@ -293,7 +293,7 @@ def main():
     argument_spec.update(vyos_argument_spec)
 
     required_one_of = [['vlan_id', 'aggregate'],
-                       ['interfaces', 'associated_interfaces']]
+                       ['aggregate', 'interfaces', 'associated_interfaces']]
 
     mutually_exclusive = [['vlan_id', 'aggregate']]
     module = AnsibleModule(argument_spec=argument_spec,
