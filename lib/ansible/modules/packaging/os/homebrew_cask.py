@@ -74,6 +74,14 @@ options:
         type: bool
         default: 'no'
         version_added: "2.5.0"
+    greedy:
+        description:
+            - upgrade casks that auto update; passes --greedy to brew cask
+              outdated when checking if an installed cask has a newer version
+              available
+        type: bool
+        default: 'no'
+        version_added: "2.7.0"
 '''
 EXAMPLES = '''
 - homebrew_cask:
@@ -111,6 +119,11 @@ EXAMPLES = '''
     name: alfred
     state: upgraded
     install_options: force
+
+- homebrew_cask:
+    name: 1password
+    state: upgraded
+    greedy: True
 
 '''
 
@@ -335,7 +348,8 @@ class HomebrewCask(object):
 
     def __init__(self, module, path=path, casks=None, state=None,
                  update_homebrew=False, install_options=None,
-                 accept_external_apps=False, upgrade_all=False):
+                 accept_external_apps=False, upgrade_all=False,
+                 greedy=False):
         if not install_options:
             install_options = list()
         self._setup_status_vars()
@@ -343,7 +357,8 @@ class HomebrewCask(object):
                                   state=state, update_homebrew=update_homebrew,
                                   install_options=install_options,
                                   accept_external_apps=accept_external_apps,
-                                  upgrade_all=upgrade_all, )
+                                  upgrade_all=upgrade_all,
+                                  greedy=greedy, )
 
         self._prep()
 
@@ -406,12 +421,17 @@ class HomebrewCask(object):
         if not self.valid_cask(self.current_cask):
             return False
 
-        rc, out, err = self.module.run_command([
-            self.brew_path,
-            'cask',
-            'outdated',
-            self.current_cask,
-        ])
+        cask_is_outdated_command = (
+            [
+                self.brew_path,
+                'cask',
+                'outdated',
+            ]
+            + (['--greedy'] if self.greedy else [])
+            + [self.current_cask]
+        )
+
+        rc, out, err = self.module.run_command(cask_is_outdated_command)
 
         return out != ""
 
@@ -697,6 +717,10 @@ def main():
                 aliases=["upgrade"],
                 type='bool',
             ),
+            greedy=dict(
+                default=False,
+                type='bool',
+            ),
         ),
         supports_check_mode=True,
     )
@@ -724,6 +748,7 @@ def main():
 
     update_homebrew = p['update_homebrew']
     upgrade_all = p['upgrade_all']
+    greedy = p['greedy']
     p['install_options'] = p['install_options'] or []
     install_options = ['--{0}'.format(install_option)
                        for install_option in p['install_options']]
@@ -735,6 +760,7 @@ def main():
                              install_options=install_options,
                              accept_external_apps=accept_external_apps,
                              upgrade_all=upgrade_all,
+                             greedy=greedy,
                              )
     (failed, changed, message) = brew_cask.run()
     if failed:
