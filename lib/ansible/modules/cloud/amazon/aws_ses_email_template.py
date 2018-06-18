@@ -14,7 +14,7 @@ short_description: Manage an AWS SES email template
 description:
     - Manage an AWS SES email template. See
       U(https://aws.amazon.com/blogs/messaging-and-targeting/introducing-email-templates-and-bulk-sending/) for details.
-version_added: "2.6"
+version_added: "2.7"
 requirements: [ boto3 ]
 author: "Rob White (@wimnat)"
 options:
@@ -45,7 +45,6 @@ extends_documentation_fragment:
 notes:
   - Amazon SES email templates use a jinja syntax for templating. Be careful to ensure strings are
     properly escaped.
-    
 '''
 
 EXAMPLES = '''
@@ -128,7 +127,7 @@ def _compare_email_template_params(user_params, current_params):
 
     # boto3 doesn't return some keys if the value is empty
     # To counter this, add the key if it's missing with a blank value
-    
+
     user_params = user_params['Template']
 
     if 'TextPart' not in current_params:
