@@ -84,8 +84,6 @@ class InventoryModule(YAMLInventoryModule):
             raise AnsibleParserError("Invalid filename: '%s'" % to_native(file_name))
 
         b_file_name = to_bytes(self.loader.path_dwim(file_name))
-        # This is what we really want but have to fix unittests to make it pass
-        # if not os.path.exists(b_file_name) or not os.path.isfile(b_file_name):
         if not self.loader.path_exists(b_file_name):
             raise AnsibleFileNotFound("Unable to retrieve file contents", file_name=file_name)
 
