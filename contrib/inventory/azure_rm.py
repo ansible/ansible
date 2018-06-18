@@ -24,7 +24,7 @@ Azure External Inventory Script
 ===============================
 Generates dynamic inventory by making API requests to the Azure Resource
 Manager using the Azure Python SDK. For instruction on installing the
-Azure Python SDK see http://azure-sdk-for-python.readthedocs.org/
+Azure Python SDK see https://azure-sdk-for-python.readthedocs.io/
 
 Authentication
 --------------

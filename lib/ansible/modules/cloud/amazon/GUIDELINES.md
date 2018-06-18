@@ -214,7 +214,7 @@ are a number of possibilities for handling it.
 * Use fail_json() to report the failure without using `ansible.module_utils.aws.core`
 * Do something custom in the case where you know how to handle the exception
 
-For more information on botocore exception handling see [the botocore error documentation](http://botocore.readthedocs.org/en/latest/client_upgrades.html#error-handling).
+For more information on botocore exception handling see [the botocore error documentation](https://botocore.readthedocs.io/en/latest/client_upgrades.html#error-handling).
 
 ### Using is_boto3_error_code
 

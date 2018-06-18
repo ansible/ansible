@@ -13,7 +13,7 @@ DOCUMENTATION = """
         Values can be easily set in the kv store with simple rest commands
       - C(curl -X PUT -d 'some-value' http://localhost:8500/v1/kv/ansible/somedata)
     requirements:
-      - 'python-consul python library U(http://python-consul.readthedocs.org/en/latest/#installation)'
+      - 'python-consul python library U(https://python-consul.readthedocs.io/en/latest/#installation)'
     options:
       _raw:
         description: List of key(s) to retrieve.
@@ -84,7 +84,7 @@ class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
 
         if not HAS_CONSUL:
-            raise AnsibleError('python-consul is required for consul_kv lookup. see http://python-consul.readthedocs.org/en/latest/#installation')
+            raise AnsibleError('python-consul is required for consul_kv lookup. see https://python-consul.readthedocs.io/en/latest/#installation')
 
         values = []
         try:

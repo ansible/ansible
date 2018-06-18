@@ -233,7 +233,7 @@ def get_consul_api(module):
 def test_dependencies(module):
     if not python_consul_installed:
         module.fail_json(msg="python-consul required for this module. "
-                             "see http://python-consul.readthedocs.org/en/latest/#installation")
+                             "see https://python-consul.readthedocs.io/en/latest/#installation")
 
 
 def main():

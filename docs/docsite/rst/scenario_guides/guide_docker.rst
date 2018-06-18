@@ -42,7 +42,7 @@ There's more planned. See the latest ideas and thinking at the `Ansible proposal
 Requirements
 ------------
 
-Using the docker modules requires having `docker-py <https://docker-py.readthedocs.org/en/stable/>`_
+Using the docker modules requires having `docker-py <https://docker-py.readthedocs.io/en/stable/>`_
 installed on the host running Ansible. You will need to have >= 1.7.0 installed.
 
 .. code-block:: bash
