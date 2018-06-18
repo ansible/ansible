@@ -194,6 +194,12 @@ options:
         type: bool
         default: 'no'
         version_added: "2.4"
+    backup:
+        description:
+            - Whether to backup the shadow file if a change is made.
+        type: bool
+        default: 'no'
+        version_added: "2.7"
 '''
 
 EXAMPLES = '''
@@ -414,6 +420,7 @@ class User(object):
         self.password_lock = module.params['password_lock']
         self.groups = None
         self.local = module.params['local']
+        self.backup = module.params['backup']
 
         if module.params['groups'] is not None:
             self.groups = ','.join(module.params['groups'])
@@ -437,6 +444,10 @@ class User(object):
             # cast all args to strings ansible-modules-core/issues/4397
             cmd = [str(x) for x in cmd]
             return self.module.run_command(cmd, use_unsafe_shell=use_unsafe_shell, data=data)
+
+    def backup_shadow(self):
+        if self.backup and not self.module.check_mode:
+            return self.module.backup_local(self.SHADOWFILE)
 
     def remove_user_userdel(self):
         if self.local:
@@ -2353,6 +2364,7 @@ def main():
             state=dict(type='str', default='present', choices=['absent', 'present']),
             name=dict(type='str', required=True, aliases=['user']),
             uid=dict(type='str'),
+            backup=dict(type='bool', default=False),
             non_unique=dict(type='bool', default=False),
             group=dict(type='str'),
             groups=dict(type='list'),
@@ -2391,6 +2403,7 @@ def main():
     )
 
     user = User(module)
+    shadow_file_backup = user.backup_shadow()
 
     module.debug('User instantiated - platform %s' % user.platform)
     if user.distribution:
@@ -2402,6 +2415,7 @@ def main():
     result = {}
     result['name'] = user.name
     result['state'] = user.state
+    result['backup'] = user.backup
     if user.state == 'absent':
         if user.user_exists():
             if module.check_mode:
@@ -2433,6 +2447,7 @@ def main():
 
     if rc is None:
         result['changed'] = False
+        os.remove(shadow_file_backup)
     else:
         result['changed'] = True
     if out:
