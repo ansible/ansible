@@ -286,6 +286,13 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
         # use ansible core library to parse out doc metadata YAML and plaintext examples
         doc, examples, returndocs, metadata = plugin_docs.get_docstring(module_path, fragment_loader, verbose=verbose)
 
+        if 'options' in doc and doc['options'] is None:
+            display.error("*** ERROR: DOCUMENTATION.options must be a dictionary/hash when used. ***")
+            pos = getattr(doc, "ansible_pos", None)
+            if pos is not None:
+                display.error("Module position: %s, %d, %d" % doc.ansible_pos)
+            doc['options'] = dict()
+
         for key, opt in doc.get('options', {}).items():
             doc['options'][key] = normalize_options(opt)
 
