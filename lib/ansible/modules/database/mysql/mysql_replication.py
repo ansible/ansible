@@ -84,6 +84,11 @@ options:
     master_ssl_cipher:
         description:
             - same as mysql variable
+    master_ssl_verify_identity:
+        description:
+            - activate host name identity verification
+        default: 0
+        choices: [ 0, 1 ]
     master_auto_position:
         description:
             - does the host uses GTID based replication or not
@@ -209,6 +214,7 @@ def main():
             master_ssl_cert=dict(default=None),
             master_ssl_key=dict(default=None),
             master_ssl_cipher=dict(default=None),
+            master_ssl_verify_identity=dict(default=False, type='bool'),
             connect_timeout=dict(default=30, type='int'),
             config_file=dict(default="~/.my.cnf", type='path'),
             ssl_cert=dict(default=None),
@@ -232,6 +238,7 @@ def main():
     master_ssl_cert = module.params["master_ssl_cert"]
     master_ssl_key = module.params["master_ssl_key"]
     master_ssl_cipher = module.params["master_ssl_cipher"]
+    master_ssl_verify_identity = module.params["master_ssl_verify_identity"]
     master_auto_position = module.params["master_auto_position"]
     ssl_cert = module.params["ssl_cert"]
     ssl_key = module.params["ssl_key"]
@@ -321,6 +328,10 @@ def main():
         if master_ssl_cipher:
             chm.append("MASTER_SSL_CIPHER=%(master_ssl_cipher)s")
             chm_params['master_ssl_cipher'] = master_ssl_cipher
+        if master_ssl_verify_identity:
+            chm.append("MASTER_SSL_VERIFY_SERVER_CERT=1")
+        else:
+            chm.append("MASTER_SSL_VERIFY_SERVER_CERT=0")
         if master_auto_position:
             chm.append("MASTER_AUTO_POSITION = 1")
         try:
