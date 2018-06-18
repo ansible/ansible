@@ -161,6 +161,12 @@ options:
               all git servers support git archive.
         version_added: "2.4"
 
+    separate_git_dir:
+        description:
+            - The path to place the cloned repository. If specified, Git repository 
+              can be separated from working tree.
+        version_added: "2.7"
+
 requirements:
     - git>=1.7.1 (the command line tool)
 
@@ -404,7 +410,7 @@ def get_submodule_versions(git_path, module, dest, version='HEAD'):
 
 
 def clone(git_path, module, repo, dest, remote, depth, version, bare,
-          reference, refspec, verify_commit):
+          reference, refspec, verify_commit, separate_git_dir):
     ''' makes a new git repo if it does not already exist '''
 
     dest_dirname = os.path.dirname(dest)
@@ -418,6 +424,10 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
         cmd.append('--bare')
     else:
         cmd.extend(['--origin', remote])
+    if separate_git_dir:
+        separate_git_dir = os.path.abspath(separate_git_dir)
+        cmd.extend(['--separate-git-dir=%s' % separate_git_dir])
+        module.warn(str(cmd))
     if depth:
         if version == 'HEAD' or refspec:
             cmd.extend(['--depth', str(depth)])
@@ -972,6 +982,7 @@ def main():
             track_submodules=dict(default='no', type='bool'),
             umask=dict(default=None, type='raw'),
             archive=dict(type='path'),
+            separate_git_dir=dict(type='path'),
         ),
         supports_check_mode=True
     )
@@ -993,6 +1004,7 @@ def main():
     ssh_opts = module.params['ssh_opts']
     umask = module.params['umask']
     archive = module.params['archive']
+    separate_git_dir = module.params['separate_git_dir']
 
     result = dict(changed=False, warnings=list())
 
@@ -1073,7 +1085,7 @@ def main():
                     result['diff'] = diff
             module.exit_json(**result)
         # there's no git config, so clone
-        clone(git_path, module, repo, dest, remote, depth, version, bare, reference, refspec, verify_commit)
+        clone(git_path, module, repo, dest, remote, depth, version, bare, reference, refspec, verify_commit, separate_git_dir)
     elif not update:
         # Just return having found a repo already in the dest path
         # this does no checking that the repo is the actual repo
