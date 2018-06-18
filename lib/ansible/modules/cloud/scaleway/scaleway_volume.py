@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 ---
 module: scaleway_volume
 short_description: Scaleway volumes management module
-version_added: "2.6"
+version_added: "2.7"
 author: Henryk Konsek (@hekonsek)
 description:
     - This module manages volumes on Scaleway account
