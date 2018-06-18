@@ -129,7 +129,7 @@ EXAMPLES = '''
     accounts: [1234567890, 2345678901]
     regions:
     - us-east-1
-    
+
 - name: on subsequent calls, templates are optional but parameters and tags can be altered
   cloudformation_stack_set:
     name: my_stack
@@ -142,7 +142,7 @@ EXAMPLES = '''
     accounts: [1234567890, 2345678901]
     regions:
     - us-east-1
-    
+
 - name: The same type of update, but wait for the update to complete in all stacks
   cloudformation_stack_set:
     name: my_stack
@@ -164,15 +164,15 @@ operations_log:
   description: Most recent events in Cloudformation's event log. This may be from a previous run in some cases.
   returned: always
   sample:
-  - action: CREATE                                                                                      
-    creation_timestamp: '2018-06-18T17:40:46.372000+00:00'                                              
-    end_timestamp: '2018-06-18T17:41:24.560000+00:00'                                                   
-    operation_id: Ansible-StackInstance-Create-0ff2af5b-251d-4fdb-8b89-1ee444eba8b8                     
-    status: FAILED                                                                                      
-    stack_instances:                                                                                      
-    - account: '1234567890'                                                                             
-      region: us-east-1                                                                                   
-      stack_set_id: TestStackPrime:19f3f684-aae9-4e67-ba36-e09f92cf5929                                   
+  - action: CREATE
+    creation_timestamp: '2018-06-18T17:40:46.372000+00:00'
+    end_timestamp: '2018-06-18T17:41:24.560000+00:00'
+    operation_id: Ansible-StackInstance-Create-0ff2af5b-251d-4fdb-8b89-1ee444eba8b8
+    status: FAILED
+    stack_instances:
+    - account: '1234567890'
+      region: us-east-1
+      stack_set_id: TestStackPrime:19f3f684-aae9-4e67-ba36-e09f92cf5929
       status: OUTDATED
       status_reason: Account 1234567890 should have 'AWSCloudFormationStackSetAdministrationRole' role with trust relationship to CloudFormation service.
 
@@ -181,40 +181,40 @@ operations:
   returned: always
   type: list
   sample:
-  - action: CREATE                                                                                      
-    administration_role_arn: arn:aws:iam::1234567890:role/AWSCloudFormationStackSetAdministrationRole 
-    creation_timestamp: '2018-06-18T17:40:46.372000+00:00'                                              
-    end_timestamp: '2018-06-18T17:41:24.560000+00:00'                                                   
-    execution_role_name: AWSCloudFormationStackSetExecutionRole                                         
-    operation_id: Ansible-StackInstance-Create-0ff2af5b-251d-4fdb-8b89-1ee444eba8b8                     
-    operation_preferences:                                                                              
-      region_order:                                                                                     
-      - us-east-1                                                                                       
-      - us-east-2                                                                                       
-    stack_set_id: TestStackPrime:19f3f684-aae9-4e67-ba36-e09f92cf5929                                   
+  - action: CREATE
+    administration_role_arn: arn:aws:iam::1234567890:role/AWSCloudFormationStackSetAdministrationRole
+    creation_timestamp: '2018-06-18T17:40:46.372000+00:00'
+    end_timestamp: '2018-06-18T17:41:24.560000+00:00'
+    execution_role_name: AWSCloudFormationStackSetExecutionRole
+    operation_id: Ansible-StackInstance-Create-0ff2af5b-251d-4fdb-8b89-1ee444eba8b8
+    operation_preferences:
+      region_order:
+      - us-east-1
+      - us-east-2
+    stack_set_id: TestStackPrime:19f3f684-aae9-4e67-ba36-e09f92cf5929
     status: FAILED
 stack_instances:
   description: CloudFormation stack instances that are members of this stack set. This will also include their region and account ID.
   returned: state == present
   type: list
-  sample: 
-    - account: '1234567890'                                                                             
-      region: us-east-1                                                                                   
-      stack_set_id: TestStackPrime:19f3f684-aae9-4e67-ba36-e09f92cf5929                                   
+  sample:
+    - account: '1234567890'
+      region: us-east-1
+      stack_set_id: TestStackPrime:19f3f684-aae9-4e67-ba36-e09f92cf5929
       status: OUTDATED
       status_reason: >
         Account 1234567890 should have 'AWSCloudFormationStackSetAdministrationRole' role with trust relationship to CloudFormation service.
     - account: '1234567890'
       region: us-east-2
-      stack_set_id: TestStackPrime:19f3f684-aae9-4e67-ba36-e09f92cf5929                                   
+      stack_set_id: TestStackPrime:19f3f684-aae9-4e67-ba36-e09f92cf5929
       status: OUTDATED
-      status_reason: Cancelled since failure tolerance has exceeded 
+      status_reason: Cancelled since failure tolerance has exceeded
 stack_set:
   type: dict
   description: Facts about the currently deployed stack set, its parameters, and its tags
   returned: state == present
   sample:
-    administration_role_arn: arn:aws:iam::1234567890:role/AWSCloudFormationStackSetAdministrationRole 
+    administration_role_arn: arn:aws:iam::1234567890:role/AWSCloudFormationStackSetAdministrationRole
     capabilities: []
     description: test stack PRIME
     execution_role_name: AWSCloudFormationStackSetExecutionRole
