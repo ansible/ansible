@@ -110,28 +110,28 @@ options:
     description:
       - Refresh ports tree using C(portsnap) before doing anything else.
     required: false
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: false
   cron:
     description:
       - Whether to use C(cron) or C(fetch) command of C(portsnap) when
         upgrading ports tree. Used with C(refresh_tree) is enabled.
     required: false
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: false
   include_deps:
     description:
       - When C(state) is C(latest) or C(reinstalled) and C(name) is given this
         option will also upgrade/reinstall dependencies of given port.
     required: false
-    default: "yes"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: true
   ignore_vulnerabilities:
     description:
       - Install port even if it has known vulnerabilities.
     required: false
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: false
   ports_dir:
     description:
       - Ports directory on target host
@@ -1025,22 +1025,22 @@ def main():
             refresh_tree=dict(
                 type='bool',
                 required=False,
-                default="no"
+                default=False
             ),
             cron=dict(
                 type='bool',
                 required=False,
-                default="no"
+                default=False
             ),
             include_deps=dict(
                 type='bool',
                 required=False,
-                default="yes"
+                default=True
             ),
             ignore_vulnerabilities=dict(
                 type='bool',
                 required=False,
-                default="no"
+                default=False
             ),
             ports_dir=dict(
                 type='str',
