@@ -181,7 +181,7 @@ EXAMPLES = """
     route_export:
       - 1:100
       - 3:100
-      
+
 - name: Creates a list of export RTs in address-family configuration submode for the VRF with the same parameters
   ios_vrf:
     name: test_export_ipv4
@@ -205,7 +205,7 @@ EXAMPLES = """
     route_both:
       - 1:100
       - 3:100
-      
+
 - name: Creates a list of import and export route targets in address-family configuration submode for the VRF with the same parameters
   ios_vrf:
     name: test_both_ipv4
@@ -221,7 +221,7 @@ EXAMPLES = """
     route_both_ipv6:
       - 1:100
       - 3:100
-    
+  
 """
 
 RETURN = """
@@ -699,7 +699,7 @@ def main():
     argument_spec.update(ios_argument_spec)
 
     mutually_exclusive = [('name', 'vrfs'), ('route_import', 'route_both'), ('route_export', 'route_both'),
-                          ('route_import_ipv4', 'route_both_ipv4'),('route_export_ipv4', 'route_both_ipv4'),
+                          ('route_import_ipv4', 'route_both_ipv4'), ('route_export_ipv4', 'route_both_ipv4'),
                           ('route_import_ipv6', 'route_both_ipv6'), ('route_export_ipv6', 'route_both_ipv6')]
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
