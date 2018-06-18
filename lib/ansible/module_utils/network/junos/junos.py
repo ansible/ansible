@@ -66,7 +66,7 @@ def tostring(element, encoding='UTF-8'):
     if HAS_LXML:
         return xml_to_string(element, encoding='unicode')
     else:
-        return to_text(xml_to_string(element, encoding))
+        return to_text(xml_to_string(element, encoding), encoding=encoding)
 
 
 def get_provider_argspec():
