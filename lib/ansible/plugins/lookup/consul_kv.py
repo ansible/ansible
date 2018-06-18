@@ -40,19 +40,19 @@ DOCUMENTATION = """
       scheme:
         default: http
         description: Whether to use http or https
-        version_added: '2.6'
+        version_added: '2.7'
       verify:
         default: True
         description: Whether to verify the ssl connection or not
         env:
           - name: ANSIBLE_CONSUL_CERT_VERIFY
-        version_added: '2.6'
+        version_added: '2.7'
       cert:
         default: None
         description: The client cert to verify the ssl connection
         env:
           - name: ANSIBLE_CONSUL_CERT
-        version_added: '2.6'
+        version_added: '2.7'
 """
 
 EXAMPLES = """
