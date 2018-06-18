@@ -177,6 +177,7 @@ def initialize(
         )
         return client
 
+
 def get_host(
     ipaconnection,
     host,
