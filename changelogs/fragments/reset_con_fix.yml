@@ -1,0 +1,2 @@
+bugfixes:
+    - uses correct conn info for reset_connection  https://github.com/ansible/ansible/issues/27520
