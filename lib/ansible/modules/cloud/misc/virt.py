@@ -25,6 +25,7 @@ options:
     description:
       - name of the guest VM being managed. Almost always required (see examples). When defining a new VM,
         name is taken from xml.
+        C(name) is an optional parameter from version 2.7 and onwards.
   state:
     description:
       - Note that there may be some lag for state requests like C(shutdown)
