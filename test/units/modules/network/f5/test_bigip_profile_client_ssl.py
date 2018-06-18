@@ -107,7 +107,7 @@ class TestManager(unittest.TestCase):
                     chain='bigip_ssl_cert1'
                 )
             ],
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
