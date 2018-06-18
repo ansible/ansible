@@ -31,10 +31,10 @@ DOCUMENTATION = """
 module: slxos_lldp
 version_added: "2.6"
 author: "Matthew Stone (@bigmstone)"
-short_description: Manage LLDP configuration on Extreme Networks SLXOS network devices.
+short_description: Manage LLDP configuration on Extreme Networks SLX-OS network devices.
 description:
   - This module provides declarative management of LLDP service
-    on Extreme SLXOS network devices.
+    on Extreme SLX-OS network devices.
 notes:
   - Tested against SLX-OS 17s.1.02
 options:
