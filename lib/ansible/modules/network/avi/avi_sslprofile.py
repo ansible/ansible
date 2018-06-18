@@ -90,6 +90,7 @@ options:
         description:
             - The amount of time before an ssl session expires.
             - Default value when not specified in API or module is interpreted by Avi Controller as 86400.
+            - Units(SEC).
     tags:
         description:
             - List of tag.

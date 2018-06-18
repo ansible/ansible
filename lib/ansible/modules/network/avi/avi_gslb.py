@@ -92,6 +92,7 @@ options:
             - Frequency with which group members communicate.
             - Allowed values are 1-3600.
             - Default value when not specified in API or module is interpreted by Avi Controller as 15.
+            - Units(SEC).
     sites:
         description:
             - Select avi site member belonging to this gslb.

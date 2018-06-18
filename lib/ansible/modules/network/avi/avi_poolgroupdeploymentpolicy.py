@@ -54,6 +54,7 @@ options:
             - Duration of evaluation period for automatic deployment.
             - Allowed values are 60-86400.
             - Default value when not specified in API or module is interpreted by Avi Controller as 300.
+            - Units(SEC).
     name:
         description:
             - The name of the pool group deployment policy.
@@ -71,6 +72,7 @@ options:
             - Target traffic ratio before pool is made production.
             - Allowed values are 1-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 100.
+            - Units(RATIO).
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.

@@ -126,6 +126,7 @@ options:
         description:
             - Mtu setting for the cloud.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1500.
+            - Units(BYTES).
     name:
         description:
             - Name of the object.

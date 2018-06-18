@@ -49,6 +49,7 @@ options:
             - Greater than this number and the client's request is considered frustrated.
             - Allowed values are 1-30000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 500.
+            - Units(MILLISECONDS).
     apdex_response_tolerated_factor:
         description:
             - Client tolerated response latency factor.
@@ -60,6 +61,7 @@ options:
             - Satisfactory client to avi round trip time(rtt).
             - Allowed values are 1-2000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 250.
+            - Units(MILLISECONDS).
     apdex_rtt_tolerated_factor:
         description:
             - Tolerated client to avi round trip time(rtt) factor.
@@ -74,6 +76,7 @@ options:
             - A pageload includes the time for dns lookup, download of all http objects, and page render time.
             - Allowed values are 1-30000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 5000.
+            - Units(MILLISECONDS).
     apdex_rum_tolerated_factor:
         description:
             - Virtual service threshold factor for tolerated page load time (plt) as multiple of apdex_rum_threshold.
@@ -86,6 +89,7 @@ options:
             - Greater than this number and the server response is considered frustrated.
             - Allowed values are 1-30000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 400.
+            - Units(MILLISECONDS).
     apdex_server_response_tolerated_factor:
         description:
             - Server tolerated response latency factor.
@@ -97,6 +101,7 @@ options:
             - Satisfactory client to avi round trip time(rtt).
             - Allowed values are 1-2000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 125.
+            - Units(MILLISECONDS).
     apdex_server_rtt_tolerated_factor:
         description:
             - Tolerated client to avi round trip time(rtt) factor.
@@ -116,41 +121,49 @@ options:
             - A connection between client and avi is considered lossy when more than this percentage of out of order packets are received.
             - Allowed values are 1-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 50.
+            - Units(PERCENT).
     conn_lossy_timeo_rexmt_threshold:
         description:
             - A connection between client and avi is considered lossy when more than this percentage of packets are retransmitted due to timeout.
             - Allowed values are 1-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 20.
+            - Units(PERCENT).
     conn_lossy_total_rexmt_threshold:
         description:
             - A connection between client and avi is considered lossy when more than this percentage of packets are retransmitted.
             - Allowed values are 1-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 50.
+            - Units(PERCENT).
     conn_lossy_zero_win_size_event_threshold:
         description:
             - A client connection is considered lossy when percentage of times a packet could not be trasmitted due to tcp zero window is above this threshold.
             - Allowed values are 0-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 2.
+            - Units(PERCENT).
     conn_server_lossy_ooo_threshold:
         description:
             - A connection between avi and server is considered lossy when more than this percentage of out of order packets are received.
             - Allowed values are 1-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 50.
+            - Units(PERCENT).
     conn_server_lossy_timeo_rexmt_threshold:
         description:
             - A connection between avi and server is considered lossy when more than this percentage of packets are retransmitted due to timeout.
             - Allowed values are 1-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 20.
+            - Units(PERCENT).
     conn_server_lossy_total_rexmt_threshold:
         description:
             - A connection between avi and server is considered lossy when more than this percentage of packets are retransmitted.
             - Allowed values are 1-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 50.
+            - Units(PERCENT).
     conn_server_lossy_zero_win_size_event_threshold:
         description:
             - A server connection is considered lossy when percentage of times a packet could not be trasmitted due to tcp zero window is above this threshold.
             - Allowed values are 0-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 2.
+            - Units(PERCENT).
     description:
         description:
             - User defined description for the object.
@@ -383,6 +396,7 @@ options:
             - It is applicable only when disable_ondemand_metrics is set to false.
             - Field introduced in 18.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1800.
+            - Units(SECONDS).
         version_added: "2.7"
     ranges:
         description:

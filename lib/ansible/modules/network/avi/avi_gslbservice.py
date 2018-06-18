@@ -135,6 +135,7 @@ options:
         description:
             - Ttl value (in seconds) for records served for this gslb service by the dns service.
             - Allowed values are 1-86400.
+            - Units(SEC).
     url:
         description:
             - Avi controller URL of the object.

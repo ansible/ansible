@@ -74,6 +74,7 @@ options:
             - The original event triggering the alert remains in the event's log.
             - Allowed values are 1-31536000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 86400.
+            - Units(SEC).
     name:
         description:
             - Name of the alert configuration.
@@ -127,6 +128,7 @@ options:
             - Only if the number of events is reached or exceeded within the time window will an alert be generated.
             - Allowed values are 1-31536000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 300.
+            - Units(SEC).
     source:
         description:
             - Signifies system events or the type of client logsused in this alert configuration.
@@ -148,6 +150,7 @@ options:
             - Alerts are suppressed (throttled) for this duration of time since the last alert was raised for this alert config.
             - Allowed values are 0-31536000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 600.
+            - Units(SEC).
     url:
         description:
             - Avi controller URL of the object.

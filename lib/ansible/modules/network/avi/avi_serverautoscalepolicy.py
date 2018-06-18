@@ -91,6 +91,7 @@ options:
         description:
             - Cooldown period during which no new scalein is triggered to allow previous scalein to successfully complete.
             - Default value when not specified in API or module is interpreted by Avi Controller as 300.
+            - Units(SEC).
     scaleout_alertconfig_refs:
         description:
             - Trigger scaleout when alerts due to any of these alert configurations are raised.
@@ -99,6 +100,7 @@ options:
         description:
             - Cooldown period during which no new scaleout is triggered to allow previous scaleout to successfully complete.
             - Default value when not specified in API or module is interpreted by Avi Controller as 300.
+            - Units(SEC).
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.

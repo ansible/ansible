@@ -85,6 +85,7 @@ options:
             - Allowed values are 1-5000.
             - Special values are 0 - 'automatic'.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
+            - Units(MILLISECONDS).
     cloud_config_cksum:
         description:
             - Checksum of cloud configuration for pool.
@@ -99,6 +100,7 @@ options:
             - Allowed values are 1-300.
             - Special values are 0 - 'immediate'.
             - Default value when not specified in API or module is interpreted by Avi Controller as 10.
+            - Units(MIN).
     created_by:
         description:
             - Creator name.
@@ -139,6 +141,7 @@ options:
             - Periodicity of feedback for fewest tasks server selection algorithm.
             - Allowed values are 1-300.
             - Default value when not specified in API or module is interpreted by Avi Controller as 10.
+            - Units(SEC).
     graceful_disable_timeout:
         description:
             - Used to gracefully disable a server.
@@ -146,6 +149,7 @@ options:
             - Allowed values are 1-7200.
             - Special values are 0 - 'immediate', -1 - 'infinite'.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1.
+            - Units(MIN).
     gslb_sp_enabled:
         description:
             - Indicates if the pool is a site-persistence pool.

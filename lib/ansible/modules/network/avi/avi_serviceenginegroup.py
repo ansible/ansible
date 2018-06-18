@@ -53,6 +53,7 @@ options:
             - Allowed values are 0-90.
             - Field deprecated in 18.1.2.
             - Field introduced in 18.1.1.
+            - Units(PERCENT).
         version_added: "2.7"
     advertise_backend_networks:
         description:
@@ -80,6 +81,7 @@ options:
             - Amount of se memory in gb until which shared memory is collected in core archive.
             - Field introduced in 17.1.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as 8.
+            - Units(GB).
     async_ssl:
         description:
             - Ssl handshakes will be handled by dedicated ssl threads.
@@ -113,6 +115,7 @@ options:
         description:
             - Frequency of rebalance, if 'auto rebalance' is enabled.
             - Default value when not specified in API or module is interpreted by Avi Controller as 300.
+            - Units(SEC).
     auto_redistribute_active_standby_load:
         description:
             - Redistribution of virtual services from the takeover se to the replacement se can cause momentary traffic loss.
@@ -132,6 +135,7 @@ options:
             - This will come at the expense of memory used for http in-memory cache.
             - Allowed values are 10-90.
             - Default value when not specified in API or module is interpreted by Avi Controller as 50.
+            - Units(PERCENT).
     cpu_reserve:
         description:
             - Boolean flag to set cpu_reserve.
@@ -183,7 +187,7 @@ options:
         description:
             - If set, disable the config memory check done in service engine.
             - Field introduced in 18.1.2.
-            - Default value when not specified in API or module is interpreted by Avi Controller as False.
+            - Default value when not specified in API or module is interpreted by Avi Controller as True.
         version_added: "2.7"
         type: bool
     disable_tso:
@@ -198,6 +202,7 @@ options:
         description:
             - Amount of disk space for each of the service engine virtual machines.
             - Default value when not specified in API or module is interpreted by Avi Controller as 10.
+            - Units(GB).
     distribute_load_active_standby:
         description:
             - Use both the active and standby service engines for virtual service placement in the legacy active standby ha mode.
@@ -252,6 +257,7 @@ options:
             - Extra config memory to support large geo db configuration.
             - Field introduced in 17.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
+            - Units(MB).
     floating_intf_ip:
         description:
             - If serviceenginegroup is configured for legacy 1+1 active standby ha mode, floating ip's will be advertised only by the active se in the pair.
@@ -288,6 +294,7 @@ options:
             - Allowed values are 0-100.
             - Field introduced in 18.1.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 8.
+            - Units(MB).
         version_added: "2.7"
     hm_on_standby:
         description:
@@ -325,6 +332,7 @@ options:
             - Ignore rtt samples if it is above threshold.
             - Field introduced in 17.1.6,17.2.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 5000.
+            - Units(MILLISECONDS).
         version_added: "2.5"
     ingress_access_data:
         description:
@@ -369,12 +377,14 @@ options:
             - Maximum disk capacity (in mb) to be allocated to an se.
             - This is exclusively used for debug and log data.
             - Default value when not specified in API or module is interpreted by Avi Controller as 10000.
+            - Units(MB).
     max_cpu_usage:
         description:
             - When cpu usage on an se exceeds this threshold, virtual services hosted on this se may be rebalanced to other ses to reduce load.
             - A new se may be created as part of this process.
             - Allowed values are 40-90.
             - Default value when not specified in API or module is interpreted by Avi Controller as 80.
+            - Units(PERCENT).
     max_public_ips_per_lb:
         description:
             - Applicable to azure platform only.
@@ -416,6 +426,7 @@ options:
             - Allowed values are 0-100.
             - Field introduced in 18.1.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 15.
+            - Units(PERCENT).
         version_added: "2.7"
     memory_per_se:
         description:
@@ -434,6 +445,7 @@ options:
             - After consolidation, unused service engines may then be eligible for deletion.
             - Allowed values are 20-60.
             - Default value when not specified in API or module is interpreted by Avi Controller as 30.
+            - Units(PERCENT).
     min_scaleout_per_vs:
         description:
             - Minimum number of active service engines for the virtual service.
@@ -445,6 +457,7 @@ options:
             - Allowed values are 0-100.
             - Field introduced in 18.1.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 20.
+            - Units(PERCENT).
         version_added: "2.7"
     minimum_required_config_memory:
         description:
@@ -452,6 +465,7 @@ options:
             - Allowed values are 0-90.
             - Field deprecated in 18.1.2.
             - Field introduced in 18.1.1.
+            - Units(PERCENT).
         version_added: "2.7"
     n_log_streaming_threads:
         description:
@@ -471,6 +485,7 @@ options:
             - Set it to zero (0) to disable throttling.
             - Field introduced in 17.1.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as 100.
+            - Units(PER_SECOND).
     num_flow_cores_sum_changes_to_ignore:
         description:
             - Number of changes in num flow cores sum to ignore.
@@ -491,6 +506,7 @@ options:
         description:
             - Amount of extra memory to be reserved for use by the operating system on a service engine.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
+            - Units(MB).
     per_app:
         description:
             - Per-app se mode is designed for deploying dedicated load balancers per app (vs).
@@ -519,6 +535,7 @@ options:
             - If this value is set to 0, controller will never delete any ses and administrator has to manually cleanup unused ses.
             - Allowed values are 0-525600.
             - Default value when not specified in API or module is interpreted by Avi Controller as 120.
+            - Units(MIN).
     se_dos_profile:
         description:
             - Dosthresholdprofile settings for serviceenginegroup.
@@ -624,6 +641,7 @@ options:
             - Allowed values are 0-100.
             - Field introduced in 18.1.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 4.
+            - Units(MB).
         version_added: "2.7"
     significant_log_throttle:
         description:
@@ -632,6 +650,7 @@ options:
             - Set it to zero (0) to disable throttling.
             - Field introduced in 17.1.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as 100.
+            - Units(PER_SECOND).
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
@@ -643,6 +662,7 @@ options:
             - Set it to zero (0) to disable throttling.
             - Field introduced in 17.1.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as 100.
+            - Units(PER_SECOND).
     url:
         description:
             - Avi controller URL of the object.
@@ -689,14 +709,17 @@ options:
         description:
             - Time to wait for the scaled in se to drain existing flows before marking the scalein done.
             - Default value when not specified in API or module is interpreted by Avi Controller as 30.
+            - Units(SEC).
     vs_scalein_timeout_for_upgrade:
         description:
             - During se upgrade, time to wait for the scaled-in se to drain existing flows before marking the scalein done.
             - Default value when not specified in API or module is interpreted by Avi Controller as 30.
+            - Units(SEC).
     vs_scaleout_timeout:
         description:
             - Time to wait for the scaled out se to become ready before marking the scaleout done.
             - Default value when not specified in API or module is interpreted by Avi Controller as 30.
+            - Units(SEC).
     vss_placement:
         description:
             - Parameters to place virtual services on only a subset of the cores of an se.
@@ -715,6 +738,7 @@ options:
             - Allowed values are 1-43200.
             - Field introduced in 18.1.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 10.
+            - Units(MIN).
         version_added: "2.7"
     waf_learning_memory:
         description:
@@ -722,6 +746,7 @@ options:
             - This can be atmost 5% of se memory.
             - Field introduced in 18.1.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
+            - Units(MB).
         version_added: "2.7"
     waf_mempool:
         description:
@@ -735,6 +760,7 @@ options:
             - Memory pool size used for waf.
             - Field introduced in 17.2.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as 64.
+            - Units(KB).
         version_added: "2.5"
 extends_documentation_fragment:
     - avi
