@@ -44,13 +44,13 @@ class ActionModule(ActionBase):
         fail_msg = self._task.args.get('fail_msg', self._task.args.get('msg'))
         if fail_msg is None:
             fail_msg = 'Assertion failed'
-        if not isinstance(fail_msg, string_types):
+        elif not isinstance(fail_msg, string_types):
             raise AnsibleError('Incorrect type for fail_msg or msg, expected string and got %s' % type(fail_msg))
 
         success_msg = self._task.args.get('success_msg')
         if success_msg is None:
             success_msg = 'All assertions passed'
-        if not isinstance(success_msg, string_types):
+        elif not isinstance(success_msg, string_types):
             raise AnsibleError('Incorrect type for success_msg, expected string and got %s' % type(success_msg))
 
         # make sure the 'that' items are a list
