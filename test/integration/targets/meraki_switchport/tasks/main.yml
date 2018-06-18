@@ -277,5 +277,3 @@
 - assert:
     that:
       - update_trunk_idempotent.changed == False
-
-
