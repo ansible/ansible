@@ -1,0 +1,6 @@
+- name: integration test for one arg lookup
+  assert:
+    that: " one_arg_lookup is defined and 'grep' in one_arg_lookup "
+- name: integration test for no arg lookup
+  assert:
+    that: " no_arg_lookup is defined and 'USER' in no_arg_lookup "

@@ -1,0 +1,2 @@
+one_arg_lookup: "{{lookup('filament_lookup', 'grep')}}"
+no_arg_lookup: "{{lookup('filament_lookup')}}"
