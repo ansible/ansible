@@ -86,7 +86,7 @@ def update_resources(module, p):
     '''update_resources attempts to fetch any of the resources given
     by name using their unique field (identity)
     '''
-    params = p.copy()
+    params = dict()
     identity_map = {
         'user': 'username',
         'team': 'name',
@@ -99,9 +99,9 @@ def update_resources(module, p):
     }
     for k, v in identity_map.items():
         try:
-            if params[k]:
+            if p[k]:
                 key = 'team' if k == 'target_team' else k
-                result = tower_cli.get_resource(key).get(**{v: params[k]})
+                result = tower_cli.get_resource(key).get(**{v: p[k]})
                 params[k] = result['id']
         except (exc.NotFound) as excinfo:
             module.fail_json(msg='Failed to update role, {0} not found: {1}'.format(k, excinfo), changed=False)
@@ -128,7 +128,6 @@ def main():
 
     if not HAS_TOWER_CLI:
         module.fail_json(msg='ansible-tower-cli required for this module')
-
     role_type = module.params.pop('role')
     state = module.params.pop('state')
 
