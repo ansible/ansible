@@ -518,12 +518,21 @@ def map_params_to_obj(module):
         item['route_import'] = get_value('route_import')
         item['route_export'] = get_value('route_export')
         item['route_both'] = get_value('route_both')
+        if item['route_both']:
+            # The parsing will have import and export aggregated
+            item['route_both'].extend(get_value('route_both'))
         item['route_import_ipv4'] = get_value('route_import_ipv4')
         item['route_export_ipv4'] = get_value('route_export_ipv4')
         item['route_both_ipv4'] = get_value('route_both_ipv4')
+        if item['route_both_ipv4']:
+            # The parsing will have import and export aggregated
+            item['route_both_ipv4'].extend(get_value('route_both_ipv4'))
         item['route_import_ipv6'] = get_value('route_import_ipv6')
         item['route_export_ipv6'] = get_value('route_export_ipv6')
         item['route_both_ipv6'] = get_value('route_both_ipv6')
+        if item['route_both_ipv6']:
+            # The parsing will have import and export aggregated
+            item['route_both_ipv6'].extend(get_value('route_both_ipv6'))
         item['associated_interfaces'] = get_value('associated_interfaces')
         objects.append(item)
 
