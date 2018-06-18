@@ -461,18 +461,24 @@ def parse_both(configobj, name):
 
 def parse_import_ipv4(configobj, name):
     cfg = configobj['vrf definition %s' % name]
-    subcfg = cfg['address-family ipv4']
-    subcfg = '\n'.join(subcfg.children)
-    matches = re.findall(r'route-target\s+import\s+(.+)', subcfg, re.M)
-    return matches
+    try:
+        subcfg = cfg['address-family ipv4']
+        subcfg = '\n'.join(subcfg.children)
+        matches = re.findall(r'route-target\s+import\s+(.+)', subcfg, re.M)
+        return matches
+    except KeyError:
+        return []
 
 
 def parse_export_ipv4(configobj, name):
     cfg = configobj['vrf definition %s' % name]
-    subcfg = cfg['address-family ipv4']
-    subcfg = '\n'.join(subcfg.children)
-    matches = re.findall(r'route-target\s+export\s+(.+)', subcfg, re.M)
-    return matches
+    try:
+        subcfg = cfg['address-family ipv4']
+        subcfg = '\n'.join(subcfg.children)
+        matches = re.findall(r'route-target\s+export\s+(.+)', subcfg, re.M)
+        return matches
+    except KeyError:
+        return []
 
 
 def parse_both_ipv4(configobj, name):
@@ -486,18 +492,24 @@ def parse_both_ipv4(configobj, name):
 
 def parse_import_ipv6(configobj, name):
     cfg = configobj['vrf definition %s' % name]
-    subcfg = cfg['address-family ipv6']
-    subcfg = '\n'.join(subcfg.children)
-    matches = re.findall(r'route-target\s+import\s+(.+)', subcfg, re.M)
-    return matches
+    try:
+        subcfg = cfg['address-family ipv6']
+        subcfg = '\n'.join(subcfg.children)
+        matches = re.findall(r'route-target\s+import\s+(.+)', subcfg, re.M)
+        return matches
+    except KeyError:
+        return []
 
 
 def parse_export_ipv6(configobj, name):
     cfg = configobj['vrf definition %s' % name]
-    subcfg = cfg['address-family ipv6']
-    subcfg = '\n'.join(subcfg.children)
-    matches = re.findall(r'route-target\s+export\s+(.+)', subcfg, re.M)
-    return matches
+    try:
+        subcfg = cfg['address-family ipv6']
+        subcfg = '\n'.join(subcfg.children)
+        matches = re.findall(r'route-target\s+export\s+(.+)', subcfg, re.M)
+        return matches
+    except KeyError:
+        return []
 
 
 def parse_both_ipv6(configobj, name):
