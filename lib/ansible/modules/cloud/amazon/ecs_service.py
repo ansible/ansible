@@ -27,7 +27,7 @@ description:
   - Creates or terminates ecs services.
 notes:
   - the service role specified must be assumable (i.e. have a trust relationship for the ecs service, ecs.amazonaws.com)
-  - for details of the parameters and returns see U(http://boto3.readthedocs.org/en/latest/reference/services/ecs.html)
+  - for details of the parameters and returns see U(https://boto3.readthedocs.io/en/latest/reference/services/ecs.html)
   - An IAM role must have been previously created
 version_added: "2.1"
 author:
