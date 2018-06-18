@@ -40,13 +40,18 @@ class ActionModule(ActionBase):
 
         fail_msg = None
         success_msg = None
-        if 'fail_msg' in self._task.args and isinstance(self._task.args['fail_msg'], string_types):
-            fail_msg = self._task.args['fail_msg']
-        elif 'msg' in self._task.args and isinstance(self._task.args['msg'], string_types):
-            fail_msg = self._task.args['msg']
 
-        if 'success_msg' in self._task.args and isinstance(self._task.args['success_msg'], string_types):
-            success_msg = self._task.args['success_msg']
+        fail_msg = self._task.args.get('fail_msg', self._task.args.get('msg'))
+        if fail_msg is None:
+            fail_msg = 'Assertion failed'
+        if not isinstance(fail_msg, string_types):
+            raise AnsibleError('Incorrect type for fail_msg or msg, expected string and got %s' % type(fail_msg))
+
+        success_msg = self._task.args.get('success_msg')
+        if success_msg is None:
+            success_msg = 'All assertions passed'
+        if not isinstance(success_msg, string_types):
+            raise AnsibleError('Incorrect type for success_msg, expected string and got %s' % type(success_msg))
 
         # make sure the 'that' items are a list
         thats = self._task.args['that']
@@ -68,14 +73,10 @@ class ActionModule(ActionBase):
                 result['evaluated_to'] = test_result
                 result['assertion'] = that
 
-                if fail_msg:
-                    result['msg'] = fail_msg
+                result['msg'] = fail_msg
 
                 return result
 
         result['changed'] = False
-        if success_msg is not None:
-            result['msg'] = success_msg
-        else:
-            result['msg'] = 'All assertions passed'
+        result['msg'] = success_msg
         return result
