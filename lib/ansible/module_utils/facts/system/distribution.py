@@ -256,6 +256,7 @@ class DistributionFiles:
                 distribution_version = re.search(r'^VERSION_ID="?([0-9]+\.?[0-9]*)"?', line)
                 if distribution_version:
                     suse_facts['distribution_version'] = distribution_version.group(1)
+                    suse_facts['distribution_major_version'] = distribution_version.group(1).split('.')[0]
                 if 'open' in data.lower():
                     release = re.search(r'^VERSION_ID="?[0-9]+\.?([0-9]*)"?', line)
                     if release:
