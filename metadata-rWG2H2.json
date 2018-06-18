@@ -1,0 +1,14 @@
+{
+    "change_description": {
+        "changed_paths": [], 
+        "command": "", 
+        "deleted_paths": [], 
+        "focused_command_targets": {}, 
+        "no_integration_paths": [], 
+        "regular_command_targets": {}
+    }, 
+    "changes": {}, 
+    "ci_provider": "", 
+    "cloud_config": null, 
+    "instance_config": null
+}
