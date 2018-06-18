@@ -36,26 +36,6 @@ options:
       - source exchange to create binding on.
       required: true
       aliases: [ "src", "source" ]
-    login_user:
-      description:
-      - rabbitMQ user for the connection.
-      default: guest
-    login_password:
-      description:
-      - rabbitMQ password for the connection.
-      default: false
-    login_host:
-      description:
-      - rabbitMQ host for the connection.
-      default: localhost
-    login_port:
-      description:
-      - rabbitMQ management API port.
-      default: 15672
-    vhost:
-      description:
-      - rabbitMQ virtual host.
-      default: "/"
     destination:
       description:
       - destination exchange or queue for the binding.
@@ -72,10 +52,10 @@ options:
       - routing key for the binding.
       default: "#"
     arguments:
-        description:
-            - extra arguments for exchange. If defined this argument is a key/value dictionary
-        required: false
-        default: {}
+      description:
+      - extra arguments for exchange. If defined this argument is a key/value dictionary
+      required: false
+      default: {}
 extends_documentation_fragment:
     - rabbitmq
 '''
@@ -121,6 +101,7 @@ class RabbitMqBinding(object):
         self.login_password = self.module.params['login_password']
         self.login_host = self.module.params['login_host']
         self.login_port = self.module.params['login_port']
+        self.login_protocol = self.module.params['login_protocol']
         self.vhost = self.module.params['vhost']
         self.destination = self.module.params['destination']
         self.destination_type = 'q' if self.module.params['destination_type'] == 'queue' else 'e'
@@ -129,8 +110,9 @@ class RabbitMqBinding(object):
         self.verify = self.module.params['cacert']
         self.cert = self.module.params['cert']
         self.key = self.module.params['key']
-        self.base_url = 'http://{0}:{1}/api/bindings'.format(self.login_host,
-                                                             self.login_port)
+        self.base_url = '{0}://{1}:{2}/api/bindings'.format(self.login_protocol,
+                                                            self.login_host,
+                                                            self.login_port)
         self.url = '{0}/{1}/e/{2}/{3}/{4}/{5}'.format(self.base_url,
                                                       urllib_parse.quote(self.vhost, safe=''),
                                                       urllib_parse.quote(self.name, safe=''),

@@ -1,19 +1,6 @@
-# (c) 2016, Jorge Rodriguez <jorge.rodriguez@tiriel.eu>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2016, Jorge Rodriguez <jorge.rodriguez@tiriel.eu>
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
 class ModuleDocFragment(object):
@@ -22,27 +9,27 @@ class ModuleDocFragment(object):
 options:
     login_user:
         description:
-            - rabbitMQ user for connection
+            - rabbitMQ user for connection.
         required: false
         default: guest
     login_password:
         description:
-            - rabbitMQ password for connection
+            - rabbitMQ password for connection.
         required: false
         default: false
     login_host:
         description:
-            - rabbitMQ host for connection
+            - rabbitMQ host for connection.
         required: false
         default: localhost
     login_port:
         description:
-            - rabbitMQ management api port
+            - rabbitMQ management API port.
         required: false
         default: 15672
     login_protocol:
         description:
-            - rabbitMQ management api protocol
+            - rabbitMQ management API protocol.
         choices: [ http , https ]
         required: false
         default: http
@@ -64,7 +51,7 @@ options:
         version_added: "2.3"
     vhost:
         description:
-            - rabbitMQ virtual host
+            - rabbitMQ virtual host.
         required: false
         default: "/"
 '''

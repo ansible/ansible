@@ -34,27 +34,6 @@ options:
             - Only present implemented atm
         choices: [ "present", "absent" ]
         default: present
-    login_user:
-        description:
-            - rabbitMQ user for connection
-        default: guest
-    login_password:
-        description:
-            - rabbitMQ password for connection
-        type: bool
-        default: 'no'
-    login_host:
-        description:
-            - rabbitMQ host for connection
-        default: localhost
-    login_port:
-        description:
-            - rabbitMQ management api port
-        default: 15672
-    vhost:
-        description:
-            - rabbitMQ virtual host
-        default: "/"
     durable:
         description:
             - whether queue is durable or not
@@ -141,8 +120,7 @@ def main():
             dead_letter_routing_key=dict(default=None, type='str'),
             arguments=dict(default=dict(), type='dict'),
             max_priority=dict(default=None, type='int')
-        ),
-        supports_check_mode=True
+        )
     )
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
@@ -271,7 +249,6 @@ def main():
             changed=False,
             name=module.params['name']
         )
-
 
 
 if __name__ == '__main__':
