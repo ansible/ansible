@@ -27,10 +27,10 @@ from ansible.module_utils.network.common.netconf import NetconfConnection
 from ansible.module_utils._text import to_text
 
 try:
-    from lxml.etree import Element, SubElement, fromstring, tostring
+    from lxml.etree import Element, SubElement, tostring as xml_to_string
     HAS_LXML = True
 except ImportError:
-    from xml.etree.ElementTree import Element, SubElement, fromstring, tostring
+    from xml.etree.ElementTree import Element, SubElement, tostring as xml_to_string
     HAS_LXML = False
 
 ACTIONS = frozenset(['merge', 'override', 'replace', 'update', 'set'])
@@ -60,6 +60,13 @@ junos_top_spec = {
     'transport': dict(removed_in_version=2.9)
 }
 junos_argument_spec.update(junos_top_spec)
+
+
+def tostring(element, encoding='UTF-8'):
+    if HAS_LXML:
+        return xml_to_string(element, encoding='unicode')
+    else:
+        return to_text(xml_to_string(element, encoding))
 
 
 def get_provider_argspec():
@@ -136,7 +143,7 @@ def get_configuration(module, compare=False, format='xml', rollback='0', filter=
         _validate_rollback_id(module, rollback)
         xattrs['compare'] = 'rollback'
         xattrs['rollback'] = str(rollback)
-        reply = conn.execute_rpc(tostring(Element('get-configuration', xattrs), encoding='unicode'))
+        reply = conn.execute_rpc(tostring(Element('get-configuration', xattrs)))
     else:
         reply = conn.get_configuration(format=format, filter=filter)
 

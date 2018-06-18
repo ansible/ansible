@@ -104,14 +104,9 @@ diff.prepared:
 import collections
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.junos.junos import junos_argument_spec
+from ansible.module_utils.network.junos.junos import junos_argument_spec, tostring
 from ansible.module_utils.network.junos.junos import load_config, map_params_to_obj, map_obj_to_ele
 from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes, locked_config
-
-try:
-    from lxml.etree import tostring
-except ImportError:
-    from xml.etree.ElementTree import tostring
 
 USE_PERSISTENT_CONNECTION = True
 
@@ -162,7 +157,7 @@ def main():
     ele = map_obj_to_ele(module, want, top)
 
     with locked_config(module):
-        diff = load_config(module, tostring(ele, encoding='unicode'), warnings, action='merge')
+        diff = load_config(module, tostring(ele), warnings, action='merge')
 
         commit = not module.check_mode
         if diff:
