@@ -136,6 +136,8 @@ except ImportError:
 else:
     HAS_VIRT = True
 
+import re
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
@@ -517,8 +519,6 @@ def core(module):
                 if guest:
                     # there might be a mismatch between quest 'name' in the module and in the xml
                     module.warn("'xml' is given - ignoring 'name'")
-                # Is there a better way to get 'name' ?
-                import re
                 found_name = re.search('<name>(.*)</name>', xml).groups()
                 if found_name:
                     domain_name = found_name[0]
