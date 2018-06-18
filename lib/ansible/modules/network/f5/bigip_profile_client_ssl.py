@@ -33,7 +33,7 @@ options:
   ciphers:
     description:
       - Specifies the list of ciphers that the system supports. When creating a new
-        profile, the default cipher list is C(DEFAULT).
+        profile, the default cipher list is provided by the parent profile.
   cert_key_chain:
     description:
       - One or more certificates and keys to associate with the SSL profile. This
@@ -402,8 +402,6 @@ class ModuleManager(object):
 
     def create(self):
         self._set_changed_options()
-        if self.want.ciphers is None:
-            self.want.update({'ciphers': 'DEFAULT'})
         if self.module.check_mode:
             return True
         self.create_on_device()
