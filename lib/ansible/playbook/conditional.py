@@ -214,7 +214,7 @@ class Conditional:
                     # when we compare the var names, normalize quotes because something
                     # like hostvars['foo'] may be tested against hostvars["foo"]
                     val = du_var.replace("'", '"')
-                    while val != None:
+                    while val is not None:
                         if var_name.replace("'", '"') == val:
                             # the should exist is a xor test between a negation in the logic portion
                             # against the state (defined or undefined)

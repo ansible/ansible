@@ -388,14 +388,14 @@ def _find_nested_var_assignment(var, iterbl):
         _find_nested_var_assignment('target', None) => None
 
     '''
-    if type(iterbl) == type({}) and var in iterbl:
+    if isinstance(iterbl, dict) and var in iterbl:
         return iterbl[var]
-    elif type(iterbl) == type({}):
+    elif isinstance(iterbl, dict):
         for i in iterbl:
             val = _find_nested_var_assignment(var, iterbl[i])
             if val:
                 return val
-    elif type(iterbl) == type([]):
+    elif isinstance(iterbl, list):
         for i in iterbl:
             val = _find_nested_var_assignment(var, i)
             if val:
