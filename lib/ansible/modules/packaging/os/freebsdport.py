@@ -1,10 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016-2017, Ross Basarevych <basarevych@gmail.com>
+# (c) 2016-2018, Ross Basarevych <basarevych@gmail.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
+# or MIT License at your discretion
+#
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
@@ -20,10 +21,9 @@ module: freebsdport
 version_added: "2.5"
 short_description: Manage FreeBSD ports
 description:
-  - Configures, installs, updates and deinstalls FreeBSD ports in canonical
-    way.
+  - Configures, installs, updates and deinstalls FreeBSD ports in a canonical way.
 author:
-    - Ross Basarevych (@basarevych)
+  - Ross Basarevych (@basarevych)
 notes:
   - This module might install (automatically) or refresh (when requested)
     the port tree using C(portsnap) utility.
@@ -66,6 +66,12 @@ options:
         the ones saved the port will be reinstalled with the new options.
         Ignored when no C(name) provided.
     required: false
+    default: null
+  variables:
+    description:
+      - Space separated list of make variables to be passed to 'build'
+        and 'install' targets.
+    requied: false
     default: null
   enable:
     description:
@@ -141,6 +147,11 @@ EXAMPLES = '''
     options: DOCS=off EXAMPLES=on NETADDR=on
     state: configured
 
+# Now you can just install with that options
+- freebsdport:
+    name: sysutils/ansible
+    state: latest
+
 # Enable DOCS and NETADDR, set EXAMPLES to default value and install Ansible
 - freebsdport:
     name: sysutils/ansible
@@ -162,6 +173,12 @@ EXAMPLES = '''
 - freebsdport:
     name: sysutils/ansible
     state: absent
+
+# Install PHP72 pecl-memcached
+- freebsdport:
+    name: databases/php-memcached
+    state: latest
+    variables: FLAVOR=php72
 '''
 
 RETURN = '''
@@ -195,6 +212,11 @@ unset_options:
     returned: when port name and state are provided
     type: list
     sample: [ 'NETADDR' ]
+variables:
+    description: Make variables used
+    returned: when variables are used
+    type: string
+    sample: 'FLAVOR=php72'
 traceback:
     description: Stack trace of exception
     returned: failure
@@ -334,8 +356,6 @@ class FreeBSDPort:
         if not options_changed:
             return self._get_options_changed(name)
 
-        self.result['changed'] = True
-
         output = ''
         options_name = self._get_options_name(name)
 
@@ -355,6 +375,7 @@ class FreeBSDPort:
         except:
             pass
 
+        self.result['changed'] = True
         with open(self.conf_file, 'w') as fd:
             if len(output):
                 fd.write(output)
@@ -400,6 +421,10 @@ class FreeBSDPort:
         if rc != 0:
             raise Exception('Could not remove old config in %s' % name)
 
+        variables_str = self.module.params['variables']
+        if variables_str is None:
+            variables_str = ''
+
         cmd = [
             '/usr/bin/make',
             '-C', self.ports_dir + '/' + name,
@@ -409,6 +434,10 @@ class FreeBSDPort:
         ]
         if self.module.params['ignore_vulnerabilities']:
             cmd.append('DISABLE_VULNERABILITIES=yes')
+        for variable in variables_str.split(' '):
+            if len(variable) == 0:
+                continue
+            cmd.append(variable)
         self._run_make(name, cmd, 'Could not build the port: %s' % name)
 
         try:
@@ -421,6 +450,10 @@ class FreeBSDPort:
             ]
             if self.module.params['ignore_vulnerabilities']:
                 cmd.append('DISABLE_VULNERABILITIES=yes')
+            for variable in variables_str.split(' '):
+                if len(variable) == 0:
+                    continue
+                cmd.append(variable)
             self._run_make(name, cmd, 'Could not install the port: %s' % name)
         except Exception as e:
             if backup is not None:
@@ -556,11 +589,21 @@ class FreeBSDPort:
         if rc != 0:
             raise Exception('Could not remove old config in %s' % name)
 
+        variables_str = self.module.params['variables']
+        if variables_str is None:
+            variables_str = ''
+
         cmd = [
             '/usr/bin/make',
             '-C', self.ports_dir + '/' + name,
             'deinstall'
         ]
+        if self.module.params['ignore_vulnerabilities']:
+            cmd.append('DISABLE_VULNERABILITIES=yes')
+        for variable in variables_str.split(' '):
+            if len(variable) == 0:
+                continue
+            cmd.append(variable)
         self._run_make(name, cmd, 'Could not deinstall the port: %s' % name)
 
         if name not in self.result['deinstalled_ports']:
@@ -959,6 +1002,10 @@ def main():
                 type='str',
                 required=False
             ),
+            variables=dict(
+                type='str',
+                required=False
+            ),
             enable=dict(
                 type='str',
                 required=False
@@ -1038,6 +1085,10 @@ def main():
         if name is not None and state is not None:
             result['set_options'] = port.get_set_options(name)
             result['unset_options'] = port.get_unset_options(name)
+
+        variables = module.params['variables']
+        if variables is not None:
+            result['variables'] = variables
 
         module.exit_json(**result)
     except Exception as e:
