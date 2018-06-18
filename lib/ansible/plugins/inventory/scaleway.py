@@ -81,11 +81,6 @@ def _build_server_url(api_endpoint):
 class InventoryModule(BaseInventoryPlugin):
     NAME = 'scaleway'
 
-    def __init__(self):
-        super(InventoryModule, self).__init__()
-
-        self.config_data = None
-
     def verify_file(self, path):
         return "scaleway" in path
 
@@ -141,7 +136,7 @@ class InventoryModule(BaseInventoryPlugin):
 
     def parse(self, inventory, loader, path, cache=True):
         super(InventoryModule, self).parse(inventory, loader, path)
-        self.config_data = self._read_config_data(path=path)
+        self._read_config_data(path=path)
 
         config_zones = self.get_option("regions")
         tags = self.get_option("tags")
