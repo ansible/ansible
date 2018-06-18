@@ -160,14 +160,14 @@ def rst_xline(width, char="="):
 test_list = partial(is_sequence, include_strings=False)
 
 
-def to_boolean(value):
+def normalize_options(value):
     """Normalize boolean option value."""
 
     if value.get('type') == 'bool' and 'default' in value:
-        temp = boolean(value['default'])
-        new_value = value.copy()
-        new_value['default'] = temp
-        return new_value
+        try:
+            value['default'] = boolean(value['default'], strict=True)
+        except TypeError:
+            pass
     return value
 
 
@@ -286,11 +286,8 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
         # use ansible core library to parse out doc metadata YAML and plaintext examples
         doc, examples, returndocs, metadata = plugin_docs.get_docstring(module_path, fragment_loader, verbose=verbose)
 
-        for key, opt in (doc.get('options') or {}).items():
-            try:
-                doc['options'][key] = to_boolean(opt)
-            except TypeError:
-                pass
+        for key, opt in doc.get('options', {}).items():
+            doc['options'][key] = normalize_options(opt)
 
         # save all the information
         module_info[module] = {'path': module_path,
