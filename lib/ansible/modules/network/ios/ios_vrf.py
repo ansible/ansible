@@ -103,10 +103,30 @@ options:
     description:
       - Adds an import list of extended route target communities to the VRF.
     version_added: "2.5"
-  mode:
+  route_both_ipv4:
     description:
-      - Configure the VRF in .
-    version_added: "2.5"
+      - Adds an export and import list of extended route target communities in address-family configuration submode to the VRF.
+    version_added: "2.7"
+  route_export_ipv4:
+    description:
+      - Adds an export list of extended route target communities in address-family configuration submode to the VRF.
+    version_added: "2.7"
+  route_import_ipv4:
+    description:
+      - Adds an import list of extended route target communities in address-family configuration submode to the VRF.
+    version_added: "2.7"
+  route_both_ipv6:
+    description:
+      - Adds an export and import list of extended route target communities in address-family configuration submode to the VRF.
+    version_added: "2.7"
+  route_export_ipv6:
+    description:
+      - Adds an export list of extended route target communities in address-family configuration submode to the VRF.
+    version_added: "2.7"
+  route_import_ipv6:
+    description:
+      - Adds an import list of extended route target communities in address-family configuration submode to the VRF.
+    version_added: "2.7"
 
 """
 EXAMPLES = """
