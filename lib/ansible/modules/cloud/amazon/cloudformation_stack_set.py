@@ -202,8 +202,8 @@ stack_instances:
       region: us-east-1                                                                                   
       stack_set_id: TestStackPrime:19f3f684-aae9-4e67-ba36-e09f92cf5929                                   
       status: OUTDATED
-      status_reason: Account 1234567890 should have 'AWSCloudFormationStackSetAdministrationRole' role wi
-  th trust relationship to CloudFormation service.
+      status_reason: >
+        Account 1234567890 should have 'AWSCloudFormationStackSetAdministrationRole' role with trust relationship to CloudFormation service.
     - account: '1234567890'
       region: us-east-2
       stack_set_id: TestStackPrime:19f3f684-aae9-4e67-ba36-e09f92cf5929                                   
@@ -219,15 +219,14 @@ stack_set:
     description: test stack PRIME
     execution_role_name: AWSCloudFormationStackSetExecutionRole
     parameters: []
-    stack_set_arn: arn:aws:cloudformation:us-east-1:1234567890:stackset/TestStackPrime:19f3f684-aae9-4$
-67-ba36-e09f92cf5929
+    stack_set_arn: arn:aws:cloudformation:us-east-1:1234567890:stackset/TestStackPrime:19f3f684-aae9-467-ba36-e09f92cf5929
     stack_set_id: TestStackPrime:19f3f684-aae9-4e67-ba36-e09f92cf5929
     stack_set_name: TestStackPrime
     status: ACTIVE
     tags:
       Some: Thing
       an: other
-    template_body: |-
+    template_body: |
       AWSTemplateFormatVersion: "2010-09-09"
       Parameters: {}
       Resources:
