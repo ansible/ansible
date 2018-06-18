@@ -606,7 +606,7 @@ def check_dependencies():
     """
     if not python_consul_installed:
         raise ImportError("python-consul required for this module. "
-                          "See: http://python-consul.readthedocs.org/en/latest/#installation")
+                          "See: https://python-consul.readthedocs.io/en/latest/#installation")
 
     if not pyhcl_installed:
         raise ImportError("pyhcl required for this module. "
