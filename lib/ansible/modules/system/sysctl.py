@@ -144,7 +144,7 @@ class SysctlModule(object):
         # get the current proc fs value
         self.proc_value = self.get_token_curr_value(thisname)
 
-        # get the currect sysctl file value
+        # get the current sysctl file value
         self.read_sysctl_file()
         if thisname not in self.file_values:
             self.file_values[thisname] = None
@@ -300,43 +300,46 @@ class SysctlModule(object):
                 self.module.fail_json(msg="Failed to open %s: %s" % (self.sysctl_file, to_native(e)))
 
         for line in lines:
-            line = line.strip()
             self.file_lines.append(line)
-
+            line = line.strip()
             # don't split empty lines or comments or line without equal sign
             if not line or line.startswith(("#", ";")) or "=" not in line:
                 continue
 
             k, v = line.split('=', 1)
             k = k.strip()
-            v = v.strip()
             self.file_values[k] = v.strip()
 
     # Fix the value in the sysctl file content
     def fix_lines(self):
-        checked = []
+        found = False
         self.fixed_lines = []
         for line in self.file_lines:
             if not line.strip() or line.strip().startswith(("#", ";")) or "=" not in line:
                 self.fixed_lines.append(line)
                 continue
             tmpline = line.strip()
-            k, v = tmpline.split('=', 1)
-            k = k.strip()
-            v = v.strip()
-            if k not in checked:
-                checked.append(k)
-                if k == self.args['name']:
-                    if self.args['state'] == "present":
-                        new_line = "%s=%s\n" % (k, self.args['value'])
-                        self.fixed_lines.append(new_line)
-                else:
-                    new_line = "%s=%s\n" % (k, v)
+            key, value = tmpline.split("=", 1)
+            old_key = key
+            old_value = value
+            key = key.strip()
+            value = value.strip()
+            if key == self.args['name']:
+                found = True
+                if self.args['state'] == 'present' and value != self.args['value']:
+                    # We are changing value
+                    new_line = "%s=%s\n" % (old_key, self.args['value'])
                     self.fixed_lines.append(new_line)
+                if self.args['state'] == 'absent':
+                    # We are deleting this value from configuration
+                    continue
+            else:
+                self.fixed_lines.append(line)
 
-        if self.args['name'] not in checked and self.args['state'] == "present":
-            new_line = "%s=%s\n" % (self.args['name'], self.args['value'])
-            self.fixed_lines.append(new_line)
+        if not found and self.args['state'] == "present":
+            # We found key which is not available in file
+            new_line = "%s = %s" % (self.args['name'], self.args['value'])
+            self.file_lines.append(new_line)
 
     # Completely rewrite the sysctl file
     def write_sysctl(self):
@@ -345,7 +348,7 @@ class SysctlModule(object):
         f = open(tmp_path, "w")
         try:
             for l in self.fixed_lines:
-                f.write(l.strip() + "\n")
+                f.write(l)
         except IOError as e:
             self.module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, to_native(e)))
         f.flush()
