@@ -41,7 +41,7 @@
     vlans_list:
     - name: default
       native: 'yes'
-    - name: finance
+    - name: 10
   check_mode: yes
   register: cm_vnic_templates_present
 
@@ -133,39 +133,43 @@
 
 
 # Test change (check_mode)
-- name: vNIC template description change (check_mode)
+- name: vNIC template change (check_mode)
   ucs_vnic_template: &vnic_templates_change
     <<: *vnic_templates_present
-    descr: Testing Ansible
+    vlans_list:
+    - name: default
+      native: 'yes'
+    - name: 10
+      state: absent
   check_mode: yes
-  register: cm_vnic_templates_descr_change
+  register: cm_vnic_templates_change
 
 
 # Change (normal mode)
-- name: vNIC template description change (normal mode)
+- name: vNIC template change (normal mode)
   ucs_vnic_template: *vnic_templates_change
-  register: nm_vnic_templates_descr_change
+  register: nm_vnic_templates_change
 
 
 # Test change again (idempotent)
-- name: vNIC template description again (check_mode)
+- name: vNIC template change again (check_mode)
   ucs_vnic_template: *vnic_templates_change
   check_mode: yes
-  register: cm_vnic_templates_descr_change_again
+  register: cm_vnic_templates_change_again
 
 
 # Change again (normal mode)
-- name: vNIC template description change again (normal mode)
+- name: vNIC template change again (normal mode)
   ucs_vnic_template: *vnic_templates_change
-  register: nm_vnic_templates_descr_change_again
+  register: nm_vnic_templates_change_again
 
 
 # Verfiy change
 - name: Verify vNIC template change results
   assert:
     that:
-    - cm_vnic_templates_descr_change.changed == nm_vnic_templates_descr_change.changed == true
-    - cm_vnic_templates_descr_change_again.changed == nm_vnic_templates_descr_change_again.changed == false
+    - cm_vnic_templates_change.changed == nm_vnic_templates_change.changed == true
+    - cm_vnic_templates_change_again.changed == nm_vnic_templates_change_again.changed == false
 
 
 # Teardown (clean environment)
