@@ -18,7 +18,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: freebsdport
-version_added: "2.5"
+version_added: "2.7"
 short_description: Manage FreeBSD ports
 description:
   - Configures, installs, updates and deinstalls FreeBSD ports in a canonical way.
@@ -110,24 +110,28 @@ options:
     description:
       - Refresh ports tree using C(portsnap) before doing anything else.
     required: false
-    default: false
+    default: no
+    choices: [ "yes", "no" ]
   cron:
     description:
       - Whether to use C(cron) or C(fetch) command of C(portsnap) when
         upgrading ports tree. Used with C(refresh_tree) is enabled.
     required: false
-    default: false
+    default: no
+    choices: [ "yes", "no" ]
   include_deps:
     description:
       - When C(state) is C(latest) or C(reinstalled) and C(name) is given this
         option will also upgrade/reinstall dependencies of given port.
     required: false
-    default: true
+    default: yes
+    choices: [ "yes", "no" ]
   ignore_vulnerabilities:
     description:
       - Install port even if it has known vulnerabilities.
     required: false
-    default: false
+    default: no
+    choices: [ "yes", "no" ]
   ports_dir:
     description:
       - Ports directory on target host
@@ -362,13 +366,13 @@ class FreeBSDPort:
         try:
             with open(self.conf_file, 'r') as fd:
                 for line in fd:
-                    match = re.match('^\s*' + options_name + '_CHANGED\s*[?+-]?=.*$', line)
+                    match = re.match(r'^\s*' + options_name + r'_CHANGED\s*[?+-]?=.*$', line)
                     if match is not None:
                         continue
-                    match = re.match('^\s*' + options_name + '_SET\s*[?+-]?=.*$', line)
+                    match = re.match(r'^\s*' + options_name + r'_SET\s*[?+-]?=.*$', line)
                     if match is not None:
                         continue
-                    match = re.match('^\s*' + options_name + '_UNSET\s*[?+-]?=.*$', line)
+                    match = re.match(r'^\s*' + options_name + r'_UNSET\s*[?+-]?=.*$', line)
                     if match is not None:
                         continue
                     output = output + line.rstrip() + '\n'
@@ -480,7 +484,7 @@ class FreeBSDPort:
             try:
                 with open(self.conf_file, 'r') as fd:
                     for line in fd:
-                        match = re.match('^\s*' + options_name + '_CHANGED\s*[?+-]?=.*$', line)
+                        match = re.match(r'^\s*' + options_name + r'_CHANGED\s*[?+-]?=.*$', line)
                         if match is not None:
                             continue
                         output = output + line.rstrip() + '\n'
@@ -653,7 +657,7 @@ class FreeBSDPort:
         cmd = [
             '/usr/bin/grep',
             '-E',
-            '^\.include "' + re.escape(self.conf_file) + '"',
+            r'^\.include "' + re.escape(self.conf_file) + '"',
             '/etc/make.conf'
         ]
         (rc, out, err) = self.module.run_command(cmd)
@@ -672,7 +676,7 @@ class FreeBSDPort:
             try:
                 with open(self.conf_file, 'r') as fd:
                     for line in fd:
-                        match = re.match('^\s*PORTSDIR\s*[?+-]?=.*$', line)
+                        match = re.match(r'^\s*PORTSDIR\s*[?+-]?=.*$', line)
                         if match is not None:
                             continue
                         output = output + line.rstrip() + '\n'
