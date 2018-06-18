@@ -73,6 +73,7 @@ options:
     quota_name:
         description:
             - Name of the quota which you want to work with.
+        version_added: "2.7"
 extends_documentation_fragment: ovirt
 '''
 
@@ -96,6 +97,16 @@ EXAMPLES = '''
     object_type: cluster
     object_name: mycluster
     role: ClusterAdmin
+
+- name: Assign QuotaConsumer role to user
+  ovirt_permissions:
+    state: absent
+    user_name: user1
+    authz_name: example.com-authz
+    object_type: data_center
+    object_name: mydatacenter
+    quota_name: myquota
+    role: QuotaConsumer
 '''
 
 RETURN = '''
@@ -163,7 +174,7 @@ def _object_service(connection, module):
         object_id = sdk_object.id
 
     object_service = objects_service.service(object_id)
-    if module.params['quota_name']:
+    if module.params['quota_name'] and object_type != 'data_center':
         quotas_service = object_service.quotas_service()
         return quotas_service.quota_service(get_id_by_name(quotas_service, module.params['quota_name']))
     return object_service
