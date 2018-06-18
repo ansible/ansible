@@ -71,7 +71,7 @@ options:
     description:
       - Space separated list of make variables to be passed to 'build'
         and 'install' targets.
-    requied: false
+    required: false
     default: null
   enable:
     description:
