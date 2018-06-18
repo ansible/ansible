@@ -29,7 +29,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: slxos_lldp
-version_added: "2.6"
+version_added: "2.7"
 author: "Matthew Stone (@bigmstone)"
 short_description: Manage LLDP configuration on Extreme Networks SLX-OS network devices.
 description:
