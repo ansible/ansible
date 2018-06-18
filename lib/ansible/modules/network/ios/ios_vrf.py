@@ -221,7 +221,7 @@ EXAMPLES = """
     route_both_ipv6:
       - 1:100
       - 3:100
-  
+
 """
 
 RETURN = """
