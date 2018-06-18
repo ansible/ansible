@@ -24,6 +24,7 @@ DOCUMENTATION = '''
             description: Filter results on a specific tag
             type: list
         oauth_token:
+            required: True
             description: Scaleway OAuth token.
             env:
                 # in order of precedence
