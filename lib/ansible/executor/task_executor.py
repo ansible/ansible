@@ -289,7 +289,7 @@ class TaskExecutor:
             label = self._task.loop_control.label
 
         # ensure we always have a label
-        if not label:
+        if label is None:
             label = '{{' + loop_var + '}}'
 
         if loop_var in task_vars:
