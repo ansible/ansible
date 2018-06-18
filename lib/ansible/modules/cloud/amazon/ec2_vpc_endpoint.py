@@ -76,9 +76,21 @@ options:
         is added to the route table with the destination of the endpoint if
         provided.
     required: false
+  subnet_ids:
+    description:
+      - List of one or more subnet ids to attach to the endpoint.
+    required: false
+  security_group_ids:
+    description:
+      - List of one or more security group ids to attach to the endpoint.
+    required: false
   vpc_endpoint_id:
     description:
       - One or more vpc endpoint ids to remove from the AWS account
+    required: false
+  vpc_endpoint_type:
+    description:
+      - One of "Gateway" or "Interface". The default is "Gateway".
     required: false
   client_token:
     description:
@@ -245,8 +257,18 @@ def create_vpc_endpoint(client, module):
     params['ServiceName'] = module.params.get('service')
     params['DryRun'] = module.check_mode
 
+    params['VpcEndpointType'] = module.params.get('vpc_endpoint_type')
+    if not params['VpcEndpointType']:
+        params['VpcEndpointType'] = "Gateway"
+
     if module.params.get('route_table_ids'):
         params['RouteTableIds'] = module.params.get('route_table_ids')
+
+    if module.params.get('subnet_ids'):
+        params['SubnetIds'] = module.params.get('subnet_ids')
+
+    if module.params.get('security_group_ids'):
+        params['SecurityGroupIds'] = module.params.get('security_group_ids')
 
     if module.params.get('client_token'):
         token_provided = True
@@ -336,7 +358,10 @@ def main():
             wait=dict(type='bool', default=False),
             wait_timeout=dict(type='int', default=320, required=False),
             route_table_ids=dict(type='list'),
+            subnet_ids=dict(type='list'),
+            security_group_ids=dict(type='list'),
             vpc_endpoint_id=dict(),
+            vpc_endpoint_type=dict(),
             client_token=dict(),
         )
     )
