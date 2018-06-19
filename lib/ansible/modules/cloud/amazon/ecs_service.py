@@ -286,7 +286,6 @@ ansible_facts:
             type: complex
 '''
 import time
-import distutils.version
 
 DEPLOYMENT_CONFIGURATION_TYPE_MAP = {
     'maximum_percent': 'int',
@@ -313,7 +312,6 @@ class EcsServiceManager:
 
     def format_network_configuration(self, network_config):
         result = dict()
-        botocore_version = distutils.version.StrictVersion(botocore.__version__)
         if 'subnets' in network_config:
             result['subnets'] = network_config['subnets']
         else:
@@ -327,7 +325,7 @@ class EcsServiceManager:
                 except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                     self.module.fail_json_aws(e, msg="Couldn't look up security groups")
             result['securityGroups'] = groups
-        if 'assign_public_ip' in network_config and botocore_version >= distutils.version.StrictVersion('1.8.4'):
+        if 'assign_public_ip' in network_config and self.module.botocore_at_least('1.8.4'):
             result['assign_public_ip'] = 'assign_public_ip'
         else:
             self.module.fail_json(msg='botocore needs to be version 1.8.4 or higher to use assign_public_ip in network_configuration')
