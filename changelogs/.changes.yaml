@@ -290,3 +290,13 @@ releases:
     - ec2_ami_fix_block_device_mapping_volume_size_type.yaml
     - v2.6.0rc2_summary.yaml
     release_date: '2018-06-08'
+  2.6.0rc3:
+    codename: Heartbreaker
+    fragments:
+    - digital_ocean_block_storage_fix.yaml
+    - gce-sort-fix.yaml
+    - iosxr_config_route_policy_objects_fix.yaml
+    - no_log_fix_for_connection_exceptions.yaml
+    - reset_con_fix.yml
+    - v2.6.0rc3_summary.yaml
+    release_date: '2018-06-18'

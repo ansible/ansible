@@ -2,6 +2,25 @@
 Ansible 2.6 "Heartbreaker" Release Notes
 ========================================
 
+v2.6.0rc3
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2018-06-18
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`_
+
+
+Bugfixes
+--------
+
+- **Security Fix** - Some connection exceptions would cause no_log specified on a task to be ignored.  If this happened, the task information, including any private information could have been displayed to stdout and (if enabled, not the default) logged to a log file specified in ansible.cfg's log_path. Additionally, sites which redirected stdout from ansible runs to a log file may have stored that private information onto disk that way as well. (https://github.com/ansible/ansible/pull/41414)
+- Fix added for Digital Ocean Volumes API change causing Ansible to recieve an unexpected value in the response. (https://github.com/ansible/ansible/pull/41431)
+- Fix iosxr_config module to handle route-policy, community-set, prefix-set, as-path-set and rd-set blocks. All these blocks are part of route-policy language of iosxr.
+- gce_net - Fix sorting of allowed ports (https://github.com/ansible/ansible/pull/41567)
+- uses correct conn info for reset_connection  https://github.com/ansible/ansible/issues/27520
+
 v2.6.0rc2
 =========
 
