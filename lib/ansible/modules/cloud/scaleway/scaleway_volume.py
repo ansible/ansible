@@ -6,6 +6,8 @@
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -44,11 +46,11 @@ options:
       - ams1
       - EMEA-NL-EVS
       - par1
-      - EMEA-FR-PAR1 
+      - EMEA-FR-PAR1
   name:
     description:
      - Name used to identify the volume.
-    required: true    
+    required: true
   organization:
     description:
      - ScaleWay organization ID to which volume belongs.
@@ -105,6 +107,7 @@ from ansible.module_utils.scaleway import ScalewayAPI, SCALEWAY_LOCATION
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.scaleway import ScalewayAPI
+
 
 def core(module):
     api_token = module.params['oauth_token']
