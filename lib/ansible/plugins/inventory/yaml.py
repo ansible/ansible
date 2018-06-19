@@ -61,7 +61,6 @@ all: # keys must be unique, i.e. only one 'hosts' per group
 import os
 
 from collections import MutableMapping
-from types import NoneType
 
 from ansible.errors import AnsibleParserError
 from ansible.module_utils.six import string_types
@@ -114,7 +113,7 @@ class InventoryModule(BaseFileInventoryPlugin):
 
     def _parse_group(self, group, group_data):
 
-        if isinstance(group_data, (MutableMapping, NoneType)):
+        if isinstance(group_data, (MutableMapping, type(None))):
 
             self.inventory.add_group(group)
 
@@ -126,7 +125,7 @@ class InventoryModule(BaseFileInventoryPlugin):
                         if isinstance(group_data[section], string_types):
                             group_data[section] = {group_data[section]: None}
 
-                        if not isinstance(group_data[section], (MutableMapping, NoneType)):
+                        if not isinstance(group_data[section], (MutableMapping, type(None))):
                             raise AnsibleParserError('Invalid "%s" entry for "%s" group, requires a dictionary, found "%s" instead.' %
                                                      (section, group, type(group_data[section])))
 
