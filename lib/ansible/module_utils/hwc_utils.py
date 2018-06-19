@@ -186,7 +186,8 @@ class HwcModule(AnsibleModule):
                     create=dict(default='10m', type='str'),
                     update=dict(default='10m', type='str'),
                     delete=dict(default='10m', type='str'),
-                ), default={})
+                ), default={}),
+                id=dict(type='str')
             )
         )
 
