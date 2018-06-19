@@ -102,6 +102,7 @@ options:
           - network configuration of the service. Only applicable for task definitions created with C(awsvpc) I(network_mode).
           - I(network_configuration) has two keys, I(subnets), a list of subnet IDs to which the task is attached and I(security_groups),
             a list of group names or group IDs for the task
+          - assign_public_ip requires botocore >= 1.8.4
         version_added: 2.6
     launch_type:
         description:
@@ -285,6 +286,7 @@ ansible_facts:
             type: complex
 '''
 import time
+import distutils.version
 
 DEPLOYMENT_CONFIGURATION_TYPE_MAP = {
     'maximum_percent': 'int',
@@ -311,6 +313,7 @@ class EcsServiceManager:
 
     def format_network_configuration(self, network_config):
         result = dict()
+        botocore_version = distutils.version.StrictVersion(botocore.__version__)
         if 'subnets' in network_config:
             result['subnets'] = network_config['subnets']
         else:
@@ -324,6 +327,10 @@ class EcsServiceManager:
                 except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                     self.module.fail_json_aws(e, msg="Couldn't look up security groups")
             result['securityGroups'] = groups
+        if 'assign_public_ip' in network_config and botocore_version >= distutils.version.StrictVersion('1.8.4'):
+            result['assign_public_ip'] = 'assign_public_ip'
+        else:
+            self.module.fail_json(msg='botocore needs to be version 1.8.4 or higher to use assign_public_ip in network_configuration')
         return dict(awsvpcConfiguration=result)
 
     def find_in_array(self, array_of_services, service_name, field_name='serviceArn'):
