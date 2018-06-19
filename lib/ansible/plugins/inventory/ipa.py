@@ -152,12 +152,15 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
             # Connect via Kerberos using ipalib
 
-            self.ipaconnection = api.bootstrap(context='cli')
+            try:
+                api = api.bootstrap(context='cli')
+            except Exception as e:
+                raise AnsibleConnectionFailure(e)
 
-            if not os.path.isdir(self.ipaconnection.env.confdir):
+            if not os.path.isdir(api.env.confdir):
                 print("WARNING: IPA configuration directory (%s) is missing. "
                       "Environment variable IPA_CONFDIR could be used to override "
-                      "default path." % self.ipaconnection.env.confdir)
+                      "default path." % api.env.confdir)
 
             if LooseVersion(IPA_VERSION) < LooseVersion('4.6.2'):
                 # With ipalib < 4.6.0 'server' and 'domain' have default values
@@ -171,19 +174,21 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                     IPA_VERSION
                 )
 
-            if 'server' not in self.ipaconnection.env or 'domain' not in self.ipaconnection.env:
+            if 'server' not in api.env or 'domain' not in api.env:
                 sys.exit(
                     "ERROR: ('jsonrpc_uri' or 'xmlrpc_uri') or 'domain' are not "
                     "defined in '[global]' section of '%s' nor in '%s'." %
-                    (self.ipaconnection.env.conf, self.ipaconnection.env.conf_default)
+                    (api.env.conf, api.env.conf_default)
                 )
 
-            self.ipaconnection.finalize()
+            api.finalize()
             try:
-                self.ipaconnection.Backend.rpcclient.connect()
+                api.Backend.rpcclient.connect()
             except AttributeError:
                 # FreeIPA < 4.0 compatibility
-                self.ipaconnection.Backend.xmlclient.connect()
+                api.Backend.xmlclient.connect()
+
+            self.ipaconnection = api
 
         hostgroups = self._get_hostgroups()
 
@@ -230,6 +235,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         inventory = {}
         hostvars = {}
         result = {}
+        all_members=[]
 
         if self.ipahttps:
             result = self.ipaconnection._request(
@@ -246,6 +252,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
             if 'member_host' in hostgroup:
                 members = [host for host in hostgroup['member_host']]
+                all_members = list(set().union(all_members, members))
             if 'member_hostgroup' in hostgroup:
                 children = hostgroup['member_hostgroup']
             inventory[hostgroup['cn'][0]] = {
@@ -258,6 +265,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 hostvars[member] = self._get_host(member)
 
         inventory['_meta'] = {'hostvars': hostvars}
+
         return inventory
 
     def _get_host(
