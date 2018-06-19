@@ -58,9 +58,9 @@
             network_configuration:
               subnets:
                 - subnet-abcd1234
-              groups:
+              security_groups:
                 - sg-abcd1234
-              assign_public_ip: true
+              assign_public_ip: ENABLED
             state: present
             <<: *aws_connection_info
           register: ecs_service_creation_vpc
