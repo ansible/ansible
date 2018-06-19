@@ -90,7 +90,7 @@ from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, AWSRet
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict
 
 
-def resource_exists(client, module, resource_type, params):
+def resource_exists(client, module, params):
     try:
         aggregator = client.describe_configuration_aggregators(
             ConfigurationAggregatorNames=[params['name']]
