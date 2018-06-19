@@ -43,6 +43,7 @@
       interface: nve1
       vni: 6000
       assoc_vrf: True
+      provider: "{{ connection }}"
       state: absent
 
   - name: configure vxlan_vtep_vni
@@ -87,6 +88,7 @@
     nxos_vxlan_vtep_vni: &remove
       interface: nve1
       vni: 8000
+      provider: "{{ connection }}"
       state: absent
 
   - name: configure vxlan_vtep
@@ -121,6 +123,7 @@
     - name: Remove and reconfigure vxlan_vtep
       nxos_vxlan_vtep: &remove_vtep
         interface: nve1
+        provider: "{{ connection }}"
         state: absent
 
     - name: Configure vxlan_vtep with host reachability bgp
@@ -241,12 +244,14 @@
     nxos_vxlan_vtep:
       interface: nve1
       shutdown: true
+      provider: "{{ connection }}"
       state: absent
     ignore_errors: yes
 
   - name: "Disable feature nv overlay"
     nxos_feature: 
       feature: nve
+      provider: "{{ connection }}"
       state: disabled
     ignore_errors: yes
 

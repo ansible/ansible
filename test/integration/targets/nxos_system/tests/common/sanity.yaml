@@ -6,6 +6,7 @@
 - block:
   - name: remove configuration
     nxos_system: &remove
+      provider: "{{ connection }}"
       state: absent
     register: result
     ignore_errors: yes
@@ -13,6 +14,7 @@
   - name: configure domain lookup
     nxos_system: &dlo
       domain_lookup: true
+      provider: "{{ connection }}"
       state: present
     register: result
 

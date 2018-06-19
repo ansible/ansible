@@ -23,6 +23,7 @@
     aggregate:
       - { name: "{{ intname1 }}", mode: access, access_vlan: 6 }
       - { name: "{{ intname2 }}", mode: access, access_vlan: 15 }
+    provider: "{{ connection }}"
     state: absent
 
 - name: Sleep for 2 seconds on Fretta Platform
@@ -58,6 +59,7 @@
       aggregate:
         - { name: "{{ intname1 }}", mode: access, access_vlan: 6 }
         - { name: "{{ intname2 }}", mode: access, access_vlan: 15 }
+      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -81,6 +83,7 @@
   - name: "remove vlans"
     nxos_vlan:
       vlan_range: "6,15"
+      provider: "{{ connection }}"
       state: absent
     ignore_errors: yes
 
@@ -89,6 +92,7 @@
       aggregate:
         - { name: "{{ intname1 }}", mode: access, access_vlan: 6 }
         - { name: "{{ intname2 }}", mode: access, access_vlan: 15 }
+      provider: "{{ connection }}"
       state: absent
     ignore_errors: yes
 

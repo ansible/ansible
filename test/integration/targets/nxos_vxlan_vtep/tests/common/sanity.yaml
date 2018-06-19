@@ -106,6 +106,7 @@
       source_interface: Loopback0
       source_interface_hold_down_time: 30
       shutdown: true
+      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -131,6 +132,7 @@
   - name: "Disable feature nv overlay"
     nxos_feature: 
       feature: nve
+      provider: "{{ connection }}"
       state: disabled
     ignore_errors: yes
 

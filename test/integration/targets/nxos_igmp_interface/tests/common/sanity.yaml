@@ -12,6 +12,7 @@
 - name: "Enable feature PIM"
   nxos_feature:
     feature: pim
+    provider: "{{ connection }}"
     state: enabled
   ignore_errors: yes
 
@@ -51,6 +52,7 @@
       # deprecated
       oif_prefix: 239.255.255.2
       oif_source: 192.0.2.1
+      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -83,6 +85,7 @@
         - {'prefix': '238.2.2.6'}
         - {'prefix': '238.2.2.5'}
         - {'source': '192.0.2.1', 'prefix': '238.2.2.5'}
+      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -103,6 +106,7 @@
     nxos_igmp_interface: &defoif
       interface: "{{ intname }}"
       oif_ps: default
+      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -122,6 +126,7 @@
       startup_query_count: 5
       robustness: 6
       oif_routemap: abcd
+      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -136,6 +141,7 @@
   - name: Configure igmp interface with default state
     nxos_igmp_interface: &default
       interface: "{{ intname }}"
+      provider: "{{ connection }}"
       state: default
     register: result
 
@@ -150,6 +156,7 @@
   - name: Configure igmp interface with absent state
     nxos_igmp_interface: &absent
       interface: "{{ intname }}"
+      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -175,6 +182,7 @@
   - name: "Disable feature PIM"
     nxos_feature:
       feature: pim
+      provider: "{{ connection }}"
       state: disabled
 
   - debug: msg="END connection={{ ansible_connection }} nxos_igmp_interface sanity test"

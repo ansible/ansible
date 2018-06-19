@@ -13,6 +13,7 @@
   - name: "Enable feature udld"
     nxos_feature: 
       feature: udld
+      provider: "{{ connection }}"
       state: enabled
 
   - name: Configure udld
@@ -71,6 +72,7 @@
 
   - name: Remove udld config
     nxos_udld: &conf4
+      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -88,6 +90,7 @@
   - name: "Disable udld"
     nxos_feature: 
       feature: udld
+      provider: "{{ connection }}"
       state: disabled
     ignore_errors: yes
 

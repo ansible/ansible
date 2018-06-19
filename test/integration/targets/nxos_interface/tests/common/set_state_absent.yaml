@@ -11,6 +11,7 @@
 - name: set state=absent
   nxos_interface:
     interface: Loopback1
+    provider: "{{ connection }}"
     state: absent
   register: result
 
@@ -21,6 +22,7 @@
 - name: verify state=absent
   nxos_interface:
     interface: Loopback1
+    provider: "{{ connection }}"
     state: absent
   register: result
 

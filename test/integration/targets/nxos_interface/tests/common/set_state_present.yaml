@@ -12,6 +12,7 @@
 - name: set state=present
   nxos_interface:
     interface: Loopback1
+    provider: "{{ connection }}"
     state: present
     description: 'Configured by Ansible - Layer3'
   register: result
@@ -23,6 +24,7 @@
 - name: verify state=present
   nxos_interface:
     interface: Loopback1
+    provider: "{{ connection }}"
     state: present
     description: 'Configured by Ansible - Layer3'
   register: result

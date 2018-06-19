@@ -7,6 +7,7 @@
   - name: enable feature vpc
     nxos_feature:
       feature: vpc
+      provider: "{{ connection }}"
       state: enabled
 
   - name: create port-channel10
@@ -25,6 +26,7 @@
 
   - name: configure vpc
     nxos_vpc:
+      provider: "{{ connection }}"
       state: present
       domain: 100
       role_priority: 32667
@@ -84,6 +86,7 @@
     nxos_vpc_interface: &remove
       portchannel: 10
       vpc: 10
+      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -98,6 +101,7 @@
   always:
   - name: remove vpc
     nxos_vpc:
+      provider: "{{ connection }}"
       state: absent
       domain: 100
       role_priority: 32667
@@ -112,6 +116,7 @@
     nxos_vpc_interface:
       portchannel: 10
       vpc: 10
+      provider: "{{ connection }}"
       state: absent
     ignore_errors: yes
 
@@ -126,6 +131,7 @@
   - name: disable feature vpc
     nxos_feature:
       feature: vpc
+      provider: "{{ connection }}"
       state: disabled
 
 - debug: msg="END connection={{ ansible_connection }} nxos_vpc_interface sanity test"

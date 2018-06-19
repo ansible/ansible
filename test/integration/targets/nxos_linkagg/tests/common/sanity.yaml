@@ -9,6 +9,7 @@
 - name: "Enable feature LACP"
   nxos_feature:
     feature: lacp
+    provider: "{{ connection }}"
     state: enabled
   ignore_errors: yes
 
@@ -39,6 +40,7 @@
 - name: create linkagg
   nxos_linkagg: &create
     group: 20
+    provider: "{{ connection }}"
     state: present
   register: result
 
@@ -107,6 +109,7 @@
 - name: remove linkagg
   nxos_linkagg: &remove
     group: 20
+    provider: "{{ connection }}"
     state: absent
   register: result
 
@@ -151,6 +154,7 @@
     aggregate:
       - { group: 20, min_links: 3 }
       - { group: 100, min_links: 4 }
+    provider: "{{ connection }}"
     state: absent
   register: result
 
@@ -187,6 +191,7 @@
 - name: "Disable feature LACP"
   nxos_feature:
     feature: lacp
+    provider: "{{ connection }}"
     state: disabled
     timeout: 60
 

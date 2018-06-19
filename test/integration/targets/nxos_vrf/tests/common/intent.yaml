@@ -137,6 +137,7 @@
     aggregate:
       - { name: test1, description: Configured by Ansible }
       - { name: test2, description: Testing, admin_state: down }
+    provider: "{{ connection }}"
     state: absent
   register: result
 
