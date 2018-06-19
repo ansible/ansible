@@ -163,7 +163,7 @@ options:
 
     separate_git_dir:
         description:
-            - The path to place the cloned repository. If specified, Git repository 
+            - The path to place the cloned repository. If specified, Git repository
               can be separated from working tree.
         version_added: "2.7"
 
@@ -445,8 +445,8 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
     elif separate_git_dir:
         git_version_used = git_version(git_path, module)
         if git_version_used is None:
-            raise AnsibleError("Can not find git executable.")
-        if git_version_used > LooseVersion('1.7.5'):
+            module.fail_json(msg='Can not find git executable at %s' % git_path)
+        if git_version_used < LooseVersion('1.7.5'):
             # git before 1.7.5 doesn't have separate-git-dir argument, do fallback
             separate_git_dir_fallback = True
         else:
@@ -477,7 +477,7 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
             dot_git_file.write("gitdir: %s" % separate_git_dir)
             dot_git_file.close()
         except IOError:
-            raise AnsibleError("Can not create and write .git file!")
+            module.fail_json(msg='Unable to create and wirte %s' % os.path.join(dest, '.git'))
 
 
 def has_local_mods(module, git_path, dest, bare):
