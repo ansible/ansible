@@ -220,9 +220,9 @@ def install_packages(module, pkgng_path, packages, cached, pkgsite, dir_arg, sta
 
         if not module.check_mode:
             if already_installed:
-                   action = "upgrade"
+                action = "upgrade"
             else:
-                   action = "install"
+                action = "install"
             if old_pkgng:
                 rc, out, err = module.run_command("%s %s %s %s -g -U -y %s" % (batch_var, pkgsite, pkgng_path, action, package))
             else:
