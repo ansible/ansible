@@ -30,7 +30,7 @@ DOCUMENTATION = """
 module: slxos_l3_interface
 version_added: "2.6"
 author: "Matthew Stone (@bigmstone)"
-short_description: Manage L3 interfaces on Extreme Networks SLXOS network devices.
+short_description: Manage L3 interfaces on Extreme Networks SLX-OS network devices.
 description:
   - This module provides declarative management of L3 interfaces
     on slxos network devices.
