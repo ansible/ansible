@@ -75,7 +75,7 @@ DOCUMENTATION = '''
 
 # Imports for Ansible AWX
 from collections import MutableMapping
-from ansible.errors import AnsibleParserError, AnsibleConnectionFailure
+from ansible.errors import AnsibleParserError, AnsibleConnectionFailure, AnsibleError
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
 from ansible.parsing.utils.addresses import parse_address
@@ -83,6 +83,7 @@ from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cachea
 
 # Imports for this plugin
 from distutils.version import LooseVersion
+from ansible.module_utils.six import iteritems
 from os import environ as env
 import os
 import sys
@@ -102,6 +103,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         self.ipapassword = None
         self.ipaversion = '2.228'
         self.ipaconnection = None
+        self._hosts = set()
 
 
     def parse(self, inventory, loader, path, cache=True):
@@ -185,95 +187,42 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         hostgroups = self._get_hostgroups()
 
-        try:
-            data = self.loader(hostgroups, cache=False)
-        except Exception as e:
-            raise AnsibleParserError(e)
-
-        if not data:
-            raise AnsibleParserError('Parsed empty JSON inventory')
-        elif not isinstance(data, MutableMapping):
-            raise AnsibleParserError('JSON inventory has invalid structure, it should be a dictionary, got: %s' % type(data))
-        elif data.get('plugin'):
-            raise AnsibleParserError('Plugin configuration JSON file, not JSON inventory')
-
-        # We expect top level keys to correspond to groups, iterate over them
-        # to get host, vars and subgroups (which we iterate over recursivelly)
-        if isinstance(data, MutableMapping):
-            for group_name in data:
-                self._parse_group(group_name, data[group_name])
+        if isinstance(hostgroups, MutableMapping):
+            for group_name in hostgroups:
+                self._parse_group(group_name, hostgroups[group_name])
         else:
             raise AnsibleParserError("Invalid data from file, expected dictionary and got:\n\n%s" % to_native(data))
 
-    def _parse_group(self, group, group_data):
+    def _parse_group(self, group, data):
 
-        if isinstance(group_data, MutableMapping):
+        self.inventory.add_group(group)
 
-            self.inventory.add_group(group)
+        if not isinstance(data, dict):
+            data = {'hosts': data}
+        # is not those subkeys, then simplified syntax, host with vars
+        elif not any(k in data for k in ('hosts', 'vars', 'children')):
+            data = {'hosts': [group], 'vars': data}
 
-            # make sure they are dicts
-            for section in ['vars', 'children', 'hosts']:
-                if section in group_data:
-                    # convert strings to dicts as these are allowed
-                    if isinstance(group_data[section], string_types):
-                        group_data[section] = {group_data[section]: None}
+        if 'hosts' in data:
+            if not isinstance(data['hosts'], list):
+                raise AnsibleError("You defined a group '%s' with bad data for the host list:\n %s" % (group, data))
 
-                    if not isinstance(group_data[section], MutableMapping):
-                        raise AnsibleParserError('Invalid "%s" entry for "%s" group, requires a dictionary, found "%s" instead.' %
-                                                 (section, group, type(group_data[section])))
+            for hostname in data['hosts']:
+                self._hosts.add(hostname)
+                self.inventory.add_host(hostname, group)
 
-            for key in group_data:
-                if key == 'vars':
-                    for var in group_data['vars']:
-                        self.inventory.set_variable(group, var, group_data['vars'][var])
+        if 'vars' in data:
+            if not isinstance(data['vars'], dict):
+                raise AnsibleError("You defined a group '%s' with bad data for variables:\n %s" % (group, data))
 
-                elif key == 'children':
-                    for subgroup in group_data['children']:
-                        self._parse_group(subgroup, group_data['children'][subgroup])
-                        self.inventory.add_child(group, subgroup)
+            for k, v in iteritems(data['vars']):
+                self.inventory.set_variable(group, k, v)
 
-                elif key == 'hosts':
-                    for host_pattern in group_data['hosts']:
-                        hosts, port = self._parse_host(host_pattern)
-                        self._populate_host_vars(hosts, group_data['hosts'][host_pattern] or {}, group, port)
-                else:
-                    self.display.warning('Skipping unexpected key (%s) in group (%s), only "vars", "children" and "hosts" are valid' % (key, group))
+        if group != '_meta' and isinstance(data, dict) and 'children' in data:
+            for child_name in data['children']:
+                self.inventory.add_group(child_name)
+                self.inventory.add_child(group, child_name)
 
-        else:
-            self.display.warning("Skipping '%s' as this is not a valid group definition" % group)
-
-    def _parse_host(self, host_pattern):
-        '''
-        Each host key can be a pattern, try to process it and add variables as needed
-        '''
-        (hostnames, port) = self._expand_hostpattern(host_pattern)
-
-        return hostnames, port
-
-    def _expand_hostpattern(self, hostpattern):
-        '''
-        Takes a single host pattern and returns a list of hostnames and an
-        optional port number that applies to all of them.
-        '''
-        # Can the given hostpattern be parsed as a host with an optional port
-        # specification?
-
-        try:
-            (pattern, port) = parse_address(hostpattern, allow_ranges=True)
-        except Exception:
-            # not a recognizable host pattern
-            pattern = hostpattern
-            port = None
-
-        # Once we have separated the pattern, we expand it into list of one or
-        # more hostnames, depending on whether it contains any [x:y] ranges.
-
-        if detect_range(pattern):
-            hostnames = expand_hostname_range(pattern)
-        else:
-            hostnames = [pattern]
-
-        return (hostnames, port)
 
     def _get_hostgroups(
         self
