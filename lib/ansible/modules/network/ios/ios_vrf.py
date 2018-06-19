@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-from collections import OrderedDict
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -260,6 +259,7 @@ from ansible.module_utils.network.ios.ios import load_config, get_config
 from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 from ansible.module_utils.network.common.config import NetworkConfig
 from ansible.module_utils.six import iteritems
+from collections import OrderedDict
 
 
 def get_interface_type(interface):
