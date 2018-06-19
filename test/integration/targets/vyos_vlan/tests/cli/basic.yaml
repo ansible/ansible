@@ -7,6 +7,8 @@
       - delete interfaces ethernet eth1 vif 100
       - delete interfaces ethernet eth0 vif 5
       - delete interfaces ethernet eth0 vif 100
+      - delete interfaces ethernet eth0 vif 101
+      - delete interfaces ethernet eth1 vif 201
 
 - name: set vlan with name
   vyos_vlan: &name
@@ -68,8 +70,32 @@
     that:
       - "result.changed == false"
 
+- name: Create VLANs using aggregate
+  vyos_vlan: &agg_vlan
+    aggregate:
+      - { vlan_id: 101, name: voice, interfaces: "eth0" }
+      - { vlan_id: 201, name: mgm, interfaces: "eth1" }
+    state: present
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'set interfaces ethernet eth0 vif 101 description voice' in result.commands"
+      - "'set interfaces ethernet eth1 vif 201 description mgm' in result.commands"
+
+- name: Create VLANs using aggregate (idempotent)
+  vyos_vlan: *agg_vlan
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
 - name: teardown
   vyos_config:
     lines:
       - delete interfaces ethernet eth1 vif 100
       - delete interfaces ethernet eth0 vif 5
+      - delete interfaces ethernet eth0 vif 101
+      - delete interfaces ethernet eth1 vif 201
