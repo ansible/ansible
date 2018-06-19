@@ -108,6 +108,7 @@ class Role(Base, Become, Conditional, Taggable):
         self._dependencies = []
         self._task_blocks = []
         self._handler_blocks = []
+        self._compiled_handler_blocks = None
         self._default_vars = dict()
         self._role_vars = dict()
         self._had_task_run = dict()
@@ -362,7 +363,15 @@ class Role(Base, Become, Conditional, Taggable):
         return self._task_blocks[:]
 
     def get_handler_blocks(self, play, dep_chain=None):
-        block_list = []
+        # Do not recreate this list each time ``get_handler_blocks`` is called.
+        # Cache the results so that we don't potentially overwrite with copied duplicates
+        #
+        # ``get_handler_blocks`` may be called when handling ``import_role`` during parsing
+        # as well as with ``Play.compile_roles_handlers`` from ``TaskExecutor``
+        if self._compiled_handler_blocks:
+            return self._compiled_handler_blocks
+
+        self._compiled_handler_blocks = block_list = []
 
         # update the dependency chain here
         if dep_chain is None:
