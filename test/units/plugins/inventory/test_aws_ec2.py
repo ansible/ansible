@@ -132,7 +132,8 @@ def test_boto3_conn(inventory):
     inventory._options = {"aws_profile": "first_precedence",
                           "aws_access_key": "test_access_key",
                           "aws_secret_key": "test_secret_key",
-                          "aws_security_token": "test_security_token"}
+                          "aws_security_token": "test_security_token",
+                          "iam_role_arn": None}
     inventory._set_credentials()
     with pytest.raises(AnsibleError) as error_message:
         for connection, region in inventory._boto3_conn(regions=['us-east-1']):
@@ -154,7 +155,7 @@ def test_set_credentials(inventory):
     inventory._options = {'aws_access_key': 'test_access_key',
                           'aws_secret_key': 'test_secret_key',
                           'aws_security_token': 'test_security_token',
-                          'boto_profile': 'test_profile',
+                          'aws_profile': 'test_profile',
                           'iam_role_arn': 'arn:aws:iam::112233445566:role/test-role'}
     inventory._set_credentials()
 
@@ -171,6 +172,7 @@ def test_insufficient_credentials(inventory):
         'aws_secret_key': None,
         'aws_security_token': None,
         'aws_profile': None
+        'iam_role_arn': None
     }
     with pytest.raises(AnsibleError) as error_message:
         inventory._set_credentials()
