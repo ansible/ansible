@@ -41,6 +41,14 @@ options:
         description:
             - The Foreman resource that the action will be performed on (e.g. organization, host).
         required: true
+    timeout:
+        description:
+            - The timeout in seconds to wait for the started Foreman action to finish.
+            - If the timeout is reached and the Foreman action did not complete, the ansible task fails. However the foreman action does not get canceled.
+        default: 1000
+        type: Integer
+        version_added: "2.7"
+        required: false
     params:
         description:
             - Parameters associated to the entity resource to set or edit in dictionary format (e.g. name, description).
@@ -124,6 +132,18 @@ EXAMPLES = '''
         organization: Default Organization
         basearch: x86_64
         releasever: 7
+
+- include: katello.yml
+  vars:
+      name: Promote Contentview Environment with longer timout
+      task_timeout: 10800
+      entity: content_view
+      action: promote
+      params:
+        name: MyContentView
+        organization: MyOrganisation
+        from_environment: Testing
+        to_environment: Production    
 '''
 
 RETURN = '''# '''
@@ -144,11 +164,11 @@ from ansible.module_utils._text import to_native
 
 
 class NailGun(object):
-    def __init__(self, server, entities, module):
+    def __init__(self, server, entities, module, task_timeout):
         self._server = server
         self._entities = entities
         self._module = module
-        entity_mixins.TASK_TIMEOUT = 1000
+        entity_mixins.TASK_TIMEOUT = task_timeout
 
     def find_organization(self, name, **params):
         org = self._entities.Organization(self._server, name=name, **params)
@@ -451,6 +471,7 @@ def main():
             entity=dict(type='str', required=True),
             action=dict(type='str'),
             verify_ssl=dict(type='bool', default=False),
+            task_timeout=dict(type='int', default=1000),
             params=dict(type='dict', required=True, no_log=True),
         ),
         supports_check_mode=True,
@@ -466,13 +487,14 @@ def main():
     action = module.params['action']
     params = module.params['params']
     verify_ssl = module.params['verify_ssl']
+    task_timeout = module.params['task_timeout']
 
     server = ServerConfig(
         url=server_url,
         auth=(username, password),
         verify=verify_ssl
     )
-    ng = NailGun(server, entities, module)
+    ng = NailGun(server, entities, module, task_timeout)
 
     # Lets make an connection to the server with username and password
     try:
