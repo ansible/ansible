@@ -286,7 +286,6 @@ def main():
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
 
-    state = module.params.get('state').lower()
     iam_type = module.params.get('iam_type').lower()
     state = module.params.get('state')
     name = module.params.get('iam_name')
