@@ -377,7 +377,7 @@ class InventoryManager(object):
                     from random import shuffle
                     shuffle(hosts)
                 elif order not in [None, 'inventory']:
-                    AnsibleOptionsError("Invalid 'order' specified for inventory hosts: %s" % order)
+                    raise AnsibleOptionsError("Invalid 'order' specified for inventory hosts: %s" % order)
 
         return hosts
 
