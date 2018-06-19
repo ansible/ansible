@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+from collections import OrderedDict
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -330,7 +331,7 @@ def map_obj_to_commands(updates, module):
                 add_command_to_vrf(want['name'], cmd, commands)
 
         if needs_update(want, have, 'route_both'):
-            for route in list(set(want['route_both'])):
+            for route in list(OrderedDict.fromkeys(want['route_both'])):
                 cmd = 'route-target both %s' % route
                 add_command_to_vrf(want['name'], cmd, commands)
 
@@ -355,7 +356,7 @@ def map_obj_to_commands(updates, module):
         if needs_update(want, have, 'route_both_ipv4'):
                 cmd = 'address-family ipv4'
                 add_command_to_vrf(want['name'], cmd, commands)
-                for route in list(set(want['route_both_ipv4'])):
+                for route in list(OrderedDict.fromkeys(want['route_both_ipv4'])):
                     cmd = 'route-target both %s' % route
                     add_command_to_vrf(want['name'], cmd, commands)
                 cmd = 'exit-address-family'
@@ -382,7 +383,7 @@ def map_obj_to_commands(updates, module):
         if needs_update(want, have, 'route_both_ipv6'):
                 cmd = 'address-family ipv6'
                 add_command_to_vrf(want['name'], cmd, commands)
-                for route in list(set(want['route_both_ipv6'])):
+                for route in list(OrderedDict.fromkeys(want['route_both_ipv6'])):
                     cmd = 'route-target both %s' % route
                     add_command_to_vrf(want['name'], cmd, commands)
                 cmd = 'exit-address-family'

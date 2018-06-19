@@ -128,7 +128,7 @@ class TestIosVrfModule(TestIosModule):
         set_module_args(dict(name='test_5', rd='2:100', route_both=['2:100', '3:100']))
         commands = ['vrf definition test_5', 'address-family ipv4', 'exit', 'address-family ipv6', 'exit', 'rd 2:100', 'route-target both 2:100',
                     'route-target both 3:100']
-        self.execute_module(changed=True, commands=commands, sort=True)
+        self.execute_module(changed=True, commands=commands, sort=False)
 
     def test_ios_vrf_route_import(self):
         set_module_args(dict(name='test_6', rd='3:100', route_import=['3:100', '4:100']))
@@ -150,7 +150,7 @@ class TestIosVrfModule(TestIosModule):
         set_module_args(dict(name='test_9', rd='168.0.0.9:100', route_both_ipv4=['168.0.0.9:100', '3:100']))
         commands = ['vrf definition test_9', 'address-family ipv4', 'exit', 'address-family ipv6', 'exit', 'rd 168.0.0.9:100', 'address-family ipv4',
                     'route-target both 168.0.0.9:100', 'route-target both 3:100', 'exit-address-family']
-        self.execute_module(changed=True, commands=commands, sort=True)
+        self.execute_module(changed=True, commands=commands, sort=False)
 
     def test_ios_vrf_route_import_ipv4(self):
         set_module_args(dict(name='test_10', rd='168.0.0.10:100', route_import_ipv4=['168.0.0.10:100', '3:100']))
@@ -172,7 +172,7 @@ class TestIosVrfModule(TestIosModule):
         set_module_args(dict(name='test_13', rd='2:100', route_both_ipv6=['2:100', '168.0.0.13:100']))
         commands = ['vrf definition test_13', 'address-family ipv4', 'exit', 'address-family ipv6', 'exit', 'rd 2:100', 'address-family ipv6',
                     'route-target both 2:100', 'route-target both 168.0.0.13:100', 'exit-address-family']
-        self.execute_module(changed=True, commands=commands, sort=True)
+        self.execute_module(changed=True, commands=commands, sort=False)
 
     def test_ios_vrf_route_import_ipv6(self):
         set_module_args(dict(name='test_14', rd='3:100', route_import_ipv6=['3:100', '168.0.0.14:100']))
