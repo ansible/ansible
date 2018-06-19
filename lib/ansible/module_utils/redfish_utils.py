@@ -25,8 +25,6 @@ class RedfishUtils(object):
 
     # The following functions are to send GET/POST/PATCH/DELETE requests
     def get_request(self, uri):
-        if 'token' in self.creds:
-            headers = {"X-Auth-Token": self.creds['token']}
         try:
             resp = open_url(uri, method="GET",
                             url_username=self.creds['user'],
@@ -44,8 +42,6 @@ class RedfishUtils(object):
         return {'ret': True, 'data': data}
 
     def post_request(self, uri, pyld, hdrs):
-        if 'token' in self.creds:
-            headers = {"X-Auth-Token": self.creds['token']}
         try:
             resp = open_url(uri, data=json.dumps(pyld),
                             headers=hdrs, method="POST",
@@ -63,8 +59,6 @@ class RedfishUtils(object):
         return {'ret': True, 'resp': resp}
 
     def patch_request(self, uri, pyld, hdrs):
-        if 'token' in self.creds:
-            headers = {"X-Auth-Token": self.creds['token']}
         try:
             resp = open_url(uri, data=json.dumps(pyld),
                             headers=hdrs, method="PATCH",
@@ -82,8 +76,6 @@ class RedfishUtils(object):
         return {'ret': True, 'resp': resp}
 
     def delete_request(self, uri, pyld, hdrs):
-        if 'token' in self.creds:
-            headers = {"X-Auth-Token": self.creds['token']}
         try:
             resp = open_url(uri, data=json.dumps(pyld),
                             headers=hdrs, method="DELETE",
