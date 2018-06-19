@@ -133,7 +133,24 @@ class AzureRMKeyVaultSecret(AzureRMModuleBase):
             setattr(self, key, kwargs[key])
 
         # Create KeyVault Client using KeyVault auth class and auth_callback
-        self.client = KeyVaultClient(self.azure_credentials)
+        def auth_callback(server, resource, scope):
+            if self.credentials['client_id'] is None or self.credentials['secret'] is None:
+                self.fail('Please specify client_id, secret and tenant to access azure Key Vault.')
+
+            tenant = self.credentials.get('tenant')
+            if not self.credentials['tenant']:
+                tenant = "common"
+
+            authcredential = ServicePrincipalCredentials(
+                client_id=self.credentials['client_id'],
+                secret=self.credentials['secret'],
+                tenant=tenant,
+                resource="https://vault.azure.net")
+
+            token = authcredential.token
+            return token['token_type'], token['access_token']
+
+        self.client = KeyVaultClient(KeyVaultAuthentication(auth_callback))
 
         results = dict()
         changed = False
