@@ -229,7 +229,7 @@ def main():
     # Return data back or fail with proper message
     if result['ret'] is True:
         del result['ret']
-        module.exit_json(result=result)
+        module.exit_json(ansible_facts=result)
     else:
         module.fail_json(msg=result['msg'])
 
