@@ -17,8 +17,8 @@ DOCUMENTATION = '''
     notes:
         - To function it requires the 'toml' plugin being whitelisted in configuration.
         - Requires the 'toml' python library
-
 '''
+
 EXAMPLES = '''
 example1: |
     [all.vars]
@@ -61,7 +61,6 @@ except ImportError:
 
 
 class InventoryModule(YAMLInventoryModule):
-
     NAME = 'toml'
 
     def __init__(self):
@@ -91,4 +90,7 @@ class InventoryModule(YAMLInventoryModule):
             with open(b_file_name, 'r') as f:
                 return toml.load(f)
         except (IOError, OSError) as e:
-            raise AnsibleParserError("an error occurred while trying to read the file '%s': %s" % (file_name, to_native(e)), orig_exc=e)
+            raise AnsibleParserError(
+                "an error occurred while trying to read the file '%s': %s" % (file_name, to_native(e)),
+                orig_exc=e
+            )
