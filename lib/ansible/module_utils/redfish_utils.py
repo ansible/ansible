@@ -4,12 +4,8 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import os
 import json
 import re
-import xml.etree.ElementTree as ET
-from distutils.version import LooseVersion
-from datetime import datetime
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.six.moves.urllib.error import URLError, HTTPError
 
