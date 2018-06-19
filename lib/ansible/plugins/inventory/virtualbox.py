@@ -250,7 +250,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             try:
                 p = Popen(cmd, stdout=PIPE)
             except Exception as e:
-                AnsibleParserError(to_native(e))
+                raise AnsibleParserError(to_native(e))
 
             source_data = p.stdout.read().splitlines()
 
