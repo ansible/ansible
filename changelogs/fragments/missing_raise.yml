@@ -1,0 +1,2 @@
+bugfixes:
+    - added missing 'raise' to exception definition https://github.com/ansible/ansible/pull/41690
