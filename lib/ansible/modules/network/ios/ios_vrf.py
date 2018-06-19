@@ -259,7 +259,6 @@ from ansible.module_utils.network.ios.ios import load_config, get_config
 from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 from ansible.module_utils.network.common.config import NetworkConfig
 from ansible.module_utils.six import iteritems
-from collections import OrderedDict
 
 
 def get_interface_type(interface):
@@ -331,7 +330,9 @@ def map_obj_to_commands(updates, module):
                 add_command_to_vrf(want['name'], cmd, commands)
 
         if needs_update(want, have, 'route_both'):
-            for route in list(OrderedDict.fromkeys(want['route_both'])):
+            proceed = []
+            needs = [item for item in want['route_both'] if not (item in proceed or proceed.append(item))]
+            for route in needs:
                 cmd = 'route-target both %s' % route
                 add_command_to_vrf(want['name'], cmd, commands)
 
@@ -356,7 +357,9 @@ def map_obj_to_commands(updates, module):
         if needs_update(want, have, 'route_both_ipv4'):
                 cmd = 'address-family ipv4'
                 add_command_to_vrf(want['name'], cmd, commands)
-                for route in list(OrderedDict.fromkeys(want['route_both_ipv4'])):
+                proceed = []
+                needs = [item for item in want['route_both_ipv4'] if not (item in proceed or proceed.append(item))]
+                for route in needs:
                     cmd = 'route-target both %s' % route
                     add_command_to_vrf(want['name'], cmd, commands)
                 cmd = 'exit-address-family'
@@ -383,7 +386,9 @@ def map_obj_to_commands(updates, module):
         if needs_update(want, have, 'route_both_ipv6'):
                 cmd = 'address-family ipv6'
                 add_command_to_vrf(want['name'], cmd, commands)
-                for route in list(OrderedDict.fromkeys(want['route_both_ipv6'])):
+                proceed = []
+                needs = [item for item in want['route_both_ipv6'] if not (item in proceed or proceed.append(item))]
+                for route in needs:
                     cmd = 'route-target both %s' % route
                     add_command_to_vrf(want['name'], cmd, commands)
                 cmd = 'exit-address-family'
