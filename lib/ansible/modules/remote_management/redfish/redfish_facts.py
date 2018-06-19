@@ -99,7 +99,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             category=dict(required=True, choices=["Inventory", "Accounts", "System", "Update", "Manager", "Chassis"]),
-            command=dict(required=True),
+            command=dict(),
             baseuri=dict(required=True),
             user=dict(required=True),
             password=dict(required=True, no_log=True),
@@ -125,6 +125,10 @@ def main():
         result = rf_utils._find_systems_resource(rf_uri)
         if result['ret'] is False:
             module.fail_json(msg=result['msg'])
+
+        # Set default value
+        if not command:
+            command = "GetSystemInventory"
 
         # General
         if command == "GetSystemInventory":
@@ -161,6 +165,10 @@ def main():
         if result['ret'] is False:
             module.fail_json(msg=result['msg'])
 
+        # Set default value
+        if not command:
+            command = "ListUsers"
+
         if command == "ListUsers":
             result = rf_utils.list_users()
         else:
@@ -171,6 +179,10 @@ def main():
         result = rf_utils._find_systems_resource(rf_uri)
         if result['ret'] is False:
             module.fail_json(msg=result['msg'])
+
+        # Set default value
+        if not command:
+            command = "GetBiosAttributes"
 
         if command == "GetBiosAttributes":
             result = rf_utils.get_bios_attributes()
@@ -185,6 +197,10 @@ def main():
         if result['ret'] is False:
             module.fail_json(msg=result['msg'])
 
+        # Set default value
+        if not command:
+            command = "GetFirmwareInventory"
+
         if command == "GetFirmwareInventory":
             result = rf_utils.get_firmware_inventory()
         else:
@@ -195,6 +211,10 @@ def main():
         result = rf_utils._find_managers_resource(rf_uri)
         if result['ret'] is False:
             module.fail_json(msg=result['msg'])
+
+        # Set default value
+        if not command:
+            command = "GetManagerAttributes"
 
         if command == "GetManagerAttributes":
             result = rf_utils.get_manager_attributes()
