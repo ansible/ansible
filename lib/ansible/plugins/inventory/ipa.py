@@ -14,8 +14,8 @@ DOCUMENTATION = '''
         - Vars entries are normal group vars.
     notes:
         - To function it requires being whitelisted in configuration.
-        - Requires the [python_freeipa](https://pypi.org/project/python-freeipa/) and [urllib3](https://pypi.org/project/urllib3/) module for HTTPS authentication
-        - Requires the [ipalib](https://pypi.org/project/ipalib/) and [ipaclient](https://pypi.org/project/ipaclient/) modules to use Kerberos authentication
+        - Requires [python_freeipa](https://pypi.org/project/python-freeipa/) and [urllib3](https://pypi.org/project/urllib3/) for HTTPS authentication
+        - Requires  [ipalib](https://pypi.org/project/ipalib/) and [ipaclient](https://pypi.org/project/ipaclient/) to use Kerberos authentication
         - Kerberos authentication requires that the Ansible user/process environment has valid Kerberos authentication & keytab
     options:
       ipahttps:
@@ -116,7 +116,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         self.ipaconnection = None
         self._hosts = set()
 
-
     def parse(self, inventory, loader, path, cache=True):
         ''' parses the inventory file '''
 
@@ -157,7 +156,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         else:
             # Connect via Kerberos using ipalib
             try:
-                from ipalib import api, errors, __version__ as IPA_VERSION
+                from ipalib import api, __version__ as IPA_VERSION
             except ImportError:
                 sys.exit('The ipa dynamic inventory script requires ipalib for Kerberos authentication')
 
@@ -207,7 +206,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             for group_name in hostgroups:
                 self._parse_group(group_name, hostgroups[group_name])
         else:
-            raise AnsibleParserError("Invalid data from file, expected dictionary and got:\n\n%s" % to_native(data))
+            raise AnsibleParserError("Invalid hostgrousp from FreeIPA, expected dictionary and got:\n\n%s" % to_native(hostgroups))
 
     def _parse_group(self, group, data):
 
@@ -238,7 +237,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             for child_name in data['children']:
                 self.inventory.add_group(child_name)
                 self.inventory.add_child(group, child_name)
-
 
     def _get_hostgroups(
         self
@@ -291,10 +289,14 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 del result['usercertificate']
         else:
             try:
+                try:
+                    from ipalib import errors
+                except ImportError:
+                    sys.exit('The ipa dynamic inventory script requires ipalib for Kerberos authentication')
                 result = self.ipaconnection.Command.host_show(host)['result']
                 if 'usercertificate' in result:
                     del result['usercertificate']
-            except errors.NotFound as e:
+            except errors.NotFound:
                 result = {}
 
         return result
