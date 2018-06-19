@@ -508,7 +508,6 @@ def replace_network_acl_association(nacl_id, subnets, client, module):
 
 
 def replace_network_acl_entry(entries, Egress, nacl_id, client, module):
-    params = dict()
     for entry in entries:
         params = entry
         params['NetworkAclId'] = nacl_id
