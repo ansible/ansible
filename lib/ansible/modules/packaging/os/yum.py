@@ -1134,7 +1134,8 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, en
         will_update_from_other_package = dict()
         for spec in items:
             # some guess work involved with groups. update @<group> will install the group if missing
-            if spec.startswith('@'):
+            # also handle globs in package name spec
+            if spec.startswith('@') or '*' in spec:
                 pkgs['update'].append(spec)
                 will_update.add(spec)
                 continue
@@ -1262,6 +1263,14 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, en
     if cmd:     # update all
         rc, out, err = module.run_command(cmd)
         res['changed'] = True
+    elif pkgs['update'] or will_update and not pkgs['install']:
+        cmd = yum_basecmd + ['upgrade'] + pkgs['update']
+        lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+        rc, out, err = module.run_command(cmd, environ_update=lang_env)
+        out_lower = out.strip().lower()
+        if not out_lower.endswith("no packages marked for update") and \
+                not out_lower.endswith("nothing to do"):
+            res['changed'] = True
     elif pkgs['install'] or will_update:
         cmd = yum_basecmd + ['install'] + pkgs['install'] + pkgs['update']
         lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
