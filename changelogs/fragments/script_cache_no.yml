@@ -1,0 +1,2 @@
+docfixes:
+    - removed config for cache in script plugin as it was not implemented

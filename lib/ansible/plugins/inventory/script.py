@@ -10,15 +10,6 @@ DOCUMENTATION = '''
     version_added: "2.4"
     short_description: Executes an inventory script that returns JSON
     options:
-      cache:
-        description: Toggle the usage of the configured Cache plugin.
-        default: False
-        type: boolean
-        ini:
-           - section: inventory_plugin_script
-             key: cache
-        env:
-           - name: ANSIBLE_INVENTORY_PLUGIN_SCRIPT_CACHE
       always_show_stderr:
         description: Toggle display of stderr even when script was successful
         version_added: "2.5.1"
