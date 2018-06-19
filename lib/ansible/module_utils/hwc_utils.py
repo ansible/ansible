@@ -204,28 +204,15 @@ class DictComparison(object):
         self.request = request
 
     def __eq__(self, other):
-        return not self.difference(other)
+        return self._compare_dicts(self.request, other.request)
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    # Returns the difference between `self.request` and `b`
-    def difference(self, b):
-        return self._compare_dicts(self.request, b.request)
-
     def _compare_dicts(self, dict1, dict2):
-        difference = {}
-        for key in dict1:
-            difference[key] = self._compare_value(dict1.get(key),
-                                                  dict2.get(key))
-
-        # Remove all empty values from difference.
-        difference2 = {}
-        for key in difference:
-            if difference[key]:
-                difference2[key] = difference[key]
-
-        return difference2
+        return all([
+            self._compare_value(dict1.get(k), dict2.get(k)) for k in dict1
+        ])
 
     # Takes in two lists and compares them.
     def _compare_lists(self, list1, list2):
@@ -236,32 +223,25 @@ class DictComparison(object):
                 value2 = list2[index]
                 difference.append(self._compare_value(value1, value2))
 
-        difference2 = []
-        for value in difference:
-            if value:
-                difference2.append(value)
-
-        return difference2
+        return all(difference)
 
     def _compare_value(self, value1, value2):
-        diff = None
-        # If a None is found, a difference does not exist.
-        # Only differing values matter.
-        if not value2:
-            return None
+        """
+        return: True: value1 is same as value2, otherwise False.
+        """
+        if not (value1 and value2):
+            return (not value1) and (not value2)
 
         # Can assume non-None types at this point.
         try:
             if isinstance(value1, list):
-                diff = self._compare_lists(value1, value2)
-            elif isinstance(value2, dict):
-                diff = self._compare_dicts(value1, value2)
+                return self._compare_lists(value1, value2)
+            elif isinstance(value1, dict):
+                return self._compare_dicts(value1, value2)
             # Always use to_text values to avoid unicode issues.
-            elif to_text(value1) != to_text(value2):
-                diff = value1
+            else:
+               return to_text(value1) == to_text(value2)
         # to_text may throw UnicodeErrors.
-        # These errors shouldn't crash Ansible and should be hidden.
+        # These errors shouldn't crash Ansible and return False as default.
         except UnicodeError:
-            pass
-
-        return diff
+            return False
