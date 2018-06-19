@@ -234,7 +234,7 @@ class CallbackBase(AnsiblePlugin):
 
     def _get_item(self, result):
         ''' here for backwards compat, really should have always been named: _get_item_label'''
-        cback = getattr(self, 'NAME', os.basename(__file__))
+        cback = getattr(self, 'NAME', os.path.basename(__file__))
         self._display.deprecated("The %s callback plugin should be updated to use the _get_item_label method instead" % cback, version="2.11")
         return self._get_item_label(result)
 
