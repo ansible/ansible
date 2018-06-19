@@ -424,10 +424,6 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
         cmd.append('--bare')
     else:
         cmd.extend(['--origin', remote])
-    if separate_git_dir:
-        separate_git_dir = os.path.abspath(separate_git_dir)
-        cmd.extend(['--separate-git-dir=%s' % separate_git_dir])
-        module.warn(str(cmd))
     if depth:
         if version == 'HEAD' or refspec:
             cmd.extend(['--depth', str(depth)])
@@ -442,6 +438,21 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
                         "HEAD, branches, tags or in combination with refspec.")
     if reference:
         cmd.extend(['--reference', str(reference)])
+    separate_git_dir_fallback = False
+    if separate_git_dir is not None and bare:
+        module.warn("Ignoring separate_git_dir argument. "
+                    "Can not do bare clone with argument separate_git_dir.")
+    elif separate_git_dir:
+        git_version_used = git_version(git_path, module)
+        if git_version_used is None:
+            raise AnsibleError("Can not find git executable.")
+        if git_version_used > LooseVersion('1.7.5'):
+            # git before 1.7.5 doesn't have separate-git-dir argument, do fallback
+            separate_git_dir_fallback = True
+        else:
+            separate_git_dir = os.path.abspath(separate_git_dir)
+            cmd.extend(['--separate-git-dir=%s' % separate_git_dir])
+
     cmd.extend([repo, dest])
     module.run_command(cmd, check_rc=True, cwd=dest_dirname)
     if bare and remote != 'origin':
@@ -456,6 +467,17 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
 
     if verify_commit:
         verify_commit_sign(git_path, module, dest, version)
+
+    if separate_git_dir_fallback:
+        separate_git_dir = os.path.abspath(separate_git_dir)
+        fallback_cmd = ['mv', os.path.join(dest, '.git'), separate_git_dir]
+        module.run_command(fallback_cmd, check_rc=True, cwd=dest)
+        try:
+            dot_git_file = open(os.path.join(dest, ".git"), "w")
+            dot_git_file.write("gitdir: %s" % separate_git_dir)
+            dot_git_file.close()
+        except IOError:
+            raise AnsibleError("Can not create and write .git file!")
 
 
 def has_local_mods(module, git_path, dest, bare):
