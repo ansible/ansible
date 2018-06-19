@@ -37,7 +37,6 @@ options:
         choices: [ 'present', 'latest', 'absent' ]
         required: false
         default: present
-        version_added: "2.7"
     cached:
         description:
             - Use local package base instead of fetching an updated one.
