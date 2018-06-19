@@ -130,12 +130,15 @@ def query_package(module, pkgng_path, name, dir_arg):
     return False
 
 
-def query_update(module, pkgng_path, name, dir_arg):
+def query_update(module, pkgng_path, name, dir_arg, old_pkgng, pkgsite):
 
     # Check to see if a package upgrade is available.
     # rc = 0, no updates available or package not installed
     # rc = 1, updates available
-    rc, out, err = module.run_command("%s %s upgrade -g -n %s" % (pkgng_path, dir_arg, name))
+    if old_pkgng:
+        rc, out, err = module.run_command("%s %s upgrade -g -n %s" % (pkgsite, pkgng_path, name))
+    else:
+        rc, out, err = module.run_command("%s %s upgrade %s -g -n %s" % (pkgng_path, dir_arg, pkgsite, name))
 
     if rc == 1:
         return True
@@ -214,7 +217,7 @@ def install_packages(module, pkgng_path, packages, cached, pkgsite, dir_arg, sta
         if already_installed and state == "present":
             continue
 
-        update_available = query_update(module, pkgng_path, package, dir_arg)
+        update_available = query_update(module, pkgng_path, package, dir_arg, old_pkgng, pkgsite)
         if not update_available and already_installed and state == "latest":
             continue
 
