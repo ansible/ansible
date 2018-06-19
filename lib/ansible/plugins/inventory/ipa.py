@@ -14,7 +14,9 @@ DOCUMENTATION = '''
         - Vars entries are normal group vars.
     notes:
         - To function it requires being whitelisted in configuration.
-        - Requires the [python_freeipa](https://pypi.org/project/python-freeipa/) module
+        - Requires the [python_freeipa](https://pypi.org/project/python-freeipa/) and [urllib3](https://pypi.org/project/urllib3/) module for HTTPS authentication
+        - Requires the [ipalib](https://pypi.org/project/ipalib/) and [ipaclient](https://pypi.org/project/ipaclient/) modules to use Kerberos authentication
+        - Kerberos authentication requires that the Ansible user/process environment has valid Kerberos authentication & keytab
     options:
       ipahttps:
         description: toggles the use of HTTPS authentication (with `python_freeipa`) or Kerberos Authentication (with `ipalib`)
@@ -71,6 +73,15 @@ DOCUMENTATION = '''
             section: defaults
           - section: inventory_ipa
             key: ipa_version
+'''
+
+EXAMPLES = '''
+plugin: ipa
+ipahttps: true
+ipaserver: ipa.example.org
+ipauser: username
+ipapassword: password
+ipaversion: 2.228
 '''
 
 # Imports for Ansible AWX
@@ -235,7 +246,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         inventory = {}
         hostvars = {}
         result = {}
-        all_members=[]
 
         if self.ipahttps:
             result = self.ipaconnection._request(
@@ -252,7 +262,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
             if 'member_host' in hostgroup:
                 members = [host for host in hostgroup['member_host']]
-                all_members = list(set().union(all_members, members))
             if 'member_hostgroup' in hostgroup:
                 children = hostgroup['member_hostgroup']
             inventory[hostgroup['cn'][0]] = {
