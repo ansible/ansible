@@ -624,7 +624,8 @@ class TaskExecutor:
                 else:
                     vars_copy.update(namespace_facts(result['ansible_facts']))
                     if C.INJECT_FACTS_AS_VARS:
-                        vars_copy.update(clean_facts(result['ansible_facts']))
+                        result['ansible_facts'] = clean_facts(result['ansible_facts'])
+                        vars_copy.update(result['ansible_facts'])
 
             # set the failed property if it was missing.
             if 'failed' not in result:
@@ -685,7 +686,8 @@ class TaskExecutor:
             else:
                 variables.update(namespace_facts(result['ansible_facts']))
                 if C.INJECT_FACTS_AS_VARS:
-                    variables.update(clean_facts(result['ansible_facts']))
+                    result['ansible_facts'] = clean_facts(result['ansible_facts'])
+                    variables.update(result['ansible_facts'])
 
         # save the notification target in the result, if it was specified, as
         # this task may be running in a loop in which case the notification
