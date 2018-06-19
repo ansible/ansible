@@ -199,20 +199,17 @@ if($gather_subset.Contains('distribution')) {
         ansible_os_family = "Windows"
         ansible_os_name = ($win32_os.Name.Split('|')[0]).Trim()
     }
-    switch ($win32_os.ProductType.ToString()) {
-      "1" {$ansible_facts += @{
+    switch ($win32_os.ProductType) {
+      1 {$ansible_facts += @{
             ansible_os_producttype = "workstation"}
           }
-      "2" {$ansible_facts += @{
+      2 {$ansible_facts += @{
             ansible_os_producttype = "domain_controller"}
           }
-      "3" {$ansible_facts += @{
+      3 {$ansible_facts += @{
             ansible_os_producttype = "server"}
           }
-      {$_ -eq "0"} {$ansible_facts += @{
-            ansible_os_producttype = "unknown"}
-          }
-      {$_ -gt "4"} {$ansible_facts += @{
+      default {$ansible_facts += @{
             ansible_os_producttype = "unknown"}
           }
     }
