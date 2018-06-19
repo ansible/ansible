@@ -629,8 +629,14 @@
           subnets: "{{ setup_subnet.results | json_query('[].subnet.id') }}"
           security_groups:
             - '{{ setup_sg.group_id }}'
+          assign_public_ip: ENABLED
         <<: *aws_connection_info
       register: ecs_fargate_service_network_with_awsvpc
+
+    - name: assert that public IP assignment is enabled
+      assert:
+        that:
+          - 'ecs_fargate_service_network_with_awsvpc.service.networkConfiguration.awsvpcConfiguration.assignPublicIp == "ENABLED"'
 
     # ============================================================
     # End tests for Fargate

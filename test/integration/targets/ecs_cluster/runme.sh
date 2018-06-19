@@ -28,5 +28,5 @@ ansible-playbook -i ../../inventory -e @../../integration_config.yml -e @../../c
 # Run full test suite
 virtualenv --system-site-packages --python "${PYTHON}" "${MYTMPDIR}/botocore-recent"
 source "${MYTMPDIR}/botocore-recent/bin/activate"
-$PYTHON -m pip install 'botocore>=1.8.0' boto3
+$PYTHON -m pip install 'botocore>=1.8.4' boto3
 ansible-playbook -i ../../inventory -e @../../integration_config.yml -e @../../cloud-config-aws.yml -v playbooks/full_test.yml "$@"

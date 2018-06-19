@@ -68,7 +68,7 @@
             network_configuration:
               subnets:
                 - subnet-abcd1234
-              groups:
+              security_groups:
                 - sg-abcd1234
             state: present
             <<: *aws_connection_info
@@ -90,7 +90,7 @@
             network_configuration:
               subnets:
                 - subnet-abcd1234
-              groups:
+              security_groups:
                 - sg-abcd1234
             launch_type: FARGATE
             state: present
@@ -132,7 +132,7 @@
             network_configuration:
               subnets:
                 - subnet-abcd1234
-              groups:
+              security_groups:
                 - sg-abcd1234
             <<: *aws_connection_info
           register: ecs_task_creation_vpc
