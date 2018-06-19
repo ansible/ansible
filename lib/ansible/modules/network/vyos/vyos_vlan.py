@@ -185,6 +185,10 @@ def map_params_to_obj(module):
                     item[key] = module.params[key]
 
             d = item.copy()
+
+            if not d['vlan_id']:
+                module.fail_json(msg='vlan_id is required')
+
             d['vlan_id'] = str(d['vlan_id'])
             module._check_required_one_of(module.required_one_of, item)
 
