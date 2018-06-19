@@ -12,12 +12,21 @@
   register: tempdir
 
 - name: SEPARATE-GIT-DIR | clone with a separate git dir
-  command: git clone {{ repo_format1 }} {{ checkout_dir }} --separate-git-dir={{ tempdir.stdout }}
+  git:
+    repo: '{{ repo_format1 }}'
+    dest: '{{ checkout_dir }}'
+    separate_git_dir: '{{ tempdir.stdout }}'
 
 - name: SEPARATE-GIT-DIR | update repo the usual way
   git:
     repo: "{{ repo_format1 }}"
     dest: "{{ checkout_dir }}"
+  register: result
+
+- name: SEPARATE-GIT-DIR | update should not fail
+  assert:
+    that:
+      - result is not failed
 
 - name: SEPARATE-GIT-DIR | set git dir to non-existent dir
   shell: "echo gitdir: /dev/null/non-existent-dir > .git"
