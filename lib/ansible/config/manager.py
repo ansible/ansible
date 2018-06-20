@@ -31,7 +31,8 @@ from ansible.utils.path import makedirs_safe
 Plugin = namedtuple('Plugin', 'name type')
 Setting = namedtuple('Setting', 'name value origin type')
 
-INTERNAL_DEFS = { 'lookup': ('_terms',) }
+INTERNAL_DEFS = {'lookup': ('_terms',)}
+
 
 # FIXME: see if we can unify in module_utils with similar function used by argspec
 def ensure_type(value, value_type, origin=None):
@@ -220,7 +221,7 @@ class ConfigManager(object):
                 with open(cfile, 'rb') as f:
                     try:
                         cfg_text = to_text(f.read(), errors='surrogate_or_strict')
-                    except UnicodeError:
+                    except UnicodeError as e:
                         raise AnsibleOptionsError("Error reading config file(%s) because the config file was not utf8 encoded: %s" % (cfile, to_native(e)))
                 try:
                     if PY3:
@@ -241,12 +242,12 @@ class ConfigManager(object):
         ''' Load YAML Config Files in order, check merge flags, keep origin of settings'''
         pass
 
-    def get_plugin_options(self, plugin_type, name, keys=None, variables=None):
+    def get_plugin_options(self, plugin_type, name, keys=None, variables=None, direct=None):
 
         options = {}
         defs = self.get_configuration_definitions(plugin_type, name)
         for option in defs:
-            options[option] = self.get_config_value(option, plugin_type=plugin_type, plugin_name=name, keys=keys, variables=variables)
+            options[option] = self.get_config_value(option, plugin_type=plugin_type, plugin_name=name, keys=keys, variables=variables, direct=direct)
 
         return options
 
@@ -290,17 +291,17 @@ class ConfigManager(object):
 
         return value, origin
 
-    def get_config_value(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None):
+    def get_config_value(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None, direct=None):
         ''' wrapper '''
 
         try:
             value, _drop = self.get_config_value_and_origin(config, cfile=cfile, plugin_type=plugin_type, plugin_name=plugin_name,
-                                                            keys=keys, variables=variables)
+                                                            keys=keys, variables=variables, direct=direct)
         except Exception as e:
             raise AnsibleError("Invalid settings supplied for %s: %s" % (config, to_native(e)))
         return value
 
-    def get_config_value_and_origin(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None):
+    def get_config_value_and_origin(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None, direct=None):
         ''' Given a config key figure out the actual value and report on the origin of the settings '''
 
         if cfile is None:
@@ -319,8 +320,14 @@ class ConfigManager(object):
             defs = self._plugins[plugin_type][plugin_name]
 
         if config in defs:
+
+            # direct setting via plugin arguments
+            if direct and config in direct:
+                value = direct[config]
+                origin = 'Direct'
+
             # Use 'variable overrides' if present, highest precedence, but only present when querying running play
-            if variables and defs[config].get('vars'):
+            if value is None and variables and defs[config].get('vars'):
                 value, origin = self._loop_entries(variables, defs[config]['vars'])
                 origin = 'var: %s' % origin
 
