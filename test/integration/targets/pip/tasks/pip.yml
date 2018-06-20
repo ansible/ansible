@@ -273,3 +273,56 @@
   assert:
     that:
       - pip_install_empty_version_string is successful
+
+# test version specifiers
+- name: make sure no test_package installed now
+  pip:
+    name: "{{ pip_test_package }}"
+    state: absent
+
+- name : install package with version specifiers
+  pip:
+    name: "{{ pip_test_package }}"
+    version: "<100.0.0,!=1.0.0,>0.0.0"
+  register: version
+
+- name: assert package installed correctly
+  assert:
+    that: "version.changed"
+
+- name: reinstall package
+  pip:
+    name: "{{ pip_test_package }}"
+    version: "<100.0.0,!=1.0.0,>0.0.0"
+  register: version2
+
+- name: assert no changes ocurred
+  assert:
+    that: "version2.changed == False"
+
+- name: test the check_mod
+  pip:
+    name: "{{ pip_test_package }}"
+    version: "<100.0.0,!=1.0.0,>0.0.0"
+  check_mode: yes
+  register: version3
+
+- name: assert no changes since satisfied the requirment
+  assert:
+    that: "version3.changed == False"
+
+- name: test the check_mod with unsatisfied version
+  pip:
+    name: "{{ pip_test_package }}"
+    version: ">100.0.0"
+  check_mode: yes
+  register: version4
+
+- name: assert changed
+  assert:
+    that: "version4.changed == True"
+
+- name: uninstall test package
+  pip:
+    name: "{{ pip_test_package }}"
+    state: absent
