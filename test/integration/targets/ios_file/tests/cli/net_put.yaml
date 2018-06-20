@@ -31,4 +31,20 @@
     that:
       - result.changed == true
 
+- name: copy file with non-ascii characters to ios in template mode(Fail case)
+  net_put:
+    src: nonascii.bin
+    mode: 'template'
+  register: result
+  ignore_errors: true
+
+- name: copy file with non-ascii characters to ios in default mode(binary)
+  net_put:
+    src: nonascii.bin
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+
 - debug: msg="END ios cli/net_put.yaml on connection={{ ansible_connection }}"
