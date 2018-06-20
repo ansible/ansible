@@ -20,6 +20,32 @@
       - create_orgaccess.changed == true
       - 'create_orgaccess.data.name == "Jane Doe"'
 
+- name: Delete recently created administrator
+  meraki_admin:
+    auth_key: '{{auth_key}}'
+    state: absent
+    org_name: '{{test_org_name}}'
+    email: '{{email_prefix}}+janedoe@{{email_domain}}'
+  delegate_to: localhost
+  register: delete_one
+
+- name: Create new administrator with org_id
+  meraki_admin:
+    auth_key: '{{auth_key}}'
+    state: present
+    org_id: '{{test_org_id}}'
+    name: Jane Doe
+    email: '{{email_prefix}}+janedoe@{{email_domain}}'
+    orgAccess: read-only
+  delegate_to: localhost
+  register: create_orgaccess_id
+
+- name: Create new admin assertion
+  assert:
+    that:
+      - create_orgaccess_id.changed == true
+      - 'create_orgaccess_id.data.name == "Jane Doe"'
+
 - name: Create administrator with tags
   meraki_admin:
     auth_key: '{{auth_key}}'

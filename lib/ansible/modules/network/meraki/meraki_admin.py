@@ -69,24 +69,37 @@ EXAMPLES = r'''
 - name: Query information about all administrators associated to the organization
   meraki_admin:
     auth_key: abc12345
+    org_name: YourOrg
     state: query
   delegate_to: localhost
 
 - name: Query information about a single administrator by name
   meraki_admin:
     auth_key: abc12345
+    org_id: 12345
     state: query
     name: Jane Doe
 
 - name: Query information about a single administrator by email
   meraki_admin:
     auth_key: abc12345
+    org_name: YourOrg
     state: query
     email: jane@doe.com
 
-- name:  new administrator with organization access
+- name: Create new administrator with organization access
   meraki_admin:
     auth_key: abc12345
+    org_name: YourOrg
+    state: present
+    name: Jane Doe
+    orgAccess: read-only
+    email: jane@doe.com
+
+- name: Create new administrator with organization access
+  meraki_admin:
+    auth_key: abc12345
+    org_name: YourOrg
     state: present
     name: Jane Doe
     orgAccess: read-only
@@ -95,6 +108,7 @@ EXAMPLES = r'''
 - name: Create a new administrator with organization access
   meraki_admin:
     auth_key: abc12345
+    org_name: YourOrg
     state: present
     name: Jane Doe
     orgAccess: read-only
@@ -103,6 +117,7 @@ EXAMPLES = r'''
 - name: Revoke access to an organization for an administrator
   meraki_admin:
     auth_key: abc12345
+    org_name: YourOrg
     state: absent
     email: jane@doe.com
 '''
@@ -144,12 +159,11 @@ def get_admins(meraki, org_id):
     return admins
 
 
-def get_admin_id(meraki, org_name, data, name=None, email=None):
+def get_admin_id(meraki, data, name=None, email=None):
     admin_id = None
     for a in data:
         if meraki.params['name'] is not None:
             if meraki.params['name'] == a['name']:
-                # meraki.fail_json(msg='HERE')
                 if admin_id is not None:
                     meraki.fail_json(msg='There are multiple administrators with the same name')
                 else:
@@ -319,18 +333,20 @@ def main():
 
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
-    org_id = meraki.get_org_id(meraki.params['org_name'])
+    org_id = meraki.params['org_id']
+    if not meraki.params['org_id']:
+        org_id = meraki.get_org_id(meraki.params['org_name'])
     if meraki.params['state'] == 'query':
         admins = get_admins(meraki, org_id)
         if not meraki.params['name'] and not meraki.params['email']:  # Return all admins for org
             meraki.result['data'] = admins
         if meraki.params['name'] is not None:  # Return a single admin for org
-            admin_id = get_admin_id(meraki, meraki.params['org_name'], admins, name=meraki.params['name'])
+            admin_id = get_admin_id(meraki, admins, name=meraki.params['name'])
             meraki.result['data'] = admin_id
             admin = get_admin(meraki, admins, admin_id)
             meraki.result['data'] = admin
         elif meraki.params['email'] is not None:
-            admin_id = get_admin_id(meraki, meraki.params['org_name'], admins, email=meraki.params['email'])
+            admin_id = get_admin_id(meraki, admins, email=meraki.params['email'])
             meraki.result['data'] = admin_id
             admin = get_admin(meraki, admins, admin_id)
             meraki.result['data'] = admin
@@ -344,7 +360,6 @@ def main():
             meraki.result['data'] = r
     elif meraki.params['state'] == 'absent':
         admin_id = get_admin_id(meraki,
-                                meraki.params['org_name'],
                                 get_admins(meraki, org_id),
                                 email=meraki.params['email']
                                 )
