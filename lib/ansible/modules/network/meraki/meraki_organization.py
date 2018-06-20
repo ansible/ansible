@@ -85,10 +85,22 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-response:
-    description: Data returned from Meraki dashboard.
-    type: dict
-    returned: info
+data:
+  description: Information about the organization which was created or modified
+  returned: success
+  type: complex
+  contains:
+    id:
+      description: Unique identification number of organization
+      returned: success
+      type: int
+      sample: 2930418
+    name:
+      description: Name of organization
+      returned: success
+      type: string
+      sample: YourOrg
+
 '''
 
 import os
