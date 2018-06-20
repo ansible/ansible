@@ -409,8 +409,9 @@ def is_eapi(module):
 
 
 def to_command(module, commands):
-    if 'text' in commands[0].split('| '):
-        default_output = 'text'
+    if isinstance(commands, dict):
+        default_output = commands['output']
+        commands = commands['command']
     elif is_eapi(module):
         default_output = 'json'
     else:
