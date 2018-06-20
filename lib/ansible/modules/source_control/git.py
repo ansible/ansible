@@ -256,6 +256,18 @@ from ansible.module_utils.six import b, string_types
 from ansible.module_utils._text import to_native
 
 
+def separate_repo_fallback(module, separate_git_dir, dest):
+    separate_git_dir = os.path.abspath(separate_git_dir)
+    fallback_cmd = ['mv', os.path.join(dest, '.git'), separate_git_dir]
+    module.run_command(fallback_cmd, check_rc=True, cwd=dest)
+    try:
+        dot_git_file = open(os.path.join(dest, ".git"), "w")
+        dot_git_file.write("gitdir: %s" % separate_git_dir)
+        dot_git_file.close()
+    except IOError:
+        module.fail_json(msg='Unable to create and wirte %s' % os.path.join(dest, '.git'))
+
+
 def head_splitter(headfile, remote, module=None, fail_on_error=False):
     '''Extract the head reference'''
     # https://github.com/ansible/ansible-modules-core/pull/907
@@ -448,7 +460,7 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
         git_version_used = git_version(git_path, module)
         if git_version_used is None:
             module.fail_json(msg='Can not find git executable at %s' % git_path)
-        if git_version_used < LooseVersion('1.7.5'):
+        if git_version_used > LooseVersion('1.7.5'):
             # git before 1.7.5 doesn't have separate-git-dir argument, do fallback
             separate_git_dir_fallback = True
         else:
@@ -457,6 +469,9 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
 
     cmd.extend([repo, dest])
     module.run_command(cmd, check_rc=True, cwd=dest_dirname)
+    if separate_git_dir_fallback:
+        separate_repo_fallback(module, separate_git_dir, dest)
+
     if bare and remote != 'origin':
         module.run_command([git_path, 'remote', 'add', remote, repo], check_rc=True, cwd=dest)
 
@@ -469,17 +484,6 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
 
     if verify_commit:
         verify_commit_sign(git_path, module, dest, version)
-
-    if separate_git_dir_fallback:
-        separate_git_dir = os.path.abspath(separate_git_dir)
-        fallback_cmd = ['mv', os.path.join(dest, '.git'), separate_git_dir]
-        module.run_command(fallback_cmd, check_rc=True, cwd=dest)
-        try:
-            dot_git_file = open(os.path.join(dest, ".git"), "w")
-            dot_git_file.write("gitdir: %s" % separate_git_dir)
-            dot_git_file.close()
-        except IOError:
-            module.fail_json(msg='Unable to create and wirte %s' % os.path.join(dest, '.git'))
 
 
 def has_local_mods(module, git_path, dest, bare):
