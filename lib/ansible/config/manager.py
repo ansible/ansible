@@ -374,7 +374,7 @@ class ConfigManager(object):
                             if plugin_name:
                                 entry += 'plugin: %s ' % plugin_name
                         entry += 'setting: %s ' % config
-                        if not plugin_type or config not in INTERNAL_DEFS.get(plugin_type):
+                        if not plugin_type or config not in INTERNAL_DEFS.get(plugin_type, {}):
                             raise AnsibleError("No setting was provided for required configuration %s" % (entry))
                     else:
                         value = defs[config].get('default')
