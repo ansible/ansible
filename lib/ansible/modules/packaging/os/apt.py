@@ -286,6 +286,7 @@ APTITUDE_ZERO = "\n0 packages upgraded, 0 newly installed"
 APT_LISTS_PATH = "/var/lib/apt/lists"
 APT_UPDATE_SUCCESS_STAMP_PATH = "/var/lib/apt/periodic/update-success-stamp"
 APT_MARK_INVALID_OP = 'Invalid operation'
+APT_MARK_INVALID_OP_DEB6 = 'Usage: apt-mark [options] {markauto|unmarkauto} packages'
 
 CLEAN_OP_CHANGED_STR = dict(
     autoremove='The following packages will be REMOVED',
@@ -502,7 +503,7 @@ def mark_installed_manually(m, packages):
     cmd = "%s manual %s" % (apt_mark_cmd_path, ' '.join(packages))
     rc, out, err = m.run_command(cmd)
 
-    if APT_MARK_INVALID_OP in err:
+    if APT_MARK_INVALID_OP in err or APT_MARK_INVALID_OP_DEB6 in err:
         cmd = "%s unmarkauto %s" % (apt_mark_cmd_path, ' '.join(packages))
         rc, out, err = m.run_command(cmd)
 
