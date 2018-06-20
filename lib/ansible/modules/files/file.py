@@ -370,7 +370,7 @@ def execute_touch(path, follow):
             raise
 
     # Unfortunately, touch always changes the file because it updates file's timestamp
-    return {'dest': path, 'changed': True}
+    return {'dest': path, 'changed': True, 'diff': diff}
 
 
 def ensure_file_attributes(path, follow):
