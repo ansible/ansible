@@ -19,7 +19,7 @@ module: meraki_device
 short_description: Manage devices in the Meraki cloud
 version_added: "2.7"
 description:
-- Visibilty into devices associated to a Meraki environment.
+- Visibility into devices associated to a Meraki environment.
 notes:
 - This module does not support claiming of devices or licenses into a Meraki organization.
 - More information about the Meraki API can be found at U(https://dashboard.meraki.com/api_docs).
