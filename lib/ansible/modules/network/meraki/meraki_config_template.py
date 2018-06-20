@@ -83,7 +83,7 @@ from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argu
 def get_config_templates(meraki, org_id):
     path = meraki.construct_path('get_all', org_id=org_id)
     response = meraki.request(path, 'GET')
-    return json.loads(response)
+    return response
 
 
 def get_template_id(meraki, name, data):

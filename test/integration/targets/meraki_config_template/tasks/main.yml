@@ -24,35 +24,35 @@
 #     that:
 #       - '"Failed to connect to" in invalid_domain.msg'
 
-# - name: Query all configuration templates
-#   meraki_config_template:
-#     auth_key: '{{auth_key}}'
-#     state: query
-#     org_name: DevTestOrg
-#   register: get_all
+- name: Query all configuration templates
+  meraki_config_template:
+    auth_key: '{{auth_key}}'
+    state: query
+    org_name: DevTestOrg
+  register: get_all
 
-# - name: Delete non-existant configuration template
-#   meraki_config_template:
-#     auth_key: '{{auth_key}}'
-#     state: absent
-#     org_name: DevTestOrg
-#     config_template: DevConfigTemplateInvalid
-#   register: deleted
-#   ignore_errors: yes
+- name: Delete non-existant configuration template
+  meraki_config_template:
+    auth_key: '{{auth_key}}'
+    state: absent
+    org_name: DevTestOrg
+    config_template: DevConfigTemplateInvalid
+  register: deleted
+  ignore_errors: yes
 
-# - debug:
-#     msg: '{{deleted}}'
+- debug:
+    msg: '{{deleted}}'
 
-# - assert:
-#     that:
-#       - '"No configuration template named" in deleted.msg'
+- assert:
+    that:
+      - '"No configuration template named" in deleted.msg'
 
 - name: Bind a template to a network
   meraki_config_template:
     auth_key: '{{auth_key}}'
     state: present
-    org_name: DevTestOrg
-    net_name: TestNet
+    org_name: '{{ test_org_name }}'
+    net_name: '{{ test_net_name }}'
     config_template: DevConfigTemplate
   register: bind
 
@@ -64,8 +64,8 @@
   meraki_config_template:
     auth_key: '{{auth_key}}'
     state: present
-    org_name: DevTestOrg
-    net_name: TestNet
+    org_name: '{{ test_org_name }}'
+    net_name: '{{ test_net_name }}'
     config_template: DevConfigTemplate
   register: bind_invalid
   ignore_errors: yes
@@ -81,8 +81,8 @@
   meraki_config_template:
     auth_key: '{{auth_key}}'
     state: absent
-    org_name: DevTestOrg
-    net_name: TestNet
+    org_name: '{{ test_org_name }}'
+    net_name: '{{ test_net_name }}'
     config_template: DevConfigTemplate
   register: unbind
 
@@ -94,8 +94,8 @@
   meraki_config_template:
     auth_key: '{{auth_key}}'
     state: absent
-    org_name: DevTestOrg
-    net_name: TestNet
+    org_name: '{{ test_org_name }}'
+    net_name: '{{ test_net_name }}'
     config_template: DevConfigTemplate
   register: unbind_invalid
 
