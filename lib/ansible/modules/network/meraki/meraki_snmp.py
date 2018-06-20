@@ -68,6 +68,35 @@ EXAMPLES = r'''
     org_name: YourOrg
     state: query
   delegate_to: localhost
+
+- name: Enable SNMPv2
+  meraki_snmp:
+    auth_key: abc12345
+    org_name: YourOrg
+    state: present
+    v2c_enabled: yes
+  delegate_to: localhost
+
+- name: Disable SNMPv2
+  meraki_snmp:
+    auth_key: abc12345
+    org_name: YourOrg
+    state: present
+    v2c_enabled: no
+  delegate_to: localhost
+
+- name: Enable SNMPv3
+  meraki_snmp:
+    auth_key: abc12345
+    org_name: YourOrg
+    state: present
+    v3_enabled: true
+    v3_auth_mode: SHA
+    v3_auth_pass: ansiblepass
+    v3_priv_mode: AES128
+    v3_priv_pass: ansiblepass
+    peer_ips: 192.0.1.1;192.0.1.2
+  delegate_to: localhost
 '''
 
 RETURN = r'''
