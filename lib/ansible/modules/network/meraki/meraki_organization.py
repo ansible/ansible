@@ -20,9 +20,6 @@ short_description: Manage organizations in the Meraki cloud
 version_added: "2.6"
 description:
 - Allows for creation, management, and visibility into organizations within Meraki.
-notes:
-- More information about the Meraki API can be found at U(https://dashboard.meraki.com/api_docs).
-- Some of the options are likely only used for developers within Meraki.
 options:
     state:
         description:
