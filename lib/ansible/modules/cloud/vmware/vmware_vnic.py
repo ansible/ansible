@@ -1,5 +1,25 @@
 #!/usr/bin/env python
 
+
+DOCUMENTATION = '''
+---
+module: vmware_vnic
+short_description: Manage Operations on vmware vnics
+'''
+
+EXAMPLES = '''
+- name: Remove Vnic
+  vmware_vnic:
+    hostname=10.x.x.x
+    username=xxxx
+    password=xxxx
+    port=443
+    name=vmname
+    uuid=vmuuid
+    nic_state=delete
+    nic_number=2
+'''
+
 import atexit
 import requests
 from tools import cli
