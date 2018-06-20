@@ -1036,6 +1036,13 @@ class ModuleValidator(Validator):
         args_from_argspec = set()
         deprecated_args_from_argspec = set()
         for arg, data in spec.items():
+            if not isinstance(data, dict):
+                self.reporter.error(
+                    path=self.object_path,
+                    code=331,
+                    msg="argument '%s' in argument_spec must be a dictionary/hash when used" % arg,
+                )
+                continue
             if not data.get('removed_in_version', None):
                 args_from_argspec.add(arg)
                 args_from_argspec.update(data.get('aliases', []))
