@@ -49,6 +49,21 @@ class TestErrors(unittest.TestCase):
         self.assertEqual(e.__repr__(), self.unicode_message)
 
     @patch.object(AnsibleError, '_get_error_lines_from_file')
+    def test_error_with_kv(self, mock_method):
+        self.obj.ansible_pos = ('foo.yml', 2, 1)
+
+        mock_method.return_value = ['    line: foo\n', '- lineinfile: line=foo path=bar\n']
+
+        e = AnsibleError(self.message, self.obj)
+        self.assertEqual(
+            e.message,
+            ("This is the error message\n\nThe error appears to be in 'foo.yml': line 1, column 19, but may\nbe elsewhere in the "
+             "file depending on the exact syntax problem.\n\nThe offending line appears to be:\n\n- lineinfile: line=foo path=bar\n"
+             "                  ^ here\n\n"
+             "There appears to be both 'k=v' shorthand syntax and YAML in this task. Only one syntax may be used.\n")
+        )
+
+    @patch.object(AnsibleError, '_get_error_lines_from_file')
     def test_error_with_object(self, mock_method):
         self.obj.ansible_pos = ('foo.yml', 1, 1)
 
