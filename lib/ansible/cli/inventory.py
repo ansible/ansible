@@ -94,6 +94,8 @@ class InventoryCLI(CLI):
         # graph
         self.parser.add_option("-y", "--yaml", action="store_true", default=False, dest='yaml',
                                help='Use YAML format instead of default JSON, ignored for --graph')
+        self.parser.add_option('--toml', action='store_true', default=False, dest='toml',
+                               help='Use TOML format instead of default JSON, ignored for --graph')
         self.parser.add_option("--vars", action="store_true", default=False, dest='show_vars',
                                help='Add vars to graph display, ignored unless used with --graph')
 
@@ -174,7 +176,7 @@ class InventoryCLI(CLI):
             results = self.inventory_graph()
         elif self.options.list:
             top = self._get_group('all')
-            if self.options.yaml:
+            if self.options.yaml or self.options.toml:
                 results = self.yaml_inventory(top)
             else:
                 results = self.json_inventory(top)
@@ -193,6 +195,12 @@ class InventoryCLI(CLI):
             import yaml
             from ansible.parsing.yaml.dumper import AnsibleDumper
             results = yaml.dump(stuff, Dumper=AnsibleDumper, default_flow_style=False)
+        elif self.options.toml:
+            try:
+                import toml
+            except ImportError:
+                raise AnsibleError('The python "toml" library is required when using the TOML output format')
+            results = toml.dumps(stuff)
         else:
             import json
             from ansible.parsing.ajson import AnsibleJSONEncoder
