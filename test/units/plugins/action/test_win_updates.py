@@ -118,3 +118,40 @@ class TestWinUpdatesActionPlugin(object):
         assert actual['become'] == e_b
         assert actual['become_method'] == e_bmethod
         assert actual['become_user'] == e_buser
+
+    def test_module_exec_async_result(self, monkeypatch):
+        return_val = {
+            "ansible_async_watchdog_pid": 7584,
+            "ansible_job_id": "545519115287.9620",
+            "changed": True,
+            "finished": 0,
+            "results_file": r"C:\.ansible_async\545519115287.9620",
+            "started": 1
+        }
+        mock_execute = MagicMock(return_value=return_val)
+        monkeypatch.setattr(ActionModule, '_execute_module', mock_execute)
+
+        task = MagicMock(Task)
+        task.args = {}
+        task.async_val = 10
+
+        connection = MagicMock()
+        connection.module_implementation_preferences = ('.ps1', '.exe', '')
+
+        play_context = MagicMock()
+        play_context.check_mode = False
+        play_context.become = True
+        play_context.become_method = 'runas'
+        play_context.become_user = 'SYSTEM'
+
+        plugin = ActionModule(task, connection, play_context, loader=None,
+                              templar=None, shared_loader_obj=None)
+        actual = plugin.run(None, {})
+
+        assert actual.get('failed') is None
+        assert actual['ansible_async_watchdog_pid'] == 7584
+        assert actual['ansible_job_id'] == "545519115287.9620"
+        assert actual['changed'] is True
+        assert actual['finished'] == 0
+        assert actual['results_file'] == r"C:\.ansible_async\545519115287.9620"
+        assert actual['started'] == 1
