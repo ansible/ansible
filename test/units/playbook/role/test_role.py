@@ -250,6 +250,28 @@ class TestRole(unittest.TestCase):
         self.assertEqual(r._role_vars, dict(foo='bam'))
 
     @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_load_role_with_vars_nested_dirs_combined(self):
+
+        fake_loader = DictDataLoader({
+            "/etc/ansible/roles/foo_vars/defaults/main/foo/bar.yml": """
+            foo: bar
+            a: 1
+            """,
+            "/etc/ansible/roles/foo_vars/defaults/main/bar/foo.yml": """
+            foo: bam
+            b: 2
+            """,
+        })
+
+        mock_play = MagicMock()
+        mock_play.ROLE_CACHE = {}
+
+        i = RoleInclude.load('foo_vars', play=mock_play, loader=fake_loader)
+        r = Role.load(i, play=mock_play)
+
+        self.assertEqual(r._default_vars, dict(foo='bar', a=1, b=2))
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
     def test_load_role_with_vars_dir_vs_file(self):
 
         fake_loader = DictDataLoader({
