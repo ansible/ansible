@@ -443,6 +443,8 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
         module.warn("Ignoring separate_git_dir argument. "
                     "Can not do bare clone with argument separate_git_dir.")
     elif separate_git_dir:
+        if os.path.exists(os.path.abspath(separate_git_dir)):
+            module.fail_json(msg='Separate-git-dir path %s already exists.' % os.path.abspath(separate_git_dir))
         git_version_used = git_version(git_path, module)
         if git_version_used is None:
             module.fail_json(msg='Can not find git executable at %s' % git_path)
