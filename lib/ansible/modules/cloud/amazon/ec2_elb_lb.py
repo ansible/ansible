@@ -980,7 +980,7 @@ class ElbManager(object):
             self.elb_conn.modify_lb_attribute(self.name, 'ConnectingSettings', attributes.connecting_settings)
 
     def _policy_name(self, policy_type):
-        return __file__.split('/')[-1].split('.')[0].replace('_', '-') + '-' + policy_type
+        return 'ec2-elb-lb-{0}'.format(to_native(policy_type, errors='surrogate_or_strict'))
 
     def _create_policy(self, policy_param, policy_meth, policy):
         getattr(self.elb_conn, policy_meth)(policy_param, self.elb.name, policy)
