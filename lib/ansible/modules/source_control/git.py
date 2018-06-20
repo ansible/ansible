@@ -258,12 +258,10 @@ from ansible.module_utils._text import to_native
 
 def separate_repo_fallback(module, separate_git_dir, dest):
     separate_git_dir = os.path.abspath(separate_git_dir)
-    fallback_cmd = ['mv', os.path.join(dest, '.git'), separate_git_dir]
-    module.run_command(fallback_cmd, check_rc=True, cwd=dest)
+    shutil.move(os.path.join(dest, '.git'), separate_git_dir)
     try:
-        dot_git_file = open(os.path.join(dest, ".git"), "w")
-        dot_git_file.write("gitdir: %s" % separate_git_dir)
-        dot_git_file.close()
+        with open(os.path.join(dest, '.git'), 'w') as dot_git_file:
+            dot_git_file.write('gitdir: %s' % separate_git_dir)
     except IOError:
         module.fail_json(msg='Unable to create and wirte %s' % os.path.join(dest, '.git'))
 
@@ -424,7 +422,6 @@ def get_submodule_versions(git_path, module, dest, version='HEAD'):
 def clone(git_path, module, repo, dest, remote, depth, version, bare,
           reference, refspec, verify_commit, separate_git_dir):
     ''' makes a new git repo if it does not already exist '''
-
     dest_dirname = os.path.dirname(dest)
     try:
         os.makedirs(dest_dirname)
@@ -465,7 +462,7 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
             separate_git_dir_fallback = True
         else:
             separate_git_dir = os.path.abspath(separate_git_dir)
-            cmd.extend(['--separate-git-dir=%s' % separate_git_dir])
+            cmd.append('--separate-git-dir=%s' % separate_git_dir)
 
     cmd.extend([repo, dest])
     module.run_command(cmd, check_rc=True, cwd=dest_dirname)
