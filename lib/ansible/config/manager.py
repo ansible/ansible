@@ -31,6 +31,7 @@ from ansible.utils.path import makedirs_safe
 Plugin = namedtuple('Plugin', 'name type')
 Setting = namedtuple('Setting', 'name value origin type')
 
+INTERNAL_DEFS = { 'lookup': ('_terms',) }
 
 # FIXME: see if we can unify in module_utils with similar function used by argspec
 def ensure_type(value, value_type, origin=None):
@@ -324,7 +325,7 @@ class ConfigManager(object):
                 origin = 'var: %s' % origin
 
             # use playbook keywords if you have em
-            if value is None and keys:
+            if value is None and keys and defs[config].get('keywords'):
                 value, origin = self._loop_entries(keys, defs[config]['keywords'])
                 origin = 'keyword: %s' % origin
 
@@ -365,7 +366,8 @@ class ConfigManager(object):
                         if plugin_name:
                             entry += 'plugin: %s ' % plugin_name
                     entry += 'setting: %s ' % config
-                    raise AnsibleError("No setting was provided for required configuration %s" % (entry))
+                    if not plugin_type or config not in INTERNAL_DEFS.get(plugin_type):
+                        raise AnsibleError("No setting was provided for required configuration %s" % (entry))
                 else:
                     value = defs[config].get('default')
                     origin = 'default'
