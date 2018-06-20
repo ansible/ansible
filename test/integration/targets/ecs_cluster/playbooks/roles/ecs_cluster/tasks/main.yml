@@ -629,7 +629,7 @@
           subnets: "{{ setup_subnet.results | json_query('[].subnet.id') }}"
           security_groups:
             - '{{ setup_sg.group_id }}'
-          assign_public_ip: ENABLED
+          assign_public_ip: true
         <<: *aws_connection_info
       register: ecs_fargate_service_network_with_awsvpc
 
