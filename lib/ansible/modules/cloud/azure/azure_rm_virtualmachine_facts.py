@@ -399,9 +399,6 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
             new_result['location'] = vm.location
             new_result['vm_size'] = result['properties']['hardwareProfile']['vmSize']
             new_result['admin_username'] = result['properties']['osProfile']['adminUsername']
-            # admin_password (probably not available)
-            # ssh_password_enabled
-            # ssh_public_keys
             image = result['properties']['storageProfile'].get('imageReference')
             if image is not None:
                 new_result['image'] = {
@@ -410,7 +407,6 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
                     'offer': image['offer'],
                     'version': image['version']
                 }
-            # availability_set
 
             vhd = result['properties']['storageProfile']['osDisk'].get('vhd')
             if vhd is not None:
@@ -419,10 +415,8 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
                 new_result['storage_container_name'] = url.path.split('/')[1]
                 new_result['storage_blob_name'] = url.path.split('/')[-1]
 
-            # managed_disk_type
             new_result['os_disk_caching'] = result['properties']['storageProfile']['osDisk']['caching']
             new_result['os_type'] = result['properties']['storageProfile']['osDisk']['osType']
-            # data_disks
             new_result['data_disks'] = []
             disks = result['properties']['storageProfile']['dataDisks']
             for disk_index in range(len(disks)):
@@ -430,29 +424,14 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
                     'lun': disks[disk_index]['lun'],
                     'disk_size_gb': disks[disk_index]['diskSizeGB'],
                     'managed_disk_type': disks[disk_index]['managedDisk']['storageAccountType'],
-                    'storage_account_name': 'xxx',
-                    'storage_container_name': 'xxx',
-                    'storage_blob_name': 'xxx',
                     'caching': disks[disk_index]['caching']
                 })
 
-            # public_ip_allocation_method
-            # open_ports
             new_result['network_interface_names'] = []
             nics = result['properties']['networkProfile']['networkInterfaces']
             for nic_index in range(len(nics)):
                 new_result['network_interface_names'].append(re.sub('.*networkInterfaces/', '', nics[nic_index]['id']))
 
-            nic = self.get_network_interface(new_result['network_interface_names'][0])
-
-            # virtual_network_resource_group
-            # virtual_network_name
-            # subnet_name
-            # remove_on_absent
-            # plan
-
-            # not needed
-            # result['type'] = vm.type
             new_result['tags'] = vm.tags
             return new_result
         else:
@@ -484,9 +463,7 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
                         config['properties']['publicIPAddress']['name'] = pipid_dict['publicIPAddresses']
                         config['properties']['publicIPAddress']['properties'] = pip_dict['properties']
 
-            snake_dict = camel_dict_to_snake_dict(result)
-            self.log(snake_dict, pretty_print=True)
-            return snake_dict
+            return result
 
     def get_network_interface(self, name):
         try:
