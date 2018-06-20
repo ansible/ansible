@@ -234,8 +234,11 @@ def main():
 
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
-    org_id = meraki.params['org_id']
 
+    if not meraki.params['org_name'] and not meraki.params['org_id']:
+        meraki.fail_json(msg='org_name or org_id is required')
+
+    org_id = meraki.params['org_id']
     if org_id is None:
         org_id = meraki.get_org_id(meraki.params['org_name'])
 
