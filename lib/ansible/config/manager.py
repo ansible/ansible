@@ -321,66 +321,67 @@ class ConfigManager(object):
 
         if config in defs:
 
-            # direct setting via plugin arguments
+            # direct setting via plugin arguments, can set to None so we bypass rest of processing/defaults
             if direct and config in direct:
                 value = direct[config]
                 origin = 'Direct'
 
-            # Use 'variable overrides' if present, highest precedence, but only present when querying running play
-            if value is None and variables and defs[config].get('vars'):
-                value, origin = self._loop_entries(variables, defs[config]['vars'])
-                origin = 'var: %s' % origin
+            else:
+                # Use 'variable overrides' if present, highest precedence, but only present when querying running play
+                if variables and defs[config].get('vars'):
+                    value, origin = self._loop_entries(variables, defs[config]['vars'])
+                    origin = 'var: %s' % origin
 
-            # use playbook keywords if you have em
-            if value is None and keys and defs[config].get('keywords'):
-                value, origin = self._loop_entries(keys, defs[config]['keywords'])
-                origin = 'keyword: %s' % origin
+                # use playbook keywords if you have em
+                if value is None and keys and defs[config].get('keywords'):
+                    value, origin = self._loop_entries(keys, defs[config]['keywords'])
+                    origin = 'keyword: %s' % origin
 
-            # env vars are next precedence
-            if value is None and defs[config].get('env'):
-                value, origin = self._loop_entries(os.environ, defs[config]['env'])
-                origin = 'env: %s' % origin
+                # env vars are next precedence
+                if value is None and defs[config].get('env'):
+                    value, origin = self._loop_entries(os.environ, defs[config]['env'])
+                    origin = 'env: %s' % origin
 
-            # try config file entries next, if we have one
-            if self._parsers.get(cfile, None) is None:
-                self._parse_config_file(cfile)
+                # try config file entries next, if we have one
+                if self._parsers.get(cfile, None) is None:
+                    self._parse_config_file(cfile)
 
-            if value is None and cfile is not None:
-                ftype = get_config_type(cfile)
-                if ftype and defs[config].get(ftype):
-                    if ftype == 'ini':
-                        # load from ini config
-                        try:  # FIXME: generalize _loop_entries to allow for files also, most of this code is dupe
-                            for ini_entry in defs[config]['ini']:
-                                temp_value = get_ini_config_value(self._parsers[cfile], ini_entry)
-                                if temp_value is not None:
-                                    value = temp_value
-                                    origin = cfile
-                                    if 'deprecated' in ini_entry:
-                                        self.DEPRECATED.append(('[%s]%s' % (ini_entry['section'], ini_entry['key']), ini_entry['deprecated']))
-                        except Exception as e:
-                            sys.stderr.write("Error while loading ini config %s: %s" % (cfile, to_native(e)))
-                    elif ftype == 'yaml':
-                        # FIXME: implement, also , break down key from defs (. notation???)
-                        origin = cfile
+                if value is None and cfile is not None:
+                    ftype = get_config_type(cfile)
+                    if ftype and defs[config].get(ftype):
+                        if ftype == 'ini':
+                            # load from ini config
+                            try:  # FIXME: generalize _loop_entries to allow for files also, most of this code is dupe
+                                for ini_entry in defs[config]['ini']:
+                                    temp_value = get_ini_config_value(self._parsers[cfile], ini_entry)
+                                    if temp_value is not None:
+                                        value = temp_value
+                                        origin = cfile
+                                        if 'deprecated' in ini_entry:
+                                            self.DEPRECATED.append(('[%s]%s' % (ini_entry['section'], ini_entry['key']), ini_entry['deprecated']))
+                            except Exception as e:
+                                sys.stderr.write("Error while loading ini config %s: %s" % (cfile, to_native(e)))
+                        elif ftype == 'yaml':
+                            # FIXME: implement, also , break down key from defs (. notation???)
+                            origin = cfile
 
-            # set default if we got here w/o a value
-            if value is None:
-                if defs[config].get('required', False):
-                    entry = ''
-                    if plugin_type:
-                        entry += 'plugin_type: %s ' % plugin_type
-                        if plugin_name:
-                            entry += 'plugin: %s ' % plugin_name
-                    entry += 'setting: %s ' % config
-                    if not plugin_type or config not in INTERNAL_DEFS.get(plugin_type):
-                        raise AnsibleError("No setting was provided for required configuration %s" % (entry))
-                else:
-                    value = defs[config].get('default')
-                    origin = 'default'
-                    # skip typing as this is a temlated default that will be resolved later in constants, which has needed vars
-                    if plugin_type is None and isinstance(value, string_types) and (value.startswith('{{') and value.endswith('}}')):
-                        return value, origin
+                # set default if we got here w/o a value
+                if value is None:
+                    if defs[config].get('required', False):
+                        entry = ''
+                        if plugin_type:
+                            entry += 'plugin_type: %s ' % plugin_type
+                            if plugin_name:
+                                entry += 'plugin: %s ' % plugin_name
+                        entry += 'setting: %s ' % config
+                        if not plugin_type or config not in INTERNAL_DEFS.get(plugin_type):
+                            raise AnsibleError("No setting was provided for required configuration %s" % (entry))
+                    else:
+                        value = defs[config].get('default')
+                        origin = 'default'
+                        # skip typing as this is a temlated default that will be resolved later in constants, which has needed vars
+                        if plugin_type is None and isinstance(value, string_types) and (value.startswith('{{') and value.endswith('}}')):
+                            return value, origin
 
             # ensure correct type, can raise exceptoins on mismatched types
             value = ensure_type(value, defs[config].get('type'), origin=origin)
