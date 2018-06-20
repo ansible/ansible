@@ -169,6 +169,10 @@ def intercept_command(args, cmd, target_name, capture=False, env=None, data=None
     env['ANSIBLE_TEST_PYTHON_VERSION'] = version
     env['ANSIBLE_TEST_PYTHON_INTERPRETER'] = interpreter
 
+    if args.coverage:
+        env['_ANSIBLE_COVERAGE_CONFIG'] = os.path.join(inject_path, '.coveragerc')
+        env['_ANSIBLE_COVERAGE_OUTPUT'] = coverage_file
+
     config = dict(
         python_interpreter=interpreter,
         coverage_file=coverage_file if args.coverage else None,

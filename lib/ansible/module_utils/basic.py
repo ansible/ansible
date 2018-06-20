@@ -62,6 +62,7 @@ PASS_BOOLS = ('no_log', 'debug', 'diff')
 # The functions available here can be used to do many common tasks,
 # to simplify development of Python modules.
 
+import __main__
 import atexit
 import locale
 import os
