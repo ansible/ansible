@@ -178,6 +178,7 @@ def is_vlan_valid(meraki, net_id, vlan_id):
             return True
     return False
 
+
 def format_dns(nameservers):
     return nameservers.replace(';', '\n')
 
