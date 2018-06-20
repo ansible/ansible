@@ -57,7 +57,7 @@ class TestErrors(unittest.TestCase):
 
         self.assertEqual(
             e.message,
-            ("This is the error message\n\nThe error appears to have been in 'foo.yml': line 1, column 1, but may\nbe elsewhere in the file depending on the "
+            ("This is the error message\n\nThe error appears to be in 'foo.yml': line 1, column 1, but may\nbe elsewhere in the file depending on the "
              "exact syntax problem.\n\nThe offending line appears to be:\n\n\nthis is line 1\n^ here\n")
         )
 
@@ -71,7 +71,7 @@ class TestErrors(unittest.TestCase):
             e = AnsibleError(self.message, self.obj)
             self.assertEqual(
                 e.message,
-                ("This is the error message\n\nThe error appears to have been in 'foo.yml': line 1, column 1, but may\nbe elsewhere in the file depending on "
+                ("This is the error message\n\nThe error appears to be in 'foo.yml': line 1, column 1, but may\nbe elsewhere in the file depending on "
                  "the exact syntax problem.\n\nThe offending line appears to be:\n\n\nthis is line 1\n^ here\n")
             )
 
@@ -80,7 +80,7 @@ class TestErrors(unittest.TestCase):
             e = AnsibleError(self.message, self.obj)
             self.assertEqual(
                 e.message,
-                ("This is the error message\n\nThe error appears to have been in 'foo.yml': line 2, column 1, but may\nbe elsewhere in the file depending on "
+                ("This is the error message\n\nThe error appears to be in 'foo.yml': line 2, column 1, but may\nbe elsewhere in the file depending on "
                  "the exact syntax problem.\n\n(specified line no longer in file, maybe it changed?)")
             )
 
@@ -93,7 +93,7 @@ class TestErrors(unittest.TestCase):
             e = AnsibleError(self.unicode_message, self.obj)
             self.assertEqual(
                 e.message,
-                ("This is an error with \xf0\x9f\x98\xa8 in it\n\nThe error appears to have been in 'foo.yml': line 1, column 1, but may\nbe elsewhere in the "
+                ("This is an error with \xf0\x9f\x98\xa8 in it\n\nThe error appears to be in 'foo.yml': line 1, column 1, but may\nbe elsewhere in the "
                  "file depending on the exact syntax problem.\n\nThe offending line appears to be:\n\n\nthis line has unicode \xf0\x9f\x98\xa8 in it!\n^ "
                  "here\n")
             )

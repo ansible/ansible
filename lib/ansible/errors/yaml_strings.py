@@ -34,7 +34,7 @@ Syntax Error while loading YAML.
   %s"""
 
 YAML_POSITION_DETAILS = """\
-The error appears to have been in '%s': line %s, column %s, but may
+The error appears to be in '%s': line %s, column %s, but may
 be elsewhere in the file depending on the exact syntax problem.
 """
 
