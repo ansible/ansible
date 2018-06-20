@@ -226,7 +226,7 @@ import tempfile
 from ansible.module_utils.basic import AnsibleModule, is_executable
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import PY3
-
+from distutils.versionpredicate import VersionPredicate
 
 #: Python one-liners to be run at the command line that will determine the
 # installed version for these special libraries.  These are libraries that
@@ -250,7 +250,9 @@ def _get_full_name(name, version=None):
     if version is None or version == "":
         resp = name
     else:
-        resp = name + '==' + version
+        if version[0].isdigit():
+            resp = "%s==%s" % (name, version)
+        resp = "\"%s (%s)\"" % (name, version)
     return resp
 
 
@@ -273,13 +275,17 @@ def _get_packages(module, pip, chdir):
 
 def _is_present(name, version, installed_pkgs, pkg_command):
     '''Return whether or not package is installed.'''
+    if version is not None:
+        if version[0].isdigit():
+            version = "==%s" % version
+        vp = VersionPredicate("%s (%s)" % (name, version))
     for pkg in installed_pkgs:
         if '==' in pkg:
             pkg_name, pkg_version = pkg.split('==')
         else:
             continue
 
-        if pkg_name == name and (version is None or version == pkg_version):
+        if (pkg_name.lower() == name.lower()) and (version is None or vp.satisfied_by(pkg_version)):
             return True
 
     return False
