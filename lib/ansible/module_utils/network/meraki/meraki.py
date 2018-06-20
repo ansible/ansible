@@ -193,7 +193,7 @@ class MerakiModule(object):
         """Downloads all networks in an organization."""
         if org_name:
             org_id = self.get_org_id(org_name)
-        path = self.construct_path('get_all', org_id=org_id)
+        path = self.construct_path('get_all', org_id=org_id, function='network')
         r = self.request(path, method='GET')
         return r
 
