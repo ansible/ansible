@@ -36,14 +36,7 @@ from ansible.module_utils._text import to_bytes
 from ansible.modules.network.netact import netact_cm_command
 from ansible.compat.tests.mock import patch
 
-from units.modules.utils import set_module_args as _set_module_args, \
-    AnsibleExitJson, AnsibleFailJson, ModuleTestCase
-
-
-def set_module_args(args):
-    """prepare arguments so that they will be picked up during module creation"""
-    args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-    basic._ANSIBLE_ARGS = to_bytes(args)
+from units.modules.utils import set_module_args, AnsibleExitJson, AnsibleFailJson, ModuleTestCase
 
 
 class AnsibleExitJson(Exception):

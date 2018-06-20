@@ -25,6 +25,8 @@ from ansible.modules.network.nso import nso_verify
 from . import nso_module
 from .nso_module import MockResponse
 
+from units.modules.utils import set_module_args
+
 
 class TestNsoVerify(nso_module.TestNsoModule):
     module = nso_verify
@@ -39,7 +41,7 @@ class TestNsoVerify(nso_module.TestNsoModule):
         open_url_mock.side_effect = lambda *args, **kwargs: nso_module.mock_call(calls, *args, **kwargs)
 
         data = {}
-        nso_module.set_module_args({
+        set_module_args({
             'username': 'user', 'password': 'password',
             'url': 'http://localhost:8080/jsonrpc', 'data': data
         })
@@ -68,7 +70,7 @@ class TestNsoVerify(nso_module.TestNsoModule):
         open_url_mock.side_effect = lambda *args, **kwargs: nso_module.mock_call(calls, *args, **kwargs)
 
         data = nso_module.load_fixture('verify_violation_data.json')
-        nso_module.set_module_args({
+        set_module_args({
             'username': 'user', 'password': 'password',
             'url': 'http://localhost:8080/jsonrpc', 'data': data
         })
@@ -97,7 +99,7 @@ class TestNsoVerify(nso_module.TestNsoModule):
         open_url_mock.side_effect = lambda *args, **kwargs: nso_module.mock_call(calls, *args, **kwargs)
 
         data = nso_module.load_fixture('verify_violation_data.json')
-        nso_module.set_module_args({
+        set_module_args({
             'username': 'user', 'password': 'password',
             'url': 'http://localhost:8080/jsonrpc', 'data': data
         })
