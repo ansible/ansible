@@ -195,10 +195,10 @@ def main():
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
 
-    if meraki.params['org_name']:
-        nets = meraki.get_nets(org_name=meraki.params['org_name'])
-    elif meraki.params['org_id']:
-        nets = meraki.get_nets(org_id=meraki.params['org_id'])
+    org_id = meraki.params['org_id']
+    if not org_id:
+        org_id = meraki.get_org_id(meraki.params['org_name'])
+    nets = meraki.get_nets(org_id=org_id)
 
     if meraki.params['state'] == 'query':
         if not meraki.params['net_name'] and not meraki.params['net_id']:
@@ -211,14 +211,9 @@ def main():
     elif meraki.params['state'] == 'present':
         if meraki.params['net_name']:  # FIXME: Idempotency check is ugly here, improve
             if is_net_valid(meraki, meraki.params['net_name'], nets) is False:
-                if meraki.params['org_name']:  # FIXME: This can be cleaned up...maybe
-                    path = meraki.construct_path('create',
-                                                 org_name=meraki.params['org_name']
-                                                 )
-                elif meraki.params['org_id']:
-                    path = meraki.construct_path('create',
-                                                 org_id=meraki.params['org_id']
-                                                 )
+                path = meraki.construct_path('create',
+                                             org_id=org_id
+                                             )
                 r = meraki.request(path,
                                    method='POST',
                                    payload=json.dumps(payload)
@@ -238,8 +233,7 @@ def main():
                     meraki.result['changed'] = True
     elif meraki.params['state'] == 'absent':
         if is_net_valid(meraki, meraki.params['net_name'], nets) is True:
-            net_id = meraki.get_net_id(org_name=meraki.params['org_name'],
-                                       net_name=meraki.params['net_name'],
+            net_id = meraki.get_net_id(net_name=meraki.params['net_name'],
                                        data=nets)
             path = meraki.construct_path('delete', net_id=net_id)
             r = meraki.request(path, method='DELETE')

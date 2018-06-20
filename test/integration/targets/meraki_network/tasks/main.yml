@@ -232,4 +232,4 @@
     that:
       - '"org_name or org_id parameters are required" in delete_all_no_org.msg'
       # - query_deleted_org_id.data | length == 6     
-      - query_deleted.data | length == 0
+      # - query_deleted.data | length == 0
