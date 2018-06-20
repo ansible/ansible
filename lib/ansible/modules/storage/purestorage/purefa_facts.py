@@ -133,11 +133,14 @@ ansible_facts:
         }
         "default": {
             "array_name": "flasharray1",
+            "connected_arrays": 1,
             "hostgroups": 0,
             "hosts": 10,
+            "pods": 3,
             "protection_groups": 1,
             "purity_version": "5.0.4",
-            "snapshots": 1
+            "snapshots": 1,
+            "volume_groups": 2
         }
         "hgroups": {}
         "hosts": {
@@ -305,8 +308,9 @@ def generate_default_dict(array):
     defaults = array.get()
     api_version = array._list_available_rest_versions()
     if AC_REQUIRED_API_VERSION in api_version:
-        pods = array.get_pods()
-        default_facts['pods'] = len(pods)
+        default_facts['volume_groups'] = len(array.list_vgroups())
+        default_facts['connected_arrays'] = len(array.list_array_connections())
+        default_facts['pods'] = len(array.list_pods())
     hosts = array.list_hosts()
     snaps = array.list_volumes(snap=True, pending=True)
     pgroups = array.list_pgroups(pending=True)
