@@ -1,0 +1,2 @@
+bugfixes:
+    - correctly handle yaml inventory files when entries are null dicts https://github.com/ansible/ansible/issues/41692
