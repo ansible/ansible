@@ -37,7 +37,6 @@ options:
       description:
       - ID number of VLAN.
       - ID should be between 1-4096.
-      type: int
     name:
       description:
       - Name of VLAN.
@@ -49,6 +48,19 @@ options:
       description:
       - IP address of appliance.
       - Address must be within subnet specified in C(subnet) parameter.
+    dns_nameservers:
+      description:
+      - Semi-colon delimited list of DNS IP addresses.
+      - Specify one of the following options for preprogrammed DNS entries opendns, google_dns, upstream_dns
+    reserved_ip_range:
+      description:
+      - IP address ranges which should be reserve and not distributed via DHCP.
+    vpn_nat_subnet:
+      description:
+      - The translated VPN subnet if VPN and VPN subnet translation are enabled on the VLAN.
+    fixed_ip_assignments:
+      description:
+      - Static IP address assignements to be distributed via DHCP by MAC address.
 author:
 - Kevin Breit (@kbreit)
 extends_documentation_fragment: meraki
