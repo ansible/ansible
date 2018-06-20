@@ -56,7 +56,7 @@ EXAMPLES = """
       
   - name: retrieving a KV from a remote cluster on non default port with ACL enabled
     debug:
-      msg: "{{ lookup('consul_kv', 'my/key', host='10.10.10.10 token=a20f2009-a1cf-4e19-8286-0632ea3bcad6', port='2000') }}"
+      msg: "{{ lookup('consul_kv', 'my/key', host='10.10.10.10 token=a20f2009-a1cf-4e19-8286-0632ea3bcad6 recurse=yes', port='2000') }}"
 """
 
 RETURN = """
