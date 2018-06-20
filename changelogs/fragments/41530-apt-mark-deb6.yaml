@@ -1,2 +1,2 @@
 bugfixes:
-  - apt: fix apt-mark on debian6 (https://github.com/ansible/ansible/pull/41530)
+  - fix apt-mark on debian6 (https://github.com/ansible/ansible/pull/41530)
