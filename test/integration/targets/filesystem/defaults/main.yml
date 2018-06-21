@@ -19,4 +19,4 @@ tested_filesystems:
   vfat: {fssize: 20, grow: True}
   ocfs2: {fssize: '{{ ocfs2_fssize }}', grow: False}  # grow not implemented
   f2fs: {fssize: '{{ f2fs_fssize|default(60) }}', grow: 'f2fs_version is version("1.10.0", ">=")'}
-  # untested: lvm, requires a block device
+  lvm: {fssize: 20, grow: True}

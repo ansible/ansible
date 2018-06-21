@@ -2,18 +2,19 @@
   package:
     name: '{{ item }}'
     state: present
-  when: ansible_system == 'Linux' or item != 'dosfstools'
   with_items:
     - e2fsprogs
     - xfsprogs
-    - dosfstools
 
 - block:
   - name: install btrfs progs
     package:
       name: btrfs-progs
       state: present
-    when: ansible_os_family != 'Suse' and not (ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('16.04', '<='))
+    when:
+      - ansible_os_family != 'Suse'
+      - not (ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('16.04', '<='))
+      - ansible_system != "FreeBSD"
 
   - name: install btrfs progs (Ubuntu <= 16.04)
     package:
@@ -39,6 +40,7 @@
   - when:
       - ansible_os_family != 'RedHat' or ansible_distribution == 'Fedora'
       - ansible_distribution != 'Ubuntu' or ansible_distribution_version is version('16.04', '>=')
+      - ansible_system != "FreeBSD"
     block:
       - name: install f2fs
         package:
@@ -53,7 +55,13 @@
       - set_fact:
           f2fs_version: '{{ mkfs_f2fs.stdout | regex_search("F2FS-tools: mkfs.f2fs Ver:.*") | regex_replace("F2FS-tools: mkfs.f2fs Ver: ([0-9.]+) .*", "\1") }}'
 
-  when: ansible_system == 'Linux'
+  - name: install dosfstools and lvm2 (Linux)
+    package:
+      name: '{{ item }}'
+    with_items:
+      - dosfstools
+      - lvm2
+    when: ansible_system == 'Linux'
 
 - block:
   - name: install fatresize
