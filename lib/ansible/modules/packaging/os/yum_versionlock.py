@@ -76,7 +76,7 @@ def main():
             state         = dict(required=True, type='str'),
             package        = dict(required=True, type='str'),
         ),
-        supports_check_mode=True
+        supports_check_mode=False
     )
 
     state       = module.params['state']
