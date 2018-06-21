@@ -563,7 +563,7 @@ Limitations
 Be aware of the following limitations with ``become`` on Windows:
 
 * Running a task with ``async`` and ``become`` on Windows Server 2008, 2008 R2
-  and Windows 7 does not work.
+  and Windows 7 only works when using Ansible 2.7 or newer.
 
 * By default, the become user logs on with an interactive session, so it must
   have the right to do so on the Windows host. If it does not inherit the

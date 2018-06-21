@@ -1,0 +1,2 @@
+bugfixes:
+- winrm - running async with become on a Server 2008 or 2008 R2 host will now work
