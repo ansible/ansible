@@ -1,5 +1,5 @@
 # Test code for the vmware_guest module.
-# Copyright: (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 - name: Wait for Flask controller to come up online
@@ -32,7 +32,7 @@
 
 - name: create new VMs with 2 disks
   vmware_guest:
-    validate_certs: False
+    validate_certs: no
     hostname: "{{ vcsim }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
@@ -42,13 +42,16 @@
     hardware:
         num_cpus: 1
         memory_mb: 512
-    disk:
+    disk: &vm_with_three_disk
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
+        - size: 0gb
+          type: thin
+          autoselect_datastore: yes
     state: poweredoff
     folder: "{{ item|dirname }}"
   with_items: "{{ vmlist['json'] }}"
@@ -73,13 +76,7 @@
     hardware:
         num_cpus: 1
         memory_mb: 512
-    disk:
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
+    disk: *vm_with_three_disk
     state: poweredoff
     folder: "{{ item|dirname }}"
   with_items: "{{ vmlist['json'] }}"
@@ -87,7 +84,7 @@
 
 - debug: var=clone_d1_c1_f0
 
-- name: assert that changes were made
+- name: assert that changes were not made
   assert:
     that:
         - "clone_d1_c1_f0.results|map(attribute='changed')|unique|list == [false]"
@@ -105,52 +102,52 @@
     hardware:
         num_cpus: 1
         memory_mb: 512
-    disk:
+    disk: &vm_with_fifteen_disk
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
     state: poweredoff
     folder: "{{ item|dirname }}"
   with_items: "{{ vmlist['json'] }}"
@@ -175,52 +172,7 @@
     hardware:
         num_cpus: 1
         memory_mb: 512
-    disk:
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
+    disk: *vm_with_fifteen_disk
     state: poweredoff
     folder: "{{ item|dirname }}"
   with_items: "{{ vmlist['json'] }}"
@@ -228,7 +180,7 @@
 
 - debug: var=clone_d1_c1_f0
 
-- name: assert that changes were made
+- name: assert that changes were not made
   assert:
     that:
         - "clone_d1_c1_f0.results|map(attribute='changed')|unique|list == [false]"
@@ -246,97 +198,97 @@
     hardware:
         num_cpus: 1
         memory_mb: 512
-    disk:
+    disk: &vm_with_thirty_disk
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
     state: poweredoff
     folder: "{{ item|dirname }}"
   with_items: "{{ vmlist['json'] }}"
@@ -361,97 +313,7 @@
     hardware:
         num_cpus: 1
         memory_mb: 512
-    disk:
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
+    disk: *vm_with_thirty_disk
     state: poweredoff
     folder: "{{ item|dirname }}"
   with_items: "{{ vmlist['json'] }}"
@@ -459,7 +321,7 @@
 
 - debug: var=clone_d1_c1_f0
 
-- name: assert that changes were made
+- name: assert that changes were not made
   assert:
     that:
         - "clone_d1_c1_f0.results|map(attribute='changed')|unique|list == [false]"
@@ -477,147 +339,147 @@
     hardware:
         num_cpus: 1
         memory_mb: 512
-    disk:
+    disk: &vm_with_forty_five_disk
         # 1
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         # 11
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         # 21
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         # 31
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         # 41
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
     state: poweredoff
     folder: "{{ item|dirname }}"
   with_items: "{{ vmlist['json'] }}"
@@ -642,147 +504,7 @@
     hardware:
         num_cpus: 1
         memory_mb: 512
-    disk:
-        # 1
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        # 11
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        # 21
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        # 31
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        # 41
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
+    disk: *vm_with_forty_five_disk
     state: poweredoff
     folder: "{{ item|dirname }}"
   with_items: "{{ vmlist['json'] }}"
@@ -790,7 +512,7 @@
 
 - debug: var=clone_d1_c1_f0
 
-- name: assert that changes were made
+- name: assert that changes were not made
   assert:
     that:
         - "clone_d1_c1_f0.results|map(attribute='changed')|unique|list == [false]"
@@ -807,190 +529,190 @@
     hardware:
         num_cpus: 1
         memory_mb: 512
-    disk:
+    disk: &vm_with_fifty_nine_disk
         # 1
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         # 11
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         # 21
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         # 31
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         # 41
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         # 51
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
         - size: 0gb
           type: thin
-          autoselect_datastore: True
+          autoselect_datastore: yes
     state: poweredoff
     folder: "{{ item|dirname }}"
   with_items: "{{ vmlist['json'] }}"
@@ -1015,190 +737,7 @@
     hardware:
         num_cpus: 1
         memory_mb: 512
-    disk:
-        # 1
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        # 11
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        # 21
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        # 31
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        # 41
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        # 51
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
-        - size: 0gb
-          type: thin
-          autoselect_datastore: True
+    disk: *vm_with_fifty_nine_disk
     state: poweredoff
     folder: "{{ item|dirname }}"
   with_items: "{{ vmlist['json'] }}"
@@ -1206,7 +745,7 @@
 
 - debug: var=clone_d1_c1_f0
 
-- name: assert that changes were made
+- name: assert that changes were not made
   assert:
     that:
         - "clone_d1_c1_f0.results|map(attribute='changed')|unique|list == [false]"
