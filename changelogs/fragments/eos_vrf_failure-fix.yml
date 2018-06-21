@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - Changed the output to "text" for "show vrf" command as default "json" output format
+    with respect to "eapi" transport was failing (https://github.com/ansible/ansible/pull/41470)
