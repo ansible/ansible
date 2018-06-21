@@ -98,13 +98,7 @@ class CallbackBase(AnsiblePlugin):
         '''
 
         # load from config
-        self._plugin_options = C.config.get_plugin_options(get_plugin_class(self), self._load_name, keys=task_keys, variables=var_options)
-
-        # or parse specific options
-        if direct:
-            for k in direct:
-                if k in self._plugin_options:
-                    self.set_option(k, direct[k])
+        self._plugin_options = C.config.get_plugin_options(get_plugin_class(self), self._load_name, keys=task_keys, variables=var_options, direct=direct)
 
     def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False):
 
