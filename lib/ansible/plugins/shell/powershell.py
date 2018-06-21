@@ -1139,7 +1139,7 @@ $exec_wrapper = {
     $DebugPreference = "Continue"
     $ErrorActionPreference = "Stop"
     Set-StrictMode -Version 2
-    
+
     function ConvertTo-HashtableFromPsCustomObject ($myPsObject){
         $output = @{};
         $myPsObject | Get-Member -MemberType *Property | % {
@@ -1183,30 +1183,29 @@ $exec_wrapper = {
 
     # TODO: handle binary modules
     # TODO: handle persistence
-    
+
     $actions = $payload.actions
-    
+
     # pop 0th action as entrypoint
     $entrypoint = $payload.($actions[0])
     $payload.actions = $payload.actions[1..99]
-    
+
     $entrypoint = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($entrypoint))
-    
+
     # load the current action entrypoint as a module custom object with a Run method
     $entrypoint = New-Module -ScriptBlock ([scriptblock]::Create($entrypoint)) -AsCustomObject
-    
+
     Set-Variable -Scope global -Name complex_args -Value $payload["module_args"] | Out-Null
-    
+
     # dynamically create/load modules
     ForEach ($mod in $payload.powershell_modules.GetEnumerator()) {
         $decoded_module = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($mod.Value))
         New-Module -ScriptBlock ([scriptblock]::Create($decoded_module)) -Name $mod.Key | Import-Module -WarningAction SilentlyContinue | Out-Null
     }
-    
-    $output = $entrypoint.Run($payload)
-    
-    Write-Output $output
 
+    $output = $entrypoint.Run($payload)
+
+    Write-Output $output
 } # end exec_wrapper
 
 
