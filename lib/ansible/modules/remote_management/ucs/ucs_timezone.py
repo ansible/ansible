@@ -16,7 +16,7 @@ module: ucs_timezone
 
 short_description: Configures timezone on Cisco UCS Manager
 
-version_added: "2.6"
+version_added: "2.7"
 
 description:
     - Configures timezone on Cisco UCS Manager.
