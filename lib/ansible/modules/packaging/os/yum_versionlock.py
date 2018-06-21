@@ -34,7 +34,7 @@ requirements:
 - yum
 - yum-versionlock
 author:
-    - Florian Paul Hoberg <florian.hoberg@credativ.de>
+    - '"Florian Paul Hoberg (@florianpaulhoberg)" <florian.hoberg@credativ.de>'
 '''
 
 EXAMPLES = '''
@@ -61,7 +61,6 @@ state:
     sample: present
 '''
 
-import yum
 from ansible.module_utils.basic import AnsibleModule
 
 def get_yum_path(module):
@@ -70,14 +69,14 @@ def get_yum_path(module):
     return yum_binary
 
 
-def get_state_yum_versionlock():
+def get_state_yum_versionlock(module, yum_binary):
     """ Check for yum plugin dependency """
-    installed = False
-    yum_pkgs = yum.YumBase()
-    if yum_pkgs.rpmdb.searchNevra(name='yum-plugin-versionlock'):
-        installed = True
-    return installed
-
+    rc_code, out, err = module.run_command("%s -q info yum-plugin-versionlock"
+                                           % (yum_binary))
+    if rc_code == 0:
+        return out
+    else:
+        module.fail_json(msg="Error: Please install rpm package yum-plugin-versionlock | " + str(err) + str(out))
 
 def get_versionlock_packages(module, yum_binary):
     """ Get an overview of all packages on yum versionlock """
@@ -129,9 +128,7 @@ def main():
     yum_binary = get_yum_path(module)
 
     # Check for yum version lock plugin
-    versionlock_plugin = get_state_yum_versionlock()
-    if versionlock_plugin is False:
-        module.fail_json(msg="Error: Please install yum-versionlock")
+    get_state_yum_versionlock(module, yum_binary)
 
     # Get an overview of all packages that have a version lock
     versionlock_packages = get_versionlock_packages(module, yum_binary)
