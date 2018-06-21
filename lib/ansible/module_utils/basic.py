@@ -294,6 +294,13 @@ def get_distribution():
     return distribution
 
 
+def missing_required_lib(library):
+
+    hostname = platform.node().split('.')[0]
+    return "Cannot run as we are missing required library (%s) on %s's python %s."
+    "Please read module documentation and install in the appropriate location." % (library, hostname, sys.executable)
+
+
 def get_distribution_version():
     ''' return the distribution version '''
     if platform.system() == 'Linux':
