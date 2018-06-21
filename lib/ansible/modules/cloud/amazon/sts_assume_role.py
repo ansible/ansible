@@ -36,8 +36,9 @@ options:
       - Supplemental policy to use in addition to assumed role's policies.
   duration_seconds:
     description:
-      - The duration, in seconds, of the role session. The value can range from 900 seconds (15 minutes) to 3600 seconds (1 hour).
-        By default, the value is set to 3600 seconds.
+      - The duration, in seconds, of the role session. The value can range from 900 seconds (15 minutes) to 43200 seconds (12 hours).
+        The max dependis on the IAM role's sessions duration setting.
+        By default, the value is set to 3600 seconds.s
   external_id:
     description:
       - A unique identifier that is used by third parties to assume a role in their customers' accounts.
