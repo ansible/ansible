@@ -243,6 +243,22 @@ An example of using this filter with ``loop``::
         key: "{{ lookup('file', item.1) }}"
       loop: "{{ users|subelements('authorized') }}"
 
+.. _random_mac_filter:
+
+Random Mac Address Filter
+`````````````````````````
+
+.. versionadded:: 2.6
+
+This filter can be used to generate a random MAC address from a string prefix.
+
+To get a random MAC address from a string prefix starting with '52:54:00'::
+
+    "{{ '52:54:00'|random_mac }}"
+    # => '52:54:00:ef:1c:03'
+
+Note that if anything is wrong with the prefix string, the filter will issue an error.
+
 .. _random_filter:
 
 Random Number Filter
