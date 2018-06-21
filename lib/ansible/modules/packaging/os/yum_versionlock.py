@@ -16,30 +16,34 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: yum_versionlock
-short_description: Locks/prevents an installed package from beeing updates by yum
+version_added: 2.7
+short_description: Locks/prevents an installed package from beeing updates by (yum) package mamanger.
 description:
-  - This module adds installed packages to yum versionlock to prevent it from beeing updated.
-    To run this module you need to install rpm package 'yum-versionlock'.
+     - This module adds installed packages to yum versionlock to prevent it from beeing updated.
 options:
-  state:
-    description:
-      - Adds/removes a package to yum versionlock to prevent it from beeing updated
-  version_added: "2.7"
   package:
     description:
-      - Wildcard package name (e.g. 'httpd')
-  version_added: "2.7"
+      - A package name or package specifier with version, like C(name-1.0).
+  state:
+    description:
+      - Whether to lock (C(present) or unlock (C(absent) a package.
+    choices: [ present, absent ]
 # informational: requirements for nodes
 requirements:
-    - yum
-    - yum-versionlock
+- yum
+- yum-versionlock
 author:
     - Florian Paul Hoberg <florian.hoberg@credativ.de>
 '''
+
 EXAMPLES = '''
 - name: Prevent Apache / httpd from beeing updated
   yum_versionlock:
     state: present
+    package: httpd
+- name:  Unlock Apache / httpd to be updated again
+  yum_versionlock:
+    state: absent
     package: httpd
 '''
 
