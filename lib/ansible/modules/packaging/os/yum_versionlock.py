@@ -17,17 +17,18 @@ DOCUMENTATION = '''
 ---
 module: yum_versionlock
 version_added: 2.7
-short_description: Locks/prevents an installed package from beeing updates by (yum) package mamanger.
+short_description: Locks/Unlocks an installed package from being updates by (yum) package manager.
 description:
-     - This module adds installed packages to yum versionlock to prevent it from beeing updated.
+     - This module adds installed packages to yum versionlock to prevent it from being updated.
 options:
   package:
     description:
       - A package name like C(httpd).
   state:
     description:
-      - Whether to lock (C(present) or unlock (C(absent) a package.
+      - Whether to lock C(present) or unlock C(absent) a package.
     choices: [ present, absent ]
+    default: present
 # informational: requirements for nodes
 requirements:
 - yum
@@ -60,44 +61,50 @@ state:
     sample: present
 '''
 
-import os.path
+import yum
 from ansible.module_utils.basic import AnsibleModule
 
-YUM_BINARY = "/bin/yum"
+def get_yum_path(module):
+    """ Get yum path """
+    yum_binary = module.get_bin_path('yum')
+    return yum_binary
 
 
 def get_state_yum_versionlock():
     """ Check for yum plugin dependency """
-    state = os.path.exists("/etc/yum/pluginconf.d/versionlock.conf")
-    return state
+    installed = False
+    yum_pkgs = yum.YumBase()
+    if yum_pkgs.rpmdb.searchNevra(name='yum-plugin-versionlock'):
+        installed = True
+    return installed
 
 
-def get_versionlock_packages(module):
+def get_versionlock_packages(module, yum_binary):
     """ Get an overview of all packages on yum versionlock """
     rc_code, out, err = module.run_command("%s -q versionlock list"
-                                           % (YUM_BINARY))
-    if rc_code is 0:
+                                           % (yum_binary))
+    if rc_code == 0:
         return out
     else:
         module.fail_json(msg="Error: " + str(err) + str(out))
 
 
-def add_package_versionlock(module, package):
+def add_package_versionlock(module, package, yum_binary):
     """ Add package to yum versionlock """
     rc_code, out, err = module.run_command("%s -q versionlock add %s"
-                                           % (YUM_BINARY, package))
-    if rc_code is 0:
+                                           % (yum_binary, package))
+    if rc_code == 0:
         changed = True
         return changed
     else:
         module.fail_json(msg="Error: " + str(err) + str(out))
 
 
-def remove_package_versionlock(module, package):
+def remove_package_versionlock(module, package, yum_binary):
     """ Remove package from yum versionlock """
     rc_code, out, err = module.run_command("%s -q versionlock delete %s"
-                                           % (YUM_BINARY, package))
-    if rc_code is 0:
+                                           % (yum_binary, package))
+    if rc_code == 0:
         changed = True
         return changed
     else:
@@ -108,7 +115,7 @@ def main():
     """ start main program to add/remove a package to yum versionlock"""
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(required=True, type='str', choices=['present', 'absent']),
+            state=dict(default='present', choices=['present', 'absent']),
             package=dict(required=True, type='str'),
         ),
         supports_check_mode=False
@@ -118,23 +125,26 @@ def main():
     package = module.params['package']
     changed = False
 
+    # Get yum path
+    yum_binary = get_yum_path(module)
+
     # Check for yum version lock plugin
     versionlock_plugin = get_state_yum_versionlock()
     if versionlock_plugin is False:
         module.fail_json(msg="Error: Please install yum-versionlock")
 
     # Get an overview of all packages that have a version lock
-    versionlock_packages = get_versionlock_packages(module)
+    versionlock_packages = get_versionlock_packages(module, yum_binary)
 
     # Add a package to versionlock
     if state == "present":
         if package not in versionlock_packages:
-            changed = add_package_versionlock(module, package)
+            changed = add_package_versionlock(module, package, yum_binary)
 
     # Remove a package from versionlock
     if state == "absent":
         if package in versionlock_packages:
-            changed = remove_package_versionlock(module, package)
+            changed = remove_package_versionlock(module, package, yum_binary)
 
     # Create Ansible meta output
     response = {"package": package, "state": state}
