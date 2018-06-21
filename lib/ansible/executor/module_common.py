@@ -143,12 +143,6 @@ if sys.version_info < (3,):
 else:
     unicode = str
     PY3 = True
-try:
-    # Python-2.6+
-    from io import BytesIO as IOStream
-except ImportError:
-    # Python < 2.6
-    from StringIO import StringIO as IOStream
 
 ZIPDATA = """%(zipdata)s"""
 
