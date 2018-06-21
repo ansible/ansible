@@ -267,8 +267,8 @@ def main():
     if url is None and hostname is not None:
         url = 'https://{0}/ovirt-engine/api'.format(hostname)
 
-    username = get_required_parameter('username', 'OVIRT_USERNAME', required=True)
-    password = get_required_parameter('password', 'OVIRT_PASSWORD', required=True)
+    username = get_required_parameter('username', 'OVIRT_USERNAME')
+    password = get_required_parameter('password', 'OVIRT_PASSWORD')
     token = get_required_parameter('token', 'OVIRT_TOKEN')
     ca_file = get_required_parameter('ca_file', 'OVIRT_CAFILE')
     insecure = params.get('insecure') if params.get('insecure') is not None else not bool(ca_file)
