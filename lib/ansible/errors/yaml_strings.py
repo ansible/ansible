@@ -134,7 +134,7 @@ Should be written as:
 # ^--- all spaces here.
 """
 
-YAML_AND_SHORTHAND_ERROR  = """\
+YAML_AND_SHORTHAND_ERROR = """\
 There appears to be both 'k=v' shorthand syntax and YAML in this task. \
 Only one syntax may be used.
 """
