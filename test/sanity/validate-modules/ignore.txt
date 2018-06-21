@@ -838,7 +838,6 @@ lib/ansible/modules/network/eos/eos_lldp.py E326
 lib/ansible/modules/network/eos/eos_logging.py E326
 lib/ansible/modules/network/eos/eos_vlan.py E325
 lib/ansible/modules/network/eos/eos_vrf.py E325
-lib/ansible/modules/network/f5/bigip_iapplx_package.py E210
 lib/ansible/modules/network/fortimanager/fmgr_script.py E324
 lib/ansible/modules/network/fortios/fortios_address.py E324
 lib/ansible/modules/network/illumos/dladm_iptun.py E325
