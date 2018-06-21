@@ -23,7 +23,7 @@ description:
 options:
   package:
     description:
-      - A package name or package specifier with version, like C(name-1.0).
+      - A package name like C(httpd).
   state:
     description:
       - Whether to lock (C(present) or unlock (C(absent) a package.
@@ -95,7 +95,7 @@ def main():
     """ start main program to add/remove a package to yum versionlock"""
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(required=True, type='str'),
+            state=dict(required=True, type='str', choices=['present', 'absent']),
             package=dict(required=True, type='str'),
         ),
         supports_check_mode=False
