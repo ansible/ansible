@@ -278,14 +278,19 @@ class TaskExecutor:
         label = None
         loop_pause = 0
         templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
+
+        # FIXME: move this to the object itself to allow post_validate to take care of templating (loop_control.post_validate)
         if self._task.loop_control:
-            # FIXME: move this to the object itself to allow post_validate to take care of templating
             loop_var = templar.template(self._task.loop_control.loop_var)
             index_var = templar.template(self._task.loop_control.index_var)
             loop_pause = templar.template(self._task.loop_control.pause)
-            # the these may be 'None', so we still need to default to something useful
-            # this is tempalted below after an item is assigned
-            label = (self._task.loop_control.label or ('{{' + loop_var + '}}'))
+
+            # This may be 'None',so it is tempalted below after we ensure a value and an item is assigned
+            label = self._task.loop_control.label
+
+        # ensure we always have a label
+        if label is None:
+            label = '{{' + loop_var + '}}'
 
         if loop_var in task_vars:
             display.warning(u"The loop variable '%s' is already in use. "
@@ -339,8 +344,8 @@ class TaskExecutor:
             res['_ansible_item_result'] = True
             res['_ansible_ignore_errors'] = task_fields.get('ignore_errors')
 
-            if label is not None:
-                res['_ansible_item_label'] = templar.template(label, cache=False)
+            # gets templated here unlike rest of loop_control fields, depends on loop_var above
+            res['_ansible_item_label'] = templar.template(label, cache=False)
 
             self._rslt_q.put(
                 TaskResult(

@@ -1,0 +1,2 @@
+bugfixes:
+    - correct debug display for all cases https://github.com/ansible/ansible/pull/41331
