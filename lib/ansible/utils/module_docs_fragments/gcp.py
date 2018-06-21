@@ -25,7 +25,6 @@ options:
     scopes:
       description:
           - Array of scopes to be used.
-      required: true
 notes:
   - For authentication, you can set service_account_file using the
     C(GCP_SERVICE_ACCOUNT_FILE) env variable.

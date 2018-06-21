@@ -151,6 +151,9 @@ def main():
         )
     )
 
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/sqlservice.admin']
+
     state = module.params['state']
     kind = 'sql#user'
 

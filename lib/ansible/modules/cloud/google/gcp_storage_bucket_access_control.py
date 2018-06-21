@@ -210,6 +210,9 @@ def main():
         )
     )
 
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/devstorage.full_control']
+
     state = module.params['state']
     kind = 'storage#bucketAccessControl'
 

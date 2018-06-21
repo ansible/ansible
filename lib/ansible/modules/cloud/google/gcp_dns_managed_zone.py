@@ -153,6 +153,9 @@ def main():
         )
     )
 
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/ndev.clouddns.readwrite']
+
     state = module.params['state']
     kind = 'dns#managedZone'
 

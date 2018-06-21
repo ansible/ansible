@@ -95,6 +95,9 @@ def main():
         )
     )
 
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/pubsub']
+
     state = module.params['state']
 
     fetch = fetch_resource(module, self_link(module))

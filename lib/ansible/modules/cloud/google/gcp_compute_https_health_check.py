@@ -220,6 +220,9 @@ def main():
         )
     )
 
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
+
     state = module.params['state']
     kind = 'compute#httpsHealthCheck'
 
