@@ -319,7 +319,6 @@ options:
                 description:
                     - Email address of the service account.
                 required: false
-                type: bool
             scopes:
                 description:
                     - The list of scopes to be made available for this service account.
@@ -862,7 +861,7 @@ def main():
                 preemptible=dict(type='bool')
             )),
             service_accounts=dict(type='list', elements='dict', options=dict(
-                email=dict(type='bool'),
+                email=dict(type='str'),
                 scopes=dict(type='list', elements='str')
             )),
             tags=dict(type='dict', options=dict(
