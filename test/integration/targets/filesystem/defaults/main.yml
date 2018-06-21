@@ -13,4 +13,4 @@ tested_filesystems:
   btrfs: {fssize: 100, grow: False}  # grow not implemented
   vfat: {fssize: 20, grow: True}
   ocfs2: {fssize: '{{ ocfs2_fssize }}', grow: False}  # grow not implemented
-  # untested: lvm, requires a block device
+  lvm: {fssize: 20, grow: True}
