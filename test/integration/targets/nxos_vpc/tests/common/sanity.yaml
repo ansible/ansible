@@ -13,6 +13,7 @@
   - name: Ensure ntc VRF exists on switch
     nxos_vrf:
       vrf: ntc
+      provider: "{{ connection }}"
 
   - name: Configure vpc
     nxos_vpc: &conf_vpc

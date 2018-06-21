@@ -22,6 +22,7 @@
     nxos_system: &hostname
       hostname: switch
       domain_name: test.example.com
+      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -41,6 +42,7 @@
       name_servers:
         - 8.8.8.8
         - 8.8.4.4
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -56,6 +58,7 @@
       name_servers:
         - { server: 8.8.8.8, vrf: management }
         - { server: 8.8.4.4, vrf: management }
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -69,6 +72,7 @@
   - name: configure domain lookup1
     nxos_system: &ndlo
       domain_lookup: false
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -94,6 +98,7 @@
   - name: configure system mtu
     nxos_system: &sysmtu
       system_mtu: 3000
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -110,6 +115,7 @@
       domain_name: default
       name_servers: default
       system_mtu: default
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true

@@ -13,16 +13,19 @@
   nxos_config: &default
     lines:
       - "default interface {{ intname }}"
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: Setup - Ensure interface is layer2
   nxos_interface:
     interface: "{{ intname }}"
     mode: layer2
+    provider: "{{ connection }}"
 
 - name: "Setup vlans"
   nxos_vlan:
     vlan_range: "5-10,20"
+    provider: "{{ connection }}"
 
 - block:
   - name: Ensure interface is in its default switchport state
@@ -36,6 +39,7 @@
       name: "{{ intname }}"
       mode: access
       access_vlan: 20
+      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -60,6 +64,7 @@
       mode: trunk
       native_vlan: 10
       trunk_allowed_vlans: 5-10
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -76,6 +81,7 @@
       mode: trunk
       native_vlan: 10
       trunk_vlans: 2-50
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true

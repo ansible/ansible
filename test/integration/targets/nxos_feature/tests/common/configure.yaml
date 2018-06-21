@@ -5,6 +5,7 @@
   nxos_config:
     lines: no feature bgp
     match: none
+    provider: "{{ connection }}"
 
 - name: enable bgp
   nxos_feature:
@@ -54,5 +55,6 @@
   nxos_config:
     lines: no feature bgp
     match: none
+    provider: "{{ connection }}"
 
 - debug: msg="END connection={{ ansible_connection }}/configure.yaml"

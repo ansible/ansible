@@ -8,6 +8,7 @@
       - show interface mgmt0 | json
     wait_for:
       - "result[1].TABLE_interface.ROW_interface.state neq down"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -22,6 +23,7 @@
       - show interface mgmt0 | json
     wait_for:
       - "result[1].TABLE_interface.ROW_interface.state != down"
+    provider: "{{ connection }}"
   register: result
 
 - assert:

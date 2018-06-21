@@ -23,6 +23,7 @@
   nxos_config: &intdefault
     lines:
       - "default interface {{ testint }}"
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Remove switchport config"
@@ -31,6 +32,7 @@
       - no switchport
     parents:
       - "interface {{ testint }}"
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Remove possibly existing port-channel and loopback ints"
@@ -40,6 +42,7 @@
       - no interface port-channel11
       - no interface loopback55
       - no interface loopback77
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - block:
@@ -161,6 +164,7 @@
         - interface loopback55
         - interface loopback77
       match: none
+      provider: "{{ connection }}"
 
   - name: "Ensure port-channels are layer3"
     nxos_config:
@@ -168,6 +172,7 @@
         - no switchport
       parents:
         - "interface {{ item }}"
+      provider: "{{ connection }}"
     with_items:
       - port-channel10
       - port-channel11

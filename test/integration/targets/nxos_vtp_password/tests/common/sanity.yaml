@@ -13,6 +13,7 @@
   - name: configure vtp domain
     nxos_vtp_domain:
       domain: testing
+      provider: "{{ connection }}"
 
   - name: configure vtp password
     nxos_vtp_password: &configure

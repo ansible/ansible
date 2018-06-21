@@ -189,6 +189,7 @@
       vrf: 'blue'
       neighbor: '192.0.2.3'
       remote_as: 2
+      provider: "{{ connection }}"
 
   - name: "Configure BGP neighbor 3"
     nxos_bgp_neighbor_af: &configure3
@@ -253,6 +254,7 @@
       asn: 65535
       neighbor: '192.0.2.2'
       remote_as: 65535
+      provider: "{{ connection }}"
 
   - name: "Configure BGP neighbor 4"
     nxos_bgp_neighbor_af: &configure4
@@ -261,6 +263,7 @@
       afi: ipv4
       safi: unicast
       route_reflector_client: 'true'
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -278,6 +281,7 @@
       afi: ipv4
       safi: unicast
       route_reflector_client: False
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true

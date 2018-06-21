@@ -36,6 +36,7 @@
       interfaces:
         - "{{ intname1 }}"
         - "{{ intname2 }}"
+      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -60,6 +61,7 @@
       vni: "{{vnid|default(omit)}}"
       rd: "{{rdd|default(omit)}}"
       interfaces: default
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true

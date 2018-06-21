@@ -13,6 +13,7 @@
   - name: configure vtp domain
     nxos_vtp_domain: &configure
       domain: ntc
+      provider: "{{ connection }}"
     register: result
 
   - assert: &true

@@ -7,6 +7,7 @@
   nxos_config: &remove_evpn
     lines: no nv overlay evpn
     match: none
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - block:
@@ -20,6 +21,7 @@
     nxos_config:
       lines: nv overlay evpn
       match: none
+      provider: "{{ connection }}"
 
   - name: "Configure nxos_evpn_vni"
     nxos_evpn_vni: &evpn_vni
@@ -33,6 +35,7 @@
           - auto
           - "5000:10"
           - "192.0.2.1:43"
+      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -53,6 +56,7 @@
       route_distinguisher: "50:20"
       route_target_import: auto
       route_target_export: auto
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -69,6 +73,7 @@
       route_distinguisher: default
       route_target_import: default
       route_target_export: default
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true

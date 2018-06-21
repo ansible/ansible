@@ -16,6 +16,7 @@
         - interface port-channel10
         - switchport
       match: none
+      provider: "{{ connection }}"
 
   - name: create port-channel11
     nxos_config:
@@ -23,6 +24,7 @@
         - interface port-channel11
         - switchport
       match: none
+      provider: "{{ connection }}"
 
   - name: configure vpc
     nxos_vpc:
@@ -40,6 +42,7 @@
     nxos_vpc_interface: &conf
       portchannel: 10
       vpc: 10
+      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -58,6 +61,7 @@
     nxos_vpc_interface: &conf1
       portchannel: 11
       peer_link: True
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -72,6 +76,7 @@
     nxos_vpc_interface: &conf2
       portchannel: 11
       peer_link: False
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -126,6 +131,7 @@
         - no interface port-channel10
         - no interface port-channel11
       match: none
+      provider: "{{ connection }}"
     ignore_errors: yes
 
   - name: disable feature vpc

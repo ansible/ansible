@@ -17,12 +17,14 @@
   nxos_config: &intdefault1
     lines:
       - "default interface {{ testint1 }}"
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Put interface {{testint2}} into default state"
   nxos_config: &intdefault2
     lines:
       - "default interface {{ testint2 }}"
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: Remove possibly configured port-channel 99

@@ -31,6 +31,7 @@
     nxos_bgp: &set1
       asn: 65535
       isolate: false
+      provider: "{{ connection }}"
     register: result
     when: bgp_isolate
 
@@ -53,6 +54,7 @@
     nxos_bgp: &reset1
       asn: 65535
       isolate: true
+      provider: "{{ connection }}"
     register: result
     when: bgp_isolate
 

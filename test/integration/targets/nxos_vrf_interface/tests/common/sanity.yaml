@@ -14,6 +14,7 @@
       parents:
         - "interface {{ intname }}"
       match: none
+      provider: "{{ connection }}"
 
   - name: Ensure vrf ntc exists on interface
     nxos_vrf_interface: &configure
@@ -56,6 +57,7 @@
     nxos_config:
       lines: "default interface {{ intname }}"
       match: none
+      provider: "{{ connection }}"
     ignore_errors: yes
 
 - debug: msg="END connection={{ ansible_connection }} nxos_vrf_interface sanity test"

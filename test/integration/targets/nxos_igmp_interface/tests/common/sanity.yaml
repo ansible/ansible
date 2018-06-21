@@ -21,6 +21,7 @@
     commands:
     - "default interface {{ intname }}"
     match: none
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - block:
@@ -33,6 +34,7 @@
       parents:
         - "interface {{ intname }}"
       match: none
+      provider: "{{ connection }}"
 
   - name: Configure igmp interface with non-default values
     nxos_igmp_interface: &non-default
@@ -101,6 +103,7 @@
     nxos_igmp_interface: &restart
       interface: "{{ intname }}"
       restart: "{{restart|default(omit)}}"
+      provider: "{{ connection }}"
 
   - name: Configure igmp interface with default oif_ps
     nxos_igmp_interface: &defoif
@@ -178,6 +181,7 @@
       commands:
       - "default interface {{ intname }}"
       match: none
+      provider: "{{ connection }}"
 
   - name: "Disable feature PIM"
     nxos_feature:

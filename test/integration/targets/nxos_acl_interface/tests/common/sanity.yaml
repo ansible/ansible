@@ -13,6 +13,7 @@
   nxos_config: &default
     lines:
       - "default interface {{ intname }}"
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Setup: Put interface into no switch port mode"
@@ -22,6 +23,7 @@
     parents:
       - "interface {{ intname }}"
     match: none
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Setup: Cleanup possibly existing acl"
@@ -40,6 +42,7 @@
     proto: tcp
     src: 192.0.2.1/24
     dest: any
+    provider: "{{ connection }}"
 
 - block:
   - name: Configure acl interface egress

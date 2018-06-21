@@ -21,6 +21,7 @@
   nxos_config:
     lines:
       - "default interface {{ testint }}"
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Ensure {{testint}} is layer3"
@@ -48,6 +49,7 @@
       jp_type_out: routemap
       sparse: True
       border: True
+      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -67,6 +69,7 @@
       interface: "{{ testint }}"
       neighbor_policy: NPR
       neighbor_type: routemap
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -85,6 +88,7 @@
       interface: "{{ testint }}"
       neighbor_policy: NPPF
       neighbor_type: prefix
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -99,6 +103,7 @@
     nxos_pim_interface: &confighak1
       interface: "{{ testint }}"
       hello_auth_key: password1
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true

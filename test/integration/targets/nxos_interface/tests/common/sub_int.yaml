@@ -16,6 +16,7 @@
   nxos_interface:
     name: "{{ testint }}"
     mode: layer3
+    provider: "{{ connection }}"
 
 - name: Create sub-interface
   nxos_interface: &sub_int
@@ -23,6 +24,7 @@
     description: "sub-interface Configured by Ansible"
     admin_state: up
     mtu: 800
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -43,6 +45,7 @@
     description: "sub-interface Configured by Ansible"
     admin_state: down
     mtu: 800
+    provider: "{{ connection }}"
   register: result
 
 - assert:

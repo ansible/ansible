@@ -21,6 +21,7 @@
       pwd: N$tOpe%1
       privacy: HelloU$er1
       encrypt: true
+      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -31,6 +32,7 @@
     nxos_snmp_user: &chg
       user: ntc
       group: network-admin
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true

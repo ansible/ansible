@@ -13,6 +13,7 @@
   - name: configure vtp version
     nxos_vtp_version: &configure
       version: 2
+      provider: "{{ connection }}"
     register: result
 
   - assert: &true

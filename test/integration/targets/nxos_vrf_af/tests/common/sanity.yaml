@@ -12,11 +12,13 @@
 - name: Configure feature nv overlay
   nxos_config:
     commands: "feature nv overlay"
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: Configure nv overlay evpn
   nxos_config:
     commands: "nv overlay evpn"
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - block:
@@ -25,6 +27,7 @@
       vrf: ansible
       afi: ipv4
       route_target_both_auto_evpn: True
+      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -44,6 +47,7 @@
       vrf: ansible
       afi: ipv6
       route_target_both_auto_evpn: True
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -59,6 +63,7 @@
       vrf: ansible
       afi: ipv4
       route_target_both_auto_evpn: False
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -74,6 +79,7 @@
       vrf: ansible
       afi: ipv6
       route_target_both_auto_evpn: False
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -130,16 +136,19 @@
   - name: Remove vrf
     nxos_config:
       commands: "no vrf context ansible"
+      provider: "{{ connection }}"
     ignore_errors: yes
 
   - name: Remove nv overlay evpn
     nxos_config:
       commands: "no nv overlay evpn"
+      provider: "{{ connection }}"
     ignore_errors: yes
 
   - name: Remove feature nv overlay
     nxos_config:
       commands: "no feature nv overlay"
+      provider: "{{ connection }}"
     ignore_errors: yes
 
   - name: Remove feature bgp

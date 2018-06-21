@@ -97,6 +97,7 @@
     nxos_user: &tear
       name: ansible
       purge: yes
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true

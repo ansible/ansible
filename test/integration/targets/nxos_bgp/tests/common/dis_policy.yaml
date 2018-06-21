@@ -30,6 +30,7 @@
       disable_policy_batching: true
       disable_policy_batching_ipv4_prefix_list: v4_p
       disable_policy_batching_ipv6_prefix_list: v6_p
+      provider: "{{ connection }}"
     register: result
     when: bgp_disable_policy
 
@@ -54,6 +55,7 @@
       disable_policy_batching: false
       disable_policy_batching_ipv4_prefix_list: default
       disable_policy_batching_ipv6_prefix_list: default
+      provider: "{{ connection }}"
     register: result
     when: bgp_disable_policy
 
