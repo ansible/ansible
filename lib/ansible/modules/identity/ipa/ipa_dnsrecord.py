@@ -46,6 +46,21 @@ options:
     - In the case of 'PTR' record type, this will be the hostname.
     - In the case of 'TXT' record type, this will be a text.
     required: true
+  record_ttl:
+    description:
+    - Set the TTL for the record.
+    - Applies only when adding a new or changing the value of record_value.
+    - TTL updates can be forced by setting force to true.
+    version_added: "2.5"
+  force:
+    description:
+    - Required in order to apply a TTL change to an existing record and record_value.
+    - When true any existing record is removed a new recorded added.
+    - Always returns changed.
+    required: false
+    default: 'False'
+    choices: ['True', 'False']
+    version_added: "2.5"
   state:
     description: State to ensure
     required: false
@@ -96,6 +111,31 @@ EXAMPLES = '''
     ipa_user: admin
     ipa_pass: topsecret
     state: absent
+
+# Ensure that dns record exists with a TTL
+- ipa_dnsrecord:
+    name: host02
+    zone_name: example.com
+    record_type: 'AAAA'
+    record_value: '::1'
+    record_ttl: 300
+    ipa_host: ipa.example.com
+    ipa_user: admin
+    ipa_pass: topsecret
+    state: present
+
+# Update a TTL for an existing record set
+- ipa_dnsrecord:
+    name: host02
+    zone_name: example.com
+    record_type: 'AAAA'
+    record_value: '::1'
+    record_ttl: 60
+    ipa_host: ipa.example.com
+    ipa_user: admin
+    ipa_pass: topsecret
+    state: present
+    force: true
 '''
 
 RETURN = '''
@@ -119,7 +159,7 @@ class DNSRecordIPAClient(IPAClient):
     def dnsrecord_find(self, zone_name, record_name):
         return self._post_json(method='dnsrecord_find', name=zone_name, item={'idnsname': record_name})
 
-    def dnsrecord_add(self, zone_name=None, record_name=None, details=None):
+    def dnsrecord_add(self, zone_name=None, record_name=None, record_ttl=None, details=None):
         item = dict(idnsname=record_name)
         if details['record_type'] == 'A':
             item.update(a_part_ip_address=details['record_value'])
@@ -136,11 +176,16 @@ class DNSRecordIPAClient(IPAClient):
         elif details['record_type'] == 'TXT':
             item.update(txtrecord=details['record_value'])
 
+        if record_ttl:
+            item.update(dnsttl=record_ttl)
+
         return self._post_json(method='dnsrecord_add', name=zone_name, item=item)
 
-    def dnsrecord_mod(self, zone_name=None, record_name=None, details=None):
+    def dnsrecord_mod(self, zone_name=None, record_name=None, record_ttl=None, details=None):
         item = get_dnsrecord_dict(details)
         item.update(idnsname=record_name)
+        if record_ttl:
+            item.update(dnsttl=record_ttl)
         return self._post_json(method='dnsrecord_mod', name=zone_name, item=item)
 
     def dnsrecord_del(self, zone_name=None, record_name=None, details=None):
@@ -176,6 +221,8 @@ def get_dnsrecord_diff(client, ipa_dnsrecord, module_dnsrecord):
 def ensure(module, client):
     zone_name = module.params['zone_name']
     record_name = module.params['record_name']
+    record_ttl = module.params['record_ttl']
+    force = module.params['force']
     state = module.params['state']
 
     ipa_dnsrecord = client.dnsrecord_find(zone_name, record_name)
@@ -189,6 +236,7 @@ def ensure(module, client):
             if not module.check_mode:
                 client.dnsrecord_add(zone_name=zone_name,
                                      record_name=record_name,
+                                     record_ttl=record_ttl,
                                      details=module_dnsrecord)
         else:
             diff = get_dnsrecord_diff(client, ipa_dnsrecord, module_dnsrecord)
@@ -197,7 +245,19 @@ def ensure(module, client):
                 if not module.check_mode:
                     client.dnsrecord_mod(zone_name=zone_name,
                                          record_name=record_name,
+                                         record_ttl=record_ttl,
                                          details=module_dnsrecord)
+            elif force:
+                changed = True
+                if not module.check_mode:
+                    client.dnsrecord_del(zone_name=zone_name,
+                                         record_name=record_name,
+                                         details=module_dnsrecord)
+                    client.dnsrecord_add(zone_name=zone_name,
+                                         record_name=record_name,
+                                         record_ttl=record_ttl,
+                                         details=module_dnsrecord)
+
     else:
         if ipa_dnsrecord:
             changed = True
@@ -216,7 +276,9 @@ def main():
                          record_name=dict(type='str', aliases=['name'], required=True),
                          record_type=dict(type='str', default='A', choices=record_types),
                          record_value=dict(type='str', required=True),
-                         state=dict(type='str', default='present', choices=['present', 'absent']),
+                         record_ttl=dict(type='int', required=False),
+                         force=dict(type='bool', default=False, required=False),
+                         state=dict(type='str', default='present', choices=['present', 'absent'])
                          )
 
     module = AnsibleModule(argument_spec=argument_spec,
