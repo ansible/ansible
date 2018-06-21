@@ -1,5 +1,5 @@
 - name: 'Recreate "disk" file'
-  command: 'dd if=/dev/zero of={{ dev }} bs=1M count={{ fssize }}'
+  command: 'dd if=/dev/zero of={{ image_file }} bs=1M count={{ fssize }}'
 
 - name: 'Create a swap filesystem'
   command: 'mkswap {{ dev }}'
