@@ -37,7 +37,7 @@ import yaml
 from collections import MutableMapping, MutableSequence
 import datetime
 from functools import partial
-from random import Random, SystemRandom, shuffle
+from random import Random, SystemRandom, shuffle, random
 
 from jinja2.filters import environmentfilter, do_groupby as _do_groupby
 
@@ -532,6 +532,39 @@ def dict_to_list_of_dict_key_value_elements(mydict):
     return ret
 
 
+def random_mac(value):
+    ''' takes string prefix, and return it completed with random bytes
+        to get a complete 6 bytes MAC address '''
+
+    if not isinstance(value, string_types):
+        raise AnsibleFilterError('Invalid value type (%s) for random_mac (%s)' % (type(value), value))
+
+    value = value.lower()
+    mac_items = value.split(':')
+
+    if len(mac_items) > 5:
+        raise AnsibleFilterError('Invalid value (%s) for random_mac: 5 colon(:) separated items max' % value)
+
+    err = ""
+    for mac in mac_items:
+        if len(mac) == 0:
+            err += ",empty item"
+            continue
+        if not re.match('[a-f0-9]{2}', mac):
+            err += ",%s not hexa byte" % mac
+    err = err.strip(',')
+
+    if len(err):
+        raise AnsibleFilterError('Invalid value (%s) for random_mac: %s' % (value, err))
+
+    # Generate random float and make it int
+    v = int(random() * 10.0**10)
+    # Select first n chars to complement input prefix
+    remain = 2 * (6 - len(mac_items))
+    rnd = ('%x' % v)[:remain]
+    return value + re.sub(r'(..)', r':\1', rnd)
+
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -621,4 +654,7 @@ class FilterModule(object):
             'flatten': flatten,
             'dict2items': dict_to_list_of_dict_key_value_elements,
             'subelements': subelements,
+
+            # Misc
+            'random_mac': random_mac,
         }
