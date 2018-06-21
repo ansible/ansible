@@ -18,9 +18,8 @@ These new modules can be found under a new consistent name scheme "gcp_*"
 (Note: gcp_target_proxy and gcp_url_map are legacy modules, despite the "gcp_*"
 name. Please use gcp_compute_target_proxy and gcp_compute_url_map instead).
 
-Additionally, there is an inventory plugin that can automatically suck down all
-of your GCE instances into Ansible dynamic inventory, and create groups by tag
-and other properties.
+Additionally, the gcp_compute inventory plugin can discovery all GCE instances
+and make them automatically available in your Ansible inventory.
 
 You may see a collection of other GCP modules that do not conform to this
 naming convention. These are the original modules primarily developed by the
@@ -36,7 +35,8 @@ adopting these new modules if possible.
 
 Introduction
 ---------------
-The Google Cloud Platform (GCP) modules require both the `requests` and the `google-auth` libraries to s to be installed. One way to t.
+The Google Cloud Platform (GCP) modules require both the `requests` and the
+`google-auth` libraries to be installed.
 
 .. code-block:: bash
 
@@ -45,7 +45,8 @@ The Google Cloud Platform (GCP) modules require both the `requests` and the `goo
 
 Credentials
 -----------
-Authenticating with GCP is easy and can be done in multiple ways. These ways include:
+Authenticating with GCP is easy and can be done in multiple ways. There are two
+common options for authenticating to GCP:
 
 * Service Accounts (Recommended): Use JSON service accounts with specific permissions.
 * Machine Accounts: Use the permissions associated with the GCP Instance you're using Ansible on.
@@ -93,7 +94,7 @@ you can use the following configuration:
 
      tasks:
 
-      - name: Launch instances
+      - name: Allocate an IP Address
         gcp_compute_address:
             state: present
             name: 'test-address1'
