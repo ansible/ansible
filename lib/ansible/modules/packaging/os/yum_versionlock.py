@@ -79,7 +79,7 @@ def get_state_yum_versionlock(module, yum_binary):
     else:
         module.fail_json(msg="Error: Please install rpm package yum-plugin-versionlock | " + str(err) + str(out))
 
-        
+
 def get_versionlock_packages(module, yum_binary):
     """ Get an overview of all packages on yum versionlock """
     rc_code, out, err = module.run_command("%s -q versionlock list"
