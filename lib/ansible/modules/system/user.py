@@ -446,7 +446,7 @@ class User(object):
             return self.module.run_command(cmd, use_unsafe_shell=use_unsafe_shell, data=data)
 
     def backup_shadow(self):
-        if self.backup and not self.module.check_mode:
+        if self.backup and not self.module.check_mode and self.SHADOWFILE:
             return self.module.backup_local(self.SHADOWFILE)
 
     def remove_user_userdel(self):
@@ -2447,7 +2447,8 @@ def main():
 
     if rc is None:
         result['changed'] = False
-        os.remove(shadow_file_backup)
+        if shadow_file_backup:
+            os.remove(shadow_file_backup)
     else:
         result['changed'] = True
     if out:
