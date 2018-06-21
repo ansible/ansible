@@ -80,6 +80,8 @@ BLACKLIST_IMPORTS = {
         }
     },
 }
+SUBPROCESS_REGEX = re.compile(r'subprocess\.Po.*')
+OS_CALL_REGEX = re.compile(r'os\.call.*')
 
 
 class ReporterEncoder(json.JSONEncoder):
@@ -395,6 +397,34 @@ class ModuleValidator(Validator):
                     msg='Found old style GPLv3 license header: '
                         'https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_documenting.html#copyright'
                 )
+
+    def _check_for_subprocess(self):
+        for child in self.ast.body:
+            if isinstance(child, ast.Import):
+                if child.names[0].name == 'subprocess':
+                    for line_no, line in enumerate(self.text.splitlines()):
+                        sp_match = SUBPROCESS_REGEX.search(line)
+                        if sp_match:
+                            self.reporter.error(
+                                path=self.object_path,
+                                code=210,
+                                msg=('subprocess.Popen call found. Should be module.run_command'),
+                                line=(line_no + 1),
+                                column=(sp_match.span()[0] + 1)
+                            )
+
+    def _check_for_os_call(self):
+        if 'os.call' in self.text:
+            for line_no, line in enumerate(self.text.splitlines()):
+                os_call_match = OS_CALL_REGEX.search(line)
+                if os_call_match:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=211,
+                        msg=('os.call() call found. Should be module.run_command'),
+                        line=(line_no + 1),
+                        column=(os_call_match.span()[0] + 1)
+                    )
 
     def _find_blacklist_imports(self):
         for child in self.ast.body:
@@ -1308,7 +1338,6 @@ class ModuleValidator(Validator):
 
     def validate(self):
         super(ModuleValidator, self).validate()
-
         if not self._python_module() and not self._powershell_module():
             self.reporter.error(
                 path=self.object_path,
@@ -1354,6 +1383,8 @@ class ModuleValidator(Validator):
             self._find_has_import()
             first_callable = self._get_first_callable()
             self._ensure_imports_below_docs(doc_info, first_callable)
+            self._check_for_subprocess()
+            self._check_for_os_call()
 
         if self._powershell_module():
             self._validate_ps_replacers()

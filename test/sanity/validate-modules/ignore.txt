@@ -251,6 +251,7 @@ lib/ansible/modules/cloud/linode/linode.py E322
 lib/ansible/modules/cloud/linode/linode.py E324
 lib/ansible/modules/cloud/lxc/lxc_container.py E324
 lib/ansible/modules/cloud/lxc/lxc_container.py E326
+lib/ansible/modules/cloud/lxc/lxc_container.py E210
 lib/ansible/modules/cloud/lxd/lxd_container.py E322
 lib/ansible/modules/cloud/lxd/lxd_container.py E324
 lib/ansible/modules/cloud/lxd/lxd_container.py E325
@@ -565,6 +566,7 @@ lib/ansible/modules/database/mongodb/mongodb_user.py E325
 lib/ansible/modules/database/mysql/mysql_replication.py E325
 lib/ansible/modules/database/mysql/mysql_replication.py E326
 lib/ansible/modules/database/mysql/mysql_user.py E322
+lib/ansible/modules/database/mysql/mysql_db.py E210
 lib/ansible/modules/database/postgresql/postgresql_ext.py E322
 lib/ansible/modules/database/postgresql/postgresql_ext.py E324
 lib/ansible/modules/database/postgresql/postgresql_lang.py E324
@@ -574,6 +576,7 @@ lib/ansible/modules/database/postgresql/postgresql_schema.py E324
 lib/ansible/modules/database/postgresql/postgresql_user.py E322
 lib/ansible/modules/database/postgresql/postgresql_user.py E324
 lib/ansible/modules/database/postgresql/postgresql_user.py E326
+lib/ansible/modules/database/postgresql/postgresql_db.py E210
 lib/ansible/modules/database/proxysql/proxysql_backend_servers.py E322
 lib/ansible/modules/database/proxysql/proxysql_backend_servers.py E325
 lib/ansible/modules/database/proxysql/proxysql_global_variables.py E322
@@ -1036,6 +1039,8 @@ lib/ansible/modules/packaging/os/apt_repository.py E325
 lib/ansible/modules/packaging/os/apt_rpm.py E322
 lib/ansible/modules/packaging/os/apt_rpm.py E324
 lib/ansible/modules/packaging/os/apt_rpm.py E326
+lib/ansible/modules/packaging/os/flatpak.py E210
+lib/ansible/modules/packaging/os/flatpak_remote.py E210
 lib/ansible/modules/packaging/os/homebrew.py E326
 lib/ansible/modules/packaging/os/homebrew_cask.py E326
 lib/ansible/modules/packaging/os/layman.py E322
@@ -1220,6 +1225,7 @@ lib/ansible/modules/system/selinux.py E324
 lib/ansible/modules/system/selinux_permissive.py E322
 lib/ansible/modules/system/seport.py E324
 lib/ansible/modules/system/service.py E323
+lib/ansible/modules/system/service.py E210
 lib/ansible/modules/system/solaris_zone.py E324
 lib/ansible/modules/system/svc.py E322
 lib/ansible/modules/system/svc.py E324
