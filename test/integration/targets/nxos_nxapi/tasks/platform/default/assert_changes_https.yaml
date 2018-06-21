@@ -7,7 +7,7 @@
       - result.stdout[0]['operation_status'].o_status == 'nxapi enabled'
   when: major_version is version('9.2', '<')
 
-- name: Assert HTTPS configuration changes Hamilton
+- name: Assert HTTPS configuration changes 9.2 or greater
   assert:
     that:
       - result.stdout[0]['https_port']
