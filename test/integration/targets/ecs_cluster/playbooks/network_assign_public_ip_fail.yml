@@ -60,7 +60,7 @@
                 - subnet-abcd1234
               security_groups:
                 - sg-abcd1234
-              assign_public_ip: ENABLED
+              assign_public_ip: true
             state: present
             <<: *aws_connection_info
           register: ecs_service_creation_vpc
