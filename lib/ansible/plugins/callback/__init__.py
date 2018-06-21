@@ -21,9 +21,12 @@ __metaclass__ = type
 
 import difflib
 import json
+import os
 import sys
 import warnings
+
 from copy import deepcopy
+from collections import MutableMapping
 
 from ansible import constants as C
 from ansible.parsing.ajson import AnsibleJSONEncoder
@@ -78,7 +81,7 @@ class CallbackBase(AnsiblePlugin):
         if options is not None:
             self.set_options(options)
 
-        self._hide_in_debug = ('changed', 'failed', 'skipped', 'invocation')
+        self._hide_in_debug = ('changed', 'failed', 'skipped', 'invocation', 'skip_reason')
 
     ''' helper for callbacks, so they don't all have to include deepcopy '''
     _copy_result = deepcopy
@@ -172,7 +175,7 @@ class CallbackBase(AnsiblePlugin):
                     if 'before' in diff and 'after' in diff:
                         # format complex structures into 'files'
                         for x in ['before', 'after']:
-                            if isinstance(diff[x], dict):
+                            if isinstance(diff[x], MutableMapping):
                                 diff[x] = json.dumps(diff[x], sort_keys=True, indent=4, separators=(',', ': ')) + '\n'
                         if 'before_header' in diff:
                             before_header = "before: %s" % diff['before_header']
@@ -221,15 +224,19 @@ class CallbackBase(AnsiblePlugin):
                 ret.append(">> the files are different, but the diff library cannot compare unicode strings\n\n")
         return u''.join(ret)
 
-    def _get_item(self, result):
+    def _get_item_label(self, result):
+        ''' retrieves the value to be displayed as a label for an item entry from a result object'''
         if result.get('_ansible_no_log', False):
             item = "(censored due to no_log)"
-        elif result.get('_ansible_item_label', False):
-            item = result.get('_ansible_item_label')
         else:
-            item = result.get('item', None)
-
+            item = result.get('_ansible_item_label', result.get('item'))
         return item
+
+    def _get_item(self, result):
+        ''' here for backwards compat, really should have always been named: _get_item_label'''
+        cback = getattr(self, 'NAME', os.path.basename(__file__))
+        self._display.deprecated("The %s callback plugin should be updated to use the _get_item_label method instead" % cback, version="2.11")
+        return self._get_item_label(result)
 
     def _process_items(self, result):
         # just remove them as now they get handled by individual callbacks
@@ -237,11 +244,18 @@ class CallbackBase(AnsiblePlugin):
 
     def _clean_results(self, result, task_name):
         ''' removes data from results for display '''
+
+        # mostly controls that debug only outputs what it was meant to
         if task_name in ['debug']:
-            for hideme in self._hide_in_debug:
-                result.pop(hideme, None)
-                if 'msg' in result:
-                    result.pop('item', None)
+            if 'msg' in result:
+                # msg should be alone
+                for key in list(result.keys()):
+                    if key != 'msg' and not key.startswith('_'):
+                        result.pop(key)
+            else:
+                # 'var' value as field, so eliminate others and what is left should be varname
+                for hidme in self._hide_in_debug:
+                    result.pop(hidme, None)
 
     def set_play_context(self, play_context):
         pass
@@ -324,7 +338,7 @@ class CallbackBase(AnsiblePlugin):
     def v2_runner_on_skipped(self, result):
         if C.DISPLAY_SKIPPED_HOSTS:
             host = result._host.get_name()
-            self.runner_on_skipped(host, self._get_item(getattr(result._result, 'results', {})))
+            self.runner_on_skipped(host, self._get_item_label(getattr(result._result, 'results', {})))
 
     def v2_runner_on_unreachable(self, result):
         host = result._host.get_name()
