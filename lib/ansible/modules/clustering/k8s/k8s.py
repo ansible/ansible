@@ -30,6 +30,7 @@ description:
   - Pass the object definition from a source file or inline. See examples for reading
     files and using Jinja templates.
   - Access to the full range of K8s APIs.
+  - Use the M(k8s_facts) module to obtain a list of items about an object of type C(kind)
   - Authenticate using either a config file, certificates, password or token.
   - Supports check mode.
 
@@ -79,21 +80,6 @@ EXAMPLES = '''
   k8s:
     state: present
     src: /testing/service.yml
-
-- name: Get an existing Service object
-  k8s:
-    api_version: v1
-    kind: Service
-    name: web
-    namespace: testing
-  register: web_service
-
-- name: Get a list of all service objects
-  k8s:
-    api_version: v1
-    kind: ServiceList
-    namespace: testing
-  register: service_list
 
 - name: Remove an existing Service object
   k8s:
