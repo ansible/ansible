@@ -50,12 +50,12 @@ EXAMPLES = '''
 RETURN = '''
 package:
     description: name of used package
-    returned: everytime 
+    returned: everytime
     type: string
     sample: httpd
 state:
     description: state of used package
-    returned: everytime 
+    returned: everytime
     type: string
     sample: present
 '''
