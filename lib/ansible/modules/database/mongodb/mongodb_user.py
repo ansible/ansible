@@ -382,16 +382,13 @@ def main():
 
         client = MongoClient(**connection_params)
 
-        # NOTE: this check must be done ASAP.
-        # We doesn't need to be authenticated.
-        check_compatibility(module, client)
-
         if login_user is None and login_password is None:
             mongocnf_creds = load_mongocnf()
             if mongocnf_creds is not False:
                 login_user = mongocnf_creds['user']
                 login_password = mongocnf_creds['password']
-        elif login_password is None or login_user is None:
+
+        if login_password is None or login_user is None:
             module.fail_json(msg='when supplying login arguments, both login_user and login_password must be provided')
 
         if login_user is not None and login_password is not None:
@@ -403,6 +400,8 @@ def main():
 
     except Exception as e:
         module.fail_json(msg='unable to connect to database: %s' % to_native(e), exception=traceback.format_exc())
+
+    check_compatibility(module, client)
 
     if state == 'present':
         if password is None and update_password == 'always':
