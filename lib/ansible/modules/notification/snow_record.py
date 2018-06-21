@@ -267,7 +267,7 @@ def run_module():
     if state == 'present' and number is None:
         try:
             record = conn.insert(table=table, payload=dict(data))
-        except pysnow.UnexpectedResponse as e:
+        except pysnow.exceptions.UnexpectedResponseFormat as e:
             snow_error = "Failed to create record: {0}, details: {1}".format(e.error_summary, e.error_details)
             module.fail_json(msg=snow_error, **result)
         result['record'] = record
@@ -283,7 +283,7 @@ def run_module():
         except pysnow.exceptions.MultipleResults:
             snow_error = "Multiple record match"
             module.fail_json(msg=snow_error, **result)
-        except pysnow.UnexpectedResponse as e:
+        except pysnow.exceptions.UnexpectedResponseFormat as e:
             snow_error = "Failed to delete record: {0}, details: {1}".format(e.error_summary, e.error_details)
             module.fail_json(msg=snow_error, **result)
         except Exception as detail:
@@ -314,7 +314,7 @@ def run_module():
         except pysnow.exceptions.NoResults:
             snow_error = "Record does not exist"
             module.fail_json(msg=snow_error, **result)
-        except pysnow.UnexpectedResponse as e:
+        except pysnow.exceptions.UnexpectedResponseFormat as e:
             snow_error = "Failed to update record: {0}, details: {1}".format(e.error_summary, e.error_details)
             module.fail_json(msg=snow_error, **result)
         except Exception as detail:
