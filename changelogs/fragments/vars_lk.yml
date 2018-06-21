@@ -1,0 +1,2 @@
+bugfixes:
+    - correctly check hostvars for vars term https://github.com/ansible/ansible/pull/41819
