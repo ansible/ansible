@@ -251,7 +251,7 @@ def _get_full_name(name, version=None):
         resp = name
     else:
         if version[0].isdigit():
-            resp = "%s==%s" % (name, version)
+            version = "==%s" % version
         resp = "\"%s (%s)\"" % (name, version)
     return resp
 

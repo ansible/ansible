@@ -280,7 +280,7 @@
     name: "{{ pip_test_package }}"
     state: absent
 
-- name : install package with version specifiers
+- name: install package with version specifiers
   pip:
     name: "{{ pip_test_package }}"
     version: "<100.0.0,!=1.0.0,>0.0.0"
