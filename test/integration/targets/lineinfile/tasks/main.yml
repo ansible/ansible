@@ -36,18 +36,27 @@
     line: "New line at the beginning"
     insertbefore: "BOF"
     backup: yes
-  register: result
+  register: result1
+
+- name: insert a line at the beginning of the file again
+  lineinfile:
+    dest: "{{ output_dir }}/test.txt"
+    state: present
+    line: "New line at the beginning"
+    insertbefore: "BOF"
+  register: result2
 
 - name: assert that the line was inserted at the head of the file
   assert:
     that:
-      - result is changed
-      - "result.msg == 'line added'"
-      - "result.backup != ''"
+      - result1 is changed
+      - result2 is not changed
+      - result1.msg == 'line added'
+      - result1.backup != ''
 
 - name: stat the backup file
   stat:
-    path: "{{ result.backup }}"
+    path: "{{ result1.backup }}"
   register: result
 
 - name: assert the backup file matches the previous hash
