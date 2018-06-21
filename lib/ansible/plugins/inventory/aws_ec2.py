@@ -92,7 +92,7 @@ keyed_groups:
   - key: 'security_groups|json_query("[].group_id")'
     prefix: 'security_groups'
   # create a group for each value of the Application tag
-  - key: tag.Application
+  - key: tags.Application
     separator: ''
   # create a group per region e.g. aws_region_us_east_2
   - key: placement.region
