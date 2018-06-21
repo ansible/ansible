@@ -222,11 +222,11 @@ import os
 import re
 import sys
 import tempfile
+from distutils.versionpredicate import VersionPredicate
 
 from ansible.module_utils.basic import AnsibleModule, is_executable
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import PY3
-from distutils.versionpredicate import VersionPredicate
 
 #: Python one-liners to be run at the command line that will determine the
 # installed version for these special libraries.  These are libraries that
@@ -273,12 +273,15 @@ def _get_packages(module, pip, chdir):
     return (command, out, err)
 
 
-def _is_present(name, version, installed_pkgs, pkg_command):
+def _is_present(module, name, version, installed_pkgs, pkg_command):
     '''Return whether or not package is installed.'''
     if version is not None:
         if version[0].isdigit():
             version = "==%s" % version
-        vp = VersionPredicate("%s (%s)" % (name, version))
+        try:
+            vp = VersionPredicate("%s (%s)" % (name, version))
+        except ValueError:
+            module.fail_json(msg="Can parse invalid version number %s" % version)
     for pkg in installed_pkgs:
         if '==' in pkg:
             pkg_name, pkg_version = pkg.split('==')
@@ -563,7 +566,7 @@ def main():
                                 out += '%s\n' % formatted_dep
 
                 for pkg in name:
-                    is_present = _is_present(pkg, version, pkg_list, pkg_cmd)
+                    is_present = _is_present(module, pkg, version, pkg_list, pkg_cmd)
                     if (state == 'present' and not is_present) or (state == 'absent' and is_present):
                         changed = True
                         break
