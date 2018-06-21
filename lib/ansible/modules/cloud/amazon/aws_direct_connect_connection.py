@@ -147,8 +147,7 @@ connection:
 
 import traceback
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (camel_dict_to_snake_dict, ec2_argument_spec, HAS_BOTO3,
-                                      get_aws_connection_info, boto3_conn, AWSRetry)
+from ansible.module_utils.ec2 import (camel_dict_to_snake_dict, AWSRetry)
 from ansible.module_utils.aws.direct_connect import (DirectConnectError, delete_connection,
                                                      associate_connection_and_lag, disassociate_connection_and_lag)
 
@@ -279,8 +278,7 @@ def ensure_absent(client, connection_id):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         state=dict(required=True, choices=['present', 'absent']),
         name=dict(),
         location=dict(),
@@ -288,7 +286,7 @@ def main():
         link_aggregation_group=dict(),
         connection_id=dict(),
         forced_update=dict(type='bool', default=False)
-    ))
+    )
 
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
