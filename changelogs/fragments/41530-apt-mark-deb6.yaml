@@ -1,0 +1,2 @@
+bugfixes:
+  - fix apt-mark on debian6 (https://github.com/ansible/ansible/pull/41530)
