@@ -6,12 +6,6 @@ class ModuleDocFragment(object):
         # GCP doc fragment.
         DOCUMENTATION = '''
 options:
-    state:
-        description:
-            - Whether the given zone should or should not be present.
-        required: true
-        choices: ["present", "absent"]
-        default: "present"
     project:
         description:
             - The Google Cloud Platform project to use.
