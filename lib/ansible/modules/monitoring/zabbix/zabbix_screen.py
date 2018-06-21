@@ -34,6 +34,7 @@ options:
             - If the screen(s) already been added, the screen(s) name won't be updated.
             - When creating or updating screen(s), C(screen_name), C(host_group) are required.
             - When deleting screen(s), the C(screen_name) is required.
+            - Option C(graphs_in_row) will limit columns of screen and make multiple rows (default 3)
             - >
               The available states are: C(present) (default) and C(absent). If the screen(s) already exists, and the state is not C(absent), the screen(s)
               will just be updated as needed.
@@ -48,7 +49,7 @@ notes:
 
 EXAMPLES = '''
 # Create/update a screen.
-- name: Create a new screen or update an existing screen's items
+- name: Create a new screen or update an existing screen's items 5 in a row
   local_action:
     module: zabbix_screen
     server_url: http://monitor.example.com
@@ -63,6 +64,7 @@ EXAMPLES = '''
           - Example graph2
         graph_width: 200
         graph_height: 100
+        graphs_in_row: 5
 
 # Create/update multi-screen
 - name: Create two of new screens or update the existing screens' items
@@ -248,20 +250,24 @@ class Screen(object):
             pass
 
     # get screen's hsize and vsize
-    def get_hsize_vsize(self, hosts, v_size):
+    def get_hsize_vsize(self, hosts, v_size, graphs_in_row):
         h_size = len(hosts)
+        # when there is only one host, put all graphs in a row
         if h_size == 1:
-            if v_size == 1:
-                h_size = 1
-            elif v_size in range(2, 9):
-                h_size = 2
+            if v_size <= graphs_in_row:
+                h_size = v_size
             else:
-                h_size = 3
+                h_size = graphs_in_row
             v_size = (v_size - 1) // h_size + 1
+        # when len(hosts) is more then graphs_in_row
+        elif len(hosts) > graphs_in_row:
+            h_size = graphs_in_row
+            v_size = (len(hosts) // graphs_in_row + 1) * v_size
+
         return h_size, v_size
 
     # create screen_items
-    def create_screen_items(self, screen_id, hosts, graph_name_list, width, height, h_size):
+    def create_screen_items(self, screen_id, hosts, graph_name_list, width, height, h_size, graphs_in_row):
         if len(hosts) < 4:
             if width is None or width < 0:
                 width = 500
@@ -289,7 +295,8 @@ class Screen(object):
                         if graph_id is not None:
                             self._zapi.screenitem.create({'screenid': screen_id, 'resourcetype': 0, 'resourceid': graph_id,
                                                           'width': width, 'height': height,
-                                                          'x': i, 'y': j, 'colspan': 1, 'rowspan': 1,
+                                                          'x': i % graphs_in_row, 'y': len(graph_id_list) * (i // graphs_in_row) + j,
+                                                          'colspan': 1, 'rowspan': 1,
                                                           'elements': 0, 'valign': 0, 'halign': 0,
                                                           'style': 0, 'dynamic': 0, 'sort_triggers': 0})
         except Already_Exists:
@@ -356,6 +363,9 @@ def main():
         else:
             host_group = zabbix_screen['host_group']
             graph_names = zabbix_screen['graph_names']
+            graphs_in_row = 3
+            if 'graphs_in_row' in zabbix_screen:
+                graphs_in_row = zabbix_screen['graphs_in_row']
             graph_width = None
             if 'graph_width' in zabbix_screen:
                 graph_width = zabbix_screen['graph_width']
@@ -369,12 +379,12 @@ def main():
             resource_id_list = []
 
             graph_ids, v_size = screen.get_graph_ids(hosts, graph_names)
-            h_size, v_size = screen.get_hsize_vsize(hosts, v_size)
+            h_size, v_size = screen.get_hsize_vsize(hosts, v_size, graphs_in_row)
 
             if not screen_id:
                 # create screen
                 screen_id = screen.create_screen(screen_name, h_size, v_size)
-                screen.create_screen_items(screen_id, hosts, graph_names, graph_width, graph_height, h_size)
+                screen.create_screen_items(screen_id, hosts, graph_names, graph_width, graph_height, h_size, graphs_in_row)
                 created_screens.append(screen_name)
             else:
                 screen_item_list = screen.get_screen_items(screen_id)
@@ -390,7 +400,7 @@ def main():
                     deleted = screen.delete_screen_items(screen_id, screen_item_id_list)
                     if deleted:
                         screen.update_screen(screen_id, screen_name, h_size, v_size)
-                        screen.create_screen_items(screen_id, hosts, graph_names, graph_width, graph_height, h_size)
+                        screen.create_screen_items(screen_id, hosts, graph_names, graph_width, graph_height, h_size, graphs_in_row)
                         changed_screens.append(screen_name)
 
     if created_screens and changed_screens:
