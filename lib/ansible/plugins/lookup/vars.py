@@ -60,6 +60,7 @@ _value:
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils.six import string_types
 from ansible.plugins.lookup import LookupBase
+from ansible.template import warn_on_top_level_fact_vars
 
 
 class LookupModule(LookupBase):
@@ -85,6 +86,8 @@ class LookupModule(LookupBase):
                         value = myvars['hostvars'][myvars['inventory_hostname']][term]
                     except KeyError:
                         raise AnsibleUndefinedVariable('No variable found with this name: %s' % term)
+
+                warn_on_top_level_fact_vars(term, value)
 
                 ret.append(self._templar.template(value, fail_on_undefined=True))
             except AnsibleUndefinedVariable:

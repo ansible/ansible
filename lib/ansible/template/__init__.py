@@ -49,7 +49,7 @@ from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
 from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
-from ansible.utils.unsafe_proxy import UnsafeProxy, wrap_var
+from ansible.utils.unsafe_proxy import UnsafeProxy, wrap_var, check_var_unsafe
 
 try:
     from __main__ import display
@@ -189,6 +189,11 @@ def tests_as_filters_warning(name, func):
     return wrapper
 
 
+def warn_on_top_level_fact_vars(key, val):
+    if check_var_unsafe(val, source='facts') and key != 'ansible_facts':
+        display.deprecated("Using top-level fact vars ('%s') is deprecated. You should use the 'ansible_facts' dict instead" % key, version='2.9')
+
+
 class AnsibleContext(Context):
     '''
     A custom context, which intercepts resolve() calls and sets a flag
@@ -200,27 +205,8 @@ class AnsibleContext(Context):
         super(AnsibleContext, self).__init__(*args, **kwargs)
         self.unsafe = False
 
-    def _is_unsafe(self, val):
-        '''
-        Our helper function, which will also recursively check dict and
-        list entries due to the fact that they may be repr'd and contain
-        a key or value which contains jinja2 syntax and would otherwise
-        lose the AnsibleUnsafe value.
-        '''
-        if isinstance(val, dict):
-            for key in val.keys():
-                if self._is_unsafe(val[key]):
-                    return True
-        elif isinstance(val, list):
-            for item in val:
-                if self._is_unsafe(item):
-                    return True
-        elif isinstance(val, string_types) and hasattr(val, '__UNSAFE__'):
-            return True
-        return False
-
     def _update_unsafe(self, val):
-        if val is not None and not self.unsafe and self._is_unsafe(val):
+        if val is not None and not self.unsafe and check_var_unsafe(val):
             self.unsafe = True
 
     def resolve(self, key):
@@ -230,11 +216,13 @@ class AnsibleContext(Context):
         '''
         val = super(AnsibleContext, self).resolve(key)
         self._update_unsafe(val)
+        warn_on_top_level_fact_vars(key, val)
         return val
 
     def resolve_or_missing(self, key):
         val = super(AnsibleContext, self).resolve_or_missing(key)
         self._update_unsafe(val)
+        warn_on_top_level_fact_vars(key, val)
         return val
 
 

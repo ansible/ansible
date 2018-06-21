@@ -53,6 +53,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import sys
+
 from collections import Mapping, MutableSequence, Set
 
 from ansible.module_utils.six import string_types, text_type
@@ -64,43 +66,127 @@ __all__ = ['UnsafeProxy', 'AnsibleUnsafe', 'wrap_var']
 
 class AnsibleUnsafe(object):
     __UNSAFE__ = True
+    __SOURCE__ = None
 
 
 class AnsibleUnsafeText(text_type, AnsibleUnsafe):
     pass
 
 
+# TODO: remove the below Int/Float classes once top-level fact vars have
+# been removed. These are only here to allow us to show a deprecation warning
+class AnsibleUnsafeInt(int, AnsibleUnsafe):
+    pass
+
+
+class AnsibleUnsafeFloat(float, AnsibleUnsafe):
+    pass
+
+
+class AnsibleUnsafeBool(int, AnsibleUnsafe):
+
+    def __bool__(self):
+        if self != 0:
+            return True
+        return False
+
+    __nonzero__ = __bool__
+
+    def __repr__(self):
+        return repr(self.__bool__())
+
+    def __str__(self):
+        # XXX: yes, this is terrible. Unfortunately, it seems to be the only way
+        # to properly JSON serialize our bool-like object with certain JSON
+        # implementations
+        caller_frame = sys._getframe().f_back
+        # This looks for a caller function name starting with '_iterencode' in
+        # a file with 'json' in the name, which should correspond with the JSON
+        # encoder
+        if caller_frame.f_code.co_name.startswith('_iterencode') and ('json' in caller_frame.f_code.co_filename):
+            if self.__bool__():
+                return 'true'
+            return 'false'
+        return str(self.__bool__())
+
+
 class UnsafeProxy(object):
-    def __new__(cls, obj, *args, **kwargs):
+    def __new__(cls, obj, source=None, *args, **kwargs):
         # In our usage we should only receive unicode strings.
         # This conditional and conversion exists to sanity check the values
         # we're given but we may want to take it out for testing and sanitize
         # our input instead.
+        ret = obj
         if isinstance(obj, string_types):
             obj = to_text(obj, errors='surrogate_or_strict')
-            return AnsibleUnsafeText(obj)
-        return obj
+            ret = AnsibleUnsafeText(obj)
+            ret.__SOURCE__ = source
+        # TODO: remove the below cases for int/float once top-level fact vars
+        # are removed
+        # We normally wouldn't consider numeric values as unsafe, but these
+        # are here to allow them to be caught for the top-level fact var
+        # deprecation warning.
+        # We ignore boolean values, because it's not easy to create a bool-like
+        # object that works properly in all contexts. This is mostly due to the
+        # bool type not being subclassable.
+        elif isinstance(obj, bool):
+            ret = AnsibleUnsafeBool(obj)
+            ret.__SOURCE__ = source
+        elif isinstance(obj, int):  # and not isinstance(obj, bool):
+            ret = AnsibleUnsafeInt(obj)
+            ret.__SOURCE__ = source
+        elif isinstance(obj, float):
+            ret = AnsibleUnsafeFloat(obj)
+            ret.__SOURCE__ = source
+        return ret
 
 
-def _wrap_dict(v):
+def _wrap_dict(v, source=None):
     for k in v.keys():
         if v[k] is not None:
-            v[wrap_var(k)] = wrap_var(v[k])
+            v[wrap_var(k, source)] = wrap_var(v[k], source)
     return v
 
 
-def _wrap_list(v):
+def _wrap_list(v, source=None):
     for idx, item in enumerate(v):
         if item is not None:
-            v[idx] = wrap_var(item)
+            v[idx] = wrap_var(item, source)
     return v
 
 
-def wrap_var(v):
+def wrap_var(v, source=None):
     if isinstance(v, Mapping):
-        v = _wrap_dict(v)
+        v = _wrap_dict(v, source)
     elif isinstance(v, (MutableSequence, Set)):
-        v = _wrap_list(v)
+        v = _wrap_list(v, source)
     elif v is not None and not isinstance(v, AnsibleUnsafe):
-        v = UnsafeProxy(v)
+        v = UnsafeProxy(v, source)
     return v
+
+
+def check_var_unsafe(val, source=None):
+    '''
+    Our helper function, which will also recursively check dict and
+    list entries due to the fact that they may be repr'd and contain
+    a key or value which contains jinja2 syntax and would otherwise
+    lose the AnsibleUnsafe value.
+    '''
+    if isinstance(val, dict):
+        for key in val.keys():
+            if check_var_unsafe(val[key], source):
+                return True
+    elif isinstance(val, list):
+        for item in val:
+            if check_var_unsafe(item, source):
+                return True
+    elif hasattr(val, '__UNSAFE__'):
+        # If no source provided, maintain old behavior where only strings are
+        # considered unsafe
+        if source is None:
+            if isinstance(val, string_types):
+                return True
+        else:
+            if getattr(val, '__SOURCE__', None) == source:
+                return True
+    return False

@@ -308,10 +308,10 @@ class VariableManager:
 
                 # push facts to main namespace
                 if C.INJECT_FACTS_AS_VARS:
-                    all_vars = combine_vars(all_vars, wrap_var(facts))
+                    all_vars = combine_vars(all_vars, wrap_var(facts, source='facts'))
                 else:
                     # always 'promote' ansible_local
-                    all_vars = combine_vars(all_vars, wrap_var({'ansible_local': facts.get('ansible_local', {})}))
+                    all_vars = combine_vars(all_vars, wrap_var({'ansible_local': facts.get('ansible_local', {})}, source='facts'))
             except KeyError:
                 pass
 

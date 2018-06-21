@@ -871,7 +871,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             data = json.loads(filtered_output)
 
             if 'ansible_facts' in data and isinstance(data['ansible_facts'], dict):
-                data['ansible_facts'] = wrap_var(data['ansible_facts'])
+                data['ansible_facts'] = wrap_var(data['ansible_facts'], source='facts')
             data['_ansible_parsed'] = True
         except ValueError:
             # not valid json, lets try to capture error

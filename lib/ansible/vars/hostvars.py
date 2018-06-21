@@ -24,7 +24,7 @@ import collections
 from jinja2.runtime import Undefined
 
 from ansible.module_utils._text import to_bytes
-from ansible.template import Templar
+from ansible.template import Templar, warn_on_top_level_fact_vars
 
 STATIC_VARS = [
     'ansible_version',
@@ -125,6 +125,7 @@ class HostVarsVars(collections.Mapping):
 
     def __getitem__(self, var):
         templar = Templar(variables=self._vars, loader=self._loader)
+        warn_on_top_level_fact_vars(var, self._vars[var])
         foo = templar.template(self._vars[var], fail_on_undefined=False, static_vars=STATIC_VARS)
         return foo
 
