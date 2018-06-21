@@ -1,0 +1,2 @@
+bugfixes:
+    - fixed config required handling, specifically for _terms in lookups https://github.com/ansible/ansible/pull/41740
