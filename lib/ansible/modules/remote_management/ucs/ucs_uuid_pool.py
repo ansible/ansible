@@ -70,7 +70,7 @@ requirements:
 author:
 - David Soper (@dsoper2)
 - CiscoUcs (@CiscoUcs)
-version_added: '2.5'
+version_added: '2.7'
 '''
 
 EXAMPLES = r'''
