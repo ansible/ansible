@@ -34,18 +34,33 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect
 
+        # Options type validation
+        # stings
+        for s_type in ('src', 'dest', 'state', 'newline_sequence', 'variable_start_string', 'variable_end_string', 'block_start_string',
+                       'block_end_string'):
+            if s_type in self._task.args:
+                value = ensure_type(self._task.args[s_type], 'string')
+                if value is not None and not isinstance(value, string_types):
+                    raise AnsibleActionFail("%s is expected to be a string, but got %s instead" % (s_type, type(value)))
+                self._task.args[s_type] = value
+
+        # booleans
+        try:
+            follow = boolean(self._task.args.get('follow', False), strict=False)
+            trim_blocks = boolean(self._task.args.get('trim_blocks', True), strict=False)
+            lstrip_blocks = boolean(self._task.args.get('lstrip_blocks', False), strict=False)
+        except TypeError as e:
+            raise AnsibleActionFail(to_native(e))
+
+        # assign to local vars for ease of use
         source = self._task.args.get('src', None)
         dest = self._task.args.get('dest', None)
-        force = boolean(self._task.args.get('force', True), strict=False)
-        follow = boolean(self._task.args.get('follow', False), strict=False)
         state = self._task.args.get('state', None)
         newline_sequence = self._task.args.get('newline_sequence', self.DEFAULT_NEWLINE_SEQUENCE)
         variable_start_string = self._task.args.get('variable_start_string', None)
         variable_end_string = self._task.args.get('variable_end_string', None)
         block_start_string = self._task.args.get('block_start_string', None)
         block_end_string = self._task.args.get('block_end_string', None)
-        trim_blocks = boolean(self._task.args.get('trim_blocks', True), strict=False)
-        lstrip_blocks = boolean(self._task.args.get('lstrip_blocks', False), strict=False)
         output_encoding = self._task.args.get('output_encoding', 'utf-8') or 'utf-8'
 
         # Option `lstrip_blocks' was added in Jinja2 version 2.7.
@@ -68,21 +83,7 @@ class ActionModule(ActionBase):
             newline_sequence = allowed_sequences[wrong_sequences.index(newline_sequence)]
 
         try:
-            for s_type in ('source', 'dest', 'state', 'newline_sequence', 'variable_start_string', 'variable_end_string', 'block_start_string',
-                           'block_end_string'):
-                value = locals()[s_type]
-                value = ensure_type(value, 'string')
-                if value is not None and not isinstance(value, string_types):
-                    raise AnsibleActionFail("%s is expected to be a string, but got %s instead" % (s_type, type(value)))
-                locals()[s_type] = value
-
-            for b_type in ('force', 'follow', 'trim_blocks'):
-                value = locals()[b_type]
-                value = ensure_type(value, 'boolean')
-                if value is not None and not isinstance(value, bool):
-                    raise AnsibleActionFail("%s is expected to be a boolean, but got %s instead" % (b_type, type(value)))
-                locals()[b_type] = value
-
+            # logical validation
             if state is not None:
                 raise AnsibleActionFail("'state' cannot be specified on a template")
             elif source is None or dest is None:
@@ -158,14 +159,11 @@ class ActionModule(ActionBase):
             # mode is either the mode from task.args or the mode of the source file if the task.args
             # mode == 'preserve'
             new_task.args['mode'] = mode
-            new_task.args.pop('newline_sequence', None)
-            new_task.args.pop('block_start_string', None)
-            new_task.args.pop('block_end_string', None)
-            new_task.args.pop('variable_start_string', None)
-            new_task.args.pop('variable_end_string', None)
-            new_task.args.pop('trim_blocks', None)
-            new_task.args.pop('lstrip_blocks', None)
-            new_task.args.pop('output_encoding', None)
+
+            # remove 'template only' options:
+            for remove in ('newline_sequence', 'block_start_string', 'block_end_string', 'variable_start_string', 'variable_end_string',
+                           'trim_blocks', 'lstrip_blocks', 'output_encoding'):
+                new_task.args.pop(remove, None)
 
             local_tempdir = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)
 
