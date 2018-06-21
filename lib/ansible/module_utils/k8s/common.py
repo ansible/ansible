@@ -189,6 +189,17 @@ class K8sAnsibleMixin(object):
             if fail:
                 self.fail(msg='Failed to find exact match for {0}.{1} by [kind, name, singularName, shortNames]'.format(api_version, kind))
 
+    def kubernetes_facts(self, kind, api_version, name=None, namespace=None, label_selectors=None, field_selectors=None):
+        resource = self.find_resource(kind, api_version)
+        result = resource.get(name=name,
+                              namespace=namespace,
+                              label_selector=','.join(label_selectors),
+                              field_selector=','.join(field_selectors)).to_dict()
+        if 'items' in result:
+            return result
+        else:
+            return dict(items=[result])
+
     def remove_aliases(self):
         """
         The helper doesn't know what to do with aliased keys
