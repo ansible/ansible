@@ -235,6 +235,14 @@ _SPECIAL_PACKAGE_CHECKERS = {'setuptools': 'import setuptools; print(setuptools.
                              'pip': 'import pkg_resources; print(pkg_resources.get_distribution("pip").version)'}
 
 
+def _parse_name_str(name):
+    tmp = re.split("==|!=|>|<|>=|<=", name.strip())
+    pkg_name = tmp[0]
+    if len(tmp) > 1:
+        formula = name.replace(pkg_name, "")
+        return pkg_name.strip(), formula.strip()
+    return pkg_name.strip(), None 
+
 def _version_number_to_formula(version):
     if version[0].isdigit():
         return "==%s" % version
@@ -521,6 +529,15 @@ def main():
                     has_vcs = True
                     break
 
+        # check invalid combination of arguments
+        if version is not None:
+            if len(name) > 1:
+                module.fail_json(msg="Version arg is not available for installing multi-packages.")
+            else:
+                pkg_name, version_formula = _parse_name_str(name[0])
+                if version_formula is not None:
+                    module.fail_json(msg="Version arg is not available if version info is provided in name.")
+
         if module.params['editable']:
             args_list = []  # used if extra_args is not used at all
             if extra_args:
@@ -535,6 +552,10 @@ def main():
 
         if name:
             for pkg in name:
+                pkg_name, version_formula = _parse_name_str(pkg)
+                if version_formula is not None:
+                    version = version_formula
+                    pkg = pkg_name
                 cmd += ' %s' % _get_full_name(pkg, version)
         elif requirements:
             cmd += ' -r %s' % requirements
@@ -569,6 +590,10 @@ def main():
                                 out += '%s\n' % formatted_dep
 
                 for pkg in name:
+                    pkg_name, version_formula = _parse_name_str(pkg)
+                    if version_formula is not None:
+                        version = version_formula
+                        pkg = pkg_name
                     is_present = _is_present(module, pkg, version, pkg_list, pkg_cmd)
                     if (state == 'present' and not is_present) or (state == 'absent' and is_present):
                         changed = True
