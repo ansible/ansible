@@ -235,6 +235,13 @@ _SPECIAL_PACKAGE_CHECKERS = {'setuptools': 'import setuptools; print(setuptools.
                              'pip': 'import pkg_resources; print(pkg_resources.get_distribution("pip").version)'}
 
 
+def _version_number_to_formula(version):
+    if version[0].isdigit():
+        return "==%s" % version
+    else:
+        return version
+
+
 def _get_cmd_options(module, cmd):
     thiscmd = cmd + " --help"
     rc, stdout, stderr = module.run_command(thiscmd)
@@ -250,9 +257,7 @@ def _get_full_name(name, version=None):
     if version is None or version == "":
         resp = name
     else:
-        if version[0].isdigit():
-            version = "==%s" % version
-        resp = "\"%s (%s)\"" % (name, version)
+        resp = "\"%s %s\"" % (name, _version_number_to_formula(version))
     return resp
 
 
@@ -275,11 +280,9 @@ def _get_packages(module, pip, chdir):
 
 def _is_present(module, name, version, installed_pkgs, pkg_command):
     '''Return whether or not package is installed.'''
-    if version is not None:
-        if version[0].isdigit():
-            version = "==%s" % version
+    if version is not None and version != "":
         try:
-            vp = VersionPredicate("%s (%s)" % (name, version))
+            vp = VersionPredicate("%s (%s)" % (name, _version_number_to_formula(version)))
         except ValueError:
             module.fail_json(msg="Can parse invalid version number %s" % version)
     for pkg in installed_pkgs:
