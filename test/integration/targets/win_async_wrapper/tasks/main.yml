@@ -19,23 +19,6 @@
      # ensure that async is actually async- this test will fail if # hosts > forks or if the target host is VERY slow
     - (lookup('pipe', 'date +%s') | int) - (start_timestamp | int) < 8
 
-- name: async poll immediate success
-  async_test:
-    sleep_delay_sec: 0
-  async: 10
-  poll: 1
-  register: asyncresult
-
-- name: validate response
-  assert:
-    that:
-    - asyncresult.ansible_job_id is match('\d+\.\d+')
-    - asyncresult.finished == 1
-    - asyncresult.changed == true
-    - asyncresult.ansible_async_watchdog_pid is number
-#    - asyncresult.module_tempdir is search('ansible-tmp-')
-    - asyncresult.module_pid is number
-
 # this part of the test is flaky- Windows PIDs are reused aggressively, so this occasionally fails due to a new process with the same ID
 # FUTURE: consider having the test module hook to a kernel object we can poke at that gets signaled/released on exit
 #- name: ensure that watchdog and module procs have exited
@@ -170,6 +153,23 @@
   assert:
     that:
     - async_custom_tmp.results_file == win_output_dir + '\\.ansible_async\\' + async_custom_tmp.ansible_job_id
+
+- name: async poll immediate success
+  async_test:
+    sleep_delay_sec: 0
+  async: 10
+  poll: 1
+  register: asyncresult
+
+- name: validate response
+  assert:
+    that:
+    - asyncresult.ansible_job_id is match('\d+\.\d+')
+    - asyncresult.finished == 1
+    - asyncresult.changed == true
+    - asyncresult.ansible_async_watchdog_pid is number
+#    - asyncresult.module_tempdir is search('ansible-tmp-')
+    - asyncresult.module_pid is number
 
 # FUTURE: figure out why the last iteration of this test often fails on shippable
 #- name: loop async success
