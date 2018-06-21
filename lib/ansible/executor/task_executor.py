@@ -953,7 +953,7 @@ class TaskExecutor:
                 display.vvvv('%s' % msg, host=self._play_context.remote_addr)
 
         if 'error' in result:
-            if self._play_context.verbosity > 2:
+            if self._play_context.verbosity > 2 or self._task.verbosity > 2:
                 if result.get('exception'):
                     msg = "The full traceback is:\n" + result['exception']
                     display.display(msg, color=C.COLOR_ERROR)

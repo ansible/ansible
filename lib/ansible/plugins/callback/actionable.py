@@ -57,7 +57,7 @@ class CallbackModule(CallbackModule_default):
         self._last_task_banner = self.last_task._uuid
 
     def _print_task_path(self, task):
-        if self._display.verbosity >= 2:
+        if self._display.verbosity >= 2 or self.task.verbosity >= 2:
             path = task.get_path()
             if path:
                 self._display.display(u"task path: %s" % path, color=C.COLOR_DEBUG)
