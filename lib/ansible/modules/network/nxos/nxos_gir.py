@@ -74,9 +74,14 @@ options:
     system_mode_maintenance_on_reload_reset_reason:
         description:
             - Boots the switch into maintenance mode automatically in the
-              event of a specified system crash.
+              event of a specified system crash. Note that not all reset
+              reasons are applicable for all platforms. Also if reset
+              reason is set to match_any, it is not idempotent as it turns
+              on all reset reasons. If reset reason is match_any and state
+              is absent, it turns off all the reset reasons.
         choices: ['hw_error','svc_failure','kern_failure','wdog_timeout',
-                  'fatal_error','lc_failure','match_any','manual_reload']
+                  'fatal_error','lc_failure','match_any','manual_reload',
+                  'any_other', 'maintenance']
     state:
         description:
             - Specify desired state of the resource.
@@ -161,14 +166,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 def execute_show_command(command, module, command_type='cli_show_ascii'):
     cmds = [command]
-    device_info = get_capabilities(module)
-    network_api = device_info.get('network_api', 'nxapi')
-
-    if network_api == 'cliconf':
-        body = run_commands(module, cmds)
-    elif network_api == 'nxapi':
-        body = run_commands(module, cmds)
-
+    body = run_commands(module, cmds)
     return body
 
 
@@ -224,8 +222,14 @@ def get_commands(module, state, mode):
             commands.append('no system mode maintenance timeout {0}'.format(
                             module.params['system_mode_maintenance_timeout']))
 
-    elif module.params['system_mode_maintenance_shutdown'] is True:
+    elif (module.params[
+        'system_mode_maintenance_shutdown'] is True and
+            mode == 'normal'):
         commands.append('system mode maintenance shutdown')
+    elif (module.params[
+          'system_mode_maintenance_shutdown'] is False and
+          mode == 'maintenance'):
+        commands.append('no system mode maintenance')
 
     elif module.params['system_mode_maintenance_on_reload_reset_reason']:
         reset_reasons = get_reset_reasons(module)
@@ -259,7 +263,8 @@ def main():
         system_mode_maintenance_on_reload_reset_reason=dict(required=False,
                                                             choices=['hw_error', 'svc_failure', 'kern_failure',
                                                                      'wdog_timeout', 'fatal_error', 'lc_failure',
-                                                                     'match_any', 'manual_reload']),
+                                                                     'match_any', 'manual_reload', 'any_other',
+                                                                     'maintenance']),
         state=dict(choices=['absent', 'present', 'default'],
                    default='present', required=False)
     )
