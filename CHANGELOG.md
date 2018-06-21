@@ -1,9 +1,16 @@
 Ansible Changes By Release
 ==========================
 
-<a id="2.4.5"></a>
+<a id="2.4.6"></a>
 
 ## 2.4.5 "Dancing Days" - TBD
+
+### Bugfixes
+
+
+<a id="2.4.5"></a>
+
+## 2.4.5 "Dancing Days" - 2018-06-21
 
 ### Bugfixes
 
