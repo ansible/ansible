@@ -128,7 +128,7 @@ def main():
 
     # Add a package to versionlock
     if state == "present":
-        if not package in versionlock_packages:
+        if package not in versionlock_packages:
             changed = add_package_versionlock(module, package)
 
     # Remove a package from versionlock
