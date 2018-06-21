@@ -41,7 +41,7 @@ def get_overview_versionlock_packages(module):
     """ Get an overview of all packages on yum versionlock """
     rc, out, err = module.run_command("%s -q versionlock list"
                                       % (yum_binary))
-    if rc is 0: 
+    if rc is 0:
         return out
     else:
         module.fail_json(msg="Error: " + str(err))
@@ -51,7 +51,7 @@ def add_package_versionlock(module, package):
     """ Add package to yum versionlock """
     rc, out, err = module.run_command("%s -q versionlock add %s"
                                       % (yum_binary, package))
-    if rc is 0: 
+    if rc is 0:
         changed = True
         return changed
     else:
@@ -62,7 +62,7 @@ def remove_package_versionlock(module, package):
     """ Remove package from yum versionlock """
     rc, out, err = module.run_command("%s -q versionlock delete %s"
                                       % (yum_binary, package))
-    if rc is 0: 
+    if rc is 0:
         changed = True
         return changed
     else:
@@ -89,7 +89,7 @@ def main():
         module.fail_json(msg="Error: Please install yum-versionlock")
 
     # Get an overview of all packages that have a version lock
-    versionlock_packages = get_overview_versionlock_packages(module) 
+    versionlock_packages = get_overview_versionlock_packages(module)
 
     # Add a package to versionlock
     if state == "present":
