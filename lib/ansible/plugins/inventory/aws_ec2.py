@@ -56,6 +56,14 @@ DOCUMENTATION = '''
 '''
 
 EXAMPLES = '''
+
+# Minimal example using environment vars or instance role credentials
+# Fetch all hosts in us-east-1, the hostname is the public DNS if it exists, otherwise the private IP address
+plugin: aws_ec2
+regions:
+  - us-east-1
+
+# Example using filters, ignoring permission errors, and specifying the hostname precedence
 plugin: aws_ec2
 boto_profile: aws_profile
 regions: # populate inventory with instances in these regions
@@ -71,11 +79,19 @@ filters:
   instance.group-id: sg-xxxxxxxx
 # ignores 403 errors rather than failing
 strict_permissions: False
+# note: I(hostnames) sets the inventory_hostname. To modify ansible_host without modifying
+# inventory_hostname use compose (see example below).
 hostnames:
   - tag:Name=Tag1,Name=Tag2  # return specific hosts only
   - tag:CustomDNSName
   - dns-name
+  - private-ip-address
 
+# Example using constructed features to create groups and set ansible_host
+plugin: aws_ec2
+regions:
+  - us-east-1
+  - us-west-1
 # keyed_groups may be used to create custom groups
 strict: False
 keyed_groups:
@@ -97,6 +113,11 @@ keyed_groups:
   # create a group per region e.g. aws_region_us_east_2
   - key: placement.region
     prefix: aws_region
+# set individual variables with compose
+compose:
+  # use the private IP address to connect to the host
+  # (note: this does not modify inventory_hostname, which is set via I(hostnames))
+  ansible_host: private_ip_address
 '''
 
 from ansible.errors import AnsibleError, AnsibleParserError
