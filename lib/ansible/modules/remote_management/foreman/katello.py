@@ -40,6 +40,45 @@ options:
     entity:
         description:
             - The Foreman resource that the action will be performed on (e.g. organization, host).
+        choices:
+
+            - repository
+            - manifest
+            - repository_set
+            - sync_plan
+            - content_view
+            - lifecycle_environment
+            - activation_key
+
+        required: true
+    action:
+        description:
+            - action associated to the entity resource to set or edit in dictionary format.
+        choices:
+            - sync (available when entity=product or entity=repository)
+            - publish (available when entity=content_view)
+            - promote (available when entity=content_view)
+        required: false
+    params:
+        description:
+            - Parameters associated to the entity resource and action, to set or edit in dictionary format.
+            - Possible Choices are in the format of "choice ([possible_entity,possible_actions,more_possible_actions,...],[next_possible_entity,..],...)"
+            - So each choice may be only available with specific entitys and actions. The action "None" means no Action specified.
+        choices:
+            - name ([product,sync,None], [repository,sync], [repository_set,None], [sync_plan,None], [content_view,promote,publish,None], [lifecycle_environment,None], [activation_key,None])
+            - organization ([product,sync,None] ,[repository,sync,None], [repository_set,None], [sync_plan,None], [content_view,promote,publish,None], [lifecycle_environment,None], [activation_key,None])
+            - content ([manifest,None])
+            - product ([repository,sync,None], [repository_set,None], [sync_plan,None], content_view)
+            - basearch ([repository_set,None])
+            - releaserver ([repository_set,None])
+            - sync_date ([sync_plan,None])
+            - interval ([sync_plan,None])
+            - repositories ([content_view,None])
+            - from_environment ([content_view,promote])
+            - to_environment([content_view,promote])
+            - prior ([lifecycle_environment,None])
+            - content_view ([activation_key,None])
+            - lifecycle_environment ([activation_key,None])
         required: true
     timeout:
         description:
@@ -49,10 +88,12 @@ options:
         type: Integer
         version_added: "2.7"
         required: false
-    params:
+    verify_ssl:
         description:
-            - Parameters associated to the entity resource to set or edit in dictionary format (e.g. name, description).
-        required: true
+            - verify the ssl/https connection (e.g for a valid certificate)
+        default: false
+        type: bool
+        required: false
 '''
 
 EXAMPLES = '''
@@ -143,7 +184,32 @@ EXAMPLES = '''
         name: MyContentView
         organization: MyOrganisation
         from_environment: Testing
-        to_environment: Production    
+        to_environment: Production  
+
+# Best Practices
+
+# In Foreman, things can be done in paralell.
+# When a conflicting action is already running,
+# the task will fail instantly instead of waiting for the already running action to complete.
+# So you sould use a "until success" loop to catch this.
+
+    - name: Promote Contentview Environment with increased Timeout
+      katello:
+        username: ansibleuser
+        password: supersecret
+        task_timeout: 10800
+        entity: content_view
+        action: promote
+        params:
+          name: MyContentView
+          organization: MyOrganisation
+          from_environment: Testing
+          to_environment: Production
+      register: task_result
+      until: task_result is success
+      retries: 9
+      delay: 120
+
 '''
 
 RETURN = '''# '''
