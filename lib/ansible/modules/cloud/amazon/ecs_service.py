@@ -113,7 +113,7 @@ options:
           assign_public_ip:
             description:
               - Whether the task's elastic network interface receives a public IP address. This option requires botocore >= 1.8.4.
-            choices: ["ENABLED", "DISABLED"]
+            type: bool
             version_added: 2.7
     launch_type:
         description:
@@ -338,7 +338,10 @@ class EcsServiceManager:
             result['securityGroups'] = groups
         if network_config['assign_public_ip'] is not None:
             if self.module.botocore_at_least('1.8.4'):
-                result['assignPublicIp'] = network_config['assign_public_ip']
+                if network_config['assign_public_ip'] is True:
+                    result['assignPublicIp'] = "ENABLED"
+                else:
+                    result['assignPublicIp'] = "DISABLED"
             else:
                 self.module.fail_json(msg='botocore needs to be version 1.8.4 or higher to use assign_public_ip in network_configuration')
         return dict(awsvpcConfiguration=result)
@@ -461,7 +464,7 @@ def main():
         network_configuration=dict(required=False, type='dict', options=dict(
             subnets=dict(type='list'),
             security_groups=dict(type='list'),
-            assign_public_ip=dict(choices=['ENABLED', 'DISABLED']),
+            assign_public_ip=dict(type='bool'),
         )),
         launch_type=dict(required=False, choices=['EC2', 'FARGATE'])
     ))
