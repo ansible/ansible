@@ -111,7 +111,7 @@ def delete_template(meraki, org_id, name, data):
     path = meraki.construct_path('delete', org_id=org_id)
     path = path + '/' + template_id
     response = meraki.request(path, 'DELETE')
-    return json.loads(response)
+    return response
 
 
 def bind(meraki, org_name, net_name, name, data):
