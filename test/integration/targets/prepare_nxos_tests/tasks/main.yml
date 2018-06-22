@@ -10,7 +10,7 @@
   nxos_nxapi:
     state: present
   connection: network_cli
-  gnore_errors: yes
+  ignore_errors: yes
 
 - name: Set nxapi to default state
   nxos_nxapi:
