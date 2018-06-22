@@ -97,6 +97,14 @@ EXAMPLES = '''
         - add bgp neighbor swp52 interface remote-as external
     commit: true
 
+- name: Check BGP Status
+  nclu:
+    commands:
+        - show bgp summary json
+  register: output
+- name: Print BGP Status In JSON
+  debug:
+    var: output["msg"]
 '''
 
 RETURN = '''
