@@ -190,6 +190,13 @@ if($gather_subset.Contains('date_time')) {
     }
 }
 
+$product_type = switch($win32_os.ProductType) {
+    1 { "workstation" }
+    2 { "domain_controller" }
+    3 { "server" }
+    default { "unknown" }
+}
+
 if($gather_subset.Contains('distribution')) {
     $win32_os = Get-LazyCimInstance Win32_OperatingSystem
     $ansible_facts += @{
@@ -198,20 +205,7 @@ if($gather_subset.Contains('distribution')) {
         ansible_distribution_major_version = $osversion.Version.Major.ToString()
         ansible_os_family = "Windows"
         ansible_os_name = ($win32_os.Name.Split('|')[0]).Trim()
-    }
-    switch ($win32_os.ProductType) {
-      1 {$ansible_facts += @{
-            ansible_os_producttype = "workstation"}
-          }
-      2 {$ansible_facts += @{
-            ansible_os_producttype = "domain_controller"}
-          }
-      3 {$ansible_facts += @{
-            ansible_os_producttype = "server"}
-          }
-      default {$ansible_facts += @{
-            ansible_os_producttype = "unknown"}
-          }
+        ansible_os_product_type = $product_type
     }
 }
 
