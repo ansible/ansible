@@ -70,6 +70,11 @@ EXAMPLES = """
     name: ge-0/0/1
     state: absent
 
+- name: Set interface Vlan1 (SVI) IPv4 address
+  junos_l3_interface:
+    name: Vlan1
+    ipv4: 192.168.0.5/24
+
 - name: Set ipv4 address using aggregate
   junos_l3_interface:
     aggregate:
