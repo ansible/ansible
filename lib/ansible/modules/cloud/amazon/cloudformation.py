@@ -113,6 +113,10 @@ options:
         must be specified (but only one of them). If 'state' ispresent, the stack does exist, and neither 'template',
         'template_body' nor 'template_url' are specified, the previous template will be reused.
     version_added: "2.5"
+  events_limit:
+    description:
+    - Maximum number of CloudFormation events to fetch from a stack when creating or updating it.
+    default: 100
 
 author: "James S. Martin (@jsmartin)"
 extends_documentation_fragment:
@@ -276,7 +280,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes, to_native
 
 
-def get_stack_events(cfn, stack_name, token_filter=None):
+def get_stack_events(cfn, stack_name, events_limit, token_filter=None):
     '''This event data was never correct, it worked as a side effect. So the v2.3 format is different.'''
     ret = {'events': [], 'log': []}
 
@@ -284,7 +288,8 @@ def get_stack_events(cfn, stack_name, token_filter=None):
         pg = cfn.get_paginator(
             'describe_stack_events'
         ).paginate(
-            StackName=stack_name
+            StackName=stack_name,
+            PaginationConfig={'MaxItems': events_limit}
         )
         if token_filter is not None:
             events = list(pg.search(
@@ -312,7 +317,7 @@ def get_stack_events(cfn, stack_name, token_filter=None):
     return ret
 
 
-def create_stack(module, stack_params, cfn):
+def create_stack(module, stack_params, cfn, events_limit):
     if 'TemplateBody' not in stack_params and 'TemplateURL' not in stack_params:
         module.fail_json(msg="Either 'template', 'template_body' or 'template_url' is required when the stack does not exist.")
 
@@ -329,7 +334,7 @@ def create_stack(module, stack_params, cfn):
 
     try:
         cfn.create_stack(**stack_params)
-        result = stack_operation(cfn, stack_params['StackName'], 'CREATE', stack_params.get('ClientRequestToken', None))
+        result = stack_operation(cfn, stack_params['StackName'], 'CREATE', events_limit, stack_params.get('ClientRequestToken', None))
     except Exception as err:
         error_msg = boto_exception(err)
         module.fail_json(msg="Failed to create stack {0}: {1}.".format(stack_params.get('StackName'), error_msg), exception=traceback.format_exc())
@@ -343,7 +348,7 @@ def list_changesets(cfn, stack_name):
     return [cs['ChangeSetName'] for cs in res['Summaries']]
 
 
-def create_changeset(module, stack_params, cfn):
+def create_changeset(module, stack_params, cfn, events_limit):
     if 'TemplateBody' not in stack_params and 'TemplateURL' not in stack_params:
         module.fail_json(msg="Either 'template' or 'template_url' is required.")
     if module.params['changeset_name'] is not None:
@@ -382,7 +387,7 @@ def create_changeset(module, stack_params, cfn):
                     break
                 # Lets not hog the cpu/spam the AWS API
                 time.sleep(1)
-            result = stack_operation(cfn, stack_params['StackName'], 'CREATE_CHANGESET')
+            result = stack_operation(cfn, stack_params['StackName'], 'CREATE_CHANGESET', events_limit)
             result['warnings'] = ['Created changeset named %s for stack %s' % (changeset_name, stack_params['StackName']),
                                   'You can execute it using: aws cloudformation execute-change-set --change-set-name %s' % cs['Id'],
                                   'NOTE that dependencies on this stack might fail due to pending changes!']
@@ -398,7 +403,7 @@ def create_changeset(module, stack_params, cfn):
     return result
 
 
-def update_stack(module, stack_params, cfn):
+def update_stack(module, stack_params, cfn, events_limit):
     if 'TemplateBody' not in stack_params and 'TemplateURL' not in stack_params:
         stack_params['UsePreviousTemplate'] = True
 
@@ -407,7 +412,7 @@ def update_stack(module, stack_params, cfn):
     # don't need to be updated.
     try:
         cfn.update_stack(**stack_params)
-        result = stack_operation(cfn, stack_params['StackName'], 'UPDATE', stack_params.get('ClientRequestToken', None))
+        result = stack_operation(cfn, stack_params['StackName'], 'UPDATE', events_limit, stack_params.get('ClientRequestToken', None))
     except Exception as err:
         error_msg = boto_exception(err)
         if 'No updates are to be performed.' in error_msg:
@@ -439,7 +444,7 @@ def boto_supports_termination_protection(cfn):
     return hasattr(cfn, "update_termination_protection")
 
 
-def stack_operation(cfn, stack_name, operation, op_token=None):
+def stack_operation(cfn, stack_name, operation, events_limit, op_token=None):
     '''gets the status of a stack while it is created/updated/deleted'''
     existed = []
     while True:
@@ -450,15 +455,15 @@ def stack_operation(cfn, stack_name, operation, op_token=None):
             # If the stack previously existed, and now can't be found then it's
             # been deleted successfully.
             if 'yes' in existed or operation == 'DELETE':  # stacks may delete fast, look in a few ways.
-                ret = get_stack_events(cfn, stack_name, op_token)
+                ret = get_stack_events(cfn, stack_name, events_limit, op_token)
                 ret.update({'changed': True, 'output': 'Stack Deleted'})
                 return ret
             else:
                 return {'changed': True, 'failed': True, 'output': 'Stack Not Found', 'exception': traceback.format_exc()}
-        ret = get_stack_events(cfn, stack_name, op_token)
+        ret = get_stack_events(cfn, stack_name, events_limit, op_token)
         if not stack:
             if 'yes' in existed or operation == 'DELETE':  # stacks may delete fast, look in a few ways.
-                ret = get_stack_events(cfn, stack_name, op_token)
+                ret = get_stack_events(cfn, stack_name, events_limit, op_token)
                 ret.update({'changed': True, 'output': 'Stack Deleted'})
                 return ret
             else:
@@ -567,7 +572,8 @@ def main():
         changeset_name=dict(default=None, required=False),
         role_arn=dict(default=None, required=False),
         tags=dict(default=None, type='dict'),
-        termination_protection=dict(default=None, type='bool')
+        termination_protection=dict(default=None, type='bool'),
+        events_limit=dict(default=100, type='int'),
     )
     )
 
@@ -665,14 +671,14 @@ def main():
 
     if state == 'present':
         if not stack_info:
-            result = create_stack(module, stack_params, cfn)
+            result = create_stack(module, stack_params, cfn, module.params.get('events_limit'))
         elif module.params.get('create_changeset'):
-            result = create_changeset(module, stack_params, cfn)
+            result = create_changeset(module, stack_params, cfn, module.params.get('events_limit'))
         else:
             if module.params.get('termination_protection') is not None:
                 update_termination_protection(module, cfn, stack_params['StackName'],
                                               bool(module.params.get('termination_protection')))
-            result = update_stack(module, stack_params, cfn)
+            result = update_stack(module, stack_params, cfn, module.params.get('events_limit'))
 
         # format the stack output
 
@@ -709,7 +715,7 @@ def main():
                     cfn.delete_stack(StackName=stack_params['StackName'])
                 else:
                     cfn.delete_stack(StackName=stack_params['StackName'], RoleARN=stack_params['RoleARN'])
-                result = stack_operation(cfn, stack_params['StackName'], 'DELETE', stack_params.get('ClientRequestToken', None))
+                result = stack_operation(cfn, stack_params['StackName'], 'DELETE', module.params.get('events_limit'), stack_params.get('ClientRequestToken', None))
         except Exception as err:
             module.fail_json(msg=boto_exception(err), exception=traceback.format_exc())
 
