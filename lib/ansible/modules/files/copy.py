@@ -366,16 +366,19 @@ def main():
         module.params['mode'] = '0%03o' % stat.S_IMODE(os.stat(b_src).st_mode)
     mode = module.params['mode']
 
-    checksum_src = None
     checksum_dest = None
-    md5sum_src = None
 
     if os.path.isfile(src):
         checksum_src = module.sha1(src)
+    else:
+        checksum_src = None
+
     # Backwards compat only.  This will be None in FIPS mode
     try:
         if os.path.isfile(src):
             md5sum_src = module.md5(src)
+        else:
+            md5sum_src = None
     except ValueError:
         md5sum_src = None
 
@@ -497,8 +500,6 @@ def main():
             if not os.path.exists(dest):
                 shutil.copytree(b_src, dest)
                 changed = True
-    else:
-        changed = False
 
     res_args = dict(
         dest=dest, src=src, md5sum=md5sum_src, checksum=checksum_src, changed=changed
