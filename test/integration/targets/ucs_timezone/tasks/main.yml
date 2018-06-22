@@ -1,5 +1,5 @@
 # Test code for the UCS modules
-# Copyright 2017, David Soper (@dsoper2)
+# Copyright 2018, John McDonough (@movinalot)
 
 - name: Test that we have a UCS host, UCS username, and UCS password
   fail:
@@ -58,8 +58,8 @@
 
 # Test change (check_mode)
 - name: Timezone description change (check_mode)
-  ucs_timezone: &vtimezone_change
-    <<: *vtimezone_present
+  ucs_timezone: &timezone_change
+    <<: *timezone_present
     descr: Testing Ansible
   check_mode: yes
   register: cm_timezone_descr_change
@@ -123,4 +123,4 @@
   assert:
     that:
     - cm_timezone_absent.changed == nm_timezone_absent.changed == true
-- cm_timezone_absent_again.changed == nm_timezone_absent_again.changed == false
+    - cm_timezone_absent_again.changed == nm_timezone_absent_again.changed == false
