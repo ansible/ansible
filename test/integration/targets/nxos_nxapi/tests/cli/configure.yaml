@@ -127,4 +127,3 @@
     register: result
 
   - debug: msg="END cli/configure.yaml"
-

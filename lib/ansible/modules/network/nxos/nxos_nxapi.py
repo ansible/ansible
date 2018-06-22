@@ -180,9 +180,9 @@ def map_obj_to_commands(want, have, module):
 
     if want.get('https') is None or want.get('https') is False:
         if have.get('https') is True or needs_update('state'):
-            commands.append('no nxapi https');
+            commands.append('no nxapi https')
         if want.get('http') is None and (needs_update('state') and have.get('http') is None):
-            commands.append('nxapi http port 80');
+            commands.append('nxapi http port 80')
 
     if needs_update('http') or (have.get('http') and needs_update('http_port')):
         if want['http'] is True or (want['http'] is None and have['http'] is True):
