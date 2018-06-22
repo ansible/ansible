@@ -717,7 +717,7 @@ class StrategyBase:
         # the host here is from the executor side, which means it was a
         # serialized/cloned copy and we'll need to look up the proper
         # host object from the master inventory
-        real_host = self._inventory.hosts[host.name]
+        real_host = self._inventory.get_host(host.name)
         group_name = result_item.get('add_group')
         parent_group_names = result_item.get('parent_groups', [])
 
