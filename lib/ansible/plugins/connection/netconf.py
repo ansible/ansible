@@ -162,7 +162,7 @@ from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
 from ansible.plugins.loader import netconf_loader
-from ansible.plugins.connection.netbase import NetworkConnectionBase
+from ansible.plugins.connection import NetworkConnectionBase
 
 try:
     from ncclient import manager

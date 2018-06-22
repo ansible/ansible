@@ -140,9 +140,6 @@ options:
       - name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT
 """
 
-import os
-
-from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.six import PY3
@@ -150,8 +147,8 @@ from ansible.module_utils.six.moves import cPickle
 from ansible.module_utils.six.moves.urllib.error import URLError
 from ansible.module_utils.urls import open_url
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins.loader import cliconf_loader, connection_loader, httpapi_loader
-from ansible.plugins.connection.netbase import NetworkConnectionBase
+from ansible.plugins.loader import cliconf_loader, httpapi_loader
+from ansible.plugins.connection import NetworkConnectionBase
 
 try:
     from __main__ import display
