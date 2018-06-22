@@ -1,4 +1,4 @@
-# SCW_API_KEY='XXX' SCW_ORG='YYY' ansible-playbook ./test/legacy/scaleway_compute.yml
+# SCW_API_KEY='XXX' SCW_ORG='YYY' ansible-playbook ./test/legacy/scaleway_volume.yml
 
 - name: Test compute instance lifecyle on a Scaleway account
   hosts: localhost
