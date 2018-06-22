@@ -285,12 +285,6 @@ class EcsTaskManager:
         response = self.ecs.deregister_task_definition(taskDefinition=taskArn)
         return response['taskDefinition']
 
-    def ecs_api_supports_requirescompatibilities(self):
-        from distutils.version import LooseVersion
-        # Checking to make sure botocore is greater than a specific version.
-        # Support for requiresCompatibilities is only available in versions beyond 1.8.4
-        return LooseVersion(botocore.__version__) >= LooseVersion('1.8.4')
-
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -323,7 +317,7 @@ def main():
     results = dict(changed=False)
 
     if module.params['launch_type']:
-        if not task_mgr.ecs_api_supports_requirescompatibilities():
+        if not module.botocore_at_least('1.8.4'):
             module.fail_json(msg='botocore needs to be version 1.8.4 or higher to use launch_type')
 
     if module.params['task_role_arn']:
