@@ -278,16 +278,16 @@ def adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list,
     return changed
 
 
-
 def copy_diff_files(src, dest):
     changed = False
-    diff_files=filecmp.dircmp(src, dest).diff_files
+    diff_files = filecmp.dircmp(src, dest).diff_files
     for item in diff_files:
         src_item_path = os.path.join(src, item)
         dest_item_path = os.path.join(dest, item)
         shutil.copyfile(src_item_path, dest_item_path)
         changed = True
     return changed
+
 
 def copy_left_only(src, dest):
     changed = False
@@ -302,9 +302,10 @@ def copy_left_only(src, dest):
         changed = True
     return changed
 
+
 def copy_common_dirs(src, dest):
     changed = False
-    common_dirs=filecmp.dircmp(src, dest).common_dirs
+    common_dirs = filecmp.dircmp(src, dest).common_dirs
     for item in common_dirs:
         src_item_path = os.path.join(src, item)
         dest_item_path = os.path.join(dest, item)
@@ -313,6 +314,7 @@ def copy_common_dirs(src, dest):
         if diff_files_changed or left_only_changed:
             changed = True
     return changed
+
 
 def main():
 
