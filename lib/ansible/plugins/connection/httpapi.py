@@ -66,6 +66,13 @@ options:
     default: False
     vars:
       - name: ansible_httpapi_use_ssl
+  validate_certs:
+    version_added: '2.7'
+    description:
+      - Whether to validate SSL certificates
+    default: True
+    vars:
+      - name: ansible_httpapi_validate_certs
   timeout:
     type: int
     description:
@@ -296,7 +303,7 @@ class Connection(ConnectionBase):
         '''
         url_kwargs = dict(
             url_username=self.get_option('remote_user'), url_password=self.get_option('password'),
-            timeout=self.get_option('timeout'),
+            timeout=self.get_option('timeout'), validate_certs=self.get_option('validate_certs'),
         )
         url_kwargs.update(kwargs)
 
