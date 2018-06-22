@@ -260,31 +260,25 @@ def build_xml(container, xmap=None, params=None, opcode=None):
             for item in subtree_list:
                 container_ele.append(item)
 
-    return etree.tostring(root)
+    return etree.tostring(root, encoding='unicode')
 
 
 def etree_find(root, node):
     try:
-        element = etree.fromstring(root).find('.//' + to_bytes(node, errors='surrogate_then_replace').strip())
-    except Exception:
-        element = etree.fromstring(etree.tostring(root)).find('.//' + to_bytes(node, errors='surrogate_then_replace').strip())
+        root = etree.fromstring(to_bytes(root))
+    except (ValueError, etree.XMLSyntaxError):
+        pass
 
-    if element is not None:
-        return element
-
-    return None
+    return root.find('.//%s' % node.strip())
 
 
 def etree_findall(root, node):
     try:
-        element = etree.fromstring(root).findall('.//' + to_bytes(node, errors='surrogate_then_replace').strip())
-    except Exception:
-        element = etree.fromstring(etree.tostring(root)).findall('.//' + to_bytes(node, errors='surrogate_then_replace').strip())
+        root = etree.fromstring(to_bytes(root))
+    except (ValueError, etree.XMLSyntaxError):
+        pass
 
-    if element is not None:
-        return element
-
-    return None
+    return root.findall('.//%s' % node.strip())
 
 
 def is_cliconf(module):

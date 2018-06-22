@@ -73,7 +73,6 @@ class Netconf(NetconfBase):
         :target: is the name of the configuration datastore being edited
         :config: is the configuration in string format."""
         if kwargs.get('config'):
-            kwargs['config'] = to_bytes(kwargs['config'], errors='surrogate_or_strict')
             if kwargs.get('format', 'xml') == 'xml':
                 kwargs['config'] = to_ele(kwargs['config'])
 

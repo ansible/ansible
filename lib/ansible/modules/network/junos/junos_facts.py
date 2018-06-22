@@ -81,16 +81,16 @@ ansible_facts:
 """
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.netconf import exec_rpc
-from ansible.module_utils.network.junos.junos import junos_argument_spec, get_param
+from ansible.module_utils.network.junos.junos import junos_argument_spec, get_param, tostring
 from ansible.module_utils.network.junos.junos import get_configuration, get_connection
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
 
 
 try:
-    from lxml.etree import Element, SubElement, tostring
+    from lxml.etree import Element, SubElement
 except ImportError:
-    from xml.etree.ElementTree import Element, SubElement, tostring
+    from xml.etree.ElementTree import Element, SubElement
 
 try:
     from jnpr.junos import Device
