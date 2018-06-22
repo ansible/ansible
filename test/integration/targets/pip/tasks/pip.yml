@@ -307,7 +307,7 @@
   check_mode: yes
   register: version3
 
-- name: assert no changes since satisfied the requirment
+- name: assert no changes
   assert:
     that: "version3.changed == False"
 
@@ -322,7 +322,73 @@
   assert:
     that: "version4.changed == True"
 
-- name: uninstall test package
+- name: uninstall test packages
   pip:
-    name: "{{ pip_test_package }}"
+    name: "{{ pip_test_packages }}"
+    state: absent
+
+- name: test invalid combination of arguments
+  pip:
+    name: "{{ pip_test_pkg_ver }}"
+    version: "1.11.1"
+  ignore_errors: yes
+  register: version5
+
+- name: assert the invalid combination should fail
+  assert:
+    that: "version5 is failed"
+
+- name: another invalid combination of arguments
+  pip:
+    name: "{{ pip_test_package }}>=0.0.0,<=99.0.0,!=12.0.0"
+    version: "<100.0.0"
+  ignore_errors: yes
+  register: version6
+
+- name: assert invalid combination should fail
+  assert:
+    that: "version6 is failed"
+
+- name: try to install invalid package
+  pip:
+    name: "{{ pip_test_pkg_ver_unsatisfied }}"
+  ignore_errors: yes
+  register: version7
+
+- name: assert install should fail
+  assert:
+    that: "version7 is failed"
+
+- name: test install multi-packages with version specifiers
+  pip:
+    name: "{{ pip_test_pkg_ver }}"
+  register: version8
+
+- name: assert packages installed correctly
+  assert:
+    that: "version8.changed"
+
+- name: test install multi-packages with check_mode
+  pip:
+    name: "{{ pip_test_pkg_ver }}"
+  check_mode: yes
+  register: version9
+
+- name: assert no change
+  assert:
+    that: "version9.changed == False"
+
+- name: test install unsatisfied multi-packages with check_mode
+  pip:
+    name: "{{ pip_test_pkg_ver_unsatisfied }}"
+  check_mode: yes
+  register: version10
+
+- name: assert changes needed
+  assert:
+    that: "version10.changed"
+
+- name: clean up
+  pip:
+    name: "{{ pip_test_pkg_ver }}"
     state: absent

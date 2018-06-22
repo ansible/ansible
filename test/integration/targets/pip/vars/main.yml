@@ -2,6 +2,12 @@ pip_test_package: sampleproject
 pip_test_packages:
   - sampleproject
   - decorator
+pip_test_pkg_ver:
+  - sampleproject<=10.0.0,!=9.0.0,>=0.0.0
+  - decorator<10.0.0,!=9.0.0,>=0.0.0
+pip_test_pkg_ver_unsatisfied:
+  - sampleproject>=99.0.0
+  - decorator>99.0.0
 pip_test_modules:
   - sample
   - decorator
