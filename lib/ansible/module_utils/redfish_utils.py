@@ -230,7 +230,7 @@ class RedfishUtils(object):
                 entry['Message'] = logEntry[u'Message']
                 entry['Severity'] = logEntry[u'Severity']
                 list_of_log_entries.append(entry)
-            logs['entries'] = list_of_log_entries
+            logs['logs'] = list_of_log_entries
             list_of_logs.append(logs)
 
         # list_of_logs[logs{list_of_log_entries[entry{}]}]
@@ -301,7 +301,7 @@ class RedfishUtils(object):
             controller['Health'] = data[u'Status'][u'Health']
             controllers_details.append(controller)
 
-        result["entries"] = controllers_details
+        result["storage_controllers"] = controllers_details
         return result
 
     def get_disk_inventory(self):
@@ -346,7 +346,7 @@ class RedfishUtils(object):
                 disk['Health'] = device[u'Status'][u'Health']
                 disks_details.append(disk)
 
-        result["entries"] = disks_details
+        result["disks"] = disks_details
         return result
 
     def restart_manager_gracefully(self):
@@ -398,12 +398,14 @@ class RedfishUtils(object):
         return result
 
     def list_users(self):
+        result = {}
         # listing all users has always been slower than other operations, why?
         allusers = []
         allusers_details = []
         response = self.get_request(self.root_uri + self.accounts_uri)
         if response['ret'] is False:
             return response
+        result['ret'] = True
         data = response['data']
 
         for users in data[u'Members']:
@@ -423,7 +425,8 @@ class RedfishUtils(object):
                 user['UserName'] = data[u'UserName']
                 user['RoleId'] = data[u'RoleId']
                 allusers_details.append(user)
-        return {'ret': True, 'entries': allusers_details}
+        result["users"] = allusers_details
+        return result
 
     def add_user(self, user):
         uri = self.root_uri + self.accounts_uri + "/" + user['userid']
@@ -479,6 +482,7 @@ class RedfishUtils(object):
 
     def get_firmware_inventory(self):
         result = {}
+        firmware = {}
         response = self.get_request(self.root_uri + self.firmware_uri)
         if response['ret'] is False:
             return response
@@ -496,24 +500,28 @@ class RedfishUtils(object):
                     return response
                 result['ret'] = True
                 data = response['data']
-                result[data[u'Name']] = data[u'Version']
+                firmware[data[u'Name']] = data[u'Version']
+        result["firmware_list"] = firmware
         return result
 
     def get_manager_attributes(self):
         result = {}
-        attributes = "Attributes"
+        manager_attributes = {}
+        attributes_id = "Attributes"
 
-        response = self.get_request(self.root_uri + self.manager_uri + "/" + attributes)
+        response = self.get_request(self.root_uri + self.manager_uri + "/" + attributes_id)
         if response['ret'] is False:
             return response
         result['ret'] = True
         data = response['data']
         for attribute in data[u'Attributes'].items():
-            result[attribute[0]] = attribute[1]
+            manager_attributes[attribute[0]] = attribute[1]
+        result["manager_attributes"] = manager_attributes
         return result
 
     def get_bios_attributes(self):
         result = {}
+        bios_attributes = {}
         key = "Bios"
 
         # Search for 'key' entry and extract URI from it
@@ -530,7 +538,8 @@ class RedfishUtils(object):
         result['ret'] = True
         data = response['data']
         for attribute in data[u'Attributes'].items():
-            result[attribute[0]] = attribute[1]
+            bios_attributes[attribute[0]] = attribute[1]
+        result["bios_attributes"] = bios_attributes
         return result
 
     def get_bios_boot_order(self):
@@ -572,7 +581,7 @@ class RedfishUtils(object):
             boot_device["Name"] = b[u'Name']
             boot_device["Enabled"] = b[u'Enabled']
             boot_device_details.append(boot_device)
-        result["entries"] = boot_device_details
+        result["boot_devices"] = boot_device_details
         return result
 
     def set_bios_default_settings(self):
@@ -732,7 +741,7 @@ class RedfishUtils(object):
                     fan['State'] = device[u'Status'][u'State']
                     fan['Health'] = device[u'Status'][u'Health']
                     fan_details.append(fan)
-                result["entries"] = fan_details
+                result["fans"] = fan_details
         return result
 
     def get_cpu_inventory(self):
@@ -776,7 +785,7 @@ class RedfishUtils(object):
             cpu['State'] = data[u'Status'][u'State']
             cpu['Health'] = data[u'Status'][u'Health']
             cpu_details.append(cpu)
-        result["entries"] = cpu_details
+        result["cpus"] = cpu_details
         return result
 
     def get_nic_inventory(self):
@@ -831,7 +840,7 @@ class RedfishUtils(object):
                 nic['Health'] = data[u'Status'][u'Health']
                 nic['State'] = data[u'Status'][u'State']
             nic_details.append(nic)
-        result["entries"] = nic_details
+        result["nics"] = nic_details
         return result
 
     def get_psu_inventory(self):
@@ -871,11 +880,12 @@ class RedfishUtils(object):
             psu['Status'] = data[u'Status'][u'State']
             psu['Health'] = data[u'Status'][u'Health']
             psu_details.append(psu)
-        result["entries"] = psu_details
+        result["psus"] = psu_details
         return result
 
     def get_system_inventory(self):
         result = {}
+        inventory = {}
         response = self.get_request(self.root_uri + self.systems_uri)
         if response['ret'] is False:
             return response
@@ -883,38 +893,39 @@ class RedfishUtils(object):
         data = response['data']
 
         # There could be more information to extract
-        result['Status'] = data[u'Status'][u'Health']
-        result['HostName'] = data[u'HostName']
-        result['PowerState'] = data[u'PowerState']
-        result['Model'] = data[u'Model']
-        result['Manufacturer'] = data[u'Manufacturer']
-        result['PartNumber'] = data[u'PartNumber']
-        result['SystemType'] = data[u'SystemType']
-        result['AssetTag'] = data[u'AssetTag']
-        result['ServiceTag'] = data[u'SKU']
-        result['SerialNumber'] = data[u'SerialNumber']
-        result['BiosVersion'] = data[u'BiosVersion']
-        result['MemoryTotal'] = data[u'MemorySummary'][u'TotalSystemMemoryGiB']
-        result['MemoryHealth'] = data[u'MemorySummary'][u'Status'][u'Health']
-        result['CpuCount'] = data[u'ProcessorSummary'][u'Count']
-        result['CpuModel'] = data[u'ProcessorSummary'][u'Model']
-        result['CpuHealth'] = data[u'ProcessorSummary'][u'Status'][u'Health']
+        inventory['Status'] = data[u'Status'][u'Health']
+        inventory['HostName'] = data[u'HostName']
+        inventory['PowerState'] = data[u'PowerState']
+        inventory['Model'] = data[u'Model']
+        inventory['Manufacturer'] = data[u'Manufacturer']
+        inventory['PartNumber'] = data[u'PartNumber']
+        inventory['SystemType'] = data[u'SystemType']
+        inventory['AssetTag'] = data[u'AssetTag']
+        inventory['ServiceTag'] = data[u'SKU']
+        inventory['SerialNumber'] = data[u'SerialNumber']
+        inventory['BiosVersion'] = data[u'BiosVersion']
+        inventory['MemoryTotal'] = data[u'MemorySummary'][u'TotalSystemMemoryGiB']
+        inventory['MemoryHealth'] = data[u'MemorySummary'][u'Status'][u'Health']
+        inventory['CpuCount'] = data[u'ProcessorSummary'][u'Count']
+        inventory['CpuModel'] = data[u'ProcessorSummary'][u'Model']
+        inventory['CpuHealth'] = data[u'ProcessorSummary'][u'Status'][u'Health']
 
         datadict = data[u'Boot']
         if 'BootSourceOverrideMode' in datadict.keys():
-            result['BootSourceOverrideMode'] = data[u'Boot'][u'BootSourceOverrideMode']
+            inventory['BootSourceOverrideMode'] = data[u'Boot'][u'BootSourceOverrideMode']
         else:
             # Not available in earlier server generations
-            result['BootSourceOverrideMode'] = "Not available"
+            inventory['BootSourceOverrideMode'] = "Not available"
 
         if 'TrustedModules' in data:
             for d in data[u'TrustedModules']:
                 if 'InterfaceType' in d.keys():
-                    result['TPMInterfaceType'] = d[u'InterfaceType']
-                result['TPMStatus'] = d[u'Status'][u'State']
+                    inventory['TPMInterfaceType'] = d[u'InterfaceType']
+                inventory['TPMStatus'] = d[u'Status'][u'State']
         else:
             # Not available in earlier server generations
-            result['TPMInterfaceType'] = "Not available"
-            result['TPMStatus'] = "Not available"
+            inventory['TPMInterfaceType'] = "Not available"
+            inventory['TPMStatus'] = "Not available"
 
+        result["system_inventory"] = inventory
         return result
