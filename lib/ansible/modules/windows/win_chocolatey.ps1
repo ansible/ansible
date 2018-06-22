@@ -20,8 +20,8 @@ $package = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $
 $force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $false
 $version = Get-AnsibleParam -obj $params -name "version" -type "str"
 $source = Get-AnsibleParam -obj $params -name "source" -type "str"
-$username = Get-AnsibleParam -obj $params -name "username" -type "str"
-$password = Get-AnsibleParam -obj $params -name "password" -type "str" -failifempty ($username -ne $null)
+$source_username = Get-AnsibleParam -obj $params -name "username" -type "str" -failifempty ($source -ne $null)
+$source_password = Get-AnsibleParam -obj $params -name "password" -type "str" -failifempty ($source_username -ne $null)
 $showlog = Get-AnsibleParam -obj $params -name "showlog" -type "bool" -default $false
 $timeout = Get-AnsibleParam -obj $params -name "timeout" -type "int" -default 2700 -aliases "execution_timeout"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","downgrade","latest","present","reinstalled"
@@ -175,8 +175,8 @@ Function Choco-Upgrade
         [int] $timeout,
         [bool] $skipscripts,
         [string] $source,
-        [string] $username,
-        [string] $password,
+        [string] $source_username,
+        [string] $source_password,
         [string] $installargs,
         [string] $packageparams,
         [bool] $allowemptychecksums,
@@ -211,14 +211,14 @@ Function Choco-Upgrade
         $options += "--source", $source
     }
 
-    if ($username)
+    if ($source_username)
     {
-        $options += "--user=$username"
+        $options += "--user=$source_username"
     }
 
-    if ($password)
+    if ($source_password)
     {
-        $options += "--password=$password"
+        $options += "--password=$source_password"
     }
 
     if ($force)
@@ -322,8 +322,8 @@ Function Choco-Install
         [int] $timeout,
         [bool] $skipscripts,
         [string] $source,
-        [string] $username,
-        [string] $password,
+        [string] $source_username,
+        [string] $source_password,
         [string] $installargs,
         [string] $packageparams,
         [bool] $allowemptychecksums,
@@ -341,12 +341,12 @@ Function Choco-Install
         if ($state -in ("downgrade", "latest"))
         {
             Choco-Upgrade -package $package -version $version -force $force -timeout $timeout `
-                -skipscripts $skipscripts -source $source -installargs $installargs `
-                -packageparams $packageparams -allowemptychecksums $allowemptychecksums `
-                -ignorechecksums $ignorechecksums -ignoredependencies $ignoredependencies `
-                -allowdowngrade $allowdowngrade -proxy_url $proxy_url `
-                -proxy_username $proxy_username -proxy_password $proxy_password `
-                -allowprerelease $allowprerelease  -username $username -password $password
+                -skipscripts $skipscripts -source $source -username $source_username `
+                -password $source_password -installargs $installargs -packageparams $packageparams `
+                -allowemptychecksums $allowemptychecksums -ignorechecksums $ignorechecksums `
+                -ignoredependencies $ignoredependencies -allowdowngrade $allowdowngrade `
+                -proxy_url $proxy_url -proxy_username $proxy_username -proxy_password $proxy_password `
+                -allowprerelease $allowprerelease  
             return
         }
         elseif (-not $force)
@@ -372,14 +372,14 @@ Function Choco-Install
         $options += "--source", $source
     }
 
-    if ($username)
+    if ($source_username)
     {
-        $options += "--user=$username"
+        $options += "--user=$source_username"
     }
 
-    if ($password)
+    if ($source_password)
     {
-        $options += "--password=$password"
+        $options += "--password=$source_password"
     }
     
     if ($force)
@@ -540,12 +540,12 @@ if ($state -in ("absent", "reinstalled")) {
 if ($state -in ("downgrade", "latest", "present", "reinstalled")) {
 
     Choco-Install -package $package -version $version -force $force -timeout $timeout `
-        -skipscripts $skipscripts -source $source -installargs $installargs `
-        -packageparams $packageparams -allowemptychecksums $allowemptychecksums `
+        -skipscripts $skipscripts -source $source -username $source_username -password $source_password `
+        -installargs $installargs -packageparams $packageparams -allowemptychecksums $allowemptychecksums `
         -ignorechecksums $ignorechecksums -ignoredependencies $ignoredependencies `
         -allowdowngrade ($state -eq "downgrade") -proxy_url $proxy_url `
         -proxy_username $proxy_username -proxy_password $proxy_password `
-        -allowprerelease $allowprerelease -username $username -password $password
+        -allowprerelease $allowprerelease 
 }
 
 Exit-Json -obj $result
