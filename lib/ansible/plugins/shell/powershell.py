@@ -919,8 +919,18 @@ namespace Ansible
 }
 "@
 
-$exec_wrapper = {
+# due to the command line size limitations of CreateProcessWithTokenW, we
+# execute a simple PS script that executes our full exec_wrapper so no files
+# touch the disk
+$become_exec_wrapper = {
     chcp.com 65001 > $null
+    $ProgressPreference = "SilentlyContinue"
+    $exec_wrapper_str = [System.Console]::In.ReadToEnd()
+    $exec_wrapper = [ScriptBlock]::Create($exec_wrapper_str)
+    &$exec_wrapper
+}
+
+$exec_wrapper = {
     Set-StrictMode -Version 2
     $DebugPreference = "Continue"
     $ErrorActionPreference = "Stop"
@@ -938,9 +948,9 @@ $exec_wrapper = {
     }
 
     # stream JSON including become_pw, ps_module_payload, bin_module_payload, become_payload, write_payload_path, preserve directives
-    # exec runspace, capture output, cleanup, return module output
-
-    $json_raw = [System.Console]::In.ReadToEnd()
+    # exec runspace, capture output, cleanup, return module output. Do not change this as it is set become before being passed to the
+    # become process.
+    $json_raw = ""
 
     If (-not $json_raw) {
         Write-Error "no input given" -Category InvalidArgument
@@ -1079,35 +1089,19 @@ Function Run($payload) {
         return $null
     }
 
-    # NB: CreateProcessWithTokenW commandline maxes out at 1024 chars, must bootstrap via filesystem
-    $temp = [System.IO.Path]::Combine($remote_tmp, [System.IO.Path]::GetRandomFileName() + ".ps1")
-    $exec_wrapper.ToString() | Set-Content -Path $temp
+    # NB: CreateProcessWithTokenW commandline maxes out at 1024 chars, must bootstrap via small
+    # wrapper which calls our read wrapper passed through stdin. Cannot use 'powershell -' as
+    # the $ErrorActionPreference is always set to Stop and cannot be changed
+    $payload_string = $payload | ConvertTo-Json -Depth 99 -Compress
+    $exec_wrapper = $exec_wrapper.ToString().Replace('$json_raw = ""', "`$json_raw = '$payload_string'")
     $rc = 0
 
+    $exec_command = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($become_exec_wrapper.ToString()))
+    $lp_command_line = New-Object System.Text.StringBuilder @("powershell.exe -NonInteractive -NoProfile -ExecutionPolicy Bypass -EncodedCommand $exec_command")
+    $lp_current_directory = "$env:SystemRoot"
+
     Try {
-        # do not modify the ACL if the logon_type is LOGON32_LOGON_NEW_CREDENTIALS
-        # as this results in the local execution running under the same user's token,
-        # otherwise we need to allow (potentially unprivileges) the become user access
-        # to the tempfile (NB: this likely won't work if traverse checking is enaabled).
-        if ($logon_type -ne [Ansible.LogonType]::LOGON32_LOGON_NEW_CREDENTIALS) {
-            $acl = Get-Acl -Path $temp
-
-            Try {
-                $acl.AddAccessRule($(New-Object System.Security.AccessControl.FileSystemAccessRule($username, "FullControl", "Allow")))
-            } Catch [System.Security.Principal.IdentityNotMappedException] {
-                throw "become_user '$username' is not recognized on this host"
-            } Catch {
-                throw "failed to set ACL on temp become execution script: $($_.Exception.Message)"
-            }
-            Set-Acl -Path $temp -AclObject $acl | Out-Null
-        }
-
-        $payload_string = $payload | ConvertTo-Json -Depth 99 -Compress
-
-        $lp_command_line = New-Object System.Text.StringBuilder @("powershell.exe -NonInteractive -NoProfile -ExecutionPolicy Bypass -File $temp")
-        $lp_current_directory = "$env:SystemRoot"
-
-        $result = [Ansible.BecomeUtil]::RunAsUser($username, $password, $lp_command_line, $lp_current_directory, $payload_string, $logon_flags, $logon_type)
+        $result = [Ansible.BecomeUtil]::RunAsUser($username, $password, $lp_command_line, $lp_current_directory, $exec_wrapper, $logon_flags, $logon_type)
         $stdout = $result.StandardOut
         $stdout = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($stdout.Trim()))
         $stderr = $result.StandardError
@@ -1118,8 +1112,6 @@ Function Run($payload) {
     } Catch {
         $excep = $_
         Dump-Error -excep $excep -msg "Failed to become user $username"
-    } Finally {
-        Remove-Item $temp -ErrorAction SilentlyContinue
     }
     $host.SetShouldExit($rc)
 }
