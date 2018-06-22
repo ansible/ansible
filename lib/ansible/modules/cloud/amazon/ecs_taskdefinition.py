@@ -230,7 +230,6 @@ class EcsTaskManager:
         params = dict(
             family=family,
             taskRoleArn=task_role_arn,
-            executionRoleArn=execution_role_arn,
             networkMode=network_mode,
             containerDefinitions=container_definitions,
             volumes=volumes
@@ -241,6 +240,8 @@ class EcsTaskManager:
             params['memory'] = memory
         if launch_type:
             params['requiresCompatibilities'] = [launch_type]
+        if execution_role_arn:
+            params['executionRoleArn'] = execution_role_arn
 
         try:
             response = self.ecs.register_task_definition(**params)
