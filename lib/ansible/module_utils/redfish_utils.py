@@ -190,7 +190,6 @@ class RedfishUtils(object):
     def get_logs(self):
         log_svcs_uri_list = []
         list_of_logs = []
-        result = {}
 
         # Find LogService
         response = self.get_request(self.root_uri + self.manager_uri)
@@ -238,8 +237,6 @@ class RedfishUtils(object):
         return {'ret': True, 'list_of_logs': list_of_logs}
 
     def clear_logs(self):
-        result = {}
-
         # Find LogService
         response = self.get_request(self.root_uri + self.manager_uri)
         if response['ret'] is False:
@@ -402,7 +399,6 @@ class RedfishUtils(object):
 
     def list_users(self):
         # listing all users has always been slower than other operations, why?
-        result = {}
         allusers = []
         allusers_details = []
         response = self.get_request(self.root_uri + self.accounts_uri)
@@ -430,7 +426,6 @@ class RedfishUtils(object):
         return {'ret': True, 'entries': allusers_details}
 
     def add_user(self, user):
-        result = {}
         uri = self.root_uri + self.accounts_uri + "/" + user['userid']
         username = {'UserName': user['username']}
         pswd = {'Password': user['userpswd']}
@@ -443,7 +438,6 @@ class RedfishUtils(object):
         return {'ret': True}
 
     def enable_user(self, user):
-        result = {}
         uri = self.root_uri + self.accounts_uri + "/" + user['userid']
         payload = {'Enabled': True}
         response = self.patch_request(uri, payload, HEADERS)
@@ -452,7 +446,6 @@ class RedfishUtils(object):
         return {'ret': True}
 
     def delete_user(self, user):
-        result = {}
         uri = self.root_uri + self.accounts_uri + "/" + user['userid']
         payload = {'UserName': ""}
         response = self.patch_request(uri, payload, HEADERS)
@@ -461,7 +454,6 @@ class RedfishUtils(object):
         return {'ret': True}
 
     def disable_user(self, user):
-        result = {}
         uri = self.root_uri + self.accounts_uri + "/" + user['userid']
         payload = {'Enabled': False}
         response = self.patch_request(uri, payload, HEADERS)
@@ -470,7 +462,6 @@ class RedfishUtils(object):
         return {'ret': True}
 
     def update_user_role(self, user):
-        result = {}
         uri = self.root_uri + self.accounts_uri + "/" + user['userid']
         payload = {'RoleId': user['userrole']}
         response = self.patch_request(uri, payload, HEADERS)
@@ -479,7 +470,6 @@ class RedfishUtils(object):
         return {'ret': True}
 
     def update_user_password(self, user):
-        result = {}
         uri = self.root_uri + self.accounts_uri + "/" + user['userid']
         payload = {'Password': user['userpswd']}
         response = self.patch_request(uri, payload, HEADERS)
@@ -489,7 +479,6 @@ class RedfishUtils(object):
 
     def get_firmware_inventory(self):
         result = {}
-        devices = []
         response = self.get_request(self.root_uri + self.firmware_uri)
         if response['ret'] is False:
             return response
@@ -640,7 +629,6 @@ class RedfishUtils(object):
         return {'ret': True}
 
     def set_manager_attributes(self, attr):
-        result = {}
         attributes = "Attributes"
 
         # Example: manager_attr = {\"name\":\"value\"}

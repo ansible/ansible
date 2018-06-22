@@ -25,7 +25,7 @@ options:
     required: true
     description:
       - Action category to execute on server
-    choices: ["Inventory", "Accounts", "System", "Update", "Manager", "Chassis"]
+    choices: ["Inventory", "Accounts", "System", "Update", "Manager"]
   command:
     required: true
     description:
@@ -88,8 +88,6 @@ result:
     sample: List of CPUs on system
 '''
 
-import os
-import json
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.redfish_utils import RedfishUtils
 
@@ -98,7 +96,7 @@ def main():
     result = {}
     module = AnsibleModule(
         argument_spec=dict(
-            category=dict(required=True, choices=["Inventory", "Accounts", "System", "Update", "Manager", "Chassis"]),
+            category=dict(required=True, choices=["Inventory", "Accounts", "System", "Update", "Manager"]),
             command=dict(),
             baseuri=dict(required=True),
             user=dict(required=True),
