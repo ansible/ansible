@@ -28,7 +28,7 @@ options:
     required: true
   vlan_id:
     description:
-      - ID of the VLAN.
+      - ID of the VLAN. Range 1-4094.
     required: true
   description:
     description:
