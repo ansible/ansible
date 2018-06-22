@@ -54,38 +54,59 @@ options:
     action:
         description:
             - action associated to the entity resource to set or edit in dictionary format.
+            - Possible Action in relation to Entitys.
+            - "sync (available when entity=product or entity=repository)"
+            - "publish (available when entity=content_view)"
+            - "promote (available when entity=content_view)"
         choices:
-            - sync (available when entity=product or entity=repository)
-            - publish (available when entity=content_view)
-            - promote (available when entity=content_view)
+            - sync
+            - publish
+            - promote
         required: false
     params:
         description:
             - Parameters associated to the entity resource and action, to set or edit in dictionary format.
-            - Possible Choices are in the format of "choice ([possible_entity,possible_actions,more_possible_actions,...],[next_possible_entity,..],...)"
-            - So each choice may be only available with specific entitys and actions. The action "None" means no Action specified.
+            - Each choice may be only available with specific entitys and actions.
+            - Possible Choices are in the format of param_name ([entry,action,action,...],[entity,..],...).
+            - The action "None" means no action specified.
+            - Possible Params in relation to entity and action.
+            - "name ([product,sync,None], [repository,sync], [repository_set,None], [sync_plan,None],"
+            - "[content_view,promote,publish,None], [lifecycle_environment,None], [activation_key,None])"
+            - "organization ([product,sync,None] ,[repository,sync,None], [repository_set,None], [sync_plan,None], "
+            - "[content_view,promote,publish,None], [lifecycle_environment,None], [activation_key,None])"
+            - "content ([manifest,None])"
+            - "product ([repository,sync,None], [repository_set,None], [sync_plan,None], content_view)"
+            - "basearch ([repository_set,None])"
+            - "releaserver ([repository_set,None])"
+            - "sync_date ([sync_plan,None])"
+            - "interval ([sync_plan,None])"
+            - "repositories ([content_view,None])"
+            - "from_environment ([content_view,promote])"
+            - "to_environment([content_view,promote])"
+            - "prior ([lifecycle_environment,None])"
+            - "content_view ([activation_key,None])"
+            - "lifecycle_environment ([activation_key,None])"
         choices:
-            - name ([product,sync,None], [repository,sync], [repository_set,None], [sync_plan,None], [content_view,promote,publish,None], [lifecycle_environment,None], [activation_key,None])
-            - organization ([product,sync,None] ,[repository,sync,None], [repository_set,None], [sync_plan,None], [content_view,promote,publish,None], [lifecycle_environment,None], [activation_key,None])
-            - content ([manifest,None])
-            - product ([repository,sync,None], [repository_set,None], [sync_plan,None], content_view)
-            - basearch ([repository_set,None])
-            - releaserver ([repository_set,None])
-            - sync_date ([sync_plan,None])
-            - interval ([sync_plan,None])
-            - repositories ([content_view,None])
-            - from_environment ([content_view,promote])
-            - to_environment([content_view,promote])
-            - prior ([lifecycle_environment,None])
-            - content_view ([activation_key,None])
-            - lifecycle_environment ([activation_key,None])
+            - name
+            - organization
+            - content
+            - product
+            - basearch
+            - releaserver
+            - sync_date
+            - interval
+            - repositories
+            - from_environment
+            - to_environment
+            - prior
+            - content_view
+            - lifecycle_environment
         required: true
-    timeout:
+    task_timeout:
         description:
             - The timeout in seconds to wait for the started Foreman action to finish.
             - If the timeout is reached and the Foreman action did not complete, the ansible task fails. However the foreman action does not get canceled.
         default: 1000
-        type: Integer
         version_added: "2.7"
         required: false
     verify_ssl:
@@ -184,7 +205,7 @@ EXAMPLES = '''
         name: MyContentView
         organization: MyOrganisation
         from_environment: Testing
-        to_environment: Production  
+        to_environment: Production
 
 # Best Practices
 
@@ -193,22 +214,22 @@ EXAMPLES = '''
 # the task will fail instantly instead of waiting for the already running action to complete.
 # So you sould use a "until success" loop to catch this.
 
-    - name: Promote Contentview Environment with increased Timeout
-      katello:
-        username: ansibleuser
-        password: supersecret
-        task_timeout: 10800
-        entity: content_view
-        action: promote
-        params:
-          name: MyContentView
-          organization: MyOrganisation
-          from_environment: Testing
-          to_environment: Production
-      register: task_result
-      until: task_result is success
-      retries: 9
-      delay: 120
+- name: Promote Contentview Environment with increased Timeout
+  katello:
+  username: ansibleuser
+  password: supersecret
+  task_timeout: 10800
+  entity: content_view
+  action: promote
+  params:
+    name: MyContentView
+    organization: MyOrganisation
+    from_environment: Testing
+    to_environment: Production
+  register: task_result
+  until: task_result is success
+  retries: 9
+  delay: 120
 
 '''
 
@@ -534,8 +555,9 @@ def main():
             server_url=dict(type='str', required=True),
             username=dict(type='str', required=True, no_log=True),
             password=dict(type='str', required=True, no_log=True),
-            entity=dict(type='str', required=True),
-            action=dict(type='str'),
+            entity=dict(type='str', required=True,
+                        choices=['repository', 'manifest', 'repository_set', 'sync_plan', 'content_view', 'lifecycle_environment', 'activation_key']),
+            action=dict(type='str', choices=['sync', 'publish', 'promote']),
             verify_ssl=dict(type='bool', default=False),
             task_timeout=dict(type='int', default=1000),
             params=dict(type='dict', required=True, no_log=True),
