@@ -60,26 +60,18 @@ For starters, here's a playbook that contains just one play::
         http_port: 80
         max_clients: 200
       remote_user: root
-      tasks:
-      - name: ensure apache is at the latest version
-        yum:
-          name: httpd
-          state: latest
-      - name: write the apache config file
-        template:
-          src: /srv/httpd.j2
-          dest: /etc/httpd.conf
+    tasks:
+    - name: ensure apache is at the latest version
+      yum: name=httpd state=latest
+    - name: write the apache config file
+        template: src=/srv/httpd.j2 dest=/etc/httpd.conf
         notify:
         - restart apache
-      - name: ensure apache is running
-        service:
-          name: httpd
-          state: started
-      handlers:
+    - name: ensure apache is running (and enable it at boot)
+        service: name=httpd state=started enabled=yes
+    handlers:
         - name: restart apache
-          service:
-            name: httpd
-            state: restarted
+          service: name=httpd state=restarted
 
 Playbooks can contain multiple plays. You may have a playbook that targets first
 the web servers, and then the database servers. For example::
