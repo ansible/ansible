@@ -60,6 +60,39 @@
 - name: prep a zip file
   shell: zip test-unarchive.zip foo-unarchive.txt foo-unarchive-777.txt chdir={{output_dir}}
 
+- name: Prepare - Create test dirs
+  file:
+    path: "{{output_dir}}/{{item}}"
+    state: directory
+  with_items:
+    - created/include
+    - created/exclude
+    - created/other
+
+- name: Prepare - Create test files
+  file:
+    path: "{{output_dir}}/created/{{item}}"
+    state: touch
+  with_items:
+    - include/include-1.txt
+    - include/include-2.txt
+    - include/include-3.txt
+    - exclude/exclude-1.txt
+    - exclude/exclude-2.txt
+    - exclude/exclude-3.txt
+    - other/include-1.ext
+    - other/include-2.ext
+    - other/exclude-1.ext
+    - other/exclude-2.ext
+    - other/other-1.ext
+    - other/other-2.ext
+
+- name: Prepare - zip file
+  shell: zip -r {{output_dir}}/unarchive-00.zip * chdir={{output_dir}}/created/
+
+- name: Prepare - tar file
+  shell: tar czvf {{output_dir}}/unarchive-00.tar * chdir={{output_dir}}/created/
+
 - name: add a file with Windows permissions to zip file
   shell: zip -k test-unarchive.zip FOO-UNAR.TXT chdir={{output_dir}}
 
@@ -187,22 +220,33 @@
 - name: "Create {{ output_dir }}/exclude directory"
   file:
     state: directory
-    path: "{{ output_dir }}/exclude"
+    path: "{{ output_dir }}/exclude-{{item}}"
+  with_items:
+    - zip
+    - tar
 
-- name: Unpack zip file excluding one file.
+- name: Unpack archive file excluding glob files.
   unarchive:
-    src: "{{ output_dir }}/test-unarchive.zip"
-    dest: "{{ output_dir }}/exclude"
-    exclude: "foo-unarchive-*.txt"
+    src: "{{ output_dir }}/unarchive-00.{{item}}"
+    dest: "{{ output_dir }}/exclude-{{item}}"
+    exclude: "exclude/exclude-*.txt"
+  with_items:
+    - zip
+    - tar
 
 - name: verify that the file was unarchived
-  shell: find {{ output_dir }}/exclude chdir={{ output_dir }}
-  register: unarchive_dir01
+  shell: find {{ output_dir }}/exclude-{{item}} chdir={{ output_dir }}
+  register: unarchive00
+  with_items:
+    - zip
+    - tar
 
-- name: verify that zip extraction excluded file
+- name: verify that archive extraction excluded the files
   assert:
     that:
-      - "'foo-unarchive-777.txt' not in unarchive_dir01.stdout"
+      - "'exclude/exclude-1.txt' not in item.stdout"
+  with_items:
+    - "{{ unarchive00.results }}"
 
 - name: remove our zip unarchive destination
   file: path={{output_dir}}/test-unarchive-zip state=absent
