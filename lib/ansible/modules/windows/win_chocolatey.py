@@ -54,12 +54,10 @@ options:
   username:
     description:
       - Username used to authenticate against a source.
-    default: 'no'
     version_added: '2.7'
   password:
     description:
       - Password used to authenticate against a source.
-    default: 'no'
     version_added: '2.7'
   install_args:
     description:
