@@ -95,15 +95,15 @@ output_lines:
 """
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.netconf import exec_rpc
-from ansible.module_utils.network.junos.junos import junos_argument_spec
+from ansible.module_utils.network.junos.junos import junos_argument_spec, tostring
 from ansible.module_utils.six import iteritems
 
 USE_PERSISTENT_CONNECTION = True
 
 try:
-    from lxml.etree import Element, SubElement, tostring
+    from lxml.etree import Element, SubElement
 except ImportError:
-    from xml.etree.ElementTree import Element, SubElement, tostring
+    from xml.etree.ElementTree import Element, SubElement
 
 
 def main():
@@ -153,7 +153,7 @@ def main():
 
     reply = exec_rpc(module, tostring(element), ignore_warning=False)
 
-    result['xml'] = str(tostring(reply))
+    result['xml'] = tostring(reply)
 
     if module.params['output'] == 'text':
         data = reply.find('.//output')
@@ -164,7 +164,7 @@ def main():
         result['output'] = module.from_json(reply.text.strip())
 
     else:
-        result['output'] = str(tostring(reply)).split('\n')
+        result['output'] = tostring(reply).split('\n')
 
     module.exit_json(**result)
 

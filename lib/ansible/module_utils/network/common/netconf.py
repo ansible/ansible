@@ -109,7 +109,7 @@ class NetconfConnection(Connection):
 
 
 def transform_reply():
-    reply = '''<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+    return b'''<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
     <xsl:output method="xml" indent="no"/>
 
     <xsl:template match="/|comment()|processing-instruction()">
@@ -131,10 +131,6 @@ def transform_reply():
     </xsl:template>
     </xsl:stylesheet>
     '''
-    if sys.version < '3':
-        return reply
-    else:
-        return reply.encode('UTF-8')
 
 
 # Note: Workaround for ncclient 0.5.3
