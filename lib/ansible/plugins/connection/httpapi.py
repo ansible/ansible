@@ -192,6 +192,10 @@ class Connection(NetworkConnectionBase):
         messages = ['updating play_context for connection']
         if self._play_context.become ^ play_context.become:
             self.set_become(play_context)
+            if play_context.become is True:
+                messages.append('authorizing connection')
+            else:
+                messages.append('deauthorizing connection')
 
         self._play_context = play_context
         return messages

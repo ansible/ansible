@@ -196,7 +196,6 @@ class Connection(NetworkConnectionBase):
         self._matched_pattern = None
         self._last_response = None
         self._history = list()
-        self._play_context = play_context
 
         if not self._network_os:
             raise AnsibleConnectionFailure(
@@ -253,14 +252,14 @@ class Connection(NetworkConnectionBase):
         play_context.deserialize(pc_data)
 
         messages = ['updating play_context for connection']
-        if self._play_context.become is False and play_context.become is True:
-            auth_pass = play_context.become_pass
-            self._terminal.on_become(passwd=auth_pass)
-            messages.append('authorizing connection')
-
-        elif self._play_context.become is True and not play_context.become:
-            self._terminal.on_unbecome()
-            messages.append('deauthorizing connection')
+        if self._play_context.become ^ play_context.become:
+            if play_context.become is True:
+                auth_pass = play_context.become_pass
+                self._terminal.on_become(passwd=auth_pass)
+                messages.append('authorizing connection')
+            else:
+                self._terminal.on_unbecome()
+                messages.append('deauthorizing connection')
 
         self._play_context = play_context
 
@@ -280,7 +279,8 @@ class Connection(NetworkConnectionBase):
             self.paramiko_conn.force_persistence = self.force_persistence
             ssh = self.paramiko_conn._connect()
 
-            display.vvvv('ssh connection done, setting terminal', host=self._play_context.remote_addr)
+            host = self.get_option('host')
+            display.vvvv('ssh connection done, setting terminal', host=host)
 
             self._ssh_shell = ssh.ssh.invoke_shell()
             self._ssh_shell.settimeout(self.get_option('persistent_command_timeout'))
@@ -289,11 +289,11 @@ class Connection(NetworkConnectionBase):
             if not self._terminal:
                 raise AnsibleConnectionFailure('network os %s is not supported' % self._network_os)
 
-            display.vvvv('loaded terminal plugin for network_os %s' % self._network_os, host=self._play_context.remote_addr)
+            display.vvvv('loaded terminal plugin for network_os %s' % self._network_os, host=host)
 
             cliconf = cliconf_loader.get(self._network_os, self)
             if cliconf:
-                display.vvvv('loaded cliconf plugin for network_os %s' % self._network_os, host=self._play_context.remote_addr)
+                display.vvvv('loaded cliconf plugin for network_os %s' % self._network_os, host=host)
                 self._implementation_plugins.append(cliconf)
             else:
                 display.vvvv('unable to load cliconf for network_os %s' % self._network_os)
@@ -301,15 +301,15 @@ class Connection(NetworkConnectionBase):
             self.receive(prompts=self._terminal.terminal_initial_prompt, answer=self._terminal.terminal_initial_answer,
                          newline=self._terminal.terminal_inital_prompt_newline)
 
-            display.vvvv('firing event: on_open_shell()', host=self._play_context.remote_addr)
+            display.vvvv('firing event: on_open_shell()', host=host)
             self._terminal.on_open_shell()
 
             if self._play_context.become and self._play_context.become_method == 'enable':
-                display.vvvv('firing event: on_become', host=self._play_context.remote_addr)
+                display.vvvv('firing event: on_become', host=host)
                 auth_pass = self._play_context.become_pass
                 self._terminal.on_become(passwd=auth_pass)
 
-            display.vvvv('ssh connection has completed successfully', host=self._play_context.remote_addr)
+            display.vvvv('ssh connection has completed successfully', host=host)
             self._connected = True
 
         return self
