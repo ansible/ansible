@@ -69,6 +69,11 @@ options:
               the permissions that are specified in this role.
         required: false
         version_added: 2.3
+    execution_role_arn:
+        description:
+            - The Amazon Resource Name (ARN) of the task execution role that the Amazon ECS container agent and the Docker daemon can assume.
+        required: false
+        version_added: 2.7
     volumes:
         description:
             - A list of names of volumes to be attached
@@ -201,7 +206,7 @@ class EcsTaskManager:
         except botocore.exceptions.ClientError:
             return None
 
-    def register_task(self, family, task_role_arn, network_mode, container_definitions, volumes, launch_type, cpu, memory):
+    def register_task(self, family, task_role_arn, execution_role_arn, network_mode, container_definitions, volumes, launch_type, cpu, memory):
         validated_containers = []
 
         # Ensures the number parameters are int as required by boto
@@ -225,6 +230,7 @@ class EcsTaskManager:
         params = dict(
             family=family,
             taskRoleArn=task_role_arn,
+            executionRoleArn=execution_role_arn,
             networkMode=network_mode,
             containerDefinitions=container_definitions,
             volumes=volumes
@@ -297,6 +303,7 @@ def main():
         containers=dict(required=False, type='list'),
         network_mode=dict(required=False, default='bridge', choices=['bridge', 'host', 'none', 'awsvpc'], type='str'),
         task_role_arn=dict(required=False, default='', type='str'),
+        execution_role_arn=dict(required=False, default='', type='str'), 
         volumes=dict(required=False, type='list'),
         launch_type=dict(required=False, choices=['EC2', 'FARGATE']),
         cpu=dict(),
@@ -442,6 +449,7 @@ def main():
                 volumes = module.params.get('volumes', []) or []
                 results['taskdefinition'] = task_mgr.register_task(module.params['family'],
                                                                    module.params['task_role_arn'],
+                                                                   module.params['execution_role_arn'],
                                                                    module.params['network_mode'],
                                                                    module.params['containers'],
                                                                    volumes,
