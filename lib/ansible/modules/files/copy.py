@@ -232,6 +232,7 @@ state:
 import os
 import os.path
 import shutil
+import filecmp
 import stat
 import errno
 import tempfile
@@ -276,6 +277,42 @@ def adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list,
         changed = adjust_recursive_directory_permissions(working_dir, new_directory_list, module, directory_args, changed)
     return changed
 
+
+
+def copy_diff_files(src, dest):
+    changed = False
+    diff_files=filecmp.dircmp(src, dest).diff_files
+    for item in diff_files:
+        src_item_path = os.path.join(src, item)
+        dest_item_path = os.path.join(dest, item)
+        shutil.copyfile(src_item_path, dest_item_path)
+        changed = True
+    return changed
+
+def copy_left_only(src, dest):
+    changed = False
+    left_only=filecmp.dircmp(src, dest).left_only
+    for item in left_only:
+        src_item_path = os.path.join(src, item)
+        dest_item_path = os.path.join(dest, item)
+        if os.path.isfile(src_item_path):
+            shutil.copyfile(src_item_path, dest_item_path)
+        if os.path.isdir(src_item_path):
+            shutil.copytree(src_item_path, dest_item_path)
+        changed = True
+    return changed
+
+def copy_common_dirs(src, dest):
+    changed = False
+    common_dirs=filecmp.dircmp(src, dest).common_dirs
+    for item in common_dirs:
+        src_item_path = os.path.join(src, item)
+        dest_item_path = os.path.join(dest, item)
+        diff_files_changed = copy_diff_files(src_item_path, dest_item_path)
+        left_only_changed = copy_left_only(src_item_path, dest_item_path)
+        if diff_files_changed or left_only_changed:
+            changed = True
+    return changed
 
 def main():
 
@@ -448,8 +485,16 @@ def main():
 
     if checksum_src is None and checksum_dest is None:
         if remote_src and os.path.isdir(b_src):
-            shutil.copytree(b_src, dest)
-            changed = True
+            if os.path.isdir(dest):
+                diff_files_changed = copy_diff_files(b_src, dest)
+                left_only_changed = copy_left_only(b_src, dest)
+                common_dirs_changed = copy_common_dirs(b_src, dest)
+                if diff_files_changed or left_only_changed or common_dirs_changed:
+                    changed = True
+
+            if not os.path.exists(dest):
+                shutil.copytree(b_src, dest)
+                changed = True
     else:
         changed = False
 
