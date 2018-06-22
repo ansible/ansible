@@ -53,9 +53,9 @@ EXAMPLES = '''
 # Create an SES email template
 - aws_ses_email_template:
     template_name: my_email_template
-    subject_part: "{% raw %}Greetings, {{ name }}!{% endraw %}"
-    text_part: "{% raw %}Dear {{ name }},\r\nYour favorite animal is {{ favoriteanimal }}.{% endraw %}"
-    html_part: "{% raw %}<h1>Hello {{ name }}</h1><p>Your favorite animal is {{ favoriteanimal }}.</p>{% endraw %}"
+    subject_part: !unsafe "Greetings, {{ name }}!"
+    text_part: !unsafe "Dear {{ name }},\r\nYour favorite animal is {{ favoriteanimal }}."
+    html_part: !unsafe "<h1>Hello {{ name }}</h1><p>Your favorite animal is {{ favoriteanimal }}.</p>"
     state: present
 
 # Delete an SES email template
