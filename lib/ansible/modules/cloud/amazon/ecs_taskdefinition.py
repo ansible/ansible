@@ -185,7 +185,7 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info
 from ansible.module_utils._text import to_text
 
@@ -303,17 +303,17 @@ def main():
         containers=dict(required=False, type='list'),
         network_mode=dict(required=False, default='bridge', choices=['bridge', 'host', 'none', 'awsvpc'], type='str'),
         task_role_arn=dict(required=False, default='', type='str'),
-        execution_role_arn=dict(required=False, default='', type='str'), 
+        execution_role_arn=dict(required=False, default='', type='str'),
         volumes=dict(required=False, type='list'),
         launch_type=dict(required=False, choices=['EC2', 'FARGATE']),
         cpu=dict(),
         memory=dict(required=False, type='str')
     ))
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True,
-                           required_if=[('launch_type', 'FARGATE', ['cpu', 'memory'])]
-                           )
+    module = AnsibleAWSModule(argument_spec=argument_spec,
+                              supports_check_mode=True,
+                              required_if=[('launch_type', 'FARGATE', ['cpu', 'memory'])]
+                              )
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
@@ -325,6 +325,10 @@ def main():
     if module.params['launch_type']:
         if not task_mgr.ecs_api_supports_requirescompatibilities():
             module.fail_json(msg='botocore needs to be version 1.8.4 or higher to use launch_type')
+
+    if module.params['task_role_arn']:
+        if not module.botocore_at_least('1.10.44'):
+            module.fail_jason(msg='botocore needs to be version 1.10.44 or higher to use task_role_arn')
 
     for container in module.params.get('containers', []):
         for environment in container.get('environment', []):
