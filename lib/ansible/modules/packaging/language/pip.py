@@ -227,6 +227,8 @@ from distutils.versionpredicate import VersionPredicate
 from ansible.module_utils.basic import AnsibleModule, is_executable
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import PY3
+from ansible.module_utils.common.collections import is_sequence
+
 
 #: Python one-liners to be run at the command line that will determine the
 # installed version for these special libraries.  These are libraries that
@@ -241,13 +243,13 @@ def _parse_name_str(name):
     if len(tmp) > 1:
         formula = name.replace(pkg_name, "")
         return pkg_name.strip(), formula.strip()
-    return pkg_name.strip(), None 
+    return pkg_name.strip(), None
+
 
 def _version_number_to_formula(version):
     if version[0].isdigit():
         return "==%s" % version
-    else:
-        return version
+    return version
 
 
 def _get_cmd_options(module, cmd):
@@ -531,7 +533,7 @@ def main():
 
         # check invalid combination of arguments
         if version is not None:
-            if len(name) > 1:
+            if is_sequence(name, include_strings=False) and len(name) > 1:
                 module.fail_json(msg="Version arg is not available for installing multi-packages.")
             else:
                 pkg_name, version_formula = _parse_name_str(name[0])
