@@ -1569,6 +1569,7 @@ class SunOS(User):
         if not self.module.check_mode:
             # we have to set the password by editing the /etc/shadow file
             if self.password is not None:
+                self.backup_shadow()
                 minweeks, maxweeks, warnweeks = self.get_password_defaults()
                 try:
                     lines = []
@@ -1673,6 +1674,7 @@ class SunOS(User):
 
         # we have to set the password by editing the /etc/shadow file
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
+            self.backup_shadow()
             (rc, out, err) = (0, '', '')
             if not self.module.check_mode:
                 minweeks, maxweeks, warnweeks = self.get_password_defaults()
@@ -2403,7 +2405,6 @@ def main():
     )
 
     user = User(module)
-    shadow_file_backup = user.backup_shadow()
 
     module.debug('User instantiated - platform %s' % user.platform)
     if user.distribution:
@@ -2447,8 +2448,6 @@ def main():
 
     if rc is None:
         result['changed'] = False
-        if shadow_file_backup:
-            os.remove(shadow_file_backup)
     else:
         result['changed'] = True
     if out:
