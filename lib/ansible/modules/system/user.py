@@ -197,6 +197,8 @@ options:
     backup:
         description:
             - Whether to backup the shadow file if a change is made.
+            - Currently only affects SunOS variants since shadow file backup is handled by underlying tools
+              on other platforms.
         type: bool
         default: 'no'
         version_added: "2.7"
