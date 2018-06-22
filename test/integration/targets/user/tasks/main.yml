@@ -299,3 +299,27 @@
         that:
           - bsd_account_expiration.stdout == '0'
   when: ansible_os_family == 'FreeBSD'
+
+
+## shadow backup
+- block:
+    - name: Create a user and backup the shadow file
+      user:
+        name: ansibulluser
+        state: present
+        backup: yes
+      register: result
+
+    - name: Find shadow backup files
+      find:
+        path: /etc
+        patterns: 'shadow\..*~$'
+        use_regex: yes
+      register: shadow_backups
+
+    - name: Assert that a backup file was created
+      assert:
+        that:
+          - result.bakup
+          - shadow_backups.files | map(attribute='path') | list | length > 0
+  when: ansible_os_family == 'Solaris'
