@@ -16,7 +16,7 @@ module: ucs_uuid_pool
 short_description: Configures server UUID pools on Cisco UCS Manager
 description:
 - Configures server UUID pools and UUID blocks on Cisco UCS Manager.
-- Examples can be used with the UCS Platform Emulator U(https://communities.cisco.com/ucspe).
+- Examples can be used with the L(UCS Platform Emulator,https://communities.cisco.com/ucspe).
 extends_documentation_fragment: ucs
 options:
   state:
@@ -125,7 +125,7 @@ def main():
     from ucsmsdk.mometa.uuidpool.UuidpoolPool import UuidpoolPool
     from ucsmsdk.mometa.uuidpool.UuidpoolBlock import UuidpoolBlock
 
-    changed = False
+    ucs.result['changed'] = False
     try:
         mo_exists = False
         props_match = False
@@ -140,7 +140,7 @@ def main():
                 if not module.check_mode:
                     ucs.login_handle.remove_mo(mo)
                     ucs.login_handle.commit()
-                changed = True
+                ucs.result['changed'] = True
         else:
             if mo_exists:
                 # check top-level mo props
@@ -182,13 +182,12 @@ def main():
 
                     ucs.login_handle.add_mo(mo, True)
                     ucs.login_handle.commit()
-                changed = True
+                ucs.result['changed'] = True
 
     except Exception as e:
         err = True
         ucs.result['msg'] = "setup error: %s " % str(e)
 
-    ucs.result['changed'] = changed
     if err:
         module.fail_json(**ucs.result)
     module.exit_json(**ucs.result)
