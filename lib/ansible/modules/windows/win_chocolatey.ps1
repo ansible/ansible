@@ -374,12 +374,12 @@ Function Choco-Install
 
     if ($username)
     {
-        $options += "--user=`"'$username'`""
+        $options += "--user=$username"
     }
 
     if ($password)
     {
-        $options += "--password=`"'$password'`""
+        $options += "--password=$password"
     }
     
     if ($force)
