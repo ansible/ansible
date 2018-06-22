@@ -647,7 +647,7 @@ class TgzArchive(object):
         if self.opts:
             cmd.extend(['--show-transformed-names'] + self.opts)
         if self.excludes:
-            cmd.extend(['--exclude=' + quote(f) for f in self.excludes])
+            cmd.extend(['--exclude=' + f for f in self.excludes])
         cmd.extend(['-f', self.src])
         rc, out, err = self.module.run_command(cmd, cwd=self.dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
         if rc != 0:
@@ -658,14 +658,18 @@ class TgzArchive(object):
             # filename = filename.decode('string_escape')
             filename = to_native(codecs.escape_decode(filename)[0])
 
-            if filename and filename not in self.excludes:
-                # We don't allow absolute filenames.  If the user wants to unarchive rooted in "/"
-                # they need to use "dest: '/'".  This follows the defaults for gtar, pax, etc.
-                # Allowing absolute filenames here also causes bugs: https://github.com/ansible/ansible/issues/21397
-                if filename.startswith('/'):
-                    filename = filename[1:]
+            # We don't allow absolute filenames.  If the user wants to unarchive rooted in "/"
+            # they need to use "dest: '/'".  This follows the defaults for gtar, pax, etc.
+            # Allowing absolute filenames here also causes bugs: https://github.com/ansible/ansible/issues/21397
+            if filename.startswith('/'):
+                filename = filename[1:]
 
-                self._files_in_archive.append(filename)
+            if self.excludes:
+                for exclude in self.excludes:
+                    if not fnmatch.fnmatch(filename, exclude):
+                        self._files_in_archive.append(to_native(filename))
+            else:
+                self._files_in_archive.append(to_native(filename))
 
         return self._files_in_archive
 
@@ -682,7 +686,7 @@ class TgzArchive(object):
         if self.module.params['keep_newer']:
             cmd.append('--keep-newer-files')
         if self.excludes:
-            cmd.extend(['--exclude=' + quote(f) for f in self.excludes])
+            cmd.extend(['--exclude=' + f for f in self.excludes])
         cmd.extend(['-f', self.src])
         rc, out, err = self.module.run_command(cmd, cwd=self.dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
 
@@ -729,7 +733,7 @@ class TgzArchive(object):
         if self.module.params['keep_newer']:
             cmd.append('--keep-newer-files')
         if self.excludes:
-            cmd.extend(['--exclude=' + quote(f) for f in self.excludes])
+            cmd.extend(['--exclude=' + f for f in self.excludes])
         cmd.extend(['-f', self.src])
         rc, out, err = self.module.run_command(cmd, cwd=self.dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
         return dict(cmd=cmd, rc=rc, out=out, err=err)
