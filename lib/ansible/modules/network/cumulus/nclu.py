@@ -97,6 +97,15 @@ EXAMPLES = '''
         - add bgp neighbor swp52 interface remote-as external
     commit: true
 
+- name: Configure BGP AS and Add 2 EBGP neighbors Using BGP Unnumbered via Template
+  nclu:
+    template: |
+      {% for neighbor in range(51,53) %}
+      add bgp neighbor swp{{neighbor}} interface remote-as external
+      add bgp autonomous-system 65000
+      {% endfor %}
+    atomic: true
+
 - name: Check BGP Status
   nclu:
     commands:
