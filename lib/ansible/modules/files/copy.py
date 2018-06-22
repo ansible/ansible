@@ -291,7 +291,7 @@ def copy_diff_files(src, dest):
 
 def copy_left_only(src, dest):
     changed = False
-    left_only=filecmp.dircmp(src, dest).left_only
+    left_only = filecmp.dircmp(src, dest).left_only
     for item in left_only:
         src_item_path = os.path.join(src, item)
         dest_item_path = os.path.join(dest, item)
