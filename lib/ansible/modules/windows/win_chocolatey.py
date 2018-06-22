@@ -51,7 +51,7 @@ options:
   source:
     description:
       - Specify source rather than using default chocolatey repository.
-  user:
+  username:
     description:
       - Username used to authenticate against a source.
     default: 'no'

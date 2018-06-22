@@ -20,8 +20,8 @@ $package = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $
 $force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $false
 $version = Get-AnsibleParam -obj $params -name "version" -type "str"
 $source = Get-AnsibleParam -obj $params -name "source" -type "str"
-$user = Get-AnsibleParam -obj $params -name "user" -type "str"
-$password = Get-AnsibleParam -obj $params -name "password" -type "str" -failifempty ($user -ne $null)
+$username = Get-AnsibleParam -obj $params -name "username" -type "str"
+$password = Get-AnsibleParam -obj $params -name "password" -type "str" -failifempty ($username -ne $null)
 $showlog = Get-AnsibleParam -obj $params -name "showlog" -type "bool" -default $false
 $timeout = Get-AnsibleParam -obj $params -name "timeout" -type "int" -default 2700 -aliases "execution_timeout"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","downgrade","latest","present","reinstalled"
@@ -175,7 +175,7 @@ Function Choco-Upgrade
         [int] $timeout,
         [bool] $skipscripts,
         [string] $source,
-        [string] $user,
+        [string] $username,
         [string] $password,
         [string] $installargs,
         [string] $packageparams,
@@ -211,9 +211,9 @@ Function Choco-Upgrade
         $options += "--source", $source
     }
 
-    if ($user)
+    if ($username)
     {
-        $options += "--user=`"'$user'`""
+        $options += "--user=`"'$username'`""
     }
 
     if ($password)
@@ -322,7 +322,7 @@ Function Choco-Install
         [int] $timeout,
         [bool] $skipscripts,
         [string] $source,
-        [string] $user,
+        [string] $username,
         [string] $password,
         [string] $installargs,
         [string] $packageparams,
@@ -346,7 +346,7 @@ Function Choco-Install
                 -ignorechecksums $ignorechecksums -ignoredependencies $ignoredependencies `
                 -allowdowngrade $allowdowngrade -proxy_url $proxy_url `
                 -proxy_username $proxy_username -proxy_password $proxy_password `
-                -allowprerelease $allowprerelease
+                -allowprerelease $allowprerelease  -username $username -password $password
             return
         }
         elseif (-not $force)
@@ -372,9 +372,9 @@ Function Choco-Install
         $options += "--source", $source
     }
 
-    if ($user)
+    if ($username)
     {
-        $options += "--user=`"'$user'`""
+        $options += "--user=`"'$username'`""
     }
 
     if ($password)
@@ -545,7 +545,7 @@ if ($state -in ("downgrade", "latest", "present", "reinstalled")) {
         -ignorechecksums $ignorechecksums -ignoredependencies $ignoredependencies `
         -allowdowngrade ($state -eq "downgrade") -proxy_url $proxy_url `
         -proxy_username $proxy_username -proxy_password $proxy_password `
-        -allowprerelease $allowprerelease -user $user -password $password
+        -allowprerelease $allowprerelease -username $username -password $password
 }
 
 Exit-Json -obj $result
