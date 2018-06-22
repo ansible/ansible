@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 module: vmware_object_role_permission
 short_description: Manage local roles on an ESXi host
 description: This module can be used to manage object permissions on the given host.
-version_added: "2.6"
+version_added: "2.7"
 author:
 - Derek Rushing (@kryptsi) <drush@kryptsi.com>
 notes:
