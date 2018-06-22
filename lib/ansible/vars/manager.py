@@ -22,7 +22,7 @@ __metaclass__ = type
 import os
 import sys
 
-from collections import defaultdict, MutableMapping
+from collections import defaultdict, MutableMapping, Sequence
 
 try:
     from hashlib import sha1
@@ -340,6 +340,12 @@ class VariableManager:
                     try:
                         for vars_file in vars_file_list:
                             vars_file = templar.template(vars_file)
+                            if not (isinstance(vars_file, Sequence)):
+                                raise AnsibleError(
+                                    "Invalid vars_files entry found: %r\n"
+                                    "vars_files entries should be either a string type or "
+                                    "a list of string types after template expansion" % vars_file
+                                )
                             try:
                                 data = preprocess_vars(self._loader.load_from_file(vars_file, unsafe=True))
                                 if data is not None:
