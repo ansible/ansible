@@ -23,6 +23,7 @@ import fcntl
 import getpass
 import locale
 import logging
+import logging.config
 import os
 import random
 import subprocess
@@ -47,6 +48,33 @@ except NameError:
     pass
 
 
+LOGGING_CONFIG = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'ansible_display': {
+            'format': '%(asctime)s p=%(process)d u=%(user)s |  %(message)s'
+        }
+    },
+    'handlers': {
+        'ansible_display_handler': {
+            'class': 'logging.FileHandler',
+            'filename': C.DEFAULT_LOG_PATH or '/dev/null',
+            'mode': 'w',
+            'formatter': 'ansible_display'
+        }
+    },
+    'loggers': {
+        'ansible.utils.display': {
+            'handlers': ['ansible_display_handler'],
+            'level': logging.DEBUG,
+            'propagate': 0
+        }
+    }
+}
+logging.config.dictConfig(LOGGING_CONFIG)
+
+
 class FilterBlackList(logging.Filter):
     def __init__(self, blacklist):
         self.blacklist = [logging.Filter(name) for name in blacklist]
@@ -60,10 +88,9 @@ logger = None
 if getattr(C, 'DEFAULT_LOG_PATH'):
     path = C.DEFAULT_LOG_PATH
     if path and (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
-        logging.basicConfig(filename=path, level=logging.DEBUG, format='%(asctime)s %(name)s %(message)s')
-        mypid = str(os.getpid())
-        user = getpass.getuser()
-        logger = logging.getLogger("p=%s u=%s | " % (mypid, user))
+        logger = logging.getLogger(__name__)
+        logger = logging.LoggerAdapter(logger, {'user': getpass.getuser()})
+
         for handler in logging.root.handlers:
             handler.addFilter(FilterBlackList(getattr(C, 'DEFAULT_LOG_FILTER', [])))
     else:
