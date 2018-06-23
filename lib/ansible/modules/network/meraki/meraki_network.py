@@ -206,7 +206,7 @@ def main():
         elif meraki.params['net_name'] or meraki.params['net_id'] is not None:
             meraki.result['data'] = meraki.get_net(meraki.params['org_name'],
                                                    meraki.params['net_name'],
-                                                   nets
+                                                   data=nets
                                                    )
     elif meraki.params['state'] == 'present':
         if meraki.params['net_name']:  # FIXME: Idempotency check is ugly here, improve
