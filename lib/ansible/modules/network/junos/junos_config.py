@@ -149,6 +149,13 @@ EXAMPLES = """
       - set vlans vlan01 description "Test vlan"
     comment: update config
 
+- name: Set routed VLAN interface (RVI) IPv4 address
+  junos_config:
+    lines:
+      - set vlans vlan01 vlan-id 1
+      - set interfaces irb unit 10 family inet address 10.0.0.1/24
+      - set vlans vlan01 l3-interface irb.10
+
 - name: rollback the configuration to id 10
   junos_config:
     rollback: 10
