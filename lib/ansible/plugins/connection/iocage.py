@@ -70,6 +70,13 @@ class Connection(Jail):
                              stderr=subprocess.STDOUT)
 
         stdout, stderr = p.communicate()
+
+        if stdout is not None:
+            stdout = stdout.decode('utf-8')
+
+        if stderr is not None:
+            stderr = stderr.decode('utf-8')
+
         # otherwise p.returncode would not be set
         p.wait()
 
