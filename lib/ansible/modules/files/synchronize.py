@@ -113,7 +113,7 @@ options:
     default: the value of the archive option
   rsync_path:
     description:
-      - Specify the rsync command to run on the remote host. See C(--rsync-path) on the rsync man page.
+      - Specify the rsync command to run on the remote host. See C(--rsync-path) on the rsync man page. To specifcy the rsync command to run on the local host, you need to set this your task var ansible_rsync_path.
   rsync_timeout:
     description:
       - Specify a --timeout for the rsync command in seconds.
@@ -301,6 +301,19 @@ EXAMPLES = '''
     src: /tmp/path_a/foo.txt
     dest: /tmp/path_b/foo.txt
     link_dest: /tmp/path_a/
+    
+# Specify the rsync binary to use on remote host and on local host    
+- hosts: groupofhosts
+  vars:
+        ansible_rsync_path: "/usr/gnu/bin/rsync"
+
+  tasks:
+    - name: copy /tmp/localpath/ to remote location /tmp/remotepath
+      synchronize:
+        src: "/tmp/localpath/"
+        dest: "/tmp/remotepath"
+        rsync_path: "/usr/gnu/bin/rsync"
+
 '''
 
 
