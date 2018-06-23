@@ -151,7 +151,7 @@ class Cliconf(CliconfBase):
             candidate_commands = ['set %s' % cmd.replace(' {', '') for cmd in commands]
 
         else:
-            candidate_commands = str(candidate).split('\n')
+            candidate_commands = str(candidate).strip().split('\n')
 
         if match == 'none':
             diff['config_diff'] = list(candidate_commands)
