@@ -261,6 +261,9 @@ class MerakiModule(object):
 
         if self.status >= 500:
             self.fail_json(msg='Request failed for {url}: {status} - {msg}'.format(**info))
+        elif self.status >= 300:
+            self.fail_json(msg='Request failed for {url}: {status} - {msg}'.format(**info),
+                           body=json.loads(to_native(info['body'])))            
         try:
             return json.loads(to_native(resp.read()))
         except:
