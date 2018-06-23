@@ -208,10 +208,10 @@ class MerakiModule(object):
         self.nets = self.request(path, method='GET')
         return self.nets
 
-    def get_net(self, org_name, net_name, data=None):
-        path = self.construct_path('get_all', function='network', org_id=org_id)
-        r = self.request(path, method='GET')
-        return r
+    # def get_net(self, org_name, net_name, data=None):
+    #     path = self.construct_path('get_all', function='network', org_id=org_id)
+    #     r = self.request(path, method='GET')
+    #     return r
 
     def get_net(self, org_name, net_name, org_id=None, data=None):
         ''' Return network information '''
