@@ -9,6 +9,7 @@ This section is new and evolving.  The idea here is to explore particular use ca
    guide_aci
    guide_aws
    guide_azure
+   guide_meraki
    guide_rax
    guide_gce
    guide_cloudstack

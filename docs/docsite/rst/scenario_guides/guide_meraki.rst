@@ -31,7 +31,7 @@ Using the Meraki modules
 
 Meraki modules provide a user-friendly interface to manage your Meraki environment using Ansible. For example, details about SNMP settings for a particular organization can be discovered using the module `meraki_snmp <meraki_snmp_module>`.
 
-.. code_block:: yaml
+.. code-block:: yaml
 
 	- name: Query SNMP settings
 	  meraki_snmp:
@@ -42,7 +42,7 @@ Meraki modules provide a user-friendly interface to manage your Meraki environme
 
 Information about a particular object can be queried. For example, the `meraki_admin <meraki_admin_module>` module supports
 
-.. code_block:: yaml
+.. code-block:: yaml
 
 	- name: Gather information about Jane Doe
 	  meraki_admin:
@@ -73,3 +73,5 @@ Meraki Authentication
 .....................
 
 All API access with the Meraki Dashboard requires an API key. An API key can be generated from the organization's settings page. Each play in a playbook requires the ``api_key`` parameter to be specified.
+
+The "Vault" feature of Ansible allows you to keep sensitive data such as passwords or keys in encrypted files, rather than as plain text in your playbooks or roles. These vault files can then be distributed or placed in source control. See :ref:`playbooks_vault` for more information.
