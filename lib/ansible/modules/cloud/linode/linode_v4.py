@@ -135,16 +135,16 @@ def delete_linode(module, instance_id, label, token):
     delete a linode instance
     """
     delete_response = requests.delete(
-        "https://api.linode.com/v4/linode/instances/{}".format(instance_id),
+        "https://api.linode.com/v4/linode/instances/{0}".format(instance_id),
         headers={
             "Content-Type": "application/json",
-            "Authorization": "Bearer {}".format(token),
+            "Authorization": "Bearer {0}".format(token),
         },
         data=json.dumps({"linodeId": instance_id}),
     )
     if not delete_response:
         module.fail_json(
-            msg="issue deleting linode: {} with id: {}".format(label, instance_id)
+            msg="issue deleting linode: {0} with id: {1}".format(label, instance_id)
         )
     return delete_response.json()
 
@@ -157,12 +157,12 @@ def list_linode(module, token):
         "https://api.linode.com/v4/linode/instances",
         headers={
             "Content-Type": "application/json",
-            "Authorization": "Bearer {}".format(token),
+            "Authorization": "Bearer {0}".format(token),
         },
         data=json.dumps({"page_size": 100}),
     )
     if not list_response:
-        module.fail_json(msg="issue creating linode: {}".format(list_response.json()))
+        module.fail_json(msg="issue creating linode: {0}".format(list_response.json()))
     return list_response.json()
 
 
@@ -187,7 +187,7 @@ def create_linode(module, root_pass, token):
         "https://api.linode.com/v4/linode/instances",
         headers={
             "Content-Type": "application/json",
-            "Authorization": "Bearer {}".format(token),
+            "Authorization": "Bearer {0}".format(token),
         },
         data=json.dumps(
             {
@@ -201,7 +201,7 @@ def create_linode(module, root_pass, token):
         ),
     )
     if not create_response:
-        module.fail_json(msg="issue creating linode: {}".format(create_response.json()))
+        module.fail_json(msg="issue creating linode: {0}".format(create_response.json()))
     return create_response.json()
 
 
@@ -210,10 +210,10 @@ def rebuild_linode(module, root_pass, instance_id, token):
     rebuild an instance to the specified parameters, should boot on its own
     """
     rebuild_response = requests.post(
-        "https://api.linode.com/v4/linode/instances/{}/rebuild".format(instance_id),
+        "https://api.linode.com/v4/linode/instances/{0}/rebuild".format(instance_id),
         headers={
             "Content-Type": "application/json",
-            "Authorization": "Bearer {}".format(token),
+            "Authorization": "Bearer {0}".format(token),
         },
         data=json.dumps(
             {
@@ -225,7 +225,7 @@ def rebuild_linode(module, root_pass, instance_id, token):
     )
     if not rebuild_response:
         module.fail_json(
-            msg="issue rebuilding linode: {}".format(rebuild_response.json())
+            msg="issue rebuilding linode: {0}".format(rebuild_response.json())
         )
 
     return rebuild_response.json()
@@ -236,27 +236,27 @@ def resize_linode(module, instance_id, token, ignore_error=False):
     resizes an instance to the specified format and then boots it
     """
     resize_response = requests.post(
-        "https://api.linode.com/v4/linode/instances/{}/resize".format(instance_id),
+        "https://api.linode.com/v4/linode/instances/{0}/resize".format(instance_id),
         headers={
             "Content-Type": "application/json",
-            "Authorization": "Bearer {}".format(token),
+            "Authorization": "Bearer {0}".format(token),
         },
         data=json.dumps({"type": module.params["type"]}),
     )
     # exit early if we are supposed to ignore errors
     if not resize_response:
-        module.fail_json(msg="issue resizing linode: {}".format(resize_response.json()))
+        module.fail_json(msg="issue resizing linode: {0}".format(resize_response.json()))
 
     boot_response = requests.post(
-        "https://api.linode.com/v4/linode/instances/{}/boot".format(instance_id),
+        "https://api.linode.com/v4/linode/instances/{0}/boot".format(instance_id),
         headers={
             "Content-Type": "application/json",
-            "Authorization": "Bearer {}".format(token),
+            "Authorization": "Bearer {0}".format(token),
         },
     )
     if not boot_response:
         module.fail_json(
-            msg="issue booting linode after resize: {}".format(boot_response.json())
+            msg="issue booting linode after resize: {0}".format(boot_response.json())
         )
 
     return boot_response.json()
