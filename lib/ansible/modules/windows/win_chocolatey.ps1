@@ -36,6 +36,7 @@ $proxy_password = Get-AnsibleParam -obj $params -name "proxy_password" -type "st
 
 $result = @{
     changed = $false 
+    rc = 0
 }
 
 Function Chocolatey-Install-Upgrade
