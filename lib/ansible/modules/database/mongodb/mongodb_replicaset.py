@@ -80,12 +80,18 @@ options:
         required: false
         default: None
     chainingAllowed:
-        description: When settings.chainingAllowed is true, the replica set allows secondary members to replicate from other secondary members. When settings.chainingAllowed is false, secondaries can replicate only from the primary.
+        description: >
+            When settings.chainingAllowed is true, the replica set allows secondary members to replicate from other
+            secondary members. When settings.chainingAllowed is false, secondaries can replicate only from the primary.
         default: true
         required: false
         type: bool
     heartbeatTimeoutSecs:
-        description: Number of seconds that the replica set members wait for a successful heartbeat from each other. If a member does not respond in time, other members mark the delinquent member as inaccessible. The setting only applies when using protocolVersion 0. When using protocolVersion 1 the relevant setting is settings.electionTimeoutMillis.
+        description: >
+            Number of seconds that the replica set members wait for a successful heartbeat from each other.
+            If a member does not respond in time, other members mark the delinquent member as inaccessible.
+            The setting only applies when using protocolVersion 0. When using protocolVersion 1 the relevant
+            setting is settings.electionTimeoutMillis.
         default: 10
         required: false
     electionTimeoutMillis:
