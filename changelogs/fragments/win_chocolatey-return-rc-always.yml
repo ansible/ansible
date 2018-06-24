@@ -1,0 +1,2 @@
+minor_changes:
+- win_chocolatey - set the rc return value to always be returned, default to 0 https://github.com/ansible/ansible/issues/41758
