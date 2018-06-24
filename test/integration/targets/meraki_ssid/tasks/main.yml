@@ -1,0 +1,207 @@
+# Test code for the Meraki SSID module
+# Copyright: (c) 2018, Kevin Breit (@kbreit)
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+# - name: Test an API key is provided
+#   fail:
+#     msg: Please define an API key
+#   when: auth_key is not defined
+  
+# - name: Use an invalid domain
+#   meraki_organization:
+#     auth_key: '{{ auth_key }}'
+#     host: marrrraki.com
+#     state: present
+#     org_name: IntTestOrg
+#     output_level: debug
+#   delegate_to: localhost
+#   register: invalid_domain
+#   ignore_errors: yes
+  
+# - name: Disable HTTP
+#   meraki_organization:
+#     auth_key: '{{ auth_key }}'
+#     use_https: false
+#     state: query
+#     output_level: debug
+#   delegate_to: localhost
+#   register: http
+#   ignore_errors: yes
+
+# - name: Connection assertions
+#   assert:
+#     that:
+#       - '"Failed to connect to" in invalid_domain.msg'
+#       - '"http" in http.url'
+
+# - name: Create test network
+#   meraki_network:
+#     auth_key: '{{auth_key}}'
+#     state: present
+#     org_name: '{{test_org_name}}'
+#     net_name: TestNetSSID
+#     type: wireless
+#   register: test_net
+
+# - debug: 
+#     msg: '{{test_net}}'
+
+# - name: Query all SSIDs
+#   meraki_ssid:
+#     auth_key: '{{auth_key}}'
+#     state: query
+#     org_name: '{{test_org_name}}'
+#     net_name: TestNetSSID
+#   delegate_to: localhost
+#   register: query_all
+
+# - debug:
+#     msg: '{{query_all}}'
+
+# - name: Enable and name SSID
+#   meraki_ssid:
+#     auth_key: '{{auth_key}}'
+#     state: present
+#     org_name: '{{test_org_name}}'
+#     net_name: TestNetSSID
+#     name: AnsibleSSID
+#     enabled: true
+#   delegate_to: localhost
+#   register: enable_name_ssid
+
+# - debug:
+#     msg: '{{ enable_name_ssid }}'
+
+# - name: Disable SSID without specifying number
+#   meraki_ssid:
+#     auth_key: '{{auth_key}}'
+#     state: present
+#     org_name: '{{test_org_name}}'
+#     net_name: TestNetSSID
+#     name: AnsibleSSID
+#     enabled: false
+#   delegate_to: localhost
+#   register: disable_ssid
+
+# - debug:
+#     msg: '{{ disable_ssid }}'
+
+# - name: Enable SSID with number
+#   meraki_ssid:
+#     auth_key: '{{auth_key}}'
+#     state: present
+#     org_name: '{{test_org_name}}'
+#     net_name: TestNetSSID
+#     number: 2
+#     enabled: true
+#   delegate_to: localhost
+#   register: énable_ssid_number
+
+# - debug:
+#     msg: '{{ énable_ssid_number }}'
+
+# - name: Set PSK with wrong mode
+#   meraki_ssid:
+#     auth_key: '{{auth_key}}'
+#     state: present
+#     org_name: '{{test_org_name}}'
+#     net_name: TestNetSSID
+#     name: AnsibleSSID
+#     auth_mode: open
+#     psk: abc1234
+#   delegate_to: localhost
+#   register: psk_invalid
+#   ignore_errors: yes
+
+# - debug:
+#     msg: '{{ psk_invalid }}'
+
+# - name: Set PSK with invalid encryption mode
+#   meraki_ssid:
+#     auth_key: '{{auth_key}}'
+#     state: present
+#     org_name: '{{test_org_name}}'
+#     net_name: TestNetSSID
+#     name: AnsibleSSID
+#     auth_mode: psk
+#     psk: abc1234
+#     encryption_mode: eap
+#   delegate_to: localhost
+#   register: psk_invalid_mode
+#   ignore_errors: yes
+
+# - debug:
+#     msg: '{{ psk_invalid_mode }}'
+
+# - name: Set PSK
+#   meraki_ssid:
+#     auth_key: '{{auth_key}}'
+#     state: present
+#     org_name: '{{test_org_name}}'
+#     net_name: TestNetSSID
+#     name: AnsibleSSID
+#     auth_mode: psk
+#     psk: abc1234
+#     encryption_mode: wpa
+#   delegate_to: localhost
+#   register: psk
+
+# - debug:
+#     msg: '{{ psk }}'
+
+# - name: Enable click-through splash page
+#   meraki_ssid:
+#     auth_key: '{{auth_key}}'
+#     state: present
+#     org_name: '{{test_org_name}}'
+#     net_name: TestNetSSID
+#     name: AnsibleSSID
+#     splash_page: Click-through splash page
+#   delegate_to: localhost
+#   register: splash_click
+
+# - debug:
+#     msg: '{{ splash_click }}'
+
+# - name: Configure RADIUS servers
+#   meraki_ssid:
+#     auth_key: '{{auth_key}}'
+#     state: present
+#     org_name: '{{test_org_name}}'
+#     net_name: TestNetSSID
+#     name: AnsibleSSID
+#     auth_mode: open-with-radius
+#     radius_servers:
+#       - host: 192.0.1.200
+#         port: 1234
+#         secret: abc98765
+#   delegate_to: localhost
+#   register: splash_click
+
+# - debug:
+#     msg: '{{ splash_click }}'
+
+- name: Delete SSID
+  meraki_ssid:
+    auth_key: '{{auth_key}}'
+    state: absent
+    org_name: '{{test_org_name}}'
+    net_name: TestNetSSID
+    name: AnsibleSSID
+  delegate_to: localhost
+  register: delete_ssid
+
+- debug:
+    msg: '{{ delete_ssid }}'
+
+- name: Delete test network
+  meraki_network:
+    auth_key: '{{auth_key}}'
+    state: absent
+    org_name: '{{test_org_name}}'
+    net_name: TestNetSSID
+  register: delete_net
+
+- debug: 
+    msg: '{{delete_net}}'
