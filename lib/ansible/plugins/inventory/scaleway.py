@@ -91,7 +91,6 @@ class InventoryModule(BaseInventoryPlugin):
             "organization",
             "state",
             "hostname",
-            "state"
         )
         for attribute in targeted_attributes:
             self.inventory.set_variable(server_id, attribute, server_info[attribute])
