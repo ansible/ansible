@@ -97,7 +97,8 @@ class InventoryModule(BaseInventoryPlugin):
             self.inventory.set_variable(server_id, attribute, server_info[attribute])
 
         self.inventory.set_variable(server_id, "tags", server_info["tags"])
-        self.inventory.set_variable(server_id, "ipv4", server_info["public_ip"]["address"])
+        if server_info.get("public_ip") and server_info["public_ip"].get("address"):
+            self.inventory.set_variable(server_id, "ipv4", server_info["public_ip"]["address"])
 
     def _get_zones(self, config_zones):
         return set(SCALEWAY_LOCATION.keys()).intersection(config_zones)
