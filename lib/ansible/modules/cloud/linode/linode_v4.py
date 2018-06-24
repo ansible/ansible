@@ -1,12 +1,8 @@
 #!/usr/bin/python
-import json
-import os
-import random
-import string
-import time
-
-from ansible.module_utils.basic import AnsibleModule
-import requests
+# -*- coding: utf-8 -*-
+#
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/license  s/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {
     "metadata_version": "1.1",
@@ -101,33 +97,24 @@ EXAMPLES = """
 
 - debug:
     msg: "{{ delete_response }}"
-
-- name: create an instance to be rebuilt and resized
-  linode_v4:
-    type: g6-nanode-1
-    region: us-east
-    image: "linode/centos7"
-    state: absent
-    label: ansible-managed-testbox
-  register: delete_response
-
-
-- name: rebuild the instance as a deb9 image and resize it to a 2g instance
-  linode_v4:
-    type: g6-standard-1
-    region: us-east
-    image: "linode/debian9"
-    state: absent
-    label: ansible-managed-testbox
-  register: delete_response
 """
 
 RETURN = """
 data:
     description: the response from the linode api on creation and removal. More information
-    can be found here: https://developers.linode.com/api/v4#operation/createLinodeInstance.
-    When resized or rebuilt, no data will be output.
+    can be found here: https://developers.linode.com/api/v4#operation/createLinodeInstance
 """
+
+import json
+import os
+import random
+import string
+import time
+
+from __future__ import absolute_import, division, print_function
+
+from ansible.module_utils.basic import AnsibleModule
+import requests
 
 
 def delete_linode(module, instance_id, label, token):
@@ -201,7 +188,9 @@ def create_linode(module, root_pass, token):
         ),
     )
     if not create_response:
-        module.fail_json(msg="issue creating linode: {0}".format(create_response.json()))
+        module.fail_json(
+            msg="issue creating linode: {0}".format(create_response.json())
+        )
     return create_response.json()
 
 
@@ -245,7 +234,9 @@ def resize_linode(module, instance_id, token, ignore_error=False):
     )
     # exit early if we are supposed to ignore errors
     if not resize_response:
-        module.fail_json(msg="issue resizing linode: {0}".format(resize_response.json()))
+        module.fail_json(
+            msg="issue resizing linode: {0}".format(resize_response.json())
+        )
 
     boot_response = requests.post(
         "https://api.linode.com/v4/linode/instances/{0}/boot".format(instance_id),
