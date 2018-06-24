@@ -34,6 +34,7 @@ Engine Improvements
 - Provide sane connection defaults by platform `ansible_platform`.
 - Refactor connection/shell/action/terminal/become plugins to allow looser coupling and more mix-and-match behaviour.
 - Investigate performance improvements in using threads as opposed to forks.
+- Jinja native types will allow for users to render a Python native type. `_pr#32738<https://github.com/ansible/ansible/pull/32738>`_
 
 
 Core Modules
