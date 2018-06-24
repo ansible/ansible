@@ -4,6 +4,8 @@
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/license  s/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+
 ANSIBLE_METADATA = {
     "metadata_version": "1.1",
     "status": ["preview"],
@@ -110,8 +112,6 @@ import os
 import random
 import string
 import time
-
-from __future__ import absolute_import, division, print_function
 
 from ansible.module_utils.basic import AnsibleModule
 import requests
