@@ -101,7 +101,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         logging of any commands based on the `nolog` argument.
 
         :param command: The command to send over the connection to the device
-        :param prompt: A regex pattern to evalue the expected prompt from the command
+        :param prompt: A single regex pattern or a sequence of patterns to evaluate the expected prompt from the command
         :param answer: The answer to respond with if the prompt is matched.
         :param sendonly: Bool value that will send the command but not wait for a result.
         :param newline: Bool value that will append the newline character to the command
@@ -117,7 +117,10 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         }
 
         if prompt is not None:
-            kwargs['prompt'] = to_bytes(prompt)
+            if isinstance(prompt, list):
+                kwargs['prompt'] = [to_bytes(p) for p in prompt]
+            else:
+                kwargs['prompt'] = to_bytes(prompt)
         if answer is not None:
             kwargs['answer'] = to_bytes(answer)
 
