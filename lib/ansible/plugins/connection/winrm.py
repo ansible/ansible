@@ -294,7 +294,7 @@ class Connection(ConnectionBase):
                          % principal)
             try:
                 child = pexpect.spawn(command, kinit_cmdline, timeout=60,
-                                      env=krb5env)
+                                      env=krb5env, echo=False)
             except pexpect.ExceptionPexpect as err:
                 err_msg = "Kerberos auth failure when calling kinit cmd " \
                           "'%s': %s" % (command, to_native(err))
@@ -328,8 +328,12 @@ class Connection(ConnectionBase):
                                      env=krb5env)
 
             except OSError as err:
+                # one last attempt at making sure the password does not exist
+                # in the output
+                exp_msg = to_native(err)
+                exp_msg.replace(to_native(password), "<redacted>")
                 err_msg = "Kerberos auth failure when calling kinit cmd " \
-                          "'%s': %s" % (self._kinit_cmd, to_native(err))
+                          "'%s': %s" % (self._kinit_cmd, exp_msg)
                 raise AnsibleConnectionFailure(err_msg)
 
             stdout, stderr = p.communicate(password + b'\n')
