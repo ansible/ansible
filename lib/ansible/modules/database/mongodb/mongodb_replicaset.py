@@ -3,11 +3,6 @@
 # (c) 2018, Rhys Campbell <rhys.james.campbell@googlemail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
-from copy import deepcopy
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -27,12 +22,10 @@ options:
         description:
             - The username used to authenticate with
         required: false
-        default: localhost
     login_password:
         description:
             - The password used to authenticate with
         required: false
-        default: null
     login_database:
         description:
             - The database where login credentials are stored
@@ -68,7 +61,7 @@ options:
         description:
             - Whether to use an SSL connection when connecting to the database
         default: False
-        type: boolx
+        type: bool
     ssl_cert_reqs:
         description:
             - Specifies whether a certificate is required from the other side of the connection, and whether it will be validated if provided.
@@ -78,7 +71,6 @@ options:
     arbiter_at_index:
         description: Identifies the position of the member in the array that is an arbiter.
         required: false
-        default: None
     chainingAllowed:
         description: >
             When settings.chainingAllowed is true, the replica set allows secondary members to replicate from other
@@ -150,6 +142,10 @@ mongodb_replicaset:
     returned: success
     type: string
 '''
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+from copy import deepcopy
 
 import os
 import ssl as ssl_lib
@@ -298,7 +294,7 @@ def main():
             login_database=dict(default="admin"),
             login_host=dict(default="localhost"),
             login_port=dict(default=27017),
-            replica_set=dict(default=None),
+            replica_set=dict(default="rs0"),
             members=dict(required=False, default=None),
             arbiter_at_index=dict(required=False, default=None, type='int'),
             validate=dict(required=False, default=True, type='bool'),

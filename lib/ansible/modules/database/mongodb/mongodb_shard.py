@@ -3,10 +3,6 @@
 # (c) 2018, Rhys Campbell <rhys.james.campbell@googlemail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -24,12 +20,10 @@ options:
         description:
             - The user to login with
         required: false
-        default: null
     login_password:
         description:
             - The password used to authenticate with
         required: false
-        default: null
     login_database:
         description:
             - The database where login credentials are stored
@@ -69,6 +63,7 @@ options:
             - Whether the shard should be present or absent from the Cluster
         required: false
         default: present
+        choices: ["present", "absent"]
 
 notes:
     - Requires the pymongo Python package on the remote host, version 2.4.2+. This
@@ -121,6 +116,8 @@ mongodb_shard:
     returned: success
     type: string
 '''
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 import os
 import ssl as ssl_lib
