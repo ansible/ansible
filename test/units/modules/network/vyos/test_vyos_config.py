@@ -49,7 +49,6 @@ class TestVyosConfigModule(TestVyosModule):
         self.cliconf_obj = Cliconf(MagicMock())
         self.running_config = load_fixture('vyos_config_config.cfg')
 
-
         self.conn = self.get_connection()
         self.conn.edit_config = MagicMock()
         self.running_config = load_fixture('vyos_config_config.cfg')
