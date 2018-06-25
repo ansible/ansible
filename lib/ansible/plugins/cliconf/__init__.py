@@ -209,8 +209,8 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         :return: Returns a json string with contains configuration applied on remote host, the returned
                  response on executing configuration commands and platform relevant data.
                {
-                   'diff': '',
-                   'response': ''
+                   "diff": "",
+                   "response": []
                }
 
         """
