@@ -38,10 +38,10 @@ options:
         default: 'present'
 
     purge_roles:
-        descriptions:
+        description:
             - Sets whether the scope mapping defined in this module is exclusive. If set to C(True),
               removes all roles not explicitly listed from the scope.
-        type: boolean
+        type: bool
         default: False
 
     target:
