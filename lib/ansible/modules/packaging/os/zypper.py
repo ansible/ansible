@@ -488,7 +488,7 @@ def main():
     update_cache = module.params['update_cache']
 
     # remove empty strings from package list
-    name = filter(None, name)
+    name = list(filter(None, name))
 
     # Refresh repositories
     if update_cache and not module.check_mode:
