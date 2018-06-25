@@ -55,7 +55,7 @@ options:
       - Execute the dump as an empty schema (with no data)
     type: bool
     default: 'no'
-    version_added: "TBD"    
+    version_added: "2.7"
   quick:
     description:
       - Option used for dumping large tables
