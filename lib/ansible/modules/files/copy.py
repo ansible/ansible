@@ -278,43 +278,48 @@ def adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list,
     return changed
 
 
-def copy_diff_files(src, dest):
+def copy_diff_files(src, dest, module):
     changed = False
     diff_files = filecmp.dircmp(src, dest).diff_files
-    for item in diff_files:
-        src_item_path = os.path.join(src, item)
-        dest_item_path = os.path.join(dest, item)
-        shutil.copyfile(src_item_path, dest_item_path)
+    if len(diff_files):
         changed = True
+    if not module.check_mode:
+        for item in diff_files:
+            src_item_path = os.path.join(src, item)
+            dest_item_path = os.path.join(dest, item)
+            shutil.copyfile(src_item_path, dest_item_path)
+            changed = True
     return changed
 
 
-def copy_left_only(src, dest):
+def copy_left_only(src, dest, module):
     changed = False
     left_only = filecmp.dircmp(src, dest).left_only
-    for item in left_only:
-        src_item_path = os.path.join(src, item)
-        dest_item_path = os.path.join(dest, item)
-        if os.path.isfile(src_item_path):
-            shutil.copyfile(src_item_path, dest_item_path)
-        if os.path.isdir(src_item_path):
-            shutil.copytree(src_item_path, dest_item_path)
+    if len(left_only):
         changed = True
+    if not module.check_mode:
+        for item in left_only:
+            src_item_path = os.path.join(src, item)
+            dest_item_path = os.path.join(dest, item)
+            if os.path.isfile(src_item_path):
+                shutil.copyfile(src_item_path, dest_item_path)
+            if os.path.isdir(src_item_path):
+                shutil.copytree(src_item_path, dest_item_path)
+            changed = True
     return changed
 
 
-def copy_common_dirs(src, dest):
+def copy_common_dirs(src, dest, module):
     changed = False
     common_dirs = filecmp.dircmp(src, dest).common_dirs
     for item in common_dirs:
         src_item_path = os.path.join(src, item)
         dest_item_path = os.path.join(dest, item)
-        diff_files_changed = copy_diff_files(src_item_path, dest_item_path)
-        left_only_changed = copy_left_only(src_item_path, dest_item_path)
+        diff_files_changed = copy_diff_files(src_item_path, dest_item_path, module)
+        left_only_changed = copy_left_only(src_item_path, dest_item_path, module)
         if diff_files_changed or left_only_changed:
             changed = True
     return changed
-
 
 def main():
 
@@ -488,12 +493,13 @@ def main():
     else:
         changed = False
 
+
     if checksum_src is None and checksum_dest is None:
         if remote_src and os.path.isdir(b_src):
             if os.path.isdir(dest):
-                diff_files_changed = copy_diff_files(b_src, dest)
-                left_only_changed = copy_left_only(b_src, dest)
-                common_dirs_changed = copy_common_dirs(b_src, dest)
+                diff_files_changed = copy_diff_files(b_src, dest, module)
+                left_only_changed = copy_left_only(b_src, dest, module)
+                common_dirs_changed = copy_common_dirs(b_src, dest, module)
                 if diff_files_changed or left_only_changed or common_dirs_changed:
                     changed = True
 
