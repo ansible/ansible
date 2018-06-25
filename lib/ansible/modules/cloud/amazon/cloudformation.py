@@ -715,7 +715,8 @@ def main():
                     cfn.delete_stack(StackName=stack_params['StackName'])
                 else:
                     cfn.delete_stack(StackName=stack_params['StackName'], RoleARN=stack_params['RoleARN'])
-                result = stack_operation(cfn, stack_params['StackName'], 'DELETE', module.params.get('events_limit'), stack_params.get('ClientRequestToken', None))
+                result = stack_operation(cfn, stack_params['StackName'], 'DELETE', module.params.get('events_limit'),
+                                         stack_params.get('ClientRequestToken', None))
         except Exception as err:
             module.fail_json(msg=boto_exception(err), exception=traceback.format_exc())
 
