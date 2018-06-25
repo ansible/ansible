@@ -222,12 +222,12 @@ import os
 import re
 import sys
 import tempfile
-from distutils.versionpredicate import VersionPredicate
+from pkg_resources import Requirement, RequirementParseError
 
 from ansible.module_utils.basic import AnsibleModule, is_executable
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import PY3
-from ansible.module_utils.common.collections import is_sequence
+from ansible.module_utils.common.collections import is_string
 
 
 #: Python one-liners to be run at the command line that will determine the
@@ -237,19 +237,59 @@ _SPECIAL_PACKAGE_CHECKERS = {'setuptools': 'import setuptools; print(setuptools.
                              'pip': 'import pkg_resources; print(pkg_resources.get_distribution("pip").version)'}
 
 
-def _parse_name_str(name):
-    tmp = re.split("==|!=|>|<|>=|<=", name.strip())
-    pkg_name = tmp[0]
-    if len(tmp) > 1:
-        formula = name.replace(pkg_name, "")
-        return pkg_name.strip(), formula.strip()
-    return pkg_name.strip(), None
+class Package(Requirement):
+    def __init__(self, name_string, version_string=None):
+        if version_string is not None:
+            if version_string[0].isdigit():
+                name_string = "%s ==%s" % (name_string, version_string)
+            else:
+                name_string = "%s %s" % (name_string, version_string)
+        super(Package, self).__init__(name_string)
+
+    def have_version_specifier(self):
+        if len(self.specs) == 0:
+            return False
+        return True
+
+    def get_name(self):
+        return self.name.lower()
+
+    def satisfied_by(self, version_to_test):
+        return self.specifier.contains(version_to_test)
+
+    def install_command(self):
+        return str(self)
 
 
-def _version_number_to_formula(version):
-    if version[0].isdigit():
-        return "==%s" % version
-    return version
+def _is_valid_pkg_name(name):
+    try:
+        Requirement(name)
+        return True
+    except RequirementParseError:
+        return False
+
+
+def _fetch_one_pkg(name):
+    stack = list()
+    for ele in name:
+        if _is_valid_pkg_name(ele):
+            if len(stack) > 0:
+                yield ",".join(stack)
+            stack = [ele]
+        else:
+            stack.append(ele)
+    yield ",".join(stack)
+
+
+def _parses_name_input(module, name):
+    """Parse name list to package list."""
+    package_list = list()
+    try:
+        for package_name in _fetch_one_pkg(name):
+            package_list.append(Package(package_name))
+    except RequirementParseError as e:
+        module.fail_json(msg=str(e))
+    return package_list
 
 
 def _get_cmd_options(module, cmd):
@@ -261,14 +301,6 @@ def _get_cmd_options(module, cmd):
     words = stdout.strip().split()
     cmd_options = [x for x in words if x.startswith('--')]
     return cmd_options
-
-
-def _get_full_name(name, version=None):
-    if version is None or version == "":
-        resp = name
-    else:
-        resp = "\"%s %s\"" % (name, _version_number_to_formula(version))
-    return resp
 
 
 def _get_packages(module, pip, chdir):
@@ -288,20 +320,15 @@ def _get_packages(module, pip, chdir):
     return (command, out, err)
 
 
-def _is_present(module, name, version, installed_pkgs, pkg_command):
+def _is_present(module, req, installed_pkgs, pkg_command):
     '''Return whether or not package is installed.'''
-    if version is not None and version != "":
-        try:
-            vp = VersionPredicate("%s (%s)" % (name, _version_number_to_formula(version)))
-        except ValueError:
-            module.fail_json(msg="Can parse invalid version number %s" % version)
     for pkg in installed_pkgs:
         if '==' in pkg:
             pkg_name, pkg_version = pkg.split('==')
         else:
             continue
 
-        if (pkg_name.lower() == name.lower()) and (version is None or vp.satisfied_by(pkg_version)):
+        if (pkg_name.lower() == req.get_name()) and (req.satisfied_by(pkg_version)):
             return True
 
     return False
@@ -511,7 +538,7 @@ def main():
         pip = _get_pip(module, env, module.params['executable'])
 
         cmd = '%s %s' % (pip, state_map[state])
-
+        packages = list()
         # If there's a virtualenv we want things we install to be able to use other
         # installations that exist as binaries within this virtualenv. Example: we
         # install cython and then gevent -- gevent needs to use the cython binary,
@@ -525,20 +552,23 @@ def main():
         # Automatically apply -e option to extra_args when source is a VCS url. VCS
         # includes those beginning with svn+, git+, hg+ or bzr+
         has_vcs = False
+
         if name:
             for pkg in name:
                 if bool(pkg and re.match(r'(svn|git|hg|bzr)\+', pkg)):
                     has_vcs = True
                     break
 
-        # check invalid combination of arguments
-        if version is not None:
-            if is_sequence(name, include_strings=False) and len(name) > 1:
-                module.fail_json(msg="Version arg is not available for installing multi-packages.")
-            else:
-                pkg_name, version_formula = _parse_name_str(name[0])
-                if version_formula is not None:
-                    module.fail_json(msg="Version arg is not available if version info is provided in name.")
+            packages = _parses_name_input(module, name)
+            # check invalid combination of arguments
+            if version is not None:
+                if len(packages) > 1:
+                    module.fail_json(msg="Version arg is not available for installing multi-packages.")
+                else:
+                    if packages[0].have_version_specifier():
+                        module.fail_json(msg="Version arg is not available if version info is provided in name.")
+                    else:
+                        packages[0] = Package(packages[0].get_name(), version)
 
         if module.params['editable']:
             args_list = []  # used if extra_args is not used at all
@@ -553,12 +583,8 @@ def main():
             cmd += ' %s' % extra_args
 
         if name:
-            for pkg in name:
-                pkg_name, version_formula = _parse_name_str(pkg)
-                if version_formula is not None:
-                    version = version_formula
-                    pkg = pkg_name
-                cmd += ' %s' % _get_full_name(pkg, version)
+            for pkg in packages:
+                cmd += ' \"%s\"' % pkg.install_command()
         elif requirements:
             cmd += ' -r %s' % requirements
         else:
@@ -591,12 +617,8 @@ def main():
                                 pkg_list.append(formatted_dep)
                                 out += '%s\n' % formatted_dep
 
-                for pkg in name:
-                    pkg_name, version_formula = _parse_name_str(pkg)
-                    if version_formula is not None:
-                        version = version_formula
-                        pkg = pkg_name
-                    is_present = _is_present(module, pkg, version, pkg_list, pkg_cmd)
+                for req in packages:
+                    is_present = _is_present(module, req, pkg_list, pkg_cmd)
                     if (state == 'present' and not is_present) or (state == 'absent' and is_present):
                         changed = True
                         break
