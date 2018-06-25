@@ -117,7 +117,7 @@ options:
     description:
     - Maximum number of CloudFormation events to fetch from a stack when creating or updating it.
     default: 100
-    version_added: "2.6"
+    version_added: "2.7"
 
 author: "James S. Martin (@jsmartin)"
 extends_documentation_fragment:
