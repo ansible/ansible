@@ -300,3 +300,19 @@ releases:
     - reset_con_fix.yml
     - v2.6.0rc3_summary.yaml
     release_date: '2018-06-18'
+  2.6.0rc4:
+    codename: Heartbreaker
+    fragments:
+    - 41530-apt-mark-deb6.yaml
+    - debug_fixes.yml
+    - eos_vrf_failure-fix.yml
+    - file_touch_diff.yaml
+    - fix_config_required.yml
+    - fix_yaml_inv_nulls.yml
+    - missing_raise.yml
+    - v2.6.0rc4_summary.yaml
+    - vars_lk.yml
+    - virtualbox_inventory.yaml
+    - win_updates-async-fix.yml
+    - winrm_kinit-remove-pass-log.yml
+    release_date: '2018-06-25'
