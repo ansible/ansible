@@ -2,6 +2,35 @@
 Ansible 2.6 "Heartbreaker" Release Notes
 ========================================
 
+v2.6.0rc4
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2018-06-25
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`_
+
+
+Minor Changes
+-------------
+
+- Raise AnsibleParserError which was missing previously
+
+Bugfixes
+--------
+
+- Changed the output to "text" for "show vrf" command as default "json" output format with respect to "eapi" transport was failing (https://github.com/ansible/ansible/pull/41470)
+- added missing 'raise' to exception definition https://github.com/ansible/ansible/pull/41690
+- correct debug display for all cases https://github.com/ansible/ansible/pull/41331
+- correctly check hostvars for vars term https://github.com/ansible/ansible/pull/41819
+- correctly handle yaml inventory files when entries are null dicts https://github.com/ansible/ansible/issues/41692
+- file module - The touch subcommand had its diff output broken during the 2.6.x development cycle.  This is now fixed (https://github.com/ansible/ansible/issues/41755)
+- fix apt-mark on debian6 (https://github.com/ansible/ansible/pull/41530)
+- fixed config required handling, specifically for _terms in lookups https://github.com/ansible/ansible/pull/41740
+- win_updates - Fixed issue where running win_updates on async fails without any error
+- winrm - ensure pexpect is set to not echo the input on a failure and have a manual sanity check afterwards https://github.com/ansible/ansible/issues/41865
+
 v2.6.0rc3
 =========
 
