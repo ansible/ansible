@@ -116,7 +116,7 @@ options:
   events_limit:
     description:
     - Maximum number of CloudFormation events to fetch from a stack when creating or updating it.
-    default: 100
+    default: 200
     version_added: "2.7"
 
 author: "James S. Martin (@jsmartin)"
@@ -574,7 +574,7 @@ def main():
         role_arn=dict(default=None, required=False),
         tags=dict(default=None, type='dict'),
         termination_protection=dict(default=None, type='bool'),
-        events_limit=dict(default=100, type='int'),
+        events_limit=dict(default=200, type='int'),
     )
     )
 
