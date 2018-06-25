@@ -1013,7 +1013,7 @@ class ContainerManager(DockerBaseClass):
                 containers = service.containers(stopped=True)
                 if len(containers) != self.scale[service.name]:
                     result['changed'] = True
-                    service_res['scale'] = self.scale[service.name] - len(containers)
+                    service_res['scale'] = int(self.scale[service.name]) - len(containers)
                     if not self.check_mode:
                         try:
                             service.scale(int(self.scale[service.name]))
