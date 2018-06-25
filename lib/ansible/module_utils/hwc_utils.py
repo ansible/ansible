@@ -141,6 +141,12 @@ class HwcSession(object):
             url += "/"
         return url
 
+    def get_project_id(self):
+        try:
+            return self._credentials().get_project_id()
+        except getattr(requests.exceptions, 'RequestException') as inst:
+            self.module.fail_json(msg=inst.message)
+
     def _session(self):
         return _LegacyJsonAdapter(self._credentials())
 
