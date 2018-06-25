@@ -85,25 +85,27 @@ def check_role_representation(rep):
 
     if not isinstance(rep, dict):
         return False, 'Roles must be defined as dicts, "%s" is not one.' % rep
-    for k in rep.keys():
-        if k not in valid_role_params:
-            return False, 'Role specification invalid; "%s" is not one of %s' % (k, valid_role_params)
-        if k == 'composites':
-            if not isinstance(rep[k], dict):
-                return False, 'Role specification invalid, composites must be a dict, "%s" is not.' % rep[k]
-            for c in rep[k].keys():
-                if c not in ['client', 'realm']:
-                    return False, 'Role specification invalid, composites can only consist of realm and client role lists.'
-                if c == 'client':
-                    if not isinstance(rep[k]['composites'][c], dict):
-                        return False, 'Composite role specification invalid, client roles must be defined as a dict, "%s" is not one' % rep[k]['composites'][c]
-                    for v in rep[k]['composites'][c].values():
-                        if not isinstance(v, list):
-                            return False, 'Composite role specification invalid, client roles must be a list, "%s" is not one' % v
-                elif c == 'realm':
-                    if not isinstance(rep[k]['composites'][c], list):
-                        return False, 'Composite role specification invalid, relam roles must be a list, "%s" is not one' % rep[k]['composites'][c]
 
+    invalid_role_params = [k for k in rep.keys() if k not in valid_role_params]
+    if any(invalid_role_params):
+        return False, 'Role specification invalid; "%s" are not one of %s' % (invalid_role_params, valid_role_params)
+
+    if rep.get('composites'):
+        if not isinstance(rep['composites'], dict):
+            return False, 'Role specification invalid, composites must be a dict, "%s" is not.' % rep['composites']
+        invalid_composite_specs = [k for k in rep['composites'] if k not in ['client', 'realm']]
+        if any(invalid_composite_specs):
+            return False, 'Role specification invalid, composites can only consist of realm and client role lists.'
+        for c in rep['composites'].keys():
+            if c == 'client':
+                if not isinstance(rep['composites'][c], dict):
+                    return False, 'Composite role specification invalid, client roles must be defined as a dict, "%s" is not one' % rep['composites'][c]
+                for v in rep['composites'][c].values():
+                    if not isinstance(v, list):
+                        return False, 'Composite role specification invalid, client roles must be a list, "%s" is not one' % v
+            elif c == 'realm':
+                if not isinstance(rep['composites'][c], list):
+                    return False, 'Composite role specification invalid, relam roles must be a list, "%s" is not one' % rep['composites'][c]
     return True, ''
 
 

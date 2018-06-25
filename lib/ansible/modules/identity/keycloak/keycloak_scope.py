@@ -34,10 +34,15 @@ options:
             - State of the scope mapping.
             - On C(present), the scope mapping will be created or updated/extended.
             - On C(absent), the scope mapping will be removed if it exists.
-            - On C(exclusive), the scope mapping is exclusive and removes all roles not explicitly
-              listed from scope
-        choices: ['present', 'absent', 'exclusive']
+        choices: ['present', 'absent']
         default: 'present'
+
+    purge_roles:
+        descriptions:
+            - Sets whether the scope mapping defined in this module is exclusive. If set to C(True),
+              removes all roles not explicitly listed from the scope.
+        type: boolean
+        default: False
 
     target:
         description:
@@ -201,7 +206,8 @@ EXAMPLES = '''
     auth_username: USERNAME
     auth_password: PASSWORD
     realm: testrealm
-    state: exclusive
+    state: present
+    purge_roles: True
     type: client
     client_id: testclient01
     clientroles:
@@ -298,15 +304,16 @@ def main():
     argument_spec = keycloak_argument_spec()
 
     meta_args = dict(
-        realm=dict(type='str'),
+        realm=dict(),
         target=dict(default='client', choices=['client', 'client-template']),
-        id=dict(type='str'),
-        name=dict(type='str'),
-        client_id=dict(type='str'),
-        state=dict(default='present', choices=['present', 'absent', 'exclusive']),
+        id=dict(),
+        name=dict(),
+        client_id=dict(),
+        state=dict(default='present', choices=['present', 'absent']),
         type=dict(default='realm', choices=['realm', 'client']),
         roles=dict(type='list', elements='dict', default=list()),
         clientroles=dict(type='dict', default=dict()),
+        purge_roles=dict(type='bool', default=False)
     )
     argument_spec.update(meta_args)
 
@@ -328,11 +335,13 @@ def main():
     roletype = module.params.get('type')
     roles = module.params.get('roles')
     clientroles = module.params.get('clientroles')
+    purge_roles = module.params.get('purge_roles')
 
     for role in roles:
         checkresult, msg = check_role_representation(role)
         if not checkresult:
             module.fail_json(msg=msg)
+
     for client in clientroles:
         if isinstance(clientroles[client], list):
             for role in clientroles[client]:
@@ -361,8 +370,8 @@ def main():
         scope_clients = [None]
     if roletype == 'client':
         scope_clients = list(clientroles.keys())
-        if state == 'exclusive':
-            # when exclusive is set, we want to delete already existing scope mappings regarding all
+        if purge_roles:
+            # when purge_roles is set, we want to delete already existing scope mappings regarding all
             # clients, so add existing mappings' client-names to list of clients to iterate over
             # (with an empty scope mapping)
             currentmappings = kc.get_scope_mappings(cid, target=target, realm=realm)
@@ -383,6 +392,8 @@ def main():
             # If this is a client scope mapping as opposed to a realm scope mapping
             if scope_client in clientroles:
                 roles = clientroles[scope_client]
+                if roles is None:
+                    roles = []
             else:
                 roles = []
             scope_client_id = kc.get_client_id(scope_client, realm=realm)
@@ -401,7 +412,7 @@ def main():
                     to_delete.append(role)
                     proposed = [x for x in proposed if x['name'] != role['name']]
 
-        if state == 'exclusive':
+        if purge_roles:
             for role in current:
                 if not contains_role(roles, role['name']):
                     to_delete.append(role)
@@ -415,7 +426,8 @@ def main():
 
         available_roles = kc.get_available_roles(cid, id_client=scope_client_id, target=target, realm=realm)
         to_update = []
-        if state == 'present' or state == 'exclusive':
+
+        if state == 'present':
             for role in roles:
                 # only add roles not already present
                 if not contains_role(current, role['name']):
