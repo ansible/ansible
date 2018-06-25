@@ -94,8 +94,8 @@
 
 - name: async poll timeout
   async_test:
-    sleep_delay_sec: 20
-  async: 15
+    sleep_delay_sec: 25
+  async: 20
   poll: 1
   register: asyncresult
   ignore_errors: true
