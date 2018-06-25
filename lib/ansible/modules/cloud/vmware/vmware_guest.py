@@ -264,6 +264,8 @@ options:
     - 'Optional parameters per entry (used for virtual hardware):'
     - ' - C(device_type) (string): Virtual network device (one of C(e1000), C(e1000e), C(pcnet32), C(vmxnet2), C(vmxnet3) (default), C(sriov)).'
     - ' - C(mac) (string): Customize MAC address.'
+    - ' - C(dvswitch_name) (string): Name of the distributed vSwitch.
+          This value is required if multiple distributed portgroups exists with the same name. version_added 2.7'
     - 'Optional parameters per entry (used for OS customization):'
     - ' - C(type) (string): Type of IP assignment (either C(dhcp) or C(static)). C(dhcp) is default.'
     - ' - C(ip) (string): Static IP address (implies C(type: static)).'
@@ -499,7 +501,8 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.vmware import (find_obj, gather_vm_facts, get_all_objs,
                                          compile_folder_path_for_object, serialize_spec,
-                                         vmware_argument_spec, set_vm_power_state, PyVmomi)
+                                         vmware_argument_spec, set_vm_power_state, PyVmomi,
+                                         find_dvs_by_name, find_dvspg_by_name)
 
 
 class PyVmomiDeviceHelper(object):
@@ -1061,7 +1064,7 @@ class PyVmomiHelper(PyVmomi):
 
     def sanitize_network_params(self):
         """
-        Function to sanitize user provided network provided params
+        Sanitize user provided network provided params
 
         Returns: A sanitized list of network params, else fails
 
@@ -1083,6 +1086,12 @@ class PyVmomiHelper(PyVmomi):
                             str(dvp.config.defaultPortConfig.vlan.vlanId) == network['vlan']:
                         network['name'] = dvp.config.name
                         break
+                    if 'dvswitch_name' in network and \
+                            dvp.config.distributedVirtualSwitch.name == network['dvswitch_name'] and \
+                            dvp.config.name == network['vlan']:
+                        network['name'] = dvp.config.name
+                        break
+
                     if dvp.config.name == network['vlan']:
                         network['name'] = dvp.config.name
                         break
@@ -1190,7 +1199,17 @@ class PyVmomiHelper(PyVmomi):
 
             if hasattr(self.cache.get_network(network_name), 'portKeys'):
                 # VDS switch
-                pg_obj = find_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_name)
+                pg_obj = None
+                if 'dvswitch_name' in network_devices[key]:
+                    dvs_name = network_devices[key]['dvswitch_name']
+                    dvs_obj = find_dvs_by_name(self.content, dvs_name)
+                    if dvs_obj is None:
+                        self.module.fail_json(msg="Unable to find distributed virtual switch %s" % dvs_name)
+                    pg_obj = find_dvspg_by_name(dvs_obj, network_name)
+                    if pg_obj is None:
+                        self.module.fail_json(msg="Unable to find distributed port group %s" % network_name)
+                else:
+                    pg_obj = find_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_name)
 
                 if (nic.device.backing and
                    (not hasattr(nic.device.backing, 'port') or
