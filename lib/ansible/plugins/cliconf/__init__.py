@@ -206,9 +206,13 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         :param diff: Boolean flag to indicate if configuration that is applied on remote host should
                      generated and returned in response or not
         :param comment: Commit comment provided it is supported by remote host
-        :return: Returns a tuple, the first entry of tupe is configuration diff if diff flag is enable else
-                it is None. Second entry is the list of response received from remote host on executing
-                configuration commands.
+        :return: Returns a json string with contains configuration applied on remote host, the returned
+                 response on executing configuration commands and platform relevant data.
+               {
+                   "diff": "",
+                   "response": []
+               }
+
         """
         pass
 

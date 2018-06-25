@@ -61,6 +61,7 @@ class Cliconf(CliconfBase):
         return out
 
     def edit_config(self, candidate=None, commit=True, replace=False, diff=False, comment=None):
+        resp = {}
         if not candidate:
             raise ValueError('must provide a candidate config to load')
 
@@ -98,7 +99,9 @@ class Cliconf(CliconfBase):
         else:
             self.discard_changes()
 
-        return diff_config, results[1:]
+        resp['diff'] = diff_config
+        resp['response'] = results[1:]
+        return json.dumps(resp)
 
     def get(self, command=None, prompt=None, answer=None, sendonly=False):
         if not command:

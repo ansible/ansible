@@ -133,7 +133,9 @@ def load_config(module, commands, commit=False, comment=None):
     connection = get_connection(module)
 
     try:
-        diff_config, resp = connection.edit_config(candidate=commands, commit=commit, diff=module._diff, comment=comment)
+        resp = connection.edit_config(candidate=commands, commit=commit, diff=module._diff, comment=comment)
+        resp = json.loads(resp)
+        diff_config = resp.get('diff')
     except ConnectionError as exc:
         module.fail_json(msg=to_text(exc))
 
