@@ -14,6 +14,10 @@ DOCUMENTATION = '''
       - Use this callback when you dont care about OK nor Skipped.
       - This callback suppresses any non Failed or Changed status.
     version_added: "2.1"
+    deprecated:
+        why: The 'default' callback plugin now supports this functionality
+        removed_in: '2.11'
+        alternative: "'default' callback plugin with 'display_skipped_hosts = no' and 'display_ok_hosts = no' options"
     extends_documentation_fragment:
       - default_callback
     requirements:
