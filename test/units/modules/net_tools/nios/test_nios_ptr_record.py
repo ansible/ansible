@@ -78,7 +78,7 @@ class TestNiosHostRecordModule(TestNiosModule):
         wapi.create_object.assert_called_once_with('testobject', {'ipv4addr': '10.36.241.14', 'ptrdname': 'ansible.test.com'})
 
     def test_nios_ptr_record_remove(self):
-        self.module.params = {'provider': None, 'state': 'absent',  'ptrdname': 'ansible.test.com',
+        self.module.params = {'provider': None, 'state': 'absent', 'ptrdname': 'ansible.test.com',
                               'ipv4addr': '10.36.241.14', 'comment': None, 'extattrs': None}
 
         ref = "record:ptr/ZG5zLm5ldHdvcmtfdmlldyQw:14.241.36.10.in-addr.arpa/default"
@@ -105,7 +105,7 @@ class TestNiosHostRecordModule(TestNiosModule):
 
     def test_nios_ptr_record_update_comment(self):
         self.module.params = {'provider': None, 'state': 'present', 'ptrdname': 'ansible.test.com',
-                              'ipv4addr': '10.36.241.14','comment': 'updated comment', 'extattrs': None}
+                              'ipv4addr': '10.36.241.14', 'comment': 'updated comment', 'extattrs': None}
 
         test_object = [
             {
