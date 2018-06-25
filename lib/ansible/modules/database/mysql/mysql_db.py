@@ -141,15 +141,7 @@ def db_delete(cursor, db):
     return True
 
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-def db_dump(module, host, user, password, db_name, target, all_databases, no_data, port, config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None,
-=======
 def db_dump(module, host, user, password, db_name, target, all_databases, port, config_file, no_data=None, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None,
->>>>>>> pushed fixes for no-data fr
-=======
-def db_dump(module, host, user, password, db_name, target, all_databases, no_data=None port, config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None,
->>>>>>> Added no-data option to dump  process so only an empty schema can be dumped as per FR #41748
             single_transaction=None, quick=None, ignore_tables=None):
     cmd = module.get_bin_path('mysqldump', True)
     # If defined, mysqldump demands --defaults-extra-file be the first option
@@ -176,15 +168,7 @@ def db_dump(module, host, user, password, db_name, target, all_databases, no_dat
     if single_transaction:
         cmd += " --single-transaction=true"
     if no_data:
-<<<<<<< HEAD
-<<<<<<< HEAD
         cmd += " --no-data=true"
-=======
-        cmd += " --no-data=true"      
->>>>>>> pushed fixes for no-data fr
-=======
-        cmd += " --no-data=true"        
->>>>>>> Added no-data option to dump  process so only an empty schema can be dumped as per FR #41748
     if quick:
         cmd += " --quick"
     if ignore_tables:
@@ -328,6 +312,7 @@ def main():
     for a_table in ignore_tables:
         if a_table == "":
             module.fail_json(msg="Name of ignored table cannot be empty")
+    no_data = module.params["no_data"]
     single_transaction = module.params["single_transaction"]
     quick = module.params["quick"]
 
