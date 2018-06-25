@@ -112,6 +112,12 @@ options:
       - The number of secondary IP addresses to assign to the network interface. This option is mutually exclusive of secondary_private_ip_addresses
     required: false
     version_added: 2.2
+  allow_reassignment:
+    description:
+      - Indicates whether to allow an IP address that is already assigned to another network interface or instance to be reassigned to the specified network interface
+    required: false
+    default: False
+    version_added: 2.5
 extends_documentation_fragment:
     - aws
     - ec2
