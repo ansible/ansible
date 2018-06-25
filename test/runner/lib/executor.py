@@ -178,6 +178,8 @@ def install_command_requirements(args):
 
     commands = [cmd for cmd in commands if cmd]
 
+    commands.append(pip + ['install', 'https://github.com/yaml/pyyaml/archive/release/4.01.zip'])
+
     # only look for changes when more than one requirements file is needed
     detect_pip_changes = len(commands) > 1
 
