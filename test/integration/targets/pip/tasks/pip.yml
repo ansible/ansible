@@ -277,13 +277,13 @@
 # test version specifiers
 - name: make sure no test_package installed now
   pip:
-    name: "{{ pip_test_package }}"
+    name: "{{ pip_test_packages }}"
     state: absent
 
 - name: install package with version specifiers
   pip:
     name: "{{ pip_test_package }}"
-    version: "<100.0.0,!=1.0.0,>0.0.0"
+    version: "<100,!=1.0,>0.0.0"
   register: version
 
 - name: assert package installed correctly
@@ -293,7 +293,7 @@
 - name: reinstall package
   pip:
     name: "{{ pip_test_package }}"
-    version: "<100.0.0,!=1.0.0,>0.0.0"
+    version: "<100,!=1.0,>0.0.0"
   register: version2
 
 - name: assert no changes ocurred
@@ -303,7 +303,7 @@
 - name: test the check_mod
   pip:
     name: "{{ pip_test_package }}"
-    version: "<100.0.0,!=1.0.0,>0.0.0"
+    version: "<100,!=1.0,>0.0.0"
   check_mode: yes
   register: version3
 
@@ -322,7 +322,7 @@
   assert:
     that: "version4.changed == True"
 
-- name: uninstall test packages
+- name: uninstall test packages for next test
   pip:
     name: "{{ pip_test_packages }}"
     state: absent
@@ -340,7 +340,7 @@
 
 - name: another invalid combination of arguments
   pip:
-    name: "{{ pip_test_package }}>=0.0.0,<=99.0.0,!=12.0.0"
+    name: "{{ pip_test_pkg_ver[0] }}"
     version: "<100.0.0"
   ignore_errors: yes
   register: version6
@@ -388,7 +388,31 @@
   assert:
     that: "version10.changed"
 
+- name: uninstall packages for next test
+  pip:
+    name: "{{ pip_test_packages }}"
+    state: absent
+
+- name: test install multi package provided by one single string
+  pip:
+    name: "{{pip_test_pkg_ver[0]}},{{pip_test_pkg_ver[1]}}"
+  register: version11
+
+- name: assert the install ran correctly
+  assert:
+    that: "version11.changed == True"
+
+- name: test install multi package provided by one single string with check_mode
+  pip:
+    name: "{{pip_test_pkg_ver[0]}},{{pip_test_pkg_ver[1]}}"
+  check_mode: yes
+  register: version12
+
+- name: assert no changes needed
+  assert:
+    that: "version12.changed == False"
+
 - name: clean up
   pip:
-    name: "{{ pip_test_pkg_ver }}"
+    name: "{{ pip_test_packages }}"
     state: absent
