@@ -114,7 +114,8 @@ options:
     version_added: 2.2
   allow_reassignment:
     description:
-      - Indicates whether to allow an IP address that is already assigned to another network interface or instance to be reassigned to the specified network interface
+      - Indicates whether to allow an IP address that is already assigned to another network interface or instance 
+        to be reassigned to the specified network interface.
     required: false
     default: False
     version_added: 2.5
