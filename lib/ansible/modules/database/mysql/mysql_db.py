@@ -50,6 +50,12 @@ options:
     type: bool
     default: 'no'
     version_added: "2.1"
+  no_data:
+    description:
+      - Execute the dump as an empty schema (with no data)
+    type: bool
+    default: 'no'
+    version_added: "TBD"    
   quick:
     description:
       - Option used for dumping large tables
