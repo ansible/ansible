@@ -8,8 +8,9 @@ import json
 import time
 
 from ansible.module_utils._text import to_text
-from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.connection import ConnectionError
+from ansible.module_utils.network.common.utils import to_list
+from ansible.plugins.httpapi import HttpApiBase
 
 try:
     from __main__ import display
@@ -18,11 +19,7 @@ except ImportError:
     display = Display()
 
 
-class HttpApi:
-    def __init__(self, connection):
-        self.connection = connection
-        self._become = False
-
+class HttpApi(HttpApiBase):
     def send_request(self, data, **message_kwargs):
         data = to_list(data)
         if self._become:
@@ -39,6 +36,7 @@ class HttpApi:
             response = json.loads(response_text)
         except ValueError:
             raise ConnectionError('Response was not valid JSON, got {0}'.format(response_text))
+
         results = handle_response(response)
 
         if self._become:
@@ -54,10 +52,6 @@ class HttpApi:
             return '#'
         else:
             return '>'
-
-    def set_become(self, play_context):
-        self._become = play_context.become
-        self._become_pass = getattr(play_context, 'become_pass') or ''
 
     # Imported from module_utils
     def edit_config(self, config, commit=False, replace=False):
@@ -120,23 +114,24 @@ class HttpApi:
             return response
 
         for item in to_list(commands):
-            cmd_output = None
+            cmd_output = 'text'
             if isinstance(item, dict):
                 command = item['command']
-                if command.endswith('| json'):
-                    command = command.replace('| json', '')
-                    cmd_output = 'json'
-                elif 'output' in item:
+                if 'output' in item:
                     cmd_output = item['output']
             else:
                 command = item
+
+            # Emulate '| json' from CLI
+            if command.endswith('| json'):
+                command = command.rsplit('|', 1)[0]
                 cmd_output = 'json'
 
             if output and output != cmd_output:
                 responses.extend(run_queue(queue, output))
                 queue = list()
 
-            output = cmd_output or 'json'
+            output = cmd_output
             queue.append(command)
 
         if queue:
