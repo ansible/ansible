@@ -271,6 +271,7 @@ class TestWinRMKerbAuth(object):
         actual_env = mock_calls[0][2]['env']
         assert list(actual_env.keys()) == ['KRB5CCNAME']
         assert actual_env['KRB5CCNAME'].startswith("FILE:/")
+        assert mock_calls[0][2]['echo'] is False
         assert mock_calls[1][0] == "().expect"
         assert mock_calls[1][1] == (".*:",)
         assert mock_calls[2][0] == "().sendline"
@@ -367,3 +368,48 @@ class TestWinRMKerbAuth(object):
         assert str(err.value) == \
             "Kerberos auth failure for principal invaliduser with " \
             "pexpect: %s" % (expected_err)
+
+    def test_kinit_error_pass_in_output_subprocess(self, monkeypatch):
+        def mock_communicate(input=None, timeout=None):
+            return b"", b"Error with kinit\n" + input
+
+        mock_popen = MagicMock()
+        mock_popen.return_value.communicate = mock_communicate
+        mock_popen.return_value.returncode = 1
+        monkeypatch.setattr("subprocess.Popen", mock_popen)
+
+        winrm.HAS_PEXPECT = False
+        pc = PlayContext()
+        new_stdin = StringIO()
+        conn = connection_loader.get('winrm', pc, new_stdin)
+        conn.set_options(var_options={"_extras": {}})
+
+        with pytest.raises(AnsibleConnectionFailure) as err:
+            conn._kerb_auth("username", "password")
+        assert str(err.value) == \
+            "Kerberos auth failure for principal username with subprocess: " \
+            "Error with kinit\n<redacted>"
+
+    def test_kinit_error_pass_in_output_pexpect(self, monkeypatch):
+        pytest.importorskip("pexpect")
+
+        mock_pexpect = MagicMock()
+        mock_pexpect.return_value.expect = MagicMock()
+        mock_pexpect.return_value.read.return_value = \
+            b"Error with kinit\npassword\n"
+        mock_pexpect.return_value.exitstatus = 1
+
+        monkeypatch.setattr("pexpect.spawn", mock_pexpect)
+
+        winrm.HAS_PEXPECT = True
+        pc = PlayContext()
+        pc = PlayContext()
+        new_stdin = StringIO()
+        conn = connection_loader.get('winrm', pc, new_stdin)
+        conn.set_options(var_options={"_extras": {}})
+
+        with pytest.raises(AnsibleConnectionFailure) as err:
+            conn._kerb_auth("username", "password")
+        assert str(err.value) == \
+            "Kerberos auth failure for principal username with pexpect: " \
+            "Error with kinit\n<redacted>"
