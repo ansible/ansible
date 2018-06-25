@@ -17,16 +17,16 @@ DOCUMENTATION = '''
 ---
 module: yum_versionlock
 version_added: 2.7
-short_description: Locks/Unlocks an installed package from being updates by (yum) package manager.
+short_description: Locks/Unlocks an installed package(s) from being updates by (yum) package manager.
 description:
      - This module adds installed packages to yum versionlock to prevent it from being updated.
 options:
   package:
     description:
-      - A package name like C(httpd).
+      - Package name(s) like C(httpd). Multiple packages are supported by adding them by whitespaces.
   state:
     description:
-      - Whether to lock C(present) or unlock C(absent) a package.
+      - Whether to lock C(present) or unlock C(absent) package(s).
     choices: [ present, absent ]
     default: present
 # informational: requirements for nodes
@@ -38,10 +38,14 @@ author:
 '''
 
 EXAMPLES = '''
-- name: Prevent Apache / httpd from beeing updated
+- name: Prevent Apache / httpd from being updated
   yum_versionlock:
     state: present
     package: httpd
+- name: Prevent multiple packages from being updated
+  yum_versionlock:
+    state: present
+    package: httpd nginx haproxy curl
 - name:  Unlock Apache / httpd to be updated again
   yum_versionlock:
     state: absent
@@ -132,18 +136,23 @@ def main():
     # Check for yum version lock plugin
     get_state_yum_versionlock(module, yum_binary)
 
+    # Split 'package' string to list by whitespaces to support multiple values
+    packages = package.split()
+
     # Get an overview of all packages that have a version lock
     versionlock_packages = get_versionlock_packages(module, yum_binary)
 
-    # Add a package to versionlock
+    # Add package(s) to versionlock
     if state == "present":
-        if package not in versionlock_packages:
-            changed = add_package_versionlock(module, package, yum_binary)
+        for single_pkg in packages:
+            if single_pkg not in versionlock_packages:
+                changed = add_package_versionlock(module, single_pkg, yum_binary)
 
-    # Remove a package from versionlock
+    # Remove package(s) from versionlock
     if state == "absent":
-        if package in versionlock_packages:
-            changed = remove_package_versionlock(module, package, yum_binary)
+        for single_pkg in packages:
+            if single_pkg in versionlock_packages:
+                changed = remove_package_versionlock(module, single_pkg, yum_binary)
 
     # Create Ansible meta output
     response = {"package": package, "state": state}
