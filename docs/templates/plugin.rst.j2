@@ -88,21 +88,21 @@ Parameters
 .. raw:: html
 
     <table  border=0 cellpadding=0 class="documentation-table">
-        {# Pre-compute the nesting depth to allocate columns #}
-        {% set ns = namespace(maxdepth=1) %}
-        {% for key, value in options|dictsort recursive %}
-            {% set ns.maxdepth = [loop.depth, ns.maxdepth] | max %}
-            {% if value.suboptions %}
-                {% if value.suboptions.items %}
-                    @{ loop(value.suboptions.items()) }@
-                {% elif value.suboptions[0].items %}
-                    @{ loop(value.suboptions[0].items()) }@
-                {% endif %}
-            {% endif %}
-        {% endfor %}
-        {# Header of the documentation #}
+        {# Pre-compute the nesting depth to allocate columns -#}
+        @{ to_kludge_ns('maxdepth', 1) -}@
+        {% for key, value in options|dictsort recursive -%}
+            @{ to_kludge_ns('maxdepth', [loop.depth, from_kludge_ns('maxdepth')] | max) -}@
+            {% if value.suboptions -%}
+                {% if value.suboptions.items -%}
+                    @{ loop(value.suboptions.items()) -}@
+                {% elif value.suboptions[0].items -%}
+                    @{ loop(value.suboptions[0].items()) -}@
+                {% endif -%}
+            {% endif -%}
+        {% endfor -%}
+        {# Header of the documentation -#}
         <tr>
-            <th colspan="@{ ns.maxdepth }@">Parameter</th>
+            <th colspan="@{ from_kludge_ns('maxdepth') }@">Parameter</th>
             <th>Choices/<font color="blue">Defaults</font></th>
             {% if plugin_type != 'module' %}
                 <th>Configuration</th>
@@ -116,7 +116,7 @@ Parameters
                     <td class="elbow-placeholder"></td>
                 {% endfor %}
                 {# parameter name with required and/or introduced label #}
-                <td colspan="@{ ns.maxdepth - loop.depth0 }@">
+                <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
                     <b>@{ key }@</b>
                     {% if value.get('required', False) %}<br/><div style="font-size: small; color: red">required</div>{% endif %}
                     {% if value.version_added %}<br/><div style="font-size: small; color: darkgreen">(added in @{value.version_added}@)</div>{% endif %}
@@ -246,19 +246,19 @@ Facts returned by this module are added/updated in the ``hostvars`` host facts a
 
     <table border=0 cellpadding=0 class="documentation-table">
         {# Pre-compute the nesting depth to allocate columns #}
-        {% set ns = namespace(maxdepth=1) %}
+        @{ to_kludge_ns('maxdepth', 1) -}@
         {% for key, value in returnfacts|dictsort recursive %}
-            {% set ns.maxdepth = [loop.depth, ns.maxdepth] | max %}
-            {% if value.contains %}
-                {% if value.contains.items %}
-                    @{ loop(value.contains.items()) }@
-                {% elif value.contains[0].items %}
-                    @{ loop(value.contains[0].items()) }@
-                {% endif %}
-            {% endif %}
-        {% endfor %}
+            @{ to_kludge_ns('maxdepth', [loop.depth, from_kludge_ns('maxdepth')] | max) -}@
+            {% if value.contains -%}
+                {% if value.contains.items -%}
+                    @{ loop(value.contains.items()) -}@
+                {% elif value.contains[0].items -%}
+                    @{ loop(value.contains[0].items()) -}@
+                {% endif -%}
+            {% endif -%}
+        {% endfor -%}
         <tr>
-            <th colspan="@{ ns.maxdepth }@">Fact</th>
+            <th colspan="@{ from_kludge_ns('maxdepth') }@">Fact</th>
             <th>Returned</th>
             <th width="100%">Description</th>
         </tr>
@@ -267,7 +267,7 @@ Facts returned by this module are added/updated in the ``hostvars`` host facts a
                 {% for i in range(1, loop.depth) %}
                     <td class="elbow-placeholder"></td>
                 {% endfor %}
-                <td colspan="@{ ns.maxdepth - loop.depth0 }@" colspan="@{ ns.maxdepth - loop.depth0 }@">
+                <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@" colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
                     <b>@{ key }@</b>
                     <br/><div style="font-size: small; color: red">@{ value.type }@</div>
                 </td>
@@ -317,19 +317,19 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
 .. raw:: html
 
     <table border=0 cellpadding=0 class="documentation-table">
-        {% set ns = namespace(maxdepth=1) %}
-        {% for key, value in returndocs|dictsort recursive %}
-            {% set ns.maxdepth = [loop.depth, ns.maxdepth] | max %}
-            {% if value.contains %}
-                {% if value.contains.items %}
-                    @{ loop(value.contains.items()) }@
-                {% elif value.contains[0].items %}
-                    @{ loop(value.contains[0].items()) }@
-                {% endif %}
-            {% endif %}
-        {% endfor %}
+        @{ to_kludge_ns('maxdepth', 1) -}@
+        {% for key, value in returndocs|dictsort recursive -%}
+            @{ to_kludge_ns('maxdepth', [loop.depth, from_kludge_ns('maxdepth')] | max) -}@
+            {% if value.contains -%}
+                {% if value.contains.items -%}
+                    @{ loop(value.contains.items()) -}@
+                {% elif value.contains[0].items -%}
+                    @{ loop(value.contains[0].items()) -}@
+                {% endif -%}
+            {% endif -%}
+        {% endfor -%}
         <tr>
-            <th colspan="@{ ns.maxdepth }@">Key</th>
+            <th colspan="@{ from_kludge_ns('maxdepth') }@">Key</th>
             <th>Returned</th>
             <th width="100%">Description</th>
         </tr>
@@ -338,7 +338,7 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
                 {% for i in range(1, loop.depth) %}
                     <td class="elbow-placeholder">&nbsp;</td>
                 {% endfor %}
-                <td colspan="@{ ns.maxdepth - loop.depth0 }@">
+                <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
                     <b>@{ key }@</b>
                     <br/><div style="font-size: small; color: red">@{ value.type }@</div>
                 </td>

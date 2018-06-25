@@ -85,6 +85,28 @@ pp = PrettyPrinter()
 display = Display()
 
 
+# kludge_ns gives us a kludgey way to set variables inside of loops that need to be visible outside
+# the loop.  We can get rid of this when we no longer need to build docs with less than Jinja-2.10
+# http://jinja.pocoo.org/docs/2.10/templates/#assignments
+# With Jinja-2.10 we can use jinja2's namespace feature, restoring the namespace template portion
+# of: fa5c0282a4816c4dd48e80b983ffc1e14506a1f5
+NS_MAP = {}
+
+
+def to_kludge_ns(key, value):
+    NS_MAP[key] = value
+    return ""
+
+
+def from_kludge_ns(key):
+    return NS_MAP[key]
+
+
+# The max filter was added in Jinja2-2.10.  Until we can require that version, use this
+def do_max(seq):
+    return max(seq)
+
+
 def rst_ify(text):
     ''' convert symbols like I(this is in italics) to valid restructured text '''
 
@@ -297,6 +319,14 @@ def jinja2_environment(template_dir, typ, plugin_type):
                       variable_end_string="}@",
                       trim_blocks=True)
     env.globals['xline'] = rst_xline
+
+    # Can be removed (and template switched to use namespace) when we no longer need to build
+    # with <Jinja-2.10
+    env.globals['to_kludge_ns'] = to_kludge_ns
+    env.globals['from_kludge_ns'] = from_kludge_ns
+    if 'max' not in env.filters:
+        # Jinja < 2.10
+        env.filters['max'] = do_max
 
     templates = {}
     if typ == 'rst':
