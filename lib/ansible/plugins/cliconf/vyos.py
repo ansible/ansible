@@ -208,7 +208,7 @@ class Cliconf(CliconfBase):
 
     def get_capabilities(self):
         result = {}
-        result['rpc'] = self.get_base_rpc() + ['commit', 'discard_changes']
+        result['rpc'] = self.get_base_rpc() + ['commit', 'discard_changes', 'get_diff']
         result['network_api'] = 'cliconf'
         result['device_info'] = self.get_device_info()
         result['device_operations'] = self.get_device_operations()

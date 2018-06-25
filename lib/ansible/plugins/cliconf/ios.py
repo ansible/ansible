@@ -206,7 +206,7 @@ class Cliconf(CliconfBase):
 
     def get_capabilities(self):
         result = dict()
-        result['rpc'] = self.get_base_rpc() + ['edit_banner']
+        result['rpc'] = self.get_base_rpc() + ['edit_banner', 'get_diff']
         result['network_api'] = 'cliconf'
         result['device_info'] = self.get_device_info()
         result['device_operations'] = self.get_device_operations()
