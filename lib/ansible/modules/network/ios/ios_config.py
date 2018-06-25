@@ -441,9 +441,9 @@ def main():
             # them with the current running config
             if not module.check_mode:
                 if commands:
-                    connection.edit_config(commands)
+                    connection.edit_config(candidate=commands)
                 if banner_diff:
-                    connection.edit_banner(json.dumps(banner_diff), multiline_delimiter=module.params['multiline_delimiter'])
+                    connection.edit_banner(candidate=json.dumps(banner_diff), multiline_delimiter=module.params['multiline_delimiter'])
 
             result['changed'] = True
 

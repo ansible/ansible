@@ -130,11 +130,11 @@ backup_path:
   sample: /playbooks/ansible/backup/vyos_config.2016-07-16@22:28:34
 """
 import re
+import json
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.common.config import NetworkConfig
 from ansible.module_utils.network.vyos.vyos import load_config, get_config, run_commands
-from ansible.module_utils.network.vyos.vyos import vyos_argument_spec
+from ansible.module_utils.network.vyos.vyos import vyos_argument_spec, get_connection
 
 
 DEFAULT_COMMENT = 'configured by vyos_config'
@@ -144,35 +144,13 @@ CONFIG_FILTERS = [
 ]
 
 
-def config_to_commands(config):
-    set_format = config.startswith('set') or config.startswith('delete')
-    candidate = NetworkConfig(indent=4, contents=config)
-    if not set_format:
-        candidate = [c.line for c in candidate.items]
-        commands = list()
-        # this filters out less specific lines
-        for item in candidate:
-            for index, entry in enumerate(commands):
-                if item.startswith(entry):
-                    del commands[index]
-                    break
-            commands.append(item)
-
-        commands = ['set %s' % cmd.replace(' {', '') for cmd in commands]
-
-    else:
-        commands = str(candidate).split('\n')
-
-    return commands
-
-
 def get_candidate(module):
     contents = module.params['src'] or module.params['lines']
 
     if module.params['lines']:
         contents = '\n'.join(contents)
 
-    return config_to_commands(contents)
+    return contents
 
 
 def diff_config(commands, config):
@@ -225,7 +203,10 @@ def run(module, result):
     candidate = get_candidate(module)
 
     # create loadable config that includes only the configuration updates
-    commands = diff_config(candidate, config)
+    connection = get_connection(module)
+    response = connection.get_diff(candidate=candidate, running=config, match=module.params['match'])
+    diff_obj = json.loads(response)
+    commands = diff_obj.get('config_diff')
     sanitize_config(commands, result)
 
     result['commands'] = commands
@@ -233,14 +214,18 @@ def run(module, result):
     commit = not module.check_mode
     comment = module.params['comment']
 
+    diff = None
     if commands:
-        load_config(module, commands, commit=commit, comment=comment)
+        diff = load_config(module, commands, commit=commit, comment=comment)
 
         if result.get('filtered'):
             result['warnings'].append('Some configuration commands were '
                                       'removed, please see the filtered key')
 
         result['changed'] = True
+
+    if module._diff:
+        result['diff'] = diff
 
 
 def main():

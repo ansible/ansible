@@ -166,6 +166,7 @@ def load_config(module, commands):
     connection = get_connection(module)
 
     try:
-        return connection.edit_config(commands)
+        diff, response = connection.edit_config(commands)
+        return response
     except ConnectionError as exc:
         module.fail_json(msg=to_text(exc))

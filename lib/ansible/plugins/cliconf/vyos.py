@@ -24,7 +24,9 @@ import json
 
 from itertools import chain
 
+from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text
+from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase
 
@@ -51,14 +53,56 @@ class Cliconf(CliconfBase):
 
         return device_info
 
-    def get_config(self, source='running', format='text'):
-        return self.send_command('show configuration commands')
+    def get_config(self, filter=None, format='set'):
+        if format == 'text':
+            out = self.send_command('show configuration')
+        else:
+            out = self.send_command('show configuration commands')
+        return out
 
-    def edit_config(self, command):
-        for cmd in chain(['configure'], to_list(command)):
-            self.send_command(cmd)
+    def edit_config(self, candidate=None, commit=True, replace=False, diff=False, comment=None):
+        if not candidate:
+            raise ValueError('must provide a candidate config to load')
 
-    def get(self, command, prompt=None, answer=None, sendonly=False):
+        if commit not in (True, False):
+            raise ValueError("'commit' must be a bool, got %s" % commit)
+
+        if replace not in (True, False):
+            raise ValueError("'replace' must be a bool, got %s" % replace)
+
+        operations = self.get_device_operations()
+        if replace and not operations['supports_replace']:
+            raise ValueError("configuration replace is not supported on vyos")
+
+        results = []
+
+        for cmd in chain(['configure'], to_list(candidate)):
+            results.append(self.send_command(cmd))
+
+        diff_config = None
+        if diff:
+            out = self.get('compare')
+            out = to_text(out, errors='surrogate_or_strict')
+            if not out.startswith('No changes'):
+                diff_config = out
+
+        if commit:
+            try:
+                self.commit(comment)
+            except AnsibleConnectionFailure as e:
+                msg = 'commit failed: %s' % e.message
+                self.discard_changes()
+                raise AnsibleConnectionFailure(msg)
+            else:
+                self.get('exit')
+        else:
+            self.discard_changes()
+
+        return diff_config, results[1:]
+
+    def get(self, command=None, prompt=None, answer=None, sendonly=False):
+        if not command:
+            raise ValueError('must provide value of command to execute')
         return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
 
     def commit(self, comment=None):
@@ -68,12 +112,105 @@ class Cliconf(CliconfBase):
             command = 'commit'
         self.send_command(command)
 
-    def discard_changes(self, *args, **kwargs):
+    def discard_changes(self):
         self.send_command('exit discard')
+
+    def get_diff(self, candidate=None, running=None, match='line', diff_ignore_lines=None, path=None, replace=None):
+        diff = {}
+        device_operations = self.get_device_operations()
+        option_values = self.get_option_values()
+
+        if candidate is None and not device_operations['supports_onbox_diff']:
+            raise ValueError("candidate configuration is required to generate diff")
+
+        if match not in option_values['diff_match']:
+            raise ValueError("'match' value %s in invalid, valid values are %s" % (match, option_values['diff_match']))
+
+        if replace:
+            raise ValueError("'replace' in diff is not supported on vyos")
+
+        if diff_ignore_lines:
+            raise ValueError("'diff_ignore_lines' in diff is not supported on vyos")
+
+        if path:
+            raise ValueError("'path' in diff is not supported on vyos")
+
+        set_format = candidate.startswith('set') or candidate.startswith('delete')
+        candidate_obj = NetworkConfig(indent=4, contents=candidate)
+        if not set_format:
+            config = [c.line for c in candidate_obj.items]
+            commands = list()
+            # this filters out less specific lines
+            for item in config:
+                for index, entry in enumerate(commands):
+                    if item.startswith(entry):
+                        del commands[index]
+                        break
+                commands.append(item)
+
+            candidate_commands = ['set %s' % cmd.replace(' {', '') for cmd in commands]
+
+        else:
+            candidate_commands = str(candidate).strip().split('\n')
+
+        if match == 'none':
+            diff['config_diff'] = list(candidate_commands)
+            return json.dumps(diff)
+
+        running_commands = [str(c).replace("'", '') for c in running.splitlines()]
+
+        updates = list()
+        visited = set()
+
+        for line in candidate_commands:
+            item = str(line).replace("'", '')
+
+            if not item.startswith('set') and not item.startswith('delete'):
+                raise ValueError('line must start with either `set` or `delete`')
+
+            elif item.startswith('set') and item not in running_commands:
+                updates.append(line)
+
+            elif item.startswith('delete'):
+                if not running_commands:
+                    updates.append(line)
+                else:
+                    item = re.sub(r'delete', 'set', item)
+                    for entry in running_commands:
+                        if entry.startswith(item) and line not in visited:
+                            updates.append(line)
+                            visited.add(line)
+
+        diff['config_diff'] = list(updates)
+        return json.dumps(diff)
+
+    def get_device_operations(self):
+        return {
+            'supports_diff_replace': False,
+            'supports_commit': True,
+            'supports_rollback': True,
+            'supports_defaults': False,
+            'supports_onbox_diff': False,
+            'supports_commit_comment': True,
+            'supports_multiline_delimiter': False,
+            'support_diff_match': True,
+            'support_diff_ignore_lines': False,
+            'supports_generate_diff': True,
+            'supports_replace': False
+        }
+
+    def get_option_values(self):
+        return {
+            'format': ['set', 'text'],
+            'diff_match': ['line', 'none'],
+            'diff_replace': [],
+        }
 
     def get_capabilities(self):
         result = {}
-        result['rpc'] = self.get_base_rpc() + ['commit', 'discard_changes']
+        result['rpc'] = self.get_base_rpc() + ['commit', 'discard_changes', 'get_diff']
         result['network_api'] = 'cliconf'
         result['device_info'] = self.get_device_info()
+        result['device_operations'] = self.get_device_operations()
+        result.update(self.get_option_values())
         return json.dumps(result)
