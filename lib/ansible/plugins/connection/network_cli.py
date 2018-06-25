@@ -197,13 +197,6 @@ class Connection(NetworkConnectionBase):
         self._last_response = None
         self._history = list()
 
-        if not self._network_os:
-            raise AnsibleConnectionFailure(
-                'Unable to automatically determine host network os. Please '
-                'manually configure ansible_network_os value for this host'
-            )
-        display.display('network_os is set to %s' % self._network_os, log_only=True)
-
         self._terminal = None
         self.paramiko_conn = None
 
@@ -273,6 +266,13 @@ class Connection(NetworkConnectionBase):
         Connects to the remote device and starts the terminal
         '''
         if not self.connected:
+            if not self._network_os:
+                raise AnsibleConnectionFailure(
+                    'Unable to automatically determine host network os. Please '
+                    'manually configure ansible_network_os value for this host'
+                )
+            display.display('network_os is set to %s' % self._network_os, log_only=True)
+
             self.paramiko_conn = connection_loader.get('paramiko', self._play_context, '/dev/null')
             self.paramiko_conn._set_log_channel(self._get_log_channel())
             self.paramiko_conn.set_options(direct={'look_for_keys': not bool(self._play_context.password and not self._play_context.private_key_file)})
