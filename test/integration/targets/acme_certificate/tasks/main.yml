@@ -68,6 +68,7 @@
   - name: Obtain cert 1
     include_tasks: obtain-cert.yml
     vars:
+      certgen_title: Certificate 1
       certificate_name: cert-1
       key_type: rsa
       rsa_bits: 2048
@@ -84,6 +85,7 @@
   - name: Obtain cert 2
     include_tasks: obtain-cert.yml
     vars:
+      certgen_title: Certificate 2
       certificate_name: cert-2
       key_type: ec256
       subject_alt_name: "DNS:*.example.com,DNS:example.com"
@@ -99,6 +101,7 @@
   - name: Obtain cert 3
     include_tasks: obtain-cert.yml
     vars:
+      certgen_title: Certificate 3
       certificate_name: cert-3
       key_type: ec384
       subject_alt_name: "DNS:*.example.com,DNS:example.org,DNS:t1.example.com"
@@ -114,6 +117,7 @@
   - name: Obtain cert 4
     include_tasks: obtain-cert.yml
     vars:
+      certgen_title: Certificate 4, Iteration 1/4
       certificate_name: cert-4
       key_type: rsa
       rsa_bits: 2048
@@ -130,6 +134,7 @@
   - name: Obtain cert 4 (should not, since already there and valid for more than 10 days)
     include_tasks: obtain-cert.yml
     vars:
+      certgen_title: Certificate 4, Iteration 2/4
       certificate_name: cert-4
       key_type: rsa
       rsa_bits: 2048
@@ -148,6 +153,7 @@
   - name: Obtain cert 4 (should again by less days)
     include_tasks: obtain-cert.yml
     vars:
+      certgen_title: Certificate 4, Iteration 3/4
       certificate_name: cert-4
       key_type: rsa
       rsa_bits: 2048
@@ -166,6 +172,7 @@
   - name: Obtain cert 4 (should again by force)
     include_tasks: obtain-cert.yml
     vars:
+      certgen_title: Certificate 4, Iteration 4/4
       certificate_name: cert-4
       key_type: rsa
       rsa_bits: 2048
