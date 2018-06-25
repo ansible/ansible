@@ -215,14 +215,15 @@ class ACMEAccount(object):
                 raise ModuleFailException("failed to create temporary content file: %s" % to_native(err), exception=traceback.format_exc())
             f.close()
 
-        error, self.key_data = self.parse_account_key(self.key)
-        if error:
-            raise ModuleFailException("error while parsing account key: %s" % error)
-        self.jwk = self.key_data['jwk']
-        self.jws_header = {
-            "alg": self.key_data['alg'],
-            "jwk": self.jwk,
-        }
+        if self.key is not None:
+            error, self.key_data = self.parse_account_key(self.key)
+            if error:
+                raise ModuleFailException("error while parsing account key: %s" % error)
+            self.jwk = self.key_data['jwk']
+            self.jws_header = {
+                "alg": self.key_data['alg'],
+                "jwk": self.jwk,
+            }
 
     def get_keyauthorization(self, token):
         '''
@@ -355,22 +356,25 @@ class ACMEAccount(object):
             "signature": nopad_b64(to_bytes(out)),
         }
 
-    def send_signed_request(self, url, payload):
+    def send_signed_request(self, url, payload, key_data=None, key=None, jws_header=None):
         '''
         Sends a JWS signed HTTP POST request to the ACME server and returns
         the response as dictionary
         https://tools.ietf.org/html/draft-ietf-acme-acme-10#section-6.2
         '''
+        key_data = key_data or self.key_data
+        key = key or self.key
+        jws_header = jws_header or self.jws_header
         failed_tries = 0
         while True:
-            protected = copy.deepcopy(self.jws_header)
+            protected = copy.deepcopy(jws_header)
             protected["nonce"] = self.directory.get_nonce()
             if self.version != 1:
                 protected["url"] = url
 
-            data = self.sign_request(protected, payload, self.key_data, self.key)
+            data = self.sign_request(protected, payload, key_data, key)
             if self.version == 1:
-                data["header"] = self.jws_header
+                data["header"] = jws_header
             data = self.module.jsonify(data)
 
             headers = {
