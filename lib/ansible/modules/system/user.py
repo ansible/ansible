@@ -22,6 +22,8 @@ notes:
     they generally come pre-installed with the system and Ansible will require they
     are present at runtime. If they are not, a descriptive error message will be shown.
   - For Windows targets, use the M(win_user) module instead.
+  - On SunOS platforms, the shadow file is backed up automatically since this module edits it directly.
+    On other platforms, the shadow file is backed up by the underlying tools used by this module.
 description:
     - Manage user accounts and user attributes.
     - For Windows targets, use the M(win_user) module instead.
@@ -194,14 +196,6 @@ options:
         type: bool
         default: 'no'
         version_added: "2.4"
-    backup:
-        description:
-            - Whether to backup the shadow file if a change is made.
-            - Currently only affects SunOS variants since shadow file backup is handled by underlying tools
-              on other platforms.
-        type: bool
-        default: 'no'
-        version_added: "2.7"
 '''
 
 EXAMPLES = '''
@@ -422,7 +416,6 @@ class User(object):
         self.password_lock = module.params['password_lock']
         self.groups = None
         self.local = module.params['local']
-        self.backup = module.params['backup']
 
         if module.params['groups'] is not None:
             self.groups = ','.join(module.params['groups'])
@@ -448,7 +441,7 @@ class User(object):
             return self.module.run_command(cmd, use_unsafe_shell=use_unsafe_shell, data=data)
 
     def backup_shadow(self):
-        if self.backup and not self.module.check_mode and self.SHADOWFILE:
+        if not self.module.check_mode and self.SHADOWFILE:
             return self.module.backup_local(self.SHADOWFILE)
 
     def remove_user_userdel(self):
@@ -2368,7 +2361,6 @@ def main():
             state=dict(type='str', default='present', choices=['absent', 'present']),
             name=dict(type='str', required=True, aliases=['user']),
             uid=dict(type='str'),
-            backup=dict(type='bool', default=False),
             non_unique=dict(type='bool', default=False),
             group=dict(type='str'),
             groups=dict(type='list'),
@@ -2418,7 +2410,6 @@ def main():
     result = {}
     result['name'] = user.name
     result['state'] = user.state
-    result['backup'] = user.backup
     if user.state == 'absent':
         if user.user_exists():
             if module.check_mode:

@@ -303,11 +303,10 @@
 
 ## shadow backup
 - block:
-    - name: Create a user and backup the shadow file
+    - name: Create a user to test shadow file backup
       user:
         name: ansibulluser
         state: present
-        backup: yes
       register: result
 
     - name: Find shadow backup files
