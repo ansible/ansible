@@ -223,7 +223,7 @@ class Connection(NetworkConnectionBase):
 
             return reply.data_xml
         else:
-            return self._local.exec_command(cmd, in_data, sudoable)
+            return super(Connection, self).exec_command(cmd, in_data, sudoable)
 
     def _connect(self):
         super(Connection, self)._connect()

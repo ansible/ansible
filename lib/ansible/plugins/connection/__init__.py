@@ -317,6 +317,9 @@ class NetworkConnectionBase(ConnectionBase):
                         return method
             raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
 
+    def exec_command(self, cmd, in_data=None, sudoable=True):
+        return self._local.exec_command(cmd, in_data, sudoable)
+
     def put_file(self, in_path, out_path):
         """Transfer a file from local to remote"""
         return self._local.put_file(in_path, out_path)

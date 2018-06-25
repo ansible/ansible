@@ -232,7 +232,7 @@ class Connection(NetworkConnectionBase):
                 return self.send(command=cmd)
 
         else:
-            return self._local.exec_command(cmd, in_data, sudoable)
+            return super(Connection, self).exec_command(cmd, in_data, sudoable)
 
     def update_play_context(self, pc_data):
         """Updates the play context information for the connection"""
