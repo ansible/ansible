@@ -162,7 +162,7 @@ def db_dump(module, host, user, password, db_name, target, all_databases, no_dat
     if single_transaction:
         cmd += " --single-transaction=true"
     if no_data:
-        cmd += " --no-data=true"        
+        cmd += " --no-data=true"
     if quick:
         cmd += " --quick"
     if ignore_tables:
@@ -298,6 +298,7 @@ def main():
     ssl_ca = module.params["ssl_ca"]
     connect_timeout = module.params['connect_timeout']
     config_file = module.params['config_file']
+    no_data = module.params["no_data"]
     login_password = module.params["login_password"]
     login_user = module.params["login_user"]
     login_host = module.params["login_host"]
