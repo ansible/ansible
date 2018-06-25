@@ -134,7 +134,7 @@ class CallbackBase(AnsiblePlugin):
                     self._display.deprecated(**warning)
                 del res['deprecations']
 
-    def _handle_exception(self, result):
+    def _handle_exception(self, result, use_stderr=False):
 
         if 'exception' in result:
             msg = "An exception occurred during task execution. "
@@ -146,7 +146,7 @@ class CallbackBase(AnsiblePlugin):
                 msg = "The full traceback is:\n" + result['exception']
                 del result['exception']
 
-            self._display.display(msg, color=C.COLOR_ERROR)
+            self._display.display(msg, color=C.COLOR_ERROR, stderr=use_stderr)
 
     def _get_diff(self, difflist):
 
