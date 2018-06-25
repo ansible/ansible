@@ -1,0 +1,2 @@
+bugfixes:
+  - lineinfile - fix insertbefore when used with BOF to not insert duplicate lines (https://github.com/ansible/ansible/issues/38219)
