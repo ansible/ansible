@@ -381,6 +381,7 @@ def modify_eni(connection, vpc_id, module, eni):
     secondary_private_ip_addresses = module.params.get("secondary_private_ip_addresses")
     purge_secondary_private_ip_addresses = module.params.get("purge_secondary_private_ip_addresses")
     secondary_private_ip_address_count = module.params.get("secondary_private_ip_address_count")
+    allow_reassignment = module.params.get("allow_reassignment")
     changed = False
 
     try:
@@ -417,7 +418,7 @@ def modify_eni(connection, vpc_id, module, eni):
                 connection.assign_private_ip_addresses(network_interface_id=eni.id,
                                                        private_ip_addresses=secondary_addresses_to_add,
                                                        secondary_private_ip_address_count=None,
-                                                       allow_reassignment=False, dry_run=False)
+                                                       allow_reassignment=allow_reassignment, dry_run=False)
                 changed = True
         if secondary_private_ip_address_count is not None:
             current_secondary_address_count = len(current_secondary_addresses)
@@ -427,7 +428,7 @@ def modify_eni(connection, vpc_id, module, eni):
                                                        private_ip_addresses=None,
                                                        secondary_private_ip_address_count=(secondary_private_ip_address_count -
                                                                                            current_secondary_address_count),
-                                                       allow_reassignment=False, dry_run=False)
+                                                       allow_reassignment=allow_reassignment, dry_run=False)
                 changed = True
             elif secondary_private_ip_address_count < current_secondary_address_count:
                 # How many of these addresses do we want to remove
@@ -577,6 +578,7 @@ def main():
             secondary_private_ip_addresses=dict(default=None, type='list'),
             purge_secondary_private_ip_addresses=dict(default=False, type='bool'),
             secondary_private_ip_address_count=dict(default=None, type='int'),
+            allow_reassignment=dict(default=False, type='bool'),
             attached=dict(default=None, type='bool')
         )
     )
