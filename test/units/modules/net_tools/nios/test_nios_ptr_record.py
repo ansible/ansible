@@ -111,7 +111,7 @@ class TestNiosHostRecordModule(TestNiosModule):
             {
                 "comment": "test comment",
                 "_ref": "record:ptr/ZG5zLm5ldHdvcmtfdmlldyQw:14.241.36.10.in-addr.arpa/default",
-                "ptrdname": "ansible.test.org",
+                "ptrdname": "ansible.test.com",
                 "ipv4addr": "10.36.241.14",
                 "extattrs": {}
             }
