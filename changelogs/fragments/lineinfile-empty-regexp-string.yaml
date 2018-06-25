@@ -1,0 +1,2 @@
+bugfixes:
+  - lineinfile - properly account for a regexp that is a an empty string to prevent improper line insertion (https://github.com/ansible/ansible/issues/29443)
