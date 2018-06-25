@@ -21,7 +21,7 @@ description:
     - Module to copy a file to a VM, fetch a file from a VM and create or delete a directory in the guest OS.
 version_added: "2.5"
 author:
-  - Stéphane Travassac (@stravassac)
+  - Stéphane Travassac (stravassac@gmail.com)
 notes:
     - Tested on vSphere 6
     - Only the first match against vm_id is used, even if there are multiple matches
@@ -348,7 +348,7 @@ class VmwareGuestFileManager(PyVmomi):
 
             status_code = info["status"]
             if status_code != 200:
-                self.module.fail_json(msg='initiateFileTransferToGuest : problem during file transfer',
+                self.module.fail_json(msg='problem during file transfer, http message:%s' % info["msg"],
                                       uuid=self.vm.summary.config.uuid)
         except vim.fault.FileAlreadyExists:
             result['changed'] = False
