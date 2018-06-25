@@ -256,12 +256,11 @@ from ansible.module_utils.six import b, string_types
 from ansible.module_utils._text import to_native
 
 
-def separate_repo_fallback(module, separate_git_dir, dest):
-    separate_git_dir = os.path.abspath(separate_git_dir)
-    shutil.move(os.path.join(dest, '.git'), separate_git_dir)
+def separate_repo_fallback(module, separate_abs_path, dest):
+    shutil.move(os.path.join(dest, '.git'), separate_abs_path)
     try:
         with open(os.path.join(dest, '.git'), 'w') as dot_git_file:
-            dot_git_file.write('gitdir: %s' % separate_git_dir)
+            dot_git_file.write('gitdir: %s' % separate_abs_path)
     except IOError:
         module.fail_json(msg='Unable to create and wirte %s' % os.path.join(dest, '.git'))
 
@@ -452,8 +451,9 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
         module.warn("Ignoring separate_git_dir argument. "
                     "Can not do bare clone with argument separate_git_dir.")
     elif separate_git_dir:
-        if os.path.exists(os.path.abspath(separate_git_dir)):
-            module.fail_json(msg='Separate-git-dir path %s already exists.' % os.path.abspath(separate_git_dir))
+        separate_abs_path = os.path.abspath(separate_git_dir)
+        if os.path.exists(separate_abs_path):
+            module.fail_json(msg='Separate-git-dir path %s already exists.' % separate_abs_path)
         git_version_used = git_version(git_path, module)
         if git_version_used is None:
             module.fail_json(msg='Can not find git executable at %s' % git_path)
@@ -461,13 +461,12 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
             # git before 1.7.5 doesn't have separate-git-dir argument, do fallback
             separate_git_dir_fallback = True
         else:
-            separate_git_dir = os.path.abspath(separate_git_dir)
-            cmd.append('--separate-git-dir=%s' % separate_git_dir)
+            cmd.append('--separate-git-dir=%s' % separate_abs_path)
 
     cmd.extend([repo, dest])
     module.run_command(cmd, check_rc=True, cwd=dest_dirname)
     if separate_git_dir_fallback:
-        separate_repo_fallback(module, separate_git_dir, dest)
+        separate_repo_fallback(module, separate_abs_path, dest)
 
     if bare and remote != 'origin':
         module.run_command([git_path, 'remote', 'add', remote, repo], check_rc=True, cwd=dest)
