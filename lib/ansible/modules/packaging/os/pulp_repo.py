@@ -46,8 +46,7 @@ options:
         a repository publish.
     required: false
     type: bool
-    choices: [ "yes", "no" ]
-    default: "no"
+    default: 'no'
     version_added: "2.7"
   importer_ssl_ca_cert:
     description:
@@ -115,8 +114,7 @@ options:
         this to "yes" automatically activates `generate_sqlite`.
     required: false
     type: bool
-    choices: ["yes", "no"]
-    default: no
+    default: 'no'
     version_added: "2.7"
   serve_http:
     description:
@@ -530,7 +528,7 @@ def main():
     argument_spec.update(
         add_export_distributor=dict(default=False, type='bool'),
         feed=dict(),
-        generate_sqlite=dict(default=False, type='bool', choices=[True, False]),
+        generate_sqlite=dict(default=False, type='bool'),
         importer_ssl_ca_cert=dict(),
         importer_ssl_client_cert=dict(),
         importer_ssl_client_key=dict(),
@@ -543,7 +541,7 @@ def main():
         pulp_host=dict(default="https://127.0.0.1"),
         relative_url=dict(),
         repo_type=dict(default="rpm"),
-        repoview=dict(default=False, type='bool', choices=[True, False]),
+        repoview=dict(default=False, type='bool'),
         serve_http=dict(default=False, type='bool'),
         serve_https=dict(default=True, type='bool'),
         state=dict(
