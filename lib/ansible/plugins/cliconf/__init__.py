@@ -93,7 +93,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         display.display('closing shell due to command timeout (%s seconds).' % self._connection._play_context.timeout, log_only=True)
         self.close()
 
-    def send_command(self, command, prompt=None, answer=None, sendonly=False, newline=True, prompt_retry_check=False):
+    def send_command(self, command=None, prompt=None, answer=None, sendonly=False, newline=True, prompt_retry_check=False):
         """Executes a command over the device connection
 
         This method will execute a command over the device connection and
@@ -184,7 +184,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         pass
 
     @abstractmethod
-    def edit_config(self, candidate, check_mode=False, replace=None):
+    def edit_config(self, candidate=None, commit=True, replace=False, diff=False, comment=None):
         """Loads the candidate configuration into the network device
 
         This method will load the specified candidate config into the device
@@ -195,20 +195,22 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         :param candidate: The configuration to load into the device and merge
             with the current running configuration
 
-        :param check_mode: Boolean value that indicates if the device candidate
+        :param commit: Boolean value that indicates if the device candidate
             configuration should be  pushed in the running configuration or discarded.
 
-        :param replace: Specifies the way in which provided config value should replace
-            the configuration running on the remote device. If the device
-            doesn't support config replace, an error is return.
-
-        :return: Returns response of executing the configuration command received
-             from remote host
+        :param replace: Boolean flag to indicate if running configuration should be completely
+                        replace by candidate configuration.
+        :param diff: Boolean flag to indicate if configuration that is applied on remote host should
+                     generated and returned in response or not
+        :param comment: Commit comment provided it is supported by remote host
+        :return: Returns a tuple, the first entry of tupe is configuration diff if diff flag is enable else
+                it is None. Second entry is the list of response received from remote host on executing
+                configuration commands.
         """
         pass
 
     @abstractmethod
-    def get(self, command, prompt=None, answer=None, sendonly=False, newline=True):
+    def get(self, command=None, prompt=None, answer=None, sendonly=False, newline=True):
         """Execute specified command on remote device
         This method will retrieve the specified data and
         return it to the caller as a string.
@@ -242,7 +244,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
                     'network_os_platform': <str>,
                 },
                 'device_operations': {
-                    'supports_replace': <bool>,            # identify if config should be merged or replaced is supported
+                    'supports_diff_replace': <bool>,       # identify if config should be merged or replaced is supported
                     'supports_commit': <bool>,             # identify if commit is supported by device or not
                     'supports_rollback': <bool>,           # identify if rollback is supported or not
                     'supports_defaults': <bool>,           # identify if fetching running config with default is supported
@@ -250,12 +252,13 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
                     'supports_onbox_diff: <bool>,          # identify if on box diff capability is supported or not
                     'supports_generate_diff: <bool>,       # identify if diff capability is supported within plugin
                     'supports_multiline_delimiter: <bool>, # identify if multiline demiliter is supported within config
-                    'support_match: <bool>,                # identify if match is supported
+                    'support_diff_match: <bool>,           # identify if match is supported
                     'support_diff_ignore_lines: <bool>,    # identify if ignore line in diff is supported
+                    'support_config_replace': <bool>,      # identify if running config replace with candidate config is supported
                 }
                 'format': [list of supported configuration format],
-                'match': ['line', 'strict', 'exact', 'none'],
-                'replace': ['line', 'block', 'config'],
+                'diff_match': [list of supported match values],
+                'diff_replace': [list of supported replace values],
             }
         :return: capability as json string
         """
@@ -326,3 +329,38 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         elif proto == 'sftp':
             with ssh.open_sftp() as sftp:
                 sftp.get(source, destination)
+
+    def get_diff(self, candidate=None, running=None, match=None, diff_ignore_lines=None, path=None, replace=None):
+        """
+        Generate diff between candidate and running configuration. If the
+        remote host supports onbox diff capabilities ie. supports_onbox_diff in that case
+        candidate and running configurations are not required to be passed as argument.
+        In case if onbox diff capability is not supported candidate argument is mandatory
+        and running argument is optional.
+        :param candidate: The configuration which is expected to be present on remote host.
+        :param running: The base configuration which is used to generate diff.
+        :param match: Instructs how to match the candidate configuration with current device configuration
+                      Valid values are 'line', 'strict', 'exact', 'none'.
+                      'line' - commands are matched line by line
+                      'strict' - command lines are matched with respect to position
+                      'exact' - command lines must be an equal match
+                      'none' - will not compare the candidate configuration with the running configuration
+        :param diff_ignore_lines: Use this argument to specify one or more lines that should be
+                                  ignored during the diff.  This is used for lines in the configuration
+                                  that are automatically updated by the system.  This argument takes
+                                  a list of regular expressions or exact line matches.
+        :param path: The ordered set of parents that uniquely identify the section or hierarchy
+                     the commands should be checked against.  If the parents argument
+                     is omitted, the commands are checked against the set of top
+                    level or global commands.
+        :param replace: Instructs on the way to perform the configuration on the device.
+                        If the replace argument is set to I(line) then the modified lines are
+                        pushed to the device in configuration mode.  If the replace argument is
+                        set to I(block) then the entire command block is pushed to the device in
+                        configuration mode if any line is not correct.
+        :return: Configuration and/or banner diff in json format.
+               {
+                   'config_diff': ''
+               }
+
+        """
