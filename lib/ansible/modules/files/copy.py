@@ -321,6 +321,7 @@ def copy_common_dirs(src, dest, module):
             changed = True
     return changed
 
+
 def main():
 
     module = AnsibleModule(
@@ -492,7 +493,6 @@ def main():
         changed = True
     else:
         changed = False
-
 
     if checksum_src is None and checksum_dest is None:
         if remote_src and os.path.isdir(b_src):
