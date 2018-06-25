@@ -197,12 +197,7 @@ class Connection(NetworkConnectionBase):
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
-        if not self._network_os:
-            for cls in netconf_loader.all(class_only=True):
-                network_os = cls.guess_network_os(self)
-                if network_os:
-                    display.display('discovered network_os %s' % network_os, log_only=True)
-                    self._network_os = network_os
+        self._network_os = self._network_os or 'default'
         display.display('network_os is set to %s' % self._network_os, log_only=True)
 
         self._manager = None
@@ -244,7 +239,14 @@ class Connection(NetworkConnectionBase):
         if self._play_context.private_key_file:
             key_filename = os.path.expanduser(self._play_context.private_key_file)
 
-        device_params = {'name': (NETWORK_OS_DEVICE_PARAM_MAP.get(self._network_os) or self._network_os or 'default')}
+        if self._network_os == 'default':
+            for cls in netconf_loader.all(class_only=True):
+                network_os = cls.guess_network_os(self)
+                if network_os:
+                    display.display('discovered network_os %s' % network_os, log_only=True)
+                    self._network_os = network_os
+
+        device_params = {'name': NETWORK_OS_DEVICE_PARAM_MAP.get(self._network_os) or self._network_os}
 
         ssh_config = os.getenv('ANSIBLE_NETCONF_SSH_CONFIG', False)
         if ssh_config in BOOLEANS_TRUE:
