@@ -9,6 +9,7 @@ import json
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.utils import to_list
+from ansible.plugins.httpapi import HttpApiBase
 
 try:
     from __main__ import display
@@ -17,14 +18,12 @@ except ImportError:
     display = Display()
 
 
-class HttpApi:
-    def __init__(self, connection):
-        self.connection = connection
-
+class HttpApi(HttpApiBase):
     def _run_queue(self, queue, output):
         if self._become:
             display.vvvv('firing event: on_become')
             queue.insert(0, 'enable')
+
         request = request_builder(queue, output)
         headers = {'Content-Type': 'application/json'}
 
@@ -73,10 +72,6 @@ class HttpApi:
         if len(responses) == 1:
             return responses[0]
         return responses
-
-    def set_become(self, play_context):
-        self._become = play_context.become
-        self._become_pass = getattr(play_context, 'become_pass') or ''
 
     # Migrated from module_utils
     def edit_config(self, command):

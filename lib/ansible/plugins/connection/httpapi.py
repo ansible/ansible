@@ -181,24 +181,16 @@ class Connection(ConnectionBase):
         self._local = connection_loader.get('local', play_context, '/dev/null')
         self._local.set_options()
 
-        self._cliconf = None
+        self._implementation_plugins = []
 
         self._ansible_playbook_pid = kwargs.get('ansible_playbook_pid')
 
-        network_os = self._play_context.network_os
-        if not network_os:
+        self._network_os = self._play_context.network_os
+        if not self._network_os:
             raise AnsibleConnectionFailure(
                 'Unable to automatically determine host network os. Please '
                 'manually configure ansible_network_os value for this host'
             )
-
-        self._httpapi = httpapi_loader.get(network_os, self)
-        if self._httpapi:
-            if hasattr(self._httpapi, 'set_become'):
-                self._httpapi.set_become(play_context)
-            display.vvvv('loaded API plugin for network_os %s' % network_os, host=self._play_context.remote_addr)
-        else:
-            raise AnsibleConnectionFailure('unable to load API plugin for network_os %s' % network_os)
 
         self._url = None
         self._auth = None
@@ -211,7 +203,7 @@ class Connection(ConnectionBase):
             return self.__dict__[name]
         except KeyError:
             if not name.startswith('_'):
-                for plugin in (self._httpapi, self._cliconf):
+                for plugin in self._implementation_plugins:
                     method = getattr(plugin, name, None)
                     if method:
                         return method
@@ -244,22 +236,29 @@ class Connection(ConnectionBase):
         return messages
 
     def _connect(self):
-        if self.connected:
-            return
-        network_os = self._play_context.network_os
+        if not self.connected:
+            protocol = 'https' if self.get_option('use_ssl') else 'http'
+            host = self.get_option('host')
+            port = self.get_option('port') or (443 if protocol == 'https' else 80)
+            self._url = '%s://%s:%s' % (protocol, host, port)
 
-        protocol = 'https' if self.get_option('use_ssl') else 'http'
-        host = self.get_option('host')
-        port = self.get_option('port') or (443 if protocol == 'https' else 80)
-        self._url = '%s://%s:%s' % (protocol, host, port)
+            httpapi = httpapi_loader.get(self._network_os, self)
+            if httpapi:
+                httpapi.set_become(self._play_context)
+                httpapi.login(self.get_option('remote_user'), self.get_option('password'))
+                display.vvvv('loaded API plugin for network_os %s' % self._network_os, host=self._play_context.remote_addr)
+            else:
+                raise AnsibleConnectionFailure('unable to load API plugin for network_os %s' % self._network_os)
+            self._implementation_plugins.append(httpapi)
 
-        self._cliconf = cliconf_loader.get(network_os, self)
-        if self._cliconf:
-            display.vvvv('loaded cliconf plugin for network_os %s' % network_os, host=host)
-        else:
-            display.vvvv('unable to load cliconf for network_os %s' % network_os)
+            cliconf = cliconf_loader.get(self._network_os, self)
+            if cliconf:
+                display.vvvv('loaded cliconf plugin for network_os %s' % self._network_os, host=host)
+                self._implementation_plugins.append(cliconf)
+            else:
+                display.vvvv('unable to load cliconf for network_os %s' % self._network_os)
 
-        self._connected = True
+            self._connected = True
 
     def _update_connection_state(self):
         '''
@@ -294,6 +293,7 @@ class Connection(ConnectionBase):
         display.vvvv('reset call on connection instance', host=self._play_context.remote_addr)
 
     def close(self):
+        self._implementation_plugins = []
         if self._connected:
             self._connected = False
 
@@ -302,14 +302,23 @@ class Connection(ConnectionBase):
         Sends the command to the device over api
         '''
         url_kwargs = dict(
-            url_username=self.get_option('remote_user'), url_password=self.get_option('password'),
             timeout=self.get_option('timeout'), validate_certs=self.get_option('validate_certs'),
         )
         url_kwargs.update(kwargs)
+        if self._auth:
+            url_kwargs['headers']['Cookie'] = self._auth
+        else:
+            url_kwargs['url_username'] = self.get_option('remote_user')
+            url_kwargs['url_password'] = self.get_option('password')
 
         try:
             response = open_url(self._url + path, data=data, **url_kwargs)
         except URLError as exc:
+            if exc.reason == 'Unauthorized' and self._auth:
+                # Stored auth appears to be invalid, clear and retry
+                self._auth = None
+                self.login(self.get_option('remote_user'), self.get_option('password'))
+                return self.send(path, data, **kwargs)
             raise AnsibleConnectionFailure('Could not connect to {0}: {1}'.format(self._url, exc.reason))
 
         self._auth = response.info().get('Set-Cookie')
