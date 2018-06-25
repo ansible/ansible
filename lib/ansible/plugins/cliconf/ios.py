@@ -66,8 +66,7 @@ class Cliconf(CliconfBase):
                       'line' - commands are matched line by line
                       'strict' - command lines are matched with respect to position
                       'exact' - command lines must be an equal match
-                      'none' - will not compare the candidate configuration with
-                               the running configuration on the remote device
+                      'none' - will not compare the candidate configuration with the running configuration
         :param diff_ignore_lines: Use this argument to specify one or more lines that should be
                                   ignored during the diff.  This is used for lines in the configuration
                                   that are automatically updated by the system.  This argument takes
@@ -90,9 +89,16 @@ class Cliconf(CliconfBase):
         """
         diff = {}
         device_operations = self.get_device_operations()
+        option_values = self.get_option_values()
 
         if candidate is None and not device_operations['supports_onbox_diff']:
-            raise ValueError('candidate configuration is required to generate diff')
+            raise ValueError("candidate configuration is required to generate diff")
+
+        if match not in option_values['diff_match']:
+            raise ValueError("'match' value %s in invalid, valid values are %s" % (match, option_values['diff_match']))
+
+        if replace not in option_values['diff_replace']:
+            raise ValueError("'replace' value %s in invalid, valid values are %s" % (replace, option_values['diff_replace']))
 
         # prepare candidate configuration
         candidate_obj = NetworkConfig(indent=1)
@@ -118,19 +124,22 @@ class Cliconf(CliconfBase):
         return json.dumps(diff)
 
     @enable_mode
-    def edit_config(self, candidate, check_mode=False, replace=None):
+    def edit_config(self, candidate=None, commit=True, replace=False, diff=False, comment=None):
         if not candidate:
-            raise ValueError('must provide a candidate config to load')
+            raise ValueError("must provide a candidate config to load")
 
-        if check_mode not in (True, False):
-            raise ValueError('`check_mode` must be a bool, got %s' % check_mode)
+        if commit not in (True, False):
+            raise ValueError("'commit' must be a bool, got %s" % commit)
 
-        options = self.get_option_values()
-        if replace and replace not in options['replace']:
-            raise ValueError('`replace` value %s in invalid, valid values are %s' % (replace, options['replace']))
+        if replace not in (True, False):
+            raise ValueError("'replace' must be a bool, got %s" % replace)
+
+        operations = self.get_device_operations()
+        if replace and not operations['supports_replace']:
+            raise ValueError("configuration replace is not supported on ios")
 
         results = []
-        if not check_mode:
+        if commit:
             for line in chain(['configure terminal'], to_list(candidate)):
                 if not isinstance(line, collections.Mapping):
                     line = {'command': line}
@@ -140,16 +149,23 @@ class Cliconf(CliconfBase):
                     results.append(self.send_command(**line))
 
             results.append(self.send_command('end'))
-        return results[1:-1]
 
-    def get(self, command, prompt=None, answer=None, sendonly=False):
-        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
+        diff_config = None
+        if diff:
+            diff_config = candidate
+
+        return diff_config, results[1:-1]
+
+    def get(self, command=None, prompt=None, answer=None, sendonly=False):
+        if not command:
+            raise ValueError('must provide value of command to execute')
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly)
 
     def get_device_info(self):
         device_info = {}
 
         device_info['network_os'] = 'ios'
-        reply = self.get('show version')
+        reply = self.get(command='show version')
         data = to_text(reply, errors='surrogate_or_strict').strip()
 
         match = re.search(r'Version (\S+)', data)
@@ -168,47 +184,50 @@ class Cliconf(CliconfBase):
 
     def get_device_operations(self):
         return {
-            'supports_replace': True,
+            'supports_diff_replace': True,
             'supports_commit': False,
             'supports_rollback': False,
             'supports_defaults': True,
             'supports_onbox_diff': False,
             'supports_commit_comment': False,
             'supports_multiline_delimiter': False,
-            'support_match': True,
+            'support_diff_match': True,
             'support_diff_ignore_lines': True,
             'supports_generate_diff': True,
+            'supports_replace': False
         }
 
     def get_option_values(self):
         return {
             'format': ['text'],
-            'match': ['line', 'strict', 'exact', 'none'],
-            'replace': ['line', 'block']
+            'diff_match': ['line', 'strict', 'exact', 'none'],
+            'diff_replace': ['line', 'block']
         }
 
     def get_capabilities(self):
         result = dict()
-        result['rpc'] = self.get_base_rpc() + ['edit_banner']
+        result['rpc'] = self.get_base_rpc() + ['edit_banner', 'get_diff']
         result['network_api'] = 'cliconf'
         result['device_info'] = self.get_device_info()
         result['device_operations'] = self.get_device_operations()
         result.update(self.get_option_values())
         return json.dumps(result)
 
-    def edit_banner(self, banners, multiline_delimiter="@", check_mode=False):
+    def edit_banner(self, candidate=None, multiline_delimiter="@", commit=True, diff=False):
         """
         Edit banner on remote device
         :param banners: Banners to be loaded in json format
         :param multiline_delimiter: Line delimiter for banner
-        :param check_mode: Boolean value that indicates if the device candidate
+        :param commit: Boolean value that indicates if the device candidate
                configuration should be  pushed in the running configuration or discarded.
+        :param diff: Boolean flag to indicate if configuration that is applied on remote host should
+                     generated and returned in response or not
         :return: Returns response of executing the configuration command received
              from remote host
         """
-        banners_obj = json.loads(banners)
+        banners_obj = json.loads(candidate)
         results = []
-        if not check_mode:
+        if commit:
             for key, value in iteritems(banners_obj):
                 key += ' %s' % multiline_delimiter
                 for cmd in ['config terminal', key, value, multiline_delimiter, 'end']:
@@ -218,7 +237,11 @@ class Cliconf(CliconfBase):
                 time.sleep(0.1)
                 results.append(self.send_command('\n'))
 
-        return results[1:-1]
+        diff_banner = None
+        if diff:
+            diff_banner = candidate
+
+        return diff_banner, results[1:-1]
 
     def _extract_banners(self, config):
         banners = {}
