@@ -3,4 +3,3 @@ posix/ci/group1
 skip/osx
 skip/freebsd
 skip/rhel
-disabled
