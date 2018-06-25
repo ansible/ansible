@@ -360,7 +360,7 @@ def main():
     if meraki.params['state'] == 'query':
         if meraki.params['name']:
             ssid_id = get_ssid_number(meraki.params['name'], get_ssids(meraki, net_id))
-            path = meraki.construct_path('get_one', net_id=net_id) + ssid_id
+            path = meraki.construct_path('get_one', net_id=net_id) + str(ssid_id)
             meraki.result['data'] = meraki.request(path, method='GET')
         elif meraki.params['number']:
             path = meraki.construct_path('get_one', net_id=net_id) + meraki.params['number']
