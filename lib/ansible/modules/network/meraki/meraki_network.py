@@ -184,11 +184,14 @@ def main():
     if meraki.params['state'] == 'present':
         payload = {'name': meraki.params['net_name'],
                    'type': meraki.params['type'],
+                   'tags': meraki.params['tags'],
                    }
         if meraki.params['tags']:
             payload['tags'] = construct_tags(meraki.params['tags'])
         if meraki.params['timezone']:
             payload['timeZone'] = meraki.params['timezone']
+        else:
+            payload['timeZone'] = 'America/Los_Angeles'
         if meraki.params['type'] == 'combined':
             payload['type'] = 'switch wireless appliance'
 
