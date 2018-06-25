@@ -193,9 +193,8 @@ from ansible.module_utils._text import to_bytes, to_native
 def write_changes(module, b_lines, dest):
 
     tmpfd, tmpfile = tempfile.mkstemp()
-    f = os.fdopen(tmpfd, 'wb')
-    f.writelines(b_lines)
-    f.close()
+    with open(tmpfile, 'wb') as f:
+        f.writelines(b_lines)
 
     validate = module.params.get('validate', None)
     valid = not validate
@@ -247,14 +246,13 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
 
         b_lines = []
     else:
-        f = open(b_dest, 'rb')
-        b_lines = f.readlines()
-        f.close()
+        with open(b_dest, 'rb') as f:
+            b_lines = f.readlines()
 
     if module._diff:
         diff['before'] = to_native(b('').join(b_lines))
 
-    if regexp is not None:
+    if regexp:
         bre_m = re.compile(to_bytes(regexp, errors='surrogate_or_strict'))
 
     if insertafter not in (None, 'BOF', 'EOF'):
@@ -270,7 +268,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     m = None
     b_line = to_bytes(line, errors='surrogate_or_strict')
     for lineno, b_cur_line in enumerate(b_lines):
-        if regexp is not None:
+        if regexp:
             match_found = bre_m.search(b_cur_line)
         else:
             match_found = b_line == b_cur_line.rstrip(b('\r\n'))
@@ -406,21 +404,20 @@ def absent(module, dest, regexp, line, backup):
             'before_header': '%s (content)' % dest,
             'after_header': '%s (content)' % dest}
 
-    f = open(b_dest, 'rb')
-    b_lines = f.readlines()
-    f.close()
+    with open(b_dest, 'rb') as f:
+        b_lines = f.readlines()
 
     if module._diff:
         diff['before'] = to_native(b('').join(b_lines))
 
-    if regexp is not None:
+    if regexp:
         bre_c = re.compile(to_bytes(regexp, errors='surrogate_or_strict'))
     found = []
 
     b_line = to_bytes(line, errors='surrogate_or_strict')
 
     def matcher(b_cur_line):
-        if regexp is not None:
+        if regexp:
             match_found = bre_c.search(b_cur_line)
         else:
             match_found = b_line == b_cur_line.rstrip(b('\r\n'))
@@ -480,13 +477,15 @@ def main():
     backrefs = params['backrefs']
     path = params['path']
     firstmatch = params['firstmatch']
+    regexp = params['regexp']
+    line = params.get('line', None)
 
     b_path = to_bytes(path, errors='surrogate_or_strict')
     if os.path.isdir(b_path):
         module.fail_json(rc=256, msg='Path %s is a directory !' % path)
 
     if params['state'] == 'present':
-        if backrefs and params['regexp'] is None:
+        if backrefs and not regexp:
             module.fail_json(msg='regexp= is required with backrefs=true')
 
         if params.get('line', None) is None:
@@ -500,13 +499,13 @@ def main():
 
         line = params['line']
 
-        present(module, path, params['regexp'], line,
+        present(module, path, regexp, line,
                 ins_aft, ins_bef, create, backup, backrefs, firstmatch)
     else:
-        if params['regexp'] is None and params.get('line', None) is None:
+        if not regexp and line is None:
             module.fail_json(msg='one of line= or regexp= is required with state=absent')
 
-        absent(module, path, params['regexp'], params.get('line', None), backup)
+        absent(module, path, regexp, line, backup)
 
 
 if __name__ == '__main__':

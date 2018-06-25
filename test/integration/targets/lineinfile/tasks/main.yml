@@ -717,3 +717,37 @@
   assert:
     that:
       - result.stat.checksum == 'eca8d8ea089d4ea57a3b87d4091599ca8b60dfd2'
+
+###################################################################
+# Issue 29443
+
+- name: Deploy the test file for lineinfile
+  copy:
+    src: test.txt
+    dest: "{{ output_dir }}/test.txt"
+  register: result
+
+- name: Assert that the test file was deployed
+  assert:
+    that:
+      - result is changed
+      - result.checksum == '5feac65e442c91f557fc90069ce6efc4d346ab51'
+      - result.state == 'file'
+
+- name: Insert a line in the file using an empty string as a regular expression
+  lineinfile:
+    path: "{{ output_dir }}/test.txt"
+    regexp: ''
+    line: This is line 6
+  register: insert_empty_regexp
+
+- name: Stat the file
+  stat:
+    path: "{{ output_dir }}/test.txt"
+  register: result
+
+- name: Assert that the file contents match what is expected
+  assert:
+    that:
+      - insert_empty_regexp is changed
+      - result.stat.checksum == '3baeade8eb2ecf4b01d70d541e9b8258b67c7f9f'
