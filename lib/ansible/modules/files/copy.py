@@ -78,7 +78,7 @@ options:
     description:
       - If C(no), it will search for I(src) at originating/master machine.
       - If C(yes) it will go to the remote/target machine for the I(src). Default is C(no).
-      - I(remote_src) support recursive copying, but dose NOT support check mode currently.
+      - I(remote_src) support recursive copying.
       - I(remote_src) only works with C(mode=preserve) as of version 2.6.
     type: bool
     default: 'no'
