@@ -24,6 +24,7 @@ import types
 
 try:
     import netaddr
+    import netaddr.core
 except ImportError:
     # in this case, we'll make the filters return error messages (see bottom)
     netaddr = None
@@ -671,7 +672,12 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
 
 
 def iparithmetic(value, amount):
-    ip = netaddr.IPAddress(value)
+    try:
+        ip = netaddr.IPAddress(value)
+    except netaddr.core.AddrFormatError:
+        msg = 'You must pass a valid IP address; {} is invalid'.format(value)
+        raise errors.AnsibleFilterError(msg)
+
     return str(ip + amount)
 
 
