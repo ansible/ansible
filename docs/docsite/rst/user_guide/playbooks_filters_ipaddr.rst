@@ -380,9 +380,9 @@ be automatically converted to a router address (with ``::1/48`` host address)::
 .. _6to4: https://en.wikipedia.org/wiki/6to4
 
 IP Arithmetic
-^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^
 
-.. versionadded:: 2.6
+.. versionadded:: 2.7
 
 ``iparithmetic()`` filter can be used to do simple IP arithmetic.
 
