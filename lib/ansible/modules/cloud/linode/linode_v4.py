@@ -23,42 +23,27 @@ version_added: "2.7"
 options:
     type:
         description:
-            - the resource size for the linode instance. More info can be
-              found here, as the id key: https://api.linode.com/v4/linode/types
+            - the resource size for the linode instance. More info can be found here, as the id key: https://api.linode.com/v4/linode/types
         required: true
     region:
         description:
-            - region to provision the instance, only needed when creating or
-              updating the instance. Options be found here:
-              https://api.linode.com/v4/regions
+            - region to provision the instance, only needed when creating or updating the instance. Options be found here: https://api.linode.com/v4/regions
         required: true
     image:
         description:
-            - image to boot the instance from. You should be able to boot
-              images that are private to your account, you would just need to
-              find the id key from the list of image objects. Publically
-              available images can be found here:
-              https://api.linode.com/v4/images
+            - image to boot the instance from. You should be able to boot images that are private to your account, you would just need to find the id key from the list of image objects. Publicly available images can be found here: https://api.linode.com/v4/images
         required: true
     state:
         description:
-            - can be either absent or present, absent deletes the image and has
-              a strict requirement on a label. present will either assure that
-              a previously created image exists or create a new one. Do note
-              that labels are unique.
+            - can be either absent or present, absent deletes the image and has a strict requirement on a label. present will either assure that a previously created image exists or create a new one. Do note that labels are unique.
         required: true
     label:
         description:
-            - can be either absent or present, absent deletes the image and has
-              a strict requirement on a label. present will either assure that
-              a previously created image exists or create a new one. Do note
-              that labels are unique.
+            - can be either absent or present, absent deletes the image and has a strict requirement on a label. present will either assure that a previously created image exists or create a new one. Do note that labels are unique.
         required: false
     token:
         description:
-            - string to authenticate against the linode api, not required as
-              the module will check for a LINODE_TOKEN environment variable on
-              the control machine.
+            - string to authenticate against the linode api, not required as the module will check for a LINODE_TOKEN environment variable on the control machine.
         required: false
 
 extends_documentation_fragment:
@@ -114,43 +99,63 @@ import string
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-import requests
+from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.digital_ocean import Response
 
 
 def delete_linode(module, instance_id, label, token):
     """
     delete a linode instance
     """
-    delete_response = requests.delete(
+
+    response, info = fetch_url(
+        module,
         "https://api.linode.com/v4/linode/instances/{0}".format(instance_id),
+        method="DELETE",
+        data=json.dumps({"linodeId": instance_id}),
         headers={
             "Content-Type": "application/json",
             "Authorization": "Bearer {0}".format(token),
         },
-        data=json.dumps({"linodeId": instance_id}),
     )
-    if not delete_response:
+
+    delete_response = Response(response, info)
+    if 400 <= delete_response.status_code < 500:
         module.fail_json(
-            msg="issue deleting linode: {0} with id: {1}".format(label, instance_id)
+            msg="client error deleting linode: {0}".format(delete_response.json)
         )
-    return delete_response.json()
+    elif 500 <= delete_response.status_code < 600:
+        module.fail_json(
+            msg="server error deleting linode: {0}".format(delete_response.json)
+        )
+    return delete_response.json
 
 
 def list_linode(module, token):
     """
     return linode instance data
     """
-    list_response = requests.get(
+    response, info = fetch_url(
+        module,
         "https://api.linode.com/v4/linode/instances",
+        method="GET",
+        data=json.dumps({"page_size": 100}),
         headers={
             "Content-Type": "application/json",
             "Authorization": "Bearer {0}".format(token),
         },
-        data=json.dumps({"page_size": 100}),
     )
-    if not list_response:
-        module.fail_json(msg="issue creating linode: {0}".format(list_response.json()))
-    return list_response.json()
+
+    list_response = Response(response, info)
+    if 400 <= list_response.status_code < 500:
+        module.fail_json(
+            msg="client error listing linode: {0}".format(list_response.json)
+        )
+    elif 500 <= list_response.status_code < 600:
+        module.fail_json(
+            msg="server error listing linode: {0}".format(list_response.json)
+        )
+    return list_response.json
 
 
 def get_instance_by_label(module, label, token):
@@ -170,8 +175,10 @@ def create_linode(module, root_pass, token):
     """
     creates an instance and returns the ip addresses
     """
-    create_response = requests.post(
+    response, info = fetch_url(
+        module,
         "https://api.linode.com/v4/linode/instances",
+        method="POST",
         headers={
             "Content-Type": "application/json",
             "Authorization": "Bearer {0}".format(token),
@@ -187,19 +194,27 @@ def create_linode(module, root_pass, token):
             }
         ),
     )
-    if not create_response:
+
+    create_response = Response(response, info)
+    if 400 <= create_response.status_code < 500:
         module.fail_json(
-            msg="issue creating linode: {0}".format(create_response.json())
+            msg="client error listing linode: {0}".format(create_response.json)
         )
-    return create_response.json()
+    elif 500 <= create_response.status_code < 600:
+        module.fail_json(
+            msg="server error listing linode: {0}".format(create_response.json)
+        )
+    return create_response.json
 
 
 def rebuild_linode(module, root_pass, instance_id, token):
     """
     rebuild an instance to the specified parameters, should boot on its own
     """
-    rebuild_response = requests.post(
+    response, info = fetch_url(
+        module,
         "https://api.linode.com/v4/linode/instances/{0}/rebuild".format(instance_id),
+        method="POST",
         headers={
             "Content-Type": "application/json",
             "Authorization": "Bearer {0}".format(token),
@@ -212,45 +227,66 @@ def rebuild_linode(module, root_pass, instance_id, token):
             }
         ),
     )
-    if not rebuild_response:
-        module.fail_json(
-            msg="issue rebuilding linode: {0}".format(rebuild_response.json())
-        )
 
-    return rebuild_response.json()
+    rebuild_response = Response(response, info)
+    if 400 <= rebuild_response.status_code < 500:
+        module.fail_json(
+            msg="client error listing linode: {0}".format(rebuild_response.json)
+        )
+    elif 500 <= rebuild_response.status_code < 600:
+        module.fail_json(
+            msg="server error listing linode: {0}".format(rebuild_response.json)
+        )
+    return rebuild_response.json
 
 
 def resize_linode(module, instance_id, token, ignore_error=False):
     """
     resizes an instance to the specified format and then boots it
     """
-    resize_response = requests.post(
+    response, info = fetch_url(
+        module,
         "https://api.linode.com/v4/linode/instances/{0}/resize".format(instance_id),
+        method="POST",
         headers={
             "Content-Type": "application/json",
             "Authorization": "Bearer {0}".format(token),
         },
         data=json.dumps({"type": module.params["type"]}),
     )
-    # exit early if we are supposed to ignore errors
-    if not resize_response:
+
+    resize_response = Response(response, info)
+    if 400 <= resize_response.status_code < 500:
         module.fail_json(
-            msg="issue resizing linode: {0}".format(resize_response.json())
+            msg="client error listing linode: {0}".format(resize_response.json)
+        )
+    elif 500 <= resize_response.status_code < 600:
+        module.fail_json(
+            msg="server error listing linode: {0}".format(resize_response.json)
         )
 
-    boot_response = requests.post(
+    # and now we boot, since resized instance don't automatically come back up
+    response, info = fetch_url(
+        module,
         "https://api.linode.com/v4/linode/instances/{0}/boot".format(instance_id),
+        method="POST",
         headers={
             "Content-Type": "application/json",
             "Authorization": "Bearer {0}".format(token),
         },
+        data=json.dumps({"type": module.params["type"]}),
     )
-    if not boot_response:
-        module.fail_json(
-            msg="issue booting linode after resize: {0}".format(boot_response.json())
-        )
 
-    return boot_response.json()
+    boot_response = Response(response, info)
+    if 400 <= boot_response.status_code < 500:
+        module.fail_json(
+            msg="client error listing linode: {0}".format(boot_response.json)
+        )
+    elif 500 <= boot_response.status_code < 600:
+        module.fail_json(
+            msg="server error listing linode: {0}".format(boot_response.json)
+        )
+    return boot_response.json
 
 
 def run_module():
@@ -377,6 +413,8 @@ def run_module():
         module.exit_json(**result)
     return None
 
+def main():
+    run_module()
 
 if __name__ == "__main__":
-    run_module()
+    main()
