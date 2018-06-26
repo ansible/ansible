@@ -1,0 +1,2 @@
+bugfixes:
+  - Re-evaluate role conditionals at handler search time (https://github.com/ansible/ansible/issues/37512)

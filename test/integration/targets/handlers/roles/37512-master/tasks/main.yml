@@ -1,0 +1,3 @@
+- name: 'Include slave role'
+  include_role:
+    name: 37512-slave

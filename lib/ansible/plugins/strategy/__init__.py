@@ -373,6 +373,10 @@ class StrategyBase:
                     if handler_task.name:
                         handler_vars = self._variable_manager.get_vars(play=iterator._play, task=handler_task)
                         templar = Templar(loader=self._loader, variables=handler_vars)
+
+                        if not handler_task.in_scope(templar, handler_vars):
+                            continue
+
                         try:
                             # first we check with the full result of get_name(), which may
                             # include the role name (if the handler is from a role). If that
@@ -396,6 +400,10 @@ class StrategyBase:
         def search_handler_blocks_by_uuid(handler_uuid, handler_blocks):
             for handler_block in handler_blocks:
                 for handler_task in handler_block.block:
+                    handler_vars = self._variable_manager.get_vars(play=iterator._play, task=handler_task)
+                    templar = Templar(loader=self._loader, variables=handler_vars)
+                    if not handler_task.in_scope(templar, handler_vars):
+                        continue
                     if handler_uuid == handler_task._uuid:
                         return handler_task
             return None
@@ -406,6 +414,10 @@ class StrategyBase:
                     try:
                         handler_vars = self._variable_manager.get_vars(play=iterator._play, task=target_handler)
                         templar = Templar(loader=self._loader, variables=handler_vars)
+
+                        if not target_handler.in_scope(templar, handler_vars):
+                            return False
+
                         target_handler_name = templar.template(target_handler.name)
                         if target_handler_name == handler_name:
                             return True

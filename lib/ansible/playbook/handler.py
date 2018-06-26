@@ -49,6 +49,19 @@ class Handler(Task):
     def has_triggered(self, host):
         return host in self._flagged_hosts
 
+    def in_scope(self, templar, handler_vars):
+        '''
+        When handler is inside a role, this checks if the role was actually
+        included by re-evaluating its when conditional. Used at handler search time
+        to skip non-included handlers.
+
+        https://github.com/ansible/ansible/issues/37512
+        '''
+        if self._role:
+            return self._role.evaluate_conditional(templar, handler_vars)
+
+        return True
+
     def serialize(self):
         result = super(Handler, self).serialize()
         result['is_handler'] = True

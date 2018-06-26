@@ -1,0 +1,2 @@
+- name: handler execute
+  command: /bin/echo 37512-handler-executed

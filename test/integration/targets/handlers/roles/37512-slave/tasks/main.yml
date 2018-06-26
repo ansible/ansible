@@ -1,0 +1,5 @@
+- name: Changed command
+  debug:
+    msg: "Notifying handler"
+  changed_when: True
+  notify: handler execute
