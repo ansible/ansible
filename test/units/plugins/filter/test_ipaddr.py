@@ -20,6 +20,7 @@ __metaclass__ = type
 import pytest
 
 from ansible.compat.tests import unittest
+from ansible.errors import AnsibleFilterError
 from ansible.plugins.filter.ipaddr import (ipaddr, _netmask_query, nthhost, next_nth_usable,
                                            previous_nth_usable, network_in_usable, network_in_network,
                                            cidr_merge, iparithmetic)
@@ -488,3 +489,8 @@ class TestIpFilter(unittest.TestCase):
             iparithmetic('2001::5', -10),
             '2000:ffff:ffff:ffff:ffff:ffff:ffff:fffb'
         )
+
+        expected = 'You must pass a valid IP address; invalid_ip is invalid'
+        with self.assertRaises(AnsibleFilterError) as exc:
+            iparithmetic('invalid_ip', 8)
+        self.assertEqual(exc.exception.message, expected)
