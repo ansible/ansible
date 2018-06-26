@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import collections
 import re
 import json
 
@@ -78,7 +79,10 @@ class Cliconf(CliconfBase):
         results = []
 
         for cmd in chain(['configure'], to_list(candidate)):
-            results.append(self.send_command(cmd))
+            if not isinstance(cmd, collections.Mapping):
+                cmd = {'command': cmd}
+
+            results.append(self.send_command(**cmd))
 
         out = self.get('compare')
         out = to_text(out, errors='surrogate_or_strict')
@@ -96,9 +100,11 @@ class Cliconf(CliconfBase):
                     self.get('exit')
             else:
                 self.discard_changes()
+        else:
+            self.get('exit')
 
         resp['diff'] = diff_config
-        resp['response'] = results[1:]
+        resp['response'] = results[1:-1]
         return json.dumps(resp)
 
     def get(self, command=None, prompt=None, answer=None, sendonly=False):
