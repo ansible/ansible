@@ -1062,7 +1062,7 @@ def main():
         module.warn("Ignoring separate_git_dir argument. "
                     "Can not do bare clone with argument separate_git_dir.")
         separate_git_dir = None
-    else:
+    elif separate_git_dir:
         separate_git_dir = os.path.abspath(separate_git_dir)
 
     gitconfig = None
