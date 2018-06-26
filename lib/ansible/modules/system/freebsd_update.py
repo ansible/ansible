@@ -81,12 +81,12 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             action=dict(type='str', required=True),
-            server=dict(type='str'),
-            basedir=dict(type='str'),
-            workdir=dict(type='str'),
-            conffile=dict(type='str'),
+            server=dict(type='str', default=''),
+            basedir=dict(type='str', default=''),
+            workdir=dict(type='str', default=''),
+            conffile=dict(type='str', default=''),
             force=dict(type='bool', default=False),
-            key=dict(type='str', default=True),
+            key=dict(type='str', default=''),
         ),
         supports_check_mode=True,
     )
@@ -95,7 +95,7 @@ def main():
 
     action = module.params['action']
     msg = "Unexpected failure!"
-    if not action in actions:
+    if action not in actions:
         msg = "Unexpected action: {}".format(action)
     server = module.params.get('server')
     basedir = module.params.get('basedir')
@@ -118,6 +118,8 @@ def main():
         cmd.extend(('-f', conffile))
     if force is True:
         cmd.extend('-F')
+    if key is not '':
+        cmd.extend(('-k', key))
 
     try:
         rc, out, err = module.run_command(cmd)
