@@ -41,7 +41,7 @@ options:
         required: false
         type: bool
         description:
-            - Darwin/OS X only, optionally hide the user from the login window and system preferences.
+            - macOS only, optionally hide the user from the login window and system preferences.
             - The default will be 'True' if the I(system) option is used.
         version_added: "2.6"
     non_unique:
@@ -74,8 +74,8 @@ options:
     shell:
         description:
             - Optionally set the user's shell.
-            - On Mac OS X, before version 2.5, the default shell for non-system users was /usr/bin/false.
-              Since 2.5, the default shell for non-system users on Mac OS X is /bin/bash.
+            - On macOS, before version 2.5, the default shell for non-system users was /usr/bin/false.
+              Since 2.5, the default shell for non-system users on macOS is /bin/bash.
     home:
         description:
             - Optionally set the user's home directory.
@@ -86,7 +86,7 @@ options:
     password:
         description:
             - Optionally set the user's password to this crypted value.
-            - On Darwin/OS X systems, this value has to be cleartext. Beware of security issues.
+            - On macOS systems, this value has to be cleartext. Beware of security issues.
             - See U(https://docs.ansible.com/ansible/faq.html#how-do-i-generate-crypted-passwords-for-the-user-module)
               for details on various ways to generate these password values.
     state:
@@ -1693,7 +1693,7 @@ class SunOS(User):
 
 class DarwinUser(User):
     """
-    This is a Darwin Mac OS X User manipulation class.
+    This is a Darwin macOS User manipulation class.
     Main differences are that Darwin:-
       - Handles accounts in a database managed by dscl(1)
       - Has no useradd/groupadd

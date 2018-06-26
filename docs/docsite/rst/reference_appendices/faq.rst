@@ -377,9 +377,9 @@ The mkpasswd utility that is available on most Linux systems is a great option:
 .. code-block:: shell-session
 
     mkpasswd --method=sha-512
-    
 
-If this utility is not installed on your system (e.g. you are using OS X) then you can still easily
+
+If this utility is not installed on your system (e.g. you are using macOS) then you can still easily
 generate these passwords using Python. First, ensure that the `Passlib <https://bitbucket.org/ecollins/passlib/wiki/Home>`_
 password hashing library is installed:
 
