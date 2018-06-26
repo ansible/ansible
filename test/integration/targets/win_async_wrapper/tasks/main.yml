@@ -22,7 +22,7 @@
 - name: async poll immediate success
   async_test:
     sleep_delay_sec: 0
-  async: 10
+  async: 20
   poll: 1
   register: asyncresult
 
@@ -59,7 +59,7 @@
 - name: async poll retry
   async_test:
     sleep_delay_sec: 5
-  async: 10
+  async: 20
   poll: 1
   register: asyncresult
 
@@ -94,8 +94,8 @@
 
 - name: async poll timeout
   async_test:
-    sleep_delay_sec: 5
-  async: 3
+    sleep_delay_sec: 25
+  async: 20
   poll: 1
   register: asyncresult
   ignore_errors: true
@@ -146,7 +146,7 @@
 
 - name: echo some non ascii characters
   win_command: cmd.exe /c echo über den Fußgängerübergang gehen
-  async: 10
+  async: 20
   poll: 1
   register: nonascii_output
 
