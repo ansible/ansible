@@ -184,14 +184,11 @@ def main():
     if meraki.params['state'] == 'present':
         payload = {'name': meraki.params['net_name'],
                    'type': meraki.params['type'],
-                   'tags': meraki.params['tags'],
                    }
         if meraki.params['tags']:
             payload['tags'] = construct_tags(meraki.params['tags'])
         if meraki.params['timezone']:
             payload['timeZone'] = meraki.params['timezone']
-        else:
-            payload['timeZone'] = 'America/Los_Angeles'
         if meraki.params['type'] == 'combined':
             payload['type'] = 'switch wireless appliance'
 
@@ -225,6 +222,16 @@ def main():
                 meraki.result['changed'] = True
             else:
                 net = meraki.get_net(meraki.params['org_name'], meraki.params['net_name'], data=nets)
+                proposed = payload
+                if meraki.params['timezone']:
+                    proposed['timeZone'] = meraki.params['timezone']
+                else:
+                    proposed['timeZone'] = 'America/Los_Angeles'
+                if not meraki.params['tags']:
+                    proposed['tags'] = None
+                if not proposed['type']:
+                    proposed['type'] = net['type']
+
                 if meraki.is_update_required(net, payload):
                     path = meraki.construct_path('update',
                                                  net_id=meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
