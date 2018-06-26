@@ -53,7 +53,7 @@ Assumptions
 Caveats
 =======
 
-- Hosts in the ESXI cluster must have access to the datastore that the template resides on.
+- Hosts in the ESXi cluster must have access to the datastore that the template resides on.
 - Multiple templates with the same name will cause module failures.
 - In order to utilize Guest Customization, VMWare Tools must be installed on the template. For Linux, the open-vm-tools package is recommended, and it requires that Perl be installed.
 
@@ -79,23 +79,112 @@ In this use case / example, we will be selecting a virtual machine template and 
           validate_certs: False
           name: testvm_2
           template: template_el7
-          datacenter: dc1
-          folder: /dc1/vm
+          datacenter: DC1
+          folder: /DC1/vm
           state: poweredon
           wait_for_ip_address: yes
 
 
 Since Ansible utilizes the VMware API to perform actions, in this use case we will be connecting directly to the API from our localhost. This means that our playbooks will not be running from the vCenter or ESXi Server. We do not necessarily need to collect facts about our localhost, so the *gather_facts* parameter will be disabled. You can run these modules against another server that would then connect to the API if your localhost does not have access to vCenter. If so, the required Python modules will need to be installed on that target server.
 
-To begin, there are a few bits of information we will need. First and foremost is the hostname of the ESXi server or vCenter server. After this, we will need the username and password for this server. For now, you will be entering these directly, but in a more advanced playbook this can be abstracted out and stored in a more secure fashion [1][2]. If your vCenter or ESXi server is not setup with proper CA certificates that can be verified from the Ansible server, then it is necessary to disable validation of these certificates by using the *validate_certs* parameter. To do this you need to set `validate_certs=False` in your playbook.
+To begin, there are a few bits of information we will need. First and foremost is the hostname of the ESXi server or vCenter server. After this, you will need the username and password for this server. For now, you will be entering these directly, but in a more advanced playbook this can be abstracted out and stored in a more secure fashion [1][2]. If your vCenter or ESXi server is not setup with proper CA certificates that can be verified from the Ansible server, then it is necessary to disable validation of these certificates by using the *validate_certs* parameter. To do this you need to set ``validate_certs=False`` in your playbook.
 
-Now we get into supplying the information about the VM we will be creating. We will need to give this VM a name. It must conform to all VMware requirements for naming conventions.  Next we will need the display name of the template that we will be cloning. This must match exactly with what is displayed in VMware.  A folder to place this virtual machine in can then be specified. This can either be a relative path or a full path to the folder including the Datacenter. We must then specify a state for the VM.  This simply tells it which action we want to take, in this case we will be ensure that the VM exists and is powered on.  An optional parameter is *wait_for_ip_address*, this will tell Ansible to wait for the machine to fully boot up and VMware Tools is running before completing this task.
+Now you need to supply the information about the virtual machine which will be created. Give your virtual machine a name, one that conforms to all VMware requirements for naming conventions.  Next, select the display name of the template from which you want to clone new virtual machine. This must match what's displayed in VMware Web UI exactly. Then you can specify a folder to place this new virtual machine in. This path can either be a relative path or a full path to the folder including the Datacenter. You may need to specify a state for the virtual machine.  This simply tells the module which action you want to take, in this case you will be ensure that the virtual machine exists and is powered on.  An optional parameter is *wait_for_ip_address*, this will tell Ansible to wait for the virtual machine to fully boot up and VMware Tools is running before completing this task.
 
 
 What to expect
 --------------
 
 - You will see a bit of JSON output after this playbook completes. This output shows various parameters that are returned from the module and from vCenter about the newly created VM.
+
+.. code-block:: yaml
+
+    {
+        "changed": true,
+        "instance": {
+            "annotation": "",
+            "current_snapshot": null,
+            "customvalues": {},
+            "guest_consolidation_needed": false,
+            "guest_question": null,
+            "guest_tools_status": "guestToolsNotRunning",
+            "guest_tools_version": "0",
+            "hw_cores_per_socket": 1,
+            "hw_datastores": [
+                "ds_215"
+            ],
+            "hw_esxi_host": "192.0.2.44",
+            "hw_eth0": {
+                "addresstype": "assigned",
+                "ipaddresses": null,
+                "label": "Network adapter 1",
+                "macaddress": "00:50:56:8c:19:f4",
+                "macaddress_dash": "00-50-56-8c-19-f4",
+                "portgroup_key": "dvportgroup-17",
+                "portgroup_portkey": "0",
+                "summary": "DVSwitch: 50 0c 5b 22 b6 68 ab 89-fc 0b 59 a4 08 6e 80 fa"
+            },
+            "hw_files": [
+                "[ds_215] testvm_2/testvm_2.vmx",
+                "[ds_215] testvm_2/testvm_2.vmsd",
+                "[ds_215] testvm_2/testvm_2.vmdk"
+            ],
+            "hw_folder": "/DC1/vm",
+            "hw_guest_full_name": null,
+            "hw_guest_ha_state": null,
+            "hw_guest_id": null,
+            "hw_interfaces": [
+                "eth0"
+            ],
+            "hw_is_template": false,
+            "hw_memtotal_mb": 512,
+            "hw_name": "testvm_2",
+            "hw_power_status": "poweredOff",
+            "hw_processor_count": 2,
+            "hw_product_uuid": "420cb25b-81e8-8d3b-dd2d-a439ee54fcc5",
+            "hw_version": "vmx-13",
+            "instance_uuid": "500cd53b-ed57-d74e-2da8-0dc0eddf54d5",
+            "ipv4": null,
+            "ipv6": null,
+            "module_hw": true,
+            "snapshots": []
+        },
+        "invocation": {
+            "module_args": {
+                "annotation": null,
+                "cdrom": {},
+                "cluster": "DC1_C1",
+                "customization": {},
+                "customization_spec": null,
+                "customvalues": [],
+                "datacenter": "DC1",
+                "disk": [],
+                "esxi_hostname": null,
+                "folder": "/DC1/vm",
+                "force": false,
+                "guest_id": null,
+                "hardware": {},
+                "hostname": "192.0.2.44",
+                "is_template": false,
+                "linked_clone": false,
+                "name": "testvm_2",
+                "name_match": "first",
+                "networks": [],
+                "password": "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER",
+                "port": 443,
+                "resource_pool": null,
+                "snapshot_src": null,
+                "state": "present",
+                "state_change_timeout": 0,
+                "template": "template_el7",
+                "username": "administrator@vsphere.local",
+                "uuid": null,
+                "validate_certs": false,
+                "vapp_properties": [],
+                "wait_for_ip_address": true
+            }
+        }
+    }
 
 - State is changed to *True* which notifies that the virtual machine is built using given template. The module will not complete until the clone task in VMware is finished. This can take some time depending on your environment.
 
