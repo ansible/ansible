@@ -21,7 +21,8 @@ import pytest
 
 from ansible.compat.tests import unittest
 from ansible.plugins.filter.ipaddr import (ipaddr, _netmask_query, nthhost, next_nth_usable,
-                                           previous_nth_usable, network_in_usable, network_in_network, cidr_merge)
+                                           previous_nth_usable, network_in_usable, network_in_network,
+                                           cidr_merge, iparithmetic)
 netaddr = pytest.importorskip('netaddr')
 
 
@@ -473,3 +474,8 @@ class TestIpFilter(unittest.TestCase):
         subnets = ['1.12.1.1', '1.12.1.255']
         self.assertEqual(cidr_merge(subnets), ['1.12.1.1/32', '1.12.1.255/32'])
         self.assertEqual(cidr_merge(subnets, 'span'), '1.12.1.0/24')
+
+    def test_iparithmetic(self):
+        self.assertEqual(iparithmetic('192.168.1.5', 5), '192.168.1.10')
+        self.assertEqual(iparithmetic('192.168.1.5', -5), '192.168.1.0')
+        self.assertEqual(iparithmetic('192.168.0.5', -10), '192.167.255.251')
