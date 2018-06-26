@@ -5,7 +5,7 @@ azure-cli-nspkg==3.0.2
 azure-common==1.1.11
 azure-mgmt-batch==4.1.0
 azure-mgmt-compute==2.1.0
-azure-mgmt-containerinstance==0.3.1
+azure-mgmt-containerinstance==0.4.0
 azure-mgmt-containerregistry==2.0.0
 azure-mgmt-containerservice==3.0.1
 azure-mgmt-dns==1.2.0
