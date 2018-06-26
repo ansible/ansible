@@ -39,6 +39,7 @@ options:
         description:
             - The description of the portgroup that is to be created.
         required: False
+        version_added: '2.7'
     switch_name:
         description:
             - The name of the distributed vSwitch the port group should be created on.
@@ -100,8 +101,8 @@ options:
             - '- C(inbound_policy) (bool): Indicate whether or not the teaming policy is applied to inbound frames as well. (default: False)'
             - '- C(notify_switches) (bool): Indicate whether or not to notify the physical switch if a link fails. (default: True)'
             - '- C(rolling_order) (bool): Indicate whether or not to use a rolling policy when restoring links. (default: False)'
-            - '. C(active_uplinkport) (list): List of active uplink ports used for load balancing. (default: None)' 
-            - '. C(standby_uplinkport) (list): List of standby uplink ports used for failover. (default: None)' 
+            - '- C(active_uplinkport) (list): List of active uplink ports used for load balancing. (default: None)'
+            - '- C(standby_uplinkport) (list): List of standby uplink ports used for failover. (default: None)'
         required: False
         version_added: '2.5'
         default: {
@@ -213,24 +214,6 @@ EXAMPLES = '''
           uplink_teaming_override: yes
           vendor_config_override: yes
           vlan_override: yes
-
-    - name: Create vlan portgroup with LACP LAG as an uplink
-      connection: local
-      vmware_dvs_portgroup_2:
-        hostname: vcenter_ip_or_hostname
-        username: vcenter_username
-        password: vcenter_password
-        validate_certs: false
-        portgroup_name: testpg-1337
-        portgroup_description: ansible test portgroup
-        switch_name: Production01
-        vlan_id: 1337
-        num_ports: 120
-        portgroup_type: ephemeral
-        teaming_policy:
-          active_uplinkport: lag1
-        state: present
-
 '''
 
 try:
