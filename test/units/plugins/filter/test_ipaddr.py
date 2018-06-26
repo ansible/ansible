@@ -479,3 +479,12 @@ class TestIpFilter(unittest.TestCase):
         self.assertEqual(iparithmetic('192.168.1.5', 5), '192.168.1.10')
         self.assertEqual(iparithmetic('192.168.1.5', -5), '192.168.1.0')
         self.assertEqual(iparithmetic('192.168.0.5', -10), '192.167.255.251')
+
+        self.assertEqual(iparithmetic('2001::1', 8), '2001::9')
+        self.assertEqual(iparithmetic('2001::1', 9), '2001::a')
+        self.assertEqual(iparithmetic('2001::1', 10), '2001::b')
+        self.assertEqual(iparithmetic('2001::5', -3), '2001::2')
+        self.assertEqual(
+            iparithmetic('2001::5', -10),
+            '2000:ffff:ffff:ffff:ffff:ffff:ffff:fffb'
+        )
