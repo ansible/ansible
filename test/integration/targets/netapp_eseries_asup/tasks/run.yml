@@ -23,36 +23,211 @@
   debug:
     msg: "Using user={{ credentials.api_username }} on server={{ credentials.api_url }}."
 
-- name: Set the ASUP settings
+# ****************************************************
+# *** Enable auto-support using all default values ***
+# ****************************************************
+- name: Enable auto-support using default values
   netapp_e_asup:
     <<: *creds
-  register: result
+    verbose: true
 
-- name: Validate settings
+- name: Collect auto-support state information from the array
+  uri:
+    url: "{{ credentials.api_url }}/device-asup"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current
+
+- name: Validate auto-support expected default state
   assert:
-    that: result.asup and result.active
+    that: "{{ current.json.asupEnabled and
+              current.json.onDemandEnabled and
+              current.json.remoteDiagsEnabled and
+              current.json.schedule.dailyMinTime == 0 and
+              current.json.schedule.dailyMaxTime == 1439 }}"
+    msg: "Unexpected auto-support state"
 
-- name: Validate the idempotency of the module
-  netapp_e_asup:
-    <<: *creds
-  register: result
-
-- name: Ensure we still have the same settings, but had no change
+- name: Validate auto-support schedule
   assert:
-    that: result.asup and result.active and not result.changed
+    that: "{{ item in current.json.schedule.daysOfWeek }}"
+    msg: "{{ item }} is missing from the schedule"
+  loop: "{{ lookup('list', ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']) }}"
 
-- name: Set the ASUP settings
+# ****************************
+# *** Disable auto-support ***
+# ****************************
+- name: Disable auto-support
   netapp_e_asup:
     <<: *creds
-    verbose: yes
+    state: disabled
+
+- name: Collect auto-support state information from the array
+  uri:
+    url: "{{ credentials.api_url }}/device-asup"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current
+
+- name: Validate auto-support is disabled
+  assert:
+    that: "{{ not current.json.asupEnabled }}"
+    msg: "Auto-support failed to be disabled"
+
+# ****************************************************
+# *** Enable auto-support using specific values ***
+# ****************************************************
+- name: Enable auto-support using specific values
+  netapp_e_asup:
+    <<: *creds
+    state: enabled
+    active: true
+    start: 22
+    end: 24
+    days:
+      - friday
+      - saturday
+    verbose: true
+
+- name: Collect auto-support state information from the array
+  uri:
+    url: "{{ credentials.api_url }}/device-asup"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current
+
+- name: Validate auto-support expected state
+  assert:
+    that: "{{ current.json.asupEnabled and
+              current.json.onDemandEnabled and
+              current.json.remoteDiagsEnabled and
+              current.json.schedule.dailyMinTime == (22 * 60) and
+              current.json.schedule.dailyMaxTime == (24 * 60 - 1) }}"
+    msg: "Unexpected auto-support state"
+
+- name: Validate auto-support schedule
+  assert:
+    that: "{{ item in current.json.schedule.daysOfWeek }}"
+    msg: "{{ item }} is missing from the schedule"
+  loop: "{{ lookup('list', ['friday', 'saturday']) }}"
+
+# ***********************************
+# *** Alter auto-support schedule ***
+# ***********************************
+- name: Auto auto-support schedule
+  netapp_e_asup:
+    <<: *creds
+    state: enabled
+    active: true
+    start: 0
+    end: 5
     days:
       - monday
-  register: result
+      - thursday
+      - sunday
+    verbose: true
 
-- name: Validate settings
+- name: Collect auto-support state information from the array
+  uri:
+    url: "{{ credentials.api_url }}/device-asup"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current
+
+- name: Validate auto-support expected state
   assert:
-    that: result.asup and result.active and result.changed and ['monday'] == result.cfg.schedule.daysOfWeek
+    that: "{{ current.json.asupEnabled and
+              current.json.onDemandEnabled and
+              current.json.remoteDiagsEnabled and
+              current.json.schedule.dailyMinTime == (0 * 60) and
+              current.json.schedule.dailyMaxTime == (5 * 60) }}"
+    msg: "Unexpected auto-support state"
 
-- name: Re-enable ASUP
+- name: Validate auto-support schedule
+  assert:
+    that: "{{ item in current.json.schedule.daysOfWeek }}"
+    msg: "{{ item }} is missing from the schedule"
+  loop: "{{ lookup('list', ['monday', 'thursday', 'sunday']) }}"
+
+# *************************************************************
+# *** Repeat previous test to verify state remains the same ***
+# *************************************************************
+- name: Repeat auto-support schedule change to verify idempotency
   netapp_e_asup:
     <<: *creds
+    state: enabled
+    active: true
+    start: 0
+    end: 5
+    days:
+      - monday
+      - thursday
+      - sunday
+    verbose: true
+  register: result
+
+- name: Collect auto-support state information from the array
+  uri:
+    url: "{{ credentials.api_url }}/device-asup"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current
+
+- name: Validate auto-support expected state
+  assert:
+    that: "{{ current.json.asupEnabled and
+              current.json.onDemandEnabled and
+              current.json.remoteDiagsEnabled and
+              current.json.schedule.dailyMinTime == (0 * 60) and
+              current.json.schedule.dailyMaxTime == (5 * 60) }}"
+    msg: "Unexpected auto-support state"
+
+- name: Validate auto-support schedule
+  assert:
+    that: "{{ item in current.json.schedule.daysOfWeek }}"
+    msg: "{{ item }} is missing from the schedule"
+  loop: "{{ lookup('list', ['monday', 'thursday', 'sunday']) }}"
+
+- name: Validate change was not detected
+  assert:
+    that: "{{ not result.changed }}"
+    msg: "Invalid change was detected"
+
+# ***********************************
+# *** Disable auto-support active ***
+# ***********************************
+- name: Auto auto-support schedule
+  netapp_e_asup:
+    <<: *creds
+    state: enabled
+    active: false
+    start: 0
+    end: 5
+    days:
+      - monday
+      - thursday
+      - sunday
+    verbose: true
+
+- name: Collect auto-support state information from the array
+  uri:
+    url: "{{ credentials.api_url }}/device-asup"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current
+
+- name: Validate auto-support expected state
+  assert:
+    that: "{{ current.json.asupEnabled and not current.json.onDemandEnabled and not current.json.remoteDiagsEnabled }}"
+    msg: "Unexpected auto-support state"

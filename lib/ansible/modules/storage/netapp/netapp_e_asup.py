@@ -28,10 +28,8 @@ options:
             - When this option is enabled, configuration, logs, and other support-related information will be relayed
               to NetApp to help better support your system. No personally identifiable information, passwords, etc, will
               be collected.
-        default: present
+        default: enabled
         choices:
-            - present
-            - absent
             - enabled
             - disabled
         aliases:
@@ -44,7 +42,7 @@ options:
               possible that the bundle did not contain all of the required information at the time of the event.
               Enabling this option allows NetApp support personnel to manually request transmission or re-transmission
               of support data in order ot resolve the problem.
-            - Only applicable if I(state=present).
+            - Only applicable if I(state=enabled).
         default: yes
         type: bool
     start:
@@ -173,8 +171,8 @@ class Asup(object):
     def __init__(self):
         argument_spec = eseries_host_argument_spec()
         argument_spec.update(dict(
-            state=dict(type='str', required=False, default='present', aliases=['asup', 'auto_support', 'autosupport'],
-                       choices=['present', 'absent', 'enabled', 'disabled']),
+            state=dict(type='str', required=False, default='enabled', aliases=['asup', 'auto_support', 'autosupport'],
+                       choices=['enabled', 'disabled']),
             active=dict(type='bool', required=False, default=True, ),
             days=dict(type='list', required=False, aliases=['schedule_days', 'days_of_week'],
                       choices=self.DAYS_OPTIONS),
@@ -186,7 +184,7 @@ class Asup(object):
 
         self.module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True, )
         args = self.module.params
-        self.asup = args['state'] in ['enabled', 'present']
+        self.asup = args['state'] == 'enabled'
         self.active = args['active']
         self.days = args['days']
         self.start = args['start']
@@ -233,7 +231,7 @@ class Asup(object):
         try:
             (rc, result) = request(self.url + 'device-asup', headers=HEADERS, **self.creds)
 
-            if not result['asupCapable']:
+            if not (result['asupCapable'] and result['onDemandCapable']):
                 self.module.fail_json(msg="ASUP is not supported on this device. Array Id [%s]." % (self.ssid))
             return result
 
