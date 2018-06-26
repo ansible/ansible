@@ -879,12 +879,12 @@ EXAMPLES = '''
       ticket: true
     register: myvm
 
- - name:
+  - name: Save ticket to file
     copy:
       content: "{{ myvm.vm.remote_vv_file }}"
       dest: ~/vvfile.vv
 
-  - name:
+  - name: Run remote viewer with file
     command: remote-viewer ~/vvfile.vv
 
 '''
@@ -899,8 +899,8 @@ id:
 vm:
     description: "Dictionary of all the VM attributes. VM attributes can be found on your oVirt/RHV instance
                   at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/vm."
-    returned: On success if VM is found.
-    Additionally when you set ticket to true it returns ticket to remote-viewer and be careful with those private data.
+    returned: On success if VM is found. 
+        Additionally when you set ticket to true it returns ticket to remote-viewer and be careful with those private data.
     type: dict
 '''
 import traceback
