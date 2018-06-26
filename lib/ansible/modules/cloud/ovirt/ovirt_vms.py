@@ -872,7 +872,7 @@ EXAMPLES = '''
         - spice
         - vnc
 # Execute remote viever to VM
-- block
+- block:
   - name: Create a VM that has the console configured for both Spice and VNC
     ovirt_vms:
       name: myvm
@@ -899,7 +899,7 @@ id:
 vm:
     description: "Dictionary of all the VM attributes. VM attributes can be found on your oVirt/RHV instance
                   at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/vm."
-    returned: On success if VM is found. 
+    returned: On success if VM is found.
         Additionally when you set ticket to true it returns ticket to remote-viewer and be careful with those private data.
     type: dict
 '''
