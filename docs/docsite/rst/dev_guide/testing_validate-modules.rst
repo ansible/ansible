@@ -83,6 +83,8 @@ Errors
   208       ``module_utils`` imports should import specific components, not ``*``
   209       Only the following ``from __future__`` imports are allowed:
             ``absolute_import``, ``division``, and ``print_function``.
+  210       ``subprocess.Popen`` used instead of ``module.run_command``
+  211       ``os.call`` used instead of ``module.run_command``
   ..
 ---------   -------------------
   **3xx**   **Documentation**

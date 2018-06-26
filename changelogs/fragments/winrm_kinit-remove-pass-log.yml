@@ -1,0 +1,2 @@
+bugfixes:
+- winrm - ensure pexpect is set to not echo the input on a failure and have a manual sanity check afterwards https://github.com/ansible/ansible/issues/41865

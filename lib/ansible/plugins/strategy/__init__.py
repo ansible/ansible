@@ -717,7 +717,12 @@ class StrategyBase:
         # the host here is from the executor side, which means it was a
         # serialized/cloned copy and we'll need to look up the proper
         # host object from the master inventory
-        real_host = self._inventory.hosts[host.name]
+        real_host = self._inventory.hosts.get(host.name)
+        if real_host is None:
+            if host.name == self._inventory.localhost.name:
+                real_host = self._inventory.localhost
+            else:
+                raise AnsibleError('%s cannot be matched in inventory' % host.name)
         group_name = result_item.get('add_group')
         parent_group_names = result_item.get('parent_groups', [])
 
@@ -831,7 +836,14 @@ class StrategyBase:
             #        we consider the ability of meta tasks to flush handlers
             for handler in handler_block.block:
                 if handler._uuid in self._notified_handlers and len(self._notified_handlers[handler._uuid]):
-                    result = self._do_handler_run(handler, handler.get_name(), iterator=iterator, play_context=play_context)
+                    handler_vars = self._variable_manager.get_vars(play=iterator._play, task=handler)
+                    templar = Templar(loader=self._loader, variables=handler_vars)
+                    handler_name = handler.get_name()
+                    try:
+                        handler_name = templar.template(handler_name)
+                    except (UndefinedError, AnsibleUndefinedVariable):
+                        pass
+                    result = self._do_handler_run(handler, handler_name, iterator=iterator, play_context=play_context)
                     if not result:
                         break
         return result
