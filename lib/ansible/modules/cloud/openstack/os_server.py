@@ -27,7 +27,8 @@ description:
 options:
    name:
      description:
-        - Name that has to be given to the instance
+        - Name that has to be given to the instance. It is also possible to
+          specify the ID of the instance instead of its name if I(state) is I(absent).
      required: true
    image:
      description:
@@ -380,6 +381,15 @@ EXAMPLES = '''
           echo "  down ip route del 10.0.0.0/8" >> /etc/network/interfaces.d/eth0.conf
           ifdown eth0 && ifup eth0
           {% endraw %}
+
+# Deletes an instance via its ID
+- name: remove an instance
+  hosts: localhost
+  tasks:
+    - name: remove an instance
+      os_server:
+        name: abcdef01-2345-6789-0abc-def0123456789
+        state: absent
 
 '''
 
