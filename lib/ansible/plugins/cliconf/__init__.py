@@ -203,8 +203,6 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
 
         :param replace: Boolean flag to indicate if running configuration should be completely
                         replace by candidate configuration.
-        :param diff: Boolean flag to indicate if configuration that is applied on remote host should
-                     generated and returned in response or not
         :param comment: Commit comment provided it is supported by remote host
         :return: Returns a json string with contains configuration applied on remote host, the returned
                  response on executing configuration commands and platform relevant data.

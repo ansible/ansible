@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import collections
 import re
 import json
 
@@ -60,7 +61,7 @@ class Cliconf(CliconfBase):
             out = self.send_command('show configuration commands')
         return out
 
-    def edit_config(self, candidate=None, commit=True, replace=False, diff=False, comment=None):
+    def edit_config(self, candidate=None, commit=True, replace=False, comment=None):
         resp = {}
         if not candidate:
             raise ValueError('must provide a candidate config to load')
@@ -78,29 +79,32 @@ class Cliconf(CliconfBase):
         results = []
 
         for cmd in chain(['configure'], to_list(candidate)):
-            results.append(self.send_command(cmd))
+            if not isinstance(cmd, collections.Mapping):
+                cmd = {'command': cmd}
 
-        diff_config = None
-        if diff:
-            out = self.get('compare')
-            out = to_text(out, errors='surrogate_or_strict')
-            if not out.startswith('No changes'):
-                diff_config = out
+            results.append(self.send_command(**cmd))
 
-        if commit:
-            try:
-                self.commit(comment)
-            except AnsibleConnectionFailure as e:
-                msg = 'commit failed: %s' % e.message
-                self.discard_changes()
-                raise AnsibleConnectionFailure(msg)
+        out = self.get('compare')
+        out = to_text(out, errors='surrogate_or_strict')
+        diff_config = out if not out.startswith('No changes') else None
+
+        if diff_config:
+            if commit:
+                try:
+                    self.commit(comment)
+                except AnsibleConnectionFailure as e:
+                    msg = 'commit failed: %s' % e.message
+                    self.discard_changes()
+                    raise AnsibleConnectionFailure(msg)
+                else:
+                    self.get('exit')
             else:
-                self.get('exit')
+                self.discard_changes()
         else:
-            self.discard_changes()
+            self.get('exit')
 
         resp['diff'] = diff_config
-        resp['response'] = results[1:]
+        resp['response'] = results[1:-1]
         return json.dumps(resp)
 
     def get(self, command=None, prompt=None, answer=None, sendonly=False):
