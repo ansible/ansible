@@ -494,6 +494,10 @@ options:
             - "C(user_migratable) - Allow manual migration only."
             - "If no value is passed, default value is set by oVirt/RHV engine."
         version_added: "2.5"
+    ticket:
+        description:
+            - "If I(true), returns to vms remote_vv_file ticket to remote-viewer."
+        version_added: "2.7"
     cpu_pinning:
         description:
             - "CPU Pinning topology to map virtual machine CPU to host CPU."
@@ -867,6 +871,22 @@ EXAMPLES = '''
       protocol:
         - spice
         - vnc
+# Execute remote viever to VM
+- block
+  - name: Create a VM that has the console configured for both Spice and VNC
+    ovirt_vms:
+      name: myvm
+      ticket: true
+    register: myvm
+
+ - name:
+    copy:
+      content: "{{ myvm.vm.remote_vv_file }}"
+      dest: ~/vvfile.vv
+
+  - name:
+    command: remote-viewer ~/vvfile.vv
+
 '''
 
 
@@ -880,6 +900,7 @@ vm:
     description: "Dictionary of all the VM attributes. VM attributes can be found on your oVirt/RHV instance
                   at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/vm."
     returned: On success if VM is found.
+    Additionally when you set ticket to true it returns ticket to remote-viewer and be careful with those private data.
     type: dict
 '''
 import traceback
@@ -1908,6 +1929,7 @@ def main():
         cpu_mode=dict(type='str'),
         placement_policy=dict(type='str'),
         custom_compatibility_version=dict(type='str'),
+        ticket=dict(type='bool', default=None),
         cpu_pinning=dict(type='list'),
         soundcard_enabled=dict(type='bool', default=None),
         smartcard_enabled=dict(type='bool', default=None),
@@ -2000,6 +2022,16 @@ def main():
                         initialization is not None and not module.params.get('cloud_init_persist')
                     ) else None,
                 )
+
+                if module.params['ticket']:
+                    vm = vms_service.vm_service(ret['id']).get()
+                    vm_service = vms_service.vm_service(vm.id)
+                    graphics_consoles_service = vm_service.graphics_consoles_service()
+                    graphics_console = graphics_consoles_service.list()[0]
+                    console_service = graphics_consoles_service.console_service(graphics_console.id)
+                    ticket = console_service.remote_viewer_connection_file()
+                    if ticket:
+                        ret['vm']['remote_vv_file'] = ticket
 
             if state == 'next_run':
                 # Apply next run configuration, if needed:
