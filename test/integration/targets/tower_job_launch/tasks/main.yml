@@ -8,9 +8,20 @@
       - "result is changed"
       - "result.status == 'pending'"
 
+- name: Create a Job Template for testing prompt on launch
+  tower_job_template:
+    name: "Demo Job Template - ask inventory and credential"
+    project: Demo Project
+    playbook: hello_world.yml
+    job_type: run
+    ask_credential: yes
+    ask_inventory: yes
+    state: present
+  register: result
+
 - name: Launch job template with inventory and credential for prompt on launch
   tower_job_launch:
-    job_template: "Demo Job Template"
+    job_template: "Demo Job Template - ask inventory and credential"
     inventory: "Demo Inventory"
     credential: "Demo Credential"
   register: result
