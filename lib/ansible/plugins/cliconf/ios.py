@@ -151,7 +151,6 @@ class Cliconf(CliconfBase):
 
             results.append(self.send_command('end'))
 
-        resp['diff'] = candidate
         resp['response'] = results[1:-1]
         return json.dumps(resp)
 
