@@ -43,7 +43,7 @@ Core Modules
 - Include feature changes and improvements
   
   - Create new argument `apply` that will allow for included tasks to inherit explicitly provided attributes. `pr#39236 <https://github.com/ansible/ansible/pull/39236>`_
-  - Create “private” functionality for allowing vars/default sot be exposed outside of roles. `pr#41330 <https://github.com/ansible/ansible/pull/41330>`_
+  - Create "private" functionality for allowing vars/default sot be exposed outside of roles. `pr#41330 <https://github.com/ansible/ansible/pull/41330>`_
 
 - Provide a parameter for the `template` module to output to different encoding formats.
 - `reboot` module for Linux hosts
