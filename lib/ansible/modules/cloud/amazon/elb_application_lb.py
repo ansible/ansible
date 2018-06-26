@@ -157,7 +157,7 @@ EXAMPLES = '''
         Certificates: # The ARN of the certificate (only one certficate ARN should be provided)
           - CertificateArn: arn:aws:iam::12345678987:server-certificate/test.domain.com
         DefaultActions:
-          - Type: forward # Required. Only 'forward' is accepted at this time
+          - Type: forward # Required. 
             TargetGroupName: # Required. The name of the target group
     state: present
 
@@ -181,7 +181,7 @@ EXAMPLES = '''
         Certificates: # The ARN of the certificate (only one certficate ARN should be provided)
           - CertificateArn: arn:aws:iam::12345678987:server-certificate/test.domain.com
         DefaultActions:
-          - Type: forward # Required. Only 'forward' is accepted at this time
+          - Type: forward # Required.
             TargetGroupName: # Required. The name of the target group
     state: present
 
@@ -212,6 +212,40 @@ EXAMPLES = '''
             Actions:
               - TargetGroupName: test-target-group
                 Type: forward
+    state: present
+
+# Create an ELB and attach a listener with Cognito authentication
+- elb_application_lb:
+    name: myelb
+    security_groups:
+      - sg-12345678
+      - my-sec-group
+    subnets:
+      - subnet-012345678
+      - subnet-abcdef000
+    listeners:
+      - Protocol: HTTPS # Required. The protocol for connections from clients to the load balancer (HTTP or HTTPS) (case-sensitive).
+        Port: 443 # Required. The port on which the load balancer is listening.
+        # The security policy that defines which ciphers and protocols are supported. The default is the current predefined security policy.
+        SslPolicy: ELBSecurityPolicy-2016-08
+        Certificates: # The ARN of the certificate (only one certficate ARN should be provided)
+          - CertificateArn: arn:aws:iam::12345678987:server-certificate/test.domain.com
+        DefaultActions:
+          # See https://docs.aws.amazon.com/elasticloadbalancing/latest/APIReference/API_Action.html for all action
+          # configuration options
+          - Type: authenticate-cognito
+            AuthenticateCognitoConfig:
+              UserPoolArn: "arn:aws:cognito-idp:us-east-1:12345678987:userpool/us-east-1_ABCDEFghI"
+              UserPoolClientId: "1234abcd6789wxyz"
+              UserPoolDomain: "myelb_user_pool"
+              SessionCookieName: "AWSELBAuthSessionCookie"
+              Scope: "openid"
+              SessionTimeout: 604800
+              OnUnauthenticatedRequest: "authenticate"
+            Order: 1 # Required if there are multiple actions
+          - Type: forward # Must be the last action in the action list (going by 'Order' key)
+            TargetGroupName: # Required. The name of the target group
+            Order: 2 # Required if there are multiple actions
     state: present
 
 # Remove an ELB

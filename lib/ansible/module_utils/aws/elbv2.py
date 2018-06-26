@@ -540,12 +540,25 @@ class ELBListeners(object):
             modified_listener['Certificates'][0]['CertificateArn'] = new_listener['Certificates'][0]['CertificateArn']
 
         # Default action
-        #   We wont worry about the Action Type because it is always 'forward'
-        if current_listener['DefaultActions'][0]['TargetGroupArn'] != new_listener['DefaultActions'][0]['TargetGroupArn']:
-            modified_listener['DefaultActions'] = []
-            modified_listener['DefaultActions'].append({})
-            modified_listener['DefaultActions'][0]['TargetGroupArn'] = new_listener['DefaultActions'][0]['TargetGroupArn']
-            modified_listener['DefaultActions'][0]['Type'] = 'forward'
+
+        # If the lengths of the actions are the same, we'll have to verify that the 
+        # contents of those actions are the same
+        if len(current_listener['DefaultActions']) == len(new_listener['DefaultActions']):
+            # if actions have just one element, compare the contents and then update if
+            # they're different
+            if len(current_listener['DefaultActions']) == 1 and len(new_listener['DefaultActions']) == 1:
+                if current_listener['DefaultActions'] != new_listener['DefaultActions']:
+                    modified_listener['DefaultActions'] = new_listener['DefaultActions']
+            # if actions have multiple elements, we'll have to order them first before comparing.
+            # multiple actions will have an 'Order' key for this purpose
+            else:
+                current_actions_sorted = sorted(current_listener['DefaultActions'], key=lambda x: x['Order'])
+                new_actions_sorted = sorted(new_listener['DefaultActions'], key=lambda x: x['Order'])
+                if current_actions_sorted != new_actions_sorted:
+                    modified_listener['DefaultActions'] = new_listener['DefaultActions']
+        # If the action lengths are different, then replace with the new actions
+        else:
+            modified_listener['DefaultActions'] = new_listener['DefaultActions']
 
         if modified_listener:
             return modified_listener
@@ -673,12 +686,25 @@ class ELBListenerRules(object):
             modified_rule['Priority'] = new_rule['Priority']
 
         # Actions
-        #   We wont worry about the Action Type because it is always 'forward'
-        if current_rule['Actions'][0]['TargetGroupArn'] != new_rule['Actions'][0]['TargetGroupArn']:
-            modified_rule['Actions'] = []
-            modified_rule['Actions'].append({})
-            modified_rule['Actions'][0]['TargetGroupArn'] = new_rule['Actions'][0]['TargetGroupArn']
-            modified_rule['Actions'][0]['Type'] = 'forward'
+
+        # If the lengths of the actions are the same, we'll have to verify that the 
+        # contents of those actions are the same
+        if len(current_rule['Actions']) == len(new_rule['Actions']):
+            # if actions have just one element, compare the contents and then update if
+            # they're different
+            if len(current_rule['Actions']) == 1 and len(new_rule['Actions']) == 1:
+                if current_rule['Actions'] != new_rule['Actions']:
+                    modified_rule['Actions'] = new_rule['Actions']
+            # if actions have multiple elements, we'll have to order them first before comparing.
+            # multiple actions will have an 'Order' key for this purpose
+            else:
+                current_actions_sorted = sorted(current_rule['Actions'], key=lambda x: x['Order'])
+                new_actions_sorted = sorted(new_rule['Actions'], key=lambda x: x['Order'])
+                if current_actions_sorted != new_actions_sorted:
+                    modified_rule['Actions'] = new_rule['Actions']
+        # If the action lengths are different, then replace with the new actions
+        else:
+            modified_rule['Actions'] = new_rule['Actions']
 
         # Conditions
         modified_conditions = []
