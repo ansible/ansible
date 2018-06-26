@@ -98,13 +98,12 @@ class ServiceMgrFactCollector(BaseFactCollector):
             try:
                 proc_1_root_stat = os.stat('/proc/1/root')
                 self_root_stat = os.stat('/proc/%d/root' % os.getpid())
-                if proc_1_root_stat.st_dev != self_root_stat.st_dev :
+                if proc_1_root_stat.st_dev != self_root_stat.st_dev:
                     proc_1 = None
-                if proc_1_root_stat.st_ino != self_root_stat.st_ino :
+                if proc_1_root_stat.st_ino != self_root_stat.st_ino:
                     proc_1 = None
             except OSError:
                 pass
-
 
         if proc_1 is not None and (proc_1 == 'init' or proc_1.endswith('sh')):
             # many systems return init, so this cannot be trusted, if it ends in 'sh' it probalby is a shell in a container
