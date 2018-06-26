@@ -678,6 +678,13 @@ def iparithmetic(value, amount):
         msg = 'You must pass a valid IP address; {} is invalid'.format(value)
         raise errors.AnsibleFilterError(msg)
 
+    if not isinstance(amount, int):
+        msg = (
+            'You must pass an integer for arithmetic; '
+            '{} is not a valid integer'
+        ).format(amount)
+        raise errors.AnsibleFilterError(msg)
+
     return str(ip + amount)
 
 
