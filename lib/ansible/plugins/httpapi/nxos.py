@@ -73,10 +73,37 @@ class HttpApi(HttpApiBase):
             return responses[0]
         return responses
 
-    # Migrated from module_utils
-    def edit_config(self, command):
+    # Masking cliconf methods
+    def edit_config(self, candidate=None, commit=True, replace=False, comment=None):
+        """Loads the candidate configuration into the network device
+
+        This method will load the specified candidate config into the device
+        and merge with the current configuration unless replace is set to
+        True.  If the device does not support config replace an errors
+        is returned.
+
+        :param candidate: The configuration to load into the device and merge
+            with the current running configuration
+
+        :param commit: Boolean value that indicates if the device candidate
+            configuration should be pushed in the running configuration or
+            discarded.
+
+        :param replace: Boolean flag to indicate if running configuration should
+            be completely replaced by candidate configuration.
+
+        :param comment: Commit comment provided it is supported by remote host
+
+        :return: Returns a json string with contains configuration applied on
+            remote host, the returned response on executing configuration
+            commands and platform relevant data.
+               {
+                   'diff': '',
+                   'response': ''
+               }
+        """
         resp = list()
-        responses = self.send_request(command, output='config')
+        responses = self.send_request(candidate, output='config')
         for response in to_list(responses):
             if response != '{}':
                 resp.append(response)
@@ -85,6 +112,7 @@ class HttpApi(HttpApiBase):
 
         return json.dumps(resp)
 
+    # Migrated from module_utils
     def run_commands(self, commands, check_rc=True):
         """Runs list of commands on remote device and returns results
         """

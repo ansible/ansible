@@ -53,13 +53,34 @@ class HttpApi(HttpApiBase):
         else:
             return '>'
 
-    # Imported from module_utils
-    def edit_config(self, config, commit=False, replace=False):
-        """Loads the configuration onto the remote devices
+    # Masking cliconf methods
+    def edit_config(self, candidate=None, commit=True, replace=False, comment=None):
+        """Loads the candidate configuration into the network device
 
-        If the device doesn't support configuration sessions, this will
-        fallback to using configure() to load the commands.  If that happens,
-        there will be no returned diff or session values
+        This method will load the specified candidate config into the device
+        and merge with the current configuration unless replace is set to
+        True.  If the device does not support config replace an errors
+        is returned.
+
+        :param candidate: The configuration to load into the device and merge
+            with the current running configuration
+
+        :param commit: Boolean value that indicates if the device candidate
+            configuration should be pushed in the running configuration or
+            discarded.
+
+        :param replace: Boolean flag to indicate if running configuration should
+            be completely replaced by candidate configuration.
+
+        :param comment: Commit comment provided it is supported by remote host
+
+        :return: Returns a json string with contains configuration applied on
+            remote host, the returned response on executing configuration
+            commands and platform relevant data.
+               {
+                   'diff': '',
+                   'response': ''
+               }
         """
         session = 'ansible_%s' % int(time.time())
         result = {'session': session}
@@ -70,7 +91,7 @@ class HttpApi(HttpApiBase):
         if replace:
             commands.append('rollback clean-config')
 
-        for command in config:
+        for command in candidate:
             if command.startswith('banner'):
                 banner_cmd = command
                 banner_input = []
@@ -100,6 +121,7 @@ class HttpApi(HttpApiBase):
 
         return result
 
+    # Imported from module_utils
     def run_commands(self, commands, check_rc=True):
         """Runs list of commands on remote device and returns results
         """
