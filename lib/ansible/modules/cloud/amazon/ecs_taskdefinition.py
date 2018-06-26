@@ -321,7 +321,7 @@ def main():
         if not module.botocore_at_least('1.8.4'):
             module.fail_json(msg='botocore needs to be version 1.8.4 or higher to use launch_type')
 
-    if module.params['task_role_arn']:
+    if module.params['execution_role_arn']:
         if not module.botocore_at_least('1.10.44'):
             module.fail_jason(msg='botocore needs to be version 1.10.44 or higher to use task_role_arn')
 
