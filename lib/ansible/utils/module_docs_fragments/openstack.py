@@ -86,7 +86,7 @@ options:
     description:
       - A path to a client key to use as part of the SSL transaction.
     required: false
-  interface:
+  endpoint_type:
     description:
         - Endpoint URL type to fetch from the service catalog.
     choices: [public, internal, admin]
