@@ -39,7 +39,7 @@ Skipping
 Aliases can be used to skip platforms using one of the following:
 
 - ``skip/freebsd`` - Skip tests on FreeBSD.
-- ``skip/osx`` - Skip tests on macOS / OS X.
+- ``skip/osx`` - Skip tests on macOS.
 - ``skip/rhel`` - Skip tests on RHEL.
 
 Aliases can be used to skip Python major versions using one of the following:

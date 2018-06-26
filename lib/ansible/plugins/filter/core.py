@@ -275,7 +275,7 @@ def get_encrypted_password(password, hashtype='sha512', salt=None):
 
         if not HAS_PASSLIB:
             if sys.platform.startswith('darwin'):
-                raise AnsibleFilterError('|password_hash requires the passlib python module to generate password hashes on Mac OS X/Darwin')
+                raise AnsibleFilterError('|password_hash requires the passlib python module to generate password hashes on macOS/Darwin')
             saltstring = "$%s$%s" % (cryptmethod[hashtype], salt)
             encrypted = crypt.crypt(password, saltstring)
         else:
