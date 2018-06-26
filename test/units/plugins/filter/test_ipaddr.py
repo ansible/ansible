@@ -494,3 +494,11 @@ class TestIpFilter(unittest.TestCase):
         with self.assertRaises(AnsibleFilterError) as exc:
             iparithmetic('invalid_ip', 8)
         self.assertEqual(exc.exception.message, expected)
+
+        expected = (
+            'You must pass an integer for arithmetic; '
+            'some_number is not a valid integer'
+        )
+        with self.assertRaises(AnsibleFilterError) as exc:
+            iparithmetic('1.2.3.4', 'some_number')
+        self.assertEqual(exc.exception.message, expected)
