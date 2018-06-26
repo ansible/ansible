@@ -541,7 +541,7 @@ class ELBListeners(object):
 
         # Default action
 
-        # If the lengths of the actions are the same, we'll have to verify that the 
+        # If the lengths of the actions are the same, we'll have to verify that the
         # contents of those actions are the same
         if len(current_listener['DefaultActions']) == len(new_listener['DefaultActions']):
             # if actions have just one element, compare the contents and then update if
@@ -687,7 +687,7 @@ class ELBListenerRules(object):
 
         # Actions
 
-        # If the lengths of the actions are the same, we'll have to verify that the 
+        # If the lengths of the actions are the same, we'll have to verify that the
         # contents of those actions are the same
         if len(current_rule['Actions']) == len(new_rule['Actions']):
             # if actions have just one element, compare the contents and then update if

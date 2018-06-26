@@ -157,7 +157,7 @@ EXAMPLES = '''
         Certificates: # The ARN of the certificate (only one certficate ARN should be provided)
           - CertificateArn: arn:aws:iam::12345678987:server-certificate/test.domain.com
         DefaultActions:
-          - Type: forward # Required. 
+          - Type: forward # Required.
             TargetGroupName: # Required. The name of the target group
     state: present
 
