@@ -4,6 +4,9 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     lookup: azure_keyvault_secret
+    author:
+        - Hai Cao <t-haicao@microsoft.com>
+    version_added: 2.6
     requirements:
         - requests
         - azure
