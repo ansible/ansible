@@ -675,13 +675,13 @@ def iparithmetic(value, amount):
     try:
         ip = netaddr.IPAddress(value)
     except netaddr.core.AddrFormatError:
-        msg = 'You must pass a valid IP address; {} is invalid'.format(value)
+        msg = 'You must pass a valid IP address; {0} is invalid'.format(value)
         raise errors.AnsibleFilterError(msg)
 
     if not isinstance(amount, int):
         msg = (
             'You must pass an integer for arithmetic; '
-            '{} is not a valid integer'
+            '{0} is not a valid integer'
         ).format(amount)
         raise errors.AnsibleFilterError(msg)
 
