@@ -25,7 +25,7 @@ options:
     required: true
     description:
       - Action category to execute on server
-    choices: ["Inventory", "Accounts", "System", "Update", "Manager"]
+    choices: ["System", "Chassis", "Accounts", "Update", "Manager"]
   command:
     required: true
     description:
@@ -47,26 +47,33 @@ author: "Jose Delarosa (github: jose-delarosa)"
 '''
 
 EXAMPLES = '''
-  - name: Getting system inventory
+  - name: Get system inventory
     redfish_facts:
-      category: Inventory
-      command: GetSystemInventory
+      category: System
+      command: GetCpuInventory
       baseuri: "{{ baseuri }}"
       user: "{{ user }}"
       password: "{{ password }}"
 
-  - name: Get CPU Inventory
-    redfish_facts:
-      category: Inventory
-      command: GetCpuInventory
-      baseuri: "{{ baseuri }}"
-      user: "{{ user}}"
-      password: "{{ password }}"
-
-  - name: Get BIOS attributes
+  - name: Get system inventory (default command)
     redfish_facts:
       category: System
-      command: GetBiosAttributes
+      baseuri: "{{ baseuri }}"
+      user: "{{ user }}"
+      password: "{{ password }}"
+
+  - name: Get system inventory (more than one command)
+    redfish_facts:
+      category: System
+      command: "GetNicInventory GetPsuInventory GetBiosAttributes"
+      baseuri: "{{ baseuri }}"
+      user: "{{ user }}"
+      password: "{{ password }}"
+
+  - name: Get fans statistics
+    redfish_facts:
+      category: Chassis
+      command: GetFanInventory
       baseuri: "{{ baseuri }}"
       user: "{{ user }}"
       password: "{{ password }}"
@@ -91,12 +98,32 @@ result:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.redfish_utils import RedfishUtils
 
+CATEGORY_COMMANDS_ALL = {
+    "System": ["GetSystemInventory", "GetPsuInventory", "GetCpuInventory",
+               "GetNicInventory", "GetStorageControllerInventory",
+               "GetDiskInventory", "GetBiosAttributes", "GetBiosBootOrder"],
+    "Chassis": ["GetFanInventory"],
+    "Accounts": ["ListUsers"],
+    "Update": ["GetFirmwareInventory"],
+    "Manager": ["GetManagerAttributes", "GetLogs"],
+}
+
+CATEGORY_COMMANDS_DEFAULT = {
+    "System": "GetSystemInventory",
+    "Chassis": "GetFanInventory",
+    "Accounts": "ListUsers",
+    "Update": "GetFirmwareInventory",
+    "Manager": "GetManagerAttributes",
+}
+
 
 def main():
+    result_all = {}
     result = {}
+    cmd_list = []
     module = AnsibleModule(
         argument_spec=dict(
-            category=dict(required=True, choices=["Inventory", "Accounts", "System", "Update", "Manager"]),
+            category=dict(required=True, choices=["System", "Chassis", "Accounts", "Update", "Manager"]),
             command=dict(),
             baseuri=dict(required=True),
             user=dict(required=True),
@@ -117,45 +144,69 @@ def main():
     rf_uri = "/redfish/v1"
     rf_utils = RedfishUtils(creds, root_uri)
 
+    # Check for valid category and command(s)
+    if category in CATEGORY_COMMANDS_ALL:
+        result['ret'] = True
+
+        # true if we don't specify a command, so use default
+        if not command:
+            cmd_list.append(CATEGORY_COMMANDS_DEFAULT[category])
+
+        # true if we specify the command 'all'
+        elif command == "all":
+            for entry in range(len(CATEGORY_COMMANDS_ALL[category])):
+                cmd_list.append(CATEGORY_COMMANDS_ALL[category][entry])
+
+        else:
+            # put all commands in a list, even if it's just one
+            for cmd in command.split():
+                if cmd in CATEGORY_COMMANDS_ALL[category]:
+                    cmd_list.append(cmd)
+                else:
+                    # Fail if even one command given is invalid
+                    result = {'ret': False, 'msg': 'Invalid Command'}
+                    break
+    else:
+        result = {'ret': False, 'msg': 'Invalid Category'}
+
+    # Check for failures
+    if result['ret'] is False:
+        module.fail_json(msg=result['msg'])
+
     # Organize by Categories / Commands
-    if category == "Inventory":
+    if category == "System":
         # execute only if we find a System resource
         result = rf_utils._find_systems_resource(rf_uri)
         if result['ret'] is False:
             module.fail_json(msg=result['msg'])
 
-        # Set default value
-        if not command:
-            command = "GetSystemInventory"
+        for command in cmd_list:
+            if command == "GetSystemInventory":
+                result["system"] = rf_utils.get_system_inventory()
+            elif command == "GetPsuInventory":
+                result["psu"] = rf_utils.get_psu_inventory()
+            elif command == "GetCpuInventory":
+                result["cpu"] = rf_utils.get_cpu_inventory()
+            elif command == "GetNicInventory":
+                result["nic"] = rf_utils.get_nic_inventory()
+            elif command == "GetStorageControllerInventory":
+                result["storage_controller"] = rf_utils.get_storage_controller_inventory()
+            elif command == "GetDiskInventory":
+                result["disk"] = rf_utils.get_disk_inventory()
+            elif command == "GetBiosAttributes":
+                result["bios_attribute"] = rf_utils.get_bios_attributes()
+            elif command == "GetBiosBootOrder":
+                result["bios_boot_order"] = rf_utils.get_bios_boot_order()
 
-        # General
-        if command == "GetSystemInventory":
-            result = rf_utils.get_system_inventory()
+    elif category == "Chassis":
+        # execute only if we find Chassis resource
+        result = rf_utils._find_chassis_resource(rf_uri)
+        if result['ret'] is False:
+            module.fail_json(msg=result['msg'])
 
-        # Components
-        elif command == "GetPsuInventory":
-            result = rf_utils.get_psu_inventory()
-        elif command == "GetCpuInventory":
-            result = rf_utils.get_cpu_inventory()
-        elif command == "GetNicInventory":
-            result = rf_utils.get_nic_inventory()
-
-        # Storage
-        elif command == "GetStorageControllerInventory":
-            result = rf_utils.get_storage_controller_inventory()
-        elif command == "GetDiskInventory":
-            result = rf_utils.get_disk_inventory()
-
-        # Chassis
-        elif command == "GetFanInventory":
-            # execute only if we find Chassis resource
-            result = rf_utils._find_chassis_resource(rf_uri)
-            if result['ret'] is False:
-                module.fail_json(msg=result['msg'])
-            result = rf_utils.get_fan_inventory()
-
-        else:
-            result = {'ret': False, 'msg': 'Invalid Command'}
+        for command in cmd_list:
+            if command == "GetFanInventory":
+                result["fan"] = rf_utils.get_fan_inventory()
 
     elif category == "Accounts":
         # execute only if we find an Account service resource
@@ -163,31 +214,9 @@ def main():
         if result['ret'] is False:
             module.fail_json(msg=result['msg'])
 
-        # Set default value
-        if not command:
-            command = "ListUsers"
-
-        if command == "ListUsers":
-            result = rf_utils.list_users()
-        else:
-            result = {'ret': False, 'msg': 'Invalid Command'}
-
-    elif category == "System":
-        # execute only if we find a System resource
-        result = rf_utils._find_systems_resource(rf_uri)
-        if result['ret'] is False:
-            module.fail_json(msg=result['msg'])
-
-        # Set default value
-        if not command:
-            command = "GetBiosAttributes"
-
-        if command == "GetBiosAttributes":
-            result = rf_utils.get_bios_attributes()
-        elif command == "GetBiosBootOrder":
-            result = rf_utils.get_bios_boot_order()
-        else:
-            result = {'ret': False, 'msg': 'Invalid Command'}
+        for command in cmd_list:
+            if command == "ListUsers":
+                result["user"] = rf_utils.list_users()
 
     elif category == "Update":
         # execute only if we find UpdateService resources
@@ -195,14 +224,9 @@ def main():
         if result['ret'] is False:
             module.fail_json(msg=result['msg'])
 
-        # Set default value
-        if not command:
-            command = "GetFirmwareInventory"
-
-        if command == "GetFirmwareInventory":
-            result = rf_utils.get_firmware_inventory()
-        else:
-            result = {'ret': False, 'msg': 'Invalid Command'}
+        for command in cmd_list:
+            if command == "GetFirmwareInventory":
+                result["firmware"] = rf_utils.get_firmware_inventory()
 
     elif category == "Manager":
         # execute only if we find a Manager service resource
@@ -210,19 +234,11 @@ def main():
         if result['ret'] is False:
             module.fail_json(msg=result['msg'])
 
-        # Set default value
-        if not command:
-            command = "GetManagerAttributes"
-
-        if command == "GetManagerAttributes":
-            result = rf_utils.get_manager_attributes()
-        elif command == "GetLogs":
-            result = rf_utils.get_logs()
-        else:
-            result = {'ret': False, 'msg': 'Invalid Command'}
-
-    else:
-        result = {'ret': False, 'msg': 'Invalid Category'}
+        for command in cmd_list:
+            if command == "GetManagerAttributes":
+                result["mgr_attr"] = rf_utils.get_manager_attributes()
+            elif command == "GetLogs":
+                result["log"] = rf_utils.get_logs()
 
     # Return data back or fail with proper message
     if result['ret'] is True:

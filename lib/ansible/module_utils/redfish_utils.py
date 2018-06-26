@@ -230,11 +230,12 @@ class RedfishUtils(object):
                 entry['Message'] = logEntry[u'Message']
                 entry['Severity'] = logEntry[u'Severity']
                 list_of_log_entries.append(entry)
-            logs['logs'] = list_of_log_entries
+            log_name = log_svcs_uri.split('/')[-1]
+            logs[log_name] = list_of_log_entries
             list_of_logs.append(logs)
 
         # list_of_logs[logs{list_of_log_entries[entry{}]}]
-        return {'ret': True, 'list_of_logs': list_of_logs}
+        return {'ret': True, 'entries': list_of_logs}
 
     def clear_logs(self):
         # Find LogService
@@ -301,7 +302,7 @@ class RedfishUtils(object):
             controller['Health'] = data[u'Status'][u'Health']
             controllers_details.append(controller)
 
-        result["storage_controllers"] = controllers_details
+        result["entries"] = controllers_details
         return result
 
     def get_disk_inventory(self):
@@ -346,7 +347,7 @@ class RedfishUtils(object):
                 disk['Health'] = device[u'Status'][u'Health']
                 disks_details.append(disk)
 
-        result["disks"] = disks_details
+        result["entries"] = disks_details
         return result
 
     def restart_manager_gracefully(self):
@@ -425,7 +426,7 @@ class RedfishUtils(object):
                 user['UserName'] = data[u'UserName']
                 user['RoleId'] = data[u'RoleId']
                 allusers_details.append(user)
-        result["users"] = allusers_details
+        result["entries"] = allusers_details
         return result
 
     def add_user(self, user):
@@ -501,7 +502,7 @@ class RedfishUtils(object):
                 result['ret'] = True
                 data = response['data']
                 firmware[data[u'Name']] = data[u'Version']
-        result["firmware_list"] = firmware
+        result["entries"] = firmware
         return result
 
     def get_manager_attributes(self):
@@ -516,7 +517,7 @@ class RedfishUtils(object):
         data = response['data']
         for attribute in data[u'Attributes'].items():
             manager_attributes[attribute[0]] = attribute[1]
-        result["manager_attributes"] = manager_attributes
+        result["entries"] = manager_attributes
         return result
 
     def get_bios_attributes(self):
@@ -539,7 +540,7 @@ class RedfishUtils(object):
         data = response['data']
         for attribute in data[u'Attributes'].items():
             bios_attributes[attribute[0]] = attribute[1]
-        result["bios_attributes"] = bios_attributes
+        result["entries"] = bios_attributes
         return result
 
     def get_bios_boot_order(self):
@@ -581,7 +582,7 @@ class RedfishUtils(object):
             boot_device["Name"] = b[u'Name']
             boot_device["Enabled"] = b[u'Enabled']
             boot_device_details.append(boot_device)
-        result["boot_devices"] = boot_device_details
+        result["entries"] = boot_device_details
         return result
 
     def set_bios_default_settings(self):
@@ -741,7 +742,7 @@ class RedfishUtils(object):
                     fan['State'] = device[u'Status'][u'State']
                     fan['Health'] = device[u'Status'][u'Health']
                     fan_details.append(fan)
-                result["fans"] = fan_details
+                result["entries"] = fan_details
         return result
 
     def get_cpu_inventory(self):
@@ -785,7 +786,7 @@ class RedfishUtils(object):
             cpu['State'] = data[u'Status'][u'State']
             cpu['Health'] = data[u'Status'][u'Health']
             cpu_details.append(cpu)
-        result["cpus"] = cpu_details
+        result["entries"] = cpu_details
         return result
 
     def get_nic_inventory(self):
@@ -840,7 +841,7 @@ class RedfishUtils(object):
                 nic['Health'] = data[u'Status'][u'Health']
                 nic['State'] = data[u'Status'][u'State']
             nic_details.append(nic)
-        result["nics"] = nic_details
+        result["entries"] = nic_details
         return result
 
     def get_psu_inventory(self):
@@ -880,7 +881,7 @@ class RedfishUtils(object):
             psu['Status'] = data[u'Status'][u'State']
             psu['Health'] = data[u'Status'][u'Health']
             psu_details.append(psu)
-        result["psus"] = psu_details
+        result["entries"] = psu_details
         return result
 
     def get_system_inventory(self):
@@ -927,5 +928,5 @@ class RedfishUtils(object):
             inventory['TPMInterfaceType'] = "Not available"
             inventory['TPMStatus'] = "Not available"
 
-        result["system_inventory"] = inventory
+        result["entries"] = inventory
         return result
