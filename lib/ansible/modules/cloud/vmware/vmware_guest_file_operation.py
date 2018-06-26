@@ -21,7 +21,7 @@ description:
     - Module to copy a file to a VM, fetch a file from a VM and create or delete a directory in the guest OS.
 version_added: "2.5"
 author:
-  - Stéphane Travassac (stravassac@gmail.com)
+  - Stéphane Travassac (@stravassac)
 notes:
     - Tested on vSphere 6
     - Only the first match against vm_id is used, even if there are multiple matches
