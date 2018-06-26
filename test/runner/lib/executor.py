@@ -197,6 +197,7 @@ def install_command_requirements(args):
                            '\n'.join((' '.join(pipes.quote(c) for c in cmd) for cmd in changes)))
 
 
+# XXX
 def run_pip_commands(args, pip, commands, detect_pip_changes=False):
     """
     :type args: EnvironmentConfig
