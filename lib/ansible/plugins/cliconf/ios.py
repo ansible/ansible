@@ -124,7 +124,7 @@ class Cliconf(CliconfBase):
         return json.dumps(diff)
 
     @enable_mode
-    def edit_config(self, candidate=None, commit=True, replace=False, diff=False, comment=None):
+    def edit_config(self, candidate=None, commit=True, replace=False, comment=None):
         resp = {}
         if not candidate:
             raise ValueError("must provide a candidate config to load")
@@ -151,11 +151,6 @@ class Cliconf(CliconfBase):
 
             results.append(self.send_command('end'))
 
-        diff_config = None
-        if diff:
-            diff_config = candidate
-
-        resp['diff'] = diff_config
         resp['response'] = results[1:-1]
         return json.dumps(resp)
 
