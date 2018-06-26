@@ -498,12 +498,15 @@ class VariableManager:
                     # This task will be skipped later due to this, so we just setup
                     # a dummy array for the later code so it doesn't fail
                     items = [None]
+                task.loop_with = None
             else:
                 raise AnsibleError("Failed to find the lookup named '%s' in the available lookup plugins" % task.loop_with)
         elif task.loop is not None:
             items = templar.template(task.loop)
         else:
             items = [None]
+
+        task.loop = items
 
         delegated_host_vars = dict()
         item_var = getattr(task.loop_control, 'loop_var', 'item')
