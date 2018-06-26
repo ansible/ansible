@@ -670,6 +670,11 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
     return False
 
 
+def iparithmetic(value, amount):
+    ip = netaddr.IPAddress(value)
+    return str(ip + amount)
+
+
 def ipwrap(value, query=''):
     try:
         if isinstance(value, (list, tuple, types.GeneratorType)):
@@ -1060,6 +1065,7 @@ class FilterModule(object):
         # IP addresses and networks
         'cidr_merge': cidr_merge,
         'ipaddr': ipaddr,
+        'iparithmetic': iparithmetic,
         'ipwrap': ipwrap,
         'ip4_hex': ip4_hex,
         'ipv4': ipv4,
