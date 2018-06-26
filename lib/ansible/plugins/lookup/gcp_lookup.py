@@ -44,6 +44,7 @@ options:
       - machine_type
       - region
       - zone
+      - instance_config
   return:
     description: An optional value to describe what part of the attribute should
                  be returned
@@ -312,6 +313,47 @@ class GcpZone(object):
         return response['name']
 
 
+class GcpInstanceConfig(object):
+    def __init__(self, options):
+        self.module = GcpModule(options)
+
+        self.link = "https://spanner.googleapis.com/v1/projects/{project}/instanceConfigs/{name}".format(**self.module.params)
+
+    def _fetch_resource(self):
+        auth = GcpSession(self.module, 'spanner')
+        return self._return_if_object(auth.get(self.link))
+
+    def _return_if_object(self, response):
+        # If not found, return nothing.
+        if response.status_code == 404:
+            return None
+
+        # If no content, return nothing.
+        if response.status_code == 204:
+            return None
+
+        try:
+            response.raise_for_status
+            result = response.json()
+        except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
+            self.module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+        except GcpRequestException as inst:
+            self.module.fail_json(msg="Network error: %s" % inst)
+
+        if navigate_hash(result, ['error', 'errors']):
+            self.module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
+        if result['kind'] != self.kind:
+            self.module.fail_json(msg="Incorrect result: {kind}".format(**result))
+
+        return result
+
+    def run(self):
+        response = self._fetch_resource()
+        if 'return' in self.module.params:
+            return response[self.module.params['return']]
+        return response['name']
+
+
 class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
 
@@ -321,7 +363,8 @@ class LookupModule(LookupBase):
             'license': GcpLicense,
             'machine_type': GcpMachineType,
             'region': GcpRegion,
-            'zone': GcpZone
+            'zone': GcpZone,
+            'instance_config': GcpInstanceConfig
         }
 
         return str(options[kwargs['attribute']](kwargs).run())
