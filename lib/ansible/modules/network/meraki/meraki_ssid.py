@@ -372,19 +372,21 @@ def main():
         for k, v in param_map.items():
             if meraki.params[v] is not None:
                 payload[k] = meraki.params[v]
-        # meraki.fail_json(msg='Payload', payload=payload)
         ssids = get_ssids(meraki, net_id)
-        ssid_id = meraki.params['number']
-        if ssid_id is None:  # Name should be used to lookup number
-            ssid_id = get_ssid_number(meraki.params['name'], ssids)
-            if ssid_id is False:
-                ssid_id = get_available_number(ssids)
+        original = ssids[get_ssid_number(meraki.params['name'], ssids)]
+        # meraki.fail_json(msg=meraki.is_update_required(original, payload), original=original, payload=payload)
+        if meraki.is_update_required(original, payload):
+            ssid_id = meraki.params['number']
+            if ssid_id is None:  # Name should be used to lookup number
+                ssid_id = get_ssid_number(meraki.params['name'], ssids)
                 if ssid_id is False:
-                    meraki.fail_json(msg='No unconfigured SSIDs are available. Specify a number.')
-        path = meraki.construct_path('update', net_id=net_id) + str(ssid_id)
-        result = meraki.request(path, 'PUT', payload=json.dumps(payload))
-        meraki.result['data'] = result
-        meraki.result['changed'] = True
+                    ssid_id = get_available_number(ssids)
+                    if ssid_id is False:
+                        meraki.fail_json(msg='No unconfigured SSIDs are available. Specify a number.')
+            path = meraki.construct_path('update', net_id=net_id) + str(ssid_id)
+            result = meraki.request(path, 'PUT', payload=json.dumps(payload))
+            meraki.result['data'] = result
+            meraki.result['changed'] = True
     elif meraki.params['state'] == 'absent':
         ssids = get_ssids(meraki, net_id)
         ssid_id = meraki.params['number']

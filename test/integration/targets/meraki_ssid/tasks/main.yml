@@ -79,6 +79,24 @@
       - query_all.data.0.name == 'TestNetSSID WiFi'
       - enable_name_ssid.data.name == 'AnsibleSSID'
 
+- name: Check for idempotency
+  meraki_ssid:
+    auth_key: '{{auth_key}}'
+    state: present
+    org_name: '{{test_org_name}}'
+    net_name: TestNetSSID
+    name: AnsibleSSID
+    enabled: true
+  delegate_to: localhost
+  register: enable_name_ssid_idempotent
+
+- debug:
+    msg: '{{ enable_name_ssid_idempotent }}'
+
+- assert:
+    that:
+      - enable_name_ssid_idempotent.changed == False
+
 - name: Query one SSIDs
   meraki_ssid:
     auth_key: '{{auth_key}}'
