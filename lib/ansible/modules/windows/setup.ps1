@@ -190,15 +190,15 @@ if($gather_subset.Contains('date_time')) {
     }
 }
 
-$product_type = switch($win32_os.ProductType) {
-    1 { "workstation" }
-    2 { "domain_controller" }
-    3 { "server" }
-    default { "unknown" }
-}
-
 if($gather_subset.Contains('distribution')) {
     $win32_os = Get-LazyCimInstance Win32_OperatingSystem
+    $product_type = switch($win32_os.ProductType) {
+        1 { "workstation" }
+        2 { "domain_controller" }
+        3 { "server" }
+        default { "unknown" }
+    }
+
     $ansible_facts += @{
         ansible_distribution = $win32_os.Caption
         ansible_distribution_version = $osversion.Version.ToString()
