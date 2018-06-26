@@ -11,6 +11,7 @@ git_archive_extensions:
 
 checkout_dir: '{{ output_dir }}/git'
 repo_dir: '{{ output_dir }}/local_repos'
+separate_git_dir: '{{ output_dir }}/sep_git_dir'
 repo_format1: 'https://github.com/jimi-c/test_role'
 repo_format2: 'git@github.com:jimi-c/test_role.git'
 repo_format3: 'ssh://git@github.com/jimi-c/test_role.git'
