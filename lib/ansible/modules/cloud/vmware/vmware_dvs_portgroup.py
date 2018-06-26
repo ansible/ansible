@@ -219,7 +219,7 @@ EXAMPLES = '''
       vmware_dvs_portgroup_2:
         hostname: vcenter_ip_or_hostname
         username: vcenter_username
-        password: vcenter_password"
+        password: vcenter_password
         validate_certs: false
         portgroup_name: testpg-1337
         portgroup_description: ansible test portgroup
