@@ -490,11 +490,11 @@ def main():
         module.fail_json(rc=256, msg='Path %s is a directory !' % path)
 
     if params['state'] == 'present':
-        if backrefs and params['regexp'] is None:
-            module.fail_json(msg='regexp= is required with backrefs=true')
+        if backrefs and regexp is None:
+            module.fail_json(msg='regexp is required with backrefs=true')
 
-        if params.get('line', None) is None:
-            module.fail_json(msg='line= is required with state=present')
+        if line is None:
+            module.fail_json(msg='line is required with state=present')
 
         # Deal with the insertafter default value manually, to avoid errors
         # because of the mutually_exclusive mechanism.
@@ -506,7 +506,7 @@ def main():
                 ins_aft, ins_bef, create, backup, backrefs, firstmatch)
     else:
         if regexp is None and line is None:
-            module.fail_json(msg='one of line= or regexp= is required with state=absent')
+            module.fail_json(msg='one of line or regexp is required with state=absent')
 
         absent(module, path, regexp, line, backup)
 
