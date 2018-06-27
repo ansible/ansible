@@ -480,6 +480,11 @@ def main():
     regexp = params['regexp']
     line = params['line']
 
+    if regexp == '':
+        module.warn(
+            'The regular expression is empty, which will match every line in the file.'
+            'This may have unintended consequences, such as replacing the last line in the file rather than appending.')
+
     b_path = to_bytes(path, errors='surrogate_or_strict')
     if os.path.isdir(b_path):
         module.fail_json(rc=256, msg='Path %s is a directory !' % path)
