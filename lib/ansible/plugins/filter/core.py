@@ -451,11 +451,14 @@ def b64encode(string, encoding='utf-8'):
 def b64decode(string, encoding='utf-8'):
     return to_text(base64.b64decode(to_bytes(string, errors='surrogate_or_strict')), encoding=encoding)
 
+
 def base64encode(string, encoding='utf-8'):
     return b64encode(string, encoding='utf-8')
 
+
 def base64decode(string, encoding='utf-8'):
     return b64decode(string, encoding='utf-8')
+
 
 def flatten(mylist, levels=None):
 
