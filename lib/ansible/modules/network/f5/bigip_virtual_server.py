@@ -333,8 +333,8 @@ options:
     version_added: 2.6
 notes:
   - Requires BIG-IP software version >= 11
-  - Requires the netaddr Python package on the host. This is as easy as pip
-    install netaddr.
+  - Requires the netaddr Python package on the host. This is as easy as
+    C(pip install netaddr).
 requirements:
   - netaddr
 extends_documentation_fragment: f5
