@@ -245,7 +245,7 @@ class Distribution(object):
     def __init__(self, name_string, version_string=None):
         if not name_string.startswith(('svn+', 'git+', 'hg+', 'bzr+', 'file:')):
             self._plain_distribution = True
-            if version_string is not None:
+            if version_string:
                 version_string = version_string.lstrip()
                 separator = '==' if version_string[0].isdigit() else ' '
                 name_string = separator.join((name_string, version_string))
@@ -281,7 +281,7 @@ class Distribution(object):
 
 
 def _is_valid_distribution_name(name):
-    if name.startswith(('>=','<=','!=','==','>','<')):
+    if name.startswith(('>=', '<=', '!=', '==', '>', '<')):
         return False
     return True
 
