@@ -271,6 +271,7 @@ Facts returned by this module are added/updated in the ``hostvars`` host facts a
                 <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@" colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
                     <b>@{ key }@</b>
                     <br/><div style="font-size: small; color: red">@{ value.type }@</div>
+                    {% if value.version_added %}<br/><div style="font-size: small; color: darkgreen">(added in @{value.version_added}@)</div>{% endif %}
                 </td>
                 <td>@{ value.returned | html_ify }@</td>
                 <td>
@@ -342,6 +343,7 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
                 <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
                     <b>@{ key }@</b>
                     <br/><div style="font-size: small; color: red">@{ value.type }@</div>
+                    {% if value.version_added %}<br/><div style="font-size: small; color: darkgreen">(added in @{value.version_added}@)</div>{% endif %}
                 </td>
                 <td>@{ value.returned | html_ify }@</td>
                 <td>
