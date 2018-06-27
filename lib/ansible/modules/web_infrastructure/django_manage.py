@@ -56,11 +56,11 @@ options:
     required: false
   clear:
     description:
-      - Clear the existing files before trying to copy or link the original file. 
+      - Clear the existing files before trying to copy or link the original file.
       - Used only with the 'collectstatic' command. The --noinput argument will be supplied automatically.
     required: false
     default: "no"
-    type: bool 
+    type: bool
   database:
     description:
       - The database to target. Used by the 'createcachetable', 'flush', 'loaddata', and 'syncdb' commands.
