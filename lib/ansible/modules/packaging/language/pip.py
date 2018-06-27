@@ -222,12 +222,16 @@ import os
 import re
 import sys
 import tempfile
-from pkg_resources import Requirement, RequirementParseError
+
+NO_SETUPTOOLS = False
+try:
+    from pkg_resources import Requirement, RequirementParseError
+except ImportError:
+    NO_SETUPTOOLS = True
 
 from ansible.module_utils.basic import AnsibleModule, is_executable
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import PY3
-from ansible.module_utils.common.collections import is_string
 
 
 #: Python one-liners to be run at the command line that will determine the
@@ -237,59 +241,61 @@ _SPECIAL_PACKAGE_CHECKERS = {'setuptools': 'import setuptools; print(setuptools.
                              'pip': 'import pkg_resources; print(pkg_resources.get_distribution("pip").version)'}
 
 
-class Package(Requirement):
+class Distribution(object):
     def __init__(self, name_string, version_string=None):
         if version_string is not None:
-            if version_string[0].isdigit():
-                name_string = "%s ==%s" % (name_string, version_string)
-            else:
-                name_string = "%s %s" % (name_string, version_string)
-        super(Package, self).__init__(name_string)
+            version_string = version_string.lstrip()
+            separator = '==' if version_string[0].isdigit() else ' '
+            name_string = separator.join((name_string, version_string))
+        self._requirement = Requirement.parse(name_string)
+        self._distribution_name = self._requirement.name.lower()
 
-    def have_version_specifier(self):
-        if len(self.specs) == 0:
-            return False
-        return True
+    @property
+    def has_version_specifier(self):
+        return bool(self._requirement.specs)
 
-    def get_name(self):
-        return self.name.lower()
+    @property
+    def distribution_name(self):
+        return self._distribution_name
 
-    def satisfied_by(self, version_to_test):
-        return self.specifier.contains(version_to_test)
+    @distribution_name.setter
+    def distribution_name(self, new_name):
+        self._distribution_name = new_name
 
-    def install_command(self):
-        return str(self)
+    def is_satisfied_by(self, version_to_test):
+        return self._requirement.specifier.contains(version_to_test)
+
+    def __str__(self):
+        return str(self._requirement)
 
 
-def _is_valid_pkg_name(name):
+def _is_valid_distribution_name(name):
     try:
-        Requirement(name)
+        Requirement.parse(name)
         return True
     except RequirementParseError:
         return False
 
 
-def _fetch_one_pkg(name):
-    stack = list()
-    for ele in name:
-        if _is_valid_pkg_name(ele):
-            if len(stack) > 0:
-                yield ",".join(stack)
-            stack = [ele]
+def _recover_distribution_name(names):
+    distribution_parts = list()
+    for name in names:
+        if _is_valid_distribution_name(name):
+            if len(distribution_parts) > 0:
+                yield ",".join(distribution_parts)
+            distribution_parts = [name]
         else:
-            stack.append(ele)
-    yield ",".join(stack)
+            distribution_parts.append(name)
+    yield ",".join(distribution_parts)
 
 
-def _parses_name_input(module, name):
+def _get_distributions_from_names(module, names):
     """Parse name list to package list."""
     package_list = list()
     try:
-        for package_name in _fetch_one_pkg(name):
-            package_list.append(Package(package_name))
+        return [Distribution(name) for name in _recover_distribution_name(names)]
     except RequirementParseError as e:
         module.fail_json(msg=str(e))
-    return package_list
 
 
 def _get_cmd_options(module, cmd):
@@ -328,7 +334,7 @@ def _is_present(module, req, installed_pkgs, pkg_command):
         else:
             continue
 
-        if (pkg_name.lower() == req.get_name()) and (req.satisfied_by(pkg_version)):
+        if (pkg_name.lower() == req.distribution_name) and (req.is_satisfied_by(pkg_version)):
             return True
 
     return False
@@ -505,6 +511,9 @@ def main():
     umask = module.params['umask']
     env = module.params['virtualenv']
 
+    if NO_SETUPTOOLS:
+        module.fail_json(msg="No setuptools found in remote host, please install that first.")
+
     venv_created = False
     if chdir:
         env = os.path.join(chdir, env)
@@ -538,7 +547,7 @@ def main():
         pip = _get_pip(module, env, module.params['executable'])
 
         cmd = '%s %s' % (pip, state_map[state])
-        packages = list()
+
         # If there's a virtualenv we want things we install to be able to use other
         # installations that exist as binaries within this virtualenv. Example: we
         # install cython and then gevent -- gevent needs to use the cython binary,
@@ -559,16 +568,16 @@ def main():
                     has_vcs = True
                     break
 
-            packages = _parses_name_input(module, name)
+            distributions = _get_distributions_from_names(module, name)
             # check invalid combination of arguments
             if version is not None:
-                if len(packages) > 1:
+                if len(distributions) > 1:
                     module.fail_json(msg="Version arg is not available for installing multi-packages.")
                 else:
-                    if packages[0].have_version_specifier():
+                    if distributions[0].has_version_specifier:
                         module.fail_json(msg="Version arg is not available if version info is provided in name.")
                     else:
-                        packages[0] = Package(packages[0].get_name(), version)
+                        distributions[0] = Distribution(distributions[0].distribution_name, version)
 
         if module.params['editable']:
             args_list = []  # used if extra_args is not used at all
@@ -583,8 +592,8 @@ def main():
             cmd += ' %s' % extra_args
 
         if name:
-            for pkg in packages:
-                cmd += ' \"%s\"' % pkg.install_command()
+            for distribution in distributions:
+                cmd += ' "%s"' % distribution
         elif requirements:
             cmd += ' -r %s' % requirements
         else:
@@ -617,8 +626,8 @@ def main():
                                 pkg_list.append(formatted_dep)
                                 out += '%s\n' % formatted_dep
 
-                for req in packages:
-                    is_present = _is_present(module, req, pkg_list, pkg_cmd)
+                for distribution in distributions:
+                    is_present = _is_present(module, distribution, pkg_list, pkg_cmd)
                     if (state == 'present' and not is_present) or (state == 'absent' and is_present):
                         changed = True
                         break
