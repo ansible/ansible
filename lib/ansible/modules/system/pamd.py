@@ -653,8 +653,8 @@ class PamdService(object):
         current_line = self._head
 
         while current_line is not None:
-            if not current_line.is_valid()[0]:
-                return current_line.is_valid()
+            if not current_line.is_valid:
+                return current_line.is_valid, "Module is invalid"
             current_line = current_line.next
         return True, "Module is valid"
 
