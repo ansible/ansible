@@ -1,0 +1,2 @@
+bugfixes:
+- win_group_membership - uses the internal Ansible SID conversion logic and uses that when comparing group membership instead of the name https://github.com/ansible/ansible/issues/40649
