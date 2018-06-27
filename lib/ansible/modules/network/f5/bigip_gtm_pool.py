@@ -179,7 +179,7 @@ options:
     version_added: 2.6
 notes:
   - Requires the netaddr Python package on the host. This is as easy as
-    pip install netaddr.
+    C(pip install netaddr).
 extends_documentation_fragment: f5
 requirements:
   - netaddr

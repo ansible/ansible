@@ -75,7 +75,8 @@ options:
     default: Common
     version_added: 2.5
 notes:
-  - Requires the netaddr Python package on the host.
+  - Requires the netaddr Python package on the host. This is as easy as
+    C(pip install netaddr).
 extends_documentation_fragment: f5
 requirements:
   - netaddr
