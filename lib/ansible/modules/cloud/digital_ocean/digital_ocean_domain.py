@@ -136,20 +136,20 @@ class DoManager(DigitalOceanHelper, object):
 
     def edit_domain_record(self, record):
         params = {'name': '@',
-            'data': self.module.params.get('ip')}
+                  'data': self.module.params.get('ip')}
         resp = self.put('domains/%s/records/%s' % (self.domain_name, record['id']), data=params)
         status, json = self.jsonify(resp)
-        
+
         return json['domain_record']
 
     def create_domain_record(self):
         params = {'name': '@',
-            'type': 'A',
-            'data': self.module.params.get('ip')}
+                  'type': 'A',
+                  'data': self.module.params.get('ip')}
 
         resp = self.post('domains/%s/records' % (self.domain_name), data=params)
         status, json = self.jsonify(resp)
-        
+
         return json['domain_record']
 
 
