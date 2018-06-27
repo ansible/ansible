@@ -121,14 +121,14 @@
   #- name: wait for host to answer on SSH
   #  delegate_to: new_azure_vm
   #  wait_for_connection:
-  - name: get content from custom_data script
-    raw: cat /tmp/custom_data.txt
-    register: custom_data_content
+  #- name: get content from custom_data script
+  #  raw: cat /tmp/custom_data.txt
+  #  register: custom_data_content
 
-  - name: assert contents
-    assert:
-        that: custom_data_content.stdout | regex_search('custom_data was executed')
-  delegate_to: new_azure_vm
+  #- name: assert contents
+  #  assert:
+  #      that: custom_data_content.stdout | regex_search('custom_data was executed')
+  #delegate_to: new_azure_vm
 
   # TODO: figure out how to make this work under ansible-test with the coverage injector
   #- name: wait for file/content created by custom_data script
