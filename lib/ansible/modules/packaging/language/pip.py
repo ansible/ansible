@@ -223,11 +223,11 @@ import re
 import sys
 import tempfile
 
-NO_SETUPTOOLS = False
 try:
-    from pkg_resources import Requirement, RequirementParseError
+    HAS_SETUPTOOLS = True
+    from pkg_resources import Requirement
 except ImportError:
-    NO_SETUPTOOLS = True
+    HAS_SETUPTOOLS = True
 
 from ansible.module_utils.basic import AnsibleModule, is_executable
 from ansible.module_utils._text import to_native
@@ -241,7 +241,7 @@ _SPECIAL_PACKAGE_CHECKERS = {'setuptools': 'import setuptools; print(setuptools.
                              'pip': 'import pkg_resources; print(pkg_resources.get_distribution("pip").version)'}
 
 
-class Distribution(object):
+class Distribution:
     def __init__(self, name_string, version_string=None):
         if not name_string.startswith(('svn+', 'git+', 'hg+', 'bzr+', 'file:')):
             self._plain_distribution = True
@@ -272,7 +272,7 @@ class Distribution(object):
     def is_satisfied_by(self, version_to_test):
         if self._plain_distribution:
             return self._requirement.specifier.contains(version_to_test)
-        return True
+        return False
 
     def __str__(self):
         if self._plain_distribution:
@@ -281,13 +281,12 @@ class Distribution(object):
 
 
 def _is_valid_distribution_name(name):
-    if name.startswith(('>=', '<=', '!=', '==', '>', '<')):
-        return False
-    return True
+    name = name.lstrip()
+    return not name.startswith(('>=', '<=', '!=', '==', '>', '<'))
 
 
 def _recover_distribution_name(names):
-    distribution_parts = list()
+    distribution_parts = []
     for name in names:
         if _is_valid_distribution_name(name):
             if len(distribution_parts) > 0:
@@ -300,10 +299,10 @@ def _recover_distribution_name(names):
 
 def _get_distributions_from_names(module, names):
     """Parse name list to package list."""
-    package_list = list()
+    package_list = []
     try:
         return [Distribution(name) for name in _recover_distribution_name(names)]
-    except RequirementParseError as e:
+    except ValueError as e:
         module.fail_json(msg=str(e))
 
 
@@ -343,7 +342,7 @@ def _is_present(module, req, installed_pkgs, pkg_command):
         else:
             continue
 
-        if (pkg_name.lower() == req.distribution_name) and (req.is_satisfied_by(pkg_version)):
+        if pkg_name.lower() == req.distribution_name and req.is_satisfied_by(pkg_version):
             return True
 
     return False
@@ -511,6 +510,9 @@ def main():
         supports_check_mode=True,
     )
 
+    if not HAS_SETUPTOOLS:
+        module.fail_json(msg="No setuptools found in remote host, please install that first.")
+
     state = module.params['state']
     name = module.params['name']
     version = module.params['version']
@@ -519,9 +521,6 @@ def main():
     chdir = module.params['chdir']
     umask = module.params['umask']
     env = module.params['virtualenv']
-
-    if NO_SETUPTOOLS:
-        module.fail_json(msg="No setuptools found in remote host, please install that first.")
 
     venv_created = False
     if chdir:
@@ -581,12 +580,12 @@ def main():
             # check invalid combination of arguments
             if version is not None:
                 if len(distributions) > 1:
-                    module.fail_json(msg="Version arg is not available for installing multi-packages.")
+                    module.fail_json(msg="'version' is not available for installing multi-packages.")
+                if distributions[0].has_version_specifier:
+                    module.fail_json(msg="'version' argument conflicts with version specifier provided along with a package name.\
+                                     Please keep a version specifier, but remove the 'version' argument.")
                 else:
-                    if distributions[0].has_version_specifier:
-                        module.fail_json(msg="Version arg is not available if version info is provided in name.")
-                    else:
-                        distributions[0] = Distribution(distributions[0].distribution_name, version)
+                    distributions[0] = Distribution(distributions[0].distribution_name, version)
 
         if module.params['editable']:
             args_list = []  # used if extra_args is not used at all
