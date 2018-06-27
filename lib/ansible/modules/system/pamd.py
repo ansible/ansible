@@ -290,6 +290,12 @@ class PamdLine(object):
         self.prev = None
         self.next = None
 
+    @property
+    def is_valid(self):
+        if self.line == '':
+            return True
+        return False
+
     # Method to check if a rule matches the type, control and path.
     def matches(self, rule_type, rule_control, rule_path, rule_args=None):
         return False
@@ -404,6 +410,10 @@ class PamdRule(PamdLine):
         if number >= 0:
             return True
         return False
+
+    @property
+    def is_valid(self):
+        return self.validate()[0]
 
     def validate(self):
         # Validate the rule type
