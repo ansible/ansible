@@ -316,3 +316,13 @@ releases:
     - win_updates-async-fix.yml
     - winrm_kinit-remove-pass-log.yml
     release_date: '2018-06-25'
+  2.6.0rc5:
+    codename: Heartbreaker
+    fragments:
+    - fix_options.yml
+    - fix_password_lookup_loading.yaml
+    - group_by_localhost.yaml
+    - lineinfile-insertbefore-bof-bugfix.yaml
+    - v2.6.0rc5_summary.yaml
+    - win_iis_webapppool-output-fix.yml
+    release_date: '2018-06-26'

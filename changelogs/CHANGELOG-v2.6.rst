@@ -2,6 +2,25 @@
 Ansible 2.6 "Heartbreaker" Release Notes
 ========================================
 
+v2.6.0rc5
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2018-06-26
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`_
+
+
+Bugfixes
+--------
+
+- allow set_options to be called multiple times https://github.com/ansible/ansible/pull/41913
+- group_by - support implicit localhost (https://github.com/ansible/ansible/pull/41860)
+- lineinfile - fix insertbefore when used with BOF to not insert duplicate lines (https://github.com/ansible/ansible/issues/38219)
+- password lookup - Do not load password lookup in network filters, allowing the password lookup to be overriden (https://github.com/ansible/ansible/pull/41907)
+- win_iis_webapppool - redirect some module output to null so Ansible can read the output JSON https://github.com/ansible/ansible/issues/40874
+
 v2.6.0rc4
 =========
 
