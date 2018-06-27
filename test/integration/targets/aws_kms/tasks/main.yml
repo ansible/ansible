@@ -11,7 +11,7 @@
           alias: "{{ resource_prefix }}-kms"
 
     - name: create a key
-      kms:
+      aws_kms:
         region: "{{ aws_region }}"
         aws_access_key: "{{ aws_access_key }}"
         aws_secret_key: "{{ aws_secret_key }}"
@@ -117,7 +117,7 @@
         caller_arn: "{{ (sts_get_caller_results.stdout|from_json).Arn }}"
 
     - name: Allow the IAM role to use a specific Encryption Context
-      kms:
+      aws_kms:
         region: "{{ aws_region }}"
         aws_access_key: "{{ aws_access_key }}"
         aws_secret_key: "{{ aws_secret_key }}"
@@ -173,7 +173,7 @@
           - grant_two.grants|length == 2
 
     - name: Add a second grant again
-      kms:
+      aws_kms:
         region: "{{ aws_region }}"
         aws_access_key: "{{ aws_access_key }}"
         aws_secret_key: "{{ aws_secret_key }}"
@@ -200,7 +200,7 @@
           - grant_two_again.grants|length == 2
 
     - name: Update the grants with purge_grants set
-      kms:
+      aws_kms:
         region: "{{ aws_region }}"
         aws_access_key: "{{ aws_access_key }}"
         aws_secret_key: "{{ aws_secret_key }}"
@@ -228,7 +228,7 @@
           - grant_three.grants|length == 1
 
     - name: update third grant to change encryption context equals to subset
-      kms:
+      aws_kms:
         region: "{{ aws_region }}"
         aws_access_key: "{{ aws_access_key }}"
         aws_secret_key: "{{ aws_secret_key }}"
@@ -257,7 +257,7 @@
           - "'encryption_context_subset' in grant_three_update.grants[0].constraints"
 
     - name: tag encryption key
-      kms:
+      aws_kms:
         region: "{{ aws_region }}"
         aws_access_key: "{{ aws_access_key }}"
         aws_secret_key: "{{ aws_secret_key }}"
@@ -278,7 +278,7 @@
           - "'tag_two' in tag_kms.tags"
 
     - name: add, replace, remove tags
-      kms:
+      aws_kms:
         region: "{{ aws_region }}"
         aws_access_key: "{{ aws_access_key }}"
         aws_secret_key: "{{ aws_secret_key }}"
@@ -301,7 +301,7 @@
           - "'tag_three' in tag_kms_update.tags"
 
     - name: make no real tag change
-      kms:
+      aws_kms:
         region: "{{ aws_region }}"
         aws_access_key: "{{ aws_access_key }}"
         aws_secret_key: "{{ aws_secret_key }}"
@@ -320,7 +320,7 @@
           - "'tag_three' in tag_kms_no_update.tags"
 
     - name: update the key's description and disable it
-      kms:
+      aws_kms:
         region: "{{ aws_region }}"
         aws_access_key: "{{ aws_access_key }}"
         aws_secret_key: "{{ aws_secret_key }}"
@@ -339,7 +339,7 @@
           - update_key.changed
 
     - name: delete the key
-      kms:
+      aws_kms:
         region: "{{ aws_region }}"
         aws_access_key: "{{ aws_access_key }}"
         aws_secret_key: "{{ aws_secret_key }}"
@@ -355,7 +355,7 @@
           - delete_kms.changed
 
     - name: undelete and enable the key
-      kms:
+      aws_kms:
         region: "{{ aws_region }}"
         aws_access_key: "{{ aws_access_key }}"
         aws_secret_key: "{{ aws_secret_key }}"
@@ -375,7 +375,7 @@
 
     # ============================================================
     - name: finish off by deleting key
-      kms:
+      aws_kms:
         state: absent
         region: "{{ aws_region }}"
         aws_access_key: "{{ aws_access_key }}"

@@ -75,11 +75,13 @@ options:
     choices:
       - present
       - absent
+    default: present
     version_added: 2.7
   enabled:
     description: Whether or not a key is enabled
     default: True
     version_added: 2.7
+    type: bool
   description:
     description:
       A description of the CMK. Use a description that helps you decide
@@ -93,11 +95,13 @@ options:
       be removed
     version_added: 2.7
     default: False
+    type: bool
   purge_grants:
     description: Whether the I(grants) argument should cause grants not in the list to
       be removed
     default: False
     version_added: 2.7
+    type: bool
   grants:
     description:
       - A list of grants to apply to the key. Each item must contain I(grantee_principal).
@@ -335,19 +339,19 @@ statement_label = {
     'admin': 'Allow access for Key Administrators'
 }
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
-from ansible.module_utils.ec2 import AWSRetry, camel_dict_to_snake_dict, HAS_BOTO3
+from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
+from ansible.module_utils.ec2 import ec2_argument_spec
+from ansible.module_utils.ec2 import AWSRetry, camel_dict_to_snake_dict
 from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list
 from ansible.module_utils.ec2 import compare_aws_tags
+from ansible.module_utils.six import string_types
 
-import traceback
 import json
 
 try:
     import botocore
 except ImportError:
-    pass  # caught by imported HAS_BOTO3
+    pass  # caught by AnsibleAWSModule
 
 
 @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
@@ -419,13 +423,10 @@ def get_kms_tags(connection, module, key_id):
         try:
             tag_response = get_kms_tags_with_backoff(connection, key_id, **kwargs)
             tags.extend(tag_response['Tags'])
-        except botocore.exceptions.ClientError as e:
-            if e.response['Error']['Code'] != 'AccessDeniedException':
-                module.fail_json(msg="Failed to obtain key tags",
-                                 exception=traceback.format_exc(),
-                                 **camel_dict_to_snake_dict(e.response))
-            else:
-                tag_response = {}
+        except is_boto3_error_code('AccessDeniedException'):
+            tag_response = {}
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:  # pylint: disable=duplicate-except
+            module.fail_json_aws(e, msg="Failed to obtain key tags")
         if tag_response.get('NextMarker'):
             kwargs['Marker'] = tag_response['NextMarker']
         else:
@@ -438,13 +439,10 @@ def get_kms_policies(connection, module, key_id):
         policies = list_key_policies_with_backoff(connection, key_id)['PolicyNames']
         return [get_key_policy_with_backoff(connection, key_id, policy)['Policy'] for
                 policy in policies]
-    except botocore.exceptions.ClientError as e:
-        if e.response['Error']['Code'] != 'AccessDeniedException':
-            module.fail_json(msg="Failed to obtain key policies",
-                             exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
-        else:
-            return []
+    except is_boto3_error_code('AccessDeniedException'):
+        return []
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:  # pylint: disable=duplicate-except
+        module.fail_json_aws(e, msg="Failed to obtain key policies")
 
 
 def key_matches_filter(key, filtr):
@@ -481,18 +479,14 @@ def camel_to_snake_grant(grant):
 def get_key_details(connection, module, key_id):
     try:
         result = get_kms_metadata_with_backoff(connection, key_id)['KeyMetadata']
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Failed to obtain key metadata",
-                         exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed to obtain key metadata")
     result['KeyArn'] = result.pop('Arn')
 
     try:
         aliases = get_kms_aliases_lookup(connection)
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Failed to obtain aliases",
-                         exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed to obtain aliases")
 
     result['aliases'] = aliases.get(result['KeyId'], [])
 
@@ -502,10 +496,8 @@ def get_key_details(connection, module, key_id):
     try:
         result['grants'] = [camel_to_snake_grant(grant) for grant in
                             get_kms_grants_with_backoff(connection, key_id)['Grants']]
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Failed to obtain key grants",
-                         exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed to obtain key grants")
     tags = get_kms_tags(connection, module, key_id)
     result['tags'] = boto3_tag_list_to_ansible_dict(tags, 'TagKey', 'TagValue')
     result['policies'] = get_kms_policies(connection, module, key_id)
@@ -515,10 +507,8 @@ def get_key_details(connection, module, key_id):
 def get_kms_facts(connection, module):
     try:
         keys = get_kms_keys_with_backoff(connection)['Keys']
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Failed to obtain keys",
-                         exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed to obtain keys")
 
     return [get_key_details(connection, module, key['KeyId']) for key in keys]
 
@@ -584,19 +574,15 @@ def ensure_enabled_disabled(connection, module, key):
         try:
             connection.enable_key(KeyId=key['key_id'])
             changed = True
-        except botocore.exceptions.ClientError as e:
-            module.fail_json(msg="Failed to enable key",
-                             exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Failed to enable key")
 
     if key['key_state'] == 'Enabled' and not module.params['enabled']:
         try:
             connection.disable_key(KeyId=key['key_id'])
             changed = True
-        except botocore.exceptions.ClientError as e:
-            module.fail_json(msg="Failed to disable key",
-                             exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Failed to disable key")
     return changed
 
 
@@ -613,10 +599,8 @@ def update_key(connection, module, key):
             try:
                 connection.create_alias(KeyId=key_id, AliasName=alias)
                 changed = True
-            except botocore.exceptions.ClientError as e:
-                module.fail_json(msg="Failed create key alias",
-                                 exception=traceback.format_exc(),
-                                 **camel_dict_to_snake_dict(e.response))
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                module.fail_json_aws(msg="Failed create key alias")
 
     if key['key_state'] == 'PendingDeletion':
         try:
@@ -625,10 +609,8 @@ def update_key(connection, module, key):
             # set this so that ensure_enabled_disabled works correctly
             key['key_state'] = 'Disabled'
             changed = True
-        except botocore.exceptions.ClientError as e:
-            module.fail_json(msg="Failed to cancel key deletion",
-                             exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Failed to cancel key deletion")
 
     changed = ensure_enabled_disabled(connection, module, key) or changed
 
@@ -639,10 +621,8 @@ def update_key(connection, module, key):
         try:
             connection.update_key_description(KeyId=key['key_id'], Description=description)
             changed = True
-        except botocore.exceptions.ClientError as e:
-            module.fail_json(msg="Failed to update key description",
-                             exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Failed to update key description")
 
     desired_tags = module.params.get('tags')
     to_add, to_remove = compare_aws_tags(key['tags'], desired_tags,
@@ -651,20 +631,16 @@ def update_key(connection, module, key):
         try:
             connection.untag_resource(KeyId=key['key_id'], TagKeys=to_remove)
             changed = True
-        except botocore.exceptions.ClientError as e:
-            module.fail_json(msg="Unable to remove or update tag",
-                             exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Unable to remove or update tag")
     if to_add:
         try:
             connection.tag_resource(KeyId=key['key_id'],
                                     Tags=[{'TagKey': tag_key, 'TagValue': desired_tags[tag_key]}
                                           for tag_key in to_add])
             changed = True
-        except botocore.exceptions.ClientError as e:
-            module.fail_json(msg="Unable to add tag to key",
-                             exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Unable to add tag to key")
 
     desired_grants = module.params.get('grants')
     existing_grants = key['grants']
@@ -676,10 +652,8 @@ def update_key(connection, module, key):
             try:
                 connection.retire_grant(KeyId=key['key_arn'], GrantId=grant['grant_id'])
                 changed = True
-            except botocore.exceptions.ClientError as e:
-                module.fail_json(msg="Unable to retire grant",
-                                 exception=traceback.format_exc(),
-                                 **camel_dict_to_snake_dict(e.response))
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                module.fail_json_aws(e, msg="Unable to retire grant")
 
     if to_add:
         for grant in to_add:
@@ -687,10 +661,8 @@ def update_key(connection, module, key):
             try:
                 connection.create_grant(**grant_params)
                 changed = True
-            except botocore.exceptions.ClientError as e:
-                module.fail_json(msg="Unable to create grant",
-                                 exception=traceback.format_exc(),
-                                 **camel_dict_to_snake_dict(e.response))
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                module.fail_json_aws(e, msg="Unable to create grant")
 
     # make results consistent with kms_facts
     result = get_key_details(connection, module, key['key_id'])
@@ -709,10 +681,8 @@ def create_key(connection, module):
 
     try:
         result = connection.create_key(**params)['KeyMetadata']
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Failed to create initial key",
-                         exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed to create initial key")
     key = get_key_details(connection, module, result['KeyId'])
 
     alias = module.params['alias']
@@ -720,20 +690,16 @@ def create_key(connection, module):
         alias = 'alias/' + alias
     try:
         connection.create_alias(AliasName=alias, TargetKeyId=key['key_id'])
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Failed to create alias",
-                         exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed to create alias")
 
     ensure_enabled_disabled(connection, module, key)
     for grant in module.params.get('grants'):
         grant_params = convert_grant_params(grant, key)
         try:
             connection.create_grant(**grant_params)
-        except botocore.exceptions.ClientError as e:
-            module.fail_json(msg="Failed to add grant to key",
-                             exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Failed to add grant to key")
 
     # make results consistent with kms_facts
     result = get_key_details(connection, module, key['key_id'])
@@ -747,10 +713,8 @@ def delete_key(connection, module, key):
         try:
             connection.schedule_key_deletion(KeyId=key['key_id'])
             changed = True
-        except botocore.exceptions.ClientError as e:
-            module.fail_json(msg="Failed to schedule key for deletion",
-                             exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Failed to schedule key for deletion")
 
     result = get_key_details(connection, module, key['key_id'])
     module.exit_json(changed=changed, **camel_dict_to_snake_dict(result))
@@ -895,23 +859,17 @@ def main():
         )
     )
 
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         supports_check_mode=True,
         argument_spec=argument_spec,
         required_one_of=[['alias', 'key_id']],
     )
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
 
     result = {}
     mode = module.params['mode']
 
-    try:
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        kms = boto3_conn(module, conn_type='client', resource='kms', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-        iam = boto3_conn(module, conn_type='client', resource='iam', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except botocore.exceptions.NoCredentialsError:
-        module.fail_json(msg='cannot connect to AWS', exception=traceback.format_exc())
+    kms = module.client('kms')
+    iam = module.client('iam')
 
     if module.params['grant_types'] or mode == 'deny':
         if module.params['role_name'] and not module.params['role_arn']:
