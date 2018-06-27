@@ -250,7 +250,7 @@ class Distribution:
                 separator = '==' if version_string[0].isdigit() else ' '
                 name_string = separator.join((name_string, version_string))
             self._requirement = Requirement.parse(name_string)
-            self._distribution_name = self._requirement.name.lower()
+            self._distribution_name = self._requirement.key
         else:
             self._plain_distribution = False
             self._distribution_name = name_string
