@@ -757,5 +757,5 @@
   vars:
     warning_message: >-
       The regular expression is an empty string, which will match every line in the file.
-      This may have unintended consequences, such as replacing the last line in the file
-      rather than appending.
+      This may have unintended consequences, such as replacing the last line in the file rather than appending.
+      If this is desired, use '^' to match every line in the file and avoid this warning.
