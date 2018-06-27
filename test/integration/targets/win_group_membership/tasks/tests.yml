@@ -1,21 +1,7 @@
 # Test code for win_group_membership
 
-# (c) 2017, Andrew Saraceni <andrew.saraceni@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, Andrew Saraceni <andrew.saraceni@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 - name: Look up built-in Administrator account name (-500 user whose domain == computer name)
   raw: $machine_sid = (Get-CimInstance Win32_UserAccount -Filter "Domain='$env:COMPUTERNAME'")[0].SID -replace '(S-1-5-21-\d+-\d+-\d+)-\d+', '$1'; (Get-CimInstance Win32_UserAccount -Filter "SID='$machine_sid-500'").Name
@@ -30,7 +16,7 @@
     name: "{{ win_local_group }}"
     members:
       - "{{ admin_account_name }}"
-      - Guest
+      - "{{ win_local_user }}"
       - NT AUTHORITY\SYSTEM
       - NT AUTHORITY\NETWORK SERVICE
     state: absent
@@ -53,17 +39,7 @@
       - FakeUser
     state: present
   register: add_fake_local_user
-  failed_when: add_fake_local_user.changed != false or add_fake_local_user.msg != "Could not resolve group member FakeUser"
-
-
-- name: Add fake FQDN domain user
-  win_group_membership:
-    name: "{{ win_local_group }}"
-    members:
-      - FakeUser@domain.fake
-    state: present
-  register: add_fake_fqdn_domain_user
-  failed_when: add_fake_fqdn_domain_user.changed != false or add_fake_fqdn_domain_user.msg != "Could not resolve NetBIOS name for domain domain.fake"
+  failed_when: add_fake_local_user.changed != false or add_fake_local_user.msg is not search("account_name FakeUser is not a valid account, cannot get SID.*")
 
 
 - name: Add users to group
@@ -71,7 +47,7 @@
     name: "{{ win_local_group }}"
     members:
       - "{{ admin_account_name }}"
-      - Guest
+      - "{{ win_local_user }}"
       - NT AUTHORITY\SYSTEM
     state: present
   register: add_users_to_group
@@ -80,8 +56,8 @@
   assert:
     that:
     - add_users_to_group.changed == true
-    - add_users_to_group.added == [admin_account_name, "Guest", "NT AUTHORITY\\SYSTEM"]
-    - add_users_to_group.members == [admin_account_name, "Guest", "NT AUTHORITY\\SYSTEM"]
+    - add_users_to_group.added == ["{{ ansible_hostname }}\\{{ admin_account_name }}", "{{ ansible_hostname }}\\{{ win_local_user }}", "NT AUTHORITY\\SYSTEM"]
+    - add_users_to_group.members == ["{{ ansible_hostname }}\\{{ admin_account_name }}", "{{ ansible_hostname }}\\{{ win_local_user }}", "NT AUTHORITY\\SYSTEM"]
   when: not in_check_mode
 
 - name: Test add_users_to_group (check-mode)
@@ -102,7 +78,7 @@
     that:
     - add_users_to_group_again.changed == false
     - add_users_to_group_again.added == []
-    - add_users_to_group_again.members == [admin_account_name, "Guest", "NT AUTHORITY\\SYSTEM"]
+    - add_users_to_group_again.members == ["{{ ansible_hostname }}\\{{ admin_account_name }}", "{{ ansible_hostname }}\\{{ win_local_user }}", "NT AUTHORITY\\SYSTEM"]
   when: not in_check_mode
 
 
@@ -111,7 +87,7 @@
     <<: *wgm_present
     members:
       - '{{ ansible_hostname }}\{{ admin_account_name }}'
-      - .\Guest
+      - '.\{{ win_local_user }}'
   register: add_different_syntax_users_to_group_again
 
 - name: Test add_different_syntax_users_to_group_again (normal mode)
@@ -119,7 +95,7 @@
     that:
     - add_different_syntax_users_to_group_again.changed == false
     - add_different_syntax_users_to_group_again.added == []
-    - add_different_syntax_users_to_group_again.members == [admin_account_name, "Guest", "NT AUTHORITY\\SYSTEM"]
+    - add_different_syntax_users_to_group_again.members == ["{{ ansible_hostname }}\\{{ admin_account_name }}", "{{ ansible_hostname }}\\{{ win_local_user }}", "NT AUTHORITY\\SYSTEM"]
   when: not in_check_mode
 
 - name: Test add_different_syntax_users_to_group_again (check-mode)
@@ -143,7 +119,7 @@
     that:
     - add_another_user_to_group.changed == true
     - add_another_user_to_group.added == ["NT AUTHORITY\\NETWORK SERVICE"]
-    - add_another_user_to_group.members == [admin_account_name, "Guest", "NT AUTHORITY\\SYSTEM", "NT AUTHORITY\\NETWORK SERVICE"]
+    - add_another_user_to_group.members == ["{{ ansible_hostname }}\\{{ admin_account_name }}", "{{ ansible_hostname }}\\{{ win_local_user }}", "NT AUTHORITY\\SYSTEM", "NT AUTHORITY\\NETWORK SERVICE"]
   when: not in_check_mode
 
 - name: Test add_another_user_to_group (check-mode)
@@ -164,7 +140,7 @@
     that:
     - add_another_user_to_group_again.changed == false
     - add_another_user_to_group_again.added == []
-    - add_another_user_to_group_again.members == [admin_account_name, "Guest", "NT AUTHORITY\\SYSTEM", "NT AUTHORITY\\NETWORK SERVICE"]
+    - add_another_user_to_group_again.members == ["{{ ansible_hostname }}\\{{ admin_account_name }}", "{{ ansible_hostname }}\\{{ win_local_user }}", "NT AUTHORITY\\SYSTEM", "NT AUTHORITY\\NETWORK SERVICE"]
   when: not in_check_mode
 
 
@@ -178,7 +154,7 @@
   assert:
     that:
     - remove_users_from_group.changed == true
-    - remove_users_from_group.removed == [admin_account_name, "Guest", "NT AUTHORITY\\SYSTEM"]
+    - remove_users_from_group.removed == ["{{ ansible_hostname }}\\{{ admin_account_name }}", "{{ ansible_hostname }}\\{{ win_local_user }}", "NT AUTHORITY\\SYSTEM"]
     - remove_users_from_group.members == ["NT AUTHORITY\\NETWORK SERVICE"]
   when: not in_check_mode
 
@@ -209,7 +185,7 @@
     <<: *wgm_absent
     members:
       - '{{ ansible_hostname }}\{{ admin_account_name }}'
-      - .\Guest
+      - '.\{{ win_local_user }}'
   register: remove_different_syntax_users_from_group_again
 
 - name: Test remove_different_syntax_users_from_group_again (normal mode)
