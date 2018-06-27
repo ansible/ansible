@@ -103,7 +103,7 @@ options:
         to be reassigned to the specified network interface.
     required: false
     default: 'no'
-    version_added: 2.5
+    version_added: 2.7
 extends_documentation_fragment:
     - aws
     - ec2
