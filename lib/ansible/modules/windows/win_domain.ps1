@@ -72,7 +72,7 @@ If(-not $forest) {
             SafeModeAdministratorPassword=$sm_cred;
             Confirm=$false;
             SkipPreChecks=$true;
-            InstallDNS=$true;
+            InstallDns=$true;
             NoRebootOnCompletion=$true;
         }
         if ($database_path) {
