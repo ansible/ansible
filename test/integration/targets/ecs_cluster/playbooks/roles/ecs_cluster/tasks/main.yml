@@ -551,11 +551,6 @@
         managed_policy:
         - AmazonEC2ContainerServiceRole
         <<: *aws_connection_info
-
-    - name: gather facts for the ecsTaskExecutionRole
-      iam_role_facts:
-        name: ecsTaskExecutionRole
-        <<: *aws_connection_info
       register: iam_execution_role
 
     - name: create Fargate VPC-networked task definition with host port set to 8080 and unsupported network mode (expected to fail)
@@ -604,7 +599,7 @@
         launch_type: FARGATE
         cpu: 512
         memory: 1024
-        execution_role_arn: "{{ iam_execution_role.iam_roles.0.arn }}"
+        execution_role_arn: "{{ iam_execution_role.arn }}"
         state: present
         <<: *aws_connection_info
       vars:
