@@ -482,7 +482,7 @@ def main():
 
     if regexp == '':
         module.warn(
-            'The regular expression is empty, which will match every line in the file.'
+            'The regular expression is an empty string, which will match every line in the file. '
             'This may have unintended consequences, such as replacing the last line in the file rather than appending.')
 
     b_path = to_bytes(path, errors='surrogate_or_strict')
