@@ -23,6 +23,7 @@ try:
 except ImportError:
     HAVE_SELINUX = False
 
+
 class LockTimeout(Exception):
     pass
 
