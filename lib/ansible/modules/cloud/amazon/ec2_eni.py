@@ -101,9 +101,9 @@ options:
     description:
       - Indicates whether to allow an IP address that is already assigned to another network interface or instance
         to be reassigned to the specified network interface.
-   required: false
-   default: 'no'
-   version_added: 2.5 
+    required: false
+    default: 'no'
+    version_added: 2.5
 extends_documentation_fragment:
     - aws
     - ec2
