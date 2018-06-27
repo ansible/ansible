@@ -310,9 +310,7 @@
   assert:
     that: 
       - results.ansible_facts.azure_virtualmachines | length == 1
-      - results.ansible_facts.azure_virtualmachines[0].name == 'testvm003'
-      - results.ansible_facts.azure_virtualmachines[0].location == 'eastus'
-      - results.ansible_facts.azure_virtualmachines[0].admin_username == 'adminuser'
+      - results.ansible_facts.azure_virtualmachines[0].name == vm2_name
 
 - name: Should be idempotent with a dual NICs
   vars:
