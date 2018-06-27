@@ -296,6 +296,22 @@
       that:
         - azure_vm.properties.availabilitySet.id
 
+- name: Retrieve vms facts (filtering by name)
+  azure_rm_virtualmachine_facts:
+    resource_group: "{{ resource_group }}"
+    name: testvm003
+  register: results
+
+- name: Just dump output
+  debug:
+    var: results
+
+- name: Assert that facts module returned the second vm
+  assert:
+    that: 
+      - results.ansible_facts.azure_virtualmachines | length == 1
+      - results.ansible_facts.azure_virtualmachines[0].name == vm2_name
+
 - name: Should be idempotent with a dual NICs
   vars:
     niclist:
