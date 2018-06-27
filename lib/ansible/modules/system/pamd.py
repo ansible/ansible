@@ -296,6 +296,11 @@ class PamdLine(object):
             return True
         return False
 
+    def validate(self):
+        if not self.is_valid:
+            return False, "Rule is not valid " + self.line
+        return True, "Rule is valid " + self.line
+
     # Method to check if a rule matches the type, control and path.
     def matches(self, rule_type, rule_control, rule_path, rule_args=None):
         return False
@@ -663,8 +668,8 @@ class PamdService(object):
         current_line = self._head
 
         while current_line is not None:
-            if not current_line.is_valid:
-                return current_line.is_valid, "Module is invalid"
+            if not current_line.validate()[0]:
+                return current_line.validate()
             current_line = current_line.next
         return True, "Module is valid"
 
