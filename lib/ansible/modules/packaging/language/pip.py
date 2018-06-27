@@ -243,16 +243,23 @@ _SPECIAL_PACKAGE_CHECKERS = {'setuptools': 'import setuptools; print(setuptools.
 
 class Distribution(object):
     def __init__(self, name_string, version_string=None):
-        if version_string is not None:
-            version_string = version_string.lstrip()
-            separator = '==' if version_string[0].isdigit() else ' '
-            name_string = separator.join((name_string, version_string))
-        self._requirement = Requirement.parse(name_string)
-        self._distribution_name = self._requirement.name.lower()
+        if not name_string.startswith(('svn+', 'git+', 'hg+', 'bzr+', 'file:')):
+            self._plain_distribution = True
+            if version_string is not None:
+                version_string = version_string.lstrip()
+                separator = '==' if version_string[0].isdigit() else ' '
+                name_string = separator.join((name_string, version_string))
+            self._requirement = Requirement.parse(name_string)
+            self._distribution_name = self._requirement.name.lower()
+        else:
+            self._plain_distribution = False
+            self._distribution_name = name_string
 
     @property
     def has_version_specifier(self):
-        return bool(self._requirement.specs)
+        if self._plain_distribution:
+            return bool(self._requirement.specs)
+        return False
 
     @property
     def distribution_name(self):
@@ -263,18 +270,20 @@ class Distribution(object):
         self._distribution_name = new_name
 
     def is_satisfied_by(self, version_to_test):
-        return self._requirement.specifier.contains(version_to_test)
+        if self._plain_distribution:
+            return self._requirement.specifier.contains(version_to_test)
+        return True
 
     def __str__(self):
-        return str(self._requirement)
+        if self._plain_distribution:
+            return str(self._requirement)
+        return self._distribution_name
 
 
 def _is_valid_distribution_name(name):
-    try:
-        Requirement.parse(name)
-        return True
-    except RequirementParseError:
+    if name.startswith(('>=','<=','!=','==','>','<')):
         return False
+    return True
 
 
 def _recover_distribution_name(names):
