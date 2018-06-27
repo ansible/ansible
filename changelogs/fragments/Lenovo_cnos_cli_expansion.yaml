@@ -1,0 +1,2 @@
+bugfixes:
+- cnos_* modules - Modified short abbreviation CLI commands to full form CLI commands so that Ansible v2.5.3 or later releases will work with CNOS 10.7.1.0 or later. (https://github.com/ansible/ansible/pull/40218).
