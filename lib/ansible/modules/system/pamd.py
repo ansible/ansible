@@ -425,10 +425,10 @@ class PamdRule(PamdLine):
         if self.rule_type not in PamdRule.valid_types:
             return False, "Rule type, " + self.rule_type + ", is not valid in rule " + self.line
         # Validate the rule control
-        if isinstance(self.rule_control, str) and self.rule_control not in PamdRule.valid_simple_controls:
+        if isinstance(self._control, str) and self.rule_control not in PamdRule.valid_simple_controls:
             return False, "Rule control, " + self.rule_control + ", is not valid in rule " + self.line
-        elif isinstance(self.rule_control, list):
-            for control in self.rule_control:
+        elif isinstance(self._control, list):
+            for control in self._control:
                 value, action = control.split("=")
                 if value not in PamdRule.valid_control_values:
                     return False, "Rule control value, " + value + ", is not valid in rule " + self.line
