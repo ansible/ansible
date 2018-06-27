@@ -164,16 +164,10 @@ from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argume
 from ansible.module_utils.basic import AnsibleModule
 
 
-def execute_show_command(command, module, command_type='cli_show_ascii'):
-    cmds = [command]
-    body = run_commands(module, cmds)
-    return body
-
-
 def get_system_mode(module):
-    command = 'show system mode'
-    body = execute_show_command(command, module)[0]
-    if 'normal' in body.lower():
+    command = {'command': 'show system mode', 'output': 'text'}
+    body = run_commands(module, [command])[0]
+    if body and 'normal' in body.lower():
         mode = 'normal'
     else:
         mode = 'maintenance'
@@ -181,15 +175,15 @@ def get_system_mode(module):
 
 
 def get_maintenance_timeout(module):
-    command = 'show maintenance timeout'
-    body = execute_show_command(command, module)[0]
+    command = {'command': 'show maintenance timeout', 'output': 'text'}
+    body = run_commands(module, [command])[0]
     timeout = body.split()[4]
     return timeout
 
 
 def get_reset_reasons(module):
-    command = 'show maintenance on-reload reset-reasons'
-    body = execute_show_command(command, module)[0]
+    command = {'command': 'show maintenance on-reload reset-reasons', 'output': 'text'}
+    body = run_commands(module, [command])[0]
     return body
 
 
@@ -222,8 +216,7 @@ def get_commands(module, state, mode):
             commands.append('no system mode maintenance timeout {0}'.format(
                             module.params['system_mode_maintenance_timeout']))
 
-    elif (module.params[
-        'system_mode_maintenance_shutdown'] is True and
+    elif (module.params['system_mode_maintenance_shutdown'] and
             mode == 'normal'):
         commands.append('system mode maintenance shutdown')
     elif (module.params[
