@@ -101,8 +101,8 @@ options:
             - '- C(inbound_policy) (bool): Indicate whether or not the teaming policy is applied to inbound frames as well. (default: False)'
             - '- C(notify_switches) (bool): Indicate whether or not to notify the physical switch if a link fails. (default: True)'
             - '- C(rolling_order) (bool): Indicate whether or not to use a rolling policy when restoring links. (default: False)'
-            - '- C(active_uplinkport) (list): List of active uplink ports used for load balancing. (default: None)'
-            - '- C(standby_uplinkport) (list): List of standby uplink ports used for failover. (default: None)'
+            - '- C(active_uplinkport) (list): List of active uplink ports used for load balancing. (default: False)'
+            - '- C(standby_uplinkport) (list): List of standby uplink ports used for failover. (default: False)'
         required: False
         version_added: '2.5'
         default: {
@@ -141,7 +141,6 @@ options:
             'vlan_override': False,
             'ipfix_override': False
         }
-
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -158,7 +157,6 @@ EXAMPLES = '''
         num_ports: 120
         portgroup_type: earlyBinding
         state: present
-
    - name: Create vlan trunk portgroup
      connection: local
      vmware_dvs_portgroup:
@@ -172,7 +170,6 @@ EXAMPLES = '''
         num_ports: 120
         portgroup_type: earlyBinding
         state: present
-
    - name: Create no-vlan portgroup
      connection: local
      vmware_dvs_portgroup:
@@ -185,7 +182,6 @@ EXAMPLES = '''
         num_ports: 120
         portgroup_type: earlyBinding
         state: present
-
    - name: Create vlan portgroup with all security and port policies
      connection: local
      vmware_dvs_portgroup:
@@ -405,19 +401,19 @@ def main():
                                                  'loadbalance_srcmac',
                                                  'loadbalance_srcid',
                                                  'loadbalance_loadbased',
-                                                 'failover_explicit',
-                                             ],
+                                                 'failover_explicit'
+                                             ]
                                              ),
-                    active_uplinkport=dict(type='list', default=None),
-                    standby_uplinkport=dict(type='list', default=None)
+                    active_uplinkport=dict(type='list', default=[]),
+                    standby_uplinkport=dict(type='list', default=[])
                 ),
                 default=dict(
                     inbound_policy=False,
                     notify_switches=True,
                     rolling_order=False,
                     load_balance_policy='loadbalance_srcid',
-                    active_uplinkport=None,
-                    standby_uplinkport=None
+                    active_uplinkport=[],
+                    standby_uplinkport=[]
                 ),
             ),
             port_policy=dict(
