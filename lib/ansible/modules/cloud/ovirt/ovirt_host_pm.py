@@ -160,6 +160,7 @@ class HostPmModule(BaseModule):
             ] if self._module.params['options'] else None,
             password=self._module.params['password'],
             port=self._module.params['port'],
+            slot=self._module.params['slot'],
             type=self._module.params['type'],
             username=self._module.params['username'],
             order=self._module.params.get('order', 100),
@@ -172,6 +173,7 @@ class HostPmModule(BaseModule):
             equal(self._module.params.get('password'), entity.password) and
             equal(self._module.params.get('username'), entity.username) and
             equal(self._module.params.get('port'), entity.port) and
+            equal(self._module.params.get('slot'), entity.slot) and
             equal(self._module.params.get('type'), entity.type) and
             equal(self._module.params.get('order'), entity.order)
         )
