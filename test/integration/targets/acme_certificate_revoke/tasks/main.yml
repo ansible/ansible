@@ -75,9 +75,9 @@
       validate_certs: no
     ignore_errors: yes
     register: cert_1_revoke
-  - name: Revoke certificate 2 via account key
+  - name: Revoke certificate 2 via certificate private key
     acme_certificate_revoke:
-      account_key_src: "{{ output_dir }}/account-ec384.pem"
+      private_key_src: "{{ output_dir }}/cert-2.key"
       certificate: "{{ output_dir }}/cert-2.pem"
       acme_version: 2
       acme_directory: https://{{ acme_host }}:14000/dir
@@ -93,10 +93,6 @@
       validate_certs: no
     ignore_errors: yes
     register: cert_3_revoke
-
-  # Pebble currently does not support revocation by certificate private key.
-  # As soon as that has been added, the tests should be updated to test that
-  # as well.
 
   # Old 0.9.8 versions have insufficient CLI support for signing with EC keys
   when: openssl_version.stdout is version('1.0.0', '>=')

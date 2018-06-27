@@ -43,7 +43,7 @@ class ACMEProvider(CloudProvider):
         if os.environ.get('ANSIBLE_ACME_CONTAINER'):
             self.image = os.environ.get('ANSIBLE_ACME_CONTAINER')
         else:
-            self.image = 'felixfontein/acme-test-container:c0cc64314be427c6d39679e95a7794c89a293912'
+            self.image = 'felixfontein/acme-test-container:703daa840c5306f55085548ad8fb26b5adbd9daf'
         self.container_name = ''
 
     def filter(self, targets, exclude):
