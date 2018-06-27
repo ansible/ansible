@@ -117,28 +117,28 @@
       state: started
 
 #- block:
-  # TODO: figure out how to make this work under ansible-test with the coverage injector
-  #- name: wait for host to answer on SSH
-  #  delegate_to: new_azure_vm
-  #  wait_for_connection:
-  #- name: get content from custom_data script
-  #  raw: cat /tmp/custom_data.txt
-  #  register: custom_data_content
+#   TODO: figure out how to make this work under ansible-test with the coverage injector
+#  - name: wait for host to answer on SSH
+#    delegate_to: new_azure_vm
+#    wait_for_connection:
+#  - name: get content from custom_data script
+#    raw: cat /tmp/custom_data.txt
+#    register: custom_data_content
 
-  #- name: assert contents
-  #  assert:
-  #      that: custom_data_content.stdout | regex_search('custom_data was executed')
-  #delegate_to: new_azure_vm
+#  - name: assert contents
+#    assert:
+#        that: custom_data_content.stdout | regex_search('custom_data was executed')
+#  delegate_to: new_azure_vm
 
-  # TODO: figure out how to make this work under ansible-test with the coverage injector
-  #- name: wait for file/content created by custom_data script
-  #  delegate_to: new_azure_vm
-  #  vars:
-  #    ansible_python_interpreter: python
-  #  wait_for:
-  #    path: /tmp/custom_data.txt
-  #    search_regex: ^custom_data was executed$
-  #    timeout: 20
+#   TODO: figure out how to make this work under ansible-test with the coverage injector
+#  - name: wait for file/content created by custom_data script
+#    delegate_to: new_azure_vm
+#    vars:
+#      ansible_python_interpreter: python
+#    wait_for:
+#      path: /tmp/custom_data.txt
+#      search_regex: ^custom_data was executed$
+#      timeout: 20
 
 - name: Restart the virtual machine
   azure_rm_virtualmachine:
@@ -310,7 +310,9 @@
   assert:
     that: 
       - results.ansible_facts.azure_virtualmachines | length == 1
-      - results.ansible_facts.azure_virtualmachines[0].name == vm2_name
+      - results.ansible_facts.azure_virtualmachines[0].name == 'testvm003'
+      - results.ansible_facts.azure_virtualmachines[0].location == 'eastus'
+      - results.ansible_facts.azure_virtualmachines[0].adminusername == 'adminuser'
 
 - name: Should be idempotent with a dual NICs
   vars:

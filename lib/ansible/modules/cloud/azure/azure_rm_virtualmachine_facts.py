@@ -219,43 +219,6 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
 
         new_result['tags'] = vm.tags
         return new_result
-        #else:
-        #    result['powerstate'] = dict()
-        #    if vm.instance_view:
-        #        result['powerstate'] = next((s.code.replace('PowerState/', '')
-        #                                    for s in vm.instance_view.statuses if s.code.startswith('PowerState')), None)
-
-        #    # Expand network interfaces to include config properties
-        #    for interface in vm.network_profile.network_interfaces:
-        #        int_dict = azure_id_to_dict(interface.id)
-        #        nic = self.get_network_interface(int_dict['networkInterfaces'])
-        #        for interface_dict in result['properties']['networkProfile']['networkInterfaces']:
-        #            if interface_dict['id'] == interface.id:
-        #                nic_dict = self.serialize_obj(nic, 'NetworkInterface')
-        #                interface_dict['name'] = int_dict['networkInterfaces']
-        #                interface_dict['properties'] = nic_dict['properties']
-
-        #    # Expand public IPs to include config properties
-        #    for interface in result['properties']['networkProfile']['networkInterfaces']:
-        #        for config in interface['properties']['ipConfigurations']:
-        #            if config['properties'].get('publicIPAddress'):
-        #                pipid_dict = azure_id_to_dict(config['properties']['publicIPAddress']['id'])
-        #                try:
-        #                    pip = self.network_client.public_ip_addresses.get(self.resource_group, pipid_dict['publicIPAddresses'])
-        #                except Exception as exc:
-        #                    self.fail("Error fetching public ip {0} - {1}".format(pipid_dict['publicIPAddresses'], str(exc)))
-        #                pip_dict = self.serialize_obj(pip, 'PublicIPAddress')
-        #                config['properties']['publicIPAddress']['name'] = pipid_dict['publicIPAddresses']
-        #                config['properties']['publicIPAddress']['properties'] = pip_dict['properties']
-
-        #    return result
-
-    def get_network_interface(self, name):
-        try:
-            nic = self.network_client.network_interfaces.get(self.resource_group, name)
-            return nic
-        except Exception as exc:
-            self.fail("Error fetching network interface {0} - {1}".format(name, str(exc)))
 
 
 def main():
