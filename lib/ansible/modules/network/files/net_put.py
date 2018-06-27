@@ -18,9 +18,9 @@ DOCUMENTATION = """
 module: net_put
 version_added: "2.6"
 author: "Deepak Agrawal (@dagrawal)"
-short_description: Copy files from Ansibe controller to a network device
+short_description: Copy a file from Ansible Controller to a network device
 description:
-  - This module provides functionlity to copy file from Ansible controller to
+  - This module provides functionality to copy file from Ansible controller to
     network devices.
 options:
   src:
@@ -48,10 +48,10 @@ requirements:
 
 notes:
    - Some devices need specific configurations to be enabled before scp can work
-     These configuration should be pre-configued before using this module
+     These configuration should be pre-configured before using this module
      e.g ios - C(ip scp server enable).
-   - User privileage to do scp on network device should be pre-configured
-     e.g. ios - need user privileage 15 by default for allowing scp.
+   - User privilege to do scp on network device should be pre-configured
+     e.g. ios - need user privilege 15 by default for allowing scp.
    - Default destination of source file.
 """
 
