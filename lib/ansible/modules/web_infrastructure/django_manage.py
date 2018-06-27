@@ -57,9 +57,9 @@ options:
   clear:
     description:
       - Clear the existing files before trying to copy or link the original file.
-      - Used only with the 'collectstatic' command. The --noinput argument will be supplied automatically.
+      - Used only with the 'collectstatic' command. The C(--noinput) argument will be added automatically.
     required: false
-    default: "no"
+    default: no
     type: bool
   database:
     description:
