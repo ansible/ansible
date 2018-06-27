@@ -257,14 +257,16 @@ from ansible.module_utils._text import to_native
 
 
 def relocate_repo(module, repo_dir, old_repo_dir, worktree_dir=None):
-    shutil.move(old_repo_dir, repo_dir)
+    if os.path.exists(repo_dir):
+        module.fail_json(msg='Separate-git-dir path %s already exists.' % repo_dir)
     if worktree_dir:
-        dot_git_file_dir = os.path.join(worktree_dir, '.git')
+        dot_git_file_path = os.path.join(worktree_dir, '.git')
         try:
-            with open(dot_git_file_dir, 'w') as dot_git_file:
+            with open(dot_git_file_path, 'w') as dot_git_file:
                 dot_git_file.write('gitdir: %s' % repo_dir)
-        except IOError:
-            module.fail_json(msg='Unable to create and wirte %s' % dot_git_file_dir)
+            shutil.move(old_repo_dir, repo_dir)
+        except (IOError, OSError) as err:
+            module.fail_json(msg='Unable to move git dir. %s' % str(err))
 
 
 def head_splitter(headfile, remote, module=None, fail_on_error=False):
@@ -448,23 +450,21 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
                         "HEAD, branches, tags or in combination with refspec.")
     if reference:
         cmd.extend(['--reference', str(reference)])
-    separate_git_dir_fallback = False
+    needs_separate_git_dir_fallback = False
 
     if separate_git_dir:
-        if os.path.exists(separate_git_dir):
-            module.fail_json(msg='Separate-git-dir path %s already exists.' % separate_git_dir)
         git_version_used = git_version(git_path, module)
         if git_version_used is None:
             module.fail_json(msg='Can not find git executable at %s' % git_path)
         if git_version_used < LooseVersion('1.7.5'):
             # git before 1.7.5 doesn't have separate-git-dir argument, do fallback
-            separate_git_dir_fallback = True
+            needs_separate_git_dir_fallback = True
         else:
             cmd.append('--separate-git-dir=%s' % separate_git_dir)
 
     cmd.extend([repo, dest])
     module.run_command(cmd, check_rc=True, cwd=dest_dirname)
-    if separate_git_dir_fallback:
+    if needs_separate_git_dir_fallback:
         relocate_repo(module, separate_git_dir, os.path.join(dest, ".git"), dest)
 
     if bare and remote != 'origin':
@@ -1007,6 +1007,7 @@ def main():
             archive=dict(type='path'),
             separate_git_dir=dict(type='path'),
         ),
+        mutually_exclusive=['separate_git_dir', ''],
         supports_check_mode=True
     )
 
@@ -1058,11 +1059,7 @@ def main():
     # call run_command()
     module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
 
-    if separate_git_dir is not None and bare:
-        module.warn("Ignoring separate_git_dir argument. "
-                    "Can not do bare clone with argument separate_git_dir.")
-        separate_git_dir = None
-    elif separate_git_dir:
+    if separate_git_dir:
         separate_git_dir = os.path.abspath(separate_git_dir)
 
     gitconfig = None
@@ -1075,6 +1072,7 @@ def main():
             if separate_git_dir and os.path.exists(repo_path) and separate_git_dir != repo_path:
                 result.update(changed=True)
                 if not module.check_mode:
+                    module.warn("***********%s and %s**********" % (separate_git_dir, repo_path))
                     relocate_repo(module, separate_git_dir, repo_path, dest)
                     repo_path = separate_git_dir
         except (IOError, ValueError) as err:
