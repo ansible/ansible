@@ -118,6 +118,7 @@ Parameters
                 {# parameter name with required and/or introduced label #}
                 <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
                     <b>@{ key }@</b>
+                    {% if value.get('type', None) %}<br/><div style="font-size: small; color: red">@{ value.type }@</div>{% endif %}
                     {% if value.get('required', False) %}<br/><div style="font-size: small; color: red">required</div>{% endif %}
                     {% if value.version_added %}<br/><div style="font-size: small; color: darkgreen">(added in @{value.version_added}@)</div>{% endif %}
                 </td>
