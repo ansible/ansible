@@ -162,7 +162,8 @@ def check_args(module, warnings):
 
 
 def map_obj_to_commands(want, have, module):
-    commands = list()
+    send_commands = list()
+    commands = dict()
 
     def needs_update(x):
         return want.get(x) is not None and (want.get(x) != have.get(x))
@@ -170,41 +171,35 @@ def map_obj_to_commands(want, have, module):
     if needs_update('state'):
         if want['state'] == 'absent':
             return ['no feature nxapi']
-        commands.append('feature nxapi')
+        send_commands.append('feature nxapi')
     elif want['state'] == 'absent':
-        return commands
+        return send_commands
 
     # The latest version (9.2) of NXOS software has changed the platform default
     # nxapi transfer to https. Enforce the default nxapi http behavior unless
     # explicitly asking for https.
 
-    if want.get('https') is None or want.get('https') is False:
-        if have.get('https') is True or needs_update('state'):
-            commands.append('no nxapi https')
-        if want.get('http') is None and (needs_update('state') and have.get('http') is None):
-            commands.append('nxapi http port 80')
+    if needs_update('http'):
+        if want.get('http') is False:
+            commands['http'] = 'no nxapi http'
+        if needs_update('http_port') and want.get('http') is True:
+            commands['http'] = 'nxapi http port %s' % want.get('http_port')
+        send_commands.append(commands['http'])
 
-    if needs_update('http') or (have.get('http') and needs_update('http_port')):
-        if want['http'] is True or (want['http'] is None and have['http'] is True):
-            port = want['http_port'] or 80
-            commands.append('nxapi http port %s' % port)
-        elif want['http'] is False:
-            commands.append('no nxapi http')
-
-    if needs_update('https') or (have.get('https') and needs_update('https_port')):
-        if want['https'] is True or (want['https'] is None and have['https'] is True):
-            port = want['https_port'] or 443
-            commands.append('nxapi https port %s' % port)
-        elif want['https'] is False:
-            commands.append('no nxapi https')
+    if needs_update('https'):
+        if want.get('https') is False:
+            commands['https'] = 'no nxapi https'
+        if needs_update('https_port') and want.get('https') is True:
+            commands['https'] = 'nxapi https port %s' % want.get('https_port')
+        send_commands.append(commands['https'])
 
     if needs_update('sandbox'):
-        cmd = 'nxapi sandbox'
+        commands['sandbox'] = 'nxapi sandbox'
         if not want['sandbox']:
-            cmd = 'no %s' % cmd
-        commands.append(cmd)
+            commands['sandbox'] = 'no %s' % commands['sandbox']
+        send_commands.append(commands['sandbox'])
 
-    return commands
+    return send_commands
 
 
 def parse_http(data):
@@ -277,10 +272,10 @@ def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
-        http=dict(aliases=['enable_http'], type='bool'),
-        http_port=dict(type='int'),
-        https=dict(aliases=['enable_https'], type='bool'),
-        https_port=dict(type='int'),
+        http=dict(aliases=['enable_http'], type='bool', default=True),
+        http_port=dict(type='int', default=80),
+        https=dict(aliases=['enable_https'], type='bool', default=False),
+        https_port=dict(type='int', default=443),
         sandbox=dict(aliases=['enable_sandbox'], type='bool'),
         state=dict(default='present', choices=['started', 'stopped', 'present', 'absent'])
     )
@@ -291,6 +286,10 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
+    warning_msg = "Module nxos_nxapi defaults to configure 'http port 80'."
+    warning_msg += "\nDefault behavior is changing in release 2.11 to configure 'https port 443'"
+    warning_msg += " when params 'http, http_port, https, https_port' are not set in the playbook."
+    warnings.append(warning_msg)
     check_args(module, warnings)
 
     result = {'changed': False, 'warnings': warnings}

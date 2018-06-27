@@ -10,11 +10,6 @@
   nxos_nxapi:
     state: present
   connection: network_cli
-  ignore_errors: yes
-
-- name: Set nxapi to default state
-  nxos_nxapi:
-  connection: network_cli
 
 # Gather the list of interfaces on this device and make the list
 # available for integration tests that need them.

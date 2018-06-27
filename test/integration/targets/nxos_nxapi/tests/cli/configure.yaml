@@ -10,7 +10,7 @@
 
 - block:
   - name: Configure NXAPI HTTPS
-    nxos_nxapi:
+    nxos_nxapi: &configure_https
       enable_http: no
       enable_sandbox: "{{nxapi_sandbox_option|default(omit)}}"
       enable_https: yes
@@ -32,21 +32,17 @@
     when: not ( platform is search('N7K')) and not (platform is search('N5K')) and not (platform is search('N35'))
 
   - name: Configure NXAPI HTTPS again
-    nxos_nxapi:
-      enable_http: no
-      enable_sandbox: "{{nxapi_sandbox_option|default(omit)}}"
-      enable_https: yes
-      https_port: 9443
+    nxos_nxapi: *configure_https
     register: result
 
   - name: Assert configuration is idempotent
-    assert:
+    assert: &assert_false
       that:
         - result.changed == false
 
 
   - name: Configure NXAPI HTTPS & HTTP
-    nxos_nxapi:
+    nxos_nxapi: &configure_https_http
       enable_http: yes
       enable_sandbox: "{{nxapi_sandbox_option|default(omit)}}"
       enable_https: yes
@@ -68,21 +64,14 @@
     when: not ( platform is search('N7K')) and not (platform is search('N5K')) and not (platform is search('N35'))
 
   - name: Configure NXAPI HTTPS & HTTP again
-    nxos_nxapi:
-      enable_http: yes
-      enable_sandbox: "{{nxapi_sandbox_option|default(omit)}}"
-      enable_https: yes
-      https_port: 9443
+    nxos_nxapi: *configure_https_http
     register: result
 
   - name: Assert configuration is idempotent
-    assert:
-      that:
-        - result.changed == false
-
+    assert: *assert_false
 
   - name: Configure NXAPI HTTP
-    nxos_nxapi:
+    nxos_nxapi: &configure_http
       enable_http: yes
       enable_sandbox: "{{nxapi_sandbox_option|default(omit)}}"
       enable_https: no
@@ -103,17 +92,11 @@
     when: not ( platform is search('N7K')) and not (platform is search('N5K')) and not (platform is search('N35'))
 
   - name: Configure NXAPI HTTP again
-    nxos_nxapi:
-      enable_http: yes
-      enable_sandbox: "{{nxapi_sandbox_option|default(omit)}}"
-      enable_https: no
+    nxos_nxapi: *configure_http
     register: result
 
   - name: Assert configuration is idempotent
-    assert:
-      that:
-        - result.changed == false
-
+    assert: *assert_false
 
   always:
   - name: Cleanup - Disable NXAPI
