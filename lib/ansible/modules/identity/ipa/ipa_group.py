@@ -24,6 +24,9 @@ options:
     - Can not be changed as it is the unique identifier.
     required: true
     aliases: ['name']
+  description:
+    description:
+    - Description of the group.
   external:
     description:
     - Allow adding external non-IPA members from trusted domains.
