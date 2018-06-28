@@ -31,6 +31,7 @@ import sys
 import warnings
 from collections import defaultdict
 from distutils.version import LooseVersion
+from functools import partial
 from pprint import PrettyPrinter
 
 try:
@@ -49,6 +50,7 @@ from six import iteritems, string_types
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.collections import is_sequence
 from ansible.plugins.loader import fragment_loader
 from ansible.utils import plugin_docs
 from ansible.utils.display import Display
@@ -152,6 +154,9 @@ def rst_xline(width, char="="):
     ''' return a restructured text line of a given length '''
 
     return char * width
+
+
+test_list = partial(is_sequence, include_strings=False)
 
 
 def write_data(text, output_dir, outputname, module=None):
@@ -334,6 +339,7 @@ def jinja2_environment(template_dir, typ, plugin_type):
         env.filters['html_ify'] = html_ify
         env.filters['fmt'] = rst_fmt
         env.filters['xline'] = rst_xline
+        env.tests['list'] = test_list
         templates['plugin'] = env.get_template('plugin.rst.j2')
 
         if plugin_type == 'module':
