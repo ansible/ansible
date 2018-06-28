@@ -120,6 +120,7 @@ from ansible.module_utils.basic import AnsibleModule, traceback
 from ansible.module_utils.ec2 import (AWSRetry, HAS_BOTO3, ec2_argument_spec, get_aws_connection_info,
                                       boto3_conn, camel_dict_to_snake_dict)
 
+
 class NotFoundException(Exception):
     """Custom exception
     """
@@ -129,6 +130,7 @@ class NotFoundException(Exception):
 
     def __str__(self):
         return repr(self.value)
+
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -192,7 +194,8 @@ def main():
             api_id = create_empty_api(module, client)
         api_data = get_api_definitions(module, swagger_file=swagger_file,
                                        swagger_dict=swagger_dict, swagger_text=swagger_text)
-        conf_res, dep_res, deleted_stage = ensure_api_in_correct_state(module, client, api_id=api_id,
+        conf_res, dep_res, deleted_stage = ensure_api_in_correct_state(module,
+                                                        client, api_id=api_id,
                                                         api_data=api_data, stage=stage,
                                                         deploy_desc=deploy_desc)
     if state == "absent":
@@ -348,6 +351,7 @@ def create_deployment(client, api_id=None, stage=None, description=None):
 
     return client.create_deployment(restApiId=api_id, stageName=stage, description=description), deleted_stage
 
+
 def get_api_id_by_name(client, api_name):
     api_list = client.get_rest_apis(limit=500)["items"]
     api_index = find_index_by_kv(api_list, "name", api_name)
@@ -356,6 +360,7 @@ def get_api_id_by_name(client, api_name):
 
     api_id = api_list[api_index]["id"]
     return api_id
+
 
 def get_oldest_stage(client, api_id):
     # Get list of stages
@@ -368,8 +373,10 @@ def get_oldest_stage(client, api_id):
 
     return api_stages, stages_count, oldest_name
 
+
 def delete_stage(client, api_id=None, stage=None):
     return client.delete_stage(restApiId=api_id, stageName=stage)
+
 
 def find_index_by_kv(obj, key, value):
     """Search index of dict in list of dicts
