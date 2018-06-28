@@ -425,6 +425,7 @@ class AzureRM(object):
 
     def _get_msi_credentials(self, subscription_id_param=None):
         credentials = MSIAuthentication()
+        subscription_id_param = subscription_id_param or os.environ.get(AZURE_CREDENTIAL_ENV_MAPPING['subscription_id'], None)
         try:
             # try to get the subscription in MSI to test whether MSI is enabled
             subscription_client = SubscriptionClient(credentials)
