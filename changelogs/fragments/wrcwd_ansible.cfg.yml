@@ -1,0 +1,2 @@
+bugfixes:
+    - avoid using ansible.cfg in a world readable dir, readd missing docs
