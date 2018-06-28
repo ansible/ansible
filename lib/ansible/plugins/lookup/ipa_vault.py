@@ -5,15 +5,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '0.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
 DOCUMENTATION = """
     author:
       - Mario Vazquez (mavazque@redhat.com)
     lookup: ipa_vault
-    version_added: "2.5"
+    version_added: "2.7"
     short_description: Gets info from IPA Vault
     requirements:
       - ipa client (command line utility)
@@ -38,7 +34,7 @@ DOCUMENTATION = """
 """
 
 EXAMPLES = """
-- name: Query ipa for all vaults availabe for the krb token
+- name: Query ipa for all vaults available for the krb token
   debug: msg="{{lookup('ipa_vault', 'find')}}"
 
 - name: Query ipa for details about an specific vault
@@ -74,7 +70,7 @@ class IPAVault(object):
     def __init__(self, ipa_cli='/usr/bin/ipa'):
         self.ipa_cli = ipa_cli
         if not os.path.isfile(self.ipa_cli):
-            raise AnsibleError("IPA Client not found in the controll machine %s, install IPA Client and try againg." % self.ipa_cli)
+            raise AnsibleError("IPA Client not found in the control machine %s, install IPA Client and try again." % self.ipa_cli)
 
     def _run(self, args, rc=0):
         pargs = " ".join(args)
