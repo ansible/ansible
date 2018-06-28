@@ -1,0 +1,2 @@
+bugfixes:
+    - avoid loading host/group vars from cwd when not specifying a playbook or playbook base dir
