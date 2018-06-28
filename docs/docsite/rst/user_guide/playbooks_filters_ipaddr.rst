@@ -379,25 +379,25 @@ be automatically converted to a router address (with ``::1/48`` host address)::
 
 .. _6to4: https://en.wikipedia.org/wiki/6to4
 
-IP Arithmetic
-^^^^^^^^^^^^^
+IP Math
+^^^^^^^
 
 .. versionadded:: 2.7
 
-``iparithmetic()`` filter can be used to do simple IP arithmetic.
+``ipmath()`` filter can be used to do simple IP math/arithmetic.
 
 Here are a few simple examples::
 
-    # {{ '192.168.1.5' | iparithmetic(5) }}
+    # {{ '192.168.1.5' | ipmath(5) }}
     192.168.1.10
 
-    # {{ '192.168.0.5' | iparithmetic(-10) }}
+    # {{ '192.168.0.5' | ipmath(-10) }}
     192.167.255.251
 
-    # {{ '2001::1' | iparithmetic(10) }}
+    # {{ '2001::1' | ipmath(10) }}
     2001::b
 
-    # {{ '2001::5' | iparithmetic(-10) }}
+    # {{ '2001::5' | ipmath(-10) }}
     2000:ffff:ffff:ffff:ffff:ffff:ffff:fffb
 
 

@@ -670,7 +670,7 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
     return False
 
 
-def iparithmetic(value, amount):
+def ipmath(value, amount):
     try:
         ip = netaddr.IPAddress(value)
     except netaddr.AddrFormatError:
@@ -1077,7 +1077,7 @@ class FilterModule(object):
         # IP addresses and networks
         'cidr_merge': cidr_merge,
         'ipaddr': ipaddr,
-        'iparithmetic': iparithmetic,
+        'ipmath': ipmath,
         'ipwrap': ipwrap,
         'ip4_hex': ip4_hex,
         'ipv4': ipv4,
