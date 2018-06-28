@@ -250,7 +250,7 @@ class Distribution:
                 separator = '==' if version_string[0].isdigit() else ' '
                 name_string = separator.join((name_string, version_string))
             self._requirement = Requirement.parse(name_string)
-            self._distribution_name = self._requirement.key
+            self._distribution_name = self._requirement.project_name
         else:
             self._plain_distribution = False
             self._distribution_name = name_string
@@ -269,9 +269,11 @@ class Distribution:
     def distribution_name(self, new_name):
         self._distribution_name = new_name
 
-    def is_satisfied_by(self, version_to_test):
-        if self._plain_distribution:
+    def is_satisfied_by(self, version_to_test, module):
+        if self._plain_distribution and hasattr(self._requirement, 'specifier'):
             return self._requirement.specifier.contains(version_to_test)
+        else:
+            module.warn(str(self._requirement.__dict__))
         return False
 
     def __str__(self):
@@ -342,7 +344,7 @@ def _is_present(module, req, installed_pkgs, pkg_command):
         else:
             continue
 
-        if pkg_name.lower() == req.distribution_name and req.is_satisfied_by(pkg_version):
+        if pkg_name.lower() == req.distribution_name and req.is_satisfied_by(pkg_version, module):
             return True
 
     return False
