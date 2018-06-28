@@ -311,10 +311,22 @@
   set_fact:
     test_dbm: "{{output_dir|expanduser}}/testdbm"
 
+- name: Install python-gdbm package if we are on OpenSuSE
+  zypper:
+    name: python-gdbm
+    state: installed
+    update_cache: yes
+  become: yes
+  when: ansible_distribution in ['openSUSE Leap']
+
+- name: Copy script for creating a DBM
+  copy:
+    src: mktestdbm.py
+    dest: "{{output_dir|expanduser}}/mktestdbm.py"
+    mode: 0755
+
 - name: Create test DBM
-  command: "{{ ansible_python.executable }} -c {{ script|quote }}"
-  vars:
-    script: "import dbm as db; d=db.open('{{test_dbm}}', 'n'); d['k1'] = 'v1'; d['k2'] = 'v2'; d.close()"
+  command: "{{ ansible_python.executable }} {{output_dir|expanduser}}/mktestdbm.py {{test_dbm}}"
 
 - name: Lookup keys in DBM and return a list
   set_fact:
