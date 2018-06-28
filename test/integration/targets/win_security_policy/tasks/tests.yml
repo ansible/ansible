@@ -146,7 +146,7 @@
     key: SeCreateTokenPrivilege
   register: add_policy_setting_actual
   
-- name: assert remove policy setting
+- name: assert add policy setting
   assert:
     that:
     - add_policy_setting_actual.value == '*S-1-5-32-546'
@@ -156,6 +156,7 @@
     section: Privilege Rights
     key: SeCreateTokenPrivilege
     value: ''
+  diff: yes
   register: remove_policy_setting
 
 - name: get actual policy setting
@@ -168,4 +169,18 @@
   assert:
     that:
     - remove_policy_setting is changed
+    - remove_policy_setting.diff.prepared == "[Privilege Rights]\n-SeCreateTokenPrivilege = *S-1-5-32-546\n+SeCreateTokenPrivilege = "
     - remove_policy_setting_actual.value is none
+    
+- name: remove policy setting again
+  win_security_policy:
+    section: Privilege Rights
+    key: SeCreateTokenPrivilege
+    value: ''
+  register: remove_policy_setting_again
+
+- name: assert remove policy setting again
+  assert:
+    that:
+    - remove_policy_setting_again is not changed
+    - remove_policy_setting_again.value == ''
