@@ -175,29 +175,24 @@ def map_obj_to_commands(want, have, module):
     elif want['state'] == 'absent':
         return send_commands
 
-    # The latest version (9.2) of NXOS software has changed the platform default
-    # nxapi transfer to https. Enforce the default nxapi http behavior unless
-    # explicitly asking for https.
+    for parameter in ['http', 'https']:
+        port_param = parameter + '_port'
+        if needs_update(parameter):
+            if want.get(parameter) is False:
+                commands[parameter] = 'no nxapi %s' % parameter
+            else:
+                commands[parameter] = 'nxapi %s port %s' % (parameter, want.get(port_param))
 
-    if needs_update('http'):
-        if want.get('http') is False:
-            commands['http'] = 'no nxapi http'
-        if needs_update('http_port') and want.get('http') is True:
-            commands['http'] = 'nxapi http port %s' % want.get('http_port')
-        send_commands.append(commands['http'])
-
-    if needs_update('https'):
-        if want.get('https') is False:
-            commands['https'] = 'no nxapi https'
-        if needs_update('https_port') and want.get('https') is True:
-            commands['https'] = 'nxapi https port %s' % want.get('https_port')
-        send_commands.append(commands['https'])
+        if needs_update(port_param) and want.get(parameter) is True:
+            commands[parameter] = 'nxapi %s port %s' % (parameter, want.get(port_param))
 
     if needs_update('sandbox'):
         commands['sandbox'] = 'nxapi sandbox'
         if not want['sandbox']:
             commands['sandbox'] = 'no %s' % commands['sandbox']
-        send_commands.append(commands['sandbox'])
+
+    for parameter in commands.keys():
+        send_commands.append(commands[parameter])
 
     return send_commands
 
@@ -286,10 +281,11 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    warning_msg = "Module nxos_nxapi defaults to configure 'http port 80'."
-    warning_msg += "\nDefault behavior is changing in release 2.11 to configure 'https port 443'"
-    warning_msg += " when params 'http, http_port, https, https_port' are not set in the playbook."
-    warnings.append(warning_msg)
+    warning_msg = "Module nxos_nxapi currently defaults to configure 'http port 80'. "
+    warning_msg += "Default behavior is changing to configure 'https port 443'"
+    warning_msg += " when params 'http, http_port, https, https_port' are not set in the playbook"
+    module.deprecate(msg=warning_msg, version="2.11")
+
     check_args(module, warnings)
 
     result = {'changed': False, 'warnings': warnings}
