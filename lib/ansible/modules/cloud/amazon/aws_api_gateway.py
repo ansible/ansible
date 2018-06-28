@@ -33,6 +33,9 @@ options:
   api_id:
     description:
       - The ID of the API you want to manage.
+  api_name:
+    description:
+      - Name of the API you want to manage.
   state:
     description:
       - NOT IMPLEMENTED Create or delete API - currently we always create.
@@ -61,6 +64,7 @@ options:
     default: Automatic deployment by Ansible.
 author:
     - 'Michael De La Rue (@mikedlr)'
+    - 'Aliaksei Maiseyeu (GitHub: ToROxI)'
 extends_documentation_fragment:
     - aws
     - ec2
@@ -116,12 +120,22 @@ from ansible.module_utils.basic import AnsibleModule, traceback
 from ansible.module_utils.ec2 import (AWSRetry, HAS_BOTO3, ec2_argument_spec, get_aws_connection_info,
                                       boto3_conn, camel_dict_to_snake_dict)
 
+class NotFoundException(Exception):
+    """Custom exception
+    """
+    def __init__(self, value):
+        super(NotFoundException, self).__init__(value)
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
 
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
             api_id=dict(type='str', required=False),
+            api_name=dict(type='str', required=False),
             state=dict(type='str', default='present', choices=['present', 'absent']),
             swagger_file=dict(type='path', default=None, aliases=['src', 'api_file']),
             swagger_dict=dict(type='json', default=None),
@@ -137,6 +151,7 @@ def main():
                            mutually_exclusive=mutually_exclusive)
 
     api_id = module.params.get('api_id')
+    api_name = module.params.get('api_name')
     state = module.params.get('state')   # noqa: F841
     swagger_file = module.params.get('swagger_file')
     swagger_dict = module.params.get('swagger_dict')
@@ -169,18 +184,21 @@ def main():
     dep_res = None
     del_res = None
 
+    if not api_id and api_name:
+        api_id = get_api_id_by_name(client, api_name)
+
     if state == "present":
         if api_id is None:
             api_id = create_empty_api(module, client)
         api_data = get_api_definitions(module, swagger_file=swagger_file,
                                        swagger_dict=swagger_dict, swagger_text=swagger_text)
-        conf_res, dep_res = ensure_api_in_correct_state(module, client, api_id=api_id,
+        conf_res, dep_res, deleted_stage = ensure_api_in_correct_state(module, client, api_id=api_id,
                                                         api_data=api_data, stage=stage,
                                                         deploy_desc=deploy_desc)
     if state == "absent":
         del_res = delete_rest_api(module, client, api_id)
 
-    exit_args = {"changed": changed, "api_id": api_id}
+    exit_args = {"changed": changed, "api_id": api_id, "deleted stage": deleted_stage}
 
     if conf_res is not None:
         exit_args['configure_response'] = camel_dict_to_snake_dict(conf_res)
@@ -259,13 +277,13 @@ def ensure_api_in_correct_state(module, client, api_id=None, api_data=None, stag
 
     if stage:
         try:
-            deploy_response = create_deployment(client, api_id=api_id, stage=stage,
+            deploy_response, deleted_stage = create_deployment(client, api_id=api_id, stage=stage,
                                                 description=deploy_desc)
         except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
             msg = "deploying api {} to stage {}".format(api_id, stage)
             fail_json_aws(module, e, msg)
 
-    return configure_response, deploy_response
+    return configure_response, deploy_response, deleted_stage
 
 
 # There is a PR open to merge fail_json_aws this into the standard module code;
@@ -320,8 +338,62 @@ def configure_api(client, api_data=None, api_id=None, mode="overwrite"):
 @AWSRetry.backoff(**retry_params)
 def create_deployment(client, api_id=None, stage=None, description=None):
     # we can also get None as an argument so we don't do this as a defult
-    return client.create_deployment(restApiId=api_id, stageName=stage, description=description)
+    deleted_stage = 'None'
+    if stage:
+        api_stages, stages_count, oldest_stage_name = get_oldest_stage(client, api_id)
+        if stages_count == 10:
+            if stage not in api_stages:
+                delete_stage(client, api_id, oldest_stage_name)
+                deleted_stage = oldest_stage_name
 
+    return client.create_deployment(restApiId=api_id, stageName=stage, description=description), deleted_stage
+
+def get_api_id_by_name(client, api_name):
+    api_list = client.get_rest_apis(limit=500)["items"]
+    api_index = find_index_by_kv(api_list, "name", api_name)
+    if not api_index:
+        raise NotFoundException("API with specified name {} was not found".format(api_name))
+
+    api_id = api_list[api_index]["id"]
+    return api_id
+
+def get_oldest_stage(client, api_id):
+    # Get list of stages
+    api_stages = client.get_stages(restApiId=api_id)
+    stages_count = len(api_stages["item"])
+
+    # Find the oldest one
+    sorted_list = sorted(api_stages["item"], key=lambda k: k['lastUpdatedDate'])
+    oldest_name = sorted_list[0]["stageName"]
+
+    return api_stages, stages_count, oldest_name
+
+def delete_stage(client, api_id=None, stage=None):
+    return client.delete_stage(restApiId=api_id, stageName=stage)
+
+def find_index_by_kv(obj, key, value):
+    """Search index of dict in list of dicts
+
+    :param obj: datastructure list of dicts
+    :type obj: list
+
+    :param key: specified key
+    :type key: str
+
+    :param value: data
+    :type value: str, list, dict
+
+    :return: index of list
+    :rtype: int
+    """
+    if isinstance(obj, list):
+        for index, item in enumerate(obj):
+            if item.get(key, None) == value:
+                return index
+    else:
+        raise TypeError("`obj` should be list")
+
+    return None
 
 if __name__ == '__main__':
     main()
