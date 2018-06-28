@@ -29,6 +29,10 @@ options:
       - Whether to lock C(present) or unlock C(absent) package(s).
     choices: [ present, absent ]
     default: present
+  repository:
+    description:
+      - Define custom repository url
+    default: https://cran.rstudio.com/
 # informational: requirements for nodes
 requirements:
 - Microsoft R Open
@@ -49,7 +53,7 @@ EXAMPLES = '''
   cran:
     state: present
     package: foobar
-    repo: https://cran.hoberg.ch
+    repository: https://cran.hoberg.ch
 '''
 
 RETURN = '''
@@ -94,7 +98,7 @@ def add_package_cran(module, rscript_binary, package, repository):
                                            'install.packages(pkgs=\"%s\", repos=\"%s\")'"
                                            % (rscript_binary, package, repository))
     # Check for string because on an error exit_code will be 0
-    if 'DONE ('+package+')' in err:
+    if 'DONE (' + package + ')' in err:
         changed = True
         return changed
     else:
