@@ -169,6 +169,8 @@ if ($secedit_ini.$section.ContainsKey($key)) {
         $secedit_ini.$section.$key = $value
         $will_change = $true
     }
+} elseif ([string]$value -eq "") {
+      # Value is requested to be removed, and has already been removed, do nothing
 } else {
     if ($diff_mode) {
         $result.diff.prepared = @"
