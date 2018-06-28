@@ -60,6 +60,16 @@ options:
               must be a dash, lowercase letter, or digit, except the last character, which cannot
               be a dash.
         required: true
+    quic_override:
+        description:
+            - Specifies the QUIC override policy for this resource. This determines whether the
+              load balancer will attempt to negotiate QUIC with clients or not. Can specify one
+              of NONE, ENABLE, or DISABLE. Specify ENABLE to always enable QUIC, Enables QUIC
+              when set to ENABLE, and disables QUIC when set to DISABLE. If NONE is specified,
+              uses the QUIC policy with no user overrides, which is equivalent to DISABLE. Not
+              specifying this field is equivalent to specifying NONE.
+        required: false
+        choices: ['NONE', 'ENABLE', 'DISABLE']
     ssl_certificates:
         description:
             - A list of SslCertificate resources that are used to authenticate connections between
@@ -200,6 +210,16 @@ RETURN = '''
               be a dash.
         returned: success
         type: str
+    quic_override:
+        description:
+            - Specifies the QUIC override policy for this resource. This determines whether the
+              load balancer will attempt to negotiate QUIC with clients or not. Can specify one
+              of NONE, ENABLE, or DISABLE. Specify ENABLE to always enable QUIC, Enables QUIC
+              when set to ENABLE, and disables QUIC when set to DISABLE. If NONE is specified,
+              uses the QUIC policy with no user overrides, which is equivalent to DISABLE. Not
+              specifying this field is equivalent to specifying NONE.
+        returned: success
+        type: str
     ssl_certificates:
         description:
             - A list of SslCertificate resources that are used to authenticate connections between
@@ -234,6 +254,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             description=dict(type='str'),
             name=dict(required=True, type='str'),
+            quic_override=dict(type='str', choices=['NONE', 'ENABLE', 'DISABLE']),
             ssl_certificates=dict(required=True, type='list', elements='dict'),
             url_map=dict(required=True, type='dict')
         )
@@ -289,6 +310,7 @@ def resource_to_request(module):
         u'kind': 'compute#targetHttpsProxy',
         u'description': module.params.get('description'),
         u'name': module.params.get('name'),
+        u'quicOverride': module.params.get('quic_override'),
         u'sslCertificates': replace_resource_dict(module.params.get('ssl_certificates', []), 'selfLink'),
         u'urlMap': replace_resource_dict(module.params.get(u'url_map', {}), 'selfLink')
     }
@@ -362,6 +384,7 @@ def response_to_hash(module, response):
         u'description': module.params.get('description'),
         u'id': response.get(u'id'),
         u'name': module.params.get('name'),
+        u'quicOverride': response.get(u'quicOverride'),
         u'sslCertificates': response.get(u'sslCertificates'),
         u'urlMap': response.get(u'urlMap')
     }
