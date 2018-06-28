@@ -39,6 +39,7 @@ from subprocess import Popen, PIPE
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
+from ansible.module_utils._text import to_text, to_bytes
 
 
 class LPassException(AnsibleError):
@@ -60,12 +61,12 @@ class LPass(object):
         return err.startswith("Are you sure you would like to log out?")
 
     def _run(self, args, stdin=None, expected_rc=0):
-        p = Popen([self.cli_path] + args, stdout=PIPE, stderr=PIPE, stdin=PIPE)
-        out, err = p.communicate(stdin)
+        p = Popen([to_bytes(self.cli_path)] + [to_bytes(a) for a in args], stdout=PIPE, stderr=PIPE, stdin=PIPE)
+        out, err = p.communicate(to_bytes(stdin))
         rc = p.wait()
         if rc != expected_rc:
             raise LPassException(err)
-        return out, err
+        return to_text(out), to_text(err)
 
     def _build_args(self, command, args=None):
         if args is None:
