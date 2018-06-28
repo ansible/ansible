@@ -15,8 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-from ansible.errors import AnsibleError
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
@@ -470,9 +468,6 @@ def parse_both(configobj, name, address_family='global'):
     elif address_family == "ipv6":
         export_match = parse_export_ipv6(configobj, name)
         import_match = parse_import_ipv6(configobj, name)
-    else:
-        raise AnsibleError(message="Pass a valid address_family type")
-
     if len(import_match) != 0 or len(export_match) != 0:
         for ex in export_match:
             exrd = rd_pattern.search(ex)
@@ -620,12 +615,11 @@ def map_params_to_obj(module):
                     item["route_export%s" % address_family].extend(get_value("route_both%s" % address_family))
                     item["route_import%s" % address_family].extend(get_value("route_both%s" % address_family))
         except AttributeError:
-           pass
+            pass
         item['associated_interfaces'] = get_value('associated_interfaces')
         objects.append(item)
 
     return objects
-
 
 def update_objects(want, have):
     updates = list()
