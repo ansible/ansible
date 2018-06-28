@@ -184,6 +184,34 @@ into::
     - key: Environment
       value: dev
 
+items2dict filter
+`````````````````
+
+.. versionadded:: 2.7
+
+This filter turns a list of dicts with 2 keys, into a dict, mapping the values of those keys into ``key: value`` pairs::
+
+    {{ tags | items2dict }}
+
+Which turns::
+
+    tags:
+      - key: Application
+        value: payment
+      - key: Environment
+        value: dev
+
+into::
+
+    Application: payment
+    Environment: dev
+
+This is the reverse of the ``dict2items`` filter.
+
+``items2dict`` accepts 2 keyword arguments, ``key_name`` and ``value_name`` that allow configuration of the names of the keys to use for the transformation::
+
+    {{ tags | items2dict(key_name='key', value_name='value') }}
+
 subelements Filter
 ``````````````````
 
