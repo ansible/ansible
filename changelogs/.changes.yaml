@@ -1,4 +1,9 @@
 releases:
+  2.6.0:
+    codename: Heartbreaker
+    fragments:
+    - v2.6.0_summary.yaml
+    release_date: '2018-06-28'
   2.6.0a1:
     codename: Heartbreaker
     fragments:
