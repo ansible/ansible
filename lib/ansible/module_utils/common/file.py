@@ -12,6 +12,7 @@ import shutil
 import tempfile
 import traceback
 import fcntl
+import sys
 
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import b, binary_type
@@ -59,6 +60,9 @@ class FileLock():
         tmp_dir = tempfile.gettempdir()
         lock_path = os.path.join(tmp_dir, 'ansible-{0}.lock'.format(os.path.basename(path)))
         l_wait = 0.1
+        r_exception = IOError
+        if sys.version_info[0] == 3:
+            r_exception = BlockingIOError
 
         self.lockfd = open(lock_path, 'w')
 
@@ -74,7 +78,7 @@ class FileLock():
                     fcntl.flock(self.lockfd, fcntl.LOCK_EX | fcntl.LOCK_NB)
                     os.chmod(lock_path, stat.S_IWRITE | stat.S_IREAD)
                     return True
-                except IOError or BlockingIOError:
+                except r_exception:
                     time.sleep(l_wait)
                     e_secs += l_wait
                     continue
