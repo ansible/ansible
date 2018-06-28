@@ -40,10 +40,8 @@ class FileLock():
         '''
         try:
             self.set_lock(path, lock_timeout)
-            print('lock aquired')
             yield
         finally:
-            print('releasing lock')
             self.unlock()
 
     def set_lock(self, path, lock_timeout=None):
