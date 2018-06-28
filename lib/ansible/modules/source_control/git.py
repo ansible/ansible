@@ -262,9 +262,9 @@ def relocate_repo(module, repo_dir, old_repo_dir, worktree_dir=None):
     if worktree_dir:
         dot_git_file_path = os.path.join(worktree_dir, '.git')
         try:
+            shutil.move(old_repo_dir, repo_dir)
             with open(dot_git_file_path, 'w') as dot_git_file:
                 dot_git_file.write('gitdir: %s' % repo_dir)
-            shutil.move(old_repo_dir, repo_dir)
         except (IOError, OSError) as err:
             module.fail_json(msg='Unable to move git dir. %s' % str(err))
 
@@ -1060,7 +1060,7 @@ def main():
     module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
 
     if separate_git_dir:
-        separate_git_dir = os.path.abspath(separate_git_dir)
+        separate_git_dir = os.path.realpath(separate_git_dir)
 
     gitconfig = None
     if not dest and allow_clone:
@@ -1072,7 +1072,6 @@ def main():
             if separate_git_dir and os.path.exists(repo_path) and separate_git_dir != repo_path:
                 result.update(changed=True)
                 if not module.check_mode:
-                    module.warn("***********%s and %s**********" % (separate_git_dir, repo_path))
                     relocate_repo(module, separate_git_dir, repo_path, dest)
                     repo_path = separate_git_dir
         except (IOError, ValueError) as err:
