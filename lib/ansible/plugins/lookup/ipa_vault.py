@@ -99,7 +99,7 @@ class IPAVault(object):
                 tmp_list = item.split(':')
                 temp_list.append([tmp_list[0], tmp_list[1].strip()])
             if ((":" not in item and len(temp_list) > 0) or (":" in item and curr_line == last_line)):
-                _list = {k: v for k, v in temp_list}
+                _list = dict((k, v) for (k, v) in temp_list)
                 temp_list = []
                 ret_list.append([_list])
         return ret_list
