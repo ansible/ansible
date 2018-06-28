@@ -32,9 +32,12 @@ options:
     description: First name
   krbpasswordexpiration:
     description:
-    - Date at which the user password will expire
+    - Date at which the user password will expire (UTC only)
     - In the format YYYYMMddHHmmss
     - e.g. 20180121182022 will expire on 21 January 2018 at 18:20:22
+    - Mutually exclusive with I(password)
+    - To update this attribute, the I(ipa_user) must have the permission to write/modify the `krbPasswordExpiration` attribute.
+      This can be done by creating a permission in FreeIPA
     version_added: 2.5
   loginshell:
     description: Login shell
@@ -46,6 +49,7 @@ options:
   password:
     description:
     - Password for a user. Will not be set for an existing user unless C(update_password) is set to C(always), which is the default.
+    - Mutually exclusive with I(krbpasswordexpiration)
   sn:
     description: Surname
   sshpubkey:
@@ -228,6 +232,13 @@ def get_user_diff(client, ipa_user, module_user):
     if sshpubkey is not None:
         del module_user['sshpubkeyfp']
         module_user['ipasshpubkey'] = sshpubkey
+
+    # If someone wants to set the krbpassword expiration, we should use setattr to properly adjust it.
+    if 'krbpasswordexpiration' in module_user:
+        if 'krbpasswordexpiration' in result:
+            module_user['setattr'] = 'krbpasswordexpiration={0}'.format(module_user['krbpasswordexpiration'])
+        del module_user['krbpasswordexpiration']
+
     return result
 
 
@@ -324,6 +335,9 @@ def main():
                          title=dict(type='str'))
 
     module = AnsibleModule(argument_spec=argument_spec,
+                           mutually_exclusive=[
+                               ['password', 'krbpasswordexpiration'],
+                           ],
                            supports_check_mode=True)
 
     client = UserIPAClient(module=module,
