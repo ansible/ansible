@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+from ansible.errors import AnsibleError
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -456,12 +457,32 @@ def parse_export(configobj, name):
     return matches
 
 
-def parse_both(configobj, name):
+def parse_both(configobj, name, address_family='global'):
+    rd_pattern = re.compile('(?P<rd>.+:.+)')
     matches = list()
-    export_match = parse_export(configobj, name)
-    import_match = parse_import(configobj, name)
-    matches.extend(export_match)
-    matches.extend(import_match)
+    if address_family == "global":
+        export_match = parse_export(configobj, name)
+        import_match = parse_import(configobj, name)
+    elif address_family == "ipv4":
+        export_match = parse_export_ipv4(configobj, name)
+        import_match = parse_import_ipv4(configobj, name)
+
+    elif address_family == "ipv6":
+        export_match = parse_export_ipv6(configobj, name)
+        import_match = parse_import_ipv6(configobj, name)
+    else:
+        raise AnsibleError(message="Pass a valid address_family type")
+
+    if len(import_match) != 0 or len(export_match) != 0:
+        for ex in export_match:
+            exrd = rd_pattern.search(ex)
+            exrd = exrd.groupdict().get('rd')
+            for im in import_match:
+                imrd = rd_pattern.search(im)
+                imrd = imrd.groupdict().get('rd')
+                if exrd == imrd:
+                    matches.extend([exrd]) if exrd not in matches else None
+                    matches.extend([imrd]) if imrd not in matches else None
     return matches
 
 
@@ -487,15 +508,6 @@ def parse_export_ipv4(configobj, name):
         return []
 
 
-def parse_both_ipv4(configobj, name):
-    matches = list()
-    export_match = parse_export_ipv4(configobj, name)
-    import_match = parse_import_ipv4(configobj, name)
-    matches.extend(export_match)
-    matches.extend(import_match)
-    return matches
-
-
 def parse_import_ipv6(configobj, name):
     cfg = configobj['vrf definition %s' % name]
     try:
@@ -518,15 +530,6 @@ def parse_export_ipv6(configobj, name):
         return []
 
 
-def parse_both_ipv6(configobj, name):
-    matches = list()
-    export_match = parse_export_ipv6(configobj, name)
-    import_match = parse_import_ipv6(configobj, name)
-    matches.extend(export_match)
-    matches.extend(import_match)
-    return matches
-
-
 def map_config_to_obj(module):
     config = get_config(module)
     configobj = NetworkConfig(indent=1, contents=config)
@@ -547,10 +550,10 @@ def map_config_to_obj(module):
             'route_both': parse_both(configobj, item),
             'route_import_ipv4': parse_import_ipv4(configobj, item),
             'route_export_ipv4': parse_export_ipv4(configobj, item),
-            'route_both_ipv4': parse_both_ipv4(configobj, item),
+            'route_both_ipv4': parse_both(configobj, item, address_family='ipv4'),
             'route_import_ipv6': parse_import_ipv6(configobj, item),
             'route_export_ipv6': parse_export_ipv6(configobj, item),
-            'route_both_ipv6': parse_both_ipv6(configobj, item),
+            'route_both_ipv6': parse_both(configobj, item, address_family='ipv6'),
         }
         instances.append(obj)
     return instances
@@ -595,7 +598,6 @@ def map_params_to_obj(module):
                 collection.append(item)
 
     objects = list()
-
     for item in collection:
         get_value = partial(get_param_value, item=item, module=module)
         item['description'] = get_value('description')
@@ -605,21 +607,20 @@ def map_params_to_obj(module):
         item['route_import'] = get_value('route_import')
         item['route_export'] = get_value('route_export')
         item['route_both'] = get_value('route_both')
-        if item['route_both']:
-            # The parsing will have the import and the export aggregated
-            item['route_both'].extend(get_value('route_both'))
         item['route_import_ipv4'] = get_value('route_import_ipv4')
         item['route_export_ipv4'] = get_value('route_export_ipv4')
         item['route_both_ipv4'] = get_value('route_both_ipv4')
-        if item['route_both_ipv4']:
-            # The parsing will have the import and the export aggregated
-            item['route_both_ipv4'].extend(get_value('route_both_ipv4'))
         item['route_import_ipv6'] = get_value('route_import_ipv6')
         item['route_export_ipv6'] = get_value('route_export_ipv6')
         item['route_both_ipv6'] = get_value('route_both_ipv6')
-        if item['route_both_ipv6']:
-            # The parsing will have the import and the export aggregated
-            item['route_both_ipv6'].extend(get_value('route_both_ipv6'))
+        both_addresses_family = ["", "_ipv6", "_ipv4"]
+        try:
+            for address_family in both_addresses_family:
+                if item["route_both%s" % address_family]:
+                    item["route_export%s" % address_family].extend(get_value("route_both%s" % address_family))
+                    item["route_import%s" % address_family].extend(get_value("route_both%s" % address_family))
+        except AttributeError:
+           pass
         item['associated_interfaces'] = get_value('associated_interfaces')
         objects.append(item)
 
@@ -704,9 +705,7 @@ def main():
 
     argument_spec.update(ios_argument_spec)
 
-    mutually_exclusive = [('name', 'vrfs'), ('route_import', 'route_both'), ('route_export', 'route_both'),
-                          ('route_import_ipv4', 'route_both_ipv4'), ('route_export_ipv4', 'route_both_ipv4'),
-                          ('route_import_ipv6', 'route_both_ipv6'), ('route_export_ipv6', 'route_both_ipv6')]
+    mutually_exclusive = [('name', 'vrfs')]
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
@@ -719,6 +718,7 @@ def main():
 
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
+    # import epdb; epdb.serve(20000)
     commands = map_obj_to_commands(update_objects(want, have), module)
 
     if module.params['purge']:
