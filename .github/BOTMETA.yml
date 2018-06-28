@@ -683,7 +683,7 @@ files:
   $modules/utilities/logic/include.py: $team_ansible
   $modules/utilities/logic/include_role.py: $team_ansible
   $modules/utilities/logic/include_vars.py: $team_ansible linuxdynasty
-  $modules/utilities/logic/pause.py: tbielawa
+  $modules/utilities/logic/pause.py: tbielawa samdoran
   $modules/utilities/logic/set_stats.py: bcoca
   $modules/utilities/logic/wait_for.py: AnderEnder gregswift jarv jhoekx
   $modules/web_infrastructure/_letsencrypt.py: mgruener resmo felixfontein
