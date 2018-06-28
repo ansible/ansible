@@ -222,12 +222,15 @@ import os
 import re
 import sys
 import tempfile
+import operator
+from distutils.version import LooseVersion
 
 try:
-    HAS_SETUPTOOLS = True
     from pkg_resources import Requirement
-except ImportError:
+
     HAS_SETUPTOOLS = True
+except ImportError:
+    HAS_SETUPTOOLS = False
 
 from ansible.module_utils.basic import AnsibleModule, is_executable
 from ansible.module_utils._text import to_native
@@ -269,11 +272,20 @@ class Distribution:
     def distribution_name(self, new_name):
         self._distribution_name = new_name
 
-    def is_satisfied_by(self, version_to_test, module):
-        if self._plain_distribution and hasattr(self._requirement, 'specifier'):
-            return self._requirement.specifier.contains(version_to_test)
-        else:
-            module.warn(str(self._requirement.__dict__))
+    def is_satisfied_by(self, version_to_test):
+        if self._plain_distribution:
+            if hasattr(self._requirement, 'specifier'):
+                return self._requirement.specifier.contains(version_to_test)
+            else:
+                version_to_test = LooseVersion(version_to_test)
+                op_dict = {">=": operator.ge, "<=": operator.le, ">": operator.gt,
+                           "<": operator.lt, "==": operator.eq, "!=": operator.ne}
+                # old setuptools has no specifierset, do fallback
+                for (op, ver) in self._requirement.specs:
+                    if not op_dict[op](version_to_test, LooseVersion(ver)):
+                        return False
+
+                return True
         return False
 
     def __str__(self):
@@ -344,7 +356,7 @@ def _is_present(module, req, installed_pkgs, pkg_command):
         else:
             continue
 
-        if pkg_name.lower() == req.distribution_name and req.is_satisfied_by(pkg_version, module):
+        if pkg_name.lower() == req.distribution_name and req.is_satisfied_by(pkg_version):
             return True
 
     return False
