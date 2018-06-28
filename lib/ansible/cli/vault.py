@@ -112,6 +112,12 @@ class VaultCLI(CLI):
                                    action='store', type='string',
                                    help='the vault id used to encrypt (required if more than vault-id is provided)')
 
+        if self.action in ["create", "decrypt", "edit", "encrypt", "rekey", "view"]:
+            self.parser.add_option('--exclusive', default=False, dest='exclusive',
+                                   action='store_true',
+                                   help='ensure correct vault modification with exclusive locking (for multi-user scenarios)')
+        self.parser.set_defaults(exclusive=False)
+
     def parse(self):
 
         self.parser = CLI.base_parser(
@@ -250,7 +256,7 @@ class VaultCLI(CLI):
 
         # FIXME: do we need to create VaultEditor here? its not reused
         vault = VaultLib(vault_secrets)
-        self.editor = VaultEditor(vault)
+        self.editor = VaultEditor(vault, self.options.exclusive)
 
         self.execute()
 

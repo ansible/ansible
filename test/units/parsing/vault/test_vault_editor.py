@@ -20,9 +20,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from multiprocessing import Event, Pipe, Process
 import os
 import stat
 import tempfile
+import time
 
 import pytest
 
@@ -32,6 +34,7 @@ from ansible.compat.tests.mock import patch
 from ansible import errors
 from ansible.parsing import vault
 from ansible.parsing.vault import VaultLib, VaultEditor, match_encrypt_secret
+from ansible.parsing.vault import VaultEditorLock
 
 from ansible.module_utils._text import to_bytes, to_text
 
@@ -593,6 +596,7 @@ class TestVaultEditor(unittest.TestCase):
 
     def test_encrypt_retains_original(self):
         ve = self._vault_editor()
+        ve.exclusive = True
         src_file_path = self._create_test_file()
 
         def command_func():
@@ -602,6 +606,7 @@ class TestVaultEditor(unittest.TestCase):
 
     def test_decrypt_retains_original(self):
         ve = self._vault_editor()
+        ve.exclusive = True
         src_file_path = self._create_test_file()
         ve.encrypt_file(src_file_path, self.vault_secret)
 
@@ -613,6 +618,7 @@ class TestVaultEditor(unittest.TestCase):
     @patch('ansible.parsing.vault.subprocess.call')
     def test_edit_retains_original(self, mock_sp_call):
         ve = self._vault_editor()
+        ve.exclusive = True
         src_file_path = self._create_test_file()
         ve.encrypt_file(src_file_path, self.vault_secret)
 
@@ -628,6 +634,7 @@ class TestVaultEditor(unittest.TestCase):
 
     def test_rekey_retains_original(self):
         ve = self._vault_editor()
+        ve.exclusive = True
         src_file_path = self._create_test_file()
         ve.encrypt_file(src_file_path, self.vault_secret)
 
@@ -637,6 +644,148 @@ class TestVaultEditor(unittest.TestCase):
             ve.rekey_file(src_file_path, vault.match_encrypt_secret(new_secrets)[1])
 
         self._test_command_retains_original(src_file_path, command_func)
+
+    def test_vault_lock_create(self):
+        vault_path = self._create_test_file()
+        vl0 = VaultEditorLock(vault_path, readonly=False)
+        self.assertEqual(vl0.path, vault_path)
+        self.assertFalse(vl0.readonly)
+        self.assertFalse(vl0.is_locked)
+
+    def test_vault_lock_acquire(self):
+        vault_path = self._create_test_file()
+        # test write access failure
+        os.chmod(vault_path, stat.S_IRUSR)
+        vl = VaultEditorLock(vault_path, readonly=False)
+        self.assertRaises(errors.AnsibleError, vl.acquire)
+        self.assertFalse(vl.is_locked)
+        self.assertTrue(vl.fd is None)
+        # test read access failure
+        os.chmod(vault_path, 0)
+        vl = VaultEditorLock(vault_path, readonly=True)
+        self.assertRaises(errors.AnsibleError, vl.acquire)
+        self.assertFalse(vl.is_locked)
+        self.assertTrue(vl.fd is None)
+        # test successful call
+        os.chmod(vault_path, stat.S_IRUSR | stat.S_IWUSR)
+        vl = VaultEditorLock(vault_path, readonly=False)
+        vl.acquire()
+        self.assertTrue(vl.is_locked)
+        self.assertTrue(vl.fd is not None)
+        self.assertFalse(vl.fd.closed)
+        vl.__exit__(None, None, None)
+        self.assertFalse(vl.is_locked)
+        self.assertTrue(vl.fd.closed)
+        # test unexpected lock failure
+
+        def fail_lockf(fd, op):
+            raise IOError(37)  # unexpected ENOLCK
+
+        vl = VaultEditorLock(vault_path, readonly=False)
+        with patch('fcntl.lockf', side_effect=fail_lockf):
+            self.assertRaises(errors.AnsibleError, vl.acquire)
+            self.assertFalse(vl.is_locked)
+            self.assertFalse(vl.fd is None)
+            self.assertTrue(vl.fd.closed)
+
+    @staticmethod
+    def _subprocess(target, args):
+        # it is impossible to test fcntl() locking within the same process
+        local, remote = Pipe()
+        p = Process(target=target, args=(args + (remote,)))
+        p.start()
+        p.join()
+        return local.recv()
+
+    @staticmethod
+    @patch('time.sleep', return_value=None)
+    def _vault_reader(vault_path, pipe, time_sleep_mock):
+        try:
+            with VaultEditorLock(vault_path, readonly=True) as vl:
+                pipe.send(vl.is_locked)
+        except Exception as exc:
+            pipe.send(exc.__class__.__name__)
+
+    def test_vault_lock_use(self):
+        vault_path = self._create_test_file()
+        # two readers can share a lock
+        with VaultEditorLock(vault_path, readonly=True) as vl:
+            self.assertTrue(vl.is_locked)
+            result = self._subprocess(self._vault_reader, (vault_path,))
+            self.assertEqual(result, True)
+        self.assertFalse(vl.is_locked)
+        # a writer denies access for a concurrent reader
+        with VaultEditorLock(vault_path, readonly=False) as vl:
+            self.assertTrue(vl.is_locked)
+            result = self._subprocess(self._vault_reader, (vault_path,))
+            self.assertEqual(result, 'AnsibleVaultError')
+
+    @staticmethod
+    def _process_pool(num_workers, target, args):
+        # a minimal multiprocessing.Pool replacement that does not require
+        # target function to be defined at the module top
+        result = []
+        for i in range(num_workers):
+            local, remote = Pipe(False)
+            writer = Process(target=target, args=(args + (remote,)))
+            writer.start()
+            result.append((writer, local))
+        return result
+
+    @staticmethod
+    def _vault_writer(vault_path, write_time, retry_time, start_event, pipe):
+        time_sleep = time.sleep
+        # reduce sleeping time between lock attempts for faster testing
+        with patch('time.sleep',
+                   side_effect=lambda t: time_sleep(retry_time)):
+            try:
+                start_event.wait()  # make all writers start at the same time
+                with VaultEditorLock(vault_path, readonly=False):
+                    pid = os.getpid()
+                    with open(vault_path, 'a+') as vault_file:
+                        vault_file.write('begin {0}\n'.format(pid))
+                        time_sleep(write_time)  # imitate a long write
+                        vault_file.write('end {0}\n'.format(pid))
+                        pipe.send(True)
+            except errors.AnsibleError:
+                pipe.send(False)
+
+    def test_vault_lock_single_winner(self):
+        vault_path = self._create_test_file()
+        start_event = Event()
+        # mock time.sleep() so the lock code does not wait until write is done
+        writers = self._process_pool(5, self._vault_writer,
+                                     (vault_path, 0.1, 0.01, start_event))
+        start_event.set()
+        [writer.join() for (writer, ignore) in writers]
+        results = [pipe.recv() for (ignore, pipe) in writers if pipe.poll(0.1)]
+        # there should be one winning writer
+        self.assertTrue(any(results))
+        results.remove(True)
+        # but all others should have been locked and exhaust all retry attempts
+        self.assertFalse(any(results))
+
+    def test_vault_lock_cooperation(self):
+        vault_path = self._create_test_file()
+        open(vault_path, 'w+').close()  # empty the file
+        start_event = Event()
+        # make the total retry timeout equal to 0.11 * 3 == 0.33
+        writers = self._process_pool(5, self._vault_writer,
+                                     (vault_path, 0.1, 0.11, start_event))
+        start_event.set()
+        [writer.join() for (writer, ignore) in writers]
+        results = [pipe.recv() for (ignore, pipe) in writers if pipe.poll(0.1)]
+        # three writers should have been able to write
+        self.assertTrue(len(filter(None, results)) == 3)
+        # all writes should be "atomic", i.e "begin"-"end" pairs cannot overlap
+        with open(vault_path, 'r') as vault:
+            lines = list(vault)
+            for index, line in enumerate(lines[1:], 1):
+                step, pid = line.split()
+                if step == 'end':
+                    prev_step, prev_pid = lines[index - 1].split()
+                    self.assertEqual(prev_pid, pid)
+                    self.assertEqual(prev_step, 'begin')
 
 
 @pytest.mark.skipif(not vault.HAS_PYCRYPTO,
