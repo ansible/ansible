@@ -253,7 +253,11 @@ class Distribution:
                 separator = '==' if version_string[0].isdigit() else ' '
                 name_string = separator.join((name_string, version_string))
             self._requirement = Requirement.parse(name_string)
-            self._distribution_name = self._requirement.project_name
+            # old pkg_resource will replace 'setuptools' with 'distribute' when it already installed
+            if self._requirement.project_name == "distribute":
+                self._distribution_name = "setuptools"
+            else:
+                self._distribution_name = self._requirement.project_name
         else:
             self._plain_distribution = False
             self._distribution_name = name_string
