@@ -3,7 +3,7 @@ Google Cloud Platform Guide
 
 .. gce_intro:
 
-Auto-generated GCP Modules
+Introduction
 --------------------------
 
 Ansible + Google have been working together on a set of auto-generated
@@ -18,7 +18,7 @@ These new modules can be found under a new consistent name scheme "gcp_*"
 (Note: gcp_target_proxy and gcp_url_map are legacy modules, despite the "gcp_*"
 name. Please use gcp_compute_target_proxy and gcp_compute_url_map instead).
 
-Additionally, the gcp_compute inventory plugin can discovery all GCE instances
+Additionally, the gcp_compute inventory plugin can discover all GCE instances
 and make them automatically available in your Ansible inventory.
 
 You may see a collection of other GCP modules that do not conform to this
@@ -35,18 +35,18 @@ adopting these new modules if possible.
 
 Introduction
 ---------------
-The Google Cloud Platform (GCP) modules require both the `requests` and the
-`google-auth` libraries to be installed.
+The Google Cloud Platform (GCP) modules require both the ``requests`` and the
+``google-auth`` libraries to be installed.
 
 .. code-block:: bash
 
-    $ pip install google-auth requests
+    $ pip install requests google-auth
 
 
 Credentials
 -----------
-Authenticating with GCP is easy and can be done in multiple ways. There are two
-common options for authenticating to GCP:
+It's easy to create a GCP account with credentials for Ansible. You have multiple options to
+get your credentials - here are two of the most common options:
 
 * Service Accounts (Recommended): Use JSON service accounts with specific permissions.
 * Machine Accounts: Use the permissions associated with the GCP Instance you're using Ansible on.
@@ -59,13 +59,13 @@ JSON format:
 1. `Create a Service Account <https://developers.google.com/identity/protocols/OAuth2ServiceAccount#creatinganaccount>`_
 2. `Download JSON credentials <https://support.google.com/cloud/answer/6158849?hl=en&ref_topic=6262490#serviceaccounts>`_
 
-There are two different ways to provide GCP credentials to Ansible:
+Once you have your credentials, there are two different ways to provide them to Ansible:
 
-* by specifying them directly as module params
+* by specifying them directly as module parameters
 * by setting environment variables
 
-Calling Modules By Passing Credentials
-``````````````````````````````````````
+Providing Credentials as Module Parameters
+``````````````````````````````````````````
 
 For the GCE modules you can specify the credentials as arguments:
 
@@ -104,7 +104,7 @@ you can use the following configuration:
             service_account_file: "{{ service_account_file }}"
             scopes: "{{ scopes }}"
 
-Configuring Modules with Environment Variables
+Providing Credentials as Environment Variables
 ``````````````````````````````````````````````
 
 Set the following environment variables before running Ansible in order to configure your credentials:
@@ -136,12 +136,12 @@ Here's an example of a valid inventory file:
     service_account_file: /home/alexstephen/my_account.json
 
 
-Executing ``ansible-inventory --list -i <filename>.gcp.yml`` will create a list of GCP instances that are ready to be configured using ANsible.
+Executing ``ansible-inventory --list -i <filename>.gcp.yml`` will create a list of GCP instances that are ready to be configured using Ansible.
 
 Create an instance
 ``````````````````
 
-The full range of GCP modules provide the ability to create a wide-variety of
+The full range of GCP modules provide the ability to create a wide variety of
 GCP resources with the full support of the entire GCP API.
 
 The following playbook creates a GCE Instance. This instance relies on a GCP
@@ -153,7 +153,7 @@ rest.
 
 .. code-block:: yaml
 
-   - name: Create instance.
+   - name: Create an instance
      hosts: localhost
      gather_facts: no
      connection: local
@@ -239,3 +239,5 @@ rest.
 
 Note that use of the "add_host" module above creates a temporary, in-memory group.  This means that a play in the same playbook can then manage machines
 in the 'new_instances' group, if so desired.  Any sort of arbitrary configuration is possible at this point.
+
+For more information about Google Cloud, please visit the `Google Cloud website <https://cloud.google.com>`
