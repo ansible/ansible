@@ -14,9 +14,9 @@ import traceback
 import fcntl
 import sys
 
+from contextlib import contextmanager
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import b, binary_type
-from contextlib import contextmanager
 
 try:
     import selinux
@@ -50,10 +50,11 @@ class FileLock():
         using given path
 
         :kw path: Path (file) to lock
-        :kw lock_timeout: Wait n seconds for lock acquisition
-            Default is None (wait until lock is released)
-            0 = Do not wait
-        :returns: True if successful else an exception is raised
+        :kw lock_timeout:
+            Wait n seconds for lock acquisition, fail if timeout is reached.
+            0 = Do not wait, fail if lock cannot be acquired immediately,
+            Default is None, wait indefinitely until lock is released.
+        :returns: True
         '''
         tmp_dir = tempfile.gettempdir()
         lock_path = os.path.join(tmp_dir, 'ansible-{0}.lock'.format(os.path.basename(path)))
