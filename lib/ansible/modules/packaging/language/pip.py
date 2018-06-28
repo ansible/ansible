@@ -245,8 +245,16 @@ _SPECIAL_PACKAGE_CHECKERS = {'setuptools': 'import setuptools; print(setuptools.
 
 
 class Distribution:
+
+    """Wrapper class for pkg_resources.Requirement.
+
+    A wrapper class for Requirement, provide usefual API to parse package name and version specifier,
+    do fallback if the installed setuptools version doesn't support some features.
+
+    """
+
     def __init__(self, name_string, version_string=None):
-        if not name_string.startswith(('svn+', 'git+', 'hg+', 'bzr+', 'file:')):
+        if not (name_string.startswith('file:') or _is_vcs_url(name_string)):
             self._plain_distribution = True
             if version_string:
                 version_string = version_string.lstrip()
@@ -272,10 +280,6 @@ class Distribution:
     def distribution_name(self):
         return self._distribution_name
 
-    @distribution_name.setter
-    def distribution_name(self, new_name):
-        self._distribution_name = new_name
-
     def is_satisfied_by(self, version_to_test):
         if self._plain_distribution:
             if hasattr(self._requirement, 'specifier'):
@@ -284,7 +288,7 @@ class Distribution:
                 version_to_test = LooseVersion(version_to_test)
                 op_dict = {">=": operator.ge, "<=": operator.le, ">": operator.gt,
                            "<": operator.lt, "==": operator.eq, "!=": operator.ne}
-                # old setuptools has no specifierset, do fallback
+                # old setuptools has no specifier, do fallback
                 for (op, ver) in self._requirement.specs:
                     if not op_dict[op](version_to_test, LooseVersion(ver)):
                         return False
@@ -298,12 +302,18 @@ class Distribution:
         return self._distribution_name
 
 
+def _is_vcs_url(name):
+    """Test whether a name is a vcs url or not."""
+    return re.match(r'(svn|git|hg|bzr)\+', name)
+
+
 def _is_valid_distribution_name(name):
-    name = name.lstrip()
-    return not name.startswith(('>=', '<=', '!=', '==', '>', '<'))
+    """Test whether a name is distribution name or version specifier."""
+    return not name.lstrip().startswith(('>=', '<=', '!=', '==', '>', '<'))
 
 
 def _recover_distribution_name(names):
+    """Recover distribution names from user's raw input."""
     distribution_parts = []
     for name in names:
         if _is_valid_distribution_name(name):
@@ -316,8 +326,7 @@ def _recover_distribution_name(names):
 
 
 def _get_distributions_from_names(module, names):
-    """Parse name list to package list."""
-    package_list = []
+    """Parse distribution name to instances of Distribution."""
     try:
         return [Distribution(name) for name in _recover_distribution_name(names)]
     except ValueError as e:
@@ -590,7 +599,7 @@ def main():
 
         if name:
             for pkg in name:
-                if bool(pkg and re.match(r'(svn|git|hg|bzr)\+', pkg)):
+                if bool(pkg and _is_vcs_url(pkg)):
                     has_vcs = True
                     break
 
@@ -600,10 +609,9 @@ def main():
                 if len(distributions) > 1:
                     module.fail_json(msg="'version' is not available for installing multi-packages.")
                 if distributions[0].has_version_specifier:
-                    module.fail_json(msg="'version' argument conflicts with version specifier provided along with a package name.\
-                                     Please keep a version specifier, but remove the 'version' argument.")
-                else:
-                    distributions[0] = Distribution(distributions[0].distribution_name, version)
+                    module.fail_json(msg="'version' argument conflicts with version specifier provided along with a package name."
+                                     "Please keep a version specifier, but remove the 'version' argument.")
+                distributions[0] = Distribution(distributions[0].distribution_name, version)
 
         if module.params['editable']:
             args_list = []  # used if extra_args is not used at all
