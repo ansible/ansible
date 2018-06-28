@@ -877,13 +877,13 @@ EXAMPLES = '''
     ovirt_vms:
       name: myvm
       ticket: true
+      state: running
     register: myvm
 
   - name: Save ticket to file
     copy:
       content: "{{ myvm.vm.remote_vv_file }}"
       dest: ~/vvfile.vv
-
   - name: Run remote viewer with file
     command: remote-viewer ~/vvfile.vv
 
@@ -898,9 +898,11 @@ id:
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 vm:
     description: "Dictionary of all the VM attributes. VM attributes can be found on your oVirt/RHV instance
-                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/vm."
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/vm.
+                  Additionally when user sent ticket=true, this module will return also remote_vv_file
+                  parameter in vm dictionary, which contains remote-viewer compatible file to open virtual
+                  machine console. Please note that this file contains sensible information."
     returned: On success if VM is found.
-        Additionally when you set ticket to true it returns ticket to remote-viewer and be careful with those private data.
     type: dict
 '''
 import traceback
@@ -2024,8 +2026,7 @@ def main():
                 )
 
                 if module.params['ticket']:
-                    vm = vms_service.vm_service(ret['id']).get()
-                    vm_service = vms_service.vm_service(vm.id)
+                    vm_service = vms_service.vm_service(ret['id'])
                     graphics_consoles_service = vm_service.graphics_consoles_service()
                     graphics_console = graphics_consoles_service.list()[0]
                     console_service = graphics_consoles_service.console_service(graphics_console.id)
