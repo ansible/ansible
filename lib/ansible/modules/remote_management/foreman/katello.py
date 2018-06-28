@@ -67,7 +67,7 @@ options:
         description:
             - Parameters associated to the entity resource and action, to set or edit in dictionary format.
             - Each choice may be only available with specific entitys and actions.
-            - Possible Choices are in the format of param_name ([entry,action,action,...],[entity,..],...).
+            - "Possible Choices are in the format of param_name ([entry,action,action,...],[entity,..],...)."
             - The action "None" means no action specified.
             - Possible Params in relation to entity and action.
             - "name ([product,sync,None], [repository,sync], [repository_set,None], [sync_plan,None],"
@@ -75,7 +75,7 @@ options:
             - "organization ([product,sync,None] ,[repository,sync,None], [repository_set,None], [sync_plan,None], "
             - "[content_view,promote,publish,None], [lifecycle_environment,None], [activation_key,None])"
             - "content ([manifest,None])"
-            - "product ([repository,sync,None], [repository_set,None], [sync_plan,None], content_view)"
+            - "product ([repository,sync,None], [repository_set,None], [sync_plan,None])"
             - "basearch ([repository_set,None])"
             - "releaserver ([repository_set,None])"
             - "sync_date ([sync_plan,None])"
