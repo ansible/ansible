@@ -1007,7 +1007,7 @@ def main():
             archive=dict(type='path'),
             separate_git_dir=dict(type='path'),
         ),
-        mutually_exclusive=['separate_git_dir', ''],
+        mutually_exclusive=['separate_git_dir', 'bare'],
         supports_check_mode=True
     )
 
