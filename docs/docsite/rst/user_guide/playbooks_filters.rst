@@ -212,6 +212,49 @@ This is the reverse of the ``dict2items`` filter.
 
     {{ tags | items2dict(key_name='key', value_name='value') }}
 
+
+.. _zip_filter:
+
+zip and zip_longest filters
+```````````````````````````
+
+.. versionadded:: 2.3
+
+To get a list combining the elements of other lists use ``zip``::
+
+    - name: give me list combo of two lists
+      debug:
+       msg: "{{ [1,2,3,4,5]|zip(['a','b','c','d','e','f'])|list }}"
+
+    - name: give me shortest combo of two lists
+      debug:
+        msg: "{{ [1,2,3]|zip(['a','b','c','d','e','f'])|list }}"
+
+To always exhaust all list use ``zip_longest``::
+
+    - name: give me longest combo of three lists , fill with X
+      debug:
+        msg: "{{ [1,2,3]|zip_longest(['a','b','c','d','e','f'], [21, 22, 23], fillvalue='X')|list }}"
+
+
+Similarly to the output of the ``items2dict`` filter mentioned above, these filters can be used to contruct a ``dict``::
+
+    {{ dict(keys_list | zip(values_list)) }}
+
+Which turns::
+
+    list_one:
+      - one
+      - two
+    list_two:
+      - apple
+      - orange
+
+into::
+
+    one: apple
+    two: orange
+
 subelements Filter
 ``````````````````
 
@@ -1102,22 +1145,7 @@ Combinations always require a set size::
         msg: "{{ [1,2,3,4,5]|combinations(2)|list }}"
 
 
-To get a list combining the elements of other lists use ``zip``::
-
-    - name: give me list combo of two lists
-      debug:
-       msg: "{{ [1,2,3,4,5]|zip(['a','b','c','d','e','f'])|list }}"
-
-    - name: give me shortest combo of two lists
-      debug:
-        msg: "{{ [1,2,3]|zip(['a','b','c','d','e','f'])|list }}"
-
-To always exhaust all list use ``zip_longest``::
-
-    - name: give me longest combo of three lists , fill with X
-      debug:
-        msg: "{{ [1,2,3]|zip_longest(['a','b','c','d','e','f'], [21, 22, 23], fillvalue='X')|list }}"
-
+Also see the :ref:`zip_filter`
 
 .. versionadded:: 2.4
 
