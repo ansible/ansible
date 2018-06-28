@@ -22,7 +22,7 @@ description:
 version_added: "1.2"
 options:
   fstype:
-    choices: [ btrfs, ext2, ext3, ext4, ext4dev, f2fs, lvm, ocfs2, reiserfs, xfs, vfat ]
+    choices: [ btrfs, ext2, ext3, ext4, ext4dev, f2fs, lvm, ocfs2, reiserfs, swap, xfs, vfat ]
     description:
     - Filesystem type to be created.
     - reiserfs support was added in 2.2.
@@ -31,6 +31,7 @@ options:
     - vfat support was added in 2.5
     - ocfs2 support was added in 2.6
     - f2fs support was added in 2.7
+    - swap support was added in devel and is Linux-only, for BSD systems, use the M(mount) module
     required: yes
     aliases: [type]
   dev:
@@ -41,6 +42,7 @@ options:
   force:
     description:
     - If C(yes), allows to create new filesystem on devices that already has filesystem.
+      Warning, C(swap) always override existing filesystems, even without force.
     type: bool
     default: 'no'
   resizefs:
@@ -56,7 +58,8 @@ options:
     description:
     - List of options to be passed to mkfs command.
 requirements:
-  - Uses tools related to the I(fstype) (C(mkfs)) and C(blkid) command. When I(resizefs) is enabled, C(blockdev) command is required too.
+  - Uses tools related to the I(fstype) (C(mkfs) or C(mkswap) and C(swapon)) and C(blkid) command.
+    When I(resizefs) is enabled, C(blockdev) command is required too.
 notes:
   - Potential filesystem on I(dev) are checked using C(blkid), in case C(blkid) isn't able to detect an existing filesystem,
     this filesystem is overwritten even if I(force) is C(no).
@@ -73,6 +76,11 @@ EXAMPLES = '''
     fstype: ext4
     dev: /dev/sdb1
     opts: -cc
+
+- name: Create a swap partition on /dev/VG/swap
+  filesystem:
+    fstype: swap
+    dev: /dev/VG/swap
 '''
 
 from distutils.version import LooseVersion
@@ -312,6 +320,28 @@ class LVM(Filesystem):
         return block_count
 
 
+class Swap(Filesystem):
+    MKFS = 'mkswap'
+    MKFS_FORCE_FLAGS = '-f'
+    GROW = 'mkswap'
+
+    def get_fs_size(self, dev):
+        cmd = self.module.get_bin_path('swapon', required=True)
+        # Old swapon versions support only: swapon -s
+        # which is the same than parsing /proc/swaps;
+        # ie: awk '$1 == "$DEVICE_PATH" {print $3}' /proc/swaps
+        # and in which the size is expressed in kB.
+        # Newer swapon versions should use: swapon --noheadings --show --raw --bytes
+        _, size, _ = self.module.run_command([cmd, '-s', dev], check_rc=True)
+        for line in size.splitlines():
+            row = line.split()
+            if row[0] == dev:
+                return int(row[2]) * 1024
+        # The command can only tell the swap size when the device
+        # is in use, otherwise return default.
+        return 1
+
+
 FILESYSTEMS = {
     'ext2': Ext2,
     'ext3': Ext3,
@@ -324,6 +354,7 @@ FILESYSTEMS = {
     'vfat': VFAT,
     'ocfs2': Ocfs2,
     'LVM2_member': LVM,
+    'swap': Swap,
 }
 
 
