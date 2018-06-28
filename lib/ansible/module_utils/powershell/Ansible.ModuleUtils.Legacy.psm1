@@ -199,6 +199,9 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
         } elseif ($type -eq "str") {
             # Convert str types to real Powershell strings
             $value = $value.ToString()
+        } elseif ($type -eq "securestr") {
+            # Convert str types to real Powershell secure strings
+            $value = ConvertTo-SecureString $value.ToString() -AsPlainText -Force
         } elseif ($type -eq "bool") {
             # Convert boolean types to real Powershell booleans
             $value = $value | ConvertTo-Bool
