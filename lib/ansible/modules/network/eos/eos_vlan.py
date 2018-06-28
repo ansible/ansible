@@ -213,7 +213,7 @@ def map_obj_to_commands(updates, module):
 
 def map_config_to_obj(module):
     objs = []
-    vlans = run_commands(module, ['show vlan conf | json'])
+    vlans = run_commands(module, ['show vlan configured-ports | json'])
 
     for vlan in vlans[0]['vlans']:
         obj = {}
