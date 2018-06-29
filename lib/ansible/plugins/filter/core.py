@@ -51,6 +51,7 @@ from ansible.errors import AnsibleFilterError
 from ansible.module_utils.six import iteritems, string_types, integer_types
 from ansible.module_utils.six.moves import reduce, shlex_quote
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.collections import is_sequence
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.hashing import md5s, checksum_s
@@ -532,6 +533,16 @@ def dict_to_list_of_dict_key_value_elements(mydict):
     return ret
 
 
+def list_of_dict_key_value_elements_to_dict(mylist, key_name='key', value_name='value'):
+    ''' takes a list of dicts with each having a 'key' and 'value' keys, and transforms the list into a dictionary,
+        effectively as the reverse of dict2items '''
+
+    if not is_sequence(mylist):
+        raise AnsibleFilterError("items2dict requires a list, got %s instead." % type(mylist))
+
+    return dict((item[key_name], item[value_name]) for item in mylist)
+
+
 def random_mac(value):
     ''' takes string prefix, and return it completed with random bytes
         to get a complete 6 bytes MAC address '''
@@ -653,6 +664,7 @@ class FilterModule(object):
             'extract': extract,
             'flatten': flatten,
             'dict2items': dict_to_list_of_dict_key_value_elements,
+            'items2dict': list_of_dict_key_value_elements_to_dict,
             'subelements': subelements,
 
             # Misc
