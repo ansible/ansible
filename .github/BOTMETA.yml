@@ -903,6 +903,10 @@ files:
     labels:
     - cloud
     - ovirt
+  $module_utils/powershell:
+    maintainers: $team_windows_core
+    labels:
+    - windows
   $module_utils/remote_management/ucs:
     maintainers: $team_ucs
     labels: ucs
