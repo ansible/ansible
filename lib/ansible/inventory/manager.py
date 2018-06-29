@@ -183,7 +183,6 @@ class InventoryManager(object):
         for name in C.INVENTORY_ENABLED:
             plugin = inventory_loader.get(name)
             if plugin:
-                plugin.set_options()
                 self._inventory_plugins.append(plugin)
             else:
                 display.warning('Failed to load inventory plugin, skipping %s' % name)
