@@ -369,10 +369,9 @@ def execute_touch(path, follow):
                     os.remove(b_path)
             raise
 
-    # Unfortunately, touch always changes the file because it updates file's timestamp
-    if module.check_mode:
-        return {'dest': path, 'changed': True}
-    return {'dest': path, 'changed': True, 'diff': diff}
+        # Unfortunately, touch always changes the file because it updates file's timestamp
+        return {'dest': path, 'changed': True, 'diff': diff}
+    return {'dest': path, 'changed': True}
 
 
 def ensure_file_attributes(path, follow):
