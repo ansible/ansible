@@ -1,7 +1,7 @@
 # This Makefile is for legacy integration tests.
 # Most new tests should be implemented using ansible-test.
 # Existing tests are slowly being migrated to ansible-test.
-# See: https://docs.ansible.com/ansible/dev_guide/testing_integration.html
+# See: https://docs.ansible.com/ansible/devel/dev_guide/testing_integration.html
 
 TEST_DIR ?= ~/ansible_testing
 INVENTORY ?= inventory
