@@ -664,7 +664,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                 ansible_versions[counter] = 0
             try:
                 ansible_versions[counter] = int(ansible_versions[counter])
-            except:
+            except Exception:
                 pass
         if len(ansible_versions) < 3:
             for counter in range(len(ansible_versions), 3):
@@ -808,6 +808,12 @@ class CLI(with_metaclass(ABCMeta, object)):
         # create the variable manager, which will be shared throughout
         # the code, ensuring a consistent view of global variables
         variable_manager = VariableManager(loader=loader, inventory=inventory)
+
+        if hasattr(options, 'basedir'):
+            if options.basedir:
+                variable_manager.safe_basedir = True
+        else:
+            variable_manager.safe_basedir = True
 
         # load vars from cli options
         variable_manager.extra_vars = load_extra_vars(loader=loader, options=options)

@@ -90,6 +90,7 @@ class VariableManager:
         self._hostvars = None
         self._omit_token = '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest()
         self._options_vars = defaultdict(dict)
+        self.safe_basedir = False
 
         # bad cache plugin is not fatal error
         try:
@@ -110,6 +111,7 @@ class VariableManager:
             omit_token=self._omit_token,
             options_vars=self._options_vars,
             inventory=self._inventory,
+            safe_basedir=self.safe_basedir,
         )
         return data
 
@@ -123,6 +125,7 @@ class VariableManager:
         self._omit_token = data.get('omit_token', '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest())
         self._inventory = data.get('inventory', None)
         self._options_vars = data.get('options_vars', dict())
+        self.safe_basedir = data.get('safe_basedir', False)
 
     @property
     def extra_vars(self):
@@ -183,7 +186,9 @@ class VariableManager:
         )
 
         # default for all cases
-        basedirs = [self._loader.get_basedir()]
+        basedirs = []
+        if self.safe_basedir:  # avoid adhoc/console loading cwd
+            basedirs = [self._loader.get_basedir()]
 
         if play:
             # first we compile any vars specified in defaults/main.yml
