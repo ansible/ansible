@@ -322,6 +322,9 @@ def execute_touch(path, follow):
     b_path = to_bytes(path, errors='surrogate_or_strict')
     prev_state = get_state(b_path)
 
+    # Unfortunately, touch always changes the file because it updates file's timestamp
+    result = {'dest': path, 'changed': True}
+
     if not module.check_mode:
         if prev_state == 'absent':
             # Create an empty file if the filename did not already exist
@@ -369,8 +372,8 @@ def execute_touch(path, follow):
                     os.remove(b_path)
             raise
 
-    # Unfortunately, touch always changes the file because it updates file's timestamp
-    return {'dest': path, 'changed': True, 'diff': diff}
+        result['diff'] = diff
+    return result
 
 
 def ensure_file_attributes(path, follow):
