@@ -54,7 +54,12 @@ class Cliconf(CliconfBase):
 
         return device_info
 
-    def get_config(self, filter=None, format='set'):
+    def get_config(self, filter=None, format=None):
+        if format:
+            option_values = self.get_option_values()
+            if format not in option_values['format']:
+                raise ValueError("'format' value %s is invalid. Valid values of format are %s" % (format, ','.join(option_values['format'])))
+
         if format == 'text':
             out = self.send_command('show configuration')
         else:
@@ -97,19 +102,23 @@ class Cliconf(CliconfBase):
                     self.discard_changes()
                     raise AnsibleConnectionFailure(msg)
                 else:
-                    self.get('exit')
+                    self.send_command('exit')
             else:
                 self.discard_changes()
         else:
-            self.get('exit')
+            self.send_command('exit')
 
         resp['diff'] = diff_config
         resp['response'] = results[1:-1]
         return json.dumps(resp)
 
-    def get(self, command=None, prompt=None, answer=None, sendonly=False):
+    def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None):
         if not command:
             raise ValueError('must provide value of command to execute')
+
+        if output:
+            raise ValueError("'output' value %s is not supported on vyos" % output)
+
         return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
 
     def commit(self, comment=None):
@@ -191,6 +200,19 @@ class Cliconf(CliconfBase):
         diff['config_diff'] = list(updates)
         return json.dumps(diff)
 
+    def run_commands(self, commands):
+        responses = list()
+        for cmd in to_list(commands):
+            if not isinstance(cmd, collections.Mapping):
+                cmd = {'command': cmd}
+
+            output = cmd.pop('output', None)
+            if output:
+                raise ValueError("'output' value %s is not supported on vyos" % output)
+
+            responses.append(self.send_command(**cmd))
+        return responses
+
     def get_device_operations(self):
         return {
             'supports_diff_replace': False,
@@ -208,14 +230,15 @@ class Cliconf(CliconfBase):
 
     def get_option_values(self):
         return {
-            'format': ['set', 'text'],
+            'format': ['text', 'set'],
             'diff_match': ['line', 'none'],
             'diff_replace': [],
+            'output': []
         }
 
     def get_capabilities(self):
         result = {}
-        result['rpc'] = self.get_base_rpc() + ['commit', 'discard_changes', 'get_diff']
+        result['rpc'] = self.get_base_rpc() + ['commit', 'discard_changes', 'get_diff', 'run_commands']
         result['network_api'] = 'cliconf'
         result['device_info'] = self.get_device_info()
         result['device_operations'] = self.get_device_operations()

@@ -168,7 +168,7 @@ def parse_commands(module, warnings):
             warnings.append('only show commands are supported when using '
                             'check mode, not executing `%s`' % item['command'])
         else:
-            items.append(module.jsonify(item))
+            items.append(item)
 
     return items
 
