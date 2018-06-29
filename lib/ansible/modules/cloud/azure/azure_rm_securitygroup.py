@@ -155,6 +155,16 @@ EXAMPLES = '''
             access: Allow
             priority: 101
             direction: Inbound
+          - name: 'AllowMultiplePorts'
+            protocol: Tcp
+            source_address_prefix:
+              - '174.109.158.0/24'
+              - '174.109.159.0/24'
+            destination_port_range:
+              - 80
+              - 443
+            access: Allow
+            priority: 102
 
 # Update rules on existing security group
 - azure_rm_securitygroup:
