@@ -163,7 +163,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         self.response_logging = False
 
     @abstractmethod
-    def get_config(self, source='running', filter=None, format='text'):
+    def get_config(self, source='running', filter=None, format=None):
         """Retrieves the specified configuration from the device
 
         This method will retrieve the configuration specified by source and
@@ -215,7 +215,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         pass
 
     @abstractmethod
-    def get(self, command=None, prompt=None, answer=None, sendonly=False, newline=True):
+    def get(self, command=None, prompt=None, answer=None, sendonly=False, newline=True, output=None):
         """Execute specified command on remote device
         This method will retrieve the specified data and
         return it to the caller as a string.
@@ -225,6 +225,9 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         :param answer: the string to respond to the prompt with
         :param sendonly: bool to disable waiting for response, default is false
         :param newline: bool to indicate if newline should be added at end of answer or not
+        :param output: For devices that support fetching command output in different
+            format, this keyword argument is used to specify the output in which
+            response is to be retrieved.
         :return:
         """
         pass
@@ -264,6 +267,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
                 'format': [list of supported configuration format],
                 'diff_match': [list of supported match values],
                 'diff_replace': [list of supported replace values],
+                'output': [list of supported command output format]
             }
         :return: capability as json string
         """
@@ -369,3 +373,22 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
                }
 
         """
+        pass
+
+    def run_commands(self, commands):
+        """
+        Execute a list of commands on remote host and return the list of response
+        :param commands: The list of command that needs to be executed on remote host.
+                The individual command in list can either be a command string or command dict.
+                If the command is dict the valid keys are
+                {
+                    'command': <command to be executed>
+                    'prompt': <expected prompt on executing the command>,
+                    'answer': <answer for the prompt>,
+                    'output': <the format in which command output should be rendered eg: 'json', 'text', if supported by platform>,
+                    'sendonly': <Boolean flag to indicate if it command execution response should be ignored or not>
+                }
+
+        :return: List of returned response
+        """
+        pass
