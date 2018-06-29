@@ -375,20 +375,20 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         """
         pass
 
-        def run_commands(self, commands):
-            """
-            Execute a list of commands on remote host and return the list of response
-            :param commands: The list of command that needs to be executed on remote host.
-                    The individual command in list can either be a command string or command dict.
-                    If the command is dict the valid keys are
-                    {
-                        'command': <command to be executed>
-                        'prompt': <expected prompt on executing the command>,
-                        'answer': <answer for the prompt>,
-                        'output': <the format in which command output should be rendered eg: 'json', 'text', if supported by platform>,
-                        'sendonly': <Boolean flag to indicate if it command execution response should be ignored or not>
-                    }
+    def run_commands(self, commands):
+        """
+        Execute a list of commands on remote host and return the list of response
+        :param commands: The list of command that needs to be executed on remote host.
+                The individual command in list can either be a command string or command dict.
+                If the command is dict the valid keys are
+                {
+                    'command': <command to be executed>
+                    'prompt': <expected prompt on executing the command>,
+                    'answer': <answer for the prompt>,
+                    'output': <the format in which command output should be rendered eg: 'json', 'text', if supported by platform>,
+                    'sendonly': <Boolean flag to indicate if it command execution response should be ignored or not>
+                }
 
-            :return: List of returned response
-            """
+        :return: List of returned response
+        """
         pass
