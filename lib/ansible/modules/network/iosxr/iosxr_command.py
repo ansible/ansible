@@ -188,7 +188,7 @@ def main():
     match = module.params['match']
 
     while retries > 0:
-        responses = run_command(module, commands)
+        responses, timestamps = run_command(module, commands)
 
         for item in list(conditionals):
             if item(responses):
@@ -212,7 +212,8 @@ def main():
         'changed': False,
         'stdout': responses,
         'warnings': warnings,
-        'stdout_lines': list(to_lines(responses))
+        'stdout_lines': list(to_lines(responses)),
+        'timestamps': timestamps
     }
 
     module.exit_json(**result)

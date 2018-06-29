@@ -382,7 +382,7 @@ class CliConfiguration(ConfigBase):
                 sleep(want_item['delay'])
 
             command = 'show interfaces {!s}'.format(want_item['name'])
-            out = run_command(self._module, command)[0]
+            out, timestamps = run_command(self._module, command)[0]
 
             if want_state in ('up', 'down'):
                 match = re.search(r'%s (\w+)' % 'line protocol is', out, re.M)

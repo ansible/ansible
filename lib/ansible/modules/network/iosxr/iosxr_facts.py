@@ -407,7 +407,7 @@ def main():
     try:
         for inst in instances:
             commands = inst.commands()
-            responses = run_command(module, commands)
+            responses, timestamps = run_command(module, commands)
             results = dict(zip(commands, responses))
             inst.populate(results)
             facts.update(inst.facts)

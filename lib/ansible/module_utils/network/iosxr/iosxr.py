@@ -29,7 +29,7 @@
 import json
 from difflib import Differ
 from copy import deepcopy
-from time import sleep
+from datetime import datetime
 
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.basic import env_fallback
@@ -437,6 +437,7 @@ def load_config(module, command_filter, commit=False, replace=False,
 def run_command(module, commands):
     conn = get_connection(module)
     responses = list()
+    timestamps = list()
     for cmd in to_list(commands):
 
         try:
@@ -455,18 +456,20 @@ def run_command(module, commands):
             newline = True
 
         try:
+            timestamp = datetime.now().replace(microsecond=0).isoformat()
             out = conn.get(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline)
         except ConnectionError as exc:
             module.fail_json(msg=to_text(exc))
 
         try:
             out = to_text(out, errors='surrogate_or_strict')
+            timestamps.append(timestamp)
         except UnicodeError:
             module.fail_json(msg=u'Failed to decode output from {0}: {1}'.format(cmd, to_text(out)))
 
         responses.append(out)
 
-    return responses
+    return responses, timestamps
 
 
 def copy_file(module, src, dst, proto='scp'):

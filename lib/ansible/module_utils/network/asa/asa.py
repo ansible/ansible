@@ -30,6 +30,7 @@ from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network.common.utils import to_list, EntityCollection
 from ansible.module_utils.connection import exec_command
 from ansible.module_utils.connection import Connection, ConnectionError
+from datetime import datetime
 
 _DEVICE_CONFIGS = {}
 _CONNECTION = None
@@ -119,12 +120,15 @@ def run_commands(module, commands, check_rc=True):
     commands = to_commands(module, to_list(commands))
 
     responses = list()
+    timestamps = list()
 
     for cmd in commands:
+        timestamp = datetime.now().replace(microsecond=0).isoformat()
         out = connection.get(**cmd)
         responses.append(to_text(out, errors='surrogate_then_replace'))
+        timestamps.append(timestamp)
 
-    return responses
+    return responses, timestamps
 
 
 def get_config(module, flags=None):
