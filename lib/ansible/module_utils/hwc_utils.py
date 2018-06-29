@@ -25,7 +25,7 @@ from ansible.module_utils._text import to_text
 
 
 def navigate_hash(source, path, default=None):
-    if not source:
+    if not (source and path):
         return None
 
     key = path[0]
@@ -89,10 +89,12 @@ class HwcSession(object):
         self.module = module
         self.product = product
         self._validate()
+        self._session = self._credentials()
+        self._adapter = _LegacyJsonAdapter(self._session)
 
     def get(self, url, body=None):
         try:
-            return self._session().get(
+            return self._adapter.get(
                 url, json=body,
                 headers=self._headers(), raise_exc=False)
         except getattr(requests.exceptions, 'RequestException') as inst:
@@ -100,7 +102,7 @@ class HwcSession(object):
 
     def post(self, url, body=None):
         try:
-            return self._session().post(
+            return self._adapter.post(
                 url, json=body,
                 headers=self._headers(), raise_exc=False)
         except getattr(requests.exceptions, 'RequestException') as inst:
@@ -108,7 +110,7 @@ class HwcSession(object):
 
     def delete(self, url, body=None):
         try:
-            return self._session().delete(
+            return self._adapter.delete(
                 url, json=body,
                 headers=self._headers(), raise_exc=False)
         except getattr(requests.exceptions, 'RequestException') as inst:
@@ -116,7 +118,7 @@ class HwcSession(object):
 
     def put(self, url, body=None):
         try:
-            return self._session().put(
+            return self._adapter.put(
                 url, json=body,
                 headers=self._headers(), raise_exc=False)
         except getattr(requests.exceptions, 'RequestException') as inst:
@@ -125,7 +127,7 @@ class HwcSession(object):
     def get_service_endpoint(self, service_type):
         e = None
         try:
-            e = self._credentials().get_endpoint_data(
+            e = self._session.get_endpoint_data(
                 service_type=service_type,
                 region_name=self.module.params['region']
             )
@@ -143,12 +145,9 @@ class HwcSession(object):
 
     def get_project_id(self):
         try:
-            return self._credentials().get_project_id()
+            return self._session.get_project_id()
         except getattr(requests.exceptions, 'RequestException') as inst:
             self.module.fail_json(msg=inst.message)
-
-    def _session(self):
-        return _LegacyJsonAdapter(self._credentials())
 
     def _validate(self):
         if not HAS_REQUESTS:
