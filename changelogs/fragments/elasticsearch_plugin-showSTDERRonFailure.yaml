@@ -1,0 +1,3 @@
+---
+bugfixes:
+- elasticsearch_plugin - Improve error messages and show stderr of elasticsearch commands
