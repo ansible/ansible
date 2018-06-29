@@ -256,6 +256,8 @@ status:
         }
 '''  # noqa: E501
 
+from collections import namedtuple
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.service import sysv_exists, sysv_is_enabled, fail_if_missing
 from ansible.module_utils._text import to_native
@@ -323,6 +325,39 @@ def unit_supports_reload(module, systemctl_executable, systemd_unit):
     return rc == 0
 
 
+
+
+SystemdFeatures = namedtuple(
+    'SystemdFeatures',
+    (
+        'try_restart',
+        'reload_or_restart',
+        'try_reload_or_restart',
+    ),
+)
+
+
+def detect_systemd_features(ansible_module, systemctl_executable):
+    """Return SystemdFeatures instance with features detected."""
+    rc, out, err = ansible_module.run_command(
+        r"%s %s" % (systemctl_executable, '--help')
+    )
+    commands_block = (
+        out.
+        partition('Unit Commands:\n')[-1].
+        partition('\n\nUnit File Commands')[0]
+    )
+    transformed_commands = (
+        l[:38].strip().partition(' ')[0]  # command descriptions start at 38th
+                                          # symbol, partition will separate
+                                          # command from its args
+        for l in commands_block.splitlines()
+    )
+    commands_list = set(filter(bool, transformed_commands))  # drop empty lines
+    return SystemdFeatures(**{  # FIXME: change syntax to Python 2.6-compatible
+        f: (f.replace('_', '-') in commands_list)
+        for f in SystemdFeatures._fields
+    })
 # ===========================================
 # Main control flow
 
