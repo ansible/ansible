@@ -99,12 +99,12 @@ EXAMPLES = '''
 - name: Read definition file from the Ansible controller file system
   k8s:
     state: present
-    definition: "{{ lookup('file', '/testing/deployment.yml') | from_yaml }}"
+    definition: "{{ lookup('file', '/testing/deployment.yml') }}"
 
 - name: Read definition file from the Ansible controller file system after Jinja templating
   k8s:
     state: present
-    definition: "{{ lookup('template', '/testing/deployment.yml') | from_yaml }}"
+    definition: "{{ lookup('template', '/testing/deployment.yml') }}"
 '''
 
 RETURN = '''
@@ -135,8 +135,8 @@ result:
        returned: success
        type: complex
      items:
-       description: Returned only when the I(kind) is a List type resource. Contains a set of objects.
-       returned: when resource is a List
+       description: Returned only when multiple yaml documents are passed to src or resource_definition
+       returned: when resource_definition or src contains list of objects
        type: list
 '''
 

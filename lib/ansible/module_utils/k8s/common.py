@@ -63,7 +63,6 @@ COMMON_ARG_SPEC = {
         'default': False,
     },
     'resource_definition': {
-        'type': 'dict',
         'aliases': ['definition', 'inline']
     },
     'src': {
