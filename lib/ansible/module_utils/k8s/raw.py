@@ -23,9 +23,10 @@ from ansible.module_utils.k8s.common import KubernetesAnsibleModule
 
 
 try:
+    import yaml
     from openshift.dynamic.exceptions import DynamicApiError, NotFoundError, ConflictError
 except ImportError:
-    # Exception handled in common
+    # Exceptions handled in common
     pass
 
 
@@ -49,7 +50,13 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         namespace = self.params.pop('namespace')
         resource_definition = self.params.pop('resource_definition')
         if resource_definition:
-            self.resource_definitions = [resource_definition]
+            if isinstance(resource_definition, str):
+                try:
+                    self.resource_definitions = yaml.safe_load_all(resource_definition)
+                except (IOError, yaml.YAMLError) as exc:
+                    self.fail(msg="Error loading resource_definition: {0}".format(exc))
+            else:
+                self.resource_definitions = [resource_definition]
         src = self.params.pop('src')
         if src:
             self.resource_definitions = self.load_resource_definitions(src)
