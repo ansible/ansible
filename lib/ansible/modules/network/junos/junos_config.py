@@ -63,8 +63,8 @@ options:
         statements on the remote device.
   confirm:
     description:
-      - The C(confirm) argument will configure a time out value for
-        the commit to be confirmed before it is automatically
+      - The C(confirm) argument will configure a time out value in minutes
+        for the commit to be confirmed before it is automatically
         rolled back.  If the C(confirm) argument is set to False, this
         argument is silently ignored.  If the value for this argument
         is set to 0, the commit is confirmed immediately.
