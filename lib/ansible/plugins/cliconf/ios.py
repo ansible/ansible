@@ -36,9 +36,12 @@ from ansible.plugins.cliconf import CliconfBase, enable_mode
 class Cliconf(CliconfBase):
 
     @enable_mode
-    def get_config(self, source='running', filter=None, format='text'):
+    def get_config(self, source='running', filter=None, format=None):
         if source not in ('running', 'startup'):
             return self.invalid_params("fetching configuration from %s is not supported" % source)
+
+        if format:
+            raise ValueError("'format' value %s is not supported on ios" % format)
 
         if not filter:
             filter = []
@@ -152,11 +155,14 @@ class Cliconf(CliconfBase):
             results.append(self.send_command('end'))
 
         resp['response'] = results[1:-1]
-        return json.dumps(resp)
+        return resp
 
-    def get(self, command=None, prompt=None, answer=None, sendonly=False):
+    def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None):
         if not command:
             raise ValueError('must provide value of command to execute')
+        if output:
+            raise ValueError("'output' value %s is not supported on ios" % output)
+
         return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly)
 
     def get_device_info(self):
@@ -199,19 +205,20 @@ class Cliconf(CliconfBase):
         return {
             'format': ['text'],
             'diff_match': ['line', 'strict', 'exact', 'none'],
-            'diff_replace': ['line', 'block']
+            'diff_replace': ['line', 'block'],
+            'output': []
         }
 
     def get_capabilities(self):
         result = dict()
-        result['rpc'] = self.get_base_rpc() + ['edit_banner', 'get_diff']
+        result['rpc'] = self.get_base_rpc() + ['edit_banner', 'get_diff', 'run_commands']
         result['network_api'] = 'cliconf'
         result['device_info'] = self.get_device_info()
         result['device_operations'] = self.get_device_operations()
         result.update(self.get_option_values())
         return json.dumps(result)
 
-    def edit_banner(self, candidate=None, multiline_delimiter="@", commit=True, diff=False):
+    def edit_banner(self, candidate=None, multiline_delimiter="@", commit=True):
         """
         Edit banner on remote device
         :param banners: Banners to be loaded in json format
@@ -223,6 +230,7 @@ class Cliconf(CliconfBase):
         :return: Returns response of executing the configuration command received
              from remote host
         """
+        resp = {}
         banners_obj = json.loads(candidate)
         results = []
         if commit:
@@ -235,11 +243,22 @@ class Cliconf(CliconfBase):
                 time.sleep(0.1)
                 results.append(self.send_command('\n'))
 
-        diff_banner = None
-        if diff:
-            diff_banner = candidate
+        resp['response'] = results[1:-1]
 
-        return diff_banner, results[1:-1]
+        return resp
+
+    def run_commands(self, commands):
+        responses = list()
+        for cmd in to_list(commands):
+            if not isinstance(cmd, collections.Mapping):
+                cmd = {'command': cmd}
+
+            output = cmd.pop('output', None)
+            if output:
+                raise ValueError("'output' value %s is not supported on ios" % output)
+
+            responses.append(self.send_command(**cmd))
+        return responses
 
     def _extract_banners(self, config):
         banners = {}
