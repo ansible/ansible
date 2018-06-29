@@ -29,8 +29,10 @@ from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE, BOOLEANS_FA
 
 HAS_DOCKER_PY = True
 HAS_DOCKER_PY_2 = False
+HAS_DOCKER_PY_GT_2_2 = False  # Docker PY version is greater than 2.2
 HAS_DOCKER_PY_3 = False
 HAS_DOCKER_ERROR = None
+DOCKER_VERSION = LooseVersion('0.0.0')
 
 try:
     from requests.exceptions import SSLError
@@ -40,17 +42,20 @@ try:
     from docker.constants import DEFAULT_DOCKER_API_VERSION
     from docker import auth
 
-    if LooseVersion(docker_version) >= LooseVersion('3.0.0'):
+    DOCKER_VERSION = LooseVersion(docker_version)
+    if DOCKER_VERSION >= LooseVersion('3.0.0'):
         HAS_DOCKER_PY_3 = True
         from docker import APIClient as Client
         from docker.types import Ulimit, LogConfig
-    elif LooseVersion(docker_version) >= LooseVersion('2.0.0'):
+    elif DOCKER_VERSION >= LooseVersion('2.0.0'):
         HAS_DOCKER_PY_2 = True
         from docker import APIClient as Client
         from docker.types import Ulimit, LogConfig
     else:
         from docker import Client
         from docker.utils.types import Ulimit, LogConfig
+    if DOCKER_VERSION >= LooseVersion('2.2.0'):
+        HAS_DOCKER_PY_GT_2_2 = True
 
 except ImportError as exc:
     HAS_DOCKER_ERROR = str(exc)
@@ -172,8 +177,8 @@ class AnsibleDockerClient(Client):
         if not HAS_DOCKER_PY:
             self.fail("Failed to import docker-py - %s. Try `pip install docker-py`" % HAS_DOCKER_ERROR)
 
-        if LooseVersion(docker_version) < LooseVersion(MIN_DOCKER_VERSION):
-            self.fail("Error: docker-py version is %s. Minimum version required is %s." % (docker_version,
+        if DOCKER_VERSION < LooseVersion(MIN_DOCKER_VERSION):
+            self.fail("Error: docker-py version is %s. Minimum version required is %s." % (DOCKER_VERSION,
                                                                                            MIN_DOCKER_VERSION))
 
         self.debug = self.module.params.get('debug')

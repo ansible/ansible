@@ -142,7 +142,8 @@ options:
   init:
     description:
       - Run an init inside the container that forwards signals and reaps processes.
-        This option requires Docker API 1.25+.
+      - Requires Docker API 1.25+ and docker-py >= 2.2.0. If version of
+        docker-py is lower, parameter is omitted.
     type: bool
     default: 'no'
     version_added: "2.6"
@@ -607,7 +608,13 @@ import re
 import shlex
 
 from ansible.module_utils.basic import human_to_bytes
-from ansible.module_utils.docker_common import HAS_DOCKER_PY_2, HAS_DOCKER_PY_3, AnsibleDockerClient, DockerBaseClass
+from ansible.module_utils.docker_common import (
+    HAS_DOCKER_PY_2,
+    HAS_DOCKER_PY_3,
+    HAS_DOCKER_PY_GT_2_2,
+    AnsibleDockerClient,
+    DockerBaseClass
+)
 from ansible.module_utils.six import string_types
 
 try:
@@ -914,13 +921,15 @@ class TaskParameters(DockerBaseClass):
             group_add='groups',
             devices='devices',
             pid_mode='pid_mode',
-            tmpfs='tmpfs',
-            init='init'
+            tmpfs='tmpfs'
         )
 
         if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
             # auto_remove is only supported in docker>=2
             host_config_params['auto_remove'] = 'auto_remove'
+            if HAS_DOCKER_PY_GT_2_2:
+                # init parameter was added in docker-py >= 2.2.0
+                host_config_params['init'] = 'init'
 
         if HAS_DOCKER_PY_3:
             # cpu_shares and volume_driver moved to create_host_config in > 3
