@@ -18,6 +18,16 @@ from ansible.module_utils.six import string_types
 from ansible.config.manager import ConfigManager, ensure_type, get_ini_config_value
 
 
+def _warning(msg):
+    ''' display is not guaranteed here, nor it being the full class, but try anyways, fallback to sys.stderr.write '''
+    try:
+        from __main__ import display
+        display.warning(msg)
+    except:
+        import sys
+        sys.stderr.write(' [WARNING] %s\n' % (msg))
+
+
 def _deprecated(msg):
     ''' display is not guaranteed here, nor it being the full class, but try anyways, fallback to sys.stderr.write '''
     try:
@@ -122,3 +132,6 @@ for setting in config.data.get_settings():
         value = ensure_type(value, setting.name)
 
     set_constant(setting.name, value)
+
+for warn in config.WARNINGS:
+    _warning(warn)
