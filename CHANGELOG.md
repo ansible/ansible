@@ -8,6 +8,8 @@ Ansible Changes By Release
 ### Bugfixes
 * **Security Fix** - avoid loading host/group vars from cwd when not specifying
   a playbook or playbook base dir (https://github.com/ansible/ansible/pull/42067)
+* **Security Fix** - avoid using ansible.cfg in a world readable dir
+  https://github.com/ansible/ansible/pull/42070
 
 
 <a id="2.4.5"></a>
