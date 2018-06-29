@@ -1,0 +1,5 @@
+---
+bugfixes:
+- file module - The touch subcommand had its diff output broken during the
+  2.6.x development cycle.  The patch to fix that broke check mode.
+  This is now fixed (https://github.com/ansible/ansible/issues/42111)
