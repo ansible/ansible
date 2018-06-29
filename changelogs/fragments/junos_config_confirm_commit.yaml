@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix junos_config confirm commit timeout issue (https://github.com/ansible/ansible/pull/41527)
