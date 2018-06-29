@@ -81,11 +81,14 @@ options:
     default: 128
   vpc_subnet_ids:
     description:
-      - List of subnet IDs to run Lambda function in. Use this option if you need to access resources in your VPC. Leave empty if you don't want to run
-        the function in a VPC.
+      - List of subnet IDs to run Lambda function in. Use this option if you need to access resources in your VPC. 
+        Leave empty if you want to save origin configuration.
+        Set to 'None' value if you don't want to run the function in a VPC.
   vpc_security_group_ids:
     description:
-      - List of VPC security group IDs to associate with the Lambda function. Required when vpc_subnet_ids is used.
+      - List of VPC security group IDs to associate with the Lambda function. 
+        Leave empty if you want to save origin configuration. 
+        Set to 'None' value if you don't want to run the function in a VPC.
   environment_variables:
     description:
       - A dictionary of environment variables the Lambda function is given.
@@ -101,6 +104,7 @@ options:
     version_added: "2.5"
 author:
     - 'Steyn Huizinga (@steynovich)'
+    - 'Aliaksei Maiseyeu (GitHub: ToROxI)'
 extends_documentation_fragment:
     - aws
     - ec2
@@ -122,6 +126,34 @@ EXAMPLES = '''
     vpc_security_group_ids:
     - sg-123abcde
     - sg-edcba321
+    environment_variables: '{{ item.env_vars }}'
+    tags:
+      key1: 'value1'
+  with_items:
+    - name: HelloWorld
+      zip_file: hello-code.zip
+      env_vars:
+        key1: "first"
+        key2: "second"
+    - name: ByeBye
+      zip_file: bye-code.zip
+      env_vars:
+        key1: "1"
+        key2: "2"
+
+# Explicit declaration of no-VPC configuration
+- name: looped creation
+  lambda:
+    name: '{{ item.name }}'
+    state: present
+    zip_file: '{{ item.zip_file }}'
+    runtime: 'python2.7'
+    role: 'arn:aws:iam::987654321012:role/lambda_basic_execution'
+    handler: 'hello_python.my_handler'
+    vpc_subnet_ids:
+    - 'None'
+    vpc_security_group_ids:
+    - 'None'
     environment_variables: '{{ item.env_vars }}'
     tags:
       key1: 'value1'
@@ -436,13 +468,13 @@ def main():
                 vpc_security_group_ids_changed = sorted(vpc_security_group_ids) != sorted(current_vpc_security_group_ids)
 
             if 'VpcConfig' not in current_config or subnet_net_id_changed or vpc_security_group_ids_changed:
+                if 'None' in vpc_subnet_ids and 'None' in vpc_security_group_ids:
+                    vpc_subnet_ids = []
+                    vpc_security_group_ids = []
+
                 new_vpc_config = {'SubnetIds': vpc_subnet_ids,
                                   'SecurityGroupIds': vpc_security_group_ids}
                 func_kwargs.update({'VpcConfig': new_vpc_config})
-        else:
-            # No VPC configuration is desired, assure VPC config is empty when present in current config
-            if 'VpcConfig' in current_config and current_config['VpcConfig'].get('VpcId'):
-                func_kwargs.update({'VpcConfig': {'SubnetIds': [], 'SecurityGroupIds': []}})
 
         # Upload new configuration if configuration has changed
         if len(func_kwargs) > 1:
