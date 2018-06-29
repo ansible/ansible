@@ -315,6 +315,7 @@ class TaskExecutor:
             items = self._squash_items(items, loop_var, task_vars)
 
         no_log = False
+        items_len = len(items)
         for item_index, item in enumerate(items):
             task_vars[loop_var] = item
             if index_var:
@@ -357,6 +358,22 @@ class TaskExecutor:
             res[loop_var] = item
             if index_var:
                 res[index_var] = item_index
+            res['loop'] = {
+                'items': items,
+                'index': item_index + 1,
+                'index0': item_index,
+                'first': item_index == 0,
+                'last': item_index + 1 == items_len,
+                'length': items_len,
+            }
+            try:
+                res['loop']['nextitem'] = items[item_index + 1]
+            except IndexError:
+                pass
+            try:
+                res['loop']['previtem'] = items[item_index - 1]
+            except IndexError:
+                pass
             res['_ansible_item_result'] = True
             res['_ansible_ignore_errors'] = task_fields.get('ignore_errors')
 
