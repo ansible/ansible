@@ -654,18 +654,6 @@ class TestVaultEditor(unittest.TestCase):
 
     def test_vault_lock_acquire(self):
         vault_path = self._create_test_file()
-        # test write access failure
-        os.chmod(vault_path, stat.S_IRUSR)
-        vl = VaultEditorLock(vault_path, readonly=False)
-        self.assertRaises(errors.AnsibleError, vl.acquire)
-        self.assertFalse(vl.is_locked)
-        self.assertTrue(vl.fd is None)
-        # test read access failure
-        os.chmod(vault_path, 0)
-        vl = VaultEditorLock(vault_path, readonly=True)
-        self.assertRaises(errors.AnsibleError, vl.acquire)
-        self.assertFalse(vl.is_locked)
-        self.assertTrue(vl.fd is None)
         # test successful call
         os.chmod(vault_path, stat.S_IRUSR | stat.S_IWUSR)
         vl = VaultEditorLock(vault_path, readonly=False)
@@ -687,6 +675,15 @@ class TestVaultEditor(unittest.TestCase):
             self.assertFalse(vl.is_locked)
             self.assertFalse(vl.fd is None)
             self.assertTrue(vl.fd.closed)
+
+    def test_vault_lock_nonexisting_file(self):
+        self._test_dir = self._create_test_dir()
+        new_vault_path = os.path.join(self._test_dir, 'new_vault.yml')
+        content = 'new content\n'
+        with VaultEditorLock(new_vault_path, readonly=False):
+            with open(new_vault_path, 'w+') as new_vault:
+                new_vault.write(content)
+        self.assertEqual(open(new_vault_path).read(), content)
 
     @staticmethod
     def _subprocess(target, args):
@@ -776,7 +773,7 @@ class TestVaultEditor(unittest.TestCase):
         [writer.join() for (writer, ignore) in writers]
         results = [pipe.recv() for (ignore, pipe) in writers if pipe.poll(0.1)]
         # three writers should have been able to write
-        self.assertTrue(len(filter(None, results)) == 3)
+        self.assertTrue(sum([1 for result in results if result]) == 3)
         # all writes should be "atomic", i.e "begin"-"end" pairs cannot overlap
         with open(vault_path, 'r') as vault:
             lines = list(vault)

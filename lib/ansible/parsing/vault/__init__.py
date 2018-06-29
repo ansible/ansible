@@ -1130,10 +1130,9 @@ class VaultEditorLock:
             if self.is_locked:
                 return self
             time.sleep(random.uniform(1.0, 2.0))
-        else:
-            raise AnsibleVaultError('Cannot access the vault file {0} '
-                                    'that is being concurrently modified. '
-                                    'Please try again.'.format(self.path))
+        raise AnsibleVaultError('Cannot access the vault file {0} '
+                                'that is being concurrently modified. '
+                                'Please try again.'.format(self.path))
 
 # Ansible requires at least Python 2.6, which has been released in October
 # 2008. At the same time the Linux 2.6.27 has been released. NFS supports
@@ -1141,7 +1140,7 @@ class VaultEditorLock:
 
     def acquire(self):
         try:
-            self.fd = open(self.path, 'rb' if self.readonly else 'r+b')
+            self.fd = open(self.path, 'r' if self.readonly else 'a+')
         except Exception as exc:
             raise AnsibleError(str(exc))
         # two readers can share a lock; a first writer makes an exclusive lock
