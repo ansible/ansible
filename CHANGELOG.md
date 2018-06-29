@@ -3,9 +3,11 @@ Ansible Changes By Release
 
 <a id="2.4.6"></a>
 
-## 2.4.5 "Dancing Days" - TBD
+## 2.4.6 "Dancing Days" - TBD
 
 ### Bugfixes
+* **Security Fix** - avoid using ansible.cfg in a world readable dir
+  https://github.com/ansible/ansible/pull/42070
 
 
 <a id="2.4.5"></a>
