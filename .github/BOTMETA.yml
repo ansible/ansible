@@ -1179,6 +1179,11 @@ files:
     - nxos
   test/integration/targets/setup_zabbix:
     maintainers: eikef D3DeFi
+  test/integration/targets/ucs:
+    maintainers: $team_ucs
+    labels:
+    - remote_management
+    - ucs
   test/units/modules/network:
     maintainers: $team_networking
     labels: networking
