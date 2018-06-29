@@ -265,9 +265,10 @@ EXAMPLES = '''
         validate_certs: false
         timeout: 15
 
+
   tasks:
 
-  - name: Create domain
+  - name: Create domain test
     idg_domain:
         name: "{{ domain_name }}"
         idg_connection: "{{ remote_idg }}"
