@@ -16,7 +16,7 @@ module: win_domain_computer
 short_description: Manage computers in Active Directory
 description:
   - Create, read, update and delete computers in Active Directory using a
-    windows brigde computer to launch New-ADComputer, Get-ADComputer,
+    windows bridge computer to launch New-ADComputer, Get-ADComputer,
     Set-ADComputer, Remove-ADComputer and Move-ADObject powershell commands.
 options:
   name:
