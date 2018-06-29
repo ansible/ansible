@@ -328,6 +328,14 @@ def unit_supports_reload(module, systemctl_executable, systemd_unit):
 DO_NOTHING = None
 
 
+def unit_is_active(module, systemctl_executable, systemd_unit):
+    rc, out, err = module.run_command(
+        r"%s %s '%s'"
+        % (systemctl_executable, 'is-active', systemd_unit)
+    )
+    return rc == 0
+
+
 SystemdFeatures = namedtuple(
     'SystemdFeatures',
     (
@@ -336,6 +344,43 @@ SystemdFeatures = namedtuple(
         'try_reload_or_restart',
     ),
 )
+
+
+def run_systemctl(module, systemctl, unit, action):
+    rc, out, err = module.run_command("%s %s '%s'" % (systemctl, action, unit))
+    if rc != 0:
+        module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, err))
+    return rc, out, err
+
+
+def try_restart(module, systemctl, unit):
+    if unit_is_active(module, systemctl, unit):
+        run_systemctl(module, systemctl, unit, 'restart')
+
+
+def reload_or_restart(module, systemctl, unit):
+    if unit_supports_reload(module, systemctl, unit):
+        run_systemctl(module, systemctl, unit, 'reload')
+    else:
+        run_systemctl(module, systemctl, unit, 'restart')
+        run_systemctl(module, systemctl, unit, 'start')
+
+
+def try_reload_or_restart(module, systemctl, unit):
+    if (
+        unit_is_active(module, systemctl, unit) and
+        unit_supports_reload(module, systemctl, unit)
+    ):
+        run_systemctl(module, systemctl, unit, 'reload')
+    else:
+        run_systemctl(module, systemctl, unit, 'restart')
+
+
+FALLBACK_ACTIONS = {
+    'try-restart': try_restart,
+    'reload-or-restart': reload_or_restart,
+    'try-reload-or-restart': try_reload_or_restart,
+}
 
 
 def detect_systemd_features(ansible_module, systemctl_executable):
