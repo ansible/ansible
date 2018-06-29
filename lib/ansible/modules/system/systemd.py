@@ -401,10 +401,10 @@ def detect_systemd_features(ansible_module, systemctl_executable):
         for l in commands_block.splitlines()
     )
     commands_list = set(filter(bool, transformed_commands))  # drop empty lines
-    return SystemdFeatures(**{  # FIXME: change syntax to Python 2.6-compatible
-        f: (f.replace('_', '-') in commands_list)
+    return SystemdFeatures(**dict(
+        (f, f.replace('_', '-') in commands_list)
         for f in SystemdFeatures._fields
-    })
+    ))
 
 
 def convert_action_to_actor(action, systemd_features):
