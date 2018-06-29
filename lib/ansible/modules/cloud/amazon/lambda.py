@@ -81,13 +81,13 @@ options:
     default: 128
   vpc_subnet_ids:
     description:
-      - List of subnet IDs to run Lambda function in. Use this option if you need to access resources in your VPC. 
+      - List of subnet IDs to run Lambda function in. Use this option if you need to access resources in your VPC.
         Leave empty if you want to save origin configuration.
         Set to 'None' value if you don't want to run the function in a VPC.
   vpc_security_group_ids:
     description:
-      - List of VPC security group IDs to associate with the Lambda function. 
-        Leave empty if you want to save origin configuration. 
+      - List of VPC security group IDs to associate with the Lambda function.
+        Leave empty if you want to save origin configuration.
         Set to 'None' value if you don't want to run the function in a VPC.
   environment_variables:
     description:
