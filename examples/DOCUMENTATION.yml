@@ -2,8 +2,7 @@
 # If a key doesn't apply to your module (ex: choices, default, or
 # aliases) you can use the word 'null', or an empty list, [], where
 # appropriate.
-#
-# See https://docs.ansible.com/ansible/dev_guide/developing_modules_documenting.html for more information
+# See https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_documenting.html for more information
 #
 module: modulename
 short_description: This is a sentence describing the module
