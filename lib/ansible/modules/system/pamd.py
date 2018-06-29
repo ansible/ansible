@@ -290,6 +290,17 @@ class PamdLine(object):
         self.prev = None
         self.next = None
 
+    @property
+    def is_valid(self):
+        if self.line == '':
+            return True
+        return False
+
+    def validate(self):
+        if not self.is_valid:
+            return False, "Rule is not valid " + self.line
+        return True, "Rule is valid " + self.line
+
     # Method to check if a rule matches the type, control and path.
     def matches(self, rule_type, rule_control, rule_path, rule_args=None):
         return False
@@ -324,7 +335,7 @@ class PamdInclude(PamdLine):
 class PamdRule(PamdLine):
 
     valid_types = ['account', 'auth', 'password', 'session']
-    valid_simple_controls = ['required', 'requisite', 'sufficicent', 'optional', 'include', 'substack']
+    valid_simple_controls = ['required', 'requisite', 'sufficient', 'optional', 'include', 'substack']
     valid_control_values = ['success', 'open_err', 'symbol_err', 'service_err', 'system_err', 'buf_err',
                             'perm_denied', 'auth_err', 'cred_insufficient', 'authinfo_unavail', 'user_unknown',
                             'maxtries', 'new_authtok_reqd', 'acct_expired', 'session_err', 'cred_unavail',
@@ -405,15 +416,19 @@ class PamdRule(PamdLine):
             return True
         return False
 
+    @property
+    def is_valid(self):
+        return self.validate()[0]
+
     def validate(self):
         # Validate the rule type
         if self.rule_type not in PamdRule.valid_types:
             return False, "Rule type, " + self.rule_type + ", is not valid in rule " + self.line
         # Validate the rule control
-        if isinstance(self.rule_control, str) and self.rule_control not in PamdRule.valid_simple_controls:
+        if isinstance(self._control, str) and self.rule_control not in PamdRule.valid_simple_controls:
             return False, "Rule control, " + self.rule_control + ", is not valid in rule " + self.line
-        elif isinstance(self.rule_control, list):
-            for control in self.rule_control:
+        elif isinstance(self._control, list):
+            for control in self._control:
                 value, action = control.split("=")
                 if value not in PamdRule.valid_control_values:
                     return False, "Rule control value, " + value + ", is not valid in rule " + self.line
@@ -653,8 +668,8 @@ class PamdService(object):
         current_line = self._head
 
         while current_line is not None:
-            if not current_line.is_valid()[0]:
-                return current_line.is_valid()
+            if not current_line.validate()[0]:
+                return current_line.validate()
             current_line = current_line.next
         return True, "Module is valid"
 
