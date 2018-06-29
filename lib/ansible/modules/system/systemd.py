@@ -28,9 +28,9 @@ options:
         description:
             - C(started)/C(stopped) are idempotent actions that will not run commands unless necessary.
               C(restarted) will always bounce the service. C(reloaded) will always reload.
-              C(tried-restarting) - restart unit if active.
-              C(reloaded-or-restarted) - reload unit if possible, otherwise start or restart.
-              C(tried-reloading-or-restarting) - if active, reload unit, if supported, otherwise restart.
+              C(tried-restarting) - restart unit if active (added in 2.8).
+              C(reloaded-or-restarted) - reload unit if possible, otherwise start or restart (added in 2.8).
+              C(tried-reloading-or-restarting) - if active, reload unit, if supported, otherwise restart (added in 2.8).
         choices: [ tried-restarting, reloaded-or-restarted, tried-reloading-or-restarting, reloaded, restarted, started, stopped ]
     enabled:
         description:
