@@ -1,0 +1,5 @@
+---
+bugfixes:
+- inventory manager - This fixes required options being populated before the
+  inventory config file is read, so the required options may be set in the
+  config file.
