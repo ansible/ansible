@@ -6,6 +6,7 @@ __metaclass__ = type
 
 import os
 import sys
+import stat
 import tempfile
 
 from collections import namedtuple
@@ -141,7 +142,7 @@ def get_ini_config_value(p, entry):
     return value
 
 
-def find_ini_config_file():
+def find_ini_config_file(warnings=None):
     ''' Load INI Config File order(first found is used): ENV, CWD, HOME, /etc/ansible '''
     # FIXME: eventually deprecate ini configs
 
@@ -151,7 +152,14 @@ def find_ini_config_file():
         if os.path.isdir(path0):
             path0 += "/ansible.cfg"
     try:
-        path1 = os.getcwd() + "/ansible.cfg"
+        path1 = os.getcwd()
+        perms1 = os.stat(path1)
+        if perms1.st_mode & stat.S_IWOTH:
+            if warnings is not None:
+                warnings.add("Ansible is in a world writable directory (%s), ignoring it as an ansible.cfg source." % to_text(path1))
+            path1 = None
+        else:
+            path1 += "/ansible.cfg"
     except OSError:
         path1 = None
     path2 = unfrackpath("~/.ansible.cfg", follow=False)
@@ -170,6 +178,7 @@ class ConfigManager(object):
 
     UNABLE = {}
     DEPRECATED = []
+    WARNINGS = set()
 
     def __init__(self, conf_file=None, defs_file=None):
 
@@ -195,7 +204,7 @@ class ConfigManager(object):
 
         if self._config_file is None:
             # set config using ini
-            self._config_file = find_ini_config_file()
+            self._config_file = find_ini_config_file(self.WARNINGS)
 
         # consume configuration
         if self._config_file:
