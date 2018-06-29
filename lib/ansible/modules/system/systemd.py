@@ -257,6 +257,7 @@ status:
 '''  # noqa: E501
 
 from collections import namedtuple
+from functools import partial
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.service import sysv_exists, sysv_is_enabled, fail_if_missing
@@ -404,6 +405,16 @@ def detect_systemd_features(ansible_module, systemctl_executable):
         f: (f.replace('_', '-') in commands_list)
         for f in SystemdFeatures._fields
     })
+
+
+def convert_action_to_actor(action, systemd_features):
+    try:
+        if not systemd_features.get(action.replace('_', '-')):
+            return FALLBACK_ACTIONS[action]
+        else:
+            return partial(run_systemctl, action=action)
+    except (AttributeError, KeyError) as exc:
+        return DO_NOTHING
 
 
 def get_action_from_state(requested_state, current_state, fallback_action):
@@ -636,7 +647,10 @@ def main():
                 if module.params['state'] not in ('started', 'stopped'):
                     result['state'] = 'started'
 
-                if action is not DO_NOTHING:
+                supported_features = detect_systemd_features(module, systemctl)
+                actor = convert_action_to_actor(action, supported_features)
+
+                if actor is not DO_NOTHING:
                     result['changed'] = True
                     if action == 'reload' and not unit_supports_reload(module, systemctl, unit):
                         module.warn(
@@ -650,9 +664,7 @@ def main():
                             % unit
                         )
                     if not module.check_mode:
-                        (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
-                        if rc != 0:
-                            module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, err))
+                        actor(module, systemctl, unit)
             else:
                 # this should not happen?
                 module.fail_json(msg="Service is in unknown state", status=result['status'])
