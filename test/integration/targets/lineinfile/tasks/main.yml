@@ -720,6 +720,8 @@
 
 ###################################################################
 # Issue 29443
+# When using an empty regexp, replace the last line (since it matches every line)
+# but also provide a warning.
 
 - name: Deploy the test file for lineinfile
   copy:
@@ -746,8 +748,14 @@
     path: "{{ output_dir }}/test.txt"
   register: result
 
-- name: Assert that the file contents match what is expected
+- name: Assert that the file contents match what is expected and a warning was displayed
   assert:
     that:
       - insert_empty_regexp is changed
-      - result.stat.checksum == '3baeade8eb2ecf4b01d70d541e9b8258b67c7f9f'
+      - warning_message in insert_empty_regexp.warnings
+      - result.stat.checksum == '23555a98ceaa88756b4c7c7bba49d9f86eed868f'
+  vars:
+    warning_message: >-
+      The regular expression is an empty string, which will match every line in the file.
+      This may have unintended consequences, such as replacing the last line in the file rather than appending.
+      If this is desired, use '^' to match every line in the file and avoid this warning.
