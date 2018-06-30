@@ -11,6 +11,7 @@ from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils._text import to_native
 from ansible.module_utils.urls import open_url, ConnectionError, SSLValidationError, url_argument_spec
 
+import six
 import json
 
 #############################
@@ -23,6 +24,7 @@ import json
 
 # Constants
 IMMUTABLE_MESSAGE = 'The current state is consistent with the desired configuration'
+ACTIONDELAY = 10 # number of seconds to wait for action apply
 
 BASIC_HEADERS = { "Content-Type": "application/json" }
 ANSIBLE_VERSION = '2.7'
@@ -89,3 +91,12 @@ def parse_to_dict(data, desc, ver):
 def on_off(arg):
     # Translate boolean to: on, off
     return "on" if arg else "off"
+
+def text_message(arg):
+    # If exist the status field brings the status
+    if isinstance(arg, six.string_types):
+        return arg
+    elif isinstance(arg['status'], six.string_types):
+        return arg['status']
+    else:
+        return 'Response with undefined structure'

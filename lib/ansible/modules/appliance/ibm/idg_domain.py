@@ -265,10 +265,9 @@ EXAMPLES = '''
         validate_certs: false
         timeout: 15
 
-
   tasks:
 
-  - name: Create domain test
+  - name: Create domain
     idg_domain:
         name: "{{ domain_name }}"
         idg_connection: "{{ remote_idg }}"
@@ -311,21 +310,26 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-monitor_type:
+name:
   description:
-    - Changed value for the monitor_type of the node.
+    - The name of the domain that is being worked on.
   returned: changed and success
   type: string
-  sample: m_of_n
-quorum:
+  sample:
+    - core-security-wrap
+    - DevWSOrchestration
+msg:
   description:
-    - Changed value for the quorum of the node.
-  returned: changed and success
-  type: int
-  sample: 1
+    - Message returned by the device API.
+  returned: always
+  type: string
+  sample:
+    - Configuration was created.
+    - Unknown error for (https://idg-host1:5554/mgmt/domains/config/). <urlopen error timed out>
 '''
 
 import json
+from time import sleep
 # import pdb
 
 from ansible.module_utils.basic import AnsibleModule
@@ -344,7 +348,6 @@ def main():
     _URI_DOMAIN_STATUS = "/mgmt/status/default/DomainStatus"
 
     _URI_ACTION = "/mgmt/actionqueue/{0}"
-    _URI_SAVE_ACTION = "/mgmt/actionqueue/{0}/operations/SaveConfig"
 
     # Define the available arguments/parameters that a user can pass to
     # the module
@@ -418,6 +421,9 @@ def main():
     validate_certs = idg_data_spec['validate_certs']
     timeout = idg_data_spec['timeout']
     use_proxy = idg_data_spec['use_proxy']
+
+    # Variable to store the status of the action
+    action_result = ''
 
     # Configuration template for the domain
     domain_obj_msg = { "Domain": {
@@ -496,17 +502,17 @@ def main():
                 # pdb.set_trace()
 
                 if state == 'present': # Create it
-                    create_code, create_msg, create_json = do_open_url(module, url, method = 'PUT', headers = BASIC_HEADERS,
+                    create_code, create_msg, create_data = do_open_url(module, url, method = 'PUT', headers = BASIC_HEADERS,
                                                                        timeout = timeout, user = user, password = password,
                                                                        use_proxy = use_proxy, force_basic_auth = BASIC_AUTH_SPEC, validate_certs = validate_certs,
                                                                        http_agent = HTTP_AGENT_SPEC, data = json.dumps(domain_obj_msg))
 
                     # pdb.set_trace()
                     if create_code == 201 and create_msg == 'Created': # Created successfully
-                        result['msg'] = create_json[domain_name]
+                        result['msg'] = text_message(create_data[domain_name])
                         result['changed'] = True
                     elif create_code == 200 and create_msg == 'OK': # Updated successfully
-                        result['msg'] = create_json[domain_name]
+                        result['msg'] = text_message(create_data[domain_name])
                         result['changed'] = True
                     else:
                         # Opps can't create
@@ -540,9 +546,10 @@ def main():
                                                                   force_basic_auth = BASIC_AUTH_SPEC, validate_certs = validate_certs,
                                                                   http_agent = HTTP_AGENT_SPEC, data = json.dumps(domain_obj_msg))
 
+                        # pdb.set_trace()
                         if upd_code == 200 and upd_msg == 'OK':
                             # Updates successfully
-                            result['msg'] = upd_json[domain_name]
+                            result['msg'] = text_message(upd_json[domain_name])
                             result['changed'] = True
                         else:
                             # Opps can't update
@@ -559,9 +566,27 @@ def main():
                                                                               force_basic_auth = BASIC_AUTH_SPEC, validate_certs = validate_certs,
                                                                               http_agent = HTTP_AGENT_SPEC, data = json.dumps(restart_act_msg))
 
+                        # pdb.set_trace()
                         if restart_code == 202 and restart_msg == 'Accepted':
+                            # Restarted accepted
+                            while action_result != 'completed':
+                                acs_code, acs_msg, acs_data = do_open_url(module, socket_connection + restart_data['_links']['location']['href'],
+                                                                          method = 'GET', headers = BASIC_HEADERS, timeout = timeout,
+                                                                          user = user, password = password, use_proxy = use_proxy,
+                                                                          force_basic_auth = BASIC_AUTH_SPEC, validate_certs = validate_certs,
+                                                                          http_agent = HTTP_AGENT_SPEC, data = None)
+
+                                if acs_code == 200 and acs_msg == 'OK':
+                                    # Restarted completed
+                                    action_result = acs_data['status']
+                                else:
+                                    # Opps can't restarted OJO(No se ha replicado)
+                                    module.fail_json(msg = to_native(acs_data['error']))
+
+                                sleep(ACTIONDELAY) # Time for complete
+
                             # Restarted successfully
-                            result['msg'] = restart_data['RestartThisDomain']['status']
+                            result['msg'] = text_message(action_result)
                             result['changed'] = True
                         else:
                             # Opps can't restarted OJO(No se ha replicado)
@@ -569,19 +594,37 @@ def main():
 
                     elif state == 'reseted':
                         # Reseted domain
-                        reset_code, reset_msg, reset_json = do_open_url(module, socket_connection + _URI_ACTION.format(domain_name),
+                        reset_code, reset_msg, reset_data = do_open_url(module, socket_connection + _URI_ACTION.format(domain_name),
                                                                         method = 'POST', headers = BASIC_HEADERS, timeout = timeout,
                                                                         user = user, password = password, use_proxy = use_proxy,
                                                                         force_basic_auth = BASIC_AUTH_SPEC, validate_certs = validate_certs,
                                                                         http_agent = HTTP_AGENT_SPEC, data = json.dumps(reset_act_msg))
 
+                        # pdb.set_trace()
                         if reset_code == 202 and reset_msg == 'Accepted':
+                            # Reseted accepted
+                            while action_result != 'completed':
+                                acs_code, acs_msg, acs_data = do_open_url(module, socket_connection + reset_data['_links']['location']['href'],
+                                                                          method = 'GET', headers = BASIC_HEADERS, timeout = timeout,
+                                                                          user = user, password = password, use_proxy = use_proxy,
+                                                                          force_basic_auth = BASIC_AUTH_SPEC, validate_certs = validate_certs,
+                                                                          http_agent = HTTP_AGENT_SPEC, data = None)
+
+                                if acs_code == 200 and acs_msg == 'OK':
+                                    # Reseted completed
+                                    action_result = acs_data['status']
+                                else:
+                                    # Opps can't saved OJO(No se ha replicado)
+                                    module.fail_json(msg = to_native(acs_data['error']))
+
+                                sleep(ACTIONDELAY) # Time for complete
+
                             # Reseted successfully
-                            result['msg'] = reset_json['ResetThisDomain']['status']
+                            result['msg'] = text_message(action_result)
                             result['changed'] = True
                         else:
                             # Opps can't reseted OJO(No se ha replicado)
-                            module.fail_json(msg = to_native(reset_json['error']))
+                            module.fail_json(msg = to_native(reset_data['error']))
 
                     elif state in ('quiesced', 'unquiesced', 'saved'):
 
@@ -592,7 +635,6 @@ def main():
                                                                   http_agent = HTTP_AGENT_SPEC, data = None)
 
                         # pdb.set_trace()
-
                         if qds_code == 200 and qds_msg == 'OK':
 
                             if isinstance(qds_data['DomainStatus'], dict):
@@ -602,13 +644,12 @@ def main():
                                 domain_quiesce_status = [d['QuiesceState'] for d in qds_data['DomainStatus'] if d['Domain'] == domain_name][0]
                                 domain_save_needed = [d['SaveNeeded'] for d in qds_data['DomainStatus'] if d['Domain'] == domain_name][0]
 
-
                             # pdb.set_trace()
                             if state == 'saved':
                                 # Saved domain
                                 if domain_save_needed != 'off':
 
-                                    save_code, save_msg, save_json = do_open_url(module, socket_connection + _URI_ACTION.format(domain_name),
+                                    save_code, save_msg, save_data = do_open_url(module, socket_connection + _URI_ACTION.format(domain_name),
                                                                                  method = 'POST', headers = BASIC_HEADERS, timeout = timeout,
                                                                                  user = user, password = password, use_proxy = use_proxy,
                                                                                  force_basic_auth = BASIC_AUTH_SPEC, validate_certs = validate_certs,
@@ -616,12 +657,12 @@ def main():
 
                                     # pdb.set_trace()
                                     if save_code == 200 and save_msg == 'OK':
-                                        # Reseted successfully
-                                        result['msg'] = save_json['SaveConfig']
+                                        # Saved successfully
+                                        result['msg'] = text_message(save_data['SaveConfig'])
                                         result['changed'] = True
                                     else:
                                         # Opps can't saved OJO(No se ha replicado)
-                                        module.fail_json(msg = to_native(save_json['error']))
+                                        module.fail_json(msg = to_native(save_data['error']))
                                 else:
                                     # Domain is save
                                     result['msg'] = IMMUTABLE_MESSAGE
@@ -635,10 +676,29 @@ def main():
                                                                            force_basic_auth = BASIC_AUTH_SPEC, validate_certs = validate_certs,
                                                                            http_agent = HTTP_AGENT_SPEC, data = json.dumps(quiesce_act_msg))
 
+                                    # pdb.set_trace()
                                     if qd_code == 202 and qd_msg == 'Accepted':
+                                        # Quiesced accepted
+                                        while action_result != 'completed':
+                                            acs_code, acs_msg, acs_data = do_open_url(module, socket_connection + qd_data['_links']['location']['href'],
+                                                                                      method = 'GET', headers = BASIC_HEADERS, timeout = timeout,
+                                                                                      user = user, password = password, use_proxy = use_proxy,
+                                                                                      force_basic_auth = BASIC_AUTH_SPEC, validate_certs = validate_certs,
+                                                                                      http_agent = HTTP_AGENT_SPEC, data = None)
+
+                                            if acs_code == 200 and acs_msg == 'OK':
+                                                # Quiesced completed
+                                                action_result = acs_data['status']
+                                            else:
+                                                # Opps can't saved OJO(No se ha replicado)
+                                                module.fail_json(msg = to_native(acs_data['error']))
+
+                                            sleep(ACTIONDELAY) # Time for complete
+
                                         # Quiesced successfully
-                                        result['msg'] = qd_data['DomainQuiesce']
+                                        result['msg'] = text_message(action_result)
                                         result['changed'] = True
+
                                     else:
                                         # Opps can't quiesced OJO(No se ha replicado)
                                         module.fail_json(msg = to_native(qd_data['error']))
@@ -655,9 +715,27 @@ def main():
                                                                               force_basic_auth = BASIC_AUTH_SPEC, validate_certs = validate_certs,
                                                                               http_agent = HTTP_AGENT_SPEC, data = json.dumps(unquiesce_act_msg))
 
+                                    # pdb.set_trace()
                                     if uqd_code == 202 and uqd_msg == 'Accepted':
+                                        # Unquiesce accepted
+                                        while action_result != 'completed':
+                                            acs_code, acs_msg, acs_data = do_open_url(module, socket_connection + uqd_data['_links']['location']['href'],
+                                                                                      method = 'GET', headers = BASIC_HEADERS, timeout = timeout,
+                                                                                      user = user, password = password, use_proxy = use_proxy,
+                                                                                      force_basic_auth = BASIC_AUTH_SPEC, validate_certs = validate_certs,
+                                                                                      http_agent = HTTP_AGENT_SPEC, data = None)
+
+                                            if acs_code == 200 and acs_msg == 'OK':
+                                                # Unquiesce completed
+                                                action_result = acs_data['status']
+                                            else:
+                                                # Opps can't saved OJO(No se ha replicado)
+                                                module.fail_json(msg = to_native(acs_data['error']))
+
+                                            sleep(ACTIONDELAY) # Time for complete
+
                                         # Unquiesce successfully
-                                        result['msg'] = uqd_data['DomainUnquiesce']
+                                        result['msg'] = text_message(action_result)
                                         result['changed'] = True
                                     else:
                                         # Opps can't unquiesce
@@ -684,9 +762,10 @@ def main():
                                                           force_basic_auth = BASIC_AUTH_SPEC, validate_certs = validate_certs,
                                                           http_agent = HTTP_AGENT_SPEC, data = None)
 
+                # pdb.set_trace()
                 if del_code == 200 and del_msg == 'OK':
                     # Remove successfully
-                    result['msg'] = del_data[domain_name]
+                    result['msg'] = text_message(del_data[domain_name])
                     result['changed'] = True
                 else:
                     # Opps can't remove
