@@ -51,3 +51,6 @@
     that:
       - 'async_hello_ansible.msg == "Hello, Ansible!"'
   when: async_hello_ansible is not skipped
+
+- include: rust.yml
+  when: ansible_system == 'Linux'

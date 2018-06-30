@@ -1,0 +1,52 @@
+- debug:
+    msg: Testing a binary module written in Rust
+
+- debug:
+    var: ansible_system
+
+- name: ping
+  ping:
+
+- name: Hello, World!
+  action: helloworld_{{ ansible_system|lower }}
+  register: hello_world
+
+- assert:
+    that:
+    - >
+        hello_world.msg == "Hello, World!"
+
+- name: Hello, Ansible!
+  action: helloworld_{{ ansible_system|lower }}
+  args:
+    name: Ansible
+  register: hello_ansible
+
+- assert:
+    that:
+    - >
+        hello_ansible.msg == "Hello, Ansible!"
+
+- name: Async Hello, World!
+  action: helloworld_{{ ansible_system|lower }}
+  async: 10
+  poll: 1
+  register: async_hello_world
+
+- assert:
+    that:
+    - >
+        async_hello_world.msg == "Hello, World!"
+
+- name: Async Hello, Ansible!
+  action: helloworld_{{ ansible_system|lower }}
+  args:
+    name: Ansible
+  async: 10
+  poll: 1
+  register: async_hello_ansible
+
+- assert:
+    that:
+    - >
+        async_hello_ansible.msg == "Hello, Ansible!"

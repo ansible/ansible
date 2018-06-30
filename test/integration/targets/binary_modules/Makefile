@@ -1,6 +1,11 @@
-.PHONY: all clean
+.PHONY: all clean golang rust
 
-all:
+all: golang rust
+
+clean:
+	rm -f library/helloworld_* library/rust_helloworld_*
+
+golang:
 	# Compiled versions of these binary modules are available at the url below.
 	# This avoids a dependency on go and keeps the binaries out of our git repository.
 	# https://ansible-ci-files.s3.amazonaws.com/test/integration/roles/test_binary_modules/
@@ -10,5 +15,7 @@ all:
 	GOOS=darwin  GOARCH=amd64 go build -o helloworld_darwin      helloworld.go; \
 	GOOS=freebsd GOARCH=amd64 go build -o helloworld_freebsd     helloworld.go
 
-clean:
-	rm -f library/helloworld_*
+rust:
+	cd library/rust && \
+	cargo build && \
+	cp -v target/debug/helloworld ../rust_helloworld_linux
