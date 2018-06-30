@@ -67,3 +67,60 @@
         that:
           - npm_fix_install is success
           - npm_fix_install is changed
+
+- vars:
+    # sample: node-v8.2.0-linux-x64.tar.xz
+    node_path: '{{ remote_dir }}/{{ nodejs_path }}/bin'
+    package:
+      to_save: moment
+      not_to_save: lodash
+
+  block:
+    - name: make sure no packages installed
+      file:
+        path: '{{ remote_dir }}/{{ item }}'
+        state: absent
+      with_items:
+        - node_modules
+        - package-lock.json
+
+    - name: prepare package.json
+      copy:
+        dest: '{{ remote_dir }}/package.json'
+        content: '{}'
+
+    - name: 'install {{ package.to_save }}'
+      npm:
+        path: '{{ remote_dir }}'
+        executable: '{{ node_path }}/npm'
+        name: '{{ package.to_save }}'
+        options:
+          save: yes
+
+    - name: check if package.json is edited
+      lineinfile:
+        path: '{{ remote_dir }}/package.json'
+        regex: '^(\s*"{{ package.to_save }}":.*)$'
+        line: '\1'
+        backref: yes
+        state: present
+      check_mode: yes
+      register: package_json_edited
+      failed_when: package_json_edited.changed
+
+    - name: 'install {{ package.not_to_save }}'
+      npm:
+        path: '{{ remote_dir }}'
+        executable: '{{ node_path }}/npm'
+        name: '{{ package.not_to_save }}'
+        options:
+          save: no
+
+    - name: check if package.json is not edited
+      lineinfile:
+        path: '{{ remote_dir }}/package.json'
+        regex: '^(\s*"{{ package.not_to_save }}":.*)$'
+        state: absent
+      check_mode: yes
+      register: package_json_not_edited
+      failed_when: package_json_not_edited.changed
