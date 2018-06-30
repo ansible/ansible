@@ -221,7 +221,11 @@ class Npm(object):
 
         installed = list()
         missing = list()
-        data = json.loads(self._exec(cmd, True, False))
+        pkglist = self._exec(cmd, True, False)
+        try:
+            data = json.loads(pkglist)
+        except ValueError as e:
+            self.module.fail_json(msg='error %s for data %s' % (e, pkglist))
         if 'dependencies' in data:
             for dep in data['dependencies']:
                 if 'missing' in data['dependencies'][dep] and data['dependencies'][dep]['missing']:
