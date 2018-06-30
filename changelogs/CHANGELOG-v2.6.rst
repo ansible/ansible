@@ -26,7 +26,6 @@ Minor Changes
 - command module - Added argv option to allow command to be specified as a list vs. a string (https://github.com/ansible/ansible/issues/19392)
 - gem - add ability to specify a custom directory for installing gems (https://github.com/ansible/ansible/pull/38195)
 - import/include - Cache task_vars to speed up IncludedFile.process_include_results (https://github.com/ansible/ansible/pull/39026)
-- postgresql_user module - Changed encrypted=yes to be the default. This shouldn't break any current playbooks, the module will just store passwords hashed by default. This change was done because Postgres 10 dropped support for UNENCRYPTED passwords and because all versions since Postgres 7.2 support storing encrypted passwords.
 - vmware_target_canonical_facts module - The target_id parameter is an optional parameter.
 
 Deprecated Features
