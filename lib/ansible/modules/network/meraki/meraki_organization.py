@@ -186,18 +186,24 @@ def main():
     elif meraki.params['state'] == 'present':
         if meraki.params['clone']:  # Cloning
             payload = {'name': meraki.params['org_name']}
-            meraki.result['data'] = meraki.request(meraki.construct_path('clone',
-                                                                         org_name=meraki.params['clone']
-                                                                         ),
-                                                   payload=json.dumps(payload),
-                                                   method='POST')
-            meraki.result['changed'] = True
+            response = meraki.request(meraki.construct_path('clone',
+                                                            org_name=meraki.params['clone']
+                                                            ),
+                                      payload=json.dumps(payload),
+                                      method='POST')
+            if meraki.status == 201:
+                meraki.result['data'] = response
+                meraki.result['changed'] = True
+            else:
+                meraki.fail_json(msg='Organization clone failed')
         elif not meraki.params['org_id'] and meraki.params['org_name']:  # Create new organization
             payload = {'name': meraki.params['org_name']}
-            meraki.result['data'] = meraki.request(meraki.construct_path('create'),
-                                                   method='POST',
-                                                   payload=json.dumps(payload))
-            meraki.result['changed'] = True
+            response = meraki.request(meraki.construct_path('create'),
+                                      method='POST',
+                                      payload=json.dumps(payload))
+            if meraki.status == 201:
+                meraki.result['data'] = response
+                meraki.result['changed'] = True
         elif meraki.params['org_id'] and meraki.params['org_name']:  # Update an existing organization
             payload = {'name': meraki.params['org_name'],
                        'id': meraki.params['org_id'],
@@ -208,12 +214,16 @@ def main():
                     meraki.params['org_id'],
                     orgs),
                     payload):
-                meraki.result['data'] = meraki.request(meraki.construct_path('update',
-                                                                             org_id=meraki.params['org_id']
-                                                                             ),
-                                                       method='PUT',
-                                                       payload=json.dumps(payload))
-                meraki.result['changed'] = True
+                response = meraki.request(meraki.construct_path('update',
+                                                                org_id=meraki.params['org_id']
+                                                                ),
+                                          method='PUT',
+                                          payload=json.dumps(payload))
+                if meraki.status == 200:
+                    meraki.result['data'] = response
+                    meraki.result['changed'] = True
+                else:
+                    meraki.fail_json(msg='Organization update failed')
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
     meraki.exit_json(**meraki.result)

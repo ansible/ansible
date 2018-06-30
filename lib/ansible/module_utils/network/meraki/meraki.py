@@ -150,7 +150,11 @@ class MerakiModule(object):
 
     def get_orgs(self):
         """Downloads all organizations for a user."""
-        return self.request('/organizations', method='GET')
+        response = self.request('/organizations', method='GET')
+        if self.status == 200:
+            return response
+        else:
+            self.fail_json(msg='Organization lookup failed')
 
     def is_org_valid(self, data, org_name=None, org_id=None):
         """Checks whether a specific org exists and is duplicated.
@@ -195,7 +199,10 @@ class MerakiModule(object):
             org_id = self.get_org_id(org_name)
         path = self.construct_path('get_all', org_id=org_id, function='network')
         r = self.request(path, method='GET')
-        return r
+        if self.status == 200:
+            return r
+        else:
+            self.fail_json(msg='Network lookup failed')
 
     def get_net(self, org_name, net_name, data=None):
         """Return network information about a particular network."""
