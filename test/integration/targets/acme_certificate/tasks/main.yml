@@ -117,7 +117,7 @@
   - name: Obtain cert 4
     include_tasks: obtain-cert.yml
     vars:
-      certgen_title: Certificate 4, Iteration 1/4
+      certgen_title: Certificate 4
       certificate_name: cert-4
       key_type: rsa
       rsa_bits: 2048
@@ -131,16 +131,31 @@
       remaining_days: 10
       terms_agreed: no
       account_email: ""
-  - name: Obtain cert 4 (should not, since already there and valid for more than 10 days)
+  - name: Obtain cert 5
     include_tasks: obtain-cert.yml
     vars:
-      certgen_title: Certificate 4, Iteration 2/4
-      certificate_name: cert-4
-      key_type: rsa
-      rsa_bits: 2048
-      subject_alt_name: "DNS:example.com,DNS:t1.example.com,DNS:test.t2.example.com,DNS:example.org,DNS:test.example.org"
+      certgen_title: Certificate 5, Iteration 1/4
+      certificate_name: cert-5
+      key_type: ec521
+      subject_alt_name: "DNS:t2.example.com"
       subject_alt_name_critical: no
-      account_key: account-rsa2048
+      account_key: account-ec384
+      challenge: http-01
+      modify_account: no
+      deactivate_authzs: yes
+      force: yes
+      remaining_days: 10
+      terms_agreed: no
+      account_email: ""
+  - name: Obtain cert 5 (should not, since already there and valid for more than 10 days)
+    include_tasks: obtain-cert.yml
+    vars:
+      certgen_title: Certificate 5, Iteration 2/4
+      certificate_name: cert-5
+      key_type: ec521
+      subject_alt_name: "DNS:t2.example.com"
+      subject_alt_name_critical: no
+      account_key: account-ec384
       challenge: http-01
       modify_account: no
       deactivate_authzs: yes
@@ -149,17 +164,16 @@
       terms_agreed: no
       account_email: ""
   - set_fact:
-      cert_4_recreate_1: "{{ challenge_data is changed }}"
-  - name: Obtain cert 4 (should again by less days)
+      cert_5_recreate_1: "{{ challenge_data is changed }}"
+  - name: Obtain cert 5 (should again by less days)
     include_tasks: obtain-cert.yml
     vars:
-      certgen_title: Certificate 4, Iteration 3/4
-      certificate_name: cert-4
-      key_type: rsa
-      rsa_bits: 2048
-      subject_alt_name: "DNS:example.com,DNS:t1.example.com,DNS:test.t2.example.com,DNS:example.org,DNS:test.example.org"
+      certgen_title: Certificate 5, Iteration 3/4
+      certificate_name: cert-5
+      key_type: ec521
+      subject_alt_name: "DNS:t2.example.com"
       subject_alt_name_critical: no
-      account_key: account-rsa2048
+      account_key: account-ec384
       challenge: http-01
       modify_account: no
       deactivate_authzs: yes
@@ -168,17 +182,16 @@
       terms_agreed: no
       account_email: ""
   - set_fact:
-      cert_4_recreate_2: "{{ challenge_data is changed }}"
-  - name: Obtain cert 4 (should again by force)
+      cert_5_recreate_2: "{{ challenge_data is changed }}"
+  - name: Obtain cert 5 (should again by force)
     include_tasks: obtain-cert.yml
     vars:
-      certgen_title: Certificate 4, Iteration 4/4
-      certificate_name: cert-4
-      key_type: rsa
-      rsa_bits: 2048
-      subject_alt_name: "DNS:example.com,DNS:t1.example.com,DNS:test.t2.example.com,DNS:example.org,DNS:test.example.org"
+      certgen_title: Certificate 5, Iteration 4/4
+      certificate_name: cert-5
+      key_type: ec521
+      subject_alt_name: "DNS:t2.example.com"
       subject_alt_name_critical: no
-      account_key: account-rsa2048
+      account_key: account-ec384
       challenge: http-01
       modify_account: no
       deactivate_authzs: yes
@@ -187,7 +200,7 @@
       terms_agreed: no
       account_email: ""
   - set_fact:
-      cert_4_recreate_3: "{{ challenge_data is changed }}"
+      cert_5_recreate_3: "{{ challenge_data is changed }}"
   ## DISSECT CERTIFICATES #######################################################################
   # Make sure certificates are valid. Root certificate for Pebble equals the chain certificate.
   - name: Verifying cert 1
@@ -206,19 +219,26 @@
     command: openssl verify -CAfile "{{ output_dir }}/cert-4-chain.pem" "{{ output_dir }}/cert-4.pem"
     ignore_errors: yes
     register: cert_4_valid
+  - name: Verifying cert 5
+    command: openssl verify -CAfile "{{ output_dir }}/cert-5-chain.pem" "{{ output_dir }}/cert-5.pem"
+    ignore_errors: yes
+    register: cert_5_valid
   # Dump certificate info
-  - name: Verifying cert 1
+  - name: Dumping cert 1
     command: openssl x509 -in "{{ output_dir }}/cert-1.pem" -noout -text
     register: cert_1_text
-  - name: Verifying cert 2
+  - name: Dumping cert 2
     command: openssl x509 -in "{{ output_dir }}/cert-2.pem" -noout -text
     register: cert_2_text
-  - name: Verifying cert 3
+  - name: Dumping cert 3
     command: openssl x509 -in "{{ output_dir }}/cert-3.pem" -noout -text
     register: cert_3_text
-  - name: Verifying cert 4
+  - name: Dumping cert 4
     command: openssl x509 -in "{{ output_dir }}/cert-4.pem" -noout -text
     register: cert_4_text
+  - name: Dumping cert 5
+    command: openssl x509 -in "{{ output_dir }}/cert-5.pem" -noout -text
+    register: cert_5_text
 
   # Old 0.9.8 versions have insufficient CLI support for signing with EC keys
   when: openssl_version.stdout is version('1.0.0', '>=')

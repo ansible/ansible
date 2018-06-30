@@ -11,7 +11,7 @@
   when: "key_type == 'ec384'"
 - name: ({{ certgen_title }}) Create cert private key (ECC 512)
   command: openssl ecparam -name secp521r1 -genkey -out {{ output_dir }}/{{ certificate_name }}.key
-  when: "key_type == 'ec512'"
+  when: "key_type == 'ec521'"
 ## CSR ########################################################################################
 - name: ({{ certgen_title }}) Create cert CSR
   openssl_csr:
