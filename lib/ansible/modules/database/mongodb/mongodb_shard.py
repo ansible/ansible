@@ -266,9 +266,17 @@ def main():
 
         client = MongoClient(**connection_params)
 
-        # NOTE: this check must be done ASAP.
-        # We don't need to be authenticated.
-        check_compatibility(module, client)
+        try:
+            check_compatibility(module, client)
+        except Exception as excep:
+            if "not authorized on" in str(excep) or "there are no users authenticated" in str(excep):
+                if login_user is not None and login_password is not None:
+                    client.admin.authenticate(login_user, login_password, source=login_database)
+                    check_compatibility(module, client)
+                else:
+                    raise excep
+            else:
+                raise excep
 
         if login_user is None and login_password is None:
             mongocnf_creds = load_mongocnf()
