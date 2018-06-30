@@ -297,6 +297,8 @@ def map_obj_to_commands(updates, module):
         want, have = update
 
         def needs_update(want, have, x):
+            if isinstance(want.get(x), list) and isinstance(have.get(x), list):
+                return want.get(x) and (want.get(x) != have.get(x)) and not all(elem in have.get(x) for elem in want.get(x))
             return want.get(x) and (want.get(x) != have.get(x))
 
         if want['state'] == 'absent':
@@ -328,13 +330,6 @@ def map_obj_to_commands(updates, module):
                 cmd = 'route-target export %s' % route
                 add_command_to_vrf(want['name'], cmd, commands)
 
-        if needs_update(want, have, 'route_both'):
-            proceed = []
-            needs = [item for item in want['route_both'] if not (item in proceed or proceed.append(item))]
-            for route in needs:
-                cmd = 'route-target both %s' % route
-                add_command_to_vrf(want['name'], cmd, commands)
-
         if needs_update(want, have, 'route_import_ipv4'):
                 cmd = 'address-family ipv4'
                 add_command_to_vrf(want['name'], cmd, commands)
@@ -353,17 +348,6 @@ def map_obj_to_commands(updates, module):
                 cmd = 'exit-address-family'
                 add_command_to_vrf(want['name'], cmd, commands)
 
-        if needs_update(want, have, 'route_both_ipv4'):
-                cmd = 'address-family ipv4'
-                add_command_to_vrf(want['name'], cmd, commands)
-                proceed = []
-                needs = [item for item in want['route_both_ipv4'] if not (item in proceed or proceed.append(item))]
-                for route in needs:
-                    cmd = 'route-target both %s' % route
-                    add_command_to_vrf(want['name'], cmd, commands)
-                cmd = 'exit-address-family'
-                add_command_to_vrf(want['name'], cmd, commands)
-
         if needs_update(want, have, 'route_import_ipv6'):
                 cmd = 'address-family ipv6'
                 add_command_to_vrf(want['name'], cmd, commands)
@@ -378,17 +362,6 @@ def map_obj_to_commands(updates, module):
                 add_command_to_vrf(want['name'], cmd, commands)
                 for route in want['route_export_ipv6']:
                     cmd = 'route-target export %s' % route
-                    add_command_to_vrf(want['name'], cmd, commands)
-                cmd = 'exit-address-family'
-                add_command_to_vrf(want['name'], cmd, commands)
-
-        if needs_update(want, have, 'route_both_ipv6'):
-                cmd = 'address-family ipv6'
-                add_command_to_vrf(want['name'], cmd, commands)
-                proceed = []
-                needs = [item for item in want['route_both_ipv6'] if not (item in proceed or proceed.append(item))]
-                for route in needs:
-                    cmd = 'route-target both %s' % route
                     add_command_to_vrf(want['name'], cmd, commands)
                 cmd = 'exit-address-family'
                 add_command_to_vrf(want['name'], cmd, commands)
@@ -609,13 +582,14 @@ def map_params_to_obj(module):
         item['route_export_ipv6'] = get_value('route_export_ipv6')
         item['route_both_ipv6'] = get_value('route_both_ipv6')
         both_addresses_family = ["", "_ipv6", "_ipv4"]
-        try:
-            for address_family in both_addresses_family:
-                if item["route_both%s" % address_family]:
-                    item["route_export%s" % address_family].extend(get_value("route_both%s" % address_family))
-                    item["route_import%s" % address_family].extend(get_value("route_both%s" % address_family))
-        except AttributeError:
-            pass
+        for address_family in both_addresses_family:
+            if item["route_both%s" % address_family]:
+                if not item["route_export%s" % address_family]:
+                    item["route_export%s" % address_family] = list()
+                if not item["route_import%s" % address_family]:
+                    item["route_import%s" % address_family] = list()
+                item["route_export%s" % address_family].extend(get_value("route_both%s" % address_family))
+                item["route_import%s" % address_family].extend(get_value("route_both%s" % address_family))
         item['associated_interfaces'] = get_value('associated_interfaces')
         objects.append(item)
 
