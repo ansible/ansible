@@ -225,8 +225,7 @@ class Npm(object):
         try:
             data = json.loads(pkglist)
         except Exception:
-            _, e, _ = sys.exc_info()
-            self.module.fail_json(msg='error %s for data %s' % (e, pkglist))
+            self.module.fail_json(msg='error with data %s' % pkglist)
         if 'dependencies' in data:
             for dep in data['dependencies']:
                 if 'missing' in data['dependencies'][dep] and data['dependencies'][dep]['missing']:
