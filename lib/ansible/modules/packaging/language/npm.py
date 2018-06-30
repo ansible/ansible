@@ -135,6 +135,7 @@ EXAMPLES = '''
 
 import os
 import re
+import sys
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -224,7 +225,8 @@ class Npm(object):
         pkglist = self._exec(cmd, True, False)
         try:
             data = json.loads(pkglist)
-        except ValueError as e:
+        except ValueError:
+            _, e, _ = sys.exc_info()
             self.module.fail_json(msg='error %s for data %s' % (e, pkglist))
         if 'dependencies' in data:
             for dep in data['dependencies']:
