@@ -305,3 +305,45 @@
     that:
       - 'var_host_info[0] == ansible_host'
       - 'var_host_info[1] == ansible_user'
+
+# Dependent lookups
+
+- name: Test dependent lookup
+  debug: var=item
+  with_dependent:
+    - a:
+      - 1
+      - 2
+      b:
+      - 3
+      - 4
+    - 'item.0.value'
+    - 'dependent_lookup_test[item.0.key ~ "_" ~ item.1]'
+  loop_control:
+    label: "{{ [item.0.key, item.1, item.2] }}"
+  register: dependent
+  vars:
+    dependent_lookup_test:
+      a_1:
+      - A
+      - B
+      a_2:
+      - C
+      b_3:
+      - D
+      b_4:
+      - E
+      - F
+      - G
+
+- name: Verify dependent lookup
+  assert:
+    that:
+        - (dependent.results | length) == 7
+        - dependent.results[0]['_ansible_item_label'] == ["a", 1, "A"]
+        - dependent.results[1]['_ansible_item_label'] == ["a", 1, "B"]
+        - dependent.results[2]['_ansible_item_label'] == ["a", 2, "C"]
+        - dependent.results[3]['_ansible_item_label'] == ["b", 3, "D"]
+        - dependent.results[4]['_ansible_item_label'] == ["b", 4, "E"]
+        - dependent.results[5]['_ansible_item_label'] == ["b", 4, "F"]
+        - dependent.results[6]['_ansible_item_label'] == ["b", 4, "G"]
