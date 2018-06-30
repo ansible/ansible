@@ -1,0 +1,90 @@
+---
+- block:
+  - name: set connection information for all tasks
+    set_fact:
+      aws_connection_info: &aws_connection_info
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        region: "{{ aws_region }}"
+        #security_token: "{{ security_token }}"
+    no_log: true
+
+  - name: add secret to AWS Secrets Manager
+    aws_secret:
+      <<: *aws_connection_info
+      name: "{{ resource_prefix }}-test-secret-string"
+      state: present
+      secret_type: 'string'
+      secret: "{{ super_secret_string }}"
+    register: result
+
+  - name: pausing for secret creation
+    pause:
+      seconds: 30
+
+  # ============================================================
+  # Creation/Deletion testing
+  # ============================================================
+  - name: get all secrets
+    aws_secret_facts:
+      <<: *aws_connection_info
+    register: result
+
+  - name: assert correct keys are returned
+    assert:
+      that:
+        - result.facts is not none
+
+  - name: get specific secret
+    aws_secret_facts:
+      <<: *aws_connection_info
+      name: "{{ resource_prefix }}-test-secret-string"
+    register: result
+
+  - name: assert correct keys are returned
+    assert:
+      that:
+        - result.facts is not none
+
+  - name: get specific prefix
+    aws_secret_facts:
+      <<: *aws_connection_info
+      prefix: "{{ resource_prefix }}"
+    register: result
+
+  - name: assert correct keys are returned
+    assert:
+      that:
+        - result.facts is not none
+
+  - name: get specific suffix
+    aws_secret_facts:
+      <<: *aws_connection_info
+      suffix: "string"
+    register: result
+
+  - name: assert correct keys are returned
+    assert:
+      that:
+        - result.facts is not none
+
+  - name: get a general regex
+    aws_secret_facts:
+      <<: *aws_connection_info
+      regex: "(.*?)"
+    register: result
+
+  - name: assert correct keys are returned
+    assert:
+      that:
+        - result.facts is not none
+
+  always:
+  - name: remove secret
+    aws_secret:
+      <<: *aws_connection_info
+      name: "{{ resource_prefix }}-test-secret-string"
+      state: absent
+      secret_type: 'string'
+      secret: "{{ super_secret_string }}"
+    ignore_errors: yes
