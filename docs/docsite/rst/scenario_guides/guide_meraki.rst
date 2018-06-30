@@ -69,6 +69,26 @@ All Ansible Meraki modules support the following parameters which affect communi
 	validate_certs
 		Determine whether certificates should be validated or trusted. (Defaults to ``yes``)
 
+In addition to the aforementioned parameters, there are other common parameters which apply to most modules.
+
+	org_name
+	    Name of the organization which the module will communicate with.
+    
+	org_id
+	    ID number of the organization which the module will communicate with.
+
+	net_name
+	    Name of the network which the module will communicate with or manipulate.
+
+
+	net_id
+	    ID of the network which the module will communicate with or manipulate.
+
+	state
+	    Define action module should make against the specified object.
+
+.. hint:: Use the ``org_id`` and ``net_id`` parameters when possible. ``org_name`` and ``net_name`` require additional behind-the-scenes API calls to learn the ID values. ``org_id`` and ``net_id`` will perform faster. 
+
 Meraki Authentication
 .....................
 
