@@ -70,6 +70,14 @@ options:
     required: false
     default: present
     choices: [ "present", "absent", "latest" ]
+  options:
+    description:
+      - Extra arguments passed to C(npm) command.
+      - Note that C('--global'), C('--production'), C('--ignore-scripts') and C('--registry')
+        options can be controlled by other arguments.
+    required: false
+    type: dict
+    version_added: "2.7"
 requirements:
     - npm installed in bin path (recommended /usr/local/bin)
 '''
@@ -111,6 +119,13 @@ EXAMPLES = '''
     path: /app/location
     state: latest
 
+- name: Update packages based on package.json to their latest version but never modify package.json.
+  npm:
+    path: /app/location
+    state: latest
+    options:
+      save: no
+
 - name: Install packages based on package.json using the npm installed with nvm v0.10.1.
   npm:
     path: /app/location
@@ -132,6 +147,8 @@ except ImportError:
         # Let snippet from module_utils/basic.py return a proper error in this case
         pass
 
+from ansible.module_utils.six import iteritems
+
 
 class Npm(object):
     def __init__(self, module, **kwargs):
@@ -144,6 +161,7 @@ class Npm(object):
         self.production = kwargs['production']
         self.ignore_scripts = kwargs['ignore_scripts']
         self.state = kwargs['state']
+        self.options = self._build_options(kwargs['options'])
 
         if kwargs['executable']:
             self.executable = kwargs['executable'].split(' ')
@@ -155,10 +173,24 @@ class Npm(object):
         else:
             self.name_version = self.name
 
+    @staticmethod
+    def _build_options(options):
+        if not options:
+            return []
+
+        def stringify(value):
+            if isinstance(value, bool):
+                return str(value).lower()
+            return str(value)
+
+        return ['--%s=%s' % (k, stringify(v)) for k, v in iteritems(options)]
+
     def _exec(self, args, run_in_check_mode=False, check_rc=True):
         if not self.module.check_mode or (self.module.check_mode and run_in_check_mode):
             cmd = self.executable + args
 
+            if self.options:
+                cmd.extend(self.options)
             if self.glbl:
                 cmd.append('--global')
             if self.production and ('install' in cmd or 'update' in cmd):
@@ -238,6 +270,7 @@ def main():
         registry=dict(default=None),
         state=dict(default='present', choices=['present', 'absent', 'latest']),
         ignore_scripts=dict(default=False, type='bool'),
+        options=dict(type='dict'),
     )
     arg_spec['global'] = dict(default='no', type='bool')
     module = AnsibleModule(
@@ -254,6 +287,7 @@ def main():
     registry = module.params['registry']
     state = module.params['state']
     ignore_scripts = module.params['ignore_scripts']
+    options = module.params['options']
 
     if not path and not glbl:
         module.fail_json(msg='path must be specified when not using global')
@@ -261,7 +295,7 @@ def main():
         module.fail_json(msg='uninstalling a package is only available for named packages')
 
     npm = Npm(module, name=name, path=path, version=version, glbl=glbl, production=production,
-              executable=executable, registry=registry, ignore_scripts=ignore_scripts, state=state)
+              executable=executable, registry=registry, ignore_scripts=ignore_scripts, state=state, options=options)
 
     changed = False
     if state == 'present':
