@@ -70,6 +70,11 @@ Major changes in popular modules are detailed here
   :ref:`DEFAULT_SYSLOG_FACILITY`. If you have :ref:`DEFAULT_SYSLOG_FACILITY` configured, the
   location of remote logs on systems which use journald may change.
 
+* The ``lineinfile`` module was changed to show a warning when using an empty string as a regexp.
+  Since an empty regexp matches every line in a file, it will replace the last line in a file rather
+  than inserting. If this is the desired behavior, use ``'^'`` which will match every line and
+  will not trigger the warning.
+
 
 Modules removed
 ---------------
