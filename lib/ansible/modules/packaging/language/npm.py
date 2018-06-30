@@ -72,11 +72,10 @@ options:
     choices: [ "present", "absent", "latest" ]
   options:
     description:
-      - Extra arguments passed to C(npm) command.
+      - Extra arguments dictionary passed to C(npm) command.
       - Note that C('--global'), C('--production'), C('--ignore-scripts') and C('--registry')
         options can be controlled by other arguments.
     required: false
-    type: dict
     version_added: "2.7"
 requirements:
     - npm installed in bin path (recommended /usr/local/bin)
@@ -225,7 +224,7 @@ class Npm(object):
         pkglist = self._exec(cmd, True, False)
         try:
             data = json.loads(pkglist)
-        except ValueError:
+        except Exception:
             _, e, _ = sys.exc_info()
             self.module.fail_json(msg='error %s for data %s' % (e, pkglist))
         if 'dependencies' in data:
