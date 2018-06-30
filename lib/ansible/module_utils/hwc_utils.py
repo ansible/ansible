@@ -91,6 +91,8 @@ class HwcSession(object):
         self._validate()
         self._session = self._credentials()
         self._adapter = _LegacyJsonAdapter(self._session)
+        self._endpoints = {}
+        self._project_id = ""
 
     def get(self, url, body=None):
         try:
@@ -125,6 +127,9 @@ class HwcSession(object):
             self.module.fail_json(msg=inst.message)
 
     def get_service_endpoint(self, service_type):
+        if self._endpoints.get(service_type):
+            return self._endpoints.get(service_type)
+
         e = None
         try:
             e = self._session.get_endpoint_data(
@@ -141,11 +146,17 @@ class HwcSession(object):
         url = e.url
         if url[-1] != "/":
             url += "/"
+
+        self._endpoints[service_type] = url
         return url
 
     def get_project_id(self):
+        if self._project_id:
+            return self._project_id
         try:
-            return self._session.get_project_id()
+            pid = self._session.get_project_id()
+            self._project_id = pid
+            return pid
         except getattr(requests.exceptions, 'RequestException') as inst:
             self.module.fail_json(msg=inst.message)
 
