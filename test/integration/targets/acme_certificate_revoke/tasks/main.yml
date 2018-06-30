@@ -39,7 +39,7 @@
       certgen_title: Certificate 2 for revocation
       certificate_name: cert-2
       key_type: ec256
-      subject_alt_name: "DNS:*.example.com,DNS:example.com"
+      subject_alt_name: "DNS:*.example.com"
       subject_alt_name_critical: yes
       account_key: account-ec384
       challenge: dns-01
@@ -55,7 +55,7 @@
       certgen_title: Certificate 3 for revocation
       certificate_name: cert-3
       key_type: ec384
-      subject_alt_name: "DNS:*.example.com,DNS:example.org,DNS:t1.example.com"
+      subject_alt_name: "DNS:t1.example.com"
       subject_alt_name_critical: no
       account_key: account-rsa2048
       challenge: dns-01
