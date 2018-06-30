@@ -36,6 +36,7 @@ options:
   api_name:
     description:
       - Name of the API you want to manage.
+    version_added: '2.7'
   state:
     description:
       - NOT IMPLEMENTED Create or delete API - currently we always create.
@@ -194,10 +195,9 @@ def main():
             api_id = create_empty_api(module, client)
         api_data = get_api_definitions(module, swagger_file=swagger_file,
                                        swagger_dict=swagger_dict, swagger_text=swagger_text)
-        conf_res, dep_res, deleted_stage = ensure_api_in_correct_state(module,
-                                                                       client, api_id=api_id,
-                                                                       api_data=api_data, stage=stage,
-                                                                       deploy_desc=deploy_desc)
+        conf_res, dep_res, deleted_stage = ensure_api_in_correct_state(module, client, api_id=api_id,
+                                                        api_data=api_data, stage=stage,
+                                                        deploy_desc=deploy_desc)
     if state == "absent":
         del_res = delete_rest_api(module, client, api_id)
 
@@ -281,7 +281,7 @@ def ensure_api_in_correct_state(module, client, api_id=None, api_data=None, stag
     if stage:
         try:
             deploy_response, deleted_stage = create_deployment(client, api_id=api_id, stage=stage,
-                                                               description=deploy_desc)
+                                                description=deploy_desc)
         except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
             msg = "deploying api {} to stage {}".format(api_id, stage)
             fail_json_aws(module, e, msg)
@@ -401,6 +401,7 @@ def find_index_by_kv(obj, key, value):
         raise TypeError("`obj` should be list")
 
     return None
+
 
 if __name__ == '__main__':
     main()
