@@ -153,7 +153,6 @@ def unbind(meraki, org_name, net_name, name, data):
             meraki.fail_json(msg='Unable to unbind configuration template from network')
 
 
-
 def main():
 
     # define the available arguments/parameters that a user can pass to
