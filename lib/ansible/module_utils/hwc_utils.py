@@ -227,12 +227,18 @@ class DictComparison(object):
         return not self.__eq__(other)
 
     def _compare_dicts(self, dict1, dict2):
+        if len(dict1.keys()) != len(dict2.keys()):
+            return False
+
         return all([
             self._compare_value(dict1.get(k), dict2.get(k)) for k in dict1
         ])
 
     # Takes in two lists and compares them.
     def _compare_lists(self, list1, list2):
+        if len(list1) != len(list2):
+            return False
+
         difference = []
         for index in range(len(list1)):
             value1 = list1[index]
