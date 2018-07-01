@@ -191,7 +191,6 @@ def _parse_key_openssl(openssl_binary, module, key_file=None, key_content=None):
     '''
     # If key_file isn't given, but key_content, write that to a temporary file
     if key_file is None:
-        assert key_content is not None
         fd, tmpsrc = tempfile.mkstemp()
         module.add_cleanup_file(tmpsrc)  # Ansible will delete the file on exit
         f = os.fdopen(fd, 'wb')
@@ -335,7 +334,6 @@ def _parse_key_cryptography(module, key_file=None, key_content=None):
     '''
     # If key_content isn't given, read key_file
     if key_content is None:
-        assert key_file is not None
         key_content = read_file(key_file)
     # Parse key
     try:
@@ -514,6 +512,8 @@ class ACMEAccount(object):
         Parses an RSA or Elliptic Curve key file in PEM format and returns a pair
         (error, key_data).
         '''
+        if key_file is None and key_content is None:
+            raise AssertionError('One of key_file and key_content must be specified!')
         if HAS_CURRENT_CRYPTOGRAPHY:
             return _parse_key_cryptography(self.module, key_file, key_content)
         else:
