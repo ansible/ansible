@@ -20,10 +20,10 @@ author: "Michael Gruener (@mgruener)"
 version_added: "2.2"
 short_description: Create SSL certificates with an ACME protocol endpoint
 description:
-   - "Create and renew SSL certificates with a CA supporting the ACME protocol,
-      such as Let's Encrypt (U(https://letsencrypt.org)). For details see
-      U(https://letsencrypt.org). The current implementation supports the
-      C(http-01) and C(dns-01) challenges."
+   - "Create and renew SSL certificates with a CA supporting the
+      L(ACME protocol,https://tools.ietf.org/html/draft-ietf-acme-acme-12),
+      such as L(Let's Encrypt,https://letsencrypt.org/). The current
+      implementation supports the C(http-01) and C(dns-01) challenges."
    - "To use this module, it has to be executed twice. Either as two
       different tasks in the same run or during two runs. Note that the output
       of the first run needs to be recorded and passed to the second run as the

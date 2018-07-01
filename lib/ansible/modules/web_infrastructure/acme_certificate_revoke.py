@@ -50,7 +50,7 @@ options:
       - "Content of the certificate's private key."
       - "Note that exactly one of C(account_key_src), C(account_key_content),
          C(private_key_src) or C(private_key_content) must be specified."
-      - "Warning: the content will be written into a temporary file, which will
+      - "I(Warning): the content will be written into a temporary file, which will
          be deleted by Ansible when the module completes. Since this is an
          important private key — it can be used to change the account key,
          or to revoke your certificates without knowing their private keys
