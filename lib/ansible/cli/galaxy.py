@@ -21,7 +21,6 @@
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
-
 import os.path
 import re
 import shutil
@@ -469,9 +468,9 @@ class GalaxyCLI(CLI):
                             # be found on galaxy.ansible.com
                             continue
                         if dep_role.install_info is None:
-                            if dep_role not in roles_left:
+                            if dep_info not in roles_left:
                                 display.display('- adding dependency: %s' % str(dep_role))
-                                roles_left.append(dep_role)
+                                roles_left.append(dep_info)
                             else:
                                 display.display('- dependency %s already pending installation.' % dep_role.name)
                         else:

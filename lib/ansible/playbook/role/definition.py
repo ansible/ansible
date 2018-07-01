@@ -92,7 +92,7 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         # and then use that to determine the role path (which may
         # result in a new role name, if it was a file path)
         role_name = self._load_role_name(ds)
-        (role_name, role_path) = self._load_role_path(role_name)
+        (role_name, role_path) = self._load_role_path(ds)
 
         # next, we split the role params out from the valid role
         # attributes and update the new datastructure with that
@@ -135,14 +135,14 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
 
         return role_name
 
-    def _load_role_path(self, role_name):
+    def _load_role_path(self, ds):
         '''
         the 'role', as specified in the ds (or as a bare string), can either
         be a simple name or a full path. If it is a full path, we use the
         basename as the role name, otherwise we take the name as-given and
         append it to the default role path
         '''
-
+        role_name = self._load_role_name(ds)
         # we always start the search for roles in the base directory of the playbook
         role_search_paths = [
             os.path.join(self._loader.get_basedir(), u'roles'),
@@ -171,8 +171,17 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
 
         templar = Templar(loader=self._loader, variables=all_vars)
         role_name = templar.template(role_name)
-
         # now iterate through the possible paths and return the first one we find
+        # looking for role_name + "-" + version first, then role name alone
+        if not isinstance(ds, string_types) and ds.get('version'):
+            role_version_name = role_name + '-' + ds.get('version')
+        
+            for path in role_search_paths:
+                path = templar.template(path)
+                role_path = unfrackpath(os.path.join(path, role_version_name))
+                if self._loader.path_exists(role_path):
+                    return (role_name, role_path)
+                        
         for path in role_search_paths:
             path = templar.template(path)
             role_path = unfrackpath(os.path.join(path, role_name))
