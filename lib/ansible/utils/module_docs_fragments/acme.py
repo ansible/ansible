@@ -19,7 +19,7 @@ description:
 requirements:
   - "python >= 2.6"
   - "either openssl, ..."
-  - "... or L(cryptography,https://cryptography.io/) >= 2.0"
+  - "... or L(cryptography,https://cryptography.io/) >= 1.5"
 options:
   account_key_src:
     description:

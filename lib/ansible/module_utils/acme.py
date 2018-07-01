@@ -23,6 +23,7 @@ import json
 import os
 import re
 import shutil
+import sys
 import tempfile
 import traceback
 
@@ -31,9 +32,18 @@ from ansible.module_utils.urls import fetch_url as _fetch_url
 
 try:
     import cryptography
+    import cryptography.hazmat.backends
+    import cryptography.hazmat.primitives.serialization
+    import cryptography.hazmat.primitives.asymmetric.rsa
+    import cryptography.hazmat.primitives.asymmetric.ec
+    import cryptography.hazmat.primitives.asymmetric.padding
+    import cryptography.hazmat.primitives.hashes
+    import cryptography.hazmat.primitives.asymmetric.utils
+    import cryptography.x509
+    import cryptography.x509.oid
     from distutils.version import LooseVersion
     CRYPTOGRAPHY_VERSION = cryptography.__version__
-    HAS_CURRENT_CRYPTOGRAPHY = (LooseVersion(CRYPTOGRAPHY_VERSION) >= LooseVersion('2.0'))
+    HAS_CURRENT_CRYPTOGRAPHY = (LooseVersion(CRYPTOGRAPHY_VERSION) >= LooseVersion('1.5'))
     if HAS_CURRENT_CRYPTOGRAPHY:
         _cryptography_backend = cryptography.hazmat.backends.default_backend()
 except Exception as _:
@@ -320,11 +330,38 @@ def _sign_request_openssl(openssl_binary, module, payload64, protected64, key_da
     }
 
 
-def _count_bytes(n):
-    if n <= 0:
-        return 0
-    # Kind of hacky, but will also work with Python 2.6 which doesn't have bit_length()
-    return (len(hex(n)) - 1) // 2
+if sys.version_info.major >= 3:
+    # Python 3 (and newer)
+    def _count_bytes(n):
+        return (n.bit_length() + 7) // 8 if n > 0 else 0
+
+    def _convert_int_to_bytes(count, no):
+        return no.to_bytes(count, byteorder='big')
+
+    def _pad_hex(n, digits):
+        res = hex(n)[2:]
+        if len(res) < digits:
+            res = '0' * (digits - len(res)) + res
+        return res
+else:
+    # Python 2
+    def _count_bytes(n):
+        if n <= 0:
+            return 0
+        h = '%x' % n
+        return (len(h) + 1) // 2
+
+    def _convert_int_to_bytes(count, n):
+        h = '%x' % n
+        if len(h) > 2 * count:
+            raise Exception('Number {1} needs more than {0} bytes!'.format(count, n))
+        return ('0' * (2 * count - len(h)) + h).decode('hex')
+
+    def _pad_hex(n, digits):
+        h = '%x' % n
+        if len(h) < digits:
+            h = '0' * (digits - len(h)) + h
+        return h
 
 
 def _parse_key_cryptography(module, key_file=None, key_content=None):
@@ -350,8 +387,8 @@ def _parse_key_cryptography(module, key_file=None, key_content=None):
             'alg': 'RS256',
             'jwk': {
                 "kty": "RSA",
-                "e": nopad_b64(pk.e.to_bytes(_count_bytes(pk.e), byteorder='big')),
-                "n": nopad_b64(pk.n.to_bytes(_count_bytes(pk.n), byteorder='big')),
+                "e": nopad_b64(_convert_int_to_bytes(_count_bytes(pk.e), pk.e)),
+                "n": nopad_b64(_convert_int_to_bytes(_count_bytes(pk.n), pk.n)),
             },
             'hash': 'sha256',
         }
@@ -387,21 +424,14 @@ def _parse_key_cryptography(module, key_file=None, key_content=None):
             'jwk': {
                 "kty": "EC",
                 "crv": curve,
-                "x": nopad_b64(pk.x.to_bytes(bytes, byteorder='big')),
-                "y": nopad_b64(pk.y.to_bytes(bytes, byteorder='big')),
+                "x": nopad_b64(_convert_int_to_bytes(bytes, pk.x)),
+                "y": nopad_b64(_convert_int_to_bytes(bytes, pk.y)),
             },
             'hash': hash,
             'point_size': point_size,
         }
     else:
         return 'unknown key type "{0}"'.format(type(key)), {}
-
-
-def _pad_hex(n, digits):
-    res = hex(n)[2:]
-    if len(res) < digits:
-        res = '0' * (digits - len(res)) + res
-    return res
 
 
 def _sign_request_cryptography(module, payload64, protected64, key_data):
