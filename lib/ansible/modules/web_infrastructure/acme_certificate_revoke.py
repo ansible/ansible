@@ -55,6 +55,10 @@ options:
          important private key — it can be used to change the account key,
          or to revoke your certificates without knowing their private keys
          —, this might not be acceptable."
+      - "In case C(cryptography) is used, the content is not written into a
+         temporary file. It can still happen that it is written to disk by
+         Ansible in the process of moving the module with its argument to
+         the node where it is executed."
   revoke_reason:
     description:
       - "One of the revocation reasonCodes defined in
