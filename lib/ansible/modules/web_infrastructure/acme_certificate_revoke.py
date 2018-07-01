@@ -82,7 +82,7 @@ RETURN = '''
 '''
 
 from ansible.module_utils.acme import (
-    ModuleFailException, ACMEAccount, nopad_b64, pem_to_der
+    ModuleFailException, ACMEAccount, nopad_b64, pem_to_der, disable_cryptography,
 )
 
 from ansible.module_utils.basic import AnsibleModule
@@ -100,6 +100,7 @@ def main():
             private_key_content=dict(type='str', no_log=True),
             certificate=dict(required=True, type='path'),
             revoke_reason=dict(required=False, type='int'),
+            force_openssl_usage=dict(required=False, default=False, type='bool'),
         ),
         required_one_of=(
             ['account_key_src', 'account_key_content', 'private_key_src', 'private_key_content'],
@@ -109,6 +110,8 @@ def main():
         ),
         supports_check_mode=False,
     )
+    if module.params['force_openssl_usage']:
+        disable_cryptography()
 
     if not module.params.get('validate_certs'):
         module.warn(warning='Disabling certificate validation for communications with ACME endpoint. ' +

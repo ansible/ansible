@@ -64,5 +64,12 @@ options:
          for example when testing against a local Pebble server."
     type: bool
     default: 'yes'
-    version_added: 2.5
+    version_added: "2.5"
+  force_openssl_usage:
+    description:
+      - "If set to C(yes), will always use the C(openssl) binary instead of trying
+         to use the L(cryptography,https://cryptography.io/) library."
+    type: bool
+    default: 'no'
+    version_added: "2.7"
 """

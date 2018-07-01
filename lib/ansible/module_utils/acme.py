@@ -740,3 +740,14 @@ def cryptography_get_cert_days(module, cert_file):
         raise ModuleFailException('Cannot parse certificate {0}: {1}'.format(cert_file, e))
     now = datetime.datetime.now()
     return (cert.not_valid_after - now).days
+
+
+def disable_cryptography():
+    '''
+    Once called, will no longer use the cryptography library instead of OpenSSL.
+
+    Does not care whether a new enough cryptoraphy is available or not. Must
+    be called before any real stuff is done which might evaluate
+    ``HAS_CURRENT_CRYPTOGRAPHY``.
+    '''
+    HAS_CURRENT_CRYPTOGRAPHY = False

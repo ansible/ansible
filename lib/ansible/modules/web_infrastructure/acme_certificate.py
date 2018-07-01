@@ -330,6 +330,7 @@ account_uri:
 from ansible.module_utils.acme import (
     ModuleFailException, fetch_url, write_file, nopad_b64, simple_get, pem_to_der, ACMEAccount,
     HAS_CURRENT_CRYPTOGRAPHY, cryptography_get_csr_domains, cryptography_get_cert_days,
+    disable_cryptography,
 )
 
 import base64
@@ -884,6 +885,7 @@ def main():
             remaining_days=dict(required=False, default=10, type='int'),
             deactivate_authzs=dict(required=False, default=False, type='bool'),
             force=dict(required=False, default=False, type='bool'),
+            force_openssl_usage=dict(required=False, default=False, type='bool'),
         ),
         required_one_of=(
             ['account_key_src', 'account_key_content'],
@@ -896,6 +898,8 @@ def main():
     )
     if module._name == 'letsencrypt':
         module.deprecate("The 'letsencrypt' module is being renamed 'acme_certificate'", version='2.10')
+    if module.params['force_openssl_usage']:
+        disable_cryptography()
 
     # AnsibleModule() changes the locale, so change it back to C because we rely on time.strptime() when parsing certificate dates.
     module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
