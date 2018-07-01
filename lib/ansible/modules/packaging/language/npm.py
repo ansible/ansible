@@ -162,6 +162,7 @@ class Npm(object):
         self.ignore_scripts = kwargs['ignore_scripts']
         self.state = kwargs['state']
         self.options = self._build_options(kwargs['options'])
+        self._debug = True
 
         if kwargs['executable']:
             self.executable = kwargs['executable'].split(' ')
@@ -212,7 +213,11 @@ class Npm(object):
                     self.module.fail_json(msg="path %s is not a directory" % self.path)
                 cwd = self.path
 
+            self.module.log('Executing: %s' % ' '.join(cmd))
             rc, out, err = self.module.run_command(cmd, check_rc=check_rc, cwd=cwd)
+            self.module.log('  --> rc: %s' % rc)
+            self.module.log('  --> stdout: %s' % out)
+            self.module.log('  --> stderr: %s' % err)
             return out
         return ''
 
