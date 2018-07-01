@@ -199,7 +199,7 @@ def main():
             module.exit_json(changed=changed, account_uri=account.uri)
         elif state == 'changed_key':
             # Parse new account key
-            error, new_key_data = account.parse_account_key(
+            error, new_key_data = account.parse_key(
                 module.params.get('new_account_key_src'),
                 module.params.get('new_account_key_content')
             )

@@ -237,7 +237,7 @@ class ACMEAccount(object):
         self._openssl_bin = module.get_bin_path('openssl', True)
 
         if self.key is not None or self.key_content is not None:
-            error, self.key_data = self.parse_account_key(self.key, self.key_content)
+            error, self.key_data = self.parse_key(self.key, self.key_content)
             if error:
                 raise ModuleFailException("error while parsing account key: %s" % error)
             self.jwk = self.key_data['jwk']
@@ -255,7 +255,7 @@ class ACMEAccount(object):
         thumbprint = nopad_b64(hashlib.sha256(accountkey_json.encode('utf8')).digest())
         return "{0}.{1}".format(token, thumbprint)
 
-    def parse_account_key(self, key_file=None, key_content=None):
+    def parse_key(self, key_file=None, key_content=None):
         '''
         Parses an RSA or Elliptic Curve key file in PEM format and returns a pair
         (error, key_data).

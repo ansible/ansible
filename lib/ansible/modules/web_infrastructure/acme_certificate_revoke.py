@@ -138,7 +138,7 @@ def main():
         # Revoke certificate
         if private_key or private_key_content:
             # Step 1: load and parse private key
-            error, private_key_data = account.parse_account_key(private_key, private_key_content)
+            error, private_key_data = account.parse_key(private_key, private_key_content)
             if error:
                 raise ModuleFailException("error while parsing private key: %s" % error)
             # Step 2: sign revokation request with private key
