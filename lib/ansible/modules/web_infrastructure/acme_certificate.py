@@ -34,12 +34,16 @@ description:
       C(dns-01) the necessary dns record has to be created.
       It is I(not) the responsibility of this module to perform these steps."
    - "For details on how to fulfill these challenges, you might have to read through
-      U(https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-8).
+      L(the specification,https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-8).
       Also, consider the examples provided for this module."
    - "Although the defaults are chosen so that the module can be used with
       the Let's Encrypt CA, the module can be used with any service using the ACME
       v1 or v2 protocol."
    - "At least one of C(dest) and C(fullchain_dest) must be specified."
+   - "Note that this module includes basic account management functionality.
+      If you want to have more control over your ACME account, use the M(acme_account)
+      module and disable account management for this module using the C(modify_account)
+      option."
    - "Note: this module was called C(letsencrypt) before Ansible 2.6. The usage
       did not change."
 extends_documentation_fragment:
@@ -49,6 +53,10 @@ options:
     description:
       - "The email address associated with this account."
       - "It will be used for certificate expiration warnings."
+      - "Note that when C(modify_account) is not set to C(no) and you also
+         used the M(acme_account) module to specify more than one contact
+         for your account, this module will update your account and restrict
+         it to the (at most one) contact email address specified here."
   agreement:
     description:
       - "URI to a terms of service document you agree to when using the
@@ -67,9 +75,9 @@ options:
     description:
       - "Boolean indicating whether the module should create the account if
          necessary, and update its contact data."
-      - "Set to C(no) if you want to use C(acme_account) to manage your
-         account instead, and to avoid accidental creation of a new account
-         using an old key if you changed the account key with C(acme_account)."
+      - "Set to C(no) if you want to use the M(acme_account) module to manage
+         your account instead, and to avoid accidental creation of a new account
+         using an old key if you changed the account key with M(acme_account)."
       - "If set to C(no), C(terms_agreed) and C(account_email) are ignored."
     type: bool
     default: 'yes'
