@@ -30,7 +30,7 @@ Including an example of how to use your role (for instance, with variables passe
 License
 -------
 
-BSD
+BSD-2-Clause
 
 Author Information
 ------------------

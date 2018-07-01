@@ -30,7 +30,7 @@ Including an example of how to use your APB (for instance, with variables passed
 License
 -------
 
-BSD
+BSD-2-Clause
 
 Author Information
 ------------------
