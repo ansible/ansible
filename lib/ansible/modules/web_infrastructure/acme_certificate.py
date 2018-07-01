@@ -519,7 +519,7 @@ class ACMEClient(object):
             result['uri'] = auth['uri']
             if self._add_or_update_auth(domain, result):
                 self.changed = True
-            # draft-ietf-acme-acme-02
+            # https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-6.1.2
             # "status (required, string): ...
             # If this field is missing, then the default value is "pending"."
             if self.version == 1 and 'status' not in result:
