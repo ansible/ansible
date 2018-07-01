@@ -1,0 +1,93 @@
+# addition
+
+- name: Test addition (check mode)
+  flatpak:
+    name: org.gnome.Calculator
+    remote: flathub
+    state: present
+  register: addition_result
+  check_mode: true
+
+- name: Verify addition test result (check mode)
+  assert:
+    that:
+      - "addition_result.changed == true"
+    msg: "Adding an absent flatpak shall mark module execution as changed"
+
+- name: Test non-existent idempotency of installation (check mode)
+  flatpak:
+    name: org.gnome.Calculator
+    remote: flathub
+    state: present
+  register: double_addition_result
+  check_mode: true
+
+- name: Verify non-existent idempotency of installation test result (check mode)
+  assert:
+    that:
+      - "double_addition_result.changed == true"
+    msg: |
+        Adding an absent flatpak a second time shall still mark module execution
+        as changed in check mode
+
+# Removal
+
+- name: Test removal not doing anything in check mode
+  flatpak:
+    name: org.gnome.Calculator
+    state: absent
+  register: removal_result
+  check_mode: true
+
+- name: Verify removal test result (check mode)
+  assert:
+    that:
+      - "removal_result.changed == false"
+    msg: "Removing an absent flatpak shall mark module execution as not changed"
+
+# addition with url
+
+- name: Test addition with url (check mode)
+  flatpak:
+    name: https://flathub.org/repo/appstream/org.gnome.Calculator.flatpakref
+    remote: flathub
+    state: present
+  register: url_addition_result
+  check_mode: true
+
+- name: Verify addition with url test result (check mode)
+  assert:
+    that:
+      - "url_addition_result.changed == true"
+    msg: "Adding an absent flatpak from URL shall mark module execution as changed"
+
+- name: Test non-existent idempotency of installation with url (check mode)
+  flatpak:
+    name: https://flathub.org/repo/appstream/org.gnome.Calculator.flatpakref
+    remote: flathub
+    state: present
+  register: double_url_addition_result
+  check_mode: true
+
+- name: Verify idempotency of installation with url test result (check mode)
+  assert:
+    that:
+      - "double_url_addition_result.changed == true"
+    msg: |
+        Adding a non-existent flatpak from URL a second time shall still mark module execution
+        as changed in check mode
+
+# Removal with url
+
+- name: Test removal with url not doing anything (check mode)
+  flatpak:
+    name: https://flathub.org/repo/appstream/org.gnome.Calculator.flatpakref
+    state: absent
+  register: url_removal_result
+  check_mode: true
+
+- name: Verify removal with url test result (check mode)
+  assert:
+    that:
+      - "url_removal_result.changed == false"
+    msg: "Removing an absent flatpak shall mark module execution as not changed"
