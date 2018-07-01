@@ -58,6 +58,8 @@ class ActionModule(ActionBase):
         block_end_string = self._task.args.get('block_end_string', None)
         trim_blocks = boolean(self._task.args.get('trim_blocks', True), strict=False)
         lstrip_blocks = boolean(self._task.args.get('lstrip_blocks', False), strict=False)
+        src_encoding = self._task.args.get('src_encoding', 'utf-8') or 'utf-8'
+        dest_encoding = self._task.args.get('dest_encoding', 'utf-8') or 'utf-8'
 
         # Option `lstrip_blocks' was added in Jinja2 version 2.7.
         if lstrip_blocks:
@@ -121,9 +123,9 @@ class ActionModule(ActionBase):
             try:
                 with open(b_tmp_source, 'rb') as f:
                     try:
-                        template_data = to_text(f.read(), errors='surrogate_or_strict')
+                        template_data = to_text(f.read(), encoding=src_encoding, errors='surrogate_or_strict')
                     except UnicodeError:
-                        raise AnsibleActionFail("Template source files must be utf-8 encoded")
+                        raise AnsibleActionFail("Template source files must be %s encoded" % (src_encoding))
 
                 # set jinja2 internal search path for includes
                 searchpath = task_vars.get('ansible_search_path', [])
@@ -176,13 +178,15 @@ class ActionModule(ActionBase):
             new_task.args.pop('variable_end_string', None)
             new_task.args.pop('trim_blocks', None)
             new_task.args.pop('lstrip_blocks', None)
+            new_task.args.pop('src_encoding', None)
+            new_task.args.pop('dest_encoding', None)
 
             local_tempdir = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)
 
             try:
                 result_file = os.path.join(local_tempdir, os.path.basename(source))
                 with open(to_bytes(result_file, errors='surrogate_or_strict'), 'wb') as f:
-                    f.write(to_bytes(resultant, errors='surrogate_or_strict'))
+                    f.write(to_bytes(resultant, encoding=dest_encoding, errors='surrogate_or_strict'))
 
                 new_task.args.update(
                     dict(
