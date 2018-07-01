@@ -328,7 +328,7 @@ account_uri:
 '''
 
 from ansible.module_utils.acme import (
-    ModuleFailException, fetch_url, write_file, nopad_b64, simple_get, ACMEAccount
+    ModuleFailException, fetch_url, write_file, nopad_b64, simple_get, pem_to_der, ACMEAccount
 )
 
 import base64
@@ -569,11 +569,9 @@ class ACMEClient(object):
         Return the certificate object as dict
         https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.4
         '''
-        openssl_csr_cmd = [self._openssl_bin, "req", "-in", self.csr, "-outform", "DER"]
-        dummy, out, dummy = self.module.run_command(openssl_csr_cmd, check_rc=True)
-
+        csr = pem_to_der(self.csr)
         new_cert = {
-            "csr": nopad_b64(to_bytes(out)),
+            "csr": nopad_b64(csr),
         }
         result, info = self.account.send_signed_request(self.finalize_uri, new_cert)
         if info['status'] not in [200]:
@@ -650,12 +648,10 @@ class ACMEClient(object):
         Return the certificate object as dict
         https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-6.5
         '''
-        openssl_csr_cmd = [self._openssl_bin, "req", "-in", self.csr, "-outform", "DER"]
-        dummy, out, dummy = self.module.run_command(openssl_csr_cmd, check_rc=True)
-
+        csr = pem_to_der(self.csr)
         new_cert = {
             "resource": "new-cert",
-            "csr": nopad_b64(to_bytes(out)),
+            "csr": nopad_b64(csr),
         }
         result, info = self.account.send_signed_request(self.directory['new-cert'], new_cert)
 

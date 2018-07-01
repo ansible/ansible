@@ -141,6 +141,30 @@ def write_file(module, dest, content):
     return changed
 
 
+def pem_to_der(pem_filename):
+    '''
+    Load PEM file, and convert to DER.
+
+    If PEM contains multiple entities, the first entity will be used.
+    '''
+    certificate_lines = []
+    try:
+        with open(pem_filename, "rt") as f:
+            header_line_count = 0
+            for line in f:
+                if line.startswith('-----'):
+                    header_line_count += 1
+                    if header_line_count == 2:
+                        # If certificate file contains other certs appended
+                        # (like intermediate certificates), ignore these.
+                        break
+                    continue
+                certificate_lines.append(line.strip())
+    except Exception as err:
+        raise ModuleFailException("cannot load PEM file {0}: {1}".format(pem_filename, to_native(err)), exception=traceback.format_exc())
+    return base64.b64decode(''.join(certificate_lines))
+
+
 class ACMEDirectory(object):
     '''
     The ACME server directory. Gives access to the available resources,

@@ -82,7 +82,7 @@ RETURN = '''
 '''
 
 from ansible.module_utils.acme import (
-    ModuleFailException, ACMEAccount, nopad_b64
+    ModuleFailException, ACMEAccount, nopad_b64, pem_to_der
 )
 
 import base64
@@ -124,22 +124,8 @@ def main():
     try:
         account = ACMEAccount(module)
         # Load certificate
-        certificate_lines = []
-        try:
-            with open(module.params.get('certificate'), "rt") as f:
-                header_line_count = 0
-                for line in f:
-                    if line.startswith('-----'):
-                        header_line_count += 1
-                        if header_line_count == 2:
-                            # If certificate file contains other certs appended
-                            # (like intermediate certificates), ignore these.
-                            break
-                        continue
-                    certificate_lines.append(line.strip())
-        except Exception as err:
-            raise ModuleFailException("cannot load certificate file: %s" % to_native(err), exception=traceback.format_exc())
-        certificate = nopad_b64(base64.b64decode(''.join(certificate_lines)))
+        certificate = pem_to_der(module.params.get('certificate'))
+        certificate = nopad_b64(certificate)
         # Construct payload
         payload = {
             'certificate': certificate
