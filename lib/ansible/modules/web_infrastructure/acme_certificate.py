@@ -97,6 +97,10 @@ options:
          the second run of the module only."
       - "The value that must be used here will be provided by a previous use
          of this module. See the examples for more details."
+      - "Note that for ACME v2, only the C(order_uri) entry of C(data) will
+         be used. For ACME v1, C(data) must be non-empty to indicate the
+         second stage is active; all needed data will be taken from the
+         CSR."
       - "I(Note): the C(data) option was marked as C(no_log) up to
          Ansible 2.5. From Ansible 2.6 on, it is no longer marked this way
          as it causes error messages to be come unusable, and C(data) does
@@ -363,7 +367,7 @@ class ACMEClient(object):
         self.authorizations = None
         self.cert_days = -1
         self.order_uri = self.data.get('order_uri') if self.data else None
-        self.finalize_uri = self.data.get('finalize_uri') if self.data else None
+        self.finalize_uri = None
 
         # Make sure account exists
         modify_account = module.params['modify_account']
@@ -679,11 +683,15 @@ class ACMEClient(object):
         Return True if this is the first execution of this module, i.e. if a
         sufficient data object from a first run has not been provided.
         '''
-        if (self.data is None) or ('authorizations' not in self.data):
+        if self.data is None:
             return True
-        if self.finalize_uri is None and self.version != 1:
-            return True
-        return False
+        if self.version == 1:
+            # As soon as self.data is a non-empty object, we are in the second stage.
+            return not self.data
+        else:
+            # We are in the second stage if data.order_uri is given (which has been
+            # stored in self.order_uri by the constructor).
+            return self.order_uri is None
 
     def start_challenges(self):
         '''
@@ -725,8 +733,42 @@ class ACMEClient(object):
         Verify challenges for all domains of the CSR.
         '''
         self.authorizations = {}
-        for domain, auth in self.data['authorizations'].items():
-            self.authorizations[domain] = auth
+
+        # Step 1: obtain challenge information
+        if self.version == 1:
+            # For ACME v1, we attempt to create new authzs. Existing ones
+            # will be returned instead.
+            for domain in self.domains:
+                new_auth = self._new_authz_v1(domain)
+                self._add_or_update_auth(domain, new_auth)
+        else:
+            # For ACME v2, we obtain the order object by fetching the
+            # order URI, and extract the information from there.
+            resp, info = fetch_url(self.module, self.order_uri)
+            try:
+                result = resp.read()
+            except AttributeError:
+                result = info.get('body')
+
+            if not result:
+                raise ModuleFailException("Cannot download order from {0}: {1} (headers: {2})".format(self.order_uri, result, info))
+
+            if info['status'] not in [200]:
+                raise ModuleFailException("Error on downloading order: CODE: {0} RESULT: {1}".format(info['status'], result))
+
+            result = self.module.from_json(result.decode('utf8'))
+            for auth_uri in result['authorizations']:
+                auth_data = simple_get(self.module, auth_uri)
+                auth_data['uri'] = auth_uri
+                domain = auth_data['identifier']['value']
+                if auth_data.get('wildcard', False):
+                    domain = '*.{0}'.format(domain)
+                self.authorizations[domain] = auth_data
+
+            self.finalize_uri = result['finalize']
+
+        # Step 2: validate challenges
+        for domain, auth in self.authorizations.items():
             if auth['status'] == 'pending':
                 self._validate_challenges(domain, auth)
 
