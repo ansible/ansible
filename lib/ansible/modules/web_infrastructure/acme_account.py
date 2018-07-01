@@ -48,7 +48,7 @@ options:
     description:
       - "A list of contact URLs."
       - "Email addresses must be prefixed with C(mailto:)."
-      - "See https://tools.ietf.org/html/draft-ietf-acme-acme-10#section-7.1.2
+      - "See https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.1.2
          for what is allowed."
       - "Must be specified when state is C(present). Will be ignored
          if state is C(absent) or C(changed_key)."

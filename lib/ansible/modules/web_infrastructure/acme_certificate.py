@@ -461,11 +461,11 @@ class ACMEClient(object):
             keyauthorization = self.account.get_keyauthorization(token)
 
             if type == 'http-01':
-                # https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-8.3
+                # https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-8.3
                 resource = '.well-known/acme-challenge/' + token
                 data[type] = {'resource': resource, 'resource_value': keyauthorization}
             elif type == 'dns-01':
-                # https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-8.5
+                # https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-8.4
                 resource = '_acme-challenge'
                 value = nopad_b64(hashlib.sha256(to_bytes(keyauthorization)).digest())
                 record = (resource + domain[1:]) if domain.startswith('*.') else (resource + '.' + domain)
@@ -537,7 +537,7 @@ class ACMEClient(object):
         '''
         Create a new certificate based on the csr.
         Return the certificate object as dict
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4
+        https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.4
         '''
         openssl_csr_cmd = [self._openssl_bin, "req", "-in", self.csr, "-outform", "DER"]
         dummy, out, dummy = self.module.run_command(openssl_csr_cmd, check_rc=True)
@@ -573,7 +573,7 @@ class ACMEClient(object):
     def _download_cert(self, url):
         '''
         Download and parse the certificate chain.
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4.2
+        https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.4.2
         '''
         resp, info = fetch_url(self.module, url, headers={'Accept': 'application/pem-certificate-chain'})
         try:
@@ -647,7 +647,7 @@ class ACMEClient(object):
     def _new_order_v2(self):
         '''
         Start a new certificate order (ACME v2 protocol).
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4
+        https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.4
         '''
         identifiers = []
         for domain in self.domains:
@@ -771,7 +771,7 @@ class ACMEClient(object):
         '''
         Deactivates all valid authz's. Does not raise exceptions.
         https://community.letsencrypt.org/t/authorization-deactivation/19860/2
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.5.2
+        https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.5.2
         '''
         authz_deactivate = {
             'status': 'deactivated'
