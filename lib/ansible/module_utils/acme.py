@@ -513,8 +513,6 @@ class ACMEAccount(object):
         self.key = module.params['account_key_src']
         self.key_content = module.params['account_key_content']
         self.directory = ACMEDirectory(module)
-        if HAS_CURRENT_CRYPTOGRAPHY:
-            self.module.debug('Using cryptography {0} instead of OpenSSL binary'.format(CRYPTOGRAPHY_VERSION))
 
         self.uri = None
 
@@ -772,12 +770,31 @@ def cryptography_get_cert_days(module, cert_file):
     return (cert.not_valid_after - now).days
 
 
-def disable_cryptography():
+def set_crypto_backend(module):
     '''
-    Once called, will no longer use the cryptography library instead of OpenSSL.
+    Sets which crypto backend to use (default: auto detection).
 
     Does not care whether a new enough cryptoraphy is available or not. Must
     be called before any real stuff is done which might evaluate
     ``HAS_CURRENT_CRYPTOGRAPHY``.
     '''
-    HAS_CURRENT_CRYPTOGRAPHY = False
+    global HAS_CURRENT_CRYPTOGRAPHY
+    # Choose backend
+    backend = module.params['select_crypto_backend']
+    if backend == 'auto':
+        pass
+    elif backend == 'openssl':
+        HAS_CURRENT_CRYPTOGRAPHY = False
+    elif backend == 'cryptography':
+        try:
+            cryptography.__version__
+        except Exception as _:
+            module.fail_json(msg='Cannot find cryptography module!')
+        HAS_CURRENT_CRYPTOGRAPHY = True
+    else:
+        module.fail_json(msg='Unknown crypto backend "{0}"!'.format(backend))
+    # Inform about choices
+    if HAS_CURRENT_CRYPTOGRAPHY:
+        module.debug('Using cryptography backend (library version {0})'.format(CRYPTOGRAPHY_VERSION))
+    else:
+        module.debug('Using OpenSSL binary backend')

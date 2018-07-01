@@ -116,7 +116,7 @@ account_uri:
 '''
 
 from ansible.module_utils.acme import (
-    ModuleFailException, ACMEAccount, disable_cryptography,
+    ModuleFailException, ACMEAccount, set_crypto_backend,
 )
 
 from ansible.module_utils.basic import AnsibleModule
@@ -136,7 +136,7 @@ def main():
             contact=dict(required=False, type='list', default=[]),
             new_account_key_src=dict(type='path'),
             new_account_key_content=dict(type='str', no_log=True),
-            force_openssl_usage=dict(required=False, default=False, type='bool'),
+            select_crypto_backend=dict(required=False, choices=['auto', 'openssl', 'cryptography'], default='auto', type='str'),
         ),
         required_one_of=(
             ['account_key_src', 'account_key_content'],
@@ -152,8 +152,7 @@ def main():
         ),
         supports_check_mode=True,
     )
-    if module.params['force_openssl_usage']:
-        disable_cryptography()
+    set_crypto_backend(module)
 
     if not module.params.get('validate_certs'):
         module.warn(warning='Disabling certificate validation for communications with ACME endpoint. ' +

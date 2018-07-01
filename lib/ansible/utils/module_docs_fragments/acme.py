@@ -12,8 +12,8 @@ description:
   - "Note that if a new enough version of the C(cryptography) library
      is available (see Requirements for details), it will be used
      instead of the C(openssl) binary. This can be explicitly disabled
-     with the C(force_openssl_usage) option. Note that using the
-     C(openssl) binary will be slower and less secure, as private key
+     or enabled with the C(select_crypto_backend) option. Note that using
+     the C(openssl) binary will be slower and less secure, as private key
      contents always have to be stored on disk (see
      C(account_key_content))."
 requirements:
@@ -78,11 +78,19 @@ options:
     type: bool
     default: 'yes'
     version_added: "2.5"
-  force_openssl_usage:
+  select_crypto_backend:
     description:
-      - "If set to C(yes), will always use the C(openssl) binary instead of trying
-         to use the L(cryptography,https://cryptography.io/) library."
-    type: bool
-    default: 'no'
+      - "Determines which crypto backend to use. The default choice is C(auto),
+         which tries to use C(cryptography) if available, and falls back to
+         C(openssl)."
+      - "If set to C(openssl), will try to use the C(openssl) binary."
+      - "If set to C(cryptography), will try to use the
+         L(cryptography,https://cryptography.io/) library."
+    type: str
+    default: 'auto'
+    choices:
+      - auto
+      - cryptography
+      - openssl
     version_added: "2.7"
 """
