@@ -59,7 +59,7 @@
 
   - name: Change email address
     acme_account:
-      account_key_src: "{{ output_dir }}/accountkey.pem"
+      account_key_content: "{{ lookup('file', output_dir ~ '/accountkey.pem') }}"
       acme_version: 2
       acme_directory: https://{{ acme_host }}:14000/dir
       validate_certs: no

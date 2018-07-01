@@ -47,7 +47,7 @@
       acme_version: 2
       acme_directory: https://{{ acme_host }}:14000/dir
       validate_certs: no
-      account_key_src: "{{ output_dir }}/account-ec384.pem"
+      account_key_content: "{{ lookup('file', output_dir ~ '/account-ec384.pem') }}"
       state: present
       allow_creation: yes
       terms_agreed: yes
@@ -106,7 +106,7 @@
       key_type: ec384
       subject_alt_name: "DNS:*.example.com,DNS:example.org,DNS:t1.example.com"
       subject_alt_name_critical: no
-      account_key: account-rsa2048
+      account_key_content: "{{ lookup('file', output_dir ~ '/account-rsa2048.pem') }}"
       challenge: dns-01
       modify_account: no
       deactivate_authzs: no
@@ -191,7 +191,7 @@
       key_type: ec521
       subject_alt_name: "DNS:t2.example.com"
       subject_alt_name_critical: no
-      account_key: account-ec384
+      account_key_content: "{{ lookup('file', output_dir ~ '/account-ec384.pem') }}"
       challenge: http-01
       modify_account: no
       deactivate_authzs: yes

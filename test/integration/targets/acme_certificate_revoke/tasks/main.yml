@@ -25,7 +25,7 @@
       rsa_bits: 2048
       subject_alt_name: "DNS:example.com"
       subject_alt_name_critical: no
-      account_key: account-ec256
+      account_key_content: "{{ lookup('file', output_dir ~ '/account-ec256.pem') }}"
       challenge: http-01
       modify_account: yes
       deactivate_authzs: no
@@ -86,7 +86,7 @@
     register: cert_2_revoke
   - name: Revoke certificate 3 via account key (fullchain)
     acme_certificate_revoke:
-      account_key_src: "{{ output_dir }}/account-rsa2048.pem"
+      account_key_content: "{{ lookup('file', output_dir ~ '/account-rsa2048.pem') }}"
       certificate: "{{ output_dir }}/cert-3-fullchain.pem"
       acme_version: 2
       acme_directory: https://{{ acme_host }}:14000/dir
