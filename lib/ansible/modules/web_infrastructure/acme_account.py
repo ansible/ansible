@@ -119,12 +119,7 @@ from ansible.module_utils.acme import (
     ModuleFailException, ACMEAccount
 )
 
-import os
-import tempfile
-import traceback
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
 
 
 def main():
@@ -203,24 +198,11 @@ def main():
                 raise ModuleFailException(msg='Account does not exist or is deactivated.')
             module.exit_json(changed=changed, account_uri=account.uri)
         elif state == 'changed_key':
-            # Get hold of new account key
-            new_key = module.params.get('new_account_key_src')
-            if new_key is None:
-                fd, tmpsrc = tempfile.mkstemp()
-                module.add_cleanup_file(tmpsrc)  # Ansible will delete the file on exit
-                f = os.fdopen(fd, 'wb')
-                try:
-                    f.write(module.params.get('new_account_key_content').encode('utf-8'))
-                    new_key = tmpsrc
-                except Exception as err:
-                    try:
-                        f.close()
-                    except Exception as e:
-                        pass
-                    raise ModuleFailException("failed to create temporary content file: %s" % to_native(err), exception=traceback.format_exc())
-                f.close()
             # Parse new account key
-            error, new_key_data = account.parse_account_key(new_key)
+            error, new_key_data = account.parse_account_key(
+                module.params.get('new_account_key_src'),
+                module.params.get('new_account_key_content')
+            )
             if error:
                 raise ModuleFailException("error while parsing account key: %s" % error)
             # Verify that the account exists and has not been deactivated
@@ -249,7 +231,7 @@ def main():
                     "oldKey": account.jwk,  # discussed in https://github.com/ietf-wg-acme/acme/pull/425,
                                             # might be required in draft 13
                 }
-                data = account.sign_request(protected, payload, new_key_data, new_key)
+                data = account.sign_request(protected, payload, new_key_data)
                 # Send request and verify result
                 result, info = account.send_signed_request(url, data)
                 if info['status'] != 200:

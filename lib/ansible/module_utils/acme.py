@@ -236,24 +236,8 @@ class ACMEAccount(object):
 
         self._openssl_bin = module.get_bin_path('openssl', True)
 
-        # Create a key file from content, key (path) and key content are mutually exclusive
-        if self.key_content is not None:
-            fd, tmpsrc = tempfile.mkstemp()
-            module.add_cleanup_file(tmpsrc)  # Ansible will delete the file on exit
-            f = os.fdopen(fd, 'wb')
-            try:
-                f.write(self.key_content.encode('utf-8'))
-                self.key = tmpsrc
-            except Exception as err:
-                try:
-                    f.close()
-                except Exception as e:
-                    pass
-                raise ModuleFailException("failed to create temporary content file: %s" % to_native(err), exception=traceback.format_exc())
-            f.close()
-
-        if self.key is not None:
-            error, self.key_data = self.parse_account_key(self.key)
+        if self.key is not None or self.key_content is not None:
+            error, self.key_data = self.parse_account_key(self.key, self.key_content)
             if error:
                 raise ModuleFailException("error while parsing account key: %s" % error)
             self.jwk = self.key_data['jwk']
@@ -271,13 +255,30 @@ class ACMEAccount(object):
         thumbprint = nopad_b64(hashlib.sha256(accountkey_json.encode('utf8')).digest())
         return "{0}.{1}".format(token, thumbprint)
 
-    def parse_account_key(self, key):
+    def parse_account_key(self, key_file=None, key_content=None):
         '''
         Parses an RSA or Elliptic Curve key file in PEM format and returns a pair
         (error, key_data).
         '''
+        # If key_file isn't given, but key_content, write that to a temporary file
+        if key_file is None:
+            assert key_content is not None
+            fd, tmpsrc = tempfile.mkstemp()
+            self.module.add_cleanup_file(tmpsrc)  # Ansible will delete the file on exit
+            f = os.fdopen(fd, 'wb')
+            try:
+                f.write(key_content.encode('utf-8'))
+                key_file = tmpsrc
+            except Exception as err:
+                try:
+                    f.close()
+                except Exception as e:
+                    pass
+                raise ModuleFailException("failed to create temporary content file: %s" % to_native(err), exception=traceback.format_exc())
+            f.close()
+        # Parse key
         account_key_type = None
-        with open(key, "rt") as f:
+        with open(key_file, "rt") as f:
             for line in f:
                 m = re.match(r"^\s*-{5,}BEGIN\s+(EC|RSA)\s+PRIVATE\s+KEY-{5,}\s*$", line)
                 if m is not None:
@@ -292,7 +293,7 @@ class ACMEAccount(object):
         if account_key_type not in ("rsa", "ec"):
             return 'unknown key type "%s"' % account_key_type, {}
 
-        openssl_keydump_cmd = [self._openssl_bin, account_key_type, "-in", key, "-noout", "-text"]
+        openssl_keydump_cmd = [self._openssl_bin, account_key_type, "-in", key_file, "-noout", "-text"]
         dummy, out, dummy = self.module.run_command(openssl_keydump_cmd, check_rc=True)
 
         if account_key_type == 'rsa':
@@ -304,6 +305,7 @@ class ACMEAccount(object):
                 pub_exp = "0{0}".format(pub_exp)
 
             return None, {
+                'key': key_file,
                 'type': 'rsa',
                 'alg': 'RS256',
                 'jwk': {
@@ -348,6 +350,7 @@ class ACMEAccount(object):
             if len(pub_hex) != 2 * bytes:
                 return 'bad elliptic curve point (%s / %s)' % (asn1_oid_curve, nist_curve), {}
             return None, {
+                'key': key_file,
                 'type': 'ec',
                 'alg': alg,
                 'jwk': {
@@ -360,14 +363,14 @@ class ACMEAccount(object):
                 'point_size': point_size,
             }
 
-    def sign_request(self, protected, payload, key_data, key):
+    def sign_request(self, protected, payload, key_data):
         try:
             payload64 = nopad_b64(self.module.jsonify(payload).encode('utf8'))
             protected64 = nopad_b64(self.module.jsonify(protected).encode('utf8'))
         except Exception as e:
             raise ModuleFailException("Failed to encode payload / headers as JSON: {0}".format(e))
 
-        openssl_sign_cmd = [self._openssl_bin, "dgst", "-{0}".format(key_data['hash']), "-sign", key]
+        openssl_sign_cmd = [self._openssl_bin, "dgst", "-{0}".format(key_data['hash']), "-sign", key_data['key']]
         sign_payload = "{0}.{1}".format(protected64, payload64).encode('utf8')
         dummy, out, dummy = self.module.run_command(openssl_sign_cmd, data=sign_payload, check_rc=True, binary_data=True)
 
@@ -393,14 +396,13 @@ class ACMEAccount(object):
             "signature": nopad_b64(to_bytes(out)),
         }
 
-    def send_signed_request(self, url, payload, key_data=None, key=None, jws_header=None):
+    def send_signed_request(self, url, payload, key_data=None, jws_header=None):
         '''
         Sends a JWS signed HTTP POST request to the ACME server and returns
         the response as dictionary
         https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-6.2
         '''
         key_data = key_data or self.key_data
-        key = key or self.key
         jws_header = jws_header or self.jws_header
         failed_tries = 0
         while True:
@@ -409,7 +411,7 @@ class ACMEAccount(object):
             if self.version != 1:
                 protected["url"] = url
 
-            data = self.sign_request(protected, payload, key_data, key)
+            data = self.sign_request(protected, payload, key_data)
             if self.version == 1:
                 data["header"] = jws_header
             data = self.module.jsonify(data)
