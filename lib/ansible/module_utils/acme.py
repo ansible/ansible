@@ -17,6 +17,7 @@ __metaclass__ = type
 import base64
 import binascii
 import copy
+import datetime
 import hashlib
 import json
 import os
@@ -27,6 +28,16 @@ import traceback
 
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.urls import fetch_url as _fetch_url
+
+try:
+    import cryptography
+    from distutils.version import LooseVersion
+    CRYPTOGRAPHY_VERSION = cryptography.__version__
+    HAS_CURRENT_CRYPTOGRAPHY = (LooseVersion(CRYPTOGRAPHY_VERSION) >= LooseVersion('2.0'))
+    if HAS_CURRENT_CRYPTOGRAPHY:
+        _cryptography_backend = cryptography.hazmat.backends.default_backend()
+except Exception as _:
+    HAS_CURRENT_CRYPTOGRAPHY = False
 
 
 class ModuleFailException(Exception):
@@ -218,6 +229,8 @@ class ACMEAccount(object):
         self.key = module.params['account_key_src']
         self.key_content = module.params['account_key_content']
         self.directory = ACMEDirectory(module)
+        if HAS_CURRENT_CRYPTOGRAPHY:
+            self.module.debug('Using cryptography {0} instead of OpenSSL binary'.format(CRYPTOGRAPHY_VERSION))
 
         self.uri = None
 
@@ -554,3 +567,45 @@ class ACMEAccount(object):
                     result, dummy = self.send_signed_request(self.uri, upd_reg)
                 changed = True
         return new_account or changed
+
+
+def _read_file(fn, mode='b'):
+    try:
+        with open(fn, 'r' + mode) as f:
+            return f.read()
+    except Exception as e:
+        raise ModuleFailException('Error while reading file "{0}": {1}'.format(fn, e))
+
+
+def cryptography_get_csr_domains(module, csr_filename):
+    '''
+    Return a set of requested domains (CN and SANs) for the CSR.
+    '''
+    domains = set([])
+    csr = cryptography.x509.load_pem_x509_csr(_read_file(csr_filename), _cryptography_backend)
+    for sub in csr.subject:
+        if sub.oid == cryptography.x509.oid.NameOID.COMMON_NAME:
+            domains.add(sub.value)
+    for extension in csr.extensions:
+        if extension.oid == cryptography.x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME:
+            for name in extension.value:
+                if isinstance(name, cryptography.x509.DNSName):
+                    domains.add(name.value)
+    return domains
+
+
+def cryptography_get_cert_days(module, cert_file):
+    '''
+    Return the days the certificate in cert_file remains valid and -1
+    if the file was not found. If cert_file contains more than one
+    certificate, only the first one will be considered.
+    '''
+    if not os.path.exists(cert_file):
+        return -1
+
+    try:
+        cert = cryptography.x509.load_pem_x509_certificate(_read_file(cert_file), _cryptography_backend)
+    except Exception as e:
+        raise ModuleFailException('Cannot parse certificate {0}: {1}'.format(cert_file, e))
+    now = datetime.datetime.now()
+    return (cert.not_valid_after - now).days

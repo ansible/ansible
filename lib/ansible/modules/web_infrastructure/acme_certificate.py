@@ -328,7 +328,8 @@ account_uri:
 '''
 
 from ansible.module_utils.acme import (
-    ModuleFailException, fetch_url, write_file, nopad_b64, simple_get, pem_to_der, ACMEAccount
+    ModuleFailException, fetch_url, write_file, nopad_b64, simple_get, pem_to_der, ACMEAccount,
+    HAS_CURRENT_CRYPTOGRAPHY, cryptography_get_csr_domains, cryptography_get_cert_days,
 )
 
 import base64
@@ -350,6 +351,8 @@ def get_cert_days(module, cert_file):
     if the file was not found. If cert_file contains more than one
     certificate, only the first one will be considered.
     '''
+    if HAS_CURRENT_CRYPTOGRAPHY:
+        return cryptography_get_cert_days(module, cert_file)
     if not os.path.exists(cert_file):
         return -1
 
@@ -422,6 +425,8 @@ class ACMEClient(object):
         '''
         Parse the CSR and return the list of requested domains
         '''
+        if HAS_CURRENT_CRYPTOGRAPHY:
+            return cryptography_get_csr_domains(self.module, self.csr)
         openssl_csr_cmd = [self._openssl_bin, "req", "-in", self.csr, "-noout", "-text"]
         dummy, out, dummy = self.module.run_command(openssl_csr_cmd, check_rc=True)
 
