@@ -83,6 +83,16 @@
     body: "{{ item.value }}"
   with_dict: "{{ challenge_data.challenge_data_dns }}"
   when: "challenge_data is changed and challenge == 'dns-01'"
+- name: ({{ certgen_title }}) Create TLS ALPN challenges
+  uri:
+    url: "http://{{ acme_host }}:5000/tls-alpn/{{ item.value['tls-alpn-01'].resource }}"
+    method: PUT
+    body_format: raw
+    body: "{{ item.value['tls-alpn-01'].resource_value | b64encode }}"
+    headers:
+      content-type: "application/octet-stream"
+  with_dict: "{{ challenge_data.challenge_data }}"
+  when: "challenge_data is changed and challenge == 'tls-alpn-01'"
 ## ACME STEP 2 ################################################################################
 - name: ({{ certgen_title }}) Obtain cert, step 2
   acme_certificate:
@@ -134,4 +144,10 @@
     method: DELETE
   with_dict: "{{ challenge_data.challenge_data_dns }}"
   when: "challenge_data is changed and challenge == 'dns-01'"
+- name: ({{ certgen_title }}) Deleting TLS ALPN challenges
+  uri:
+    url: "http://{{ acme_host }}:5000/tls-alpn/{{ item.value['tls-alpn-01'].resource }}"
+    method: DELETE
+  with_dict: "{{ challenge_data.challenge_data }}"
+  when: "challenge_data is changed and challenge == 'tls-alpn-01'"
 ###############################################################################################
