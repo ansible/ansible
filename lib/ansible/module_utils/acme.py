@@ -94,6 +94,14 @@ def simple_get(module, url):
     return result
 
 
+def read_file(fn, mode='b'):
+    try:
+        with open(fn, 'r' + mode) as f:
+            return f.read()
+    except Exception as e:
+        raise ModuleFailException('Error while reading file "{0}": {1}'.format(fn, e))
+
+
 # function source: network/basics/uri.py
 def write_file(module, dest, content):
     '''
@@ -226,7 +234,7 @@ def _parse_key_openssl(openssl_binary, module, key_file=None, key_content=None):
             pub_exp = "0{0}".format(pub_exp)
 
         return None, {
-            'key': key_file,
+            'key_file': key_file,
             'type': 'rsa',
             'alg': 'RS256',
             'jwk': {
@@ -271,7 +279,7 @@ def _parse_key_openssl(openssl_binary, module, key_file=None, key_content=None):
         if len(pub_hex) != 2 * bytes:
             return 'bad elliptic curve point (%s / %s)' % (asn1_oid_curve, nist_curve), {}
         return None, {
-            'key': key_file,
+            'key_file': key_file,
             'type': 'ec',
             'alg': alg,
             'jwk': {
@@ -286,7 +294,7 @@ def _parse_key_openssl(openssl_binary, module, key_file=None, key_content=None):
 
 
 def _sign_request_openssl(openssl_binary, module, payload64, protected64, key_data):
-    openssl_sign_cmd = [openssl_binary, "dgst", "-{0}".format(key_data['hash']), "-sign", key_data['key']]
+    openssl_sign_cmd = [openssl_binary, "dgst", "-{0}".format(key_data['hash']), "-sign", key_data['key_file']]
     sign_payload = "{0}.{1}".format(protected64, payload64).encode('utf8')
     dummy, out, dummy = module.run_command(openssl_sign_cmd, data=sign_payload, check_rc=True, binary_data=True)
 
@@ -310,6 +318,115 @@ def _sign_request_openssl(openssl_binary, module, payload64, protected64, key_da
         "protected": protected64,
         "payload": payload64,
         "signature": nopad_b64(to_bytes(out)),
+    }
+
+
+def _count_bytes(n):
+    if n <= 0:
+        return 0
+    # Kind of hacky, but will also work with Python 2.6 which doesn't have bit_length()
+    return (len(hex(n)) - 1) // 2
+
+
+def _parse_key_cryptography(module, key_file=None, key_content=None):
+    '''
+    Parses an RSA or Elliptic Curve key file in PEM format and returns a pair
+    (error, key_data).
+    '''
+    # If key_content isn't given, read key_file
+    if key_content is None:
+        assert key_file is not None
+        key_content = read_file(key_file)
+    # Parse key
+    try:
+        key = cryptography.hazmat.primitives.serialization.load_pem_private_key(key_content, password=None, backend=_cryptography_backend)
+    except Exception as e:
+        return 'error while loading key: {0}'.format(e), None
+    if isinstance(key, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey):
+        pk = key.public_key().public_numbers()
+        return None, {
+            'key_obj': key,
+            'type': 'rsa',
+            'alg': 'RS256',
+            'jwk': {
+                "kty": "RSA",
+                "e": nopad_b64(pk.e.to_bytes(_count_bytes(pk.e), byteorder='big')),
+                "n": nopad_b64(pk.n.to_bytes(_count_bytes(pk.n), byteorder='big')),
+            },
+            'hash': 'sha256',
+        }
+    elif isinstance(key, cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey):
+        pk = key.public_key().public_numbers()
+        if pk.curve.name == 'secp256r1':
+            bits = 256
+            alg = 'ES256'
+            hash = 'sha256'
+            point_size = 32
+            curve = 'P-256'
+        elif pk.curve.name == 'secp384r1':
+            bits = 384
+            alg = 'ES384'
+            hash = 'sha384'
+            point_size = 48
+            curve = 'P-384'
+        elif pk.curve.name == 'secp521r1':
+            # Not yet supported on Let's Encrypt side, see
+            # https://github.com/letsencrypt/boulder/issues/2217
+            bits = 521
+            alg = 'ES512'
+            hash = 'sha512'
+            point_size = 66
+            curve = 'P-521'
+        else:
+            return 'unknown elliptic curve: {0}'.format(pk.curve.name), {}
+        bytes = (bits + 7) // 8
+        return None, {
+            'key_obj': key,
+            'type': 'ec',
+            'alg': alg,
+            'jwk': {
+                "kty": "EC",
+                "crv": curve,
+                "x": nopad_b64(pk.x.to_bytes(bytes, byteorder='big')),
+                "y": nopad_b64(pk.y.to_bytes(bytes, byteorder='big')),
+            },
+            'hash': hash,
+            'point_size': point_size,
+        }
+    else:
+        return 'unknown key type "{0}"'.format(type(key)), {}
+
+
+def _pad_hex(n, digits):
+    res = hex(n)[2:]
+    if len(res) < digits:
+        res = '0' * (digits - len(res)) + res
+    return res
+
+
+def _sign_request_cryptography(module, payload64, protected64, key_data):
+    sign_payload = "{0}.{1}".format(protected64, payload64).encode('utf8')
+    if isinstance(key_data['key_obj'], cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey):
+        padding = cryptography.hazmat.primitives.asymmetric.padding.PKCS1v15()
+        hash = cryptography.hazmat.primitives.hashes.SHA256()
+        signature = key_data['key_obj'].sign(sign_payload, padding, hash)
+    elif isinstance(key_data['key_obj'], cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey):
+        if key_data['hash'] == 'sha256':
+            hash = cryptography.hazmat.primitives.hashes.SHA256
+        elif key_data['hash'] == 'sha384':
+            hash = cryptography.hazmat.primitives.hashes.SHA384
+        elif key_data['hash'] == 'sha512':
+            hash = cryptography.hazmat.primitives.hashes.SHA512
+        ecdsa = cryptography.hazmat.primitives.asymmetric.ec.ECDSA(hash())
+        r, s = cryptography.hazmat.primitives.asymmetric.utils.decode_dss_signature(key_data['key_obj'].sign(sign_payload, ecdsa))
+        rr = _pad_hex(r, 2 * key_data['point_size'])
+        ss = _pad_hex(s, 2 * key_data['point_size'])
+        signature = binascii.unhexlify(rr) + binascii.unhexlify(ss)
+
+    return {
+        "protected": protected64,
+        "payload": payload64,
+        "signature": nopad_b64(signature),
     }
 
 
@@ -397,7 +514,10 @@ class ACMEAccount(object):
         Parses an RSA or Elliptic Curve key file in PEM format and returns a pair
         (error, key_data).
         '''
-        return _parse_key_openssl(self._openssl_bin, self.module, key_file, key_content)
+        if HAS_CURRENT_CRYPTOGRAPHY:
+            return _parse_key_cryptography(self.module, key_file, key_content)
+        else:
+            return _parse_key_openssl(self._openssl_bin, self.module, key_file, key_content)
 
     def sign_request(self, protected, payload, key_data):
         try:
@@ -406,7 +526,10 @@ class ACMEAccount(object):
         except Exception as e:
             raise ModuleFailException("Failed to encode payload / headers as JSON: {0}".format(e))
 
-        return _sign_request_openssl(self._openssl_bin, self.module, payload64, protected64, key_data)
+        if HAS_CURRENT_CRYPTOGRAPHY:
+            return _sign_request_cryptography(self.module, payload64, protected64, key_data)
+        else:
+            return _sign_request_openssl(self._openssl_bin, self.module, payload64, protected64, key_data)
 
     def send_signed_request(self, url, payload, key_data=None, jws_header=None):
         '''
@@ -583,20 +706,12 @@ class ACMEAccount(object):
         return new_account or changed
 
 
-def _read_file(fn, mode='b'):
-    try:
-        with open(fn, 'r' + mode) as f:
-            return f.read()
-    except Exception as e:
-        raise ModuleFailException('Error while reading file "{0}": {1}'.format(fn, e))
-
-
 def cryptography_get_csr_domains(module, csr_filename):
     '''
     Return a set of requested domains (CN and SANs) for the CSR.
     '''
     domains = set([])
-    csr = cryptography.x509.load_pem_x509_csr(_read_file(csr_filename), _cryptography_backend)
+    csr = cryptography.x509.load_pem_x509_csr(read_file(csr_filename), _cryptography_backend)
     for sub in csr.subject:
         if sub.oid == cryptography.x509.oid.NameOID.COMMON_NAME:
             domains.add(sub.value)
@@ -618,7 +733,7 @@ def cryptography_get_cert_days(module, cert_file):
         return -1
 
     try:
-        cert = cryptography.x509.load_pem_x509_certificate(_read_file(cert_file), _cryptography_backend)
+        cert = cryptography.x509.load_pem_x509_certificate(read_file(cert_file), _cryptography_backend)
     except Exception as e:
         raise ModuleFailException('Cannot parse certificate {0}: {1}'.format(cert_file, e))
     now = datetime.datetime.now()
