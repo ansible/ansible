@@ -335,6 +335,8 @@ def _parse_key_cryptography(module, key_file=None, key_content=None):
     # If key_content isn't given, read key_file
     if key_content is None:
         key_content = read_file(key_file)
+    else:
+        key_content = to_bytes(key_content)
     # Parse key
     try:
         key = cryptography.hazmat.primitives.serialization.load_pem_private_key(key_content, password=None, backend=_cryptography_backend)
