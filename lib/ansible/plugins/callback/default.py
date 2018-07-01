@@ -24,6 +24,18 @@ from ansible.plugins.callback import CallbackBase
 from ansible.utils.color import colorize, hostcolor
 
 
+# These values use ansible.constants for historical reasons, mostly to allow
+# unmodified derivative plugins to work. However, newer options added to the
+# plugin are not also added to ansible.constants, so authors of derivative
+# callback plugins will eventually need to add a reference to the common docs
+# fragment for the 'default' callback plugin
+DEFAULT_SHOW_CUSTOM_STATS = C.SHOW_CUSTOM_STATS
+DEFAULT_DISPLAY_SKIPPED_HOSTS = C.DISPLAY_SKIPPED_HOSTS
+# These values reflect the defaults defined in the config fragment in the docs
+DEFAULT_DISPLAY_OK_HOSTS = True
+DEFAULT_DISPLAY_FAILED_STDERR = False
+
+
 class CallbackModule(CallbackBase):
 
     '''
@@ -50,7 +62,7 @@ class CallbackModule(CallbackBase):
         if self._last_task_banner != result._task._uuid:
             self._print_task_banner(result._task)
 
-        use_stderr = self._plugin_options.get('display_failed_stderr', False)
+        use_stderr = self._plugin_options.get('display_failed_stderr', DEFAULT_DISPLAY_FAILED_STDERR)
 
         self._handle_exception(result._result, use_stderr=use_stderr)
         self._handle_warnings(result._result)
@@ -71,7 +83,7 @@ class CallbackModule(CallbackBase):
             self._display.display("...ignoring", color=C.COLOR_SKIP)
 
     def v2_runner_on_ok(self, result):
-        if not self._plugin_options.get('display_ok_hosts'):
+        if not self._plugin_options.get('display_ok_hosts', DEFAULT_DISPLAY_OK_HOSTS):
             return
 
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
@@ -106,7 +118,7 @@ class CallbackModule(CallbackBase):
             self._display.display(msg, color=color)
 
     def v2_runner_on_skipped(self, result):
-        if self._plugin_options.get('display_skipped_hosts', C.DISPLAY_SKIPPED_HOSTS):  # fallback on constants for inherited plugins missing docs
+        if self._plugin_options.get('display_skipped_hosts', DEFAULT_DISPLAY_SKIPPED_HOSTS):
 
             self._clean_results(result._result, result._task.action)
 
@@ -146,7 +158,8 @@ class CallbackModule(CallbackBase):
             self._last_task_name = task.get_name().strip()
 
             # Display the task banner immediately if we're not doing any filtering based on task result
-            if self._plugin_options.get('display_skipped_hosts') and self._plugin_options.get('display_ok_hosts'):
+            if (self._plugin_options.get('display_skipped_hosts', DEFAULT_DISPLAY_SKIPPED_HOSTS) and
+                    self._plugin_options.get('display_ok_hosts', DEFAULT_DISPLAY_OK_HOSTS)):
                 self._print_task_banner(task)
 
     def _print_task_banner(self, task):
@@ -206,7 +219,7 @@ class CallbackModule(CallbackBase):
                 self._display.display(diff)
 
     def v2_runner_item_on_ok(self, result):
-        if not self._plugin_options.get('display_ok_hosts'):
+        if not self._plugin_options.get('display_ok_hosts', DEFAULT_DISPLAY_OK_HOSTS):
             return
 
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
@@ -247,7 +260,7 @@ class CallbackModule(CallbackBase):
         self._display.display(msg + " (item=%s) => %s" % (self._get_item_label(result._result), self._dump_results(result._result)), color=C.COLOR_ERROR)
 
     def v2_runner_item_on_skipped(self, result):
-        if self._plugin_options.get('display_skipped_hosts', C.DISPLAY_SKIPPED_HOSTS):  # fallback on constants for inherited plugins missing docs
+        if self._plugin_options.get('display_skipped_hosts', DEFAULT_DISPLAY_SKIPPED_HOSTS):
             self._clean_results(result._result, result._task.action)
             msg = "skipping: [%s] => (item=%s) " % (result._host.get_name(), self._get_item_label(result._result))
             if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
@@ -286,7 +299,7 @@ class CallbackModule(CallbackBase):
         self._display.display("", screen_only=True)
 
         # print custom stats
-        if self._plugin_options.get('show_custom_stats', C.SHOW_CUSTOM_STATS) and stats.custom:  # fallback on constants for inherited plugins missing docs
+        if self._plugin_options.get('show_custom_stats', DEFAULT_SHOW_CUSTOM_STATS) and stats.custom:
             self._display.banner("CUSTOM STATS: ")
             # per host
             # TODO: come up with 'pretty format'
