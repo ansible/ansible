@@ -60,8 +60,8 @@ options:
   validate_certs:
     description:
       - Whether calls to the ACME directory will validate TLS certificates.
-      - I(Warning): Should I(only ever) be set to C(no) for testing purposes,
-        for example when testing against a local Pebble server.
+      - "I(Warning): Should I(only ever) be set to C(no) for testing purposes,
+         for example when testing against a local Pebble server."
     type: bool
     default: 'yes'
     version_added: 2.5
