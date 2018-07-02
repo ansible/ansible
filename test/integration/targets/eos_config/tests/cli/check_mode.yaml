@@ -17,7 +17,7 @@
    that:
    - "result.msg is defined"
    - "result.failed == true"
-   - "'Error on executing commands' in result.msg"
+   - "'Invalid input' in result.msg"
 
 - name: valid configuration in check mode
   eos_config:
