@@ -22,6 +22,12 @@
     allocation_method: Static
     name: testPublicIP
 
+- name: Create load balancer
+  azure_rm_loadbalancer:
+    resource_group: "{{ resource_group }}"
+    name: testLB
+    public_ip_address_name: testPublicIP
+
 - name: Create network security group within same resource group of VMSS.
   azure_rm_securitygroup:
     resource_group: "{{ resource_group }}"
@@ -31,12 +37,6 @@
   azure_rm_securitygroup:
     resource_group: "{{ resource_group_secondary }}"
     name: testNetworkSecurityGroup2
-
-- name: Create load balancer
-  azure_rm_loadbalancer:
-    resource_group: "{{ resource_group }}"
-    name: testLB
-    public_ip_address_name: testPublicIP
 
 - name: Create VMSS
   azure_rm_virtualmachine_scaleset:
@@ -150,6 +150,38 @@
   assert:
     that: results.changed
 
+- name: Create VMSS
+  azure_rm_virtualmachine_scaleset:
+    resource_group: "{{ resource_group }}"
+    name: testVMSS{{ rpfx }}1
+    vm_size: Standard_DS1_v2
+    admin_username: testuser
+    ssh_password_enabled: true
+    admin_password: "Password1234!"
+    capacity: 2
+    virtual_network_name: testVnet
+    subnet_name: testSubnet
+    load_balancer: testLB
+    upgrade_policy: Manual
+    tier: Standard
+    managed_disk_type: Standard_LRS
+    os_disk_caching: ReadWrite
+    image:
+      offer: CoreOS
+      publisher: CoreOS
+      sku: Stable
+      version: latest
+    data_disks:
+      - lun: 0
+        disk_size_gb: 64
+        caching: ReadWrite
+        managed_disk_type: Standard_LRS
+  register: results
+
+- name: Assert that VMSS ran
+  assert:
+    that: results.changed
+
 - name: Delete VMSS
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
@@ -164,10 +196,36 @@
       sku: Stable
       version: latest
 
+- name: Create VMSS with security group in same resource group, with accelerated networking(check mode).
+  azure_rm_virtualmachine_scaleset:
+    resource_group: "{{ resource_group }}"
+    name: testVMSS{{ rpfx }}2
+    vm_size: Standard_D3_v2
+    capacity: 1
+    virtual_network_name: testVnet
+    subnet_name: testSubnet
+    admin_username: testuser
+    ssh_password_enabled: true
+    admin_password: "Password1234!"
+    image:
+      offer: CoreOS
+      publisher: CoreOS
+      sku: Stable
+      version: latest
+    upgrade_policy: Manual
+    security_group: testNetworkSecurityGroup
+    enable_accelerated_networking: yes
+  register: results
+  check_mode: yes
+
+- name: Assert that VMSS can be created
+  assert:
+    that: results.changed
+
 - name: Create VMSS with security group in same resource group, with accelerated networking.
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
-    name: testVMSWithAccNetworking
+    name: testVMSS{{ rpfx }}2
     vm_size: Standard_D3_v2
     capacity: 1
     virtual_network_name: testVnet
@@ -195,7 +253,7 @@
 - name: Delete VMSS
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
-    name: testVMSWithAccNetworking
+    name: testVMSS{{ rpfx }}2
     state: absent
     remove_on_absent: ['all']
     vm_size: Standard_D3_v2
@@ -206,10 +264,37 @@
       sku: Stable
       version: latest
 
+- name: Create VMSS with security group in different resource group(check mode).
+  azure_rm_virtualmachine_scaleset:
+    resource_group: "{{ resource_group }}"
+    name: testVMSS{{ rpfx }}3
+    vm_size: Standard_DS1_v2
+    capacity: 1
+    virtual_network_name: testVnet
+    subnet_name: testSubnet
+    admin_username: testuser
+    ssh_password_enabled: true
+    admin_password: "Password1234!"
+    image:
+      offer: CoreOS
+      publisher: CoreOS
+      sku: Stable
+      version: latest
+    upgrade_policy: Manual
+    security_group:
+      name: testNetworkSecurityGroup2
+      resource_group: "{{ resource_group_secondary }}"
+  register: results
+  check_mode: yes
+
+- name: Assert that VMSS ran
+  assert:
+    that: results.changed
+
 - name: Create VMSS with security group in different resource group.
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
-    name: testVMSSNsgInDiffRscGrp
+    name: testVMSS{{ rpfx }}3
     vm_size: Standard_DS1_v2
     capacity: 1
     virtual_network_name: testVnet
@@ -237,7 +322,7 @@
 - name: Delete VMSS
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
-    name: testVMSSNsgInDiffRscGrp
+    name: testVMSS{{ rpfx }}3
     state: absent
     remove_on_absent: ['all']
     vm_size: Standard_DS1_v2
@@ -251,7 +336,7 @@
 - name: Fail when instance type is not supported to enable accelerated networking
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
-    name: testVMSWithAccNetworking
+    name: testVMSS{{ rpfx }}4
     vm_size: Standard_DS1_v2
     virtual_network_name: testVnet
     subnet_name: testSubnet
