@@ -32,8 +32,9 @@ DOCUMENTATION = """
 """
 
 import subprocess
-from ansible.plugins.connection.jail import Connection as Jail
 
+from ansible.plugins.connection.jail import Connection as Jail
+from ansible.module_utils._text import to_native
 from ansible.errors import AnsibleError
 
 try:
@@ -72,10 +73,10 @@ class Connection(Jail):
         stdout, stderr = p.communicate()
 
         if stdout is not None:
-            stdout = stdout.decode('utf-8')
+            stdout = to_native(stdout)
 
         if stderr is not None:
-            stderr = stderr.decode('utf-8')
+            stderr = to_native(stderr)
 
         # otherwise p.returncode would not be set
         p.wait()
