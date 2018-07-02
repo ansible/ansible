@@ -1,22 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2014, Trond Hindenes <trond@hindenes.com>, and others
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2014, Trond Hindenes <trond@hindenes.com>, and others
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
@@ -65,6 +51,22 @@ options:
     - C(creates_path) MUST be set and is a file.
     - You can use this in conjunction with C(product_id) and other C(creates_*).
     version_added: '2.4'
+  display_name:
+    description:
+    - The display Name of the installed package.
+    - This is used for checking whether the product is already installed and
+      getting the uninstall information if C(state=absent).
+    - You can find the display names for installed programs in Programs and
+    Features.
+    - C(display_version) MUST be set.
+  display_version:
+    description:
+    - The display Version of the installed package.
+    - This is used for checking the version installed for the C(display_name)
+    reference.
+    - You can find the display versions for installed programs in Programs and
+    Features.
+    - C(display_name) MUST be set.
   expected_return_code:
     description:
     - One or more return codes from the package installation that indicates
@@ -74,11 +76,6 @@ options:
     - A return code of C(3010) usually means that a reboot is required, the
       C(reboot_required) return value is set if the return code is C(3010).
     default: [0, 3010]
-  name:
-    description:
-    - Name of the package, if name isn't specified the path will be used for
-      log messages.
-    - As of Ansible 2.4 this is deprecated and no longer required.
   password:
     description:
     - The password for C(user_name), must be set when C(user_name) is.
