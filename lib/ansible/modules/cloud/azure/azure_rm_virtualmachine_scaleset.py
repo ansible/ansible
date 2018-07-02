@@ -185,7 +185,7 @@ options:
         default: ['all']
     enable_accelerated_networking:
         description:
-            - Indicates whether user wants to allow accelerated networking for virtual machines in scaleset.
+            - Indicates whether user wants to allow accelerated networking for virtual machines in scaleset being created.
         version_added: "2.7"
         type: bool
         default: false
