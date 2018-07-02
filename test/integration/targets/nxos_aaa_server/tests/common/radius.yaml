@@ -9,6 +9,7 @@
     deadtime: default
     server_timeout: default
     directed_request: default
+    provider: "{{ connection }}"
     state: default
   ignore_errors: yes
 
@@ -16,6 +17,7 @@
   - name: "Configure radius server defaults"
     nxos_aaa_server: &configure_default_radius
       server_type: radius
+      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -33,6 +35,7 @@
       server_timeout: 9
       deadtime: 20
       directed_request: enabled
+      provider: "{{ connection }}"
       state: present
     register: result
   
@@ -57,6 +60,7 @@
       server_type: radius
       encrypt_type: 7
       global_key: test_key
+      provider: "{{ connection }}"
       state: present
     register: result
    
@@ -75,6 +79,7 @@
       server_timeout: default
       global_key: default
       directed_request: default
+      provider: "{{ connection }}"
       state: default
     register: result
 

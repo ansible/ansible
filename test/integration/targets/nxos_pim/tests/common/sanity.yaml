@@ -6,16 +6,19 @@
 - name: "Setup: Disable feature PIM"
   nxos_feature: &disable_feature
     feature: pim
+    provider: "{{ connection }}"
     state: disabled
 
 - name: "Setup: Enable feature PIM"
   nxos_feature:
     feature: pim
+    provider: "{{ connection }}"
     state: enabled
 
 - name: "Setup: Configure ssm_range none"
   nxos_pim: &none
     ssm_range: "none"
+    provider: "{{ connection }}"
 
 - block:
   - name: Configure ssm_range
@@ -23,6 +26,7 @@
       ssm_range: 
         - "239.128.1.0/24"
         - "224.0.0.0/8"
+      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -40,6 +44,7 @@
   - name: Configure ssm_range default
     nxos_pim: &conf_default
       ssm_range: "default"
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true

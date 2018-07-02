@@ -11,6 +11,7 @@
   - name: "Enable feature hsrp"
     nxos_feature: 
       feature: hsrp
+      provider: "{{ connection }}"
       state: enabled
 
   - name: "change int1 mode"
@@ -20,6 +21,7 @@
       parents:
         - "interface {{ intname1 }}"
       match: none
+      provider: "{{ connection }}"
 
   - name: "change int2 mode"
     nxos_config:
@@ -28,6 +30,7 @@
       parents:
         - "interface {{ intname2 }}"
       match: none
+      provider: "{{ connection }}"
 
   - name: "configure nxos_hsrp"
     nxos_hsrp: &conf1000
@@ -39,6 +42,7 @@
       preempt: enabled
       auth_type: md5
       auth_string: "7 1234"
+      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -63,6 +67,7 @@
       preempt: enabled
       auth_type: md5
       auth_string: "0 1234"
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -83,6 +88,7 @@
       preempt: disabled
       auth_type: md5
       auth_string: "0 1234"
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -101,6 +107,7 @@
       interface: "{{ intname2 }}"
       auth_type: text
       auth_string: "1234"
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -119,6 +126,7 @@
       interface: "{{ intname2 }}"
       auth_type: text
       auth_string: default
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -133,6 +141,7 @@
     nxos_hsrp: &remove
       group: 1000
       interface: "{{ intname1 }}"
+      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -148,6 +157,7 @@
   - name: "Disable feature hsrp"
     nxos_feature: 
       feature: hsrp
+      provider: "{{ connection }}"
       state: disabled
     ignore_errors: yes
 

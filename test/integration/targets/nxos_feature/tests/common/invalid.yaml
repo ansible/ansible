@@ -4,6 +4,7 @@
 - name: configure invalid feature name
   nxos_feature:
     feature: invalid
+    provider: "{{ connection }}"
   register: result
   ignore_errors: yes
 

@@ -8,6 +8,7 @@
       - show interface mgmt0 | json
     wait_for:
       - "result[1].TABLE_interface.ROW_interface.state foo up"
+    provider: "{{ connection }}"
   register: result
   ignore_errors: yes
 
