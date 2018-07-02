@@ -1,4 +1,5 @@
 #!powershell
+# This file is part of Ansible
 
 # Copyright: (c) 2014, Trond Hindenes <trond@hindenes.com>, and others
 # Copyright: (c) 2017, Ansible Project
@@ -25,6 +26,8 @@ $validate_certs = Get-AnsibleParam -obj $params -name "validate_certs" -type "bo
 $creates_path = Get-AnsibleParam -obj $params -name "creates_path" -type "path"
 $creates_version = Get-AnsibleParam -obj $params -name "creates_version" -type "str"
 $creates_service = Get-AnsibleParam -obj $params -name "creates_service" -type "str"
+$display_name = Get-AnsibleParam -obj $params -name "display_name" -type "str"
+$display_version = Get-AnsibleParam -obj $params -name "display_version" -type "str" -failifempty ($display_name -ne $null)
 
 $result = @{
     changed = $false
@@ -149,7 +152,7 @@ Function Test-RegistryProperty($path, $name) {
     }
 }
 
-Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_path, $creates_version, $creates_service) {
+Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_path, $creates_version, $creates_service, $display_name, $display_version) {
     # will get some metadata about the program we are trying to install or remove
     $metadata = @{
         installed = $false
@@ -209,7 +212,7 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
     }
 
     # try and get the product id
-    if ($product_id -ne $null) {
+    if ($product_id -ne $null ) {
         $metadata.product_id = $product_id
     } else {
         # we can get the product_id if the path is an msi and is either a local file or unc file with credential delegation
@@ -220,12 +223,21 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
             } catch {
                 Fail-Json -obj $result -message "failed to get product_id from MSI at $($path): $($_.Exception.Message)"
             }
-        } elseif ($creates_path -eq $null -and $creates_service -eq $null) {
+        } elseif (($creates_path -eq $null -and $creates_service -eq $null) -and ($display_name -eq $null -and $display_version -eq $null)) {
             # we need to fail without the product id at this point
             Fail-Json $result "product_id is required when the path is not an MSI or the path is an MSI but not local"
         }
     }
 
+    if ($display_name -ne $null) {
+        $metadata.display_name = $display_name
+    }
+
+    if ($display_version -ne $null) {
+        $metadata.display_version = $display_version
+    }
+
+    # try and get the product id
     if ($metadata.product_id -ne $null) {
         $uninstall_key = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$($metadata.product_id)"
         $uninstall_key_wow64 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$($metadata.product_id)"
@@ -238,6 +250,48 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
 
         # if the reg key exists, try and get the uninstall string and check if it is an MSI
         if ($metadata.installed -eq $true -and $metadata.location_type -eq [LocationType]::Empty) {
+            if (Test-RegistryProperty -path $uninstall_key -name "UninstallString") {
+                $metadata.uninstall_string = (Get-ItemProperty -Path $uninstall_key -Name "UninstallString").UninstallString
+                if ($metadata.uninstall_string.StartsWith("MsiExec")) {
+                    $metadata.msi = $true
+                }
+            }
+        }
+    }
+
+    if ($metadata.display_name -ne $null -and $metadata.display_version -ne $null) {
+        $uninstall_node = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\"
+        $uninstall_node_wow64 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\"
+        $uninstall_array = Get-ChildItem -Path $uninstall_node -Name
+        $uninstall_array_wow64 = Get-ChildItem -Path $uninstall_node_wow64 -Name
+
+        foreach ($software in $uninstall_array) {
+            $uninstall_path = $uninstall_node + $software
+            if ( Test-RegistryProperty -Path $uninstall_path -name "displayName") {
+               $displayname = (Get-ItemProperty -Path $uninstall_path -Name "displayName").displayName
+            }
+            if ( Test-RegistryProperty -Path $uninstall_path -name "displayVersion") {
+               $displayversion = (Get-ItemProperty -Path $uninstall_path -Name "displayVersion").displayVersion
+            }
+            if ($metadata.display_name -eq $displayname -and $metadata.display_version -eq $displayversion) {
+               $uninstall_key  = $uninstall_path
+               $metadata.installed = $true
+            }
+        }
+        foreach ($software in $uninstall_array_wow64) {
+            $uninstall_path = $uninstall_node_wow64 + $software
+            if ( Test-RegistryProperty -Path $uninstall_path -name "displayName") {
+               $displayname = (Get-ItemProperty -Path $uninstall_path -Name "displayName").displayName
+            }
+            if ( Test-RegistryProperty -Path $uninstall_path -name "displayVersion") {
+               $displayversion = (Get-ItemProperty -Path $uninstall_path -Name "displayVersion").displayVersion
+            }
+            if ($metadata.display_name -eq $displayname -and $metadata.display_version -eq $displayversion) {
+               $uninstall_key  = $uninstall_path
+               $metadata.installed = $true
+            }
+        }
+        if ($metadata.installed -eq $true) {
             if (Test-RegistryProperty -path $uninstall_key -name "UninstallString") {
                 $metadata.uninstall_string = (Get-ItemProperty -Path $uninstall_key -Name "UninstallString").UninstallString
                 if ($metadata.uninstall_string.StartsWith("MsiExec")) {
@@ -268,7 +322,6 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
         $metadata.installed = $service_exists
     }
 
-
     # finally throw error if path is not valid unless we want to uninstall the package and it already is
     if ($metadata.path_error -ne $null -and (-not ($state -eq "absent" -and $metadata.installed -eq $false))) {
         Fail-Json -obj $result -message $metadata.path_error
@@ -297,7 +350,7 @@ Function Convert-Encoding($string) {
     }
 }
 
-$program_metadata = Get-ProgramMetadata -state $state -path $path -product_id $product_id -credential $credential -creates_path $creates_path -creates_version $creates_version -creates_service $creates_service
+$program_metadata = Get-ProgramMetadata -state $state -path $path -product_id $product_id -credential $credential -creates_path $creates_path -creates_version $creates_version -creates_service $creates_service -display_name $display_name -display_version $display_version
 if ($state -eq "absent") {
     if ($program_metadata.installed -eq $true) {
         # artifacts we create that must be cleaned up
