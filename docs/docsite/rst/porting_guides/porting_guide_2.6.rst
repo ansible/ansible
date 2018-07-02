@@ -73,6 +73,11 @@ Noteworthy module changes
 * The ``k8s`` module will not automatically change ``Project`` creation requests into ``ProjectRequest`` creation requests as the ``openshift_raw`` module did. You must now specify the ``ProjectRequest`` kind explicitly.
 * The ``k8s`` module will not automatically remove secrets from the Ansible return values (and by extension the log). In order to prevent secret values in a task from being logged, specify the ``no_log`` parameter on the task block.
 * The ``k8s_scale`` module now supports scalable OpenShift objects, such as ``DeploymentConfig``.
+* The ``lineinfile`` module was changed to show a warning when using an empty string as a regexp.
+  Since an empty regexp matches every line in a file, it will replace the last line in a file rather
+  than inserting. If this is the desired behavior, use ``'^'`` which will match every line and
+  will not trigger the warning.
+
 
 
 Plugins
