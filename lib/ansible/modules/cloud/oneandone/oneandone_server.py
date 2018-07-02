@@ -135,7 +135,7 @@ options:
     default: 'yes'
 
 requirements:
-  - "1and1"
+  - "1and1 >= 1.7.3"
   - "python >= 2.6"
 
 author:
