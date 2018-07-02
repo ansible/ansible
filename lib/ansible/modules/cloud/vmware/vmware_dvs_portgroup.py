@@ -101,15 +101,17 @@ options:
             - '- C(inbound_policy) (bool): Indicate whether or not the teaming policy is applied to inbound frames as well. (default: False)'
             - '- C(notify_switches) (bool): Indicate whether or not to notify the physical switch if a link fails. (default: True)'
             - '- C(rolling_order) (bool): Indicate whether or not to use a rolling policy when restoring links. (default: False)'
-            - '- C(active_uplinkport) (list): List of active uplink ports used for load balancing. (default: False)'
-            - '- C(standby_uplinkport) (list): List of standby uplink ports used for failover. (default: False)'
+            - '- C(active_uplinkport) (list): List of active uplink ports used for load balancing. (default: [])'
+            - '- C(standby_uplinkport) (list): List of standby uplink ports used for failover. (default: [])'
         required: False
         version_added: '2.5'
         default: {
             'notify_switches': True,
             'load_balance_policy': 'loadbalance_srcid',
             'inbound_policy': False,
-            'rolling_order': False
+            'rolling_order': False,
+            'active_uplinkport': [],
+            'standby_uplinkport': []
         }
     port_policy:
         description:
