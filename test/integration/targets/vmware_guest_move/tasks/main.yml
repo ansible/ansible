@@ -37,7 +37,7 @@
 
 - set_fact: vm1="{{ vms['json'][0] }}"
 
-# Testcase 0001: Get detail of vms from given esxi
+# Testcase 0001: Move vm and get changed status
 - name: Move VM (Changed)
   vmware_guest_move:
     validate_certs: false
@@ -49,6 +49,8 @@
     dest_folder: F1/DC1/vm/F1
   register: vm_facts_0001
 
+
+# Testcase 0002: Move vm and get OK status (Already Moved)
 - name: Move VM (OK)
   vmware_guest_move:
     validate_certs: false
