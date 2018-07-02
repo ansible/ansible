@@ -339,6 +339,8 @@ def await_stack_set_operation(module, cfn, stack_set_name, operation_id, max_wai
             # subtract however long we waited already
             max_wait=int(max_wait - (datetime.datetime.now() - wait_start).total_seconds()),
         )
+    elif operation and operation['StackSetOperation']['Status'] in ('FAILED', 'STOPPED'):
+        pass
     else:
         module.warn(
             "Timed out waiting for operation {0} on stack set {1} after {2} seconds. Returning unfinished operation".format(
@@ -348,6 +350,7 @@ def await_stack_set_operation(module, cfn, stack_set_name, operation_id, max_wai
 
 
 def await_stack_instance_completion(module, cfn, stack_set_name, max_wait):
+    to_await = None
     for i in range(max_wait // 15):
         try:
             stack_instances = cfn.list_stack_instances(StackSetName=stack_set_name)
@@ -381,6 +384,7 @@ def main():
         wait=dict(type='bool', default=False),
         wait_timeout=dict(type='int', default=900),
         state=dict(default='present', choices=['present', 'absent']),
+        purge_stacks=dict(type='bool', default=True),
         parameters=dict(type='dict', default={}),
         template=dict(type='path'),
         template_url=dict(),
@@ -412,8 +416,8 @@ def main():
         mutually_exclusive=[['template_url', 'template', 'template_body']],
         supports_check_mode=True
     )
-    if not (module.boto3_at_least('1.6.0') and module.botocore_at_least('1.8.0')):
-        module.fail_json(msg="Boto3 or botocore version is too low. This module requires at least boto3 1.6 and botocore 1.8")
+    if not (module.boto3_at_least('1.6.0') and module.botocore_at_least('1.10.26')):
+        module.fail_json(msg="Boto3 or botocore version is too low. This module requires at least boto3 1.6 and botocore 1.10.26")
 
     # Wrap the cloudformation client methods that this module uses with
     # automatic backoff / retry for throttling error codes
@@ -425,6 +429,12 @@ def main():
     # collect the parameters that are passed to boto3. Keeps us from having so many scalars floating around.
     stack_params = {}
     state = module.params['state']
+    if state == 'present' and not module.params['accounts']:
+        module.fail_json(
+            msg="Can't create a stack set without choosing at least one account. "
+                "To get the ID of the current account, use the aws_caller_facts module."
+        )
+
     module.params['accounts'] = [to_native(a) for a in module.params['accounts']]
 
     stack_params['StackSetName'] = module.params['name']
@@ -530,7 +540,7 @@ def main():
                 Accounts=list(set(acct for acct, region in new_stack_instances)),
                 Regions=list(set(region for acct, region in new_stack_instances)),
                 OperationPreferences=get_operation_preferences(module),
-                OperationId=operation_ids[-1]
+                OperationId=operation_ids[-1],
             )
         else:
             operation_ids.append('Ansible-StackInstance-Update-{0}'.format(operation_uuid))
@@ -549,10 +559,43 @@ def main():
             )
 
     elif state == 'absent':
+        if not existing_stack_set:
+            module.exit_json(msg='Stack set {0} does not exist'.format(module.params['name']))
+        if module.params.get('purge_stack_instances') is False:
+            pass
+        try:
+            cfn.delete_stack_set(
+                StackSetName=module.params['name'],
+            )
+            module.exit_json(msg='Stack set {0} deleted'.format(module.params['name']))
+        except is_boto3_error_code('OperationInProgressException') as e:
+            module.fail_json_aws(e, msg='Cannot delete stack {0} while there is an operation in progress'.format(module.params['name']))
+        except is_boto3_error_code('StackSetNotEmptyException'):
+            delete_instances_op = 'Ansible-StackInstance-Delete-{0}'.format(operation_uuid)
+            #AWSRetry.jittered_backoff(retries=3, delay=10, catch_extra_error_codes=['OperationInProgressException'])(
+            cfn.delete_stack_instances(
+                StackSetName=module.params['name'],
+                Accounts=module.params['accounts'],
+                Regions=module.params['regions'],
+                RetainStacks=(not module.params.get('purge_stacks')),
+                OperationId=delete_instances_op
+            )
+            await_stack_set_operation(
+                module, cfn, operation_id=delete_instances_op,
+                stack_set_name=stack_params['StackSetName'],
+                max_wait=module.params.get('wait_timeout'),
+            )
+            cfn.delete_stack_set(
+                StackSetName=module.params['name'],
+            )
+            module.exit_json(changed=True, msg='Stack set {0} deleted'.format(module.params['name']))
+
         # absent state is different because of the way delete_stack works.
         # problem is it it doesn't give an error if stack isn't found
         # so must describe the stack first
         raise NotImplementedError("Oooooops")
+
+        module.exit_json(msg='Stack set {0} deleted'.format(module.params['name']))
 
     result.update(**describe_stack_tree(module, stack_params['StackSetName'], operation_ids=operation_ids))
     if any(o['status'] == 'FAILED' for o in result['operations']):
