@@ -45,7 +45,7 @@ options:
   logdest:
     description:
       - Where the puppet logs should go, if puppet apply is being used.
-    choices: [ stdout, syslog ]
+    choices: [ stdout, syslog, all ]
     default: stdout
     version_added: "2.1"
   certname:
@@ -64,12 +64,15 @@ options:
   summarize:
     description:
       - Whether to print a transaction summary
+    version_added: "2.7"
   verbose:
     description:
       - Print extra information
+    version_added: "2.7"
   debug:
     description:
       - Enable full debugging
+    version_added: "2.7"
 requirements:
 - puppet
 author:
