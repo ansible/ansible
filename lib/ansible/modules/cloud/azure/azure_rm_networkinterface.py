@@ -507,7 +507,9 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                     changed = True
 
                 if self.enable_accelerated_networking != bool(results.get('enable_accelerated_networking')):
-                    self.log("CHANGED: Accelerated Networking set to {0} (previously {1})".format(self.enable_accelerated_networking, results.get('enable_accelerated_networking')))
+                    self.log("CHANGED: Accelerated Networking set to {0} (previously {1})".format(
+                        self.enable_accelerated_networking,
+                        results.get('enable_accelerated_networking')))
                     changed = True
 
                 if not changed:
