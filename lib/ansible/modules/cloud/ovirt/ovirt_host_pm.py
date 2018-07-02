@@ -61,13 +61,10 @@ options:
     port:
         description:
             - "Power management interface port."
-    slot:
-        description:
-            - "Power management slot."
     options:
         description:
-            - "Dictionary of additional fence agent options."
-            - "Additional information about options can be found at U(https://fedorahosted.org/cluster/wiki/FenceArguments)."
+            - "Dictionary of additional fence agent options (including Power Management slot)."
+            - "Additional information about options can be found at U(https://github.com/ClusterLabs/fence-agents/blob/master/doc/FenceAgentAPI.md)."
     encrypt_options:
         description:
             - "If (true) options will be encrypted when send to agent."
@@ -94,6 +91,20 @@ EXAMPLES = '''
     password: admin
     port: 3333
     type: ipmilan
+
+# Add fence agent to host 'myhost' using 'slot' option
+- ovirt_host_pm:
+    name: myhost
+    address: 1.2.3.4
+    options:
+      myoption1: x
+      myoption2: y
+      slot: myslot
+    username: admin
+    password: admin
+    port: 3333
+    type: ipmilan
+
 
 # Remove ipmilan fence agent with address 1.2.3.4 on host 'myhost'
 - ovirt_host_pm:
@@ -160,7 +171,6 @@ class HostPmModule(BaseModule):
             ] if self._module.params['options'] else None,
             password=self._module.params['password'],
             port=self._module.params['port'],
-            slot=self._module.params['slot'],
             type=self._module.params['type'],
             username=self._module.params['username'],
             order=self._module.params.get('order', 100),
@@ -173,7 +183,6 @@ class HostPmModule(BaseModule):
             equal(self._module.params.get('password'), entity.password) and
             equal(self._module.params.get('username'), entity.username) and
             equal(self._module.params.get('port'), entity.port) and
-            equal(self._module.params.get('slot'), entity.slot) and
             equal(self._module.params.get('type'), entity.type) and
             equal(self._module.params.get('order'), entity.order)
         )
