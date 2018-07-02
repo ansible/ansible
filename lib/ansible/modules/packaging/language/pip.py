@@ -223,7 +223,7 @@ def _get_cmd_options(module, cmd):
 def _get_full_name(name, version=None):
     if version is None or version == "":
         resp = name
-    elif re.match('^\d', version) != None :
+    elif re.match(r'^\d', version) != None :
         resp = name + '==' + version
     else:
         resp = name + version
