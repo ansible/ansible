@@ -7,6 +7,8 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import re
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
@@ -26,7 +28,7 @@ options:
       - As of 2.2 you can supply a list of names.
   version:
     description:
-      - The version expression to install of the Python library specified in the I(name) parameter.
+      - The version number or expression to install of the Python library specified in the I(name) parameter.
   requirements:
     description:
       - The path to a pip requirements file, which should be local to the remote system.
@@ -123,7 +125,7 @@ EXAMPLES = '''
 # Install (Bottle) python package on version 0.11.
 - pip:
     name: bottle
-    version: "==0.11"
+    version: 0.11
 
 # Install (MyApp) using one of the remote protocols (bzr+,hg+,git+,svn+). You do not have to supply '-e' option in extra_args.
 - pip:
@@ -220,7 +222,9 @@ def _get_cmd_options(module, cmd):
 
 def _get_full_name(name, version=None):
     if version is None or version == "":
-        resp = name + '=='
+        resp = name
+    elif re.match('^\d', version) != None :
+        resp = name + '==' + version
     else:
         resp = name + version
     return resp
