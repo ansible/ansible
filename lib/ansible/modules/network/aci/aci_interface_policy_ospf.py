@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# Copyright: (c) 2018, Dag Wieers (dagwieers) <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -248,7 +249,10 @@ def main():
     tenant = module.params['tenant']
     ospf = module.params['ospf']
     description = module.params['description']
-    controls = ','.join(module.params['controls'])
+    if module.params['controls'] is None:
+        controls = None
+    else:
+        controls = ','.join(module.params['controls'])
     cost = module.params['cost']
     dead_interval = module.params['dead_interval']
     hello_interval = module.params['hello_interval']
@@ -261,7 +265,7 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class='ospfIfPol',
-            aci_rn='uni/tn-{0}/ospfIfP-{1}'.format(tenant, ospf),
+            aci_rn='tn-{0}/ospfIfPol-{1}'.format(tenant, ospf),
             filter_target='eq(ospfIfPol.name, "{0}")'.format(ospf),
             module_object=ospf,
         ),
