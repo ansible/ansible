@@ -21,7 +21,7 @@ notes:
   L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)
-version_added: '2.4'
+version_added: '2.7'
 options:
   tenant:
     description:
@@ -50,15 +50,30 @@ options:
   cost:
     description:
     - The OSPF cost of the interface.
-    - The cost (also called metric) of an interface in OSPF is an indication of the overhead required to send packets across a certain interface. The cost of an interface is inversely proportional to the bandwidth of that interface. A higher bandwidth indicates a lower cost. There is more overhead (higher cost) and time delays involved in crossing a 56k serial line than crossing a 10M ethernet line. The formula used to calculate the cost is: cost= 10000 0000/bandwith in bps For example, it will cost 10 EXP8/10 EXP7 = 10 to cross a 10M Ethernet line and will cost 10 EXP8/1544000 = 64 to cross a T1 line. By default, the cost of an interface is calculated based on the bandwidth; you can force the cost of an interface with the ip ospf cost value interface subconfiguration mode command.
+    - The cost (also called metric) of an interface in OSPF is an indication of
+      the overhead required to send packets across a certain interface. The
+      cost of an interface is inversely proportional to the bandwidth of that
+      interface. A higher bandwidth indicates a lower cost. There is more
+      overhead (higher cost) and time delays involved in crossing a 56k serial
+      line than crossing a 10M ethernet line. The formula used to calculate the
+      cost is C(cost= 10000 0000/bandwith in bps) For example, it will cost
+      10 EXP8/10 EXP7 = 10 to cross a 10M Ethernet line and will cost
+      10 EXP8/1544000 = 64 to cross a T1 line.
+    - By default, the cost of an interface is calculated based on the bandwidth;
+      you can force the cost of an interface with the ip ospf cost value
+      interface subconfiguration mode command.
   controls:
     description:
     - The interface policy controls.
+    choices: [ advert-subnet, bfd, mtu-ignore, passive ]
   dead_interval:
     description:
-    - The interval between hello packets from a neighbor before the router declares the neighbor as down.
+    - The interval between hello packets from a neighbor before the router
+      declares the neighbor as down.
     - This value must be the same for all networking devices on a specific network.
-    - Specifying a smaller dead interval (seconds) will give faster detection of a neighbor being down and improve convergence, but might cause more routing instability.
+    - Specifying a smaller dead interval (seconds) will give faster detection
+      of a neighbor being down and improve convergence, but might cause more
+      routing instability.
   hello_interval:
     description:
     - The interval between hello packets that OSPF sends on the interface.
