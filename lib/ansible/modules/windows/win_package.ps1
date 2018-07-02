@@ -1,4 +1,4 @@
-#!powershell
+﻿#!powershell
 # This file is part of Ansible
 
 # (c) 2014, Trond Hindenes <trond@hindenes.com>, and others
@@ -25,6 +25,8 @@ $validate_certs = Get-AnsibleParam -obj $params -name "validate_certs" -type "bo
 $creates_path = Get-AnsibleParam -obj $params -name "creates_path" -type "path"
 $creates_version = Get-AnsibleParam -obj $params -name "creates_version" -type "str"
 $creates_service = Get-AnsibleParam -obj $params -name "creates_service" -type "str"
+$display_name = Get-AnsibleParam -obj $params -name "display_name" -type "str"
+$display_version = Get-AnsibleParam -obj $params -name "display_version" -type "str" -failifempty ($display_name -ne $null)
 
 $result = @{
     changed = $false
@@ -101,7 +103,7 @@ namespace Ansible {
                 uint res = MsiOpenPackageW(msi, out MsiHandle);
                 if (res != 0)
                     return null;
-                
+
                 int length = 256;
                 var buffer = new StringBuilder(length);
                 res = MsiGetPropertyW(MsiHandle, property, buffer, ref length);
@@ -150,7 +152,7 @@ Function Test-RegistryProperty($path, $name) {
     }
 }
 
-Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_path, $creates_version, $creates_service) {
+Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_path, $creates_version, $creates_service, $display_name, $display_version) {
     # will get some metadata about the program we are trying to install or remove
     $metadata = @{
         installed = $false
@@ -192,7 +194,7 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
                 # Someone is using an auth that supports credential delegation, at least it will fail otherwise
                 $test_path = $path
             }
-            
+
             $valid_path = Test-Path -Path $test_path -PathType Leaf
             if ($valid_path -ne $true) {
                 $metadata.path_error = "the file at the UNC path $path cannot be reached, ensure the user_name account has access to this path or use an auth transport with credential delegation"
@@ -210,7 +212,7 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
     }
 
     # try and get the product id
-    if ($product_id -ne $null) {
+    if ($product_id -ne $null ) {
         $metadata.product_id = $product_id
     } else {
         # we can get the product_id if the path is an msi and is either a local file or unc file with credential delegation
@@ -221,12 +223,21 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
             } catch {
                 Fail-Json -obj $result -message "failed to get product_id from MSI at $($path): $($_.Exception.Message)"
             }
-        } elseif ($creates_path -eq $null -and $creates_service -eq $null) {
+        } elseif (($creates_path -eq $null -and $creates_service -eq $null) -and ($display_name -eq $null -and $display_version -eq $null)) {
             # we need to fail without the product id at this point
             Fail-Json $result "product_id is required when the path is not an MSI or the path is an MSI but not local"
         }
     }
 
+    if ($display_name -ne $null) {
+        $metadata.display_name = $display_name
+    }
+
+    if ($display_version -ne $null) {
+        $metadata.display_version = $display_version
+    }
+
+    # try and get the product id
     if ($metadata.product_id -ne $null) {
         $uninstall_key = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$($metadata.product_id)"
         $uninstall_key_wow64 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$($metadata.product_id)"
@@ -248,11 +259,53 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
         }
     }
 
+    if ($metadata.display_name -ne $null -and $metadata.display_version -ne $null) {
+        $uninstall_node = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\"
+        $uninstall_node_wow64 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\"
+        $uninstall_array = Get-ChildItem -Path $uninstall_node -Name
+        $uninstall_array_wow64 = Get-ChildItem -Path $uninstall_node_wow64 -Name
+
+        foreach ($software in $uninstall_array) {
+            $uninstall_path = $uninstall_node + $software
+            if ( Test-RegistryProperty -Path $uninstall_path -name "displayName") {
+               $displayname = (Get-ItemProperty -Path $uninstall_path -Name "displayName").displayName
+            }
+            if ( Test-RegistryProperty -Path $uninstall_path -name "displayVersion") {
+               $displayversion = (Get-ItemProperty -Path $uninstall_path -Name "displayVersion").displayVersion
+            }
+            if ($metadata.display_name -eq $displayname -and $metadata.display_version -eq $displayversion) {
+               $uninstall_key  = $uninstall_path
+               $metadata.installed = $true
+            }
+        }
+        foreach ($software in $uninstall_array_wow64) {
+            $uninstall_path = $uninstall_node_wow64 + $software
+            if ( Test-RegistryProperty -Path $uninstall_path -name "displayName") {
+               $displayname = (Get-ItemProperty -Path $uninstall_path -Name "displayName").displayName
+            }
+            if ( Test-RegistryProperty -Path $uninstall_path -name "displayVersion") {
+               $displayversion = (Get-ItemProperty -Path $uninstall_path -Name "displayVersion").displayVersion
+            }
+            if ($metadata.display_name -eq $displayname -and $metadata.display_version -eq $displayversion) {
+               $uninstall_key  = $uninstall_path
+               $metadata.installed = $true
+            }
+        }
+        if ($metadata.installed -eq $true) {
+            if (Test-RegistryProperty -path $uninstall_key -name "UninstallString") {
+                $metadata.uninstall_string = (Get-ItemProperty -Path $uninstall_key -Name "UninstallString").UninstallString
+                if ($metadata.uninstall_string.StartsWith("MsiExec")) {
+                    $metadata.msi = $true
+                }
+            }
+        }
+    }
+
     # use the creates_* to determine if the program is installed
     if ($creates_path -ne $null) {
         $path_exists = Test-Path -Path $creates_path
         $metadata.installed = $path_exists
-        
+
         if ($creates_version -ne $null -and $path_exists -eq $true) {
             if (Test-Path -Path $creates_path -PathType Leaf) {
                 $existing_version = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($creates_path).FileVersion
@@ -298,9 +351,9 @@ Function Convert-Encoding($string) {
     }
 }
 
-$program_metadata = Get-ProgramMetadata -state $state -path $path -product_id $product_id -credential $credential -creates_path $creates_path -creates_version $creates_version -creates_service $creates_service
+$program_metadata = Get-ProgramMetadata -state $state -path $path -product_id $product_id -credential $credential -creates_path $creates_path -creates_version $creates_version -creates_service $creates_service -display_name $display_name -display_version $display_version
 if ($state -eq "absent") {
-    if ($program_metadata.installed -eq $true) {      
+    if ($program_metadata.installed -eq $true) {
         # artifacts we create that must be cleaned up
         $cleanup_artifacts = @()
         try {
@@ -349,7 +402,7 @@ if ($state -eq "absent") {
                 if ($arguments -ne $null) {
                     $uninstall_command += " $arguments"
                 }
-                
+
                 try {
                     $process_result = Run-Command -command $uninstall_command
                 } catch {
@@ -379,7 +432,7 @@ if ($state -eq "absent") {
                     $result.reboot_required = $true
                     $result.restart_required = $true
                 }
-            }            
+            }
         } finally {
             # make sure we cleanup any remaining artifacts
             foreach ($cleanup_artifact in $cleanup_artifacts) {
@@ -401,7 +454,7 @@ if ($state -eq "absent") {
             if ($program_metadata.location_type -eq [LocationType]::Unc -and $credential -ne $null) {
                 $file_name = Split-Path -Path $path -Leaf
                 $local_path = [System.IO.Path]::GetRandomFileName()
-                Copy-Item -Path "win_package:\$file_name" -Destination $local_path -WhatIf:$check_mode                                                
+                Copy-Item -Path "win_package:\$file_name" -Destination $local_path -WhatIf:$check_mode
                 $cleanup_artifacts += $local_path
             } elseif ($program_metadata.location_type -eq [LocationType]::Http -and $program_metadata.msi -ne $true) {
                 $local_path = [System.IO.Path]::GetRandomFileName()
@@ -419,11 +472,11 @@ if ($state -eq "absent") {
                 $temp_path = [System.IO.Path]::GetTempPath()
                 $log_file = [System.IO.Path]::GetRandomFileName()
                 $log_path = Join-Path -Path $temp_path -ChildPath $log_file
-                
+
                 $cleanup_artifacts += $log_path
                 $install_arguments = @("$env:windir\system32\msiexec.exe", "/i", $local_path, "/L*V", $log_path, "/qn", "/norestart")
             } else {
-                $log_path = $null                
+                $log_path = $null
                 $install_arguments = @($local_path)
             }
 
@@ -432,13 +485,13 @@ if ($state -eq "absent") {
                 if ($arguments -ne $null) {
                     $install_command += " $arguments"
                 }
-                
+
                 try {
                     $process_result = Run-Command -command $install_command
                 } catch {
                     Fail-Json -obj $result -message "failed to run install process ($install_command): $($_.Exception.Message)"
                 }
-                
+
                 if (($log_path -ne $null) -and (Test-Path -Path $log_path)) {
                     $log_content = Get-Content -Path $log_path | Out-String
                 } else {
@@ -462,7 +515,7 @@ if ($state -eq "absent") {
                     $result.reboot_required = $true
                     $result.restart_required = $true
                 }
-            }            
+            }
         } finally {
             # make sure we cleanup any remaining artifacts
             foreach ($cleanup_artifact in $cleanup_artifacts) {

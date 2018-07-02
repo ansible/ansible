@@ -1,8 +1,22 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2014, Trond Hindenes <trond@hindenes.com>, and others
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# (c) 2014, Trond Hindenes <trond@hindenes.com>, and others
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
@@ -60,6 +74,11 @@ options:
     - A return code of C(3010) usually means that a reboot is required, the
       C(reboot_required) return value is set if the return code is C(3010).
     default: [0, 3010]
+  name:
+    description:
+    - Name of the package, if name isn't specified the path will be used for
+      log messages.
+    - As of Ansible 2.4 this is deprecated and no longer required.
   password:
     description:
     - The password for C(user_name), must be set when C(user_name) is.
