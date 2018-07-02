@@ -1,14 +1,14 @@
 ---
-- name: Toggle feature nxapi - Enable
+- name: Enable Feature Privilage
   nxos_config:
     lines:
-      - feature nxapi
       - feature privilege
   connection: network_cli
   ignore_errors: yes
 
-- name: Set nxapi to default state
+- name: Enable Feature NXAPI
   nxos_nxapi:
+    state: present
   connection: network_cli
 
 # Gather the list of interfaces on this device and make the list
@@ -93,6 +93,7 @@
 # 8.0(1)
 # 7.3(0)D1(1)
 # 7.0(3)IHD8(1)
+- set_fact: major_version="{{ image_version[0:3] }}"
 - set_fact: imagetag="{{ image_version[0:3] }}"
   when: image_version is search("\d\.\d\(\d\)")
 - set_fact: imagetag="{{ image_version[6:8] }}"
