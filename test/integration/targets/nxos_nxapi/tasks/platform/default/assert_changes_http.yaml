@@ -1,0 +1,16 @@
+---
+- name: Assert HTTP configuration changes
+  assert:
+    that:
+      - result.stdout[0]['TABLE_listen_on_port']['ROW_listen_on_port'].l_port
+      - result.stdout[0]['TABLE_listen_on_port']['ROW_listen_on_port'].l_port|string is search("80")
+      - result.stdout[0]['operation_status'].o_status == 'nxapi enabled'
+  when: major_version is version('9.2', '<')
+
+- name: Assert HTTP configuration changes 9.2 or greater
+  assert:
+    that:
+      - result.stdout[0]['http_port']
+      - result.stdout[0]['http_port']|string is search("80")
+      - result.stdout[0]['nxapi_status'] == 'nxapi enabled'
+  when: major_version is version('9.2', '>=')
