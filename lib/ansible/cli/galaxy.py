@@ -564,7 +564,6 @@ class GalaxyCLI(CLI):
         role.select()
         display.display("- Selected version %s for role %s" % (version, name))
 
->>>>>>> Support for multiple role versions in ansible-galaxy
         return 0
 
     def execute_search(self):
