@@ -222,7 +222,7 @@ def _get_full_name(name, version=None):
     if version is None or version == "":
         resp = name
     else:
-        resp = name + '==' + version
+        resp = name + version
     return resp
 
 
