@@ -23,6 +23,7 @@ def main():
         'lib/ansible/executor/task_queue_manager.py',
         'lib/ansible/module_utils/facts/network/linux.py',
         'lib/ansible/module_utils/urls.py',
+        'lib/ansible/module_utils/compat_platform.py',
         'lib/ansible/modules/cloud/amazon/data_pipeline.py',
         'lib/ansible/modules/cloud/amazon/ec2_group_facts.py',
         'lib/ansible/modules/cloud/amazon/ec2_vpc_nat_gateway.py',
