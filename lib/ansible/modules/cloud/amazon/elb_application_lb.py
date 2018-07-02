@@ -48,6 +48,13 @@ options:
     required: false
     default: no
     type: bool
+  http2:
+    description:
+      - Indicates whether to enable HTTP2 routing.
+    required: false
+    default: no
+    type: bool
+    version_added: 2.6
   idle_timeout:
     description:
       - The number of seconds to wait before an idle connection is closed.
@@ -320,6 +327,11 @@ load_balancer_name:
     returned: when state is present
     type: string
     sample: my-elb
+routing_http2_enabled:
+    description: Indicates whether HTTP/2 is enabled.
+    returned: when state is present
+    type: string
+    sample: true
 scheme:
     description: Internet-facing or internal load balancer.
     returned: when state is present
@@ -490,6 +502,7 @@ def main():
             access_logs_s3_bucket=dict(type='str'),
             access_logs_s3_prefix=dict(type='str'),
             deletion_protection=dict(type='bool'),
+            http2=dict(type='bool'),
             idle_timeout=dict(type='int'),
             listeners=dict(type='list',
                            elements='dict',
