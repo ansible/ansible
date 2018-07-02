@@ -201,7 +201,6 @@ def main():
         type=dict(default=None),
         port=dict(default=None, type='int'),
         order=dict(default=None, type='int'),
-        slot=dict(default=None),
         options=dict(default=None, type='dict'),
         encrypt_options=dict(default=None, type='bool', aliases=['encrypt']),
     )
