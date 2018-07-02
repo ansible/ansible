@@ -27,8 +27,8 @@ Action plugin are executed by default when an associated module is used; no acti
 Plugin List
 -----------
 
-You can use ``ansible-doc -t cache -l`` to see the list of available plugins.
-Use ``ansible-doc -t cache <plugin name>`` to see specific documentation and examples.
+You can use ``ansible-doc -t action -l`` to see the list of available plugins.
+Use ``ansible-doc -t action <plugin name>`` to see specific documentation and examples.
 
 .. seealso::
 
