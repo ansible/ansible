@@ -7,14 +7,17 @@
   - name: enable feature vpc
     nxos_feature:
       feature: vpc
+      provider: "{{ connection }}"
       state: enabled
 
   - name: Ensure ntc VRF exists on switch
     nxos_vrf:
       vrf: ntc
+      provider: "{{ connection }}"
 
   - name: Configure vpc
     nxos_vpc: &conf_vpc
+      provider: "{{ connection }}"
       state: present
       domain: 100
       pkl_dest: 192.168.100.4
@@ -36,6 +39,7 @@
 
   - name: Configure vpc1
     nxos_vpc: &conf_vpc1
+      provider: "{{ connection }}"
       state: present
       domain: 100
       role_priority: 500
@@ -55,6 +59,7 @@
   - block:
     - name: Configure auto1
       nxos_vpc: &auto_false
+        provider: "{{ connection }}"
         state: present
         domain: 100
         auto_recovery: False
@@ -70,6 +75,7 @@
 
     - name: Configure auto2
       nxos_vpc: &auto_true
+        provider: "{{ connection }}"
         state: present
         domain: 100
         auto_recovery: True
@@ -88,6 +94,7 @@
   - block:
     - name: Configure auto1
       nxos_vpc: &auto_true1
+        provider: "{{ connection }}"
         state: present
         domain: 100
         auto_recovery: True
@@ -103,6 +110,7 @@
 
     - name: Configure auto2
       nxos_vpc: &auto_false1
+        provider: "{{ connection }}"
         state: present
         domain: 100
         auto_recovery: False
@@ -120,6 +128,7 @@
 
   - name: Configure vpc2
     nxos_vpc: &conf_vpc2
+      provider: "{{ connection }}"
       state: present
       domain: 100
       role_priority: default
@@ -138,6 +147,7 @@
 
   - name: Configure vpc3
     nxos_vpc: &conf_vpc3
+      provider: "{{ connection }}"
       state: present
       domain: 100
       peer_gw: False
@@ -153,6 +163,7 @@
 
   - name: remove vpc
     nxos_vpc: &rem_vpc
+      provider: "{{ connection }}"
       state: absent
       domain: 100
     register: result
@@ -169,12 +180,14 @@
   - name: remove vrf
     nxos_vrf:
       vrf: ntc
+      provider: "{{ connection }}"
       state: absent
     ignore_errors: yes
 
   - name: disable feature vpc
     nxos_feature:
       feature: vpc
+      provider: "{{ connection }}"
       state: disabled
     ignore_errors: yes
 
