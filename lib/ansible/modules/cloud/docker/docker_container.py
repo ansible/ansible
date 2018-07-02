@@ -557,12 +557,12 @@ EXAMPLES = '''
     purge_networks: yes
 
 - name: Star a container and use an env file
-    docker_container:
-      name: agent
-      image: jenkinsci/ssh-slave
-      env_file:
-        '/var/tmp/jenkins/agent.env'
-        
+  docker_container:
+    name: agent
+    image: jenkinsci/ssh-slave
+    env_file:
+      '/var/tmp/jenkins/agent.env'
+
 '''
 
 RETURN = '''
