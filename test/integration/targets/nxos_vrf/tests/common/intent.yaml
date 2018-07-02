@@ -170,6 +170,7 @@
       - no vrf member test1
     parents: no switchport
     before: "interface {{ testint1 }}"
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: setup - remove vrf from interfaces used in test(part2)
