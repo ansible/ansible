@@ -212,12 +212,13 @@ def state_present(module, existing, proposed, candidate):
         elif key == 'ingress-replication protocol' and value != existing_commands.get(key):
             evalue = existing_commands.get(key)
             dvalue = PARAM_TO_DEFAULT_KEYMAP.get('ingress_replication', 'default')
-            if value != dvalue:
-                if evalue != dvalue:
+            if evalue:
+                if value != dvalue:
+                    if evalue != dvalue:
+                        commands.append('no {0} {1}'.format(key, evalue))
+                    commands.append('{0} {1}'.format(key, value))
+                else:
                     commands.append('no {0} {1}'.format(key, evalue))
-                commands.append('{0} {1}'.format(key, value))
-            else:
-                commands.append('no {0} {1}'.format(key, evalue))
 
         elif value is True:
             commands.append(key)
