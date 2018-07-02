@@ -111,11 +111,13 @@ options:
       - Overrides the encoding used to read the template file defined by C(src).
       - It defaults to C('utf-8'), but any encoding supported by python can be used.
     default: 'utf-8'
+    version_added: "2.7"
   dest_encoding:
     description:
       - Overrides the encoding used to write the template file defined by C(dest).
       - It defaults to C('utf-8'), but any encoding supported by python can be used.
     default: 'utf-8'
+    version_added: "2.7"
 notes:
   - For Windows you can use M(win_template) which uses '\\r\\n' as C(newline_sequence).
   - Including a string that uses a date in the template will result in the template being marked 'changed' each time
