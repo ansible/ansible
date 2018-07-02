@@ -64,10 +64,10 @@ class TestConnectionClass(unittest.TestCase):
     @patch("ansible.plugins.connection.paramiko_ssh.Connection._connect")
     def test_network_cli__connect(self, mocked_super, mocked_terminal_loader):
         pc = PlayContext()
+        pc.network_os = 'ios'
         new_stdin = StringIO()
 
         conn = connection_loader.get('network_cli', pc, '/dev/null')
-        pc.network_os = 'ios'
 
         conn.ssh = MagicMock()
         conn.receive = MagicMock()
