@@ -53,7 +53,7 @@ options:
     key_algorithm:
         description:
             - Specify key algorithm used by C(key_secret).
-        choices: ['HMAC-MD5.SIG-ALG.REG.INT', 'hmac-md5', 'hmac-sha1', 'hmac-sha224', 'hmac-sha256', 'hamc-sha384',
+        choices: ['HMAC-MD5.SIG-ALG.REG.INT', 'hmac-md5', 'hmac-sha1', 'hmac-sha224', 'hmac-sha256', 'hmac-sha384',
                   'hmac-sha512']
         default: 'hmac-md5'
     zone:
@@ -322,7 +322,7 @@ class RecordManager(object):
 
 def main():
     tsig_algs = ['HMAC-MD5.SIG-ALG.REG.INT', 'hmac-md5', 'hmac-sha1', 'hmac-sha224',
-                 'hmac-sha256', 'hamc-sha384', 'hmac-sha512']
+                 'hmac-sha256', 'hmac-sha384', 'hmac-sha512']
 
     module = AnsibleModule(
         argument_spec=dict(
