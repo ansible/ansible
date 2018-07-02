@@ -130,9 +130,9 @@ class CallbackModule(CallbackBase):
         self.timestamp_format = self.get_option('timestamp_format')
         self.data_format = self.get_option('data_format')
 
-        if not os.path.exists(self.log_directory):
+        if not os.path.isdir(self.log_directory) or not os.access(self.log_directory, os.W_OK | os.X_OK):
             self.disabled = True
-            self._display.error('Configured log directory does not exist. Disabling the log_plays callback plugin.')
+            self._display.error('Configured log directory does not exist or it is not writable. Disabling the log_plays callback plugin.')
 
         if self.data_format not in ('json', 'yaml', 'raw'):
             self.data_format = 'json'
