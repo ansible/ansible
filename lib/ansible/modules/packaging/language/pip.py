@@ -24,9 +24,11 @@ options:
     description:
       - The name of a Python library to install or the url of the remote package.
       - As of 2.2 you can supply a list of names.
+      - As of 2.7, you can supply a list of names with version specifiers.
   version:
     description:
       - The version number to install of the Python library specified in the I(name) parameter.
+      - As of 2.7, you can supply version specifiers.
   requirements:
     description:
       - The path to a pip requirements file, which should be local to the remote system.
@@ -124,6 +126,21 @@ EXAMPLES = '''
 - pip:
     name: bottle
     version: 0.11
+
+# Install (bottle) python package with version specifiers (only in 2.7)
+- pip:
+    name: bottle
+    version: '>0.10,<0.20,!=0.11'
+
+# Install multi python packages with version specifiers (only in 2.7)
+- pip:
+    name:
+      - 'django>1.11.0,<1.12.0'
+      - 'bottle>0.10,<0.20,!=0.11'
+
+# 2.7 also support multi packages in one name string
+- pip:
+    name: 'djang>1.11.0,<1.12.0,bottle>0.10,<0.20,!=0.11'
 
 # Install (MyApp) using one of the remote protocols (bzr+,hg+,git+,svn+). You do not have to supply '-e' option in extra_args.
 - pip:
@@ -243,14 +260,16 @@ from ansible.module_utils.six import PY3
 _SPECIAL_PACKAGE_CHECKERS = {'setuptools': 'import setuptools; print(setuptools.__version__)',
                              'pip': 'import pkg_resources; print(pkg_resources.get_distribution("pip").version)'}
 
+op_dict = {">=": operator.ge, "<=": operator.le, ">": operator.gt,
+           "<": operator.lt, "==": operator.eq, "!=": operator.ne}
+
 
 class Distribution:
 
-    """Wrapper class for pkg_resources.Requirement.
+    """Python distribution package metadata wrapper.
 
     A wrapper class for Requirement, provide usefual API to parse package name and version specifier,
     do fallback if the installed setuptools version doesn't support some features.
-
     """
 
     def __init__(self, name_string, version_string=None):
@@ -285,14 +304,11 @@ class Distribution:
             if hasattr(self._requirement, 'specifier'):
                 return self._requirement.specifier.contains(version_to_test)
             else:
-                version_to_test = LooseVersion(version_to_test)
-                op_dict = {">=": operator.ge, "<=": operator.le, ">": operator.gt,
-                           "<": operator.lt, "==": operator.eq, "!=": operator.ne}
                 # old setuptools has no specifier, do fallback
+                version_to_test = LooseVersion(version_to_test)
                 for (op, ver) in self._requirement.specs:
                     if not op_dict[op](version_to_test, LooseVersion(ver)):
                         return False
-
                 return True
         return False
 
@@ -309,7 +325,7 @@ def _is_vcs_url(name):
 
 def _is_valid_distribution_name(name):
     """Test whether a name is distribution name or version specifier."""
-    return not name.lstrip().startswith(('>=', '<=', '!=', '==', '>', '<'))
+    return not name.lstrip().startswith(tuple(op_dict.keys()))
 
 
 def _recover_distribution_name(names):
