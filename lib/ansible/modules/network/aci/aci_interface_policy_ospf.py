@@ -44,10 +44,8 @@ options:
     description:
     - The OSPF interface policy network type.
     - OSPF supports broadcast and point-to-point.
+    - The APIC defaults to C(unspecified) when unset during creation.
     choices: [ bcast, p2p ]
-  priority:
-    description:
-    - The priority for the OSPF interface profile.
   cost:
     description:
     - The OSPF cost of the interface.
@@ -63,9 +61,18 @@ options:
     - By default, the cost of an interface is calculated based on the bandwidth;
       you can force the cost of an interface with the ip ospf cost value
       interface subconfiguration mode command.
+    - Accepted values range between C(1) and C(450).
+    - The APIC defaults to C(0) when unset during creation.
   controls:
     description:
     - The interface policy controls.
+    - 'This is a list of one or more of the following controls:'
+    - C(advert-subnet) -- Advertise IP subnet instead of a host mask in the router LSA.
+    - C(bfd) -- Bidirectional Forwarding Detection
+    - C(mtu-ignore) -- Disables MTU mismatch detection on an interface.
+    - C(passive) -- The interface does not participate in the OSPF protocol and
+      will not establish adjacencies or send routing updates. However the
+      interface is announced as part of the routing network.
     choices: [ advert-subnet, bfd, mtu-ignore, passive ]
   dead_interval:
     description:
@@ -75,21 +82,39 @@ options:
     - Specifying a smaller dead interval (seconds) will give faster detection
       of a neighbor being down and improve convergence, but might cause more
       routing instability.
+    - Accepted values range between C(1) and C(65535).
+    - The APIC defaults to C(40) when unset during creation.
   hello_interval:
     description:
     - The interval between hello packets that OSPF sends on the interface.
     - Note that the smaller the hello interval, the faster topological changes will be detected, but more routing traffic will ensue.
     - This value must be the same for all routers and access servers on a specific network.
+    - Accepted values range between C(1) and C(65535).
+    - The APIC defaults to C(10) when unset during creation.
+  prefix_suppression:
+    description:
+    - Whether prefix suppressions is enabled or disabled.
+    - The APIC defaults to C(inherit) when unset during creation.
+    type: bool
+  priority:
+    description:
+    - The priority for the OSPF interface profile.
+    - Accepted values ranges between C(0) and C(255).
+    - The APIC defaults to C(1) when unset during creation.
   retransmit_interval:
     description:
     - The interval between LSA retransmissions.
     - The retransmit interval occurs while the router is waiting for an acknowledgement from the neighbor router that it received the LSA.
     - If no acknowlegment is received at the end of the interval, then the LSA is resent.
+    - Accepted values range between C(1) and C(65535).
+    - The APIC defaults to C(5) when unset during creation.
   transmit_delay:
     description:
     - The delay time needed to send an LSA update packet.
     - OSPF increments the LSA age time by the transmit delay amount before transmitting the LSA update.
     - You should take into account the transmission and propagation delays for the interface when you set this value.
+    - Accepted values range between C(1) and C(450).
+    - The APIC defaults to C(1) when unset during creation.
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -99,14 +124,41 @@ options:
 extends_documentation_fragment: aci
 '''
 
-# FIXME: Add more, better examples
 EXAMPLES = r'''
-- aci_interface_policy_ospf:
-    host: '{{ hostname }}'
-    username: '{{ username }}'
-    password: '{{ password }}'
-    ospf: '{{ ospf }}'
-    description: '{{ descr }}'
+- name: Ensure ospf interface policy exists
+  aci_interface_policy_ospf:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: production
+    ospf: ospf1
+    state: present
+
+- name: Ensure ospf interface policy does not exist
+  aci_interface_policy_ospf:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: production
+    ospf: ospf1
+    state: present
+
+- name: Query an ospf interface policy
+  aci_interface_policy_ospf:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: production
+    ospf: ospf1
+    state: query
+
+- name: Query all ospf interface policies in tenant production
+  aci_interface_policy_ospf:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: production
+    state: query
 '''
 
 RETURN = r'''
@@ -225,11 +277,12 @@ def main():
         ospf=dict(type='str', required=False, aliases=['ospf_interface', 'name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         network_type=dict(type='str', choices=['bcast', 'p2p']),
-        priority=dict(type='int'),
         cost=dict(type='int'),
         controls=dict(type='list', choices=['advert-subnet', 'bfd', 'mtu-ignore', 'passive']),
-        hello_interval=dict(type='int'),
         dead_interval=dict(type='int'),
+        hello_interval=dict(type='int'),
+        prefix_suppression=dict(type='bool'),
+        priority=dict(type='int'),
         retransmit_interval=dict(type='int'),
         transmit_delay=dict(type='int'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
@@ -249,17 +302,38 @@ def main():
     tenant = module.params['tenant']
     ospf = module.params['ospf']
     description = module.params['description']
+
     if module.params['controls'] is None:
         controls = None
     else:
         controls = ','.join(module.params['controls'])
+
     cost = module.params['cost']
+    if cost is not None and cost not in range(1, 451):
+        module.fail_json(msg="Parameter 'cost' is only valid in range between 1 and 450.")
+
     dead_interval = module.params['dead_interval']
+    if dead_interval is not None and dead_interval not in range(1, 65536):
+        module.fail_json(msg="Parameter 'dead_interval' is only valid in range between 1 and 65536.")
+
     hello_interval = module.params['hello_interval']
+    if hello_interval is not None and hello_interval not in range(1, 65536):
+        module.fail_json(msg="Parameter 'hello_interval' is only valid in range between 1 and 65536.")
+
     network_type = module.params['network_type']
+    prefix_suppression = aci.boolean(module.params['prefix_suppression'], 'enabled', 'disabled')
     priority = module.params['priority']
+    if priority is not None and priority not in range(0, 256):
+        module.fail_json(msg="Parameter 'priority' is only valid in range between 1 and 255.")
+
     retransmit_interval = module.params['retransmit_interval']
+    if retransmit_interval is not None and retransmit_interval not in range(1, 65536):
+        module.fail_json(msg="Parameter 'retransmit_interval' is only valid in range between 1 and 65536.")
+
     transmit_delay = module.params['transmit_delay']
+    if transmit_delay is not None and transmit_delay not in range(1, 451):
+        module.fail_json(msg="Parameter 'transmit_delay' is only valid in range between 1 and 450.")
+
     state = module.params['state']
 
     aci.construct_url(
@@ -284,6 +358,7 @@ def main():
                 deadIntvl=dead_interval,
                 helloIntvl=hello_interval,
                 nwT=network_type,
+                pfxSuppress=prefix_suppression,
                 prio=priority,
                 rexmitIntvl=retransmit_interval,
                 xmitDelay=transmit_delay,
