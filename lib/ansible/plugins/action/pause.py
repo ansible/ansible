@@ -200,7 +200,11 @@ class ActionModule(ActionBase):
 
                     old_settings = termios.tcgetattr(stdin_fd)
                     tty.setraw(stdin_fd)
-                    tty.setraw(stdout_fd)
+
+                    # Only set stdout to raw mode if it is a TTY. This is needed when redirecting
+                    # stdout to a file since a file cannot be set to raw mode.
+                    if isatty(stdout_fd):
+                        tty.setraw(stdout_fd)
 
                     # Only echo input if no timeout is specified
                     if not seconds and echo:
