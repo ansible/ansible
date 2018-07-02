@@ -1,0 +1,2 @@
+bugfixes:
+    - nsupdate - allow hmac-sha384 https://github.com/ansible/ansible/pull/42209
