@@ -106,7 +106,6 @@ class AdHocCLI(CLI):
 
         self.normalize_become_options()
         (sshpass, becomepass) = self.ask_passwords()
-        becomepass = "{{'%s'}}" % becomepass
         passwords = {'conn_pass': sshpass, 'become_pass': becomepass}
 
         # dynamically load any plugins

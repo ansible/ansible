@@ -338,7 +338,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                 if op.ask_pass and becomepass == '':
                     becomepass = sshpass
                 if becomepass:
-                    becomepass = to_bytes(becomepass)
+                    becomepass = to_bytes("{{'%s'}}" % becomepass)
         except EOFError:
             pass
 
