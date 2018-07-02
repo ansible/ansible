@@ -330,7 +330,7 @@ def _sign_request_openssl(openssl_binary, module, payload64, protected64, key_da
     }
 
 
-if sys.version_info.major >= 3:
+if sys.version_info[0] >= 3:
     # Python 3 (and newer)
     def _count_bytes(n):
         return (n.bit_length() + 7) // 8 if n > 0 else 0
