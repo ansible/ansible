@@ -13,7 +13,7 @@
     auth_key: '{{ auth_key }}'
     host: marrrraki.com
     state: present
-    org_name: IntTestOrg
+    org_name: '{{test_org_name}}'
     output_level: debug
   delegate_to: localhost
   register: invalid_domain
@@ -24,6 +24,7 @@
     auth_key: '{{ auth_key }}'
     use_https: false
     state: query
+    org_name: '{{test_org_name}}'
     output_level: debug
   delegate_to: localhost
   register: http
@@ -158,8 +159,8 @@
 - assert:
     that:
       - update_vlan_add_ip.changed == True
-      - update_vlan_add_ip.data.fixed_ip_assignments | length == 2
-      - update_vlan_add_ip.data.reserved_ip_range | length == 2
+      - update_vlan_add_ip.data.fixedIpAssignments | length == 2
+      - update_vlan_add_ip.data.reservedIpRanges | length == 2
 
 - name: Remove IP assignments and reserved IP ranges
   meraki_vlan:
@@ -189,8 +190,8 @@
 - assert:
     that:
       - update_vlan_remove_ip.changed == True
-      - update_vlan_remove_ip.data.fixed_ip_assignments | length == 1
-      - update_vlan_remove_ip.data.reserved_ip_range | length == 1
+      - update_vlan_remove_ip.data.fixedIpAssignments | length == 1
+      - update_vlan_remove_ip.data.reservedIpRanges | length == 1
 
 - name: Update VLAN with idempotency
   meraki_vlan:
