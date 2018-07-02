@@ -131,6 +131,7 @@ EXAMPLES = r"""
     state: absent
     regexp: '^%wheel'
 
+# Searches for a line that begins with 127.0.0.1 and replaces it with the value of the 'line' parameter
 - lineinfile:
     path: /etc/hosts
     regexp: '^127\.0\.0\.1'
