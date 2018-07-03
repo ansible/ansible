@@ -193,6 +193,7 @@ options:
             - ip_forwarding
         type: bool
         default: 'no'
+        version_added: 2.7
 extends_documentation_fragment:
     - azure
     - azure_tags
