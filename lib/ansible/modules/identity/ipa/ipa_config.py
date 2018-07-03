@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# Copyright: (c) 2017, Ansible Project
+# Copyright: (c) 2018, Fran Fitzpatrick <francis.x.fitzpatrick@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -37,7 +37,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-user:
+config:
   description: Configuration as returned by IPA API
   returned: always
   type: dict
