@@ -34,7 +34,6 @@
     force: 'true'
     provider: "{{ connection }}"
     state: absent
-    timeout: 60
 
 - block:
   - name: Configure port-channel mode active
@@ -45,7 +44,6 @@
       force: 'true'
       provider: "{{ connection }}"
       state: present
-      timeout: 60
     register: result
 
   - assert: &true
@@ -68,7 +66,6 @@
       force: 'true'
       provider: "{{ connection }}"
       state: present
-      timeout: 60
     register: result
 
   - assert: *true
@@ -91,7 +88,6 @@
       feature: lacp
       provider: "{{ connection }}"
       state: disabled
-      timeout: 60
 
   always:
   - name: Delete port-channel
