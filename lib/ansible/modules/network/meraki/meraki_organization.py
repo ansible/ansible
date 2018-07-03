@@ -191,11 +191,10 @@ def main():
                                                             ),
                                       payload=json.dumps(payload),
                                       method='POST')
-            if meraki.status == 201:
-                meraki.result['data'] = response
-                meraki.result['changed'] = True
-            else:
+            if meraki.status != 201:
                 meraki.fail_json(msg='Organization clone failed')
+            meraki.result['data'] = response
+            meraki.result['changed'] = True
         elif not meraki.params['org_id'] and meraki.params['org_name']:  # Create new organization
             payload = {'name': meraki.params['org_name']}
             response = meraki.request(meraki.construct_path('create'),
@@ -219,11 +218,10 @@ def main():
                                                                 ),
                                           method='PUT',
                                           payload=json.dumps(payload))
-                if meraki.status == 200:
-                    meraki.result['data'] = response
-                    meraki.result['changed'] = True
-                else:
+                if meraki.status != 200:
                     meraki.fail_json(msg='Organization update failed')
+                meraki.result['data'] = response
+                meraki.result['changed'] = True
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
     meraki.exit_json(**meraki.result)
