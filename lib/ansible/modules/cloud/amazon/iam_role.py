@@ -152,7 +152,7 @@ iam_role:
 from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info, boto3_conn, sort_json_policy_dict
-from ansible.module_utils.ec2 import HAS_BOTO3
+from ansible.module_utils.ec2 import HAS_BOTO3, AWSRetry
 
 import json
 import traceback
@@ -239,6 +239,9 @@ def create_or_update_role(connection, module):
         try:
             if not module.check_mode:
                 role = connection.create_role(**params)
+                # 'Description' is documented as key of the role returned by create_role
+                # but appears to be a boto3 bug. Get the role after creating it.
+                role = get_role_with_backoff(connection, module, params['RoleName'])
             else:
                 role = {'MadeInCheckMode': True}
                 role['AssumeRolePolicyDocument'] = json.loads(params['AssumeRolePolicyDocument'])
@@ -401,6 +404,13 @@ def destroy_role(connection, module):
         module.exit_json(changed=False)
 
     module.exit_json(changed=True)
+
+
+def get_role_with_backoff(connection, module, name):
+    try:
+        return AWSRetry.jittered_backoff(catch_extra_error_codes=['NoSuchEntity'])(connection.get_role)(RoleName=name)['Role']
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json(msg="Unable to get role {0}: {1}".format(name, to_native(e)), exception=traceback.format_exc())
 
 
 def get_role(connection, module, name):
