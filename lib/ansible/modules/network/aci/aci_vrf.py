@@ -40,7 +40,7 @@ options:
     choices: [ egress, ingress ]
   policy_control_preference:
     description:
-    - Determines if the Fabric should enforce Contrac Policies.
+    - Determines if the fabric should enforce contract policies to allow routing and packet forwarding.
     choices: [ enforced, unenforced ]
   description:
     description:
