@@ -328,16 +328,13 @@ def create_or_update_role(connection, module):
                 connection.add_role_to_instance_profile(InstanceProfileName=params['RoleName'], RoleName=params['RoleName'])
 
     # Check Description update
-    if not module.check_mode and params.get('Description') and role['Description'] != params['Description']:
+    if not role.get('MadeInCheckMode') and params.get('Description') and role['Description'] != params['Description']:
         try:
             if not module.check_mode:
                 connection.update_role_description(RoleName=params['RoleName'], Description=params['Description'])
 
-                changed = True
-        except ClientError as e:
-            module.fail_json(msg="Unable to update description for role {0}: {1}".format(params['RoleName'], to_native(e)),
-                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-        except BotoCoreError as e:
+            changed = True
+        except (BotoCoreError, ClientError) as e:
             module.fail_json(msg="Unable to update description for role {0}: {1}".format(params['RoleName'], to_native(e)),
                              exception=traceback.format_exc())
 
