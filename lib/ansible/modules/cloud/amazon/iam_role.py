@@ -240,7 +240,8 @@ def create_or_update_role(connection, module):
             if not module.check_mode:
                 role = connection.create_role(**params)
                 # 'Description' is documented as key of the role returned by create_role
-                # but appears to be a boto3 bug. Get the role after creating it.
+                # but appears to be an AWS bug (the value is not returned using the AWS CLI either).
+                # Get the role after creating it.
                 role = get_role_with_backoff(connection, module, params['RoleName'])
             else:
                 role = {'MadeInCheckMode': True}
