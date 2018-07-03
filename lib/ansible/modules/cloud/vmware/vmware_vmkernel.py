@@ -50,7 +50,7 @@ options:
             - ' - C(type) (string): Type of IP assignment (either C(dhcp) or C(static)).'
             - 'Following parameters are required in case of C(type) is set to C(static)'
             - ' - C(ip_address) (string): Static IP address (implies C(type: static)).'
-            - ' - C(netmask) (string): Static netmask required for C(ip).'
+            - ' - C(subnet_mask) (string): Static netmask required for C(ip).'
         version_added: 2.5
     ip_address:
         description:
