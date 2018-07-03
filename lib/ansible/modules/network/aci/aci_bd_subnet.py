@@ -48,7 +48,8 @@ options:
     description:
     - The subnet mask for the Subnet.
     - This is the number assocated with CIDR notation.
-    choices: [ Any 0 to 32 for IPv4 Addresses, 0-128 for IPv6 Addresses  ]
+    - For IPv4 addresses, accepted values range between C(0) and C(32).
+    - For IPv6 addresses, accepted Values range between C(0) and C(128).
     aliases: [ subnet_mask ]
   nd_prefix_policy:
     description:
