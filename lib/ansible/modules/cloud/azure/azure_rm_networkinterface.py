@@ -185,6 +185,14 @@ options:
             - When a default security group is created for a Linux host a rule will be added allowing inbound TCP
               connections to the default SSH port 22, and for a Windows host rules will be added allowing inbound
               access to RDP ports 3389 and 5986. Override the default ports by providing a list of open ports.
+    enable_ip_forwarding:
+        description:
+            - This disable's Azure's check on the source and destination IPs for a network interface,
+              allowing VMs attached to this network interface to route traffic to interfaces other than its own
+        aliases:
+            - ip_forwarding
+        type: bool
+        default: 'no'
 extends_documentation_fragment:
     - azure
     - azure_tags
@@ -290,6 +298,7 @@ state:
             "internal_dns_name_label": null,
             "internal_fqdn": null
         },
+        "enable_accelerated_networking": false,
         "enable_ip_forwarding": false,
         "etag": 'W/"be115a43-2148-4545-a324-f33ad444c926"',
         "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkInterfaces/nic003",
