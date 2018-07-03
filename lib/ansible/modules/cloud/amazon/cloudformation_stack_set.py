@@ -44,7 +44,7 @@ options:
       - This must be the full path to the file, relative to the working directory. If using roles this may look
         like "roles/cloudformation/files/cloudformation-example.json".
       - If 'state' is 'present' and the stack does not exist yet, either 'template', 'template_body' or 'template_url'
-        must be specified (but only one of them). If 'state' ispresent, the stack does exist, and neither 'template',
+        must be specified (but only one of them). If 'state' is present, the stack does exist, and neither 'template',
         'template_body' nor 'template_url' are specified, the previous template will be reused.
   template_body:
     description:
@@ -377,6 +377,63 @@ def await_stack_set_exists(cfn, stack_set_name):
     return camel_dict_to_snake_dict(ss, ignore_list=('Tags',))
 
 
+def describe_stack_tree(module, stack_set_name, operation_ids=None):
+    cfn = module.client('cloudformation', retry_decorator=AWSRetry.jittered_backoff(retries=5, delay=3, max_delay=5))
+    result = dict()
+    result['stack_set'] = camel_dict_to_snake_dict(
+        cfn.describe_stack_set(
+            StackSetName=stack_set_name,
+            aws_retry=True,
+        )['StackSet']
+    )
+    result['stack_set']['tags'] = boto3_tag_list_to_ansible_dict(result['stack_set']['tags'])
+    result['operations_log'] = sorted(
+        camel_dict_to_snake_dict(
+            cfn.list_stack_set_operations(
+                StackSetName=stack_set_name,
+                aws_retry=True,
+            )
+        )['summaries'],
+        key=lambda x: x['creation_timestamp']
+    )
+    result['stack_instances'] = sorted(
+        [
+            camel_dict_to_snake_dict(i) for i in
+            cfn.list_stack_instances(StackSetName=stack_set_name)['Summaries']
+        ],
+        key=lambda i: i['region'] + i['account']
+    )
+
+    if operation_ids:
+        result['operations'] = []
+        for op_id in operation_ids:
+            try:
+                result['operations'].append(camel_dict_to_snake_dict(
+                    cfn.describe_stack_set_operation(
+                        StackSetName=stack_set_name,
+                        OperationId=op_id,
+                    )['StackSetOperation']
+                ))
+            except is_boto3_error_code('OperationNotFoundException'):  # pylint: disable=duplicate-except
+                pass
+    return result
+
+
+def get_operation_preferences(module):
+    params = dict()
+    if module.params.get('regions'):
+        params['RegionOrder'] = list(module.params['regions'])
+    for param, api_name in {
+        'fail_count': 'FailureToleranceCount',
+        'fail_percentage': 'FailureTolerancePercentage',
+        'parallel_percentage': 'MaxConcurrentPercentage',
+        'parallel_count': 'MaxConcurrentCount',
+    }.items():
+        if module.params.get('failure_tolerance', {}).get(param):
+            params[api_name] = module.params.get('failure_tolerance', {}).get(param)
+    return params
+
+
 def main():
     argument_spec = dict(
         name=dict(required=True),
@@ -601,63 +658,6 @@ def main():
     if any(o['status'] == 'FAILED' for o in result['operations']):
         module.fail_json(msg="One or more operations failed to execute", **result)
     module.exit_json(**result)
-
-
-def describe_stack_tree(module, stack_set_name, operation_ids=None):
-    cfn = module.client('cloudformation', retry_decorator=AWSRetry.jittered_backoff(retries=5, delay=3, max_delay=5))
-    result = dict()
-    result['stack_set'] = camel_dict_to_snake_dict(
-        cfn.describe_stack_set(
-            StackSetName=stack_set_name,
-            aws_retry=True,
-        )['StackSet']
-    )
-    result['stack_set']['tags'] = boto3_tag_list_to_ansible_dict(result['stack_set']['tags'])
-    result['operations_log'] = sorted(
-        camel_dict_to_snake_dict(
-            cfn.list_stack_set_operations(
-                StackSetName=stack_set_name,
-                aws_retry=True,
-            )
-        )['summaries'],
-        key=lambda x: x['creation_timestamp']
-    )
-    result['stack_instances'] = sorted(
-        [
-            camel_dict_to_snake_dict(i) for i in
-            cfn.list_stack_instances(StackSetName=stack_set_name)['Summaries']
-        ],
-        key=lambda i: i['region'] + i['account']
-    )
-
-    if operation_ids:
-        result['operations'] = []
-        for op_id in operation_ids:
-            try:
-                result['operations'].append(camel_dict_to_snake_dict(
-                    cfn.describe_stack_set_operation(
-                        StackSetName=stack_set_name,
-                        OperationId=op_id,
-                    )['StackSetOperation']
-                ))
-            except is_boto3_error_code('OperationNotFoundException'):  # pylint: disable=duplicate-except
-                pass
-    return result
-
-
-def get_operation_preferences(module):
-    params = dict()
-    if module.params.get('regions'):
-        params['RegionOrder'] = list(module.params['regions'])
-    for param, api_name in {
-        'fail_count': 'FailureToleranceCount',
-        'fail_percentage': 'FailureTolerancePercentage',
-        'parallel_percentage': 'MaxConcurrentPercentage',
-        'parallel_count': 'MaxConcurrentCount',
-    }.items():
-        if module.params.get('failure_tolerance', {}).get(param):
-            params[api_name] = module.params.get('failure_tolerance', {}).get(param)
-    return params
 
 
 if __name__ == '__main__':
