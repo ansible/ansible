@@ -297,6 +297,11 @@ except ImportError:
     display = Display()
 
 
+NOT_SSH_ERRORS = ('Traceback (most recent call last):',  # Python-2.6 when there's an exception
+                                                         # while invoking a script via -m
+                  'PHP Parse error:',  # Php always returns error 255
+                  )
+
 SSHPASS_AVAILABLE = None
 
 
@@ -333,7 +338,7 @@ def _ssh_retry(func):
                     display.vvv(return_tuple, host=self.host)
                     # 0 = success
                     # 1-254 = remote command return code
-                    # 255 = failure from the ssh command itself
+                    # 255 could be a failure from the ssh command itself
                 except (AnsibleControlPersistBrokenPipeError) as e:
                     # Retry one more time because of the ControlPersist broken pipe (see #16731)
                     cmd = args[0]
@@ -344,10 +349,19 @@ def _ssh_retry(func):
                     display.vvv(u"RETRYING BECAUSE OF CONTROLPERSIST BROKEN PIPE")
                     return_tuple = func(self, *args, **kwargs)
 
-                if return_tuple[0] != 255:
-                    break
-                else:
-                    raise AnsibleConnectionFailure("Failed to connect to the host via ssh: %s" % to_native(return_tuple[2]))
+                if return_tuple[0] == 255:
+                    SSH_ERROR = True
+                    for signature in NOT_SSH_ERRORS:
+                        if signature in return_tuple[1]:
+                            SSH_ERROR = False
+                            break
+
+                    if SSH_ERROR:
+                        raise AnsibleConnectionFailure("Failed to connect to the host via ssh: %s"
+                                                       % to_native(return_tuple[2]))
+
+                break
+
             except (AnsibleConnectionFailure, Exception) as e:
                 if attempt == remaining_tries - 1:
                     raise
