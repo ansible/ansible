@@ -1,0 +1,2 @@
+bugfixes:
+- group_by - support implicit localhost (https://github.com/ansible/ansible/pull/41860)
