@@ -153,7 +153,8 @@ def get_admins(meraki, org_id):
         ),
         method='GET'
     )
-    return admins
+    if meraki.status == 200:
+        return admins
 
 
 def get_admin_id(meraki, data, name=None, email=None):
@@ -189,10 +190,11 @@ def find_admin(meraki, data, email):
 
 def delete_admin(meraki, org_id, admin_id):
     path = meraki.construct_path('revoke', 'admin', org_id=org_id) + admin_id
-    # meraki.fail_json(msg=path)
     r = meraki.request(path,
                        method='DELETE'
                        )
+    if meraki.status == 204:
+        return r
 
 
 def network_factory(meraki, networks, nets):
@@ -209,7 +211,9 @@ def network_factory(meraki, networks, nets):
 
 def get_nets_temp(meraki, org_id):  # Function won't be needed when get_nets is added to util
     path = meraki.construct_path('get_all', function='network', org_id=org_id)
-    return meraki.request(path, method='GET')
+    response = meraki.request(path, method='GET')
+    if meraki.status == 200:
+        return response
 
 
 def create_admin(meraki, org_id, name, email):
@@ -234,8 +238,9 @@ def create_admin(meraki, org_id, name, email):
                            method='POST',
                            payload=json.dumps(payload)
                            )
-        meraki.result['changed'] = True
-        return r
+        if meraki.status == 201:
+            meraki.result['changed'] = True
+            return r
     elif is_admin_existing is not None:  # Update existing admin
         if not meraki.params['tags']:
             payload['tags'] = []
@@ -248,8 +253,9 @@ def create_admin(meraki, org_id, name, email):
                                method='PUT',
                                payload=json.dumps(payload)
                                )
-            meraki.result['changed'] = True
-            return r
+            if meraki.status == 200:
+                meraki.result['changed'] = True
+                return r
         else:
             # meraki.fail_json(msg='No update is required!!!')
             return -1

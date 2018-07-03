@@ -125,7 +125,8 @@ def get_snmp(meraki, org_id):
     r = meraki.request(path,
                        method='GET',
                        )
-    return r
+    if meraki.status == 200:
+        return r
 
 
 def set_snmp(meraki, org_id):
@@ -169,8 +170,9 @@ def set_snmp(meraki, org_id):
         r = meraki.request(path,
                            method='PUT',
                            payload=json.dumps(payload))
-        meraki.result['changed'] = True
-        return r
+        if meraki.status == 200:
+            meraki.result['changed'] = True
+            return r
     return -1
 
 
