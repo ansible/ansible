@@ -56,6 +56,10 @@ class MerakiModule(object):
         self.result = dict(changed=False)
         self.headers = dict()
         self.function = function
+        self.orgs = None
+        self.nets = None
+        self.org_id = None
+        self.net_id = None
 
         # normal output
         self.existing = None
@@ -153,7 +157,8 @@ class MerakiModule(object):
         response = self.request('/organizations', method='GET')
         if self.status != 200:
             self.fail_json(msg='Organization lookup failed')
-        return response
+        self.orgs = self.request('/organizations', method='GET')
+        return self.orgs
 
     def is_org_valid(self, data, org_name=None, org_id=None):
         """Checks whether a specific org exists and is duplicated.
@@ -200,7 +205,8 @@ class MerakiModule(object):
         r = self.request(path, method='GET')
         if self.status != 200:
             self.fail_json(msg='Network lookup failed')
-        return r
+        self.nets = self.request(path, method='GET')
+        return self.nets
 
     def get_net(self, org_name, net_name, data=None):
         """Return network information about a particular network."""
