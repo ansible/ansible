@@ -51,7 +51,7 @@ Using the ACI modules
 ---------------------
 The Ansible ACI modules provide a user-friendly interface to managing your ACI environment using Ansible playbooks.
 
-For instance ensuring that a specific tenant exists, is done using the following Ansible task using module `aci_tenant <aci_tenant_module>`:
+For instance ensuring that a specific tenant exists, is done using the following Ansible task using module :ref:`aci_tenant <aci_tenant_module>`:
 
 .. code-block:: yaml
 
@@ -96,7 +96,7 @@ Or query all objects.
         state: query
       register: all_tenants
 
-After registering the return values of the `aci_tenant <aci_tenant_module>` task as shown above, you can access all tenant information from variable ``all_tenants``.
+After registering the return values of the :ref:`aci_tenant <aci_tenant_module>` task as shown above, you can access all tenant information from variable ``all_tenants``.
 
 
 Common parameters
