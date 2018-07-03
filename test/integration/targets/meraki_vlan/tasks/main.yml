@@ -159,8 +159,8 @@
   - assert:
       that:
         - update_vlan_add_ip.changed == True
-        - update_vlan_add_ip.data.fixed_ip_assignments | length == 2
-        - update_vlan_add_ip.data.reserved_ip_range | length == 2
+        - update_vlan_add_ip.data.fixedIpAssignments | length == 2
+        - update_vlan_add_ip.data.reservedIpRange | length == 2
 
   - name: Remove IP assignments and reserved IP ranges
     meraki_vlan:
@@ -190,8 +190,8 @@
   - assert:
       that:
         - update_vlan_remove_ip.changed == True
-        - update_vlan_remove_ip.data.fixed_ip_assignments | length == 1
-        - update_vlan_remove_ip.data.reserved_ip_range | length == 1
+        - update_vlan_remove_ip.data.fixedIpAssignments | length == 1
+        - update_vlan_remove_ip.data.reservedIpRange | length == 1
 
   - name: Update VLAN with idempotency
     meraki_vlan:
