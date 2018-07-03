@@ -72,10 +72,19 @@ arn:
   type: string
   sample: arn:aws:eks:us-west-2:111111111111:cluster/my-eks-cluster
 certificate_authority:
-  description: Certificate Authority Data for cluster
+  description: Dictionary containing Certificate Authority Data for cluster
   returned: after creation
   type: complex
-  contains: {}
+  contains:
+    data:
+      description: Base-64 encoded Certificate Authority Data for cluster
+      returned: when the cluster has been created and is active
+      type: string
+endpoint:
+  description: Kubernetes API server endpoint
+  returned: when the cluster has been created and is active
+  type: string
+  sample: https://API_SERVER_ENDPOINT.yl4.us-west-2.eks.amazonaws.com
 created_at:
   description: Cluster creation date and time
   returned: when state is present
@@ -120,7 +129,9 @@ status:
   description: status of the EKS cluster
   returned: when state is present
   type: string
-  sample: CREATING
+  sample:
+  - CREATING
+  - ACTIVE
 version:
   description: Kubernetes version of the cluster
   returned: when state is present
