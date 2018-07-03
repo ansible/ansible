@@ -236,8 +236,8 @@ def main():
                     proposed['tags'] = None
                 if not proposed['type']:
                     proposed['type'] = net['type']
-
-                if meraki.is_update_required(net, payload):
+                ignore = ('disableMyMerakiCom')
+                if meraki.is_update_required(net, payload, optional_ignore=ignore):
                     path = meraki.construct_path('update',
                                                  net_id=meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
                                                  )
