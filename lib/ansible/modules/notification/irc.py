@@ -133,14 +133,8 @@ import ssl
 import time
 import traceback
 
-from ansible.module_utils._text import to_native, to_text, to_bytes
+from ansible.module_utils._text import to_native, to_bytes
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import PY3
-
-if PY3:
-    safe = to_bytes
-else:
-    safe = to_text
 
 
 def send_msg(msg, server='localhost', port='6667', channel=None, nick_to=None, key=None, topic=None,
@@ -193,9 +187,9 @@ def send_msg(msg, server='localhost', port='6667', channel=None, nick_to=None, k
     irc.connect((server, int(port)))
 
     if passwd:
-        irc.send(safe('PASS %s\r\n' % passwd))
-    irc.send(safe('NICK %s\r\n' % nick))
-    irc.send(safe('USER %s %s %s :ansible IRC\r\n' % (nick, nick, nick)))
+        irc.send(to_bytes('PASS %s\r\n' % passwd))
+    irc.send(to_bytes('NICK %s\r\n' % nick))
+    irc.send(to_bytes('USER %s %s %s :ansible IRC\r\n' % (nick, nick, nick)))
     motd = ''
     start = time.time()
     while 1:
@@ -211,9 +205,9 @@ def send_msg(msg, server='localhost', port='6667', channel=None, nick_to=None, k
         time.sleep(0.5)
 
     if key:
-        irc.send(safe('JOIN %s %s\r\n' % (channel, key)))
+        irc.send(to_bytes('JOIN %s %s\r\n' % (channel, key)))
     else:
-        irc.send(safe('JOIN %s\r\n' % channel))
+        irc.send(to_bytes('JOIN %s\r\n' % channel))
 
     join = ''
     start = time.time()
@@ -226,18 +220,18 @@ def send_msg(msg, server='localhost', port='6667', channel=None, nick_to=None, k
         time.sleep(0.5)
 
     if topic is not None:
-        irc.send(safe('TOPIC %s :%s\r\n' % (channel, topic)))
+        irc.send(to_bytes('TOPIC %s :%s\r\n' % (channel, topic)))
         time.sleep(1)
 
     if nick_to:
         for nick in nick_to:
-            irc.send(safe('PRIVMSG %s :%s\r\n' % (nick, message)))
+            irc.send(to_bytes('PRIVMSG %s :%s\r\n' % (nick, message)))
     if channel:
-        irc.send(safe('PRIVMSG %s :%s\r\n' % (channel, message)))
+        irc.send(to_bytes('PRIVMSG %s :%s\r\n' % (channel, message)))
     time.sleep(1)
     if part:
-        irc.send(safe('PART %s\r\n' % channel))
-        irc.send(safe('QUIT\r\n'))
+        irc.send(to_bytes('PART %s\r\n' % channel))
+        irc.send(to_bytes('QUIT\r\n'))
         time.sleep(1)
     irc.close()
 
