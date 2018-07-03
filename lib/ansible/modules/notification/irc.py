@@ -133,8 +133,14 @@ import ssl
 import time
 import traceback
 
+from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
+from ansible.module_utils.six import PY3
+
+if PY3:
+    safe = to_bytes
+else:
+    safe = to_text
 
 
 def send_msg(msg, server='localhost', port='6667', channel=None, nick_to=None, key=None, topic=None,
@@ -170,13 +176,13 @@ def send_msg(msg, server='localhost', port='6667', channel=None, nick_to=None, k
 
     try:
         styletext = stylechoices[style]
-    except:
+    except Exception:
         styletext = ""
 
     try:
         colornumber = colornumbers[color]
         colortext = "\x03" + colornumber
-    except:
+    except Exception:
         colortext = ""
 
     message = styletext + colortext + msg
@@ -185,14 +191,15 @@ def send_msg(msg, server='localhost', port='6667', channel=None, nick_to=None, k
     if use_ssl:
         irc = ssl.wrap_socket(irc)
     irc.connect((server, int(port)))
+
     if passwd:
-        irc.send('PASS %s\r\n' % passwd)
-    irc.send('NICK %s\r\n' % nick)
-    irc.send('USER %s %s %s :ansible IRC\r\n' % (nick, nick, nick))
+        irc.send(safe('PASS %s\r\n' % passwd))
+    irc.send(safe('NICK %s\r\n' % nick))
+    irc.send(safe('USER %s %s %s :ansible IRC\r\n' % (nick, nick, nick)))
     motd = ''
     start = time.time()
     while 1:
-        motd += irc.recv(1024)
+        motd += to_text(irc.recv(1024))
         # The server might send back a shorter nick than we specified (due to NICKLEN),
         #  so grab that and use it from now on (assuming we find the 00[1-4] response).
         match = re.search(r'^:\S+ 00[1-4] (?P<nick>\S+) :', motd, flags=re.M)
@@ -204,14 +211,14 @@ def send_msg(msg, server='localhost', port='6667', channel=None, nick_to=None, k
         time.sleep(0.5)
 
     if key:
-        irc.send('JOIN %s %s\r\n' % (channel, key))
+        irc.send(safe('JOIN %s %s\r\n' % (channel, key)))
     else:
-        irc.send('JOIN %s\r\n' % channel)
+        irc.send(safe('JOIN %s\r\n' % channel))
 
     join = ''
     start = time.time()
     while 1:
-        join += irc.recv(1024)
+        join += to_text(irc.recv(1024))
         if re.search(r'^:\S+ 366 %s %s :' % (nick, channel), join, flags=re.M):
             break
         elif time.time() - start > timeout:
@@ -219,18 +226,18 @@ def send_msg(msg, server='localhost', port='6667', channel=None, nick_to=None, k
         time.sleep(0.5)
 
     if topic is not None:
-        irc.send('TOPIC %s :%s\r\n' % (channel, topic))
+        irc.send(safe('TOPIC %s :%s\r\n' % (channel, topic)))
         time.sleep(1)
 
     if nick_to:
         for nick in nick_to:
-            irc.send('PRIVMSG %s :%s\r\n' % (nick, message))
+            irc.send(safe('PRIVMSG %s :%s\r\n' % (nick, message)))
     if channel:
-        irc.send('PRIVMSG %s :%s\r\n' % (channel, message))
+        irc.send(safe('PRIVMSG %s :%s\r\n' % (channel, message)))
     time.sleep(1)
     if part:
-        irc.send('PART %s\r\n' % channel)
-        irc.send('QUIT\r\n')
+        irc.send(safe('PART %s\r\n' % channel))
+        irc.send(safe('QUIT\r\n'))
         time.sleep(1)
     irc.close()
 
