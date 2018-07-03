@@ -27,7 +27,7 @@
     provider: "{{ nios_provider }}"
 
 - name: create an ipv4 ptr record
-  nios_host_record:
+  nios_ptr_record:
     ptrdname: host.ansible.com
     ipv4: 192.168.10.1
     state: present
@@ -35,7 +35,7 @@
   register: ipv4_ptr_create1
 
 - name: recreate an ipv4 ptr record
-  nios_host_record:
+  nios_ptr_record:
     ptrdname: host.ansible.com
     ipv4: 192.168.10.1
     state: present
@@ -43,7 +43,7 @@
   register: ipv4_ptr_create2
 
 - name: add a comment to an existing ipv4 ptr record
-  nios_host_record:
+  nios_ptr_record:
     ptrdname: host.ansible.com
     ipv4: 192.168.10.1
     comment: this is a test comment
@@ -52,7 +52,7 @@
   register: ipv4_ptr_update1
 
 - name: add a comment to an ipv4 ptr host record
-  nios_host_record:
+  nios_ptr_record:
     ptrdname: host.ansible.com
     ipv4: 192.168.10.1
     comment: this is a test comment
@@ -61,7 +61,7 @@
   register: ipv4_ptr_update2
 
 - name: remove a ptr record from the system
-  nios_host_record:
+  nios_ptr_record:
     ptrdname: host.ansible.com
     ipv4: 192.168.10.1
     state: absent
@@ -69,7 +69,7 @@
   register: ipv4_ptr_delete1
 
 - name: remove a ptr record from the system
-  nios_host_record:
+  nios_ptr_record:
     ptrdname: host.ansible.com
     ipv4: 192.168.10.1
     state: absent
