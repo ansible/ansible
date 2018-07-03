@@ -42,14 +42,14 @@ options:
     description:
     - The encapsulation ID associating the C(epg) with the interface path.
     - This acts as the secondary C(encap_id) when using micro-segmentation.
+    - Accepted values are any valid encap ID for specified encap, currently ranges between C(1) and C(4096).
     aliases: [ vlan, vlan_id ]
-    choices: [ Valid encap IDs for specified encap, currently 1 to 4096 ]
   primary_encap_id:
     description:
     - Determines the primary encapsulation ID associating the C(epg)
       with the interface path when using micro-segmentation.
+    - Accepted values are any valid encap ID for specified encap, currently ranges between C(1) and C(4096).
     aliases: [ primary_vlan, primary_vlan_id ]
-    choices: [ Valid encap IDs for specified encap, currently 1 to 4096 ]
   deploy_immediacy:
     description:
     - The Deployement Immediacy of Static EPG on PC, VPC or Interface.
@@ -89,7 +89,7 @@ options:
     description:
     - The C(extpaths) integer value part of the tDn.
     - C(extpaths) is only used if C(interface_type) is C(fex).
-    - Usually something like '1011'.
+    - Usually something like C(1011).
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
