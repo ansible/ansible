@@ -97,7 +97,7 @@
     state: present
     org_name: '{{test_org_name}}'
     name: Jim Doe
-    email: '{{email_prefix}}+jimdoe@{{email_domain}}'
+    email: '{{email_prefix}}+jimdoe{{email_domain}}'
     orgAccess: none
     networks:
       - { "network": "TestNet", "access": "read-only" }
