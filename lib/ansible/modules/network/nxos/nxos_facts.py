@@ -37,6 +37,9 @@ description:
 author:
   - Jason Edelman (@jedelman8)
   - Gabriele Gerbino (@GGabriele)
+notes:
+  - This module is only supported on the NX-OS device that supports JSON
+    structured output. NX-OS OS version should be 6.0(2)A8 or 7.x or later.
 options:
   gather_subset:
     description:
@@ -169,6 +172,7 @@ vlan_list:
 import re
 
 from ansible.module_utils.network.nxos.nxos import run_commands, get_config
+from ansible.module_utils.network.nxos.nxos import get_capabilities
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types, iteritems
@@ -537,6 +541,13 @@ def main():
     spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=spec, supports_check_mode=True)
+
+    capabilities = get_capabilities(module)
+    if capabilities:
+        os_version = capabilities['device_info']['network_os_version']
+        os_version_major = int(os_version[0])
+        if os_version_major < 7 and "6.0(2)A8" not in os_version:
+            module.fail_json(msg="this module requires JSON structured output support on the NX-OS device")
 
     warnings = list()
     check_args(module, warnings)
