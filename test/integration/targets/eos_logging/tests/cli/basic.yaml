@@ -96,6 +96,8 @@
     facility: local7
     level: informational
     state: present
+    authorize: yes
+    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -112,6 +114,8 @@
     facility: local7
     level: informational
     state: present
+    authorize: yes
+    provider: "{{ cli }}"
   become: yes
   register: result
 
