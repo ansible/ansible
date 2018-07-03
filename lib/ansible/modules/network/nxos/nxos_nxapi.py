@@ -273,6 +273,8 @@ def main():
         https_port=dict(type='int', default=443),
         sandbox=dict(aliases=['enable_sandbox'], type='bool'),
         state=dict(default='present', choices=['started', 'stopped', 'present', 'absent'])
+        ssl_ciphers(default='weak', choices=['weak', 'disabled'])
+        ssl_protocols(default='TLSv1.0', choices=['TLSv1.0', 'TLSv1.1', 'TLSv1.2', 'disabled'])
     )
 
     argument_spec.update(nxos_argument_spec)
