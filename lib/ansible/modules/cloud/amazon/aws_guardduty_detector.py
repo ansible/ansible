@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: guardduty_detector
+module: aws_guardduty_detector
 short_description: Enable/Disable the AWS GuardDuty detector.
 description:
     - Enable/Disable the GuardDuty detector for a given AWS account.
@@ -56,13 +56,16 @@ EXAMPLES = r'''
 '''
 
 
-RETURN = r'''#'''
+RETURN = r'''
+detector_id:
+    description: The ID of the GuardDuty detector you just created or updated.
+    returned: always
+    type: string
+'''
 
 import os
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, AWSRetry
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict
 
 try:
     from botocore.exceptions import BotoCoreError, ClientError
@@ -73,51 +76,46 @@ except ImportError:
 def detector_exists(client, module, result):
     try:
         response = client.list_detectors()
-        result['detector_id'] = response['DetectorIds'][0]
-        return True
+        return {'exists': True, 'detector_id': response['DetectorIds'][0]}
     except (ClientError, IndexError):
-        return False
+        return {'exists': False}
 
-    return False
+    return {'exists': False}
 
 
-def create_detector(client, module, result):
+def create_detector(client, module):
     if module.check_mode:
         module.exit_json(changed=True)
     try:
         response = client.create_detector(
             Enable=module.params.get('enabled')
         )
-        result['detector_id'] = response['DetectorId']
-        result['changed'] = True
-        return result
+        return {'changed': True, 'detector_id': response['DetectorId']}
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e, msg="Failed to enable detector")
 
 
-def update_detector(client, module, result):
+def update_detector(client, module, status):
     if module.check_mode:
         module.exit_json(changed=True)
     try:
         response = client.update_detector(
-            DetectorId=result['detector_id'],
+            DetectorId=status['detector_id'],
             Enable=module.params.get('enabled')
         )
-        result['changed'] = True
-        return result
+        return {'changed': True, 'detector_id': status['detector_id']}
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e, msg="Failed to update detector")
 
 
-def delete_detector(client, module, result):
+def delete_detector(client, module, status):
     if module.check_mode:
         module.exit_json(changed=True)
     try:
         response = client.delete_detector(
-            DetectorId=result['detector_id']
+            DetectorId=status['detector_id']
         )
-        result['changed'] = True
-        return result
+        return {'changed': True, 'detector_id': status['detector_id']}
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e, msg="Failed to delete detector")
 
@@ -132,7 +130,8 @@ def main():
     )
 
     result = {
-        'changed': False
+        'changed': False,
+        'detector_id': ''
     }
 
     desired_state = module.params.get('state')
@@ -142,16 +141,16 @@ def main():
     detector_status = detector_exists(client, module, result)
 
     if desired_state == 'present':
-        if not detector_status:
-            create_detector(client, module, result)
-        if detector_status:
-            update_detector(client, module, result)
+        if not detector_status['exists']:
+            result = create_detector(client, module)
+        if detector_status['exists']:
+            result = update_detector(client, module, detector_status)
 
     if desired_state == 'absent':
-        if detector_status:
-            delete_detector(client, module, result)
+        if detector_status['exists']:
+            result = delete_detector(client, module, detector_status)
 
-    module.exit_json(changed=result['changed'], results=result)
+    module.exit_json(changed=result['changed'], detector_id=result['detector_id'])
 
 
 if __name__ == '__main__':
