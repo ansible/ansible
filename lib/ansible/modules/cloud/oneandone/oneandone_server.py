@@ -218,6 +218,7 @@ from ansible.module_utils.oneandone import (
     get_monitoring_policy,
     get_firewall_policy,
     get_load_balancer,
+    get_baremetal_model,
     get_server,
     OneAndOneResources,
     wait_for_resource_creation_completion,
@@ -253,8 +254,8 @@ def _create_server(module, oneandone_conn, hostname, description,
                    fixed_instance_size_id, vcore, cores_per_processor, ram,
                    hdds, datacenter_id, appliance_id, ssh_key,
                    private_network_id, firewall_policy_id, load_balancer_id,
-                   monitoring_policy_id, server_type, wait, wait_timeout,
-                   wait_interval):
+                   monitoring_policy_id, server_type, baremetal_model_id,
+                   wait, wait_timeout, wait_interval):
 
     try:
         existing_server = get_server(oneandone_conn, hostname)
@@ -282,7 +283,8 @@ def _create_server(module, oneandone_conn, hostname, description,
                 firewall_policy_id=firewall_policy_id,
                 load_balancer_id=load_balancer_id,
                 monitoring_policy_id=monitoring_policy_id,
-                server_type=server_type,), hdds)
+                server_type=server_type,
+                baremetal_model_id=baremetal_model_id,), hdds)
 
         if wait:
             wait_for_resource_creation_completion(
@@ -335,6 +337,7 @@ def create_server(module, oneandone_conn):
     firewall_policy = module.params.get('firewall_policy')
     load_balancer = module.params.get('load_balancer')
     server_type = module.params.get('server_type')
+    baremetal_model = module.params.get('baremetal_model_id')
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
     wait_interval = module.params.get('wait_interval')
@@ -355,7 +358,10 @@ def create_server(module, oneandone_conn):
             module.fail_json(
                 msg='fixed_instance_size %s not found.' % fixed_instance_size)
 
-    appliance_id = get_appliance(oneandone_conn, appliance)
+    if server_type == 'baremetal':
+        appliance_id = get_appliance(oneandone_conn=oneandone_conn, appliance=appliance, appliance_type='BAREMETAL')
+    else:
+        appliance_id = get_appliance(oneandone_conn, appliance)
     if appliance_id is None:
         _check_mode(module, False)
         module.fail_json(
@@ -401,6 +407,16 @@ def create_server(module, oneandone_conn):
             module.fail_json(
                 msg='load balancer %s not found.' % load_balancer)
 
+    baremetal_model_id = None
+    if baremetal_model:
+        baremetal_model_id = get_baremetal_model(
+            oneandone_conn,
+            baremetal_model)
+        if baremetal_model_id is None:
+            _check_mode(module, False)
+            module.fail_json(
+                msg='baremetal model %s not found.' % baremetal_model)
+
     if auto_increment:
         hostnames = _auto_increment_hostname(count, hostname)
         descriptions = _auto_increment_description(count, description)
@@ -436,6 +452,7 @@ def create_server(module, oneandone_conn):
             firewall_policy_id=firewall_policy_id,
             load_balancer_id=load_balancer_id,
             server_type=server_type,
+            baremetal_model_id=baremetal_model_id,
             wait=wait,
             wait_timeout=wait_timeout,
             wait_interval=wait_interval)
@@ -632,6 +649,7 @@ def main():
             load_balancer=dict(type='str'),
             monitoring_policy=dict(type='str'),
             server_type=dict(type='str', default='cloud', choices=['cloud', 'baremetal', 'k8s_node']),
+            baremetal_model_id=dict(type='str'),
             wait=dict(type='bool', default=True),
             wait_timeout=dict(type='int', default=600),
             wait_interval=dict(type='int', default=5),
@@ -639,7 +657,8 @@ def main():
         ),
         supports_check_mode=True,
         mutually_exclusive=(['fixed_instance_size', 'vcore'], ['fixed_instance_size', 'cores_per_processor'],
-                            ['fixed_instance_size', 'ram'], ['fixed_instance_size', 'hdds'],),
+                            ['fixed_instance_size', 'ram'], ['fixed_instance_size', 'hdds'],
+                            ['fixed_instance_size', 'baremetal_model_id'], ['vcore', 'baremetal_model_id'],),
         required_together=(['vcore', 'cores_per_processor', 'ram', 'hdds'],)
     )
 

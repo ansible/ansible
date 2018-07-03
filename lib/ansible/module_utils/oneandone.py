@@ -79,12 +79,12 @@ def get_fixed_instance_size(oneandone_conn, fixed_instance_size, full_object=Fal
             return _fixed_instance_size['id']
 
 
-def get_appliance(oneandone_conn, appliance, full_object=False):
+def get_appliance(oneandone_conn, appliance, full_object=False, appliance_type='IMAGE'):
     """
     Validates the appliance exists by ID or name.
     Return the appliance ID.
     """
-    for _appliance in oneandone_conn.list_appliances(q='IMAGE'):
+    for _appliance in oneandone_conn.list_appliances(q=appliance_type):
         if appliance in (_appliance['id'], _appliance['name']):
             if full_object:
                 return _appliance
@@ -202,6 +202,18 @@ def get_public_ip(oneandone_conn, public_ip, full_object=False):
             if full_object:
                 return _public_ip
             return _public_ip['id']
+
+
+def get_baremetal_model(oneandone_conn, baremetal_model, full_object=False):
+    """
+    Validates that the baremetal model exists by ID or a name.
+    Returns the baremetal model if one was found.
+    """
+    for _baremetal_model in oneandone_conn.list_baremetal_models(per_page=1000):
+        if baremetal_model in (_baremetal_model['id'], _baremetal_model['name']):
+            if full_object:
+                return _baremetal_model
+            return _baremetal_model['id']
 
 
 def wait_for_resource_creation_completion(oneandone_conn,
