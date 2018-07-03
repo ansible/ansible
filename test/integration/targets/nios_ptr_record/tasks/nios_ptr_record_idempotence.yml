@@ -1,3 +1,31 @@
+- name: cleanup the parent object
+  nios_zone:
+    name: ansible.com
+    state: absent
+    provider: "{{ nios_provider }}"
+
+- name: create the parent object
+  nios_zone:
+    name: ansible.com
+    state: present
+    provider: "{{ nios_provider }}"
+
+- name: cleanup ipv4 host record
+  nios_host_record:
+    name: host.ansible.com
+    ipv4:
+      - address: 192.168.10.1
+    state: absent
+    provider: "{{ nios_provider }}"
+
+- name: create an ipv4 host record
+  nios_host_record:
+    name: host.ansible.com
+    ipv4:
+      - address: 192.168.10.1
+    state: present
+    provider: "{{ nios_provider }}"
+
 - name: create an ipv4 ptr record
   nios_ptr_record:
     ptrdname: ptr.host.ansible.com
@@ -56,3 +84,4 @@
       - "not ipv4_ptr_update2.changed"
       - "ipv4_ptr_delete1.changed"
       - "not ipv4_ptr_delete2.changed"
+
