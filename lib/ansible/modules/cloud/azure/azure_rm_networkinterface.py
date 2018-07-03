@@ -179,6 +179,21 @@ options:
             - When a default security group is created for a Linux host a rule will be added allowing inbound TCP
               connections to the default SSH port 22, and for a Windows host rules will be added allowing inbound
               access to RDP ports 3389 and 5986. Override the default ports by providing a list of open ports.
+    enable_accelerated_networking:
+        description:
+            - This enables accelerated networking on the network interface
+        aliases:
+            - accelerated_networking
+        type: bool
+        default: 'no'
+    enable_ip_forwarding:
+        description:
+            - This disable's Azure's check on the source and destination IPs for a network interface,
+              allowing VMs attached to this network interface to route traffic to interfaces other than its own
+        aliases:
+            - ip_forwarding
+        type: bool
+        default: 'no'
 extends_documentation_fragment:
     - azure
     - azure_tags
@@ -276,6 +291,7 @@ state:
             "internal_dns_name_label": null,
             "internal_fqdn": null
         },
+        "enable_accelerated_networking": false,
         "enable_ip_forwarding": false,
         "etag": 'W/"be115a43-2148-4545-a324-f33ad444c926"',
         "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkInterfaces/nic003",
@@ -400,8 +416,8 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             ip_configurations=dict(type='list', default=None, elements='dict', options=ip_configuration_spec),
             os_type=dict(type='str', choices=['Windows', 'Linux'], default='Linux'),
             open_ports=dict(type='list'),
-            enable_accelerated_networking=dict(type='bool', default=False),
-            enable_ip_forwarding=dict(type='bool', default=False),
+            enable_accelerated_networking=dict(type='bool', default=False, aliases=['accelerated_networking']),
+            enable_ip_forwarding=dict(type='bool', default=False, aliases=['ip_forwarding']),
         )
 
         required_if = [
