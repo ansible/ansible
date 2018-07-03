@@ -128,17 +128,6 @@ class MerakiModule(object):
         ignored_keys = ('id', 'organizationId')
         if not optional_ignore:
             optional_ignore = ('')
-
-        # self.fail_json(msg="Update required check", original=original, proposed=proposed)
-
-        for k, v in original.items():
-            try:
-                if k not in ignored_keys and k not in optional_ignore:
-                    if v != proposed[k]:
-                        is_changed = True
-            except KeyError:
-                if v != '':
-                    is_changed = True
         for k, v in proposed.items():
             try:
                 if k not in ignored_keys and k not in optional_ignore:
