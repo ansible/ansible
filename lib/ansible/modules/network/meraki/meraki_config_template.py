@@ -83,6 +83,8 @@ from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argu
 def get_config_templates(meraki, org_id):
     path = meraki.construct_path('get_all', org_id=org_id)
     response = meraki.request(path, 'GET')
+    if meraki.status != 200:
+        meraki.fail_json(msg='Unable to get configuration templates')
     return response
 
 
@@ -96,10 +98,8 @@ def get_template_id(meraki, name, data):
 def is_network_bound(meraki, nets, net_name, template_id):
     for net in nets:
         if net['name'] == net_name:
-            # meraki.fail_json(msg=net['name'])
             try:
                 if net['configTemplateId'] == template_id:
-                    # meraki.fail_json(msg='Network is already bound.')
                     return True
             except KeyError:
                 pass
@@ -111,6 +111,8 @@ def delete_template(meraki, org_id, name, data):
     path = meraki.construct_path('delete', org_id=org_id)
     path = path + '/' + template_id
     response = meraki.request(path, 'DELETE')
+    if meraki.status != 200:
+        meraki.fail_json(msg='Unable to remove configuration template')
     return response
 
 
@@ -126,7 +128,10 @@ def bind(meraki, org_name, net_name, name, data):
         if meraki.params['auto_bind']:
             payload['autoBind'] = meraki.params['auto_bind']
         meraki.result['changed'] = True
-        return meraki.request(path, method='POST', payload=json.dumps(payload))
+        r = meraki.request(path, method='POST', payload=json.dumps(payload))
+        if meraki.status != 200:
+            meraki.fail_json(msg='Unable to bind configuration template to network')
+        return r
 
 
 def unbind(meraki, org_name, net_name, name, data):
@@ -136,7 +141,10 @@ def unbind(meraki, org_name, net_name, name, data):
     if is_network_bound(meraki, nets, net_name, template_id) is True:
         path = meraki.construct_path('unbind', function='config_template', net_id=net_id)
         meraki.result['changed'] = True
-        return meraki.request(path, method='POST')
+        r = meraki.request(path, method='POST')
+        if meraki.status != 200:
+            meraki.fail_json(msg='Unable to unbind configuration template from network')
+        return r
 
 
 def main():
@@ -215,8 +223,6 @@ def main():
                                  meraki.params['net_name'],
                                  meraki.params['config_template'],
                                  get_config_templates(meraki, org_id))
-            # meraki.fail_json(msg='Output', bind_output=template_bind)
-            # meraki.result['data'] = json.loads(template_bind)
     elif meraki.params['state'] == 'absent':
         if not meraki.params['net_name']:
             meraki.result['data'] = delete_template(meraki,
@@ -229,7 +235,6 @@ def main():
                                    meraki.params['net_name'],
                                    meraki.params['config_template'],
                                    get_config_templates(meraki, org_id))
-            # meraki.result['data'] = json.loads(config_unbind)
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results

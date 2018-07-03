@@ -47,6 +47,15 @@
     that:
       - '"No configuration template named" in deleted.msg'
 
+- name: Create a network
+  meraki_network:
+    auth_key: '{{auth_key}}'
+    state: present
+    org_name: '{{ test_org_name }}'
+    net_name: '{{ test_net_name }}'
+    type: appliance
+  delegate_to: localhost
+
 - name: Bind a template to a network
   meraki_config_template:
     auth_key: '{{auth_key}}'
@@ -102,3 +111,11 @@
 - assert:
     that:
       unbind_invalid.changed == False
+
+- name: Delete network
+  meraki_network:
+    auth_key: '{{auth_key}}'
+    state: absent
+    org_name: '{{ test_org_name }}'
+    net_name: '{{ test_net_name }}'
+  delegate_to: localhost
