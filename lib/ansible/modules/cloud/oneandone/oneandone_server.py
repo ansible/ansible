@@ -110,6 +110,13 @@ options:
       - The type of server to be built.
     default: "cloud"
     choices: [ "cloud", "baremetal", "k8s_node" ]
+  baremetal_model_id:
+    description:
+      - The baremetal model name or ID for the server which must be provided when
+        creating a baremetal server. It is required only for 'present' state, and
+        it is mutually exclusive with vcore, cores_per_processor, ram, hdds,
+        and fixed_instance_size parameters.
+    choices: [ "BMC_L", "BMC_L_HDD", "BMC_S", "BMC_S_HDD", "BMC_XL", "BMC_XL_HDD" ]
   wait:
     description:
       - Wait for the server to be in state 'running' before returning.
