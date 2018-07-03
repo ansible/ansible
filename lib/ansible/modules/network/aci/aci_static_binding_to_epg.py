@@ -42,6 +42,7 @@ options:
     description:
     - Description for the static path to EPG binding.
     aliases: [ descr ]
+    version_added: '2.7'
   encap_id:
     description:
     - The encapsulation ID associating the C(epg) with the interface path.
