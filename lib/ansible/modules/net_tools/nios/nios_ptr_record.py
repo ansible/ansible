@@ -35,7 +35,6 @@ options:
       - Sets the DNS view to associate this a record with. The DNS
         view must already be configured on the system
     required: false
-    default: default
     aliases:
       - dns_view
   ipv4addr:
