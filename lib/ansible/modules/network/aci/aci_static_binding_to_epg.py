@@ -38,6 +38,10 @@ options:
     description:
     - The name of the end point group.
     aliases: [ epg_name ]
+  description:
+    description:
+    - Description for the static path to EPG binding.
+    aliases: [ descr ]
   encap_id:
     description:
     - The encapsulation ID associating the C(epg) with the interface path.
@@ -263,6 +267,7 @@ def main():
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),  # Not required for querying all objects
         epg=dict(type='str', aliases=['epg_name']),  # Not required for querying all objects
+        description=dict(type='str', aliases=['descr']),
         encap_id=dict(type='int', aliases=['vlan', 'vlan_id']),
         primary_encap_id=dict(type='int', aliases=['primary_vlan', 'primary_vlan_id']),
         deploy_immediacy=dict(type='str', choices=['immediate', 'lazy']),
@@ -289,6 +294,7 @@ def main():
     tenant = module.params['tenant']
     ap = module.params['ap']
     epg = module.params['epg']
+    description = module.params['description']
     encap_id = module.params['encap_id']
     primary_encap_id = module.params['primary_encap_id']
     deploy_immediacy = module.params['deploy_immediacy']
@@ -383,6 +389,7 @@ def main():
         aci.payload(
             aci_class='fvRsPathAtt',
             class_config=dict(
+                descr=description,
                 encap=encap_id,
                 primaryEncap=primary_encap_id,
                 instrImedcy=deploy_immediacy,
