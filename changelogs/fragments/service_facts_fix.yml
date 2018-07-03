@@ -1,0 +1,2 @@
+bugfixes:
+    - correct service facts systemd detection of state https://github.com/ansible/ansible/issues/40809
