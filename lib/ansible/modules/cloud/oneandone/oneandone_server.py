@@ -117,6 +117,7 @@ options:
         it is mutually exclusive with vcore, cores_per_processor, ram, hdds,
         and fixed_instance_size parameters.
     choices: [ "BMC_L", "BMC_L_HDD", "BMC_S", "BMC_S_HDD", "BMC_XL", "BMC_XL_HDD" ]
+    version_added: "2.7"
   wait:
     description:
       - Wait for the server to be in state 'running' before returning.
