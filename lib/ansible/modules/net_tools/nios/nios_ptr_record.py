@@ -34,19 +34,19 @@ options:
     description:
       - Sets the DNS view to associate this a record with. The DNS
         view must already be configured on the system
-    required: true
+    required: false
     default: default
     aliases:
       - dns_view
   ipv4addr:
     description:
-      - The IPv4 Address of the record.
+      - The IPv4 Address of the record. Mutually exclusive with the ipv6addr.
     required: true
     aliases:
       - ipv4
   ipv6addr:
     description:
-      - The IPv6 Address of the record.
+      - The IPv6 Address of the record. Mutually exclusive with the ipv4addr.
     required: true
     aliases:
       - ipv6
@@ -115,9 +115,8 @@ from ansible.module_utils.net_tools.nios.api import WapiModule
 def main():
     # Module entry point
     ib_spec = dict(
-        name=dict(required=False, ib_req=False),
-        view=dict(default='default', aliases=['dns_view'], ib_req=True),
-
+        name=dict(required=False),
+        view=dict(aliases=['dns_view']),
         ipv4addr=dict(aliases=['ipv4'], ib_req=True),
         ipv6addr=dict(aliases=['ipv6'], ib_req=True),
         ptrdname=dict(ib_req=True),
@@ -137,10 +136,19 @@ def main():
     argument_spec.update(WapiModule.provider_spec)
 
     mutually_exclusive = [('ipv4addr', 'ipv6addr')]
+    required_one_of = [
+        ['ipv4addr', 'ipv6addr']
+    ]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
-                           supports_check_mode=True)
+                           supports_check_mode=True,
+                           required_one_of=required_one_of)
+
+    if module.params['ipv4addr']:
+        del ib_spec['ipv6addr']
+    elif module.params['ipv6addr']:
+        del ib_spec['ipv4addr']
 
     wapi = WapiModule(module)
     result = wapi.run('record:ptr', ib_spec)
