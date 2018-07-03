@@ -20,8 +20,8 @@ $package = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $
 $force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $false
 $version = Get-AnsibleParam -obj $params -name "version" -type "str"
 $source = Get-AnsibleParam -obj $params -name "source" -type "str"
-$source_username = Get-AnsibleParam -obj $params -name "username" -type "str" -failifempty ($source -ne $null)
-$source_password = Get-AnsibleParam -obj $params -name "password" -type "str" -failifempty ($source_username -ne $null)
+$source_username = Get-AnsibleParam -obj $params -name "source_username" -type "str" -failifempty ($source -ne $null)
+$source_password = Get-AnsibleParam -obj $params -name "source_password" -type "str" -failifempty ($source_username -ne $null)
 $showlog = Get-AnsibleParam -obj $params -name "showlog" -type "bool" -default $false
 $timeout = Get-AnsibleParam -obj $params -name "timeout" -type "int" -default 2700 -aliases "execution_timeout"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","downgrade","latest","present","reinstalled"
@@ -341,7 +341,7 @@ Function Choco-Install
         if ($state -in ("downgrade", "latest"))
         {
             Choco-Upgrade -package $package -version $version -force $force -timeout $timeout `
-                -skipscripts $skipscripts -source $source -username $source_username `
+                -skipscripts $skipscripts -source $source -user $source_username `
                 -password $source_password -installargs $installargs -packageparams $packageparams `
                 -allowemptychecksums $allowemptychecksums -ignorechecksums $ignorechecksums `
                 -ignoredependencies $ignoredependencies -allowdowngrade $allowdowngrade `
@@ -540,7 +540,7 @@ if ($state -in ("absent", "reinstalled")) {
 if ($state -in ("downgrade", "latest", "present", "reinstalled")) {
 
     Choco-Install -package $package -version $version -force $force -timeout $timeout `
-        -skipscripts $skipscripts -source $source -username $source_username -password $source_password `
+        -skipscripts $skipscripts -source $source -user $source_username -password $source_password `
         -installargs $installargs -packageparams $packageparams -allowemptychecksums $allowemptychecksums `
         -ignorechecksums $ignorechecksums -ignoredependencies $ignoredependencies `
         -allowdowngrade ($state -eq "downgrade") -proxy_url $proxy_url `
