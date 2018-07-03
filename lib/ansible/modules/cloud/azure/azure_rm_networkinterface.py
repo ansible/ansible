@@ -186,6 +186,7 @@ options:
             - accelerated_networking
         type: bool
         default: 'no'
+        version_added: 2.7
     enable_ip_forwarding:
         description:
             - This disable's Azure's check on the source and destination IPs for a network interface,
@@ -194,6 +195,7 @@ options:
             - ip_forwarding
         type: bool
         default: 'no'
+        version_added: 2.7
 extends_documentation_fragment:
     - azure
     - azure_tags
