@@ -152,6 +152,21 @@ options:
         key: command_timeout
     env:
       - name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT
+  netconf_ssh_config:
+    type: boolean
+    default: False
+    description:
+      - This variable is used to enable bastion/jump host with netconf connection. The bastion/jump
+        host ssh settings should be present in ssh configuration file (~/.ssh/config).
+    ini:
+      - section: netconf_connection
+        key: ssh_config
+        version_added: '2.7'
+    env:
+      - name: ANSIBLE_NETCONF_SSH_CONFIG
+    vars:
+      - name: ansible_netconf_ssh_config
+        version_added: '2.7'
 """
 
 import os
@@ -248,7 +263,7 @@ class Connection(NetworkConnectionBase):
 
         device_params = {'name': NETWORK_OS_DEVICE_PARAM_MAP.get(self._network_os) or self._network_os}
 
-        ssh_config = os.getenv('ANSIBLE_NETCONF_SSH_CONFIG', False)
+        ssh_config = self.get_option('netconf_ssh_config')
         if ssh_config in BOOLEANS_TRUE:
             ssh_config = True
         else:
