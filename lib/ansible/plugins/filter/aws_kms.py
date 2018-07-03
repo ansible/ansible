@@ -3,7 +3,7 @@
 Module to handle encrypting and decrypting of items with AWS KMS.
 """
 from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+__metaclass__ = type  # pylint: disable=invalid-name
 
 
 import base64
@@ -52,8 +52,8 @@ def aws_kms_encrypt(plaintext, key_arn):
             key_provider=master_key_provider
         )
         return base64.b64encode(ciphertext)
-    except aws_encryption_sdk.exceptions.NotSupportedError:
-        raise AnsibleFilterError('Unable to encrypt value using KMS')
+    except aws_encryption_sdk.exceptions.AWSEncryptionSDKClientError as kms_ex:
+        raise AnsibleFilterError("Unable to encrypt value using KMS - %s" % kms_ex)
 
 
 def aws_kms_decrypt(ciphertext, key_arn):
@@ -78,8 +78,8 @@ def aws_kms_decrypt(ciphertext, key_arn):
             key_provider=master_key_provider
         )
         return cycled_plaintext.rstrip()
-    except aws_encryption_sdk.exceptions.NotSupportedError:
-        raise AnsibleFilterError('Unable to decrypt value using KMS')
+    except aws_encryption_sdk.exceptions.AWSEncryptionSDKClientError as kms_ex:
+        raise AnsibleFilterError("Unable to encrypt value using KMS - %s" % kms_ex)
 
 
 class FilterModule(object):  # pylint: disable=too-few-public-methods
