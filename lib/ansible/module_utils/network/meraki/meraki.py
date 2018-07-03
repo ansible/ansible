@@ -130,14 +130,14 @@ class MerakiModule(object):
         if not optional_ignore:
             optional_ignore = ('')
 
-        for k, v in original.items():
-            try:
-                if k not in ignored_keys and k not in optional_ignore:
-                    if v != proposed[k]:
-                        is_changed = True
-            except KeyError:
-                if v != '':
-                    is_changed = True
+        # for k, v in original.items():
+        #     try:
+        #         if k not in ignored_keys and k not in optional_ignore:
+        #             if v != proposed[k]:
+        #                 is_changed = True
+        #     except KeyError:
+        #         if v != '':
+        #             is_changed = True
         for k, v in proposed.items():
             try:
                 if k not in ignored_keys and k not in optional_ignore:
