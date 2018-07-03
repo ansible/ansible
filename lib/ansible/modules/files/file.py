@@ -33,7 +33,7 @@ author:
 options:
   path:
     description:
-      - 'path to the file being managed.  Aliases: I(dest), I(name)'
+      - Path to the file being managed.
     required: true
     aliases: [ dest, name ]
   state:
@@ -212,18 +212,24 @@ def get_state(path):
     ''' Find out current state '''
 
     b_path = to_bytes(path, errors='surrogate_or_strict')
-    if os.path.lexists(b_path):
-        if os.path.islink(b_path):
-            return 'link'
-        elif os.path.isdir(b_path):
-            return 'directory'
-        elif os.stat(b_path).st_nlink > 1:
-            return 'hard'
+    try:
+        if os.path.lexists(b_path):
+            if os.path.islink(b_path):
+                return 'link'
+            elif os.path.isdir(b_path):
+                return 'directory'
+            elif os.stat(b_path).st_nlink > 1:
+                return 'hard'
 
-        # could be many other things, but defaulting to file
-        return 'file'
+            # could be many other things, but defaulting to file
+            return 'file'
 
-    return 'absent'
+        return 'absent'
+    except OSError as e:
+        if e.errno == errno.ENOENT:  # It may already have been removed
+            return 'absent'
+        else:
+            raise
 
 
 # This should be moved into the common file utilities
