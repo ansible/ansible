@@ -140,6 +140,8 @@ options:
          If C(cert_days < remaining_days), then it will be renewed.
          If the certificate is not renewed, module return values will not
          include C(challenge_data)."
+      - "To make sure that the certificate is renewed in any case, you can
+         use the C(force) option."
     default: 10
   deactivate_authzs:
     description:
@@ -155,7 +157,7 @@ options:
   force:
     description:
       - Enforces the execution of the challenge and validation, even if an
-        existing certificate is still valid.
+        existing certificate is still valid for more than C(remaining_days).
       - This is especially helpful when having an updated CSR e.g. with
         additional domains for which a new certificate is desired.
     type: bool
