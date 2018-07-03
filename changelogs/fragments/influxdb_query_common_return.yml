@@ -1,0 +1,2 @@
+bugfixes:
+- "influxdb_query - fixed the use of the common return 'results' caused an unexpected fault. The return is renamed to 'query_results'"
