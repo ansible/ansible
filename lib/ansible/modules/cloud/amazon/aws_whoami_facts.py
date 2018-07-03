@@ -162,8 +162,8 @@ def get_role(client):
     role_meta = r.open('GET', 'http://169.254.169.254/latest/meta-data/iam/info').read().decode('utf-8')
     role_meta_json = json.loads(role_meta)
     try:
-        role_arn = role_meta_json['InstanceProfileArn'].split('/')[-1]
-        role_data = client.get_role(RoleName=role_name)
+        role_arn = role_meta_json['InstanceProfileArn']
+        role_data = client.get_role(RoleName=role_arn.split('/')[-1])
         return camel_dict_to_snake_dict(role_data['Role'])
     except KeyError:
         # No instance profile so no role to report in results
