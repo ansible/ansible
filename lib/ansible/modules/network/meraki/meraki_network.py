@@ -58,9 +58,9 @@ options:
         - See U(https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) for a list of valid timezones.
     disable_my_meraki:
         description:
-        - Disables the local device status pages (U[my.meraki.com](my.meraki.com), U[ap.meraki.com](ap.meraki.com), U[switch.meraki.com](switch.meraki.com), U[wired.meraki.com](wired.meraki.com))
+        - Disables the local device status pages (U[my.meraki.com](my.meraki.com), U[ap.meraki.com](ap.meraki.com), U[switch.meraki.com](switch.meraki.com),
+        U[wired.meraki.com](wired.meraki.com))
         type: bool
-        default: yes
 
 author:
     - Kevin Breit (@kbreit)
@@ -189,8 +189,8 @@ def main():
     # Construct payload
     if meraki.params['state'] == 'present':
         payload = dict()
-        if meraki.params['type']:
-            payload['name'] = meraki.params['name']
+        if meraki.params['net_name']:
+            payload['name'] = meraki.params['net_name']
         if meraki.params['type']:
             payload['type'] = meraki.params['type']
             if meraki.params['type'] == 'combined':
