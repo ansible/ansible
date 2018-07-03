@@ -6,8 +6,8 @@ Ansible Changes By Release
 ## 2.4.6 "Dancing Days" - TBD
 
 ### Bugfixes
-* **Security Fix** - avoid using ansible.cfg in a world readable dir
-  https://github.com/ansible/ansible/pull/42070
+* **Security Fix** - avoid loading host/group vars from cwd when not specifying
+  a playbook or playbook base dir (https://github.com/ansible/ansible/pull/42067)
 
 
 <a id="2.4.5"></a>
