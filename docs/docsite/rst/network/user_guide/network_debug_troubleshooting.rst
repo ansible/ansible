@@ -597,6 +597,41 @@ no additional changes necessary.  The network module will now connect to the
 network device by first connecting to the host specified in
 ``ansible_ssh_common_args``, which is ``bastion01`` in the above example.
 
+Using bastion/jump host with netconf connection
+-----------------------------------------------
+
+Enabling jump host setting
+--------------------------
+
+Bastion/jump host with netconf connection can be enable using
+- Setting Ansible variable``ansible_netconf_ssh_config`` or
+- Setting environment variable ``ANSIBLE_NETCONF_SSH_CONFIG`` or
+- Setting ``ssh_config=Ture`` under ``netconf_connection`` section in ansible configuration file
+
+The ssh config file (~/.ssh/config) should have the correct proxycommand and required ssh configuration variables
+
+Example ssh config file (~/.ssh/config)
+---------------------------------------
+
+.. code-block:: ini
+
+   Host junoshost
+   HostName junos01
+   User myuser
+
+   ProxyCommand ssh user@bastion01 nc %h %p %r
+
+Example Ansible inventory file
+
+.. code-block:: ini
+    [junos]
+    junoshost
+
+   [junos:vars]
+   ansible_connection=netconf
+   ansible_network_os=junos
+   ansible_user=myuser
+   ansible_ssh_pass=!vault...
 
 .. note:: Using ``ProxyCommand`` with passwords via variables
 
