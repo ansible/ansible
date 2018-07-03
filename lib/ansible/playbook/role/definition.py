@@ -175,13 +175,12 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         # looking for role_name + "-" + version first, then role name alone
         if not isinstance(ds, string_types) and ds.get('version'):
             role_version_name = role_name + '-' + ds.get('version')
-        
+
             for path in role_search_paths:
                 path = templar.template(path)
                 role_path = unfrackpath(os.path.join(path, role_version_name))
                 if self._loader.path_exists(role_path):
-                    return (role_name, role_path)
-                        
+                    return (role_name, role_path)   
         for path in role_search_paths:
             path = templar.template(path)
             role_path = unfrackpath(os.path.join(path, role_name))

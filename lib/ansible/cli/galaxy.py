@@ -522,12 +522,10 @@ class GalaxyCLI(CLI):
         if len(self.args) == 1:
             roles = self._find_roles(name=self.args.pop())
         else:
-            roles = self._find_roles()
-
-            
+            roles = self._find_roles()            
         if not roles:
-            raise AnsibleOptionsError("- None of the provided paths was usable. Please specify a valid path with --roles-path")
-            
+            raise AnsibleOptionsError("- None of the provided paths was usable. Please specify a valid path with --roles-path")     
+
         for role in roles:
             install_info = role.install_info
             version = None
