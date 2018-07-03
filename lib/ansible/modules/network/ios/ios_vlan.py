@@ -218,7 +218,7 @@ def parse_to_logical_rows(out):
         if not l:
             """Skip empty lines."""
             continue
-        if '0' < l[0] < '9':
+        if '0' < l[0] <= '9':
             """Line starting with a number."""
             if started_yielding:
                 yield cur_row
