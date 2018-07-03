@@ -177,7 +177,7 @@ def get_portchannel(module, netcfg=None):
     members = []
 
     try:
-        run_commands(module, [command])[0]
+        body = run_commands(module, [command])[0]
         pc_table = body['TABLE_channel']['ROW_channel']
 
         if isinstance(pc_table, dict):
