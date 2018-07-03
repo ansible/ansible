@@ -90,6 +90,7 @@ class InventoryModule(BaseFileInventoryPlugin):
         ''' parses the inventory file '''
 
         super(InventoryModule, self).parse(inventory, loader, path)
+        self.set_options()
 
         try:
             data = self.loader.load_from_file(path, cache=False)
