@@ -1,31 +1,39 @@
+---
+
 - name: create an ipv4 ptr record
   nios_ptr_record:
-    ptrdname: host.ansible.com
+    name: ptr.ansible.com
+    ptrdname: ptr.ansible.com
     ipv4: 192.168.10.1
     state: present
     provider: "{{ nios_provider }}"
+    view: default
   register: ipv4_ptr_create1
 
-- name: recreate an ipv4 ptr record
+- name: create the same ipv4 ptr record
   nios_ptr_record:
-    ptrdname: host.ansible.com
+    name: ptr.ansible.com
+    ptrdname: ptr.ansible.com
     ipv4: 192.168.10.1
     state: present
+    view: default
     provider: "{{ nios_provider }}"
   register: ipv4_ptr_create2
 
 - name: add a comment to an existing ipv4 ptr record
   nios_ptr_record:
-    ptrdname: host.ansible.com
+    name: ptr.ansible.com
+    ptrdname: ptr.ansible.com
     ipv4: 192.168.10.1
     comment: this is a test comment
     state: present
     provider: "{{ nios_provider }}"
   register: ipv4_ptr_update1
 
-- name: add a comment to an ipv4 ptr host record
+- name: add the same comment to the same ipv4 ptr host record
   nios_ptr_record:
-    ptrdname: host.ansible.com
+    name: ptr.ansible.com
+    ptrdname: ptr.ansible.com
     ipv4: 192.168.10.1
     comment: this is a test comment
     state: present
@@ -34,15 +42,17 @@
 
 - name: remove a ptr record from the system
   nios_ptr_record:
-    ptrdname: host.ansible.com
+    name: ptr.ansible.com
+    ptrdname: ptr.ansible.com
     ipv4: 192.168.10.1
     state: absent
     provider: "{{ nios_provider }}"
   register: ipv4_ptr_delete1
 
-- name: remove a ptr record from the system
+- name: remove the same ptr record from the system
   nios_ptr_record:
-    ptrdname: host.ansible.com
+    ptrdname: ptr.ansible.com
+    name: ptr.ansible.com
     ipv4: 192.168.10.1
     state: absent
     provider: "{{ nios_provider }}"
