@@ -106,6 +106,27 @@
           - eks_create is changed
           - eks_create.name == eks_cluster_name
 
+    - name: create EKS cluster with same details but wait for it to become active
+      aws_eks_cluster:
+        name: "{{ eks_cluster_name }}"
+        security_groups: "{{ eks_security_groups | json_query('[].name') }}"
+        subnets: "{{ setup_subnets.results | json_query('[].subnet.id') }}"
+        role_arn: "{{ iam_role.arn }}"
+        wait: yes
+        <<: *aws_connection_info
+      register: eks_create
+
+    - name: Check that EKS cluster is active and has CA and endpoint data
+      assert:
+        that:
+          - eks_create is not changed
+          - eks_create.name == eks_cluster_name
+          - eks_create.status == "ACTIVE"
+          - eks_create.certificate_authority.data is defined
+          - eks_create.certificate_authority.data != ""
+          - eks_create.endpoint is defined
+          - eks_create.endpoint != ""
+
     - name: create EKS cluster with same details but using SG ids
       aws_eks_cluster:
         name: "{{ eks_cluster_name }}"
