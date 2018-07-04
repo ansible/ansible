@@ -26,6 +26,7 @@ import json
 
 from itertools import chain
 
+from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
@@ -41,7 +42,7 @@ class Cliconf(CliconfBase):
             return self.invalid_params("fetching configuration from %s is not supported" % source)
 
         if format:
-            raise ValueError("'format' value %s is not supported on ios" % format)
+            raise ValueError("'format' value %s is not supported for get_config" % format)
 
         if not filter:
             filter = []
@@ -94,14 +95,14 @@ class Cliconf(CliconfBase):
         device_operations = self.get_device_operations()
         option_values = self.get_option_values()
 
-        if candidate is None and not device_operations['supports_onbox_diff']:
+        if candidate is None and device_operations['supports_generate_diff']:
             raise ValueError("candidate configuration is required to generate diff")
 
         if match not in option_values['diff_match']:
-            raise ValueError("'match' value %s in invalid, valid values are %s" % (match, option_values['diff_match']))
+            raise ValueError("'match' value %s in invalid, valid values are %s" % (match, ', '.join(option_values['diff_match'])))
 
         if replace not in option_values['diff_replace']:
-            raise ValueError("'replace' value %s in invalid, valid values are %s" % (replace, option_values['diff_replace']))
+            raise ValueError("'replace' value %s in invalid, valid values are %s" % (replace, ', '.join(option_values['diff_replace'])))
 
         # prepare candidate configuration
         candidate_obj = NetworkConfig(indent=1)
@@ -124,11 +125,13 @@ class Cliconf(CliconfBase):
         banners = self._diff_banners(want_banners, have_banners)
 
         diff['banner_diff'] = banners if banners else {}
-        return json.dumps(diff)
+        return diff
 
     @enable_mode
     def edit_config(self, candidate=None, commit=True, replace=False, comment=None):
         resp = {}
+        operations = self.get_device_operations()
+
         if not candidate:
             raise ValueError("must provide a candidate config to load")
 
@@ -138,9 +141,12 @@ class Cliconf(CliconfBase):
         if replace not in (True, False):
             raise ValueError("'replace' must be a bool, got %s" % replace)
 
+        if comment and not operations['supports_commit_comment']:
+            raise ValueError("commit comment is not supported")
+
         operations = self.get_device_operations()
         if replace and not operations['supports_replace']:
-            raise ValueError("configuration replace is not supported on ios")
+            raise ValueError("configuration replace is not supported")
 
         results = []
         if commit:
@@ -153,6 +159,8 @@ class Cliconf(CliconfBase):
                     results.append(self.send_command(**line))
 
             results.append(self.send_command('end'))
+        else:
+            raise ValueError('check mode is not supported')
 
         resp['response'] = results[1:-1]
         return resp
@@ -161,7 +169,7 @@ class Cliconf(CliconfBase):
         if not command:
             raise ValueError('must provide value of command to execute')
         if output:
-            raise ValueError("'output' value %s is not supported on ios" % output)
+            raise ValueError("'output' value %s is not supported for get" % output)
 
         return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly)
 
@@ -247,7 +255,10 @@ class Cliconf(CliconfBase):
 
         return resp
 
-    def run_commands(self, commands):
+    def run_commands(self, commands=None, check_rc=True):
+        if commands is None:
+            raise ValueError("'commands' value is required")
+
         responses = list()
         for cmd in to_list(commands):
             if not isinstance(cmd, collections.Mapping):
@@ -255,9 +266,17 @@ class Cliconf(CliconfBase):
 
             output = cmd.pop('output', None)
             if output:
-                raise ValueError("'output' value %s is not supported on ios" % output)
+                raise ValueError("'output' value %s is not supported for run_commands" % output)
 
-            responses.append(self.send_command(**cmd))
+            try:
+                out = self.send_command(**cmd)
+            except AnsibleConnectionFailure as e:
+                if check_rc:
+                    raise
+                out = getattr(e, 'err', e)
+
+            responses.append(out)
+
         return responses
 
     def _extract_banners(self, config):

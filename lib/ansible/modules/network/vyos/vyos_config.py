@@ -130,7 +130,6 @@ backup_path:
   sample: /playbooks/ansible/backup/vyos_config.2016-07-16@22:28:34
 """
 import re
-import json
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.vyos.vyos import load_config, get_config, run_commands
@@ -205,8 +204,7 @@ def run(module, result):
     # create loadable config that includes only the configuration updates
     connection = get_connection(module)
     response = connection.get_diff(candidate=candidate, running=config, match=module.params['match'])
-    diff_obj = json.loads(response)
-    commands = diff_obj.get('config_diff')
+    commands = response.get('config_diff')
     sanitize_config(commands, result)
 
     result['commands'] = commands
