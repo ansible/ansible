@@ -171,7 +171,7 @@ class Cliconf(CliconfBase):
 
         if match == 'none':
             diff['config_diff'] = list(candidate_commands)
-            return json.dumps(diff)
+            return diff
 
         running_commands = [str(c).replace("'", '') for c in running.splitlines()]
 

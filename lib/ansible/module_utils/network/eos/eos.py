@@ -392,6 +392,7 @@ def get_config(module, flags=None):
     conn = get_connection(module)
     return conn.get_config(flags)
 
+
 def run_commands(module, commands, check_rc=True):
     conn = get_connection(module)
     return conn.run_commands(to_command(module, commands), check_rc=check_rc)
