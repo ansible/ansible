@@ -1,0 +1,6 @@
+---                                                                                                                              
+cli:                                                                                                                             
+  host: "{{ ansible_host }}"                                                                                                     
+  username:  ansible                                                                        
+  password:  ansible                                                                  
+  transport: cli 
