@@ -33,6 +33,7 @@ options:
     description:
     - Force principal name even if host is not in DNS.
     required: false
+    type: bool
   state:
     description: State to ensure
     required: false
