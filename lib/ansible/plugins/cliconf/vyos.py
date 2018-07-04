@@ -58,7 +58,7 @@ class Cliconf(CliconfBase):
         if format:
             option_values = self.get_option_values()
             if format not in option_values['format']:
-                raise ValueError("'format' value %s is invalid. Valid values of format are %s" % (format, ','.join(option_values['format'])))
+                raise ValueError("'format' value %s is invalid. Valid values of format are %s" % (format, ', '.join(option_values['format'])))
 
         if format == 'text':
             out = self.send_command('show configuration')
@@ -140,7 +140,7 @@ class Cliconf(CliconfBase):
             raise ValueError("candidate configuration is required to generate diff")
 
         if match not in option_values['diff_match']:
-            raise ValueError("'match' value %s in invalid, valid values are %s" % (match, option_values['diff_match']))
+            raise ValueError("'match' value %s in invalid, valid values are %s" % (match, ', '.join(option_values['diff_match'])))
 
         if replace:
             raise ValueError("'replace' in diff is not supported")

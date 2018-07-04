@@ -33,6 +33,7 @@ import time
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.connection import Connection, ConnectionError
+from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.common.utils import to_list, ComplexList
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.urls import fetch_url
@@ -355,9 +356,25 @@ class Eapi:
 
         return result
 
-    def get_diff(self, candidate=None, running=None, match='line', diff_ignore_lines=None, path=None, replace='line'):
-        conn = self._get_connection()
-        return conn.get_diff(candidate=candidate, running=running, match=match, diff_ignore_lines=diff_ignore_lines, path=path, replace=replace)
+    # get_diff added here to support connection=local and transport=eapi scenario
+    def get_diff(self, candidate, running=None, match='line', diff_ignore_lines=None, path=None, replace='line'):
+        diff = {}
+
+        # prepare candidate configuration
+        candidate_obj = NetworkConfig(indent=3)
+        candidate_obj.load(candidate)
+
+        if running and match != 'none' and replace != 'config':
+            # running configuration
+            running_obj = NetworkConfig(indent=3, contents=running, ignore_lines=diff_ignore_lines)
+            configdiffobjs = candidate_obj.difference(running_obj, path=path, match=match, replace=replace)
+
+        else:
+            configdiffobjs = candidate_obj.items
+
+        configdiff = dumps(configdiffobjs, 'commands') if configdiffobjs else ''
+        diff['config_diff'] = configdiff if configdiffobjs else {}
+        return diff
 
 
 def is_json(cmd):
@@ -401,3 +418,8 @@ def run_commands(module, commands, check_rc=True):
 def load_config(module, config, commit=False, replace=False):
     conn = get_connection(module)
     return conn.load_config(config, commit, replace)
+
+
+def get_diff(self, candidate=None, running=None, match='line', diff_ignore_lines=None, path=None, replace='line'):
+    conn = self.get_connection()
+    return conn.get_diff(candidate=candidate, running=running, match=match, diff_ignore_lines=diff_ignore_lines, path=path, replace=replace)

@@ -232,10 +232,10 @@ class Cliconf(CliconfBase):
             raise ValueError("candidate configuration is required to generate diff")
 
         if match not in option_values['diff_match']:
-            raise ValueError("'match' value %s in invalid, valid values are %s" % (match, option_values['diff_match']))
+            raise ValueError("'match' value %s in invalid, valid values are %s" % (match, ', '.join(option_values['diff_match'])))
 
         if replace not in option_values['diff_replace']:
-            raise ValueError("'replace' value %s in invalid, valid values are %s" % (replace, option_values['diff_replace']))
+            raise ValueError("'replace' value %s in invalid, valid values are %s" % (replace, ', '.join(option_values['diff_replace'])))
 
         # prepare candidate configuration
         candidate_obj = NetworkConfig(indent=3)
