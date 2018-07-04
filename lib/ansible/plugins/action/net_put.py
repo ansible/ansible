@@ -104,6 +104,10 @@ class ActionModule(ActionBase):
 
         try:
             changed = self._handle_existing_file(conn, output_file, dest, proto, sock_timeout)
+            if changed is False:
+                result['changed'] = False
+                result['destination'] = dest
+                return result
         except Exception as exc:
             result['msg'] = ('Warning: Exc %s idempotency check failed. Check'
                              'dest' % exc)
@@ -168,7 +172,7 @@ class ActionModule(ActionBase):
         checksum_new = sha1.digest()
         os.remove(source_file)
         if checksum_old == checksum_new:
-           return (False)
+           return False
         else:
            return True
 
