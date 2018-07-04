@@ -1,4 +1,4 @@
-#!/usr/bin/python
+idg_mgmt.status_text#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # (c) 2018, [David Grau Merconchini <david@gallorojo.com.mx>]
@@ -338,7 +338,11 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.urls import open_url
 
 # Common package of our implementation for IDG
-from ansible.module_utils.appliance.ibm.idg_common import *
+try:
+    from ansible.module_utils.appliance.ibm.idg_common import *
+    HAS_IDG_UTILS = True
+except ImportError:
+    HAS_IDG_UTILS = False
 
 def main():
 
@@ -378,7 +382,7 @@ def main():
         name = dict(type = 'str', required = True), # Domain name
         user_summary =  dict(type = 'str', required = False), # Domain description
         admin_state = dict(type = 'str', choices = ['enabled', 'disabled'], default = 'enabled'), # Domain's administrative state
-        state = dict(type = 'str', choices = ['present', 'absent', 'restarted', 'reseted', 'saved', 'quiesced', 'unquiesced'], default = 'present'), # Domain's operational state
+        state = dict(type = 'str', choices = ['present', 'absent', 'restarted', 'quiesced', 'unquiesced'], default = 'present'), # Domain's operational state
         quiesce_conf = dict(type = 'dict', options = quiescemap_spec, default = dict({ 'delay': 0, 'timeout': 60 })), # Transitions the operational state of a domain to down in a controlled manner.
         idg_connection = dict(type = 'dict', options = idg_endpoint_spec, required = True), # IDG connection
         file_map = dict(type = 'dict', options = filemap_spec, default = dict({ 'display': True, 'exec': True, 'copyfrom': True,
@@ -400,6 +404,10 @@ def main():
         supports_check_mode = True
     )
 
+    # Validates the dependence of the utility module
+    if not HAS_IDG_UTILS:
+        module.fail_json(msg="The IDG utils module is required")
+
     # Parse arguments to dict
     idg_data_spec = parse_to_dict(module.params['idg_connection'], 'IDGConnection', ANSIBLE_VERSION)
     filemap_data_spec = parse_to_dict(module.params['file_map'], 'FileMap', ANSIBLE_VERSION)
@@ -416,11 +424,18 @@ def main():
     # Connection
     socket_connection = "https://{0}:{1}".format(idg_data_spec['server'], idg_data_spec['server_port'])
     url = socket_connection + _URI_DOMAIN_CONFIG.format(domain_name)
-    user = idg_data_spec['user']
-    password = idg_data_spec['password']
-    validate_certs = idg_data_spec['validate_certs']
-    timeout = idg_data_spec['timeout']
-    use_proxy = idg_data_spec['use_proxy']
+
+    # Init IDG API connect
+    idg_mgmt = IDG_API(ansible_module = module,
+                       idg_host = "https://{0}:{1}".format(idg_data_spec['server'], idg_data_spec['server_port']),
+                       headers = BASIC_HEADERS,
+                       http_agent = HTTP_AGENT_SPEC,
+                       use_proxy = idg_data_spec['use_proxy'],
+                       timeout = idg_data_spec['timeout'],
+                       validate_certs = idg_data_spec['validate_certs'],
+                       user = idg_data_spec['user'],
+                       password = idg_data_spec['password'],
+                       force_basic_auth = BASIC_AUTH_SPEC)
 
     # Variable to store the status of the action
     action_result = ''
@@ -481,11 +496,7 @@ def main():
         module.exit_json(**result)
 
     # List of configured domains
-    chk_code, chk_msg, chk_data = do_open_url(module, socket_connection + _URI_DOMAIN_LIST,
-                                             method = 'GET', headers = BASIC_HEADERS, timeout = timeout, user = user,
-                                             password = password, use_proxy = use_proxy,
-                                             force_basic_auth = BASIC_AUTH_SPEC, validate_certs = validate_certs,
-                                             http_agent = HTTP_AGENT_SPEC, data = None)
+    chk_code, chk_msg, chk_data = idg_mgmt.api_call(uri = _URI_DOMAIN_LIST, method = 'GET', data = None)
 
     if chk_code == 200 and chk_msg == 'OK': # If the answer is correct
 
@@ -495,30 +506,28 @@ def main():
         else:
             configured_domains = [d['name'] for d in chk_data['domain']]
 
-        if state in ('present', 'saved', 'restarted', 'reseted', 'quiesced', 'unquiesced'): # They need for or do a domain
+        if state in ('present', 'restarted', 'quiesced', 'unquiesced'): # They need for or do a domain
 
             if domain_name not in configured_domains: # Domain NOT EXIST.
 
                 # pdb.set_trace()
 
                 if state == 'present': # Create it
-                    create_code, create_msg, create_data = do_open_url(module, url, method = 'PUT', headers = BASIC_HEADERS,
-                                                                       timeout = timeout, user = user, password = password,
-                                                                       use_proxy = use_proxy, force_basic_auth = BASIC_AUTH_SPEC, validate_certs = validate_certs,
-                                                                       http_agent = HTTP_AGENT_SPEC, data = json.dumps(domain_obj_msg))
+                    create_code, create_msg, create_data = idg_mgmt.api_call(uri = _URI_DOMAIN_CONFIG.format(domain_name), method = 'PUT',
+                                                                             data = json.dumps(domain_obj_msg))
 
                     # pdb.set_trace()
                     if create_code == 201 and create_msg == 'Created': # Created successfully
-                        result['msg'] = text_message(create_data[domain_name])
+                        result['msg'] = idg_mgmt.status_text(create_data[domain_name])
                         result['changed'] = True
                     elif create_code == 200 and create_msg == 'OK': # Updated successfully
-                        result['msg'] = text_message(create_data[domain_name])
+                        result['msg'] = idg_mgmt.status_text(create_data[domain_name])
                         result['changed'] = True
                     else:
                         # Opps can't create
                         module.fail_json(msg = "Unable to reach state %s in domain %s." % (state, domain_name))
 
-                elif state in ('saved', 'restarted', 'reseted', 'quiesced', 'unquiesced'): # Can't do this actions
+                elif state in ('restarted', 'quiesced', 'unquiesced'): # Can't do this actions
                     module.fail_json(msg = 'Unable to reach state "%s" in domain %s. Domain not exist!' % (state, domain_name))
 
             else: # Domain EXIST
@@ -526,10 +535,7 @@ def main():
                 # pdb.set_trace()
 
                 # Get current domain configuration
-                dc_code, dc_msg, dc_data = do_open_url(module, url, method = 'GET', headers = BASIC_HEADERS,
-                                                       timeout = timeout, user = user, password = password,
-                                                       use_proxy = use_proxy, force_basic_auth = BASIC_AUTH_SPEC, validate_certs = validate_certs,
-                                                       http_agent = HTTP_AGENT_SPEC, data = None)
+                dc_code, dc_msg, dc_data = idg_mgmt.api_call(uri = _URI_DOMAIN_CONFIG.format(domain_name), method = 'GET', data = None)
 
                 if dc_code == 200 and dc_msg == 'OK':
 
@@ -541,15 +547,13 @@ def main():
 
                     if state == 'present' and (domain_obj_msg['Domain'] != dc_data['Domain']): # Need update
 
-                        upd_code, upd_msg, upd_json = do_open_url(module, url, method = 'PUT', headers = BASIC_HEADERS,
-                                                                  timeout = timeout, user = user, password = password, use_proxy = use_proxy,
-                                                                  force_basic_auth = BASIC_AUTH_SPEC, validate_certs = validate_certs,
-                                                                  http_agent = HTTP_AGENT_SPEC, data = json.dumps(domain_obj_msg))
+                        upd_code, upd_msg, upd_json = idg_mgmt.api_call(uri = _URI_DOMAIN_CONFIG.format(domain_name), method = 'PUT',
+                                                                        data = json.dumps(domain_obj_msg))
 
                         # pdb.set_trace()
                         if upd_code == 200 and upd_msg == 'OK':
                             # Updates successfully
-                            result['msg'] = text_message(upd_json[domain_name])
+                            result['msg'] = idg_mgmt.status_text(upd_json[domain_name])
                             result['changed'] = True
                         else:
                             # Opps can't update
@@ -560,148 +564,89 @@ def main():
                         result['msg'] = IMMUTABLE_MESSAGE
 
                     elif state == 'restarted': # Restart domain
-                        restart_code, restart_msg, restart_data = do_open_url(module, socket_connection + _URI_ACTION.format(domain_name),
-                                                                              method = 'POST', headers = BASIC_HEADERS, timeout = timeout,
-                                                                              user = user, password = password, use_proxy = use_proxy,
-                                                                              force_basic_auth = BASIC_AUTH_SPEC, validate_certs = validate_certs,
-                                                                              http_agent = HTTP_AGENT_SPEC, data = json.dumps(restart_act_msg))
+                        restart_code, restart_msg, restart_data = idg_mgmt.api_call(uri = _URI_ACTION.format(domain_name), method = 'POST',
+                                                                                    data = json.dumps(restart_act_msg))
 
                         # pdb.set_trace()
                         if restart_code == 202 and restart_msg == 'Accepted':
                             # Restarted accepted
                             while action_result != 'completed':
-                                acs_code, acs_msg, acs_data = do_open_url(module, socket_connection + restart_data['_links']['location']['href'],
-                                                                          method = 'GET', headers = BASIC_HEADERS, timeout = timeout,
-                                                                          user = user, password = password, use_proxy = use_proxy,
-                                                                          force_basic_auth = BASIC_AUTH_SPEC, validate_certs = validate_certs,
-                                                                          http_agent = HTTP_AGENT_SPEC, data = None)
+                                # Wait to complete
+                                rac_code, rac_msg, rac_data = idg_mgmt.api_call(uri = _URI_ACTION.format(domain_name) + '/pending',
+                                                                                method = 'GET', data = None)
 
-                                if acs_code == 200 and acs_msg == 'OK':
-                                    # Restarted completed
-                                    action_result = acs_data['status']
+                                if rac_code == 200 and rac_msg == 'OK':
+                                    action_result = idg_mgmt.get_operation_status(rac_data['operations'], restart_data['_links']['location']['href'])
+                                    if action_result != 'completed': sleep(idg_mgmt.SHORT_DELAY)
                                 else:
-                                    # Opps can't restarted OJO(No se ha replicado)
-                                    module.fail_json(msg = to_native(acs_data['error']))
+                                    # Opps can't get export status
+                                    module.fail_json(msg = to_native(idg_mgmt.ERROR_RETRIEVING_STATUS % (state, domain_name)))
 
-                                sleep(ACTIONDELAY) # Time for complete
+                            # Restart completed. Get result
+                            acs_code, acs_msg, acs_data = idg_mgmt.api_call(uri = restart_data['_links']['location']['href'], method = 'GET',
+                                                                            data = None)
 
-                            # Restarted successfully
-                            result['msg'] = text_message(action_result)
-                            result['changed'] = True
+                            if acs_code == 200 and acs_msg == 'OK':
+                                # Restarted successfully
+                                result['msg'] = idg_mgmt.status_text(action_result)
+                                result['changed'] = True
+                            else:
+                                # Can't retrieve the restart result
+                                module.fail_json(msg = to_native(idg_mgmt.ERROR_RETRIEVING_RESULT % (state, domain_name)))
+
                         else:
-                            # Opps can't restarted OJO(No se ha replicado)
-                            module.fail_json(msg = to_native(restart_data['error']))
+                            # Can't restarted
+                            module.fail_json(msg = to_native(idg_mgmt.ERROR_ACCEPTING_ACTION % (state, domain_name)))
 
-                    elif state == 'reseted':
-                        # Reseted domain
-                        reset_code, reset_msg, reset_data = do_open_url(module, socket_connection + _URI_ACTION.format(domain_name),
-                                                                        method = 'POST', headers = BASIC_HEADERS, timeout = timeout,
-                                                                        user = user, password = password, use_proxy = use_proxy,
-                                                                        force_basic_auth = BASIC_AUTH_SPEC, validate_certs = validate_certs,
-                                                                        http_agent = HTTP_AGENT_SPEC, data = json.dumps(reset_act_msg))
+                    elif state in ('quiesced', 'unquiesced'):
 
-                        # pdb.set_trace()
-                        if reset_code == 202 and reset_msg == 'Accepted':
-                            # Reseted accepted
-                            while action_result != 'completed':
-                                acs_code, acs_msg, acs_data = do_open_url(module, socket_connection + reset_data['_links']['location']['href'],
-                                                                          method = 'GET', headers = BASIC_HEADERS, timeout = timeout,
-                                                                          user = user, password = password, use_proxy = use_proxy,
-                                                                          force_basic_auth = BASIC_AUTH_SPEC, validate_certs = validate_certs,
-                                                                          http_agent = HTTP_AGENT_SPEC, data = None)
-
-                                if acs_code == 200 and acs_msg == 'OK':
-                                    # Reseted completed
-                                    action_result = acs_data['status']
-                                else:
-                                    # Opps can't saved OJO(No se ha replicado)
-                                    module.fail_json(msg = to_native(acs_data['error']))
-
-                                sleep(ACTIONDELAY) # Time for complete
-
-                            # Reseted successfully
-                            result['msg'] = text_message(action_result)
-                            result['changed'] = True
-                        else:
-                            # Opps can't reseted OJO(No se ha replicado)
-                            module.fail_json(msg = to_native(reset_data['error']))
-
-                    elif state in ('quiesced', 'unquiesced', 'saved'):
-
-                        qds_code, qds_msg, qds_data = do_open_url(module, socket_connection + _URI_DOMAIN_STATUS,
-                                                                  method = 'GET', headers = BASIC_HEADERS, timeout = timeout,
-                                                                  user = user, password = password, use_proxy = use_proxy,
-                                                                  force_basic_auth = BASIC_AUTH_SPEC, validate_certs = validate_certs,
-                                                                  http_agent = HTTP_AGENT_SPEC, data = None)
+                        qds_code, qds_msg, qds_data = idg_mgmt.api_call(uri = _URI_DOMAIN_STATUS, method = 'GET', data = None)
 
                         # pdb.set_trace()
                         if qds_code == 200 and qds_msg == 'OK':
 
                             if isinstance(qds_data['DomainStatus'], dict):
                                 domain_quiesce_status = qds_data['DomainStatus']['QuiesceState']
-                                domain_save_needed = qds_data['DomainStatus']['SaveNeeded']
                             else:
                                 domain_quiesce_status = [d['QuiesceState'] for d in qds_data['DomainStatus'] if d['Domain'] == domain_name][0]
-                                domain_save_needed = [d['SaveNeeded'] for d in qds_data['DomainStatus'] if d['Domain'] == domain_name][0]
 
                             # pdb.set_trace()
-                            if state == 'saved':
-                                # Saved domain
-                                if domain_save_needed != 'off':
-
-                                    save_code, save_msg, save_data = do_open_url(module, socket_connection + _URI_ACTION.format(domain_name),
-                                                                                 method = 'POST', headers = BASIC_HEADERS, timeout = timeout,
-                                                                                 user = user, password = password, use_proxy = use_proxy,
-                                                                                 force_basic_auth = BASIC_AUTH_SPEC, validate_certs = validate_certs,
-                                                                                 http_agent = HTTP_AGENT_SPEC, data = json.dumps(save_act_msg))
-
-                                    # pdb.set_trace()
-                                    if save_code == 200 and save_msg == 'OK':
-                                        # Saved successfully
-                                        result['msg'] = text_message(save_data['SaveConfig'])
-                                        result['changed'] = True
-                                    else:
-                                        # Opps can't saved OJO(No se ha replicado)
-                                        module.fail_json(msg = to_native(save_data['error']))
-                                else:
-                                    # Domain is save
-                                    result['msg'] = IMMUTABLE_MESSAGE
-
-                            elif state == 'quiesced':
+                            if state == 'quiesced':
                                 if domain_quiesce_status == '':
                                     # Quiesce domain
-                                    qd_code, qd_msg, qd_data = do_open_url(module, socket_connection + _URI_ACTION.format(domain_name),
-                                                                           method = 'POST', headers = BASIC_HEADERS, timeout = timeout,
-                                                                           user = user, password = password, use_proxy = use_proxy,
-                                                                           force_basic_auth = BASIC_AUTH_SPEC, validate_certs = validate_certs,
-                                                                           http_agent = HTTP_AGENT_SPEC, data = json.dumps(quiesce_act_msg))
+                                    qd_code, qd_msg, qd_data = idg_mgmt.api_call(uri = _URI_ACTION.format(domain_name), method = 'POST',
+                                                                                 data = json.dumps(quiesce_act_msg))
 
                                     # pdb.set_trace()
                                     if qd_code == 202 and qd_msg == 'Accepted':
                                         # Quiesced accepted
                                         while action_result != 'completed':
-                                            acs_code, acs_msg, acs_data = do_open_url(module, socket_connection + qd_data['_links']['location']['href'],
-                                                                                      method = 'GET', headers = BASIC_HEADERS, timeout = timeout,
-                                                                                      user = user, password = password, use_proxy = use_proxy,
-                                                                                      force_basic_auth = BASIC_AUTH_SPEC, validate_certs = validate_certs,
-                                                                                      http_agent = HTTP_AGENT_SPEC, data = None)
+                                            # Wait to complete
+                                            qac_code, qac_msg, qac_data = idg_mgmt.api_call(uri = _URI_ACTION.format(domain_name) + '/pending',
+                                                                                            method = 'GET', data = None)
 
-                                            if acs_code == 200 and acs_msg == 'OK':
-                                                # Quiesced completed
-                                                action_result = acs_data['status']
+                                            if qac_code == 200 and qac_msg == 'OK':
+                                                action_result = idg_mgmt.get_operation_status(qac_data['operations'], qd_data['_links']['location']['href'])
+                                                if action_result != 'completed': sleep(idg_mgmt.SHORT_DELAY)
                                             else:
-                                                # Opps can't saved OJO(No se ha replicado)
-                                                module.fail_json(msg = to_native(acs_data['error']))
+                                                # Opps can't get export status
+                                                module.fail_json(msg = to_native(idg_mgmt.ERROR_RETRIEVING_STATUS % (state, domain_name)))
 
-                                            sleep(ACTIONDELAY) # Time for complete
+                                        # Quiesced completed. Get result
+                                        acs_code, acs_msg, acs_data = idg_mgmt.api_call(uri = qd_data['_links']['location']['href'], method = 'GET',
+                                                                                        data = None)
 
-                                        # Quiesced successfully
-                                        result['msg'] = text_message(action_result)
-                                        result['changed'] = True
+                                        if acs_code == 200 and acs_msg == 'OK':
+                                            # Quiesced successfully
+                                            result['msg'] = idg_mgmt.status_text(action_result)
+                                            result['changed'] = True
+                                        else:
+                                            # Can't launch the quiesced action
+                                            module.fail_json(msg = to_native(idg_mgmt.ERROR_ACCEPTING_ACTION % (state, domain_name)))
 
                                     else:
-                                        # Opps can't quiesced OJO(No se ha replicado)
-                                        module.fail_json(msg = to_native(qd_data['error']))
+                                        # Can't quiesced
+                                        module.fail_json(msg = to_native(idg_mgmt.ERROR_RETRIEVING_RESULT % (state, domain_name)))
                                 else:
                                     # Domain is quiesced
                                     result['msg'] = IMMUTABLE_MESSAGE
@@ -709,37 +654,37 @@ def main():
                             elif state == 'unquiesced':
                                 if domain_quiesce_status == 'quiesced':
                                     # Unquiesce domain
-                                    uqd_code, uqd_msg, uqd_data = do_open_url(module, socket_connection + _URI_ACTION.format(domain_name),
-                                                                              method = 'POST', headers = BASIC_HEADERS, timeout = timeout,
-                                                                              user = user, password = password, use_proxy = use_proxy,
-                                                                              force_basic_auth = BASIC_AUTH_SPEC, validate_certs = validate_certs,
-                                                                              http_agent = HTTP_AGENT_SPEC, data = json.dumps(unquiesce_act_msg))
+                                    uqd_code, uqd_msg, uqd_data = idg_mgmt.api_call(uri = _URI_ACTION.format(domain_name), method = 'POST',
+                                                                                    data = json.dumps(unquiesce_act_msg))
 
                                     # pdb.set_trace()
                                     if uqd_code == 202 and uqd_msg == 'Accepted':
                                         # Unquiesce accepted
                                         while action_result != 'completed':
-                                            acs_code, acs_msg, acs_data = do_open_url(module, socket_connection + uqd_data['_links']['location']['href'],
-                                                                                      method = 'GET', headers = BASIC_HEADERS, timeout = timeout,
-                                                                                      user = user, password = password, use_proxy = use_proxy,
-                                                                                      force_basic_auth = BASIC_AUTH_SPEC, validate_certs = validate_certs,
-                                                                                      http_agent = HTTP_AGENT_SPEC, data = None)
+                                            uqac_code, uqac_msg, uqac_data = idg_mgmt.api_call(uri = _URI_ACTION.format(domain_name) + '/pending',
+                                                                                               method = 'GET', data = None)
 
-                                            if acs_code == 200 and acs_msg == 'OK':
-                                                # Unquiesce completed
-                                                action_result = acs_data['status']
+                                            if uqac_code == 200 and uqac_msg == 'OK':
+                                                action_result = idg_mgmt.get_operation_status(uqac_data['operations'], uqd_data['_links']['location']['href'])
+                                                if action_result != 'completed': sleep(idg_mgmt.SHORT_DELAY)
                                             else:
-                                                # Opps can't saved OJO(No se ha replicado)
-                                                module.fail_json(msg = to_native(acs_data['error']))
+                                                # Opps can't get export status
+                                                module.fail_json(msg = to_native(idg_mgmt.ERROR_RETRIEVING_STATUS % (state, domain_name)))
 
-                                            sleep(ACTIONDELAY) # Time for complete
+                                        acs_code, acs_msg, acs_data = idg_mgmt.api_call(uri = uqd_data['_links']['location']['href'],
+                                                                                        method = 'GET', data = None)
 
-                                        # Unquiesce successfully
-                                        result['msg'] = text_message(action_result)
-                                        result['changed'] = True
+                                        if acs_code == 200 and acs_msg == 'OK':
+                                            # Unquiesce successfully
+                                            result['msg'] = idg_mgmt.status_text(action_result)
+                                            result['changed'] = True
+                                        else:
+                                            # Opps can't saved OJO(No se ha replicado)
+                                            module.fail_json(msg = to_native(idg_mgmt.ERROR_ACCEPTING_ACTION % (state, domain_name)))
+
                                     else:
-                                        # Opps can't unquiesce
-                                        module.fail_json(msg = to_native(uqd_data['error']))
+                                        # Can't accept unquiesce
+                                        module.fail_json(msg = to_native(idg_mgmt.ERROR_ACCEPTING_ACTION % (state, domain_name)))
 
                                 else:
                                     # Domain is unquiesced
@@ -751,21 +696,19 @@ def main():
 
                 else:
                     # Opps can't read domain configuration
-                    module.fail_json(msg = to_native(dc_data['error']))
+                    module.fail_json(msg = "Unable to get configuration from domain %s." % (domain_name))
 
         elif state == 'absent': # Remove domain
 
             if domain_name in configured_domains: # Domain EXIST.
                 # Remove
-                del_code, del_msg, del_data = do_open_url(module, url, method = 'DELETE', headers = BASIC_HEADERS,
-                                                          timeout = timeout, user = user, password = password, use_proxy = use_proxy,
-                                                          force_basic_auth = BASIC_AUTH_SPEC, validate_certs = validate_certs,
-                                                          http_agent = HTTP_AGENT_SPEC, data = None)
+                del_code, del_msg, del_data = idg_mgmt.api_call(uri = _URI_DOMAIN_CONFIG.format(domain_name),
+                                                                method = 'DELETE', data = None)
 
                 # pdb.set_trace()
                 if del_code == 200 and del_msg == 'OK':
                     # Remove successfully
-                    result['msg'] = text_message(del_data[domain_name])
+                    result['msg'] = idg_mgmt.status_text(del_data[domain_name])
                     result['changed'] = True
                 else:
                     # Opps can't remove

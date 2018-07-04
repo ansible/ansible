@@ -13,6 +13,7 @@ from ansible.module_utils.urls import open_url, ConnectionError, SSLValidationEr
 
 import six
 import json
+# import pdb
 
 #############################
 # Variables
@@ -42,33 +43,96 @@ idg_endpoint_spec.update(
 )
 
 #############################
-# Functions
+# Class
 #############################
 
-def do_open_url(ansible_module, url, **kwargs):
-    try:
-        resp = open_url(url,
-                        method = kwargs['method'],
-                        headers = kwargs['headers'],
-                        timeout = kwargs['timeout'],
-                        url_username = kwargs['user'],
-                        url_password = kwargs['password'],
-                        use_proxy = kwargs['use_proxy'],
-                        force_basic_auth = BASIC_AUTH_SPEC,
-                        validate_certs = kwargs['validate_certs'],
-                        http_agent = HTTP_AGENT_SPEC,
-                        data = kwargs['data'])
-    except HTTPError as e:
-        # Get results with code different from 200
-        return int(e.getcode()), e.msg, json.loads(e.read())
-    except SSLValidationError as e:
-        ansible_module.fail_json(msg="Error validating the server's certificate for (%s). %s" % (url, to_native(e)))
-    except ConnectionError as e:
-        ansible_module.fail_json(msg="Error connecting to (%s). %s" % (url, to_native(e)))
-    except Exception as e:
-        ansible_module.fail_json(msg="Unknown error for (%s). %s " % (url, to_native(e)))
-    else:
-        return int(resp.getcode()), resp.msg, json.loads(resp.read())
+class IDG_API(object):
+    """ Class for managing communication with
+        the IBM DataPower Gateway """
+
+    SHORT_DELAY = 3
+    MEDIUM_DELAY = 5
+    LONG_DELAY = 8
+
+    ERROR_RETRIEVING_STATUS = 'Error. Retrieving the status of "%s" over domain "%s".'
+    ERROR_RETRIEVING_RESULT = 'Error. Retrieving the result of "%s" over domain "%s".'
+    ERROR_ACCEPTING_ACTION = 'Error. Accepting "%s" over domain "%s".'
+
+    def __init__(self, **kwargs):
+        # Initialize the common variables to all calls
+        # Operations variables
+        self.ansible_module = kwargs['ansible_module']
+        self.idg_host = kwargs['idg_host']
+        self.headers = kwargs['headers']
+        self.force_basic_auth = kwargs['force_basic_auth']
+        self.http_agent = kwargs['http_agent']
+        self.timeout = kwargs['timeout']
+        self.url_username = kwargs['user']
+        self.url_password = kwargs['password']
+        self.use_proxy = kwargs['use_proxy']
+        self.validate_certs = kwargs['validate_certs']
+
+    @staticmethod
+    def get_operation_status(operations, location):
+        # If have only one operation
+        if isinstance(operations, dict):
+            if operations['location'] == location:
+                return operations['status']
+            else:
+                return None
+        elif isinstance(operations, list):
+            # multiple operations
+            op = [o for o in operations if o.get('location') == location]
+            if op:
+                return op[0]['status']
+            else:
+                return None
+        else:
+            # Unknown structure
+            return None
+
+    @staticmethod
+    def status_text(arg):
+        # If exist the status field brings the status
+        if isinstance(arg, six.string_types):
+            return arg
+        elif isinstance(arg['status'], six.string_types):
+            return arg['status']
+        else:
+            return None
+
+    def api_call(self, **kwargs):
+        url = self.idg_host + kwargs['uri']
+
+        try:
+
+            resp = open_url(url,
+                            method = kwargs['method'],
+                            headers = self.headers,
+                            timeout = self.timeout,
+                            url_username = self.url_username,
+                            url_password = self.url_password,
+                            use_proxy = self.use_proxy,
+                            force_basic_auth = self.force_basic_auth,
+                            validate_certs = self.validate_certs,
+                            http_agent = self.http_agent,
+                            data = kwargs['data'])
+
+        except HTTPError as e:
+            # Get results with code different from 200
+            return int(e.getcode()), e.msg, json.loads(e.read())
+        except SSLValidationError as e:
+            self.ansible_module.fail_json(msg="Error validating the server's certificate for (%s). %s" % (url, to_native(e)))
+        except ConnectionError as e:
+            self.ansible_module.fail_json(msg="Error connecting to (%s). %s" % (url, to_native(e)))
+        except Exception as e:
+            self.ansible_module.fail_json(msg="Unknown error for (%s). %s " % (url, to_native(e)))
+        else:
+            return int(resp.getcode()), resp.msg, json.loads(resp.read())
+
+#############################
+# Functions
+#############################
 
 def parse_to_dict(data, desc, ver):
     # Interpret data as a dictionary
@@ -91,12 +155,3 @@ def parse_to_dict(data, desc, ver):
 def on_off(arg):
     # Translate boolean to: on, off
     return "on" if arg else "off"
-
-def text_message(arg):
-    # If exist the status field brings the status
-    if isinstance(arg, six.string_types):
-        return arg
-    elif isinstance(arg['status'], six.string_types):
-        return arg['status']
-    else:
-        return 'Response with undefined structure'
