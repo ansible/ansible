@@ -1,0 +1,2 @@
+bugfixes:
+- Fix nxos_nxapi default http behavior (https://github.com/ansible/ansible/pull/41817).
