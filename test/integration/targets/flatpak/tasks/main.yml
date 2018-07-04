@@ -25,7 +25,7 @@
 
   - name: Test executable override
     flatpak:
-      name: org.gnome.Calculator
+      name: org.gnome.Characters
       remote: flathub
       state: present
       executable: nothing-that-exists

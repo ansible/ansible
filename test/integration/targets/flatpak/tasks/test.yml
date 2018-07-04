@@ -2,7 +2,7 @@
 
 - name: Test addition - {{ method }}
   flatpak:
-    name: org.gnome.Calculator
+    name: org.gnome.Characters
     remote: flathub
     state: present
     method: "{{ method }}"
@@ -14,15 +14,15 @@
       - "addition_result.changed == true"
     msg: "state=preset shall add flatpak when absent"
 
-- name: Test idempotency of installation - {{ method }}
+- name: Test idempotency of addition - {{ method }}
   flatpak:
-    name: org.gnome.Calculator
+    name: org.gnome.Characters
     remote: flathub
     state: present
     method: "{{ method }}"
   register: double_addition_result
 
-- name: Verify idempotency of installation test result - {{ method }}
+- name: Verify idempotency of addition test result - {{ method }}
   assert:
     that:
       - "double_addition_result.changed == false"
@@ -32,7 +32,7 @@
 
 - name: Test removal - {{ method }}
   flatpak:
-    name: org.gnome.Calculator
+    name: org.gnome.Characters
     state: absent
     method: "{{ method }}"
   register: removal_result
@@ -45,7 +45,7 @@
 
 - name: Test idempotency of removal - {{ method }}
   flatpak:
-    name: org.gnome.Calculator
+    name: org.gnome.Characters
     state: absent
     method: "{{ method }}"
   register: double_removal_result
@@ -60,7 +60,7 @@
 
 - name: Test addition with url - {{ method }}
   flatpak:
-    name: https://flathub.org/repo/appstream/org.gnome.Calculator.flatpakref
+    name: https://flathub.org/repo/appstream/org.gnome.Characters.flatpakref
     remote: flathub
     state: present
     method: "{{ method }}"
@@ -72,15 +72,15 @@
       - "url_addition_result.changed == true"
     msg: "state=preset with url as name shall add flatpak when absent"
 
-- name: Test idempotency of installation with url - {{ method }}
+- name: Test idempotency of addition with url - {{ method }}
   flatpak:
-    name: https://flathub.org/repo/appstream/org.gnome.Calculator.flatpakref
+    name: https://flathub.org/repo/appstream/org.gnome.Characters.flatpakref
     remote: flathub
     state: present
     method: "{{ method }}"
   register: double_url_addition_result
 
-- name: Verify idempotency of installation with url test result - {{ method }}
+- name: Verify idempotency of addition with url test result - {{ method }}
   assert:
     that:
       - "double_url_addition_result.changed == false"
@@ -90,7 +90,7 @@
 
 - name: Test removal with url - {{ method }}
   flatpak:
-    name: https://flathub.org/repo/appstream/org.gnome.Calculator.flatpakref
+    name: https://flathub.org/repo/appstream/org.gnome.Characters.flatpakref
     state: absent
     method: "{{ method }}"
   register: url_removal_result
@@ -103,7 +103,7 @@
 
 - name: Test idempotency of removal with url - {{ method }}
   flatpak:
-    name: https://flathub.org/repo/appstream/org.gnome.Calculator.flatpakref
+    name: https://flathub.org/repo/appstream/org.gnome.Characters.flatpakref
     state: absent
     method: "{{ method }}"
   register: double_url_removal_result
