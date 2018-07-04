@@ -153,11 +153,12 @@ options:
     env:
       - name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT
   netconf_ssh_config:
-    type: boolean
-    default: False
+    default: None
     description:
-      - This variable is used to enable bastion/jump host with netconf connection. The bastion/jump
-        host ssh settings should be present in ssh configuration file (~/.ssh/config).
+      - This variable is used to enable bastion/jump host with netconf connection. If set to
+        True the bastion/jump host ssh settings should be present in ~/.ssh/config file,
+        alternatively it can be set to custom ssh configuration file path to read the
+        bastion/jump host settings.
     ini:
       - section: netconf_connection
         key: ssh_config
@@ -175,7 +176,7 @@ import json
 
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE, BOOLEANS_FALSE
 from ansible.plugins.loader import netconf_loader
 from ansible.plugins.connection import NetworkConnectionBase
 
@@ -202,7 +203,7 @@ NETWORK_OS_DEVICE_PARAM_MAP = {
     "ce": "huawei"
 }
 
-
+import q
 class Connection(NetworkConnectionBase):
     """NetConf connections"""
 
@@ -266,7 +267,7 @@ class Connection(NetworkConnectionBase):
         ssh_config = self.get_option('netconf_ssh_config')
         if ssh_config in BOOLEANS_TRUE:
             ssh_config = True
-        else:
+        elif ssh_config in BOOLEANS_FALSE:
             ssh_config = None
 
         try:
