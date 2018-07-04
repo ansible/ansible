@@ -13,6 +13,98 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
+module: idg_domain_config
+short_description: Manages IBM DataPower Gateway(IDG) domains configurations actions.
+description:
+  - Manages IBM DataPower Gateway(IDG) domains configurations actions.
+version_added: "2.7"
+options:
+  name:
+    description:
+      - Domain identifier.
+    required: True
+    type: str
+
+  user_summary:
+    description:
+      - A descriptive summary for the configuration.
+    required: False
+    type: str
+
+  state:
+    description:
+      - Specifies the current state of the domain.
+        C(reseted) will delete all configured services within the domain.
+        C(exported)
+        C(imported)
+        C(saved)
+      - Be particularly careful about changing the status C(reseted).
+        These Will affect all configured services within the domain.
+        C(reseted) deletes all configuration data in the domain
+    default: saved
+    required: True
+    type: str
+    choices:
+      - reseted
+      - imported
+      - exported
+      - saved
+
+  idg_connection:
+    description:
+      - A dict object containing connection details.
+    type: dict
+    required: True
+    suboptions:
+      password:
+        description:
+          - The password for the user account used to connect to the
+            REST management interface.
+        aliases:
+            - url_password
+        type: str
+        required: True
+      server:
+        description:
+          - The DataPower® Gateway host.
+        type: str
+        required: True
+      server_port:
+        description:
+          - The DataPower® Gateway port.
+        type: int
+        default: 5554
+        required: False
+      timeout:
+        description:
+          - Specifies the timeout in seconds for communicating with the device.
+        default: 10
+        type: int
+      use_proxy:
+        description:
+          - Control if the lookup will observe HTTP proxy environment variables when present.
+        default: False
+        type: bool
+        required: False
+      user:
+        description:
+          - The username to connect to the REST management interface with.
+            This user must have administrative privileges.
+        aliases:
+            - url_username
+        type: str
+        required: True
+      validate_certs:
+        description:
+          - Control SSL handshake validation.
+        default: True
+        type: bool
+
+notes:
+  - This documentation was developed mostly from the content
+    provided by IBM in its web administration interface.
+  - For more information consult the official documentation.
+    U(https://www.ibm.com/support/knowledgecenter/SS9H2Y_7.7.0/com.ibm.dp.doc/welcome.html)
 
 author:
   - David Grau Merconchini (@dgraum)
@@ -54,7 +146,7 @@ def main():
     module_args = dict(
         state = dict(type = 'str', choices = ['exported', 'imported', 'reseted', 'saved'], default = 'saved'), # Domain's operational state
         idg_connection = dict(type = 'dict', options = idg_endpoint_spec, required = True), # IDG connection
-        domain = dict(type = 'str', required = True), # Domain to work
+        name = dict(type = 'str', required = True), # Domain to work
         # for Export
         user_summary = dict(type = 'str', required = False), # Backup comment
         all_files = dict(type = 'bool', default = False), # Include all files in the local: directory for the domain
@@ -85,7 +177,7 @@ def main():
 
     # Status & domain
     state = module.params['state']
-    domain_name = module.params['domain']
+    domain_name = module.params['name']
 
     # Init IDG API connect
     idg_mgmt = IDG_API(ansible_module = module,
@@ -136,8 +228,6 @@ def main():
     result = dict(
         changed = False,
         name = domain_name,
-        file = None,
-        fail = False,
         msg = 'No change was made'
     )
 
@@ -292,7 +382,7 @@ def main():
                             # pdb.set_trace()
                             result['msg'] = 'Error code:' + doim_data['result']['Import']['import-results']['detected-errors']['error']
                             result['changed'] = False
-                            result['fail'] = True
+                            result['failed'] = True
                         else:
                             result['msg'] = doim_data['status']
                             result['changed'] = True
@@ -306,14 +396,14 @@ def main():
         else: # Domain NOT EXIST.
             # pdb.set_trace()
             # Opps can't work the configuration of non-existent domain
-            module.fail_json(msg = 'Unable to reach state "%s" in domain %s. Domain not exist!' % (state, domain_name))
+            module.fail_json(msg = idg_mgmt.ERROR_REACH_STATE + ' Domain not exist!' % (state, domain_name))
 
         # pdb.set_trace()
         # That's all folks!
         module.exit_json(**result)
 
     else: # The DP domains could not be extracted
-        module.fail_json(msg = "Unable to retrieve domain settings")
+        module.fail_json(msg = idg_mgmt.ERROR_GET_DOMAIN_LIST)
 
 if __name__ == '__main__':
     main()

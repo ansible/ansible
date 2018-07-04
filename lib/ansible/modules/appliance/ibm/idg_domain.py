@@ -1,4 +1,4 @@
-idg_mgmt.status_text#!/usr/bin/python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # (c) 2018, [David Grau Merconchini <david@gallorojo.com.mx>]
@@ -6,7 +6,6 @@ idg_mgmt.status_text#!/usr/bin/python
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -89,23 +88,20 @@ options:
       - Specifies the current state of the domain.
       - C(present), C(absent). Create or remove a domain.
       - To make active set to C(enabled), inactive, set to C(disabled).
-        C(reseted) will delete all configured services within the domain.
         C(restarted) all services will be stoped and started.
         C(quiesced) Transitions the operational state of a domain,
         and the services and handlers associated with the domain,
         to down in a controlled manner.
         C(unquiesced) Bring the operational state of the domain to up
-      - Be particularly careful about changing the status to C(restarted) or C(reseted).
+      - Be particularly careful about changing the status to C(restarted).
         These Will affect all configured services within the domain.
         C(restarted) all the configuration that has not been saved will be lost.
-        C(reseted) deletes all configuration data in the domain
     default: present
     required: True
     type: str
     choices:
       - present
       - absent
-      - reseted
       - restarted
       - quiesced
       - unquiesced
@@ -274,12 +270,6 @@ EXAMPLES = '''
         user_summary: "{{ summary }}"
         state: present
 
-  - name: Save default domain
-    idg_domain:
-        name: default
-        idg_connection: "{{ remote_idg }}"
-        state: saved
-
   - name: Update domain
     idg_domain:
         name: "{{ domain_name }}"
@@ -295,12 +285,6 @@ EXAMPLES = '''
             copyto: true
             delete: false
             subdir: true
-
-  - name: Save domain
-    idg_domain:
-        name: "{{ domain_name }}"
-        idg_connection: "{{ remote_idg }}"
-        state: saved
 
   - name: Restart domain
     idg_domain:
@@ -525,10 +509,10 @@ def main():
                         result['changed'] = True
                     else:
                         # Opps can't create
-                        module.fail_json(msg = "Unable to reach state %s in domain %s." % (state, domain_name))
+                        module.fail_json(msg = idg_mgmt.ERROR_REACH_STATE % (state, domain_name))
 
                 elif state in ('restarted', 'quiesced', 'unquiesced'): # Can't do this actions
-                    module.fail_json(msg = 'Unable to reach state "%s" in domain %s. Domain not exist!' % (state, domain_name))
+                    module.fail_json(msg = idg_mgmt.ERROR_REACH_STATE + ' Domain not exist!' % (state, domain_name))
 
             else: # Domain EXIST
                 # Update, save or restart
@@ -570,7 +554,7 @@ def main():
                         # pdb.set_trace()
                         if restart_code == 202 and restart_msg == 'Accepted':
                             # Restarted accepted
-                            while action_result != 'completed':
+                            while action_result != 'processed':
                                 # Wait to complete
                                 rac_code, rac_msg, rac_data = idg_mgmt.api_call(uri = _URI_ACTION.format(domain_name) + '/pending',
                                                                                 method = 'GET', data = None)
@@ -620,7 +604,7 @@ def main():
                                     # pdb.set_trace()
                                     if qd_code == 202 and qd_msg == 'Accepted':
                                         # Quiesced accepted
-                                        while action_result != 'completed':
+                                        while action_result != 'processed':
                                             # Wait to complete
                                             qac_code, qac_msg, qac_data = idg_mgmt.api_call(uri = _URI_ACTION.format(domain_name) + '/pending',
                                                                                             method = 'GET', data = None)
@@ -641,12 +625,12 @@ def main():
                                             result['msg'] = idg_mgmt.status_text(action_result)
                                             result['changed'] = True
                                         else:
-                                            # Can't launch the quiesced action
-                                            module.fail_json(msg = to_native(idg_mgmt.ERROR_ACCEPTING_ACTION % (state, domain_name)))
+                                            # Can't get the quiesced action result
+                                            module.fail_json(msg = to_native(idg_mgmt.ERROR_RETRIEVING_RESULT % (state, domain_name)))
 
                                     else:
                                         # Can't quiesced
-                                        module.fail_json(msg = to_native(idg_mgmt.ERROR_RETRIEVING_RESULT % (state, domain_name)))
+                                        module.fail_json(msg = to_native(idg_mgmt.ERROR_ACCEPTING_ACTION % (state, domain_name)))
                                 else:
                                     # Domain is quiesced
                                     result['msg'] = IMMUTABLE_MESSAGE
@@ -660,7 +644,7 @@ def main():
                                     # pdb.set_trace()
                                     if uqd_code == 202 and uqd_msg == 'Accepted':
                                         # Unquiesce accepted
-                                        while action_result != 'completed':
+                                        while action_result != 'processed':
                                             uqac_code, uqac_msg, uqac_data = idg_mgmt.api_call(uri = _URI_ACTION.format(domain_name) + '/pending',
                                                                                                method = 'GET', data = None)
 
@@ -671,6 +655,7 @@ def main():
                                                 # Opps can't get export status
                                                 module.fail_json(msg = to_native(idg_mgmt.ERROR_RETRIEVING_STATUS % (state, domain_name)))
 
+                                        # Unquiesced completed. Get result
                                         acs_code, acs_msg, acs_data = idg_mgmt.api_call(uri = uqd_data['_links']['location']['href'],
                                                                                         method = 'GET', data = None)
 
@@ -679,8 +664,8 @@ def main():
                                             result['msg'] = idg_mgmt.status_text(action_result)
                                             result['changed'] = True
                                         else:
-                                            # Opps can't saved OJO(No se ha replicado)
-                                            module.fail_json(msg = to_native(idg_mgmt.ERROR_ACCEPTING_ACTION % (state, domain_name)))
+                                            # Can't get unquiesce final result
+                                            module.fail_json(msg = to_native(idg_mgmt.ERROR_RETRIEVING_RESULT % (state, domain_name)))
 
                                     else:
                                         # Can't accept unquiesce
@@ -691,11 +676,11 @@ def main():
                                     result['msg'] = IMMUTABLE_MESSAGE
 
                         else:
-                            # Opps can't get domain status
+                            # Can't get domain status
                             module.fail_json(msg = "Unable to get status from domain %s." % (domain_name))
 
                 else:
-                    # Opps can't read domain configuration
+                    # Can't read domain configuration
                     module.fail_json(msg = "Unable to get configuration from domain %s." % (domain_name))
 
         elif state == 'absent': # Remove domain
@@ -711,8 +696,8 @@ def main():
                     result['msg'] = idg_mgmt.status_text(del_data[domain_name])
                     result['changed'] = True
                 else:
-                    # Opps can't remove
-                    module.fail_json(msg = to_native(del_data['error']))
+                    # Can't remove
+                    module.fail_json(msg = 'Error deleting domain "%s".' % (domain_name))
 
             else: # Domain NOT EXIST.
                 result['msg'] = IMMUTABLE_MESSAGE
@@ -721,10 +706,8 @@ def main():
         # That's all folks!
         module.exit_json(**result)
 
-    else: # The DP domains could not be extracted
-        # Opps can't read domain's lists
-        # That's all folks!
-        module.fail_json(msg = to_native(chk_data['error']))
+    else: # Can't read domain's lists
+        module.fail_json(msg = idg_mgmt.ERROR_GET_DOMAIN_LIST)
 
 if __name__ == '__main__':
     main()

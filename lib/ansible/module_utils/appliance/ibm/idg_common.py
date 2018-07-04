@@ -54,9 +54,11 @@ class IDG_API(object):
     MEDIUM_DELAY = 5
     LONG_DELAY = 8
 
+    ERROR_GET_DOMAIN_LIST = 'Unable to retrieve domain settings'
     ERROR_RETRIEVING_STATUS = 'Error. Retrieving the status of "%s" over domain "%s".'
     ERROR_RETRIEVING_RESULT = 'Error. Retrieving the result of "%s" over domain "%s".'
     ERROR_ACCEPTING_ACTION = 'Error. Accepting "%s" over domain "%s".'
+    ERROR_REACH_STATE = 'Unable to reach state "%s" in domain %s.'
 
     def __init__(self, **kwargs):
         # Initialize the common variables to all calls
