@@ -167,6 +167,9 @@
       register: eks_delete
       ignore_errors: yes
 
+    - pause:
+        minutes: 5
+
     - debug:
         msg: "{{ eks_security_groups|reverse|list }}"
 
@@ -174,6 +177,19 @@
       set_fact:
         additional_eks_sg:
           - name: "{{ eks_cluster_name }}-workers-sg"
+
+    - name: set all security group rule lists to empty to remove circular dependency
+      ec2_group:
+        name: "{{ item.name }}"
+        description: "{{ item.description }}"
+        state: present
+        rules: []
+        rules_egress: []
+        purge_rules: yes
+        purge_rules_egress: yes
+        vpc_id: '{{ setup_vpc.vpc.id }}'
+        <<: *aws_connection_info
+      with_items: "{{ eks_security_groups }}"
 
     - name: remove security groups
       ec2_group:
