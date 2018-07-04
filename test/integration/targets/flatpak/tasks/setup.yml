@@ -33,3 +33,9 @@
      state: present
      flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
      method: system
+
+- name: Add flatpak for testing check mode on present flatpak
+  flatpak:
+    name: org.gnome.Calculator
+    remote: flathub
+    state: present
