@@ -1640,5 +1640,5 @@ NETCONF_SSH_CONFIG:
   ini:
   - {key: ssh_config, section: netconf_connection}
   yaml: {key: netconf_connection.ssh_config}
-  default: None
+  default: null
 ...
