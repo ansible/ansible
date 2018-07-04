@@ -198,6 +198,7 @@ class Connection(NetworkConnectionBase):
         self._history = list()
 
         self._terminal = None
+        self.cliconf = None
         self.paramiko_conn = None
 
         if self._play_context.verbosity > 3:
@@ -258,7 +259,6 @@ class Connection(NetworkConnectionBase):
 
         self.reset_history()
         self.disable_response_logging()
-
         return messages
 
     def _connect(self):
@@ -291,10 +291,11 @@ class Connection(NetworkConnectionBase):
 
             display.vvvv('loaded terminal plugin for network_os %s' % self._network_os, host=host)
 
-            cliconf = cliconf_loader.get(self._network_os, self)
-            if cliconf:
+            self.cliconf = cliconf_loader.get(self._network_os, self)
+            if self.cliconf:
                 display.vvvv('loaded cliconf plugin for network_os %s' % self._network_os, host=host)
-                self._implementation_plugins.append(cliconf)
+                self._implementation_plugins.append(self.cliconf)
+                self.cliconf.set_options()
             else:
                 display.vvvv('unable to load cliconf for network_os %s' % self._network_os)
 

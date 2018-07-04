@@ -121,27 +121,6 @@ class Cli:
 
         return self._connection
 
-    def close_session(self, session):
-        conn = self._get_connection()
-        # to close session gracefully execute abort in top level session prompt.
-        conn.get('end')
-        conn.get('configure session %s' % session)
-        conn.get('abort')
-
-    @property
-    def supports_sessions(self):
-        if self._session_support is not None:
-            return self._session_support
-        conn = self._get_connection()
-
-        self._session_support = True
-        try:
-            out = conn.get('show configuration sessions')
-        except:
-            self._session_support = False
-
-        return self._session_support
-
     def get_config(self, flags=None):
         """Retrieves the current config from the device or cache
         """
@@ -155,7 +134,7 @@ class Cli:
             return self._device_configs[cmd]
         except KeyError:
             conn = self._get_connection()
-            out = conn.get_config(flags=flags)
+            out = conn.get_config(filter=flags)
             cfg = to_text(out, errors='surrogate_then_replace').strip()
             self._device_configs[cmd] = cfg
             return cfg
@@ -164,48 +143,27 @@ class Cli:
         """Run list of commands on remote device and return results
         """
         connection = self._get_connection()
-        return connection.run_commands(commands, check_rc)
-
-    def configure(self, commands):
-        """Sends configuration commands to the remote device
-        """
-        conn = get_connection(self)
-
-        out = conn.get('configure')
-
-        try:
-            self.send_config(commands)
-        except ConnectionError as exc:
-            conn.get('end')
-            message = getattr(exc, 'err', exc)
-            self._module.fail_json(msg="Error on executing commands %s" % commands, data=to_text(message, errors='surrogate_then_replace'))
-
-        conn.get('end')
-        return {}
+        return connection.run_commands(commands=commands, check_rc=check_rc)
 
     def load_config(self, commands, commit=False, replace=False):
         """Loads the config commands onto the remote device
         """
-        use_session = os.getenv('ANSIBLE_EOS_USE_SESSIONS', True)
-        try:
-            use_session = int(use_session)
-        except ValueError:
-            pass
-
-        if not all((bool(use_session), self.supports_sessions)):
-            if commit:
-                return self.configure(commands)
-            else:
-                self._module.warn("EOS can not check config without config session")
-                result = {'changed': True}
-                return result
-
         conn = self._get_connection()
         try:
-            return conn.load_config(commands, commit, replace)
+            response = conn.edit_config(commands, commit, replace)
         except ConnectionError as exc:
             message = getattr(exc, 'err', exc)
-            self._module.fail_json(msg="%s" % message, data=to_text(message, errors='surrogate_then_replace'))
+            if "check mode is not supported without configuration session" in message:
+                self._module.warn("EOS can not check config without config session")
+                response = {'changed': True}
+            else:
+                self._module.fail_json(msg="%s" % message, data=to_text(message, errors='surrogate_then_replace'))
+
+        return response
+
+    def get_diff(self, candidate=None, running=None, match='line', diff_ignore_lines=None, path=None, replace='line'):
+        conn = self._get_connection()
+        return conn.get_diff(candidate=candidate, running=running, match=match, diff_ignore_lines=diff_ignore_lines, path=path, replace=replace)
 
 
 class Eapi:
@@ -397,6 +355,10 @@ class Eapi:
 
         return result
 
+    def get_diff(self, candidate=None, running=None, match='line', diff_ignore_lines=None, path=None, replace='line'):
+        conn = self._get_connection()
+        return conn.get_diff(candidate=candidate, running=running, match=match, diff_ignore_lines=diff_ignore_lines, path=path, replace=replace)
+
 
 def is_json(cmd):
     return to_native(cmd, errors='surrogate_then_replace').endswith('| json')
@@ -430,10 +392,9 @@ def get_config(module, flags=None):
     conn = get_connection(module)
     return conn.get_config(flags)
 
-
-def run_commands(module, commands):
+def run_commands(module, commands, check_rc=True):
     conn = get_connection(module)
-    return conn.run_commands(to_command(module, commands))
+    return conn.run_commands(to_command(module, commands), check_rc=check_rc)
 
 
 def load_config(module, config, commit=False, replace=False):

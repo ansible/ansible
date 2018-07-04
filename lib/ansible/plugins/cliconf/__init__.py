@@ -19,12 +19,13 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
 from functools import wraps
 
+from ansible.plugins import AnsiblePlugin
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.six import with_metaclass
+
 
 try:
     from scp import SCPClient
@@ -49,7 +50,7 @@ def enable_mode(func):
     return wrapped
 
 
-class CliconfBase(with_metaclass(ABCMeta, object)):
+class CliconfBase(AnsiblePlugin):
     """
     A base class for implementing cli connections
 
@@ -84,6 +85,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
     __rpc__ = ['get_config', 'edit_config', 'get_capabilities', 'get', 'enable_response_logging', 'disable_response_logging']
 
     def __init__(self, connection):
+        super(CliconfBase, self).__init__()
         self._connection = connection
         self.history = list()
         self.response_logging = False
@@ -375,7 +377,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         """
         pass
 
-    def run_commands(self, commands):
+    def run_commands(self, commands=None, check_rc=True):
         """
         Execute a list of commands on remote host and return the list of response
         :param commands: The list of command that needs to be executed on remote host.
@@ -385,10 +387,12 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
                     'command': <command to be executed>
                     'prompt': <expected prompt on executing the command>,
                     'answer': <answer for the prompt>,
-                    'output': <the format in which command output should be rendered eg: 'json', 'text', if supported by platform>,
+                    'output': <the format in which command output should be rendered eg: 'json', 'text'>,
                     'sendonly': <Boolean flag to indicate if it command execution response should be ignored or not>
                 }
-
+        :param check_rc: Boolean flag to check if returned response should be checked for error or not.
+                         If check_rc is False the error output is appended in return response list, else if the
+                         value is True an exception is raised.
         :return: List of returned response
         """
         pass
