@@ -36,6 +36,17 @@ options:
       - absent
       - present
     default: present
+  wait:
+    description: >-
+      Specifies whether the module waits until the cluster becomes active after
+      creation. It takes "usually less than 10 minutes" per AWS documentation.
+    type: bool
+    default: 'no'
+  wait_timeout:
+    description: >-
+      The duration in seconds to wait for the cluster to become active. Defaults
+      to 1200 seconds (20 minutes).
+    default: 1200
 
 
 requirements: [ 'botocore', 'boto3' ]
@@ -72,10 +83,19 @@ arn:
   type: string
   sample: arn:aws:eks:us-west-2:111111111111:cluster/my-eks-cluster
 certificate_authority:
-  description: Certificate Authority Data for cluster
+  description: Dictionary containing Certificate Authority Data for cluster
   returned: after creation
   type: complex
-  contains: {}
+  contains:
+    data:
+      description: Base-64 encoded Certificate Authority Data for cluster
+      returned: when the cluster has been created and is active
+      type: string
+endpoint:
+  description: Kubernetes API server endpoint
+  returned: when the cluster has been created and is active
+  type: string
+  sample: https://API_SERVER_ENDPOINT.yl4.us-west-2.eks.amazonaws.com
 created_at:
   description: Cluster creation date and time
   returned: when state is present
@@ -120,7 +140,9 @@ status:
   description: status of the EKS cluster
   returned: when state is present
   type: string
-  sample: CREATING
+  sample:
+  - CREATING
+  - ACTIVE
 version:
   description: Kubernetes version of the cluster
   returned: when state is present
@@ -131,6 +153,7 @@ version:
 
 from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, get_ec2_security_group_ids_from_names
+from ansible.module_utils.aws.waiters import get_waiter
 
 try:
     import botocore.exceptions
@@ -142,6 +165,7 @@ def ensure_present(client, module):
     name = module.params.get('name')
     subnets = module.params['subnets']
     groups = module.params['security_groups']
+    wait = module.params.get('wait')
     cluster = get_cluster(client, module)
     try:
         ec2 = module.client('ec2')
@@ -157,6 +181,13 @@ def ensure_present(client, module):
             module.fail_json(msg="Cannot modify security groups of existing cluster")
         if module.params.get('version') and module.params.get('version') != cluster['version']:
             module.fail_json(msg="Cannot modify version of existing cluster")
+
+        if wait:
+            wait_until_cluster_active(client, module)
+            # Ensure that fields that are only available for active clusters are
+            # included in the returned value
+            cluster = get_cluster(client, module)
+
         module.exit_json(changed=False, **camel_dict_to_snake_dict(cluster))
 
     if module.check_mode:
@@ -175,6 +206,13 @@ def ensure_present(client, module):
         module.fail_json(msg="Region %s is not supported by EKS" % client.meta.region_name)
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
         module.fail_json_aws(e, msg="Couldn't create cluster %s" % name)
+
+    if wait:
+        wait_until_cluster_active(client, module)
+        # Ensure that fields that are only available for active clusters are
+        # included in the returned value
+        cluster = get_cluster(client, module)
+
     module.exit_json(changed=True, **camel_dict_to_snake_dict(cluster))
 
 
@@ -205,6 +243,15 @@ def get_cluster(client, module):
         module.fail_json(e, msg="Couldn't get cluster %s" % name)
 
 
+def wait_until_cluster_active(client, module):
+    name = module.params.get('name')
+    wait_timeout = module.params.get('wait_timeout')
+
+    waiter = get_waiter(client, 'cluster_active')
+    attempts = 1 + int(wait_timeout / waiter.config.delay)
+    waiter.wait(name=name, WaiterConfig={'MaxAttempts': attempts})
+
+
 def main():
     argument_spec = dict(
         name=dict(required=True),
@@ -213,6 +260,8 @@ def main():
         subnets=dict(type='list'),
         security_groups=dict(type='list'),
         state=dict(choices=['absent', 'present'], default='present'),
+        wait=dict(default=False, type='bool'),
+        wait_timeout=dict(default=1200, type='int')
     )
 
     module = AnsibleAWSModule(
