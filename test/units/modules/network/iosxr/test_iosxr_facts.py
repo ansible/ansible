@@ -25,6 +25,7 @@ from ansible.compat.tests.mock import patch
 from units.modules.utils import set_module_args
 from .iosxr_module import TestIosxrModule, load_fixture
 from ansible.modules.network.iosxr import iosxr_facts
+from datetime import datetime
 
 
 class TestIosxrFacts(TestIosxrModule):
@@ -48,6 +49,7 @@ class TestIosxrFacts(TestIosxrModule):
         def load_from_file(*args, **kwargs):
             module, commands = args
             output = list()
+            timestamps = list()
 
             for item in commands:
                 try:
@@ -59,7 +61,8 @@ class TestIosxrFacts(TestIosxrModule):
                 filename = filename.replace('/', '7')
                 filename = filename.replace('|', '_')
                 output.append(load_fixture(filename))
-            return output
+                timestamps.append(datetime.now().replace(microsecond=0).isoformat())
+            return output, timestamps
 
         self.run_command.side_effect = load_from_file
 
