@@ -153,7 +153,6 @@ options:
     env:
       - name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT
   netconf_ssh_config:
-    default: None
     description:
       - This variable is used to enable bastion/jump host with netconf connection. If set to
         True the bastion/jump host ssh settings should be present in ~/.ssh/config file,
@@ -203,7 +202,7 @@ NETWORK_OS_DEVICE_PARAM_MAP = {
     "ce": "huawei"
 }
 
-import q
+
 class Connection(NetworkConnectionBase):
     """NetConf connections"""
 
