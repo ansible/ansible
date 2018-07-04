@@ -150,10 +150,8 @@ EXAMPLES = '''
     runtime: 'python2.7'
     role: 'arn:aws:iam::987654321012:role/lambda_basic_execution'
     handler: 'hello_python.my_handler'
-    vpc_subnet_ids:
-    - 'None'
-    vpc_security_group_ids:
-    - 'None'
+    vpc_subnet_ids: []
+    vpc_security_group_ids: []
     environment_variables: '{{ item.env_vars }}'
     tags:
       key1: 'value1'
@@ -468,10 +466,6 @@ def main():
                 vpc_security_group_ids_changed = sorted(vpc_security_group_ids) != sorted(current_vpc_security_group_ids)
 
             if 'VpcConfig' not in current_config or subnet_net_id_changed or vpc_security_group_ids_changed:
-                if 'None' in vpc_subnet_ids and 'None' in vpc_security_group_ids:
-                    vpc_subnet_ids = []
-                    vpc_security_group_ids = []
-
                 new_vpc_config = {'SubnetIds': vpc_subnet_ids,
                                   'SecurityGroupIds': vpc_security_group_ids}
                 func_kwargs.update({'VpcConfig': new_vpc_config})
