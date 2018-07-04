@@ -20,10 +20,10 @@ author: "Michael Gruener (@mgruener)"
 version_added: "2.2"
 short_description: Create SSL certificates with an ACME protocol endpoint
 description:
-   - "Create and renew SSL certificates with a CA supporting the ACME protocol,
-      such as Let's Encrypt (U(https://letsencrypt.org)). For details see
-      U(https://letsencrypt.org). The current implementation supports the
-      C(http-01) and C(dns-01) challenges."
+   - "Create and renew SSL certificates with a CA supporting the
+      L(ACME protocol,https://tools.ietf.org/html/draft-ietf-acme-acme-12),
+      such as L(Let's Encrypt,https://letsencrypt.org/). The current
+      implementation supports the C(http-01) and C(dns-01) challenges."
    - "To use this module, it has to be executed twice. Either as two
       different tasks in the same run or during two runs. Note that the output
       of the first run needs to be recorded and passed to the second run as the
@@ -34,12 +34,16 @@ description:
       C(dns-01) the necessary dns record has to be created.
       It is I(not) the responsibility of this module to perform these steps."
    - "For details on how to fulfill these challenges, you might have to read through
-      U(https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-8).
+      L(the specification,https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-8).
       Also, consider the examples provided for this module."
    - "Although the defaults are chosen so that the module can be used with
       the Let's Encrypt CA, the module can be used with any service using the ACME
       v1 or v2 protocol."
    - "At least one of C(dest) and C(fullchain_dest) must be specified."
+   - "Note that this module includes basic account management functionality.
+      If you want to have more control over your ACME account, use the M(acme_account)
+      module and disable account management for this module using the C(modify_account)
+      option."
    - "Note: this module was called C(letsencrypt) before Ansible 2.6. The usage
       did not change."
 extends_documentation_fragment:
@@ -49,6 +53,10 @@ options:
     description:
       - "The email address associated with this account."
       - "It will be used for certificate expiration warnings."
+      - "Note that when C(modify_account) is not set to C(no) and you also
+         used the M(acme_account) module to specify more than one contact
+         for your account, this module will update your account and restrict
+         it to the (at most one) contact email address specified here."
   agreement:
     description:
       - "URI to a terms of service document you agree to when using the
@@ -67,9 +75,9 @@ options:
     description:
       - "Boolean indicating whether the module should create the account if
          necessary, and update its contact data."
-      - "Set to C(no) if you want to use C(acme_account) to manage your
-         account instead, and to avoid accidental creation of a new account
-         using an old key if you changed the account key with C(acme_account)."
+      - "Set to C(no) if you want to use the M(acme_account) module to manage
+         your account instead, and to avoid accidental creation of a new account
+         using an old key if you changed the account key with M(acme_account)."
       - "If set to C(no), C(terms_agreed) and C(account_email) are ignored."
     type: bool
     default: 'yes'
@@ -465,11 +473,11 @@ class ACMEClient(object):
             keyauthorization = self.account.get_keyauthorization(token)
 
             if type == 'http-01':
-                # https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-8.3
+                # https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-8.3
                 resource = '.well-known/acme-challenge/' + token
                 data[type] = {'resource': resource, 'resource_value': keyauthorization}
             elif type == 'dns-01':
-                # https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-8.5
+                # https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-8.4
                 resource = '_acme-challenge'
                 value = nopad_b64(hashlib.sha256(to_bytes(keyauthorization)).digest())
                 record = (resource + domain[1:]) if domain.startswith('*.') else (resource + '.' + domain)
@@ -523,7 +531,7 @@ class ACMEClient(object):
             result['uri'] = auth['uri']
             if self._add_or_update_auth(domain, result):
                 self.changed = True
-            # draft-ietf-acme-acme-02
+            # https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-6.1.2
             # "status (required, string): ...
             # If this field is missing, then the default value is "pending"."
             if self.version == 1 and 'status' not in result:
@@ -541,7 +549,7 @@ class ACMEClient(object):
         '''
         Create a new certificate based on the csr.
         Return the certificate object as dict
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4
+        https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.4
         '''
         openssl_csr_cmd = [self._openssl_bin, "req", "-in", self.csr, "-outform", "DER"]
         dummy, out, dummy = self.module.run_command(openssl_csr_cmd, check_rc=True)
@@ -577,7 +585,7 @@ class ACMEClient(object):
     def _download_cert(self, url):
         '''
         Download and parse the certificate chain.
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4.2
+        https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.4.2
         '''
         resp, info = fetch_url(self.module, url, headers={'Accept': 'application/pem-certificate-chain'})
         try:
@@ -651,7 +659,7 @@ class ACMEClient(object):
     def _new_order_v2(self):
         '''
         Start a new certificate order (ACME v2 protocol).
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4
+        https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.4
         '''
         identifiers = []
         for domain in self.domains:
@@ -813,7 +821,7 @@ class ACMEClient(object):
         '''
         Deactivates all valid authz's. Does not raise exceptions.
         https://community.letsencrypt.org/t/authorization-deactivation/19860/2
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.5.2
+        https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.5.2
         '''
         authz_deactivate = {
             'status': 'deactivated'
