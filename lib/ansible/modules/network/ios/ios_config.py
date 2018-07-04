@@ -400,6 +400,7 @@ def main():
     check_args(module, warnings)
     result['warnings'] = warnings
 
+    diff_ignore_lines = module.params['diff_ignore_lines']
     config = None
     contents = None
     flags = get_defaults_flag(module) if module.params['defaults'] else []
@@ -419,10 +420,9 @@ def main():
         candidate = get_candidate_config(module)
         running = get_running_config(module, contents, flags=flags)
 
-        response = connection.get_diff(candidate=candidate, running=running, match=match, diff_ignore_lines=None, path=path, replace=replace)
-        diff = json.loads(response)
-        config_diff = diff['config_diff']
-        banner_diff = diff['banner_diff']
+        response = connection.get_diff(candidate=candidate, running=running, match=match, diff_ignore_lines=diff_ignore_lines, path=path, replace=replace)
+        config_diff = response['config_diff']
+        banner_diff = response['banner_diff']
 
         if config_diff or banner_diff:
             commands = config_diff.split('\n')
@@ -449,8 +449,6 @@ def main():
 
     running_config = module.params['running_config']
     startup_config = None
-
-    diff_ignore_lines = module.params['diff_ignore_lines']
 
     if module.params['save_when'] == 'always' or module.params['save']:
         save_config(module, result)
