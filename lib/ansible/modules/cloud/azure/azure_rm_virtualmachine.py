@@ -312,6 +312,11 @@ options:
             - A list of Availability Zones for your virtual machine
         type: list
         version_added: "2.8"
+    license_type:
+        description:
+            - Specifies that the image or disk that is being used was licensed on-premises. This element is only
+              used for images that contain the Windows Server operating system.
+        version_added: 2.7
 
 extends_documentation_fragment:
     - azure
@@ -320,6 +325,8 @@ extends_documentation_fragment:
 author:
     - "Chris Houseknecht (@chouseknecht)"
     - "Matt Davis (@nitzmahone)"
+    - "Christopher Perrin (@cperrin88)"
+
 '''
 EXAMPLES = '''
 
@@ -754,8 +761,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             generalized=dict(type='bool', default=False),
             data_disks=dict(type='list'),
             plan=dict(type='dict'),
+            zones=dict(type='list'),
             accept_terms=dict(type='bool', default=False),
-            zones=dict(type='list')
+            license_type=dict(type='str')
         )
 
         self.resource_group = None
@@ -797,6 +805,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.plan = None
         self.accept_terms = None
         self.zones = None
+        self.license_type = None
 
         self.results = dict(
             changed=False,
@@ -1115,6 +1124,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         plan=plan,
                         zones=self.zones,
                     )
+
+                    if self.license_type:
+                        vm_resource['license_type'] = license_type
 
                     if self.admin_password:
                         vm_resource.os_profile.admin_password = self.admin_password
