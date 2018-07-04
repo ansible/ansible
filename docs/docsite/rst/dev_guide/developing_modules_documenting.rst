@@ -393,7 +393,14 @@ Starting with Ansible version 2.2, all new modules are required to use imports i
 Formatting functions
 --------------------
 
-These formatting functions are ``U()`` for URLs, ``I()`` for option names, ``C()`` for files and option values and ``M()`` for module names.
+The formatting functions are:
+
+* ``L()`` for Links with a heading
+* ``U()`` for URLs
+* ``I()`` for option names
+* ``C()`` for files and option values
+* ``M()`` for module names.
+
 Module names should be specified as ``M(module)`` to create a link to the online documentation for that module.
 
 
@@ -407,6 +414,7 @@ Example usage::
     ...
     See also M(win_copy) or M(win_template).
     ...
+    Time zone names are from the L(tz database,https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
     See U(https://www.ansible.com/tower) for an overview.
     ...
     See L(IOS Platform Options guide, ../network/user_guide/platform_ios.html)
