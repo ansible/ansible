@@ -94,7 +94,7 @@ class Cliconf(CliconfBase):
             if match_isan_file_name:
                 device_info['network_os_image'] = match_isan_file_name.group(1)
 
-        match_os_platform = re.search(r'NAME: "Chassis",\s+DESCR: "NX-OSv Chassis\s?"\s+\n'
+        match_os_platform = re.search(r'NAME: "Chassis",\s+DESCR:.*\n'
                                       r'PID:\s+(\S+)', platform_reply, re.M)
         if match_os_platform:
             device_info['network_os_platform'] = match_os_platform.group(1)
