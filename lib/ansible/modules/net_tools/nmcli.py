@@ -1033,10 +1033,10 @@ class Nmcli(object):
 
         params = {'dev': self.vlandev,
                   'id': self.vlanid,
-                  'ip4': self.ip4,
-                  'gw4': self.gw4,
-                  'ip6': self.ip6,
-                  'gw6': self.gw6,
+                  'ip4': self.ip4 or '',
+                  'gw4': self.gw4 or '',
+                  'ip6': self.ip6 or '',
+                  'gw6': self.gw6 or '',
                   'autoconnect': self.bool_to_string(self.autoconnect)
                   }
         for k, v in params.items():
@@ -1048,16 +1048,22 @@ class Nmcli(object):
         cmd = [self.nmcli_bin]
         cmd.append('con')
         cmd.append('mod')
-        cmd.append('con-name')
+
+        if self.conn_name is not None:
+            cmd.append(self.conn_name)
+        elif self.ifname is not None:
+            cmd.append(self.ifname)
+        else:
+            cmd.append('vlan%s' % self.vlanid)
 
         params = {'vlan.parent': self.vlandev,
                   'vlan.id': self.vlanid,
-                  'ipv4.address': self.ip4,
-                  'ipv4.gateway': self.gw4,
-                  'ipv4.dns': self.dns4,
-                  'ipv6.address': self.ip6,
-                  'ipv6.gateway': self.gw6,
-                  'ipv6.dns': self.dns6,
+                  'ipv4.address': self.ip4 or '',
+                  'ipv4.gateway': self.gw4 or '',
+                  'ipv4.dns': self.dns4 or '',
+                  'ipv6.address': self.ip6 or '',
+                  'ipv6.gateway': self.gw6 or '',
+                  'ipv6.dns': self.dns6 or '',
                   'autoconnect': self.bool_to_string(self.autoconnect)
                   }
 
