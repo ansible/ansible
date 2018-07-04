@@ -69,6 +69,11 @@ options:
               the permissions that are specified in this role.
         required: false
         version_added: 2.3
+    execution_role_arn:
+        description:
+            - The Amazon Resource Name (ARN) of the task execution role that the Amazon ECS container agent and the Docker daemon can assume.
+        required: false
+        version_added: 2.7
     volumes:
         description:
             - A list of names of volumes to be attached
@@ -180,7 +185,7 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info
 from ansible.module_utils._text import to_text
 
@@ -201,7 +206,7 @@ class EcsTaskManager:
         except botocore.exceptions.ClientError:
             return None
 
-    def register_task(self, family, task_role_arn, network_mode, container_definitions, volumes, launch_type, cpu, memory):
+    def register_task(self, family, task_role_arn, execution_role_arn, network_mode, container_definitions, volumes, launch_type, cpu, memory):
         validated_containers = []
 
         # Ensures the number parameters are int as required by boto
@@ -235,6 +240,8 @@ class EcsTaskManager:
             params['memory'] = memory
         if launch_type:
             params['requiresCompatibilities'] = [launch_type]
+        if execution_role_arn:
+            params['executionRoleArn'] = execution_role_arn
 
         try:
             response = self.ecs.register_task_definition(**params)
@@ -279,12 +286,6 @@ class EcsTaskManager:
         response = self.ecs.deregister_task_definition(taskDefinition=taskArn)
         return response['taskDefinition']
 
-    def ecs_api_supports_requirescompatibilities(self):
-        from distutils.version import LooseVersion
-        # Checking to make sure botocore is greater than a specific version.
-        # Support for requiresCompatibilities is only available in versions beyond 1.8.4
-        return LooseVersion(botocore.__version__) >= LooseVersion('1.8.4')
-
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -297,16 +298,17 @@ def main():
         containers=dict(required=False, type='list'),
         network_mode=dict(required=False, default='bridge', choices=['bridge', 'host', 'none', 'awsvpc'], type='str'),
         task_role_arn=dict(required=False, default='', type='str'),
+        execution_role_arn=dict(required=False, default='', type='str'),
         volumes=dict(required=False, type='list'),
         launch_type=dict(required=False, choices=['EC2', 'FARGATE']),
         cpu=dict(),
         memory=dict(required=False, type='str')
     ))
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True,
-                           required_if=[('launch_type', 'FARGATE', ['cpu', 'memory'])]
-                           )
+    module = AnsibleAWSModule(argument_spec=argument_spec,
+                              supports_check_mode=True,
+                              required_if=[('launch_type', 'FARGATE', ['cpu', 'memory'])]
+                              )
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
@@ -316,8 +318,12 @@ def main():
     results = dict(changed=False)
 
     if module.params['launch_type']:
-        if not task_mgr.ecs_api_supports_requirescompatibilities():
+        if not module.botocore_at_least('1.8.4'):
             module.fail_json(msg='botocore needs to be version 1.8.4 or higher to use launch_type')
+
+    if module.params['execution_role_arn']:
+        if not module.botocore_at_least('1.10.44'):
+            module.fail_json(msg='botocore needs to be version 1.10.44 or higher to use execution_role_arn')
 
     for container in module.params.get('containers', []):
         for environment in container.get('environment', []):
@@ -442,6 +448,7 @@ def main():
                 volumes = module.params.get('volumes', []) or []
                 results['taskdefinition'] = task_mgr.register_task(module.params['family'],
                                                                    module.params['task_role_arn'],
+                                                                   module.params['execution_role_arn'],
                                                                    module.params['network_mode'],
                                                                    module.params['containers'],
                                                                    volumes,

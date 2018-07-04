@@ -541,6 +541,18 @@
     # ============================================================
     # Begin tests for Fargate
 
+    - name: ensure AmazonECSTaskExecutionRolePolicy exists
+      iam_role:
+        name: ecsTaskExecutionRole
+        assume_role_policy_document: "{{ lookup('file','ecs-trust-policy.json') }}"
+        description: "Allows ECS containers to make calls to ECR"
+        state: present
+        create_instance_profile: no
+        managed_policy:
+        - AmazonEC2ContainerServiceRole
+        <<: *aws_connection_info
+      register: iam_execution_role
+
     - name: create Fargate VPC-networked task definition with host port set to 8080 and unsupported network mode (expected to fail)
       ecs_taskdefinition:
         containers: "{{ ecs_fargate_task_containers }}"
@@ -579,7 +591,7 @@
           - ecs_fargate_task_definition_vpc_no_mem is failed
           - 'ecs_fargate_task_definition_vpc_no_mem.msg == "launch_type is FARGATE but all of the following are missing: cpu, memory"' 
 
-    - name: create Fargate VPC-networked task definition with CPU or Memory 
+    - name: create Fargate VPC-networked task definition with CPU or Memory and execution role
       ecs_taskdefinition:
         containers: "{{ ecs_fargate_task_containers }}"
         family: "{{ ecs_task_name }}-vpc"
@@ -587,6 +599,7 @@
         launch_type: FARGATE
         cpu: 512
         memory: 1024
+        execution_role_arn: "{{ iam_execution_role.arn }}"
         state: present
         <<: *aws_connection_info
       vars:
