@@ -618,7 +618,7 @@ Example ssh config file (~/.ssh/config)
 
 .. code-block:: ini
 
-   Host junos
+   Host junos01
    HostName junos01
    User myuser
 
@@ -627,14 +627,16 @@ Example ssh config file (~/.ssh/config)
 Example Ansible inventory file
 
 .. code-block:: ini
+
     [junos]
-    junos
+    junos01
 
     [junos:vars]
     ansible_connection=netconf
     ansible_network_os=junos
     ansible_user=myuser
     ansible_ssh_pass=!vault...
+
 
 .. note:: Using ``ProxyCommand`` with passwords via variables
 
