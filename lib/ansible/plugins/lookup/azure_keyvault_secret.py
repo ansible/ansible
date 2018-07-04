@@ -6,7 +6,7 @@ DOCUMENTATION = """
     lookup: azure_keyvault_secret
     author:
         - Hai Cao <t-haicao@microsoft.com>
-    version_added: 2.6
+    version_added: 2.7
     requirements:
         - requests
         - azure
@@ -29,7 +29,7 @@ DOCUMENTATION = """
             description: tenant_id of service principal provided above
     notes:
         - If ansible is running on Azure Virtual Machine with MSI enabled, client_id, secret and tenant isn't necessary. For how to enable MSI on Azure Virutal Machine, please refer to this doc https://docs.microsoft.com/en-us/azure/active-directory/managed-service-identity/
-        - If this plugin is called on a non-azure virtual machine or it's an azure machine has no access to the desired key vault via MSI, then you have to provide a valid service principal that has access to the key vault. 
+        - If this plugin is called on a non-Azure Virtual Machine or it's an Azure Virtual Machine that has no access to the desired key vault via MSI, then you have to provide a valid service principal that has access to the key vault. 
 """
 
 EXAMPLE = """
