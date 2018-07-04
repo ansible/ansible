@@ -604,11 +604,14 @@ Enabling jump host setting
 --------------------------
 
 Bastion/jump host with netconf connection can be enable using
-- Setting Ansible variable``ansible_netconf_ssh_config`` or
-- Setting environment variable ``ANSIBLE_NETCONF_SSH_CONFIG`` or
-- Setting ``ssh_config=Ture`` under ``netconf_connection`` section in ansible configuration file
+- Setting Ansible variable``ansible_netconf_ssh_config`` either to ``True`` or custom ssh config file path
+- Setting environment variable ``ANSIBLE_NETCONF_SSH_CONFIG`` to ``True`` or custom ssh config file path
+- Setting ``ssh_config = 1`` or ``ssh_config = <ssh-file-path>``under ``netconf_connection`` section
 
-The ssh config file (~/.ssh/config) should have the correct proxycommand and required ssh configuration variables
+If the configuration variable is set to 1 the proxycommand and other ssh variables are read from
+default ssh config file (~/.ssh/config).
+If the configuration variable is set to file path the proxycommand and other ssh variables are read
+from the given custom ssh file path
 
 Example ssh config file (~/.ssh/config)
 ---------------------------------------
