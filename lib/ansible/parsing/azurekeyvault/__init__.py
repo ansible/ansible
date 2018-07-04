@@ -32,13 +32,7 @@ from binascii import unhexlify
 from binascii import Error as BinasciiError
 
 from ansible.errors import AnsibleError, AnsibleAssertionError
-from ansible import constants as C
-from ansible.module_utils.six import PY3, binary_type
-# Note: on py2, this zip is izip not the list based zip() builtin
-from ansible.module_utils.six.moves import zip
 from ansible.module_utils._text import to_bytes, to_text, to_native
-from ansible.utils.path import makedirs_safe
-#from azure.keyvault.models.key_vault_error import KeyVaultErrorException
 
 try:
     from __main__ import display
@@ -56,14 +50,12 @@ def get_secret(vault_uri, secret_name, secret_version):
 
     try:
         client = get_client()
-        display.warning("uri {0} secert {1} version {2}".format(vault_uri, secret_name, secret_version))
         secret_bundle = client.get_secret(vault_uri, secret_name, secret_version)
 
         if secret_bundle:
             return secret_bundle.value
-    except KeyVaultErrorException:
-#        raise AnsibleError("Failed to get secret from Azure Key Vault: {0}".format(str(e)))
-        raise AnsibleError("Failed to get secret from Azure Key Vault")
+    except KeyVaultErrorException as e:
+        raise AnsibleError("Failed to get secret from Azure Key Vault: {0}".format(str(e)))
 
     return None
 
