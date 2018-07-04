@@ -16,7 +16,7 @@ import yaml
 
 from ansible.module_utils.six import text_type
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.parsing.azurekeyvault import is_azure_keyvault_secret, get_if_azure_keyvault_secret, get_secret
+from ansible.parsing.azurekeyvault import get_secret
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
 
 class AzureKeyVaultUnicode(yaml.YAMLObject, AnsibleBaseYAMLObject):
@@ -32,18 +32,17 @@ class AzureKeyVaultUnicode(yaml.YAMLObject, AnsibleBaseYAMLObject):
         self.envelope = envelope
         tempdata = envelope.strip().split(';')
 
-        if len(tempdata) == 2
-            vault_uri = tempdata[0]
+        if len(tempdata) == 2:
             secret = tempdata[1]
             tempsecret = secret.split('/')
 
-            self.vault_uri = tempdata[1]
+            self.vault_uri = tempdata[0]
             self.secret_name = tempsecret[0]
             self.secret_version = tempsecret[1] if len(tempsecret) >1 else ''
 
     @property
     def data(self):
-        if hasattr(self, vault_uri) and hasattr(self, secret_name) and hasattr(self, secret_name):
+        if hasattr(self, 'vault_uri') and hasattr(self, 'secret_name') and hasattr(self, 'secret_name'):
             return get_secret(self.vault_uri, self.secret_name, self.secret_version)
         else:
             self.envelope

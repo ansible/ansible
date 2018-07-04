@@ -38,6 +38,7 @@ from ansible.module_utils.six import PY3, binary_type
 from ansible.module_utils.six.moves import zip
 from ansible.module_utils._text import to_bytes, to_text, to_native
 from ansible.utils.path import makedirs_safe
+#from azure.keyvault.models.key_vault_error import KeyVaultErrorException
 
 try:
     from __main__ import display
@@ -60,8 +61,9 @@ def get_secret(vault_uri, secret_name, secret_version):
 
         if secret_bundle:
             return secret_bundle.value
-    except KeyVaultErrorException as e:
-        raise AnsibleError("Failed to get secret from Azure Key Vault: {0}".format(str(e)))
+    except KeyVaultErrorException:
+#        raise AnsibleError("Failed to get secret from Azure Key Vault: {0}".format(str(e)))
+        raise AnsibleError("Failed to get secret from Azure Key Vault")
 
     return None
 
