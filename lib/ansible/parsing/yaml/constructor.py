@@ -23,6 +23,7 @@ from yaml.constructor import SafeConstructor, ConstructorError
 from yaml.nodes import MappingNode
 
 from ansible.module_utils._text import to_bytes
+from ansible.parsing.yaml.azurekeyvaultunicode import AzureKeyVaultUnicode
 from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleSequence, AnsibleUnicode
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.utils.unsafe_proxy import wrap_var
@@ -109,6 +110,12 @@ class AnsibleConstructor(SafeConstructor):
         ret.vault = vault
         return ret
 
+    def construct_azure_keyvault_secrets(self, node):
+        value = self.construct_scalar(node)
+        # get secrets from azure key vault
+        ret = AzureKeyVaultUnicode(value)
+        return ret
+
     def construct_yaml_seq(self, node):
         data = AnsibleSequence()
         yield data
@@ -160,5 +167,9 @@ AnsibleConstructor.add_constructor(
 AnsibleConstructor.add_constructor(
     u'!vault',
     AnsibleConstructor.construct_vault_encrypted_unicode)
+
+AnsibleConstructor.add_constructor(
+    u'!azurekeyvault',
+    AnsibleConstructor.construct_azure_keyvault_secrets)
 
 AnsibleConstructor.add_constructor(u'!vault-encrypted', AnsibleConstructor.construct_vault_encrypted_unicode)
