@@ -1,0 +1,2 @@
+bugfixes:
+- Fix nxos CI failures (https://github.com/ansible/ansible/pull/42240).
