@@ -147,7 +147,7 @@ class ACMEDirectory(object):
     and allows to obtain a Replay-Nonce. The acme_directory URL
     needs to support unauthenticated GET requests; ACME endpoints
     requiring authentication are not supported.
-    https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.1.1
+    https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.1.1
     '''
 
     def __init__(self, module):
@@ -228,7 +228,7 @@ class ACMEAccount(object):
     def get_keyauthorization(self, token):
         '''
         Returns the key authorization for the given token
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-8.1
+        https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-8.1
         '''
         accountkey_json = json.dumps(self.jwk, sort_keys=True, separators=(',', ':'))
         thumbprint = nopad_b64(hashlib.sha256(accountkey_json.encode('utf8')).digest())
@@ -360,7 +360,7 @@ class ACMEAccount(object):
         '''
         Sends a JWS signed HTTP POST request to the ACME server and returns
         the response as dictionary
-        https://tools.ietf.org/html/draft-ietf-acme-acme-10#section-6.2
+        https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-6.2
         '''
         key_data = key_data or self.key_data
         key = key or self.key
@@ -392,7 +392,7 @@ class ACMEAccount(object):
                     try:
                         result = self.module.from_json(content.decode('utf8'))
                         # In case of badNonce error, try again (up to 5 times)
-                        # (https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-6.6)
+                        # (https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-6.6)
                         if (400 <= info['status'] < 600 and
                                 result.get('type') == 'urn:ietf:params:acme:error:badNonce' and
                                 failed_tries <= 5):
@@ -420,7 +420,7 @@ class ACMEAccount(object):
         Registers a new ACME account. Returns True if the account was
         created and False if it already existed (e.g. it was not newly
         created).
-        https://tools.ietf.org/html/draft-ietf-acme-acme-10#section-7.3
+        https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.3
         '''
         contact = [] if contact is None else contact
 
@@ -498,7 +498,7 @@ class ACMEAccount(object):
         will be stored in self.uri; if it is None, the account does not
         exist.
 
-        https://tools.ietf.org/html/draft-ietf-acme-acme-10#section-7.3
+        https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.3
         '''
 
         new_account = True

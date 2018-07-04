@@ -23,6 +23,10 @@ description:
    - "Allows to create, modify or delete accounts with Let's Encrypt.
       Let's Encrypt is a free, automated, and open certificate authority
       (CA), run for the public's benefit. For details see U(https://letsencrypt.org)."
+   - "The M(acme_certificate) module also allows to do basic account management.
+      When using both modules, it is recommended to disable account management
+      for M(acme_certificate). For that, use the C(modify_account) option of
+      M(acme_certificate)."
    - "This module only works with the ACME v2 protocol."
 extends_documentation_fragment:
   - acme
@@ -48,7 +52,7 @@ options:
     description:
       - "A list of contact URLs."
       - "Email addresses must be prefixed with C(mailto:)."
-      - "See https://tools.ietf.org/html/draft-ietf-acme-acme-10#section-7.1.2
+      - "See https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.1.2
          for what is allowed."
       - "Must be specified when state is C(present). Will be ignored
          if state is C(absent) or C(changed_key)."

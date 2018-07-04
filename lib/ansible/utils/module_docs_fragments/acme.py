@@ -17,7 +17,8 @@ options:
       - "Path to a file containing the ACME account RSA or Elliptic Curve
          key."
       - "RSA keys can be created with C(openssl rsa ...). Elliptic curve keys can
-         be created with C(openssl ecparam -genkey ...)."
+         be created with C(openssl ecparam -genkey ...). Any other tool creating
+         private keys in PEM format can be used as well."
       - "Mutually exclusive with C(account_key_content)."
       - "Required if C(account_key_content) is not used."
     aliases: [ account_key ]
@@ -26,7 +27,7 @@ options:
       - "Content of the ACME account RSA or Elliptic Curve key."
       - "Mutually exclusive with C(account_key_src)."
       - "Required if C(account_key_src) is not used."
-      - "Warning: the content will be written into a temporary file, which will
+      - "I(Warning): the content will be written into a temporary file, which will
          be deleted by Ansible when the module completes. Since this is an
          important private key — it can be used to change the account key,
          or to revoke your certificates without knowing their private keys
@@ -59,8 +60,8 @@ options:
   validate_certs:
     description:
       - Whether calls to the ACME directory will validate TLS certificates.
-      - I(Warning:) Should I(only ever) be set to C(no) for testing purposes,
-        for example when testing against a local Pebble server.
+      - "I(Warning): Should I(only ever) be set to C(no) for testing purposes,
+         for example when testing against a local Pebble server."
     type: bool
     default: 'yes'
     version_added: 2.5
