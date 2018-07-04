@@ -32,6 +32,7 @@ options:
     description:
     - Force host name even if not in DNS.
     required: false
+    type: bool
   ip_address:
     description:
     - Add the host to DNS with this IP address.
@@ -64,12 +65,13 @@ options:
   state:
     description: State to ensure
     default: present
-    choices: ["present", "absent", "disabled"]
+    choices: ["present", "absent", "enabled", "disabled"]
   update_dns:
     description:
     - If set C("True") with state as C("absent"), then removes DNS records of the host managed by FreeIPA DNS.
     - This option has no effect for states other than "absent".
     default: false
+    type: bool
     version_added: "2.5"
   random_password:
     description: Generate a random password to be used in bulk enrollment
