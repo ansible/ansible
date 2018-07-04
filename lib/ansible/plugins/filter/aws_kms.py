@@ -3,7 +3,7 @@
 Module to handle encrypting and decrypting of items with AWS KMS.
 """
 from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type  # pylint: disable=invalid-name
+__metaclass__ = type
 
 
 import base64
