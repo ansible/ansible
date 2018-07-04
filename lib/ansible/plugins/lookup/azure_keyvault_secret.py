@@ -33,9 +33,9 @@ DOCUMENTATION = """
 """
 
 EXAMPLE = """
-- debug: msg="the value of this secret is {{lookup('azure_keyvault_secret','testSecret/version')}}"
+- debug: msg="the value of this secret is {{lookup('azure_keyvault_secret','testSecret/version',vault_url='https://yourvault.vault.azure.net')}}"
 
-- debug: msg="the value of this secret is {{lookup('azure_keyvault_secret','testSecret/version',vault_url='https://myvault.vault.azure.net', cliend_id='123456789', secret='abcdefg', tenant_id='uvwxyz')}}"
+- debug: msg="the value of this secret is {{lookup('azure_keyvault_secret','testSecret/version',vault_url='https://yourvault.vault.azure.net', cliend_id='123456789', secret='abcdefg', tenant_id='uvwxyz')}}"
 
 # Example below creates an Azure Virtual Machine with ssh public key from key vault using 'azure_keyvault_secret' lookup plugin.
 - name: Create Azure VM
