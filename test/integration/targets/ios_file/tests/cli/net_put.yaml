@@ -21,6 +21,15 @@
     that:
       - result.changed == true
 
+- name: Idempotency Check
+  net_put:
+    src: ios1.cfg
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
 - name: copy file from controller to ios + dest specified
   net_put:
     src: ios1.cfg
@@ -34,7 +43,7 @@
 - name: copy file with non-ascii characters to ios in template mode(Fail case)
   net_put:
     src: nonascii.bin
-    mode: 'template'
+    mode: 'text'
   register: result
   ignore_errors: true
 
