@@ -149,12 +149,12 @@ class ActionModule(ActionBase):
         tmp_dest_file = os.path.join(cwd, filename)
         try:
             out = conn.get_file(
-                    source=source, destination=tmp_dest_file,
-                    proto=proto, timeout=timeout
+                source=source, destination=tmp_dest_file,
+                proto=proto, timeout=timeout
             )
         except Exception as exc:
             os.remove(tmp_dest_file)
-            raise Exception(osex)
+            raise Exception(exc)
 
         try:
             with open(tmp_dest_file, 'r') as f:
@@ -175,6 +175,6 @@ class ActionModule(ActionBase):
         checksum_new = sha1.digest()
         os.remove(tmp_dest_file)
         if checksum_old == checksum_new:
-           return False
+            return False
         else:
-           return True
+            return True

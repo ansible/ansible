@@ -141,8 +141,8 @@ class ActionModule(ActionBase):
         source_file = os.path.join(cwd, filename)
         try:
             out = conn.get_file(
-                    source=dest, destination=source_file,
-                    proto=proto, timeout=timeout
+                source=dest, destination=source_file,
+                proto=proto, timeout=timeout
             )
         except Exception as exc:
             if (to_text(exc)).find("No such file or directory") > 0:
@@ -172,9 +172,9 @@ class ActionModule(ActionBase):
         checksum_new = sha1.digest()
         os.remove(source_file)
         if checksum_old == checksum_new:
-           return False
+            return False
         else:
-           return True
+            return True
 
     def _get_working_path(self):
         cwd = self._loader.get_basedir()
