@@ -28,9 +28,16 @@ version_added: "2.7"
 '''
 
 EXAMPLES = '''
-# Ensure the default login shell is bash
+# Ensure the default login shell is bash.
 - ipa_config:
     ipadefaultloginshell: /bin/bash
+    ipa_host: localhost
+    ipa_user: admin
+    ipa_pass: supersecret
+
+# Ensure the default e-mail domain is ansible.com.
+- ipa_config:
+    ipadefaultemaildomain: ansible.com
     ipa_host: localhost
     ipa_user: admin
     ipa_pass: supersecret
@@ -38,7 +45,7 @@ EXAMPLES = '''
 
 RETURN = '''
 config:
-  description: Configuration as returned by IPA API
+  description: Configuration as returned by IPA API.
   returned: always
   type: dict
 '''
