@@ -91,7 +91,6 @@ except requests.exceptions.RequestException:
     print('Unable to fetch MSI token. Will use service principal if provided.')
     TOKEN_ACQUIRED = False
 
-
 def lookup_sercret_non_msi(terms, vault_url, kwargs):
     import logging
     logging.getLogger('msrestazure.azure_active_directory').addHandler(logging.NullHandler())
@@ -137,6 +136,8 @@ class LookupModule(LookupBase):
 
         ret = []
         vault_url = kwargs.pop('vault_url', None)
+        if vault_url is None:
+            raise AnsibleError('Failed to get valid vault url.')
         if TOKEN_ACQUIRED:
             secret_params = {'api-version': '2016-10-01'}
             secret_headers = {'Authorization': 'Bearer ' + token}
