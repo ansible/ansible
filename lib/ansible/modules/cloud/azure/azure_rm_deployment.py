@@ -56,6 +56,7 @@ options:
     description:
       - A hash containing the templates inline. This parameter is mutually exclusive with 'template_link'.
         Either one of them is required if "state" parameter is "present".
+    type: dict
   template_link:
     description:
       - Uri of file containing the template body. This parameter is mutually exclusive with 'template'. Either one
@@ -64,6 +65,7 @@ options:
     description:
       - A hash of all the required template variables for the deployment template. This parameter is mutually exclusive
         with 'parameters_link'. Either one of them is required if "state" parameter is "present".
+    type: dict
   parameters_link:
     description:
       - Uri of file containing the parameters body. This parameter is mutually exclusive with 'parameters'. Either
