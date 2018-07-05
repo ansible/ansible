@@ -33,7 +33,7 @@ def dependency_check():
     """
     if not HAS_DEPENDENCIES:
         raise AnsibleError('You need to install "botocore" and "aws_encryption_sdk"'
-                           'before using aws_kms filter')
+                           'before using aws_kms filter plugin')
 
 
 def aws_kms_encrypt(plaintext, key_arn):
