@@ -14,6 +14,10 @@ DOCUMENTATION = '''
     description:
         - Get inventory hosts from Scaleway
     options:
+        plugin:
+            description: token that ensures this is a source file for the 'scaleway' plugin.
+            required: True
+            choices: ['scaleway']
         regions:
             description: Filter results on a specific Scaleway region
             type: list
