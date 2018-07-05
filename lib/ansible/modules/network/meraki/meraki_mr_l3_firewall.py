@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = r'''
 ---
-module: meraki_organization
+module: meraki_mr_l3_firewall
 short_description: Manage MR access point layer 3 firewalls in the Meraki cloud
 version_added: "2.7"
 description:
@@ -24,20 +24,54 @@ options:
     state:
         description:
         - Create or modify an organization.
-        choices: ['present', 'query']
         default: present
-    clone:
-        description:
-        - Organization to clone to a new organization.
+        choices: [present, query]
     org_name:
         description:
         - Name of organization.
-        - If C(clone) is specified, C(org_name) is the name of the new organization.
-        aliases: [ name, organization ]
     org_id:
         description:
         - ID of organization.
-        aliases: [ id ]
+    net_name:
+        description:
+        - Name of network containing access points.
+    net_id:
+        description:
+        - ID of network containing access points.
+    number:
+        description:
+        - Number of SSID to apply firewall rule to.
+        aliases: [ssid_number]
+    ssid_name:
+        description:
+        - Name of SSID to apply firewall rule to.
+        aliases: [ssid]
+    allow_lan_access:
+        description:
+        - Sets whether devices can talk to other devices on the same LAN.
+        type: bool
+        default: yes
+    rules:
+        description:
+        - List of firewall rules.
+        suboptions:
+            policy:
+                description:
+                - Specifies the action that should be taken when rule is hit.
+                choices: [allow, deny]
+            protocol:
+                description:
+                - Specifies protocol to match against.
+                choices: [any, icmp, tcp, udp]
+            dest_port:
+                description:
+                - Comma separated list of destination ports to match.
+            dest_cidr:
+                description:
+                - Comma separated list of CIDR notation networks to match.
+            comment:
+                description:
+                - Optional comment describing the firewall rule.
 author:
 - Kevin Breit (@kbreit)
 extends_documentation_fragment: meraki
@@ -47,21 +81,6 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-data:
-  description: Information about the organization which was created or modified
-  returned: success
-  type: complex
-  contains:
-    id:
-      description: Unique identification number of organization
-      returned: success
-      type: int
-      sample: 2930418
-    name:
-      description: Name of organization
-      returned: success
-      type: string
-      sample: YourOrg
 
 '''
 
@@ -77,7 +96,7 @@ def assemble_payload(meraki):
                   'protocol': 'protocol',
                   'dest_port': 'destPort',
                   'dest_cidr': 'destCidr',
-                  'comment': 'comment', 
+                  'comment': 'comment',
                   }
     rules = []
     for rule in meraki.params['rules']:
@@ -89,30 +108,43 @@ def assemble_payload(meraki):
     return payload
 
 
-def get_rules(meraki, net_id):
+def get_rules(meraki, net_id, number):
         path = meraki.construct_path('get_all', net_id=net_id)
-        path = path + meraki.params['number'] + '/l3FirewallRules'
+        path = path + number + '/l3FirewallRules'
         response = meraki.request(path, method='GET')
         if meraki.status == 200:
             return response
+
+
+def get_ssid_number(name, data):
+    for ssid in data:
+        if name == ssid['name']:
+            return ssid['number']
+    return False
+
+
+def get_ssids(meraki, net_id):
+    path = meraki.construct_path('get_all', net_id=net_id)
+    return meraki.request(path, method='GET')
+
 
 def main():
     # define the available arguments/parameters that a user can pass to
     # the module
 
-    fw_rules=dict(policy=dict(type='str', choices=['allow', 'deny']),
-                  protocol=dict(type='str', choices=['tcp', 'udp', 'icmp', 'any']),
-                  dest_port=dict(type='str'),
-                  dest_cidr=dict(type='str'),
-                  comment=dict(type='str'),
-                  )
+    fw_rules = dict(policy=dict(type='str', choices=['allow', 'deny']),
+                    protocol=dict(type='str', choices=['tcp', 'udp', 'icmp', 'any']),
+                    dest_port=dict(type='str'),
+                    dest_cidr=dict(type='str'),
+                    comment=dict(type='str'),
+                    )
 
     argument_spec = meraki_argument_spec()
-    argument_spec.update(clone=dict(type='str'),
-                         state=dict(type='str', choices=['present', 'query'], default='present'),
+    argument_spec.update(state=dict(type='str', choices=['present', 'query'], default='present'),
                          net_name=dict(type='str'),
                          net_id=dict(type='str'),
                          number=dict(type='str', aliases=['ssid_number']),
+                         ssid_name=dict(type='str', aliases=['ssid']),
                          rules=dict(type='list', default=None, elements='dict', options=fw_rules),
                          allow_lan_access=dict(type='bool', default=True),
                          )
@@ -168,14 +200,16 @@ def main():
             orgs = meraki.get_orgs()
         net_id = meraki.get_net_id(net_name=meraki.params['net_name'],
                                    data=meraki.get_nets(org_id=org_id))
+    number = meraki.params['number']
+    if meraki.params['ssid_name']:
+        number = get_ssid_number(meraki.params['ssid_name'], get_ssids(meraki, net_id))
 
     if meraki.params['state'] == 'query':
-        meraki.result['data'] = get_rules(meraki, net_id)
-
+        meraki.result['data'] = get_rules(meraki, net_id, number)
     elif meraki.params['state'] == 'present':
-        rules = get_rules(meraki, net_id)
+        rules = get_rules(meraki, net_id, number)
         path = meraki.construct_path('get_all', net_id=net_id)
-        path = path + meraki.params['number'] + '/l3FirewallRules'
+        path = path + number + '/l3FirewallRules'
         if meraki.params['rules']:
             payload = assemble_payload(meraki)
         else:
@@ -185,12 +219,12 @@ def main():
             if len(rules) != len(payload['rules']):  # Quick and simple check to avoid more processing
                 update = True
             if update is False:
-                for r in range(len(rules)-2):
+                for r in range(len(rules) - 2):
                     if meraki.is_update_required(rules[r], payload[r]) is True:
                         update = True
         except KeyError:
             pass
-        if rules[len(rules)-2] != meraki.params['allow_lan_access']:
+        if rules[len(rules) - 2] != meraki.params['allow_lan_access']:
             update = True
         if update is True:
             payload['allowLanAccess'] = meraki.params['allow_lan_access']
@@ -198,7 +232,6 @@ def main():
             if meraki.status == 200:
                 meraki.result['data'] = response
                 meraki.result['changed'] = True
-
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results

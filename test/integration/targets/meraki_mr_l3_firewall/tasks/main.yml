@@ -82,4 +82,5 @@
     state: absent
     org_name: '{{test_org_name}}'
     net_id: '{{net}}'
+    number: 1
   delegate_to: localhost
