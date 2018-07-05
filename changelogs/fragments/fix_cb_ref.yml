@@ -1,2 +1,2 @@
-- bufgix:
-    - correctly reference the callback ojbect when giving an error https://github.com/ansible/ansible/pull/40453
+bugfixes:
+    - callback plugins - correctly reference the callback object when giving an error (https://github.com/ansible/ansible/pull/40453)

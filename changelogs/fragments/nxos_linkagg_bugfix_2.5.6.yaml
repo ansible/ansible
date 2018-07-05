@@ -1,2 +1,2 @@
 bugfixes:
-- Fix nxos_linkagg (https://github.com/ansible/ansible/pull/41550).
+- nxos_linkagg - fix issue (https://github.com/ansible/ansible/pull/41550).

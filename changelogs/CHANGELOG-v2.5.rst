@@ -2,10 +2,82 @@
 Ansible 2.5 "Kashmir" Release Notes
 ===================================
 
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.6:
+
+v2.5.6
+======
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.6_Release Summary:
+
+Release Summary
+---------------
+
+| Release Date: 2018-07-05
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`_
+
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.6_Minor Changes:
+
+Minor Changes
+-------------
+
+- Restore module_utils.basic.BOOLEANS variable for backwards compatibility with the module API in older ansible releases.
+
+- lineinfile - add warning when using an empty regexp (https://github.com/ansible/ansible/issues/29443)
+
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.6_Bugfixes:
+
+Bugfixes
+--------
+
+- apt - fix apt-mark on debian6 (https://github.com/ansible/ansible/pull/41530)
+
+- **Security Fix** - avoid loading host/group vars from cwd when not specifying a playbook or playbook base dir
+
+- copy module - fixed recursive copy with relative paths (https://github.com/ansible/ansible/pull/40166)
+
+- correct debug display for all cases https://github.com/ansible/ansible/pull/41331
+
+- eos_l2_interface - fix eapi (https://github.com/ansible/ansible/pull/42270)
+
+- group_by - support implicit localhost (https://github.com/ansible/ansible/pull/41860)
+
+- influxdb_query - fixed the use of the common return 'results' caused an unexpected fault. The return is renamed to 'query_results'
+
+- junos_config - fix confirm commit timeout issue (https://github.com/ansible/ansible/pull/41527)
+
+- lineinfile - fix insertbefore when used with BOF to not insert duplicate lines (https://github.com/ansible/ansible/issues/38219)
+
+- nsupdate - allow hmac-sha384 https://github.com/ansible/ansible/pull/42209
+
+- nxos_linkagg - fix issue (https://github.com/ansible/ansible/pull/41550).
+
+- nxos_vxlan_vtep_vni - fix issue (https://github.com/ansible/ansible/pull/42240)
+
+- uses correct conn info for reset_connection  https://github.com/ansible/ansible/issues/27520
+
+- correct service facts systemd detection of state https://github.com/ansible/ansible/issues/40809
+
+- correctly check hostvars for vars term https://github.com/ansible/ansible/pull/41819
+
+- vyos_vlan - fix aggregate configuration issues (https://github.com/ansible/ansible/pull/41638)
+
+- win_domain - fixes typo in one of the AD cmdlets https://github.com/ansible/ansible/issues/41536
+
+- win_iis_webapppool - redirect some module output to null so Ansible can read the output JSON https://github.com/ansible/ansible/issues/40874
+
+- win_updates - Fixed issue where running win_updates on async fails without any error
+
+- winrm - ensure pexpect is set to not echo the input on a failure and have a manual sanity check afterwards https://github.com/ansible/ansible/issues/41865
+
+- **Security Fix** - avoid using ansible.cfg in a world writable dir.
+
+
 .. _Ansible 2.5 "Kashmir" Release Notes_v2.5.5:
 
 v2.5.5
-=========
+======
 
 .. _Ansible 2.5 "Kashmir" Release Notes_v2.5.5_Release Summary:
 
@@ -16,7 +88,7 @@ Release Summary
 | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`_
 
 
-.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.4-38_Bugfixes:
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.5_Bugfixes:
 
 Bugfixes
 --------
@@ -67,15 +139,27 @@ Release Summary
 Bugfixes
 --------
 
+- skip marking packages as manually installed when apt-mark is not available (https://github.com/ansible/ansible/pull/40600)
+
 - jenkins_plugin - fix plugin always updated even if already uptodate (https://github.com/ansible/ansible/pull/40645)
+
+- allow ansible-doc to handle 'keywords' configuration entries https://github.com/ansible/ansible/pull/40620
 
 - ec2_asg - wait for lifecycle hooks to complete (https://github.com/ansible/ansible/issues/37281)
 
+- edgeos modules - add note and warning that the modules require network_cli connection (https://github.com/ansible/ansible/issues/39499)
+
 - edgeos_config - check for a corresponding set command when issuing delete commands to ensure the desired state is met (https://github.com/ansible/ansible/issues/40437)
+
+- callback plugins - correctly reference the callback object when giving an error (https://github.com/ansible/ansible/pull/40453)
+
+- fix doas construction for become (https://github.com/ansible/ansible/pull/37511)
 
 - iptables - use suboptions to properly join tcp_flags options (https://github.com/ansible/ansible/issues/36490)
 
 - known_hosts - add better checking and error reporting to the host field (https://github.com/ansible/ansible/pull/38307)
+
+- meta: reset connection is not run once (https://github.com/ansible/ansible/issues/39364)
 
 - Fix legacy Nexus 3k integration test and module issues (https://github.com/ansible/ansible/pull/40322).
 
@@ -96,6 +180,10 @@ Bugfixes
 - user - With python 3.6 spwd.getspnam returns PermissionError instead of KeyError if user does not have privileges (https://github.com/ansible/ansible/issues/39472)
 
 - synchronize - Ensure the local connection created by synchronize uses _remote_is_local=True, which causes ActionBase to build a local tmpdir (https://github.com/ansible/ansible/pull/40833)
+
+- synchronize - Ensure rsync_opts is a list when not provided
+
+- action - Ensure remote user is correctly calculated when expanding the remote user path
 
 - win_get_url - fixed issue when authenticating when force=yes https://github.com/ansible/ansible/pull/40641
 
@@ -149,6 +237,12 @@ Bugfixes
 
 - Fix regression in aws_s3 to allow uploading files on the remote host to an S3 bucket
 
+- dont require property for older callbacks to load https://github.com/ansible/ansible/pull/38281
+
+- fix diff callback only being called when global diff option was set and not honoring task diff (https://github.com/ansible/ansible/issues/31129)
+
+- minor doc fix https://github.com/ansible/ansible/pull/39111
+
 - ec2_vpc_route_table - fix regression by skipping routes without DestinationCidrBlock (https://github.com/ansible/ansible/pull/37010)
 
 - Use custom waiters
@@ -158,6 +252,8 @@ Bugfixes
 - Fix non-monotonic AWS behavior by waiting until attributes are the correct value before returning the subnet
 
 - Don't use custom waiter configs for older versions of botocore
+
+- return empty list if host pattern is empty https://github.com/ansible/ansible/pull/37931
 
 - Fix an encoding issue when parsing the examples from a plugins' documentation
 
@@ -170,6 +266,14 @@ Bugfixes
 - file module - Fix error when recursively assigning permissions and a symlink to a nonexistent file is present in the directory tree (https://github.com/ansible/ansible/issues/39456)
 
 - file - Eliminate an error if we're asked to remove a file but something removes it while we are processing the request (https://github.com/ansible/ansible/pull/39466)
+
+- Capture correct exception type https://github.com/ansible/ansible/pull/39406
+
+- dont emit empty error due to \n https://github.com/ansible/ansible/pull/39019
+
+- single bad path for galaxy is just a warning, error only if no usable paths found https://github.com/ansible/ansible/pull/39082
+
+- correctly deal with user homedir (~) translations https://github.com/ansible/ansible/pull/36755
 
 - Fix interfaces_file to support `allow-` https://github.com/ansible/ansible/pull/37847
 
@@ -186,6 +290,8 @@ Bugfixes
 - iosxr_* modules do not work with iosxr version >= 6.3.2 as cisco has deprecated 'show version brief'
 
 - Fix junos_config confirm timeout issue (https://github.com/ansible/ansible/pull/40238)
+
+- avoid uneeded reloading of plugin files https://github.com/ansible/ansible/pull/37648
 
 - Fix nested noop block padding in dynamic includes (https://github.com/ansible/ansible/pull/38814)
 
@@ -217,7 +323,19 @@ Bugfixes
 
 - nxos_snapshot - Fix logic for save_snapshot_locally (https://github.com/ansible/ansible/pull/40227)
 
+- nxos terminal plugin on_become (https://github.com/ansible/ansible/pull/39355)
+
+- nxos module_doc_fragments for authorize, auth_pass (https://github.com/ansible/ansible/pull/39946)
+
 - Fix nxos terminal plugin regex (https://github.com/ansible/ansible/pull/39659)
+
+- protect against bad plugin verify method https://github.com/ansible/ansible/pull/36591
+
+- include_role - disambiguate keywords from variables (https://github.com/ansible/ansible/pull/38968)
+
+- filter was removed ... docs shoudl be too https://github.com/ansible/ansible/pull/37946
+
+- ensure C locale for chkconfig to allow sane screen scraping https://github.com/ansible/ansible/pull/38980
 
 - template action plugin - fix the encoding of filenames to avoid tracebacks on Python2 when characters that are not present in the user's locale are present. (https://github.com/ansible/ansible/pull/39424)
 
@@ -349,6 +467,8 @@ Bugfixes
 
 - Set default network type as 'dhcp' if user has not specified any.
 
+- Changed hostname variable in order for the esxi host to be found when authentication against a vcenter was done.
+
 - nmcli change default value of autoconnect
 
 - azure_rm_image - Allow Azure images to be created with tags, bug was introduced in Ansible v2.5.0
@@ -371,6 +491,8 @@ Bugfixes
 
 - edgeos_command - add action plugin to backup config (https://github.com/ansible/ansible/pull/37619)
 
+- eos cliconf get_config() format type fix (https://github.com/ansible/ansible/pull/38682)
+
 - eos_vlan - fixed eos_vlan not working when having more than 6 interfaces (https://github.com/ansible/ansible/pull/38347)
 
 - Various grafana_* modules - Port away from the deprecated b64encodestring function to the b64encode function instead. (https://github.com/ansible/ansible/pull/38388)
@@ -386,6 +508,8 @@ Bugfixes
 - ios_l2_interface - use show run instead of section pipeline ios_l2_interface (https://github.com/ansible/ansible/pull/39658)
 
 - Add supported connection in junos module documentation (https://github.com/ansible/ansible/pull/38813)
+
+- junos_netconf - Report error is wrong connection type is used for junos_netconf (https://github.com/ansible/ansible/pull/38527)
 
 - _nxos_switchport - fix removal of trunk vlans (https://github.com/ansible/ansible/pull/37328)
 
@@ -434,6 +558,8 @@ Bugfixes
 - openssl-certificate - Add space between arguments for acme-tiny (https://github.com/ansible/ansible/pull/36739)
 
 - Fix traceback when creating or stopping ovirt vms (https://github.com/ansible/ansible/pull/37249)
+
+- Add url to troubleshoot persistent socket path related issues https://github.com/ansible/ansible/pull/38542
 
 - Fix for consul_kv idempotence on Python3 https://github.com/ansible/ansible/issues/35893
 

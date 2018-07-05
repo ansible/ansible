@@ -1,2 +1,2 @@
-- bugfix:
-    - fix doas construction for become https://github.com/ansible/ansible/pull/37511
+bugfixes:
+    - fix doas construction for become (https://github.com/ansible/ansible/pull/37511)

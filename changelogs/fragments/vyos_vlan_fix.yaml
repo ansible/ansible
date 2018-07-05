@@ -1,2 +1,2 @@
-- bugfixes:
+bugfixes:
     - vyos_vlan - fix aggregate configuration issues (https://github.com/ansible/ansible/pull/41638)
