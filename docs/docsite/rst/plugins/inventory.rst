@@ -1,5 +1,6 @@
 .. contents:: Topics
 
+.. _inventory_plugins:
 
 Inventory Plugins
 -----------------
