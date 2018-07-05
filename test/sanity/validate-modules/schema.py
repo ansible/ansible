@@ -50,7 +50,7 @@ option_schema = Schema(
         'default': Any(None, float, int, bool, list, dict, *string_types),
         'suboptions': Any(None, *list_dict_suboption_schema),
         # Note: Types are strings, not literal bools, such as True or False
-        'type': Any(None, "bool")
+        'type': Any(None, 'str', 'list', 'dict', 'bool', 'int', 'float', 'path', 'raw', 'jsonarg', 'json', 'bytes', 'bits')
     },
     extra=PREVENT_EXTRA
 )

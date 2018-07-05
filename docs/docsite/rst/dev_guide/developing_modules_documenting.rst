@@ -239,7 +239,9 @@ The following fields can be used and are all required unless specified otherwise
   :choices:
     List of option values. Should be absent if empty.
   :type:
-    If an argument is ``type='bool'``, this field should be set to ``type: bool`` and no ``choices`` should be specified.
+
+    * Specifies the data type that option accepts, must match the ``argspec``.
+    * If an argument is ``type='bool'``, this field should be set to ``type: bool`` and no ``choices`` should be specified.
   :aliases:
     List of option name aliases; generally not needed.
   :version_added:
