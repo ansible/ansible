@@ -58,6 +58,15 @@
     provider: "{{ nios_provider }}"
   register: ipv4_ptr_delete2
 
+- name: create an ipv6 ptr record
+  nios_ptr_record:
+    ptrdname: ptr6.ansible.com
+    name: ptr6.ansible.com
+    ipv6: "2002:8ac3:802d:1242:20d:60ff:fe38:6d16"
+    state: present
+    provider: "{{ nios_provider }}"
+  register: ipv6_ptr_create1
+
 - assert:
     that:
       - "ipv4_ptr_create1.changed"
@@ -66,3 +75,4 @@
       - "not ipv4_ptr_update2.changed"
       - "ipv4_ptr_delete1.changed"
       - "not ipv4_ptr_delete2.changed"
+      - "ipv6_ptr_create1.changed"
