@@ -48,13 +48,14 @@ DOCUMENTATION = """
           - section: callback_grafana_annotations
             key: grafana_url
       validate_grafana_certs:
-        description: (bool) validate the SSL certificate of the Grafana server. (For HTTPS url)
+        description: validate the SSL certificate of the Grafana server. (For HTTPS url)
         env:
           - name: GRAFANA_VALIDATE_CERT
         ini:
           - section: callback_grafana_annotations
             key: validate_grafana_certs
         default: True
+        type: bool
       http_agent:
         description: The HTTP 'User-agent' value to set in HTTP requets.
         env:
