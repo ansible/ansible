@@ -38,6 +38,7 @@ from ansible.errors import AnsibleOptionsError, AnsibleError
 from ansible.inventory.manager import InventoryManager
 from ansible.module_utils.six import with_metaclass, string_types
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.utils.unsafe_proxy import AnsibleUnsafeText
 from ansible.parsing.dataloader import DataLoader
 from ansible.release import __version__
 from ansible.utils.path import unfrackpath
@@ -329,7 +330,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                 sshpass = getpass.getpass(prompt="SSH password: ")
                 become_prompt = "%s password[defaults to SSH password]: " % become_prompt_method
                 if sshpass:
-                    sshpass = to_bytes(sshpass, errors='strict', nonstring='simplerepr')
+                    sshpass = AnsibleUnsafeText(to_bytes(sshpass, errors='strict', nonstring='simplerepr'))
             else:
                 become_prompt = "%s password: " % become_prompt_method
 
@@ -338,7 +339,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                 if op.ask_pass and becomepass == '':
                     becomepass = sshpass
                 if becomepass:
-                    becomepass = to_bytes(becomepass)
+                    becomepass = AnsibleUnsafeText(to_bytes(becomepass))
         except EOFError:
             pass
 
