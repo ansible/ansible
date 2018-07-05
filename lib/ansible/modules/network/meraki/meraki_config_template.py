@@ -19,12 +19,11 @@ module: meraki_config_template
 short_description: Manage configuration templates in the Meraki cloud
 version_added: "2.7"
 description:
-- Allows for management of SNMP settings for Meraki.
+- Allows for querying, deleting, binding, and unbinding of configuration templates.
 notes:
-- More information about the Meraki API can be found at U(https://dashboard.meraki.com/api_docs).
-- Some of the options are likely only used for developers within Meraki.
 - Module is not idempotent as the Meraki API is limited in what information it provides about configuration templates.
 - Meraki's API does not support creating new configuration templates.
+- To use the configuration template, simply pass its ID via C(net_id) parameters in Meraki modules.
 options:
     state:
         description:
@@ -63,14 +62,50 @@ EXAMPLES = r'''
     org_name: YourOrg
     state: query
   delegate_to: localhost
+
+- name: Bind a template from a network
+  meraki_config_template:
+    auth_key: abc123
+    state: present
+    org_name: YourOrg
+    net_name: YourNet
+    config_template: DevConfigTemplate
+  delegate_to: localhost
+
+- name: Unbind a template from a network
+  meraki_config_template:
+    auth_key: abc123
+    state: absent
+    org_name: YourOrg
+    net_name: YourNet
+    config_template: DevConfigTemplate
+  delegate_to: localhost
+
+- name: Delete a configuration template
+  meraki_config_template:
+    auth_key: abc123
+    state: absent
+    org_name: YourOrg
+    config_template: DevConfigTemplate
+  delegate_to: localhost
 '''
 
 RETURN = r'''
 data:
-    description: Information about queried or updated object.
-    type: list
-    returned: info
-
+    description: Information about queried object.
+    returned: success
+    type: complex
+    contains:
+        id:
+          description: Unique identification number of organization
+          returned: success
+          type: int
+          sample: L_2930418
+        name:
+          description: Name of configuration template
+          returned: success
+          type: string
+          sample: YourTemplate
 '''
 
 import os
