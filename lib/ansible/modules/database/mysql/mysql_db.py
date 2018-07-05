@@ -141,8 +141,8 @@ def db_delete(cursor, db):
     return True
 
 
-def db_dump(module, host, user, password, db_name, target, all_databases, port, config_file, no_data=None, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None,
-            single_transaction=None, quick=None, ignore_tables=None):
+def db_dump(module, host, user, password, db_name, target, all_databases, port, config_file, no_data=None, socket=None,
+            ssl_cert=None, ssl_key=None, ssl_ca=None, single_transaction=None, quick=None, ignore_tables=None):
     cmd = module.get_bin_path('mysqldump', True)
     # If defined, mysqldump demands --defaults-extra-file be the first option
     if config_file:
