@@ -219,7 +219,7 @@ class Cliconf(CliconfBase):
 
     def get_capabilities(self):
         result = dict()
-        result['rpc'] = self.get_base_rpc() + ['edit_banner', 'get_diff', 'run_commands']
+        result['rpc'] = self.get_base_rpc() + ['edit_banner', 'get_diff', 'run_commands', 'get_defaults_flag']
         result['network_api'] = 'cliconf'
         result['device_info'] = self.get_device_info()
         result['device_operations'] = self.get_device_operations()
@@ -278,6 +278,25 @@ class Cliconf(CliconfBase):
             responses.append(out)
 
         return responses
+
+    def get_defaults_flag(self):
+        """
+        The method identifies the filter that should be used to fetch running-configuration
+        with defaults.
+        :return: valid default filter
+        """
+        out = self.get('show running-config ?')
+        out = to_text(out, errors='surrogate_then_replace')
+
+        commands = set()
+        for line in out.splitlines():
+            if line.strip():
+                commands.add(line.strip().split()[0])
+
+        if 'all' in commands:
+            return 'all'
+        else:
+            return 'full'
 
     def _extract_banners(self, config):
         banners = {}
