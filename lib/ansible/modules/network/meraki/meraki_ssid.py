@@ -85,6 +85,16 @@ options:
     radius_servers:
         description:
         - List of RADIUS servers.
+        suboptions:
+            host:
+                description:
+                - IP addres or hostname of RADIUS server.
+            port:
+                description:
+                - Port number RADIUS server is listening to.
+            secret:
+                description:
+                - RADIUS password.
     radius_coa_enabled:
         description:
         - Enable or disable RADIUS CoA (Change of Authorization) on SSID.
@@ -104,6 +114,16 @@ options:
     radius_accounting_servers:
         description:
         - List of RADIUS servers for RADIUS accounting.
+        suboptions:
+            host:
+                description:
+                - IP addres or hostname of RADIUS server.
+            port:
+                description:
+                - Port number RADIUS server is listening to.
+            secret:
+                description:
+                - RADIUS password.
     ip_assignment_mode:
         description:
         - Method of which SSID uses to assign IP addresses.
@@ -125,6 +145,13 @@ options:
     ap_tags_vlan_ids:
         description:
         - List of VLAN tags.
+        suboptions:
+            tags:
+                description:
+                - List of AP tags.
+            vlan_id:
+                description:
+                - Numerical identifier that is assigned to the VLAN.
     walled_garden_enabled:
         description:
         - Enable or disable walled garden functionality.
