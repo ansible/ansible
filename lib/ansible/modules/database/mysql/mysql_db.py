@@ -141,7 +141,11 @@ def db_delete(cursor, db):
     return True
 
 
+<<<<<<< HEAD
 def db_dump(module, host, user, password, db_name, target, all_databases, no_data, port, config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None,
+=======
+def db_dump(module, host, user, password, db_name, target, all_databases, port, config_file, no_data=None, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None,
+>>>>>>> pushed fixes for no-data fr
             single_transaction=None, quick=None, ignore_tables=None):
     cmd = module.get_bin_path('mysqldump', True)
     # If defined, mysqldump demands --defaults-extra-file be the first option
@@ -168,7 +172,11 @@ def db_dump(module, host, user, password, db_name, target, all_databases, no_dat
     if single_transaction:
         cmd += " --single-transaction=true"
     if no_data:
+<<<<<<< HEAD
         cmd += " --no-data=true"
+=======
+        cmd += " --no-data=true"      
+>>>>>>> pushed fixes for no-data fr
     if quick:
         cmd += " --quick"
     if ignore_tables:
