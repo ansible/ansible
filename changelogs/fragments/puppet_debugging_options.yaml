@@ -1,3 +1,4 @@
+---
 features:
-- Add support for --debug, --verbose, --summarize
-- Add support for setting logdest to both stdout and syslog via 'all'
+  - Add support for --debug, --verbose, --summarize
+  - Add support for setting logdest to both stdout and syslog via 'all'
