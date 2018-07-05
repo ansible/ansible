@@ -83,32 +83,32 @@ options:
 EXAMPLES = '''
 - name: Create a PTR Record
   nios_ptr_record:
-    ipv4: "{{ ipv4 }}"
-    ptrdname: "{{ ptrdname }}"
+    ipv4: 192.168.10.1
+    ptrdname: host.ansible.com
     state: present
     provider:
-      host: "{{ nios.host }}"
-      username: "{{ nios.login }}"
-      password: "{{ nios.password }}"
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
   connection: local
 
 - name: Delete a PTR Record
   nios_ptr_record:
-    ipv4: "{{ ipv4 }}"
-    ptrdname: "{{ ptrdname }}"
+    ipv4: 192.168.10.1
+    ptrdname: host.ansible.com
     state: absent
     provider:
-      host: "{{ nios.host }}"
-      username: "{{ nios.login }}"
-      password: "{{ nios.password }}"
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
   connection: local
-
 '''
 
 RETURN = ''' # '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.net_tools.nios.api import WapiModule
+from ansible.module_utils.net_tools.nios.api import NIOS_PTR_RECORD
 
 
 def main():
@@ -150,7 +150,7 @@ def main():
         del ib_spec['ipv4addr']
 
     wapi = WapiModule(module)
-    result = wapi.run('record:ptr', ib_spec)
+    result = wapi.run(NIOS_PTR_RECORD, ib_spec)
 
     module.exit_json(**result)
 
