@@ -177,7 +177,7 @@ data:
             returned: always
             type: string
         syslog_enabled:
-            description: 
+            description: Whether to log to syslog when rule is matched.
             returned: always
             type: bool
             sample: true
