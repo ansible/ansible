@@ -37,7 +37,7 @@ extends_documentation_fragment:
     - aws
     - ec2
 
-author: "Akane Morikawa (@cahlchang)"
+author: "Nao Morikawa (@cahlchang)"
 '''
 
 EXAMPLES = '''
