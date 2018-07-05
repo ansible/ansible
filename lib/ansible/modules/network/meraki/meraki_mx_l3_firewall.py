@@ -86,6 +86,53 @@ extends_documentation_fragment: meraki
 '''
 
 EXAMPLES = r'''
+- name: Query firewall rules
+  meraki_mx_l3_firewall:
+    auth_key: abc123
+    org_name: YourOrg
+    net_name: YourNet
+    state: query
+  delegate_to: localhost
+
+- name: Set two firewall rules
+  meraki_mx_l3_firewall:
+    auth_key: abc123
+    org_name: YourOrg
+    net_name: YourNet
+    state: present
+    rules:
+      - comment: Block traffic to server
+        src_cidr: 192.0.1.0/24
+        src_port: any
+        dest_cidr: 192.0.2.2/32
+        src_port: any
+        protocol: any
+        policy: deny
+      - comment: Allow traffic to group of servers
+        src_cidr: 192.0.1.0/24
+        src_port: any
+        dest_cidr: 192.0.2.0/24
+        src_port: any
+        protocol: any
+        policy: permit
+  delegate_to: localhost
+
+- name: Set one firewall rule and enable logging of the default rule
+  meraki_mx_l3_firewall:
+    auth_key: abc123
+    org_name: YourOrg
+    net_name: YourNet
+    state: present
+    rules:
+      - comment: Block traffic to server
+        src_cidr: 192.0.1.0/24
+        src_port: any
+        dest_cidr: 192.0.2.2/32
+        src_port: any
+        protocol: any
+        policy: deny
+    syslog_default_rule: yes
+  delegate_to: localhost
 '''
 
 RETURN = r'''
