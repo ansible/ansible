@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - To fix the NoneType error raised in ios_l2_interface when Access Mode VLAN is unassigned 
+    (https://github.com/ansible/ansible/pull/42312)
