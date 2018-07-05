@@ -49,7 +49,7 @@ DOCUMENTATION = '''
         default: False
 '''
 
-EXAMPLES='''
+EXAMPLES = '''
 # my.foreman.yml
 plugin: foreman
 url: http://localhost:2222
