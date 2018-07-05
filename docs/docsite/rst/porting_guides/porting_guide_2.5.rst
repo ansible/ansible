@@ -184,6 +184,10 @@ and ``checksum_algorithm: md5`` can still be used if an MD5 checksum is
 desired.
 
 * ``osx_say`` module was renamed into :ref:`say <say_module>`.
+* The ``lineinfile`` module was changed in 2.5.6 to show a warning when using an empty string as a regexp.
+  Since an empty regexp matches every line in a file, it will replace the last line in a file rather
+  than inserting. If this is the desired behavior, use ``'^'`` which will match every line and
+  will not trigger the warning.
 * Several modules which could deal with symlinks had the default value of their ``follow`` option
   changed as part of a feature to `standardize the behavior of follow
   <https://github.com/ansible/proposals/issues/69>`_:
