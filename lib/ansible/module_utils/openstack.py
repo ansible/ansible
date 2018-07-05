@@ -74,7 +74,7 @@ def openstack_find_nova_addresses(addresses, ext_tag, key_name=None):
     return ret
 
 
-def openstack_full_argument_spec(**kwargs):
+def openstack_full_argument_spec(service_type=None, **kwargs):
     spec = dict(
         cloud=dict(default=None, type='raw'),
         auth_type=dict(default=None),
@@ -92,6 +92,9 @@ def openstack_full_argument_spec(**kwargs):
             default='public', choices=['public', 'internal', 'admin'],
             aliases=['endpoint_type']),
     )
+    if service_type:
+        key = '{service_type}_endpoint_override'
+        spec[key] = dict(default=None)
     spec.update(kwargs)
     return spec
 

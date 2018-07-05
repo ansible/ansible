@@ -47,6 +47,12 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
+   identity_endpoint_override:
+     description:
+       - Endpoint to use to talk to the keystone service, bypassing the
+         catalog. Useful for bootstrapping a keystone installation.
+     required: false
+     version_added: "2.7"
 requirements:
     - "python >= 2.7"
     - "openstacksdk"
@@ -129,6 +135,7 @@ def _system_state_change(module, service):
 
 def main():
     argument_spec = openstack_full_argument_spec(
+        service_type='identity',
         description=dict(default=None),
         enabled=dict(default=True, type='bool'),
         name=dict(required=True),

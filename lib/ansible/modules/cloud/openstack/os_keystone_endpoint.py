@@ -50,6 +50,12 @@ options:
        - Should the resource be C(present) or C(absent).
      choices: [present, absent]
      default: present
+   identity_endpoint_override:
+     description:
+       - Endpoint to use to talk to the keystone service, bypassing the
+         catalog. Useful for bootstrapping a keystone installation.
+     required: false
+     version_added: "2.7"
 requirements:
     - openstacksdk >= 0.13.0
 '''
@@ -132,6 +138,7 @@ def _system_state_change(module, endpoint):
 
 def main():
     argument_spec = openstack_full_argument_spec(
+        service_type='identity',
         service=dict(type='str', required=True),
         endpoint_interface=dict(type='str', required=True, choices=['admin', 'public', 'internal']),
         url=dict(type='str', required=True),
