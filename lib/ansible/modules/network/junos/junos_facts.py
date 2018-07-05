@@ -42,7 +42,7 @@ options:
         junos-eznc library to be installed on control node and the device login credentials
         must be given in C(provider) option.
     required: false
-    default: [!config, !ofacts]
+    default: ['!config', '!ofacts']
     version_added: "2.3"
   config_format:
     description:
@@ -53,8 +53,8 @@ options:
          device. This value is not applicable while fetching old style facts that is
          when value of I(gather_subset) C(all) or C(ofacts) is present in the value.
     required: false
-    default: text
-    choices: ['xml', 'set', 'text', 'json']
+    default: 'text'
+    choices: ['xml', 'text', 'set', 'json']
     version_added: "2.3"
 requirements:
   - ncclient (>=v0.5.2)
