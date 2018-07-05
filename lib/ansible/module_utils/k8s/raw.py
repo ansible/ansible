@@ -19,6 +19,7 @@
 from __future__ import absolute_import, division, print_function
 
 
+from ansible.module_utils.six import string_types
 from ansible.module_utils.k8s.common import KubernetesAnsibleModule
 
 
@@ -50,7 +51,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         namespace = self.params.pop('namespace')
         resource_definition = self.params.pop('resource_definition')
         if resource_definition:
-            if isinstance(resource_definition, str):
+            if isinstance(resource_definition, string_types):
                 try:
                     self.resource_definitions = yaml.safe_load_all(resource_definition)
                 except (IOError, yaml.YAMLError) as exc:
