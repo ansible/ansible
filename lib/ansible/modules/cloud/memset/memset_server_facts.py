@@ -98,6 +98,7 @@ memset_api:
             "source_ports": "any"
           }
         }
+      }
     firewall_type:
       description: The type of firewall the server has (i.e. self-managed, managed).
       returned: always
