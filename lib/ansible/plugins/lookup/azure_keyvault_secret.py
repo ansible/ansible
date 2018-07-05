@@ -16,7 +16,7 @@ DOCUMENTATION = """
       - This lookup returns the content of a secret kept in azure key vault.
     options:
         _terms:
-            description: secret name of the secret to retrieve, version can be included like this: secret_name/secret_version.
+            description: secret name of the secret to retrieve, version can be included like secret_name/secret_version.
             required: True
         vault_url:
             description: url of azure key vault to be retrieved from
@@ -29,7 +29,7 @@ DOCUMENTATION = """
             description: tenant_id of service principal provided above
     notes:
         - If version is not provided, Key Vault will give the latest version.
-        - If ansible is running on Azure Virtual Machine with MSI enabled, client_id, secret and tenant isn't necessary. 
+        - If ansible is running on Azure Virtual Machine with MSI enabled, client_id, secret and tenant isn't necessary.
         - For how to enable MSI on Azure VM, please refer to this doc https://docs.microsoft.com/en-us/azure/active-directory/managed-service-identity/
         - If MSI is not available on the machine, then you have to provide a valid service principal that has access to the key vault.
 """
