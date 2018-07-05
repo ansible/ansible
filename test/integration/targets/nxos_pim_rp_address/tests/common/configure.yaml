@@ -11,11 +11,13 @@
   - name: "Disable feature PIM"
     nxos_feature: &disable_feature
       feature: pim
+      provider: "{{ connection }}"
       state: disabled
 
   - name: "Enable feature PIM"
     nxos_feature: &enable_feature
       feature: pim
+      provider: "{{ connection }}"
       state: enabled
 
   - name: Configure rp_address + group_list 
@@ -23,6 +25,7 @@
       rp_address: "10.1.1.20"
       group_list: "224.0.0.0/8"
       bidir: "{{ bidir }}"
+      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -43,6 +46,7 @@
       rp_address: "10.1.1.20"
       group_list: "224.0.0.0/8"
       bidir: False
+      provider: "{{ connection }}"
       state: present
     register: result
     when: platform is not match("N3L")
@@ -62,6 +66,7 @@
     nxos_pim_rp_address: &configbi
       rp_address: "10.1.1.20"
       bidir: "{{ bidir }}"
+      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -77,6 +82,7 @@
     nxos_pim_rp_address: &confignbi
       rp_address: "10.1.1.20"
       bidir: False
+      provider: "{{ connection }}"
       state: present
     register: result
     when: platform is not match("N3L")
@@ -96,6 +102,7 @@
     nxos_pim_rp_address: &configglr
       rp_address: "10.1.1.20"
       group_list: "224.0.0.0/8"
+      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -110,6 +117,7 @@
   - name: Remove rp_address
     nxos_pim_rp_address: &configbir
       rp_address: "10.1.1.20"
+      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -126,6 +134,7 @@
       rp_address: "10.1.1.20"
       prefix_list: "pim_prefix_list"
       bidir: "{{ bidir }}"
+      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -142,6 +151,7 @@
       rp_address: "10.1.1.20"
       prefix_list: "pim_prefix_list"
       bidir: False
+      provider: "{{ connection }}"
       state: present
     register: result
     when: platform is not match("N3L")
@@ -162,6 +172,7 @@
       rp_address: "10.1.1.20"
       prefix_list: "pim_prefix_list"
       bidir: False
+      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -178,6 +189,7 @@
       rp_address: "10.1.1.20"
       route_map: "pim_routemap"
       bidir: "{{ bidir }}"
+      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -194,6 +206,7 @@
       rp_address: "10.1.1.20"
       route_map: "pim_routemap"
       bidir: False
+      provider: "{{ connection }}"
       state: present
     register: result
     when: platform is not match("N3L")
@@ -214,6 +227,7 @@
       rp_address: "10.1.1.20"
       route_map: "pim_routemap"
       bidir: False
+      provider: "{{ connection }}"
       state: absent
     register: result
 

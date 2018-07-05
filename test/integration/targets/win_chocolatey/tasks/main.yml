@@ -26,6 +26,7 @@
   assert:
     that:
     - 'install.changed == true'
+    - install.rc == 0
 
 - name: install chocolatey-core.extension again
   win_chocolatey:
@@ -37,6 +38,7 @@
   assert:
     that:
     - 'install_again.changed == false'
+    - install.rc == 0
 
 - name: remove chocolatey-core.extension
   win_chocolatey:
@@ -48,6 +50,7 @@
   assert:
     that:
     - 'remove.changed == true'
+    - install.rc == 0
 
 - name: remove chocolatey-core.extension again
   win_chocolatey:
@@ -59,3 +62,4 @@
   assert:
     that:
     - 'remove_again.changed == false'
+    - install.rc == 0

@@ -7,6 +7,7 @@
   nxos_logging: &clog
     dest: console
     dest_level: 0
+    provider: "{{ connection }}"
     state: present
   register: result
 
@@ -28,6 +29,7 @@
     dest: logfile
     name: test
     dest_level: 1
+    provider: "{{ connection }}"
     state: present
   register: result
 
@@ -46,6 +48,7 @@
   nxos_logging: &molog
     dest: module
     dest_level: 2
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -63,6 +66,7 @@
   nxos_logging: &mlog
     dest: monitor
     dest_level: 3
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -80,6 +84,7 @@
   nxos_logging: &flog
     facility: daemon
     facility_level: 4
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -100,6 +105,7 @@
     facility: auth
     dest_level: 1
     state: present
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -122,6 +128,7 @@
       - { dest: logfile, dest_level: 1, name: test }
       - { facility: daemon, facility_level: 4 }
       - { dest: server, remote_server: test-syslogserver.com, facility: auth, dest_level: 1 }
+    provider: "{{ connection }}"
     state: absent
   register: result
 

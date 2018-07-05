@@ -135,6 +135,9 @@ class AnsibleAWSModule(object):
     def warn(self, *args, **kwargs):
         return self._module.warn(*args, **kwargs)
 
+    def md5(self, *args, **kwargs):
+        return self._module.md5(*args, **kwargs)
+
     def client(self, service, retry_decorator=None):
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(self, boto3=True)
         conn = boto3_conn(self, conn_type='client', resource=service,
@@ -251,3 +254,25 @@ class _RetryingBotoClientWrapper(object):
             return wrapped
         else:
             return unwrapped
+
+
+def is_boto3_error_code(code, e=None):
+    """Check if the botocore exception is raised by a specific error code.
+
+    Returns ClientError if the error code matches, a dummy exception if it does not have an error code or does not match
+
+    Example:
+    try:
+        ec2.describe_instances(InstanceIds=['potato'])
+    except is_boto3_error_code('InvalidInstanceID.Malformed'):
+        # handle the error for that code case
+    except botocore.exceptions.ClientError as e:
+        # handle the generic error case for all other codes
+    """
+    from botocore.exceptions import ClientError
+    if e is None:
+        import sys
+        dummy, e, dummy = sys.exc_info()
+    if isinstance(e, ClientError) and e.response['Error']['Code'] == code:
+        return ClientError
+    return type('NeverEverRaisedException', (Exception,), {})

@@ -42,7 +42,7 @@ EXAMPLES = '''
 - group_by:
     key: machine_{{ ansible_machine }}
 
-# Create groups like 'kvm-host'
+# Create groups like 'virt_kvm_host'
 - group_by:
     key: virt_{{ ansible_virtualization_type }}_{{ ansible_virtualization_role }}
 

@@ -24,7 +24,7 @@ Azure External Inventory Script
 ===============================
 Generates dynamic inventory by making API requests to the Azure Resource
 Manager using the Azure Python SDK. For instruction on installing the
-Azure Python SDK see http://azure-sdk-for-python.readthedocs.org/
+Azure Python SDK see https://azure-sdk-for-python.readthedocs.io/
 
 Authentication
 --------------
@@ -425,6 +425,7 @@ class AzureRM(object):
 
     def _get_msi_credentials(self, subscription_id_param=None):
         credentials = MSIAuthentication()
+        subscription_id_param = subscription_id_param or os.environ.get(AZURE_CREDENTIAL_ENV_MAPPING['subscription_id'], None)
         try:
             # try to get the subscription in MSI to test whether MSI is enabled
             subscription_client = SubscriptionClient(credentials)

@@ -14,7 +14,7 @@ DOCUMENTATION = """
     notes:
       - this is the standard lookup used for loops in most examples
       - check out the 'flattened' lookup for recursive flattening
-      - if you dont want flattening nor any other tranformation look at the 'list' lookup.
+      - if you do not want flattening nor any other transformation look at the 'list' lookup.
     options:
       _terms:
         description: list of items

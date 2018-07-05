@@ -18,8 +18,15 @@ source "${MYTMPDIR}/botocore-1.7.40/bin/activate"
 $PYTHON -m pip install 'botocore<=1.7.40' boto3
 ansible-playbook -i ../../inventory -e @../../integration_config.yml -e @../../cloud-config-aws.yml -v playbooks/network_fail.yml "$@"
 
+# Test graceful failure for assign public ip
+# applies for botocore >= 1.7.44 and < 1.8.4
+virtualenv --system-site-packages --python "${PYTHON}" "${MYTMPDIR}/botocore-1.7.44"
+source "${MYTMPDIR}/botocore-1.7.44/bin/activate"
+$PYTHON -m pip install 'botocore>=1.7.44,<1.8.4' boto3
+ansible-playbook -i ../../inventory -e @../../integration_config.yml -e @../../cloud-config-aws.yml -v playbooks/network_assign_public_ip_fail.yml "$@"
+
 # Run full test suite
 virtualenv --system-site-packages --python "${PYTHON}" "${MYTMPDIR}/botocore-recent"
 source "${MYTMPDIR}/botocore-recent/bin/activate"
-$PYTHON -m pip install 'botocore>=1.8.0' boto3
+$PYTHON -m pip install 'botocore>=1.8.4' boto3
 ansible-playbook -i ../../inventory -e @../../integration_config.yml -e @../../cloud-config-aws.yml -v playbooks/full_test.yml "$@"

@@ -118,7 +118,7 @@ class DocCLI(CLI):
         if self.options.list_files:
             paths = loader._get_paths()
             for path in paths:
-                self.plugin_list = self.find_plugins(path, plugin_type)
+                self.plugin_list.update(self.find_plugins(path, plugin_type))
 
             list_text = self.get_plugin_list_filenames(loader)
             self.pager(list_text)
@@ -128,7 +128,7 @@ class DocCLI(CLI):
         if self.options.list_dir:
             paths = loader._get_paths()
             for path in paths:
-                self.plugin_list = self.find_plugins(path, plugin_type)
+                self.plugin_list.update(self.find_plugins(path, plugin_type))
 
             self.pager(self.get_plugin_list_text(loader))
             return 0
@@ -537,6 +537,8 @@ class DocCLI(CLI):
         if 'deprecated' in doc and doc['deprecated'] is not None and len(doc['deprecated']) > 0:
             text.append("DEPRECATED: \n")
             if isinstance(doc['deprecated'], dict):
+                if 'version' in doc['deprecated'] and 'removed_in' not in doc['deprecated']:
+                    doc['deprecated']['removed_in'] = doc['deprecated']['version']
                 text.append("\tReason: %(why)s\n\tWill be removed in: Ansible %(removed_in)s\n\tAlternatives: %(alternative)s" % doc.pop('deprecated'))
             else:
                 text.append("%s" % doc.pop('deprecated'))

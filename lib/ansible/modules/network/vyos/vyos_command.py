@@ -168,7 +168,7 @@ def parse_commands(module, warnings):
             warnings.append('only show commands are supported when using '
                             'check mode, not executing `%s`' % item['command'])
         else:
-            items.append(module.jsonify(item))
+            items.append(item)
 
     return items
 
@@ -220,7 +220,7 @@ def main():
     if conditionals:
         failed_conditions = [item.raw for item in conditionals]
         msg = 'One or more conditional statements have not been satisfied'
-        module.fail_json(msg=msg, falied_conditions=failed_conditions)
+        module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
     result = {
         'changed': False,

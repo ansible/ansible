@@ -4,6 +4,7 @@
     nxos_user:
       name: auth_user
       role: network-operator
+      provider: "{{ connection }}"
       state: present
       configured_password: pass123
 
@@ -30,5 +31,6 @@
   - name: delete user
     nxos_user:
       name: auth_user
+      provider: "{{ connection }}"
       state: absent
     register: result

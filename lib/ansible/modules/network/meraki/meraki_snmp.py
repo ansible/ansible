@@ -20,9 +20,6 @@ short_description: Manage organizations in the Meraki cloud
 version_added: "2.6"
 description:
 - Allows for management of SNMP settings for Meraki.
-notes:
-- More information about the Meraki API can be found at U(https://dashboard.meraki.com/api_docs).
-- Some of the options are likely only used for developers within Meraki.
 options:
     state:
         description:
@@ -68,6 +65,35 @@ EXAMPLES = r'''
     org_name: YourOrg
     state: query
   delegate_to: localhost
+
+- name: Enable SNMPv2
+  meraki_snmp:
+    auth_key: abc12345
+    org_name: YourOrg
+    state: present
+    v2c_enabled: yes
+  delegate_to: localhost
+
+- name: Disable SNMPv2
+  meraki_snmp:
+    auth_key: abc12345
+    org_name: YourOrg
+    state: present
+    v2c_enabled: no
+  delegate_to: localhost
+
+- name: Enable SNMPv3
+  meraki_snmp:
+    auth_key: abc12345
+    org_name: YourOrg
+    state: present
+    v3_enabled: true
+    v3_auth_mode: SHA
+    v3_auth_pass: ansiblepass
+    v3_priv_mode: AES128
+    v3_priv_pass: ansiblepass
+    peer_ips: 192.0.1.1;192.0.1.2
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -99,7 +125,8 @@ def get_snmp(meraki, org_id):
     r = meraki.request(path,
                        method='GET',
                        )
-    return r
+    if meraki.status == 200:
+        return r
 
 
 def set_snmp(meraki, org_id):
@@ -143,8 +170,9 @@ def set_snmp(meraki, org_id):
         r = meraki.request(path,
                            method='PUT',
                            payload=json.dumps(payload))
-        meraki.result['changed'] = True
-        return r
+        if meraki.status == 200:
+            meraki.result['changed'] = True
+            return r
     return -1
 
 
@@ -205,8 +233,11 @@ def main():
 
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
-    org_id = meraki.params['org_id']
 
+    if not meraki.params['org_name'] and not meraki.params['org_id']:
+        meraki.fail_json(msg='org_name or org_id is required')
+
+    org_id = meraki.params['org_id']
     if org_id is None:
         org_id = meraki.get_org_id(meraki.params['org_name'])
 

@@ -12,6 +12,7 @@
       pref: 100
       tag: 5500
       vrf: "{{ item }}"
+      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -36,6 +37,7 @@
       pref: 10
       tag: default
       vrf: "{{ item }}"
+      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -55,6 +57,7 @@
       route_name: testing
       pref: 100
       vrf: "{{ item }}"
+      provider: "{{ connection }}"
       state: absent
     with_items: "{{ vrfs }}"
     register: result
@@ -73,6 +76,7 @@
       aggregate:
         - { prefix: "192.168.22.64/24", next_hop: "192.0.2.3" }
         - { prefix: "192.168.24.64/24", next_hop: "192.0.2.3" }
+      provider: "{{ connection }}"
     register: result
 
   - assert:
@@ -92,6 +96,7 @@
       aggregate:
         - { prefix: "192.168.22.64/24", next_hop: "192.0.2.3" }
         - { prefix: "192.168.24.64/24", next_hop: "192.0.2.3" }
+      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -116,6 +121,7 @@
       pref: 100
       tag: 5500
       vrf: "{{ item }}"
+      provider: "{{ connection }}"
       state: absent
     with_items: "{{ vrfs }}"
     ignore_errors: yes
@@ -125,6 +131,7 @@
       aggregate:
         - { prefix: "192.168.22.64/24", next_hop: "192.0.2.3" }
         - { prefix: "192.168.24.64/24", next_hop: "192.0.2.3" }
+      provider: "{{ connection }}"
       state: absent
     ignore_errors: yes
 

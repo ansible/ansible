@@ -248,8 +248,8 @@ if not HAS_MATCH_HOSTNAME:
     HAS_MATCH_HOSTNAME = True
 
 
-# This is a dummy cacert provided for Mac OS since you need at least 1
-# ca cert, regardless of validity, for Python on Mac OS to use the
+# This is a dummy cacert provided for macOS since you need at least 1
+# ca cert, regardless of validity, for Python on macOS to use the
 # keychain functionality in OpenSSL for validating SSL certificates.
 # See: http://mercurial.selenic.com/wiki/CACertificates#Mac_OS_X_10.6_and_higher
 b_DUMMY_CA_CERT = b"""-----BEGIN CERTIFICATE-----
@@ -625,7 +625,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         to_add_fd, to_add_path = tempfile.mkstemp()
         to_add = False
 
-        # Write the dummy ca cert if we are running on Mac OS X
+        # Write the dummy ca cert if we are running on macOS
         if system == u'Darwin':
             os.write(tmp_fd, b_DUMMY_CA_CERT)
             # Default Homebrew path for OpenSSL certs

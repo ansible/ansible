@@ -31,15 +31,16 @@ class AnsibleVersionMunger(object):
 
         match = self._parsed_regex_match
 
-        if v.is_prerelease:
+        # treat dev as prerelease for now
+        if v.is_prerelease or match.group('dev'):
             if match.group('pre'):
                 tag_value = match.group('pre')
                 tag_type = match.group('pre_l')
-                tag_ver = match.group('pre_n')
+                if match.group('dev'):
+                    tag_value += ('~%s' % match.group('dev').strip('.'))
             elif match.group('dev'):
                 tag_type = "dev"
-                tag_value = match.group('dev')
-                tag_ver = match.group('dev_n')
+                tag_value = match.group('dev').strip('.')
             else:
                 raise Exception("unknown prerelease type for version {0}".format(self._raw_version))
 
@@ -48,7 +49,6 @@ class AnsibleVersionMunger(object):
         else:
             tag_type = None
             tag_value = ''
-            tag_ver = 0
 
         # not a pre/post/dev release, just return base version
         if not tag_type:
@@ -66,11 +66,14 @@ class AnsibleVersionMunger(object):
         v = self._parsed_version
         match = self._parsed_regex_match
 
-        if v.is_prerelease:
+        # treat presence of dev as prerelease for now
+        if v.is_prerelease or match.group('dev'):
             if match.group('pre'):
                 tag_value = match.group('pre')
                 tag_type = match.group('pre_l')
                 tag_ver = match.group('pre_n')
+                if match.group('dev'):
+                    tag_value += match.group('dev')
             elif match.group('dev'):
                 tag_type = "dev"
                 tag_value = match.group('dev')

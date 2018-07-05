@@ -6,6 +6,7 @@
 - name: "nxos_facts gather hardware facts"
   nxos_facts:
     gather_subset: hardware
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -30,6 +31,7 @@
 - name: "nxos_facts gather config facts"
   nxos_facts:
     gather_subset: config
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -52,6 +54,7 @@
     gather_subset:
       - hardware
       - config
+    provider: "{{ connection }}"
   register: result
 
 - assert:

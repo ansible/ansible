@@ -1,0 +1,4 @@
+---
+minor_changes:
+  - elasticsearch_plugin - Add the possibility to use the elasticsearch_plugin installation batch mode
+    to install plugins with advanced privileges without user interaction.

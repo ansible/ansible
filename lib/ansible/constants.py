@@ -17,6 +17,16 @@ from ansible.module_utils.six import string_types
 from ansible.config.manager import ConfigManager, ensure_type, get_ini_config_value
 
 
+def _warning(msg):
+    ''' display is not guaranteed here, nor it being the full class, but try anyways, fallback to sys.stderr.write '''
+    try:
+        from __main__ import display
+        display.warning(msg)
+    except:
+        import sys
+        sys.stderr.write(' [WARNING] %s\n' % (msg))
+
+
 def _deprecated(msg, version='2.8'):
     ''' display is not guaranteed here, nor it being the full class, but try anyways, fallback to sys.stderr.write '''
     try:
@@ -24,7 +34,7 @@ def _deprecated(msg, version='2.8'):
         display.deprecated(msg, version=version)
     except:
         import sys
-        sys.stderr.write('[DEPRECATED] %s, to be removed in %s' % (msg, version))
+        sys.stderr.write(' [DEPRECATED] %s, to be removed in %s\n' % (msg, version))
 
 
 def mk_boolean(value):
@@ -94,7 +104,7 @@ DEFAULT_REMOTE_PASS = None
 DEFAULT_SUBSET = None
 DEFAULT_SU_PASS = None
 # FIXME: expand to other plugins, but never doc fragments
-CONFIGURABLE_PLUGINS = ('cache', 'callback', 'connection', 'inventory', 'lookup', 'shell')
+CONFIGURABLE_PLUGINS = ('cache', 'callback', 'connection', 'inventory', 'lookup', 'shell', 'cliconf')
 # NOTE: always update the docs/docsite/Makefile to match
 DOCUMENTABLE_PLUGINS = CONFIGURABLE_PLUGINS + ('module', 'strategy', 'vars')
 IGNORE_FILES = ("COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUIDELINES")  # ignore during module search
@@ -189,3 +199,6 @@ for setting in config.data.get_settings():
         value = ensure_type(value, setting.type)
 
     set_constant(setting.name, value)
+
+for warn in config.WARNINGS:
+    _warning(warn)

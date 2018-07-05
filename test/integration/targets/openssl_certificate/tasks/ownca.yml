@@ -1,0 +1,116 @@
+- name: Generate CA privatekey
+  openssl_privatekey:
+    path: '{{ output_dir }}/ca_privatekey.pem'
+
+- name: Generate CA CSR
+  openssl_csr:
+    path: '{{ output_dir }}/ca_csr.csr'
+    privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
+    subject:
+      commonName: Example CA
+
+- name: Generate selfsigned CA certificate
+  openssl_certificate:
+    path: '{{ output_dir }}/ca_cert.pem'
+    csr_path: '{{ output_dir }}/ca_csr.csr'
+    privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
+    provider: selfsigned
+    selfsigned_digest: sha256
+
+- name: Generate ownca certificate
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert.pem'
+    csr_path: '{{ output_dir }}/csr.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
+    provider: ownca
+    ownca_digest: sha256
+  register: ownca_certificate
+
+- name: Generate ownca certificate
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert.pem'
+    csr_path: '{{ output_dir }}/csr.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
+    provider: ownca
+    ownca_digest: sha256
+  register: ownca_certificate_idempotence
+
+- name: Generate ownca certificate (check mode)
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert.pem'
+    csr_path: '{{ output_dir }}/csr.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
+    provider: ownca
+    ownca_digest: sha256
+  check_mode: yes
+
+- name: Check ownca certificate
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert.pem'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    provider: assertonly
+    has_expired: False
+    version: 3
+    signature_algorithms:
+      - sha256WithRSAEncryption
+      - sha256WithECDSAEncryption
+    subject:
+      commonName: www.example.com
+    issuer:
+      commonName: Example CA
+
+- name: Generate ownca v2 certificate
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert_v2.pem'
+    csr_path: '{{ output_dir }}/csr.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
+    provider: ownca
+    ownca_digest: sha256
+    ownca_version: 2
+
+- name: Generate ownca certificate2
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert2.pem'
+    csr_path: '{{ output_dir }}/csr2.csr'
+    privatekey_path: '{{ output_dir }}/privatekey2.pem'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
+    provider: ownca
+    ownca_digest: sha256
+
+- name: Check ownca certificate2
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert2.pem'
+    privatekey_path: '{{ output_dir }}/privatekey2.pem'
+    provider: assertonly
+    has_expired: False
+    version: 3
+    signature_algorithms:
+      - sha256WithRSAEncryption
+      - sha256WithECDSAEncryption
+    subject:
+      commonName: www.example.com
+      C: US
+      ST: California
+      L: Los Angeles
+      O: ACME Inc.
+      OU:
+        - Roadrunner pest control
+        - Pyrotechnics
+    keyUsage:
+      - digitalSignature
+    extendedKeyUsage:
+      - ipsecUser
+      - biometricInfo
+    issuer:
+      commonName: Example CA
+
+- import_tasks: ../tests/validate_ownca.yml

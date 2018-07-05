@@ -166,7 +166,7 @@ def create_or_update_user(connection, module):
             module.exit_json(changed=True)
 
         try:
-            user = connection.create_user(**params)
+            connection.create_user(**params)
             changed = True
         except ClientError as e:
             module.fail_json(msg="Unable to create user: {0}".format(to_native(e)), exception=traceback.format_exc(),

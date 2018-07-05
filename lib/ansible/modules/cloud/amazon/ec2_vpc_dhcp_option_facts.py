@@ -108,10 +108,8 @@ def list_dhcp_options(client, module):
         module.fail_json(msg=str(e), exception=traceback.format_exc(),
                          **camel_dict_to_snake_dict(e.response))
 
-    results = [camel_dict_to_snake_dict(get_dhcp_options_info(option))
-               for option in all_dhcp_options['DhcpOptions']]
-
-    module.exit_json(dhcp_options=results)
+    return [camel_dict_to_snake_dict(get_dhcp_options_info(option))
+            for option in all_dhcp_options['DhcpOptions']]
 
 
 def main():
@@ -144,7 +142,7 @@ def main():
     # call your function here
     results = list_dhcp_options(connection, module)
 
-    module.exit_json(result=results)
+    module.exit_json(dhcp_options=results)
 
 
 if __name__ == '__main__':

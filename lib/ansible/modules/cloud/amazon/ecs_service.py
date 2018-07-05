@@ -27,7 +27,7 @@ description:
   - Creates or terminates ecs services.
 notes:
   - the service role specified must be assumable (i.e. have a trust relationship for the ecs service, ecs.amazonaws.com)
-  - for details of the parameters and returns see U(http://boto3.readthedocs.org/en/latest/reference/services/ecs.html)
+  - for details of the parameters and returns see U(https://boto3.readthedocs.io/en/latest/reference/services/ecs.html)
   - An IAM role must have been previously created
 version_added: "2.1"
 author:
@@ -100,9 +100,21 @@ options:
     network_configuration:
         description:
           - network configuration of the service. Only applicable for task definitions created with C(awsvpc) I(network_mode).
-          - I(network_configuration) has two keys, I(subnets), a list of subnet IDs to which the task is attached and I(security_groups),
-            a list of group names or group IDs for the task
-        version_added: 2.6
+          - assign_public_ip requires botocore >= 1.8.4
+        suboptions:
+          subnets:
+            description:
+              - A list of subnet IDs to associate with the task
+            version_added: 2.6
+          security_groups:
+            description:
+              - A list of security group names or group IDs to associate with the task
+            version_added: 2.6
+          assign_public_ip:
+            description:
+              - Whether the task's elastic network interface receives a public IP address. This option requires botocore >= 1.8.4.
+            type: bool
+            version_added: 2.7
     launch_type:
         description:
           - The launch type on which to run your service
@@ -311,11 +323,11 @@ class EcsServiceManager:
 
     def format_network_configuration(self, network_config):
         result = dict()
-        if 'subnets' in network_config:
+        if network_config['subnets'] is not None:
             result['subnets'] = network_config['subnets']
         else:
             self.module.fail_json(msg="Network configuration must include subnets")
-        if 'security_groups' in network_config:
+        if network_config['security_groups'] is not None:
             groups = network_config['security_groups']
             if any(not sg.startswith('sg-') for sg in groups):
                 try:
@@ -324,6 +336,14 @@ class EcsServiceManager:
                 except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                     self.module.fail_json_aws(e, msg="Couldn't look up security groups")
             result['securityGroups'] = groups
+        if network_config['assign_public_ip'] is not None:
+            if self.module.botocore_at_least('1.8.4'):
+                if network_config['assign_public_ip'] is True:
+                    result['assignPublicIp'] = "ENABLED"
+                else:
+                    result['assignPublicIp'] = "DISABLED"
+            else:
+                self.module.fail_json(msg='botocore needs to be version 1.8.4 or higher to use assign_public_ip in network_configuration')
         return dict(awsvpcConfiguration=result)
 
     def find_in_array(self, array_of_services, service_name, field_name='serviceArn'):
@@ -441,7 +461,11 @@ def main():
         deployment_configuration=dict(required=False, default={}, type='dict'),
         placement_constraints=dict(required=False, default=[], type='list'),
         placement_strategy=dict(required=False, default=[], type='list'),
-        network_configuration=dict(required=False, type='dict'),
+        network_configuration=dict(required=False, type='dict', options=dict(
+            subnets=dict(type='list'),
+            security_groups=dict(type='list'),
+            assign_public_ip=dict(type='bool'),
+        )),
         launch_type=dict(required=False, choices=['EC2', 'FARGATE'])
     ))
 

@@ -286,7 +286,6 @@ def main():
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
 
-    state = module.params.get('state').lower()
     iam_type = module.params.get('iam_type').lower()
     state = module.params.get('state')
     name = module.params.get('iam_name')
@@ -302,7 +301,7 @@ def main():
             with open(policy_document, 'r') as json_data:
                 pdoc = json.dumps(json.load(json_data))
                 json_data.close()
-        except IOError:
+        except IOError as e:
             if e.errno == 2:
                 module.fail_json(
                     msg='policy_document {0:!r} does not exist'.format(policy_document))

@@ -161,6 +161,12 @@ class Block(Base, Become, Conditional, Taggable):
         except AssertionError as e:
             raise AnsibleParserError("A malformed block was encountered while loading always", obj=self._ds, orig_exc=e)
 
+    def _validate_always(self, attr, name, value):
+        if value and not self.block:
+            raise AnsibleParserError("'%s' keyword cannot be used without 'block'" % name, obj=self._ds)
+
+    _validate_rescue = _validate_always
+
     def get_dep_chain(self):
         if self._dep_chain is None:
             if self._parent:

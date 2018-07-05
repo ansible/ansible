@@ -131,38 +131,15 @@ def to_commands(module, commands):
 
 
 def run_commands(module, commands, check_rc=True):
-    responses = list()
     connection = get_connection(module)
-
-    for cmd in to_list(commands):
-        if isinstance(cmd, dict):
-            command = cmd['command']
-            prompt = cmd['prompt']
-            answer = cmd['answer']
-        else:
-            command = cmd
-            prompt = None
-            answer = None
-
-        try:
-            out = connection.get(command, prompt, answer)
-        except ConnectionError as e:
-            if check_rc:
-                raise
-            else:
-                out = e
-
-        try:
-            out = to_text(out, errors='surrogate_or_strict')
-        except UnicodeError:
-            module.fail_json(msg=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))
-
-        responses.append(out)
-
-    return responses
+    return connection.run_commands(commands=commands, check_rc=check_rc)
 
 
 def load_config(module, commands):
     connection = get_connection(module)
 
-    return connection.edit_config(commands)
+    try:
+        resp = connection.edit_config(commands)
+        return resp.get('response')
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc))

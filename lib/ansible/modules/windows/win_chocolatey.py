@@ -211,7 +211,7 @@ command:
   sample: choco.exe install -r --no-progress -y sysinternals --timeout 2700 --failonunfound
 rc:
   description: The return code from the chocolatey task.
-  returned: changed
+  returned: always
   type: int
   sample: 0
 stdout:

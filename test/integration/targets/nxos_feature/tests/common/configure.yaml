@@ -5,10 +5,12 @@
   nxos_config:
     lines: no feature bgp
     match: none
+    provider: "{{ connection }}"
 
 - name: enable bgp
   nxos_feature:
     feature: bgp
+    provider: "{{ connection }}"
     state: enabled
   register: result
 
@@ -19,6 +21,7 @@
 - name: verify bgp
   nxos_feature:
     feature: bgp
+    provider: "{{ connection }}"
     state: enabled
   register: result
 
@@ -29,6 +32,7 @@
 - name: disable bgp
   nxos_feature:
     feature: bgp
+    provider: "{{ connection }}"
     state: disabled
   register: result
 
@@ -39,6 +43,7 @@
 - name: verify bgp
   nxos_feature:
     feature: bgp
+    provider: "{{ connection }}"
     state: disabled
   register: result
 
@@ -50,5 +55,6 @@
   nxos_config:
     lines: no feature bgp
     match: none
+    provider: "{{ connection }}"
 
 - debug: msg="END connection={{ ansible_connection }}/configure.yaml"

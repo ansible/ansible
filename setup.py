@@ -232,7 +232,9 @@ static_setup_params = dict(
     project_urls={
         'Bug Tracker': 'https://github.com/ansible/ansible/issues',
         'CI: Shippable': 'https://app.shippable.com/github/ansible/ansible',
+        'Code of Conduct': 'https://docs.ansible.com/ansible/latest/community/code_of_conduct.html',
         'Documentation': 'https://docs.ansible.com/ansible/',
+        'Mailing lists': 'https://docs.ansible.com/ansible/latest/community/communication.html#mailing-list-information',
         'Source Code': 'https://github.com/ansible/ansible',
     },
     license='GPLv3+',

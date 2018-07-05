@@ -400,6 +400,7 @@ def main():
     check_args(module, warnings)
     result['warnings'] = warnings
 
+    diff_ignore_lines = module.params['diff_ignore_lines']
     config = None
     contents = None
     flags = get_defaults_flag(module) if module.params['defaults'] else []
@@ -419,10 +420,9 @@ def main():
         candidate = get_candidate_config(module)
         running = get_running_config(module, contents, flags=flags)
 
-        response = connection.get_diff(candidate=candidate, running=running, match=match, diff_ignore_lines=None, path=path, replace=replace)
-        diff = json.loads(response)
-        config_diff = diff['config_diff']
-        banner_diff = diff['banner_diff']
+        response = connection.get_diff(candidate=candidate, running=running, match=match, diff_ignore_lines=diff_ignore_lines, path=path, replace=replace)
+        config_diff = response['config_diff']
+        banner_diff = response['banner_diff']
 
         if config_diff or banner_diff:
             commands = config_diff.split('\n')
@@ -441,16 +441,14 @@ def main():
             # them with the current running config
             if not module.check_mode:
                 if commands:
-                    connection.edit_config(commands)
+                    connection.edit_config(candidate=commands)
                 if banner_diff:
-                    connection.edit_banner(json.dumps(banner_diff), multiline_delimiter=module.params['multiline_delimiter'])
+                    connection.edit_banner(candidate=json.dumps(banner_diff), multiline_delimiter=module.params['multiline_delimiter'])
 
             result['changed'] = True
 
-    running_config = None
+    running_config = module.params['running_config']
     startup_config = None
-
-    diff_ignore_lines = module.params['diff_ignore_lines']
 
     if module.params['save_when'] == 'always' or module.params['save']:
         save_config(module, result)
@@ -470,7 +468,7 @@ def main():
             output = run_commands(module, 'show running-config')
             contents = output[0]
         else:
-            contents = running_config.config_text
+            contents = running_config
 
         # recreate the object in order to process diff_ignore_lines
         running_config = NetworkConfig(indent=1, contents=contents, ignore_lines=diff_ignore_lines)

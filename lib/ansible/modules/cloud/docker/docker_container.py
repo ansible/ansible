@@ -173,7 +173,8 @@ options:
        - Dictionary of key value pairs.
   links:
     description:
-      - List of name aliases for linked containers in the format C(container_name:alias)
+      - List of name aliases for linked containers in the format C(container_name:alias).
+      - Setting this will force container to be restarted.
   log_driver:
     description:
       - Specify the logging driver. Docker uses json-file by default.
@@ -844,14 +845,14 @@ class TaskParameters(DockerBaseClass):
             if ':' in vol:
                 if len(vol.split(':')) == 3:
                     host, container, mode = vol.split(':')
-                    if re.match(r'[\.~]', host):
-                        host = os.path.abspath(host)
+                    if re.match(r'[.~]', host):
+                        host = os.path.abspath(os.path.expanduser(host))
                     new_vols.append("%s:%s:%s" % (host, container, mode))
                     continue
                 elif len(vol.split(':')) == 2:
                     parts = vol.split(':')
-                    if parts[1] not in VOLUME_PERMISSIONS and re.match(r'[\.~]', parts[0]):
-                        host = os.path.abspath(parts[0])
+                    if parts[1] not in VOLUME_PERMISSIONS and re.match(r'[.~]', parts[0]):
+                        host = os.path.abspath(os.path.expanduser(parts[0]))
                         new_vols.append("%s:%s:rw" % (host, parts[1]))
                         continue
             new_vols.append(vol)
@@ -1038,6 +1039,8 @@ class TaskParameters(DockerBaseClass):
                     protocol = 'tcp'
                     port = int(publish_port)
                 for exposed_port in exposed:
+                    if exposed_port[1] != protocol:
+                        continue
                     if isinstance(exposed_port[0], string_types) and '-' in exposed_port[0]:
                         start_port, end_port = exposed_port[0].split('-')
                         if int(start_port) <= port <= int(end_port):
@@ -1229,7 +1232,7 @@ class Container(DockerBaseClass):
 
         # "ExposedPorts": null returns None type & causes AttributeError - PR #5517
         if config.get('ExposedPorts') is not None:
-            expected_exposed = [re.sub(r'/.+$', '', p) for p in config.get('ExposedPorts', dict()).keys()]
+            expected_exposed = [self._normalize_port(p) for p in config.get('ExposedPorts', dict()).keys()]
         else:
             expected_exposed = []
 
@@ -1644,10 +1647,10 @@ class Container(DockerBaseClass):
         self.log('_get_expected_exposed')
         image_ports = []
         if image:
-            image_ports = [re.sub(r'/.+$', '', p) for p in (image['ContainerConfig'].get('ExposedPorts') or {}).keys()]
+            image_ports = [self._normalize_port(p) for p in (image['ContainerConfig'].get('ExposedPorts') or {}).keys()]
         param_ports = []
         if self.parameters.ports:
-            param_ports = [str(p[0]) for p in self.parameters.ports]
+            param_ports = [str(p[0]) + '/' + p[1] for p in self.parameters.ports]
         result = list(set(image_ports + param_ports))
         self.log(result, pretty_print=True)
         return result
@@ -1687,6 +1690,11 @@ class Container(DockerBaseClass):
         for key, value in getattr(self.parameters, param_name).items():
             results.append("%s%s%s" % (key, join_with, value))
         return results
+
+    def _normalize_port(self, port):
+        if '/' not in port:
+            return port + '/tcp'
+        return port
 
 
 class ContainerManager(DockerBaseClass):
