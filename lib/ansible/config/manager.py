@@ -100,7 +100,7 @@ def ensure_type(value, value_type, origin=None):
             value = [resolve_path(x, basedir=basedir) for x in value]
 
         elif value_type in ('str', 'string'):
-            value = to_text(unquote(value), errors='surrogate_or_strict')
+            value = unquote(to_text(value, errors='surrogate_or_strict'))
 
         # defaults to string type
         elif isinstance(value, string_types):
