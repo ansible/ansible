@@ -7,6 +7,11 @@
         aws_secret_key: "{{ aws_secret_key }}"
         security_token: "{{ security_token }}"
         region: "{{ aws_region }}"
+      awscli_connection_info: &awscli_connection_info
+        AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+        AWS_SESSION_TOKEN: "{{ security_token }}"
+        AWS_DEFAULT_REGION: "{{ aws_region }}"
     no_log: yes
 
   - name: create VPC
@@ -98,12 +103,50 @@
       <<: *aws_connection_info
     register: tg
 
+  - name: create privatekey for testing
+    openssl_privatekey:
+      path: ./ansible_alb_test.pem
+      size: 2048
+
+  - name: create csr for cert
+    openssl_csr:
+      path: ./ansible_alb_test.csr
+      privatekey_path: ./ansible_alb_test.pem
+      C: US
+      ST: AnyPrincipality
+      L: AnyTown
+      O: AnsibleIntegrationTest
+      OU: Test
+      CN: ansible-alb-test.example.com
+
+  - name: create certificate
+    openssl_certificate:
+      path: ./ansible_alb_test.crt
+      privatekey_path: ./ansible_alb_test.pem
+      csr_path: ./ansible_alb_test.csr
+      provider: selfsigned
+
+  # This really should be an ACM Cert, but there is no acm_cert resource module
+  - name: upload server cert to iam
+    iam_cert:
+      name: "{{ alb_name }}"
+      state: present
+      cert: ./ansible_alb_test.crt
+      key: ./ansible_alb_test.pem
+      <<: *aws_connection_info
+    register: cert_upload
+
+  - name: register certificate arn to acm_arn fact
+    set_fact:
+        cert_arn: "{{ cert_upload.arn }}"
+
   - include_tasks: test_alb_bad_listener_options.yml
   - include_tasks: test_alb_tags.yml
   - include_tasks: test_creating_alb.yml
   - include_tasks: test_alb_with_asg.yml
   - include_tasks: test_modifying_alb_listeners.yml
   - include_tasks: test_deleting_alb.yml
+  - include_tasks: test_multiple_actions.yml
 
   always:
   #############################################################################
@@ -133,6 +176,18 @@
       delay: 3
       until: remove_tg is success
       when: tg is defined
+      ignore_errors: yes
+
+    - name: destroy acm certificate
+      iam_cert:
+        name: "{{ alb_name }}"
+        state: absent
+        <<: *aws_connection_info
+      register: remove_cert
+      retries: 5
+      delay: 3
+      until: remove_cert is success
+      when: cert_arn is defined
       ignore_errors: yes
 
     - name: destroy sec group
