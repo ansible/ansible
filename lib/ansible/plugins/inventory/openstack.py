@@ -20,6 +20,10 @@ DOCUMENTATION = '''
         - Uses openstack.(yml|yaml) YAML configuration file to configure the inventory plugin
         - Uses standard clouds.yaml YAML configuration file to configure cloud credentials
     options:
+        plugin:
+            description: token that ensures this is a source file for the 'openstack' plugin.
+            required: True
+            choices: ['openstack']
         show_all:
             description: toggles showing all vms vs only those with a working IP
             type: bool

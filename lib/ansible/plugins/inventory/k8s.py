@@ -19,6 +19,10 @@ DOCUMENTATION = '''
       - Uses k8s.(yml|yaml) YAML configuration file to set parameter values.
 
     options:
+      plugin:
+         description: token that ensures this is a source file for the 'k8s' plugin.
+         required: True
+         choices: ['k8s']
       connections:
           description:
           - Optional list of cluster connection settings. If no connections are provided, the default

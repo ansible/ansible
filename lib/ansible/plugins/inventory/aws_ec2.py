@@ -15,6 +15,10 @@ DOCUMENTATION = '''
         - Get inventory hosts from Amazon Web Services EC2.
         - Uses a <name>.aws_ec2.yaml (or <name>.aws_ec2.yml) YAML configuration file.
     options:
+        plugin:
+            description: token that ensures this is a source file for the 'aws_ec2' plugin.
+            required: True
+            choices: ['aws_ec2']
         boto_profile:
           description: The boto profile to use.
           env:
