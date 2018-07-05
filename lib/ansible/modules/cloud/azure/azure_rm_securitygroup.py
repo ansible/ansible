@@ -140,19 +140,19 @@ EXAMPLES = '''
       name: mysecgroup
       purge_rules: yes
       rules:
-          - name: DenySSH
-            protocol: TCP
-            destination_port_range: 22
-            access: Deny
-            priority: 100
-            direction: Inbound
           - name: 'AllowSSH'
-            protocol: TCP
+            protocol: Tcp
             source_address_prefix:
               - '174.109.158.0/24'
               - '174.109.159.0/24'
             destination_port_range: 22
             access: Allow
+            priority: 100
+            direction: Inbound
+          - name: DenySSH
+            protocol: Tcp
+            destination_port_range: 22
+            access: Deny
             priority: 101
             direction: Inbound
 
@@ -161,17 +161,17 @@ EXAMPLES = '''
       resource_group: mygroup
       name: mysecgroup
       rules:
-          - name: DenySSH
-            protocol: TCP
-            destination_port_range: 22-23
-            access: Deny
-            priority: 100
-            direction: Inbound
           - name: AllowSSHFromHome
-            protocol: TCP
+            protocol: Tcp
             source_address_prefix: '174.109.158.0/24'
             destination_port_range: 22-23
             access: Allow
+            priority: 100
+            direction: Inbound
+          - name: DenySSH
+            protocol: Tcp
+            destination_port_range: 22-23
+            access: Deny
             priority: 102
             direction: Inbound
       tags:
