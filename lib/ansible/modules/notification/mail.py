@@ -263,6 +263,11 @@ def main():
     except smtplib.SMTPException as e:
         module.fail_json(rc=1, msg='Unable to Connect %s:%s: %s' % (host, port, to_native(e)), exception=traceback.format_exc())
 
+    try:
+        smtp.ehlo()
+    except smtplib.SMTPException as e:
+            module.fail_json(rc=1, msg='Helo failed for host %s:%s: %s' % (host, port, to_native(e)), exception=traceback.format_exc())
+
     if int(code) > 0:
         if not secure_state and secure in ('starttls', 'try'):
             if smtp.has_extn('STARTTLS'):
@@ -272,13 +277,13 @@ def main():
                 except smtplib.SMTPException as e:
                     module.fail_json(rc=1, msg='Unable to start an encrypted session to %s:%s: %s' %
                                      (host, port, to_native(e)), exception=traceback.format_exc())
+                try:
+                    smtp.ehlo()
+                except smtplib.SMTPException as e:
+                    module.fail_json(rc=1, msg='Helo failed for host %s:%s: %s' % (host, port, to_native(e)), exception=traceback.format_exc())
             else:
                 if secure == 'starttls':
                     module.fail_json(rc=1, msg='StartTLS is not offered on server %s:%s' % (host, port))
-        try:
-            smtp.ehlo()
-        except smtplib.SMTPException as e:
-            module.fail_json(rc=1, msg='Helo failed for host %s:%s: %s' % (host, port, to_native(e)), exception=traceback.format_exc())
 
     if username and password:
         if smtp.has_extn('AUTH'):
