@@ -1,0 +1,2 @@
+bugfixes:
+    - fix mail module when using starttls https://github.com/ansible/ansible/issues/42338
