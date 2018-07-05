@@ -136,6 +136,11 @@ import copy
 
 class KubernetesFactsModule(KubernetesAnsibleModule):
 
+    def __init__(self, *args, **kwargs):
+        KubernetesAnsibleModule.__init__(self, *args,
+                                         supports_check_mode=True,
+                                         **kwargs)
+
     def execute_module(self):
         self.client = self.get_api_client()
 
