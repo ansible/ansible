@@ -1894,7 +1894,12 @@ class ContainerManager(DockerBaseClass):
         self.log("create container")
         self.log("image: %s parameters:" % image)
         self.log(create_parameters, pretty_print=True)
-        self.results['actions'].append(dict(created="Created container", create_parameters=create_parameters))
+        # Parameters contains host_config of type docker.types.containers.HostConfig,
+        # derived from dict, which ansible cannot convert to JSON correctly.
+        # Therefore, we make sure we copy it to turn it into a regular dict.
+        debug_parameters = dict(create_parameters)
+        debug_parameters['host_config'] = dict(debug_parameters['host_config'])
+        self.results['actions'].append(dict(created="Created container", create_parameters=debug_parameters))
         self.results['changed'] = True
         new_container = None
         if not self.check_mode:
