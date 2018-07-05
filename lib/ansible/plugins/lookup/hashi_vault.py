@@ -41,6 +41,10 @@ DOCUMENTATION = """
       description: Secret id for a vault AppRole auth.
       env:
         - name: VAULT_SECRET_ID
+    role:
+      description: Role name for vault GCP auth and Kubernetes auth
+      env:
+        - name: VAULT_ROLE
     auth_method:
       description:
       - Authentication method to be used.
@@ -98,6 +102,14 @@ EXAMPLES = """
 - name: Return all secrets from a path in a namespace
   debug:
     msg: "{{ lookup('hashi_vault', 'secret=secret/hello token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200 namespace=teama/admins')}}"
+
+- name: authenticate using GCP auth
+  debug:
+      msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=gcp role=myrole url=http://myvault:8200')}}"
+
+- name: authenticate using Kubernetes auth
+  debug:
+      msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=kubernetes role=myrole url=http://myvault:8200')}}"
 """
 
 RETURN = """
@@ -107,6 +119,7 @@ _raw:
 """
 
 import os
+import requests
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -249,7 +262,49 @@ class HashiVault:
         if secret_id is None:
             raise AnsibleError("Authentication method app role requires a secret_id")
 
-        self.client.auth_approle(role_id, secret_id)
+        mount_point = kwargs.get('mount_point')
+        if mount_point is None:
+            mount_point = 'approle'
+
+        self.client.auth_approle(role_id, secret_id, mount_point=mount_point)
+
+    def auth_gcp(self, **kwargs):
+        role = kwargs.get('role', os.environ.get('VAULT_ROLE', None))
+        if role is None:
+            raise AnsibleError("Authentication method gcp requires a role")
+
+        mount_point = kwargs.get('mount_point')
+        if mount_point is None:
+            mount_point = 'gcp'
+
+        audience = ANSIBLE_HASHI_VAULT_ADDR + "/vault/" + role
+        headers = {'Metadata-Flavor': 'Google'}
+        format = 'full'
+
+        url = 'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity?audience={0}&format={1}'.format(audience, format)
+        try:
+            jwt = requests.get(url, headers=headers).text
+        except requests.exceptions.ConnectionError:
+            raise AnsibleError("hashi_vault lookup failed to connect to http://metadata.google.internal. Make sure you are running from a GCE instance")
+
+        self.client.auth_gcp(role, jwt, mount_point=mount_point)
+
+    def auth_kubernetes(self, **kwargs):
+        role = kwargs.get('role', os.environ.get('VAULT_ROLE', None))
+        if role is None:
+            raise AnsibleError("Authentication method kubernetes requires a role")
+
+        mount_point = kwargs.get('mount_point')
+        if mount_point is None:
+            mount_point = 'kubernetes'
+
+        try:
+            f = open('/var/run/secrets/kubernetes.io/serviceaccount/token')
+            jwt = f.read()
+        except IOError:
+            raise AnsibleError("hashi_vault lookup failed to read JWT from file. Make sure you are running from a Kubernetes Pod")
+
+        self.client.auth_kubernetes(role, jwt, mount_point=mount_point)
 
 
 class LookupModule(LookupBase):
