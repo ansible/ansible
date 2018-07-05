@@ -25,7 +25,6 @@ options:
     required: true
     description:
       - Action category to execute on server
-    choices: ["System", "Chassis", "Accounts", "Update", "Manager"]
   command:
     required: true
     description:
@@ -123,7 +122,7 @@ def main():
     cmd_list = []
     module = AnsibleModule(
         argument_spec=dict(
-            category=dict(required=True, choices=["System", "Chassis", "Accounts", "Update", "Manager"]),
+            category=dict(required=True),
             command=dict(),
             baseuri=dict(required=True),
             user=dict(required=True),
