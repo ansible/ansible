@@ -6,6 +6,7 @@
     commands:
       - terminal dont-ask
       - delete network-integration.cfg
+#     - delete abc
   ignore_errors: yes
 
 - name: "Setup - Turn on feature scp-server"
@@ -56,6 +57,37 @@
   - name: "Setup - Remove existing file"
     nxos_command: *remove_file
     register: result
+
+# Uncomment the follwoing tasks with proper filename, scp server details
+#  - name: "Copy file abc"
+#    nxos_file_copy: &copy_pull
+#      file_pull: True
+#      remote_file: "/mydir/abc"
+#      remote_scp_server: "192.168.0.1"
+#      remote_scp_server_user: "myUser"
+#      remote_scp_server_password: "myPassword"
+#    register: result
+#
+#  - assert: *true
+#
+#  - name: "Overwrite the file"
+#    nxos_file_copy: *copy_pull
+#    register: result
+#
+#  - assert: *true
+#
+#  - name: "Copy different file as abc"
+#    nxos_file_copy: &copy_pull_diff
+#      file_pull: True
+#      file_pull_timeout: 1200
+#      local_file: "abc"
+#      remote_file: "/mydir/xyz"
+#      remote_scp_server: "192.168.0.1"
+#      remote_scp_server_user: "myUser"
+#      remote_scp_server_password: "myPassword"
+#    register: result
+#
+#  - assert: *true
 
   rescue:
 
