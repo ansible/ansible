@@ -17,7 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from ansible.compat.tests import unittest
-from ansible.module_utils.ec2 import _camel_to_snake, _snake_to_camel, camel_dict_to_snake_dict
+from ansible.module_utils.common.dict_transformations import _camel_to_snake, _snake_to_camel, camel_dict_to_snake_dict, dict_merge
 
 EXPECTED_SNAKIFICATION = {
     'alllower': 'alllower',
@@ -69,3 +69,48 @@ class CamelDictToSnakeDictTestCase(unittest.TestCase):
         snake_dict = camel_dict_to_snake_dict(camel_dict, ignore_list='World')
         self.assertEqual(snake_dict['hello'], dict(one='one', two='two'))
         self.assertEqual(snake_dict['world'], dict(Three='three', Four='four'))
+
+
+class DictMergeTestCase(unittest.TestCase):
+    def test_dict_merge(self):
+        base = dict(obj2=dict(), b1=True, b2=False, b3=False,
+                    one=1, two=2, three=3, obj1=dict(key1=1, key2=2),
+                    l1=[1, 3], l2=[1, 2, 3], l4=[4],
+                    nested=dict(n1=dict(n2=2)))
+
+        other = dict(b1=True, b2=False, b3=True, b4=True,
+                     one=1, three=4, four=4, obj1=dict(key1=2),
+                     l1=[2, 1], l2=[3, 2, 1], l3=[1],
+                     nested=dict(n1=dict(n2=2, n3=3)))
+
+        result = dict_merge(base, other)
+
+        # string assertions
+        self.assertTrue('one' in result)
+        self.assertTrue('two' in result)
+        self.assertEqual(result['three'], 4)
+        self.assertEqual(result['four'], 4)
+
+        # dict assertions
+        self.assertTrue('obj1' in result)
+        self.assertTrue('key1' in result['obj1'])
+        self.assertTrue('key2' in result['obj1'])
+
+        # list assertions
+        # this line differs from the network_utils/common test of the function of the
+        # same name as this method does not merge lists
+        self.assertEqual(result['l1'], [2, 1])
+        self.assertTrue('l2' in result)
+        self.assertEqual(result['l3'], [1])
+        self.assertTrue('l4' in result)
+
+        # nested assertions
+        self.assertTrue('obj1' in result)
+        self.assertEqual(result['obj1']['key1'], 2)
+        self.assertTrue('key2' in result['obj1'])
+
+        # bool assertions
+        self.assertTrue('b1' in result)
+        self.assertTrue('b2' in result)
+        self.assertTrue(result['b3'])
+        self.assertTrue(result['b4'])

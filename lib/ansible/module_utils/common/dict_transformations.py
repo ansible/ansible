@@ -8,6 +8,7 @@ __metaclass__ = type
 
 
 import re
+from copy import deepcopy
 
 
 def camel_dict_to_snake_dict(camel_dict, reversible=False, ignore_list=()):
@@ -105,3 +106,18 @@ def _camel_to_snake(name, reversible=False):
     all_cap_pattern = r'([a-z0-9])([A-Z]+)'
     s2 = re.sub(first_cap_pattern, r'\1_\2', s1)
     return re.sub(all_cap_pattern, r'\1_\2', s2).lower()
+
+
+def dict_merge(a, b):
+    '''recursively merges dicts. not just simple a['key'] = b['key'], if
+    both a and b have a key whose value is a dict then dict_merge is called
+    on both values and the result stored in the returned dictionary.'''
+    if not isinstance(b, dict):
+        return b
+    result = deepcopy(a)
+    for k, v in b.items():
+        if k in result and isinstance(result[k], dict):
+                result[k] = dict_merge(result[k], v)
+        else:
+            result[k] = deepcopy(v)
+    return result
