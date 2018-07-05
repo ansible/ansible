@@ -106,14 +106,14 @@ EXAMPLES = r'''
         src_cidr: 192.0.1.0/24
         src_port: any
         dest_cidr: 192.0.2.2/32
-        src_port: any
+        dest_port: any
         protocol: any
         policy: deny
       - comment: Allow traffic to group of servers
         src_cidr: 192.0.1.0/24
         src_port: any
         dest_cidr: 192.0.2.0/24
-        src_port: any
+        dest_port: any
         protocol: any
         policy: permit
   delegate_to: localhost
@@ -129,7 +129,7 @@ EXAMPLES = r'''
         src_cidr: 192.0.1.0/24
         src_port: any
         dest_cidr: 192.0.2.2/32
-        src_port: any
+        dest_port: any
         protocol: any
         policy: deny
     syslog_default_rule: yes
