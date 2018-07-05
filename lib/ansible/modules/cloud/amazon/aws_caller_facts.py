@@ -39,6 +39,11 @@ account:
     returned: success
     type: string
     sample: "123456789012"
+account_alias:
+    description: The account alias the access credentials are associated with.
+    returned: success
+    type: string
+    sample: "acme-production"
 arn:
     description: The arn identifying the user the credentials are associated with.
     returned: success
@@ -73,12 +78,24 @@ def main():
     try:
         caller_identity = client.get_caller_identity()
         caller_identity.pop('ResponseMetadata', None)
-        module.exit_json(
-            changed=False,
-            **camel_dict_to_snake_dict(caller_identity)
-        )
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e, msg='Failed to retrieve caller identity')
+
+    iam_client = module.client('iam')
+    alias = ''
+
+    try:
+        response = iam_client.list_account_aliases()
+        if response and response['AccountAliases']:
+            alias = response['AccountAliases'][0]
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg='Failed to retrieve account aliases')
+
+    caller_identity['account_alias'] = alias
+
+    module.exit_json(
+        changed=False,
+        **camel_dict_to_snake_dict(caller_identity))
 
 
 if __name__ == '__main__':
