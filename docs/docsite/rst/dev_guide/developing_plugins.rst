@@ -49,7 +49,7 @@ These are pre-populated by a ``self.set_options()`` call, for most plugin types 
 but for some types you might need to do this explicitly.
 Of course, if you don't have any configurable options, you can ignore this.
 
-Plugins that support embedded documentation (see :ref:`ansible-doc` for the list) are now required to provide well-formed doc strings to be considered for merge into the Ansible repo. This documentations also doubles as 'configuration definition' so they will never be out of sync.
+Plugins that support embedded documentation (see :ref:`ansible-doc` for the list) must now include well-formed doc strings to be considered for merge into the Ansible repo. This documentation also doubles as 'configuration definition' so they will never be out of sync.
 
 If you inherit from a plugin, you must document the options it takes, either via a documentation fragment or as a copy.
 

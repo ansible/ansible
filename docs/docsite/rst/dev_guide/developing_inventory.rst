@@ -7,12 +7,15 @@ Developing Dynamic Inventory
    :local:
 
 As described in :ref:`dynamic_inventory`, Ansible can pull inventory information from dynamic sources,
-including cloud sources, using the supplied :ref:`inventory plugins <Inventory_Plugins>`.
+including cloud sources, using the supplied :ref:`inventory plugins <inventory_plugins>`.
 If the source you want is not currently covered by existing plugins, you can create your own as with any other plugin type.
 
-In previous versions you had to create a a script or program that can output JSON in the correct format when invoked with the proper arguments.
-This is still supported via the :ref:`script inventory plugin <script_inventory>` and there is no restriction on the programming language used.
-The disadvantages are that they cannot use integrated functionality like the :ref:`inventory plugins <Inventory_Plugins>` can and then need to implement these features themselves. i.e caching, configuration management, dynamic variable and group composition, etc.
+In previous versions you had to create a script or program that can output JSON in the correct format when invoked with the proper arguments.
+You can still use and write inventory scripts, as we ensured backwards compatiblity via the :ref:`script inventory plugin <script_inventory>`
+and there is no restriction on the programming language used.
+If you choose to write a script, however, you will need to implement some features youself.
+i.e caching, configuration management, dynamic variable and group composition, etc.
+While with :ref:`inventory plugins <inventory_plugins>` you can leverage the Ansible codebase to add these common features.
 
 
 .. _inventory_sources:
@@ -20,12 +23,25 @@ The disadvantages are that they cannot use integrated functionality like the :re
 Inventory sources
 -----------------
 
-Inventory sources are strings (i.e what you pass to ``-i`` in the command line).
-They usually correspond to a file path, but they can also be a comma separated list, a URI, or anything your plugin can use as input.
-The 'inventory source' provided can be either a string (:ref:`host list <host_list_inventory>` plugin),
-a data file (like consumed by the :ref:`yaml <yaml_inventory>` and :ref:`ini <ini_inventory>` plugins),
-a configuration file (:ref:`virtualbox <virtualbox_inventory>` and :ref:`constructed <constructed_inventory>`)
-or even a script or executable (the :ref:`script plugin <script_inventory>` uses those).
+Inventory sources are strings (i.e what you pass to ``-i`` in the command line),
+they can represent a path to a file/script or just be the raw data for the plugin to use.
+Here are some plugins and the type of source they use:
+
++--------------------------------------------+--------------------------------------+
+|  Plugin                                    | Source                               |
++--------------------------------------------+--------------------------------------+
+| :ref:`host list <host_list_inventory>`     | A comma separated list of hosts      |
++--------------------------------------------+--------------------------------------+
+| :ref:`yaml <yaml_inventory>`               | Path to a YAML format data file      |
++--------------------------------------------+--------------------------------------+
+| :ref:`constructed <constructed_inventory>` | Path to a YAML configuration file    |
++--------------------------------------------+--------------------------------------+
+| :ref:`ini <ini_inventory>`                 | Path to An ini formated data file    |
++--------------------------------------------+--------------------------------------+
+| :ref:`virtualbox <virtualbox_inventory>`   | Path to a YAML configuration file    |
++--------------------------------------------+--------------------------------------+
+| :ref:`script plugin <script_inventory>`    | Path to an executable outputing JSON |
++--------------------------------------------+--------------------------------------+
 
 
 
@@ -90,7 +106,7 @@ This method is used by Ansible to make a quick determination if the inventory so
                 valid = True
         return valid
 
-In this case, from the :ref:`virtualbox inventory plugin <virtualbox_inventory>`, we screen for specific file name patterns to avoid attempting to consume any valid yaml file. You can add any type of condition here, but the most common ones are 'extension matching'
+In this case, from the :ref:`virtualbox inventory plugin <virtualbox_inventory>`, we screen for specific file name patterns to avoid attempting to consume any valid yaml file. You can add any type of condition here, but the most common one is 'extension matching'
 
 Another example that actually does not use a 'file' but the inventory source string itself,
 from the :ref:`host list <host_list_inventory>` plugin:
@@ -298,7 +314,7 @@ For example::
 
 .. _replacing_inventory_ini_with_dynamic_provider:
 
-If you intend to replace an existing static inventory file with a inventory script,
+If you intend to replace an existing static inventory file with an inventory script,
 it must return a JSON object which contains an 'all' group that includes every
 host in the inventory as a member and every group in the inventory as a child.
 It should also include an 'ungrouped' group which contains all hosts which are not members of any other group.
