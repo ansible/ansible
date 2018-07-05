@@ -3,7 +3,7 @@ Ansible Changes By Release
 
 <a id="2.4.6"></a>
 
-## 2.4.6 "Dancing Days" - TBD
+## 2.4.6 "Dancing Days" - 2018-07-05
 
 ### Bugfixes
 * **Security Fix** - avoid loading host/group vars from cwd when not specifying

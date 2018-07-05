@@ -42,7 +42,7 @@ Ansible Release   Latest Version               Status
 ===============   ==========================   =================================================
 devel             `2.6` (unreleased, trunk)    In development
 2.5               `2.5.5`_ (2018-06-14)        Supported (security **and** general bug fixes)
-2.4               `2.4.5`_ (2018-06-21)        Supported (security **and** critical bug fixes)
+2.4               `2.4.6`_ (2018-07-05)        Supported (security **and** critical bug fixes)
 2.3               `2.3.2`_ (2017-08-08)        Unsupported (end of life)
 2.2               `2.2.3`_ (2017-05-09)        Unsupported (end of life)
 2.1               `2.1.6`_ (2017-06-01)        Unsupported (end of life)
@@ -58,7 +58,7 @@ devel             `2.6` (unreleased, trunk)    In development
 .. Comment: devel used to point here but we're currently revamping our changelog process and have no
    link to a static changelog for devel _2.6: https://github.com/ansible/ansible/blob/devel/CHANGELOG.md
 .. _2.5.5: https://github.com/ansible/ansible/blob/stable-2.5/changelogs/CHANGELOG-v2.5.rst
-.. _2.4.5: https://github.com/ansible/ansible/blob/stable-2.4/CHANGELOG.md
+.. _2.4.6: https://github.com/ansible/ansible/blob/stable-2.4/CHANGELOG.md
 .. _2.3.2: https://github.com/ansible/ansible/blob/stable-2.3/CHANGELOG.md
 .. _2.2.3: https://github.com/ansible/ansible/blob/stable-2.2/CHANGELOG.md
 .. _2.1.6: https://github.com/ansible/ansible/blob/stable-2.1/CHANGELOG.md
