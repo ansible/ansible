@@ -52,6 +52,7 @@ EXAMPLE = """
 - name: Create Azure VM
   hosts: localhost
   connection: local
+  no_log: True
   vars:
     resource_group: myResourceGroup
     vm_name: testvm
