@@ -24,13 +24,13 @@ from ansible.compat.tests.mock import patch, MagicMock, Mock
 from .test_nios_module import TestNiosModule, load_fixture
 
 
-class TestNiosHostRecordModule(TestNiosModule):
+class TestNiosPTRRecordModule(TestNiosModule):
 
     module = nios_ptr_record
 
     def setUp(self):
 
-        super(TestNiosHostRecordModule, self).setUp()
+        super(TestNiosPTRRecordModule, self).setUp()
         self.module = MagicMock(name='ansible.modules.net_tools.nios.nios_ptr_record.WapiModule')
         self.module.check_mode = False
         self.module.params = {'provider': None}
@@ -43,7 +43,7 @@ class TestNiosHostRecordModule(TestNiosModule):
         self.load_config = self.mock_wapi_run.start()
 
     def tearDown(self):
-        super(TestNiosHostRecordModule, self).tearDown()
+        super(TestNiosPTRRecordModule, self).tearDown()
         self.mock_wapi.stop()
 
     def _get_wapi(self, test_object):
@@ -156,3 +156,20 @@ class TestNiosHostRecordModule(TestNiosModule):
 
         self.assertTrue(res['changed'])
         wapi.update_object.called_once_with(test_object)
+
+    def test_nios_ptr6_record_create(self):
+        self.module.params = {'provider': None, 'state': 'present', 'ptrdname': 'ansible6.test.com',
+                              'ipv6addr': '2002:8ac3:802d:1242:20d:60ff:fe38:6d16', 'comment': None, 'extattrs': None}
+
+        test_object = None
+        test_spec = {"ipv6addr": {"ib_req": True},
+                     "ptrdname": {"ib_req": True},
+                     "comment": {},
+                     "extattrs": {}}
+
+        wapi = self._get_wapi(test_object)
+        print("WAPI: ", wapi)
+        res = wapi.run('testobject', test_spec)
+
+        self.assertTrue(res['changed'])
+        wapi.create_object.assert_called_once_with('testobject', {'ipv6addr': '2002:8ac3:802d:1242:20d:60ff:fe38:6d16', 'ptrdname': 'ansible6.test.com'})
