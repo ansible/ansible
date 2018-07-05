@@ -191,6 +191,14 @@ def map_obj_to_commands(want, have, module):
         if not want['sandbox']:
             commands['sandbox'] = 'no %s' % commands['sandbox']
 
+    if needs_update('ssl_ciphers'):
+        commands['ssl_ciphers'] = 'nxapi ssl ciphers weak'
+        if want['ssl_ciphers'] == 'absent':
+            commands['ssl_ciphers'] = 'no nxapi ssl ciphers weak'
+
+    if needs_update('ssl_protocols'):
+        commands['ssl_protocols'] = 'nxapi ssl protocols %s' % (want.get('ssl_protocols'))
+
     for parameter in commands.keys():
         send_commands.append(commands[parameter])
 
@@ -231,6 +239,27 @@ def parse_sandbox(data):
     return {'sandbox': value}
 
 
+def parse_ssl_ciphers(data):
+    ciphers_res = [r'(\w+) nxapi ssl ciphers weak']
+    value = None
+
+    for regex in ciphers_res:
+        match = re.search(regex, data, re.M)
+        if match:
+            value = match.group(1)
+            break
+
+    return {'ssl_strong_ciphers': value == 'no'}
+
+
+def parse_protocols(data):
+    tls1_0 = re.search(r'(?<!\S)TLSv1(?!\S)', data, re.M) is not None
+    tls1_1 = re.search(r'(?<!\S)TLSv1.1(?!\S)', data, re.M) is not None
+    tls1_2 = re.search(r'(?<!\S)TLSv1.2(?!\S)', data, re.M) is not None
+
+    return {'tls1_0': tls1_0, 'tls1_1': tls1_1, 'tls1_2': tls1_2}
+
+
 def map_config_to_obj(module):
     out = run_commands(module, ['show run all | inc nxapi'], check_rc=False)[0]
     match = re.search(r'no feature nxapi', out, re.M)
@@ -246,6 +275,8 @@ def map_config_to_obj(module):
     obj.update(parse_http(out))
     obj.update(parse_https(out))
     obj.update(parse_sandbox(out))
+    obj.update(parse_ssl_ciphers(out))
+    obj.update(parse_protocols(out))
 
     return obj
 
@@ -257,7 +288,11 @@ def map_params_to_obj(module):
         'https': module.params['https'],
         'https_port': module.params['https_port'],
         'sandbox': module.params['sandbox'],
-        'state': module.params['state']
+        'state': module.params['state'],
+        'ssl_strong_ciphers': module.params['ssl_strong_ciphers'],
+        'tls1_0': module.params['tls1_0'],
+        'tls1_1': module.params['tls1_1'],
+        'tls1_2': module.params['tls1_2']
     }
 
     return obj
@@ -273,8 +308,10 @@ def main():
         https_port=dict(type='int', default=443),
         sandbox=dict(aliases=['enable_sandbox'], type='bool'),
         state=dict(default='present', choices=['started', 'stopped', 'present', 'absent'])
-        ssl_ciphers(default='weak', choices=['weak', 'disabled'])
-        ssl_protocols(default='TLSv1.0', choices=['TLSv1.0', 'TLSv1.1', 'TLSv1.2', 'disabled'])
+        ssl_strong_ciphers=dict(type='bool', default=False)
+        tls1_0=dict(type='bool', default=True),
+        tls1_1=dict(type='bool', default=False),
+        tls1_2=dict(type='bool', default=False),
     )
 
     argument_spec.update(nxos_argument_spec)
