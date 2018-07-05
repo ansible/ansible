@@ -284,7 +284,7 @@ def main():
             else:
                 if secure == 'starttls':
                     module.fail_json(rc=1, msg='StartTLS is not offered on server %s:%s' % (host, port))
-        
+
     if username and password:
         if smtp.has_extn('AUTH'):
             try:
