@@ -43,8 +43,9 @@ options:
     description:
       - Puppet environment to be used.
   logdest:
-    description:
-      - Where the puppet logs should go, if puppet apply is being used.
+    description: |
+      Where the puppet logs should go, if puppet apply is being used. 'all' 
+      will go to both stdout and syslog.
     choices: [ stdout, syslog, all ]
     default: stdout
     version_added: "2.1"
