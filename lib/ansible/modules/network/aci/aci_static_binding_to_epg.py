@@ -302,9 +302,10 @@ def main():
     interface_mode = module.params['interface_mode']
     interface_type = module.params['interface_type']
     pod_id = module.params['pod_id']
-    # Users are likely to use integers for leaf IDs, which would raise an exception when using the join method
-    leafs = [str(leaf) for leaf in module.params['leafs']]
+    leafs = module.params['leafs']
     if leafs is not None:
+        # Users are likely to use integers for leaf IDs, which would raise an exception when using the join method
+        leafs = [str(leaf) for leaf in module.params['leafs']]
         if len(leafs) == 1:
             if interface_type != 'vpc':
                 leafs = leafs[0]
