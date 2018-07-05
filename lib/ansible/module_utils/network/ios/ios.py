@@ -93,18 +93,8 @@ def check_args(module, warnings):
 
 def get_defaults_flag(module):
     connection = get_connection(module)
-    out = connection.get('show running-config ?')
-    out = to_text(out, errors='surrogate_then_replace')
-
-    commands = set()
-    for line in out.splitlines():
-        if line.strip():
-            commands.add(line.strip().split()[0])
-
-    if 'all' in commands:
-        return ['all']
-    else:
-        return ['full']
+    out = connection.get_defaults_flag()
+    return to_text(out, errors='surrogate_then_replace').strip()
 
 
 def get_config(module, flags=None):
