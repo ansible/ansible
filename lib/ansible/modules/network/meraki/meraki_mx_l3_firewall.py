@@ -78,6 +78,7 @@ options:
         description:
         - Whether to log hits against the default firewall rule.
         - Only applicable if a syslog server is specified against the network.
+        - This is not shown in response from Meraki. Instead, refer to the C(syslog_enabled) value in the default rule.
         type: bool
         default: no
 author:
@@ -136,7 +137,50 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-
+data:
+    description: Firewall rules associated to network.
+    returned: success
+    type: complex
+    contains:
+        comment:
+            description: Comment to describe the firewall rule.
+            returned: always
+            type: string
+            sample: Block traffic to server
+        src_cidr:
+            description: Comma separated list of CIDR notation source networks.
+            returned: always
+            type: string
+            sample: 192.0.1.1/32,192.0.1.2/32
+        src_port:
+            description: Comma separated list of source ports.
+            returned: always
+            type: string
+            sample: 80,443
+        dest_cidr:
+            description: Comma separated list of CIDR notation destination networks.
+            returned: always
+            type: string
+            sample: 192.0.1.1/32,192.0.1.2/32
+        dest_port:
+            description: Comma separated list of destination ports.
+            returned: always
+            type: string
+            sample: 80,443
+        protocol:
+            description: Network protocol for which to match against.
+            returned: always
+            type: string
+            sample: tcp
+        policy:
+            description: Action to take when rule is matched.
+            returned: always
+            type: string
+        syslog_enabled:
+            description: 
+            returned: always
+            type: bool
+            sample: true
 '''
 
 import os
