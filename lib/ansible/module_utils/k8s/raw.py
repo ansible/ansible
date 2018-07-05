@@ -55,6 +55,8 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                     self.resource_definitions = yaml.safe_load_all(resource_definition)
                 except (IOError, yaml.YAMLError) as exc:
                     self.fail(msg="Error loading resource_definition: {0}".format(exc))
+            elif isinstance(resource_definition, list):
+                self.resource_definitions = resource_definition
             else:
                 self.resource_definitions = [resource_definition]
         src = self.params.pop('src')
