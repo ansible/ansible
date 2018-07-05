@@ -2,6 +2,33 @@
 Ansible 2.6 "Heartbreaker" Release Notes
 ========================================
 
+v2.6.1
+======
+
+Release Summary
+---------------
+
+| Release Date: 2018-07-05
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`_
+
+
+Minor Changes
+-------------
+
+- Restore module_utils.basic.BOOLEANS variable for backwards compatibility with the module API in older ansible releases.
+
+Bugfixes
+--------
+
+- **Security Fix** - avoid loading host/group vars from cwd when not specifying a playbook or playbook base dir
+- **Security Fix** - avoid using ansible.cfg in a world writable dir.
+- Fix junos_config confirm commit timeout issue (https://github.com/ansible/ansible/pull/41527)
+- file module - The touch subcommand had its diff output broken during the 2.6.x development cycle.  The patch to fix that broke check mode. This is now fixed (https://github.com/ansible/ansible/issues/42111)
+- inventory manager - This fixes required options being populated before the inventory config file is read, so the required options may be set in the config file.
+- nsupdate - allow hmac-sha384 https://github.com/ansible/ansible/pull/42209
+- win_domain - fixes typo in one of the AD cmdlets https://github.com/ansible/ansible/issues/41536
+- win_group_membership - uses the internal Ansible SID conversion logic and uses that when comparing group membership instead of the name https://github.com/ansible/ansible/issues/40649
+
 v2.6.0
 ======
 
@@ -393,8 +420,8 @@ f5
 files
 ^^^^^
 
-- net_get - Copy files from a network device to Ansible Controller
-- net_put - Copy files from Ansibe controller to a network device
+- net_get - Copy a file from a network device to Ansible Controller
+- net_put - Copy a file from Ansible Controller to a network device
 
 fortios
 ^^^^^^^

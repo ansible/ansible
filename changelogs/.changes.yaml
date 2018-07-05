@@ -331,3 +331,17 @@ releases:
     - v2.6.0rc5_summary.yaml
     - win_iis_webapppool-output-fix.yml
     release_date: '2018-06-26'
+  2.6.1:
+    codename: Heartbreaker
+    fragments:
+    - avoid_cwd_vars.yml
+    - basic_booleans_backward_compat.yaml
+    - file_touch_check_mode.yaml
+    - inventory_manager_fix_required_options_override.yaml
+    - junos_config_confirm_commit.yaml
+    - nsupdate_fix_hmac-sha384.yaml
+    - v2.6.1_summary.yaml
+    - win_domain-dns-typo-fix.yml
+    - win_group_membership-sid-bugfix.yml
+    - wrcwd_ansible.cfg.yml
+    release_date: '2018-07-05'
