@@ -58,7 +58,7 @@
     nxos_command: *remove_file
     register: result
 
-# Uncomment the follwoing tasks with proper filename, scp server details
+# Uncomment the following tasks with proper filename, scp server information
 #  - name: "Copy file abc"
 #    nxos_file_copy: &copy_pull
 #      file_pull: True
