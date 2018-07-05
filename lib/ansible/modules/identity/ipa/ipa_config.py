@@ -21,8 +21,10 @@ description:
 options:
   ipadefaultloginshell:
     description: Default shell for new users.
+    aliases: ["loginshell"]
   ipadefaultemaildomain:
     description: Default e-mail domain for new users.
+    aliases: ["emaildomain"]
 extends_documentation_fragment: ipa.documentation
 version_added: "2.7"
 '''
@@ -106,8 +108,8 @@ def ensure(module, client):
 def main():
     argument_spec = ipa_argument_spec()
     argument_spec.update(
-        ipadefaultloginshell=dict(type='str'),
-        ipadefaultemaildomain=dict(type='str'),
+        ipadefaultloginshell=dict(type='str', aliases=['loginshell']),
+        ipadefaultemaildomain=dict(type='str', aliases=['emaildomain']),
     )
 
     module = AnsibleModule(
