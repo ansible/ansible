@@ -560,8 +560,7 @@ EXAMPLES = '''
   docker_container:
     name: agent
     image: jenkinsci/ssh-slave
-    env_file:
-      '/var/tmp/jenkins/agent.env'
+    env_file: '/var/tmp/jenkins/agent.env'
 
 '''
 
