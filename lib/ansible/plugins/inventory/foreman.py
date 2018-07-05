@@ -19,6 +19,7 @@ DOCUMENTATION = '''
       plugin:
         description: the name of this plugin, it should alwys be set to 'foreman' for this plugin to recognize it as it's own.
         required: True
+        choices: ['foreman']
       url:
         description: url to foreman
         default: 'http://localhost:300'
