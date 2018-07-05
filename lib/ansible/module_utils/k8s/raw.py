@@ -103,8 +103,8 @@ class KubernetesRawModule(KubernetesAnsibleModule):
 
     def perform_action(self, resource, definition):
         result = {'changed': False, 'result': {}}
-        state = self.params.pop('state', None)
-        force = self.params.pop('force', False)
+        state = self.params.get('state', None)
+        force = self.params.get('force', False)
         name = definition.get('metadata', {}).get('name')
         namespace = definition.get('metadata', {}).get('namespace')
         existing = None
