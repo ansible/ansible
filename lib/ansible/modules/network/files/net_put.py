@@ -49,7 +49,7 @@ options:
         present in the src file. If mode is set to I(binary) then file will be
         copied as it is to destination device.
     default: binary
-    choices: ['binary', 'template']
+    choices: ['binary', 'text']
     version_added: "2.7"
 
 requirements:
