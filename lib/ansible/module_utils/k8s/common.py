@@ -51,6 +51,7 @@ try:
 except ImportError:
     pass
 
+
 def list_dict_str(value):
     if isinstance(value, list):
         return value
