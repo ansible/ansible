@@ -123,7 +123,7 @@ data:
         returned: success
         type: string
         sample: switch
-      disableMyMerakiCom
+      disableMyMerakiCom:
         description: States whether U(my.meraki.com) and other device portals should be disabled.
         returned: success
         type: bool
