@@ -18,9 +18,9 @@ Scenario Requirements
 
     * Ansible 2.5 or later must be installed.
 
-    * The Python module ``Pyvmomi`` must be installed on the Ansible (or Target host if not executing against localhost).
+    * The Python module ``Pyvmomi`` must be installed on the Ansible control node (or Target host if not executing against localhost).
 
-    * Installing the latest ``Pyvmomi`` via pip is recommended [as the OS packages are usually out of date and incompatible].
+    * We recommend installing the latest version with pip: ``pip install Pyvmomi`` (as the OS packages are usually out of date and incompatible).
 
 * Hardware
 
@@ -34,31 +34,28 @@ Scenario Requirements
 
     * Username and Password for vCenter or ESXi server
 
-Assumptions
-===========
-
-- All variable names and VMware object names are case sensitive.
-- You need to use Python 2.7.9 version in order to use ``validate_certs`` option, as this version is capable of changing the SSL verification behaviours.
+    * Hosts in the ESXi cluster must have access to the datastore that the template resides on.
 
 Caveats
 =======
 
-- Hosts in the ESXi cluster must have access to the datastore that the template resides on.
+- All variable names and VMware object names are case sensitive.
+- You need to use Python 2.7.9 version in order to use ``validate_certs`` option, as this version is capable of changing the SSL verification behaviours.
 - ``vmware_guest`` module tries to mimick VMware Web UI and workflow, so the virtual machine must be in powered off state in order to remove it from the VMware inventory.
 
 .. warning::
 
-   The removal VMware virtual machine using ``vmware_guest`` module is destructive and can not be reverted, so it is recommended to take backup before proceeding.
+   The removal VMware virtual machine using ``vmware_guest`` module is destructive operation and can not be reverted, so it is strongly recommended to take the backup of virtual machine and related files (vmx and vmdk files) before proceeding.
 
 Example Description
 ===================
 
-In this use case / example, user will be selecting a virtual machine using name for removal. The following Ansible playbook showcases the basic parameters that are needed for this.
+In this use case / example, user will be removing a virtual machine using name. The following Ansible playbook showcases the basic parameters that are needed for this.
 
 .. code-block:: yaml
 
     ---
-    - name: Purge virtual machine
+    - name: Remove virtual machine
       gather_facts: no
       vars_files:
         - vcenter_vars.yml
@@ -87,19 +84,21 @@ Since Ansible utilizes the VMware API to perform actions, in this use case it wi
 
 This means that playbooks will not be running from the vCenter or ESXi Server.
 
-The ``gather_facts`` parameter will be disabled as it is not necessarily need to collect facts about localhost.
+Note that this play disables the ``gather_facts`` parameter, since you don't want to collect facts about localhost.
 
-User can run these modules against another server that would then connect to the API if localhost does not have access to vCenter. If so, the required Python modules will need to be installed on that target server.
+You can run these modules against another server that would then connect to the API if localhost does not have access to vCenter. If so, the required Python modules will need to be installed on that target server. We recommend installing the latest version with pip: ``pip install Pyvmomi`` (as the OS packages are usually out of date and incompatible).
 
-To begin, there are a few bits of information we will need -
+Before you begin, make sure you have:
 
-* First is the hostname of the ESXi server or vCenter server.
+- Hostname of the ESXi server or vCenter server
+- Username and password for the ESXi or vCenter server
+- Name of the existing Virtual Machine you want to remove
 
-* After this, you will need the username and password for this server. For now, you will be entering these directly, but in a more advanced playbook this can be abstracted out and stored in a more secure fashion using :ref:`ansible-vault` or using `Ansible Tower credentials <http://docs.ansible.com/ansible-tower/latest/html/userguide/credentials.html>`_.
+For now, you will be entering these directly, but in a more advanced playbook this can be abstracted out and stored in a more secure fashion using :ref:`ansible-vault` or using `Ansible Tower credentials <http://docs.ansible.com/ansible-tower/latest/html/userguide/credentials.html>`_.
 
-* If your vCenter or ESXi server is not setup with proper CA certificates that can be verified from the Ansible server, then it is necessary to disable validation of these certificates by using the ``validate_certs`` parameter. To do this you need to set ``validate_certs=False`` in your playbook.
+If your vCenter or ESXi server is not setup with proper CA certificates that can be verified from the Ansible server, then it is necessary to disable validation of these certificates by using the ``validate_certs`` parameter. To do this you need to set ``validate_certs=False`` in your playbook.
 
-Now you need to supply the information about the existing virtual machine which will be removed. The name of virtual machine will be used as input for ``vmware_guest`` module. Specify name of the existing virtual machine as ``name`` parameter.
+The name of existing virtual machine will be used as input for ``vmware_guest`` module via ``name`` parameter.
 
 
 What to expect
@@ -119,7 +118,7 @@ What to expect
 Troubleshooting
 ---------------
 
-Things to inspect
+If your playbook fails:
 
 - Check if the values provided for username and password are correct.
 - Check if the datacenter you provided is available.
