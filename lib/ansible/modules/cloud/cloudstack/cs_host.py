@@ -103,7 +103,7 @@ EXAMPLES = '''
     zone: ch-zrh-ix-01
     allocation_state: disabled
 
-- name: Ensure an existing host is disabled
+- name: Ensure an existing host is enabled
   local_action:
     module: cs_host
     name: ix-pod01-esx01.example.com
