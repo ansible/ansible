@@ -126,6 +126,234 @@
       - output.changed
       - output.state.ip_configuration.subnet.name == 'tn{{ rpfx }}'
 
+- name: Enable accelerated networking on NIC (check mode)
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      public_ip_name: "tn{{ rpfx }}"
+      public_ip_allocation_method: Static
+      security_group:
+        name: "tn{{ rpfx }}2"
+        resource_group: "{{ resource_group_secondary }}"
+      enable_accelerated_networking: yes
+  register: output
+  check_mode: yes
+
+- assert:
+    that:
+      - output.changed
+
+- name: Enable accelerated networking on NIC
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      public_ip_name: "tn{{ rpfx }}"
+      public_ip_allocation_method: Static
+      security_group:
+        name: "tn{{ rpfx }}2"
+        resource_group: "{{ resource_group_secondary }}"
+      enable_accelerated_networking: yes
+  register: output
+
+- assert:
+    that:
+      - output.changed
+      - output.state.enable_accelerated_networking
+
+- name: Enable accelerated networking on NIC (idempotent)
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      public_ip_name: "tn{{ rpfx }}"
+      public_ip_allocation_method: Static
+      security_group:
+        name: "tn{{ rpfx }}2"
+        resource_group: "{{ resource_group_secondary }}"
+      enable_accelerated_networking: yes
+  register: output
+
+- assert:
+    that:
+      - not output.changed
+      - output.state.enable_accelerated_networking
+
+- name: Disable accelerated networking on NIC (check mode)
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      public_ip_name: "tn{{ rpfx }}"
+      public_ip_allocation_method: Static
+      security_group:
+        name: "tn{{ rpfx }}2"
+        resource_group: "{{ resource_group_secondary }}"
+      enable_accelerated_networking: no
+  register: output
+  check_mode: yes
+
+- assert:
+    that:
+      - output.changed
+
+- name: Disable accelerated networking on NIC
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      public_ip_name: "tn{{ rpfx }}"
+      public_ip_allocation_method: Static
+      security_group:
+        name: "tn{{ rpfx }}2"
+        resource_group: "{{ resource_group_secondary }}"
+      enable_accelerated_networking: no
+  register: output
+
+- assert:
+    that:
+      - output.changed
+      - not output.state.enable_accelerated_networking
+
+- name: Disable accelerated networking on NIC (idempotent)
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      public_ip_name: "tn{{ rpfx }}"
+      public_ip_allocation_method: Static
+      security_group:
+        name: "tn{{ rpfx }}2"
+        resource_group: "{{ resource_group_secondary }}"
+      enable_accelerated_networking: no
+  register: output
+
+- assert:
+    that:
+      - not output.changed
+      - not output.state.enable_accelerated_networking
+
+- name: Enable IP forwarding on NIC (check mode)
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      public_ip_name: "tn{{ rpfx }}"
+      public_ip_allocation_method: Static
+      security_group:
+        name: "tn{{ rpfx }}2"
+        resource_group: "{{ resource_group_secondary }}"
+      enable_ip_forwarding: yes
+  register: output
+  check_mode: yes
+
+- assert:
+    that:
+      - output.changed
+
+- name: Enable IP forwarding on NIC
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      public_ip_name: "tn{{ rpfx }}"
+      public_ip_allocation_method: Static
+      security_group:
+        name: "tn{{ rpfx }}2"
+        resource_group: "{{ resource_group_secondary }}"
+      enable_ip_forwarding: yes
+  register: output
+
+- assert:
+    that:
+      - output.changed
+      - output.state.enable_ip_forwarding
+
+- name: Enable IP forwarding on NIC (idempotent)
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      public_ip_name: "tn{{ rpfx }}"
+      public_ip_allocation_method: Static
+      security_group:
+        name: "tn{{ rpfx }}2"
+        resource_group: "{{ resource_group_secondary }}"
+      enable_ip_forwarding: yes
+  register: output
+
+- assert:
+    that:
+      - not output.changed
+      - output.state.enable_ip_forwarding
+
+- name: Disable IP forwarding on NIC (check mode)
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      public_ip_name: "tn{{ rpfx }}"
+      public_ip_allocation_method: Static
+      security_group:
+        name: "tn{{ rpfx }}2"
+        resource_group: "{{ resource_group_secondary }}"
+      enable_ip_forwarding: no
+  register: output
+  check_mode: yes
+
+- assert:
+    that:
+      - output.changed
+
+- name: Disable IP forwarding on NIC
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      public_ip_name: "tn{{ rpfx }}"
+      public_ip_allocation_method: Static
+      security_group:
+        name: "tn{{ rpfx }}2"
+        resource_group: "{{ resource_group_secondary }}"
+      enable_ip_forwarding: no
+  register: output
+
+- assert:
+    that:
+      - output.changed
+      - not output.state.enable_ip_forwarding
+
+- name: Disable IP forwarding on NIC (idempotent)
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      public_ip_name: "tn{{ rpfx }}"
+      public_ip_allocation_method: Static
+      security_group:
+        name: "tn{{ rpfx }}2"
+        resource_group: "{{ resource_group_secondary }}"
+      enable_ip_forwarding: no
+  register: output
+
+- assert:
+    that:
+      - not output.changed
+      - not output.state.enable_ip_forwarding
+
 - name: Update the NIC with mutilple ip configurations (check mode)
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
