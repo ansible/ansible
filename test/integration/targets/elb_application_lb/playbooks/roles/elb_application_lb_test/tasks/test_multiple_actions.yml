@@ -11,17 +11,50 @@
 
   - name: register dummy OIDC config
     set_fact:
-        AuthenticateOidcActionConfig:
-            AuthorizationEndpoint: "https://www.example.com/auth"
-            ClientId: "eeeeeeeeeeeeeeeeeeeeeeeeee"
-            ClientSecret: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-            Issuer: "https://www.example.com/issuer"
-            OnUnauthenticatedRequest: "authenticate"
-            Scope: "openid"
-            SessionCookieName: "AWSELBAuthSessionCookie"
-            SessionTimeout: 604800
-            TokenEndpoint: "https://www.example.com/token"
-            UserInfoEndpoint: "https://www.example.com/userinfo"
+      AuthenticateOidcActionConfig:
+        AuthorizationEndpoint: "https://www.example.com/auth"
+        ClientId: "eeeeeeeeeeeeeeeeeeeeeeeeee"
+        ClientSecret: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+        Issuer: "https://www.example.com/issuer"
+        OnUnauthenticatedRequest: "authenticate"
+        Scope: "openid"
+        SessionCookieName: "AWSELBAuthSessionCookie"
+        SessionTimeout: 604800
+        TokenEndpoint: "https://www.example.com/token"
+        UserInfoEndpoint: "https://www.example.com/userinfo"
+
+  - name: delete existing ALB to avoid target group association issues
+    elb_application_lb:
+      name: "{{ alb_name }}"
+      state: absent
+      <<: *aws_connection_info
+      wait: yes
+      wait_timeout: 600
+
+  - name: cleanup tg to avoid target group association issues
+    elb_target_group:
+      name: "{{ tg_name }}"
+      protocol: http
+      port: 80
+      vpc_id: "{{ vpc.vpc.id }}"
+      state: absent
+      wait: yes
+      wait_timeout: 600
+      <<: *aws_connection_info
+    register: cleanup_tg
+    retries: 5
+    delay: 3
+    until: cleanup_tg is success
+
+  - name: recreate a target group
+    elb_target_group:
+      name: "{{ tg_name }}"
+      protocol: http
+      port: 80
+      vpc_id: "{{ vpc.vpc.id }}"
+      state: present
+      <<: *aws_connection_info
+    register: tg
 
   - name: create ALB with multiple DefaultActions
     elb_application_lb:
@@ -40,7 +73,7 @@
               AuthenticateOidcConfig: "{{ AuthenticateOidcActionConfig }}"
               Order: 1
           Certificates:
-              - CertificateArn: "{{ cert_arn }}"
+            - CertificateArn: "{{ cert_arn }}"
           SslPolicy: ELBSecurityPolicy-2016-08
       <<: *aws_connection_info
     register: alb
@@ -49,7 +82,7 @@
       that:
         - alb.changed
         - alb.listeners|length == 1
-        - alb.listeners[0].rules|length == 2
+        - alb.listeners[0].rules[0].actions|length == 2
 
   - name: test idempotence creating ALB with a listener
     elb_application_lb:
@@ -68,7 +101,7 @@
               AuthenticateOidcConfig: "{{ AuthenticateOidcActionConfig }}"
               Order: 1
           Certificates:
-              - CertificateArn: "{{ cert_arn }}"
+            - CertificateArn: "{{ cert_arn }}"
           SslPolicy: ELBSecurityPolicy-2016-08
       <<: *aws_connection_info
     register: alb
@@ -77,7 +110,7 @@
       that:
         - not alb.changed
         - alb.listeners|length == 1
-        - alb.listeners[0].rules|length == 2
+        - alb.listeners[0].rules[0].actions|length == 2
 
   - name: test changing order of actions
     elb_application_lb:
@@ -96,7 +129,7 @@
               TargetGroupName: "{{ tg_name }}"
               Order: 2
           Certificates:
-              - CertificateArn: "{{ cert_arn }}"
+            - CertificateArn: "{{ cert_arn }}"
           SslPolicy: ELBSecurityPolicy-2016-08
       <<: *aws_connection_info
     register: alb
@@ -105,7 +138,7 @@
       that:
         - not alb.changed
         - alb.listeners|length == 1
-        - alb.listeners[0].rules|length == 1
+        - alb.listeners[0].rules[0].actions|length == 2
 
   - name: test non-default rule with multiple actions
     elb_application_lb:
@@ -146,8 +179,8 @@
       that:
         - alb.changed
         - alb.listeners|length == 1
-        - alb.listeners[0].rules|length == 2
-        - alb.listeners[1].rules|length == 2
+        - alb.listeners[0].rules[0].actions|length == 2
+        - alb.listeners[0].rules[1].actions|length == 2
 
   - name: test idempotency non-default rule with multiple actions
     elb_application_lb:
@@ -188,8 +221,8 @@
       that:
         - not alb.changed
         - alb.listeners|length == 1
-        - alb.listeners[0].rules|length == 2
-        - alb.listeners[1].rules|length == 2
+        - alb.listeners[0].rules[0].actions|length == 2
+        - alb.listeners[0].rules[1].actions|length == 2
 
   - name: test non-default rule action order change
     elb_application_lb:
@@ -230,5 +263,5 @@
       that:
         - not alb.changed
         - alb.listeners|length == 1
-        - alb.listeners[0].rules|length == 2
-        - alb.listeners[1].rules|length == 2
+        - alb.listeners[0].rules[0].actions|length == 2
+        - alb.listeners[0].rules[1].actions|length == 2
