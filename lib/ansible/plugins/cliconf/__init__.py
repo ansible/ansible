@@ -262,9 +262,9 @@ class CliconfBase(AnsiblePlugin):
                     'supports_onbox_diff: <bool>,          # identify if on box diff capability is supported or not
                     'supports_generate_diff: <bool>,       # identify if diff capability is supported within plugin
                     'supports_multiline_delimiter: <bool>, # identify if multiline demiliter is supported within config
-                    'support_diff_match: <bool>,           # identify if match is supported
-                    'support_diff_ignore_lines: <bool>,    # identify if ignore line in diff is supported
-                    'support_config_replace': <bool>,      # identify if running config replace with candidate config is supported
+                    'supports_diff_match: <bool>,           # identify if match is supported
+                    'supports_diff_ignore_lines: <bool>,    # identify if ignore line in diff is supported
+                    'supports_config_replace': <bool>,      # identify if running config replace with candidate config is supported
                 }
                 'format': [list of supported configuration format],
                 'diff_match': [list of supported match values],
