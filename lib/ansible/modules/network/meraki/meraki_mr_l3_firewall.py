@@ -93,7 +93,7 @@ EXAMPLES = r'''
         dest_cidr: 192.0.2.0/24
     allow_lan_access: no
   delegate_to: localhost
-  
+
 - name: Enable local LAN access
   meraki_mr_l3_firewall:
     auth_key: abc123
