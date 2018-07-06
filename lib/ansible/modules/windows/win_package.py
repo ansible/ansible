@@ -58,7 +58,7 @@ options:
       getting the uninstall information if C(state=absent).
     - You can find the display names for installed programs in Programs and
     Features.
-    - C(display_version) MUST be set.
+    - You can use this in conjunction with C(display_version).
   display_version:
     description:
     - The display Version of the installed package.
