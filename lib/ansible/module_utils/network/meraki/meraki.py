@@ -206,6 +206,9 @@ class MerakiModule(object):
         if self.status != 200:
             self.fail_json(msg='Network lookup failed')
         self.nets = self.request(path, method='GET')
+        templates = self.get_config_templates(org_id)
+        for t in templates:
+            self.nets.append(t)
         return self.nets
 
     def get_net(self, org_name, net_name, data=None):
@@ -235,6 +238,19 @@ class MerakiModule(object):
             if n['name'] == net_name:
                 return n['id']
         self.fail_json(msg='No network found with the name {0}'.format(net_name))
+
+    def get_config_templates(self, org_id):
+        path = self.construct_path('get_all', function='configTemplates', org_id=org_id)
+        response = self.request(path, 'GET')
+        if self.status != 200:
+            self.fail_json(msg='Unable to get configuration templates')
+        return response
+
+    def get_template_id(self, name, data):
+        for template in data:
+            if name == template['name']:
+                return template['id']
+        meraki.fail_json(msg='No configuration template named {0} found'.format(name))
 
     def construct_path(self, action, function=None, org_id=None, net_id=None, org_name=None):
         """Build a path from the URL catalog.
