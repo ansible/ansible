@@ -405,9 +405,11 @@ def main():
     state = module.params['state']
     admin_state = module.params['admin_state']
 
+    # Result
+    result['name'] = domain_name
+
     # Connection
     socket_connection = "https://{0}:{1}".format(idg_data_spec['server'], idg_data_spec['server_port'])
-    url = socket_connection + _URI_DOMAIN_CONFIG.format(domain_name)
 
     # Init IDG API connect
     idg_mgmt = IDG_API(ansible_module = module,
@@ -455,36 +457,28 @@ def main():
     # Action messages
     # Restart
     restart_act_msg = { "RestartThisDomain": {} }
-    # Reset
-    reset_act_msg = { "ResetThisDomain": {} }
-    # Save
-    save_act_msg = { "SaveConfig": {} }
+
     # Quiesce
     quiesce_act_msg = { "DomainQuiesce": {
                             "delay": quiesce_conf_data_spec['delay'], "name": domain_name,
                             "timeout": quiesce_conf_data_spec['timeout']
                       } }
+
     # Unquiesce
     unquiesce_act_msg = { "DomainUnquiesce": { "name": domain_name } }
 
-    # Seed the result
-    result = dict(
-        changed = False,
-        name = domain_name,
-        msg = 'No change was made'
-    )
+    ###
+    ### Here the action begins
+    ###
 
-    # If the user is working in only check mode we do not
-    # want to make any changes
-    if module.check_mode:
-        module.exit_json(**result)
+    # pdb.set_trace()
 
     # List of configured domains
     chk_code, chk_msg, chk_data = idg_mgmt.api_call(uri = _URI_DOMAIN_LIST, method = 'GET', data = None)
 
     if chk_code == 200 and chk_msg == 'OK': # If the answer is correct
 
-        configured_domains = [] # List of existing domains
+        # List of existing domains
         if isinstance(chk_data['domain'], dict): # if has only default domain
             configured_domains = [chk_data['domain']['name']]
         else:
@@ -495,8 +489,13 @@ def main():
             if domain_name not in configured_domains: # Domain NOT EXIST.
 
                 # pdb.set_trace()
-
                 if state == 'present': # Create it
+
+                    # If the user is working in only check mode we do not want to make any changes
+                    if module.check_mode:
+                        result['msg'] = CHECK_MODE_MESSAGE
+                        module.exit_json(**result)
+
                     create_code, create_msg, create_data = idg_mgmt.api_call(uri = _URI_DOMAIN_CONFIG.format(domain_name), method = 'PUT',
                                                                              data = json.dumps(domain_obj_msg))
 
@@ -531,6 +530,11 @@ def main():
 
                     if state == 'present' and (domain_obj_msg['Domain'] != dc_data['Domain']): # Need update
 
+                        # If the user is working in only check mode we do not want to make any changes
+                        if module.check_mode:
+                            result['msg'] = CHECK_MODE_MESSAGE
+                            module.exit_json(**result)
+
                         upd_code, upd_msg, upd_json = idg_mgmt.api_call(uri = _URI_DOMAIN_CONFIG.format(domain_name), method = 'PUT',
                                                                         data = json.dumps(domain_obj_msg))
 
@@ -548,6 +552,12 @@ def main():
                         result['msg'] = IMMUTABLE_MESSAGE
 
                     elif state == 'restarted': # Restart domain
+
+                        # If the user is working in only check mode we do not want to make any changes
+                        if module.check_mode:
+                            result['msg'] = CHECK_MODE_MESSAGE
+                            module.exit_json(**result)
+
                         restart_code, restart_msg, restart_data = idg_mgmt.api_call(uri = _URI_ACTION.format(domain_name), method = 'POST',
                                                                                     data = json.dumps(restart_act_msg))
 
@@ -597,6 +607,12 @@ def main():
                             # pdb.set_trace()
                             if state == 'quiesced':
                                 if domain_quiesce_status == '':
+
+                                    # If the user is working in only check mode we do not want to make any changes
+                                    if module.check_mode:
+                                        result['msg'] = CHECK_MODE_MESSAGE
+                                        module.exit_json(**result)
+
                                     # Quiesce domain
                                     qd_code, qd_msg, qd_data = idg_mgmt.api_call(uri = _URI_ACTION.format(domain_name), method = 'POST',
                                                                                  data = json.dumps(quiesce_act_msg))
@@ -637,6 +653,12 @@ def main():
 
                             elif state == 'unquiesced':
                                 if domain_quiesce_status == 'quiesced':
+
+                                    # If the user is working in only check mode we do not want to make any changes
+                                    if module.check_mode:
+                                        result['msg'] = CHECK_MODE_MESSAGE
+                                        module.exit_json(**result)
+
                                     # Unquiesce domain
                                     uqd_code, uqd_msg, uqd_data = idg_mgmt.api_call(uri = _URI_ACTION.format(domain_name), method = 'POST',
                                                                                     data = json.dumps(unquiesce_act_msg))
@@ -686,6 +708,12 @@ def main():
         elif state == 'absent': # Remove domain
 
             if domain_name in configured_domains: # Domain EXIST.
+
+                # If the user is working in only check mode we do not want to make any changes
+                if module.check_mode:
+                    result['msg'] = CHECK_MODE_MESSAGE
+                    module.exit_json(**result)
+
                 # Remove
                 del_code, del_msg, del_data = idg_mgmt.api_call(uri = _URI_DOMAIN_CONFIG.format(domain_name),
                                                                 method = 'DELETE', data = None)

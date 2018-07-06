@@ -25,12 +25,20 @@ import json
 
 # Constants
 IMMUTABLE_MESSAGE = 'The current state is consistent with the desired configuration'
+CHECK_MODE_MESSAGE = 'Change was only simulated, due to enabling verification mode'
 ACTIONDELAY = 10 # number of seconds to wait for action apply
 
 BASIC_HEADERS = { "Content-Type": "application/json" }
 ANSIBLE_VERSION = '2.7'
 BASIC_AUTH_SPEC = True
 HTTP_AGENT_SPEC = None
+
+# Seed the result
+result = dict(
+    changed = False,
+    name = 'default',
+    msg = 'good is coming'
+)
 
 # Socket information
 idg_endpoint_spec = url_argument_spec()

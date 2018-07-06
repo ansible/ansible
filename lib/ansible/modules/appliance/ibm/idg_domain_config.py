@@ -179,6 +179,9 @@ def main():
     state = module.params['state']
     domain_name = module.params['name']
 
+    # Result
+    result['name'] = domain_name
+
     # Init IDG API connect
     idg_mgmt = IDG_API(ansible_module = module,
                        idg_host = "https://{0}:{1}".format(idg_data_spec['server'], idg_data_spec['server_port']),
@@ -218,25 +221,17 @@ def main():
                             # "DeploymentPolicyParams": "name",
                           }
                         }
-
+    # Action messages
     # Reset
     reset_act_msg = { "ResetThisDomain": {} }
+
     # Save
     save_act_msg = { "SaveConfig": {} }
 
-    # Seed the result
-    result = dict(
-        changed = False,
-        name = domain_name,
-        msg = 'No change was made'
-    )
+    ###
+    ### Here the action begins
+    ###
 
-    # If the user is working in only check mode we do not
-    # want to make any changes
-    if module.check_mode:
-        module.exit_json(**result)
-
-    # pdb.set_trace()
     # List of configured domains
     chk_code, chk_msg, chk_data = idg_mgmt.api_call(uri = _URI_DOMAIN_LIST, method = 'GET', data = None)
 
@@ -251,6 +246,12 @@ def main():
 
             # pdb.set_trace()
             if state == 'exported':
+
+                # If the user is working in only check mode we do not want to make any changes
+                if module.check_mode:
+                    result['msg'] = CHECK_MODE_MESSAGE
+                    module.exit_json(**result)
+
                 # export and finish
                 # pdb.set_trace()
                 exp_code, exp_msg, exp_data = idg_mgmt.api_call(uri = _URI_ACTION.format(domain_name), method = 'POST',
@@ -287,6 +288,12 @@ def main():
                     module.fail_json(msg = to_native(idg_mgmt.ERROR_ACCEPTING_ACTION % (state, domain_name)))
 
             elif state == 'reseted':
+
+                # If the user is working in only check mode we do not want to make any changes
+                if module.check_mode:
+                    result['msg'] = CHECK_MODE_MESSAGE
+                    module.exit_json(**result)
+
                 # Reseted domain
                 reset_code, reset_msg, reset_data = idg_mgmt.api_call(uri = _URI_ACTION.format(domain_name), method = 'POST',
                                                                       data = json.dumps(reset_act_msg))
@@ -336,6 +343,11 @@ def main():
                     # Saved domain
                     if domain_save_needed != 'off':
 
+                        # If the user is working in only check mode we do not want to make any changes
+                        if module.check_mode:
+                            result['msg'] = CHECK_MODE_MESSAGE
+                            module.exit_json(**result)
+
                         save_code, save_msg, save_data = idg_mgmt.api_call(uri = _URI_ACTION.format(domain_name), method = 'POST',
                                                                            data = json.dumps(save_act_msg))
 
@@ -352,6 +364,12 @@ def main():
                         result['msg'] = IMMUTABLE_MESSAGE
 
             elif state == 'imported':
+
+                # If the user is working in only check mode we do not want to make any changes
+                if module.check_mode:
+                    result['msg'] = CHECK_MODE_MESSAGE
+                    module.exit_json(**result)
+
                 # Import
                 # pdb.set_trace()
                 imp_code, imp_msg, imp_data = idg_mgmt.api_call(uri = _URI_ACTION.format(domain_name), method = 'POST',
