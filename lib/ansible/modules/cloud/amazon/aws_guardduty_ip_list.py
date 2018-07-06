@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: guardduty_ip_list
+module: aws_guardduty_ip_list
 short_description: Manage Trusted/Threat IP list for AWS GuardDuty.
 description:
     - Manage a Trusted/Threat IP list assigned to a AWS GuardDuty detector.
@@ -75,13 +75,17 @@ EXAMPLES = r'''
 '''
 
 
-RETURN = r'''#'''
+RETURN = r'''
+ip_list_id:
+    description: The ID of the GuardDuty IP Set or Threat Intel Set you just created or updated.
+    returned: always
+    type: string
+'''
 
 import os
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, AWSRetry
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict
+from ansible.module_utils.aws.core import is_boto3_error_code
 
 try:
     from botocore.exceptions import BotoCoreError, ClientError
@@ -89,102 +93,98 @@ except ImportError:
     pass  # handled by AnsibleAWSModule
 
 
-def ip_list_exists(client, module, result):
+def ip_list_exists(client, module):
     try:
         if module.params.get('list_type') == 'trusted':
-            sets = client.list_ip_sets(
+            paginator = client.get_paginator('list_ip_sets')
+            sets = paginator.paginate(
                 DetectorId=module.params.get('detector_id')
             )
-            for i in sets['IpSetIds']:
-                ti_set = client.get_ip_set(
-                    DetectorId=module.params.get('detector_id'),
-                    IpSetId=i
-                )
-                if ti_set['Name'] == module.params.get('name'):
-                    result['trusted_set_id'] = i
-                    return True
+            for i in sets:
+                for s in i['IpSetIds']:
+                    ti_set = client.get_ip_set(
+                        DetectorId=module.params.get('detector_id'),
+                        IpSetId=s
+                    )
+                    if ti_set['Name'] == module.params.get('name'):
+                        return {'exists': True, 'ip_list_id': s}
         if module.params.get('list_type') == 'threat':
-            sets = client.list_threat_intel_sets(
+            paginator = client.get_paginator('list_threat_intel_sets')
+            sets = paginator.paginate(
                 DetectorId=module.params.get('detector_id')
             )
-            for i in sets['ThreatIntelSetIds']:
-                ti_set = client.get_threat_intel_set(
-                    DetectorId=module.params.get('detector_id'),
-                    ThreatIntelSetId=i
-                )
-                if ti_set['Name'] == module.params.get('name'):
-                    result['threat_set_id'] = i
-                    return True
-    except ClientError:
-        return False
+            for i in sets:
+                for s in i['ThreatIntelSetIds']:
+                    ti_set = client.get_threat_intel_set(
+                        DetectorId=module.params.get('detector_id'),
+                        ThreatIntelSetId=s
+                    )
+                    if ti_set['Name'] == module.params.get('name'):
+                        return {'exists': True, 'ip_list_id': s}
+    except is_boto3_error_code('TheListIsntFoundError'):
+        return {'exists': False}
+    except (BotoCoreError, ClientError) as e:  # pylint: disable=duplicate-except
+        module.fail_json_aws(e, msg="Unable to list {0} sets".format(module.params.get('list_type')))
 
-    return False
+    return {'exists': False}
 
 
-def create_ip_list(client, module, params, result):
+def create_ip_list(client, module, params):
     if module.check_mode:
         module.exit_json(changed=True)
     try:
         if module.params.get('list_type') == 'trusted':
             response = client.create_ip_set(**params)
-            result['trusted_set_id'] = response['IpSetId']
-            result['changed'] = True
-            return result
+            return {'changed': True, 'ip_list_id': response['IpSetId']}
         if module.params.get('list_type') == 'threat':
             response = client.create_threat_intel_set(**params)
-            result['threat_set_id'] = response['ThreatIntelSetId']
-            result['changed'] = True
-            return result
+            return {'changed': True, 'ip_list_id': response['ThreatIntelSetId']}
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e, msg="Failed to create IP list")
 
-    return result
+    return {'changed': False}
 
 
-def update_ip_list(client, module, params, result):
+def update_ip_list(client, module, params, status):
     if module.check_mode:
         module.exit_json(changed=True)
     try:
         if module.params.get('list_type') == 'trusted':
-            params['IpSetId'] = result['trusted_set_id']
+            params['IpSetId'] = status['ip_list_id']
             del params['Format']
             response = client.update_ip_set(**params)
-            result['changed'] = True
-            return result
+            return {'changed': True, 'ip_list_id': status['ip_list_id']}
         if module.params.get('list_type') == 'threat':
-            params['ThreatIntelSetId'] = result['threat_set_id']
+            params['ThreatIntelSetId'] = status['ip_list_id']
             del params['Format']
             response = client.update_threat_intel_set(**params)
-            result['changed'] = True
-            return result
+            return {'changed': True, 'ip_list_id': status['ip_list_id']}
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e, msg="Failed to update IP list")
 
-    return result
+    return {'changed': False, 'ip_list_id': status['ip_list_id']}
 
 
-def delete_ip_list(client, module, result):
+def delete_ip_list(client, module, status):
     if module.check_mode:
         module.exit_json(changed=True)
     try:
         if module.params.get('list_type') == 'trusted':
             response = client.delete_ip_set(
                 DetectorId=module.params.get('detector_id'),
-                IpSetId=result['trusted_set_id']
+                IpSetId=status['ip_list_id']
             )
-            result['changed'] = True
-            return result
+            return {'changed': True, 'ip_list_id': ''}
         if module.params.get('list_type') == 'threat':
             response = client.delete_threat_intel_set(
                 DetectorId=module.params.get('detector_id'),
-                ThreatIntelSetId=result['threat_set_id']
+                ThreatIntelSetId=status['ip_list_id']
             )
-            result['changed'] = True
-            return result
+            return {'changed': True, 'ip_list_id': ''}
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e, msg="Failed to delete IP list")
 
-    return result
+    return {'changed': False, 'ip_list_id': ''}
 
 
 def main():
@@ -202,14 +202,15 @@ def main():
     )
 
     result = {
-        'changed': False
+        'changed': False,
+        'ip_list_id': ''
     }
 
     desired_state = module.params.get('state')
 
     client = module.client('guardduty')
 
-    ip_list_status = ip_list_exists(client, module, result)
+    ip_list_status = ip_list_exists(client, module)
 
     params = {}
     params['Name'] = module.params.get('name')
@@ -219,16 +220,16 @@ def main():
     params['Activate'] = module.params.get('enabled')
 
     if desired_state == 'present':
-        if not ip_list_status:
-            create_ip_list(client, module, params, result)
-        if ip_list_status:
-            update_ip_list(client, module, params, result)
+        if not ip_list_status['exists']:
+            result = create_ip_list(client, module, params)
+        if ip_list_status['exists']:
+            result = update_ip_list(client, module, params, ip_list_status)
 
     if desired_state == 'absent':
-        if ip_list_status:
-            delete_ip_list(client, module, result)
+        if ip_list_status['exists']:
+            result = delete_ip_list(client, module, ip_list_status)
 
-    module.exit_json(changed=result['changed'], results=result)
+    module.exit_json(changed=result['changed'], ip_list_id=result['ip_list_id'])
 
 
 if __name__ == '__main__':

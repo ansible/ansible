@@ -5,6 +5,7 @@
       aws_connection_info: &aws_connection_info
         aws_access_key: "{{ aws_access_key }}"
         aws_secret_key: "{{ aws_secret_key }}"
+        #security_token: "{{ security_token }}"
         region: "{{ aws_region }}"
     no_log: true
 
@@ -27,20 +28,20 @@
       - 'files/threat.txt'
 
   - name: create GuardDuty detector
-    guardduty_detector:
+    aws_guardduty_detector:
       <<: *aws_connection_info
       state: present
       enabled: true
     register: gd_detector
 
   - name: add whitelist to GuardDuty detector
-    guardduty_ip_list:
+    aws_guardduty_ip_list:
       <<: *aws_connection_info
       name: "{{ resource_prefix }}-test-whitelist"
       list_type: trusted
       state: present
       enabled: true
-      detector_id: "{{ gd_detector.results.detector_id }}"
+      detector_id: "{{ gd_detector.detector_id }}"
       format: 'TXT'
       location: "https://{{ resource_prefix }}-test-guardduty-bucket.s3.amazonaws.com/files/trusted.txt"
     register: result
@@ -49,16 +50,16 @@
     assert:
       that:
         - result.changed
-        - result.trusted_set_id is not none
+        - result.ip_list_id is not none
 
   - name: disable whitelist
-    guardduty_ip_list:
+    aws_guardduty_ip_list:
       <<: *aws_connection_info
       name: "{{ resource_prefix }}-test-whitelist"
       list_type: trusted
       state: present
       enabled: false
-      detector_id: "{{ gd_detector.results.detector_id }}"
+      detector_id: "{{ gd_detector.detector_id }}"
       format: 'TXT'
       location: "https://{{ resource_prefix }}-test-guardduty-bucket.s3.amazonaws.com/files/trusted.txt"
     register: result
@@ -67,16 +68,16 @@
     assert:
       that:
         - result.changed
-        - result.trusted_set_id is not none
+        - result.ip_list_id is not none
 
   - name: delete whitelist
-    guardduty_ip_list:
+    aws_guardduty_ip_list:
       <<: *aws_connection_info
       name: "{{ resource_prefix }}-test-whitelist"
       list_type: trusted
       state: absent
       enabled: false
-      detector_id: "{{ gd_detector.results.detector_id }}"
+      detector_id: "{{ gd_detector.detector_id }}"
       format: 'TXT'
       location: "https://{{ resource_prefix }}-test-guardduty-bucket.s3.amazonaws.com/files/trusted.txt"
     register: result
@@ -87,13 +88,13 @@
         - result.changed
 
   - name: add threat list to GuardDuty detector
-    guardduty_ip_list:
+    aws_guardduty_ip_list:
       <<: *aws_connection_info
       name: "{{ resource_prefix }}-test-threatlist"
       list_type: threat
       state: present
       enabled: true
-      detector_id: "{{ gd_detector.results.detector_id }}"
+      detector_id: "{{ gd_detector.detector_id }}"
       format: 'TXT'
       location: "https://{{ resource_prefix }}-test-guardduty-bucket.s3.amazonaws.com/files/threat.txt"
     register: result
@@ -102,16 +103,16 @@
     assert:
       that:
         - result.changed
-        - result.threat_set_id is not none
+        - result.ip_list_id is not none
 
   - name: disable threat list
-    guardduty_ip_list:
+    aws_guardduty_ip_list:
       <<: *aws_connection_info
       name: "{{ resource_prefix }}-test-threatlist"
       list_type: threat
       state: present
       enabled: false
-      detector_id: "{{ gd_detector.results.detector_id }}"
+      detector_id: "{{ gd_detector.detector_id }}"
       format: 'TXT'
       location: "https://{{ resource_prefix }}-test-guardduty-bucket.s3.amazonaws.com/files/threat.txt"
     register: result
@@ -120,16 +121,16 @@
     assert:
       that:
         - result.changed
-        - result.threat_set_id is not none
+        - result.ip_list_id is not none
 
   - name: delete threat list
-    guardduty_ip_list:
+    aws_guardduty_ip_list:
       <<: *aws_connection_info
       name: "{{ resource_prefix }}-test-threatlist"
       list_type: threat
       state: absent
       enabled: false
-      detector_id: "{{ gd_detector.results.detector_id }}"
+      detector_id: "{{ gd_detector.detector_id }}"
       format: 'TXT'
       location: "https://{{ resource_prefix }}-test-guardduty-bucket.s3.amazonaws.com/files/threat.txt"
     register: result
@@ -141,7 +142,7 @@
 
   always:
   - name: destroy GuardDuty detector
-    guardduty_detector:
+    aws_guardduty_detector:
       <<: *aws_connection_info
       state: absent
       enabled: false
