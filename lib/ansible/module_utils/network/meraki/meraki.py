@@ -250,7 +250,7 @@ class MerakiModule(object):
         for template in data:
             if name == template['name']:
                 return template['id']
-        meraki.fail_json(msg='No configuration template named {0} found'.format(name))
+        self.fail_json(msg='No configuration template named {0} found'.format(name))
 
     def construct_path(self, action, function=None, org_id=None, net_id=None, org_name=None):
         """Build a path from the URL catalog.

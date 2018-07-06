@@ -31,8 +31,11 @@ options:
       default: query
     net_name:
       description:
-      - Name of network which VLAN is or should be in.
+      - Name of network which VLAN is in or should be in.
       aliases: [network]
+    net_id:
+      description:
+      - ID of network which VLAN is in or should be in.
     vlan_id:
       description:
       - ID number of VLAN.
