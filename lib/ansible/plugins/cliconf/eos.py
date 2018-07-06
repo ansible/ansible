@@ -298,8 +298,8 @@ class Cliconf(CliconfBase):
             'supports_onbox_diff': True if self.supports_sessions else False,
             'supports_commit_comment': False,
             'supports_multiline_delimiter': False,
-            'support_diff_match': True,
-            'support_diff_ignore_lines': True,
+            'supports_diff_match': True,
+            'supports_diff_ignore_lines': True,
             'supports_generate_diff': True,
             'supports_replace': True if self.supports_sessions else False
         }
