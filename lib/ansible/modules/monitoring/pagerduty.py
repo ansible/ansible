@@ -143,87 +143,92 @@ from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_bytes
 
 
-def auth_header(user, passwd, token):
-    if token:
-        return "Token token=%s" % token
+class PagerDutyRequest(object):
+    def __init__(self, module, name, user, passwd, token):
+        self.module = module
+        self.name = name
+        self.user = user
+        self.passwd = passwd
+        self.token = token
 
-    auth = base64.b64encode(to_bytes('%s:%s' % (user, passwd)).replace('\n', ''))
-    return "Basic %s" % auth
+    def ongoing(self, http_call=fetch_url):
+        url = "https://" + self.name + ".pagerduty.com/api/v1/maintenance_windows/ongoing"
+        headers = {"Authorization": self._auth_header()}
 
+        response, info = http_call(self.module, url, headers=headers)
+        if info['status'] != 200:
+            self.module.fail_json(msg="failed to lookup the ongoing window: %s" % info['msg'])
 
-def ongoing(module, name, user, passwd, token):
-    url = "https://" + name + ".pagerduty.com/api/v1/maintenance_windows/ongoing"
-    headers = {"Authorization": auth_header(user, passwd, token)}
+        try:
+            json_out = json.loads(response.read())
+        except:
+            json_out = ""
 
-    response, info = fetch_url(module, url, headers=headers)
-    if info['status'] != 200:
-        module.fail_json(msg="failed to lookup the ongoing window: %s" % info['msg'])
+        return False, json_out, False
 
-    try:
-        json_out = json.loads(response.read())
-    except:
-        json_out = ""
+    def create(self, requester_id, service, hours, minutes, desc):
+        now = datetime.datetime.utcnow()
+        later = now + datetime.timedelta(hours=int(hours), minutes=int(minutes))
+        start = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+        end = later.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    return False, json_out, False
+        url = "https://" + self.name + ".pagerduty.com/api/v1/maintenance_windows"
+        headers = {
+            'Authorization': self._auth_header(),
+            'Content-Type': 'application/json',
+        }
+        request_data = {'maintenance_window': {'start_time': start, 'end_time': end, 'description': desc, 'service_ids': service}}
 
+        if requester_id:
+            request_data['requester_id'] = requester_id
+        else:
+            if self.token:
+                self.module.fail_json(msg="requester_id is required when using a token")
 
-def create(module, name, user, passwd, token, requester_id, service, hours, minutes, desc):
-    now = datetime.datetime.utcnow()
-    later = now + datetime.timedelta(hours=int(hours), minutes=int(minutes))
-    start = now.strftime("%Y-%m-%dT%H:%M:%SZ")
-    end = later.strftime("%Y-%m-%dT%H:%M:%SZ")
+        data = json.dumps(request_data)
+        response, info = fetch_url(self.module, url, data=data, headers=headers, method='POST')
+        if info['status'] != 201:
+            self.module.fail_json(msg="failed to create the window: %s" % info['msg'])
 
-    url = "https://" + name + ".pagerduty.com/api/v1/maintenance_windows"
-    headers = {
-        'Authorization': auth_header(user, passwd, token),
-        'Content-Type': 'application/json',
-    }
-    request_data = {'maintenance_window': {'start_time': start, 'end_time': end, 'description': desc, 'service_ids': service}}
+        try:
+            json_out = json.loads(response.read())
+        except:
+            json_out = ""
 
-    if requester_id:
-        request_data['requester_id'] = requester_id
-    else:
-        if token:
-            module.fail_json(msg="requester_id is required when using a token")
+        return False, json_out, True
 
-    data = json.dumps(request_data)
-    response, info = fetch_url(module, url, data=data, headers=headers, method='POST')
-    if info['status'] != 201:
-        module.fail_json(msg="failed to create the window: %s" % info['msg'])
+    def absent(self, requester_id, service):
+        url = "https://" + self.name + ".pagerduty.com/api/v1/maintenance_windows/" + service[0]
+        headers = {
+            'Authorization': self._auth_header(),
+            'Content-Type': 'application/json',
+        }
+        request_data = {}
 
-    try:
-        json_out = json.loads(response.read())
-    except:
-        json_out = ""
+        if requester_id:
+            request_data['requester_id'] = requester_id
+        else:
+            if self.token:
+                self.module.fail_json(msg="requester_id is required when using a token")
 
-    return False, json_out, True
+        data = json.dumps(request_data)
+        response, info = fetch_url(self.module, url, data=data, headers=headers, method='DELETE')
+        if info['status'] != 204:
+            self.module.fail_json(msg="failed to delete the window: %s" % info['msg'])
 
+        try:
+            json_out = json.loads(response.read())
+        except:
+            json_out = ""
 
-def absent(module, name, user, passwd, token, requester_id, service):
-    url = "https://" + name + ".pagerduty.com/api/v1/maintenance_windows/" + service[0]
-    headers = {
-        'Authorization': auth_header(user, passwd, token),
-        'Content-Type': 'application/json',
-    }
-    request_data = {}
+        return False, json_out, True
 
-    if requester_id:
-        request_data['requester_id'] = requester_id
-    else:
-        if token:
-            module.fail_json(msg="requester_id is required when using a token")
+    def _auth_header(self, user=None, passwd=None, token=None):
+        if self.token:
+            return "Token token=%s" % self.token
 
-    data = json.dumps(request_data)
-    response, info = fetch_url(module, url, data=data, headers=headers, method='DELETE')
-    if info['status'] != 204:
-        module.fail_json(msg="failed to delete the window: %s" % info['msg'])
-
-    try:
-        json_out = json.loads(response.read())
-    except:
-        json_out = ""
-
-    return False, json_out, True
+        auth = base64.b64encode(to_bytes('%s:%s' % (self.user, self.passwd)).replace('\n', ''))
+        return "Basic %s" % auth
 
 
 def main():
@@ -248,7 +253,6 @@ def main():
     name = module.params['name']
     user = module.params['user']
     passwd = module.params['passwd']
-    token = module.params['token']
     service = module.params['service']
     hours = module.params['hours']
     minutes = module.params['minutes']
@@ -259,18 +263,20 @@ def main():
     if not token and not (user or passwd):
         module.fail_json(msg="neither user and passwd nor token specified")
 
+    pd = PagerDutyRequest(module, name, user, passwd, token)
+
     if state == "running" or state == "started":
         if not service:
             module.fail_json(msg="service not specified")
-        (rc, out, changed) = create(module, name, user, passwd, token, requester_id, service, hours, minutes, desc)
+        (rc, out, changed) = pd.create(requester_id, service, hours, minutes, desc)
         if rc == 0:
             changed = True
 
     if state == "ongoing":
-        (rc, out, changed) = ongoing(module, name, user, passwd, token)
+        (rc, out, changed) = pd.ongoing()
 
     if state == "absent":
-        (rc, out, changed) = absent(module, name, user, passwd, token, requester_id, service)
+        (rc, out, changed) = pd.absent(requester_id, service)
 
     if rc != 0:
         module.fail_json(msg="failed", result=out)
