@@ -115,6 +115,7 @@ CATEGORY_COMMANDS_ALL = {
     "Manager": ["GetManagerAttributes", "GetLogs"],
 }
 
+CATEGORY_DEFAULT = "Systems"
 CATEGORY_COMMANDS_DEFAULT = {
     "Systems": "GetSystemInventory",
     "Chassis": "GetFanInventory",
@@ -151,7 +152,7 @@ def main():
     # Build Category list
     if not module.params['category']:
         # True if we don't specify a category --> use default
-        category_list.append("Systems")
+        category_list.append(CATEGORY_DEFAULT)
     elif module.params['category'] == "all":
         for entry in CATEGORY_COMMANDS_ALL:
             category_list.append(entry)
@@ -176,10 +177,10 @@ def main():
                         command_list.append(cmd)
                     else:
                         # Fail if even one command given is invalid
-                        module.fail_json(msg="Invalid Command")
+                        module.fail_json(msg="Invalid Command: %s" % cmd)
         else:
             # Fail if even one category given is invalid
-            module.fail_json(msg="Invalid Category")
+            module.fail_json(msg="Invalid Category: %s" % category)
 
         # Organize by Categories / Commands
         if category == "Systems":
