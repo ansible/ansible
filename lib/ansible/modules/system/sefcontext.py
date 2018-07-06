@@ -61,7 +61,7 @@ options:
   reload:
     description:
     - Reload SELinux policy after commit.
-    - NOTE: This does not apply the SELinux file context to filesystem(s).
+    - Note that this does not apply SELinux file contexts to filesystem(s).
     type: bool
     default: 'yes'
 notes:
