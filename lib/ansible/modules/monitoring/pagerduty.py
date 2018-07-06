@@ -152,8 +152,11 @@ class PagerDutyRequest(object):
         self.token = token
 
     def ongoing(self, http_call=fetch_url):
-        url = "https://" + self.name + ".pagerduty.com/api/v1/maintenance_windows/ongoing"
-        headers = {"Authorization": self._auth_header()}
+        url = "https://api.pagerduty.com/maintenance_windows?filter=ongoing"
+        headers = {
+            "Authorization": self._auth_header(),
+            'Accept': 'application/vnd.pagerduty+json;version=2'
+        }
 
         response, info = http_call(self.module, url, headers=headers)
         if info['status'] != 200:
