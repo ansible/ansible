@@ -99,6 +99,13 @@ EXAMPLES = """
 # Collect only facts returned by facter.
 # ansible all -m setup -a 'gather_subset=!all,!any,facter'
 
+- name: Collect only facts returned by facter
+  setup:
+    gather_subset:
+      - '!all'
+      - '!any'
+      - facter
+
 # Display only facts about certain interfaces.
 # ansible all -m setup -a 'filter=ansible_eth[0-2]'
 
