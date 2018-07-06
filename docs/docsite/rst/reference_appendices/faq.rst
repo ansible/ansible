@@ -533,7 +533,7 @@ The above DOES NOT WORK as you expect, if you need to use a dynamic variable use
 
     {{ hostvars[inventory_hostname]['somevar_' + other_var] }}
 
-For 'non host vars' you can use the vars lookup plugin:
+For 'non host vars' you can use the :ref:`vars lookup<vars_lookup>` plugin:
 
 .. code-block:: jinja
 
