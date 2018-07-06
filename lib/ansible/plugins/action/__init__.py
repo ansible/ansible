@@ -226,12 +226,43 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         return True
 
+    def _get_admin_users(self):
+        '''
+        Returns a list of admin users that are configured for the current shell
+        plugin
+        '''
+        try:
+            admin_users = self._connection._shell.get_option('admin_users')
+        except AnsibleError:
+            # fallback for old custom plugins w/o get_option
+            admin_users = ['root']
+        return admin_users
+
+    def _is_become_unprivileged(self):
+        '''
+        The user is not the same as the connection user and is not part of the
+        shell configured admin users
+        '''
+        # if we don't use become then we know we aren't switching to a
+        # different unprivileged user
+        if not self._play_context.become:
+            return False
+
+        # if we use become and the user is not an admin (or same user) then
+        # we need to return become_unprivileged as True
+        admin_users = self._get_admin_users()
+        try:
+            remote_user = self._connection.get_option('remote_user')
+        except AnsibleError:
+            remote_user = self._play_context.remote_user
+        return bool(self._play_context.become_user not in admin_users + [remote_user])
+
     def _make_tmp_path(self, remote_user=None):
         '''
         Create and return a temporary path on a remote box.
         '''
 
-        deescalated_user = self._deescalated_user()
+        become_unprivileged = self._is_become_unprivileged()
         try:
             remote_tmp = self._connection._shell.get_option('remote_tmp')
         except AnsibleError:
@@ -246,7 +277,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             tmpdir = C.DEFAULT_LOCAL_TMP
         else:
             tmpdir = self._remote_expand_user(remote_tmp, sudoable=False)
-        cmd = self._connection._shell.mkdtemp(basefile=basefile, system=deescalated_user, tmpdir=tmpdir)
+        cmd = self._connection._shell.mkdtemp(basefile=basefile, system=become_unprivileged, tmpdir=tmpdir)
         result = self._low_level_execute_command(cmd, sudoable=False)
 
         # error handling on this seems a little aggressive?
@@ -290,7 +321,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         self._connection._shell.tmpdir = rc
 
-        if not deescalated_user:
+        if not become_unprivileged:
             self._connection._shell.env.update({'ANSIBLE_REMOTE_TMP': self._connection._shell.tmpdir})
         return rc
 
@@ -402,7 +433,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # we have a need for it, at which point we'll have to do something different.
             return remote_paths
 
-        if self._deescalated_user():
+        if self._is_become_unprivileged():
             # Unprivileged user that's different than the ssh user.  Let's get
             # to work!
 
@@ -653,7 +684,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         module_args['_ansible_keep_remote_files'] = C.DEFAULT_KEEP_REMOTE_FILES
 
         # make sure all commands use the designated temporary directory if created
-        if self._deescalated_user():  # force fallback on remote_tmp as user cannot normally write to dir
+        if self._is_become_unprivileged():  # force fallback on remote_tmp as user cannot normally write to dir
             module_args['_ansible_tmpdir'] = None
         else:
             module_args['_ansible_tmpdir'] = self._connection._shell.tmpdir
@@ -1024,33 +1055,3 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         # if missing it will return a file not found exception
         return self._loader.path_dwim_relative_stack(path_stack, dirname, needle)
-
-    def _get_admin_users(self):
-        '''
-        Returns a list of admin users that are configured for the current shell
-        plugin
-        '''
-        # fallback for old custom plugins w/o get_option
-        try:
-            admin_users = self._connection._shell.get_option('admin_users')
-        except AnsibleError:
-            admin_users = ['root']
-        return admin_users
-
-    def _deescalated_user(self):
-        '''
-        The user is not the same as the connection user and is not part of the
-        shell configured admin users
-        '''
-        # if we don't use become then we know the user is deescalated
-        if not self._play_context.become:
-            return False
-
-        # if we use become and the user is not an admin (or same user) then
-        # we need to deescalate
-        admin_users = self._get_admin_users()
-        try:
-            remote_user = self._connection.get_option('remote_user')
-        except AnsibleError:
-            remote_user = self._play_context.remote_user
-        return bool(self._play_context.become_user not in admin_users + [remote_user])
