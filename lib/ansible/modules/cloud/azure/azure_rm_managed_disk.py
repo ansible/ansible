@@ -149,7 +149,7 @@ def managed_disk_to_dict(managed_disk):
     os_type = None
     if managed_disk.os_type:
         os_type = managed_disk.os_type.name
-    return dict(
+    result = dict(
         id=managed_disk.id,
         name=managed_disk.name,
         location=managed_disk.location,
@@ -159,6 +159,14 @@ def managed_disk_to_dict(managed_disk):
         storage_account_type=managed_disk.sku.name.value,
         managed_by=managed_disk.managed_by
     )
+
+    create_data = managed_disk.creation_data
+    result['create_option'] = create_data.create_option.value.lower()
+    if create_data.source_uri:
+        result['source_uri'] = create_data.source_uri
+    if create_data.source_resource_id:
+        result['source_resource_id'] = create_data.source_resource_id
+    return result
 
 
 class AzureRMManagedDisk(AzureRMModuleBase):
