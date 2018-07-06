@@ -1,4 +1,5 @@
 ---
-features:
-  - Add support for --debug, --verbose, --summarize
-  - Add support for setting logdest to both stdout and syslog via 'all'
+minor_changes:
+  - puppet - Add support for --debug, --verbose, --summarize 
+    https://github.com/ansible/ansible/issues/37986
+  - puppet - Add support for setting logdest to both stdout and syslog via 'all'
