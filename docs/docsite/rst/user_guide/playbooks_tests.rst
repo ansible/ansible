@@ -138,7 +138,7 @@ You can use `any` and `all` to check if any or all elements in a list are true o
 Testing paths
 `````````````
 
-.. note:: In 2.5 the follwing tests were renamed to remove the ``is_`` prefix
+.. note:: In 2.5 the following tests were renamed to remove the ``is_`` prefix
 
 The following tests can provide information about a path on the controller::
 
