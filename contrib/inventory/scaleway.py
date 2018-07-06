@@ -18,7 +18,7 @@ This script generates an Ansible hosts file with these host groups:
 <hostname>: Defines host itself with Scaleway's hostname as group name.
 <tag>: Contains all hosts which has "<tag>" as tag.
 <region>: Contains all hosts which are in the "<region>" region.
-all: Contains all hosts defined in Scaleway.
+scaleway: Contains all hosts defined in Scaleway.
 '''
 
 # (c) 2017, Paul B. <paul@bonaud.fr>
