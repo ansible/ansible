@@ -483,7 +483,7 @@ class Connection(ConnectionBase):
             self._connected = True
         return self
 
-    def _reset(self):
+    def reset(self):
         self.protocol = None
         self.shell_id = None
         self._connect()

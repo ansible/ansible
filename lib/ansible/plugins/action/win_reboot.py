@@ -155,8 +155,13 @@ class ActionModule(ActionBase):
                 display.vvv("attempting to get system uptime")
 
                 # override connection timeout from defaults to custom value
-                self._connection.set_option("connection_timeout", connect_timeout)
-                self._connection._reset()
+                try:
+                    self._connection.set_option("connection_timeout",
+                                                connect_timeout)
+                    self._connection.reset()
+                except AttributeError:
+                    display.warning("Connection plugin does not allow the "
+                                    "connection timeout to be overridden")
 
                 # try and get uptime
                 try:
@@ -171,9 +176,10 @@ class ActionModule(ActionBase):
 
             # reset the connection to clear the custom connection timeout
             try:
-                self._connection.set_option("connecton_timeout", connection_timeout_orig)
-                self._connection._reset()
-            except AnsibleError as e:
+                self._connection.set_option("connection_timeout",
+                                            connection_timeout_orig)
+                self._connection.reset()
+            except (AnsibleError, AttributeError) as e:
                 display.debug("Failed to reset connection_timeout back to default: %s" % to_native(e))
 
             # finally run test command to ensure everything is working
@@ -185,8 +191,11 @@ class ActionModule(ActionBase):
                     # in case of a failure trying to execute the command
                     # (another reboot occurred) we need to reset the connection
                     # to make sure we are not re-using the same shell id
-                    self._connection._reset()
-                    raise e
+                    try:
+                        self._connection.reset()
+                    except AttributeError:
+                        pass
+                    raise
                 else:
                     if rc != 0:
                         raise Exception("test command failed, stdout: '%s', stderr: '%s', rc: %d"
