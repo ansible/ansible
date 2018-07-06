@@ -80,7 +80,7 @@ def main():
         module.warn("'say' executable found but system is '%s': ignoring voice parameter" % get_platform())
 
     if not executable:
-        module.fail_json(msg="Unable to find either 'say' or 'espeak' executable")
+        module.fail_json(msg="Unable to find either 'say', 'espeak' or 'espeak-ng' executable")
 
     if module.check_mode:
         module.exit_json(msg=msg, changed=False)
