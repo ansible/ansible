@@ -157,6 +157,13 @@ EXAMPLES = """
   junos_config:
     zeroize: yes
 
+- name: Set VLAN access and trunking
+  junos_config:
+    lines:
+      - set vlans vlan02 vlan-id 6
+      - set interfaces ge-0/0/6.0 family ethernet-switching interface-mode access vlan members vlan02
+      - set interfaces ge-0/0/6.0 family ethernet-switching interface-mode trunk vlan members vlan02
+
 - name: confirm a previous commit
   junos_config:
     confirm_commit: yes
