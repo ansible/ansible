@@ -25,22 +25,13 @@ options:
     required: True
     type: str
 
-  user_summary:
-    description:
-      - A descriptive summary for the configuration.
-    required: False
-    type: str
-
   state:
     description:
       - Specifies the current state of the domain.
         C(reseted) will delete all configured services within the domain.
-        C(exported)
-        C(imported)
-        C(saved)
+        C(exported), C(imported), C(saved) domain settings
       - Be particularly careful about changing the status C(reseted).
-        These Will affect all configured services within the domain.
-        C(reseted) deletes all configuration data in the domain
+        These will deletes all configuration data in the domain.
     default: saved
     required: True
     type: str
@@ -100,6 +91,75 @@ options:
         default: True
         type: bool
 
+  user_summary:
+    description:
+      - A descriptive summary for the export.
+    required: False
+    type: str
+
+  all_files:
+    description:
+      - Include all files in the local directory for the domain?
+      - Only be taken into account during the export
+    default: False
+    required: False
+    type: bool
+
+  persisted:
+    description:
+      - Export from persisted or running configuration?
+      - Only be taken into account during the export
+    default: False
+    required: False
+    type: bool
+
+  internal_files:
+    description:
+      - Export internal configuration files?
+      - Only be taken into account during the export
+    default: True
+    required: False
+    type: bool
+
+  input_file:
+    description:
+      - The base64-encoded BLOB to import
+      - Only be taken into account during the import
+    required: False
+    type: str
+
+  overwrite_files:
+    description:
+      - Overwrite local files
+      - Only be taken into account during the import
+    default: False
+    required: False
+    type: bool
+
+  overwrite_objects:
+    description:
+      - Overwrite objects that exist
+      - Only be taken into account during the import
+    default: False
+    required: False
+    type: bool
+
+  dry_run:
+    description:
+      - Import package (on) or validate the import operation without importing (off).
+      - Only be taken into account during the import
+    default: False
+    required: False
+    type: bool
+
+  rewrite_local_ip:
+    description:
+      - The local address bindings of services in the import package are rewritten on import to their equivalent interfaces
+      - Only be taken into account during the import
+    default: False
+    required: False
+    type: bool
+
 notes:
   - This documentation was developed mostly from the content
     provided by IBM in its web administration interface.
@@ -111,11 +171,65 @@ author:
 '''
 
 EXAMPLES = '''
+- name: Test DataPower domain configuration module
+  connection: local
+  hosts: localhost
+  vars:
+    source_domain: test1
+    target_domain: test2
+    remote_idg:
+        server: idghosts
+        server_port: 5554
+        user: admin
+        password: admin
+        validate_certs: false
+        timeout: 15
 
+  tasks:
+
+    - name: Export domain
+      idg_domain_config:
+        name: "{{ source_domain }}"
+        idg_connection: "{{ remote_idg }}"
+        state: exported
+        all_files: True
+        user_summary: Midnight backup
+      register: export_out
+
+    - name: Import domain
+      idg_domain_config:
+        name: "{{ target_domain }}"
+        idg_connection: "{{ remote_idg }}"
+        state: imported
+        overwrite_files: True
+        overwrite_objects: True
+        input_file: "{{ export_out['file'] }}"
+
+    - name: Save domain
+      idg_domain_config:
+        name: "{{ target_domain }}"
+        idg_connection: "{{ remote_idg }}"
+        state: saved
+      register: save_out
 '''
 
 RETURN = '''
-
+name:
+  description:
+    - The name of the domain that is being worked on.
+  returned: changed and success
+  type: string
+  sample:
+    - core-security-wrap
+    - DevWSOrchestration
+msg:
+  description:
+    - Message returned by the device API.
+  returned: always
+  type: string
+  sample:
+    - Configuration was created.
+    - Unknown error for (https://idg-host1:5554/mgmt/domains/config/). <urlopen error timed out>
 '''
 
 import json

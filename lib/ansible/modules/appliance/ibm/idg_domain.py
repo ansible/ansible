@@ -27,7 +27,7 @@ options:
 
   user_summary:
     description:
-      - A descriptive summary for the configuration.
+      - A descriptive summary for the domain.
     required: False
     type: str
 
