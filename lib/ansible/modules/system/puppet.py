@@ -43,9 +43,10 @@ options:
     description:
       - Puppet environment to be used.
   logdest:
-    description:
-      - Where the puppet logs should go, if puppet apply is being used.
-    choices: [ stdout, syslog ]
+    description: |
+      Where the puppet logs should go, if puppet apply is being used. C(all)
+      will go to both C(stdout) and C(syslog).
+    choices: [ stdout, syslog, all ]
     default: stdout
     version_added: "2.1"
   certname:
@@ -61,6 +62,18 @@ options:
       - Execute a specific piece of Puppet code.
       - It has no effect with a puppetmaster.
     version_added: "2.1"
+  summarize:
+    description:
+      - Whether to print a transaction summary
+    version_added: "2.7"
+  verbose:
+    description:
+      - Print extra information
+    version_added: "2.7"
+  debug:
+    description:
+      - Enable full debugging
+    version_added: "2.7"
 requirements:
 - puppet
 author:
@@ -90,6 +103,12 @@ EXAMPLES = '''
 - name: Run puppet using a specific tags
   puppet:
     tags: update,nginx
+
+- name: Run a manifest with debug, log to both syslog and stdout, specify module path
+  puppet:
+    modulepath: /etc/puppet/modules:/opt/stack/puppet-modules:/usr/share/openstack-puppet/modules
+    logdest: all
+    manifest: /var/lib/example/puppet_step_config.pp
 '''
 
 import json
@@ -129,7 +148,9 @@ def main():
             puppetmaster=dict(type='str'),
             modulepath=dict(type='str'),
             manifest=dict(type='str'),
-            logdest=dict(type='str', default='stdout', choices=['stdout', 'syslog']),
+            logdest=dict(type='str', default='stdout', choices=['stdout',
+                                                                'syslog',
+                                                                'all']),
             # internal code to work with --diff, do not use
             show_diff=dict(type='bool', default=False, aliases=['show-diff']),
             facts=dict(type='dict'),
@@ -138,6 +159,9 @@ def main():
             certname=dict(type='str'),
             tags=dict(type='list'),
             execute=dict(type='str'),
+            summarize=dict(type='bool', default=False),
+            debug=dict(type='bool', default=False),
+            verbose=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
         mutually_exclusive=[
@@ -212,6 +236,8 @@ def main():
         cmd = "%s apply --detailed-exitcodes " % base_cmd
         if p['logdest'] == 'syslog':
             cmd += "--logdest syslog "
+        if p['logdest'] == 'all':
+            cmd += " --logdest syslog --logdest stdout"
         if p['modulepath']:
             cmd += "--modulepath='%s'" % p['modulepath']
         if p['environment']:
@@ -228,6 +254,12 @@ def main():
             cmd += " --execute '%s'" % p['execute']
         else:
             cmd += pipes.quote(p['manifest'])
+        if p['summarize']:
+            cmd += " --summarize"
+        if p['debug']:
+            cmd += " --debug"
+        if p['verbose']:
+            cmd += " --verbose"
     rc, stdout, stderr = module.run_command(cmd)
 
     if rc == 0:
