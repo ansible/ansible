@@ -466,13 +466,20 @@ class ELBListeners(object):
         if not listeners:
             listeners = []
 
+        fixed_listeners = []
         for listener in listeners:
-            if 'TargetGroupName' in listener['DefaultActions'][0]:
-                listener['DefaultActions'][0]['TargetGroupArn'] = convert_tg_name_to_arn(self.connection, self.module,
-                                                                                         listener['DefaultActions'][0]['TargetGroupName'])
-                del listener['DefaultActions'][0]['TargetGroupName']
+            fixed_actions = []
+            for action in listener['DefaultActions']:
+                if 'TargetGroupName' in action:
+                    action['TargetGroupArn'] = convert_tg_name_to_arn(self.connection,
+                                                                      self.module,
+                                                                      action['TargetGroupName'])
+                    del action['TargetGroupName']
+                fixed_actions.append(action)
+            listener['DefaultActions'] = fixed_actions
+            fixed_listeners.append(listener)
 
-        return listeners
+        return fixed_listeners
 
     def compare_listeners(self):
         """
@@ -674,12 +681,18 @@ class ELBListenerRules(object):
         :return: the same list of dicts ensuring that each rule Actions dict has TargetGroupArn key. If a TargetGroupName key exists, it is removed.
         """
 
+        fixed_rules = []
         for rule in rules:
-            if 'TargetGroupName' in rule['Actions'][0]:
-                rule['Actions'][0]['TargetGroupArn'] = convert_tg_name_to_arn(self.connection, self.module, rule['Actions'][0]['TargetGroupName'])
-                del rule['Actions'][0]['TargetGroupName']
+            fixed_actions = []
+            for action in rule['Actions']:
+                if 'TargetGroupName' in action:
+                    action['TargetGroupArn'] = convert_tg_name_to_arn(self.connection, self.module, action['TargetGroupName'])
+                    del action['TargetGroupName']
+                fixed_actions.append(action)
+            rule['Actions'] = fixed_actions
+            fixed_rules.append(rule)
 
-        return rules
+        return fixed_rules
 
     def _get_elb_listener_rules(self):
 
