@@ -96,7 +96,7 @@ options:
     description:
       - Path to a file containing environment variables I(FOO=BAR).
       - If variable also present in C(env), then C(env) value will override.
-      - Requires docker >= 1.4.0.
+      - Requires docker >= 2.3.0.
   entrypoint:
     description:
       - Command that overwrites the default ENTRYPOINT of the image.
@@ -421,7 +421,7 @@ author:
 
 requirements:
     - "python >= 2.6"
-    - "docker >= 1.7.0"
+    - "docker >= 2.3.0"
     - "Docker API >= 1.20"
 '''
 
