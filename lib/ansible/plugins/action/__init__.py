@@ -60,9 +60,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
 
-        self._admin_users = []
-        self._deescalate = False
-
     @abstractmethod
     def run(self, tmp=None, task_vars=None):
         """ Action Plugins should implement this method to perform their
@@ -88,17 +85,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                                  ' plugins should set self._connection._shell.tmpdir to share'
                                  ' the tmpdir']
         del tmp
-
-        # set info needed to make decisions, fallback for old custom plugins w/o get_option
-        try:
-            self._admin_users = self._connection._shell.get_option('admin_users')
-        except AnsibleError:
-            self._admin_users = ['root']
-        try:
-            remote_user = self._connection.get_option('remote_user')
-        except AnsibleError:
-            remote_user = self._play_context.remote_user
-        self._deescalate = bool(self._play_context.become and self._play_context.become_user not in self._admin_users + [remote_user])
 
         if self._task.async_val and not self._supports_async:
             raise AnsibleActionFail('async is not supported for this task.')
@@ -245,9 +231,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         Create and return a temporary path on a remote box.
         '''
 
-        if remote_user is None:
-            remote_user = self._play_context.remote_user
-
+        deescalated_user = self._deescalated_user()
         try:
             remote_tmp = self._connection._shell.get_option('remote_tmp')
         except AnsibleError:
@@ -262,7 +246,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             tmpdir = C.DEFAULT_LOCAL_TMP
         else:
             tmpdir = self._remote_expand_user(remote_tmp, sudoable=False)
-        cmd = self._connection._shell.mkdtemp(basefile=basefile, system=self._deescalate, tmpdir=tmpdir)
+        cmd = self._connection._shell.mkdtemp(basefile=basefile, system=deescalated_user, tmpdir=tmpdir)
         result = self._low_level_execute_command(cmd, sudoable=False)
 
         # error handling on this seems a little aggressive?
@@ -306,7 +290,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         self._connection._shell.tmpdir = rc
 
-        if not self._deescalate:
+        if not deescalated_user:
             self._connection._shell.env.update({'ANSIBLE_REMOTE_TMP': self._connection._shell.tmpdir})
         return rc
 
@@ -418,7 +402,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # we have a need for it, at which point we'll have to do something different.
             return remote_paths
 
-        if self._deescalate:
+        if self._deescalated_user():
             # Unprivileged user that's different than the ssh user.  Let's get
             # to work!
 
@@ -445,8 +429,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                         raise AnsibleError('Failed to set file mode on remote temporary files (rc: {0}, err: {1})'.format(res['rc'], to_native(res['stderr'])))
 
                 res = self._remote_chown(remote_paths, self._play_context.become_user)
-                if res['rc'] != 0 and remote_user in self._admin_users:
-                    # chown failed even if remove_user is administrator/root
+                if res['rc'] != 0 and remote_user in self._get_admin_users():
+                    # chown failed even if remote_user is administrator/root
                     raise AnsibleError('Failed to change ownership of the temporary files Ansible needs to create despite connecting as a privileged user. '
                                        'Unprivileged become user would be unable to read the file.')
                 elif res['rc'] != 0:
@@ -669,7 +653,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         module_args['_ansible_keep_remote_files'] = C.DEFAULT_KEEP_REMOTE_FILES
 
         # make sure all commands use the designated temporary directory if created
-        if self._deescalate:  # force fallback on remote_tmp as user cannot normally write to dir
+        if self._deescalated_user():  # force fallback on remote_tmp as user cannot normally write to dir
             module_args['_ansible_tmpdir'] = None
         else:
             module_args['_ansible_tmpdir'] = self._connection._shell.tmpdir
@@ -1040,3 +1024,33 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         # if missing it will return a file not found exception
         return self._loader.path_dwim_relative_stack(path_stack, dirname, needle)
+
+    def _get_admin_users(self):
+        '''
+        Returns a list of admin users that are configured for the current shell
+        plugin
+        '''
+        # fallback for old custom plugins w/o get_option
+        try:
+            admin_users = self._connection._shell.get_option('admin_users')
+        except AnsibleError:
+            admin_users = ['root']
+        return admin_users
+
+    def _deescalated_user(self):
+        '''
+        The user is not the same as the connection user and is not part of the
+        shell configured admin users
+        '''
+        # if we don't use become then we know the user is deescalated
+        if not self._play_context.become:
+            return False
+
+        # if we use become and the user is not an admin (or same user) then
+        # we need to deescalate
+        admin_users = self._get_admin_users()
+        try:
+            remote_user = self._connection.get_option('remote_user')
+        except AnsibleError:
+            remote_user = self._play_context.remote_user
+        return bool(self._play_context.become_user not in admin_users + [remote_user])
