@@ -61,6 +61,7 @@ options:
             - Disables the local device status pages (U[my.meraki.com](my.meraki.com), U[ap.meraki.com](ap.meraki.com), U[switch.meraki.com](switch.meraki.com),
             U[wired.meraki.com](wired.meraki.com))
         type: bool
+        version_added: '2.7'
 
 author:
     - Kevin Breit (@kbreit)
