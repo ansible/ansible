@@ -14,8 +14,7 @@ def main():
         'test/integration/targets/lookup_properties/lookup-8859-15.ini',
         'test/integration/targets/template/files/encoding_1252_utf-8.expected',
         'test/integration/targets/template/files/encoding_1252_windows-1252.expected',
-        'test/integration/targets/template/templates/encoding_1252_utf-8.j2',
-        'test/integration/targets/template/templates/encoding_1252_windows-1252.j2',
+        'test/integration/targets/template/templates/encoding_1252.j2',
     ])
 
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
