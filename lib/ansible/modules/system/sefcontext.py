@@ -70,6 +70,10 @@ notes:
   SELinux context(s), so it is advisable to first create the SELinux
   file contexts before creating files, or run C(restorecon) manually
   for the existing files that require the new SELinux file contexts.
+- Not applying SELinux fcontexts is a deliberate decision as it would
+  be unclear what changes would entail to, and there's no guarantee
+  that applying SELinux fcontext does not pick up other unrelated
+  changes.
 requirements:
 - libselinux-python
 - policycoreutils-python
