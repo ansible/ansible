@@ -57,9 +57,9 @@ options:
         - Timezone associated to network.
         - See U(https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) for a list of valid timezones.
     disable_my_meraki:
-        description:
-        - Disables the local device status pages (U[my.meraki.com](my.meraki.com), U[ap.meraki.com](ap.meraki.com), U[switch.meraki.com](switch.meraki.com),
-        U[wired.meraki.com](wired.meraki.com))
+        description: >
+            - Disables the local device status pages (U[my.meraki.com](my.meraki.com), U[ap.meraki.com](ap.meraki.com), U[switch.meraki.com](switch.meraki.com),
+            U[wired.meraki.com](wired.meraki.com))
         type: bool
 
 author:
@@ -90,6 +90,7 @@ EXAMPLES = r'''
     type: switch
     timezone: America/Chicago
     tags: production, chicago
+  delegate_to: localhost
 '''
 
 RETURN = r'''
