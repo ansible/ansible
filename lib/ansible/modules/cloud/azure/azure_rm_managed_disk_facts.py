@@ -76,10 +76,10 @@ azure_managed_disk:
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
-from ansible.modules.cloud.azure.azure_rm_managed_disk import managed_disk_to_dict
 
 try:
     from msrestazure.azure_exceptions import CloudError
+    from ansible.modules.cloud.azure.azure_rm_managed_disk import managed_disk_to_dict
 except:
     # handled in azure_rm_common
     pass
