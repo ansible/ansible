@@ -1,0 +1,2 @@
+bugfixes:
+  - pause - do not set stdout to raw mode when redirecting to a file (https://github.com/ansible/ansible/issues/41717)
