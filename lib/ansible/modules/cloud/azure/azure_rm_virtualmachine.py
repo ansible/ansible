@@ -1305,6 +1305,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         network_profile=self.compute_models.NetworkProfile(
                             network_interfaces=nics
                         ),
+                        license_type=license_type
                     )
 
                     if vm_dict.get('tags'):
