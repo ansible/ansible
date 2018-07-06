@@ -26,7 +26,7 @@ $creates_path = Get-AnsibleParam -obj $params -name "creates_path" -type "path"
 $creates_version = Get-AnsibleParam -obj $params -name "creates_version" -type "str"
 $creates_service = Get-AnsibleParam -obj $params -name "creates_service" -type "str"
 $display_name = Get-AnsibleParam -obj $params -name "display_name" -type "str"
-$display_version = Get-AnsibleParam -obj $params -name "display_version" -type "str" -failifempty ($display_name -ne $null)
+$display_version = Get-AnsibleParam -obj $params -name "display_version" -type "str"
 
 $result = @{
     changed = $false
@@ -79,6 +79,10 @@ if ($path -eq $null) {
 
 if ($creates_version -ne $null -and $creates_path -eq $null) {
     Fail-Json -obj $result -Message "creates_path must be set when creates_version is set"
+}
+
+if ($display_version -ne $null -and $display_name -eq $null) {
+    Fail-Json -obj $result -Message "display_name must be set when display_version is set"
 }
 
 $msi_tools = @"
@@ -259,7 +263,7 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
         }
     }
 
-    if ($metadata.display_name -ne $null -and $metadata.display_version -ne $null) {
+    if ($metadata.display_name -ne $null) {
         $uninstall_node = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\"
         $uninstall_node_wow64 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\"
         $uninstall_array = Get-ChildItem -Path $uninstall_node -Name
@@ -273,9 +277,13 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
             if ( Test-RegistryProperty -Path $uninstall_path -name "displayVersion") {
                $displayversion = (Get-ItemProperty -Path $uninstall_path -Name "displayVersion").displayVersion
             }
-            if ($metadata.display_name -eq $displayname -and $metadata.display_version -eq $displayversion) {
-               $uninstall_key  = $uninstall_path
-               $metadata.installed = $true
+            if ($metadata.display_name -eq $displayname) {
+                $uninstall_key  = $uninstall_path
+                if ( $metadata.display_version -ne $null -and $metadata.display_version -eq $displayversion) {
+                    $metadata.installed = $true
+                } else {
+                    $metadata.installed = $true
+                }
             }
         }
         foreach ($software in $uninstall_array_wow64) {
@@ -286,9 +294,13 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
             if ( Test-RegistryProperty -Path $uninstall_path -name "displayVersion") {
                $displayversion = (Get-ItemProperty -Path $uninstall_path -Name "displayVersion").displayVersion
             }
-            if ($metadata.display_name -eq $displayname -and $metadata.display_version -eq $displayversion) {
-               $uninstall_key  = $uninstall_path
-               $metadata.installed = $true
+            if ($metadata.display_name -eq $displayname) {
+                $uninstall_key  = $uninstall_path
+                if ( $metadata.display_version -ne $null -and $metadata.display_version -eq $displayversion) {
+                    $metadata.installed = $true
+                } else {
+                    $metadata.installed = $true
+                }
             }
         }
         if ($metadata.installed -eq $true) {
