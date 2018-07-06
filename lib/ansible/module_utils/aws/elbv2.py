@@ -563,7 +563,20 @@ class ELBListeners(object):
             else:
                 current_actions_sorted = sorted(current_listener['DefaultActions'], key=lambda x: x['Order'])
                 new_actions_sorted = sorted(new_listener['DefaultActions'], key=lambda x: x['Order'])
-                if current_actions_sorted != new_actions_sorted:
+
+                # the AWS api won't return the client secret, so we'll have to remove it
+                # or the module will always see the new and current actions as different
+                # and try to apply the same config
+                new_actions_sorted_no_secret = []
+                for action in new_actions_sorted:
+                    # the secret is currently only defined in the oidc config
+                    if action['Type'] == 'authenticate-oidc':
+                        action['AuthenticateOidcConfig'].pop('ClientSecret')
+                        new_actions_sorted_no_secret.append(action)
+                    else:
+                        new_actions_sorted_no_secret.append(action)
+
+                if current_actions_sorted != new_actions_sorted_no_secret:
                     modified_listener['DefaultActions'] = new_listener['DefaultActions']
         # If the action lengths are different, then replace with the new actions
         else:
@@ -728,7 +741,20 @@ class ELBListenerRules(object):
             else:
                 current_actions_sorted = sorted(current_rule['Actions'], key=lambda x: x['Order'])
                 new_actions_sorted = sorted(new_rule['Actions'], key=lambda x: x['Order'])
-                if current_actions_sorted != new_actions_sorted:
+
+                # the AWS api won't return the client secret, so we'll have to remove it
+                # or the module will always see the new and current actions as different
+                # and try to apply the same config
+                new_actions_sorted_no_secret = []
+                for action in new_actions_sorted:
+                    # the secret is currently only defined in the oidc config
+                    if action['Type'] == 'authenticate-oidc':
+                        action['AuthenticateOidcConfig'].pop('ClientSecret')
+                        new_actions_sorted_no_secret.append(action)
+                    else:
+                        new_actions_sorted_no_secret.append(action)
+
+                if current_actions_sorted != new_actions_sorted_no_secret:
                     modified_rule['Actions'] = new_rule['Actions']
         # If the action lengths are different, then replace with the new actions
         else:
