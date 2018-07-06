@@ -79,6 +79,7 @@ options:
     vm_shell_args:
       description:
       - The argument to the program.
+      - The characters which must be escaped to the shell also be escaped on the command line provided.
       default: " "
     vm_shell_env:
       description:
@@ -104,12 +105,12 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = r'''
 - name: Run command inside a virtual machine
   vmware_vm_shell:
-    hostname: myVSphere
-    username: myUsername
-    password: mySecret
-    datacenter: myDatacenter
-    folder: /vm
-    vm_id: NameOfVM
+    hostname: "{{ vcenter_server }}"
+    username: "{{ vcenter_user }}"
+    password: "{{ vcenter_pass }}"
+    datacenter: "{{ datacenter }}"
+    folder: /"{{datacenter}}"/vm
+    vm_id: "{{ vm_name }}"
     vm_username: root
     vm_password: superSecret
     vm_shell: /bin/echo
@@ -123,11 +124,11 @@ EXAMPLES = r'''
 
 - name: Run command inside a virtual machine with wait and timeout
   vmware_vm_shell:
-    hostname: myVSphere
-    username: myUsername
-    password: mySecret
-    datacenter: myDatacenter
-    folder: /vm
+    hostname: "{{ vcenter_server }}"
+    username: "{{ vcenter_user }}"
+    password: "{{ vcenter_pass }}"
+    datacenter: "{{ datacenter }}"
+    folder: /"{{datacenter}}"/vm
     vm_id: NameOfVM
     vm_username: root
     vm_password: superSecret
@@ -137,6 +138,35 @@ EXAMPLES = r'''
     timeout: 2000
   delegate_to: localhost
   register: shell_command_with_wait_timeout
+
+- name: Change user password in the guest machine
+  vmware_vm_shell:
+    hostname: "{{ vcenter_server }}"
+    username: "{{ vcenter_user }}"
+    password: "{{ vcenter_pass }}"
+    datacenter: "{{ datacenter }}"
+    folder: /"{{datacenter}}"/vm
+    vm_id: "{{ vm_name }}"
+    vm_username: sample
+    vm_password: old_password
+    vm_shell: "/bin/echo"
+    vm_shell_args: "-e 'old_password\nnew_password\nnew_password' | passwd sample > /tmp/$$.txt 2>&1"
+  delegate_to: localhost
+
+- name: Change hostname of guest machine
+  vmware_vm_shell:
+    hostname: "{{ vcenter_server }}"
+    username: "{{ vcenter_user }}"
+    password: "{{ vcenter_pass }}"
+    validate_certs: no
+    datacenter: "{{ datacenter }}"
+    folder: /"{{datacenter}}"/vm
+    vm_id: "{{ vm_name }}"
+    vm_username: testUser
+    vm_password: SuperSecretPassword
+    vm_shell: "/usr/bin/hostnamectl"
+    vm_shell_args: "set-hostname new_hostname > /tmp/$$.txt 2>&1"
+  delegate_to: localhost
 '''
 
 RETURN = r'''
