@@ -1096,6 +1096,10 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                                         publisher=self.plan.get('publisher'),
                                                         promotion_code=self.plan.get('promotion_code'))
 
+                    license_type = None
+                    if self.license_type is None:
+                        license_type = "None"
+
                     vm_resource = self.compute_models.VirtualMachine(
                         location=self.location,
                         tags=self.tags,
@@ -1275,6 +1279,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         )
                     else:
                         os_profile = None
+                    license_type = None
+                    if self.license_type is None:
+                        license_type = "None"
 
                     vm_resource = self.compute_models.VirtualMachine(
                         location=vm_dict['location'],
