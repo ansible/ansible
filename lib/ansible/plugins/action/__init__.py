@@ -226,18 +226,43 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         return True
 
+    def _get_admin_users(self):
+        '''
+        Returns a list of admin users that are configured for the current shell
+        plugin
+        '''
+        try:
+            admin_users = self._connection._shell.get_option('admin_users')
+        except AnsibleError:
+            # fallback for old custom plugins w/o get_option
+            admin_users = ['root']
+        return admin_users
+
+    def _is_become_unprivileged(self):
+        '''
+        The user is not the same as the connection user and is not part of the
+        shell configured admin users
+        '''
+        # if we don't use become then we know we aren't switching to a
+        # different unprivileged user
+        if not self._play_context.become:
+            return False
+
+        # if we use become and the user is not an admin (or same user) then
+        # we need to return become_unprivileged as True
+        admin_users = self._get_admin_users()
+        try:
+            remote_user = self._connection.get_option('remote_user')
+        except AnsibleError:
+            remote_user = self._play_context.remote_user
+        return bool(self._play_context.become_user not in admin_users + [remote_user])
+
     def _make_tmp_path(self, remote_user=None):
         '''
         Create and return a temporary path on a remote box.
         '''
 
-        if remote_user is None:
-            remote_user = self._play_context.remote_user
-
-        try:
-            admin_users = self._connection._shell.get_option('admin_users') + [remote_user]
-        except AnsibleError:
-            admin_users = ['root', remote_user]  # plugin does not support admin_users
+        become_unprivileged = self._is_become_unprivileged()
         try:
             remote_tmp = self._connection._shell.get_option('remote_tmp')
         except AnsibleError:
@@ -245,7 +270,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         # deal with tmpdir creation
         basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
-        use_system_tmp = bool(self._play_context.become and self._play_context.become_user not in admin_users)
         # Network connection plugins (network_cli, netconf, etc.) execute on the controller, rather than the remote host.
         # As such, we want to avoid using remote_user for paths  as remote_user may not line up with the local user
         # This is a hack and should be solved by more intelligent handling of remote_tmp in 2.7
@@ -253,7 +277,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             tmpdir = C.DEFAULT_LOCAL_TMP
         else:
             tmpdir = self._remote_expand_user(remote_tmp, sudoable=False)
-        cmd = self._connection._shell.mkdtemp(basefile=basefile, system=use_system_tmp, tmpdir=tmpdir)
+        cmd = self._connection._shell.mkdtemp(basefile=basefile, system=become_unprivileged, tmpdir=tmpdir)
         result = self._low_level_execute_command(cmd, sudoable=False)
 
         # error handling on this seems a little aggressive?
@@ -297,7 +321,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         self._connection._shell.tmpdir = rc
 
-        if not use_system_tmp:
+        if not become_unprivileged:
             self._connection._shell.env.update({'ANSIBLE_REMOTE_TMP': self._connection._shell.tmpdir})
         return rc
 
@@ -409,12 +433,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # we have a need for it, at which point we'll have to do something different.
             return remote_paths
 
-        try:
-            admin_users = self._connection._shell.get_option('admin_users')
-        except AnsibleError:
-            admin_users = ['root']  # plugin does not support admin users
-
-        if self._play_context.become and self._play_context.become_user and self._play_context.become_user not in admin_users + [remote_user]:
+        if self._is_become_unprivileged():
             # Unprivileged user that's different than the ssh user.  Let's get
             # to work!
 
@@ -441,8 +460,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                         raise AnsibleError('Failed to set file mode on remote temporary files (rc: {0}, err: {1})'.format(res['rc'], to_native(res['stderr'])))
 
                 res = self._remote_chown(remote_paths, self._play_context.become_user)
-                if res['rc'] != 0 and remote_user in admin_users:
-                    # chown failed even if remove_user is root
+                if res['rc'] != 0 and remote_user in self._get_admin_users():
+                    # chown failed even if remote_user is administrator/root
                     raise AnsibleError('Failed to change ownership of the temporary files Ansible needs to create despite connecting as a privileged user. '
                                        'Unprivileged become user would be unable to read the file.')
                 elif res['rc'] != 0:
@@ -665,7 +684,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         module_args['_ansible_keep_remote_files'] = C.DEFAULT_KEEP_REMOTE_FILES
 
         # make sure all commands use the designated temporary directory if created
-        module_args['_ansible_tmpdir'] = self._connection._shell.tmpdir
+        if self._is_become_unprivileged():  # force fallback on remote_tmp as user cannot normally write to dir
+            module_args['_ansible_tmpdir'] = None
+        else:
+            module_args['_ansible_tmpdir'] = self._connection._shell.tmpdir
 
         # make sure the remote_tmp value is sent through in case modules needs to create their own
         try:
