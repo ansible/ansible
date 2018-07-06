@@ -132,7 +132,7 @@ def sanitize_result(data):
     to a list.
     """
     if isinstance(data, dict):
-        return {k: sanitize_result(v) for k, v in data.items()}
+        return dict((k, sanitize_result(v)) for k, v in data.items())
     elif isinstance(data, (list, tuple)):
         return [sanitize_result(v) for v in data]
     else:
