@@ -415,7 +415,7 @@ class TestActionBase(unittest.TestCase):
             return " ".join(to_run)
 
         def get_option(option):
-            return {}.get(option)
+            return {'admin_users': ['root', 'toor']}.get(option)
 
         mock_connection = MagicMock()
         mock_connection.build_module_command.side_effect = build_module_command
