@@ -107,9 +107,9 @@ from ansible.module_utils.six import b
 from ansible.module_utils._text import to_native
 
 
-def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False):
+def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False, tmpdir=None):
     ''' assemble a file from a directory of fragments '''
-    tmpfd, temp_path = tempfile.mkstemp()
+    tmpfd, temp_path = tempfile.mkstemp(dir=tmpdir)
     tmp = os.fdopen(tmpfd, 'wb')
     delimit_me = False
     add_newline = False
@@ -204,7 +204,7 @@ def main():
     if validate and "%s" not in validate:
         module.fail_json(msg="validate must contain %%s: %s" % validate)
 
-    path = assemble_from_fragments(src, delimiter, compiled_regexp, ignore_hidden)
+    path = assemble_from_fragments(src, delimiter, compiled_regexp, ignore_hidden, module.tmpdir)
     path_hash = module.sha1(path)
     result['checksum'] = path_hash
 
