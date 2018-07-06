@@ -944,6 +944,7 @@ class AnsibleModule(object):
                     except (OSError, IOError) as e:
                         self.warn("Unable to use %s as temporary directory, "
                                   "failing back to system: %s" % (basedir, to_native(e)))
+                        basedir = None
                     else:
                         self.warn("Module remote_tmp %s did not exist and was "
                                   "created with a mode of 0700, this may cause"
@@ -952,7 +953,13 @@ class AnsibleModule(object):
                                   "the correct permissions manually" % basedir)
 
             basefile = "ansible-moduletmp-%s-" % time.time()
-            tmpdir = tempfile.mkdtemp(prefix=basefile, dir=basedir)
+            try:
+                tmpdir = tempfile.mkdtemp(prefix=basefile, dir=basedir)
+            except (OSError, IOError) as e:
+                self.fail_json(
+                    msg="Failed to create remote module tmp path at dir %s "
+                        "with prefix %s: %s" % (basedir, basefile, to_native(e))
+                )
             if not self._keep_remote_files:
                 atexit.register(shutil.rmtree, tmpdir)
             self._tmpdir = tmpdir
