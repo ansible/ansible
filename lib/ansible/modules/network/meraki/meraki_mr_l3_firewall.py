@@ -78,6 +78,41 @@ extends_documentation_fragment: meraki
 '''
 
 EXAMPLES = r'''
+- name: Create single firewall rule
+  meraki_mr_l3_firewall:
+    auth_key: abc123
+    state: present
+    org_name: YourOrg
+    net_id: 12345
+    number: 1
+    rules:
+      - comment: Integration test rule
+        policy: allow
+        protocol: tcp
+        dest_port: 80
+        dest_cidr: 192.0.2.0/24
+    allow_lan_access: no
+  delegate_to: localhost
+  
+- name: Enable local LAN access
+  meraki_mr_l3_firewall:
+    auth_key: abc123
+    state: present
+    org_name: YourOrg
+    net_id: 123
+    number: 1
+    rules:
+    allow_lan_access: yes
+  delegate_to: localhost
+
+- name: Query firewall rules
+  meraki_mr_l3_firewall:
+    auth_key: abc123
+    state: query
+    org_name: YourOrg
+    net_name: YourNet
+    number: 1
+  delegate_to: localhost
 '''
 
 RETURN = r'''
