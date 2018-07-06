@@ -24,7 +24,7 @@ Azure External Inventory Script
 ===============================
 Generates dynamic inventory by making API requests to the Azure Resource
 Manager using the Azure Python SDK. For instruction on installing the
-Azure Python SDK see http://azure-sdk-for-python.readthedocs.org/
+Azure Python SDK see https://azure-sdk-for-python.readthedocs.io/
 
 Authentication
 --------------
@@ -326,10 +326,10 @@ class AzureRM(object):
         # get authentication authority
         # for adfs, user could pass in authority or not.
         # for others, use default authority from cloud environment
-        if self.credentials.get('adfs_authority_url') is None:
-            self._adfs_authority_url = self._cloud_environment.endpoints.active_directory
-        else:
+        if self.credentials.get('adfs_authority_url'):
             self._adfs_authority_url = self.credentials.get('adfs_authority_url')
+        else:
+            self._adfs_authority_url = self._cloud_environment.endpoints.active_directory
 
         # get resource from cloud environment
         self._resource = self._cloud_environment.endpoints.active_directory_resource_id
@@ -425,6 +425,7 @@ class AzureRM(object):
 
     def _get_msi_credentials(self, subscription_id_param=None):
         credentials = MSIAuthentication()
+        subscription_id_param = subscription_id_param or os.environ.get(AZURE_CREDENTIAL_ENV_MAPPING['subscription_id'], None)
         try:
             # try to get the subscription in MSI to test whether MSI is enabled
             subscription_client = SubscriptionClient(credentials)
@@ -627,6 +628,8 @@ class AzureInventory(object):
                             help='Active Directory User')
         parser.add_argument('--password', action='store',
                             help='password')
+        parser.add_argument('--adfs_authority_url', action='store',
+                            help='Azure ADFS authority url')
         parser.add_argument('--cloud_environment', action='store',
                             help='Azure Cloud Environment name or metadata discovery URL')
         parser.add_argument('--resource-groups', action='store',

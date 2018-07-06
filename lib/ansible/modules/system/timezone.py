@@ -70,7 +70,6 @@ EXAMPLES = '''
 '''
 
 import errno
-import filecmp
 import os
 import platform
 import random
@@ -706,20 +705,6 @@ class BSDTimezone(Timezone):
             return 'UTC'
 
         # Strategy 2:
-        #   Return planned timezone as current timezone if their content matches.
-        #   This is bad design to see `self.value` here,
-        #   but it's intended to avoid useless diff.
-        planned = self.value['name']['planned']
-        try:
-            already_planned_state = filecmp.cmp(os.path.join(zoneinfo_dir, planned), localtime_file)
-        except OSError:
-            # Even if reading planned zoneinfo file gives an OSError, don't abort here,
-            # because a bit more detailed check will be done in `set`.
-            already_planned_state = False
-        if already_planned_state:
-            return planned
-
-        # Strategy 3:
         #   Follow symlink of /etc/localtime
         zoneinfo_file = localtime_file
         while not zoneinfo_file.startswith(zoneinfo_dir):
@@ -731,15 +716,16 @@ class BSDTimezone(Timezone):
         else:
             return zoneinfo_file.replace(zoneinfo_dir, '')
 
-        # Strategy 4:
-        #   Check all files in /usr/share/zoneinfo and return first match.
-        for dname, _, fnames in os.walk(zoneinfo_dir):
-            for fname in fnames:
+        # Strategy 3:
+        #   (If /etc/localtime is not symlinked)
+        #   Check all files in /usr/share/zoneinfo and return first non-link match.
+        for dname, _, fnames in sorted(os.walk(zoneinfo_dir)):
+            for fname in sorted(fnames):
                 zoneinfo_file = os.path.join(dname, fname)
-                if filecmp.cmp(zoneinfo_file, localtime_file):
+                if not os.path.islink(zoneinfo_file) and filecmp.cmp(zoneinfo_file, localtime_file):
                     return zoneinfo_file.replace(zoneinfo_dir, '')
 
-        # Strategy 5:
+        # Strategy 4:
         #   As a fall-back, return 'UTC' as default assumption.
         self.module.warn('Could not identify timezone name from /etc/localtime. Assuming UTC.')
         return 'UTC'

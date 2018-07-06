@@ -8,7 +8,7 @@
     msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
   when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
 
-- name: ensure static path to epg is deleted for test kick off
+- name: Ensure static path to epg is deleted for test kick off
   aci_static_binding_to_epg: &aci_static_binding_to_epg_absent
     host: '{{ aci_hostname }}'
     username: '{{ aci_username }}'
@@ -26,7 +26,7 @@
     interface: '1/7'
     state: absent
 
-- name: ensure tenant exists for tests to kick off
+- name: Ensure tenant exists for tests to kick off
   aci_tenant: &aci_tenant_present
     host: "{{ aci_hostname }}"
     username: "{{ aci_username }}"
@@ -35,23 +35,23 @@
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
     output_level: debug
-    state: present
     tenant: anstest
+    state: present
   register: tenant_present
 
-- name: ensure ap exists
+- name: Ensure ap exists
   aci_ap: &aci_ap_present
     <<: *aci_tenant_present
     ap: anstest
   register: ap_present
 
-- name: ensure epg exists
+- name: Ensure epg exists
   aci_epg: &aci_epg_present
     <<: *aci_ap_present
     epg: anstest
   register: epg_present
 
-- name: bind static-binding to epg - check mode works
+- name: Bind static-binding to epg - check mode works
   aci_static_binding_to_epg: &aci_static_binding_to_epg_present
     <<: *aci_epg_present
     encap_id: 222
@@ -64,30 +64,55 @@
   check_mode: yes
   register: provide_present_check_mode
 
-- name: bind static-binding to epg - provide works (creation w/o check-mode)
+- name: Bind static-binding to epg - provide works (creation w/o check-mode)
   aci_static_binding_to_epg:
     <<: *aci_static_binding_to_epg_present
   ignore_errors: yes
   register: provide_present
 
-- name: bind static-binding to epg - primary_encap_id works
+- name: Bind static-binding to epg - primary_encap_id works
   aci_static_binding_to_epg: &primary_encap_id_present
     <<: *aci_static_binding_to_epg_present
     primary_encap_id: 50
   register: primary_ecap_id_present
 
-- name: bind contract to epg - idempotency works again
+- name: Bind contract to epg - idempotency works again
   aci_static_binding_to_epg:
     <<: *primary_encap_id_present
   register: idempotent_present
 
-- name: missing required param - failure message works
+- name: Bind contract to epg - update description (check mode)
+  aci_static_binding_to_epg:
+    <<: *primary_encap_id_present
+    description: Binding description
+  check_mode: yes
+  register: description_cm
+
+- name: Bind contract to epg - update description (run mode)
+  aci_static_binding_to_epg:
+    <<: *primary_encap_id_present
+    description: Binding description
+  register: description
+
+- name: Bind contract to epg - update description (check mode)
+  aci_static_binding_to_epg:
+    <<: *primary_encap_id_present
+    description: Binding description
+  register: idempotent_description_cm
+
+- name: Bind contract to epg - update description (run mode)
+  aci_static_binding_to_epg:
+    <<: *primary_encap_id_present
+    description: Binding description
+  register: idempotent_description
+
+- name: Missing required param - failure message works
   aci_static_binding_to_epg:
     <<: *aci_tenant_present
   ignore_errors: yes
   register: missing_required_present
 
-- name: present assertions
+- name: Present assertions
   assert:
     that:
       - provide_present_check_mode.changed == true
@@ -97,57 +122,57 @@
       - provide_present.previous == []
       - primary_ecap_id_present.changed == true
       - 'primary_ecap_id_present.sent == {"fvRsPathAtt": {"attributes": {"primaryEncap": "vlan-50"}}}'
+      - description_cm.changed == true
+      - description.changed == true
+      - idempotent_description_cm.changed == false
+      - idempotent_description.changed == false
       - missing_required_present.failed == true
-      - 'missing_required_present.msg == "missing required arguments: interface_type"'
+      - 'missing_required_present.msg == "state is present but all of the following are missing: ap, encap_id, epg, interface, leafs, pod_id"'
       - missing_required_present.failed == true
 
 
-- name: get binding
+- name: Query specific binding
   aci_static_binding_to_epg:
     <<: *primary_encap_id_present
     state: query
   register: query_static_binding
 
-- name: missing required param - failure message works
+- name: Query all bindings
   aci_static_binding_to_epg:
     <<: *aci_tenant_present
     state: query
-  ignore_errors: yes
-  register: missing_required_query
+  register: query_all
 
-- name: query assertions
+- name: Query assertions
   assert:
     that:
       - query_static_binding.changed == false
       - query_static_binding.current != []
       - '"class/fvRsPathAtt.json" in query_static_binding.url'
-      # FIXME: possibility to query all the static bindings
-#       - query_all.changed == false
-#       - '"class/fvRsPathAtt.json" in query_all.url'
-      - missing_required_query.failed == true
-      - 'missing_required_query.msg == "missing required arguments: interface_type"'
+      - query_all.changed == false
+      - '"class/fvRsPathAtt.json" in query_all.url'
 
 
-- name: delete provide binding - deletion works
+- name: Delete provide binding - deletion works
   aci_static_binding_to_epg:
     <<: *primary_encap_id_present
     state: absent
   register: provide_absent
 
-- name: delete provide binding - idempotency works
+- name: Delete provide binding - idempotency works
   aci_static_binding_to_epg:
     <<: *primary_encap_id_present
     state: absent
   register: provide_absent_idempotent
 
-- name: missing param - failure message works
+- name: Missing param - failure message works
   aci_static_binding_to_epg:
     <<: *aci_tenant_present
     state: absent
   ignore_errors: yes
   register: missing_param_absent
 
-- name: absent assertions
+- name: Absent assertions
   assert:
     that:
       - provide_absent.changed == true
@@ -156,23 +181,23 @@
       - provide_absent_idempotent.previous == []
       - missing_param_absent.failed == true
       - missing_param_absent.failed == true
-      - 'missing_param_absent.msg == "missing required arguments: interface_type"'
+      - 'missing_param_absent.msg == "state is absent but all of the following are missing: ap, epg, interface, leafs, pod_id"'
 
-- name: cleanup binding
+- name: Cleanup binding
   aci_static_binding_to_epg:
     <<: *aci_static_binding_to_epg_absent
 
-- name: cleanup epg
+- name: Cleanup epg
   aci_epg:
     <<: *aci_epg_present
     state: absent
 
-- name: cleanup ap
+- name: Cleanup ap
   aci_ap:
     <<: *aci_ap_present
     state: absent
 
-- name: cleanup tenant
+- name: Cleanup tenant
   aci_tenant:
     <<: *aci_tenant_present
     state: absent

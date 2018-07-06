@@ -280,7 +280,8 @@ class Task(Base, Conditional, Taggable, Become):
                 except AnsibleUndefinedVariable as e:
                     if self.action in ('setup', 'gather_facts') and 'ansible_env' in to_native(e):
                         # ignore as fact gathering sets ansible_env
-                        pass
+                        return
+                    raise
 
             if isinstance(value, list):
                 for env_item in value:

@@ -1,0 +1,9 @@
+---
+- name: Assert HTTPS & HTTP configuration changes
+  assert:
+    that:
+      - result.stdout[0].https_port is defined
+      - result.stdout[0].http_port is defined
+      - result.stdout[0].https_port|string is search("9443")
+      - result.stdout[0].http_port|string is search("80")
+      - result.stdout[0].sandbox_status == 'Enabled'

@@ -25,3 +25,18 @@
 - assert:
     that:
       - "result is changed"
+
+- name: create a project directory for manual project
+  import_tasks: create_project_dir.yml
+
+- name: Create a manual project
+  tower_project:
+    name: manual project
+    organization: Default
+    scm_type: manual
+    local_path: "manual_test_project"
+  register: result
+
+- assert:
+    that:
+      - "result is changed"

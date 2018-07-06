@@ -147,7 +147,11 @@ class Cli:
         """Run list of commands on remote device and return results
         """
         connection = self._get_connection()
-        return connection.run_commands(commands, check_rc)
+
+        try:
+            return connection.run_commands(commands, check_rc)
+        except ConnectionError as exc:
+            self._module.fail_json(msg=to_text(exc))
 
     def load_config(self, config, return_error=False, opts=None):
         """Sends configuration commands to the remote device
@@ -160,8 +164,7 @@ class Cli:
         msgs = []
         try:
             responses = connection.edit_config(config)
-            out = json.loads(responses)[1:-1]
-            msg = out
+            msg = json.loads(responses)
         except ConnectionError as e:
             code = getattr(e, 'code', 1)
             message = getattr(e, 'err', e)

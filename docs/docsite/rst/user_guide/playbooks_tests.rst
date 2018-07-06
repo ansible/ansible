@@ -119,7 +119,7 @@ You can use `any` and `all` to check if any or all elements in a list are true o
   vars:
     mylist:
         - 1
-        - 3 == 3
+        - "{{ 3 == 3 }}"
         - True
     myotherlist:
         - False

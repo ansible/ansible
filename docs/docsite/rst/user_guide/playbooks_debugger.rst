@@ -1,3 +1,5 @@
+.. _playbook_debugger:
+
 Playbook Debugger
 =================
 

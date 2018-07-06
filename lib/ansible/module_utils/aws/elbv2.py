@@ -228,6 +228,7 @@ class ApplicationLoadBalancer(ElasticLoadBalancerV2):
         self.access_logs_s3_bucket = module.params.get("access_logs_s3_bucket")
         self.access_logs_s3_prefix = module.params.get("access_logs_s3_prefix")
         self.idle_timeout = module.params.get("idle_timeout")
+        self.http2 = module.params.get("http2")
 
         if self.elb is not None and self.elb['Type'] != 'application':
             self.module.fail_json(msg="The load balancer type you are trying to manage is not application. Try elb_network_lb module instead.")
@@ -271,20 +272,18 @@ class ApplicationLoadBalancer(ElasticLoadBalancerV2):
 
         update_attributes = []
 
-        if self.access_logs_enabled and self.elb_attributes['access_logs_s3_enabled'] != "true":
-            update_attributes.append({'Key': 'access_logs.s3.enabled', 'Value': "true"})
-        if not self.access_logs_enabled and self.elb_attributes['access_logs_s3_enabled'] != "false":
-            update_attributes.append({'Key': 'access_logs.s3.enabled', 'Value': 'false'})
+        if self.access_logs_enabled is not None and str(self.access_logs_enabled).lower() != self.elb_attributes['access_logs_s3_enabled']:
+            update_attributes.append({'Key': 'access_logs.s3.enabled', 'Value': str(self.access_logs_enabled).lower()})
         if self.access_logs_s3_bucket is not None and self.access_logs_s3_bucket != self.elb_attributes['access_logs_s3_bucket']:
             update_attributes.append({'Key': 'access_logs.s3.bucket', 'Value': self.access_logs_s3_bucket})
         if self.access_logs_s3_prefix is not None and self.access_logs_s3_prefix != self.elb_attributes['access_logs_s3_prefix']:
             update_attributes.append({'Key': 'access_logs.s3.prefix', 'Value': self.access_logs_s3_prefix})
-        if self.deletion_protection and self.elb_attributes['deletion_protection_enabled'] != "true":
-            update_attributes.append({'Key': 'deletion_protection.enabled', 'Value': "true"})
-        if self.deletion_protection is not None and not self.deletion_protection and self.elb_attributes['deletion_protection_enabled'] != "false":
-            update_attributes.append({'Key': 'deletion_protection.enabled', 'Value': "false"})
+        if self.deletion_protection is not None and str(self.deletion_protection).lower() != self.elb_attributes['deletion_protection_enabled']:
+            update_attributes.append({'Key': 'deletion_protection.enabled', 'Value': str(self.deletion_protection).lower()})
         if self.idle_timeout is not None and str(self.idle_timeout) != self.elb_attributes['idle_timeout_timeout_seconds']:
             update_attributes.append({'Key': 'idle_timeout.timeout_seconds', 'Value': str(self.idle_timeout)})
+        if self.http2 is not None and str(self.http2).lower() != self.elb_attributes['routing_http2_enabled']:
+            update_attributes.append({'Key': 'routing.http2.enabled', 'Value': str(self.http2).lower()})
 
         if update_attributes:
             try:

@@ -734,8 +734,7 @@ def main():
     # Params was removed
     # https://meetbot.fedoraproject.org/ansible-meeting/2017-09-28/ansible_dev_meeting.2017-09-28-15.00.log.html
     if module.params['params']:
-        module.fail_json(msg="The params option to jenkins_plugin was removed in Ansible 2.5"
-                         "since it circumvents Ansible's option handling")
+        module.fail_json(msg="The params option to jenkins_plugin was removed in Ansible 2.5 since it circumvents Ansible's option handling")
 
     # Force basic authentication
     module.params['force_basic_auth'] = True

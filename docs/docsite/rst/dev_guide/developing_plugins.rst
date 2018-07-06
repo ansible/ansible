@@ -15,7 +15,7 @@ General Guidelines
 This section lists some things that should apply to any type of plugin you develop.
 
 Raising Errors
-``````````````
+^^^^^^^^^^^^^^
 
 In general, errors encountered during execution should be returned by raising AnsibleError() or similar class with a message describing the error. When wrapping other exceptions into error messages, you should always use the ``to_text`` Ansible function to ensure proper string compatibility across Python versions:
 
@@ -31,7 +31,7 @@ In general, errors encountered during execution should be returned by raising An
 Check the different AnsibleError objects and see which one applies the best to your situation.
 
 String Encoding
-```````````````
+^^^^^^^^^^^^^^^
 Any strings returned by your plugin that could ever contain non-ASCII characters must be converted into Python's unicode type because the strings will be run through jinja2.  To do this, you can use:
 
 .. code-block:: python
@@ -40,15 +40,19 @@ Any strings returned by your plugin that could ever contain non-ASCII characters
     result_string = to_text(result_string)
 
 Plugin Configuration
-````````````````````
+^^^^^^^^^^^^^^^^^^^^
 
 Starting with Ansible version 2.4, we are unifying how each plugin type is configured and how they get those settings.  Plugins will be able to declare their requirements and have Ansible provide them with a resolved'configuration. Starting with Ansible 2.4 both callback and connection type plugins can use this system.
 
-Most plugins will be able to use  ``self._options[<optionname>]`` to access the settings, except callbacks that use ``self._plugin_options[<optionname>]``.
+Most plugins will be able to use  ``self.get_option(<optionname>)`` to access the settings.
+These are pre-populated by a ``self.set_options()`` call, for most plugin types this is done by the controller,
+but for some types you might need to do this explicitly.
+Of course, if you don't have any configurable options, you can ignore this.
 
-Plugins that support embedded documentation (see `ansible-doc` for the list) are now required to provide well-formed doc strings to be considered for merge into the Ansible repo.
+Plugins that support embedded documentation (see :ref:`ansible-doc` for the list) must now include well-formed doc strings to be considered for merge into the Ansible repo. This documentation also doubles as 'configuration definition' so they will never be out of sync.
 
 If you inherit from a plugin, you must document the options it takes, either via a documentation fragment or as a copy.
+
 
 .. _developing_callbacks:
 
@@ -167,32 +171,7 @@ Inventory Plugins
 
 Inventory plugins were added in Ansible version 2.4. Inventory plugins parse inventory sources and form an in memory representation of the inventory.
 
-Inventory plugins are invoked via the InventoryManager and are given access to any existing inventory data. They are given an 'inventory source' as supplied to Ansible (via config/options/defaults/etc), which they can either ignore
-by returning false from the ``verify_file`` method, or attempting to parse (with the ``parse`` method) and return an ``AnsibleParserError`` on failure.
-
-.. code-block:: python
-
-   def parse(self, inventory, loader, path, cache=True):
-        pass # your code goes here
-
-Inventory plugins take the following parameters:
-
- * inventory: inventory object with existing data and the methods to add hosts/groups/variables to inventory
- * loader: Ansible's DataLoader. The DataLoader can read files, auto load JSON/YAML and decrypt vaulted data, and cache read files.
- * path: string with inventory source (this is usually a path, but is not required)
- * cache: indicates whether the plugin should use or avoid caches (cache plugin and/or loader)
-
-Inventory sources are strings. They usually correspond to a file path, but they can also be a comma separated list,
-a URI, or anything your plugin can use as input.
-The 'inventory source' provided can be either a string (``host_list`` plugin), a data file (like consumed by the ``yaml`` and ``ini`` plugins), a configuration file (see ``virtualbox`` and ``constructed``) or even a script or executable (the ``script`` uses those).
-
-When using the 'persistent' cache, inventory plugins can also use the configured cache plugin to store and retrieve data to avoid costly external calls.
-
-Inventory plugins normally only execute at the start of a run, before playbooks/plays and roles are found,
-but they can be 're-executed' via the ``meta: refresh_inventory`` task, which will clear out the existing inventory and rebuild it.
-
-For examples on how to implement an inventory plug in, see the source code here:
-`lib/ansible/plugins/inventory <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/inventory>`_.
+You can see the details for inventory plugins in the :ref:`developing_inventory` page.
 
 .. _developing_lookup_plugins:
 

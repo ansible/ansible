@@ -19,3 +19,33 @@ To install sphinx and the required theme, install pip and then "pip install sphi
 
 [file issues]: https://github.com/ansible/ansible/issues
 [module-docs]: https://docs.ansible.com/developing_modules.html#documenting-your-module
+
+HEADERS
+=======
+
+RST allows for arbitrary hierchy for the headers, it will 'learn on the fly' but we want a standard so all our documents can follow:
+
+```
+##########################
+# with overline, for parts
+##########################
+
+*****************************
+* with overline, for chapters
+*****************************
+
+=, for sections
+===============
+
+-, for subsections
+------------------
+
+^, for sub-subsections
+^^^^^^^^^^^^^^^^^^^^^
+
+", for paragraphs
+"""""""""""""""""
+
+```
+
+We do have pages littered with ```````` headers, but those should be removed for one of the above.

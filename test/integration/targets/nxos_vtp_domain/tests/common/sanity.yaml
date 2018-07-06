@@ -7,11 +7,13 @@
   - name: enable feature vtp
     nxos_feature:
       feature: vtp
+      provider: "{{ connection }}"
       state: enabled
 
   - name: configure vtp domain
     nxos_vtp_domain: &configure
       domain: ntc
+      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -30,6 +32,7 @@
   - name: disable feature vtp
     nxos_feature:
       feature: vtp
+      provider: "{{ connection }}"
       state: disabled
 
 - debug: msg="END connection={{ ansible_connection }} nxos_vtp_domain sanity test"

@@ -359,7 +359,7 @@ EXAMPLES = '''
   hosts: localhost
   gather_facts: False
   vars:
-    key_name: my_keypair
+    keypair: my_keypair
     instance_type: m1.small
     security_group: my_securitygroup
     image: my_ami_id

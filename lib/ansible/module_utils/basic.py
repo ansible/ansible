@@ -172,7 +172,7 @@ from ansible.module_utils.six import (
 )
 from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils._text import to_native, to_bytes, to_text
-from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
+from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
 
 
 # Note: When getting Sequence from collections, it matches with strings.  If
@@ -930,20 +930,35 @@ class AnsibleModule(object):
 
     @property
     def tmpdir(self):
-        # if _ansible_tmpdir was not set, the module needs to create it and
-        # clean it up once finished.
+        # if _ansible_tmpdir was not set and we have a remote_tmp,
+        # the module needs to create it and clean it up once finished.
+        # otherwise we create our own module tmp dir from the system defaults
         if self._tmpdir is None:
+            basedir = None
+
             basedir = os.path.expanduser(os.path.expandvars(self._remote_tmp))
             if not os.path.exists(basedir):
-                self.warn("Module remote_tmp %s did not exist and was created "
-                          "with a mode of 0700, this may cause issues when "
-                          "running as another user. To avoid this, create the "
-                          "remote_tmp dir with the correct permissions "
-                          "manually" % basedir)
-                os.makedirs(basedir, mode=0o700)
+                try:
+                    os.makedirs(basedir, mode=0o700)
+                except (OSError, IOError) as e:
+                    self.warn("Unable to use %s as temporary directory, "
+                              "failing back to system: %s" % (basedir, to_native(e)))
+                    basedir = None
+                else:
+                    self.warn("Module remote_tmp %s did not exist and was "
+                              "created with a mode of 0700, this may cause"
+                              " issues when running as another user. To "
+                              "avoid this, create the remote_tmp dir with "
+                              "the correct permissions manually" % basedir)
 
             basefile = "ansible-moduletmp-%s-" % time.time()
-            tmpdir = tempfile.mkdtemp(prefix=basefile, dir=basedir)
+            try:
+                tmpdir = tempfile.mkdtemp(prefix=basefile, dir=basedir)
+            except (OSError, IOError) as e:
+                self.fail_json(
+                    msg="Failed to create remote module tmp path at dir %s "
+                        "with prefix %s: %s" % (basedir, basefile, to_native(e))
+                )
             if not self._keep_remote_files:
                 atexit.register(shutil.rmtree, tmpdir)
             self._tmpdir = tmpdir
@@ -1355,10 +1370,15 @@ class AnsibleModule(object):
 
         existing = self.get_file_attributes(b_path)
 
-        if existing.get('attr_flags', '') != attributes:
+        attr_mod = '='
+        if attributes.startswith(('-', '+')):
+            attr_mod = attributes[0]
+            attributes = attributes[1:]
+
+        if existing.get('attr_flags', '') != attributes or attr_mod == '-':
             attrcmd = self.get_bin_path('chattr')
             if attrcmd:
-                attrcmd = [attrcmd, '=%s' % attributes, b_path]
+                attrcmd = [attrcmd, '%s%s' % (attr_mod, attributes), b_path]
                 changed = True
 
                 if diff is not None:
@@ -1367,7 +1387,7 @@ class AnsibleModule(object):
                     diff['before']['attributes'] = existing.get('attr_flags')
                     if 'after' not in diff:
                         diff['after'] = {}
-                    diff['after']['attributes'] = attributes
+                    diff['after']['attributes'] = '%s%s' % (attr_mod, attributes)
 
                 if not self.check_mode:
                     try:
@@ -2185,7 +2205,19 @@ class AnsibleModule(object):
                 for arg in log_args:
                     journal_args.append((arg.upper(), str(log_args[arg])))
                 try:
-                    journal.send(u"%s %s" % (module, journal_msg), **dict(journal_args))
+                    if HAS_SYSLOG:
+                        # If syslog_facility specified, it needs to convert
+                        #  from the facility name to the facility code, and
+                        #  set it as SYSLOG_FACILITY argument of journal.send()
+                        facility = getattr(syslog,
+                                           self._syslog_facility,
+                                           syslog.LOG_USER) >> 3
+                        journal.send(MESSAGE=u"%s %s" % (module, journal_msg),
+                                     SYSLOG_FACILITY=facility,
+                                     **dict(journal_args))
+                    else:
+                        journal.send(MESSAGE=u"%s %s" % (module, journal_msg),
+                                     **dict(journal_args))
                 except IOError:
                     # fall back to syslog since logging to journal failed
                     self._log_to_syslog(syslog_msg)

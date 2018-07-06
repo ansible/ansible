@@ -8,7 +8,7 @@ This section discusses the behavioral changes between Ansible 2.4 and Ansible 2.
 
 It is intended to assist in updating your playbooks, plugins and other parts of your Ansible infrastructure so they will work with this version of Ansible.
 
-We suggest you read this page along with `Ansible Changelog <https://github.com/ansible/ansible/blob/devel/CHANGELOG.md#2.5>`_ to understand what updates you may need to make.
+We suggest you read this page along with `Ansible Changelog for 2.5 <https://github.com/ansible/ansible/blob/stable-2.5/changelogs/CHANGELOG-v2.5.rst>`_ to understand what updates you may need to make.
 
 This document is part of a collection on porting. The complete list of porting guides can be found at :ref:`porting guides <porting_guides>`.
 
@@ -90,6 +90,11 @@ You will run into errors because Ansible reads name in this context as a keyword
 
 
 For a full list of keywords see ::ref::`Playbook Keywords`.
+
+Migrating from with_X to loop
+-----------------------------
+
+.. include:: ../user_guide/shared_snippets/with2loop.txt
 
 
 Deprecated
@@ -197,6 +202,12 @@ desired.
   * The :ref:`blockinfile module <blockinfile_module>` had its ``follow`` parameter removed because
     it inherently modifies the content of an existing file so it makes no sense to operate on the
     link itself.
+  * In Ansible-2.5.3, the :ref:`template module <template_module>` became more strict about its
+    ``src`` file being proper utf-8.  Previously, non-utf8 contents in a template module src file
+    would result in a mangled output file (the non-utf8 characters would be replaced with a unicode
+    replacement character).  Now, on Python2, the module will error out with the message, "Template
+    source files must be utf-8 encoded".  On Python3, the module will first attempt to pass the
+    non-utf8 characters through verbatim and fail if that does not succeed.
 
 Plugins
 =======

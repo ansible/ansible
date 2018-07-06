@@ -422,6 +422,17 @@ def _get_vnic_profile_mappings(module):
     return vnicProfileMappings
 
 
+def searchable_attributes(module):
+    """
+    Return all searchable template attributes passed to module.
+    """
+    attributes = {
+        'name': module.params.get('name'),
+        'cluster': module.params.get('cluster'),
+    }
+    return dict((k, v) for k, v in attributes.items() if v is not None)
+
+
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
@@ -474,6 +485,7 @@ def main():
         if state == 'present':
             ret = templates_module.create(
                 result_state=otypes.TemplateStatus.OK,
+                search_params=searchable_attributes(module),
                 clone_permissions=module.params['clone_permissions'],
                 seal=module.params['seal'],
             )
