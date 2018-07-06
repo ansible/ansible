@@ -431,17 +431,18 @@ def parse_export(configobj, name):
 def parse_both(configobj, name, address_family='global'):
     rd_pattern = re.compile('(?P<rd>.+:.+)')
     matches = list()
+    export_match = None
+    import_match = None
     if address_family == "global":
         export_match = parse_export(configobj, name)
         import_match = parse_import(configobj, name)
     elif address_family == "ipv4":
         export_match = parse_export_ipv4(configobj, name)
         import_match = parse_import_ipv4(configobj, name)
-
     elif address_family == "ipv6":
         export_match = parse_export_ipv6(configobj, name)
         import_match = parse_import_ipv6(configobj, name)
-    if len(import_match) != 0 or len(export_match) != 0:
+    if import_match and export_match:
         for ex in export_match:
             exrd = rd_pattern.search(ex)
             exrd = exrd.groupdict().get('rd')
@@ -462,7 +463,7 @@ def parse_import_ipv4(configobj, name):
         matches = re.findall(r'route-target\s+import\s+(.+)', subcfg, re.M)
         return matches
     except KeyError:
-        return []
+        pass
 
 
 def parse_export_ipv4(configobj, name):
@@ -473,7 +474,7 @@ def parse_export_ipv4(configobj, name):
         matches = re.findall(r'route-target\s+export\s+(.+)', subcfg, re.M)
         return matches
     except KeyError:
-        return []
+        pass
 
 
 def parse_import_ipv6(configobj, name):
@@ -484,7 +485,7 @@ def parse_import_ipv6(configobj, name):
         matches = re.findall(r'route-target\s+import\s+(.+)', subcfg, re.M)
         return matches
     except KeyError:
-        return []
+        pass
 
 
 def parse_export_ipv6(configobj, name):
@@ -495,7 +496,7 @@ def parse_export_ipv6(configobj, name):
         matches = re.findall(r'route-target\s+export\s+(.+)', subcfg, re.M)
         return matches
     except KeyError:
-        return []
+        pass
 
 
 def map_config_to_obj(module):
