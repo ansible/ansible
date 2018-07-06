@@ -85,6 +85,7 @@
   aci_static_binding_to_epg:
     <<: *primary_encap_id_present
     description: Binding description
+  check_mode: yes
   register: description_cm
 
 - name: Bind contract to epg - update description (run mode)
@@ -126,22 +127,21 @@
       - idempotent_description_cm.changed == false
       - idempotent_description.changed == false
       - missing_required_present.failed == true
-      - 'missing_required_present.msg == "missing required arguments: interface_type"'
+      - 'missing_required_present.msg == "state is present but all of the following are missing: ap, encap_id, epg, interface, leafs, pod_id"'
       - missing_required_present.failed == true
 
 
-- name: Get binding
+- name: Query specific binding
   aci_static_binding_to_epg:
     <<: *primary_encap_id_present
     state: query
   register: query_static_binding
 
-- name: Missing required param - failure message works
+- name: Query all bindings
   aci_static_binding_to_epg:
     <<: *aci_tenant_present
     state: query
-  ignore_errors: yes
-  register: missing_required_query
+  register: query_all
 
 - name: Query assertions
   assert:
@@ -149,11 +149,8 @@
       - query_static_binding.changed == false
       - query_static_binding.current != []
       - '"class/fvRsPathAtt.json" in query_static_binding.url'
-      # FIXME: possibility to query all the static bindings
-#       - query_all.changed == false
-#       - '"class/fvRsPathAtt.json" in query_all.url'
-      - missing_required_query.failed == true
-      - 'missing_required_query.msg == "missing required arguments: interface_type"'
+      - query_all.changed == false
+      - '"class/fvRsPathAtt.json" in query_all.url'
 
 
 - name: Delete provide binding - deletion works
@@ -184,7 +181,7 @@
       - provide_absent_idempotent.previous == []
       - missing_param_absent.failed == true
       - missing_param_absent.failed == true
-      - 'missing_param_absent.msg == "missing required arguments: interface_type"'
+      - 'missing_param_absent.msg == "state is absent but all of the following are missing: ap, epg, interface, leafs, pod_id"'
 
 - name: Cleanup binding
   aci_static_binding_to_epg:
