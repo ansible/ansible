@@ -53,6 +53,10 @@ options:
     description:
       - Only run plays and tasks tagged with these values
     required: false
+  skip_tags:
+    description:
+      - Do not run plays and tasks tagged with these values
+    required: false
   connection_method:
     description:
       - Connection type to use
@@ -249,6 +253,7 @@ def run_module():
             extra_vars=dict(type='dict'),
             extra_vars_files=dict(type='list'),
             tags=dict(type='list'),
+            skip_tags=dict(type='list'),
             connection_method=dict(
                 type='str',
                 choices=[
@@ -319,6 +324,7 @@ def run_module():
     extra_vars = module.params['extra_vars']
     extra_vars_files = module.params['extra_vars_files']
     tags = module.params['tags']
+    skip_tags = module.params['skip_tags']
     connection_method = module.params['connection_method']
     connection_user = module.params['connection_user']
     connection_timeout = module.params['connection_timeout']
@@ -365,6 +371,9 @@ def run_module():
 
     if tags:
         command += " --tags " + ','.join(tags)
+
+    if skip_tags:
+        command += " --skip-tags " + ','.join(tags)
 
     if connection_method:
         command += " --connection %s" % connection_method
