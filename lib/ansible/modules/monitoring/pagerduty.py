@@ -169,27 +169,33 @@ class PagerDutyRequest(object):
 
         return False, json_out, False
 
-    def create(self, requester_id, service, hours, minutes, desc):
+    def create(self, requester_id, service, hours, minutes, desc, http_call=fetch_url):
         now = datetime.datetime.utcnow()
         later = now + datetime.timedelta(hours=int(hours), minutes=int(minutes))
         start = now.strftime("%Y-%m-%dT%H:%M:%SZ")
         end = later.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-        url = "https://" + self.name + ".pagerduty.com/api/v1/maintenance_windows"
+        url = 'https://api.pagerduty.com/maintenance_windows'
+
+        if not requester_id:
+            self.module.fail_json(msg="requester_id is required when maintenance window should be created")
+
         headers = {
             'Authorization': self._auth_header(),
             'Content-Type': 'application/json',
+            'From': requester_id,
+            'Accept': 'application/vnd.pagerduty+json;version=2'
         }
-        request_data = {'maintenance_window': {'start_time': start, 'end_time': end, 'description': desc, 'service_ids': service}}
 
-        if requester_id:
-            request_data['requester_id'] = requester_id
+        if (isinstance(service, list)):
+            services = [{'id': s, 'type':'service_reference'} for s in service]
         else:
-            if self.token:
-                self.module.fail_json(msg="requester_id is required when using a token")
+            services = [{'id': service, 'type':'service_reference'}]
+
+        request_data = {'maintenance_window': {'start_time': start, 'end_time': end, 'description': desc, 'services': services}}
 
         data = json.dumps(request_data)
-        response, info = fetch_url(self.module, url, data=data, headers=headers, method='POST')
+        response, info = http_call(self.module, url, data=data, headers=headers, method='POST')
         if info['status'] != 201:
             self.module.fail_json(msg="failed to create the window: %s" % info['msg'])
 
