@@ -1096,7 +1096,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                                         publisher=self.plan.get('publisher'),
                                                         promotion_code=self.plan.get('promotion_code'))
 
-                    license_type = None
+                    license_type = self.license_type
                     if self.license_type is None:
                         license_type = "None"
 
