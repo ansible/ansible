@@ -73,6 +73,7 @@ options:
         remote file will be copied to local file on the device. If the
         file already exists on the device, it will be overwritten, and
         the operation is NOT idempotent.
+    type: bool
     default: False
     version_added: "2.7"
   file_pull_timeout:
