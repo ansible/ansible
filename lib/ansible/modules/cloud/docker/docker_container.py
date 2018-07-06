@@ -607,7 +607,7 @@ import re
 import shlex
 
 from ansible.module_utils.basic import human_to_bytes
-from ansible.module_utils.docker_common import HAS_DOCKER_PY_2, HAS_DOCKER_PY_3, AnsibleDockerClient, DockerBaseClass
+from ansible.module_utils.docker_common import HAS_DOCKER_PY_2, HAS_DOCKER_PY_3, AnsibleDockerClient, DockerBaseClass, sanitize_result
 from ansible.module_utils.six import string_types
 
 try:
@@ -1780,7 +1780,7 @@ class ContainerManager(DockerBaseClass):
             self.container_remove(container.Id)
 
     def fail(self, msg, **kwargs):
-        self.client.module.fail_json(msg=msg, **kwargs)
+        self.client.module.fail_json(msg=msg, **sanitize_result(kwargs))
 
     def _output_logs(self, msg):
         self.client.module.log(msg=msg)
@@ -1894,12 +1894,7 @@ class ContainerManager(DockerBaseClass):
         self.log("create container")
         self.log("image: %s parameters:" % image)
         self.log(create_parameters, pretty_print=True)
-        # Parameters contains host_config of type docker.types.containers.HostConfig,
-        # derived from dict, which ansible cannot convert to JSON correctly.
-        # Therefore, we make sure we copy it to turn it into a regular dict.
-        debug_parameters = dict(create_parameters)
-        debug_parameters['host_config'] = dict(debug_parameters['host_config'])
-        self.results['actions'].append(dict(created="Created container", create_parameters=debug_parameters))
+        self.results['actions'].append(dict(created="Created container", create_parameters=create_parameters))
         self.results['changed'] = True
         new_container = None
         if not self.check_mode:
@@ -2100,7 +2095,7 @@ def main():
         client.module.fail_json(msg="'auto_remove' is not compatible with the 'docker-py' Python package. It requires the newer 'docker' Python package.")
 
     cm = ContainerManager(client)
-    client.module.exit_json(**cm.results)
+    client.module.exit_json(**sanitize_result(cm.results))
 
 
 if __name__ == '__main__':
