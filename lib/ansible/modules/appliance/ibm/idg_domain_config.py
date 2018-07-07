@@ -233,7 +233,6 @@ msg:
 '''
 
 import json
-from time import sleep
 # import pdb
 
 from ansible.module_utils.basic import AnsibleModule
@@ -372,18 +371,9 @@ def main():
                                                                 data = json.dumps(export_action_msg))
 
                 if exp_code == 202 and exp_msg == 'Accepted':
-                    # Exported accepted
-                    while action_result != 'completed':
-                        # Wait to complete
-                        eac_code, eac_msg, eac_data = idg_mgmt.api_call(uri = _URI_ACTION.format(domain_name) + '/pending',
-                                                                        method = 'GET', data = None)
-
-                        if eac_code == 200 and eac_msg == 'OK':
-                            action_result = idg_mgmt.get_operation_status(eac_data['operations'], exp_data['_links']['location']['href'])
-                            if action_result != 'completed': sleep(idg_mgmt.SHORT_DELAY)
-                        else:
-                            # Opps can't get export status
-                            module.fail_json(msg = to_native(idg_mgmt.ERROR_RETRIEVING_STATUS % (state, domain_name)))
+                    # Exported accepted. Wait for complete
+                    action_result = idg_mgmt.wait_for_action_end(uri = _URI_ACTION.format(domain_name), href = exp_data['_links']['location']['href'],
+                                                                 state = state, domain = domain_name)
 
                     # Export completed. Get result
                     doex_code, doex_msg, doex_data = idg_mgmt.api_call(uri = exp_data['_links']['location']['href'], method = 'GET',
@@ -392,7 +382,7 @@ def main():
                     if doex_code == 200 and doex_msg == 'OK':
                         # Export ok
                         result['file'] = doex_data['result']['file']
-                        result['msg'] = idg_mgmt.status_text(action_result)
+                        result['msg'] = action_result
                         result['changed'] = True
                     else:
                         # Can't retrieve the export
@@ -414,17 +404,9 @@ def main():
 
                 # pdb.set_trace()
                 if reset_code == 202 and reset_msg == 'Accepted':
-                    # Reseted accepted
-                    while action_result != 'processed':
-                        rac_code, rac_msg, rac_data = idg_mgmt.api_call(uri = _URI_ACTION.format(domain_name) + '/pending',
-                                                                        method = 'GET', data = None)
-
-                        if rac_code == 200 and rac_msg == 'OK':
-                            action_result = idg_mgmt.get_operation_status(rac_data['operations'], reset_data['_links']['location']['href'])
-                            if action_result != 'completed': sleep(idg_mgmt.SHORT_DELAY) # Time for complete
-                        else:
-                            # Can't get reset status
-                            module.fail_json(msg = to_native(idg_mgmt.ERROR_RETRIEVING_STATUS % (state, domain_name)))
+                    # Reseted accepted. Wait for complete
+                    action_result = idg_mgmt.wait_for_action_end(uri = _URI_ACTION.format(domain_name), href = reset_data['_links']['location']['href'],
+                                                                 state = state, domain = domain_name)
 
                     # Reseted completed
                     dore_code, dore_msg, dore_data = idg_mgmt.api_call(uri = reset_data['_links']['location']['href'], method = 'GET',
@@ -432,7 +414,7 @@ def main():
 
                     if dore_code == 200 and dore_msg == 'OK':
                         # Reseted successfully
-                        result['msg'] = dore_data['status']
+                        result['msg'] = dore_data['status'].capitalize()
                         result['changed'] = True
                     else:
                         # Can't retrieve the reset result
@@ -491,18 +473,9 @@ def main():
 
                 # pdb.set_trace()
                 if imp_code == 202 and imp_msg == 'Accepted':
-                    # Import accepted
-                    while action_result != 'processed':
-                        iac_code, iac_msg, iac_data = idg_mgmt.api_call(uri = _URI_ACTION.format(domain_name) + '/pending',
-                                                                        method = 'GET', data = None)
-
-                        if iac_code == 200 and iac_msg == 'OK':
-                            # Export completed
-                            action_result = idg_mgmt.get_operation_status(iac_data['operations'], imp_data['_links']['location']['href'])
-                            if action_result != 'processed': sleep(idg_mgmt.SHORT_DELAY) # Time for complete
-                        else:
-                            # Can't get import status
-                            module.fail_json(msg = to_native(idg_mgmt.ERROR_RETRIEVING_STATUS % (state, domain_name)))
+                    # Import accepted. Wait for complete
+                    action_result = idg_mgmt.wait_for_action_end(uri = _URI_ACTION.format(domain_name), href = imp_data['_links']['location']['href'],
+                                                                 state = state, domain = domain_name)
 
                     # Import ready
                     doim_code, doim_msg, doim_data = idg_mgmt.api_call(uri = imp_data['_links']['location']['href'], method = 'GET',
@@ -516,7 +489,7 @@ def main():
                             result['changed'] = False
                             result['failed'] = True
                         else:
-                            result['msg'] = doim_data['status']
+                            result['msg'] = doim_data['status'].capitalize()
                             result['changed'] = True
                     else:
                         # Can't retrieve the import result

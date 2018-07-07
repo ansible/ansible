@@ -13,6 +13,7 @@ from ansible.module_utils.urls import open_url, ConnectionError, SSLValidationEr
 
 import six
 import json
+from time import sleep
 # import pdb
 
 #############################
@@ -139,6 +140,32 @@ class IDG_API(object):
             self.ansible_module.fail_json(msg="Unknown error for (%s). %s " % (url, to_native(e)))
         else:
             return int(resp.getcode()), resp.msg, json.loads(resp.read())
+
+    def wait_for_action_end(self, **kwargs):
+
+        good_results = ['processed', 'completed']
+        max_steps = 30
+        count = 0
+        action_result = ''
+        # pdb.set_trace()
+
+        while (action_result not in good_results) and (count < max_steps):
+            # Wait to complete
+            code, msg, data = self.api_call(uri = kwargs['uri'] + '/pending',
+                                                method = 'GET', data = None)
+            count += 1
+            if code == 200 and msg == 'OK':
+                action_result = self.get_operation_status(data['operations'], kwargs['href'])
+                if action_result not in good_results: sleep(self.SHORT_DELAY)
+            else:
+                # Opps can't get status
+                self.ansible_module.fail_json(msg = to_native(self.ERROR_RETRIEVING_STATUS % (kwargs['state'], kwargs['domain'])))
+
+        if count == max_steps:
+            self.ansible_module.fail_json(msg = to_native((self.ERROR_RETRIEVING_STATUS + 'Reached the maximum level of interactions') % (kwargs['state'], kwargs['domain'])))
+        else:
+            return action_result.capitalize()
+
 
 #############################
 # Functions

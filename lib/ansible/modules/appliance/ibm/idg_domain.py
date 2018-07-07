@@ -313,7 +313,6 @@ msg:
 '''
 
 import json
-from time import sleep
 # import pdb
 
 from ansible.module_utils.basic import AnsibleModule
@@ -471,8 +470,6 @@ def main():
     ### Here the action begins
     ###
 
-    # pdb.set_trace()
-
     # List of configured domains
     chk_code, chk_msg, chk_data = idg_mgmt.api_call(uri = _URI_DOMAIN_LIST, method = 'GET', data = None)
 
@@ -499,7 +496,6 @@ def main():
                     create_code, create_msg, create_data = idg_mgmt.api_call(uri = _URI_DOMAIN_CONFIG.format(domain_name), method = 'PUT',
                                                                              data = json.dumps(domain_obj_msg))
 
-                    # pdb.set_trace()
                     if create_code == 201 and create_msg == 'Created': # Created successfully
                         result['msg'] = idg_mgmt.status_text(create_data[domain_name])
                         result['changed'] = True
@@ -511,7 +507,7 @@ def main():
                         module.fail_json(msg = idg_mgmt.ERROR_REACH_STATE % (state, domain_name))
 
                 elif state in ('restarted', 'quiesced', 'unquiesced'): # Can't do this actions
-                    module.fail_json(msg = idg_mgmt.ERROR_REACH_STATE + ' Domain not exist!' % (state, domain_name))
+                    module.fail_json(msg = (idg_mgmt.ERROR_REACH_STATE + " Domain not exist!") % (state, domain_name))
 
             else: # Domain EXIST
                 # Update, save or restart
@@ -561,20 +557,10 @@ def main():
                         restart_code, restart_msg, restart_data = idg_mgmt.api_call(uri = _URI_ACTION.format(domain_name), method = 'POST',
                                                                                     data = json.dumps(restart_act_msg))
 
-                        # pdb.set_trace()
                         if restart_code == 202 and restart_msg == 'Accepted':
-                            # Restarted accepted
-                            while action_result != 'processed':
-                                # Wait to complete
-                                rac_code, rac_msg, rac_data = idg_mgmt.api_call(uri = _URI_ACTION.format(domain_name) + '/pending',
-                                                                                method = 'GET', data = None)
-
-                                if rac_code == 200 and rac_msg == 'OK':
-                                    action_result = idg_mgmt.get_operation_status(rac_data['operations'], restart_data['_links']['location']['href'])
-                                    if action_result != 'completed': sleep(idg_mgmt.SHORT_DELAY)
-                                else:
-                                    # Opps can't get export status
-                                    module.fail_json(msg = to_native(idg_mgmt.ERROR_RETRIEVING_STATUS % (state, domain_name)))
+                            # Restarted accepted. Wait for complete
+                            action_result = idg_mgmt.wait_for_action_end(uri = _URI_ACTION.format(domain_name), href = restart_data['_links']['location']['href'],
+                                                                         state = state, domain = domain_name)
 
                             # Restart completed. Get result
                             acs_code, acs_msg, acs_data = idg_mgmt.api_call(uri = restart_data['_links']['location']['href'], method = 'GET',
@@ -582,7 +568,7 @@ def main():
 
                             if acs_code == 200 and acs_msg == 'OK':
                                 # Restarted successfully
-                                result['msg'] = idg_mgmt.status_text(action_result)
+                                result['msg'] = action_result
                                 result['changed'] = True
                             else:
                                 # Can't retrieve the restart result
@@ -619,18 +605,9 @@ def main():
 
                                     # pdb.set_trace()
                                     if qd_code == 202 and qd_msg == 'Accepted':
-                                        # Quiesced accepted
-                                        while action_result != 'processed':
-                                            # Wait to complete
-                                            qac_code, qac_msg, qac_data = idg_mgmt.api_call(uri = _URI_ACTION.format(domain_name) + '/pending',
-                                                                                            method = 'GET', data = None)
-
-                                            if qac_code == 200 and qac_msg == 'OK':
-                                                action_result = idg_mgmt.get_operation_status(qac_data['operations'], qd_data['_links']['location']['href'])
-                                                if action_result != 'completed': sleep(idg_mgmt.SHORT_DELAY)
-                                            else:
-                                                # Opps can't get export status
-                                                module.fail_json(msg = to_native(idg_mgmt.ERROR_RETRIEVING_STATUS % (state, domain_name)))
+                                        # Quiesced accepted. Wait for complete
+                                        action_result = idg_mgmt.wait_for_action_end(uri = _URI_ACTION.format(domain_name), href = qd_data['_links']['location']['href'],
+                                                                                     state = state, domain = domain_name)
 
                                         # Quiesced completed. Get result
                                         acs_code, acs_msg, acs_data = idg_mgmt.api_call(uri = qd_data['_links']['location']['href'], method = 'GET',
@@ -638,7 +615,7 @@ def main():
 
                                         if acs_code == 200 and acs_msg == 'OK':
                                             # Quiesced successfully
-                                            result['msg'] = idg_mgmt.status_text(action_result)
+                                            result['msg'] = action_result
                                             result['changed'] = True
                                         else:
                                             # Can't get the quiesced action result
@@ -665,17 +642,9 @@ def main():
 
                                     # pdb.set_trace()
                                     if uqd_code == 202 and uqd_msg == 'Accepted':
-                                        # Unquiesce accepted
-                                        while action_result != 'processed':
-                                            uqac_code, uqac_msg, uqac_data = idg_mgmt.api_call(uri = _URI_ACTION.format(domain_name) + '/pending',
-                                                                                               method = 'GET', data = None)
-
-                                            if uqac_code == 200 and uqac_msg == 'OK':
-                                                action_result = idg_mgmt.get_operation_status(uqac_data['operations'], uqd_data['_links']['location']['href'])
-                                                if action_result != 'completed': sleep(idg_mgmt.SHORT_DELAY)
-                                            else:
-                                                # Opps can't get export status
-                                                module.fail_json(msg = to_native(idg_mgmt.ERROR_RETRIEVING_STATUS % (state, domain_name)))
+                                        # Unquiesce accepted. Wait for complete
+                                        action_result = idg_mgmt.wait_for_action_end(uri = _URI_ACTION.format(domain_name), href = uqd_data['_links']['location']['href'],
+                                                                                     state = state, domain = domain_name)
 
                                         # Unquiesced completed. Get result
                                         acs_code, acs_msg, acs_data = idg_mgmt.api_call(uri = uqd_data['_links']['location']['href'],
@@ -683,7 +652,7 @@ def main():
 
                                         if acs_code == 200 and acs_msg == 'OK':
                                             # Unquiesce successfully
-                                            result['msg'] = idg_mgmt.status_text(action_result)
+                                            result['msg'] = action_result
                                             result['changed'] = True
                                         else:
                                             # Can't get unquiesce final result
