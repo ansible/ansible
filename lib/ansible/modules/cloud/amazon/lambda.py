@@ -452,7 +452,7 @@ def main():
                     func_kwargs.update({'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
 
         # Check for unsupported mutation
-        if current_config['Runtime'] != runtime:
+        if runtime and current_config['Runtime'] != runtime:
             module.fail_json(msg='Cannot change runtime. Please recreate the function')
 
         # If VPC configuration is desired
