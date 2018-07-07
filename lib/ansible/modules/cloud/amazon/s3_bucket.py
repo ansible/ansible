@@ -30,7 +30,8 @@ author: "Rob White (@wimnat)"
 options:
   force:
     description:
-      - When trying to delete a bucket, delete all keys (including versions) in the bucket first (an s3 bucket must be empty for a successful deletion)
+      - When trying to delete a bucket, delete all keys (including versions and delete markers)
+        in the bucket first (an s3 bucket must be empty for a successful deletion)
     type: bool
     default: 'no'
   name:
