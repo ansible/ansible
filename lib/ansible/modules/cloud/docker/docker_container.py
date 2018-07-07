@@ -96,7 +96,6 @@ options:
     description:
       - Path to a file containing environment variables I(FOO=BAR).
       - If variable also present in C(env), then C(env) value will override.
-      - Requires docker >= 2.3.0.
   entrypoint:
     description:
       - Command that overwrites the default ENTRYPOINT of the image.
@@ -421,7 +420,13 @@ author:
 
 requirements:
     - "python >= 2.6"
-    - "docker >= 2.3.0"
+    - "docker-py >= 1.7.0"
+    - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
+       module has been superseded by L(docker,https://pypi.org/project/docker/)
+       (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
+       For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
+       install the C(docker) Python module. Note that both modules should I(not)
+       be installed at the same time."
     - "Docker API >= 1.20"
 '''
 
@@ -619,7 +624,7 @@ try:
         from docker.utils.types import Ulimit, LogConfig
     from ansible.module_utils.docker_common import docker_version
 except:
-    # missing docker handled in ansible.module_utils.docker
+    # missing docker-py handled in ansible.module_utils.docker
     pass
 
 
