@@ -236,7 +236,6 @@ import json
 # import pdb
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils._text import to_native
 from ansible.module_utils.urls import open_url
 
@@ -261,7 +260,7 @@ def main():
         idg_connection = dict(type = 'dict', options = idg_endpoint_spec, required = True), # IDG connection
         name = dict(type = 'str', required = True), # Domain to work
         # for Export
-        user_summary = dict(type = 'str', required = False), # Backup comment
+        user_summary = dict(type = 'str'), # Backup comment
         all_files = dict(type = 'bool', default = False), # Include all files in the local: directory for the domain
         persisted = dict(type = 'bool', default = False), # Export from persisted or running configuration
         internal_files = dict(type = 'bool', default = True), # Export internal configuration file
@@ -278,7 +277,12 @@ def main():
     # AnsibleModule instantiation
     module = AnsibleModule(
         argument_spec = module_args,
-        supports_check_mode = True
+        supports_check_mode = True,
+        # Interaction between parameters
+        required_if = [
+                        ['state', 'imported', ['input_file']]
+                      ]
+
     )
 
     # Validates the dependence of the utility module
