@@ -28,7 +28,7 @@ options:
   command:
     required: false
     description:
-      - Command to execute on OOB controller
+      - List of commands to execute on OOB controller
   baseuri:
     required: true
     description:
@@ -71,14 +71,14 @@ EXAMPLES = '''
   - name: Get several inventories
     redfish_facts:
       category: Systems
-      command: "GetNicInventory GetPsuInventory GetBiosAttributes"
+      command: GetNicInventory,GetPsuInventory,GetBiosAttributes
       baseuri: "{{ baseuri }}"
       user: "{{ user }}"
       password: "{{ password }}"
 
   - name: Get default system inventory and user information
     redfish_facts:
-      category: "Systems,Accounts"
+      category: Systems,Accounts
       baseuri: "{{ baseuri }}"
       user: "{{ user }}"
       password: "{{ password }}"
@@ -144,7 +144,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             category=dict(type='list', default='Systems'),
-            command=dict(),
+            command=dict(type='list'),
             baseuri=dict(required=True),
             user=dict(required=True),
             password=dict(required=True, no_log=True),
@@ -176,16 +176,16 @@ def main():
             if not module.params['command']:
                 # True if we don't specify a command --> use default
                 command_list.append(CATEGORY_COMMANDS_DEFAULT[category])
-            elif module.params['command'] == "all":
+            elif "all" in module.params['command']:
                 for entry in range(len(CATEGORY_COMMANDS_ALL[category])):
                     command_list.append(CATEGORY_COMMANDS_ALL[category][entry])
             # one or more commands
             else:
-                for cmd in module.params['command'].split():
-                    if cmd in CATEGORY_COMMANDS_ALL[category]:
-                        command_list.append(cmd)
-                    else:
-                        # Fail if even one command given is invalid
+                command_list = module.params['command']
+                # Verify that all commands are valid
+                for cmd in command_list:
+                    # Fail if even one command given is invalid
+                    if cmd not in CATEGORY_COMMANDS_ALL[category]:
                         module.fail_json(msg="Invalid Command: %s" % cmd)
         else:
             # Fail if even one category given is invalid
