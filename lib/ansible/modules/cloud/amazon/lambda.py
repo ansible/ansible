@@ -364,8 +364,7 @@ def main():
                           ['zip_file', 's3_object_version']]
 
     required_together = [['s3_key', 's3_bucket'],
-                         ['vpc_subnet_ids', 'vpc_security_group_ids'],
-                         ['runtime', 'handler', 'role']]
+                         ['vpc_subnet_ids', 'vpc_security_group_ids']]
 
     required_if = []
 
