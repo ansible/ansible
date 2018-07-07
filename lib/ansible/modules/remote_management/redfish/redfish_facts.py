@@ -62,6 +62,12 @@ EXAMPLES = '''
       user: "{{ user }}"
       password: "{{ password }}"
 
+  - name: Get default inventory information
+    redfish_facts:
+      baseuri: "{{ baseuri }}"
+      user: "{{ user }}"
+      password: "{{ password }}"
+
   - name: Get several inventories
     redfish_facts:
       category: Systems
@@ -70,9 +76,16 @@ EXAMPLES = '''
       user: "{{ user }}"
       password: "{{ password }}"
 
-  - name: Get system inventory and user information (use default commands)
+  - name: Get default system inventory and user information
     redfish_facts:
       category: "Systems,Accounts"
+      baseuri: "{{ baseuri }}"
+      user: "{{ user }}"
+      password: "{{ password }}"
+
+  - name: Get default system, user and firmware information
+    redfish_facts:
+      category: ["Systems", "Accounts", "Update"]
       baseuri: "{{ baseuri }}"
       user: "{{ user }}"
       password: "{{ password }}"
