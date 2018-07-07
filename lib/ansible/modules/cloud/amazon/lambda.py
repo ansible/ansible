@@ -409,15 +409,16 @@ def main():
     # Get function configuration if present, False otherwise
     current_function = get_current_function(client, name)
 
-    if state == 'present' and (role or not current_function):
-        if role.startswith('arn:aws:iam'):
-            role_arn = role
+    if state == 'present':
+        if role or not current_function:
+            if role.startswith('arn:aws:iam'):
+                role_arn = role
+            else:
+                # get account ID and assemble ARN
+                account_id = get_account_id(module, region=region, endpoint=ec2_url, **aws_connect_kwargs)
+                role_arn = 'arn:aws:iam::{0}:role/{1}'.format(account_id, role)
         else:
-            # get account ID and assemble ARN
-            account_id = get_account_id(module, region=region, endpoint=ec2_url, **aws_connect_kwargs)
-            role_arn = 'arn:aws:iam::{0}:role/{1}'.format(account_id, role)
-    else:
-        role_arn = current_function['Configuration']['Role']
+            role_arn = current_function['Configuration']['Role']
 
     # Update existing Lambda function
     if state == 'present' and current_function:
