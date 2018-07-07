@@ -823,7 +823,7 @@ class PyVmomiHelper(PyVmomi):
                 except ValueError as e:
                     self.module.fail_json(msg="hardware.mem_limit attribute should be an integer value.")
                 memory_allocation.limit = mem_limit
-                if vm_obj is None or mem_limit.limit != vm_obj.config.memoryAllocation.limit:
+                if vm_obj is None or memory_allocation.limit != vm_obj.config.memoryAllocation.limit:
                     rai_change_detected = True
 
             if 'mem_reservation' in self.params['hardware']:
@@ -1246,7 +1246,6 @@ class PyVmomiHelper(PyVmomi):
                 # virtual machine is going to be deployed then we get error. We can infer that there is no
                 # association between given distributed port group and host system.
                 host_system = self.params.get('esxi_hostname')
-
                 if host_system and host_system not in [host.config.host.name for host in pg_obj.config.distributedVirtualSwitch.config.host]:
                     self.module.fail_json(msg="It seems that host system '%s' is not associated with distributed"
                                               " virtual portgroup '%s'. Please make sure host system is associated"
@@ -1268,7 +1267,6 @@ class PyVmomiHelper(PyVmomi):
                 nic.device.backing.opaqueNetworkType = 'nsx.LogicalSwitch'
                 nic.device.backing.opaqueNetworkId = network_id
                 nic.device.deviceInfo.summary = 'nsx.LogicalSwitch: %s' % network_id
-
             else:
                 # vSwitch
                 if not isinstance(nic.device.backing, vim.vm.device.VirtualEthernetCard.NetworkBackingInfo):
@@ -1406,6 +1404,7 @@ class PyVmomiHelper(PyVmomi):
             else:
                 self.module.fail_json(msg="Unable to find customization specification"
                                           " '%s' in given configuration." % custom_spec_name)
+
         # Network settings
         adaptermaps = []
         for network in self.params['networks']:
@@ -2251,6 +2250,7 @@ def main():
         networks=dict(type='list', default=[]),
         resource_pool=dict(type='str'),
         customization=dict(type='dict', default={}, no_log=True),
+        customization_spec=dict(type='str', default=None),
         vapp_properties=dict(type='list', default=[]),
     )
 
