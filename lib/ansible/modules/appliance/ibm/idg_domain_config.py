@@ -241,10 +241,11 @@ from ansible.module_utils.urls import open_url
 
 # Common package of our implementation for IDG
 try:
-    from ansible.module_utils.appliance.ibm.idg_common import *
-    HAS_IDG_UTILS = True
+    from ansible.module_utils.appliance.ibm.idg_common import result, idg_endpoint_spec, IDG_Utils
+    from ansible.module_utils.appliance.ibm.idg_rest_mgmt import IDG_API
+    HAS_IDG_DEPS = True
 except ImportError:
-    HAS_IDG_UTILS = False
+    HAS_IDG_DEPS = False
 
 def main():
 
@@ -282,15 +283,14 @@ def main():
         required_if = [
                         ['state', 'imported', ['input_file']]
                       ]
-
     )
 
     # Validates the dependence of the utility module
-    if not HAS_IDG_UTILS:
+    if not HAS_IDG_DEPS:
         module.fail_json(msg="The IDG utils module is required")
 
     # Parse arguments to dict
-    idg_data_spec = parse_to_dict(module.params['idg_connection'], 'IDGConnection', ANSIBLE_VERSION)
+    idg_data_spec = IDG_Utils.parse_to_dict(module.params['idg_connection'], 'IDGConnection', IDG_Utils.ANSIBLE_VERSION)
 
     # Status & domain
     state = module.params['state']
@@ -302,14 +302,14 @@ def main():
     # Init IDG API connect
     idg_mgmt = IDG_API(ansible_module = module,
                        idg_host = "https://{0}:{1}".format(idg_data_spec['server'], idg_data_spec['server_port']),
-                       headers = BASIC_HEADERS,
-                       http_agent = HTTP_AGENT_SPEC,
+                       headers = IDG_Utils.BASIC_HEADERS,
+                       http_agent = IDG_Utils.HTTP_AGENT_SPEC,
                        use_proxy = idg_data_spec['use_proxy'],
                        timeout = idg_data_spec['timeout'],
                        validate_certs = idg_data_spec['validate_certs'],
                        user = idg_data_spec['user'],
                        password = idg_data_spec['password'],
-                       force_basic_auth = BASIC_AUTH_SPEC)
+                       force_basic_auth = IDG_Utils.BASIC_AUTH_SPEC)
 
     # Variable to store the status of the action
     action_result = ''
@@ -318,9 +318,9 @@ def main():
     export_action_msg = { "Export": {
                             "Format": "ZIP",
                             "UserComment": module.params['user_summary'],
-                            "AllFiles": on_off(module.params['all_files']),
-                            "Persisted": on_off(module.params['persisted']),
-                            "IncludeInternalFiles": on_off(module.params['internal_files'])
+                            "AllFiles": IDG_Utils.on_off(module.params['all_files']),
+                            "Persisted": IDG_Utils.on_off(module.params['persisted']),
+                            "IncludeInternalFiles": IDG_Utils.on_off(module.params['internal_files'])
                             # TODO
                             # "DeploymentPolicy":""
                           }
@@ -329,10 +329,10 @@ def main():
     import_action_msg = { "Import": {
                             "Format": "ZIP",
                             "InputFile": module.params['input_file'],
-                            "OverwriteFiles": on_off(module.params['overwrite_files']),
-                            "OverwriteObjects": on_off(module.params['overwrite_objects']),
-                            "DryRun": on_off(module.params['dry_run']),
-                            "RewriteLocalIP": on_off(module.params['rewrite_local_ip'])
+                            "OverwriteFiles": IDG_Utils.on_off(module.params['overwrite_files']),
+                            "OverwriteObjects": IDG_Utils.on_off(module.params['overwrite_objects']),
+                            "DryRun": IDG_Utils.on_off(module.params['dry_run']),
+                            "RewriteLocalIP": IDG_Utils.on_off(module.params['rewrite_local_ip'])
                             # TODO
                             # "DeploymentPolicy": "name",
                             # "DeploymentPolicyParams": "name",
@@ -366,7 +366,7 @@ def main():
 
                 # If the user is working in only check mode we do not want to make any changes
                 if module.check_mode:
-                    result['msg'] = CHECK_MODE_MESSAGE
+                    result['msg'] = IDG_Utils.CHECK_MODE_MESSAGE
                     module.exit_json(**result)
 
                 # export and finish
@@ -399,7 +399,7 @@ def main():
 
                 # If the user is working in only check mode we do not want to make any changes
                 if module.check_mode:
-                    result['msg'] = CHECK_MODE_MESSAGE
+                    result['msg'] = IDG_Utils.CHECK_MODE_MESSAGE
                     module.exit_json(**result)
 
                 # Reseted domain
@@ -445,7 +445,7 @@ def main():
 
                         # If the user is working in only check mode we do not want to make any changes
                         if module.check_mode:
-                            result['msg'] = CHECK_MODE_MESSAGE
+                            result['msg'] = IDG_Utils.CHECK_MODE_MESSAGE
                             module.exit_json(**result)
 
                         save_code, save_msg, save_data = idg_mgmt.api_call(uri = _URI_ACTION.format(domain_name), method = 'POST',
@@ -461,13 +461,13 @@ def main():
                             module.fail_json(msg = to_native(idg_mgmt.ERROR_RETRIEVING_RESULT % (state, domain_name)))
                     else:
                         # Domain is save
-                        result['msg'] = IMMUTABLE_MESSAGE
+                        result['msg'] = IDG_Utils.IMMUTABLE_MESSAGE
 
             elif state == 'imported':
 
                 # If the user is working in only check mode we do not want to make any changes
                 if module.check_mode:
-                    result['msg'] = CHECK_MODE_MESSAGE
+                    result['msg'] = IDG_Utils.CHECK_MODE_MESSAGE
                     module.exit_json(**result)
 
                 # Import

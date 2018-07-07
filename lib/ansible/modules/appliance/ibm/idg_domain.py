@@ -321,10 +321,11 @@ from ansible.module_utils.urls import open_url
 
 # Common package of our implementation for IDG
 try:
-    from ansible.module_utils.appliance.ibm.idg_common import *
-    HAS_IDG_UTILS = True
+    from ansible.module_utils.appliance.ibm.idg_common import result, idg_endpoint_spec, IDG_Utils
+    from ansible.module_utils.appliance.ibm.idg_rest_mgmt import IDG_API
+    HAS_IDG_DEPS = True
 except ImportError:
-    HAS_IDG_UTILS = False
+    HAS_IDG_DEPS = False
 
 def main():
 
@@ -383,18 +384,22 @@ def main():
     # AnsibleModule instantiation
     module = AnsibleModule(
         argument_spec = module_args,
-        supports_check_mode = True
+        supports_check_mode = True,
+        # Interaction between parameters
+        required_if = [
+                        ['state', 'quiesced', ['quiesce_conf']]
+                      ]
     )
 
     # Validates the dependence of the utility module
-    if not HAS_IDG_UTILS:
+    if not HAS_IDG_DEPS:
         module.fail_json(msg="The IDG utils module is required")
 
     # Parse arguments to dict
-    idg_data_spec = parse_to_dict(module.params['idg_connection'], 'IDGConnection', ANSIBLE_VERSION)
-    filemap_data_spec = parse_to_dict(module.params['file_map'], 'FileMap', ANSIBLE_VERSION)
-    monitoringmap_data_spec = parse_to_dict(module.params['monitoring_map'], 'MonitoringMap', ANSIBLE_VERSION)
-    quiesce_conf_data_spec = parse_to_dict(module.params['quiesce_conf'], 'QuiesceConf', ANSIBLE_VERSION)
+    idg_data_spec = IDG_Utils.parse_to_dict(module.params['idg_connection'], 'IDGConnection', IDG_Utils.ANSIBLE_VERSION)
+    filemap_data_spec = IDG_Utils.parse_to_dict(module.params['file_map'], 'FileMap', IDG_Utils.ANSIBLE_VERSION)
+    monitoringmap_data_spec = IDG_Utils.parse_to_dict(module.params['monitoring_map'], 'MonitoringMap', IDG_Utils.ANSIBLE_VERSION)
+    quiesce_conf_data_spec = IDG_Utils.parse_to_dict(module.params['quiesce_conf'], 'QuiesceConf', IDG_Utils.ANSIBLE_VERSION)
 
     # Domain to work
     domain_name = module.params['name']
@@ -406,20 +411,17 @@ def main():
     # Result
     result['name'] = domain_name
 
-    # Connection
-    socket_connection = "https://{0}:{1}".format(idg_data_spec['server'], idg_data_spec['server_port'])
-
     # Init IDG API connect
     idg_mgmt = IDG_API(ansible_module = module,
                        idg_host = "https://{0}:{1}".format(idg_data_spec['server'], idg_data_spec['server_port']),
-                       headers = BASIC_HEADERS,
-                       http_agent = HTTP_AGENT_SPEC,
+                       headers = IDG_Utils.BASIC_HEADERS,
+                       http_agent = IDG_Utils.HTTP_AGENT_SPEC,
                        use_proxy = idg_data_spec['use_proxy'],
                        timeout = idg_data_spec['timeout'],
                        validate_certs = idg_data_spec['validate_certs'],
                        user = idg_data_spec['user'],
                        password = idg_data_spec['password'],
-                       force_basic_auth = BASIC_AUTH_SPEC)
+                       force_basic_auth = IDG_Utils.BASIC_AUTH_SPEC)
 
     # Variable to store the status of the action
     action_result = ''
@@ -432,19 +434,19 @@ def main():
                            "ConfigMode": module.params['config_mode'],
                            "ConfigPermissionsMode": module.params['config_permissions_mode'],
                            "ImportFormat": module.params['import_format'],
-                           "LocalIPRewrite": on_off(module.params['local_ip_rewrite']),
+                           "LocalIPRewrite": IDG_Utils.on_off(module.params['local_ip_rewrite']),
                            "MaxChkpoints": module.params['max_chkpoints'],
                            "FileMap": {
-                                "Display": on_off(filemap_data_spec['display']),
-                                "Exec": on_off(filemap_data_spec['exec']),
-                                "CopyFrom": on_off(filemap_data_spec['copyfrom']),
-                                "CopyTo": on_off(filemap_data_spec['copyto']),
-                                "Delete": on_off(filemap_data_spec['delete']),
-                                "Subdir": on_off(filemap_data_spec['subdir'])
+                                "Display": IDG_Utils.on_off(filemap_data_spec['display']),
+                                "Exec": IDG_Utils.on_off(filemap_data_spec['exec']),
+                                "CopyFrom": IDG_Utils.on_off(filemap_data_spec['copyfrom']),
+                                "CopyTo": IDG_Utils.on_off(filemap_data_spec['copyto']),
+                                "Delete": IDG_Utils.on_off(filemap_data_spec['delete']),
+                                "Subdir": IDG_Utils.on_off(filemap_data_spec['subdir'])
                            },
                            "MonitoringMap": {
-                                "Audit": on_off(monitoringmap_data_spec['audit']),
-                                "Log": on_off(monitoringmap_data_spec['log'])
+                                "Audit": IDG_Utils.on_off(monitoringmap_data_spec['audit']),
+                                "Log": IDG_Utils.on_off(monitoringmap_data_spec['log'])
                            }
                         }
                      }
@@ -489,7 +491,7 @@ def main():
 
                     # If the user is working in only check mode we do not want to make any changes
                     if module.check_mode:
-                        result['msg'] = CHECK_MODE_MESSAGE
+                        result['msg'] = IDG_Utils.CHECK_MODE_MESSAGE
                         module.exit_json(**result)
 
                     create_code, create_msg, create_data = idg_mgmt.api_call(uri = _URI_DOMAIN_CONFIG.format(domain_name), method = 'PUT',
@@ -527,7 +529,7 @@ def main():
 
                         # If the user is working in only check mode we do not want to make any changes
                         if module.check_mode:
-                            result['msg'] = CHECK_MODE_MESSAGE
+                            result['msg'] = IDG_Utils.CHECK_MODE_MESSAGE
                             module.exit_json(**result)
 
                         upd_code, upd_msg, upd_json = idg_mgmt.api_call(uri = _URI_DOMAIN_CONFIG.format(domain_name), method = 'PUT',
@@ -544,13 +546,13 @@ def main():
 
                     elif state == 'present' and (domain_obj_msg['Domain'] == dc_data['Domain']): # Identicals configurations
                         # The current configuration is identical to the new configuration, there is nothing to do
-                        result['msg'] = IMMUTABLE_MESSAGE
+                        result['msg'] = IDG_Utils.IMMUTABLE_MESSAGE
 
                     elif state == 'restarted': # Restart domain
 
                         # If the user is working in only check mode we do not want to make any changes
                         if module.check_mode:
-                            result['msg'] = CHECK_MODE_MESSAGE
+                            result['msg'] = IDG_Utils.CHECK_MODE_MESSAGE
                             module.exit_json(**result)
 
                         restart_code, restart_msg, restart_data = idg_mgmt.api_call(uri = _URI_ACTION.format(domain_name), method = 'POST',
@@ -595,7 +597,7 @@ def main():
 
                                     # If the user is working in only check mode we do not want to make any changes
                                     if module.check_mode:
-                                        result['msg'] = CHECK_MODE_MESSAGE
+                                        result['msg'] = IDG_Utils.CHECK_MODE_MESSAGE
                                         module.exit_json(**result)
 
                                     # Quiesce domain
@@ -625,14 +627,14 @@ def main():
                                         module.fail_json(msg = to_native(idg_mgmt.ERROR_ACCEPTING_ACTION % (state, domain_name)))
                                 else:
                                     # Domain is quiesced
-                                    result['msg'] = IMMUTABLE_MESSAGE
+                                    result['msg'] = IDG_Utils.IMMUTABLE_MESSAGE
 
                             elif state == 'unquiesced':
                                 if domain_quiesce_status == 'quiesced':
 
                                     # If the user is working in only check mode we do not want to make any changes
                                     if module.check_mode:
-                                        result['msg'] = CHECK_MODE_MESSAGE
+                                        result['msg'] = IDG_Utils.CHECK_MODE_MESSAGE
                                         module.exit_json(**result)
 
                                     # Unquiesce domain
@@ -663,7 +665,7 @@ def main():
 
                                 else:
                                     # Domain is unquiesced
-                                    result['msg'] = IMMUTABLE_MESSAGE
+                                    result['msg'] = IDG_Utils.IMMUTABLE_MESSAGE
 
                         else:
                             # Can't get domain status
@@ -679,7 +681,7 @@ def main():
 
                 # If the user is working in only check mode we do not want to make any changes
                 if module.check_mode:
-                    result['msg'] = CHECK_MODE_MESSAGE
+                    result['msg'] = IDG_Utils.CHECK_MODE_MESSAGE
                     module.exit_json(**result)
 
                 # Remove
@@ -696,7 +698,7 @@ def main():
                     module.fail_json(msg = 'Error deleting domain "%s".' % (domain_name))
 
             else: # Domain NOT EXIST.
-                result['msg'] = IMMUTABLE_MESSAGE
+                result['msg'] = IDG_Utils.IMMUTABLE_MESSAGE
 
         # pdb.set_trace()
         # That's all folks!
