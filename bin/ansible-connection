@@ -69,7 +69,7 @@ class ConnectionProcess(object):
         self.connection = None
         self._ansible_playbook_pid = ansible_playbook_pid
 
-    def start(self):
+    def start(self, variables):
         try:
             messages = list()
             result = {}
@@ -83,7 +83,7 @@ class ConnectionProcess(object):
                 self.play_context.private_key_file = os.path.join(self.original_path, self.play_context.private_key_file)
             self.connection = connection_loader.get(self.play_context.connection, self.play_context, '/dev/null',
                                                     ansible_playbook_pid=self._ansible_playbook_pid)
-            self.connection.set_options()
+            self.connection.set_options(var_options=variables)
             self.connection._connect()
             self.connection._socket_path = self.socket_path
             self.srv.register(self.connection)
@@ -107,7 +107,7 @@ class ConnectionProcess(object):
             while self.connection.connected:
                 signal.signal(signal.SIGALRM, self.connect_timeout)
                 signal.signal(signal.SIGTERM, self.handler)
-                signal.alarm(C.PERSISTENT_CONNECT_TIMEOUT)
+                signal.alarm(self.connection.get_option('persistent_connect_timeout'))
 
                 self.exception = None
                 (s, addr) = self.sock.accept()
@@ -141,7 +141,8 @@ class ConnectionProcess(object):
             self.shutdown()
 
     def connect_timeout(self, signum, frame):
-        display.display('persistent connection idle timeout triggered, timeout value is %s secs' % C.PERSISTENT_CONNECT_TIMEOUT, log_only=True)
+        display.display('persistent connection idle timeout triggered, timeout value is %s secs'
+                        % self.connection.get_option('persistent_connect_timeout'), log_only=True)
         self.shutdown()
 
     def command_timeout(self, signum, frame):
@@ -200,10 +201,21 @@ def main():
             init_data += cur_line
             cur_line = stdin.readline()
 
+        cur_line = stdin.readline()
+        vars_data = b''
+
+        while cur_line.strip() != b'#END_VARS#':
+            if cur_line == b'':
+                raise Exception("EOF found before vars data was complete")
+            vars_data += cur_line
+            cur_line = stdin.readline()
+
         if PY3:
             pc_data = cPickle.loads(init_data, encoding='bytes')
+            variables = cPickle.loads(vars_data, encoding='bytes')
         else:
             pc_data = cPickle.loads(init_data)
+            variables = cPickle.loads(vars_data)
 
         play_context = PlayContext()
         play_context.deserialize(pc_data)
@@ -241,7 +253,7 @@ def main():
                         os.close(r)
                         wfd = os.fdopen(w, 'w')
                         process = ConnectionProcess(wfd, play_context, socket_path, original_path, ansible_playbook_pid)
-                        process.start()
+                        process.start(variables)
                     except Exception:
                         messages.append(traceback.format_exc())
                         rc = 1

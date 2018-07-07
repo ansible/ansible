@@ -96,7 +96,7 @@ options:
     description:
       - Path to a file containing environment variables I(FOO=BAR).
       - If variable also present in C(env), then C(env) value will override.
-      - Requires docker-py >= 1.4.0.
+      - Requires docker >= 2.3.0.
   entrypoint:
     description:
       - Command that overwrites the default ENTRYPOINT of the image.
@@ -139,6 +139,13 @@ options:
     description:
       - Repository path and tag used to create the container. If an image is not found or pull is true, the image
         will be pulled from the registry. If no tag is included, 'latest' will be used.
+  init:
+    description:
+      - Run an init inside the container that forwards signals and reaps processes.
+        This option requires Docker API 1.25+.
+    type: bool
+    default: 'no'
+    version_added: "2.6"
   interactive:
     description:
       - Keep stdin open after a container is launched, even if not attached.
@@ -166,7 +173,8 @@ options:
        - Dictionary of key value pairs.
   links:
     description:
-      - List of name aliases for linked containers in the format C(container_name:alias)
+      - List of name aliases for linked containers in the format C(container_name:alias).
+      - Setting this will force container to be restarted.
   log_driver:
     description:
       - Specify the logging driver. Docker uses json-file by default.
@@ -238,6 +246,12 @@ options:
       - An integer value containing the score given to the container in order to tune OOM killer preferences.
     default: 0
     version_added: "2.2"
+  output_logs:
+    description:
+      - If set to true, output of the container command will be printed (only effective when log_driver is set to json-file or journald.
+    type: bool
+    default: 'no'
+    version_added: "2.7"
   paused:
     description:
       - Use with the started state to pause running processes inside the container.
@@ -407,7 +421,7 @@ author:
 
 requirements:
     - "python >= 2.6"
-    - "docker-py >= 1.7.0"
+    - "docker >= 2.3.0"
     - "Docker API >= 1.20"
 '''
 
@@ -603,7 +617,7 @@ try:
     else:
         from docker.utils.types import Ulimit, LogConfig
 except:
-    # missing docker-py handled in ansible.module_utils.docker
+    # missing docker handled in ansible.module_utils.docker
     pass
 
 
@@ -653,6 +667,7 @@ class TaskParameters(DockerBaseClass):
         self.hostname = None
         self.ignore_image = None
         self.image = None
+        self.init = None
         self.interactive = None
         self.ipc_mode = None
         self.keep_volumes = None
@@ -661,6 +676,7 @@ class TaskParameters(DockerBaseClass):
         self.labels = None
         self.links = None
         self.log_driver = None
+        self.output_logs = None
         self.log_options = None
         self.mac_address = None
         self.memory = None
@@ -829,14 +845,14 @@ class TaskParameters(DockerBaseClass):
             if ':' in vol:
                 if len(vol.split(':')) == 3:
                     host, container, mode = vol.split(':')
-                    if re.match(r'[\.~]', host):
-                        host = os.path.abspath(host)
+                    if re.match(r'[.~]', host):
+                        host = os.path.abspath(os.path.expanduser(host))
                     new_vols.append("%s:%s:%s" % (host, container, mode))
                     continue
                 elif len(vol.split(':')) == 2:
                     parts = vol.split(':')
-                    if parts[1] not in VOLUME_PERMISSIONS and re.match(r'[\.~]', parts[0]):
-                        host = os.path.abspath(parts[0])
+                    if parts[1] not in VOLUME_PERMISSIONS and re.match(r'[.~]', parts[0]):
+                        host = os.path.abspath(os.path.expanduser(parts[0]))
                         new_vols.append("%s:%s:rw" % (host, parts[1]))
                         continue
             new_vols.append(vol)
@@ -898,7 +914,8 @@ class TaskParameters(DockerBaseClass):
             group_add='groups',
             devices='devices',
             pid_mode='pid_mode',
-            tmpfs='tmpfs'
+            tmpfs='tmpfs',
+            init='init'
         )
 
         if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
@@ -1022,6 +1039,8 @@ class TaskParameters(DockerBaseClass):
                     protocol = 'tcp'
                     port = int(publish_port)
                 for exposed_port in exposed:
+                    if exposed_port[1] != protocol:
+                        continue
                     if isinstance(exposed_port[0], string_types) and '-' in exposed_port[0]:
                         start_port, end_port = exposed_port[0].split('-')
                         if int(start_port) <= port <= int(end_port):
@@ -1213,7 +1232,7 @@ class Container(DockerBaseClass):
 
         # "ExposedPorts": null returns None type & causes AttributeError - PR #5517
         if config.get('ExposedPorts') is not None:
-            expected_exposed = [re.sub(r'/.+$', '', p) for p in config.get('ExposedPorts', dict()).keys()]
+            expected_exposed = [self._normalize_port(p) for p in config.get('ExposedPorts', dict()).keys()]
         else:
             expected_exposed = []
 
@@ -1628,10 +1647,10 @@ class Container(DockerBaseClass):
         self.log('_get_expected_exposed')
         image_ports = []
         if image:
-            image_ports = [re.sub(r'/.+$', '', p) for p in (image['ContainerConfig'].get('ExposedPorts') or {}).keys()]
+            image_ports = [self._normalize_port(p) for p in (image['ContainerConfig'].get('ExposedPorts') or {}).keys()]
         param_ports = []
         if self.parameters.ports:
-            param_ports = [str(p[0]) for p in self.parameters.ports]
+            param_ports = [str(p[0]) + '/' + p[1] for p in self.parameters.ports]
         result = list(set(image_ports + param_ports))
         self.log(result, pretty_print=True)
         return result
@@ -1671,6 +1690,11 @@ class Container(DockerBaseClass):
         for key, value in getattr(self.parameters, param_name).items():
             results.append("%s%s%s" % (key, join_with, value))
         return results
+
+    def _normalize_port(self, port):
+        if '/' not in port:
+            return port + '/tcp'
+        return port
 
 
 class ContainerManager(DockerBaseClass):
@@ -1757,6 +1781,9 @@ class ContainerManager(DockerBaseClass):
 
     def fail(self, msg, **kwargs):
         self.client.module.fail_json(msg=msg, **kwargs)
+
+    def _output_logs(self, msg):
+        self.client.module.log(msg=msg)
 
     def _get_container(self, container):
         '''
@@ -1898,6 +1925,8 @@ class ContainerManager(DockerBaseClass):
 
                 if logging_driver == 'json-file' or logging_driver == 'journald':
                     output = self.client.logs(container_id, stdout=True, stderr=True, stream=False, timestamps=False)
+                    if self.parameters.output_logs:
+                        self._output_logs(msg=output)
                 else:
                     output = "Result logged using `%s` driver" % logging_driver
 
@@ -1999,6 +2028,7 @@ def main():
         hostname=dict(type='str'),
         ignore_image=dict(type='bool', default=False),
         image=dict(type='str'),
+        init=dict(type='bool', default=False),
         interactive=dict(type='bool', default=False),
         ipc_mode=dict(type='str'),
         keep_volumes=dict(type='bool', default=True),
@@ -2021,6 +2051,7 @@ def main():
         networks=dict(type='list'),
         oom_killer=dict(type='bool'),
         oom_score_adj=dict(type='int'),
+        output_logs=dict(type='bool', default=False),
         paused=dict(type='bool', default=False),
         pid_mode=dict(type='str'),
         privileged=dict(type='bool', default=False),

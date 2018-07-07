@@ -12,6 +12,7 @@ $ErrorActionPreference = "Stop"
 $params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 $diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
+$_remote_tmp = Get-AnsibleParam $params "_ansible_remote_tmp" -type "path" -default $env:TMP
 
 $path = Get-AnsibleParam -obj $params -name "path" -type "str" -failifempty $true -aliases "key"
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -aliases "entry","value"
@@ -370,7 +371,14 @@ if ($hive) {
     if (-not (Test-Path $hive)) {
         Fail-Json -obj $result -message "hive at path '$hive' is not valid or accessible, cannot load hive"
     }
+
+    $original_tmp = $env:TMP
+    $original_temp = $env:TEMP
+    $env:TMP = $_remote_tmp
+    $env:TEMP = $_remote_tmp
     Add-Type -TypeDefinition $registry_util
+    $env:TMP = $original_tmp
+    $env:TEMP = $original_temp
     try {
         [Ansible.RegistryUtil]::EnablePrivileges()
     } catch [System.ComponentModel.Win32Exception] {

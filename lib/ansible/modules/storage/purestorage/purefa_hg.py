@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Simon Dodsley (simon@purestorage.com)
+# (c) 2018, Simon Dodsley (simon@purestorage.com)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -126,7 +126,7 @@ def make_hostgroup(module, array):
     try:
         array.create_hgroup(module.params['hostgroup'])
     except:
-        module.fail_json(msg='Failed to create hostgroup {0}'.format(module.params['hostgroup']))
+        changed = False
     if module.params['host']:
         array.set_hgroup(module.params['hostgroup'], hostlist=module.params['host'])
     if module.params['volume']:
@@ -188,14 +188,24 @@ def update_hostgroup(module, array):
 
 def delete_hostgroup(module, array):
     changed = True
-    for vol in array.list_hgroup_connections(module.params['hostgroup']):
-        array.disconnect_hgroup(module.params['hostgroup'], vol["vol"])
-    host = array.get_hgroup(module.params['hostgroup'])
-    array.set_hgroup(module.params['hostgroup'], remhostlist=host['hosts'])
     try:
-        array.delete_hgroup(module.params['hostgroup'])
+        vols = array.list_hgroup_connections(module.params['hostgroup'])
+        for vol in vols:
+            try:
+                array.disconnect_hgroup(module.params['hostgroup'], vol["vol"])
+            except:
+                changed = False
+        host = array.get_hgroup(module.params['hostgroup'])
+        try:
+            array.set_hgroup(module.params['hostgroup'], remhostlist=host['hosts'])
+            try:
+                array.delete_hgroup(module.params['hostgroup'])
+            except:
+                changed = False
+        except:
+            changed = False
     except:
-        module.fail_json(msg='Failed to delete hostgroup {0}'.format(module.params['hostgroup']))
+        changed = False
     module.exit_json(changed=changed)
 
 

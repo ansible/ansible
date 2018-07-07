@@ -11,7 +11,7 @@ Foreword
 ````````
 
 Now that you've read the :ref:`installation guide<installation_guide>` and installed Ansible, it's time to get
-started with some ad-hoc commands.  
+started with some ad-hoc commands.
 
 What we are showing first are not the powerful configuration/deployment/orchestration features of Ansible.
 These features are handled by playbooks which are covered in a separate section.
@@ -24,15 +24,17 @@ Remote Connection Information
 `````````````````````````````
 
 Before we get started, it's important to understand how Ansible communicates with remote
-machines over SSH. 
+machines over SSH.
 
-By default, Ansible will try to use native 
+By default, Ansible will try to use native
 OpenSSH for remote communication when possible.  This enables ControlPersist (a performance feature), Kerberos, and options in ``~/.ssh/config`` such as Jump Host setup.  However, when using Enterprise Linux 6 operating systems as the control machine (Red Hat Enterprise Linux and derivatives such as CentOS), the version of OpenSSH may be too old to support ControlPersist. On these operating systems, Ansible will fallback into using a high-quality Python implementation of
-OpenSSH called 'paramiko'.  If you wish to use features like Kerberized SSH and more, consider using Fedora, OS X, or Ubuntu as your control machine until a newer version of OpenSSH is available for your platform.
+OpenSSH called 'paramiko'.  If you wish to use features like Kerberized SSH and more, consider using Fedora, macOS, or Ubuntu as your control machine until a newer version of OpenSSH is available for your platform.
 
 Occasionally you'll encounter a device that doesn't support SFTP. This is rare, but should it occur, you can switch to SCP mode in :ref:`intro_configuration`.
 
 When speaking with remote machines, Ansible by default assumes you are using SSH keys.  SSH keys are encouraged but password authentication can also be used where needed by supplying the option ``--ask-pass``.  If using sudo features and when sudo requires a password, also supply ``--ask-become-pass`` (previously ``--ask-sudo-pass`` which has been deprecated).
+
+.. include:: shared_snippets/SSH_password_prompt.txt
 
 While it may be common sense, it is worth sharing: Any management system benefits from being run near the machines being managed. If you are running Ansible in a cloud, consider running it from a machine inside that cloud.  In most cases this will work better than on the open Internet.
 
@@ -51,8 +53,8 @@ public SSH key should be located in ``authorized_keys`` on those systems::
     192.0.2.50
     aserver.example.org
     bserver.example.org
-   
-   
+
+
 This is an inventory file, which is also explained in greater depth here:  :doc:`intro_inventory`.
 
 We'll assume you are using SSH keys for authentication.  To set up SSH agent to avoid retyping passwords, you can
@@ -81,7 +83,7 @@ If you would like to access sudo mode, there are also flags to do that:
     # as bruce
     $ ansible all -m ping -u bruce
     # as bruce, sudoing to root
-    $ ansible all -m ping -u bruce --sudo 
+    $ ansible all -m ping -u bruce --sudo
     # as bruce, sudoing to batman
     $ ansible all -m ping -u bruce --sudo --sudo-user batman
 
@@ -95,13 +97,13 @@ If you would like to access sudo mode, there are also flags to do that:
 replacement.  Flags passed to sudo (like -H) can also be set there.)
 
 Now run a live command on all of your nodes:
-  
+
 .. code-block:: bash
 
    $ ansible all -a "/bin/echo hello"
 
 Congratulations!  You've just contacted your nodes with Ansible.  It's
-soon going to be time to: read about some more real-world cases in :doc:`intro_adhoc`, 
+soon going to be time to: read about some more real-world cases in :doc:`intro_adhoc`,
 explore what you can do with different modules, and to learn about the Ansible
 :doc:`playbooks` language.  Ansible is not just about running commands, it
 also has powerful configuration management and deployment features.  There's more to
@@ -126,7 +128,7 @@ You can specify localhost explicitly by adding this to your inventory file::
 Host Key Checking
 `````````````````
 
-Ansible has host key checking enabled by default.  
+Ansible has host key checking enabled by default.
 
 If a host is reinstalled and has a different key in 'known_hosts', this will result in an error message until corrected.  If a host is not initially in 'known_hosts' this will result in prompting for confirmation of the key, which results in an interactive experience if using Ansible, from say, cron.  You might not want this.
 

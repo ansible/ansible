@@ -129,59 +129,59 @@ def map_obj_to_commands(updates, module):
 
         if state == 'absent':
             if obj_in_have:
-                commands.append('no vlan {}'.format(vlan_id))
+                commands.append('no vlan {0}'.format(vlan_id))
 
         elif state == 'present':
             if not obj_in_have:
-                commands.append('vlan {}'.format(vlan_id))
+                commands.append('vlan {0}'.format(vlan_id))
                 if name:
-                    commands.append('name {}'.format(name))
+                    commands.append('name {0}'.format(name))
 
                 if interfaces:
                     for i in interfaces:
-                        commands.append('interface {}'.format(i))
+                        commands.append('interface {0}'.format(i))
                         commands.append('switchport mode access')
-                        commands.append('switchport access vlan {}'.format(vlan_id))
+                        commands.append('switchport access vlan {0}'.format(vlan_id))
 
             else:
                 if name:
                     if name != obj_in_have['name']:
-                        commands.append('vlan {}'.format(vlan_id))
-                        commands.append('name {}'.format(name))
+                        commands.append('vlan {0}'.format(vlan_id))
+                        commands.append('name {0}'.format(name))
 
                 if interfaces:
                     if not obj_in_have['interfaces']:
                         for i in interfaces:
-                            commands.append('vlan {}'.format(vlan_id))
-                            commands.append('interface {}'.format(i))
+                            commands.append('vlan {0}'.format(vlan_id))
+                            commands.append('interface {0}'.format(i))
                             commands.append('switchport mode access')
-                            commands.append('switchport access vlan {}'.format(vlan_id))
+                            commands.append('switchport access vlan {0}'.format(vlan_id))
 
                     elif set(interfaces) != set(obj_in_have['interfaces']):
                         missing_interfaces = list(set(interfaces) - set(obj_in_have['interfaces']))
                         for i in missing_interfaces:
-                            commands.append('vlan {}'.format(vlan_id))
-                            commands.append('interface {}'.format(i))
+                            commands.append('vlan {0}'.format(vlan_id))
+                            commands.append('interface {0}'.format(i))
                             commands.append('switchport mode access')
-                            commands.append('switchport access vlan {}'.format(vlan_id))
+                            commands.append('switchport access vlan {0}'.format(vlan_id))
 
                         superfluous_interfaces = list(set(obj_in_have['interfaces']) - set(interfaces))
                         for i in superfluous_interfaces:
-                            commands.append('vlan {}'.format(vlan_id))
-                            commands.append('interface {}'.format(i))
+                            commands.append('vlan {0}'.format(vlan_id))
+                            commands.append('interface {0}'.format(i))
                             commands.append('switchport mode access')
-                            commands.append('no switchport access vlan {}'.format(vlan_id))
+                            commands.append('no switchport access vlan {0}'.format(vlan_id))
         else:
-            commands.append('vlan {}'.format(vlan_id))
+            commands.append('vlan {0}'.format(vlan_id))
             if name:
-                commands.append('name {}'.format(name))
-            commands.append('state {}'.format(state))
+                commands.append('name {0}'.format(name))
+            commands.append('state {0}'.format(state))
 
     if purge:
         for h in have:
             obj_in_want = search_obj_in_list(h['vlan_id'], want)
             if not obj_in_want and h['vlan_id'] != '1':
-                commands.append('no vlan {}'.format(h['vlan_id']))
+                commands.append('no vlan {0}'.format(h['vlan_id']))
 
     return commands
 
@@ -211,36 +211,46 @@ def map_params_to_obj(module):
     return obj
 
 
+def parse_to_logical_rows(out):
+    started_yielding = False
+    cur_row = []
+    for l in out.splitlines()[2:]:
+        if not l:
+            """Skip empty lines."""
+            continue
+        if '0' < l[0] < '9':
+            """Line starting with a number."""
+            if started_yielding:
+                yield cur_row
+                cur_row = []  # Reset it to hold a next chunk
+            started_yielding = True
+        cur_row.append(l)
+
+    # Return the rest of it:
+    yield cur_row
+
+
+def map_ports_str_to_list(ports_str):
+    return list(filter(bool, (p.strip().replace('Gi', 'GigabitEthernet') for p in ports_str.split(', '))))
+
+
+def parse_to_obj(logical_rows):
+    first_row = logical_rows[0]
+    rest_rows = logical_rows[1:]
+    obj = re.match(r'(?P<vlan_id>\d+)\s+(?P<name>[^\s]+)\s+(?P<state>[^\s]+)\s*(?P<interfaces>.*)', first_row).groupdict()
+    if obj['state'] == 'suspended':
+        obj['state'] = 'suspend'
+    obj['interfaces'] = map_ports_str_to_list(obj['interfaces'])
+    obj['interfaces'].extend(prts_r for prts in rest_rows for prts_r in map_ports_str_to_list(prts))
+    return obj
+
+
+def parse_vlan_brief(vlan_out):
+    return [parse_to_obj(r) for r in parse_to_logical_rows(vlan_out)]
+
+
 def map_config_to_obj(module):
-    output = run_commands(module, ['show vlan'])
-    lines = output[0].strip().splitlines()[2:-1]
-
-    if not lines:
-        return list()
-
-    objs = list()
-
-    for l in lines:
-        splitted_line = l.strip().replace(",", "").split()
-        if splitted_line == []:
-            break
-        obj = {}
-        obj['vlan_id'] = splitted_line[0]
-        obj['name'] = splitted_line[1]
-        obj['state'] = splitted_line[2]
-
-        if obj['state'] == 'suspended':
-            obj['state'] = 'suspend'
-
-        obj['interfaces'] = []
-        if len(splitted_line) > 3:
-            interface = []
-            for i in range(3, len(splitted_line)):
-                interface.append(splitted_line[i].replace('Gi', 'GigabitEthernet'))
-            obj['interfaces'].extend(interface)
-        objs.append(obj)
-
-    return objs
+    return parse_vlan_brief(run_commands(module, ['show vlan brief'])[0])
 
 
 def check_declarative_intent_params(want, module, result):

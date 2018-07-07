@@ -173,7 +173,7 @@ class PlayIterator:
         # the others.
         setup_block.run_once = False
         setup_task = Task(block=setup_block)
-        setup_task.action = 'gather_facts'
+        setup_task.action = 'setup'
         setup_task.name = 'Gathering Facts'
         setup_task.tags = ['always']
         setup_task.args = {
@@ -301,7 +301,7 @@ class PlayIterator:
 
                     if (gathering == 'implicit' and implied) or \
                        (gathering == 'explicit' and boolean(self._play.gather_facts, strict=False)) or \
-                       (gathering == 'smart' and implied and not (self._variable_manager._fact_cache.get(host.name, {}).get('_ansible_facts_gathered', False))):
+                       (gathering == 'smart' and implied and not (self._variable_manager._fact_cache.get(host.name, {}).get('module_setup', False))):
                         # The setup block is always self._blocks[0], as we inject it
                         # during the play compilation in __init__ above.
                         setup_block = self._blocks[0]
@@ -513,6 +513,18 @@ class PlayIterator:
     def is_failed(self, host):
         s = self.get_host_state(host)
         return self._check_failed_state(s)
+
+    def get_active_state(self, state):
+        '''
+        Finds the active state, recursively if necessary when there are child states.
+        '''
+        if state.run_state == self.ITERATING_TASKS and state.tasks_child_state is not None:
+            return self.get_active_state(state.tasks_child_state)
+        elif state.run_state == self.ITERATING_RESCUE and state.rescue_child_state is not None:
+            return self.get_active_state(state.rescue_child_state)
+        elif state.run_state == self.ITERATING_ALWAYS and state.always_child_state is not None:
+            return self.get_active_state(state.always_child_state)
+        return state
 
     def get_original_task(self, host, task):
         # now a noop because we've changed the way we do caching

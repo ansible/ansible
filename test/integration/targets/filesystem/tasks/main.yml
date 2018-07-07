@@ -4,6 +4,15 @@
     msg: '{{ role_path|basename }}'
 - import_tasks: setup.yml
 
+- include_vars: "{{ lookup('first_found', search) }}"
+  vars:
+    search:
+      files:
+        - '{{ ansible_distribution }}-{{ ansible_distribution_version }}.yml'
+        - 'default.yml'
+      paths:
+        - '../vars/'
+
 - include_tasks: create_fs.yml
   vars:
     dev: '{{ ansible_user_dir }}/ansible_testing/img'
@@ -12,6 +21,7 @@
     grow: '{{ item.value.grow }}'
   when:
     - 'not (item.key == "btrfs" and ansible_system == "FreeBSD")'
+    - 'not (item.key == "ocfs2" and ansible_os_family != "Debian")'
     # On Ubuntu trusty, blkid is unable to identify filesystem smaller than 256Mo, see:
     # https://www.kernel.org/pub/linux/utils/util-linux/v2.21/v2.21-ChangeLog
     # https://anonscm.debian.org/cgit/collab-maint/pkg-util-linux.git/commit/?id=04f7020eadf31efc731558df92daa0a1c336c46c

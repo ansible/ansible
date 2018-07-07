@@ -62,6 +62,7 @@ class TestPluginCLIConfSLXOS(unittest.TestCase):
         self._mock_connection = MagicMock()
         self._mock_connection.send.side_effect = _connection_side_effect
         self._cliconf = slxos.Cliconf(self._mock_connection)
+        self.maxDiff = None
 
     def tearDown(self):
         pass
@@ -125,7 +126,9 @@ class TestPluginCLIConfSLXOS(unittest.TestCase):
                 'get_config',
                 'edit_config',
                 'get_capabilities',
-                'get'
+                'get',
+                'enable_response_logging',
+                'disable_response_logging'
             ],
             'device_info': {
                 'network_os_model': 'BR-SLX9140',

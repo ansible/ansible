@@ -6,15 +6,15 @@
 - name: "Enable feature tacacs+"
   nxos_feature:
     feature: tacacs+
-    state: enabled
     provider: "{{ connection }}"
+    state: enabled
 
 - name: "Setup"
   nxos_aaa_server_host: &remove
     server_type: tacacs
     address: 8.8.8.8
-    state: absent
     provider: "{{ connection }}"
+    state: absent
   ignore_errors: yes
 
 - block:
@@ -23,8 +23,8 @@
     nxos_aaa_server_host: &configure_default_tacacs
       server_type: tacacs
       address: 8.8.8.8
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: &true
@@ -57,8 +57,8 @@
       address: 8.8.8.8
       host_timeout: 25
       tacacs_port: 89
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
  
   - assert: *true
@@ -75,8 +75,8 @@
       address: 8.8.8.8
       host_timeout: default
       tacacs_port: 100
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -95,8 +95,8 @@
       tacacs_port: default
       encrypt_type: 0
       key: hello
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
    
   - assert: *true
@@ -121,8 +121,8 @@
       tacacs_port: 89
       encrypt_type: 7
       key: hello
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -141,8 +141,8 @@
       tacacs_port: 89
       encrypt_type: 7
       key: default
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -160,8 +160,8 @@
       host_timeout: default
       tacacs_port: default
       key: default
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -185,7 +185,7 @@
   - name: "Disable feature tacacs+"
     nxos_feature:
       feature: tacacs+
-      state: disabled
       provider: "{{ connection }}"
+      state: disabled
 
   - debug: msg="END connection={{ ansible_connection }} nxos_aaa_server_host tacacs.yaml sanity test"  

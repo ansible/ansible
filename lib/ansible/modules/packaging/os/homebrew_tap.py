@@ -111,7 +111,7 @@ def add_tap(module, brew_path, tap, url=None):
             tap,
             url,
         ])
-        if already_tapped(module, brew_path, tap):
+        if rc == 0:
             changed = True
             msg = 'successfully tapped: %s' % tap
         else:

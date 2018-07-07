@@ -192,12 +192,20 @@ if($gather_subset.Contains('date_time')) {
 
 if($gather_subset.Contains('distribution')) {
     $win32_os = Get-LazyCimInstance Win32_OperatingSystem
+    $product_type = switch($win32_os.ProductType) {
+        1 { "workstation" }
+        2 { "domain_controller" }
+        3 { "server" }
+        default { "unknown" }
+    }
+
     $ansible_facts += @{
         ansible_distribution = $win32_os.Caption
         ansible_distribution_version = $osversion.Version.ToString()
         ansible_distribution_major_version = $osversion.Version.Major.ToString()
         ansible_os_family = "Windows"
         ansible_os_name = ($win32_os.Name.Split('|')[0]).Trim()
+        ansible_os_product_type = $product_type
     }
 }
 

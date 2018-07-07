@@ -40,15 +40,17 @@ class ActionModule(ActionBase):
                 raise AnsibleError("Unknown category_name %s, must be one of "
                                    "(%s)" % (name, ','.join(valid_categories)))
 
-    def _run_win_updates(self, module_args, task_vars):
+    def _run_win_updates(self, module_args, task_vars, use_task):
         display.vvv("win_updates: running win_updates module")
-        result = self._execute_module(module_name='win_updates',
-                                      module_args=module_args,
-                                      task_vars=task_vars,
-                                      wrap_async=self._task.async_val)
+        wrap_async = self._task.async_val
+        result = self._execute_module_with_become(module_name='win_updates',
+                                                  module_args=module_args,
+                                                  task_vars=task_vars,
+                                                  wrap_async=wrap_async,
+                                                  use_task=use_task)
         return result
 
-    def _reboot_server(self, task_vars, reboot_timeout):
+    def _reboot_server(self, task_vars, reboot_timeout, use_task):
         display.vvv("win_updates: rebooting remote host after update install")
         reboot_args = {
             'reboot_timeout': reboot_timeout
@@ -58,42 +60,35 @@ class ActionModule(ActionBase):
         if reboot_result.get('failed', False):
             raise AnsibleError(reboot_result['msg'])
 
-        display.vvv("win_updates: checking WUA is not busy with win_shell "
-                    "command")
-        # While this always returns False after a reboot it doesn't return a
-        # value until Windows is actually ready and finished installing updates
-        # This needs to run with become as WUA doesn't work over WinRM
-        # Ignore connection errors as another reboot can happen
-        command = "(New-Object -ComObject Microsoft.Update.Session)." \
-                  "CreateUpdateInstaller().IsBusy"
-        shell_module_args = {
-            '_raw_params': command
-        }
+        # only run this if the user has specified we can only use scheduled
+        # tasks, the win_shell command requires become and will be skipped if
+        # become isn't available to use
+        if use_task:
+            display.vvv("win_updates: skipping WUA is not busy check as "
+                        "use_scheduled_task=True is set")
+        else:
+            display.vvv("win_updates: checking WUA is not busy with win_shell "
+                        "command")
+            # While this always returns False after a reboot it doesn't return
+            # a value until Windows is actually ready and finished installing
+            # updates. This needs to run with become as WUA doesn't work over
+            # WinRM, ignore connection errors as another reboot can happen
+            command = "(New-Object -ComObject Microsoft.Update.Session)." \
+                      "CreateUpdateInstaller().IsBusy"
+            shell_module_args = {
+                '_raw_params': command
+            }
 
-        # run win_shell module with become and ignore any errors in case of
-        # a windows reboot during execution
-        orig_become = self._play_context.become
-        orig_become_method = self._play_context.become_method
-        orig_become_user = self._play_context.become_user
-        if orig_become is None or orig_become is False:
-            self._play_context.become = True
-        if orig_become_method != 'runas':
-            self._play_context.become_method = 'runas'
-        if orig_become_user is None or 'root':
-            self._play_context.become_user = 'SYSTEM'
-        try:
-            shell_result = self._execute_module(module_name='win_shell',
-                                                module_args=shell_module_args,
-                                                task_vars=task_vars)
-            display.vvv("win_updates: shell wait results: %s"
-                        % json.dumps(shell_result))
-        except Exception as exc:
-            display.debug("win_updates: Fatal error when running shell "
-                          "command, attempting to recover: %s" % to_text(exc))
-        finally:
-            self._play_context.become = orig_become
-            self._play_context.become_method = orig_become_method
-            self._play_context.become_user = orig_become_user
+            try:
+                shell_result = self._execute_module_with_become(
+                    module_name='win_shell', module_args=shell_module_args,
+                    task_vars=task_vars, wrap_async=False, use_task=use_task
+                )
+                display.vvv("win_updates: shell wait results: %s"
+                            % json.dumps(shell_result))
+            except Exception as exc:
+                display.debug("win_updates: Fatal error when running shell "
+                              "command, attempting to recover: %s" % to_text(exc))
 
         display.vvv("win_updates: ensure the connection is up and running")
         # in case Windows needs to reboot again after the updates, we wait for
@@ -129,6 +124,32 @@ class ActionModule(ActionBase):
         dict_var.update(new)
         return dict_var
 
+    def _execute_module_with_become(self, module_name, module_args, task_vars,
+                                    wrap_async, use_task):
+        orig_become = self._play_context.become
+        orig_become_method = self._play_context.become_method
+        orig_become_user = self._play_context.become_user\
+
+        if not use_task:
+            if orig_become is None or orig_become is False:
+                self._play_context.become = True
+            if orig_become_method != 'runas':
+                self._play_context.become_method = 'runas'
+            if orig_become_user is None or orig_become_user == 'root':
+                self._play_context.become_user = 'SYSTEM'
+
+        try:
+            module_res = self._execute_module(module_name=module_name,
+                                              module_args=module_args,
+                                              task_vars=task_vars,
+                                              wrap_async=wrap_async)
+        finally:
+            self._play_context.become = orig_become
+            self._play_context.become_method = orig_become_method
+            self._play_context.become_user = orig_become_user
+
+        return module_res
+
     def run(self, tmp=None, task_vars=None):
         self._supports_check_mode = True
         self._supports_async = True
@@ -148,6 +169,8 @@ class ActionModule(ActionBase):
         reboot = self._task.args.get('reboot', False)
         reboot_timeout = self._task.args.get('reboot_timeout',
                                              self.DEFAULT_REBOOT_TIMEOUT)
+        use_task = boolean(self._task.args.get('use_scheduled_task', False),
+                           strict=False)
 
         # Validate the options
         try:
@@ -184,13 +207,13 @@ class ActionModule(ActionBase):
         new_module_args = self._task.args.copy()
         new_module_args.pop('reboot', None)
         new_module_args.pop('reboot_timeout', None)
-        result = self._run_win_updates(new_module_args, task_vars)
+        result = self._run_win_updates(new_module_args, task_vars, use_task)
 
         # if the module failed to run at all then changed won't be populated
         # so we just return the result as is
         # https://github.com/ansible/ansible/issues/38232
         failed = result.get('failed', False)
-        if "updates" not in result.keys() or failed:
+        if ("updates" not in result.keys() and self._task.async_val == 0) or failed:
             result['failed'] = True
             return result
 
@@ -232,7 +255,8 @@ class ActionModule(ActionBase):
                                        "update install"
                     try:
                         changed = True
-                        self._reboot_server(task_vars, reboot_timeout)
+                        self._reboot_server(task_vars, reboot_timeout,
+                                            use_task)
                     except AnsibleError as exc:
                         result['failed'] = True
                         result['msg'] = "Failed to reboot remote host when " \
@@ -242,7 +266,8 @@ class ActionModule(ActionBase):
 
                 result.pop('msg', None)
                 # rerun the win_updates module after the reboot is complete
-                result = self._run_win_updates(new_module_args, task_vars)
+                result = self._run_win_updates(new_module_args, task_vars,
+                                               use_task)
                 if result.get('failed', False):
                     return result
 

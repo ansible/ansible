@@ -38,6 +38,7 @@ from ansible.errors import AnsibleOptionsError, AnsibleError
 from ansible.inventory.manager import InventoryManager
 from ansible.module_utils.six import with_metaclass, string_types
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.utils.unsafe_proxy import AnsibleUnsafeText
 from ansible.parsing.dataloader import DataLoader
 from ansible.release import __version__
 from ansible.utils.path import unfrackpath
@@ -180,9 +181,11 @@ class CLI(with_metaclass(ABCMeta, object)):
             ver = deprecated[1]['version']
             display.deprecated("%s option, %s %s" % (name, why, alt), version=ver)
 
-        # warn about typing issues with configuration entries
-        for unable in C.config.UNABLE:
-            display.warning("Unable to set correct type for configuration entry: %s" % unable)
+        # Errors with configuration entries
+        if C.config.UNABLE:
+            for unable in C.config.UNABLE:
+                display.error("Unable to set correct type for configuration entry for %s: %s" % (unable, C.config.UNABLE[unable]))
+            raise AnsibleError("Invalid configuration settings")
 
     @staticmethod
     def split_vault_id(vault_id):
@@ -327,7 +330,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                 sshpass = getpass.getpass(prompt="SSH password: ")
                 become_prompt = "%s password[defaults to SSH password]: " % become_prompt_method
                 if sshpass:
-                    sshpass = to_bytes(sshpass, errors='strict', nonstring='simplerepr')
+                    sshpass = AnsibleUnsafeText(to_bytes(sshpass, errors='strict', nonstring='simplerepr'))
             else:
                 become_prompt = "%s password: " % become_prompt_method
 
@@ -336,7 +339,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                 if op.ask_pass and becomepass == '':
                     becomepass = sshpass
                 if becomepass:
-                    becomepass = to_bytes(becomepass)
+                    becomepass = AnsibleUnsafeText(to_bytes(becomepass))
         except EOFError:
             pass
 
@@ -662,7 +665,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                 ansible_versions[counter] = 0
             try:
                 ansible_versions[counter] = int(ansible_versions[counter])
-            except:
+            except Exception:
                 pass
         if len(ansible_versions) < 3:
             for counter in range(len(ansible_versions), 3):
@@ -806,6 +809,12 @@ class CLI(with_metaclass(ABCMeta, object)):
         # create the variable manager, which will be shared throughout
         # the code, ensuring a consistent view of global variables
         variable_manager = VariableManager(loader=loader, inventory=inventory)
+
+        if hasattr(options, 'basedir'):
+            if options.basedir:
+                variable_manager.safe_basedir = True
+        else:
+            variable_manager.safe_basedir = True
 
         # load vars from cli options
         variable_manager.extra_vars = load_extra_vars(loader=loader, options=options)

@@ -2,6 +2,8 @@
 # Copyright (c), Toshio Kuratomi <tkuratomi@ansible.com> 2016
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
+from __future__ import absolute_import, division, print_function
+
 SIZE_RANGES = {
     'Y': 1 << 80,
     'Z': 1 << 70,
@@ -41,13 +43,15 @@ PASS_VARS = {
     'check_mode': 'check_mode',
     'debug': '_debug',
     'diff': '_diff',
+    'keep_remote_files': '_keep_remote_files',
     'module_name': '_name',
     'no_log': 'no_log',
+    'remote_tmp': '_remote_tmp',
     'selinux_special_fs': '_selinux_special_fs',
     'shell_executable': '_shell',
     'socket': '_socket_path',
     'syslog_facility': '_syslog_facility',
-    'tmpdir': 'tmpdir',
+    'tmpdir': '_tmpdir',
     'verbosity': '_verbosity',
     'version': 'ansible_version',
 }
@@ -58,6 +62,7 @@ PASS_BOOLS = ('no_log', 'debug', 'diff')
 # The functions available here can be used to do many common tasks,
 # to simplify development of Python modules.
 
+import atexit
 import locale
 import os
 import re
@@ -76,8 +81,6 @@ import pwd
 import platform
 import errno
 import datetime
-from collections import deque
-from collections import Mapping, MutableMapping, Sequence, MutableSequence, Set, MutableSet
 from itertools import chain, repeat
 
 try:
@@ -101,14 +104,6 @@ except ImportError:
 
 # Python2 & 3 way to get NoneType
 NoneType = type(None)
-
-# Note: When getting Sequence from collections, it matches with strings.  If
-# this matters, make sure to check for strings before checking for sequencetype
-try:
-    from collections.abc import KeysView
-    SEQUENCETYPE = (Sequence, frozenset, KeysView)
-except ImportError:
-    SEQUENCETYPE = (Sequence, frozenset)
 
 try:
     import json
@@ -157,6 +152,13 @@ except ImportError:
     except ImportError:
         pass
 
+from ansible.module_utils.common._collections_compat import (
+    deque,
+    KeysView,
+    Mapping, MutableMapping,
+    Sequence, MutableSequence,
+    Set, MutableSet,
+)
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.six import (
     PY2,
@@ -170,8 +172,12 @@ from ansible.module_utils.six import (
 )
 from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils._text import to_native, to_bytes, to_text
-from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
+from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
 
+
+# Note: When getting Sequence from collections, it matches with strings.  If
+# this matters, make sure to check for strings before checking for sequencetype
+SEQUENCETYPE = frozenset, KeysView, Sequence
 
 PASSWORD_MATCH = re.compile(r'^(?:.+[-_\s])?pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)(?:[-_\s].+)?$', re.I)
 
@@ -190,13 +196,6 @@ try:
 except NameError:
     # Python 3
     unicode = text_type
-
-try:
-    # Python 2.6+
-    bytes
-except NameError:
-    # Python 2.4
-    bytes = binary_type
 
 try:
     # Python 2
@@ -618,7 +617,7 @@ def bytes_to_human(size, isbits=False, unit=None):
     else:
         suffix = base
 
-    return '%.2f %s' % (float(size) / limit, suffix)
+    return '%.2f %s' % (size / limit, suffix)
 
 
 def human_to_bytes(number, default_unit=None, isbits=False):
@@ -853,6 +852,7 @@ class AnsibleModule(object):
         self.aliases = {}
         self._legal_inputs = ['_ansible_%s' % k for k in PASS_VARS]
         self._options_context = list()
+        self._tmpdir = None
 
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.items():
@@ -927,6 +927,43 @@ class AnsibleModule(object):
             self.deprecate('Setting check_invalid_arguments is deprecated and will be removed.'
                            ' Update the code for this module  In the future, AnsibleModule will'
                            ' always check for invalid arguments.', version='2.9')
+
+    @property
+    def tmpdir(self):
+        # if _ansible_tmpdir was not set and we have a remote_tmp,
+        # the module needs to create it and clean it up once finished.
+        # otherwise we create our own module tmp dir from the system defaults
+        if self._tmpdir is None:
+            basedir = None
+
+            basedir = os.path.expanduser(os.path.expandvars(self._remote_tmp))
+            if not os.path.exists(basedir):
+                try:
+                    os.makedirs(basedir, mode=0o700)
+                except (OSError, IOError) as e:
+                    self.warn("Unable to use %s as temporary directory, "
+                              "failing back to system: %s" % (basedir, to_native(e)))
+                    basedir = None
+                else:
+                    self.warn("Module remote_tmp %s did not exist and was "
+                              "created with a mode of 0700, this may cause"
+                              " issues when running as another user. To "
+                              "avoid this, create the remote_tmp dir with "
+                              "the correct permissions manually" % basedir)
+
+            basefile = "ansible-moduletmp-%s-" % time.time()
+            try:
+                tmpdir = tempfile.mkdtemp(prefix=basefile, dir=basedir)
+            except (OSError, IOError) as e:
+                self.fail_json(
+                    msg="Failed to create remote module tmp path at dir %s "
+                        "with prefix %s: %s" % (basedir, basefile, to_native(e))
+                )
+            if not self._keep_remote_files:
+                atexit.register(shutil.rmtree, tmpdir)
+            self._tmpdir = tmpdir
+
+        return self._tmpdir
 
     def warn(self, warning):
 
@@ -1333,10 +1370,15 @@ class AnsibleModule(object):
 
         existing = self.get_file_attributes(b_path)
 
-        if existing.get('attr_flags', '') != attributes:
+        attr_mod = '='
+        if attributes.startswith(('-', '+')):
+            attr_mod = attributes[0]
+            attributes = attributes[1:]
+
+        if existing.get('attr_flags', '') != attributes or attr_mod == '-':
             attrcmd = self.get_bin_path('chattr')
             if attrcmd:
-                attrcmd = [attrcmd, '=%s' % attributes, b_path]
+                attrcmd = [attrcmd, '%s%s' % (attr_mod, attributes), b_path]
                 changed = True
 
                 if diff is not None:
@@ -1345,7 +1387,7 @@ class AnsibleModule(object):
                     diff['before']['attributes'] = existing.get('attr_flags')
                     if 'after' not in diff:
                         diff['after'] = {}
-                    diff['after']['attributes'] = attributes
+                    diff['after']['attributes'] = '%s%s' % (attr_mod, attributes)
 
                 if not self.check_mode:
                     try:
@@ -2163,7 +2205,19 @@ class AnsibleModule(object):
                 for arg in log_args:
                     journal_args.append((arg.upper(), str(log_args[arg])))
                 try:
-                    journal.send(u"%s %s" % (module, journal_msg), **dict(journal_args))
+                    if HAS_SYSLOG:
+                        # If syslog_facility specified, it needs to convert
+                        #  from the facility name to the facility code, and
+                        #  set it as SYSLOG_FACILITY argument of journal.send()
+                        facility = getattr(syslog,
+                                           self._syslog_facility,
+                                           syslog.LOG_USER) >> 3
+                        journal.send(MESSAGE=u"%s %s" % (module, journal_msg),
+                                     SYSLOG_FACILITY=facility,
+                                     **dict(journal_args))
+                    else:
+                        journal.send(MESSAGE=u"%s %s" % (module, journal_msg),
+                                     **dict(journal_args))
                 except IOError:
                     # fall back to syslog since logging to journal failed
                     self._log_to_syslog(syslog_msg)
@@ -2506,17 +2560,16 @@ class AnsibleModule(object):
                 self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, to_native(e)),
                                exception=traceback.format_exc())
             else:
-                b_dest_dir = os.path.dirname(b_dest)
                 # Use bytes here.  In the shippable CI, this fails with
                 # a UnicodeError with surrogateescape'd strings for an unknown
                 # reason (doesn't happen in a local Ubuntu16.04 VM)
-                native_dest_dir = b_dest_dir
-                native_suffix = os.path.basename(b_dest)
-                native_prefix = b('.ansible_tmp')
+                b_dest_dir = os.path.dirname(b_dest)
+                b_suffix = os.path.basename(b_dest)
                 error_msg = None
                 tmp_dest_name = None
                 try:
-                    tmp_dest_fd, tmp_dest_name = tempfile.mkstemp(prefix=native_prefix, dir=native_dest_dir, suffix=native_suffix)
+                    tmp_dest_fd, tmp_dest_name = tempfile.mkstemp(prefix=b'.ansible_tmp',
+                                                                  dir=b_dest_dir, suffix=b_suffix)
                 except (OSError, IOError) as e:
                     error_msg = 'The destination directory (%s) is not writable by the current user. Error was: %s' % (os.path.dirname(dest), to_native(e))
                 except TypeError:

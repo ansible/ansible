@@ -41,6 +41,10 @@ options:
   vpc_id:
     description:
         - the vpc-id of a vpc to attach or detach
+  asn:
+    description:
+        - the BGP ASN of the amazon side
+    version_added: "2.6"
   wait_timeout:
     description:
         - number of seconds to wait for status during vpc attach and detach
@@ -112,6 +116,7 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
+from ansible.module_utils.aws.core import is_boto3_error_code
 from ansible.module_utils.aws.waiters import get_waiter
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import HAS_BOTO3, boto3_conn, ec2_argument_spec, get_aws_connection_info, AWSRetry
@@ -203,9 +208,11 @@ def detach_vgw(client, module, vpn_gateway_id, vpc_id=None):
 def create_vgw(client, module):
     params = dict()
     params['Type'] = module.params.get('type')
+    if module.params.get('asn'):
+        params['AmazonSideAsn'] = module.params.get('asn')
 
     try:
-        response = client.create_vpn_gateway(Type=params['Type'])
+        response = client.create_vpn_gateway(**params)
         get_waiter(
             client, 'vpn_gateway_exists'
         ).wait(
@@ -214,7 +221,9 @@ def create_vgw(client, module):
     except botocore.exceptions.WaiterError as e:
         module.fail_json(msg="Failed to wait for Vpn Gateway {0} to be available".format(response['VpnGateway']['VpnGatewayId']),
                          exception=traceback.format_exc())
-    except botocore.exceptions.ClientError as e:
+    except is_boto3_error_code('VpnGatewayLimitExceeded'):
+        module.fail_json(msg="Too many VPN gateways exist in this account.", exception=traceback.format_exc())
+    except botocore.exceptions.ClientError as e:  # pylint: disable=duplicate-except
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
     result = response
@@ -526,6 +535,7 @@ def main():
         name=dict(),
         vpn_gateway_id=dict(),
         vpc_id=dict(),
+        asn=dict(type='int'),
         wait_timeout=dict(type='int', default=320),
         type=dict(default='ipsec.1', choices=['ipsec.1']),
         tags=dict(default=None, required=False, type='dict', aliases=['resource_tags']),

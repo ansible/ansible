@@ -6,16 +6,16 @@
 - name: Setup - Remove snmp_contact if configured
   nxos_snmp_contact: &remove
     contact: Test
-    state: absent 
     provider: "{{ connection }}"
+    state: absent 
 
 - block:
 
   - name: Configure snmp contact
     nxos_snmp_contact: &config
       contact: Testing
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: &true
@@ -33,8 +33,8 @@
   - name: Change snmp contact
     nxos_snmp_contact: &config1
       contact: Test
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true

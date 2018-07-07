@@ -29,6 +29,9 @@ options:
     resource_group:
         description:
             - The resource group to search for the desired availability set
+    tags:
+        description:
+            - List of tags to be matched
 
 extends_documentation_fragment:
     - azure

@@ -93,11 +93,9 @@ DOCUMENTATION = '''
 EXAMPLES = '''
 # file must be named openstack.yaml or openstack.yml
 # Make the plugin behave like the default behavior of the old script
-simple_config_file:
-    plugin: openstack
-    inventory_hostname: 'name'
-    expand_hostvars: true
-    fail_on_errors: true
+plugin: openstack
+expand_hostvars: yes
+fail_on_errors: yes
 '''
 
 import collections
@@ -106,12 +104,14 @@ from ansible.errors import AnsibleParserError
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 
 try:
-    import os_client_config
-    import shade
-    import shade.inventory
-    HAS_SHADE = True
+    # Due to the name shadowing we should import other way
+    import importlib
+    sdk = importlib.import_module('openstack')
+    sdk_inventory = importlib.import_module('openstack.cloud.inventory')
+    client_config = importlib.import_module('openstack.config.loader')
+    HAS_SDK = True
 except ImportError:
-    HAS_SHADE = False
+    HAS_SDK = False
 
 
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
@@ -135,8 +135,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             msg = 'plugin config file, but not for us: %s' % self._config_data['plugin']
         elif 'plugin' not in self._config_data and 'clouds' not in self._config_data:
             msg = "it's not a plugin configuration nor a clouds.yaml file"
-        elif not HAS_SHADE:
-            msg = "shade is required for the OpenStack inventory plugin. OpenStack inventory sources will be skipped."
+        elif not HAS_SDK:
+            msg = "openstacksdk is required for the OpenStack inventory plugin. OpenStack inventory sources will be skipped."
 
         if msg:
             raise AnsibleParserError(msg)
@@ -157,14 +157,14 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             clouds_yaml_path = self._config_data.get('clouds_yaml_path')
             if clouds_yaml_path:
                 config_files = (clouds_yaml_path +
-                                os_client_config.config.CONFIG_FILES)
+                                client_config.CONFIG_FILES)
             else:
                 config_files = None
 
             # TODO(mordred) Integrate shade's logging with ansible's logging
-            shade.simple_logging()
+            sdk.enable_logging()
 
-            cloud_inventory = shade.inventory.OpenStackInventory(
+            cloud_inventory = sdk_inventory.OpenStackInventory(
                 config_files=config_files,
                 private=self._config_data.get('private', False))
             only_clouds = self._config_data.get('only_clouds', [])

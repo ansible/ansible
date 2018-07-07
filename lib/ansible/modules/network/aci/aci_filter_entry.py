@@ -37,18 +37,18 @@ options:
   dst_port:
     description:
     - Used to set both destination start and end ports to the same value when ip_protocol is tcp or udp.
+    - Accepted values are any valid TCP/UDP port range.
     - The APIC defaults to C(unspecified) when unset during creation.
-    choices: [ Valid TCP/UDP Port Ranges]
   dst_port_end:
     description:
     - Used to set the destination end port when ip_protocol is tcp or udp.
+    - Accepted values are any valid TCP/UDP port range.
     - The APIC defaults to C(unspecified) when unset during creation.
-    choices: [ Valid TCP/UDP Port Ranges]
   dst_port_start:
     description:
     - Used to set the destination start port when ip_protocol is tcp or udp.
+    - Accepted values are any valid TCP/UDP port range.
     - The APIC defaults to C(unspecified) when unset during creation.
-    choices: [ Valid TCP/UDP Port Ranges]
   entry:
     description:
     - Then name of the Filter Entry.

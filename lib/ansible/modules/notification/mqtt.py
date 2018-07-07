@@ -90,7 +90,7 @@ options:
 requirements: [ mosquitto ]
 notes:
  - This module requires a connection to an MQTT broker such as Mosquitto
-   U(http://mosquitto.org) and the I(Paho) C(mqtt) Python client (U(https://pypi.python.org/pypi/paho-mqtt)).
+   U(http://mosquitto.org) and the I(Paho) C(mqtt) Python client (U(https://pypi.org/project/paho-mqtt/)).
 author: "Jan-Piet Mens (@jpmens)"
 '''
 

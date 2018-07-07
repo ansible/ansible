@@ -21,7 +21,7 @@ import pytest
 
 from ansible.compat.tests import unittest
 from ansible.plugins.filter.ipaddr import (ipaddr, _netmask_query, nthhost, next_nth_usable,
-                                           previous_nth_usable, network_in_usable, network_in_network)
+                                           previous_nth_usable, network_in_usable, network_in_network, cidr_merge)
 netaddr = pytest.importorskip('netaddr')
 
 
@@ -457,3 +457,19 @@ class TestIpFilter(unittest.TestCase):
         subnet = '1.12.1.0/24'
         address = '1.12.2.0'
         self.assertEqual(network_in_network(subnet, address), False)
+
+    def test_cidr_merge(self):
+        self.assertEqual(cidr_merge([]), [])
+        self.assertEqual(cidr_merge([], 'span'), None)
+        subnets = ['1.12.1.0/24']
+        self.assertEqual(cidr_merge(subnets), subnets)
+        self.assertEqual(cidr_merge(subnets, 'span'), subnets[0])
+        subnets = ['1.12.1.0/25', '1.12.1.128/25']
+        self.assertEqual(cidr_merge(subnets), ['1.12.1.0/24'])
+        self.assertEqual(cidr_merge(subnets, 'span'), '1.12.1.0/24')
+        subnets = ['1.12.1.0/25', '1.12.1.128/25', '1.12.2.0/24']
+        self.assertEqual(cidr_merge(subnets), ['1.12.1.0/24', '1.12.2.0/24'])
+        self.assertEqual(cidr_merge(subnets, 'span'), '1.12.0.0/22')
+        subnets = ['1.12.1.1', '1.12.1.255']
+        self.assertEqual(cidr_merge(subnets), ['1.12.1.1/32', '1.12.1.255/32'])
+        self.assertEqual(cidr_merge(subnets, 'span'), '1.12.1.0/24')

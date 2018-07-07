@@ -43,6 +43,11 @@ options:
             - "Timeout setting: 30s, 1m, 1h..."
             - Only valid for Elasticsearch < 5.0. This option is ignored for Elasticsearch > 5.0.
         default: 1m
+    force:
+        description:
+            - "Force batch mode when installing plugins. This is only necessary if a plugin requires additional permissions and console detection fails."
+        default: False
+        version_added: "2.7"
     plugin_bin:
         description:
             - Location of the plugin binary. If this file is not found, the default plugin binaries will be used.
@@ -85,6 +90,12 @@ EXAMPLES = '''
 - elasticsearch_plugin:
     name: analysis-icu
     state: present
+
+# Install the ingest-geoip plugin with a forced installation
+- elasticsearch_plugin:
+    name: ingest-geoip
+    state: present
+    force: yes
 '''
 
 import os
@@ -134,7 +145,7 @@ def parse_error(string):
         return string
 
 
-def install_plugin(module, plugin_bin, plugin_name, version, url, proxy_host, proxy_port, timeout):
+def install_plugin(module, plugin_bin, plugin_name, version, url, proxy_host, proxy_port, timeout, force):
     cmd_args = [plugin_bin, PACKAGE_STATE_MAP["present"], plugin_name]
 
     # Timeout and version are only valid for plugin, not elasticsearch-plugin
@@ -152,6 +163,9 @@ def install_plugin(module, plugin_bin, plugin_name, version, url, proxy_host, pr
     if url:
         cmd_args.append("--url %s" % url)
 
+    if force:
+        cmd_args.append("--batch")
+
     cmd = " ".join(cmd_args)
 
     if module.check_mode:
@@ -161,7 +175,7 @@ def install_plugin(module, plugin_bin, plugin_name, version, url, proxy_host, pr
 
     if rc != 0:
         reason = parse_error(out)
-        module.fail_json(msg='Is %s a valid plugin name?' % plugin_name, err=reason)
+        module.fail_json(msg="Installing plugin '%s' failed: %s" % (plugin_name, reason), err=err)
 
     return True, cmd, out, err
 
@@ -178,7 +192,7 @@ def remove_plugin(module, plugin_bin, plugin_name):
 
     if rc != 0:
         reason = parse_error(out)
-        module.fail_json(msg=reason)
+        module.fail_json(msg="Removing plugin '%s' failed: %s" % (plugin_name, reason), err=err)
 
     return True, cmd, out, err
 
@@ -221,6 +235,7 @@ def main():
             state=dict(default="present", choices=PACKAGE_STATE_MAP.keys()),
             url=dict(default=None),
             timeout=dict(default="1m"),
+            force=dict(default=False),
             plugin_bin=dict(type="path"),
             plugin_dir=dict(default="/usr/share/elasticsearch/plugins/", type="path"),
             proxy_host=dict(default=None),
@@ -234,6 +249,7 @@ def main():
     state = module.params["state"]
     url = module.params["url"]
     timeout = module.params["timeout"]
+    force = module.params["force"]
     plugin_bin = module.params["plugin_bin"]
     plugin_dir = module.params["plugin_dir"]
     proxy_host = module.params["proxy_host"]
@@ -250,7 +266,7 @@ def main():
         module.exit_json(changed=False, name=name, state=state)
 
     if state == "present":
-        changed, cmd, out, err = install_plugin(module, plugin_bin, name, version, url, proxy_host, proxy_port, timeout)
+        changed, cmd, out, err = install_plugin(module, plugin_bin, name, version, url, proxy_host, proxy_port, timeout, force)
 
     elif state == "absent":
         changed, cmd, out, err = remove_plugin(module, plugin_bin, name)

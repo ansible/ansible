@@ -7,8 +7,8 @@
   nxos_ntp_auth: &setup
     key_id: 32
     md5string: hello
-    state: absent
     provider: "{{ connection }}"
+    state: absent
   ignore_errors: yes
 
 - block:
@@ -18,8 +18,8 @@
       key_id: 32
       md5string: hello
       authentication: off
+      provider: "{{ connection }}"
       state: present
-      provider: "{{ connection }}"      
     register: result
 
   - assert: &true
@@ -31,8 +31,8 @@
       key_id: 32
       md5string: hello
       authentication: off
+      provider: "{{ connection }}"
       state: absent
-      provider: "{{ connection }}"      
     register: result
 
   - assert: *true
@@ -42,8 +42,8 @@
       key_id: 32
       md5string: hello
       auth_type: encrypt
+      provider: "{{ connection }}"
       state: present
-      provider: "{{ connection }}"      
     register: result
 
   - assert: *true
@@ -59,8 +59,8 @@
   - name: Turn on authentication
     nxos_ntp_auth: &authon
       authentication: on
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -74,8 +74,8 @@
   - name: Turn off authentication
     nxos_ntp_auth: &authoff
       authentication: off
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -90,8 +90,8 @@
     nxos_ntp_auth: &tkey
       key_id: 32
       trusted_key: true
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -106,8 +106,8 @@
     nxos_ntp_auth: &rtkey
       key_id: 32
       trusted_key: false
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -124,8 +124,8 @@
       md5string: hello
       auth_type: encrypt
       authentication: on
-      state: absent
       provider: "{{ connection }}"
+      state: absent
     register: result
 
   - assert: *true

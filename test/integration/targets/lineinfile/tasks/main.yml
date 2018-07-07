@@ -36,18 +36,27 @@
     line: "New line at the beginning"
     insertbefore: "BOF"
     backup: yes
-  register: result
+  register: result1
+
+- name: insert a line at the beginning of the file again
+  lineinfile:
+    dest: "{{ output_dir }}/test.txt"
+    state: present
+    line: "New line at the beginning"
+    insertbefore: "BOF"
+  register: result2
 
 - name: assert that the line was inserted at the head of the file
   assert:
     that:
-      - result is changed
-      - "result.msg == 'line added'"
-      - "result.backup != ''"
+      - result1 is changed
+      - result2 is not changed
+      - result1.msg == 'line added'
+      - result1.backup != ''
 
 - name: stat the backup file
   stat:
-    path: "{{ result.backup }}"
+    path: "{{ result1.backup }}"
   register: result
 
 - name: assert the backup file matches the previous hash
@@ -708,3 +717,45 @@
   assert:
     that:
       - result.stat.checksum == 'eca8d8ea089d4ea57a3b87d4091599ca8b60dfd2'
+
+###################################################################
+# Issue 29443
+# When using an empty regexp, replace the last line (since it matches every line)
+# but also provide a warning.
+
+- name: Deploy the test file for lineinfile
+  copy:
+    src: test.txt
+    dest: "{{ output_dir }}/test.txt"
+  register: result
+
+- name: Assert that the test file was deployed
+  assert:
+    that:
+      - result is changed
+      - result.checksum == '5feac65e442c91f557fc90069ce6efc4d346ab51'
+      - result.state == 'file'
+
+- name: Insert a line in the file using an empty string as a regular expression
+  lineinfile:
+    path: "{{ output_dir }}/test.txt"
+    regexp: ''
+    line: This is line 6
+  register: insert_empty_regexp
+
+- name: Stat the file
+  stat:
+    path: "{{ output_dir }}/test.txt"
+  register: result
+
+- name: Assert that the file contents match what is expected and a warning was displayed
+  assert:
+    that:
+      - insert_empty_regexp is changed
+      - warning_message in insert_empty_regexp.warnings
+      - result.stat.checksum == '23555a98ceaa88756b4c7c7bba49d9f86eed868f'
+  vars:
+    warning_message: >-
+      The regular expression is an empty string, which will match every line in the file.
+      This may have unintended consequences, such as replacing the last line in the file rather than appending.
+      If this is desired, use '^' to match every line in the file and avoid this warning.

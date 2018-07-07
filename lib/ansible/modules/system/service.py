@@ -206,7 +206,10 @@ class Service(object):
 
         # Most things don't need to be daemonized
         if not daemonize:
-            return self.module.run_command(cmd)
+            # chkconfig localizes messages and we're screen scraping so make
+            # sure we use the C locale
+            lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+            return self.module.run_command(cmd, environ_update=lang_env)
 
         # This is complex because daemonization is hard for people.
         # What we do is daemonize a part of this module, the daemon runs the
@@ -1085,6 +1088,21 @@ class DragonFlyBsdService(FreeBsdService):
 
     platform = 'DragonFly'
     distribution = None
+
+    def service_enable(self):
+        if self.enable:
+            self.rcconf_value = "YES"
+        else:
+            self.rcconf_value = "NO"
+
+        rcfiles = ['/etc/rc.conf']  # Overkill?
+        for rcfile in rcfiles:
+            if os.path.isfile(rcfile):
+                self.rcconf_file = rcfile
+
+        self.rcconf_key = "%s" % string.replace(self.name, "-", "_")
+
+        return self.service_enable_rcconf()
 
 
 class OpenBsdService(Service):

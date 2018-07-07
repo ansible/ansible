@@ -7,7 +7,7 @@
   - name: create static route
     nxos_static_route: &configure
       prefix: "192.168.20.64/24"
-      next_hop: "3.3.3.3"
+      next_hop: "192.0.2.3"
       route_name: testing
       pref: 100
       tag: 5500
@@ -32,7 +32,7 @@
   - name: change static route
     nxos_static_route: &configure1
       prefix: "192.168.20.64/24"
-      next_hop: "3.3.3.3"
+      next_hop: "192.0.2.3"
       route_name: default
       pref: 10
       tag: default
@@ -53,12 +53,12 @@
   - name: remove static route
     nxos_static_route: &remove
       prefix: "192.168.20.64/24"
-      next_hop: "3.3.3.3"
+      next_hop: "192.0.2.3"
       route_name: testing
       pref: 100
       vrf: "{{ item }}"
-      state: absent
       provider: "{{ connection }}"
+      state: absent
     with_items: "{{ vrfs }}"
     register: result
 
@@ -74,8 +74,8 @@
   - name: configure static route(aggregate)
     nxos_static_route: &conf_agg
       aggregate:
-        - { prefix: "192.168.22.64/24", next_hop: "3.3.3.3" }
-        - { prefix: "192.168.24.64/24", next_hop: "3.3.3.3" }
+        - { prefix: "192.168.22.64/24", next_hop: "192.0.2.3" }
+        - { prefix: "192.168.24.64/24", next_hop: "192.0.2.3" }
       provider: "{{ connection }}"
     register: result
 
@@ -94,10 +94,10 @@
   - name: remove static route aggregate
     nxos_static_route: &remove_agg
       aggregate:
-        - { prefix: "192.168.22.64/24", next_hop: "3.3.3.3" }
-        - { prefix: "192.168.24.64/24", next_hop: "3.3.3.3" }
-      state: absent
+        - { prefix: "192.168.22.64/24", next_hop: "192.0.2.3" }
+        - { prefix: "192.168.24.64/24", next_hop: "192.0.2.3" }
       provider: "{{ connection }}"
+      state: absent
     register: result
 
   - assert:
@@ -116,23 +116,23 @@
   - name: remove static route
     nxos_static_route:
       prefix: "192.168.20.64/24"
-      next_hop: "3.3.3.3"
+      next_hop: "192.0.2.3"
       route_name: testing
       pref: 100
       tag: 5500
       vrf: "{{ item }}"
-      state: absent
       provider: "{{ connection }}"
+      state: absent
     with_items: "{{ vrfs }}"
     ignore_errors: yes
 
   - name: remove static route aggregate
     nxos_static_route:
       aggregate:
-        - { prefix: "192.168.22.64/24", next_hop: "3.3.3.3" }
-        - { prefix: "192.168.24.64/24", next_hop: "3.3.3.3" }
-      state: absent
+        - { prefix: "192.168.22.64/24", next_hop: "192.0.2.3" }
+        - { prefix: "192.168.24.64/24", next_hop: "192.0.2.3" }
       provider: "{{ connection }}"
+      state: absent
     ignore_errors: yes
 
 - debug: msg="END connection={{ ansible_connection }} nxos_static_route sanity test"

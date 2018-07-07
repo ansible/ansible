@@ -42,7 +42,6 @@ options:
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
-        default: resource_group location
     sku:
         description:
             The load balancer SKU.
@@ -610,6 +609,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         self.natpool_frontend_port_end = None
         self.natpool_backend_port = None
         self.natpool_protocol = None
+        self.tags = None
 
         self.results = dict(changed=False, state=dict())
 
@@ -620,7 +620,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
-        for key in self.module_args.keys():
+        for key in list(self.module_args.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
 
         changed = False
@@ -685,6 +685,13 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
             changed = True
 
         self.results['state'] = load_balancer_to_dict(load_balancer)
+        if 'tags' in self.results['state']:
+            update_tags, self.results['state']['tags'] = self.update_tags(self.results['state']['tags'])
+            if update_tags:
+                changed = True
+        else:
+            if self.tags:
+                changed = True
         self.results['changed'] = changed
 
         if self.state == 'present' and changed:
@@ -761,6 +768,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
             param = self.network_models.LoadBalancer(
                 sku=self.network_models.LoadBalancerSku(self.sku) if self.sku else None,
                 location=self.location,
+                tags=self.tags,
                 frontend_ip_configurations=frontend_ip_configurations_param,
                 backend_address_pools=backend_address_pools_param,
                 probes=probes_param,

@@ -9,4 +9,8 @@ VLAN             Name            State                      Ports           Clas
 
 22               VLAN0022        INACTIVE(no member port)
 
-200              VLAN0200        INACTIVE(member port down) Po 200(u)
+
+200              VLAN0200        INACTIVE(member port down) Eth 0/8(t)
+                                                            Po 200(u)
+
+1001             VLAN1001        INACTIVE(no member port)

@@ -328,7 +328,7 @@ class PluginLoader:
         from ansible.vars.reserved import is_reserved_name
 
         plugin = self._find_plugin(name, mod_type=mod_type, ignore_deprecated=ignore_deprecated, check_aliases=check_aliases)
-        if plugin and self.package == 'ansible.modules' and name not in ('gather_facts',) and is_reserved_name(name):
+        if plugin and self.package == 'ansible.modules' and is_reserved_name(name):
             raise AnsibleError(
                 'Module "%s" shadows the name of a reserved keyword. Please rename or remove this module. Found at %s' % (name, plugin)
             )
@@ -761,4 +761,11 @@ inventory_loader = PluginLoader(
     'ansible.plugins.inventory',
     C.DEFAULT_INVENTORY_PLUGIN_PATH,
     'inventory_plugins'
+)
+
+httpapi_loader = PluginLoader(
+    'HttpApi',
+    'ansible.plugins.httpapi',
+    C.DEFAULT_HTTPAPI_PLUGIN_PATH,
+    'httpapi_plugins',
 )

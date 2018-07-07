@@ -1,0 +1,3 @@
+bugfixes:
+- winrm - running async with become on a Server 2008 or 2008 R2 host will now work
+- become runas - changed runas process so it does not create a temporary file on the disk during execution

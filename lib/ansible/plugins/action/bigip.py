@@ -73,13 +73,13 @@ class ActionModule(_ActionModule):
                 socket_path = connection.run()
                 display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
                 if not socket_path:
-                    return {'failed': True,
-                            'msg': 'Unable to open shell. Please see: ' +
-                                   'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
+                    return {
+                        'failed': True,
+                        'msg': 'Unable to open shell. Please see: '
+                               'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'
+                    }
 
                 task_vars['ansible_socket'] = socket_path
-        else:
-            return {'failed': True, 'msg': 'Connection type %s is not valid for this module' % self._play_context.connection}
 
         if (self._play_context.connection == 'local' and transport == 'cli') or self._play_context.connection == 'network_cli':
             # make sure we are in the right cli context which should be

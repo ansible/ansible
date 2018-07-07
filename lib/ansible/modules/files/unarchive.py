@@ -26,6 +26,7 @@ description:
      - By default, it will copy the source file from the local system to the target before unpacking.
      - Set C(remote_src=yes) to unpack an archive which already exists on the target.
      - For Windows targets, use the M(win_unzip) module instead.
+     - If checksum validation is desired, use M(get_url) or M(uri) instead to fetch the file and set C(remote_src=yes).
 options:
   src:
     description:
@@ -131,6 +132,7 @@ EXAMPLES = r'''
 import binascii
 import codecs
 import datetime
+import fnmatch
 import grp
 import os
 import platform
@@ -262,7 +264,11 @@ class ZipArchive(object):
         else:
             try:
                 for member in archive.namelist():
-                    if member not in self.excludes:
+                    if self.excludes:
+                        for exclude in self.excludes:
+                            if not fnmatch.fnmatch(member, exclude):
+                                self._files_in_archive.append(to_native(member))
+                    else:
                         self._files_in_archive.append(to_native(member))
             except:
                 archive.close()
@@ -641,7 +647,7 @@ class TgzArchive(object):
         if self.opts:
             cmd.extend(['--show-transformed-names'] + self.opts)
         if self.excludes:
-            cmd.extend(['--exclude=' + quote(f) for f in self.excludes])
+            cmd.extend(['--exclude=' + f for f in self.excludes])
         cmd.extend(['-f', self.src])
         rc, out, err = self.module.run_command(cmd, cwd=self.dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
         if rc != 0:
@@ -652,14 +658,18 @@ class TgzArchive(object):
             # filename = filename.decode('string_escape')
             filename = to_native(codecs.escape_decode(filename)[0])
 
-            if filename and filename not in self.excludes:
-                # We don't allow absolute filenames.  If the user wants to unarchive rooted in "/"
-                # they need to use "dest: '/'".  This follows the defaults for gtar, pax, etc.
-                # Allowing absolute filenames here also causes bugs: https://github.com/ansible/ansible/issues/21397
-                if filename.startswith('/'):
-                    filename = filename[1:]
+            # We don't allow absolute filenames.  If the user wants to unarchive rooted in "/"
+            # they need to use "dest: '/'".  This follows the defaults for gtar, pax, etc.
+            # Allowing absolute filenames here also causes bugs: https://github.com/ansible/ansible/issues/21397
+            if filename.startswith('/'):
+                filename = filename[1:]
 
-                self._files_in_archive.append(filename)
+            if self.excludes:
+                for exclude in self.excludes:
+                    if not fnmatch.fnmatch(filename, exclude):
+                        self._files_in_archive.append(to_native(filename))
+            else:
+                self._files_in_archive.append(to_native(filename))
 
         return self._files_in_archive
 
@@ -676,7 +686,7 @@ class TgzArchive(object):
         if self.module.params['keep_newer']:
             cmd.append('--keep-newer-files')
         if self.excludes:
-            cmd.extend(['--exclude=' + quote(f) for f in self.excludes])
+            cmd.extend(['--exclude=' + f for f in self.excludes])
         cmd.extend(['-f', self.src])
         rc, out, err = self.module.run_command(cmd, cwd=self.dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
 
@@ -723,7 +733,7 @@ class TgzArchive(object):
         if self.module.params['keep_newer']:
             cmd.append('--keep-newer-files')
         if self.excludes:
-            cmd.extend(['--exclude=' + quote(f) for f in self.excludes])
+            cmd.extend(['--exclude=' + f for f in self.excludes])
         cmd.extend(['-f', self.src])
         rc, out, err = self.module.run_command(cmd, cwd=self.dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
         return dict(cmd=cmd, rc=rc, out=out, err=err)
@@ -786,7 +796,6 @@ def main():
         # not checking because of daisy chain to file module
         argument_spec=dict(
             src=dict(type='path', required=True),
-            original_basename=dict(type='str'),  # used to handle 'dest is a directory' via template, a slight hack
             dest=dict(type='path', required=True),
             remote_src=dict(type='bool', default=False),
             creates=dict(type='path'),
