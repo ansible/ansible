@@ -259,7 +259,7 @@ def main():
                     result["log"] = rf_utils.get_logs()
 
     # Return data back or fail with proper message
-    module.exit_json(ansible_facts=result)
+    module.exit_json(redfish_facts=result)
 
 if __name__ == '__main__':
     main()
