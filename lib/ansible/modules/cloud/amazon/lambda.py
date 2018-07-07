@@ -409,7 +409,7 @@ def main():
     # Get function configuration if present, False otherwise
     current_function = get_current_function(client, name)
 
-    if state == 'present' and not current_function and role:
+    if state == 'present' and (role or not current_function):
         if role.startswith('arn:aws:iam'):
             role_arn = role
         else:
