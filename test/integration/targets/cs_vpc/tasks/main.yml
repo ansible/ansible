@@ -45,7 +45,7 @@
   assert:
     that:
     - vpc is failed
-    - 'vpc.msg == "VPC offering not found: does_not_exist"'
+    - 'vpc.msg == "VPC offering not found or not enabled: does_not_exist"'
 
 - name: test create vpc with custom offering in check mode
   cs_vpc:
