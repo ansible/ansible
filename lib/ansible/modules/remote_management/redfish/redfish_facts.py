@@ -22,13 +22,13 @@ description:
   - Information retrieved is placed in a location specified by the user.
 options:
   category:
-    required: true
+    required: false
     description:
-      - Action category to execute on server
+      - List of categories to execute on OOB controller
   command:
-    required: true
+    required: false
     description:
-      - Command to execute on server
+      - Command to execute on OOB controller
   baseuri:
     required: true
     description:
@@ -72,7 +72,7 @@ EXAMPLES = '''
 
   - name: Get system inventory and user information (use default commands)
     redfish_facts:
-      category: "Systems Accounts"
+      category: "Systems,Accounts"
       baseuri: "{{ baseuri }}"
       user: "{{ user }}"
       password: "{{ password }}"
@@ -115,7 +115,6 @@ CATEGORY_COMMANDS_ALL = {
     "Manager": ["GetManagerAttributes", "GetLogs"],
 }
 
-CATEGORY_DEFAULT = "Systems"
 CATEGORY_COMMANDS_DEFAULT = {
     "Systems": "GetSystemInventory",
     "Chassis": "GetFanInventory",
@@ -131,7 +130,7 @@ def main():
     category_list = []
     module = AnsibleModule(
         argument_spec=dict(
-            category=dict(),
+            category=dict(type='list', default='Systems'),
             command=dict(),
             baseuri=dict(required=True),
             user=dict(required=True),
@@ -150,15 +149,12 @@ def main():
     rf_utils = RedfishUtils(creds, root_uri)
 
     # Build Category list
-    if not module.params['category']:
-        # True if we don't specify a category --> use default
-        category_list.append(CATEGORY_DEFAULT)
-    elif module.params['category'] == "all":
+    if "all" in module.params['category']:
         for entry in CATEGORY_COMMANDS_ALL:
             category_list.append(entry)
     else:
         # one or more categories specified
-        category_list = module.params['category'].split()
+        category_list = module.params['category']
 
     for category in category_list:
         command_list = []
