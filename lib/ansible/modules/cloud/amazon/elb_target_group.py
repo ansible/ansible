@@ -135,10 +135,12 @@ options:
       - Whether or not to wait for the target group.
     type: bool
     default: false
+    version_added: "2.4"
   wait_timeout:
     description:
       - The time to wait for the target group.
     default: 200
+    version_added: "2.4"
 extends_documentation_fragment:
     - aws
     - ec2
