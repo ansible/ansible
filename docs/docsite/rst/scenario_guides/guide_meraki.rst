@@ -69,23 +69,22 @@ All Ansible Meraki modules support the following parameters which affect communi
 	validate_certs
 		Determine whether certificates should be validated or trusted. (Defaults to ``yes``)
 
-In addition to the aforementioned parameters, there are other common parameters which apply to most modules.
+These are the common parameters which are used for most every module.
 
 	org_name
-	    Name of the organization which the module will communicate with.
-    
+		Name of organization to perform actions in.
+
 	org_id
-	    ID number of the organization which the module will communicate with.
+		ID of organization to perform actions in.
 
 	net_name
-	    Name of the network which the module will communicate with or manipulate.
-
+		Name of network to perform actions in.
 
 	net_id
-	    ID of the network which the module will communicate with or manipulate.
+		ID of network to perform actions in.
 
 	state
-	    Define action module should make against the specified object.
+		General specification of what action to take. ``query`` does lookups. ``present`` creates or edits. ``absent`` deletes.
 
 .. hint:: Use the ``org_id`` and ``net_id`` parameters when possible. ``org_name`` and ``net_name`` require additional behind-the-scenes API calls to learn the ID values. ``org_id`` and ``net_id`` will perform faster. 
 
@@ -95,3 +94,28 @@ Meraki Authentication
 All API access with the Meraki Dashboard requires an API key. An API key can be generated from the organization's settings page. Each play in a playbook requires the ``api_key`` parameter to be specified.
 
 The "Vault" feature of Ansible allows you to keep sensitive data such as passwords or keys in encrypted files, rather than as plain text in your playbooks or roles. These vault files can then be distributed or placed in source control. See :ref:`playbooks_vault` for more information.
+
+Meraki's API returns a 404 error if the API key is not correct. It does not provide any specific error saying the key is incorrect. If you receive a 404 error, check the API key first.
+
+Returned Data Structures
+........................
+
+Meraki and its related Ansible modules return most information in the form of a list. For example, this is returned information by ``meraki_admin`` querying administrators. It returns a list even though there's only one.
+
+.. code-block:: yaml
+[
+	{'orgAccess': 'full', 
+	 'name': 'John Doe',
+	 'tags': [],
+	 'networks': [],
+	 'email': 'john@doe.com',
+	 'id': '12345677890'
+	}
+]
+
+Error Handling
+..............
+
+Ansible's Meraki modules will often fail if improper or incompatible parameters are specified. However, there will likely be scenarios where the module accepts the information but the Meraki API rejects the data. If this happens, the error will be returned in the ``body`` field for HTTP status of 400 return code.
+
+Meraki's API returns a 404 error if the API key is not correct. It does not provide any specific error saying the key is incorrect. If you receive a 404 error, check the API key first. 404 errors can also occur if improper object IDs (ex. ``org_id`` are specified.
