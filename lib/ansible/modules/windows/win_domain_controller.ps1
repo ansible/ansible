@@ -157,10 +157,6 @@ Try {
 
     switch($state) {
         domain_controller {
-            If(-not $safe_mode_password) {
-                Fail-Json -message "safe_mode_password is required for state=domain_controller"
-            }
-
             If($current_dc_domain) {
                 # FUTURE: implement managed Remove/Add to change domains?
 
@@ -206,9 +202,6 @@ Try {
             }
         }
         member_server {
-            If(-not $local_admin_password) {
-                Fail-Json -message "local_admin_password is required for state=domain_controller"
-            }
             # at this point we already know we're a DC and shouldn't be...
             Write-DebugLog "Need to uninstall domain controller..."
             $result.changed = $true
