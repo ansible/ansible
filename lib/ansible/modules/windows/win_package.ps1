@@ -211,7 +211,7 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
             }
         }
     } else {
-        # should only occur when state=absent and product_id is not null, we can get the uninstall string from the reg value
+        # should only occur when state=absent and product_id is not null or when state=absent and display_name is not null, we can get the uninstall string from the reg value
         $metadata.location_type = [LocationType]::Empty
     }
 
@@ -227,9 +227,9 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
             } catch {
                 Fail-Json -obj $result -message "failed to get product_id from MSI at $($path): $($_.Exception.Message)"
             }
-        } elseif (($creates_path -eq $null -and $creates_service -eq $null) -and ($display_name -eq $null -and $display_version -eq $null)) {
+        } elseif ($creates_path -eq $null -and $creates_service -eq $null -and $display_name -eq $null) {
             # we need to fail without the product id at this point
-            Fail-Json $result "product_id is required when the path is not an MSI or the path is an MSI but not local"
+            Fail-Json $result "product_id or display_name is required when the path is not an MSI or the path is an MSI but not local"
         }
     }
 
