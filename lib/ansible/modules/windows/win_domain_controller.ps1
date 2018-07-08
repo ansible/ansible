@@ -42,14 +42,14 @@ Function Get-MissingFeatures {
     }
 
     $missing_features = @($features | Where-Object InstallState -ne Installed)
-    
+
     return ,$missing_features # no, the comma's not a typo- allows us to return an empty array
 }
 
 Function Ensure-FeatureInstallation {
     # ensure RSAT-ADDS and AD-Domain-Services features are installed
 
-    Write-DebugLog "Ensuring required Windows features are installed..." 
+    Write-DebugLog "Ensuring required Windows features are installed..."
     $feature_result = Install-WindowsFeature $required_features
 
     If(-not $feature_result.Success) {
@@ -71,17 +71,6 @@ Function Get-DomainControllerDomain {
         $true { return $domain }
         Default { return $null }
     }
-}
-
-Function Create-Credential {
-    Param(
-        [string] $cred_user,
-        [string] $cred_password
-    )
-
-    $cred = New-Object System.Management.Automation.PSCredential($cred_user, $($cred_password | ConvertTo-SecureString -AsPlainText -Force))
-
-    Return $cred
 }
 
 Function Get-OperationMasterRoles {
@@ -164,7 +153,7 @@ Try {
         Ensure-FeatureInstallation | Out-Null
     }
 
-    $domain_admin_cred = Create-Credential -cred_user $domain_admin_user -cred_password $domain_admin_password
+    $domain_admin_cred = Create-PSCredential $domain_admin_user $domain_admin_password
 
     switch($state) {
         domain_controller {

@@ -66,17 +66,6 @@ Function Get-DomainMembershipMatch {
     }
 }
 
-Function Create-Credential {
-    Param(
-        [string] $cred_user,
-        [string] $cred_pass
-    )
-
-    $cred = New-Object System.Management.Automation.PSCredential($cred_user, $($cred_pass | ConvertTo-SecureString -AsPlainText -Force))
-
-    return $cred
-}
-
 Function Get-HostnameMatch {
     Param(
         [string] $hostname
@@ -104,7 +93,7 @@ Function Join-Domain {
     )
 
     Write-DebugLog ("Creating credential for user {0}" -f $domain_admin_user)
-    $domain_cred = Create-Credential $domain_admin_user $domain_admin_password
+    $domain_cred = Create-PSCredential $domain_admin_user $domain_admin_password
 
     $add_args = @{
         ComputerName="."
@@ -152,7 +141,7 @@ Function Set-Workgroup {
 
     if ($swg_result.ReturnValue -ne 0) {
         Fail-Json -obj $result -message "failed to set workgroup through WMI, return value: $($swg_result.ReturnValue)"
-    
+
     return $swg_result}
 }
 
@@ -164,7 +153,7 @@ Function Join-Workgroup {
     )
 
     If(Is-DomainJoined) { # if we're on a domain, unjoin it (which forces us to join a workgroup)
-        $domain_cred = Create-Credential $domain_admin_user $domain_admin_password
+        $domain_cred = Create-PSCredential $domain_admin_user $domain_admin_password
 
         # 2012+ call the Workgroup arg WorkgroupName, but seem to accept
         try {
@@ -261,7 +250,7 @@ Try {
                     $rename_args = @{NewName=$hostname}
 
                     If (Is-DomainJoined) {
-                        $domain_cred = Create-Credential $domain_admin_user $domain_admin_password
+                        $domain_cred = Create-PSCredential $domain_admin_user $domain_admin_password
                         $rename_args.DomainCredential = $domain_cred
                     }
 
