@@ -228,19 +228,26 @@ def main():
                          number=dict(type='str'),
                          name=dict(type='str', aliases=['description']),
                          tags=dict(type='str'),
-                         enabled=dict(type='bool', default=True),
-                         type=dict(type='str', choices=['access', 'trunk'], default='access'),
+                         # enabled=dict(type='bool', default=True),
+                         enabled=dict(type='bool'),
+                         type=dict(type='str', choices=['access', 'trunk']),
+                         # type=dict(type='str', choices=['access', 'trunk'], default='access'),
                          vlan=dict(type='int'),
                          voice_vlan=dict(type='int'),
-                         allowed_vlans=dict(type='list', default='all'),
-                         poe_enabled=dict(type='bool', default=True),
-                         isolation_enabled=dict(type='bool', default=False),
-                         rstp_enabled=dict(type='bool', default=True),
-                         stp_guard=dict(type='str', choices=['disabled', 'root guard', 'bpdu guard', 'loop guard'], default='disabled'),
+                         allowed_vlans=dict(type='list'),
+                         # allowed_vlans=dict(type='list', default='all'),
+                         poe_enabled=dict(type='bool'),
+                         # poe_enabled=dict(type='bool', default=True),
+                         # isolation_enabled=dict(type='bool', default=False),
+                         isolation_enabled=dict(type='bool'),
+                         rstp_enabled=dict(type='bool'),
+                         # rstp_enabled=dict(type='bool', default=True),
+                         stp_guard=dict(type='str', choices=['disabled', 'root guard', 'bpdu guard', 'loop guard']),
+                         # stp_guard=dict(type='str', choices=['disabled', 'root guard', 'bpdu guard', 'loop guard'], default='disabled'),
                          access_policy_number=dict(type='str'),
                          link_negotiation=dict(type='str',
-                                               choices=['Auto negotiate', '100Megabit (auto)', '100 Megabit full duplex (forced)'],
-                                               default='Auto negotiate'),
+                                               choices=['Auto negotiate', '100Megabit (auto)', '100 Megabit full duplex (forced)']),
+                                               # default='Auto negotiate'),
                          )
 
     # the AnsibleModule object will be our abstraction working with Ansible
@@ -280,6 +287,9 @@ def main():
         meraki.exit_json(**meraki.result)
 
     # execute checks for argument completeness
+    if meraki.params['type'] == 'trunk':
+        if not meraki.params['allowed_vlans']:
+            meraki.fail_json(msg='Allowed VLANs must be "all" or a comma-separated list of VLANs or ranges between 1 and 4094')
 
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
@@ -297,49 +307,32 @@ def main():
     elif meraki.params['state'] == 'present':
         payload = dict()
         proposed = dict()
+        for k,v in param_map.items():
+            for i in param_map:
+                if meraki.params[v] or meraki.params[v] is False:
+                    if v not in ('number'):
+                        payload[k] = meraki.params[v]
 
-        # if meraki.params['type'] == 'access':
-        payload['name'] = meraki.params['name']
-        payload['tags'] = meraki.params['tags']
-        payload['enabled'] = meraki.params['enabled']
-        payload['poeEnabled'] = meraki.params['poe_enabled']
-        payload['type'] = meraki.params['type']
-        payload['vlan'] = meraki.params['vlan']
-        payload['voiceVlan'] = meraki.params['voice_vlan']
-        payload['isolationEnabled'] = meraki.params['isolation_enabled']
-        payload['rstpEnabled'] = meraki.params['rstp_enabled']
-        payload['stpGuard'] = meraki.params['stp_guard']
-        payload['accessPolicyNumber'] = meraki.params['access_policy_number']
-        payload['linkNegotiation'] = meraki.params['link_negotiation']
-        payload['allowedVlans'] = list_to_csv(meraki.params['allowed_vlans'])
-        proposed['name'] = meraki.params['name']
-        proposed['tags'] = meraki.params['tags']
-        proposed['enabled'] = meraki.params['enabled']
-        proposed['poeEnabled'] = meraki.params['poe_enabled']
-        proposed['type'] = meraki.params['type']
-        proposed['vlan'] = meraki.params['vlan']
-        proposed['voiceVlan'] = meraki.params['voice_vlan']
-        proposed['isolationEnabled'] = meraki.params['isolation_enabled']
-        proposed['rstpEnabled'] = meraki.params['rstp_enabled']
-        proposed['stpGuard'] = meraki.params['stp_guard']
-        proposed['accessPolicyNumber'] = meraki.params['access_policy_number']
-        proposed['linkNegotiation'] = meraki.params['link_negotiation']
-        proposed['allowedVlans'] = list_to_csv(meraki.params['allowed_vlans'])
-
-        # Exceptions need to be made for idempotency check based on how Meraki returns
-        if meraki.params['type'] == 'trunk':
-            if meraki.params['vlan'] and meraki.params['allowed_vlans'] != 'all':
-                proposed['allowedVlans'] = str(meraki.params['vlan']) + ',' + proposed['allowedVlans']
-        else:
-            if not meraki.params['vlan']:  # VLAN needs to be specified in access ports, but can't default to it
-                payload['vlan'] = 1
-                proposed['vlan'] = 1
+        if meraki.params['allowed_vlans']:
+            payload['allowedVlans'] = list_to_csv(meraki.params['allowed_vlans'])
 
         query_path = meraki.construct_path('get_one') + meraki.params['number']
         query_path = query_path.replace('serial', meraki.params['serial'])
         original = meraki.request(query_path, method='GET')
+        proposed = payload
+        # meraki.fail_json(msg='Payload', payload=payload)
+
+        # Exceptions need to be made for idempotency check based on how Meraki returns
+        if not meraki.params['vlan'] and meraki.params['allowed_vlans']:
+            if meraki.params['allowed_vlans'][0] != 'all':
+                proposed['allowedVlans'] = str(original['vlan']) + ',' + payload['allowedVlans']
+        elif meraki.params['vlan'] and meraki.params['allowed_vlans']:
+            if meraki.params['allowed_vlans'][0] != 'all':
+                proposed['allowedVlans'] = str(meraki.params['vlan']) + ',' + payload['allowedVlans']
+
+        # meraki.fail_json(msg='Payload', original=original, proposed=proposed)
         if meraki.params['type'] == 'trunk':
-            proposed['voiceVlan'] = original['voiceVlan']  # API shouldn't include voice VLAN on a trunk port
+            payload['voiceVlan'] = original['voiceVlan']  # API shouldn't include voice VLAN on a trunk port
         if meraki.is_update_required(original, proposed, optional_ignore=('number')):
             path = meraki.construct_path('update') + meraki.params['number']
             path = path.replace('serial', meraki.params['serial'])
