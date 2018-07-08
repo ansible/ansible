@@ -25,6 +25,7 @@ options:
     required: false
     description:
       - List of categories to execute on OOB controller
+    default: ['Systems']
   command:
     required: false
     description:
@@ -143,7 +144,7 @@ def main():
     category_list = []
     module = AnsibleModule(
         argument_spec=dict(
-            category=dict(type='list', default='Systems'),
+            category=dict(type='list', default=['Systems']),
             command=dict(type='list'),
             baseuri=dict(required=True),
             user=dict(required=True),
