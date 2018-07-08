@@ -87,13 +87,9 @@ Function Join-Domain {
     Param(
         [string] $dns_domain_name,
         [string] $new_hostname,
-        [string] $domain_admin_user,
-        [string] $domain_admin_password,
+        [System.Management.Automation.PSCredential] $domain_cred,
         [string] $domain_ou_path
     )
-
-    Write-DebugLog ("Creating credential for user {0}" -f $domain_admin_user)
-    $domain_cred = Create-PSCredential $domain_admin_user $domain_admin_password
 
     $add_args = @{
         ComputerName="."
@@ -148,13 +144,10 @@ Function Set-Workgroup {
 Function Join-Workgroup {
     Param(
         [string] $workgroup_name,
-        [string] $domain_admin_user,
-        [string] $domain_admin_password
+        [System.Management.Automation.PSCredential] $domain_cred
     )
 
     If(Is-DomainJoined) { # if we're on a domain, unjoin it (which forces us to join a workgroup)
-        $domain_cred = Create-PSCredential $domain_admin_user $domain_admin_password
-
         # 2012+ call the Workgroup arg WorkgroupName, but seem to accept
         try {
             $rc_result = Remove-Computer -Workgroup $workgroup_name -Credential $domain_cred -Force
@@ -179,15 +172,15 @@ $params = Parse-Args -arguments $args -supports_check_mode $true
 
 $state = Get-AnsibleParam $params "state" -validateset @("domain","workgroup") -failifempty $result
 
-$dns_domain_name = Get-AnsibleParam $params "dns_domain_name"
-$hostname = Get-AnsibleParam $params "hostname"
-$workgroup_name = Get-AnsibleParam $params "workgroup_name"
-$domain_admin_user = Get-AnsibleParam $params "domain_admin_user" -failifempty $result
-$domain_admin_password = Get-AnsibleParam $params "domain_admin_password" -failifempty $result
-$domain_ou_path = Get-AnsibleParam $params "domain_ou_path"
+$dns_domain_name = Get-AnsibleParam -obj $params -name "dns_domain_name" -type "str"
+$hostname = Get-AnsibleParam -obj $params -name "hostname" -type "str"
+$workgroup_name = Get-AnsibleParam -obj $params -name "workgroup_name" -type "str"
+$domain_admin_user = Get-AnsibleParam -obj $params -name "domain_admin_user" -type "str" -failifempty $result
+$domain_admin_password = Get-AnsibleParam -obj $params -name "domain_admin_password" -type "securestr" -failifempty $result
+$domain_ou_path = Get-AnsibleParam -obj $params -name "domain_ou_path" -type "str"
 
-$log_path = Get-AnsibleParam $params "log_path"
-$_ansible_check_mode = Get-AnsibleParam $params "_ansible_check_mode" -default $false
+$log_path = Get-AnsibleParam -obj $params -name "log_path" -type "path"
+$_ansible_check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
 If ($state -eq "domain") {
     If(-not $dns_domain_name) {
@@ -222,10 +215,10 @@ Try {
                         throw "switching domains is not implemented"
                     }
 
+                    $domain_cred = Create-PSCredential $domain_admin_user $domain_admin_password
                     $join_args = @{
                         dns_domain_name = $dns_domain_name
-                        domain_admin_user = $domain_admin_user
-                        domain_admin_password = $domain_admin_password
+                        domain_cred = $domain_cred
                     }
 
                     Write-DebugLog "not a domain member, joining..."
@@ -277,7 +270,8 @@ Try {
             If(-not $_ansible_check_mode) {
                 If(-not $workgroup_match) {
                     Write-DebugLog ("setting workgroup to {0}" -f $workgroup_name)
-                    $join_wg_result = Join-Workgroup -workgroup_name $workgroup_name -domain_admin_user $domain_admin_user -domain_admin_password $domain_admin_password
+                    $domain_cred = Create-PSCredential $domain_admin_user $domain_admin_password
+                    $join_wg_result = Join-Workgroup -workgroup_name $workgroup_name -domain_cred $domain_cred
 
                     # this change requires a reboot
                     $result.reboot_required = $true

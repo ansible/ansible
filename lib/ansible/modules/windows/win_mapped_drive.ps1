@@ -16,7 +16,7 @@ $letter = Get-AnsibleParam -obj $params -name "letter" -type "str" -failifempty 
 $path = Get-AnsibleParam -obj $params -name "path" -type "path"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","present"
 $username = Get-AnsibleParam -obj $params -name "username" -type "str"
-$password = Get-AnsibleParam -obj $params -name "password" -type "str"
+$password = Get-AnsibleParam -obj $params -name "password" -type "securestr"
 
 $result = @{
     changed = $false

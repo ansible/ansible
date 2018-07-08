@@ -35,13 +35,13 @@ Function Ensure-Prereqs {
     }
 }
 
-$parsed_args = Parse-Args $args -supports_check_mode $true
-$check_mode = Get-AnsibleParam $parsed_args "_ansible_check_mode" -default $false
-$dns_domain_name = Get-AnsibleParam $parsed_args "dns_domain_name" -failifempty $true
-$domain_netbios_name = Get-AnsibleParam $parsed_args "domain_netbios_name"
-$safe_mode_admin_password = Get-AnsibleParam $parsed_args "safe_mode_password" -failifempty $true
-$database_path = Get-AnsibleParam $parsed_args "database_path" -type "path"
-$sysvol_path = Get-AnsibleParam $parsed_args "sysvol_path" -type "path"
+$params = Parse-Args $args -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
+$dns_domain_name = Get-AnsibleParam -obj $params -name "dns_domain_name" -type "str" -failifempty $true
+$domain_netbios_name = Get-AnsibleParam -obj $params -name "domain_netbios_name" -type "str"
+$safe_mode_admin_password = Get-AnsibleParam -obj $params -name "safe_mode_password" -type "securestr" -failifempty $true
+$database_path = Get-AnsibleParam -obj $params -name "database_path" -type "path"
+$sysvol_path = Get-AnsibleParam -obj $params -name "sysvol_path" -type "path"
 
 $forest = $null
 
@@ -65,11 +65,9 @@ If(-not $forest) {
     $result.changed = $true
 
     If(-not $check_mode) {
-        $sm_cred = ConvertTo-SecureString $safe_mode_admin_password -AsPlainText -Force
-
         $install_forest_args = @{
             DomainName=$dns_domain_name;
-            SafeModeAdministratorPassword=$sm_cred;
+            SafeModeAdministratorPassword=$safe_mode_admin_password;
             Confirm=$false;
             SkipPreChecks=$true;
             InstallDns=$true;
@@ -84,7 +82,7 @@ If(-not $forest) {
         if ($domain_netbios_name) {
             $install_forest_args.DomainNetBiosName = $domain_netbios_name
         }
-        
+
         $iaf = Install-ADDSForest @install_forest_args
 
         $result.reboot_required = $iaf.RebootRequired

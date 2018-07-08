@@ -84,21 +84,21 @@ $result = @{
     reboot_required = $false
 }
 
-$param = Parse-Args -arguments $args -supports_check_mode $true
+$params = Parse-Args -arguments $args -supports_check_mode $true
 
-$dns_domain_name = Get-AnsibleParam $param "dns_domain_name"
-$safe_mode_password= Get-AnsibleParam $param "safe_mode_password"
-$domain_admin_user = Get-AnsibleParam $param "domain_admin_user" -failifempty $result
-$domain_admin_password= Get-AnsibleParam $param "domain_admin_password" -failifempty $result
-$local_admin_password= Get-AnsibleParam $param "local_admin_password"
-$database_path = Get-AnsibleParam $param "database_path" -type "path"
-$sysvol_path = Get-AnsibleParam $param "sysvol_path" -type "path"
-$read_only = Get-AnsibleParam $param "read_only" -type "bool" -default $false
-$site_name = Get-AnsibleParam $param "site_name" -type "str" -failifempty $read_only
+$dns_domain_name = Get-AnsibleParam -obj $params -name "dns_domain_name" -type "str"
+$safe_mode_password= Get-AnsibleParam -obj $params -name "safe_mode_password" -type "securestr"
+$domain_admin_user = Get-AnsibleParam -obj $params -name "domain_admin_user" -type "str" -failifempty $result
+$domain_admin_password= Get-AnsibleParam -obj $params -name "domain_admin_password" -type "securestr" -failifempty $result
+$local_admin_password= Get-AnsibleParam -obj $params -name "local_admin_password" -type "securestr"
+$database_path = Get-AnsibleParam -obj $params -name "database_path" -type "path"
+$sysvol_path = Get-AnsibleParam -obj $params -name "sysvol_path" -type "path"
+$read_only = Get-AnsibleParam -obj $params -name "read_only" -type "bool" -default $false
+$site_name = Get-AnsibleParam -obj $params -name "site_name" -type "str" -failifempty $read_only
 
-$state = Get-AnsibleParam $param "state" -validateset ("domain_controller", "member_server") -failifempty $result
-$log_path = Get-AnsibleParam $param "log_path"
-$_ansible_check_mode = Get-AnsibleParam $param "_ansible_check_mode" -default $false
+$state = Get-AnsibleParam -obj $params -name "state" -validateset ("domain_controller", "member_server") -failifempty $result
+$log_path = Get-AnsibleParam -obj $params -name "log_path" -type "path"
+$_ansible_check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
 $global:log_path = $log_path
 
@@ -180,12 +180,11 @@ Try {
 
                 $result.reboot_required = $true
 
-                $safe_mode_secure = $safe_mode_password | ConvertTo-SecureString -AsPlainText -Force
                 Write-DebugLog "Installing domain controller..."
                 $install_params = @{
                     DomainName = $dns_domain_name
                     Credential = $domain_admin_cred
-                    SafeModeAdministratorPassword = $safe_mode_secure
+                    SafeModeAdministratorPassword = $safe_mode_password
                 }
                 if ($database_path) {
                     $install_params.DatabasePath = $database_path
@@ -230,10 +229,8 @@ Try {
 
             $result.reboot_required = $true
 
-            $local_admin_secure = $local_admin_password | ConvertTo-SecureString -AsPlainText -Force
-
             Write-DebugLog "Uninstalling domain controller..."
-            $uninstall_result = Uninstall-ADDSDomainController -NoRebootOnCompletion -LocalAdministratorPassword $local_admin_secure -Credential $domain_admin_cred
+            $uninstall_result = Uninstall-ADDSDomainController -NoRebootOnCompletion -LocalAdministratorPassword $local_admin_password -Credential $domain_admin_cred
             Write-DebugLog "Uninstallation complete, needs reboot..."
         }
         default { throw ("invalid state {0}" -f $state) }
