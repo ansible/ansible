@@ -1375,6 +1375,17 @@ HOST_KEY_CHECKING:
   ini:
   - {key: host_key_checking, section: defaults}
   type: boolean
+INVALID_TASK_ATTRIBUTE_FAILED:
+  name: Controls whether invalid attributes for a task result in errors instead of warnings
+  default: false
+  description: If 'true', invalid attributes for a task will result in errors instead of warnings
+  type: boolean
+  env:
+    - name: ANSIBLE_INVALID_TASK_ATTRIBUTE_FAILED
+  ini:
+    - key: invalid_task_attribute_failed
+      section: defaults
+  version_added: "2.7"
 INVENTORY_ANY_UNPARSED_IS_FAILED:
   name: Controls whether any unparseable inventory source is a fatal error
   default: False

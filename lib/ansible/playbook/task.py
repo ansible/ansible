@@ -231,7 +231,7 @@ class Task(Base, Conditional, Taggable, Become):
                                        " Please see:\nhttps://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse\n\n"
                                        " for currently supported syntax regarding included files and variables", version="2.7")
                     new_ds['vars'][k] = v
-                elif k in self._valid_attrs:
+                elif C.INVALID_TASK_ATTRIBUTE_FAILED or k in self._valid_attrs:
                     new_ds[k] = v
                 else:
                     display.warning("Ignoring invalid attribute: %s" % k)
