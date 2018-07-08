@@ -358,7 +358,7 @@ class TaskExecutor:
             res[loop_var] = item
             if index_var:
                 res[index_var] = item_index
-            res['loop'] = {
+            res['ansible_loop'] = {
                 'items': items,
                 'index': item_index + 1,
                 'index0': item_index,
@@ -367,11 +367,11 @@ class TaskExecutor:
                 'length': items_len,
             }
             try:
-                res['loop']['nextitem'] = items[item_index + 1]
+                res['ansible_loop']['nextitem'] = items[item_index + 1]
             except IndexError:
                 pass
             try:
-                res['loop']['previtem'] = items[item_index - 1]
+                res['ansible_loop']['previtem'] = items[item_index - 1]
             except IndexError:
                 pass
             res['_ansible_item_result'] = True
