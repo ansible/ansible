@@ -76,6 +76,6 @@ fi
 
 # Test that duplicate items in loop are not deduped
 ANSIBLE_STRATEGY='linear' ansible-playbook tasks/test_include_dupe_loop.yml -i ../../inventory "$@" | tee test_include_dupe_loop.out
-test "$(grep -c 'item=foo' test_include_dupe_loop.out)" = 3
+test "$(grep -c '"item=foo"' test_include_dupe_loop.out)" = 3
 ANSIBLE_STRATEGY='free' ansible-playbook tasks/test_include_dupe_loop.yml -i ../../inventory "$@" | tee test_include_dupe_loop.out
-test "$(grep -c 'item=foo' test_include_dupe_loop.out)" = 3
+test "$(grep -c '"item=foo"' test_include_dupe_loop.out)" = 3
