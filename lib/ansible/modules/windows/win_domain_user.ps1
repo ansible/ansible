@@ -69,9 +69,7 @@ If (($password_expired -ne $null) -and ($password_never_expires -ne $null)) {
 
 $extra_args = @{}
 if ($domain_username -ne $null) {
-    $domain_password = ConvertTo-SecureString $domain_password -AsPlainText -Force
-    $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $domain_username, $domain_password
-    $extra_args.Credential = $credential
+    $extra_args.Credential = Create-PSCredential $domain_username $domain_password
 }
 if ($domain_server -ne $null) {
     $extra_args.Server = $domain_server
@@ -183,7 +181,7 @@ If ($state -eq 'present') {
                     $existing_value = $user_obj.$attribute_name
                     if ($existing_value -cne $attribute_value) {
                         $replace_attributes.$attribute_name = $attribute_value
-                    }                
+                    }
                 } else {
                     $add_attributes.$attribute_name = $attribute_value
                 }

@@ -35,7 +35,7 @@ $proxy_username = Get-AnsibleParam -obj $params -name "proxy_username" -type "st
 $proxy_password = Get-AnsibleParam -obj $params -name "proxy_password" -type "str" -failifempty ($proxy_username -ne $null)
 
 $result = @{
-    changed = $false 
+    changed = $false
     rc = 0
 }
 
@@ -60,8 +60,7 @@ Function Chocolatey-Install-Upgrade
             if ($proxy_username -and $proxy_password) {
                 $env:chocolateyProxyUser = $proxy_username
                 $env:chocolateyProxyPassword = $proxy_password
-                $passwd = ConvertTo-SecureString $proxy_password -AsPlainText -Force
-                $wp.Credentials = New-Object System.Management.Automation.PSCredential($proxy_username, $passwd)
+                $wp.Credentials = Create-PSCredential $proxy_username $proxy_password
             }
         }
         $install_output = $wc.DownloadString("https://chocolatey.org/install.ps1") | powershell -

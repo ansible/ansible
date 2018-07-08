@@ -77,9 +77,7 @@ if ($state -eq "absent") {
 
     $extra_args = @{}
     if ($username -ne $null) {
-        $sec_password = ConvertTo-SecureString -String $password -AsPlainText -Force
-        $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $username, $sec_password
-        $extra_args.Credential = $credential
+        $extra_args.Credential = Create-PSCredential $username $password
     }
 
     $physical_drives = Get-PSDrive -PSProvider "FileSystem"

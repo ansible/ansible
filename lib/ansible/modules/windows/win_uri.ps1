@@ -158,9 +158,7 @@ if ($user -and $password) {
         $basic_value = [Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes("$($user):$($password)"))
         $client.Headers.Add("Authorization", "Basic $basic_value")
     } else {
-        $sec_password = ConvertTo-SecureString -String $password -AsPlainText -Force
-        $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $user, $sec_password
-        $client.Credentials = $credential
+        $client.Credentials = Create-PSCredential $user $password
     }
 } elseif ($user -or $password) {
     Add-Warning -obj $result -message "Both 'user' and 'password' parameters are required together, skipping authentication"
@@ -252,7 +250,7 @@ if ($return_content -or $dest) {
 
                 $sp = New-Object -TypeName System.Security.Cryptography.SHA1CryptoServiceProvider
                 $content_checksum = [System.BitConverter]::ToString($sp.ComputeHash($memory_st)).Replace("-", "").ToLower()
-    
+
                 if ($actual_checksum -eq $content_checksum) {
                     $changed = $false
                 }
