@@ -33,21 +33,17 @@ options:
     allowed_vlans:
         description:
         - List of VLAN numbers to be allowed on switchport.
-        default: all
     enabled:
         description:
         - Whether a switchport should be enabled or disabled.
         type: bool
-        default: yes
     isolation_enabled:
         description:
         - Isolation status of switchport.
-        default: no
         type: bool
     link_negotiation:
         description:
         - Link speed for the switchport.
-        default: Auto negotiate
         choices: [Auto negotiate, 100Megabit (auto), 100 Megabit full duplex (forced)]
     name:
         description:
@@ -60,12 +56,10 @@ options:
         description:
         - Enable or disable Power Over Ethernet on a port.
         type: bool
-        default: true
     rstp_enabled:
         description:
         - Enable or disable Rapid Spanning Tree Protocol on a port.
         type: bool
-        default: true
     serial:
         description:
         - Serial nubmer of the switch.
@@ -73,7 +67,6 @@ options:
         description:
         - Set state of STP guard.
         choices: [disabled, root guard, bpdu guard, loop guard]
-        default: disabled
     tags:
         description:
         - Space delimited list of tags to assign to a port.
@@ -81,7 +74,6 @@ options:
         description:
         - Set port type.
         choices: [access, trunk]
-        default: access
     vlan:
         description:
         - VLAN number assigned to port.
@@ -228,26 +220,18 @@ def main():
                          number=dict(type='str'),
                          name=dict(type='str', aliases=['description']),
                          tags=dict(type='str'),
-                         # enabled=dict(type='bool', default=True),
                          enabled=dict(type='bool'),
                          type=dict(type='str', choices=['access', 'trunk']),
-                         # type=dict(type='str', choices=['access', 'trunk'], default='access'),
                          vlan=dict(type='int'),
                          voice_vlan=dict(type='int'),
                          allowed_vlans=dict(type='list'),
-                         # allowed_vlans=dict(type='list', default='all'),
                          poe_enabled=dict(type='bool'),
-                         # poe_enabled=dict(type='bool', default=True),
-                         # isolation_enabled=dict(type='bool', default=False),
                          isolation_enabled=dict(type='bool'),
                          rstp_enabled=dict(type='bool'),
-                         # rstp_enabled=dict(type='bool', default=True),
                          stp_guard=dict(type='str', choices=['disabled', 'root guard', 'bpdu guard', 'loop guard']),
-                         # stp_guard=dict(type='str', choices=['disabled', 'root guard', 'bpdu guard', 'loop guard'], default='disabled'),
                          access_policy_number=dict(type='str'),
                          link_negotiation=dict(type='str',
                                                choices=['Auto negotiate', '100Megabit (auto)', '100 Megabit full duplex (forced)']),
-                                               # default='Auto negotiate'),
                          )
 
     # the AnsibleModule object will be our abstraction working with Ansible
@@ -307,7 +291,7 @@ def main():
     elif meraki.params['state'] == 'present':
         payload = dict()
         proposed = dict()
-        for k,v in param_map.items():
+        for k, v in param_map.items():
             for i in param_map:
                 if meraki.params[v] or meraki.params[v] is False:
                     if v not in ('number'):
