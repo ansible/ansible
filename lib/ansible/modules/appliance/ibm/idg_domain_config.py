@@ -249,11 +249,6 @@ except ImportError:
 
 def main():
 
-    # Constants for domain management
-    _URI_DOMAIN_LIST = "/mgmt/domains/config/"
-    _URI_DOMAIN_STATUS = "/mgmt/status/default/DomainStatus"
-    _URI_ACTION = "/mgmt/actionqueue/{0}"
-
     # Arguments/parameters that a user can pass to the module
 
     module_args = dict(
@@ -350,7 +345,7 @@ def main():
     ###
 
     # List of configured domains
-    chk_code, chk_msg, chk_data = idg_mgmt.api_call(uri = _URI_DOMAIN_LIST, method = 'GET', data = None)
+    chk_code, chk_msg, chk_data = idg_mgmt.api_call(uri = IDG_Utils.URI_DOMAIN_LIST, method = 'GET', data = None)
 
     if chk_code == 200 and chk_msg == 'OK': # If the answer is correct
 
@@ -371,12 +366,12 @@ def main():
 
                 # export and finish
                 # pdb.set_trace()
-                exp_code, exp_msg, exp_data = idg_mgmt.api_call(uri = _URI_ACTION.format(domain_name), method = 'POST',
+                exp_code, exp_msg, exp_data = idg_mgmt.api_call(uri = IDG_Utils.URI_ACTION.format(domain_name), method = 'POST',
                                                                 data = json.dumps(export_action_msg))
 
                 if exp_code == 202 and exp_msg == 'Accepted':
-                    # Exported accepted. Wait for complete
-                    action_result = idg_mgmt.wait_for_action_end(uri = _URI_ACTION.format(domain_name), href = exp_data['_links']['location']['href'],
+                    # Asynchronous actions export accepted. Wait for complete
+                    action_result = idg_mgmt.wait_for_action_end(uri = IDG_Utils.URI_ACTION.format(domain_name), href = exp_data['_links']['location']['href'],
                                                                  state = state, domain = domain_name)
 
                     # Export completed. Get result
@@ -391,6 +386,12 @@ def main():
                     else:
                         # Can't retrieve the export
                         module.fail_json(msg = to_native(idg_mgmt.ERROR_RETRIEVING_RESULT % (state, domain_name)))
+
+                elif exp_code == 200 and exp_msg == 'OK':
+                    # Successfully processed synchronized action
+                    result['msg'] = idg_mgmt.status_text(exp_data['Export'])
+                    result['changed'] = True
+
                 else:
                     # Export not accepted
                     module.fail_json(msg = to_native(idg_mgmt.ERROR_ACCEPTING_ACTION % (state, domain_name)))
@@ -403,13 +404,13 @@ def main():
                     module.exit_json(**result)
 
                 # Reseted domain
-                reset_code, reset_msg, reset_data = idg_mgmt.api_call(uri = _URI_ACTION.format(domain_name), method = 'POST',
+                reset_code, reset_msg, reset_data = idg_mgmt.api_call(uri = IDG_Utils.URI_ACTION.format(domain_name), method = 'POST',
                                                                       data = json.dumps(reset_act_msg))
 
                 # pdb.set_trace()
                 if reset_code == 202 and reset_msg == 'Accepted':
-                    # Reseted accepted. Wait for complete
-                    action_result = idg_mgmt.wait_for_action_end(uri = _URI_ACTION.format(domain_name), href = reset_data['_links']['location']['href'],
+                    # Asynchronous actions reset accepted. Wait for complete
+                    action_result = idg_mgmt.wait_for_action_end(uri = IDG_Utils.URI_ACTION.format(domain_name), href = reset_data['_links']['location']['href'],
                                                                  state = state, domain = domain_name)
 
                     # Reseted completed
@@ -424,13 +425,18 @@ def main():
                         # Can't retrieve the reset result
                         module.fail_json(msg = to_native(idg_mgmt.ERROR_RETRIEVING_RESULT % (state, domain_name)))
 
+                elif reset_code == 200 and reset_msg == 'OK':
+                    # Successfully processed synchronized action
+                    result['msg'] = idg_mgmt.status_text(reset_data['ResetThisDomain'])
+                    result['changed'] = True
+
                 else:
                     # Reseted not accepted
                     module.fail_json(msg = to_native(idg_mgmt.ERROR_ACCEPTING_ACTION % (state, domain_name)))
 
             elif state == 'saved':
 
-                qds_code, qds_msg, qds_data = idg_mgmt.api_call(uri = _URI_DOMAIN_STATUS, method = 'GET', data = None)
+                qds_code, qds_msg, qds_data = idg_mgmt.api_call(uri = IDG_Utils.URI_DOMAIN_STATUS, method = 'GET', data = None)
 
                 # pdb.set_trace()
                 if qds_code == 200 and qds_msg == 'OK':
@@ -448,12 +454,29 @@ def main():
                             result['msg'] = IDG_Utils.CHECK_MODE_MESSAGE
                             module.exit_json(**result)
 
-                        save_code, save_msg, save_data = idg_mgmt.api_call(uri = _URI_ACTION.format(domain_name), method = 'POST',
+                        save_code, save_msg, save_data = idg_mgmt.api_call(uri = IDG_Utils.URI_ACTION.format(domain_name), method = 'POST',
                                                                            data = json.dumps(save_act_msg))
 
                         # pdb.set_trace()
-                        if save_code == 200 and save_msg == 'OK':
-                            # Saved successfully
+                        if save_code == 202 and save_msg == 'Accepted':
+                            # Asynchronous actions save accepted. Wait for complete
+                            action_result = idg_mgmt.wait_for_action_end(uri = IDG_Utils.URI_ACTION.format(domain_name), href = save_data['_links']['location']['href'],
+                                                                         state = state, domain = domain_name)
+
+                            # Save ready
+                            dosv_code, dosv_msg, dosv_data = idg_mgmt.api_call(uri = save_data['_links']['location']['href'], method = 'GET',
+                                                                               data = None)
+
+                            if dosv_code == 200 and dosv_msg == 'OK':
+                                # Save completed
+                                result['msg'] = action_result
+                                result['changed'] = True
+                            else:
+                                # Can't retrieve the save result
+                                module.fail_json(msg = to_native(idg_mgmt.ERROR_RETRIEVING_RESULT % (state, domain_name)))
+
+                        elif save_code == 200 and save_msg == 'OK':
+                            # Successfully processed synchronized action save
                             result['msg'] = idg_mgmt.status_text(save_data['SaveConfig'])
                             result['changed'] = True
                         else:
@@ -472,13 +495,13 @@ def main():
 
                 # Import
                 # pdb.set_trace()
-                imp_code, imp_msg, imp_data = idg_mgmt.api_call(uri = _URI_ACTION.format(domain_name), method = 'POST',
+                imp_code, imp_msg, imp_data = idg_mgmt.api_call(uri = IDG_Utils.URI_ACTION.format(domain_name), method = 'POST',
                                                                 data = json.dumps(import_action_msg))
 
                 # pdb.set_trace()
                 if imp_code == 202 and imp_msg == 'Accepted':
-                    # Import accepted. Wait for complete
-                    action_result = idg_mgmt.wait_for_action_end(uri = _URI_ACTION.format(domain_name), href = imp_data['_links']['location']['href'],
+                    # Asynchronous actions import accepted. Wait for complete
+                    action_result = idg_mgmt.wait_for_action_end(uri = IDG_Utils.URI_ACTION.format(domain_name), href = imp_data['_links']['location']['href'],
                                                                  state = state, domain = domain_name)
 
                     # Import ready
@@ -498,6 +521,12 @@ def main():
                     else:
                         # Can't retrieve the import result
                         module.fail_json(msg = to_native(idg_mgmt.ERROR_RETRIEVING_RESULT % (state, domain_name)))
+
+                elif imp_code == 200 and imp_msg == 'OK':
+                    # Successfully processed synchronized action
+                    result['msg'] = idg_mgmt.status_text(imp_data['Import'])
+                    result['changed'] = True
+
                 else:
                     # Imported not accepted
                     module.fail_json(msg = to_native(idg_mgmt.ERROR_ACCEPTING_ACTION % (state, domain_name)))

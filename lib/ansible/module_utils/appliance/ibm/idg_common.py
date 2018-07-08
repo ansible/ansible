@@ -16,16 +16,6 @@ import json
 from time import sleep
 # import pdb
 
-#############################
-# Variables
-#############################
-
-#
-# API connections
-#
-
-# Constants
-
 # Seed the result
 result = dict(
     changed = False,
@@ -46,13 +36,27 @@ idg_endpoint_spec.update(
 class IDG_Utils(object):
     """ Class class with very useful things """
 
+    #############################
+    # Constants
+    #############################
+
     IMMUTABLE_MESSAGE = 'The current state is consistent with the desired configuration'
     CHECK_MODE_MESSAGE = 'Change was only simulated, due to enabling verification mode'
 
+    # Connection agreements
     BASIC_HEADERS = { "Content-Type": "application/json" }
     ANSIBLE_VERSION = '2.7'
     BASIC_AUTH_SPEC = True
     HTTP_AGENT_SPEC = None
+
+    # REST api management
+    # Domains
+    URI_DOMAIN_LIST = "/mgmt/domains/config/"
+    # Management
+    URI_DOMAIN_CONFIG = "/mgmt/config/default/Domain/{0}"
+    URI_DOMAIN_STATUS = "/mgmt/status/default/DomainStatus"
+    # Actions
+    URI_ACTION = "/mgmt/actionqueue/{0}"
 
     @staticmethod
     def parse_to_dict(data, desc, ver):
