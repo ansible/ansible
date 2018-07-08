@@ -237,7 +237,6 @@ import json
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
-from ansible.module_utils.urls import open_url
 
 # Common package of our implementation for IDG
 try:
@@ -250,7 +249,6 @@ except ImportError:
 def main():
 
     # Arguments/parameters that a user can pass to the module
-
     module_args = dict(
         state = dict(type = 'str', choices = ['exported', 'imported', 'reseted', 'saved'], default = 'saved'), # Domain's operational state
         idg_connection = dict(type = 'dict', options = idg_endpoint_spec, required = True), # IDG connection

@@ -108,20 +108,20 @@ class IDG_API(object):
 
     def wait_for_action_end(self, **kwargs):
 
-        good_results = ['processed', 'completed']
+        str_results = ['processed', 'completed']
         max_steps = 30
         count = 0
         action_result = ''
         # pdb.set_trace()
 
-        while (action_result not in good_results) and (count < max_steps):
+        while (action_result not in str_results) and (count < max_steps):
             # Wait to complete
             code, msg, data = self.api_call(uri = kwargs['uri'] + '/pending',
                                                 method = 'GET', data = None)
             count += 1
             if code == 200 and msg == 'OK':
                 action_result = self.get_operation_status(data['operations'], kwargs['href'])
-                if action_result not in good_results: sleep(self.SHORT_DELAY)
+                if action_result not in str_results: sleep(self.SHORT_DELAY)
             else:
                 # Opps can't get status
                 self.ansible_module.fail_json(msg = to_native(self.ERROR_RETRIEVING_STATUS % (kwargs['state'], kwargs['domain'])))
