@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# pylint: disable=no-self-argument
+#
 # Copyright 2006-2017 by the Pygments team, see AUTHORS at
 # https://bitbucket.org/birkenfeld/pygments-main/raw/7941677dc77d4f2bf0bbd6140ade85a9454b8b80/AUTHORS
 # Copyright by Kirill Simonov (original author of YAML lexer).
@@ -31,7 +33,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from __future__ import absolute_import, unicode_literals, print_function
+from __future__ import absolute_import, print_function
 
 from pygments.lexer import LexerContext, ExtendedRegexLexer, DelegatingLexer, bygroups, include
 from pygments.lexers import DjangoLexer
@@ -474,10 +476,15 @@ class AnsibleYamlJinjaLexer(DelegatingLexer):
         super(AnsibleYamlJinjaLexer, self).__init__(AnsibleYamlLexer, DjangoLexer, **options)
 
 
-__version__         = "0.1.0"
-__license__         = "Apache 2.0"
-__author__          = "Felix Fontein"
-__author_email__    = "felix@fontein.de"
+
+#####################################################################################################
+## Sphinx plugin ####################################################################################
+#####################################################################################################
+
+__version__ = "0.1.0"
+__license__ = "BSD license"
+__author__ = "Felix Fontein"
+__author_email__ = "felix@fontein.de"
 
 
 def setup(app):
@@ -489,4 +496,4 @@ def setup(app):
         for alias in lexer.aliases:
             app.add_lexer(alias, lexer)
 
-    return dict(version=__version__)
+    return dict(version=__version__, parallel_read_safe=True)
