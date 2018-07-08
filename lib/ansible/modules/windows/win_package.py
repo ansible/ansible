@@ -56,16 +56,16 @@ options:
     - The display Name of the installed package.
     - This is used for checking whether the product is already installed and
       getting the uninstall information if C(state=absent).
-    - You can find the display names for installed programs in Programs and
-    Features.
+    - You can find the display name for installed programs in Programs and
+    Features Panel.
     - You can use this in conjunction with C(display_version).
   display_version:
     description:
     - The display Version of the installed package.
     - This is used for checking the version installed for the C(display_name)
     reference.
-    - You can find the display versions for installed programs in Programs and
-    Features.
+    - You can find the display version for installed programs in Programs and
+    Features Panel.
     - C(display_name) MUST be set.
   expected_return_code:
     description:
@@ -110,7 +110,7 @@ options:
   state:
     description:
     - Whether to install or uninstall the package.
-    - The module uses C(product_id) and whether it exists at the registry path
+    - The module uses C(product_id) or C(display_name) and whether it exists at the registry path
       to see whether it needs to install or uninstall the package.
     default: present
     aliases: [ ensure ]
