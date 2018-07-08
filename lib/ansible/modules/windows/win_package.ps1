@@ -228,7 +228,7 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
                 Fail-Json -obj $result -message "failed to get product_id from MSI at $($path): $($_.Exception.Message)"
             }
         } elseif ($creates_path -eq $null -and $creates_service -eq $null -and $display_name -eq $null) {
-            # we need to fail without the product id at this point
+            # we need to fail without the product id or display_name at this point
             Fail-Json $result "product_id or display_name is required when the path is not an MSI or the path is an MSI but not local"
         }
     }
@@ -263,6 +263,7 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
         }
     }
 
+    # try to find display_name in Registry and check display_version if available. Finally Get product_id 
     if ($metadata.display_name -ne $null) {
         $uninstall_node = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\"
         $uninstall_node_wow64 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\"
@@ -305,7 +306,8 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
                 }
             }
         }
-        if ($metadata.installed -eq $true) {
+        # if the reg key exists, try and get the uninstall string and check if it is an MSI
+        if ($metadata.installed -eq $true -and $metadata.location_type -eq [LocationType]::Empty) {
             if (Test-RegistryProperty -path $uninstall_key -name "UninstallString") {
                 $metadata.uninstall_string = (Get-ItemProperty -Path $uninstall_key -Name "UninstallString").UninstallString
                 if ($metadata.uninstall_string.StartsWith("MsiExec")) {
