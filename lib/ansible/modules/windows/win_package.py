@@ -206,6 +206,19 @@ EXAMPLES = r'''
     creates_version: 16.04
     state: present
 
+- name: Install 7zip and use the displayname for the installation check found in
+Programs and Features
+  win_package:
+    path: C:\temp\7zip.exe
+    display_name: 7-Zip 16.04 (x64 edition)
+
+- name: Install Zotero
+   win_package:
+     path:  C:\temp\Zotero-5.0.52_setup.exe
+     arguments: /S
+     display_name: Zotero
+     display_version: 5.0.52
+
 - name: Uninstall 7zip from the exe
   win_package:
     path: C:\Program Files\7-Zip\Uninstall.exe
@@ -217,6 +230,11 @@ EXAMPLES = r'''
   win_package:
     product_id: 7-Zip
     arguments: /S
+    state: absent
+
+- name: Uninstall 7zip using display_name without specifying the path
+  win_package:
+    display_name: 7-Zip 18.05 (x64 edition)
     state: absent
 
 - name: Install application and override expected return codes
