@@ -72,8 +72,8 @@ foreach ($rc in ($expected_return_code)) {
 }
 
 if ($path -eq $null) {
-    if (-not ($state -eq "absent" -and $product_id -ne $null)) {
-        Fail-Json -obj $result -message "path can only be null when state=absent and product_id is not null"
+    if (-not (($state -eq "absent" -and $product_id -ne $null) -or ($state -eq "absent" -and $display_name -ne $null))) {
+        Fail-Json -obj $result -message "path can only be null when state=absent and product_id is not null or when  state=absent and display_name is not null "
     }
 }
 
@@ -269,8 +269,8 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
         $uninstall_array = Get-ChildItem -Path $uninstall_node -Name
         $uninstall_array_wow64 = Get-ChildItem -Path $uninstall_node_wow64 -Name
 
-        foreach ($software in $uninstall_array) {
-            $uninstall_path = $uninstall_node + $software
+        foreach ($product_id in $uninstall_array) {
+            $uninstall_path = $uninstall_node + $product_id
             if ( Test-RegistryProperty -Path $uninstall_path -name "displayName") {
                $displayname = (Get-ItemProperty -Path $uninstall_path -Name "displayName").displayName
             }
@@ -279,6 +279,7 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
             }
             if ($metadata.display_name -eq $displayname) {
                 $uninstall_key  = $uninstall_path
+                $metadata.product_id = $product_id
                 if ( $metadata.display_version -ne $null -and $metadata.display_version -eq $displayversion) {
                     $metadata.installed = $true
                 } else {
@@ -286,8 +287,8 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
                 }
             }
         }
-        foreach ($software in $uninstall_array_wow64) {
-            $uninstall_path = $uninstall_node_wow64 + $software
+        foreach ($product_id in $uninstall_array_wow64) {
+            $uninstall_path = $uninstall_node_wow64 + $product_id
             if ( Test-RegistryProperty -Path $uninstall_path -name "displayName") {
                $displayname = (Get-ItemProperty -Path $uninstall_path -Name "displayName").displayName
             }
@@ -296,6 +297,7 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
             }
             if ($metadata.display_name -eq $displayname) {
                 $uninstall_key  = $uninstall_path
+                $metadata.product_id = $product_id
                 if ( $metadata.display_version -ne $null -and $metadata.display_version -eq $displayversion) {
                     $metadata.installed = $true
                 } else {
