@@ -282,11 +282,12 @@ class LookupModule(LookupBase):
             b_path = to_bytes(path, errors='surrogate_or_strict')
             chars = _gen_candidate_chars(params['chars'])
 
-            b_pathdir = os.path.dirname(b_path)
-            makedirs_safe(b_pathdir, mode=0o700)
-
+            content = None
             changed = False
-            content = _read_password_file(b_path)
+            if b_path != to_bytes('/dev/null'):
+                b_pathdir = os.path.dirname(b_path)
+                makedirs_safe(b_pathdir, mode=0o700)
+                content = _read_password_file(b_path)
 
             if content is None or b_path == to_bytes('/dev/null'):
                 plaintext_password = random_password(params['length'], chars)
