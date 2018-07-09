@@ -567,10 +567,7 @@ def main():
                                                           module.params['desired_count'],
                                                           deploymentConfiguration,
                                                           network_configuration,
-<<<<<<< 61b5adcf316bcab84432cc4f0f1c22c411c5a071
                                                           module.params['health_check_grace_period_seconds'],
-=======
->>>>>>> Support UpdateService forceNewDeployment in ecs_service module
                                                           module.params['force_new_deployment'])
                 else:
                     try:
