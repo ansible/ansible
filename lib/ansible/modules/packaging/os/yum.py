@@ -1470,7 +1470,7 @@ def main():
             bugfix=dict(required=False, type='bool', default=False),
             enable_plugin=dict(type='list', default=[]),
             disable_plugin=dict(type='list', default=[]),
-            disable_excludes=dict(type='str', default=None),
+            disable_excludes=dict(type='str', default=None, choices=['all', 'main', 'repoid', None]),
         ),
         required_one_of=[['name', 'list']],
         mutually_exclusive=[['name', 'list']],
