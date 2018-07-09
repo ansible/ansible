@@ -572,9 +572,9 @@
   register: yum_result
 
 - name: verify packages did not install
-    assert:
-      that:
-          - "yum_result is failed"
+  assert:
+    that:
+      - "yum_result is failed"
 
 - name: install sos
   yum: name=sos state=present disable_excludes=all
@@ -583,8 +583,8 @@
 - name: verify packages installed
   assert:
     that:
-        - "yum_result is success"
-        - "yum_result is changed"
+      - "yum_result is success"
+      - "yum_result is changed"
 
 - name: exclude sos
   lineinfile:
