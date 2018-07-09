@@ -546,3 +546,49 @@
   file:
     name: "/tmp/non_existent_pkg.rpm"
     state: absent
+
+- name: uninstall sos
+  yum: name=sos state=removed
+
+- name: check sos with rpm
+  shell: rpm -q sos
+  ignore_errors: True
+  register: rpm_sos_result
+
+- name: verify packages installed
+  assert:
+    that:
+        - "rpm_sos_result is failed"
+
+- name: exclude sos
+  lineinfile:
+    dest: /etc/yum.conf
+    regexp: (^exclude=)(.)*
+    line: "exclude=sos"
+    state: present
+
+- name: install sos
+  yum: name=sos state=present
+  register: yum_result
+
+  name: verify packages did not install
+    assert:
+      that:
+          - "yum_result is failed"
+
+- name: install sos
+  yum: name=sos state=present disable_excludes=all
+  register: yum_result
+
+- name: verify packages installed
+  assert:
+    that:
+        - "yum_result is success"
+        - "yum_result is changed"
+
+- name: exclude sos
+  lineinfile:
+    dest: /etc/yum.conf
+    regexp: (^exclude=sos)
+    line: "exclude="
+    state: present
