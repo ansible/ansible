@@ -104,37 +104,37 @@ data:
     contains:
         hostname:
             description: Hostname of SNMP server.
-            returned: always
+            returned: success
             type: string
             sample: n1.meraki.com
         peerIps:
             description: Semi-colon delimited list of IPs which can poll SNMP information.
-            returned: always
+            returned: success
             type: string
             sample: 192.0.1.1
         port:
             description: Port number of SNMP.
-            returned: always
+            returned: success
             type: string
             sample: 16100
         v2cEnabled:
             description: Shows enabled state of SNMPv2c
-            returned: always
+            returned: success
             type: bool
             sample: true
         v3Enabled:
             description: Shows enabled state of SNMPv3
-            returned: always
+            returned: success
             type: bool
             sample: true
         v3AuthMode:
             description: The SNMP version 3 authentication mode either MD5 or SHA.
-            returned: always
+            returned: success
             type: string
             sample: SHA
         v3PrivMode:
             description: The SNMP version 3 privacy mode DES or AES128.
-            returned: always
+            returned: success
             type: string
             sample: AES128
         v2CommunityString:
