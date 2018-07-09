@@ -76,6 +76,18 @@ class PagerDutyTest(unittest.TestCase):
         )
         return object(), {'status': 201}
 
+    def _assert_absent_maintenance_window_url(self, module, url, headers, method=None):
+        self.assertEquals('https://api.pagerduty.com/maintenance_windows/window_id', url)
+        return object(), {'status': 204}
+
+    def _assert_absent_window_with_v1_compatible_header(self, module, url, headers, method=None):
+        self.assertDictContainsSubset(
+          {'Accept': 'application/vnd.pagerduty+json;version=2'},
+          headers,
+          'Accept:application/vnd.pagerduty+json;version=2 HTTP header not found'
+        )
+        return object(), {'status': 204}
+
     def test_ongoing_maintenance_windos_url(self):
         self.pd.ongoing(http_call=self._assert_ongoing_maintenance_windows)
 
@@ -102,3 +114,9 @@ class PagerDutyTest(unittest.TestCase):
 
     def test_create_maintenance_for_multiple_services(self):
         self.pd.create('requester_id', ['service_id_1', 'service_id_2', 'service_id_3'], 1, 0, 'desc', http_call=self._assert_create_window_multiple_service)
+
+    def test_absent_maintenance_window_url(self):
+        self.pd.absent('window_id', http_call=self._assert_absent_maintenance_window_url)
+
+    def test_absent_maintenance_compatibility_header(self):
+        self.pd.absent('window_id', http_call=self._assert_absent_window_with_v1_compatible_header)
