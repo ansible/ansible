@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix fetching old style facts in junos_facts module (https://github.com/ansible/ansible/pull/42351)
