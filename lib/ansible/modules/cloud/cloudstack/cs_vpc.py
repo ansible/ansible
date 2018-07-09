@@ -231,7 +231,15 @@ class AnsibleCloudStackVpc(AnsibleCloudStack):
 
         vpc_offerings = self.query_api('listVPCOfferings', **args)
         if vpc_offerings:
-            return self._get_by_key(key, vpc_offerings['vpcoffering'][0])
+            # The API name argument filter also matches substrings, we have to
+            # iterate over the results to get an exact match
+            for vo in vpc_offerings['vpcoffering']:
+                if 'name' in args:
+                    if args['name'] == vo['name']:
+                        return self._get_by_key(key, vo)
+                #  Return the first offering found, if not queried for the name
+                else:
+                    return self._get_by_key(key, vo)
         self.module.fail_json(msg=fail_msg)
 
     def get_vpc(self):
