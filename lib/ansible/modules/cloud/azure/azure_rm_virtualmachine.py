@@ -1698,6 +1698,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
     def parse_network_interface(self, nic):
         nic = self.parse_resource_to_dict(nic)
+        if 'name' not in nic:
+            self.fail("Invalid network interface {0}".format(str(nic)))
         return format_resource_id(val=nic['name'],
                                   subscription_id=nic['subscription_id'],
                                   resource_group=nic['resource_group'],
