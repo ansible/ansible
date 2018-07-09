@@ -85,6 +85,9 @@ def main():
     alias = ''
 
     try:
+        # Although a list is returned by list_account_aliases AWS supports maximum one alias per account.
+        # If an alias is defined it will be returned otherwise a blank string is filled in as account_alias.
+        # see https://docs.aws.amazon.com/cli/latest/reference/iam/list-account-aliases.html#output
         response = iam_client.list_account_aliases()
         if response and response['AccountAliases']:
             alias = response['AccountAliases'][0]
