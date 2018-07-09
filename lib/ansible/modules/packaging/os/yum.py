@@ -789,7 +789,7 @@ def list_stuff(module, repoquerybin, conf_file, stuff, installroot='/', disabler
     return [pkg_to_dict(p) for p in sorted(is_installed(module, repoq, stuff, conf_file, qf=is_installed_qf,
                                                         installroot=installroot, disable_excludes=disable_excludes) +
                                            is_available(module, repoq, stuff, conf_file, qf=qf, installroot=installroot,
-                                                         disable_excludes=disable_excludes)) if p.strip()]
+                                                        disable_excludes=disable_excludes)) if p.strip()]
 
 
 def exec_install(module, items, action, pkgs, res, yum_basecmd):
@@ -1028,7 +1028,7 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, en
                                                disable_excludes=disable_excludes)
         else:
             installed = is_installed(module, repoq, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos, en_plugins=en_plugins,
-                                     dis_plugins=dis_plugins, installroot=installroot,disable_excludes=disable_excludes)
+                                     dis_plugins=dis_plugins, installroot=installroot, disable_excludes=disable_excludes)
 
         if installed:
             pkgs.append(pkg)
@@ -1498,7 +1498,7 @@ def main():
             module.fail_json(msg="repoquery is required to use list= with this module. Please install the yum-utils package.")
         results = {'results': list_stuff(module, repoquerybin, params['conf_file'],
                                          params['list'], params['installroot'],
-                                         params['disablerepo'], params['enablerepo'],params['disable_excludes'])}
+                                         params['disablerepo'], params['enablerepo'], params['disable_excludes'])}
     else:
         # If rhn-plugin is installed and no rhn-certificate is available on
         # the system then users will see an error message using the yum API.
