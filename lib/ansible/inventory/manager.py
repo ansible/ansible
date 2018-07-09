@@ -235,9 +235,9 @@ class InventoryManager(object):
                     continue
 
                 # recursively deal with directory entries
-                b_fullpath = os.path.join(b_source, i)
-                parsed_this_one = self.parse_source(b_fullpath, cache=cache)
-                display.debug(u'parsed %s as %s' % (to_text(b_fullpath), parsed_this_one))
+                fullpath = to_text(os.path.join(b_source, i))
+                parsed_this_one = self.parse_source(fullpath, cache=cache)
+                display.debug(u'parsed %s as %s' % (fullpath, parsed_this_one))
                 if not parsed:
                     parsed = parsed_this_one
         else:
