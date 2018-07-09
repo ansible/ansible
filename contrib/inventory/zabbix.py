@@ -75,7 +75,8 @@ class ZabbixInventory(object):
             self.zabbix_password = config.get('zabbix', 'password')
         # ssl certs
         if config.has_option('zabbix','validate_certs'):
-            self.validate_certs = config.get('zabbix','validate_certs')
+            if config.get('zabbix','validate_certs') in ['false', 'False', False]:
+                self.validate_certs = False
 
     def read_cli(self):
         parser = argparse.ArgumentParser()
