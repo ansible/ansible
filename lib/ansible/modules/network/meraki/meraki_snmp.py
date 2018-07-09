@@ -69,19 +69,55 @@ EXAMPLES = r'''
 
 RETURN = r'''
 data:
-    description: Information about queried or updated object.
-    type: list
-    returned: info
-    sample:
-      "data": {
-          "hostname": "n110.meraki.com",
-          "peer_ips": null,
-          "port": 16100,
-          "v2c_enabled": false,
-          "v3_auth_mode": null,
-          "v3_enabled": false,
-          "v3_priv_mode": null
-      }
+    description: Information about SNMP settings.
+    type: complex
+    returned: always
+    contains:
+        hostname:
+            description: Hostname of SNMP server.
+            returned: success
+            type: string
+            sample: n1.meraki.com
+        peerIps:
+            description: Semi-colon delimited list of IPs which can poll SNMP information.
+            returned: success
+            type: string
+            sample: 192.0.1.1
+        port:
+            description: Port number of SNMP.
+            returned: success
+            type: string
+            sample: 16100
+        v2cEnabled:
+            description: Shows enabled state of SNMPv2c
+            returned: success
+            type: bool
+            sample: true
+        v3Enabled:
+            description: Shows enabled state of SNMPv3
+            returned: success
+            type: bool
+            sample: true
+        v3AuthMode:
+            description: The SNMP version 3 authentication mode either MD5 or SHA.
+            returned: success
+            type: string
+            sample: SHA
+        v3PrivMode:
+            description: The SNMP version 3 privacy mode DES or AES128.
+            returned: success
+            type: string
+            sample: AES128
+        v2CommunityString:
+            description: Automatically generated community string for SNMPv2c.
+            returned: When SNMPv2c is enabled.
+            type: string
+            sample: o/8zd-JaSb
+        v3User:
+            description: Automatically generated username for SNMPv3.
+            returned: When SNMPv3c is enabled.
+            type: string
+            sample: o/8zd-JaSb
 '''
 
 import os
