@@ -2021,7 +2021,8 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
 
         init_supported = init_supported and LooseVersion(docker_version) >= LooseVersion('2.2')
         if self.module.params.get("init") and not init_supported:
-            self.fail('docker-py version is %s. Minimum version required is 2.2 to set init option.' % (docker_version,))
+            self.fail("docker or docker-py version is %s. Minimum version required is 2.2 to set init option. "
+                      "If you use the 'docker-py' module, you have to switch to the docker 'Python' package." % (docker_version,))
 
         self.HAS_INIT_OPT = init_supported
         self.HAS_AUTO_REMOVE_OPT = HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3
