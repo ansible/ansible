@@ -378,6 +378,7 @@ RETURN = '''
 
 from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, remove_nones_from_dict, replace_resource_dict
 import json
+import re
 import time
 
 ################################################################################
@@ -471,7 +472,7 @@ def resource_to_request(module):
         u'name': module.params.get('name'),
         u'sizeGb': module.params.get('size_gb'),
         u'sourceImage': module.params.get('source_image'),
-        u'type': module.params.get('type')
+        u'type': disk_type_selflink(module.params.get('type'), module.params)
     }
     return_vals = {}
     for k, v in request.items():
@@ -552,6 +553,15 @@ def response_to_hash(module, response):
         u'type': response.get(u'type'),
         u'users': response.get(u'users')
     }
+
+
+def disk_type_selflink(name, params):
+    if name is None:
+        return
+    url = r"https://www.googleapis.com/compute/v1/projects/.*/zones/{zone}/diskTypes/[a-z1-9\-]*"
+    if not re.match(url, name):
+        name = "https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/diskTypes/%s".format(**params) % name
+    return name
 
 
 def async_op_url(module, extra_data=None):
