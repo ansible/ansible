@@ -1,0 +1,2 @@
+bugfixes:
+- Enforcing NXAPI default HTTP behavior (https://github.com/ansible/ansible/pull/41817).
