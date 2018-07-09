@@ -768,6 +768,11 @@ class TaskExecutor:
                 display.debug("Async poll exception was:\n%s" % to_text(traceback.format_exc()))
                 try:
                     normal_handler._connection.reset()
+                except AnsibleError as e:
+                    # with ssh, older host's may fail when trying to run ssh -O
+                    # stop, we should just continue and try again in the loop
+                    display.debug("async_poll: connection reset failed, "
+                                  "attempting to continue:\n%s" % to_native(e))
                 except AttributeError:
                     pass
 
