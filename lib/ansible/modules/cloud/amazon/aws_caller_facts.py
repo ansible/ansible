@@ -76,8 +76,8 @@ def main():
     client = module.client('sts')
 
     try:
-        caller_identity = client.get_caller_identity()
-        caller_identity.pop('ResponseMetadata', None)
+        caller_facts = client.get_caller_identity()
+        caller_facts.pop('ResponseMetadata', None)
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e, msg='Failed to retrieve caller identity')
 
@@ -94,11 +94,11 @@ def main():
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e, msg='Failed to retrieve account aliases')
 
-    caller_identity['account_alias'] = alias
+    caller_facts['account_alias'] = alias
 
     module.exit_json(
         changed=False,
-        **camel_dict_to_snake_dict(caller_identity))
+        **camel_dict_to_snake_dict(caller_facts))
 
 
 if __name__ == '__main__':
