@@ -24,8 +24,8 @@ options:
       - Name of the encrypted block device as it appears in the C(/etc/crypttab) file, or
         optionally prefixed with C(/dev/mapper/), as it appears in the filesystem. I(/dev/mapper/)
         will be stripped from I(name).
+        Required when I(state != info).
     type: str
-    required: yes
   state:
     description:
       - Use I(present) to add a line to C(/etc/crypttab) or update its definition
@@ -34,9 +34,10 @@ options:
       - Use I(opts_present) to add options to those already present; options with
         different values will be updated.
       - Use I(opts_absent) to remove options from the existing set.
+      - Use I(info) to return the current crypt devices without making any changes.
     type: str
     required: yes
-    choices: [ absent, opts_absent, opts_present, present ]
+    choices: [ absent, opts_absent, opts_present, present, info ]
   backing_device:
     description:
       - Path to the underlying block device or file, or the UUID of a block-device
@@ -77,6 +78,48 @@ EXAMPLES = r'''
   when: "'/dev/mapper/luks-' in {{ item.device }}"
 '''
 
+RETURN = '''
+entries:
+  description: The crypttab entries after any changes have been applied.
+  returned: success
+  type: complex
+  sample: {
+    "sda1_crypt": {
+        "backing_device": "UUID=7b2598fb-0b76-40be-adeb-382cc42a065c",
+        "options": {
+            "luks": true
+        },
+        "password": "/disk-key"
+    },
+    "sdb_crypt": {
+        "backing_device": "/dev/sdb",
+        "options": {
+            "cipher": "aes-xts-plain64",
+            "discard": true
+        },
+        "password": "none"
+    }
+  }
+  contains:
+    "I(name)":
+      description: One entry for each line in the crypttab file keyed by the name.
+      returned: success
+      type: complex
+      contains:
+        backing_device:
+          description: The underlying device where the encrypted data is stored.
+          returned: success
+          type: str
+          sample: "/dev/sdb"
+        options:
+          description: Dict with one entry for each option specified for the device.
+          returned: success
+        password:
+          description: The password or key-file for the crypt device.
+          returned: success
+          type: str
+'''
+
 import os
 import traceback
 
@@ -87,13 +130,19 @@ from ansible.module_utils._text import to_bytes, to_native
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(type='str', required=True),
-            state=dict(type='str', required=True, choices=['absent', 'opts_absent', 'opts_present', 'present']),
+            name=dict(type='str'),
+            state=dict(type='str', required=True, choices=['absent', 'opts_absent', 'opts_present', 'present', 'info']),
             backing_device=dict(type='str'),
             password=dict(type='path'),
             opts=dict(type='str'),
             path=dict(type='path', default='/etc/crypttab')
         ),
+        required_if=[
+            ['state', 'absent', ['name']],
+            ['state', 'opts_absent', ['name']],
+            ['state', 'opts_present', ['name']],
+            ['state', 'present', ['name']],
+        ],
         supports_check_mode=True,
     )
 
@@ -103,10 +152,10 @@ def main():
     state = module.params['state']
     path = module.params['path']
     name = module.params['name']
-    if name.startswith('/dev/mapper/'):
+    if name and name.startswith('/dev/mapper/'):
         name = name[len('/dev/mapper/'):]
 
-    if state != 'absent' and backing_device is None and password is None and opts is None:
+    if state not in ['absent', 'info'] and backing_device is None and password is None and opts is None:
         module.fail_json(msg="expected one or more of 'backing_device', 'password' or 'opts'",
                          **module.params)
 
@@ -155,6 +204,9 @@ def main():
         if existing_line is not None:
             changed, reason = existing_line.opts.remove(opts)
 
+    elif state == 'info':
+        reason = 'retrieved crypttab'
+
     if changed and not module.check_mode:
         try:
             f = open(path, 'wb')
@@ -162,7 +214,7 @@ def main():
         finally:
             f.close()
 
-    module.exit_json(changed=changed, msg=reason, **module.params)
+    module.exit_json(changed=changed, msg=reason, entries=crypttab.to_json_dict(), **module.params)
 
 
 class Crypttab(object):
@@ -196,6 +248,13 @@ class Crypttab(object):
             if line.name == name:
                 return line
         return None
+
+    def to_json_dict(self):
+        json_dict = {}
+        for line in self.lines():
+            line_json_dict = line.to_json_dict()
+            json_dict[line_json_dict.pop('name')] = line_json_dict
+        return json_dict
 
     def __str__(self):
         lines = []
@@ -273,6 +332,14 @@ class Line(object):
             return True
         return False
 
+    def to_json_dict(self):
+        return {
+            "name": self.name,
+            "backing_device": self.backing_device,
+            "password": self.password,
+            "options": self.opts.to_json_dict(),
+        }
+
     def __str__(self):
         if self.valid():
             fields = [self.name, self.backing_device]
@@ -344,6 +411,17 @@ class Options(dict):
 
     def __ne__(self, obj):
         return not (isinstance(obj, Options) and sorted(self.items()) == sorted(obj.items()))
+
+    def to_json_dict(self):
+        json_dict = {}
+        for (key, value) in self.items():
+            if value is None:
+                # Return a present boolean key with a true value rather than None
+                # to make tests on this information easier.
+                json_dict[key] = True
+            else:
+                json_dict[key] = value
+        return json_dict
 
     def __str__(self):
         ret = []
