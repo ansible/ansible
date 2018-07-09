@@ -19,6 +19,7 @@
 from __future__ import absolute_import, division, print_function
 
 
+from ansible.module_utils.six import string_types
 from ansible.module_utils.k8s.common import KubernetesAnsibleModule
 
 
@@ -50,11 +51,13 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         namespace = self.params.pop('namespace')
         resource_definition = self.params.pop('resource_definition')
         if resource_definition:
-            if isinstance(resource_definition, str):
+            if isinstance(resource_definition, string_types):
                 try:
                     self.resource_definitions = yaml.safe_load_all(resource_definition)
                 except (IOError, yaml.YAMLError) as exc:
                     self.fail(msg="Error loading resource_definition: {0}".format(exc))
+            elif isinstance(resource_definition, list):
+                self.resource_definitions = resource_definition
             else:
                 self.resource_definitions = [resource_definition]
         src = self.params.pop('src')
@@ -100,8 +103,8 @@ class KubernetesRawModule(KubernetesAnsibleModule):
 
     def perform_action(self, resource, definition):
         result = {'changed': False, 'result': {}}
-        state = self.params.pop('state', None)
-        force = self.params.pop('force', False)
+        state = self.params.get('state', None)
+        force = self.params.get('force', False)
         name = definition.get('metadata', {}).get('name')
         namespace = definition.get('metadata', {}).get('namespace')
         existing = None
