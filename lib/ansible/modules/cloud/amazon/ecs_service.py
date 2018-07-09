@@ -82,6 +82,11 @@ options:
           - The number of times to check that the service is available
         required: false
         default: 10
+    force_new_deployment:
+        description:
+          - Force deployment of service even if there are no changes
+        required: false
+        version_added: 2.6
     deployment_configuration:
         description:
           - Optional parameters that control the deployment_configuration; format is '{"maximum_percent":<integer>, "minimum_healthy_percent":<integer>}
@@ -405,13 +410,15 @@ class EcsServiceManager:
         return self.jsonize(response['service'])
 
     def update_service(self, service_name, cluster_name, task_definition,
-                       desired_count, deployment_configuration, network_configuration):
+                       desired_count, deployment_configuration, network_configuration,
+                       force_new_deployment):
         params = dict(
             cluster=cluster_name,
             service=service_name,
             taskDefinition=task_definition,
             desiredCount=desired_count,
-            deploymentConfiguration=deployment_configuration)
+            deploymentConfiguration=deployment_configuration,
+            forceNewDeployment=force_new_deployment)
         if network_configuration:
             params['networkConfiguration'] = network_configuration
         response = self.ecs.update_service(**params)
@@ -458,6 +465,7 @@ def main():
         role=dict(required=False, default='', type='str'),
         delay=dict(required=False, type='int', default=10),
         repeat=dict(required=False, type='int', default=10),
+        force_new_deployment=dict(required=False, default=False, type='bool'),
         deployment_configuration=dict(required=False, default={}, type='dict'),
         placement_constraints=dict(required=False, default=[], type='list'),
         placement_strategy=dict(required=False, default=[], type='list'),
@@ -527,7 +535,8 @@ def main():
                                                           module.params['task_definition'],
                                                           module.params['desired_count'],
                                                           deploymentConfiguration,
-                                                          network_configuration)
+                                                          network_configuration,
+                                                          module.params['force_new_deployment'])
                 else:
                     for loadBalancer in loadBalancers:
                         if 'containerPort' in loadBalancer:
