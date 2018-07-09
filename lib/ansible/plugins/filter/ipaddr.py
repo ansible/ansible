@@ -1078,7 +1078,9 @@ def hwaddr(value, query='', alias='hwaddr'):
 def macaddr(value, query=''):
     return hwaddr(value, query, alias='macaddr')
 
-def genmac(value='AC:DE:48'):
+def genmac(value):
+    if not value:
+        value = 'AC:DE:48'
     ret = '{0}:{1:02X}:{2:02X}:{3:02X}'.format(value,
                                                random.randint(0, 0xff),
                                                random.randint(0, 0xff),
