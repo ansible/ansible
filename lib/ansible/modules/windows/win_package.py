@@ -63,9 +63,9 @@ options:
     description:
     - The display Version of the installed package.
     - This is used for checking the version installed for the C(display_name)
-    reference.
+      reference.
     - You can find the display version for installed programs in Programs and
-    Features Panel.
+      Features Panel.
     - C(display_name) MUST be set.
   expected_return_code:
     description:
@@ -212,11 +212,11 @@ EXAMPLES = r'''
     display_name: 7-Zip 16.04 (x64 edition)
 
 - name: Install Zotero
-   win_package:
-     path:  C:\temp\Zotero-5.0.52_setup.exe
-     arguments: /S
-     display_name: Zotero
-     display_version: 5.0.52
+  win_package:
+    path:  C:\temp\Zotero-5.0.52_setup.exe
+    arguments: /S
+    display_name: Zotero
+    display_version: 5.0.52
 
 - name: Uninstall 7zip from the exe
   win_package:
