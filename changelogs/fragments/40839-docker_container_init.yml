@@ -1,0 +1,2 @@
+bugfixes:
+- fixes docker_container compatibilty with docker-py < 2.2
