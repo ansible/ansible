@@ -43,6 +43,6 @@ class LookupModule(LookupBase):
             ret = ipaddr.genmac(term)
 
         if format and format not in ['bool','int']:
-           return ipaddr.hwaddr(ret, format).split(',')
+            return ipaddr.hwaddr(ret, format).split(',')
         else:
             return ret.split(',')
