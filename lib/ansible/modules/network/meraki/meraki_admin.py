@@ -121,20 +121,55 @@ EXAMPLES = r'''
 
 RETURN = r'''
 data:
-    description: Information about the created or manipulated object.
-    returned: info
-    type: list
-    sample:
-        [
-            {
-                "email": "john@doe.com",
-                "id": "12345677890",
-                "name": "John Doe",
-                "networks": [],
-                "orgAccess": "full",
-                "tags": []
-            }
-        ]
+    description: List of administrators.
+    returned: success
+    type: complex
+    contains:
+        email:
+            description: Email address of administrator.
+            returned: always
+            type: string
+            sample: your@email.com
+        id:
+            description: Unique identification number of administrator.
+            returned: always
+            type: string
+            sample: 1234567890
+        name:
+            description: Given name of administrator.
+            returned: always
+            type: string
+            sample: John Doe
+        networks:
+            description: List of networks administrator has access on.
+            returned: always
+            type: complex
+            contains:
+                id:
+                     description: The network ID.
+                     returned: always
+                     type: string
+                     sample: N_0123456789
+                access:
+                     description: Access level of administrator. Options are 'full', 'read-only', or 'none'.
+                     returned: always
+                     type: string
+                     sample: read-only
+        tags:
+            description: Tags the adminsitrator has access on.
+            returned: always
+            type: complex
+            contains:
+                tag:
+                    description: Tag name.
+                    returned: always
+                    type: string
+                    sample: Access level of administrator. Options are 'full', 'read-only', or 'none'.
+        orgAccess:
+            description: The privilege of the dashboard administrator on the organization. Options are 'full', 'read-only', or 'none'.
+            returned: always
+            type: string
+            sample: full
 '''
 
 import os
