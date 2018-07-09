@@ -494,7 +494,7 @@ Or, using YAML `single quote escaping <http://yaml.org/spec/current.html#id25343
         var: item
       loop: "{{ domain_definition | json_query('domain.server[?cluster==''cluster1''].port') }}"
 
-.. note:: Espaping single quotes within single quotes in YAML is done by doubling the single quote.
+.. note:: Escaping single quotes within single quotes in YAML is done by doubling the single quote.
 
 In this example, we get a hash map with all ports and names of a cluster::
 
