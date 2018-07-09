@@ -479,17 +479,25 @@ def main():
     backrefs = params['backrefs']
     path = params['path']
     firstmatch = params['firstmatch']
+    regexp = params['regexp']
+    line = params['line']
+
+    if regexp == '':
+        module.warn(
+            "The regular expression is an empty string, which will match every line in the file. "
+            "This may have unintended consequences, such as replacing the last line in the file rather than appending. "
+            "If this is desired, use '^' to match every line in the file and avoid this warning.")
 
     b_path = to_bytes(path, errors='surrogate_or_strict')
     if os.path.isdir(b_path):
         module.fail_json(rc=256, msg='Path %s is a directory !' % path)
 
     if params['state'] == 'present':
-        if backrefs and params['regexp'] is None:
-            module.fail_json(msg='regexp= is required with backrefs=true')
+        if backrefs and regexp is None:
+            module.fail_json(msg='regexp is required with backrefs=true')
 
-        if params.get('line', None) is None:
-            module.fail_json(msg='line= is required with state=present')
+        if line is None:
+            module.fail_json(msg='line is required with state=present')
 
         # Deal with the insertafter default value manually, to avoid errors
         # because of the mutually_exclusive mechanism.
@@ -497,13 +505,11 @@ def main():
         if ins_bef is None and ins_aft is None:
             ins_aft = 'EOF'
 
-        line = params['line']
-
         present(module, path, params['regexp'], line,
                 ins_aft, ins_bef, create, backup, backrefs, firstmatch)
     else:
-        if params['regexp'] is None and params.get('line', None) is None:
-            module.fail_json(msg='one of line= or regexp= is required with state=absent')
+        if regexp is None and line is None:
+            module.fail_json(msg='one of line or regexp is required with state=absent')
 
         absent(module, path, params['regexp'], params.get('line', None), backup)
 
