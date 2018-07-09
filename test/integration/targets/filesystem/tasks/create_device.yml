@@ -22,6 +22,11 @@
         removes: '{{ dev }}'
       when: fstype == 'lvm'
 
+    - name: 'Clean correct device for LVM'
+      set_fact:
+        dev: '{{ image_file }}'
+      when: fstype == 'lvm'
+
     - file:
         name: '{{ image_file }}'
         state: absent
