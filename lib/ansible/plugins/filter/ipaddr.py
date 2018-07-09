@@ -22,6 +22,7 @@ __metaclass__ = type
 from functools import partial
 import types
 from ansible.module_utils import six
+import random
 
 try:
     import netaddr
@@ -1077,6 +1078,12 @@ def hwaddr(value, query='', alias='hwaddr'):
 def macaddr(value, query=''):
     return hwaddr(value, query, alias='macaddr')
 
+def genmac(value='AC:DE:48'):
+    ret = '{0}:{1:02X}:{2:02X}:{3:02X}'.format(value,
+                                               random.randint(0, 0xff),
+                                               random.randint(0, 0xff),
+                                               random.randint(0, 0xff))
+    return ret
 
 def _need_netaddr(f_name, *args, **kwargs):
     raise errors.AnsibleFilterError("The %s filter requires python's netaddr be "
@@ -1112,7 +1119,8 @@ class FilterModule(object):
 
         # MAC / HW addresses
         'hwaddr': hwaddr,
-        'macaddr': macaddr
+        'macaddr': macaddr,
+        'genmac': genmac
     }
 
     def filters(self):
