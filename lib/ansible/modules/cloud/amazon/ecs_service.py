@@ -86,7 +86,8 @@ options:
         description:
           - Force deployment of service even if there are no changes
         required: false
-        version_added: 2.6
+        version_added: 2.7
+        type: bool
     deployment_configuration:
         description:
           - Optional parameters that control the deployment_configuration; format is '{"maximum_percent":<integer>, "minimum_healthy_percent":<integer>}
