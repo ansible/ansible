@@ -169,6 +169,15 @@
     delegate_to: localhost
     register: net_query_all
       
+  - name: Query a configuration template
+    meraki_network:
+      auth_key: '{{auth_key}}'
+      state: query
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_template_name}}'
+    delegate_to: localhost
+    register: query_config_template
+
   - name: Query one network
     meraki_network:
       auth_key: '{{ auth_key }}'
@@ -182,6 +191,7 @@
     assert:
       that:
         - 'net_query_one.data.name == "IntTestNetworkSwitch"'
+        - 'query_config_template.data.name == "DevConfigTemplate"'
         
 
 #############################################################################

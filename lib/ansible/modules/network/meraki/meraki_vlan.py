@@ -31,8 +31,11 @@ options:
       default: query
     net_name:
       description:
-      - Name of network which VLAN is or should be in.
+      - Name of network which VLAN is in or should be in.
       aliases: [network]
+    net_id:
+      description:
+      - ID of network which VLAN is in or should be in.
     vlan_id:
       description:
       - ID number of VLAN.
@@ -200,6 +203,7 @@ def main():
     argument_spec = meraki_argument_spec()
     argument_spec.update(state=dict(type='str', choices=['absent', 'present', 'query'], default='query'),
                          net_name=dict(type='str', aliases=['network']),
+                         net_id=dict(type='str'),
                          vlan_id=dict(type='int'),
                          name=dict(type='str', aliases=['vlan_name']),
                          subnet=dict(type='str'),
@@ -243,7 +247,10 @@ def main():
 
     payload = None
 
-    nets = temp_get_nets(meraki, meraki.params['org_name'])
+    org_id = meraki.params['org_id']
+    if org_id is None:
+        org_id = meraki.get_org_id(meraki.params['org_name'])
+    nets = meraki.get_nets(org_id=org_id)
     net_id = None
     if meraki.params['net_name']:
         net_id = meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
