@@ -32,7 +32,7 @@ options:
     description:
       What voice to use
     required: false
-requirements: [ say or espeak ]
+requirements: [ say or espeak or espeak-ng ]
 author:
     - "Ansible Core Team"
     - "Michael DeHaan (@mpdehaan)"
@@ -72,13 +72,15 @@ def main():
     executable = module.get_bin_path('say')
     if not executable:
         executable = module.get_bin_path('espeak')
+        if not executable:
+            executable = module.get_bin_path('espeak-ng')
     elif get_platform() != 'Darwin':
         # 'say' binary available, it might be GNUstep tool which doesn't support 'voice' parameter
         voice = None
         module.warn("'say' executable found but system is '%s': ignoring voice parameter" % get_platform())
 
     if not executable:
-        module.fail_json(msg="Unable to find either 'say' or 'espeak' executable")
+        module.fail_json(msg="Unable to find either 'say', 'espeak' or 'espeak-ng' executable")
 
     if module.check_mode:
         module.exit_json(msg=msg, changed=False)
