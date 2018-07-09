@@ -153,6 +153,7 @@ options:
       - If set to C(main), disable excludes defined in [main] in yum.conf.
       - If set to C(repoid), disable excludes defined for given repo id.
     required: false
+    choices: [ all, main, repoid ]
     version_added: "2.7"
 notes:
   - When used with a `loop:` each package will be processed individually,
@@ -1470,7 +1471,7 @@ def main():
             bugfix=dict(required=False, type='bool', default=False),
             enable_plugin=dict(type='list', default=[]),
             disable_plugin=dict(type='list', default=[]),
-            disable_excludes=dict(type='str', default=None, choices=['all', 'main', 'repoid', None]),
+            disable_excludes=dict(type='str', default=None, choices=['all', 'main', 'repoid']),
         ),
         required_one_of=[['name', 'list']],
         mutually_exclusive=[['name', 'list']],
