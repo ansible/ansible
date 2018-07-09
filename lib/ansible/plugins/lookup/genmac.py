@@ -33,7 +33,10 @@ import os
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 from ansible.plugins.filter import ipaddr
+
+
 class LookupModule(LookupBase):
+
     def run(self, terms, variables=None, **kwargs):
         format = kwargs.get('format', None)
         if not terms:
@@ -42,7 +45,7 @@ class LookupModule(LookupBase):
         for term in terms:
             ret = ipaddr.genmac(term)
 
-        if format and format not in ['bool','int']:
+        if format and format not in ['bool', 'int']:
             return ipaddr.hwaddr(ret, format).split(',')
         else:
             return ret.split(',')

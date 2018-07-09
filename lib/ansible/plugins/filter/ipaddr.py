@@ -1078,6 +1078,7 @@ def hwaddr(value, query='', alias='hwaddr'):
 def macaddr(value, query=''):
     return hwaddr(value, query, alias='macaddr')
 
+
 def genmac(value):
     if not value:
         value = 'AC:DE:48'
@@ -1086,6 +1087,7 @@ def genmac(value):
                                                random.randint(0, 0xff),
                                                random.randint(0, 0xff))
     return ret
+
 
 def _need_netaddr(f_name, *args, **kwargs):
     raise errors.AnsibleFilterError("The %s filter requires python's netaddr be "

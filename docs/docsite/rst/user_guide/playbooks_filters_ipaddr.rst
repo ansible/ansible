@@ -605,6 +605,31 @@ convert it between various formats. Examples::
     # {{ macaddress | hwaddr('cisco') }}
     1a2b.3c4d.5e6f
 
+Generate MAC address based on OUI prefix filter
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. versionadded:: 2.7
+
+You can use ``genmac()`` filter to generate random mac address based on `OUI`_ prefix.
+
+      # Example MAC address
+      prefix = '52:54:00'
+      # Generate a random MAC address with OUI prefix
+      # {{ prefix | genmac }}
+      52:54:00:0C:F5:10
+      # Generate a random MAC address without OUI prefix
+      # {{ '' | genmac }}
+      AC:DE:48:54:4B:54
+
+Common prefixes:
+   - ``00:16:3E`` -- Xen
+   - ``00:18:51`` -- OpenVZ
+   - ``00:50:56`` -- VMware (manually generated)
+   - ``52:54:00`` -- QEMU/KVM
+   - ``AC:DE:48`` -- PRIVATE
+
+.. _OUI: http://standards-oui.ieee.org/oui/oui.txt
+
 .. seealso::
 
    :doc:`playbooks`
