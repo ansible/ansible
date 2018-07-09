@@ -22,8 +22,8 @@ import os
 import copy
 
 
-from ansible.module_utils.six import iteritems
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import iteritems, string_types
 
 try:
     import kubernetes
@@ -51,6 +51,16 @@ try:
 except ImportError:
     pass
 
+
+def list_dict_str(value):
+    if isinstance(value, list):
+        return value
+    elif isinstance(value, dict):
+        return value
+    elif isinstance(value, string_types):
+        return value
+    raise TypeError
+
 ARG_ATTRIBUTES_BLACKLIST = ('property_path',)
 
 COMMON_ARG_SPEC = {
@@ -63,6 +73,7 @@ COMMON_ARG_SPEC = {
         'default': False,
     },
     'resource_definition': {
+        'type': list_dict_str,
         'aliases': ['definition', 'inline']
     },
     'src': {
