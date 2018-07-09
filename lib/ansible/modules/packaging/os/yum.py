@@ -1489,10 +1489,8 @@ def main():
     params = module.params
     enable_plugin = params.get('enable_plugin')
     disable_plugin = params.get('disable_plugin')
-    +        if yum.__version_info__ >= (3, 4):
-    +            yum_basecmd.extend(['--disableincludes', disable_includes])
-    +        else:
-    +            module.fail_json(msg="'disable_includes' is available in yum version 3.4 and onwards.")
+    if params['disable_excludes'] and yum.__version_info__ < (3, 4):
+        module.fail_json(msg="'disable_includes' is available in yum version 3.4 and onwards.")
 
     if params['list']:
         repoquerybin = ensure_yum_utils(module)
@@ -1534,11 +1532,10 @@ def main():
         security = params['security']
         bugfix = params['bugfix']
         allow_downgrade = params['allow_downgrade']
-        disable_excludes=params['disable_excludes']
         results = ensure(module, state, pkg, params['conf_file'], enablerepo,
                          disablerepo, disable_gpg_check, exclude, repoquery,
                          skip_broken, update_only, security, bugfix, params['installroot'], allow_downgrade,
-                         disable_plugin=disable_plugin, enable_plugin=enable_plugin, disable_excludes=disable_excludes)
+                         disable_plugin=disable_plugin, enable_plugin=enable_plugin, disable_excludes=params['disable_excludes'])
         if repoquery:
             results['msg'] = '%s %s' % (
                 results.get('msg', ''),
