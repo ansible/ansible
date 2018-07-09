@@ -163,7 +163,7 @@ def managed_disk_to_dict(managed_disk):
     create_data = managed_disk.creation_data
     result['create_option'] = create_data.create_option.value.lower()
     result['source_uri'] = create_data.source_uri
-    result['source_resource_id'] = create_data.source_resource_id
+    result['source_resource_uri'] = create_data.source_resource_id
     return result
 
 
