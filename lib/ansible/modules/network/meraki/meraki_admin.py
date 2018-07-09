@@ -106,47 +106,60 @@ EXAMPLES = r'''
 
 RETURN = r'''
 data:
-    description: Information about the created or manipulated object.
-    returned: info
-    type: list
-    sample:
-        [
-            {
-                "email": "john@doe.com",
-                "id": "12345677890",
-                "name": "John Doe",
-                "networks": [],
-                "orgAccess": "full",
-                "tags": []
-            }
-        ]
-changed:
-    description: Whether object changed as a result of the request.
-    returned: info
-    type: string
-    sample:
-        "changed": false
-
-status:
-    description: HTTP response code
-    returned: info
-    type: int
-    sample:
-        "status": 200
-
-response:
-    description: HTTP response description and bytes
-    returned: info
-    type: string
-    sample:
-        "response": "OK (unknown bytes)"
-
-failed:
-    description: Boolean value whether the task failed
-    returned: info
-    type: bool
-    sample:
-        "failed": false
+    description: List of administrators.
+    returned: success
+    type: complex
+    contains:
+        email:
+            description: Email address of administrator.
+            returned: success
+            type: string
+            sample: your@email.com
+        id:
+            description: Unique identification number of administrator.
+            returned: success
+            type: string
+            sample: 1234567890
+        name:
+            description: Given name of administrator.
+            returned: success
+            type: string
+            sample: John Doe
+        networks:
+            description: List of networks administrator has access on.
+            returned: success
+            type: complex
+            contains:
+                id:
+                     description: The network ID.
+                     returned: when network permissions are set
+                     type: string
+                     sample: N_0123456789
+                access:
+                     description: Access level of administrator. Options are 'full', 'read-only', or 'none'.
+                     returned: when network permissions are set
+                     type: string
+                     sample: read-only
+        tags:
+            description: Tags the adminsitrator has access on.
+            returned: success
+            type: complex
+            contains:
+                tag:
+                    description: Tag name.
+                    returned: when tag permissions are set
+                    type: string
+                    sample: production
+                access:
+                    description: Access level of administrator. Options are 'full', 'read-only', or 'none'.
+                    returned: when tag permissions are set
+                    type: string
+                    sample: full
+        orgAccess:
+            description: The privilege of the dashboard administrator on the organization. Options are 'full', 'read-only', or 'none'.
+            returned: success
+            type: string
+            sample: full
 '''
 
 import os
