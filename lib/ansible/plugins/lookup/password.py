@@ -91,6 +91,7 @@ _raw:
 
 import os
 import string
+import time
 
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -161,11 +162,19 @@ def _read_password_file(b_path):
         None if no password file was present.
     """
     content = None
-
-    if os.path.exists(b_path):
-        with open(b_path, 'rb') as f:
-            b_content = f.read().rstrip()
-        content = to_text(b_content, errors='surrogate_or_strict')
+    fd = -1
+    try:
+        fd = os.open(b_path, os.O_CREAT | os.O_EXCL)
+        os.close(fd)
+    except OSError as e:
+        if e.strerror == 'File exists':
+            while os.stat(b_path).st_size <= 0:
+                    time.sleep(0.1)
+            with open(b_path, 'rb') as f:
+                b_content = f.read().rstrip()
+                content = to_text(b_content, errors='surrogate_or_strict')
+        else:
+            raise e
 
     return content
 
@@ -257,9 +266,6 @@ def _format_content(password, salt, encrypt=True):
 
 
 def _write_password_file(b_path, content):
-    b_pathdir = os.path.dirname(b_path)
-    makedirs_safe(b_pathdir, mode=0o700)
-
     with open(b_path, 'wb') as f:
         os.chmod(b_path, 0o600)
         b_content = to_bytes(content, errors='surrogate_or_strict') + b'\n'
@@ -275,6 +281,9 @@ class LookupModule(LookupBase):
             path = self._loader.path_dwim(relpath)
             b_path = to_bytes(path, errors='surrogate_or_strict')
             chars = _gen_candidate_chars(params['chars'])
+
+            b_pathdir = os.path.dirname(b_path)
+            makedirs_safe(b_pathdir, mode=0o700)
 
             changed = False
             content = _read_password_file(b_path)
