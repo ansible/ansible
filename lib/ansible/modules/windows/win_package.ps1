@@ -1,4 +1,4 @@
-﻿#!powershell
+#!powershell
 # This file is part of Ansible
 
 # (c) 2014, Trond Hindenes <trond@hindenes.com>, and others
