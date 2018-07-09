@@ -2384,9 +2384,10 @@ class AnsibleModule(object):
             raise AssertionError("implementation error -- msg to explain the error is required")
         kwargs['failed'] = True
 
-        # add traceback if debug or high verbosity and it is missing
-        # Note: badly named as exception, it is really always been 'traceback'
-        if 'exception' not in kwargs and sys.exc_info()[2] and (self._debug or self._verbosity >= 3):
+        # Add traceback if debug or high verbosity and it is missing
+        # NOTE: Only do this for Python 3, as prior versions would add last (stack frame) exception
+        # NOTE: Badly named as exception, it has really always been 'traceback'
+        if 'exception' not in kwargs and PY3 and sys.exc_info()[2] and (self._debug or self._verbosity >= 3):
             kwargs['exception'] = ''.join(traceback.format_tb(sys.exc_info()[2]))
 
         self.do_cleanup_files()
