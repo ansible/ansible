@@ -127,47 +127,52 @@ data:
     contains:
         email:
             description: Email address of administrator.
-            returned: always
+            returned: success
             type: string
             sample: your@email.com
         id:
             description: Unique identification number of administrator.
-            returned: always
+            returned: success
             type: string
             sample: 1234567890
         name:
             description: Given name of administrator.
-            returned: always
+            returned: success
             type: string
             sample: John Doe
         networks:
             description: List of networks administrator has access on.
-            returned: always
+            returned: success
             type: complex
             contains:
                 id:
                      description: The network ID.
-                     returned: always
+                     returned: when network permissions are set
                      type: string
                      sample: N_0123456789
                 access:
                      description: Access level of administrator. Options are 'full', 'read-only', or 'none'.
-                     returned: always
+                     returned: when network permissions are set
                      type: string
                      sample: read-only
         tags:
             description: Tags the adminsitrator has access on.
-            returned: always
+            returned: success
             type: complex
             contains:
                 tag:
                     description: Tag name.
-                    returned: always
+                    returned: when tag permissions are set
                     type: string
-                    sample: Access level of administrator. Options are 'full', 'read-only', or 'none'.
+                    sample: production
+                access:
+                    description: Access level of administrator. Options are 'full', 'read-only', or 'none'.
+                    returned: when tag permissions are set
+                    type: string
+                    sample: full
         orgAccess:
             description: The privilege of the dashboard administrator on the organization. Options are 'full', 'read-only', or 'none'.
-            returned: always
+            returned: success
             type: string
             sample: full
 '''
