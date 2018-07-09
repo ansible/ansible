@@ -57,7 +57,7 @@ options:
     - This is used for checking whether the product is already installed and
       getting the uninstall information if C(state=absent).
     - You can find the display name for installed programs in Programs and
-    Features Panel.
+      Features Panel.
     - You can use this in conjunction with C(display_version).
   display_version:
     description:
@@ -206,8 +206,7 @@ EXAMPLES = r'''
     creates_version: 16.04
     state: present
 
-- name: Install 7zip and use the displayname for the installation check found in
-Programs and Features
+- name: Install 7zip and use the displayname for the installation check found in Programs and Features
   win_package:
     path: C:\temp\7zip.exe
     display_name: 7-Zip 16.04 (x64 edition)
