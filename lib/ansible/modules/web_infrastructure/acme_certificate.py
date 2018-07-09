@@ -876,7 +876,7 @@ def main():
         supports_check_mode=True,
     )
     if module._name == 'letsencrypt':
-        module.deprecate("The 'letsencrypt' module is being renamed 'acme_certificate'", version=2.10)
+        module.deprecate("The 'letsencrypt' module is being renamed 'acme_certificate'", version='2.10')
 
     # AnsibleModule() changes the locale, so change it back to C because we rely on time.strptime() when parsing certificate dates.
     module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
