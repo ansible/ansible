@@ -1345,17 +1345,17 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             self.log('Storing NIC names for deletion.')
             for interface in vm.network_profile.network_interfaces:
                 id_dict = azure_id_to_dict(interface.id)
-                nic_names.append(id_dict['networkInterfaces'])
+                nic_names.append(dict(name=id_dict['networkInterfaces'], resource_group=id_dict['resourceGroups']))
             self.log('NIC names to delete {0}'.format(', '.join(nic_names)))
             self.results['deleted_network_interfaces'] = nic_names
             if self.remove_on_absent.intersection(set(['all', 'public_ips'])):
                 # also store each nic's attached public IPs and delete after the NIC is gone
-                for name in nic_names:
-                    nic = self.get_network_interface(name)
+                for nic_dict in nic_names:
+                    nic = self.get_network_interface(nic_dict['resource_group'], nic_dict['name'])
                     for ipc in nic.ip_configurations:
                         if ipc.public_ip_address:
                             pip_dict = azure_id_to_dict(ipc.public_ip_address.id)
-                            pip_names.append(pip_dict['publicIPAddresses'])
+                            pip_names.append(dict(name=pip_dict['publicIPAddresses'], resource_group=pip_dict['resourceGroups']))
                 self.log('Public IPs to  delete are {0}'.format(', '.join(pip_names)))
                 self.results['deleted_public_ips'] = pip_names
 
@@ -1378,13 +1378,13 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
         if self.remove_on_absent.intersection(set(['all', 'network_interfaces'])):
             self.log('Deleting network interfaces')
-            for name in nic_names:
-                self.delete_nic(name)
+            for nic_dict in nic_names:
+                self.delete_nic(nic_dict['resource_group'], nic_dict['name'])
 
         if self.remove_on_absent.intersection(set(['all', 'public_ips'])):
             self.log('Deleting public IPs')
-            for name in pip_names:
-                self.delete_pip(name)
+            for pip_dict in pip_names:
+                self.delete_pip(pip_dict['resource_group'], pip_dict['name'])
         return True
 
     def get_network_interface(self, resource_group, name):
@@ -1394,21 +1394,21 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         except Exception as exc:
             self.fail("Error fetching network interface {0} - {1}".format(name, str(exc)))
 
-    def delete_nic(self, name):
+    def delete_nic(self, resource_group, name):
         self.log("Deleting network interface {0}".format(name))
         self.results['actions'].append("Deleted network interface {0}".format(name))
         try:
-            poller = self.network_client.network_interfaces.delete(self.resource_group, name)
+            poller = self.network_client.network_interfaces.delete(resource_group, name)
         except Exception as exc:
             self.fail("Error deleting network interface {0} - {1}".format(name, str(exc)))
         self.get_poller_result(poller)
         # Delete doesn't return anything. If we get this far, assume success
         return True
 
-    def delete_pip(self, name):
+    def delete_pip(self, resource_group, name):
         self.results['actions'].append("Deleted public IP {0}".format(name))
         try:
-            poller = self.network_client.public_ip_addresses.delete(self.resource_group, name)
+            poller = self.network_client.public_ip_addresses.delete(resource_group, name)
             self.get_poller_result(poller)
         except Exception as exc:
             self.fail("Error deleting {0} - {1}".format(name, str(exc)))
