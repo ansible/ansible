@@ -1698,9 +1698,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
     def parse_network_interface(self, nic):
         nic = self.parse_resource_to_dict(nic)
-        return format_resource_id(val=nic.name,
-                                  subscription_id=nic.subscription_id,
-                                  resource_group=nic.resource_group,
+        return format_resource_id(val=nic['name'],
+                                  subscription_id=nic['subscription_id'],
+                                  resource_group=nic['resource_group'],
                                   namespace='Microsoft.Network',
                                   types='networkInterfaces')
 
