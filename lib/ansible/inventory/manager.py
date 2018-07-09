@@ -225,8 +225,7 @@ class InventoryManager(object):
 
         # use binary for path functions
         b_source = to_bytes(source)
-        # source should already be 'text' but JIC, ensure it
-        source = to_text(source)
+
         # process directories as a collection of inventories
         if os.path.isdir(b_source):
             display.debug(u'Searching for inventory files in directory: %s' % source)
@@ -238,7 +237,7 @@ class InventoryManager(object):
                     continue
 
                 # recursively deal with directory entries
-                fullpath = to_text(os.path.join(b_source, i))
+                fullpath = to_text(os.path.join(b_source, i), errors='surrogate_or_strict')
                 parsed_this_one = self.parse_source(fullpath, cache=cache)
                 display.debug(u'parsed %s as %s' % (fullpath, parsed_this_one))
                 if not parsed:
