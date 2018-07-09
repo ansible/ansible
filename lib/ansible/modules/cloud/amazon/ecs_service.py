@@ -513,7 +513,9 @@ def main():
         update = False
 
         if existing and 'status' in existing and existing['status'] == "ACTIVE":
-            if service_mgr.is_matching_service(module.params, existing):
+            if module.params['force_new_deployment']:
+                update = True
+            elif service_mgr.is_matching_service(module.params, existing):
                 matching = True
                 results['service'] = existing
             else:
