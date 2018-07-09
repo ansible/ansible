@@ -259,7 +259,7 @@ class InventoryManager(object):
 
                 # initialize and figure out if plugin wants to attempt parsing this file
                 try:
-                    plugin_wants = bool(plugin.verify_file(source))
+                    plugin_wants = bool(plugin.verify_file(to_text(source)))
                 except Exception:
                     plugin_wants = False
 
