@@ -114,6 +114,11 @@ Meraki and its related Ansible modules return most information in the form of a 
 		}
 	]
 
+Handling Returned Data
+......................
+
+Since Meraki's response data uses lists instead of properly keyed dictionaries for responses, certain strategies should be used when querying data for particular information. For many situations, use the ``selectattr()`` Jinja2 function.
+
 Error Handling
 ..............
 
