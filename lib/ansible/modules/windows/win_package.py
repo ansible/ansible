@@ -59,6 +59,7 @@ options:
     - You can find the display name for installed programs in Programs and
       Features Panel.
     - You can use this in conjunction with C(display_version).
+    version_added: '2.7'
   display_version:
     description:
     - The display Version of the installed package.
@@ -67,6 +68,7 @@ options:
     - You can find the display version for installed programs in Programs and
       Features Panel.
     - C(display_name) MUST be set.
+    version_added: '2.7'
   expected_return_code:
     description:
     - One or more return codes from the package installation that indicates
