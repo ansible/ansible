@@ -42,6 +42,7 @@ options:
     description:
       - The path to an existing Terraform plan file to apply. If this is not
         specified, Ansible will build a new TF plan and execute it.
+        Note that this option is required if 'state' has the 'planned' value.
     required: false
   state_file:
     description:
