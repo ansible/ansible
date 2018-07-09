@@ -226,9 +226,11 @@ options:
               providing a list of ports.
     network_interface_names:
         description:
-            - List of existing network interface names to add to the VM. If a network interface name is not provided
-              when the VM is created, a default network interface will be created. In order for the module to create
-              a network interface, at least one Virtual Network with one Subnet must exist.
+            - List of existing network interface names to add to the VM.
+            - Item can be a str of name or resource id of the network interface.
+            - Item can also be a dict contains C(resource_group) and C(name) of the network interface.
+            - If a network interface name is not provided when the VM is created, a default network interface will be created.
+            - In order for the module to create a new network interface, at least one Virtual Network with one Subnet must exist.
         aliases:
             - network_interfaces
     virtual_network_resource_group:
@@ -239,15 +241,17 @@ options:
     virtual_network_name:
         description:
             - When creating a virtual machine, if a network interface name is not provided, one will be created.
-              The new network interface will be assigned to the first virtual network found in the resource group.
-              Use this parameter to provide a specific virtual network instead.
+            - The network interface will be assigned to the first virtual network found in the resource group.
+            - Use this parameter to provide a specific virtual network instead.
+            - If the virtual network in in another resource group, specific resource group by C(virtual_network_resource_group).
         aliases:
             - virtual_network
     subnet_name:
         description:
             - When creating a virtual machine, if a network interface name is not provided, one will be created.
-              The new network interface will be assigned to the first subnet found in the virtual network.
-              Use this parameter to provide a specific subnet instead.
+            - The new network interface will be assigned to the first subnet found in the virtual network.
+            - Use this parameter to provide a specific subnet instead.
+            - If the subnet is in another resource group, specific resource group by C(virtual_network_resource_group).
         aliases:
             - subnet
     remove_on_absent:
@@ -614,7 +618,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import to_native, to_bytes
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict, normalize_location_name
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict, normalize_location_name, format_resource_id
 
 
 AZURE_OBJECT_CLASS = 'VirtualMachine'
@@ -660,7 +664,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static', 'Disabled'], default='Static',
                                              aliases=['public_ip_allocation']),
             open_ports=dict(type='list'),
-            network_interface_names=dict(type='list', aliases=['network_interfaces']),
+            network_interface_names=dict(type='list', aliases=['network_interfaces'], elements='raw'),
             remove_on_absent=dict(type='list', default=['all']),
             virtual_network_resource_group=dict(type='str'),
             virtual_network_name=dict(type='str', aliases=['virtual_network']),
@@ -753,9 +757,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 ))
 
             if self.network_interface_names:
-                for name in self.network_interface_names:
-                    nic = self.get_network_interface(name)
-                    network_interfaces.append(nic.id)
+                for nic_name in self.network_interface_names:
+                    nic = self.parse_network_interface(nic_name)
+                    network_interfaces.append(nic)
 
             if self.ssh_public_keys:
                 msg = "Parameter error: expecting ssh_public_keys to be a list of type dict where " \
@@ -1691,6 +1695,14 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         except Exception as exc:
             self.fail("Error creating network interface {0} - {1}".format(network_interface_name, str(exc)))
         return new_nic
+
+    def parse_network_interface(self, nic):
+        nic = self.parse_resource_to_dict(nic)
+        return format_resource_id(val=nic.name,
+                                  subscription_id=nic.subscription_id,
+                                  resource_group=nic.resource_group,
+                                  namespace='Microsoft.Network',
+                                  types='networkInterfaces')
 
 
 def main():
