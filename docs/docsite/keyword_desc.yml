@@ -31,6 +31,7 @@ environment: A dictionary that gets converted into environment vars to be provid
 fact_path: Set the fact path option for the fact gathering plugin controlled by :term:`gather_facts`.
 failed_when: "Conditional expression that overrides the task's normal 'failed' status."
 force_handlers: Will force notified handler execution for hosts even if they failed during the play. Will not trigger if the play itself fails.
+forks: Limit number of concurrent task runs on task, block and playbook level.
 gather_facts: "A boolean that controls if the play will automatically run the 'setup' task to gather facts for the hosts."
 gather_subset: Allows you to pass subset options to the  fact gathering plugin controlled by :term:`gather_facts`.
 gather_timeout: Allows you to set the timeout for the fact gathering plugin controlled by :term:`gather_facts`.
