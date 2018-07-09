@@ -611,6 +611,7 @@ class Base(FieldAttributeBase):
     _check_mode = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('check'))
     _diff = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('diff'))
     _any_errors_fatal = FieldAttribute(isa='bool', default=C.ANY_ERRORS_FATAL)
+    _forks = FieldAttribute(isa='list', extend=True, prepend=True, static=True)
 
     # explicitly invoke a debugger on tasks
     _debugger = FieldAttribute(isa='string')

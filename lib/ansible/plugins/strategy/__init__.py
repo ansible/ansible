@@ -300,6 +300,14 @@ class StrategyBase:
             queued = False
             starting_worker = self._cur_worker
             while True:
+                if len(task.forks) > 0 and task._parent._play.strategy != "free":
+                    if task.run_once:
+                        display.debug("Ignoring 'forks' as 'run_once' is also set for '%s'" % task.get_name())
+                    else:
+                        forks = min(task.forks)
+                        display.debug("task: %s, forks: %d" % (task.get_name(), forks))
+                        if forks > 0 and self._cur_worker >= forks:
+                            self._cur_worker = 0
                 worker_prc = self._workers[self._cur_worker]
                 if worker_prc is None or not worker_prc.is_alive():
                     self._queued_task_cache[(host.name, task._uuid)] = {
