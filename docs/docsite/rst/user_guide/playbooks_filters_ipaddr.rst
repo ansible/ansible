@@ -611,7 +611,7 @@ Generate MAC address based on OUI prefix filter
 .. versionadded:: 2.7
 
 You can use ``genmac()`` filter to generate random mac address based on `OUI`_
-prefix. Examples:: 
+prefix. Examples::
 
     # Example prefix
     prefix = '52:54:00'
