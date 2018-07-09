@@ -373,7 +373,7 @@ def run_module():
         command += " --tags " + ','.join(tags)
 
     if skip_tags:
-        command += " --skip-tags " + ','.join(tags)
+        command += " --skip-tags " + ','.join(skip_tags)
 
     if connection_method:
         command += " --connection %s" % connection_method
@@ -434,6 +434,8 @@ def run_module():
 
     if forks:
         command += " --fork %s" % str(forks)
+
+    os.chdir(os.path.dirname(os.path.realpath(path)))
 
     startd = datetime.datetime.now()
 
