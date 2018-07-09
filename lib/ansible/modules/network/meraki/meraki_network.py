@@ -56,6 +56,12 @@ options:
         description:
         - Timezone associated to network.
         - See U(https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) for a list of valid timezones.
+    disable_my_meraki:
+        description: >
+            - Disables the local device status pages (U[my.meraki.com](my.meraki.com), U[ap.meraki.com](ap.meraki.com), U[switch.meraki.com](switch.meraki.com),
+            U[wired.meraki.com](wired.meraki.com))
+        type: bool
+        version_added: '2.7'
 
 author:
     - Kevin Breit (@kbreit)
@@ -85,6 +91,7 @@ EXAMPLES = r'''
     type: switch
     timezone: America/Chicago
     tags: production, chicago
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -170,6 +177,7 @@ def main():
         timezone=dict(type='str'),
         net_name=dict(type='str', aliases=['name', 'network']),
         state=dict(type='str', choices=['present', 'query', 'absent'], default='present'),
+        disable_my_meraki=dict(type='bool'),
     )
 
     # the AnsibleModule object will be our abstraction working with Ansible
@@ -207,15 +215,19 @@ def main():
 
     # Construct payload
     if meraki.params['state'] == 'present':
-        payload = {'name': meraki.params['net_name'],
-                   'type': meraki.params['type'],
-                   }
+        payload = dict()
+        if meraki.params['net_name']:
+            payload['name'] = meraki.params['net_name']
+        if meraki.params['type']:
+            payload['type'] = meraki.params['type']
+            if meraki.params['type'] == 'combined':
+                payload['type'] = 'switch wireless appliance'
         if meraki.params['tags']:
             payload['tags'] = construct_tags(meraki.params['tags'])
         if meraki.params['timezone']:
             payload['timeZone'] = meraki.params['timezone']
-        if meraki.params['type'] == 'combined':
-            payload['type'] = 'switch wireless appliance'
+        if meraki.params['disable_my_meraki']:
+            payload['disableMyMerakiCom'] = meraki.params['disable_my_meraki']
 
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
@@ -248,16 +260,6 @@ def main():
                     meraki.result['changed'] = True
             else:
                 net = meraki.get_net(meraki.params['org_name'], meraki.params['net_name'], data=nets)
-                proposed = payload
-                if meraki.params['timezone']:
-                    proposed['timeZone'] = meraki.params['timezone']
-                else:
-                    proposed['timeZone'] = 'America/Los_Angeles'
-                if not meraki.params['tags']:
-                    proposed['tags'] = None
-                if not proposed['type']:
-                    proposed['type'] = net['type']
-
                 if meraki.is_update_required(net, payload):
                     path = meraki.construct_path('update',
                                                  net_id=meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
