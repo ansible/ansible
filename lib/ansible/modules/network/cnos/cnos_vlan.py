@@ -34,7 +34,7 @@ DOCUMENTATION = '''
 ---
 module: cnos_vlan
 author: "Anil Kumar Muraleedharan (@amuraleedhar)"
-short_description: Manage VLAN resources and attributes on Lenovo CNOS devices.
+short_description: Manage VLAN resources and attributes on devices running Lenovo CNOS
 description:
     - This module allows you to work with VLAN related configurations. The
      operators used are overloaded to ensure control over switch VLAN
@@ -43,58 +43,46 @@ description:
      filter. After passing this level, there are five VLAN arguments that will
      perform further configurations. They are vlanArg1, vlanArg2, vlanArg3,
      vlanArg4, and vlanArg5. The value of vlanArg1 will determine the way
-     following arguments will be evaluated. For details on how to use these
+     following arguments will be evaluated. For more details on how to use these
      arguments, see [Overloaded Variables].
      This module uses SSH to manage network device configuration.
      The results of the operation will be placed in a directory named 'results'
-     that must be created by the user in their local directory to where the
-     playbook is run. For more information about this module from Lenovo and
-     customizing it usage for your use cases, please visit
-     U(http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_vlan.html)
+     that must be created by the user in their local directory to where the playbook is run.
+     For more information about this module from Lenovo and customizing it usage for your
+     use cases, please visit U(http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_vlan.html)
 version_added: "2.3"
 extends_documentation_fragment: cnos
 options:
   vlanArg1:
     description:
-      - This is an overloaded vlan first argument. Usage of this argument can
-      be found is the User Guide referenced above.
+      - This is an overloaded vlan first argument. Usage of this argument can be found is the User Guide referenced above.
     required: true
     choices: [access-map, dot1q, filter, <1-3999> VLAN ID 1-3999 or range]
   vlanArg2:
     description:
-      - This is an overloaded vlan second argument. Usage of this argument can
-      be found is the User Guide referenced above.
+      - This is an overloaded vlan second argument. Usage of this argument can be found is the User Guide referenced above.
     choices: [VLAN Access Map name,egress-only,name, flood,state, ip]
   vlanArg3:
     description:
-      - This is an overloaded vlan third argument. Usage of this argument can
-      be found is the User Guide referenced above.
-    choices: [action, match, statistics, enter VLAN id or range of vlan,
-              ascii name for the VLAN, ipv4 or ipv6, active or suspend,
-              fast-leave, last-member-query-interval, mrouter, querier,
-              querier-timeout, query-interval, query-max-response-time,
-              report-suppression, robustness-variable, startup-query-count,
-              startup-query-interval, static-group]
+      - This is an overloaded vlan third argument. Usage of this argument can be found is the User Guide referenced above.
+    choices: [action, match, statistics, enter VLAN id or range of vlan, ascii name for the VLAN, ipv4 or ipv6, active or suspend, fast-leave,
+    last-member-query-interval, mrouter, querier, querier-timeout, query-interval, query-max-response-time, report-suppression,
+    robustness-variable, startup-query-count, startup-query-interval, static-group]
   vlanArg4:
     description:
-      - This is an overloaded vlan fourth argument. Usage of this argument can
-      be found is the User Guide referenced above.
-    choices: [drop or forward or redirect, ip or mac,Interval in seconds,
-              ethernet, port-aggregation, Querier IP address,
-              Querier Timeout in seconds, Query Interval in seconds,
-              Query Max Response Time in seconds,  Robustness Variable value,
-              Number of queries sent at startup, Query Interval at startup]
+      - This is an overloaded vlan fourth argument. Usage of this argument can be found is the User Guide referenced above.
+    choices: [drop or forward or redirect, ip or mac,Interval in seconds,ethernet, port-aggregation, Querier IP address,
+    Querier Timeout in seconds, Query Interval in seconds, Query Max Response Time in seconds,  Robustness Variable value,
+    Number of queries sent at startup, Query Interval at startup]
   vlanArg5:
     description:
-      - This is an overloaded vlan fifth argument. Usage of this argument can
-      be found is the User Guide referenced above.
+      - This is an overloaded vlan fifth argument. Usage of this argument can be found is the User Guide referenced above.
     choices: [access-list name, Slot/chassis number, Port Aggregation Number]
 
 '''
 EXAMPLES = '''
 
-Tasks: The following are examples of using the module cnos_vlan.
-These are written in the main.yml file of the tasks directory.
+Tasks: The following are examples of using the module cnos_vlan. These are written in the main.yml file of the tasks directory.
 ---
 - name: Test Vlan - Create a vlan, name it
   cnos_vlan:
