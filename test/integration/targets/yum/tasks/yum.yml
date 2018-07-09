@@ -568,8 +568,9 @@
     state: present
 
 - name: install sos
-  yum: name=sos state=present
+  yum: name=sos state=latest
   register: yum_result
+  ignore_errors: True
 
 - name: verify packages did not install
   assert:
@@ -577,8 +578,9 @@
       - "yum_result is failed"
 
 - name: install sos
-  yum: name=sos state=present disable_excludes=all
+  yum: name=sos state=latest disable_excludes=all
   register: yum_result
+      - "yum_result is changed"
 
 - name: verify packages installed
   assert:
