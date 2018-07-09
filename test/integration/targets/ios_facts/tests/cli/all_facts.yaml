@@ -28,4 +28,8 @@
       - "result.ansible_facts.ansible_net_memfree_mb > 1"
       - "result.ansible_facts.ansible_net_memtotal_mb > 1"
 
+- assert:
+    that: "{{ item.value.spacetotal_kb }} > {{ item.value.spacefree_kb }}"
+  loop: "{{ lookup('dict', result.ansible_facts.ansible_net_filesystems_info, wantlist=True) }}"
+
 - debug: msg="END cli/all_facts.yaml on connection={{ ansible_connection }}"
