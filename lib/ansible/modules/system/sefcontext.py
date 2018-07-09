@@ -1,16 +1,14 @@
 #!/usr/bin/python
 
-# (c) 2016, Dag Wieers <dag@wieers.com>
+# Copyright: (c) 2016, Dag Wieers (@dagwieers) <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = r'''
 ---
@@ -24,11 +22,22 @@ options:
   target:
     description:
     - Target path (expression).
+    type: str
     required: yes
     aliases: [ path ]
   ftype:
     description:
     - File type.
+    - The following file type options can be passed;
+      C(a) for all files,
+      C(b) for block devices,
+      C(c) for character devices,
+      C(d) for directories,
+      C(f) for regular files,
+      C(l) for symbolic links,
+      C(p) for named pipes,
+      C(s) for socket files.
+    type: str
     default: a
   setype:
     description:
@@ -37,26 +46,34 @@ options:
   seuser:
     description:
     - SELinux user for the specified target.
+    type: str
   selevel:
     description:
     - SELinux range for the specified target.
+    type: str
     aliases: [ serange ]
   state:
     description:
-    - Desired boolean value.
+    - Whether the SELinux file context must be C(absent) or C(present).
+    type: str
     choices: [ absent, present ]
     default: present
   reload:
     description:
     - Reload SELinux policy after commit.
+    - Note that this does not apply SELinux file contexts to existing files.
     type: bool
     default: 'yes'
 notes:
-- The changes are persistent across reboots
+- The changes are persistent across reboots.
 - The M(sefcontext) module does not modify existing files to the new
   SELinux context(s), so it is advisable to first create the SELinux
   file contexts before creating files, or run C(restorecon) manually
   for the existing files that require the new SELinux file contexts.
+- Not applying SELinux fcontexts to existing files is a deliberate
+  decision as it would be unclear what reported changes would entail
+  to, and there's no guarantee that applying SELinux fcontext does
+  not pick up other unrelated prior changes.
 requirements:
 - libselinux-python
 - policycoreutils-python
@@ -65,11 +82,14 @@ author:
 '''
 
 EXAMPLES = r'''
-# Allow apache to modify files in /srv/git_repos
-- sefcontext:
+- name: Allow apache to modify files in /srv/git_repos
+  sefcontext:
     target: '/srv/git_repos(/.*)?'
     setype: httpd_git_rw_content_t
     state: present
+
+- name: Apply new SELinux file context to filesystem
+  command: restorecon -irv /srv/git_repos
 '''
 
 RETURN = r'''
