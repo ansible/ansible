@@ -214,7 +214,7 @@
 - name: check sos with rpm
   shell: rpm -q sos
 
-- name: check sos with rpm
+- name: check bc with rpm
   shell: rpm -q bc
 
 - name: uninstall sos and bc
@@ -547,50 +547,44 @@
     name: "/tmp/non_existent_pkg.rpm"
     state: absent
 
-- name: uninstall sos
-  yum: name=sos state=removed
+- name: uninstall zip
+  yum: name=zip state=removed
 
-- name: check sos with rpm
-  shell: rpm -q sos
+- name: check zip with rpm
+  shell: rpm -q zip
   ignore_errors: True
-  register: rpm_sos_result
+  register: rpm_zip_result
 
 - name: verify packages installed
   assert:
     that:
-        - "rpm_sos_result is failed"
+        - "rpm_zip_result is failed"
 
-- name: exclude sos
+- name: exclude zip
   lineinfile:
     dest: /etc/yum.conf
     regexp: (^exclude=)(.)*
-    line: "exclude=sos"
+    line: "exclude=zip*"
     state: present
 
-- name: install sos
-  yum: name=sos state=latest
-  register: yum_result
+- name: install zip
+  yum: name=zip state=latest
+  register: yum_zip_result
   ignore_errors: True
 
 - name: verify packages did not install
   assert:
     that:
-      - "yum_result is failed"
+      - "yum_zip_result is failed"
 
-- name: install sos
-  yum: name=sos state=latest disable_excludes=all
-  register: yum_result
+- name: install zip
+  yum: name=zip state=latest disable_excludes=all
+  register: yum_zip_result
       - "yum_result is changed"
 
-- name: verify packages installed
-  assert:
-    that:
-      - "yum_result is success"
-      - "yum_result is changed"
-
-- name: exclude sos
+- name: remoe exclude zip
   lineinfile:
     dest: /etc/yum.conf
-    regexp: (^exclude=sos)
+    regexp: (^exclude=zip*)
     line: "exclude="
     state: present
