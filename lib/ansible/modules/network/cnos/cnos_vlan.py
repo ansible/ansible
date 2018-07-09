@@ -43,13 +43,12 @@ description:
      filter. After passing this level, there are five VLAN arguments that will
      perform further configurations. They are vlanArg1, vlanArg2, vlanArg3,
      vlanArg4, and vlanArg5. The value of vlanArg1 will determine the way
-     following arguments will be evaluated. For more details on how to use these
-     arguments, see [Overloaded Variables].
-     This module uses SSH to manage network device configuration.
-     The results of the operation will be placed in a directory named 'results'
-     that must be created by the user in their local directory to where the playbook is run.
-     For more information about this module from Lenovo and customizing it usage for your
-     use cases, please visit U(http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_vlan.html)
+     following arguments will be evaluated. This module uses SSH to manage network
+     device configuration. The results of the operation will be placed in a directory
+     named 'results' that must be created by the user in their local directory to
+     where the playbook is run. For more information about this module from Lenovo and
+     customizing it usage for your use cases,
+     please visit U(http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_vlan.html)
 version_added: "2.3"
 extends_documentation_fragment: cnos
 options:
