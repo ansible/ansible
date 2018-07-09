@@ -571,7 +571,7 @@
   yum: name=sos state=present
   register: yum_result
 
-  name: verify packages did not install
+- name: verify packages did not install
     assert:
       that:
           - "yum_result is failed"
