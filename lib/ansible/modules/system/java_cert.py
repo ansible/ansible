@@ -108,8 +108,8 @@ EXAMPLES = '''
     keystore_pass: changeit
     keystore_create: yes
     state: present
-    
-- name: Import certificate trustcacert option
+
+- name: Import certificate with trustcacert option
   java_cert:
     cert_path: "/tmp/mycert.cer"
     cert_alias: "beeline-{{ inventory_hostname }}"
