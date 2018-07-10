@@ -290,7 +290,7 @@ def main():
         pkcs12_password=dict(type='str', no_log=True),
         pkcs12_alias=dict(type='str'),
         cert_alias=dict(type='str'),
-        trust_ca_certs=dict(type='bool', default=False)
+        trust_ca_certs=dict(type='bool', default=False),
         cert_port=dict(type='int', default='443'),
         keystore_path=dict(type='path'),
         keystore_pass=dict(type='str', required=True, no_log=True),
