@@ -26,6 +26,14 @@ options:
     description: Flag to control if the lookup will observe HTTP proxy environment variables when present.
     type: boolean
     default: True
+  url_username:
+    description: Username to use for HTTP authentication.
+    type: string
+    default: ""
+  url_password:
+    description: Password to use for HTTP authentication.
+    type: string
+    default: ""
 """
 
 EXAMPLES = """
@@ -35,6 +43,10 @@ EXAMPLES = """
 
 - name: display ip ranges
   debug: msg="{{ lookup('url', 'https://ip-ranges.amazonaws.com/ip-ranges.json', split_lines=False) }}"
+
+- name: url lookup using authentication
+  debug: msg="{{item}}"
+  loop: "{{ lookup('url', 'https://some.private.site.com/file.txt', url_username='bob', url_password='hunter2') }}"
 """
 
 RETURN = """
@@ -62,12 +74,14 @@ class LookupModule(LookupBase):
         validate_certs = kwargs.get('validate_certs', True)
         split_lines = kwargs.get('split_lines', True)
         use_proxy = kwargs.get('use_proxy', True)
+        url_username = kwargs.get('url_username', None)
+        url_password = kwargs.get('url_password', None)
 
         ret = []
         for term in terms:
             display.vvvv("url lookup connecting to %s" % term)
             try:
-                response = open_url(term, validate_certs=validate_certs, use_proxy=use_proxy)
+                response = open_url(term, validate_certs=validate_certs, use_proxy=use_proxy, url_username=username, url_password=password)
             except HTTPError as e:
                 raise AnsibleError("Received HTTP error for %s : %s" % (term, str(e)))
             except URLError as e:
