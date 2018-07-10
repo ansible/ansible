@@ -32,6 +32,11 @@ options:
   cert_alias:
     description:
       - Imported certificate alias.
+  trust_ca_certs:
+    description:
+      - Indicator whether to use -trustcacerts option in keytool command or not
+    choices: [ "yes", "no" ]
+    default: "no"
   pkcs12_path:
     description:
       - Local path to load PKCS12 keystore from.
@@ -190,14 +195,15 @@ def import_cert_url(module, executable, url, port, keystore_path, keystore_pass,
                                 error=import_err)
 
 
-def import_cert_path(module, executable, path, keystore_path, keystore_pass, alias):
+def import_cert_path(module, executable, path, keystore_path, keystore_pass, alias, trust_ca_certs):
     ''' Import certificate from path into keystore located on
         keystore_path as alias '''
     import_cmd = ("%s -importcert -noprompt -keystore '%s' "
-                  "-storepass '%s' -file '%s' -alias '%s'") % (executable,
+                  "-storepass '%s' -file '%s' -alias '%s' %s") % (executable,
                                                                keystore_path,
                                                                keystore_pass,
-                                                               path, alias)
+                                                               path, alias,
+                                                               ('-trustcacert' if trust_ca_certs else ''))
 
     if module.check_mode:
         module.exit_json(changed=True)
@@ -284,6 +290,7 @@ def main():
         pkcs12_password=dict(type='str', no_log=True),
         pkcs12_alias=dict(type='str'),
         cert_alias=dict(type='str'),
+        trust_ca_certs=dict(type='bool', default=False)
         cert_port=dict(type='int', default='443'),
         keystore_path=dict(type='path'),
         keystore_pass=dict(type='str', required=True, no_log=True),
@@ -309,6 +316,7 @@ def main():
     pkcs12_path = module.params.get('pkcs12_path')
     pkcs12_pass = module.params.get('pkcs12_password', '')
     pkcs12_alias = module.params.get('pkcs12_alias', '1')
+    trust_ca_certs = module.params.get('trust_ca_certs')
 
     cert_alias = module.params.get('cert_alias') or url
 
@@ -343,7 +351,7 @@ def main():
 
             if path:
                 import_cert_path(module, executable, path, keystore_path,
-                                 keystore_pass, cert_alias)
+                                 keystore_pass, cert_alias, trust_ca_certs)
 
             if url:
                 import_cert_url(module, executable, url, port, keystore_path,
