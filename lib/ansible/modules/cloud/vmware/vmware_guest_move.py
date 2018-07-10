@@ -94,7 +94,7 @@ EXAMPLES = r'''
     password: "{{ vcenter_password }}"
     validate_certs: no
     uuid: "{{ vm_facts.instance.hw_product_uuid }}"
-    dest_folder: "/path/to/new/folder/where/we/want/vm"
+    dest_folder: "/DataCenter/vm/path/to/new/folder/where/we/want"
   datacenter: "{{ datacenter }}"
   delegate_to: localhost
   register: facts
