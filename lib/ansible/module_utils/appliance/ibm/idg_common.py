@@ -6,21 +6,16 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six.moves.urllib.error import HTTPError
-from ansible.module_utils._text import to_native
-from ansible.module_utils.urls import open_url, ConnectionError, SSLValidationError, url_argument_spec
+from ansible.module_utils.urls import url_argument_spec
 
-import six
 import json
-from time import sleep
 # import pdb
 
 # Seed the result
 result = dict(
     changed = False,
     name = 'default',
-    msg = 'good is coming'
+    msg = 'the best is coming'
 )
 
 # Socket information
@@ -42,6 +37,7 @@ class IDG_Utils(object):
 
     IMMUTABLE_MESSAGE = 'The current state is consistent with the desired configuration'
     CHECK_MODE_MESSAGE = 'Change was only simulated, due to enabling verification mode'
+    UNCONTROLLED_EXCEPTION = 'Unknown exception'
 
     # Connection agreements
     BASIC_HEADERS = { "Content-Type": "application/json" }
@@ -49,14 +45,11 @@ class IDG_Utils(object):
     BASIC_AUTH_SPEC = True
     HTTP_AGENT_SPEC = None
 
-    # REST api management
-    # Domains
-    URI_DOMAIN_LIST = "/mgmt/domains/config/"
-    # Management
-    URI_DOMAIN_CONFIG = "/mgmt/config/default/Domain/{0}"
-    URI_DOMAIN_STATUS = "/mgmt/status/default/DomainStatus"
-    # Actions
-    URI_ACTION = "/mgmt/actionqueue/{0}"
+    @staticmethod
+    def implement_check_mode(module, result):
+        if module.check_mode:
+            result['msg'] = IDG_Utils.CHECK_MODE_MESSAGE
+            module.exit_json(**result)
 
     @staticmethod
     def parse_to_dict(data, desc, ver):

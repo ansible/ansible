@@ -282,264 +282,258 @@ def main():
     if not HAS_IDG_DEPS:
         module.fail_json(msg="The IDG utils module is required")
 
-    # Parse arguments to dict
-    idg_data_spec = IDG_Utils.parse_to_dict(module.params['idg_connection'], 'IDGConnection', IDG_Utils.ANSIBLE_VERSION)
+    try:
 
-    # Status & domain
-    state = module.params['state']
-    domain_name = module.params['name']
+        # Parse arguments to dict
+        idg_data_spec = IDG_Utils.parse_to_dict(module.params['idg_connection'], 'IDGConnection', IDG_Utils.ANSIBLE_VERSION)
 
-    # Result
-    result['name'] = domain_name
+        # Status & domain
+        state = module.params['state']
+        domain_name = module.params['name']
 
-    # Init IDG API connect
-    idg_mgmt = IDG_API(ansible_module = module,
-                       idg_host = "https://{0}:{1}".format(idg_data_spec['server'], idg_data_spec['server_port']),
-                       headers = IDG_Utils.BASIC_HEADERS,
-                       http_agent = IDG_Utils.HTTP_AGENT_SPEC,
-                       use_proxy = idg_data_spec['use_proxy'],
-                       timeout = idg_data_spec['timeout'],
-                       validate_certs = idg_data_spec['validate_certs'],
-                       user = idg_data_spec['user'],
-                       password = idg_data_spec['password'],
-                       force_basic_auth = IDG_Utils.BASIC_AUTH_SPEC)
+        # Result
+        result['name'] = domain_name
 
-    # Variable to store the status of the action
-    action_result = ''
+        # Init IDG API connect
+        idg_mgmt = IDG_API(ansible_module = module,
+                           idg_host = "https://{0}:{1}".format(idg_data_spec['server'], idg_data_spec['server_port']),
+                           headers = IDG_Utils.BASIC_HEADERS,
+                           http_agent = IDG_Utils.HTTP_AGENT_SPEC,
+                           use_proxy = idg_data_spec['use_proxy'],
+                           timeout = idg_data_spec['timeout'],
+                           validate_certs = idg_data_spec['validate_certs'],
+                           user = idg_data_spec['user'],
+                           password = idg_data_spec['password'],
+                           force_basic_auth = IDG_Utils.BASIC_AUTH_SPEC)
 
-    # Configuration template for the domain
-    export_action_msg = { "Export": {
-                            "Format": "ZIP",
-                            "UserComment": module.params['user_summary'],
-                            "AllFiles": IDG_Utils.on_off(module.params['all_files']),
-                            "Persisted": IDG_Utils.on_off(module.params['persisted']),
-                            "IncludeInternalFiles": IDG_Utils.on_off(module.params['internal_files'])
-                            # TODO
-                            # "DeploymentPolicy":""
-                          }
-                        }
+        # Variable to store the status of the action
+        action_result = ''
 
-    import_action_msg = { "Import": {
-                            "Format": "ZIP",
-                            "InputFile": module.params['input_file'],
-                            "OverwriteFiles": IDG_Utils.on_off(module.params['overwrite_files']),
-                            "OverwriteObjects": IDG_Utils.on_off(module.params['overwrite_objects']),
-                            "DryRun": IDG_Utils.on_off(module.params['dry_run']),
-                            "RewriteLocalIP": IDG_Utils.on_off(module.params['rewrite_local_ip'])
-                            # TODO
-                            # "DeploymentPolicy": "name",
-                            # "DeploymentPolicyParams": "name",
-                          }
-                        }
-    # Action messages
-    # Reset
-    reset_act_msg = { "ResetThisDomain": {} }
+        # Configuration template for the domain
+        export_action_msg = { "Export": {
+                                "Format": "ZIP",
+                                "UserComment": module.params['user_summary'],
+                                "AllFiles": IDG_Utils.on_off(module.params['all_files']),
+                                "Persisted": IDG_Utils.on_off(module.params['persisted']),
+                                "IncludeInternalFiles": IDG_Utils.on_off(module.params['internal_files'])
+                                # TODO
+                                # "DeploymentPolicy":""
+                              }
+                            }
 
-    # Save
-    save_act_msg = { "SaveConfig": {} }
+        import_action_msg = { "Import": {
+                                "Format": "ZIP",
+                                "InputFile": module.params['input_file'],
+                                "OverwriteFiles": IDG_Utils.on_off(module.params['overwrite_files']),
+                                "OverwriteObjects": IDG_Utils.on_off(module.params['overwrite_objects']),
+                                "DryRun": IDG_Utils.on_off(module.params['dry_run']),
+                                "RewriteLocalIP": IDG_Utils.on_off(module.params['rewrite_local_ip'])
+                                # TODO
+                                # "DeploymentPolicy": "name",
+                                # "DeploymentPolicyParams": "name",
+                              }
+                            }
+        # Action messages
+        # Reset
+        reset_act_msg = { "ResetThisDomain": {} }
 
-    ###
-    ### Here the action begins
-    ###
+        # Save
+        save_act_msg = { "SaveConfig": {} }
 
-    # List of configured domains
-    chk_code, chk_msg, chk_data = idg_mgmt.api_call(uri = IDG_Utils.URI_DOMAIN_LIST, method = 'GET', data = None)
+        ###
+        ### Here the action begins
+        ###
 
-    if chk_code == 200 and chk_msg == 'OK': # If the answer is correct
+        # List of configured domains
+        chk_code, chk_msg, chk_data = idg_mgmt.api_call(IDG_API.URI_DOMAIN_LIST, method = 'GET')
 
-        if isinstance(chk_data['domain'], dict): # if has only default domain
-            configured_domains = [chk_data['domain']['name']]
-        else:
-            configured_domains = [d['name'] for d in chk_data['domain']]
+        if chk_code == 200 and chk_msg == 'OK': # If the answer is correct
 
-        if domain_name in configured_domains: # Domain EXIST.
+            if isinstance(chk_data['domain'], dict): # if has only default domain
+                configured_domains = [chk_data['domain']['name']]
+            else:
+                configured_domains = [d['name'] for d in chk_data['domain']]
 
-            # pdb.set_trace()
-            if state == 'exported':
+            if domain_name in configured_domains: # Domain EXIST.
 
-                # If the user is working in only check mode we do not want to make any changes
-                if module.check_mode:
-                    result['msg'] = IDG_Utils.CHECK_MODE_MESSAGE
-                    module.exit_json(**result)
-
-                # export and finish
                 # pdb.set_trace()
-                exp_code, exp_msg, exp_data = idg_mgmt.api_call(uri = IDG_Utils.URI_ACTION.format(domain_name), method = 'POST',
-                                                                data = json.dumps(export_action_msg))
+                if state == 'exported':
 
-                if exp_code == 202 and exp_msg == 'Accepted':
-                    # Asynchronous actions export accepted. Wait for complete
-                    action_result = idg_mgmt.wait_for_action_end(uri = IDG_Utils.URI_ACTION.format(domain_name), href = exp_data['_links']['location']['href'],
-                                                                 state = state, domain = domain_name)
+                    # If the user is working in only check mode we do not want to make any changes
+                    IDG_Utils.implement_check_mode(module, result)
 
-                    # Export completed. Get result
-                    doex_code, doex_msg, doex_data = idg_mgmt.api_call(uri = exp_data['_links']['location']['href'], method = 'GET',
-                                                                       data = None)
+                    # export and finish
+                    # pdb.set_trace()
+                    exp_code, exp_msg, exp_data = idg_mgmt.api_call(IDG_API.URI_ACTION.format(domain_name), method = 'POST',
+                                                                    data = json.dumps(export_action_msg))
 
-                    if doex_code == 200 and doex_msg == 'OK':
-                        # Export ok
-                        result['file'] = doex_data['result']['file']
-                        result['msg'] = action_result
+                    if exp_code == 202 and exp_msg == 'Accepted':
+                        # Asynchronous actions export accepted. Wait for complete
+                        action_result = idg_mgmt.wait_for_action_end(IDG_API.URI_ACTION.format(domain_name), href = exp_data['_links']['location']['href'],
+                                                                     state = state, domain = domain_name)
+
+                        # Export completed. Get result
+                        doex_code, doex_msg, doex_data = idg_mgmt.api_call(exp_data['_links']['location']['href'], method = 'GET')
+
+                        if doex_code == 200 and doex_msg == 'OK':
+                            # Export ok
+                            result['file'] = doex_data['result']['file']
+                            result['msg'] = action_result
+                            result['changed'] = True
+                        else:
+                            # Can't retrieve the export
+                            module.fail_json(msg = to_native(IDG_API.ERROR_RETRIEVING_RESULT.format(state, domain_name)))
+
+                    elif exp_code == 200 and exp_msg == 'OK':
+                        # Successfully processed synchronized action
+                        result['msg'] = idg_mgmt.status_text(exp_data['Export'])
                         result['changed'] = True
+
                     else:
-                        # Can't retrieve the export
-                        module.fail_json(msg = to_native(idg_mgmt.ERROR_RETRIEVING_RESULT % (state, domain_name)))
+                        # Export not accepted
+                        module.fail_json(msg = to_native(IDG_API.ERROR_ACCEPTING_ACTION.format(state, domain_name)))
 
-                elif exp_code == 200 and exp_msg == 'OK':
-                    # Successfully processed synchronized action
-                    result['msg'] = idg_mgmt.status_text(exp_data['Export'])
-                    result['changed'] = True
+                elif state == 'reseted':
 
-                else:
-                    # Export not accepted
-                    module.fail_json(msg = to_native(idg_mgmt.ERROR_ACCEPTING_ACTION % (state, domain_name)))
+                    # If the user is working in only check mode we do not want to make any changes
+                    IDG_Utils.implement_check_mode(module, result)
 
-            elif state == 'reseted':
+                    # Reseted domain
+                    reset_code, reset_msg, reset_data = idg_mgmt.api_call(IDG_API.URI_ACTION.format(domain_name), method = 'POST',
+                                                                          data = json.dumps(reset_act_msg))
 
-                # If the user is working in only check mode we do not want to make any changes
-                if module.check_mode:
-                    result['msg'] = IDG_Utils.CHECK_MODE_MESSAGE
-                    module.exit_json(**result)
+                    # pdb.set_trace()
+                    if reset_code == 202 and reset_msg == 'Accepted':
+                        # Asynchronous actions reset accepted. Wait for complete
+                        action_result = idg_mgmt.wait_for_action_end(IDG_API.URI_ACTION.format(domain_name), href = reset_data['_links']['location']['href'],
+                                                                     state = state, domain = domain_name)
 
-                # Reseted domain
-                reset_code, reset_msg, reset_data = idg_mgmt.api_call(uri = IDG_Utils.URI_ACTION.format(domain_name), method = 'POST',
-                                                                      data = json.dumps(reset_act_msg))
+                        # Reseted completed
+                        dore_code, dore_msg, dore_data = idg_mgmt.api_call(reset_data['_links']['location']['href'], method = 'GET')
 
-                # pdb.set_trace()
-                if reset_code == 202 and reset_msg == 'Accepted':
-                    # Asynchronous actions reset accepted. Wait for complete
-                    action_result = idg_mgmt.wait_for_action_end(uri = IDG_Utils.URI_ACTION.format(domain_name), href = reset_data['_links']['location']['href'],
-                                                                 state = state, domain = domain_name)
+                        if dore_code == 200 and dore_msg == 'OK':
+                            # Reseted successfully
+                            result['msg'] = dore_data['status'].capitalize()
+                            result['changed'] = True
+                        else:
+                            # Can't retrieve the reset result
+                            module.fail_json(msg = to_native(IDG_API.ERROR_RETRIEVING_RESULT.format(state, domain_name)))
 
-                    # Reseted completed
-                    dore_code, dore_msg, dore_data = idg_mgmt.api_call(uri = reset_data['_links']['location']['href'], method = 'GET',
-                                                                       data = None)
-
-                    if dore_code == 200 and dore_msg == 'OK':
-                        # Reseted successfully
-                        result['msg'] = dore_data['status'].capitalize()
+                    elif reset_code == 200 and reset_msg == 'OK':
+                        # Successfully processed synchronized action
+                        result['msg'] = idg_mgmt.status_text(reset_data['ResetThisDomain'])
                         result['changed'] = True
+
                     else:
-                        # Can't retrieve the reset result
-                        module.fail_json(msg = to_native(idg_mgmt.ERROR_RETRIEVING_RESULT % (state, domain_name)))
+                        # Reseted not accepted
+                        module.fail_json(msg = to_native(IDG_API.ERROR_ACCEPTING_ACTION.format(state, domain_name)))
 
-                elif reset_code == 200 and reset_msg == 'OK':
-                    # Successfully processed synchronized action
-                    result['msg'] = idg_mgmt.status_text(reset_data['ResetThisDomain'])
-                    result['changed'] = True
+                elif state == 'saved':
 
-                else:
-                    # Reseted not accepted
-                    module.fail_json(msg = to_native(idg_mgmt.ERROR_ACCEPTING_ACTION % (state, domain_name)))
+                    qds_code, qds_msg, qds_data = idg_mgmt.api_call(IDG_API.URI_DOMAIN_STATUS, method = 'GET')
 
-            elif state == 'saved':
+                    # pdb.set_trace()
+                    if qds_code == 200 and qds_msg == 'OK':
 
-                qds_code, qds_msg, qds_data = idg_mgmt.api_call(uri = IDG_Utils.URI_DOMAIN_STATUS, method = 'GET', data = None)
+                        if isinstance(qds_data['DomainStatus'], dict):
+                            domain_save_needed = qds_data['DomainStatus']['SaveNeeded']
+                        else:
+                            domain_save_needed = [d['SaveNeeded'] for d in qds_data['DomainStatus'] if d['Domain'] == domain_name][0]
 
-                # pdb.set_trace()
-                if qds_code == 200 and qds_msg == 'OK':
+                        # Saved domain
+                        if domain_save_needed != 'off':
 
-                    if isinstance(qds_data['DomainStatus'], dict):
-                        domain_save_needed = qds_data['DomainStatus']['SaveNeeded']
-                    else:
-                        domain_save_needed = [d['SaveNeeded'] for d in qds_data['DomainStatus'] if d['Domain'] == domain_name][0]
+                            # If the user is working in only check mode we do not want to make any changes
+                            IDG_Utils.implement_check_mode(module, result)
 
-                    # Saved domain
-                    if domain_save_needed != 'off':
+                            save_code, save_msg, save_data = idg_mgmt.api_call(IDG_API.URI_ACTION.format(domain_name), method = 'POST',
+                                                                               data = json.dumps(save_act_msg))
 
-                        # If the user is working in only check mode we do not want to make any changes
-                        if module.check_mode:
-                            result['msg'] = IDG_Utils.CHECK_MODE_MESSAGE
-                            module.exit_json(**result)
+                            # pdb.set_trace()
+                            if save_code == 202 and save_msg == 'Accepted':
+                                # Asynchronous actions save accepted. Wait for complete
+                                action_result = idg_mgmt.wait_for_action_end(IDG_API.URI_ACTION.format(domain_name), href = save_data['_links']['location']['href'],
+                                                                             state = state, domain = domain_name)
 
-                        save_code, save_msg, save_data = idg_mgmt.api_call(uri = IDG_Utils.URI_ACTION.format(domain_name), method = 'POST',
-                                                                           data = json.dumps(save_act_msg))
+                                # Save ready
+                                dosv_code, dosv_msg, dosv_data = idg_mgmt.api_call(save_data['_links']['location']['href'], method = 'GET')
 
-                        # pdb.set_trace()
-                        if save_code == 202 and save_msg == 'Accepted':
-                            # Asynchronous actions save accepted. Wait for complete
-                            action_result = idg_mgmt.wait_for_action_end(uri = IDG_Utils.URI_ACTION.format(domain_name), href = save_data['_links']['location']['href'],
-                                                                         state = state, domain = domain_name)
+                                if dosv_code == 200 and dosv_msg == 'OK':
+                                    # Save completed
+                                    result['msg'] = action_result
+                                    result['changed'] = True
+                                else:
+                                    # Can't retrieve the save result
+                                    module.fail_json(msg = to_native(IDG_API.ERROR_RETRIEVING_RESULT.format(state, domain_name)))
 
-                            # Save ready
-                            dosv_code, dosv_msg, dosv_data = idg_mgmt.api_call(uri = save_data['_links']['location']['href'], method = 'GET',
-                                                                               data = None)
-
-                            if dosv_code == 200 and dosv_msg == 'OK':
-                                # Save completed
-                                result['msg'] = action_result
+                            elif save_code == 200 and save_msg == 'OK':
+                                # Successfully processed synchronized action save
+                                result['msg'] = idg_mgmt.status_text(save_data['SaveConfig'])
                                 result['changed'] = True
                             else:
-                                # Can't retrieve the save result
-                                module.fail_json(msg = to_native(idg_mgmt.ERROR_RETRIEVING_RESULT % (state, domain_name)))
-
-                        elif save_code == 200 and save_msg == 'OK':
-                            # Successfully processed synchronized action save
-                            result['msg'] = idg_mgmt.status_text(save_data['SaveConfig'])
-                            result['changed'] = True
+                                # Can't saved
+                                module.fail_json(msg = to_native(IDG_API.ERROR_RETRIEVING_RESULT.format(state, domain_name)))
                         else:
-                            # Can't saved
-                            module.fail_json(msg = to_native(idg_mgmt.ERROR_RETRIEVING_RESULT % (state, domain_name)))
-                    else:
-                        # Domain is save
-                        result['msg'] = IDG_Utils.IMMUTABLE_MESSAGE
+                            # Domain is save
+                            result['msg'] = IDG_Utils.IMMUTABLE_MESSAGE
 
-            elif state == 'imported':
+                elif state == 'imported':
 
-                # If the user is working in only check mode we do not want to make any changes
-                if module.check_mode:
-                    result['msg'] = IDG_Utils.CHECK_MODE_MESSAGE
-                    module.exit_json(**result)
+                    # If the user is working in only check mode we do not want to make any changes
+                    IDG_Utils.implement_check_mode(module, result)
 
-                # Import
-                # pdb.set_trace()
-                imp_code, imp_msg, imp_data = idg_mgmt.api_call(uri = IDG_Utils.URI_ACTION.format(domain_name), method = 'POST',
-                                                                data = json.dumps(import_action_msg))
+                    # Import
+                    # pdb.set_trace()
+                    imp_code, imp_msg, imp_data = idg_mgmt.api_call(IDG_API.URI_ACTION.format(domain_name), method = 'POST',
+                                                                    data = json.dumps(import_action_msg))
 
-                # pdb.set_trace()
-                if imp_code == 202 and imp_msg == 'Accepted':
-                    # Asynchronous actions import accepted. Wait for complete
-                    action_result = idg_mgmt.wait_for_action_end(uri = IDG_Utils.URI_ACTION.format(domain_name), href = imp_data['_links']['location']['href'],
-                                                                 state = state, domain = domain_name)
+                    # pdb.set_trace()
+                    if imp_code == 202 and imp_msg == 'Accepted':
+                        # Asynchronous actions import accepted. Wait for complete
+                        action_result = idg_mgmt.wait_for_action_end(IDG_API.URI_ACTION.format(domain_name), href = imp_data['_links']['location']['href'],
+                                                                     state = state, domain = domain_name)
 
-                    # Import ready
-                    doim_code, doim_msg, doim_data = idg_mgmt.api_call(uri = imp_data['_links']['location']['href'], method = 'GET',
-                                                                       data = None)
+                        # Import ready
+                        doim_code, doim_msg, doim_data = idg_mgmt.api_call(imp_data['_links']['location']['href'], method = 'GET')
 
-                    if doim_code == 200 and doim_msg == 'OK':
-                        # Export completed
-                        if doim_data['result']['Import']['import-results']['detected-errors'] == 'true':
-                            # pdb.set_trace()
-                            result['msg'] = 'Error code:' + doim_data['result']['Import']['import-results']['detected-errors']['error']
-                            result['changed'] = False
-                            result['failed'] = True
+                        if doim_code == 200 and doim_msg == 'OK':
+                            # Export completed
+                            if doim_data['result']['Import']['import-results']['detected-errors'] == 'true':
+                                # pdb.set_trace()
+                                result['msg'] = 'Error code:' + doim_data['result']['Import']['import-results']['detected-errors']['error']
+                                result['changed'] = False
+                                result['failed'] = True
+                            else:
+                                result['msg'] = doim_data['status'].capitalize()
+                                result['changed'] = True
                         else:
-                            result['msg'] = doim_data['status'].capitalize()
-                            result['changed'] = True
+                            # Can't retrieve the import result
+                            module.fail_json(msg = to_native(IDG_API.ERROR_RETRIEVING_RESULT.format(state, domain_name)))
+
+                    elif imp_code == 200 and imp_msg == 'OK':
+                        # Successfully processed synchronized action
+                        result['msg'] = idg_mgmt.status_text(imp_data['Import'])
+                        result['changed'] = True
+
                     else:
-                        # Can't retrieve the import result
-                        module.fail_json(msg = to_native(idg_mgmt.ERROR_RETRIEVING_RESULT % (state, domain_name)))
+                        # Imported not accepted
+                        module.fail_json(msg = to_native(IDG_API.ERROR_ACCEPTING_ACTION.format(state, domain_name)))
 
-                elif imp_code == 200 and imp_msg == 'OK':
-                    # Successfully processed synchronized action
-                    result['msg'] = idg_mgmt.status_text(imp_data['Import'])
-                    result['changed'] = True
+            else: # Domain NOT EXIST.
+                # pdb.set_trace()
+                # Opps can't work the configuration of non-existent domain
+                module.fail_json(msg = (IDG_API.ERROR_REACH_STATE + ' Domain not exist!').format(state, domain_name))
 
-                else:
-                    # Imported not accepted
-                    module.fail_json(msg = to_native(idg_mgmt.ERROR_ACCEPTING_ACTION % (state, domain_name)))
+        else: # Can't read domain's lists
+            module.fail_json(msg = IDG_API.ERROR_GET_DOMAIN_LIST)
 
-        else: # Domain NOT EXIST.
-            # pdb.set_trace()
-            # Opps can't work the configuration of non-existent domain
-            module.fail_json(msg = idg_mgmt.ERROR_REACH_STATE + ' Domain not exist!' % (state, domain_name))
-
-        # pdb.set_trace()
+    except Exception as e:
+        # Uncontrolled exception
+        module.fail_json(msg = (IDG_Utils.UNCONTROLLED_EXCEPTION + '. {0}').format(to_native(e)))
+    else:
         # That's all folks!
         module.exit_json(**result)
 
-    else: # The DP domains could not be extracted
-        module.fail_json(msg = idg_mgmt.ERROR_GET_DOMAIN_LIST)
 
 if __name__ == '__main__':
     main()
