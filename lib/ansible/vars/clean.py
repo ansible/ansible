@@ -59,12 +59,16 @@ def clean_facts(facts):
     ''' remove facts that can override internal keys or otherwise deemed unsafe '''
     data = deepcopy(facts)
 
-    remove_keys = set(C.COMMON_CONNECTION_VARS)
+    remove_keys = set()
     fact_keys = set(data.keys())
     # first we add all of our magic variable names to the set of
     # keys we want to remove from facts
+    # NOTE: these will eventually disappear in favor of others below
     for magic_var in C.MAGIC_VARIABLE_MAPPING:
         remove_keys.update(fact_keys.intersection(C.MAGIC_VARIABLE_MAPPING[magic_var]))
+
+    # remove common connection vars
+    remove_keys.update(fact_keys.intersection(C.COMMON_CONNECTION_VARS))
 
     # next we remove any connection plugin specific vars
     for conn_path in connection_loader.all(path_only=True):
