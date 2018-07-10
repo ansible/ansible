@@ -1,6 +1,7 @@
  - name: Prepare random number
    set_fact:
      rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+     parameter: {}
    run_once: yes
 
  - name: Clearing (if) previous disks were created
@@ -188,18 +189,13 @@
        that:
            - "azure_managed_disk | length > 0"
 
+- set_fact:
+     parameter: "{{parameter |combine({item.key: item.value})}}"
+  when: "{{item.key not in ['id', 'changed']}}"
+  with_dict: "{{ fact.ansible_facts.azure_managed_disk[0] }}"
+
  - name: Create disk with facts return value
-   azure_rm_managed_disk:
-       resource_group: "{{ resource_group }}"
-       name: "md{{ rpfx }}1"
-       location: "{{ fact.ansible_facts.azure_managed_disk[0].location }}"
-       storage_account_type: "{{ fact.ansible_facts.azure_managed_disk[0].storage_account_type }}"
-       create_option: "{{ fact.ansible_facts.azure_managed_disk[0].create_option }}"
-       source_uri: "{{ fact.ansible_facts.azure_managed_disk[0].source_uri }}"
-       source_resource_uri: "{{ fact.ansible_facts.azure_managed_disk[0].source_resource_uri }}"
-       os_type: "{{ fact.ansible_facts.azure_managed_disk[0].os_type }}"
-       disk_size_gb: "{{ fact.ansible_facts.azure_managed_disk[0].disk_size_gb }}"
-       managed_by: "{{ fact.ansible_facts.azure_managed_disk[0].managed_by }}"
+   azure_rm_managed_disk: "{{ parameter | combine({'resource_group': resource_group}) }}"
    register: output
 
  - assert:
