@@ -308,10 +308,10 @@ class Distribution:
         except AttributeError:
             # old setuptools has no specifier, do fallback
             version_to_test = LooseVersion(version_to_test)
-            for op, ver in self._requirement.specs:
-                if not op_dict[op](version_to_test, LooseVersion(ver)):
-                    return False
-            return True
+            return all(
+                op_dict[op](version_to_test, LooseVersion(ver))
+                for op, ver in self._requirement.specs
+            )
 
     def __str__(self):
         if self._plain_distribution:
