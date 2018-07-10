@@ -557,7 +557,7 @@
     yum_version: "{%- if item.yumstate == 'installed' -%}{{ item.version }}{%- else -%}{{ yum_version }}{%- endif -%}"
   with_items: "{{ yum_version.results }}"
 
-- name: check wheter yum supports disableexcludes (>= 3.4)
+- name: check whether yum supports disableexcludes (>= 3.4)
   set_fact:
     supports_disable_excludes: "{{ yum_version is version_compare('3.4.0', '>=') }}"
 
@@ -588,7 +588,7 @@
   ignore_errors: True
   when: supports_disable_excludes
 
-- name: verify packages did not install because it is in exclude list
+- name: verify zip did not install because it is in exclude list
   assert:
     that:
       - "yum_zip_result is failed"
@@ -596,15 +596,15 @@
 
 - name: install zip with disable_excludes
   yum: name=zip state=latest disable_excludes=all
-  register: yum_zip_result_uing_excludes
+  register: yum_zip_result_using_excludes
   when: supports_disable_excludes
 
-- name: verify packages did install using disable_excludes=all
+- name: verify zip did install using disable_excludes=all
   assert:
     that:
-      - "yum_zip_result_uing_excludes is success"
-      - "yum_zip_result_uing_excludes is changed"
-      - "yum_zip_result_uing_excludes is not failed"
+      - "yum_zip_result_using_excludes is success"
+      - "yum_zip_result_using_excludes is changed"
+      - "yum_zip_result_using_excludes is not failed"
   when: supports_disable_excludes
 
 - name: remove exclude zip (cleanup yum.conf)
@@ -627,6 +627,12 @@
   assert:
     that:
       - "yum_fail_zip_result_old_yum is failed"
+  when: not supports_disable_excludes
+
+- name: verify yum module outputs
+  assert:
+    that:
+        - "'is available in yum version 3.4 and onwards.' in yum_fail_zip_result_old_yum"
   when: not supports_disable_excludes
 
 - name: remove exclude zip (cleanup yum.conf)
