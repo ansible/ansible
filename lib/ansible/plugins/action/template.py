@@ -89,7 +89,7 @@ class ActionModule(ActionBase):
 
             for b_type in ('force', 'follow', 'trim_blocks'):
                 value = locals()[b_type]
-                value = ensure_type(value, 'string')
+                value = ensure_type(value, 'boolean')
                 if value is not None and not isinstance(value, bool):
                     raise AnsibleActionFail("%s is expected to be a boolean, but got %s instead" % (b_type, type(value)))
                 locals()[b_type] = value
