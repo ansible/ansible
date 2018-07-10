@@ -273,21 +273,22 @@ class Distribution:
     """
 
     def __init__(self, name_string, version_string=None):
-        if not (name_string.startswith('file:') or _is_vcs_url(name_string)):
-            self._plain_distribution = True
-            if version_string:
-                version_string = version_string.lstrip()
-                separator = '==' if version_string[0].isdigit() else ' '
-                name_string = separator.join((name_string, version_string))
-            self._requirement = Requirement.parse(name_string)
-            # old pkg_resource will replace 'setuptools' with 'distribute' when it already installed
-            if self._requirement.project_name == "distribute":
-                self._distribution_name = "setuptools"
-            else:
-                self._distribution_name = self._requirement.project_name
+        self._plain_distribution = False
+        self._distribution_name = name_string
+        self._requirement = Requirement.parse(name_string)
+        if name_string.startswith('file:') or _is_vcs_url(name_string):
+            return
+
+        self._plain_distribution = True
+        if version_string:
+            version_string = version_string.lstrip()
+            separator = '==' if version_string[0].isdigit() else ' '
+            name_string = separator.join((name_string, version_string))
+        # old pkg_resource will replace 'setuptools' with 'distribute' when it already installed
+        if self._requirement.project_name == "distribute":
+            self._distribution_name = "setuptools"
         else:
-            self._plain_distribution = False
-            self._distribution_name = name_string
+            self._distribution_name = self._requirement.project_name
 
     @property
     def has_version_specifier(self):
