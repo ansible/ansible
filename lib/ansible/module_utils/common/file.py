@@ -30,6 +30,12 @@ class LockTimeout(Exception):
 
 
 class FileLock():
+    '''
+    Currently FileLock is implemented via fcntl.flock on a lock file, however this
+    behaviour may change in the future. Avoid mixing lock types fcntl.flock,
+    fcntl.lockf and module_utils.common.file.FileLock as it will certainly cause
+    unwanted and/or unexpected behaviour
+    '''
     def __init__(self):
         self.lockfd = None
 
