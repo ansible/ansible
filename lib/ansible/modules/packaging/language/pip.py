@@ -265,11 +265,11 @@ op_dict = {">=": operator.ge, "<=": operator.le, ">": operator.gt,
 
 
 class Distribution:
-
     """Python distribution package metadata wrapper.
 
-    A wrapper class for Requirement, provide usefual API to parse package name and version specifier,
-    do fallback if the installed setuptools version doesn't support some features.
+    A wrapper class for Requirement, which provides API to parse package name
+    and version specifier, providing fallback if the installed setuptools version
+    doesn't support required features.
     """
 
     def __init__(self, name_string, version_string=None):
