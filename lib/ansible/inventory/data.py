@@ -170,7 +170,7 @@ class InventoryData(object):
             else:
                 display.debug("group %s already in inventory" % group)
         else:
-            display.warning("Ignoring empty/false group name: %s" % group)
+            raise AnsibleError("Invalid empty/false group name provided: %s" % group)
 
     def remove_group(self, group):
 
@@ -220,7 +220,7 @@ class InventoryData(object):
                 self._groups_dict_cache = {}
                 display.debug("Added host %s to group %s" % (host, group))
         else:
-            display.warning("Ignoring empty host name: %s" % host)
+            raise AnsibleError("Invalid empty host name provided: %s" % host)
 
     def remove_host(self, host):
 
