@@ -1,0 +1,5 @@
+---
+minor_changes:
+- File locking feature added, making it possible to gain exclusive access
+  to given file through module_utils.common.file.FileLock
+  (https://github.com/ansible/ansible/issues/29962)
