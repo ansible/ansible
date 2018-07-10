@@ -1,12 +1,3 @@
-- name: Install requirements
-  pip:
-    name: openshift
-
-- name: Install requirements on localhost
-  pip:
-    name: openshift
-  delegate_to: localhost
-
 # TODO: This is the only way I could get the kubeconfig, I don't know why. Running the lookup outside of debug seems to return an empty string
 - debug: msg={{ lookup('env', 'K8S_AUTH_KUBECONFIG') }}
   register: kubeconfig
