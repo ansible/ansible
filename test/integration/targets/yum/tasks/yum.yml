@@ -632,7 +632,7 @@
 - name: verify yum module outputs
   assert:
     that:
-        - "'is available in yum version 3.4 and onwards.' in yum_fail_zip_result_old_yum"
+        - "'is available in yum version 3.4 and onwards.' in yum_fail_zip_result_old_yum.msg"
   when: not supports_disable_excludes
 
 - name: remove exclude zip (cleanup yum.conf)
