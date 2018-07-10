@@ -153,10 +153,12 @@ def rst_xline(width, char="="):
 
     return char * width
 
+
 def test_list(value):
     ''' Return true if the object is a list or tuple '''
 
     return isinstance(value, Sequence) and not isinstance(value, string_types)
+
 
 def write_data(text, output_dir, outputname, module=None):
     ''' dumps module output to a file or the screen, as requested '''
