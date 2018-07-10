@@ -627,7 +627,7 @@
   assert:
     that:
       - "yum_fail_zip_result_old_yum is failed"
-  when: supports_disable_excludes
+  when: not supports_disable_excludes
 
 - name: remove exclude zip (cleanup yum.conf)
   lineinfile:
@@ -648,5 +648,5 @@
       - "yum_zip_result_old_yum is success"
       - "yum_zip_result_old_yum is changed"
       - "yum_zip_result_old_yum is not failed"
-  when: supports_disable_excludes
+  when: not supports_disable_excludes
 # end test case where disable_excludes is not supported
