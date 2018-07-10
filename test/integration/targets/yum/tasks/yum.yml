@@ -572,7 +572,7 @@
 - name: verify packages installed
   assert:
     that:
-        - "rpm_zip_result is failed"
+      - "rpm_zip_result is failed"
 
 - name: exclude zip
   lineinfile:
@@ -582,25 +582,32 @@
     state: present
 
 # begin test case where disable_excludes is supported
-- name: install zip
+- name: Try install zip without disable_excludes
   yum: name=zip state=latest
   register: yum_zip_result
   ignore_errors: True
   when: supports_disable_excludes
 
-- name: verify packages did not install
+- name: verify packages did not install because it is in exclude list
   assert:
     that:
       - "yum_zip_result is failed"
   when: supports_disable_excludes
 
-- name: install zip
+- name: install zip with disable_excludes
   yum: name=zip state=latest disable_excludes=all
-  register: yum_zip_result
-      - "yum_result is changed"
+  register: yum_zip_result_uing_excludes
   when: supports_disable_excludes
 
-- name: remoe exclude zip
+- name: verify packages did install using disable_excludes=all
+  assert:
+    that:
+      - "yum_zip_result_uing_excludes is success"
+      - "yum_zip_result_uing_excludes is changed"
+      - "yum_zip_result_uing_excludes is not failed"
+  when: supports_disable_excludes
+
+- name: remove exclude zip (cleanup yum.conf)
   lineinfile:
     dest: /etc/yum.conf
     regexp: (^exclude=zip*)
@@ -610,14 +617,19 @@
 # end test case where disable_excludes is supported
 
 # begin test case where disable_excludes is not supported
-- name: install zip
+- name: Try install zip with disable_excludes
   yum: name=zip state=latest disable_excludes=all
-  register: yum_zip_result
-      - "yum_result is failed"
+  register: yum_fail_zip_result_old_yum
   ignore_errors: True
   when: not supports_disable_excludes
 
-- name: remoe exclude zip
+- name: verify packages did not install because yum version is unsupported
+  assert:
+    that:
+      - "yum_fail_zip_result_old_yum is failed"
+  when: supports_disable_excludes
+
+- name: remove exclude zip (cleanup yum.conf)
   lineinfile:
     dest: /etc/yum.conf
     regexp: (^exclude=zip*)
@@ -625,9 +637,16 @@
     state: present
   when: not supports_disable_excludes
 
-- name: install zip
+- name: install zip (bring test env in same state as when testing started)
   yum: name=zip state=latest
-  register: yum_zip_result
-      - "yum_result is changed"
+  register: yum_zip_result_old_yum
   when: not supports_disable_excludes
+
+- name: verify zip installed
+  assert:
+    that:
+      - "yum_zip_result_old_yum is success"
+      - "yum_zip_result_old_yum is changed"
+      - "yum_zip_result_old_yum is not failed"
+  when: supports_disable_excludes
 # end test case where disable_excludes is not supported
