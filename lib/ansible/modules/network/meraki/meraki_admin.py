@@ -249,13 +249,6 @@ def network_factory(meraki, networks, nets):
     return networks_new
 
 
-def get_nets_temp(meraki, org_id):  # Function won't be needed when get_nets is added to util
-    path = meraki.construct_path('get_all', function='network', org_id=org_id)
-    response = meraki.request(path, method='GET')
-    if meraki.status == 200:
-        return response
-
-
 def create_admin(meraki, org_id, name, email):
     payload = dict()
     payload['name'] = name
@@ -268,7 +261,7 @@ def create_admin(meraki, org_id, name, email):
     if meraki.params['tags'] is not None:
         payload['tags'] = json.loads(meraki.params['tags'])
     if meraki.params['networks'] is not None:
-        nets = get_nets_temp(meraki, org_id)
+        nets = meraki.get_nets(org_id=org_id)
         networks = network_factory(meraki, meraki.params['networks'], nets)
         # meraki.fail_json(msg=str(type(networks)), data=networks)
         payload['networks'] = networks
