@@ -150,6 +150,13 @@ options:
       - C(storage) is the storage identifier where to create the disk.
       - C(size) is the size of the disk in GB.
       - C(format) is the drive's backing file's data format. C(qcow2|raw|subvol).
+  ipconfig:
+    description:
+      - cloud-init: Specify IP addresses and gateways for the corresponding interface.
+      - IP addresses use CIDR notation, gateways are optional but need an IP of the same type specified.
+      - The special string 'dhcp' can be used for IP addresses to use DHCP, in which case no explicit gateway should be provided.
+      - For IPv6 the special string 'auto' can be used to use stateless autoconfiguration.
+      - If cloud-init is enabled and neither an IPv4 nor an IPv6 address is specified, it defaults to using dhcp on IPv4.
   keyboard:
     description:
       - Sets the keyboard layout for VNC server.
@@ -276,6 +283,9 @@ options:
       - The larger the number is, the more memory this VM gets.
       - The number is relative to weights of all other running VMs.
       - Using 0 disables auto-ballooning, this means no limit.
+  sshkeys:
+    description:
+      - cloud-init: Setup public SSH keys (one key per line, OpenSSH format).
   skiplock:
     description:
       - Ignore locks
@@ -813,6 +823,7 @@ def main():
             hotplug=dict(type='str'),
             hugepages=dict(choices=['any', '2', '1024']),
             ide=dict(type='dict', default=None),
+            ipconfig=dict(type='dict', default=None),
             keyboard=dict(type='str'),
             kvm=dict(type='bool', default='yes'),
             localtime=dict(type='bool'),
@@ -843,6 +854,7 @@ def main():
             smbios=dict(type='str'),
             snapname=dict(type='str'),
             sockets=dict(type='int', default=1),
+            sshkeys=dict(type='str'),
             startdate=dict(type='str'),
             startup=dict(),
             state=dict(default='present', choices=['present', 'absent', 'stopped', 'started', 'restarted', 'current']),
@@ -981,6 +993,7 @@ def main():
                       hotplug=module.params['hotplug'],
                       hugepages=module.params['hugepages'],
                       ide=module.params['ide'],
+                      ipconfig=module.params['ipconfig'],
                       keyboard=module.params['keyboard'],
                       kvm=module.params['kvm'],
                       localtime=module.params['localtime'],
@@ -1005,6 +1018,7 @@ def main():
                       skiplock=module.params['skiplock'],
                       smbios1=module.params['smbios'],
                       snapname=module.params['snapname'],
+                      sshkeys=module.params['sshkeys'],
                       startdate=module.params['startdate'],
                       startup=module.params['startup'],
                       tablet=module.params['tablet'],
