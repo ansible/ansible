@@ -81,7 +81,7 @@ class LookupModule(LookupBase):
         for term in terms:
             display.vvvv("url lookup connecting to %s" % term)
             try:
-                response = open_url(term, validate_certs=validate_certs, use_proxy=use_proxy, url_username=username, url_password=password)
+                response = open_url(term, validate_certs=validate_certs, use_proxy=use_proxy, url_username=url_username, url_password=url_password)
             except HTTPError as e:
                 raise AnsibleError("Received HTTP error for %s : %s" % (term, str(e)))
             except URLError as e:
