@@ -68,20 +68,17 @@ def main():
 
     msg = module.params['msg']
     voice = module.params['voice']
+    possibles = ('say', 'espeak', 'espeak-ng')
 
-    executable = module.get_bin_path('say')
-    if not executable:
-        executable = module.get_bin_path('espeak')
-        if not executable:
-            executable = module.get_bin_path('espeak-ng')
-    elif get_platform() != 'Darwin':
-        # 'say' binary available, it might be GNUstep tool which doesn't support 'voice' parameter
-        voice = None
-        module.warn("'say' executable found but system is '%s': ignoring voice parameter" % get_platform())
-
-    if not executable:
-        module.fail_json(msg="Unable to find either 'say', 'espeak' or 'espeak-ng' executable")
-
+    for possible in possibles:
+        executable = module.get_bin_path(possible)
+        if executable and get_platform() != 'Darwin':
+            # 'say' binary available, it might be GNUstep tool which doesn't support 'voice' parameter
+            voice = None
+        elif executable:
+            break
+        else:
+            module.fail_json(msg='Unable to find either %s' % ', '.join(possibles))
     if module.check_mode:
         module.exit_json(msg=msg, changed=False)
 
