@@ -630,4 +630,3 @@
       - "yum_result is changed"
   when: not supports_disable_excludes
 # end test case where disable_excludes is not supported
-
