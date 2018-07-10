@@ -2,6 +2,7 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
+
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -33,9 +34,34 @@ DOCUMENTATION = """
            - The target to connect to, must be a resolvable address.
         env:
           - name: ANSIBLE_CONSUL_URL
+        ini:
+          - section: lookup_consul
+            key: host
       port:
         description: The port of the target host to connect to.
         default: 8500
+      scheme:
+        default: http
+        description: Whether to use http or https
+        version_added: '2.7'
+      validate_certs:
+        default: True
+        description: Whether to verify the ssl connection or not
+        env:
+          - name: ANSIBLE_CONSUL_VALIDATE_CERTS
+        ini:
+          - section: lookup_consul
+            key: validate_certs
+        version_added: '2.7'
+      client_cert:
+        default: None
+        description: The client cert to verify the ssl connection
+        env:
+          - name: ANSIBLE_CONSUL_CLIENT_CERT
+        ini:
+          - section: lookup_consul
+            key: client_cert
+        version_added: '2.7'
 """
 
 EXAMPLES = """
@@ -62,7 +88,6 @@ RETURN = """
 """
 
 import os
-import sys
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.plugins.lookup import LookupBase
@@ -74,6 +99,7 @@ except ImportError:
 
 try:
     import consul
+
     HAS_CONSUL = True
 except ImportError as e:
     HAS_CONSUL = False
@@ -84,7 +110,8 @@ class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
 
         if not HAS_CONSUL:
-            raise AnsibleError('python-consul is required for consul_kv lookup. see https://python-consul.readthedocs.io/en/latest/#installation')
+            raise AnsibleError(
+                'python-consul is required for consul_kv lookup. see http://python-consul.readthedocs.org/en/latest/#installation')
 
         values = []
         try:
@@ -92,12 +119,19 @@ class LookupModule(LookupBase):
                 params = self.parse_params(term)
                 try:
                     url = os.environ['ANSIBLE_CONSUL_URL']
+                    validate_certs = os.environ['ANSIBLE_CONSUL_VALIDATE_CERTS'] or True
+                    client_cert = os.environ['ANSIBLE_CONSUL_CLIENT_CERT']
                     u = urlparse(url)
-                    consul_api = consul.Consul(host=u.hostname, port=u.port, scheme=u.scheme)
+                    consul_api = consul.Consul(host=u.hostname, port=u.port, scheme=u.scheme, verify=validate_certs,
+                                               cert=client_cert)
                 except KeyError:
                     port = kwargs.get('port', '8500')
                     host = kwargs.get('host', 'localhost')
-                    consul_api = consul.Consul(host=host, port=port)
+                    scheme = kwargs.get('scheme', 'http')
+                    validate_certs = kwargs.get('validate_certs', True)
+                    client_cert = kwargs.get('client_cert', None)
+                    consul_api = consul.Consul(host=host, port=port, scheme=scheme, verify=validate_certs,
+                                               cert=client_cert)
 
                 results = consul_api.kv.get(params['key'],
                                             token=params['token'],
