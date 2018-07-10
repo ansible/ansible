@@ -559,7 +559,7 @@
 
 - name: check wheter yum supports disableexcludes (>= 3.4)
   set_fact:
-    supports_disable_excludes: yum_version is version_compare('3.4.0', '>=')
+    supports_disable_excludes: "{{ yum_version is version_compare('3.4.0', '>=') }}"
 
 - name: uninstall zip
   yum: name=zip state=removed
@@ -569,7 +569,7 @@
   ignore_errors: True
   register: rpm_zip_result
 
-- name: verify packages installed
+- name: verify zip is uninstalled
   assert:
     that:
       - "rpm_zip_result is failed"
