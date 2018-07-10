@@ -182,6 +182,13 @@ class ActionModule(ActionBase):
             # finally run test command to ensure everything is working
             def run_test_command():
                 display.vvv("attempting post-reboot test command '%s'" % test_command)
+
+                try:
+                    # reset to avoid a stale connection
+                    self._connection._reset()
+                except (AnsibleError, AttributeError):
+                    display.debug("Failed to reset connection")
+
                 (rc, stdout, stderr) = self._connection.exec_command(test_command)
 
                 if rc != 0:
