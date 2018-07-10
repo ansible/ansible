@@ -336,9 +336,8 @@ def _recover_distribution_name(names):
         if _is_valid_distribution_name(name):
             if len(distribution_parts) > 0:
                 yield ",".join(distribution_parts)
-            distribution_parts = [name]
-        else:
-            distribution_parts.append(name)
+            distribution_parts = []
+        distribution_parts.append(name)
     yield ",".join(distribution_parts)
 
 
