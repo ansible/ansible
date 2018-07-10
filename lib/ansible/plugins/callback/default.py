@@ -207,6 +207,9 @@ class CallbackModule(CallbackBase):
         self._display.banner(msg)
 
     def v2_on_file_diff(self, result):
+        if self._last_task_banner != result._task._uuid:
+            self._print_task_banner(result._task)
+
         if result._task.loop and 'results' in result._result:
             for res in result._result['results']:
                 if 'diff' in res and res['diff'] and res.get('changed', False):
