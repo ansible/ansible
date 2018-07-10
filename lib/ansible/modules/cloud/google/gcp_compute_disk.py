@@ -173,6 +173,9 @@ options:
                       that protects this resource.
                 required: false
 extends_documentation_fragment: gcp
+notes:
+    - "API Reference: U(https://cloud.google.com/compute/docs/reference/latest/disks)"
+    - "Adding a persistent disk: U(https://cloud.google.com/compute/docs/disks/add-persistent-disk)"
 '''
 
 EXAMPLES = '''

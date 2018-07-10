@@ -76,6 +76,9 @@ options:
               users and the load balancer. Currently, exactly one SSL certificate must be specified.
         required: true
 extends_documentation_fragment: gcp
+notes:
+    - "API Reference: U(https://cloud.google.com/compute/docs/reference/latest/targetSslProxies)"
+    - "Setting Up SSL proxy for Google Cloud Load Balancing: U(https://cloud.google.com/compute/docs/load-balancing/tcp-ssl/)"
 '''
 
 EXAMPLES = '''

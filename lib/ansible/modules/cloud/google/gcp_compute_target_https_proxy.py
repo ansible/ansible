@@ -79,6 +79,9 @@ options:
             - A reference to the UrlMap resource that defines the mapping from URL to the BackendService.
         required: true
 extends_documentation_fragment: gcp
+notes:
+    - "API Reference: U(https://cloud.google.com/compute/docs/reference/latest/targetHttpsProxies)"
+    - "Official Documentation: U(https://cloud.google.com/compute/docs/load-balancing/http/target-proxies)"
 '''
 
 EXAMPLES = '''

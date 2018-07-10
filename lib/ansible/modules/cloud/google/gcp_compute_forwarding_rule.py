@@ -154,6 +154,9 @@ options:
             - This field is not applicable to global forwarding rules.
         required: true
 extends_documentation_fragment: gcp
+notes:
+    - "API Reference: U(https://cloud.google.com/compute/docs/reference/latest/forwardingRule)"
+    - "Official Documentation: U(https://cloud.google.com/compute/docs/load-balancing/network/forwarding-rules)"
 '''
 
 EXAMPLES = '''

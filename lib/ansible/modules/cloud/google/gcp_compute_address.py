@@ -92,6 +92,10 @@ options:
             - This field is not applicable to global addresses.
         required: true
 extends_documentation_fragment: gcp
+notes:
+    - "API Reference: U(https://cloud.google.com/compute/docs/reference/beta/addresses)"
+    - "Reserving a Static External IP Address: U(https://cloud.google.com/compute/docs/instances-and-network)"
+    - "Reserving a Static Internal IP Address: U(https://cloud.google.com/compute/docs/ip-addresses/reserve-static-internal-ip-address)"
 '''
 
 EXAMPLES = '''

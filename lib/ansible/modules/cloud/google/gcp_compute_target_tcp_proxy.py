@@ -71,6 +71,9 @@ options:
             - A reference to the BackendService resource.
         required: true
 extends_documentation_fragment: gcp
+notes:
+    - "API Reference: U(https://cloud.google.com/compute/docs/reference/latest/targetTcpProxies)"
+    - "Setting Up TCP proxy for Google Cloud Load Balancing: U(https://cloud.google.com/compute/docs/load-balancing/tcp-ssl/tcp-proxy)"
 '''
 
 EXAMPLES = '''

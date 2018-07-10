@@ -68,6 +68,9 @@ options:
         required: false
         choices: ['IPV4', 'IPV6']
 extends_documentation_fragment: gcp
+notes:
+    - "API Reference: U(https://cloud.google.com/compute/docs/reference/latest/globalAddresses)"
+    - "Reserving a Static External IP Address: U(https://cloud.google.com/compute/docs/ip-addresses/reserve-static-external-ip-address)"
 '''
 
 EXAMPLES = '''

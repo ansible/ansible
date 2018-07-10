@@ -120,6 +120,9 @@ options:
             - URL to a VpnTunnel that should handle matching packets.
         required: false
 extends_documentation_fragment: gcp
+notes:
+    - "API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/routes)"
+    - "Using Routes: U(https://cloud.google.com/vpc/docs/using-routes)"
 '''
 
 EXAMPLES = '''

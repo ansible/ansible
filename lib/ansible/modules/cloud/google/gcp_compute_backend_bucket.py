@@ -74,6 +74,9 @@ options:
               be a dash.
         required: true
 extends_documentation_fragment: gcp
+notes:
+    - "API Reference: U(https://cloud.google.com/compute/docs/reference/latest/backendBuckets)"
+    - "Using a Cloud Storage bucket as a load balancer backend: U(https://cloud.google.com/compute/docs/load-balancing/http/backend-bucket)"
 '''
 
 EXAMPLES = '''

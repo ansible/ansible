@@ -81,6 +81,9 @@ options:
               if the profile is not CUSTOM.
         required: false
 extends_documentation_fragment: gcp
+notes:
+    - "API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/sslPolicies)"
+    - "Using SSL Policies: U(https://cloud.google.com/compute/docs/load-balancing/ssl-policies)"
 '''
 
 EXAMPLES = '''

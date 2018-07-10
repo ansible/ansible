@@ -69,6 +69,8 @@ options:
             - The region this gateway should sit in.
         required: true
 extends_documentation_fragment: gcp
+notes:
+    - "API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/targetVpnGateways)"
 '''
 
 EXAMPLES = '''

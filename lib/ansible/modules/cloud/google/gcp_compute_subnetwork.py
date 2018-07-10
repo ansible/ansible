@@ -99,6 +99,10 @@ options:
             - URL of the GCP region for this subnetwork.
         required: true
 extends_documentation_fragment: gcp
+notes:
+    - "API Reference: U(https://cloud.google.com/compute/docs/reference/rest/beta/subnetworks)"
+    - "Private Google Access: U(https://cloud.google.com/vpc/docs/configure-private-google-access)"
+    - "Cloud Networking: U(https://cloud.google.com/vpc/docs/using-vpc)"
 '''
 
 EXAMPLES = '''

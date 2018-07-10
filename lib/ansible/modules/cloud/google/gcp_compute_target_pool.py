@@ -114,6 +114,9 @@ options:
             - The region where the target pool resides.
         required: true
 extends_documentation_fragment: gcp
+notes:
+    - "API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/targetPools)"
+    - "Official Documentation: U(https://cloud.google.com/compute/docs/load-balancing/network/target-pools)"
 '''
 
 EXAMPLES = '''
