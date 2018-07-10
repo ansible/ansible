@@ -203,7 +203,7 @@ def import_cert_path(module, executable, path, keystore_path, keystore_pass, ali
                                                                keystore_path,
                                                                keystore_pass,
                                                                path, alias,
-                                                               ('-trustcacert' if trust_ca_certs else ''))
+                                                               ('-trustcacerts' if trust_ca_certs else ''))
 
     if module.check_mode:
         module.exit_json(changed=True)
@@ -316,6 +316,7 @@ def main():
     pkcs12_path = module.params.get('pkcs12_path')
     pkcs12_pass = module.params.get('pkcs12_password', '')
     pkcs12_alias = module.params.get('pkcs12_alias', '1')
+    
     trust_ca_certs = module.params.get('trust_ca_certs')
 
     cert_alias = module.params.get('cert_alias') or url
