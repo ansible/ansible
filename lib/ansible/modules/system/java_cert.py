@@ -37,6 +37,7 @@ options:
       - Indicator whether to use -trustcacerts option in keytool command or not.
     choices: [ "yes", "no" ]
     default: "no"
+    version_added: "2.7"
   pkcs12_path:
     description:
       - Local path to load PKCS12 keystore from.
@@ -200,10 +201,10 @@ def import_cert_path(module, executable, path, keystore_path, keystore_pass, ali
         keystore_path as alias '''
     import_cmd = ("%s -importcert -noprompt -keystore '%s' "
                   "-storepass '%s' -file '%s' -alias '%s' %s") % (executable,
-                                                               keystore_path,
-                                                               keystore_pass,
-                                                               path, alias,
-                                                               ('-trustcacerts' if trust_ca_certs else ''))
+                                                                  keystore_path,
+                                                                  keystore_pass,
+                                                                  path, alias,
+                                                                  ('-trustcacerts' if trust_ca_certs else ''))
 
     if module.check_mode:
         module.exit_json(changed=True)
@@ -290,7 +291,7 @@ def main():
         pkcs12_password=dict(type='str', no_log=True),
         pkcs12_alias=dict(type='str'),
         cert_alias=dict(type='str'),
-        trust_ca_certs=dict(type='bool', default=False),
+        trust_ca_certs=dict(type='bool', default="no", choices=['yes', 'no']),
         cert_port=dict(type='int', default='443'),
         keystore_path=dict(type='path'),
         keystore_pass=dict(type='str', required=True, no_log=True),
@@ -316,7 +317,7 @@ def main():
     pkcs12_path = module.params.get('pkcs12_path')
     pkcs12_pass = module.params.get('pkcs12_password', '')
     pkcs12_alias = module.params.get('pkcs12_alias', '1')
-    
+
     trust_ca_certs = module.params.get('trust_ca_certs')
 
     cert_alias = module.params.get('cert_alias') or url
