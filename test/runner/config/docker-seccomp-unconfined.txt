@@ -1,0 +1,9 @@
+centos6
+centos7
+fedora24
+fedora25
+opensuse42.2
+opensuse42.3
+ubuntu1404
+ubuntu1604
+ubuntu1604py3
