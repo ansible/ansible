@@ -12,7 +12,7 @@ from ansible.parsing.dataloader import DataLoader
 from ansible.vars.clean import strip_internal_keys
 
 _IGNORE = ('failed', 'skipped')
-_PRESERVE = ('attempts', 'changed', 'retries')
+_PRESERVE = ('attempts', 'changed', 'retries', '_ansible_delegated_vars')
 
 
 class TaskResult:
