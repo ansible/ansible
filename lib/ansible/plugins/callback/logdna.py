@@ -52,6 +52,7 @@ DOCUMENTATION = '''
         ini:
           - section: callback_logdna
             key: conf_tags
+        default: ansible
 '''
 
 import logging
@@ -59,6 +60,7 @@ import json
 import socket
 from uuid import getnode
 from ansible.plugins.callback import CallbackBase
+from ansible.parsing.ajson import AnsibleJSONEncoder
 
 try:
     from logdna import LogDNAHandler
@@ -97,7 +99,7 @@ def get_ip():
 # Is it JSON?
 def isJSONable(obj):
     try:
-        json.dumps(obj)
+        json.dumps(obj, sort_keys=True, cls=AnsibleJSONEncoder)
         return True
     except BaseException:
         return False
@@ -135,25 +137,17 @@ class CallbackModule(CallbackBase):
         if self.conf_hostname is None:
             self.conf_hostname = get_hostname()
 
-        if self.conf_tags is None:
-            self.conf_tags = ['ansible']
-        else:
-            self.conf_tags = self.conf_tags.split(',')
+        self.conf_tags = self.conf_tags.split(',')
 
-        if self.conf_key is None:
-            self.disabled = True
-            self._display.warning('WARNING:\nLogDNA Ingestion Key has not been provided!')
-        else:
+        if HAS_LOGDNA:
+            self.log = logging.getLogger('logdna')
+            self.log.setLevel(logging.INFO)
+            self.options = {'hostname': self.conf_hostname, 'mac': self.mac, 'index_meta': True}
+            self.log.addHandler(LogDNAHandler(self.conf_key, self.options))
             self.disabled = False
-            if HAS_LOGDNA:
-                self.log = logging.getLogger('logdna')
-                self.log.setLevel(logging.INFO)
-                self.options = {'hostname': self.conf_hostname, 'mac': self.mac, 'index_meta': True}
-                self.log.addHandler(LogDNAHandler(self.conf_key, self.options))
-                self.disabled = False
-            else:
-                self.disabled = True
-                self._display.warning('WARNING:\nPlease, install LogDNA Python Package: `pip install logdna`')
+        else:
+            self.disabled = True
+            self._display.warning('WARNING:\nPlease, install LogDNA Python Package: `pip install logdna`')
 
     def metaIndexing(self, meta):
         invalidKeys = []
@@ -170,9 +164,9 @@ class CallbackModule(CallbackBase):
 
     def sanitizeJSON(self, data):
         try:
-            return json.loads(json.dumps(data))
+            return json.loads(json.dumps(data, sort_keys=True, cls=AnsibleJSONEncoder))
         except BaseException:
-            return {'warnings': ['JSON Formatting Issue', json.dumps(data)]}
+            return {'warnings': ['JSON Formatting Issue', json.dumps(data, sort_keys=True, cls=AnsibleJSONEncoder)]}
 
     def flush(self, log, options):
         if HAS_LOGDNA:
