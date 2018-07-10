@@ -148,7 +148,7 @@ except ImportError:
 def managed_disk_to_dict(managed_disk):
     os_type = None
     if managed_disk.os_type:
-        os_type = managed_disk.os_type.name
+        os_type = managed_disk.os_type.value
     result = dict(
         id=managed_disk.id,
         name=managed_disk.name,
