@@ -136,6 +136,16 @@ import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
+def try_recv(sock, num=1024):
+    '''reads from socket and responds to ping if necessary'''
+    while True:
+        ret = sock.recv(num)
+        ping = re.search(r"^PING\s:(\w*)\s*", ret)
+        if ping and ping.group(1):
+            sock.send("PONG :%s\r\n" % ping.group(1))
+        else:
+            break
+    return ret
 
 def send_msg(msg, server='localhost', port='6667', channel=None, nick_to=None, key=None, topic=None,
              nick="ansible", color='none', passwd=False, timeout=30, use_ssl=False, part=True, style=None):
@@ -192,7 +202,7 @@ def send_msg(msg, server='localhost', port='6667', channel=None, nick_to=None, k
     motd = ''
     start = time.time()
     while 1:
-        motd += irc.recv(1024)
+        motd += try_recv(irc)
         # The server might send back a shorter nick than we specified (due to NICKLEN),
         #  so grab that and use it from now on (assuming we find the 00[1-4] response).
         match = re.search(r'^:\S+ 00[1-4] (?P<nick>\S+) :', motd, flags=re.M)
@@ -211,8 +221,8 @@ def send_msg(msg, server='localhost', port='6667', channel=None, nick_to=None, k
     join = ''
     start = time.time()
     while 1:
-        join += irc.recv(1024)
-        if re.search(r'^:\S+ 366 %s %s :' % (nick, channel), join, flags=re.M):
+        join += try_recv(irc)
+        if re.search('^:\S+ 366 %s %s :' % (nick, channel), join, flags=re.M):
             break
         elif time.time() - start > timeout:
             raise Exception('Timeout waiting for IRC JOIN response')
@@ -254,7 +264,7 @@ def main():
                                                                     "light_blue", "pink", "gray",
                                                                     "light_gray", "none"]),
             style=dict(default="none", choices=["underline", "reverse", "bold", "italic", "none"]),
-            channel=dict(required=False),
+            channel=dict(required=True),
             key=dict(no_log=True),
             topic=dict(),
             passwd=dict(no_log=True),
