@@ -99,7 +99,10 @@ def ensure_type(value, value_type, origin=None):
                 value = value.split(',')
             value = [resolve_path(x, basedir=basedir) for x in value]
 
-        # defaults to string types
+        elif value_type in ('str', 'string'):
+            value = unquote(to_text(value, errors='surrogate_or_strict'))
+
+        # defaults to string type
         elif isinstance(value, string_types):
             value = unquote(value)
 
