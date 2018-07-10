@@ -10,31 +10,47 @@ DOCUMENTATION = '''
     short_description: Sends playbook logs to LogDNA
     description:
       - This callback will report logs from playbook actions, tasks, and events to LogDNA (https://app.logdna.com)
-    version_added: 2.5.2
+    version_added: 0.1
     requirements:
       - whitelisting in configuration
     options:
       conf_key:
         required: True
         description: LogDNA Ingestion Key
+        type: string
         env:
           - name: LOGDNA_INGESTION_KEY
+        ini:
+          - section: callback_logdna
+            key: conf_key
       plugin_ignore_errors:
         required: False
         description: Whether to ignore errors on failing or not
+        type: boolean
         env:
           - name: ANSIBLE_IGNORE_ERRORS
+        ini:
+          - section: callback_logdna
+            key: plugin_ignore_errors
         default: False
       conf_hostname:
         required: False
-        description: Alternative Host Name
+        description: Alternative Host Name; the current host name by default
+        type: string
         env:
           - name: LOGDNA_HOSTNAME
+        ini:
+          - section: callback_logdna
+            key: conf_hostname
       conf_tags:
         required: False
         description: Tags
+        type: string
         env:
           - name: LOGDNA_TAGS
+        ini:
+          - section: callback_logdna
+            key: conf_tags
 '''
 
 import logging
@@ -115,19 +131,13 @@ class CallbackModule(CallbackBase):
         self.mac = get_mac()
         self.ip = get_ip()
 
-        if self.plugin_ignore_errors is None:
-            self.plugin_ignore_errors = False
-
         if self.conf_hostname is None:
             self.conf_hostname = get_hostname()
 
         if self.conf_tags is None:
             self.conf_tags = ['ansible']
         else:
-            if isinstance(self.conf_tags, str):
-                self.conf_tags = self.conf_tags.split(',')
-            elif not isinstance(self.conf_tags, list):
-                self.conf_tags = [str(self.conf_tags)]
+            self.conf_tags = self.conf_tags.split(',')
 
         if self.conf_key is None:
             self.disabled = True
@@ -168,13 +178,12 @@ class CallbackModule(CallbackBase):
             self.log.info(json.dumps(log), options)
 
     def sendLog(self, host, category, logdata):
-        if not self.disabled:
-            options = {'app': 'ansible', 'meta': {'playbook': self.playbook_name, 'host': host, 'category': category}}
-            logdata['info'].pop('invocation', None)
-            warnings = logdata['info'].pop('warnings', None)
-            if warnings is not None:
-                self.flush({'warn': warnings}, options)
-            self.flush(logdata, options)
+        options = {'app': 'ansible', 'meta': {'playbook': self.playbook_name, 'host': host, 'category': category}}
+        logdata['info'].pop('invocation', None)
+        warnings = logdata['info'].pop('warnings', None)
+        if warnings is not None:
+            self.flush({'warn': warnings}, options)
+        self.flush(logdata, options)
 
     def v2_playbook_on_start(self, playbook):
         self.playbook = playbook
