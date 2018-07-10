@@ -92,6 +92,7 @@ _raw:
 import os
 import string
 import time
+import shutil
 
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -162,19 +163,11 @@ def _read_password_file(b_path):
         None if no password file was present.
     """
     content = None
-    fd = -1
-    try:
-        fd = os.open(b_path, os.O_CREAT | os.O_EXCL)
-        os.close(fd)
-    except OSError as e:
-        if e.strerror == 'File exists':
-            while os.stat(b_path).st_size <= 0:
-                    time.sleep(0.1)
-            with open(b_path, 'rb') as f:
-                b_content = f.read().rstrip()
-                content = to_text(b_content, errors='surrogate_or_strict')
-        else:
-            raise e
+
+    if os.path.exists(b_path):
+        with open(b_path, 'rb') as f:
+            b_content = f.read().rstrip()
+        content = to_text(b_content, errors='surrogate_or_strict')
 
     return content
 
@@ -266,6 +259,9 @@ def _format_content(password, salt, encrypt=True):
 
 
 def _write_password_file(b_path, content):
+    b_pathdir = os.path.dirname(b_path)
+    makedirs_safe(b_pathdir, mode=0o700)
+
     with open(b_path, 'wb') as f:
         os.chmod(b_path, 0o600)
         b_content = to_bytes(content, errors='surrogate_or_strict') + b'\n'
@@ -284,12 +280,27 @@ class LookupModule(LookupBase):
 
             content = None
             changed = False
-            if b_path != to_bytes('/dev/null'):
-                b_pathdir = os.path.dirname(b_path)
-                makedirs_safe(b_pathdir, mode=0o700)
+            writer_process = False
+            if not os.path.exists(b_path):
+                try:
+                    fd = os.open("./ansible_password_lookup.lockfile", os.O_CREAT | os.O_EXCL)
+                    writer_process = True
+                    os.close(fd)
+                except OSError as e:
+                    if e.strerror == 'File exists':
+                        timeout = 0
+                        while os.path.exists("./ansible_password_lookup.lockfile"):
+                            time.sleep(0.1)
+                            timeout += 1
+                            if timeout > 20:
+                                raise AnsibleError("Password lookup cannot get the lock in 2 seconds, abort...\n"
+                                                   "This may caused by un-removed lockfile, you can manually remove it")
+                    else:
+                        raise
+            if not writer_process:
                 content = _read_password_file(b_path)
 
-            if content is None or b_path == to_bytes('/dev/null'):
+            if writer_process or b_path == to_bytes('/dev/null'):
                 plaintext_password = random_password(params['length'], chars)
                 salt = None
                 changed = True
@@ -300,9 +311,10 @@ class LookupModule(LookupBase):
                 changed = True
                 salt = _random_salt()
 
-            if changed and b_path != to_bytes('/dev/null'):
+            if changed and writer_process and b_path != to_bytes('/dev/null'):
                 content = _format_content(plaintext_password, salt, encrypt=params['encrypt'])
                 _write_password_file(b_path, content)
+                os.remove("./ansible_password_lookup.lockfile")
 
             if params['encrypt']:
                 password = do_encrypt(plaintext_password, params['encrypt'], salt=salt)
