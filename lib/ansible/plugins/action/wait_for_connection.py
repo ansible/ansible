@@ -22,8 +22,6 @@ __metaclass__ = type
 import time
 from datetime import datetime, timedelta
 
-from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_native
 from ansible.plugins.action import ActionBase
 
 try:
@@ -84,11 +82,7 @@ class ActionModule(ActionBase):
             display.vvv("wait_for_connection: attempting ping module test")
             # call connection reset between runs if it's there
             try:
-                self._connection.reset()
-            except AnsibleError as e:
-                display.debug("wait_for_connection: connection reset failed, "
-                              "attempting to continue ping test: %s"
-                              % to_native(e))
+                self._connection._reset()
             except AttributeError:
                 pass
 
