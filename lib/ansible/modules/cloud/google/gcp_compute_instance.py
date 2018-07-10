@@ -249,7 +249,7 @@ options:
                               field undefined to use an IP from a shared ephemeral IP address pool. If you specify
                               a static external IP address, it must live in the same region as the zone of the
                               instance.
-                        required: true
+                        required: false
                     type:
                         description:
                             - The type of configuration. The default and only option is ONE_TO_ONE_NAT.
@@ -875,7 +875,7 @@ def main():
             network_interfaces=dict(type='list', elements='dict', options=dict(
                 access_configs=dict(type='list', elements='dict', options=dict(
                     name=dict(required=True, type='str'),
-                    nat_ip=dict(required=True, type='dict'),
+                    nat_ip=dict(type='dict'),
                     type=dict(required=True, type='str', choices=['ONE_TO_ONE_NAT'])
                 )),
                 alias_ip_ranges=dict(type='list', elements='dict', options=dict(
