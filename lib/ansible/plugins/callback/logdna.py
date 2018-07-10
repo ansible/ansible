@@ -10,8 +10,9 @@ DOCUMENTATION = '''
     short_description: Sends playbook logs to LogDNA
     description:
       - This callback will report logs from playbook actions, tasks, and events to LogDNA (https://app.logdna.com)
-    version_added: 0.1
+    version_added: 2.7
     requirements:
+      - LogDNA Python Library (https://github.com/logdna/python)
       - whitelisting in configuration
     options:
       conf_key:
