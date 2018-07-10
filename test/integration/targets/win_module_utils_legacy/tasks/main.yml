@@ -1,0 +1,41 @@
+# NB: these tests are just a placeholder until we have pester unit tests.
+# They are being run as part of the Windows smoke tests. Please do not significantly
+# increase the size of these tests, as the smoke tests need to remain fast.
+# Any significant additions should be made to the (as yet nonexistent) PS module_utils unit tests.
+
+- name: find a nonexistent drive letter
+  raw: foreach($c in [char[]]([char]'D'..[char]'Z')) { If (-not $(Get-PSDrive $c -ErrorAction SilentlyContinue)) { return $c } }
+  register: bogus_driveletter
+
+- assert:
+    that: bogus_driveletter.stdout_lines[0] | length == 1
+
+- name: test path shape validation
+  testpath:
+    path: "{{ item.path }}"
+  failed_when: path_shapes is failed != (item.should_fail | default(false))
+  register: path_shapes
+  with_items:
+  - path: C:\Windows
+  - path: HKLM:\Software
+  - path: '{{ bogus_driveletter.stdout_lines[0] }}:\goodpath'
+  - path: '{{ bogus_driveletter.stdout_lines[0] }}:\badpath*%@:\blar'
+    should_fail: true
+
+- name: test list parameters
+  testlist:
+    value: '{{item.value}}'
+  register: list_tests
+  failed_when: list_tests is failed or list_tests.count != item.count
+  with_items:
+  - value: []
+    count: 0
+  - value:
+    - 1
+    - 2
+    count: 2
+  - value:
+    - 1
+    count: 1
+  - value: "1, 2"
+    count: 2

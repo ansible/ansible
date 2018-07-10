@@ -1,0 +1,181 @@
+---
+- name: Remove users prior to tests
+  iosxr_config:
+    lines:
+      - no username ansible1
+      - no username ansible2
+      - no username ansible3
+    provider: "{{ cli }}"
+  connection: network_cli
+
+- name: Create user (SetUp)
+  iosxr_user:
+    name: ansible1
+    configured_password: password
+    state: present
+    provider: "{{ netconf }}"
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"ansible1" in result.xml[0]'
+      - '"secret" in result.xml[0]'
+
+- name: Create user with update_password always (not idempotent)
+  iosxr_user:
+    name: ansible1
+    configured_password: password
+    update_password: always
+    state: present
+    provider: "{{ netconf }}"
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"ansible1" in result.xml[0]'
+      - '"secret" in result.xml[0]'
+
+- name: Create user again with update_password on_create (idempotent)
+  iosxr_user:
+    name: ansible1
+    configured_password: password
+    update_password: on_create
+    state: present
+    provider: "{{ netconf }}"
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+      - 'result.xml | length == 0'
+
+- name: Modify user group
+  iosxr_user:
+    name: ansible1
+    configured_password: password
+    update_password: on_create
+    group: sysadmin
+    state: present
+    provider: "{{ netconf }}"
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"ansible1" in result.xml[0]'
+      - '"sysadmin" in result.xml[0]'
+
+- name: Modify user group again (idempotent)
+  iosxr_user:
+    name: ansible1
+    configured_password: password
+    update_password: on_create
+    group: sysadmin
+    state: present
+    provider: "{{ netconf }}"
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+      - 'result.xml | length == 0'
+
+- name: Collection of users (SetUp)
+  iosxr_user:
+    aggregate:
+      - name: ansible2
+      - name: ansible3
+    configured_password: password
+    state: present
+    group: sysadmin
+    provider: "{{ netconf }}"
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"ansible2" in result.xml[0]'
+      - '"secret" in result.xml[0]'
+      - '"sysadmin" in result.xml[1]'
+      - '"ansible2" in result.xml[0]'
+      - '"secret" in result.xml[0]'
+      - '"sysadmin" in result.xml[1]'
+
+- name: Add collection of users again with update_password always (not idempotent)
+  iosxr_user:
+    aggregate:
+      - name: ansible2
+      - name: ansible3
+    configured_password: password
+    state: present
+    group: sysadmin
+    provider: "{{ netconf }}"
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"ansible2" in result.xml[0]'
+      - '"ansible3" in result.xml[0]'
+      - '"secret" in result.xml[0]'
+
+- name: Add collection of users again with update_password on_create (idempotent)
+  iosxr_user:
+    aggregate:
+      - name: ansible2
+      - name: ansible3
+    configured_password: password
+    update_password: on_create
+    state: present
+    group: sysadmin
+    provider: "{{ netconf }}"
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+      - 'result.xml | length == 0'
+
+- name: Delete collection of users
+  iosxr_user:
+    aggregate:
+      - name: ansible1
+      - name: ansible2
+      - name: ansible3
+    state: absent
+    provider: "{{ netconf }}"
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"ansible1" in result.xml[0]'
+      - '"ansible2" in result.xml[0]'
+      - '"ansible3" in result.xml[0]'
+
+- name: Delete collection of users again (idempotent)
+  iosxr_user:
+    aggregate:
+      - name: ansible1
+      - name: ansible2
+      - name: ansible3
+    state: absent
+    provider: "{{ netconf }}"
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+      - 'result.xml | length == 0'

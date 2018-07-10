@@ -1,0 +1,42 @@
+{
+    "data": {
+        "lags": [
+            {
+                "awsDevice": "EqSe2-1bwfvazist2k0",
+                "connections": [
+                    {
+                        "bandwidth": "1Gbps",
+                        "connectionName": "Requested Connection 1 for Lag dxlag-fgkk4dja",
+                        "location": "EqSe2",
+                        "ownerAccount": "448830907657",
+                        "lagId": "dxlag-fgkk4dja",
+                        "region": "us-west-2",
+                        "connectionState": "requested",
+                        "connectionId": "dxcon-ffx41o23"
+                    }
+                ],
+                "lagState": "pending",
+                "minimumLinks": 0,
+                "location": "EqSe2",
+                "connectionsBandwidth": "1Gbps",
+                "ownerAccount": "448830907657",
+                "region": "us-west-2",
+                "numberOfConnections": 1,
+                "lagName": "ansible_lag_1",
+                "lagId": "dxlag-fgkk4dja"
+            }
+        ],
+        "ResponseMetadata": {
+            "RetryAttempts": 0,
+            "HTTPStatusCode": 200,
+            "HTTPHeaders": {
+                "content-type": "application/x-amz-json-1.1",
+                "x-amzn-requestid": "be79c564-70a7-11e7-83ab-ef16f9ac5159",
+                "content-length": "520",
+                "date": "Mon, 24 Jul 2017 19:39:01 GMT"
+            },
+            "RequestId": "be79c564-70a7-11e7-83ab-ef16f9ac5159"
+        }
+    },
+    "status_code": 200
+}

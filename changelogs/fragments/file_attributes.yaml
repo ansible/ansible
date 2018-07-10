@@ -1,0 +1,4 @@
+---
+minor_changes:
+- 'Setting file attributes (via the file module amongst others) now accepts
+  + and - modifiers to add or remove individual attributes. (https://github.com/ansible/ansible/issues/33838)'

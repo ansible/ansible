@@ -1,22 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -131,15 +123,15 @@ snapshots_absent:
     sample: "[disk0-example-snapshot, disk1-example-snapshot]"
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.gce import gce_connect
-
 try:
     from libcloud.compute.types import Provider
     _ = Provider.GCE
     HAS_LIBCLOUD = True
 except ImportError:
     HAS_LIBCLOUD = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.gce import gce_connect
 
 
 def find_snapshot(volume, name):
@@ -199,31 +191,32 @@ def main():
     instance_disks = instance.extra['disks']
 
     for instance_disk in instance_disks:
+        disk_snapshot_name = snapshot_name
         device_name = instance_disk['deviceName']
         if disks is None or device_name in disks:
             volume_obj = gce.ex_get_volume(device_name)
 
             # If we have more than one disk to snapshot, prepend the disk name
             if len(instance_disks) > 1:
-                snapshot_name = device_name + "-" + snapshot_name
+                disk_snapshot_name = device_name + "-" + disk_snapshot_name
 
-            snapshot = find_snapshot(volume_obj, snapshot_name)
+            snapshot = find_snapshot(volume_obj, disk_snapshot_name)
 
             if snapshot and state == 'present':
-                json_output['snapshots_existing'].append(snapshot_name)
+                json_output['snapshots_existing'].append(disk_snapshot_name)
 
             elif snapshot and state == 'absent':
                 snapshot.destroy()
                 json_output['changed'] = True
-                json_output['snapshots_deleted'].append(snapshot_name)
+                json_output['snapshots_deleted'].append(disk_snapshot_name)
 
             elif not snapshot and state == 'present':
-                volume_obj.snapshot(snapshot_name)
+                volume_obj.snapshot(disk_snapshot_name)
                 json_output['changed'] = True
-                json_output['snapshots_created'].append(snapshot_name)
+                json_output['snapshots_created'].append(disk_snapshot_name)
 
             elif not snapshot and state == 'absent':
-                json_output['snapshots_absent'].append(snapshot_name)
+                json_output['snapshots_absent'].append(disk_snapshot_name)
 
     module.exit_json(**json_output)
 

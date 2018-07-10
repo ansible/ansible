@@ -1,0 +1,5 @@
+---
+test_cs_configuration_storage: PS0-adv
+test_cs_configuration_cluster: C0-basic
+test_cs_configuration_account: admin
+test_cs_configuration_zone: Sandbox-simulator-basic

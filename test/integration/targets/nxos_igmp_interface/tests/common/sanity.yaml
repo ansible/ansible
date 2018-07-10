@@ -1,0 +1,192 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_igmp_interface sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+# Select interface for test
+- set_fact: intname="{{ nxos_int1 }}"
+
+- set_fact: restart="true"
+  when: platform is not match("N35")
+
+- name: "Enable feature PIM"
+  nxos_feature:
+    feature: pim
+    provider: "{{ connection }}"
+    state: enabled
+  ignore_errors: yes
+
+- name: Put interface in default mode
+  nxos_config:
+    commands:
+    - "default interface {{ intname }}"
+    match: none
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- block:
+  
+  - name: put interface in L3 and enable PIM
+    nxos_config:
+      commands:
+        - no switchport
+        - ip pim sparse-mode
+      parents:
+        - "interface {{ intname }}"
+      match: none
+      provider: "{{ connection }}"
+
+  - name: Configure igmp interface with non-default values
+    nxos_igmp_interface: &non-default
+      interface: "{{ intname }}"
+      version: 3
+      startup_query_interval: 60
+      startup_query_count: 5
+      robustness: 6
+      querier_timeout: 2000
+      query_mrt: 12
+      query_interval: 200
+      last_member_qrt: 2
+      last_member_query_count: 4
+      report_llg: true
+      immediate_leave: true
+      group_timeout: 300
+      # deprecated
+      oif_prefix: 239.255.255.2
+      oif_source: 192.0.2.1
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Check Idempotence - Configure igmp interface with non-default values"
+    nxos_igmp_interface: *non-default
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Configure igmp interface with some default values
+    nxos_igmp_interface: &sdef
+      interface: "{{ intname }}"
+      version: default
+      startup_query_interval: default
+      startup_query_count: default
+      robustness: default
+      querier_timeout: default
+      query_mrt: default
+      query_interval: default
+      last_member_qrt: default
+      last_member_query_count: default
+      group_timeout: default
+      oif_ps:
+        - {'prefix': '238.2.2.6'}
+        - {'prefix': '238.2.2.5'}
+        - {'source': '192.0.2.1', 'prefix': '238.2.2.5'}
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence - Configure igmp interface with some default values"
+    nxos_igmp_interface: *sdef
+    register: result
+
+  - assert: *false
+
+  - name: restart igmp
+    nxos_igmp_interface: &restart
+      interface: "{{ intname }}"
+      restart: "{{restart|default(omit)}}"
+      provider: "{{ connection }}"
+
+  - name: Configure igmp interface with default oif_ps
+    nxos_igmp_interface: &defoif
+      interface: "{{ intname }}"
+      oif_ps: default
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence - Configure igmp interface with default oif_ps"
+    nxos_igmp_interface: *defoif
+    register: result
+
+  - assert: *false
+
+  - name: Configure igmp interface with oif_routemap
+    nxos_igmp_interface: &orm
+      interface: "{{ intname }}"
+      version: 3
+      startup_query_interval: 60
+      startup_query_count: 5
+      robustness: 6
+      oif_routemap: abcd
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence - Configure igmp interface with oif_routemap"
+    nxos_igmp_interface: *orm
+    register: result
+
+  - assert: *false
+
+  - name: Configure igmp interface with default state
+    nxos_igmp_interface: &default
+      interface: "{{ intname }}"
+      provider: "{{ connection }}"
+      state: default
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence - Configure igmp interface with default state"
+    nxos_igmp_interface: *default
+    register: result
+
+  - assert: *false
+
+  - name: Configure igmp interface with absent state
+    nxos_igmp_interface: &absent
+      interface: "{{ intname }}"
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence - Configure igmp interface with absent state"
+    nxos_igmp_interface: *absent
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: Configure igmp interface with absent state
+    nxos_igmp_interface: *absent
+    register: result
+
+  - name: Put interface in default mode
+    nxos_config:
+      commands:
+      - "default interface {{ intname }}"
+      match: none
+      provider: "{{ connection }}"
+
+  - name: "Disable feature PIM"
+    nxos_feature:
+      feature: pim
+      provider: "{{ connection }}"
+      state: disabled
+
+  - debug: msg="END connection={{ ansible_connection }} nxos_igmp_interface sanity test"

@@ -2,23 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Nimbis Services, Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -63,7 +53,7 @@ options:
       - Whether the user entry should be present or not
   create:
     required: false
-    choices: [ "yes", "no" ]
+    type: bool
     default: "yes"
     description:
       - Used with C(state=present). If specified, the file will be created
@@ -75,6 +65,7 @@ notes:
   - "On RHEL or CentOS: Enable EPEL, then install I(python-passlib)."
 requirements: [ passlib>=1.6 ]
 author: "Ansible Core Team"
+extends_documentation_fragment: files
 """
 
 EXAMPLES = """
@@ -104,8 +95,9 @@ EXAMPLES = """
 
 import os
 import tempfile
-from distutils.version import StrictVersion
-
+from distutils.version import LooseVersion
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 try:
     from passlib.apache import HtpasswdFile, htpasswd_context
     from passlib.context import CryptContext
@@ -138,7 +130,7 @@ def present(dest, username, password, crypt_scheme, create, check_mode):
         if check_mode:
             return ("Create %s" % dest, True)
         create_missing_directories(dest)
-        if StrictVersion(passlib.__version__) >= StrictVersion('1.6'):
+        if LooseVersion(passlib.__version__) >= LooseVersion('1.6'):
             ht = HtpasswdFile(dest, new=True, default_scheme=crypt_scheme, context=context)
         else:
             ht = HtpasswdFile(dest, autoload=False, default=crypt_scheme, context=context)
@@ -149,7 +141,7 @@ def present(dest, username, password, crypt_scheme, create, check_mode):
         ht.save()
         return ("Created %s and added %s" % (dest, username), True)
     else:
-        if StrictVersion(passlib.__version__) >= StrictVersion('1.6'):
+        if LooseVersion(passlib.__version__) >= LooseVersion('1.6'):
             ht = HtpasswdFile(dest, new=False, default_scheme=crypt_scheme, context=context)
         else:
             ht = HtpasswdFile(dest, default=crypt_scheme, context=context)
@@ -176,7 +168,7 @@ def absent(dest, username, check_mode):
     """ Ensures user is absent
 
     Returns (msg, changed) """
-    if StrictVersion(passlib.__version__) >= StrictVersion('1.6'):
+    if LooseVersion(passlib.__version__) >= LooseVersion('1.6'):
         ht = HtpasswdFile(dest, new=False)
     else:
         ht = HtpasswdFile(dest)
@@ -271,14 +263,9 @@ def main():
 
         check_file_attrs(module, changed, msg)
         module.exit_json(msg=msg, changed=changed)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg=str(e))
+    except Exception as e:
+        module.fail_json(msg=to_native(e))
 
-
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 
 if __name__ == '__main__':
     main()

@@ -1,28 +1,15 @@
 #!/usr/bin/python
 #
-# Create Webfaction domains and subdomains using Ansible and the Webfaction API
-#
-# ------------------------------------------
-#
 # (c) Quentin Stafford-Fraser 2015
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Create Webfaction domains and subdomains using Ansible and the Webfaction API
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -32,7 +19,7 @@ DOCUMENTATION = '''
 module: webfaction_domain
 short_description: Add or remove domains and subdomains on Webfaction
 description:
-    - Add or remove domains or subdomains on a Webfaction host. Further documentation at http://github.com/quentinsf/ansible-webfaction.
+    - Add or remove domains or subdomains on a Webfaction host. Further documentation at https://github.com/quentinsf/ansible-webfaction.
 author: Quentin Stafford-Fraser (@quentinsf)
 version_added: "2.0"
 notes:
@@ -42,7 +29,7 @@ notes:
       You can run playbooks that use this on a local machine, or on a Webfaction host, or elsewhere, since the scripts use the remote webfaction API.
       The location is not important. However, running them on multiple hosts I(simultaneously) is best avoided. If you don't specify I(localhost) as
       your host, you may want to add C(serial: 1) to the plays.
-    - See `the webfaction API <http://docs.webfaction.com/xmlrpc-api/>`_ for more info.
+    - See `the webfaction API <https://docs.webfaction.com/xmlrpc-api/>`_ for more info.
 
 options:
 
@@ -54,15 +41,13 @@ options:
     state:
         description:
             - Whether the domain should exist
-        required: false
         choices: ['present', 'absent']
         default: "present"
 
     subdomains:
         description:
             - Any subdomains to create.
-        required: false
-        default: null
+        default: []
 
     login_name:
         description:
@@ -95,24 +80,26 @@ EXAMPLES = '''
 
 '''
 
-import socket
-import xmlrpclib
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import xmlrpc_client
 
-webfaction = xmlrpclib.ServerProxy('https://api.webfaction.com/')
+
+webfaction = xmlrpc_client.ServerProxy('https://api.webfaction.com/')
+
 
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True),
-            state = dict(required=False, choices=['present', 'absent'], default='present'),
-            subdomains = dict(required=False, default=[]),
-            login_name = dict(required=True),
-            login_password = dict(required=True, no_log=True),
+        argument_spec=dict(
+            name=dict(required=True),
+            state=dict(required=False, choices=['present', 'absent'], default='present'),
+            subdomains=dict(required=False, default=[], type='list'),
+            login_name=dict(required=True),
+            login_password=dict(required=True, no_log=True),
         ),
         supports_check_mode=True
     )
-    domain_name  = module.params['name']
+    domain_name = module.params['name']
     domain_state = module.params['state']
     domain_subdomains = module.params['subdomains']
 
@@ -137,7 +124,7 @@ def main():
             if set(existing_domain['subdomains']) >= set(domain_subdomains):
                 # If it exists with the right subdomains, we don't change anything.
                 module.exit_json(
-                    changed = False,
+                    changed=False,
                 )
 
         positional_args = [session_id, domain_name] + domain_subdomains
@@ -156,7 +143,7 @@ def main():
         # If the app's already not there, nothing changed.
         if not existing_domain:
             module.exit_json(
-                changed = False,
+                changed=False,
             )
 
         positional_args = [session_id, domain_name] + domain_subdomains
@@ -171,11 +158,10 @@ def main():
         module.fail_json(msg="Unknown state specified: {}".format(domain_state))
 
     module.exit_json(
-        changed = True,
-        result = result
+        changed=True,
+        result=result
     )
 
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

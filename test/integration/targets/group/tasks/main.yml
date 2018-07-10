@@ -1,0 +1,107 @@
+# Test code for the group module.
+# (c) 2017, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: get the jinja2 version
+  shell: python -c 'import jinja2; print(jinja2.__version__)'
+  register: jinja2_version
+  delegate_to: localhost
+- debug: var=jinja2_version
+
+##
+## group add
+##
+
+- name: try to create group
+  group:
+      name: ansibullgroup
+      state: present
+  register: group_test0
+
+- name: make a list of groups
+  script: grouplist.sh "{{ ansible_distribution }}"
+  register: group_names
+
+- name: show group names
+  debug: var=group_names
+- name: validate results for testcase 0
+  assert:
+      that:
+          - '"ansibullgroup" in group_names.stdout_lines'
+
+##
+## group check
+##
+
+- name: run existing group check tests
+  group:
+      name: "{{ group_names.stdout_lines|random }}"
+      state: present
+  with_sequence: start=1 end=5
+  register: group_test1
+- debug: var=group_test1
+
+- name: validate results for testcase 1
+  assert:
+      that:
+          - 'group_test1.results is defined'
+          - 'group_test1.results|length == 5'
+
+- name: validate change results for testcase 1 (jinja2 >= 2.6)
+  assert:
+      that:
+          - "group_test1.results|map(attribute='changed')|unique|list == [False]"
+          - "group_test1.results|map(attribute='state')|unique|list == ['present']"
+  when: "jinja2_version.stdout is version('2.6', '>=')"
+
+- name: validate change results for testcase 1 (jinja2 < 2.6)
+  assert:
+      that:
+          - "not group_test1.results[0]['changed']"
+          - "not group_test1.results[1]['changed']"
+          - "not group_test1.results[2]['changed']"
+          - "not group_test1.results[3]['changed']"
+          - "not group_test1.results[4]['changed']"
+  when: "jinja2_version.stdout is version('2.6', '<')"
+
+
+
+##
+## group remove
+##
+            
+- name: try to delete the group
+  group:
+      name: ansibullgroup
+      state: absent
+  register: group_test2
+
+- name: make a new list of groups
+  shell: |
+      cat /etc/group | cut -d: -f1
+  register: group_names2
+  when: 'ansible_distribution != "MacOSX"'
+
+- name: make a list of groups
+  script: grouplist.sh "{{ ansible_distribution }}"
+  register: group_names2
+
+- debug: var=group_names2
+- name: validate results for testcase 2
+  assert:
+      that:
+          - '"ansibullgroup" not in group_names2.stdout_lines'

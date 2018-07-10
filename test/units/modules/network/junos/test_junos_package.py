@@ -19,10 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch, MagicMock
-from .junos_module import TestJunosModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .junos_module import TestJunosModule
 jnpr_mock = MagicMock()
 
 modules = {
@@ -43,10 +42,10 @@ class TestJunosCommandModule(TestJunosModule):
     module = junos_package
 
     def setUp(self):
-        pass
+        super(TestJunosCommandModule, self).setUp()
 
     def tearDown(self):
-        pass
+        super(TestJunosCommandModule, self).tearDown()
 
     def test_junos_package_src(self):
         set_module_args(dict(src='junos-vsrx-12.1X46-D10.2-domestic.tgz'))

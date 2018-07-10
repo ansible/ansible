@@ -2,24 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016, Adam Števko <adam.stevko@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -66,17 +55,17 @@ options:
 '''
 
 EXAMPLES = '''
-name: Allow forwarding of IPv4 packets on network interface e1000g0
-ipadm_ifprop: protocol=ipv4 property=forwarding value=on interface=e1000g0
+- name: Allow forwarding of IPv4 packets on network interface e1000g0
+  ipadm_ifprop: protocol=ipv4 property=forwarding value=on interface=e1000g0
 
-name: Temporarily reset IPv4 forwarding property on network interface e1000g0
-ipadm_ifprop: protocol=ipv4 interface=e1000g0  temporary=true property=forwarding state=reset
+- name: Temporarily reset IPv4 forwarding property on network interface e1000g0
+  ipadm_ifprop: protocol=ipv4 interface=e1000g0  temporary=true property=forwarding state=reset
 
-name: Configure IPv6 metric on network interface e1000g0
-ipadm_ifprop: protocol=ipv6 nic=e1000g0 name=metric value=100
+- name: Configure IPv6 metric on network interface e1000g0
+  ipadm_ifprop: protocol=ipv6 nic=e1000g0 name=metric value=100
 
-name: Set IPv6 MTU on network interface bge0
-ipadm_ifprop: interface=bge0 name=mtu value=1280 protocol=ipv6
+- name: Set IPv6 MTU on network interface bge0
+  ipadm_ifprop: interface=bge0 name=mtu value=1280 protocol=ipv6
 '''
 
 RETURN = '''
@@ -108,6 +97,7 @@ value:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+
 
 SUPPORTED_PROTOCOLS = ['ipv4', 'ipv6']
 

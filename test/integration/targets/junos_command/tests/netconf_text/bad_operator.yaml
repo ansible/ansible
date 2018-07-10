@@ -1,13 +1,13 @@
 ---
-- debug: msg="START netconf_text/bad_operator.yaml"
+- debug: msg="START netconf_text/bad_operator.yaml on connection={{ ansible_connection }}"
 
 - name: test bad operator with text encoding
   junos_command:
     commands:
       - show version
-      - show interfaces fxp0
+      - show interfaces lo0
     wait_for:
-      - "result[1].interface-information[0].physical-interface[0].name[0].data foo fxp0"
+      - "result[1].interface-information[0].physical-interface[0].name[0].data foo lo0"
     encoding: text
     provider: "{{ netconf }}"
   register: result
@@ -18,4 +18,4 @@
       - "result.failed == true"
       - "result.msg is defined"
 
-- debug: msg="END netconf_text/bad_operator.yaml"
+- debug: msg="END netconf_text/bad_operator.yaml on connection={{ ansible_connection }}"

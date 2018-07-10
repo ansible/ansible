@@ -1,26 +1,15 @@
 #!/usr/bin/python
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'community'
-}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = """
@@ -42,27 +31,22 @@ options:
         section.  The commands must be the exact same commands as found
         in the device running-config.  Be sure to note the configuration
         command syntax as some commands are automatically modified by the
-        device config parser.
-    required: false
-    default: null
+        device config parser.  The I(lines) argument only supports current
+        context lines.  See EXAMPLES
     aliases: ['commands']
   parents:
     description:
-      - The ordered set of parents that uniquely identify the section
+      - The ordered set of parents that uniquely identify the section or hierarchy
         the commands should be checked against.  If the parents argument
         is omitted, the commands are checked against the set of top
         level or global commands.
-    required: false
-    default: null
   src:
     description:
       - Specifies the source path to the file that contains the configuration
         or configuration template to load.  The path to the source file can
         either be the full path on the Ansible control host or a relative
         path from the playbook or role root directory.  This argument is mutually
-        exclusive with I(lines).
-    required: false
-    default: null
+        exclusive with I(lines), I(parents).
     version_added: "2.2"
   before:
     description:
@@ -71,16 +55,12 @@ options:
         the opportunity to perform configuration commands prior to pushing
         any changes without affecting how the set of commands are matched
         against the system.
-    required: false
-    default: null
   after:
     description:
       - The ordered set of commands to append to the end of the command
         stack if a change needs to be made.  Just like with I(before) this
         allows the playbook designer to append a set of commands to be
         executed after the command set.
-    required: false
-    default: null
   match:
     description:
       - Instructs the module on the way to perform the matching of
@@ -91,7 +71,6 @@ options:
         must be an equal match.  Finally, if match is set to I(none), the
         module will not attempt to compare the source configuration with
         the running configuration on the remote device.
-    required: false
     default: line
     choices: ['line', 'strict', 'exact', 'none']
   replace:
@@ -102,7 +81,6 @@ options:
         mode.  If the replace argument is set to I(block) then the entire
         command block is pushed to the device in configuration mode if any
         line is not correct.
-    required: false
     default: line
     choices: ['line', 'block']
   force:
@@ -114,9 +92,7 @@ options:
       - Note this argument should be considered deprecated.  To achieve
         the equivalent, set the C(match=none) which is idempotent.  This argument
         will be removed in a future release.
-    required: false
-    default: false
-    choices: [ "true", "false" ]
+    type: bool
     version_added: "2.2"
   backup:
     description:
@@ -125,9 +101,8 @@ options:
         changes are made.  The backup file is written to the C(backup)
         folder in the playbook root directory.  If the directory does not
         exist, it is created.
-    required: false
-    default: no
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
     version_added: "2.2"
   config:
     description:
@@ -135,8 +110,6 @@ options:
         the base configuration to be used to validate configuration
         changes necessary.  If this argument is provided, the module
         will not download the running-config from the remote node.
-    required: false
-    default: null
     version_added: "2.2"
   defaults:
     description:
@@ -144,9 +117,8 @@ options:
         when getting the remote device running config.  When enabled,
         the module will get the current config by issuing the command
         C(show running-config all).
-    required: false
-    default: no
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
     aliases: ['detail']
     version_added: "2.2"
   save:
@@ -154,9 +126,8 @@ options:
       - The C(save) argument instructs the module to save the running-
         config to the startup-config at the conclusion of the module
         running.  If check mode is specified, this argument is ignored.
-    required: false
-    default: no
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
     version_added: "2.2"
 """
 
@@ -198,6 +169,23 @@ vars:
       src: "{{ inventory_hostname }}.cfg"
       provider: "{{ cli }}"
       save: yes
+
+- name: invalid use of lines
+  sros_config:
+    lines:
+      - service
+      -     vpls 1000 customer foo 1 create
+      -         description "invalid lines example"
+    provider: "{{ cli }}"
+
+- name: valid use of lines
+  sros_config:
+    lines:
+      - description "invalid lines example"
+    parents:
+      - service
+      - vpls 1000 customer foo 1 create
+    provider: "{{ cli }}"
 """
 
 RETURN = """
@@ -218,19 +206,10 @@ backup_path:
   sample: /playbooks/ansible/backup/sros_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.sros import sros_argument_spec, check_args
-from ansible.module_utils.sros import load_config, run_commands, get_config
+from ansible.module_utils.network.common.config import NetworkConfig, dumps
+from ansible.module_utils.network.sros.sros import sros_argument_spec, check_args
+from ansible.module_utils.network.sros.sros import load_config, run_commands, get_config
 
-def sanitize_config(lines):
-    commands = list()
-    for line in lines:
-        for index, entry in enumerate(commands):
-            if line.startswith(entry):
-                del commands[index]
-                break
-        commands.append(line)
-    return commands
 
 def get_active_config(module):
     contents = module.params['config']
@@ -241,6 +220,7 @@ def get_active_config(module):
         return get_config(module, flags)
     return contents
 
+
 def get_candidate(module):
     candidate = NetworkConfig(indent=4)
     if module.params['src']:
@@ -249,6 +229,7 @@ def get_candidate(module):
         parents = module.params['parents'] or list()
         candidate.add(module.params['lines'], parents=parents)
     return candidate
+
 
 def run(module, result):
     match = module.params['match']
@@ -264,7 +245,7 @@ def run(module, result):
 
     if configobjs:
         commands = dumps(configobjs, 'commands')
-        commands = sanitize_config(commands.split('\n'))
+        commands = commands.split('\n')
 
         result['commands'] = commands
         result['updates'] = commands
@@ -274,6 +255,7 @@ def run(module, result):
         if not module.check_mode:
             load_config(module, commands)
         result['changed'] = True
+
 
 def main():
     """ main entry point for module execution
@@ -295,7 +277,8 @@ def main():
 
     argument_spec.update(sros_argument_spec)
 
-    mutually_exclusive = [('lines', 'src')]
+    mutually_exclusive = [('lines', 'src'),
+                          ('parents', 'src')]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,

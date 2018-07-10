@@ -1,0 +1,31 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_rollback sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- name: delete existing checkpoint file
+  nxos_config: &delete
+    commands:
+      - terminal dont-ask
+      - delete backup.cfg
+    match: none
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: Create checkpoint file
+  nxos_rollback:
+    checkpoint_file: backup.cfg
+    provider: "{{ connection }}"
+    timeout: 300
+
+- name: rollback to the previously created checkpoint file
+  nxos_rollback:
+    rollback_to: backup.cfg
+    provider: "{{ connection }}"
+    timeout: 300
+
+- name: cleanup checkpoint file
+  nxos_config: *delete
+  ignore_errors: yes
+
+- debug: msg="END connection={{ ansible_connection }} nxos_rollback sanity test"

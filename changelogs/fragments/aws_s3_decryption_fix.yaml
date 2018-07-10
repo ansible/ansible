@@ -1,0 +1,3 @@
+---
+bugfixes:
+- fix decrypting vault files for the aws_s3 module (https://github.com/ansible/ansible/pull/39634)

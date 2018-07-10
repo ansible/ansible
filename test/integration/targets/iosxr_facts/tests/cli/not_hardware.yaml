@@ -1,11 +1,12 @@
 ---
-- debug: msg="START cli/not_hardware_facts.yaml"
+- debug: msg="START cli/not_hardware_facts.yaml on connection={{ ansible_connection }}"
 
 
 - name: test not hardware
   iosxr_facts:
     gather_subset:
       - "!hardware"
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -26,4 +27,4 @@
       # ... and not present
       - "result.ansible_facts.ansible_net_filesystems is not defined"
 
-- debug: msg="END cli/not_hardware_facts.yaml"
+- debug: msg="END cli/not_hardware_facts.yaml on connection={{ ansible_connection }}"

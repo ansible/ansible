@@ -28,9 +28,14 @@
 
 import os
 
-import tower_cli.utils.exceptions as exc
-from tower_cli.utils import parser
-from tower_cli.api import client
+try:
+    import tower_cli.utils.exceptions as exc
+    from tower_cli.utils import parser
+    from tower_cli.api import client
+
+    HAS_TOWER_CLI = True
+except ImportError:
+    HAS_TOWER_CLI = False
 
 
 def tower_auth_config(module):
@@ -40,7 +45,7 @@ def tower_auth_config(module):
     it will attempt to fetch values from the module pararms and
     only pass those values that have been set.
     '''
-    config_file = module.params.get('tower_config_file')
+    config_file = module.params.pop('tower_config_file', None)
     if config_file:
         config_file = os.path.expanduser(config_file)
         if not os.path.exists(config_file):
@@ -52,17 +57,17 @@ def tower_auth_config(module):
             return parser.string_to_dict(f.read())
     else:
         auth_config = {}
-        host = module.params.get('tower_host')
+        host = module.params.pop('tower_host', None)
         if host:
             auth_config['host'] = host
-        username = module.params.get('tower_username')
+        username = module.params.pop('tower_username', None)
         if username:
             auth_config['username'] = username
-        password = module.params.get('tower_password')
+        password = module.params.pop('tower_password', None)
         if password:
             auth_config['password'] = password
-        verify_ssl = module.params.get('tower_verify_ssl')
-        if verify_ssl:
+        verify_ssl = module.params.pop('tower_verify_ssl', None)
+        if verify_ssl is not None:
             auth_config['verify_ssl'] = verify_ssl
         return auth_config
 
@@ -79,9 +84,9 @@ def tower_check_mode(module):
 
 def tower_argument_spec():
     return dict(
-        tower_host = dict(),
-        tower_username = dict(),
-        tower_password = dict(no_log=True),
-        tower_verify_ssl = dict(type='bool', default=True),
-        tower_config_file = dict(type='path'),
+        tower_host=dict(),
+        tower_username=dict(),
+        tower_password=dict(no_log=True),
+        tower_verify_ssl=dict(type='bool', default=True),
+        tower_config_file=dict(type='path'),
     )

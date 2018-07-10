@@ -19,7 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -69,7 +69,7 @@ EXAMPLES = '''
 RETURN = '''
 ovirt_vms:
     description: "List of dictionaries describing the VMs. VM attribues are mapped to dictionary keys,
-                  all VMs attributes can be found at following url: https://ovirt.example.com/ovirt-engine/api/model#types/vm."
+                  all VMs attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/vm."
     returned: On success.
     type: list
 '''

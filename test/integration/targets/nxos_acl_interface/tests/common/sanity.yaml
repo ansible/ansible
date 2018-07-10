@@ -1,0 +1,130 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_acl_interface sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+# Select interface for test
+- set_fact: intname="{{ nxos_int1 }}"
+
+- name: "Interface selected for this test"
+  debug: msg="{{ intname }}"
+
+- name: "Setup: Put interface into a default state"
+  nxos_config: &default
+    lines:
+      - "default interface {{ intname }}"
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: "Setup: Put interface into no switch port mode"
+  nxos_config:
+    commands:
+      - "no switchport"
+    parents:
+      - "interface {{ intname }}"
+    match: none
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: "Setup: Cleanup possibly existing acl"
+  nxos_acl: &remove
+    name: ANSIBLE_ACL
+    seq: 10
+    provider: "{{ connection }}"
+    state: delete_acl
+  ignore_errors: yes
+
+- name: Configure Supporting ACL
+  nxos_acl:
+    name: ANSIBLE_ACL
+    seq: 10
+    action: permit
+    proto: tcp
+    src: 192.0.2.1/24
+    dest: any
+    provider: "{{ connection }}"
+
+- block:
+  - name: Configure acl interface egress
+    nxos_acl_interface: &configure_egr
+      name: ANSIBLE_ACL
+      interface: "{{ intname }}"
+      direction: egress
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Check Idempotence egress"
+    nxos_acl_interface: *configure_egr
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Configure acl interface ingress
+    nxos_acl_interface: &configure_ingr
+      name: ANSIBLE_ACL
+      interface: "{{ intname }}"
+      direction: ingress
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence ingress"
+    nxos_acl_interface: *configure_ingr
+    register: result
+
+  - assert: *false
+
+  - name: Cleanup acl interface egress
+    nxos_acl_interface: &cleanup_egr
+      name: ANSIBLE_ACL
+      interface: "{{ intname }}"
+      direction: egress
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence egress cleanup"
+    nxos_acl_interface: *cleanup_egr
+    register: result
+
+  - assert: *false
+
+  - name: Cleanup acl interface ingress
+    nxos_acl_interface: &cleanup_ingr
+      name: ANSIBLE_ACL
+      interface: "{{ intname }}"
+      direction: ingress
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence ingress cleanup"
+    nxos_acl_interface: *cleanup_ingr
+    register: result
+
+  - assert: *false
+
+  rescue:
+  - name: Put test interface into default state.
+    nxos_config: *default
+    ignore_errors: yes
+
+  always:
+  - name: Remove possible configured ACL
+    nxos_acl: *remove
+    ignore_errors: yes
+
+  - debug: msg="END connection={{ ansible_connection }} nxos_acl_interface sanity test"

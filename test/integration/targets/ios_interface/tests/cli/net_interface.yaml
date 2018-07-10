@@ -1,0 +1,47 @@
+---
+- debug: msg="START ios cli/net_interface.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+
+- name: Configure interface (setup)
+  net_interface:
+    name: "{{ test_interface }}"
+    description: test-interface-1
+    speed: 1000
+    mtu: 1800
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- name: Configure interface using platform agnostic module
+  net_interface:
+    name: "{{ test_interface }}"
+    description: test-interface-initial
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface {{ test_interface }}" in result.commands'
+      - '"description test-interface-initial" in result.commands'
+
+- name: Confgure interface parameters using platform agnostic module
+  net_interface:
+    name: "{{ test_interface }}"
+    description: test-interface
+    mtu: 2000
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface {{ test_interface }}" in result.commands'
+      - '"description test-interface" in result.commands'
+      - '"mtu 2000" in result.commands'
+
+- debug: msg="START ios cli/net_interface.yaml on connection={{ ansible_connection }}"

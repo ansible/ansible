@@ -1,0 +1,71 @@
+- block:
+    - name: Generate privatekey
+      openssl_privatekey:
+        path: '{{ output_dir }}/privatekey.pem'
+
+    - name: Generate CSR
+      openssl_csr:
+        path: '{{ output_dir }}/csr.csr'
+        privatekey_path: '{{ output_dir }}/privatekey.pem'
+        subject:
+          commonName: www.ansible.com
+
+    # keyUsage longname and shortname should be able to be used
+    # interchangeably. Hence the long name is specified here
+    # but the short name is used to test idempotency for ipsecuser
+    # and vice-versa for biometricInfo
+    - name: Generate CSR with KU and XKU
+      openssl_csr:
+        path: '{{ output_dir }}/csr_ku_xku.csr'
+        privatekey_path: '{{ output_dir }}/privatekey.pem'
+        subject:
+          CN: www.ansible.com
+        keyUsage:
+          - digitalSignature
+          - keyAgreement
+        extendedKeyUsage:
+          - qcStatements
+          - DVCS
+          - IPSec User
+          - biometricInfo
+
+    - name: Generate CSR with KU and XKU (test idempotency)
+      openssl_csr:
+        path: '{{ output_dir }}/csr_ku_xku.csr'
+        privatekey_path: '{{ output_dir }}/privatekey.pem'
+        subject:
+          commonName: 'www.ansible.com'
+        keyUsage:
+          - digitalSignature
+          - keyAgreement
+        extendedKeyUsage:
+          - ipsecUser
+          - qcStatements
+          - DVCS
+          - Biometric Info
+      register: csr_ku_xku
+
+    - name: Generate CSR with old API
+      openssl_csr:
+        path: '{{ output_dir }}/csr_oldapi.csr'
+        privatekey_path: '{{ output_dir }}/privatekey.pem'
+        commonName: www.ansible.com
+
+    - name: Generate CSR with OCSP Must Staple
+      openssl_csr:
+        path: '{{ output_dir }}/csr_ocsp.csr'
+        privatekey_path: '{{ output_dir }}/privatekey.pem'
+        subject_alt_name: "DNS:www.ansible.com"
+        ocsp_must_staple: true
+
+    - name: Generate CSR with OCSP Must Staple (test idempotency)
+      openssl_csr:
+        path: '{{ output_dir }}/csr_ocsp.csr'
+        privatekey_path: '{{ output_dir }}/privatekey.pem'
+        subject_alt_name: "DNS:www.ansible.com"
+        ocsp_must_staple: true
+      register: csr_ocsp_idempotency
+
+    - import_tasks: ../tests/validate.yml
+
+  when: pyopenssl_version.stdout is version('0.15', '>=')

@@ -19,7 +19,6 @@
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
-import json
 
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.nxos import nxos_system
@@ -31,6 +30,8 @@ class TestNxosSystemModule(TestNxosModule):
     module = nxos_system
 
     def setUp(self):
+        super(TestNxosSystemModule, self).setUp()
+
         self.mock_get_config = patch('ansible.modules.network.nxos.nxos_system.get_config')
         self.get_config = self.mock_get_config.start()
 
@@ -38,11 +39,12 @@ class TestNxosSystemModule(TestNxosModule):
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
+        super(TestNxosSystemModule, self).tearDown()
         self.mock_get_config.stop()
         self.mock_load_config.stop()
 
-    def load_fixtures(self, commands=None):
-        self.get_config.return_value = load_fixture('nxos_system_config.cfg')
+    def load_fixtures(self, commands=None, device=''):
+        self.get_config.return_value = load_fixture('', 'nxos_system_config.cfg')
         self.load_config.return_value = None
 
     def test_nxos_system_hostname_changed(self):
@@ -126,5 +128,3 @@ class TestNxosSystemModule(TestNxosModule):
                     'vrf context management', 'no ip name-server 172.26.1.1', 'exit',
                     'no system jumbomtu']
         self.execute_module(changed=True, commands=commands)
-
-

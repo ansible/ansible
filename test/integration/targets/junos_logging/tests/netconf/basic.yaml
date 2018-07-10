@@ -1,0 +1,394 @@
+---
+- debug: msg="START junos_logging netconf/basic.yaml on connection={{ ansible_connection }}"
+
+- name: setup - remove file logging
+  junos_logging:
+    dest: file
+    name: test
+    facility: pfe
+    level: error
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Create file logging
+  junos_logging:
+    dest: file
+    name: test_file
+    facility: pfe
+    level: error
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>test_file</name>' in config.xml"
+      - "'<name>pfe</name>' in config.xml"
+      - "'<error/>' in config.xml"
+
+- name: Create file logging (idempotent)
+  junos_logging:
+    dest: file
+    name: test_file
+    facility: pfe
+    level: error
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Deactivate logging configuration
+  junos_logging:
+    dest: file
+    name: test_file
+    facility: pfe
+    level: error
+    state: present
+    active: False
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<file inactive=\"inactive\">' in config.xml"
+      - "'<contents inactive=\"inactive\">' in config.xml"
+
+- name: Activate logging configuration
+  junos_logging:
+    dest: file
+    name: test_file
+    facility: pfe
+    level: error
+    state: present
+    active: True
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>test_file</name>' in config.xml"
+      - "'<name>pfe</name>' in config.xml"
+      - "'<error/>' in config.xml"
+
+- name: Delete logging configuration
+  junos_logging:
+    dest: file
+    name: test_file
+    facility: pfe
+    level: error
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>test_file</name>' not in config.xml"
+
+- name: Configure console logging
+  junos_logging:
+    dest: console
+    facility: kernel
+    level: emergency
+    state: present
+    active: True
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<console>' in config.xml"
+      - "'<name>kernel</name>' in config.xml"
+      - "'<emergency/>' in config.xml"
+
+- name: Configure console logging (idempotent)
+  junos_logging:
+    dest: console
+    facility: kernel
+    level: emergency
+    state: present
+    active: True
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Disable console logging
+  junos_logging:
+    dest: console
+    facility: kernel
+    level: emergency
+    state: present
+    active: False
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<console inactive=\"inactive\">' in config.xml"
+
+- name: Delete console logging
+  junos_logging:
+    dest: console
+    facility: kernel
+    level: emergency
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<console>' not in config.xml"
+
+- name: Configure logging parameters
+  junos_logging:
+    size: 65536
+    files: 40
+    rotate_frequency: 20
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<size>64k</size>' in config.xml"
+      - "'<files>40</files>' in config.xml"
+      - "'<log-rotate-frequency>20</log-rotate-frequency>' in config.xml"
+
+- name: Configure logging parameters (idempotent)
+  junos_logging:
+    size: 65536
+    files: 40
+    rotate_frequency: 20
+    state: present
+    active: True
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Disable logging parameters
+  junos_logging:
+    size: 65536
+    files: 40
+    rotate_frequency: 20
+    state: present
+    active: False
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<size inactive=\"inactive\">64k</size>' in config.xml"
+      - "'<files inactive=\"inactive\">40</files>' in config.xml"
+      - "'<log-rotate-frequency inactive=\"inactive\">20</log-rotate-frequency>' in config.xml"
+
+- name: Activate logging parameters
+  junos_logging:
+    size: 65536
+    files: 40
+    rotate_frequency: 20
+    state: present
+    active: True
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<size>64k</size>' in config.xml"
+      - "'<files>40</files>' in config.xml"
+      - "'<log-rotate-frequency>20</log-rotate-frequency>' in config.xml"
+
+- name: Delete logging parameters
+  junos_logging:
+    size: 65536
+    files: 40
+    rotate_frequency: 20
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<size>64k</size>' not in config.xml"
+      - "'<files>40</files>' not in config.xml"
+      - "'<log-rotate-frequency>20</log-rotate-frequency>' not in config.xml"
+
+- name: Seup file logging using aggregate
+  junos_logging:
+    aggregate:
+    - {dest: file, name: test-1,  facility: pfe, level: critical, state: absent}
+    - {dest: file, name: test-2,  facility: kernel, level: emergency, state: absent}
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Configure file logging using aggregate
+  junos_logging:
+    aggregate:
+    - {dest: file, name: test-1,  facility: pfe, level: critical, active: True}
+    - {dest: file, name: test-2,  facility: kernel, level: emergency, active: True}
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - result.diff.prepared is search("\+ *file test-1")
+      - result.diff.prepared is search("\+ *pfe critical")
+      - result.diff.prepared is search("\+ *file test-2")
+      - result.diff.prepared is search("\+ *kernel emergency")
+
+- name: Deactivate file logging configuration using aggregate
+  junos_logging:
+    aggregate:
+    - dest: file
+      name: test-1
+      facility: pfe
+      level: critical
+    - dest: file
+      name: test-2
+      facility: kernel
+      level: emergency
+    active: False
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - result.diff.prepared is search("! *inactive[:] file test-1")
+      - result.diff.prepared is search("! *inactive[:] pfe")
+      - result.diff.prepared is search("! *inactive[:] file test-2")
+      - result.diff.prepared is search("! *inactive[:] kernel")
+
+- name: activate file logging configuration using aggregate
+  junos_logging:
+    aggregate:
+    - { dest: file, name: test-1,  facility: pfe, level: critical }
+    - { dest: file, name: test-2,  facility: kernel, level: emergency }
+    active: True
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - result.diff.prepared is search("! *active[:] file test-1")
+      - result.diff.prepared is search("! *active[:] pfe")
+      - result.diff.prepared is search("! *active[:] file test-2")
+      - result.diff.prepared is search("! *active[:] kernel")
+
+- name: Delete file logging using aggregate
+  junos_logging:
+    aggregate:
+    - { dest: file, name: test-1,  facility: pfe, level: critical }
+    - { dest: file, name: test-2,  facility: kernel, level: emergency }
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - result.diff.prepared is search("\- *file test-1")
+      - result.diff.prepared is search("\- *pfe critical")
+      - result.diff.prepared is search("\- *file test-2")
+      - result.diff.prepared is search("\- *kernel emergency")
+
+- name: Delete file logging using aggregate (idempotent)
+  junos_logging:
+    aggregate:
+    - { dest: file, name: test-1,  facility: pfe, level: critical }
+    - { dest: file, name: test-2,  facility: kernel, level: emergency }
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- debug: msg="END junos_logging netconf/basic.yaml on connection={{ ansible_connection }}"

@@ -1,0 +1,3 @@
+- name: install py27-requests to avoid install via pip later
+  package:
+    name: py27-requests

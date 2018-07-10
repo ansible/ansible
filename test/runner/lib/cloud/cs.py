@@ -21,6 +21,7 @@ from lib.util import (
 
 from lib.http import (
     HttpClient,
+    HttpError,
     urlparse,
 )
 
@@ -51,7 +52,8 @@ class CsCloudProvider(CloudProvider):
         """
         super(CsCloudProvider, self).__init__(args, config_extension='.ini')
 
-        self.image = 'resmo/cloudstack-sim'
+        # The simulator must be pinned to a specific version to guarantee CI passes with the version used.
+        self.image = 'quay.io/ansible/cloudstack-test-container:1.0.0'
         self.container_name = ''
         self.endpoint = ''
         self.host = ''
@@ -65,12 +67,18 @@ class CsCloudProvider(CloudProvider):
         if os.path.isfile(self.config_static_path):
             return
 
-        docker = find_executable('docker')
+        docker = find_executable('docker', required=False)
 
         if docker:
             return
 
-        super(CsCloudProvider, self).filter(targets, exclude)
+        skip = 'cloud/%s/' % self.platform
+        skipped = [target.name for target in targets if skip in target.aliases]
+
+        if skipped:
+            exclude.append(skip)
+            display.warning('Excluding tests marked "%s" which require the "docker" command or config (see "%s"): %s'
+                            % (skip.rstrip('/'), self.config_template_path, ', '.join(skipped)))
 
     def setup(self):
         """Setup the cloud resource before delegation and register a cleanup callback."""
@@ -154,7 +162,8 @@ class CsCloudProvider(CloudProvider):
             display.info('Starting a new CloudStack simulator docker container.', verbosity=1)
             docker_pull(self.args, self.image)
             docker_run(self.args, self.image, ['-d', '-p', '8888:8888', '--name', self.container_name])
-            display.notice('The CloudStack simulator will probably be ready in 5 - 10 minutes.')
+            if not self.args.explain:
+                display.notice('The CloudStack simulator will probably be ready in 5 - 10 minutes.')
 
         container_id = get_docker_container_id()
 
@@ -241,7 +250,10 @@ class CsCloudProvider(CloudProvider):
             response = client.get(endpoint)
 
             if response.status_code == 200:
-                return response.json()
+                try:
+                    return response.json()
+                except HttpError as ex:
+                    display.error(ex)
 
             time.sleep(30)
 

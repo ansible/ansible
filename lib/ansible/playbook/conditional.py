@@ -29,8 +29,6 @@ from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils.six import text_type
 from ansible.module_utils._text import to_native
 from ansible.playbook.attribute import FieldAttribute
-from ansible.template import Templar
-from ansible.template.safe_eval import safe_eval
 
 try:
     from __main__ import display
@@ -43,6 +41,7 @@ DEFINED_REGEX = re.compile(r'(hostvars\[.+\]|[\w_]+)\s+(not\s+is|is|is\s+not)\s+
 LOOKUP_REGEX = re.compile(r'lookup\s*\(')
 VALID_VAR_REGEX = re.compile("^[_A-Za-z][_a-zA-Z0-9]*$")
 
+
 class Conditional:
 
     '''
@@ -50,7 +49,7 @@ class Conditional:
     to be run conditionally when a condition is met or skipped.
     '''
 
-    _when = FieldAttribute(isa='list', default=[])
+    _when = FieldAttribute(isa='list', default=[], extend=True, prepend=True)
 
     def __init__(self, loader=None):
         # when used directly, this class needs a loader, but we want to
@@ -65,18 +64,7 @@ class Conditional:
 
     def _validate_when(self, attr, name, value):
         if not isinstance(value, list):
-            setattr(self, name, [ value ])
-
-    def _get_attr_when(self):
-        '''
-        Override for the 'tags' getattr fetcher, used from Base.
-        '''
-        when = self._attributes['when']
-        if when is None:
-            when = []
-        if hasattr(self, '_get_parent_attribute'):
-            when = self._get_parent_attribute('when', extend=True, prepend=True)
-        return when
+            setattr(self, name, [value])
 
     def extract_defined_undefined(self, conditional):
         results = []
@@ -129,6 +117,11 @@ class Conditional:
         if conditional is None or conditional == '':
             return True
 
+        if templar.is_template(conditional):
+            display.warning('when statements should not include jinja2 '
+                            'templating delimiters such as {{ }} or {%% %%}. '
+                            'Found: %s' % conditional)
+
         # pull the "bare" var out, which allows for nested conditionals
         # and things like:
         # - assert:
@@ -138,11 +131,6 @@ class Conditional:
         #   - 1 == 1
         if conditional in all_vars and VALID_VAR_REGEX.match(conditional):
             conditional = all_vars[conditional]
-
-        if templar.is_template(conditional):
-            display.warning('when statements should not include jinja2 '
-                            'templating delimiters such as {{ }} or {%% %%}. '
-                            'Found: %s' % conditional)
 
         # make sure the templar is using the variables specified with this method
         templar.set_available_variables(variables=all_vars)
@@ -188,7 +176,7 @@ class Conditional:
                         )
             try:
                 e = templar.environment.overlay()
-                e.filters.update(templar._get_filters())
+                e.filters.update(templar._get_filters(e.filters))
                 e.tests.update(templar._get_tests())
 
                 res = e._parse(conditional, None, None)
@@ -236,7 +224,4 @@ class Conditional:
                 # trigger the AnsibleUndefinedVariable exception again below
                 raise
             except Exception as new_e:
-                raise AnsibleUndefinedVariable(
-                    "error while evaluating conditional (%s): %s" % (original, e)
-                )
-
+                raise AnsibleUndefinedVariable("error while evaluating conditional (%s): %s" % (original, e))

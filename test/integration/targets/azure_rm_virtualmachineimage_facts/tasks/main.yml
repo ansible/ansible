@@ -1,0 +1,43 @@
+- name: set location
+  set_fact:
+    location: eastus
+
+- name: Get facts for a specific image
+  azure_rm_virtualmachineimage_facts:
+    location: "{{ location }}"
+    publisher: OpenLogic
+    offer: CentOS
+    sku: '7.3'
+    version: '7.3.20170707'
+  register: output
+
+- assert:
+      that: azure_vmimages | length == 1
+
+- name: List available versions
+  azure_rm_virtualmachineimage_facts:
+    location: "{{ location }}"
+    publisher: OpenLogic
+    offer: CentOS
+    sku: '7.3'
+  register: output
+
+- assert:
+      that: azure_vmimages | length > 0
+
+- name: List available offers
+  azure_rm_virtualmachineimage_facts:
+    location: "{{ location }}"
+    publisher: OpenLogic
+  register: output
+
+- assert:
+      that: azure_vmimages | length > 0
+
+- name: List available publishers
+  azure_rm_virtualmachineimage_facts:
+    location: "{{ location }}"
+  register: output
+
+- assert:
+      that: azure_vmimages | length > 0

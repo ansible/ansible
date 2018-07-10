@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -33,6 +33,7 @@ author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - C(state=absent) removes the whole BGP ASN configuration when
       C(vrf=default) or the whole VRF instance within the BGP process when
       using a different VRF.
@@ -48,243 +49,167 @@ options:
         description:
             - Name of the VRF. The name 'default' is a valid VRF representing
               the global BGP.
-        required: false
-        default: null
     bestpath_always_compare_med:
         description:
             - Enable/Disable MED comparison on paths from different
               autonomous systems.
-        required: false
-        choices: ['true','false']
-        default: null
+        type: bool
     bestpath_aspath_multipath_relax:
         description:
             - Enable/Disable load sharing across the providers with
               different (but equal-length) AS paths.
-        required: false
-        choices: ['true','false']
-        default: null
+        type: bool
     bestpath_compare_routerid:
         description:
             - Enable/Disable comparison of router IDs for identical eBGP paths.
-        required: false
-        choices: ['true','false']
-        default: null
+        type: bool
+    bestpath_compare_neighborid:
+        description:
+            - Enable/Disable neighborid. Use this when more paths available than max path config.
+        type: bool
     bestpath_cost_community_ignore:
         description:
             - Enable/Disable Ignores the cost community for BGP best-path
               calculations.
-        required: false
-        choices: ['true','false']
-        default: null
+        type: bool
     bestpath_med_confed:
         description:
             - Enable/Disable enforcement of bestpath to do a MED comparison
               only between paths originated within a confederation.
-        required: false
-        choices: ['true','false']
-        default: null
+        type: bool
     bestpath_med_missing_as_worst:
         description:
             - Enable/Disable assigns the value of infinity to received
               routes that do not carry the MED attribute, making these routes
               the least desirable.
-        required: false
-        choices: ['true','false']
-        default: null
+        type: bool
     bestpath_med_non_deterministic:
         description:
             - Enable/Disable deterministic selection of the best MED pat
               from among the paths from the same autonomous system.
-        required: false
-        choices: ['true','false']
-        default: null
+        type: bool
     cluster_id:
         description:
             - Route Reflector Cluster-ID.
-        required: false
-        default: null
     confederation_id:
         description:
             - Routing domain confederation AS.
-        required: false
-        default: null
     confederation_peers:
         description:
             - AS confederation parameters.
-        required: false
-        default: null
     disable_policy_batching:
         description:
             - Enable/Disable the batching evaluation of prefix advertisement
               to all peers.
-        required: false
-        choices: ['true','false']
-        default: null
+        type: bool
     disable_policy_batching_ipv4_prefix_list:
         description:
             - Enable/Disable the batching evaluation of prefix advertisements
               to all peers with prefix list.
-        required: false
-        default: null
     disable_policy_batching_ipv6_prefix_list:
         description:
             - Enable/Disable the batching evaluation of prefix advertisements
               to all peers with prefix list.
-        required: false
     enforce_first_as:
         description:
             - Enable/Disable enforces the neighbor autonomous system to be
               the first AS number listed in the AS path attribute for eBGP.
               On NX-OS, this property is only supported in the
               global BGP context.
-        required: false
-        choices: ['true','false']
-        default: null
+        type: bool
     event_history_cli:
         description:
             - Enable/Disable cli event history buffer.
-        required: false
         choices: ['size_small', 'size_medium', 'size_large', 'size_disable', 'default']
-        default: null
     event_history_detail:
         description:
             - Enable/Disable detail event history buffer.
-        required: false
         choices: ['size_small', 'size_medium', 'size_large', 'size_disable', 'default']
-        default: null
     event_history_events:
         description:
             - Enable/Disable event history buffer.
-        required: false
         choices: ['size_small', 'size_medium', 'size_large', 'size_disable', 'default']
-        default: null
     event_history_periodic:
         description:
             - Enable/Disable periodic event history buffer.
-        required: false
         choices: ['size_small', 'size_medium', 'size_large', 'size_disable', 'default']
     fast_external_fallover:
         description:
             - Enable/Disable immediately reset the session if the link to a
               directly connected BGP peer goes down.  Only supported in the
               global BGP context.
-        required: false
-        choices: ['true','false']
-        default: null
+        type: bool
     flush_routes:
         description:
             - Enable/Disable flush routes in RIB upon controlled restart.
               On NX-OS, this property is only supported in the global
               BGP context.
-        required: false
-        choices: ['true','false']
-        default: null
+        type: bool
     graceful_restart:
         description:
             - Enable/Disable graceful restart.
-        required: false
-        choices: ['true','false']
-        default: null
+        type: bool
     graceful_restart_helper:
         description:
             - Enable/Disable graceful restart helper mode.
-        required: false
-        choices: ['true','false']
-        default: null
+        type: bool
     graceful_restart_timers_restart:
         description:
             - Set maximum time for a restart sent to the BGP peer.
-        required: false
-        choices: ['true','false']
-        default: null
     graceful_restart_timers_stalepath_time:
         description:
             - Set maximum time that BGP keeps the stale routes from the
               restarting BGP peer.
-        choices: ['true','false']
-        default: null
     isolate:
         description:
             - Enable/Disable isolate this router from BGP perspective.
-        required: false
-        choices: ['true','false']
-        default: null
+        type: bool
     local_as:
         description:
             - Local AS number to be used within a VRF instance.
-        required: false
-        default: null
     log_neighbor_changes:
         description:
             - Enable/Disable message logging for neighbor up/down event.
-        required: false
-        choices: ['true','false']
-        default: null
+        type: bool
     maxas_limit:
         description:
             - Specify Maximum number of AS numbers allowed in the AS-path
               attribute. Valid values are between 1 and 512.
-        required: false
-        default: null
     neighbor_down_fib_accelerate:
         description:
             - Enable/Disable handle BGP neighbor down event, due to
               various reasons.
-        required: false
-        choices: ['true','false']
-        default: null
+        type: bool
     reconnect_interval:
         description:
             - The BGP reconnection interval for dropped sessions.
               Valid values are between 1 and 60.
-        required: false
-        default: null
     router_id:
         description:
             - Router Identifier (ID) of the BGP router VRF instance.
-        required: false
-        default: null
     shutdown:
         description:
             - Administratively shutdown the BGP protocol.
-        required: false
-        choices: ['true','false']
-        default: null
+        type: bool
     suppress_fib_pending:
         description:
             - Enable/Disable advertise only routes programmed in hardware
               to peers.
-        required: false
-        choices: ['true','false']
-        default: null
+        type: bool
     timer_bestpath_limit:
         description:
             - Specify timeout for the first best path after a restart,
               in seconds.
-        required: false
-        default: null
-    timer_bestpath_limit_always:
-        description:
-            - Enable/Disable update-delay-always option.
-        required: false
-        choices: ['true','false']
-        default: null
     timer_bgp_hold:
         description:
             - Set BGP hold timer.
-        required: false
-        default: null
     timer_bgp_keepalive:
         description:
             - Set BGP keepalive timer.
-        required: false
-        default: null
     state:
         description:
             - Determines whether the config should be present or not
               on the device.
-        required: false
         default: present
         choices: ['present','absent']
 '''
@@ -295,7 +220,7 @@ EXAMPLES = '''
   nxos_bgp:
       asn: 65535
       vrf: test
-      router_id: 1.1.1.1
+      router_id: 192.0.2.1
       state: present
 '''
 
@@ -304,14 +229,15 @@ commands:
     description: commands sent to the device
     returned: always
     type: list
-    sample: ["router bgp 65535", "vrf test", "router-id 1.1.1.1"]
+    sample: ["router bgp 65535", "vrf test", "router-id 192.0.2.1"]
 '''
 
 import re
-from ansible.module_utils.nxos import get_config, load_config
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+
+from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
+from ansible.module_utils.network.common.config import CustomNetworkConfig
 
 
 BOOL_PARAMS = [
@@ -347,11 +273,13 @@ GLOBAL_PARAMS = [
     'fast_external_fallover',
     'flush_routes',
     'isolate',
+    'suppress_fib_pending',
     'shutdown'
 ]
 PARAM_TO_DEFAULT_KEYMAP = {
     'timer_bgp_keepalive': '60',
     'timer_bgp_hold': '180',
+    'timer_bestpath_limit': '300',
     'graceful_restart': True,
     'graceful_restart_timers_restart': '120',
     'graceful_restart_timers_stalepath_time': '300',
@@ -359,9 +287,17 @@ PARAM_TO_DEFAULT_KEYMAP = {
     'suppress_fib_pending': True,
     'fast_external_fallover': True,
     'enforce_first_as': True,
-    'event_history_periodic': True,
     'event_history_cli': True,
-    'event_history_events': True
+    'event_history_detail': False,
+    'event_history_events': True,
+    'event_history_periodic': True,
+    'maxas_limit': '',
+    'router_id': '',
+    'cluster_id': '',
+    'disable_policy_batching_ipv4_prefix_list': '',
+    'disable_policy_batching_ipv6_prefix_list': '',
+    'local_as': '',
+    'confederation_id': '',
 }
 PARAM_TO_COMMAND_KEYMAP = {
     'asn': 'router bgp',
@@ -406,105 +342,66 @@ PARAM_TO_COMMAND_KEYMAP = {
 }
 
 
-def invoke(name, *args, **kwargs):
-    func = globals().get(name)
-    if func:
-        return func(*args, **kwargs)
-
-
-def get_custom_value(config, arg):
-    if arg.startswith('event_history'):
-        REGEX_SIZE = re.compile(r'(?:{0} size\s)(?P<value>.*)$'.format(PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
-        REGEX = re.compile(r'\s+{0}\s*$'.format(PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
-        value = False
-
-        if 'no {0}'.format(PARAM_TO_COMMAND_KEYMAP[arg]) in config:
-            pass
-        elif PARAM_TO_COMMAND_KEYMAP[arg] in config:
-            try:
-                value = REGEX_SIZE.search(config).group('value')
-            except AttributeError:
-                if REGEX.search(config):
-                    value = True
-
-    elif arg == 'enforce_first_as' or arg == 'fast_external_fallover':
-        REGEX = re.compile(r'no\s+{0}\s*$'.format(PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
-        value = True
-        try:
-            if REGEX.search(config):
-                value = False
-        except TypeError:
-            value = True
-
-    elif arg == 'confederation_peers':
-        REGEX = re.compile(r'(?:confederation peers\s)(?P<value>.*)$', re.M)
-        value = ''
-        if 'confederation peers' in config:
-            value = REGEX.search(config).group('value').split()
-
-    elif arg == 'timer_bgp_keepalive':
-        REGEX = re.compile(r'(?:timers bgp\s)(?P<value>.*)$', re.M)
-        value = ''
-        if 'timers bgp' in config:
-            parsed = REGEX.search(config).group('value').split()
-            value = parsed[0]
-
-    elif arg == 'timer_bgp_hold':
-        REGEX = re.compile(r'(?:timers bgp\s)(?P<value>.*)$', re.M)
-        value = ''
-        if 'timers bgp' in config:
-            parsed = REGEX.search(config).group('value').split()
-            if len(parsed) == 2:
-                value = parsed[1]
-
-    return value
-
-
 def get_value(arg, config):
-    custom = [
-        'event_history_cli',
-        'event_history_events',
-        'event_history_periodic',
-        'event_history_detail',
-        'confederation_peers',
-        'timer_bgp_hold',
-        'timer_bgp_keepalive',
-        'enforce_first_as',
-        'fast_external_fallover'
-    ]
+    command = PARAM_TO_COMMAND_KEYMAP.get(arg)
 
-    if arg in custom:
-        value = get_custom_value(config, arg)
-    elif arg in BOOL_PARAMS:
-        REGEX = re.compile(r'\s+{0}\s*$'.format(PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
-        value = False
-        try:
-            if REGEX.search(config):
-                value = True
-        except TypeError:
+    if command.split()[0] == 'event-history':
+        has_size = re.search(r'^\s+{0} size\s(?P<value>.*)$'.format(command), config, re.M)
+
+        if command == 'event-history detail':
             value = False
+        else:
+            value = 'size_small'
+
+        if has_size:
+            value = 'size_%s' % has_size.group('value')
+
+    elif arg in ['enforce_first_as', 'fast_external_fallover']:
+        no_command_re = re.compile(r'no\s+{0}\s*'.format(command), re.M)
+        value = True
+
+        if no_command_re.search(config):
+            value = False
+
+    elif arg in BOOL_PARAMS:
+        has_command = re.search(r'^\s+{0}\s*$'.format(command), config, re.M)
+        value = False
+
+        if has_command:
+            value = True
     else:
-        REGEX = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
+        command_val_re = re.compile(r'(?:{0}\s)(?P<value>.*)'.format(command), re.M)
         value = ''
-        if PARAM_TO_COMMAND_KEYMAP[arg] in config:
-            value = REGEX.search(config).group('value')
+
+        has_command = command_val_re.search(config)
+        if has_command:
+            found_value = has_command.group('value')
+
+            if arg == 'confederation_peers':
+                value = found_value.split()
+            elif arg == 'timer_bgp_keepalive':
+                value = found_value.split()[0]
+            elif arg == 'timer_bgp_hold':
+                split_values = found_value.split()
+                if len(split_values) == 2:
+                    value = split_values[1]
+            elif found_value:
+                value = found_value
+
     return value
 
 
 def get_existing(module, args, warnings):
     existing = {}
-    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
+    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module, flags=['bgp all']))
 
-    try:
-        asn_regex = r'.*router\sbgp\s(?P<existing_asn>\d+).*'
-        match_asn = re.match(asn_regex, str(netcfg), re.DOTALL)
-        existing_asn_group = match_asn.groupdict()
-        existing_asn = existing_asn_group['existing_asn']
-    except AttributeError:
-        existing_asn = ''
+    asn_re = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+(\.\d+)?).*', re.S)
+    asn_match = asn_re.match(str(netcfg))
 
-    if existing_asn:
+    if asn_match:
+        existing_asn = asn_match.group('existing_asn')
         bgp_parent = 'router bgp {0}'.format(existing_asn)
+
         if module.params['vrf'] != 'default':
             parents = [bgp_parent, 'vrf {0}'.format(module.params['vrf'])]
         else:
@@ -513,40 +410,28 @@ def get_existing(module, args, warnings):
         config = netcfg.get_section(parents)
         if config:
             for arg in args:
-                if arg != 'asn':
-                    if module.params['vrf'] != 'default':
-                        if arg not in GLOBAL_PARAMS:
-                            existing[arg] = get_value(arg, config)
-                    else:
-                        existing[arg] = get_value(arg, config)
+                if arg != 'asn' and (module.params['vrf'] == 'default' or
+                                     arg not in GLOBAL_PARAMS):
+                    existing[arg] = get_value(arg, config)
 
             existing['asn'] = existing_asn
             if module.params['vrf'] == 'default':
                 existing['vrf'] = 'default'
-        else:
-            if (module.params['state'] == 'present' and
-                    module.params['vrf'] != 'default'):
-                msg = ("VRF {0} doesn't exist. ".format(module.params['vrf']))
-                warnings.append(msg)
-    else:
-        if (module.params['state'] == 'present' and
-                module.params['vrf'] != 'default'):
-            msg = ("VRF {0} doesn't exist. ".format(module.params['vrf']))
-            warnings.append(msg)
+
+    if not existing and module.params['vrf'] != 'default' and module.params['state'] == 'present':
+        msg = ("VRF {0} doesn't exist.".format(module.params['vrf']))
+        warnings.append(msg)
 
     return existing
 
 
 def apply_key_map(key_map, table):
     new_dict = {}
-    for key, value in table.items():
+    for key in table:
         new_key = key_map.get(key)
         if new_key:
-            value = table.get(key)
-            if value:
-                new_dict[new_key] = value
-            else:
-                new_dict[new_key] = value
+            new_dict[new_key] = table.get(key)
+
     return new_dict
 
 
@@ -561,67 +446,57 @@ def state_present(module, existing, proposed, candidate):
         elif value is False:
             commands.append('no {0}'.format(key))
         elif value == 'default':
-            if key in PARAM_TO_DEFAULT_KEYMAP:
-                commands.append('{0} {1}'.format(key, PARAM_TO_DEFAULT_KEYMAP[key]))
-            elif existing_commands.get(key):
-                existing_value = existing_commands.get(key)
+            default_value = PARAM_TO_DEFAULT_KEYMAP.get(key)
+            existing_value = existing_commands.get(key)
+
+            if default_value:
+                commands.append('{0} {1}'.format(key, default_value))
+            elif existing_value:
                 if key == 'confederation peers':
-                    commands.append('no {0} {1}'.format(key, ' '.join(existing_value)))
-                else:
-                    commands.append('no {0} {1}'.format(key, existing_value))
-        else:
-            if key == 'confederation peers':
-                existing_confederation_peers = existing.get('confederation_peers')
-
-                if existing_confederation_peers:
-                    if not isinstance(existing_confederation_peers, list):
-                        existing_confederation_peers = [existing_confederation_peers]
-                else:
-                    existing_confederation_peers = []
-
-                values = value.split()
-                for each_value in values:
-                    if each_value not in existing_confederation_peers:
-                        existing_confederation_peers.append(each_value)
-                peer_string = ' '.join(existing_confederation_peers)
-                commands.append('{0} {1}'.format(key, peer_string))
-            elif key.startswith('timers bgp'):
-                command = 'timers bgp {0} {1}'.format(
-                    proposed['timer_bgp_keepalive'],
-                    proposed['timer_bgp_hold'])
-                if command not in commands:
-                    commands.append(command)
-            else:
-                if value.startswith('size'):
-                    value = value.replace('_', ' ')
-                command = '{0} {1}'.format(key, value)
+                    existing_value = ' '.join(existing_value)
+                commands.append('no {0} {1}'.format(key, existing_value))
+        elif not value:
+            existing_value = existing_commands.get(key)
+            if existing_value:
+                commands.append('no {0} {1}'.format(key, existing_value))
+        elif key == 'confederation peers':
+            commands.append('{0} {1}'.format(key, value))
+        elif key.startswith('timers bgp'):
+            command = 'timers bgp {0} {1}'.format(
+                proposed['timer_bgp_keepalive'],
+                proposed['timer_bgp_hold'])
+            if command not in commands:
                 commands.append(command)
+        else:
+            if value.startswith('size'):
+                value = value.replace('_', ' ')
+            command = '{0} {1}'.format(key, value)
+            commands.append(command)
 
+    parents = []
     if commands:
         commands = fix_commands(commands)
         parents = ['router bgp {0}'.format(module.params['asn'])]
         if module.params['vrf'] != 'default':
             parents.append('vrf {0}'.format(module.params['vrf']))
-        candidate.add(commands, parents=parents)
     elif proposed:
         if module.params['vrf'] != 'default':
             commands.append('vrf {0}'.format(module.params['vrf']))
             parents = ['router bgp {0}'.format(module.params['asn'])]
         else:
             commands.append('router bgp {0}'.format(module.params['asn']))
-            parents = []
-        candidate.add(commands, parents=parents)
+
+    candidate.add(commands, parents=parents)
 
 
-def state_absent(module, existing, proposed, candidate):
+def state_absent(module, existing, candidate):
     commands = []
     parents = []
     if module.params['vrf'] == 'default':
         commands.append('no router bgp {0}'.format(module.params['asn']))
-    else:
-        if existing.get('vrf') == module.params['vrf']:
-            commands.append('no vrf {0}'.format(module.params['vrf']))
-            parents = ['router bgp {0}'.format(module.params['asn'])]
+    elif existing.get('vrf') == module.params['vrf']:
+        commands.append('no vrf {0}'.format(module.params['vrf']))
+        parents = ['router bgp {0}'.format(module.params['asn'])]
 
     candidate.add(commands, parents=parents)
 
@@ -640,16 +515,38 @@ def fix_commands(commands):
             confederation_peers_command = command
 
     if local_as_command and confederation_id_command:
-        commands.pop(commands.index(local_as_command))
-        commands.pop(commands.index(confederation_id_command))
-        commands.append(local_as_command)
-        commands.append(confederation_id_command)
+        if 'no' in confederation_id_command:
+            commands.pop(commands.index(local_as_command))
+            commands.pop(commands.index(confederation_id_command))
+            commands.append(confederation_id_command)
+            commands.append(local_as_command)
+        else:
+            commands.pop(commands.index(local_as_command))
+            commands.pop(commands.index(confederation_id_command))
+            commands.append(local_as_command)
+            commands.append(confederation_id_command)
 
-    elif confederation_peers_command and confederation_id_command:
-        commands.pop(commands.index(confederation_peers_command))
-        commands.pop(commands.index(confederation_id_command))
-        commands.append(confederation_id_command)
-        commands.append(confederation_peers_command)
+    if confederation_peers_command and confederation_id_command:
+        if local_as_command:
+            if 'no' in local_as_command:
+                commands.pop(commands.index(local_as_command))
+                commands.pop(commands.index(confederation_id_command))
+                commands.pop(commands.index(confederation_peers_command))
+                commands.append(confederation_id_command)
+                commands.append(confederation_peers_command)
+                commands.append(local_as_command)
+            else:
+                commands.pop(commands.index(local_as_command))
+                commands.pop(commands.index(confederation_id_command))
+                commands.pop(commands.index(confederation_peers_command))
+                commands.append(local_as_command)
+                commands.append(confederation_id_command)
+                commands.append(confederation_peers_command)
+        else:
+            commands.pop(commands.index(confederation_peers_command))
+            commands.pop(commands.index(confederation_id_command))
+            commands.append(confederation_id_command)
+            commands.append(confederation_peers_command)
 
     return commands
 
@@ -668,14 +565,14 @@ def main():
         bestpath_med_non_deterministic=dict(required=False, type='bool'),
         cluster_id=dict(required=False, type='str'),
         confederation_id=dict(required=False, type='str'),
-        confederation_peers=dict(required=False, type='str'),
+        confederation_peers=dict(required=False, type='list'),
         disable_policy_batching=dict(required=False, type='bool'),
         disable_policy_batching_ipv4_prefix_list=dict(required=False, type='str'),
         disable_policy_batching_ipv6_prefix_list=dict(required=False, type='str'),
         enforce_first_as=dict(required=False, type='bool'),
         event_history_cli=dict(required=False, choices=['true', 'false', 'default', 'size_small', 'size_medium', 'size_large', 'size_disable']),
         event_history_detail=dict(required=False, choices=['true', 'false', 'default', 'size_small', 'size_medium', 'size_large', 'size_disable']),
-        event_history_events=dict(required=False, choices=['true', 'false', 'default' 'size_small', 'size_medium', 'size_large', 'size_disable']),
+        event_history_events=dict(required=False, choices=['true', 'false', 'default', 'size_small', 'size_medium', 'size_large', 'size_disable']),
         event_history_periodic=dict(required=False, choices=['true', 'false', 'default', 'size_small', 'size_medium', 'size_large', 'size_disable']),
         fast_external_fallover=dict(required=False, type='bool'),
         flush_routes=dict(required=False, type='bool'),
@@ -696,11 +593,7 @@ def main():
         timer_bgp_hold=dict(required=False, type='str'),
         timer_bgp_keepalive=dict(required=False, type='str'),
         state=dict(choices=['present', 'absent'], default='present', required=False),
-        include_defaults=dict(default=True),
-        config=dict(),
-        save=dict(type='bool', default=False)
     )
-
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
@@ -709,63 +602,22 @@ def main():
 
     warnings = list()
     check_args(module, warnings)
+    result = dict(changed=False, warnings=warnings)
 
     state = module.params['state']
-    args = [
-        "asn",
-        "bestpath_always_compare_med",
-        "bestpath_aspath_multipath_relax",
-        "bestpath_compare_neighborid",
-        "bestpath_compare_routerid",
-        "bestpath_cost_community_ignore",
-        "bestpath_med_confed",
-        "bestpath_med_missing_as_worst",
-        "bestpath_med_non_deterministic",
-        "cluster_id",
-        "confederation_id",
-        "confederation_peers",
-        "disable_policy_batching",
-        "disable_policy_batching_ipv4_prefix_list",
-        "disable_policy_batching_ipv6_prefix_list",
-        "enforce_first_as",
-        "event_history_cli",
-        "event_history_detail",
-        "event_history_events",
-        "event_history_periodic",
-        "fast_external_fallover",
-        "flush_routes",
-        "graceful_restart",
-        "graceful_restart_helper",
-        "graceful_restart_timers_restart",
-        "graceful_restart_timers_stalepath_time",
-        "isolate",
-        "local_as",
-        "log_neighbor_changes",
-        "maxas_limit",
-        "neighbor_down_fib_accelerate",
-        "reconnect_interval",
-        "router_id",
-        "shutdown",
-        "suppress_fib_pending",
-        "timer_bestpath_limit",
-        "timer_bgp_hold",
-        "timer_bgp_keepalive",
-        "vrf"
-    ]
 
     if module.params['vrf'] != 'default':
-        for param, inserted_value in module.params.items():
-            if param in GLOBAL_PARAMS and inserted_value:
-                module.fail_json(msg='Global params can be modified only'
-                                     ' under "default" VRF.',
+        for param in GLOBAL_PARAMS:
+            if module.params[param]:
+                module.fail_json(msg='Global params can be modified only under "default" VRF.',
                                  vrf=module.params['vrf'],
                                  global_param=param)
 
+    args = PARAM_TO_COMMAND_KEYMAP.keys()
     existing = get_existing(module, args, warnings)
 
-    if existing.get('asn'):
-        if (existing.get('asn') != module.params['asn'] and
-                state == 'present'):
+    if existing.get('asn') and state == 'present':
+        if existing.get('asn') != module.params['asn']:
             module.fail_json(msg='Another BGP ASN already exists.',
                              proposed_asn=module.params['asn'],
                              existing_asn=existing.get('asn'))
@@ -774,24 +626,33 @@ def main():
                          if v is not None and k in args)
     proposed = {}
     for key, value in proposed_args.items():
-        if key != 'asn' and key != 'vrf':
+        if key not in ['asn', 'vrf']:
             if str(value).lower() == 'default':
-                value = PARAM_TO_DEFAULT_KEYMAP.get(key)
-                if value is None:
-                    value = 'default'
-            if existing.get(key) or (not existing.get(key) and value):
-                proposed[key] = value
+                value = PARAM_TO_DEFAULT_KEYMAP.get(key, 'default')
+            if key == 'confederation_peers':
+                if value[0] == 'default':
+                    if existing.get(key):
+                        proposed[key] = 'default'
+                else:
+                    v = set([int(i) for i in value])
+                    ex = set([int(i) for i in existing.get(key)])
+                    if v != ex:
+                        proposed[key] = ' '.join(str(s) for s in v)
+            else:
+                if existing.get(key) != value:
+                    proposed[key] = value
 
-    result = dict(changed=False, warnings=warnings)
+    candidate = CustomNetworkConfig(indent=3)
+    if state == 'present':
+        state_present(module, existing, proposed, candidate)
+    elif existing.get('asn') == module.params['asn']:
+        state_absent(module, existing, candidate)
 
-    if state == 'present' or existing.get('asn') == module.params['asn']:
-        candidate = CustomNetworkConfig(indent=3)
-        invoke('state_%s' % state, module, existing, proposed, candidate)
-
-        if (candidate):
-            load_config(module, candidate)
-            result['changed'] = True
-        result['commands'] = [item.text for item in candidate.items]
+    if candidate:
+        candidate = candidate.items_text()
+        load_config(module, candidate)
+        result['changed'] = True
+        result['commands'] = candidate
     else:
         result['commands'] = []
 

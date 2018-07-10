@@ -1,0 +1,425 @@
+---
+# __Test Info__
+# Create a self signed cert and upload it to AWS
+# http://www.akadia.com/services/ssh_test_certificate.html
+# http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/ssl-server-cert.html
+
+# __Test Outline__
+#
+# __elb_classic_lb__
+# create test elb with listeners and certificate
+# change AZ's
+# change listeners
+# remove listeners
+# remove elb
+
+# __ec2-common__
+# test environment variable EC2_REGION
+# test with no parameters
+# test with only instance_id
+# test invalid region parameter
+# test valid region parameter
+# test invalid ec2_url parameter
+# test valid ec2_url parameter
+# test credentials from environment
+# test credential parameters
+
+- block:
+
+    # ============================================================
+    # create test elb with listeners, certificate, and health check
+
+    - name: Create ELB
+      elb_classic_lb:
+        name: "{{ tag_prefix }}"
+        region: "{{ ec2_region }}"
+        ec2_access_key: "{{ ec2_access_key }}"
+        ec2_secret_key: "{{ ec2_secret_key }}"
+        security_token: "{{ security_token }}"
+        state: present
+        zones:
+          - "{{ ec2_region }}a"
+          - "{{ ec2_region }}b"
+        listeners:
+          - protocol: http
+            load_balancer_port: 80
+            instance_port: 80
+          - protocol: http
+            load_balancer_port: 8080
+            instance_port: 8080
+        health_check:
+            ping_protocol: http
+            ping_port: 80
+            ping_path: "/index.html"
+            response_timeout: 5
+            interval: 30
+            unhealthy_threshold: 2
+            healthy_threshold: 10
+      register: info
+
+    - assert:
+        that:
+          - 'info.changed'
+          - 'info.elb.status == "created"'
+          - '"{{ ec2_region }}a" in info.elb.zones'
+          - '"{{ ec2_region }}b" in info.elb.zones'
+          - 'info.elb.health_check.healthy_threshold == 10'
+          - 'info.elb.health_check.interval == 30'
+          - 'info.elb.health_check.target == "HTTP:80/index.html"'
+          - 'info.elb.health_check.timeout == 5'
+          - 'info.elb.health_check.unhealthy_threshold == 2'
+          - '[80, 80, "HTTP", "HTTP"] in info.elb.listeners'
+          - '[8080, 8080, "HTTP", "HTTP"] in info.elb.listeners'
+
+    # ============================================================
+
+    # check ports, would be cool, but we are at the mercy of AWS
+    # to start things in a timely manner
+
+    #- name: check to make sure 80 is listening
+    #  wait_for: host={{ info.elb.dns_name }} port=80 timeout=600
+    #  register: result
+
+    #- name: assert can connect to port#
+    #  assert: 'result.state == "started"'
+
+    #- name: check to make sure 443 is listening
+    #  wait_for: host={{ info.elb.dns_name }} port=443 timeout=600
+    #  register: result
+
+    #- name: assert can connect to port#
+    #  assert: 'result.state == "started"'
+
+    # ============================================================
+
+    # Change AZ's
+
+    - name: Change AZ's
+      elb_classic_lb:
+        name: "{{ tag_prefix }}"
+        region: "{{ ec2_region }}"
+        ec2_access_key: "{{ ec2_access_key }}"
+        ec2_secret_key: "{{ ec2_secret_key }}"
+        security_token: "{{ security_token }}"
+        state: present
+        zones:
+          - "{{ ec2_region }}c"
+        listeners:
+          - protocol: http
+            load_balancer_port: 80
+            instance_port: 80
+        purge_zones: yes
+        health_check:
+            ping_protocol: http
+            ping_port: 80
+            ping_path: "/index.html"
+            response_timeout: 5
+            interval: 30
+            unhealthy_threshold: 2
+            healthy_threshold: 10
+      register: info
+
+
+
+    - assert:
+        that:
+          - 'info.elb.status == "ok"'
+          - 'info.changed'
+          - 'info.elb.zones[0] == "{{ ec2_region }}c"'
+
+    # ============================================================
+
+    # Update AZ's
+
+    - name: Update AZ's
+      elb_classic_lb:
+        name: "{{ tag_prefix }}"
+        region: "{{ ec2_region }}"
+        ec2_access_key: "{{ ec2_access_key }}"
+        ec2_secret_key: "{{ ec2_secret_key }}"
+        security_token: "{{ security_token }}"
+        state: present
+        zones:
+          - "{{ ec2_region }}a"
+          - "{{ ec2_region }}b"
+          - "{{ ec2_region }}c"
+        listeners:
+          - protocol: http
+            load_balancer_port: 80
+            instance_port: 80
+        purge_zones: yes
+      register: info
+
+    - assert:
+        that:
+          - 'info.changed'
+          - 'info.elb.status == "ok"'
+          - '"{{ ec2_region }}a" in info.elb.zones'
+          - '"{{ ec2_region }}b" in info.elb.zones'
+          - '"{{ ec2_region }}c" in info.elb.zones'
+
+
+    # ============================================================
+
+    # Purge Listeners
+
+    - name: Purge Listeners
+      elb_classic_lb:
+        name: "{{ tag_prefix }}"
+        region: "{{ ec2_region }}"
+        ec2_access_key: "{{ ec2_access_key }}"
+        ec2_secret_key: "{{ ec2_secret_key }}"
+        security_token: "{{ security_token }}"
+        state: present
+        zones:
+          - "{{ ec2_region }}a"
+          - "{{ ec2_region }}b"
+          - "{{ ec2_region }}c"
+        listeners:
+          - protocol: http
+            load_balancer_port: 80
+            instance_port: 81
+        purge_listeners: yes
+      register: info
+
+    - assert:
+        that:
+          - 'info.elb.status == "ok"'
+          - 'info.changed'
+          - '[80, 81, "HTTP", "HTTP"] in info.elb.listeners'
+          - 'info.elb.listeners|length == 1'
+
+
+
+    # ============================================================
+
+    # add Listeners
+
+    - name: Add Listeners
+      elb_classic_lb:
+        name: "{{ tag_prefix }}"
+        region: "{{ ec2_region }}"
+        ec2_access_key: "{{ ec2_access_key }}"
+        ec2_secret_key: "{{ ec2_secret_key }}"
+        security_token: "{{ security_token }}"
+        state: present
+        zones:
+          - "{{ ec2_region }}a"
+          - "{{ ec2_region }}b"
+          - "{{ ec2_region }}c"
+        listeners:
+          - protocol: http
+            load_balancer_port: 8081
+            instance_port: 8081
+        purge_listeners: no
+      register: info
+
+    - assert:
+        that:
+          - 'info.elb.status == "ok"'
+          - 'info.changed'
+          - '[80, 81, "HTTP", "HTTP"] in info.elb.listeners'
+          - '[8081, 8081, "HTTP", "HTTP"] in info.elb.listeners'
+          - 'info.elb.listeners|length == 2'
+
+
+    # ============================================================
+
+    - name: test with no parameters
+      elb_classic_lb:
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with no parameters
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("missing required arguments: ")'
+
+
+
+    # ============================================================
+    - name: test with only name
+      elb_classic_lb:
+        name="{{ tag_prefix }}"
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with only name
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg == "missing required arguments: state"'
+
+
+    # ============================================================
+    - name: test invalid region parameter
+      elb_classic_lb:
+        name: "{{ tag_prefix }}"
+        region: 'asdf querty 1234'
+        state: present
+        listeners:
+          - protocol: http
+            load_balancer_port: 80
+            instance_port: 80
+        zones:
+          - "{{ ec2_region }}a"
+          - "{{ ec2_region }}b"
+          - "{{ ec2_region }}c"
+      register: result
+      ignore_errors: true
+
+    - name: assert invalid region parameter
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("Region asdf querty 1234 does not seem to be available ")'
+
+
+    # ============================================================
+    - name: test valid region parameter
+      elb_classic_lb:
+        name: "{{ tag_prefix }}"
+        region: "{{ ec2_region }}"
+        state: present
+        zones:
+          - "{{ ec2_region }}a"
+          - "{{ ec2_region }}b"
+          - "{{ ec2_region }}c"
+        listeners:
+          - protocol: http
+            load_balancer_port: 80
+            instance_port: 80
+
+      register: result
+      ignore_errors: true
+
+    - name: assert valid region parameter
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("No handler was ready to authenticate.")'
+
+
+    # ============================================================
+
+    - name: test invalid ec2_url parameter
+      elb_classic_lb:
+        name: "{{ tag_prefix }}"
+        region: "{{ ec2_region }}"
+        state: present
+        zones:
+          - "{{ ec2_region }}a"
+          - "{{ ec2_region }}b"
+          - "{{ ec2_region }}c"
+        listeners:
+          - protocol: http
+            load_balancer_port: 80
+            instance_port: 80
+      environment:
+        EC2_URL: bogus.example.com
+      register: result
+      ignore_errors: true
+
+    - name: assert invalid ec2_url parameter
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("No handler was ready to authenticate.")'
+
+
+    # ============================================================
+    - name: test valid ec2_url parameter
+      elb_classic_lb:
+        name: "{{ tag_prefix }}"
+        region: "{{ ec2_region }}"
+        state: present
+        zones:
+          - "{{ ec2_region }}a"
+          - "{{ ec2_region }}b"
+          - "{{ ec2_region }}c"
+        listeners:
+          - protocol: http
+            load_balancer_port: 80
+            instance_port: 80
+      environment:
+        EC2_URL: '{{ec2_url}}'
+      register: result
+      ignore_errors: true
+
+    - name: assert valid ec2_url parameter
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("No handler was ready to authenticate.")'
+
+
+    # ============================================================
+    - name: test credentials from environment
+      elb_classic_lb:
+        name: "{{ tag_prefix }}"
+        region: "{{ ec2_region }}"
+        state: present
+        zones:
+          - "{{ ec2_region }}a"
+          - "{{ ec2_region }}b"
+          - "{{ ec2_region }}c"
+        listeners:
+          - protocol: http
+            load_balancer_port: 80
+            instance_port: 80
+      environment:
+        EC2_ACCESS_KEY: bogus_access_key
+        EC2_SECRET_KEY: bogus_secret_key
+      register: result
+      ignore_errors: true
+
+    - name: assert credentials from environment
+      assert:
+        that:
+           - 'result.failed'
+           - '"InvalidClientTokenId" in result.exception'
+
+
+    # ============================================================
+    - name: test credential parameters
+      elb_classic_lb:
+        name: "{{ tag_prefix }}"
+        region: "{{ ec2_region }}"
+        state: present
+        zones:
+          - "{{ ec2_region }}a"
+          - "{{ ec2_region }}b"
+          - "{{ ec2_region }}c"
+        listeners:
+          - protocol: http
+            load_balancer_port: 80
+            instance_port: 80
+      register: result
+      ignore_errors: true
+
+    - name: assert credential parameters
+      assert:
+        that:
+           - 'result.failed'
+           - '"No handler was ready to authenticate. 1 handlers were checked." in result.msg'
+
+  always:
+
+    # ============================================================
+    - name: remove the test load balancer completely
+      elb_classic_lb:
+        name: "{{ tag_prefix }}"
+        region: "{{ ec2_region }}"
+        state: absent
+        ec2_access_key: "{{ ec2_access_key }}"
+        ec2_secret_key: "{{ ec2_secret_key }}"
+        security_token: "{{ security_token }}"
+      register: result
+
+    - name: assert the load balancer was removed
+      assert:
+        that:
+           - 'result.changed'
+           - 'result.elb.name == "{{tag_prefix}}"'
+           - 'result.elb.status == "deleted"'

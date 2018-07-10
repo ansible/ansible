@@ -19,14 +19,14 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import glob
 import os
 import re
 import time
-import glob
 
-from ansible.plugins.action.sros import ActionModule as _ActionModule
-from ansible.module_utils._text import to_text
 from ansible.module_utils.six.moves.urllib.parse import urlsplit
+from ansible.module_utils._text import to_text
+from ansible.plugins.action.sros import ActionModule as _ActionModule
 from ansible.utils.vars import merge_hash
 
 PRIVATE_KEYS_RE = re.compile('__.+__')
@@ -43,6 +43,7 @@ class ActionModule(_ActionModule):
                 return dict(failed=True, msg=exc.message)
 
         result = super(ActionModule, self).run(tmp, task_vars)
+        del tmp  # tmp no longer has any effect
 
         if self._task.args.get('backup') and result.get('__backup__'):
             # User requested backup and no error occurred in module.
@@ -110,4 +111,3 @@ class ActionModule(_ActionModule):
         searchpath.append(os.path.dirname(source))
         self._templar.environment.loader.searchpath = searchpath
         self._task.args['src'] = self._templar.template(template_data)
-

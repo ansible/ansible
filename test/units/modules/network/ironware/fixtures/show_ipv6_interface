@@ -1,0 +1,5 @@
+Type Codes - I:ISIS  O:OSPF R:RIP
+Interface     Status/Protocol IGPs  IPv6 Address                                VRF
+eth 1/1       up/up                 fe80::224:38ff:feae:ff00                    default-vrf
+                                    2001:db8::1/64
+                                    2001:db8::/64[Anycast]

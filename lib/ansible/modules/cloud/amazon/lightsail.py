@@ -1,23 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.0'}
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -37,37 +29,26 @@ options:
     description:
       - Name of the instance
     required: true
-    default : null
   zone:
     description:
       - AWS availability zone in which to launch the instance. Required when state='present'
-    required: false
-    default: null
   blueprint_id:
     description:
       - ID of the instance blueprint image. Required when state='present'
-    required: false
-    default: null
   bundle_id:
     description:
       - Bundle of specification info for the instance. Required when state='present'
-    required: false
-    default: null
   user_data:
     description:
       - Launch script that can configure the instance with additional data
-    required: false
-    default: null
   key_pair_name:
     description:
       - Name of the key pair to use with the instance
-    required: false
-    default: null
   wait:
     description:
       - Wait for the instance to be in state 'running' before returning.  If wait is "no" an ip_address may not be returned
-    default: "yes"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'yes'
   wait_timeout:
     description:
       - How long before wait gives up, in seconds.
@@ -77,7 +58,9 @@ requirements:
   - "python >= 2.6"
   - boto3
 
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+  - aws
+  - ec2
 '''
 
 
@@ -163,7 +146,6 @@ instance:
     username: "ubuntu"
 '''
 
-import os
 import time
 import traceback
 
@@ -180,7 +162,8 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import (ec2_argument_spec, get_aws_connection_info, boto3_conn,
+                                      HAS_BOTO3, camel_dict_to_snake_dict)
 
 
 def create_instance(module, client, instance_name):
@@ -421,7 +404,7 @@ def core(module):
         client = boto3_conn(module, conn_type='client', resource='lightsail',
                             region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except (botocore.exceptions.ClientError, botocore.exceptions.ValidationError) as e:
-        module.fail_json('Failed while connecting to the lightsail service: %s' % e, exception=traceback.format_exc())
+        module.fail_json(msg='Failed while connecting to the lightsail service: %s' % e, exception=traceback.format_exc())
 
     changed = False
     state = module.params['state']
@@ -475,6 +458,7 @@ def main():
         core(module)
     except (botocore.exceptions.ClientError, Exception) as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
+
 
 if __name__ == '__main__':
     main()

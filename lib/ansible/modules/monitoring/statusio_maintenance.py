@@ -2,23 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2015, Benjamin Copeland (@bhcopeland) <ben@copeland.me.uk>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -40,17 +30,14 @@ options:
     title:
         description:
             - A descriptive title for the maintenance window
-        required: false
         default: "A new maintenance window"
     desc:
         description:
             - Message describing the maintenance window
-        required: false
         default: "Created by Ansible"
     state:
         description:
             - Desired state of the package.
-        required: false
         default: "present"
         choices: ["present", "absent"]
     api_id:
@@ -68,73 +55,61 @@ options:
     url:
         description:
             - Status.io API URL. A private apiary can be used instead.
-        required: false
         default: "https://api.status.io"
     components:
         description:
             - The given name of your component (server name)
-        required: false
         aliases: ['component']
-        default: None
     containers:
         description:
             - The given name of your container (data center)
-        required: false
         aliases: ['container']
-        default: None
     all_infrastructure_affected:
         description:
             - If it affects all components and containers
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     automation:
         description:
             - Automatically start and end the maintenance window
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     maintenance_notify_now:
         description:
             - Notify subscribers now
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     maintenance_notify_72_hr:
         description:
             - Notify subscribers 72 hours before maintenance start time
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     maintenance_notify_24_hr:
         description:
             - Notify subscribers 24 hours before maintenance start time
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     maintenance_notify_1_hr:
         description:
             - Notify subscribers 1 hour before maintenance start time
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     maintenance_id:
         description:
             - The maintenance id number when deleting a maintenance window
-        required: false
-        default: None
     minutes:
         description:
             - The length of time in UTC that the maintenance will run \
             (starting from playbook runtime)
-        required: false
         default: 10
     start_date:
         description:
             - Date maintenance is expected to start (Month/Day/Year) (UTC)
             - End Date is worked out from start_date + minutes
-        required: false
-        default: None
     start_time:
         description:
             - Time maintenance is expected to start (Hour:Minutes) (UTC)
             - End Time is worked out from start_time + minutes
-        required: false
-        default: None
 '''
 
 EXAMPLES = '''
@@ -190,6 +165,11 @@ EXAMPLES = '''
 RETURN = ''' # '''
 
 import datetime
+import json
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+from ansible.module_utils.urls import open_url
 
 
 def get_api_auth_headers(api_id, api_key, url, statuspage):
@@ -210,8 +190,8 @@ def get_api_auth_headers(api_id, api_key, url, statuspage):
         else:
             auth_headers = headers
             auth_content = data
-    except:
-        return 1, None, None, e
+    except Exception as e:
+        return 1, None, None, to_native(e)
     return 0, auth_headers, auth_content, None
 
 
@@ -320,9 +300,8 @@ def create_maintenance(auth_headers, url, statuspage, host_ids,
 
         if data["status"]["error"] == "yes":
             return 1, None, data["status"]["message"]
-    except Exception:
-        e = get_exception()
-        return 1, None, str(e)
+    except Exception as e:
+        return 1, None, to_native(e)
     return 0, None, None
 
 
@@ -339,9 +318,8 @@ def delete_maintenance(auth_headers, url, statuspage, maintenance_id):
         data = json.loads(response.read())
         if data["status"]["error"] == "yes":
             return 1, None, "Invalid maintenance_id"
-    except Exception:
-        e = get_exception()
-        return 1, None, str(e)
+    except Exception as e:
+        return 1, None, to_native(e)
     return 0, None, None
 
 
@@ -475,7 +453,6 @@ def main():
                 module.fail_json(
                     msg="Failed to delete maintenance: %s" % error)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
+
 if __name__ == '__main__':
     main()

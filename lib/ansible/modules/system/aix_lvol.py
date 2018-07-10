@@ -2,30 +2,20 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016, Alain Dejoux <adejoux@djouxtech.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-DOCUMENTATION = '''
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+DOCUMENTATION = r'''
 ---
 author:
-    - "Alain Dejoux (@adejoux)"
+    - Alain Dejoux (@adejoux)
 module: aix_lvol
 short_description: Configure AIX LVM logical volumes
 description:
@@ -42,83 +32,84 @@ options:
     required: true
   lv_type:
     description:
-    - The type of the logical volume. Default to jfs2.
+    - The type of the logical volume.
+    default: jfs2
   size:
     description:
     - The size of the logical volume with one of the [MGT] units.
   copies:
     description:
-    - the number of copies of the logical volume. By default, 1 copy. Maximum copies are 3.
+    - The number of copies of the logical volume. Maximum copies are 3.
+    default: '1'
   policy:
-    choices: [ "maximum", "minimum" ]
+    choices: [ maximum, minimum ]
     default: maximum
     description:
-    - Sets the interphysical volume allocation policy. "maximum" allocates logical partitions across the maximum number of physical volumes.
-      "minimum" allocates logical partitions across the minimum number of physical volumes.
+    - Sets the interphysical volume allocation policy. C(maximum) allocates logical partitions across the maximum number of physical volumes.
+      C(minimum) allocates logical partitions across the minimum number of physical volumes.
   state:
-    choices: [ "present", "absent" ]
+    choices: [ absent, present ]
     default: present
     description:
     - Control if the logical volume exists. If C(present) and the
       volume does not already exist then the C(size) option is required.
   opts:
     description:
-    - Free-form options to be passed to the mklv command
+    - Free-form options to be passed to the mklv command.
   pvs:
     description:
-    - Comma separated list of physical volumes e.g. hdisk1,hdisk2
+    - Comma separated list of physical volumes e.g. C(hdisk1,hdisk2).
 '''
 
-EXAMPLES = '''
-# Create a logical volume of 512M.
-- aix_lvol:
+EXAMPLES = r'''
+- name: Create a logical volume of 512M
+  aix_lvol:
     vg: testvg
     lv: testlv
     size: 512M
 
-# Create a logical volume of 512M with disks hdisk1 and hdisk2
-- aix_lvol:
+- name: Create a logical volume of 512M with disks hdisk1 and hdisk2
+  aix_lvol:
     vg: testvg
     lv: test2lv
     size: 512M
     pvs: hdisk1,hdisk2
 
-# Create a logical volume of 512M mirrored.
-- aix_lvol:
+- name: Create a logical volume of 512M mirrored
+  aix_lvol:
     vg: testvg
     lv: test3lv
     size: 512M
     copies: 2
 
-# Create a logical volume of 1G with a minimum placement policy .
-- aix_lvol:
+- name: Create a logical volume of 1G with a minimum placement policy
+  aix_lvol:
     vg: rootvg
     lv: test4lv
     size: 1G
     policy: minimum
 
-# Create a logical volume with special options like mirror pool
-- aix_lvol:
+- name: Create a logical volume with special options like mirror pool
+  aix_lvol:
     vg: testvg
     lv: testlv
     size: 512M
     opts: -p copy1=poolA -p copy2=poolB
 
-# Extend the logical volume to 1200M.
-- aix_lvol:
+- name: Extend the logical volume to 1200M
+  aix_lvol:
     vg: testvg
     lv: test4lv
     size: 1200M
 
-
-# Remove the logical volume.
-- aix_lvol:
+- name: Remove the logical volume
+  aix_lvol:
     vg: testvg
     lv: testlv
     state: absent
 '''
 
-RETURN = '''
+RETURN = r'''
 msg:
   type: string
   description: A friendly message describing the task result.
@@ -126,15 +117,16 @@ msg:
   sample: Logical volume testlv created.
 '''
 
-from ansible.module_utils.basic import AnsibleModule
 import re
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 def convert_size(module, size):
     unit = size[-1].upper()
     units = ['M', 'G', 'T']
     try:
-        multiplier = 1024**units.index(unit)
+        multiplier = 1024 ** units.index(unit)
     except ValueError:
         module.fail_json(msg="No valid size unit specified.")
 
@@ -152,20 +144,20 @@ def parse_lv(data):
     name = None
 
     for line in data.splitlines():
-        match = re.search("LOGICAL VOLUME:\s+(\w+)\s+VOLUME GROUP:\s+(\w+)", line)
+        match = re.search(r"LOGICAL VOLUME:\s+(\w+)\s+VOLUME GROUP:\s+(\w+)", line)
         if match is not None:
             name = match.group(1)
             vg = match.group(2)
             continue
-        match = re.search("LPs:\s+(\d+).*PPs", line)
+        match = re.search(r"LPs:\s+(\d+).*PPs", line)
         if match is not None:
             lps = int(match.group(1))
             continue
-        match = re.search("PP SIZE:\s+(\d+)", line)
+        match = re.search(r"PP SIZE:\s+(\d+)", line)
         if match is not None:
             pp_size = int(match.group(1))
             continue
-        match = re.search("INTER-POLICY:\s+(\w+)", line)
+        match = re.search(r"INTER-POLICY:\s+(\w+)", line)
         if match is not None:
             policy = match.group(1)
             continue
@@ -182,22 +174,22 @@ def parse_vg(data):
 
     for line in data.splitlines():
 
-        match = re.search("VOLUME GROUP:\s+(\w+)", line)
+        match = re.search(r"VOLUME GROUP:\s+(\w+)", line)
         if match is not None:
             name = match.group(1)
             continue
 
-        match = re.search("TOTAL PP.*\((\d+)", line)
+        match = re.search(r"TOTAL PP.*\((\d+)", line)
         if match is not None:
             size = int(match.group(1))
             continue
 
-        match = re.search("PP SIZE:\s+(\d+)", line)
+        match = re.search(r"PP SIZE:\s+(\d+)", line)
         if match is not None:
             pp_size = int(match.group(1))
             continue
 
-        match = re.search("FREE PP.*\((\d+)", line)
+        match = re.search(r"FREE PP.*\((\d+)", line)
         if match is not None:
             free = int(match.group(1))
             continue
@@ -208,14 +200,14 @@ def parse_vg(data):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            vg=dict(required=True, type='str'),
-            lv=dict(required=True, type='str'),
-            lv_type=dict(default='jfs2', type='str'),
+            vg=dict(type='str', required=True),
+            lv=dict(type='str', required=True),
+            lv_type=dict(type='str', default='jfs2'),
             size=dict(type='str'),
-            opts=dict(default='', type='str'),
-            copies=dict(default='1', type='str'),
-            state=dict(choices=["absent", "present"], default='present'),
-            policy=dict(choices=["maximum", "minimum"], default='maximum'),
+            opts=dict(type='str', default=''),
+            copies=dict(type='str', default='1'),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            policy=dict(type='str', default='maximum', choices=['maximum', 'minimum']),
             pvs=dict(type='list', default=list())
         ),
         supports_check_mode=True,

@@ -1,0 +1,109 @@
+---
+- block:
+  - name: Create user with password
+    iosxr_user:
+      name: auth_user
+      state: present
+      configured_password: pass123
+      provider: "{{ cli }}"
+    connection: network_cli
+
+  - name: test login
+    expect:
+      command: "ssh auth_user@{{ ansible_ssh_host }} -p {{ ansible_ssh_port|default(22) }} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no show version"
+      responses:
+        (?i)password: "pass123"
+    connection: network_cli
+
+  - name: test login with invalid password (should fail)
+    expect:
+      command: "ssh auth_user@{{ ansible_ssh_host }} -p {{ ansible_ssh_port|default(22) }} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no show version"
+      responses:
+        (?i)password: "badpass"
+    ignore_errors: yes
+    connection: network_cli
+    register: results
+
+  - name: check that attempt failed
+    assert:
+      that:
+        - results.failed
+
+  - name: create user with private key (contents input)
+    iosxr_user:
+      name: auth_user
+      state: present
+      public_key_contents: "{{ lookup('file', \"{{ role_path }}/files/public.pub\") }}"
+      provider: "{{ cli }}"
+    connection: network_cli
+
+  - name: test login with private key
+    expect:
+      command: "ssh auth_user@{{ ansible_ssh_host }} -p {{ ansible_ssh_port|default(22) }} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i {{ role_path }}/files/private show version"
+      responses:
+        (?i)password: 'pass123'
+    connection: network_cli
+
+  - name: remove user and key
+    iosxr_user:
+      name: auth_user
+      provider: "{{ cli }}"
+      state: absent
+    connection: network_cli
+
+  - name: test login with private key (should fail, no user)
+    expect:
+      command: "ssh auth_user@{{ ansible_ssh_host }} -p {{ ansible_ssh_port|default(22) }} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i {{ role_path }}/files/private show version"
+      responses:
+        (?i)password: 'pass123'
+    ignore_errors: yes
+    connection: network_cli
+    register: results
+
+  - name: create user with private key (path input)
+    iosxr_user:
+      name: auth_user
+      state: present
+      public_key: "{{ role_path }}/files/public.pub"
+      provider: "{{ cli }}"
+    connection: network_cli
+
+  - name: test login with private key
+    expect:
+      command: "ssh auth_user@{{ ansible_ssh_host }} -p {{ ansible_ssh_port|default(22) }} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i {{ role_path }}/files/private show version"
+      responses:
+        (?i)password: 'pass123'
+    ignore_errors: yes
+    connection: network_cli
+
+  - name: change private key for user
+    iosxr_user:
+      name: auth_user
+      state: present
+      public_key_contents: "{{ lookup('file', \"{{ role_path }}/files/public2.pub\") }}"
+      provider: "{{ cli }}"
+    connection: network_cli
+
+  # FIXME: pexpect fails with OSError: [Errno 5] Input/output error
+  - name: test login with invalid private key (should fail)
+    expect:
+      command: "ssh auth_user@{{ ansible_ssh_host }} -p {{ ansible_ssh_port|default(22) }} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i {{ role_path }}/files/private show version"
+      responses:
+        (?i)password: "pass123"
+    ignore_errors: yes
+    connection: network_cli
+    register: results
+
+  - name: check that attempt failed
+    assert:
+      that:
+        - results.failed
+
+  always:
+  - name: delete user
+    iosxr_user:
+      name: auth_user
+      state: absent
+      provider: "{{ cli }}"
+    connection: network_cli
+    register: result

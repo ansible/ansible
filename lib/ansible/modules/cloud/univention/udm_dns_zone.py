@@ -3,24 +3,13 @@
 
 # Copyright (c) 2016, Adfinis SyGroup AG
 # Tobias Rueetschi <tobias.ruetschi@adfinis-sygroup.ch>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -122,10 +111,10 @@ from ansible.module_utils.univention_umc import (
 def convert_time(time):
     """Convert a time in seconds into the biggest unit"""
     units = [
-        (24 * 60 * 60 , 'days'),
-        (60 * 60      , 'hours'),
-        (60           , 'minutes'),
-        (1            , 'seconds'),
+        (24 * 60 * 60, 'days'),
+        (60 * 60, 'hours'),
+        (60, 'minutes'),
+        (1, 'seconds'),
     ]
 
     if time == 0:
@@ -137,49 +126,49 @@ def convert_time(time):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            type        = dict(required=True,
-                               type='str'),
-            zone        = dict(required=True,
-                               aliases=['name'],
-                               type='str'),
-            nameserver  = dict(default=[],
-                               type='list'),
-            interfaces  = dict(default=[],
-                               type='list'),
-            refresh     = dict(default=3600,
-                               type='int'),
-            retry       = dict(default=1800,
-                               type='int'),
-            expire      = dict(default=604800,
-                               type='int'),
-            ttl         = dict(default=600,
-                               type='int'),
-            contact     = dict(default='',
-                               type='str'),
-            mx          = dict(default=[],
-                               type='list'),
-            state       = dict(default='present',
-                               choices=['present', 'absent'],
-                               type='str')
+        argument_spec=dict(
+            type=dict(required=True,
+                      type='str'),
+            zone=dict(required=True,
+                      aliases=['name'],
+                      type='str'),
+            nameserver=dict(default=[],
+                            type='list'),
+            interfaces=dict(default=[],
+                            type='list'),
+            refresh=dict(default=3600,
+                         type='int'),
+            retry=dict(default=1800,
+                       type='int'),
+            expire=dict(default=604800,
+                        type='int'),
+            ttl=dict(default=600,
+                     type='int'),
+            contact=dict(default='',
+                         type='str'),
+            mx=dict(default=[],
+                    type='list'),
+            state=dict(default='present',
+                       choices=['present', 'absent'],
+                       type='str')
         ),
         supports_check_mode=True,
-        required_if = ([
+        required_if=([
             ('state', 'present', ['nameserver', 'interfaces'])
         ])
     )
-    type        = module.params['type']
-    zone        = module.params['zone']
-    nameserver  = module.params['nameserver']
-    interfaces  = module.params['interfaces']
-    refresh     = module.params['refresh']
-    retry       = module.params['retry']
-    expire      = module.params['expire']
-    ttl         = module.params['ttl']
-    contact     = module.params['contact']
-    mx          = module.params['mx']
-    state       = module.params['state']
-    changed     = False
+    type = module.params['type']
+    zone = module.params['zone']
+    nameserver = module.params['nameserver']
+    interfaces = module.params['interfaces']
+    refresh = module.params['refresh']
+    retry = module.params['retry']
+    expire = module.params['expire']
+    ttl = module.params['ttl']
+    contact = module.params['contact']
+    mx = module.params['mx']
+    state = module.params['state']
+    changed = False
 
     obj = list(ldap_search(
         '(&(objectClass=dNSZone)(zoneName={}))'.format(zone),
@@ -198,15 +187,15 @@ def main():
                 obj = umc_module_for_add('dns/{}'.format(type), container)
             else:
                 obj = umc_module_for_edit('dns/{}'.format(type), dn)
-            obj['zone']         = zone
-            obj['nameserver']   = nameserver
-            obj['a']            = interfaces
-            obj['refresh']      = convert_time(refresh)
-            obj['retry']        = convert_time(retry)
-            obj['expire']       = convert_time(expire)
-            obj['ttl']          = convert_time(ttl)
-            obj['contact']      = contact
-            obj['mx']           = mx
+            obj['zone'] = zone
+            obj['nameserver'] = nameserver
+            obj['a'] = interfaces
+            obj['refresh'] = convert_time(refresh)
+            obj['retry'] = convert_time(retry)
+            obj['expire'] = convert_time(expire)
+            obj['ttl'] = convert_time(ttl)
+            obj['contact'] = contact
+            obj['mx'] = mx
             diff = obj.diff()
             if exists:
                 for k in obj.keys():

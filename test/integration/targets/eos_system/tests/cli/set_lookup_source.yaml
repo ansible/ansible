@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/set_lookup_source.yaml"
+- debug: msg="START cli/set_lookup_source.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   eos_config:
@@ -7,12 +7,12 @@
       - no ip domain lookup source-interface
       - vrf definition ansible
     match: none
-    provider: "{{ cli }}"
+  become: yes
 
 - name: configure lookup_source
   eos_system:
     lookup_source: Management1
-    provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -23,7 +23,7 @@
 - name: verify lookup_source
   eos_system:
     lookup_source: Management1
-    provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -35,7 +35,7 @@
     lookup_source:
       - interface: Management1
         vrf: ansible
-    provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -50,7 +50,7 @@
     lookup_source:
       - interface: Management1
         vrf: ansible
-    provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -63,6 +63,6 @@
       - no ip domain lookup source-interface
       - no vrf definition ansible
     match: none
-    provider: "{{ cli }}"
+  become: yes
 
-- debug: msg="END cli/set_lookup_source.yaml"
+- debug: msg="END cli/set_lookup_source.yaml on connection={{ ansible_connection }}"

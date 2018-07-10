@@ -1,0 +1,29 @@
+# src is a file, dest is a non-existent directory (2 levels of directories):
+# checks that dest is created
+- name: Ensure that dest top directory doesn't exist
+  file:
+    path: '{{ remote_dir }}/{{ item.dest.split("/")[0] }}'
+    state: absent
+
+- name: Copy file, dest is a nonexistent target directory
+  copy:
+    src: '{{ item.src }}'
+    dest: '{{ remote_dir }}/{{ item.dest }}'
+  register: copy_result
+
+- name: assert copy worked
+  assert:
+    that:
+      - 'copy_result is successful'
+      - 'copy_result is changed'
+
+- name: stat copied file
+  stat:
+    path: '{{ remote_dir }}/{{ item.check }}'
+  register: stat_file_in_dir_result
+
+- name: assert that file exists
+  assert:
+    that:
+    - stat_file_in_dir_result.stat.exists
+    - stat_file_in_dir_result.stat.isreg

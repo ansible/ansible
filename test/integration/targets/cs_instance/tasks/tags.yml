@@ -1,0 +1,132 @@
+---
+- name: test add tags to instance in check mode
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    template: "{{ test_cs_instance_template }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+    tags:
+     - { key: "{{ cs_resource_prefix }}-tag1", value: "{{ cs_resource_prefix }}-value1" }
+     - { key: "{{ cs_resource_prefix }}-tag2", value: "{{ cs_resource_prefix }}-value2" }
+  register: instance
+  check_mode: true
+- name: verify add tags to instance in check mode
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - not instance.tags
+
+- name: test add tags to instance
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    template: "{{ test_cs_instance_template }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+    tags:
+     - { key: "{{ cs_resource_prefix }}-tag1", value: "{{ cs_resource_prefix }}-value1" }
+     - { key: "{{ cs_resource_prefix }}-tag2", value: "{{ cs_resource_prefix }}-value2" }
+  register: instance
+- name: verify add tags to instance
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.tags|length == 2
+    - "instance.tags[0]['key'] in [ '{{ cs_resource_prefix }}-tag2', '{{ cs_resource_prefix }}-tag1' ]"
+    - "instance.tags[1]['key'] in [ '{{ cs_resource_prefix }}-tag2', '{{ cs_resource_prefix }}-tag1' ]"
+    - "instance.tags[0]['value'] in [ '{{ cs_resource_prefix }}-value2', '{{ cs_resource_prefix }}-value1' ]"
+    - "instance.tags[1]['value'] in [ '{{ cs_resource_prefix }}-value2', '{{ cs_resource_prefix }}-value1' ]"
+
+- name: test tags to instance idempotence
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    tags:
+     - { key: "{{ cs_resource_prefix }}-tag1", value: "{{ cs_resource_prefix }}-value1" }
+     - { key: "{{ cs_resource_prefix }}-tag2", value: "{{ cs_resource_prefix }}-value2" }
+  register: instance
+- name: verify tags to instance idempotence
+  assert:
+    that:
+    - instance is successful
+    - instance is not changed
+    - instance.tags|length == 2
+    - "instance.tags[0]['key'] in [ '{{ cs_resource_prefix }}-tag2', '{{ cs_resource_prefix }}-tag1' ]"
+    - "instance.tags[1]['key'] in [ '{{ cs_resource_prefix }}-tag2', '{{ cs_resource_prefix }}-tag1' ]"
+    - "instance.tags[0]['value'] in [ '{{ cs_resource_prefix }}-value2', '{{ cs_resource_prefix }}-value1' ]"
+    - "instance.tags[1]['value'] in [ '{{ cs_resource_prefix }}-value2', '{{ cs_resource_prefix }}-value1' ]"
+
+- name: test change tags of instance in check mode
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    tags:
+     - { key: "{{ cs_resource_prefix }}-tag2", value: "{{ cs_resource_prefix }}-value2" }
+     - { key: "{{ cs_resource_prefix }}-tag3", value: "{{ cs_resource_prefix }}-value3" }
+  register: instance
+  check_mode: true
+- name: verify tags to instance idempotence in check mode
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.tags|length == 2
+    - "instance.tags[0]['key'] in [ '{{ cs_resource_prefix }}-tag2', '{{ cs_resource_prefix }}-tag1' ]"
+    - "instance.tags[1]['key'] in [ '{{ cs_resource_prefix }}-tag2', '{{ cs_resource_prefix }}-tag1' ]"
+    - "instance.tags[0]['value'] in [ '{{ cs_resource_prefix }}-value2', '{{ cs_resource_prefix }}-value1' ]"
+    - "instance.tags[1]['value'] in [ '{{ cs_resource_prefix }}-value2', '{{ cs_resource_prefix }}-value1' ]"
+
+- name: test change tags of instance
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    tags:
+     - { key: "{{ cs_resource_prefix }}-tag2", value: "{{ cs_resource_prefix }}-value2" }
+     - { key: "{{ cs_resource_prefix }}-tag3", value: "{{ cs_resource_prefix }}-value3" }
+  register: instance
+- name: verify tags to instance idempotence
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.tags|length == 2
+    - "instance.tags[0]['key'] in [ '{{ cs_resource_prefix }}-tag2', '{{ cs_resource_prefix }}-tag3' ]"
+    - "instance.tags[1]['key'] in [ '{{ cs_resource_prefix }}-tag2', '{{ cs_resource_prefix }}-tag3' ]"
+    - "instance.tags[0]['value'] in [ '{{ cs_resource_prefix }}-value2', '{{ cs_resource_prefix }}-value3' ]"
+    - "instance.tags[1]['value'] in [ '{{ cs_resource_prefix }}-value2', '{{ cs_resource_prefix }}-value3' ]"
+
+- name: test not touch tags of instance if no param tags
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+  register: instance
+- name: verify not touch tags of instance if no param tags
+  assert:
+    that:
+    - instance is successful
+    - instance is not changed
+    - instance.tags|length == 2
+    - "instance.tags[0]['key'] in [ '{{ cs_resource_prefix }}-tag2', '{{ cs_resource_prefix }}-tag3' ]"
+    - "instance.tags[1]['key'] in [ '{{ cs_resource_prefix }}-tag2', '{{ cs_resource_prefix }}-tag3' ]"
+    - "instance.tags[0]['value'] in [ '{{ cs_resource_prefix }}-value2', '{{ cs_resource_prefix }}-value3' ]"
+    - "instance.tags[1]['value'] in [ '{{ cs_resource_prefix }}-value2', '{{ cs_resource_prefix }}-value3' ]"
+
+- name: test remove tags in check mode
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    tags: []
+  register: instance
+  check_mode: true
+- name: verify remove tags in check mode
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.tags|length != 0
+
+- name: test remove tags
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    tags: []
+  register: instance
+- name: verify remove tags
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.tags|length == 0

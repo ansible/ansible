@@ -17,17 +17,22 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 # Make sure we start fresh
 
-- name: Ensure zip is present to create test archive (yum)
-  yum: name=zip state=latest
+# Need unzip for unarchive module, and zip for archive creation.
+- name: Ensure zip and unzip is present to create test archive (yum)
+  yum: name=zip,unzip state=latest
   when: ansible_pkg_mgr  ==  'yum'
 
   #- name: Ensure zip is present to create test archive (dnf)
   #  dnf: name=zip state=latest
   #  when: ansible_pkg_mgr  ==  'dnf'
 
-- name: Ensure zip is present to create test archive (apt)
-  apt: name=zip state=latest
+- name: Ensure zip & unzip is present to create test archive (apt)
+  apt: name=zip,unzip state=latest
   when: ansible_pkg_mgr  ==  'apt'
+
+- name: Ensure zip & unzip is present to create test archive (pkg)
+  pkgng: name=zip,unzip state=present
+  when: ansible_pkg_mgr  ==  'pkgng'
 
 - name: prep our file
   copy: src=foo.txt dest={{output_dir}}/foo-unarchive.txt
@@ -38,8 +43,58 @@
 - name: prep a tar.gz file
   shell: tar czvf test-unarchive.tar.gz foo-unarchive.txt chdir={{output_dir}}
 
+- name: prep a chmodded file for zip
+  copy: src=foo.txt dest={{output_dir}}/foo-unarchive-777.txt mode=0777
+
+- name: prep a windows permission file for our zip
+  copy: src=foo.txt dest={{output_dir}}/FOO-UNAR.TXT
+
+# This gets around an unzip timestamp bug in some distributions
+# Recent unzip on Ubuntu and BSD will randomly round some timestamps up.
+# But that doesn't seem to happen when the timestamp has an even second.
+- name: Bug work around
+  command: touch -t "201705111530.00" {{output_dir}}/foo-unarchive.txt {{output_dir}}/foo-unarchive-777.txt {{output_dir}}/FOO-UNAR.TXT
+# See Ubuntu bug 1691636: https://bugs.launchpad.net/ubuntu/+source/unzip/+bug/1691636
+# When these are fixed, this code should be removed.
+
 - name: prep a zip file
-  shell: zip test-unarchive.zip foo-unarchive.txt chdir={{output_dir}}
+  shell: zip test-unarchive.zip foo-unarchive.txt foo-unarchive-777.txt chdir={{output_dir}}
+
+- name: Prepare - Create test dirs
+  file:
+    path: "{{output_dir}}/{{item}}"
+    state: directory
+  with_items:
+    - created/include
+    - created/exclude
+    - created/other
+
+- name: Prepare - Create test files
+  file:
+    path: "{{output_dir}}/created/{{item}}"
+    state: touch
+  with_items:
+    - include/include-1.txt
+    - include/include-2.txt
+    - include/include-3.txt
+    - exclude/exclude-1.txt
+    - exclude/exclude-2.txt
+    - exclude/exclude-3.txt
+    - other/include-1.ext
+    - other/include-2.ext
+    - other/exclude-1.ext
+    - other/exclude-2.ext
+    - other/other-1.ext
+    - other/other-2.ext
+
+- name: Prepare - zip file
+  shell: zip -r {{output_dir}}/unarchive-00.zip * chdir={{output_dir}}/created/
+
+- name: Prepare - tar file
+  shell: tar czvf {{output_dir}}/unarchive-00.tar * chdir={{output_dir}}/created/
+
+- name: add a file with Windows permissions to zip file
+  shell: zip -k test-unarchive.zip FOO-UNAR.TXT chdir={{output_dir}}
 
 - name: prep a subdirectory
   file: path={{output_dir}}/unarchive-dir state=directory
@@ -141,17 +196,67 @@
       - "unarchive03.changed == true"
       # Verify that file list is generated
       - "'files' in unarchive03"
-      - "{{unarchive03['files']| length}} == 1"
+      - "{{unarchive03['files']| length}} == 3"
       - "'foo-unarchive.txt' in unarchive03['files']"
+      - "'foo-unarchive-777.txt' in unarchive03['files']"
+      - "'FOO-UNAR.TXT' in unarchive03['files']"
 
 - name: verify that the file was unarchived
-  file: path={{output_dir}}/test-unarchive-zip/foo-unarchive.txt state=file
+  file: path={{output_dir}}/test-unarchive-zip/{{item}} state=file
+  with_items:
+    - foo-unarchive.txt
+    - foo-unarchive-777.txt
+    - FOO-UNAR.TXT
+
+- name: repeat the last request to verify no changes
+  unarchive: src={{output_dir}}/test-unarchive.zip dest={{output_dir | expanduser}}/test-unarchive-zip remote_src=yes list_files=True
+  register: unarchive03b
+
+- name: verify that the task was not marked as changed
+  assert:
+    that:
+      - "unarchive03b.changed == false"
+
+- name: "Create {{ output_dir }}/exclude directory"
+  file:
+    state: directory
+    path: "{{ output_dir }}/exclude-{{item}}"
+  with_items:
+    - zip
+    - tar
+
+- name: Unpack archive file excluding glob files.
+  unarchive:
+    src: "{{ output_dir }}/unarchive-00.{{item}}"
+    dest: "{{ output_dir }}/exclude-{{item}}"
+    exclude: "exclude/exclude-*.txt"
+  with_items:
+    - zip
+    - tar
+
+- name: verify that the file was unarchived
+  shell: find {{ output_dir }}/exclude-{{item}} chdir={{ output_dir }}
+  register: unarchive00
+  with_items:
+    - zip
+    - tar
+
+- name: verify that archive extraction excluded the files
+  assert:
+    that:
+      - "'exclude/exclude-1.txt' not in item.stdout"
+  with_items:
+    - "{{ unarchive00.results }}"
 
 - name: remove our zip unarchive destination
   file: path={{output_dir}}/test-unarchive-zip state=absent
 
-- name: remove our test file for the archive
-  file: path={{output_dir}}/foo-unarchive.txt state=absent
+- name: remove our test files for the archive
+  file: path={{output_dir}}/{{item}} state=absent
+  with_items:
+    - foo-unarchive.txt
+    - foo-unarchive-777.txt
+    - FOO-UNAR.TXT
 
 - name: check if /tmp/foo-unarchive.text exists
   stat: path=/tmp/foo-unarchive.txt
@@ -163,7 +268,7 @@
   when: unarchive04.stat.exists
 
 - name: try unarchiving to /tmp
-  unarchive: src={{output_dir}}/test-unarchive.tar.gz dest=/tmp remote_src=yes 
+  unarchive: src={{output_dir}}/test-unarchive.tar.gz dest=/tmp remote_src=yes
   register: unarchive05
 
 - name: verify that the file was marked as changed
@@ -180,7 +285,7 @@
 - name: create our unarchive destination
   file: path={{output_dir}}/test-unarchive-tar-gz state=directory
 
-- name: unarchive and set mode to 0600
+- name: unarchive and set mode to 0600, directories 0700
   unarchive:
     src: "{{ output_dir }}/test-unarchive.tar.gz"
     dest: "{{ output_dir | expanduser }}/test-unarchive-tar-gz"
@@ -210,7 +315,6 @@
 - name: create our unarchive destination
   file: path={{output_dir}}/test-unarchive-tar-gz state=directory
 
-
 - name: unarchive over existing extraction and set mode to 0644
   unarchive:
     src: "{{ output_dir }}/test-unarchive.tar.gz"
@@ -236,7 +340,7 @@
     src: "{{ output_dir }}/test-unarchive.tar.gz"
     dest: "{{ output_dir | expanduser }}/test-unarchive-tar-gz"
     remote_src: yes
-    mode: "u+rwX,g-wx,o-wx,g+r,o+r"
+    mode: "u+rwX-x,g-wx,o-wx,g+r,o+r"
     list_files: True
   register: unarchive07
 
@@ -252,10 +356,72 @@
 - name: remove our tar.gz unarchive destination
   file: path={{ output_dir }}/test-unarchive-tar-gz state=absent
 
+- name: create our unarchive destination
+  file: path={{output_dir}}/test-unarchive-zip state=directory
+
+- name: unarchive and set mode to 0601, directories 0700
+  unarchive:
+    src: "{{ output_dir }}/test-unarchive.zip"
+    dest: "{{ output_dir | expanduser }}/test-unarchive-zip"
+    remote_src: yes
+    mode: "u+rwX-x,g-rwx,o=x"
+    list_files: True
+  register: unarchive08
+
+- name: Test that the file modes were changed
+  stat:
+    path: "{{ output_dir | expanduser }}/test-unarchive-zip/foo-unarchive.txt"
+  register: unarchive08_stat
+
+- name: Test that the file modes were changed
+  assert:
+    that:
+      - "unarchive08.changed == true"
+      - "unarchive08_stat.stat.mode == '0601'"
+      # Verify that file list is generated
+      - "'files' in unarchive08"
+      - "{{unarchive08['files']| length}} == 3"
+      - "'foo-unarchive.txt' in unarchive08['files']"
+      - "'foo-unarchive-777.txt' in unarchive08['files']"
+      - "'FOO-UNAR.TXT' in unarchive08['files']"
+
+- name: unarchive zipfile a second time and set mode to 0601, directories 0700
+  unarchive:
+    src: "{{ output_dir }}/test-unarchive.zip"
+    dest: "{{ output_dir | expanduser }}/test-unarchive-zip"
+    remote_src: yes
+    mode: "u+rwX-x,g-rwx,o=x"
+    list_files: True
+  register: unarchive08
+
+- name: Test that the file modes were not changed
+  stat:
+    path: "{{ output_dir | expanduser }}/test-unarchive-zip/foo-unarchive.txt"
+  register: unarchive08_stat
+
+- debug:
+    var: unarchive08
+
+- debug:
+    var: unarchive08_stat
+
+- name: Test that the files did not change
+  assert:
+    that:
+      - "unarchive08.changed == false"
+      - "unarchive08_stat.stat.mode == '0601'"
+      # Verify that file list is generated
+      - "'files' in unarchive08"
+      - "{{unarchive08['files']| length}} == 3"
+      - "'foo-unarchive.txt' in unarchive08['files']"
+      - "'foo-unarchive-777.txt' in unarchive08['files']"
+      - "'FOO-UNAR.TXT' in unarchive08['files']"
+
+- name: remove our zip unarchive destination
+  file: path={{ output_dir }}/test-unarchive-zip state=absent
 
 - name: create our unarchive destination
   file: path={{output_dir}}/test-unarchive-tar-gz state=directory
-
 
 - name: create a directory with quotable chars
   file: path="{{ output_dir }}/test-quotes~root" state=directory
@@ -396,7 +562,6 @@
 
 - name: remove our tar.gz unarchive destination
   file: path={{ output_dir }}/test-unarchive-tar-gz state=absent
-
 
 - name: Create a file
   file:

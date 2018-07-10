@@ -1,0 +1,126 @@
+# Test code for the UCS modules
+# Copyright 2018, John McDonough (@movinalot)
+
+- name: Test that we have a UCS host, UCS username, and UCS password
+  fail:
+    msg: 'Please define the following variables: ucs_hostname, ucs_username and ucs_password.'
+  when: ucs_hostname is not defined or ucs_username is not defined or ucs_password is not defined
+  vars:
+    login_info: &login_info
+      hostname: "{{ ucs_hostname }}"
+      username: "{{ ucs_username }}"
+      password: "{{ ucs_password }}"
+
+
+# Setup (clean environment)
+- name: Timezone absent
+  ucs_timezone: &timezone_absent
+    <<: *login_info
+    state: absent
+
+
+# Test present (check_mode)
+- name: Timezone present (check_mode)
+  ucs_timezone: &timezone_present
+    <<: *login_info
+    timezone: America/Los_Angeles
+    description: Timezone for America/Los_Angeles
+  check_mode: yes
+  register: cm_timezone_present
+
+
+# Present (normal mode)
+- name: Timezone present (normal mode)
+  ucs_timezone: *timezone_present
+  register: nm_timezone_present
+
+
+# Test present again (idempotent)
+- name: Timezone present again (check_mode)
+  ucs_timezone: *timezone_present
+  check_mode: yes
+  register: cm_timezone_present_again
+
+
+# Present again (normal mode)
+- name: Timezone present again (normal mode)
+  ucs_timezone: *timezone_present
+  register: nm_timezone_present_again
+
+
+# Verfiy present
+- name: Verify Timezone present results
+  assert:
+    that:
+    - cm_timezone_present.changed == nm_timezone_present.changed == true
+    - cm_timezone_present_again.changed == nm_timezone_present_again.changed == false
+
+
+# Test change (check_mode)
+- name: Timezone description change (check_mode)
+  ucs_timezone: &timezone_change
+    <<: *timezone_present
+    descr: Testing Ansible
+  check_mode: yes
+  register: cm_timezone_descr_change
+
+
+# Change (normal mode)
+- name: Timezone description change (normal mode)
+  ucs_timezone: *timezone_change
+  register: nm_timezone_descr_change
+
+
+# Test change again (idempotent)
+- name: Timezone description again (check_mode)
+  ucs_timezone: *timezone_change
+  check_mode: yes
+  register: cm_timezone_descr_change_again
+
+
+# Change again (normal mode)
+- name: Timezone description change again (normal mode)
+  ucs_timezone: *timezone_change
+  register: nm_timezone_descr_change_again
+
+
+# Verfiy change
+- name: Verify Timezone change results
+  assert:
+    that:
+    - cm_timezone_descr_change.changed == nm_timezone_descr_change.changed == true
+    - cm_timezone_descr_change_again.changed == nm_timezone_descr_change_again.changed == false
+
+
+# Teardown (clean environment)
+- name: Timezone absent (check_mode)
+  ucs_timezone: *timezone_absent
+  check_mode: yes
+  register: cm_timezone_absent
+
+
+# Absent (normal mode)
+- name: Timezone absent (normal mode)
+  ucs_timezone: *timezone_absent
+  register: nm_timezone_absent
+
+
+# Test absent again (idempotent)
+- name: Timezone absent again (check_mode)
+  ucs_timezone: *timezone_absent
+  check_mode: yes
+  register: cm_timezone_absent_again
+
+
+# Absent again (normal mode)
+- name: Timezone absent again (normal mode)
+  ucs_timezone: *timezone_absent
+  register: nm_timezone_absent_again
+
+
+# Verfiy absent
+- name: Verify Timezone absent results
+  assert:
+    that:
+    - cm_timezone_absent.changed == nm_timezone_absent.changed == true
+    - cm_timezone_absent_again.changed == nm_timezone_absent_again.changed == false

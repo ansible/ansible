@@ -2,23 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
@@ -35,63 +25,48 @@ description:
     - Manage I(git) checkouts of repositories to deploy files or software.
 options:
     repo:
-        required: true
-        aliases: [ name ]
         description:
             - git, SSH, or HTTP(S) protocol address of the git repository.
-    dest:
         required: true
+        aliases: [ name ]
+    dest:
         description:
-            - Absolute path of where the repository should be checked out to.
-              This parameter is required, unless C(clone) is set to C(no)
-              This change was made in version 1.8.3. Prior to this version,
-              the C(dest) parameter was always required.
+            - The path of where the repository should be checked out. This
+              parameter is required, unless C(clone) is set to C(no).
+        required: true
     version:
-        required: false
-        default: "HEAD"
         description:
             - What version of the repository to check out.  This can be the
               the literal string C(HEAD), a branch name, a tag name.
               It can also be a I(SHA-1) hash, in which case C(refspec) needs
               to be specified if the given revision is not already available.
+        default: "HEAD"
     accept_hostkey:
-        required: false
-        default: "no"
-        choices: [ "yes", "no" ]
-        version_added: "1.5"
         description:
-            - if C(yes), adds the hostkey for the repo url if not already
-              added. If ssh_opts contains "-o StrictHostKeyChecking=no",
-              this parameter is ignored.
-    ssh_opts:
-        required: false
-        default: None
+            - if C(yes), ensure that "-o StrictHostKeyChecking=no" is
+              present as an ssh option.
+        type: bool
+        default: 'no'
         version_added: "1.5"
+    ssh_opts:
         description:
             - Creates a wrapper script and exports the path as GIT_SSH
               which git then automatically uses to override ssh arguments.
               An example value could be "-o StrictHostKeyChecking=no"
-    key_file:
-        required: false
-        default: None
         version_added: "1.5"
+    key_file:
         description:
-            - Specify an optional private key file to use for the checkout.
+            - Specify an optional private key file path, on the target host, to use for the checkout.
+        version_added: "1.5"
     reference:
-        required: false
-        default: null
-        version_added: "1.4"
         description:
             - Reference repository (see "git clone --reference ...")
+        version_added: "1.4"
     remote:
-        required: false
-        default: "origin"
         description:
             - Name of the remote.
+        default: "origin"
     refspec:
-        required: false
-        default: null
-        version_added: "1.9"
         description:
             - Add an additional refspec to be fetched.
               If version is set to a I(SHA-1) not reachable from any branch
@@ -99,92 +74,92 @@ options:
               the I(SHA-1).
               Uses the same syntax as the 'git fetch' command.
               An example value could be "refs/meta/config".
+        version_added: "1.9"
     force:
-        required: false
-        default: "no"
-        choices: [ "yes", "no" ]
-        version_added: "0.7"
         description:
             - If C(yes), any modified files in the working
               repository will be discarded.  Prior to 0.7, this was always
               'yes' and could not be disabled.  Prior to 1.9, the default was
               `yes`
+        type: bool
+        default: 'no'
+        version_added: "0.7"
     depth:
-        required: false
-        default: null
-        version_added: "1.2"
         description:
             - Create a shallow clone with a history truncated to the specified
               number or revisions. The minimum possible value is C(1), otherwise
               ignored. Needs I(git>=1.9.1) to work correctly.
+        version_added: "1.2"
     clone:
-        required: false
-        default: "yes"
-        choices: [ "yes", "no" ]
-        version_added: "1.9"
         description:
             - If C(no), do not clone the repository if it does not exist locally
+        type: bool
+        default: 'yes'
+        version_added: "1.9"
     update:
-        required: false
-        default: "yes"
-        choices: [ "yes", "no" ]
-        version_added: "1.2"
         description:
             - If C(no), do not retrieve new revisions from the origin repository
+            - Operations like archive will work on the existing (old) repository and might
+              not respond to changes to the options version or remote.
+        type: bool
+        default: 'yes'
+        version_added: "1.2"
     executable:
-        required: false
-        default: null
-        version_added: "1.4"
         description:
             - Path to git executable to use. If not supplied,
               the normal mechanism for resolving binary paths will be used.
-    bare:
-        required: false
-        default: "no"
-        choices: [ "yes", "no" ]
         version_added: "1.4"
+    bare:
         description:
             - if C(yes), repository will be created as a bare repo, otherwise
               it will be a standard repo with a workspace.
+        type: bool
+        default: 'no'
+        version_added: "1.4"
     umask:
-        required: false
-        default: null
-        version_added: "2.2"
         description:
             - The umask to set before doing any checkouts, or any other
               repository maintenance.
+        version_added: "2.2"
 
     recursive:
-        required: false
-        default: "yes"
-        choices: [ "yes", "no" ]
-        version_added: "1.6"
         description:
             - if C(no), repository will be cloned without the --recursive
               option, skipping sub-modules.
+        type: bool
+        default: 'yes'
+        version_added: "1.6"
 
     track_submodules:
-        required: false
-        default: "no"
-        choices: ["yes", "no"]
-        version_added: "1.8"
         description:
             - if C(yes), submodules will track the latest commit on their
               master branch (or other branch specified in .gitmodules).  If
               C(no), submodules will be kept at the revision specified by the
               main project. This is equivalent to specifying the --remote flag
               to git submodule update.
+        type: bool
+        default: 'no'
+        version_added: "1.8"
 
     verify_commit:
-        required: false
-        default: "no"
-        choices: ["yes", "no"]
-        version_added: "2.0"
         description:
             - if C(yes), when cloning or checking out a C(version) verify the
               signature of a GPG signed commit. This requires C(git) version>=2.1.0
               to be installed. The commit MUST be signed and the public key MUST
-              be trusted in the GPG trustdb.
+              be present in the GPG keyring.
+        type: bool
+        default: 'no'
+        version_added: "2.0"
+
+    archive:
+        description:
+            - Specify archive file path with extension. If specified, creates an
+              archive file of the specified format containing the tree structure
+              for the source tree.
+              Allowed archive formats ["zip", "tar.gz", "tar", "tgz"]
+            - This will clone and perform git archive from local directory as not
+              all git servers support git archive.
+        version_added: "2.4"
 
 requirements:
     - git>=1.7.1 (the command line tool)
@@ -228,11 +203,18 @@ EXAMPLES = '''
     repo: https://github.com/ansible/ansible-examples.git
     dest: /src/ansible-examples
     refspec: '+refs/pull/*:refs/heads/*'
+
+# Example Create git archive from repo
+- git:
+    repo: https://github.com/ansible/ansible-examples.git
+    dest: /src/ansible-examples
+    archive: /tmp/ansible-examples.zip
+
 '''
 
 RETURN = '''
 after:
-    description: last commit revision of the repository retrived during the update
+    description: last commit revision of the repository retrieved during the update
     returned: success
     type: string
     sample: 4c020102a9cd6fe908c9a4a326a38f972f63a903
@@ -253,16 +235,17 @@ warnings:
     sample: Your git version is too old to fully support the depth argument. Falling back to full checkouts.
 '''
 
+import filecmp
 import os
 import re
 import shlex
 import stat
 import sys
+import shutil
 import tempfile
 from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule, get_module_path
-from ansible.module_utils.known_hosts import add_git_host_key
 from ansible.module_utils.six import b, string_types
 from ansible.module_utils._text import to_native
 
@@ -348,6 +331,9 @@ if [ -z "$GIT_SSH_OPTS" ]; then
 else
     BASEOPTS=$GIT_SSH_OPTS
 fi
+
+# Let ssh fail rather than prompt
+BASEOPTS="$BASEOPTS -o BatchMode=yes"
 
 if [ -z "$GIT_KEY" ]; then
     ssh $BASEOPTS "$@"
@@ -448,9 +434,8 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
         cmd.extend(['--reference', str(reference)])
     cmd.extend([repo, dest])
     module.run_command(cmd, check_rc=True, cwd=dest_dirname)
-    if bare:
-        if remote != 'origin':
-            module.run_command([git_path, 'remote', 'add', remote, repo], check_rc=True, cwd=dest)
+    if bare and remote != 'origin':
+        module.run_command([git_path, 'remote', 'add', remote, repo], check_rc=True, cwd=dest)
 
     if refspec:
         cmd = [git_path, 'fetch']
@@ -570,15 +555,17 @@ def get_branches(git_path, module, dest):
     return branches
 
 
-def get_tags(git_path, module, dest):
+def get_annotated_tags(git_path, module, dest):
     tags = []
-    cmd = '%s tag' % (git_path,)
+    cmd = [git_path, 'for-each-ref', 'refs/tags/', '--format', '%(objecttype):%(refname:short)']
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
         module.fail_json(msg="Could not determine tag data - received %s" % out, stdout=out, stderr=err)
     for line in to_native(out).split('\n'):
         if line.strip():
-            tags.append(line.strip())
+            tagtype, tagname = line.strip().split(':')
+            if tagtype == 'tag':
+                tags.append(tagname)
     return tags
 
 
@@ -605,9 +592,33 @@ def is_local_branch(git_path, module, dest, branch):
 def is_not_a_branch(git_path, module, dest):
     branches = get_branches(git_path, module, dest)
     for branch in branches:
-        if branch.startswith('* ') and ('no branch' in branch or 'detached from' in branch):
+        if branch.startswith('* ') and ('no branch' in branch or 'detached from' in branch or 'detached at' in branch):
             return True
     return False
+
+
+def get_repo_path(dest, bare):
+    if bare:
+        repo_path = dest
+    else:
+        repo_path = os.path.join(dest, '.git')
+    # Check if the .git is a file. If it is a file, it means that the repository is in external directory respective to the working copy (e.g. we are in a
+    # submodule structure).
+    if os.path.isfile(repo_path):
+        with open(repo_path, 'r') as gitfile:
+            data = gitfile.read()
+        ref_prefix, gitdir = data.rstrip().split('gitdir: ', 1)
+        if ref_prefix:
+            raise ValueError('.git file has invalid git dir reference format')
+
+        # There is a possibility the .git file to have an absolute path.
+        if os.path.isabs(gitdir):
+            repo_path = gitdir
+        else:
+            repo_path = os.path.join(repo_path.split('.git')[0], gitdir)
+        if not os.path.isdir(repo_path):
+            raise ValueError('%s is not a directory' % repo_path)
+    return repo_path
 
 
 def get_head_branch(git_path, module, dest, remote, bare=False):
@@ -618,31 +629,16 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
     associated with.  In the case of a detached HEAD, this will look
     up the branch in .git/refs/remotes/<remote>/HEAD.
     '''
-    if bare:
-        repo_path = dest
-    else:
-        repo_path = os.path.join(dest, '.git')
-    # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
-    if os.path.isfile(repo_path):
-        try:
-            git_conf = open(repo_path, 'rb')
-            for line in git_conf:
-                config_val = line.split(b(':'), 1)
-                if config_val[0].strip() == b('gitdir'):
-                    gitdir = to_native(config_val[1].strip(), errors='surrogate_or_strict')
-                    break
-            else:
-                # No repo path found
-                return ''
-
-            # There is a possibility the .git file to have an absolute path.
-            if os.path.isabs(gitdir):
-                repo_path = gitdir
-            else:
-                repo_path = os.path.join(repo_path.split('.git')[0], gitdir)
-        except (IOError, AttributeError):
-            # No repo path found
-            return ''
+    try:
+        repo_path = get_repo_path(dest, bare)
+    except (IOError, ValueError) as err:
+        # No repo path found
+        """``.git`` file does not have a valid format for detached Git dir."""
+        module.fail_json(
+            msg='Current repo does not have a valid reference to a '
+            'separate Git dir or it refers to the invalid path',
+            details=str(err),
+        )
     # Read .git/HEAD for the name of the branch.
     # If we're in a detached HEAD state, look up the branch associated with
     # the remote HEAD in .git/refs/remotes/<remote>/HEAD
@@ -705,9 +701,7 @@ def fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec, g
                 # 1.8.3 is broken, 1.9.x works
                 # ensure that remote branch is available as both local and remote ref
                 refspecs.append('+refs/heads/%s:refs/heads/%s' % (version, version))
-                refspecs.append('+refs/heads/%s:refs/remotes/%s/%s' % (version, remote, version))
-            else:
-                refspecs.append(version)
+            refspecs.append('+refs/heads/%s:refs/remotes/%s/%s' % (version, remote, version))
         elif is_remote_tag(git_path, module, dest, repo, version):
             refspecs.append('+refs/tags/' + version + ':refs/tags/' + version)
         if refspecs:
@@ -757,15 +751,6 @@ def submodules_fetch(git_path, module, remote, track_submodules, dest):
             # Check that dest/path/.git exists
             if not os.path.exists(os.path.join(dest, path, '.git')):
                 changed = True
-
-        # add the submodule repo's hostkey
-        if line.strip().startswith('url'):
-            repo = line.split('=', 1)[1].strip()
-            if module.params['ssh_opts'] is not None:
-                if "-o StrictHostKeyChecking=no" not in module.params['ssh_opts']:
-                    add_git_host_key(module, repo, accept_hostkey=module.params['accept_hostkey'])
-            else:
-                add_git_host_key(module, repo, accept_hostkey=module.params['accept_hostkey'])
 
     # Check for updates to existing modules
     if not changed:
@@ -876,7 +861,7 @@ def switch_version(git_path, module, dest, remote, version, verify_commit, depth
 
 
 def verify_commit_sign(git_path, module, dest, version):
-    if version in get_tags(git_path, module, dest):
+    if version in get_annotated_tags(git_path, module, dest):
         git_sub = "verify-tag"
     else:
         git_sub = "verify-commit"
@@ -899,6 +884,67 @@ def git_version(git_path, module):
     if not rematch:
         return None
     return LooseVersion(rematch.groups()[0])
+
+
+def git_archive(git_path, module, dest, archive, archive_fmt, version):
+    """ Create git archive in given source directory """
+    cmd = "%s archive --format=%s --output=%s %s" \
+          % (git_path, archive_fmt, archive, version)
+    (rc, out, err) = module.run_command(cmd, cwd=dest)
+    if rc != 0:
+        module.fail_json(msg="Failed to perform archive operation",
+                         details="Git archive command failed to create "
+                                 "archive %s using %s directory."
+                                 "Error: %s" % (archive, dest, err))
+    return rc, out, err
+
+
+def create_archive(git_path, module, dest, archive, version, repo, result):
+    """ Helper function for creating archive using git_archive """
+    all_archive_fmt = {'.zip': 'zip', '.gz': 'tar.gz', '.tar': 'tar',
+                       '.tgz': 'tgz'}
+    _, archive_ext = os.path.splitext(archive)
+    archive_fmt = all_archive_fmt.get(archive_ext, None)
+    if archive_fmt is None:
+        module.fail_json(msg="Unable to get file extension from "
+                             "archive file name : %s" % archive,
+                         details="Please specify archive as filename with "
+                                 "extension. File extension can be one "
+                                 "of ['tar', 'tar.gz', 'zip', 'tgz']")
+
+    repo_name = repo.split("/")[-1].replace(".git", "")
+
+    if os.path.exists(archive):
+        # If git archive file exists, then compare it with new git archive file.
+        # if match, do nothing
+        # if does not match, then replace existing with temp archive file.
+        tempdir = tempfile.mkdtemp()
+        new_archive_dest = os.path.join(tempdir, repo_name)
+        new_archive = new_archive_dest + '.' + archive_fmt
+        git_archive(git_path, module, dest, new_archive, archive_fmt, version)
+
+        # filecmp is supposed to be efficient than md5sum checksum
+        if filecmp.cmp(new_archive, archive):
+            result.update(changed=False)
+            # Cleanup before exiting
+            try:
+                shutil.rmtree(tempdir)
+            except OSError:
+                pass
+        else:
+            try:
+                shutil.move(new_archive, archive)
+                shutil.rmtree(tempdir)
+                result.update(changed=True)
+            except OSError as e:
+                module.fail_json(msg="Failed to move %s to %s" %
+                                     (new_archive, archive),
+                                 details="Error occured while moving : %s"
+                                         % to_native(e))
+    else:
+        # Perform archive from local directory
+        git_archive(git_path, module, dest, archive, archive_fmt, version)
+        result.update(changed=True)
 
 
 # ===========================================
@@ -925,6 +971,7 @@ def main():
             recursive=dict(default='yes', type='bool'),
             track_submodules=dict(default='no', type='bool'),
             umask=dict(default=None, type='raw'),
+            archive=dict(type='path'),
         ),
         supports_check_mode=True
     )
@@ -945,8 +992,16 @@ def main():
     key_file = module.params['key_file']
     ssh_opts = module.params['ssh_opts']
     umask = module.params['umask']
+    archive = module.params['archive']
 
     result = dict(changed=False, warnings=list())
+
+    if module.params['accept_hostkey']:
+        if ssh_opts is not None:
+            if "-o StrictHostKeyChecking=no" not in ssh_opts:
+                ssh_opts += " -o StrictHostKeyChecking=no"
+        else:
+            ssh_opts = "-o StrictHostKeyChecking=no"
 
     # evaluate and set the umask before doing anything else
     if umask is not None:
@@ -973,26 +1028,25 @@ def main():
         module.fail_json(msg="the destination directory must be specified unless clone=no")
     elif dest:
         dest = os.path.abspath(dest)
-        if bare:
-            gitconfig = os.path.join(dest, 'config')
-        else:
-            gitconfig = os.path.join(dest, '.git', 'config')
+        try:
+            repo_path = get_repo_path(dest, bare)
+        except (IOError, ValueError) as err:
+            # No repo path found
+            """``.git`` file does not have a valid format for detached Git dir."""
+            module.fail_json(
+                msg='Current repo does not have a valid reference to a '
+                'separate Git dir or it refers to the invalid path',
+                details=str(err),
+            )
+        gitconfig = os.path.join(repo_path, 'config')
 
     # create a wrapper script and export
     # GIT_SSH=<path> as an environment variable
     # for git to use the wrapper script
-    ssh_wrapper = None
-    if key_file or ssh_opts:
-        ssh_wrapper = write_ssh_wrapper()
-        set_git_ssh(ssh_wrapper, key_file, ssh_opts)
-        module.add_cleanup_file(path=ssh_wrapper)
+    ssh_wrapper = write_ssh_wrapper()
+    set_git_ssh(ssh_wrapper, key_file, ssh_opts)
+    module.add_cleanup_file(path=ssh_wrapper)
 
-    # add the git repo's hostkey
-    if module.params['ssh_opts'] is not None:
-        if "-o StrictHostKeyChecking=no" not in module.params['ssh_opts']:
-            add_git_host_key(module, repo, accept_hostkey=module.params['accept_hostkey'])
-    else:
-        add_git_host_key(module, repo, accept_hostkey=module.params['accept_hostkey'])
     git_version_used = git_version(git_path, module)
 
     if depth is not None and git_version_used < LooseVersion('1.9.1'):
@@ -1003,8 +1057,8 @@ def main():
     track_submodules = module.params['track_submodules']
 
     result.update(before=None)
+
     local_mods = False
-    need_fetch = True
     if (dest and not os.path.exists(gitconfig)) or (not dest and not allow_clone):
         # if there is no git configuration, do a clone operation unless:
         # * the user requested no clone (they just want info)
@@ -1020,13 +1074,21 @@ def main():
             module.exit_json(**result)
         # there's no git config, so clone
         clone(git_path, module, repo, dest, remote, depth, version, bare, reference, refspec, verify_commit)
-        need_fetch = False
     elif not update:
         # Just return having found a repo already in the dest path
         # this does no checking that the repo is the actual repo
         # requested.
         result['before'] = get_version(module, git_path, dest)
         result.update(after=result['before'])
+        if archive:
+            # Git archive is not supported by all git servers, so
+            # we will first clone and perform git archive from local directory
+            if module.check_mode:
+                result.update(changed=True)
+                module.exit_json(**result)
+
+            create_archive(git_path, module, dest, archive, version, repo, result)
+
         module.exit_json(**result)
     else:
         # else do a pull
@@ -1092,13 +1154,14 @@ def main():
             if diff:
                 result['diff'] = diff
 
-    # cleanup the wrapper script
-    if ssh_wrapper:
-        try:
-            os.remove(ssh_wrapper)
-        except OSError:
-            # No need to fail if the file already doesn't exist
-            pass
+    if archive:
+        # Git archive is not supported by all git servers, so
+        # we will first clone and perform git archive from local directory
+        if module.check_mode:
+            result.update(changed=True)
+            module.exit_json(**result)
+
+        create_archive(git_path, module, dest, archive, version, repo, result)
 
     module.exit_json(**result)
 

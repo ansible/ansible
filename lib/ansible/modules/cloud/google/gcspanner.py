@@ -1,22 +1,13 @@
 #!/usr/bin/python
-# Copyright 2017 Google Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# -*- coding: utf-8 -*-
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+# Copyright: (c) 2017, Google Inc.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -24,73 +15,74 @@ DOCUMENTATION = '''
 ---
 module: gcspanner
 version_added: "2.3"
-short_description: Create and Delete Instances/Databases on Spanner.
+short_description: Create and Delete Instances/Databases on Spanner
 description:
     - Create and Delete Instances/Databases on Spanner.
       See U(https://cloud.google.com/spanner/docs) for an overview.
 requirements:
-  - "python >= 2.6"
-  - "google-auth >= 0.5.0"
-  - "google-cloud-spanner >= 0.23.0"
+  - python >= 2.6
+  - google-auth >= 0.5.0
+  - google-cloud-spanner >= 0.23.0
 notes:
   - Changing the configuration on an existing instance is not supported.
 author:
-  - "Tom Melendez (@supertom) <tom@supertom.com>"
+  - Tom Melendez (@supertom) <tom@supertom.com>
 options:
   configuration:
     description:
-       - Configuration the instance should use. Examples are us-central1, asia-east1 and europe-west1.
-    required: True
+       - Configuration the instance should use.
+       - Examples are us-central1, asia-east1 and europe-west1.
+    required: yes
   instance_id:
     description:
        - GCP spanner instance name.
-    required: True
+    required: yes
   database_name:
     description:
        - Name of database contained on the instance.
-    required: False
   force_instance_delete:
     description:
        - To delete an instance, this argument must exist and be true (along with state being equal to absent).
-    required: False
-    default: False
+    type: bool
+    default: 'no'
   instance_display_name:
     description:
-       - Name of Instance to display.  If not specified, instance_id will be used instead.
-    required: False
+       - Name of Instance to display.
+       - If not specified, instance_id will be used instead.
   node_count:
     description:
-       - Number of nodes in the instance.  If not specified while creating an instance,
-         node_count will be set to 1.
-    required: False
+       - Number of nodes in the instance.
+    default: 1
   state:
-    description: State of the instance or database (absent, present). Applies to the most granular
-                 resource. If a database_name is specified we remove it.  If only instance_id
-                 is specified, that is what is removed.
-    required: False
-    default: "present"
+    description:
+    - State of the instance or database. Applies to the most granular resource.
+    - If a C(database_name) is specified we remove it.
+    - If only C(instance_id) is specified, that is what is removed.
+    choices: [ absent, present ]
+    default: present
 '''
+
 EXAMPLES = '''
-# Create instance.
-gcspanner:
-  instance_id: "{{ instance_id }}"
-  configuration: "{{ configuration }}"
-  state: present
-  node_count: 1
+- name: Create instance
+  gcspanner:
+    instance_id: '{{ instance_id }}'
+    configuration: '{{ configuration }}'
+    state: present
+    node_count: 1
 
-# Create database.
-gcspanner:
-  instance_id: "{{ instance_id }}"
-  configuration: "{{ configuration }}"
-  database_name: "{{ database_name }}"
-  state: present
+- name: Create database
+  gcspanner:
+    instance_id: '{{ instance_id }}'
+    configuration: '{{ configuration }}'
+    database_name: '{{ database_name }}'
+    state: present
 
-# Delete instance (and all databases)
-gcspanner:
-  instance_id: "{{ instance_id }}"
-  configuration: "{{ configuration }}"
-  state: absent
-  force_instance_delete: yes
+- name: Delete instance (and all databases)
+- gcspanner:
+    instance_id: '{{ instance_id }}'
+    configuration: '{{ configuration }}'
+    state: absent
+    force_instance_delete: yes
 '''
 
 RETURN = '''
@@ -139,10 +131,13 @@ except ImportError as e:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.gcp import check_min_pkg_version, get_google_cloud_credentials
+from ansible.module_utils.six import string_types
+
 
 CLOUD_CLIENT = 'google-cloud-spanner'
 CLOUD_CLIENT_MINIMUM_VERSION = '0.23.0'
 CLOUD_CLIENT_USER_AGENT = 'ansible-spanner-0.1'
+
 
 def get_spanner_configuration_name(config_name, project_name):
     config_name = 'projects/%s/instanceConfigs/regional-%s' % (project_name,
@@ -169,7 +164,7 @@ def instance_update(instance):
         errmsg = 'node_count must be an integer %s (%s)' % (
             instance.node_count, type(instance.node_count))
     if instance.display_name and not isinstance(instance.display_name,
-                                                basestring):
+                                                string_types):
         errmsg = 'instance_display_name must be an string %s (%s)' % (
             instance.display_name, type(instance.display_name))
     if errmsg:
@@ -177,7 +172,7 @@ def instance_update(instance):
 
     try:
         instance.update()
-    except ValueError as e:
+    except ValueError:
         # The ValueError here is the one we 'expect'.
         pass
 
@@ -185,17 +180,20 @@ def instance_update(instance):
 
 
 def main():
-    module = AnsibleModule(argument_spec=dict(
-        instance_id=dict(type='str', required=True),
-        state=dict(choices=['absent', 'present'], default='present'),
-        database_name=dict(type='str', default=None),
-        configuration=dict(type='str', required=True),
-        node_count=dict(type='int'),
-        instance_display_name=dict(type='str', default=None),
-        force_instance_delete=dict(type='bool', default=False),
-        service_account_email=dict(),
-        credentials_file=dict(),
-        project_id=dict(), ), )
+    module = AnsibleModule(
+        argument_spec=dict(
+            instance_id=dict(type='str', required=True),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            database_name=dict(type='str'),
+            configuration=dict(type='str', required=True),
+            node_count=dict(type='int', default=1),
+            instance_display_name=dict(type='str'),
+            force_instance_delete=dict(type='bool', default=False),
+            service_account_email=dict(type='str'),
+            credentials_file=dict(type='str'),
+            project_id=dict(type='str'),
+        ),
+    )
 
     if not HAS_PYTHON26:
         module.fail_json(
@@ -283,6 +281,7 @@ def main():
     json_output['changed'] = changed
     json_output.update(mod_params)
     module.exit_json(**json_output)
+
 
 if __name__ == '__main__':
     main()

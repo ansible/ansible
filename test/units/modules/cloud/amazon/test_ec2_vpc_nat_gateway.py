@@ -1,17 +1,18 @@
 import pytest
 import unittest
 
-boto3 = pytest.importorskip("boto3")
-botocore = pytest.importorskip("botocore")
-
 from collections import namedtuple
 from ansible.parsing.dataloader import DataLoader
-from ansible.vars import VariableManager
-from ansible.inventory import Inventory
+from ansible.vars.manager import VariableManager
+from ansible.inventory.manager import InventoryManager
 from ansible.playbook.play import Play
 from ansible.executor.task_queue_manager import TaskQueueManager
 
 import ansible.modules.cloud.amazon.ec2_vpc_nat_gateway as ng
+
+
+boto3 = pytest.importorskip("boto3")
+botocore = pytest.importorskip("botocore")
 
 Options = (
     namedtuple(
@@ -19,13 +20,13 @@ Options = (
             'connection', 'module_path', 'forks', 'become', 'become_method',
             'become_user', 'remote_user', 'private_key_file', 'ssh_common_args',
             'sftp_extra_args', 'scp_extra_args', 'ssh_extra_args', 'verbosity',
-            'check'
+            'check', 'diff'
         ]
     )
 )
 # initialize needed objects
-variable_manager = VariableManager()
 loader = DataLoader()
+variable_manager = VariableManager(loader=loader)
 options = (
     Options(
         connection='local',
@@ -33,7 +34,7 @@ options = (
         forks=1, become=None, become_method=None, become_user=None, check=True,
         remote_user=None, private_key_file=None, ssh_common_args=None,
         sftp_extra_args=None, scp_extra_args=None, ssh_extra_args=None,
-        verbosity=3
+        verbosity=3, diff=False
     )
 )
 passwords = dict(vault_pass='')
@@ -41,8 +42,9 @@ passwords = dict(vault_pass='')
 aws_region = 'us-west-2'
 
 # create inventory and pass to var manager
-inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list='localhost')
+inventory = InventoryManager(loader=loader)
 variable_manager.set_inventory(inventory)
+
 
 def run(play):
     tqm = None
@@ -62,14 +64,15 @@ def run(play):
             tqm.cleanup()
     return tqm, results
 
+
 class AnsibleVpcNatGatewayTasks(unittest.TestCase):
 
     def test_create_gateway_using_allocation_id(self):
-        play_source =  dict(
-            name = "Create new nat gateway with eip allocation-id",
-            hosts = 'localhost',
-            gather_facts = 'no',
-            tasks = [
+        play_source = dict(
+            name="Create new nat gateway with eip allocation-id",
+            hosts='localhost',
+            gather_facts='no',
+            tasks=[
                 dict(
                     action=dict(
                         module='ec2_vpc_nat_gateway',
@@ -98,11 +101,11 @@ class AnsibleVpcNatGatewayTasks(unittest.TestCase):
         self.failUnless(tqm._stats.changed['localhost'] == 1)
 
     def test_create_gateway_using_allocation_id_idempotent(self):
-        play_source =  dict(
-            name = "Create new nat gateway with eip allocation-id",
-            hosts = 'localhost',
-            gather_facts = 'no',
-            tasks = [
+        play_source = dict(
+            name="Create new nat gateway with eip allocation-id",
+            hosts='localhost',
+            gather_facts='no',
+            tasks=[
                 dict(
                     action=dict(
                         module='ec2_vpc_nat_gateway',
@@ -131,11 +134,11 @@ class AnsibleVpcNatGatewayTasks(unittest.TestCase):
         self.assertFalse('localhost' in tqm._stats.changed)
 
     def test_create_gateway_using_eip_address(self):
-        play_source =  dict(
-            name = "Create new nat gateway with eip address",
-            hosts = 'localhost',
-            gather_facts = 'no',
-            tasks = [
+        play_source = dict(
+            name="Create new nat gateway with eip address",
+            hosts='localhost',
+            gather_facts='no',
+            tasks=[
                 dict(
                     action=dict(
                         module='ec2_vpc_nat_gateway',
@@ -164,11 +167,11 @@ class AnsibleVpcNatGatewayTasks(unittest.TestCase):
         self.failUnless(tqm._stats.changed['localhost'] == 1)
 
     def test_create_gateway_using_eip_address_idempotent(self):
-        play_source =  dict(
-            name = "Create new nat gateway with eip address",
-            hosts = 'localhost',
-            gather_facts = 'no',
-            tasks = [
+        play_source = dict(
+            name="Create new nat gateway with eip address",
+            hosts='localhost',
+            gather_facts='no',
+            tasks=[
                 dict(
                     action=dict(
                         module='ec2_vpc_nat_gateway',
@@ -197,11 +200,11 @@ class AnsibleVpcNatGatewayTasks(unittest.TestCase):
         self.assertFalse('localhost' in tqm._stats.changed)
 
     def test_create_gateway_in_subnet_only_if_one_does_not_exist_already(self):
-        play_source =  dict(
-            name = "Create new nat gateway only if one does not exist already",
-            hosts = 'localhost',
-            gather_facts = 'no',
-            tasks = [
+        play_source = dict(
+            name="Create new nat gateway only if one does not exist already",
+            hosts='localhost',
+            gather_facts='no',
+            tasks=[
                 dict(
                     action=dict(
                         module='ec2_vpc_nat_gateway',
@@ -230,11 +233,11 @@ class AnsibleVpcNatGatewayTasks(unittest.TestCase):
         self.assertFalse('localhost' in tqm._stats.changed)
 
     def test_delete_gateway(self):
-        play_source =  dict(
-            name = "Delete Nat Gateway",
-            hosts = 'localhost',
-            gather_facts = 'no',
-            tasks = [
+        play_source = dict(
+            name="Delete Nat Gateway",
+            hosts='localhost',
+            gather_facts='no',
+            tasks=[
                 dict(
                     action=dict(
                         module='ec2_vpc_nat_gateway',
@@ -262,37 +265,8 @@ class AnsibleVpcNatGatewayTasks(unittest.TestCase):
         self.failUnless(tqm._stats.ok['localhost'] == 2)
         self.assertTrue('localhost' in tqm._stats.changed)
 
-class AnsibleEc2VpcNatGatewayFunctions(unittest.TestCase):
 
-    def test_convert_to_lower(self):
-        example = ng.DRY_RUN_GATEWAY_UNCONVERTED
-        converted_example = ng.convert_to_lower(example[0])
-        keys = list(converted_example.keys())
-        keys.sort()
-        for i in range(len(keys)):
-            if i == 0:
-                self.assertEqual(keys[i], 'create_time')
-            if i == 1:
-                self.assertEqual(keys[i], 'nat_gateway_addresses')
-                gw_addresses_keys = list(converted_example[keys[i]][0].keys())
-                gw_addresses_keys.sort()
-                for j in range(len(gw_addresses_keys)):
-                    if j == 0:
-                        self.assertEqual(gw_addresses_keys[j], 'allocation_id')
-                    if j == 1:
-                        self.assertEqual(gw_addresses_keys[j], 'network_interface_id')
-                    if j == 2:
-                        self.assertEqual(gw_addresses_keys[j], 'private_ip')
-                    if j == 3:
-                        self.assertEqual(gw_addresses_keys[j], 'public_ip')
-            if i == 2:
-                self.assertEqual(keys[i], 'nat_gateway_id')
-            if i == 3:
-                self.assertEqual(keys[i], 'state')
-            if i == 4:
-                self.assertEqual(keys[i], 'subnet_id')
-            if i == 5:
-                self.assertEqual(keys[i], 'vpc_id')
+class AnsibleEc2VpcNatGatewayFunctions(unittest.TestCase):
 
     def test_get_nat_gateways(self):
         client = boto3.client('ec2', region_name=aws_region)
@@ -356,7 +330,7 @@ class AnsibleEc2VpcNatGatewayFunctions(unittest.TestCase):
         client = boto3.client('ec2', region_name=aws_region)
         gws, err_msg = (
             ng.gateway_in_subnet_exists(
-                client, 'subnet-123456789',  check_mode=True
+                client, 'subnet-123456789', check_mode=True
             )
         )
         should_return = ng.DRY_RUN_GATEWAYS
@@ -366,7 +340,7 @@ class AnsibleEc2VpcNatGatewayFunctions(unittest.TestCase):
         client = boto3.client('ec2', region_name=aws_region)
         allocation_id, _ = (
             ng.get_eip_allocation_id_by_address(
-                client, '55.55.55.55',  check_mode=True
+                client, '55.55.55.55', check_mode=True
             )
         )
         should_return = 'eipalloc-1234567'
@@ -376,7 +350,7 @@ class AnsibleEc2VpcNatGatewayFunctions(unittest.TestCase):
         client = boto3.client('ec2', region_name=aws_region)
         allocation_id, err_msg = (
             ng.get_eip_allocation_id_by_address(
-                client, '52.52.52.52',  check_mode=True
+                client, '52.52.52.52', check_mode=True
             )
         )
         self.assertEqual(err_msg, 'EIP 52.52.52.52 does not exist')

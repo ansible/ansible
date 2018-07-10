@@ -1,0 +1,14 @@
+---
+
+
+- name: Setup cs action
+  delegate_to: localhost
+  register: result
+  check_mode: "{{ check_mode }}"
+  netscaler_cs_action:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+
+    name: action-2
+    targetvserverexpr: '"mylb_" + HTTP.REQ.URL.SUFFIX'

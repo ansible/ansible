@@ -1,0 +1,38 @@
+---
+- debug: msg="START netconf_json/greaterthan.yaml on connection={{ ansible_connection }}"
+
+- name: test gt operator
+  junos_command:
+    commands:
+      - show version
+      - show interfaces lo0
+    format: json
+    wait_for:
+      - "result[1]['interface-information'][0]['physical-interface'][0]['local-index'][0]['data'] gt 5"
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.stdout is defined"
+      - "result.stdout_lines is defined"
+
+- name: test > operator
+  junos_command:
+    commands:
+      - show version
+      - show interfaces lo0
+    format: json
+    wait_for:
+      - "result[1]['interface-information'][0]['physical-interface'][0]['local-index'][0]['data'] > 5"
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.stdout is defined"
+      - "result.stdout_lines is defined"
+
+- debug: msg="END netconf_json/greaterthan.yaml on connection={{ ansible_connection }}"

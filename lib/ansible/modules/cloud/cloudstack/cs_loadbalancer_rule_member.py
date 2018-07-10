@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -43,8 +43,6 @@ options:
     description:
       - Public IP address from where the network traffic will be load balanced from.
       - Only needed to find the rule if C(name) is not unique.
-    required: false
-    default: null
     aliases: [ 'public_ip' ]
   vms:
     description:
@@ -54,35 +52,26 @@ options:
   state:
     description:
       - Should the VMs be present or absent from the rule.
-    required: false
     default: 'present'
     choices: [ 'present', 'absent' ]
   project:
     description:
       - Name of the project the firewall rule is related to.
-    required: false
-    default: null
   domain:
     description:
       - Domain the rule is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the rule is related to.
-    required: false
-    default: null
   zone:
     description:
       - Name of the zone in which the rule should be located.
       - If not set, default zone is used.
-    required: false
-    default: null
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Add VMs to an exising load balancer
+# Add VMs to an existing load balancer
 - local_action:
     module: cs_loadbalancer_rule_member
     name: balance_http
@@ -207,7 +196,6 @@ state:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
-    CloudStackException,
     cs_argument_spec,
     cs_required_together,
 )
@@ -238,7 +226,7 @@ class AnsibleCloudStackLBRuleMember(AnsibleCloudStack):
         if self.module.params.get('ip_address'):
             args['publicipid'] = self.get_ip_address(key='id')
 
-        rules = self.cs.listLoadBalancerRules(**args)
+        rules = self.query_api('listLoadBalancerRules', **args)
         if rules:
             if len(rules['loadbalancerrule']) > 1:
                 self.module.fail_json(msg="More than one rule having name %s. Please pass 'ip_address' as well." % args['name'])
@@ -253,9 +241,7 @@ class AnsibleCloudStackLBRuleMember(AnsibleCloudStack):
         }
 
     def _get_members_of_rule(self, rule):
-        res = self.cs.listLoadBalancerRuleInstances(id=rule['id'])
-        if 'errortext' in res:
-            self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+        res = self.query_api('listLoadBalancerRuleInstances', id=rule['id'])
         return res.get('loadbalancerruleinstance', [])
 
     def _ensure_members(self, operation):
@@ -283,10 +269,11 @@ class AnsibleCloudStackLBRuleMember(AnsibleCloudStack):
             return rule
 
         args = self._get_common_args()
-        vms = self.cs.listVirtualMachines(**args)
+        args['fetch_list'] = True
+        vms = self.query_api('listVirtualMachines', **args)
         to_change_ids = []
         for name in to_change:
-            for vm in vms.get('virtualmachine', []):
+            for vm in vms:
                 if vm['name'] == name:
                     to_change_ids.append(vm['id'])
                     break
@@ -301,8 +288,7 @@ class AnsibleCloudStackLBRuleMember(AnsibleCloudStack):
                 id=rule['id'],
                 virtualmachineids=to_change_ids,
             )
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+
             poll_async = self.module.params.get('poll_async')
             if poll_async:
                 self.poll_job(res)
@@ -344,20 +330,15 @@ def main():
         supports_check_mode=True
     )
 
-    try:
-        acs_lb_rule_member = AnsibleCloudStackLBRuleMember(module)
+    acs_lb_rule_member = AnsibleCloudStackLBRuleMember(module)
 
-        state = module.params.get('state')
-        if state in ['absent']:
-            rule = acs_lb_rule_member.remove_members()
-        else:
-            rule = acs_lb_rule_member.add_members()
+    state = module.params.get('state')
+    if state in ['absent']:
+        rule = acs_lb_rule_member.remove_members()
+    else:
+        rule = acs_lb_rule_member.add_members()
 
-        result = acs_lb_rule_member.get_result(rule)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
-
+    result = acs_lb_rule_member.get_result(rule)
     module.exit_json(**result)
 
 

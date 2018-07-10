@@ -1,6 +1,4 @@
----
-
-- name: Clean up the directories
+- name: RESET-ORIGIN | Clean up the directories
   file:
     state: absent
     path: "{{ item }}"
@@ -8,17 +6,17 @@
     - "{{ repo_dir }}/origin"
     - "{{ checkout_dir }}"
 
-- name: Create a directory
+- name: RESET-ORIGIN | Create a directory
   file:
     name: "{{ repo_dir }}/origin"
     state: directory
 
-- name: Initialise the repo with a file named origin,see github.com/ansible/ansible/pull/22502
+- name: RESET-ORIGIN | Initialise the repo with a file named origin,see github.com/ansible/ansible/pull/22502
   shell: git init; echo "PR 22502" > origin; git add origin; git commit -m "PR 22502"
   args:
     chdir: "{{ repo_dir }}/origin"
 
-- name: Clone a git repo with file named origin
+- name: RESET-ORIGIN | Clone a git repo with file named origin
   git:
     repo: "{{ repo_dir }}/origin"
     dest: "{{ checkout_dir }}"

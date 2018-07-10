@@ -1,12 +1,12 @@
 - name: python 2
   set_fact:
     python_suffix: ""
-  when: ansible_python_version | version_compare('3', '<')
+  when: ansible_python_version is version('3', '<')
 
 - name: python 3
   set_fact:
     python_suffix: "-py3"
-  when: ansible_python_version | version_compare('3', '>=')
+  when: ansible_python_version is version('3', '>=')
 
 - include_vars: '{{ item }}'
   with_first_found:
@@ -63,9 +63,9 @@
   when: ansible_os_family == "RedHat" and ansible_service_mgr != "systemd"
 
 - name: Initialize postgres (Debian)
-  command: /usr/bin/pg_createcluster {{ pg_ver }} main
-  # Sometimes package install creates the db cluster, sometimes this step is needed
-  ignore_errors: True
+  shell: '. /usr/share/postgresql-common/maintscripts-functions && set_system_locale && /usr/bin/pg_createcluster -u postgres {{ pg_ver }} main'
+  args:
+    creates: "/etc/postgresql/{{ pg_ver }}/"
   when: ansible_os_family == 'Debian'
 
 - name: Initialize postgres (Suse)
@@ -108,7 +108,7 @@
 
   - name: Generate locale (RedHat)
     command: 'localedef -f ISO-8859-1 -i {{ item.locale }} {{ item.locale }}'
-    when: item|failed
+    when: item is failed
     with_items: '{{ locale_present.results }}'
   when: ansible_os_family == 'RedHat' and ansible_distribution != 'Fedora'
 

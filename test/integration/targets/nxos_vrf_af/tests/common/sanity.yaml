@@ -1,0 +1,161 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_vrf_af sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- name: Configure feature bgp
+  nxos_feature:
+    feature: bgp
+    provider: "{{ connection }}"
+    state: enabled
+
+- name: Configure feature nv overlay
+  nxos_config:
+    commands: "feature nv overlay"
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: Configure nv overlay evpn
+  nxos_config:
+    commands: "nv overlay evpn"
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- block:
+  - name: Configure vrf af ipv4
+    nxos_vrf_af: &configure4
+      vrf: ansible
+      afi: ipv4
+      route_target_both_auto_evpn: True
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Conf Idempotence"
+    nxos_vrf_af: *configure4
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Configure vrf af ipv6
+    nxos_vrf_af: &configure6
+      vrf: ansible
+      afi: ipv6
+      route_target_both_auto_evpn: True
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Conf Idempotence"
+    nxos_vrf_af: *configure6
+    register: result
+
+  - assert: *false
+
+  - name: Remove router target4
+    nxos_vrf_af: &rrt4
+      vrf: ansible
+      afi: ipv4
+      route_target_both_auto_evpn: False
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Conf Idempotence"
+    nxos_vrf_af: *rrt4
+    register: result
+
+  - assert: *false
+
+  - name: Remove router target6
+    nxos_vrf_af: &rrt6
+      vrf: ansible
+      afi: ipv6
+      route_target_both_auto_evpn: False
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Conf Idempotence"
+    nxos_vrf_af: *rrt6
+    register: result
+
+  - assert: *false
+
+  - name: Remove vrf af v6
+    nxos_vrf_af: &remove6
+      vrf: ansible
+      afi: ipv6
+      route_target_both_auto_evpn: True
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - pause:
+      seconds: 30
+
+  - name: "Remove Idempotence"
+    nxos_vrf_af: *remove6
+    register: result
+
+  - assert: *false
+
+  - name: Remove vrf af v4
+    nxos_vrf_af: &remove4
+      vrf: ansible
+      afi: ipv4
+      route_target_both_auto_evpn: True
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - pause:
+      seconds: 30
+
+  - name: "Remove Idempotence"
+    nxos_vrf_af: *remove4
+    register: result
+
+  - assert: *false
+
+  when: not platform is search("N35|N3L")
+
+  always:
+  - name: Remove vrf
+    nxos_config:
+      commands: "no vrf context ansible"
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
+  - name: Remove nv overlay evpn
+    nxos_config:
+      commands: "no nv overlay evpn"
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
+  - name: Remove feature nv overlay
+    nxos_config:
+      commands: "no feature nv overlay"
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
+  - name: Remove feature bgp
+    nxos_feature:
+      feature: bgp
+      provider: "{{ connection }}"
+      state: disabled
+    ignore_errors: yes
+
+- debug: msg="END connection={{ ansible_connection }} nxos_vrf_af sanity test"

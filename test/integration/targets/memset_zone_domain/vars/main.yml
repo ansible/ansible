@@ -1,0 +1,4 @@
+---
+test_domain: ansible.example.com
+target_zone: ansible-dns-zone
+duplicate_zone: ansible-dns-zone-dupe

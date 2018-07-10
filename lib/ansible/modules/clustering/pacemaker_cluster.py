@@ -1,32 +1,23 @@
 #!/usr/bin/python
-#coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
-# (c) 2016, Mathieu Bultel <mbultel@redhat.com>
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2016, Mathieu Bultel <mbultel@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
 module: pacemaker_cluster
-short_description: Manage a pacemaker cluster
+short_description: Manage pacemaker clusters
 version_added: "2.3"
-author: "Mathieu Bultel (matbu)"
+author:
+- Mathieu Bultel (@matbu)
 description:
    - This module can manage a pacemaker cluster and nodes from Ansible using
      the pacemaker cli.
@@ -34,26 +25,21 @@ options:
     state:
       description:
         - Indicate desired state of the cluster
-      choices: ['online', 'offline', 'restart', 'cleanup']
-      required: true
+      choices: [ cleanup, offline, online, restart ]
+      required: yes
     node:
       description:
         - Specify which node of the cluster you want to manage. None == the
           cluster status itself, 'all' == check the status of all nodes.
-      required: false
-      default: None
     timeout:
       description:
         - Timeout when the module should considered that the action has failed
-      required: false
       default: 300
     force:
       description:
         - Force the change of the cluster state
-      required: false
-      default: true
-requirements:
-    - "python >= 2.6"
+      type: bool
+      default: 'yes'
 '''
 EXAMPLES = '''
 ---
@@ -61,8 +47,9 @@ EXAMPLES = '''
   hosts: localhost
   gather_facts: no
   tasks:
-    - name: get cluster state
-      pacemaker_cluster: state=online
+  - name: Get cluster state
+    pacemaker_cluster:
+      state: online
 '''
 
 RETURN = '''
@@ -83,9 +70,11 @@ rc:
 '''
 
 import time
-from distutils.version import StrictVersion
 
-_PCS_CLUSTER_DOWN="Error: cluster is not currently running on this node"
+from ansible.module_utils.basic import AnsibleModule
+
+
+_PCS_CLUSTER_DOWN = "Error: cluster is not currently running on this node"
 
 
 def get_cluster_status(module):
@@ -95,6 +84,7 @@ def get_cluster_status(module):
         return 'offline'
     else:
         return 'online'
+
 
 def get_node_status(module, node='all'):
     if node == 'all':
@@ -109,11 +99,13 @@ def get_node_status(module, node='all'):
         status.append(o.split(':'))
     return status
 
+
 def clean_cluster(module, timeout):
     cmd = "pcs resource cleanup"
     rc, out, err = module.run_command(cmd)
     if rc is 1:
         module.fail_json(msg="Command execution failed.\nCommand: `%s`\nError: %s" % (cmd, err))
+
 
 def set_cluster(module, state, timeout, force):
     if state == 'online':
@@ -128,13 +120,14 @@ def set_cluster(module, state, timeout, force):
 
     t = time.time()
     ready = False
-    while time.time() < t+timeout:
+    while time.time() < t + timeout:
         cluster_state = get_cluster_status(module)
         if cluster_state == state:
             ready = True
             break
     if not ready:
         module.fail_json(msg="Failed to set the state `%s` on the cluster\n" % (state))
+
 
 def set_node(module, state, timeout, force, node='all'):
     # map states
@@ -155,7 +148,7 @@ def set_node(module, state, timeout, force, node='all'):
 
     t = time.time()
     ready = False
-    while time.time() < t+timeout:
+    while time.time() < t + timeout:
         nodes_state = get_node_status(module)
         for node in nodes_state:
             if node[1].strip().lower() == state:
@@ -164,15 +157,17 @@ def set_node(module, state, timeout, force, node='all'):
     if not ready:
         module.fail_json(msg="Failed to set the state `%s` on the cluster\n" % (state))
 
+
 def main():
     argument_spec = dict(
-        state = dict(choices=['online', 'offline', 'restart', 'cleanup']),
-        node  = dict(default=None),
-        timeout=dict(default=300, type='int'),
-        force=dict(default=True, type='bool'),
+        state=dict(type='str', choices=['online', 'offline', 'restart', 'cleanup']),
+        node=dict(type='str'),
+        timeout=dict(type='int', default=300),
+        force=dict(type='bool', default=True),
     )
 
-    module = AnsibleModule(argument_spec,
+    module = AnsibleModule(
+        argument_spec,
         supports_check_mode=True,
     )
     changed = False
@@ -186,14 +181,12 @@ def main():
         if node is None:
             cluster_state = get_cluster_status(module)
             if cluster_state == state:
-                module.exit_json(changed=changed,
-                         out=cluster_state)
+                module.exit_json(changed=changed, out=cluster_state)
             else:
                 set_cluster(module, state, timeout, force)
                 cluster_state = get_cluster_status(module)
                 if cluster_state == state:
-                    module.exit_json(changed=True,
-                         out=cluster_state)
+                    module.exit_json(changed=True, out=cluster_state)
                 else:
                     module.fail_json(msg="Fail to bring the cluster %s" % state)
         else:
@@ -201,14 +194,12 @@ def main():
             # Check cluster state
             for node_state in cluster_state:
                 if node_state[1].strip().lower() == state:
-                    module.exit_json(changed=changed,
-                             out=cluster_state)
+                    module.exit_json(changed=changed, out=cluster_state)
                 else:
                     # Set cluster status if needed
                     set_cluster(module, state, timeout, force)
                     cluster_state = get_node_status(module, node)
-                    module.exit_json(changed=True,
-                             out=cluster_state)
+                    module.exit_json(changed=True, out=cluster_state)
 
     if state in ['restart']:
         set_cluster(module, 'offline', timeout, force)
@@ -217,18 +208,18 @@ def main():
             set_cluster(module, 'online', timeout, force)
             cluster_state = get_cluster_status(module)
             if cluster_state == 'online':
-                module.exit_json(changed=True,
-                     out=cluster_state)
+                module.exit_json(changed=True, out=cluster_state)
             else:
                 module.fail_json(msg="Failed during the restart of the cluster, the cluster can't be started")
         else:
             module.fail_json(msg="Failed during the restart of the cluster, the cluster can't be stopped")
 
     if state in ['cleanup']:
-        set_cluster(module, state, timeout, force)
+        clean_cluster(module, timeout)
+        cluster_state = get_cluster_status(module)
         module.exit_json(changed=True,
-                 out=cluster_state)
+                         out=cluster_state)
 
-from ansible.module_utils.basic import AnsibleModule
+
 if __name__ == '__main__':
     main()

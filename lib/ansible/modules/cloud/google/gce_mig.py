@@ -1,22 +1,12 @@
 #!/usr/bin/python
 # Copyright 2016 Google Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -50,31 +40,22 @@ options:
        - Instance Template to be used in creating the VMs.  See
          U(https://cloud.google.com/compute/docs/instance-templates) to learn more
          about Instance Templates.  Required for creating MIGs.
-    required: false
   size:
     description:
        - Size of Managed Instance Group.  If MIG already exists, it will be
          resized to the number provided here.  Required for creating MIGs.
-    required: false
   service_account_email:
     description:
       - service account email
-    required: false
-    default: null
   credentials_file:
     description:
       - Path to the JSON file associated with the service account email
-    default: null
-    required: false
   project_id:
     description:
       - GCE project ID
-    required: false
-    default: null
   state:
     description:
       - desired state of the resource
-    required: false
     default: "present"
     choices: ["absent", "present"]
   zone:
@@ -87,15 +68,11 @@ options:
         and policy.max_instances (int) are required fields if autoscaling is used. See
         U(https://cloud.google.com/compute/docs/reference/beta/autoscalers) for more information
         on Autoscaling.
-    required: false
-    default: null
   named_ports:
     version_added: "2.3"
     description:
       - Define named ports that backend services can forward data to.  Format is a a list of
         name:port dictionaries.
-    required: false
-    default: null
 '''
 
 EXAMPLES = '''
@@ -272,7 +249,11 @@ updated_named_ports:
     sample: true
 '''
 
-import socket
+try:
+    from ast import literal_eval
+    HAS_PYTHON26 = True
+except ImportError:
+    HAS_PYTHON26 = False
 
 try:
     import libcloud
@@ -286,11 +267,8 @@ try:
 except ImportError:
     HAS_LIBCLOUD = False
 
-try:
-    from ast import literal_eval
-    HAS_PYTHON26 = True
-except ImportError:
-    HAS_PYTHON26 = False
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.gce import gce_connect
 
 
 def _check_params(params, field_list):
@@ -348,7 +326,7 @@ def _validate_autoscaling_params(params):
         {'name': 'name', 'required': True, 'type': str},
         {'name': 'enabled', 'required': True, 'type': bool},
         {'name': 'policy', 'required': True, 'type': dict}
-    ] # yapf: disable
+    ]  # yapf: disable
 
     (as_req_valid, as_req_msg) = _check_params(params['autoscaling'],
                                                as_req_fields)
@@ -360,7 +338,7 @@ def _validate_autoscaling_params(params):
         {'name': 'max_instances', 'required': True, 'type': int},
         {'name': 'min_instances', 'required': False, 'type': int},
         {'name': 'cool_down_period', 'required': False, 'type': int}
-    ] # yapf: disable
+    ]  # yapf: disable
 
     (as_policy_valid, as_policy_msg) = _check_params(
         params['autoscaling']['policy'], as_policy_fields)
@@ -394,7 +372,7 @@ def _validate_named_port_params(params):
     req_fields = [
         {'name': 'name', 'required': True, 'type': str},
         {'name': 'port', 'required': True, 'type': int}
-    ] # yapf: disable
+    ]  # yapf: disable
 
     for np in params['named_ports']:
         (valid_named_ports, np_msg) = _check_params(np, req_fields)
@@ -404,7 +382,7 @@ def _validate_named_port_params(params):
     return (True, '')
 
 
-def _get_instance_list(mig, field='name', filter_list=['NONE']):
+def _get_instance_list(mig, field='name', filter_list=None):
     """
     Helper to grab field from instances response.
 
@@ -423,6 +401,8 @@ def _get_instance_list(mig, field='name', filter_list=['NONE']):
     :return: List of strings from list_managed_instances response.
     :rtype: ``list``
     """
+    filter_list = ['NONE'] if filter_list is None else filter_list
+
     return [x[field] for x in mig.list_managed_instances()
             if x['currentAction'] in filter_list]
 
@@ -779,7 +759,7 @@ def main():
             req_create_fields = [
                 {'name': 'template', 'required': True, 'type': str},
                 {'name': 'size', 'required': True, 'type': int}
-            ] # yapf: disable
+            ]  # yapf: disable
 
             (valid_create_fields, valid_create_msg) = _check_params(
                 params, req_create_fields)
@@ -902,8 +882,6 @@ def main():
     json_output.update(params)
     module.exit_json(**json_output)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.gce import *
+
 if __name__ == '__main__':
     main()

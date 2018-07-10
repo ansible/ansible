@@ -1,0 +1,6 @@
+---
+minor_changes:
+  - Added new filter to generate random MAC addresses from a given
+    string acting as a prefix. Refer to the appropriate entry
+    which has been added to user_guide playbook_filters.rst
+    document.

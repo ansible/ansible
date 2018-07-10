@@ -1,0 +1,112 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_gir_profile_management sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- name: "Setup - Remove maintenace mode profiles"
+  nxos_gir_profile_management: &remove_maintenance
+    mode: maintenance
+    provider: "{{ connection }}"
+    state: absent    
+  ignore_errors: yes
+
+- name: "Setup - Remove normal mode profiles"
+  nxos_gir_profile_management: &remove_normal
+    mode: normal
+    provider: "{{ connection }}"
+    state: absent
+  ignore_errors: yes
+
+- name: "Setup - Turn on feature eigrp"
+  nxos_feature: 
+    feature: eigrp
+    provider: "{{ connection }}"
+    state: enabled
+  ignore_errors: yes
+
+- block:
+  - name: "Create maintenace mode profile"
+    nxos_gir_profile_management: &create_maintenance_profile
+      mode: maintenance
+      commands:
+        - router eigrp 11
+        - isolate
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Check Idempotence - Create maintenace mode profile"
+    nxos_gir_profile_management: *create_maintenance_profile
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: "Create normal mode profile"
+    nxos_gir_profile_management: &create_normal_profile
+      mode: normal
+      commands:
+        - router eigrp 11
+        - isolate
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence - Create normal mode profile"
+    nxos_gir_profile_management: *create_normal_profile
+    register: result
+
+  - assert: *false
+
+  - name: "Remove maintenance mode profile"
+    nxos_gir_profile_management: *remove_maintenance
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence - Remove maintenance mode profile"
+    nxos_gir_profile_management: *remove_maintenance
+    register: result
+
+  - assert: *false
+
+  - name: "Remove normal mode profile"
+    nxos_gir_profile_management: *remove_normal
+    register: result 
+
+  - assert: *true
+
+  - name: "Check Idempotence - Remove normal mode profile"
+    nxos_gir_profile_management: *remove_normal
+    register: result
+
+  - assert: *false
+
+  when: not ( platform is match('N35')) and not titanium
+
+  rescue:
+
+  - debug: msg="connection={{ ansible_connection }} nxos_gir_profile_management failure detected"
+
+  always:
+
+  - name: "Remove normal mode profile"
+    nxos_gir_profile_management: *remove_normal
+
+  - name: "Remove maintenance mode profile"
+    nxos_gir_profile_management: *remove_maintenance
+
+  - name: "Turn off feature eigrp"
+    nxos_feature:
+      feature: eigrp
+      provider: "{{ connection }}"
+      state: disabled
+
+  - debug: msg="END connection={{ ansible_connection }} nxos_gir_profile_management sanity test"  

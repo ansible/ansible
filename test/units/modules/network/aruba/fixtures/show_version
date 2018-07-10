@@ -1,0 +1,17 @@
+Aruba Operating System Software.
+ArubaOS (MODEL: Aruba7220-US), Version 6.4.3.10
+Website: http://www.arubanetworks.com
+Copyright (c) 2002-2016, Aruba Networks, Inc.
+Compiled on 2016-08-31 at 18:31:30 PDT (build 56305) by p4build
+
+ROM: System Bootstrap, Version CPBoot 1.2.1.0 (build 39183)
+Built: 2013-07-26 04:57:47
+Built by: p4build@re_client_39183
+
+
+Switch uptime is 15 days 20 hours 51 minutes 51 seconds
+Reboot Cause: User reboot (Intent:cause:register 78:86:50:2)
+Supervisor Card
+Processor (XLP432 Rev B1 (Secure Boot) , 1000 MHz) with 7370M bytes of memory.
+32K bytes of non-volatile configuration memory.
+7920M bytes of Supervisor Card system flash.

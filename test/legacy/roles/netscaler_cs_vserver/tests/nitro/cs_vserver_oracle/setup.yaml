@@ -1,0 +1,18 @@
+---
+
+
+- name: Setup cs vserver
+  delegate_to: localhost
+  register: result
+  check_mode: "{{ check_mode }}"
+  netscaler_cs_vserver:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+
+    name: cs-vserver-3
+    servicetype: ORACLE
+    ipv46: 192.168.1.3
+    port: 80
+    td: 0
+    oracleserverversion: 10G

@@ -5,7 +5,7 @@
 - name: verify setup
   assert:
     that:
-    - sg|success
+    - sg is successful
 
 - name: test fail if missing name
   action: cs_securitygroup
@@ -14,8 +14,18 @@
 - name: verify results of fail if missing name
   assert:
     that:
-    - sg|failed
+    - sg is failed
     - "sg.msg == 'missing required arguments: name'"
+
+- name: test present security group in check mode
+  cs_securitygroup: name={{ cs_resource_prefix }}_sg
+  register: sg
+  check_mode: true
+- name: verify results of create security group in check mode
+  assert:
+    that:
+    - sg is successful
+    - sg is changed
 
 - name: test present security group
   cs_securitygroup: name={{ cs_resource_prefix }}_sg
@@ -23,8 +33,8 @@
 - name: verify results of create security group
   assert:
     that:
-    - sg|success
-    - sg|changed
+    - sg is successful
+    - sg is changed
     - sg.name == "{{ cs_resource_prefix }}_sg"
 
 - name: test present security group is idempotence
@@ -33,8 +43,19 @@
 - name: verify results present security group is idempotence
   assert:
     that:
-    - sg|success
-    - not sg|changed
+    - sg is successful
+    - sg is not changed
+    - sg.name == "{{ cs_resource_prefix }}_sg"
+
+- name: test absent security group in check mode
+  cs_securitygroup: name={{ cs_resource_prefix }}_sg state=absent
+  register: sg
+  check_mode: true
+- name: verify results of absent security group in check mode
+  assert:
+    that:
+    - sg is successful
+    - sg is changed
     - sg.name == "{{ cs_resource_prefix }}_sg"
 
 - name: test absent security group
@@ -43,8 +64,8 @@
 - name: verify results of absent security group
   assert:
     that:
-    - sg|success
-    - sg|changed
+    - sg is successful
+    - sg is changed
     - sg.name == "{{ cs_resource_prefix }}_sg"
 
 - name: test absent security group is idempotence
@@ -53,6 +74,6 @@
 - name: verify results of absent security group is idempotence
   assert:
     that:
-    - sg|success
-    - not sg|changed
+    - sg is successful
+    - sg is not changed
     - sg.name is undefined

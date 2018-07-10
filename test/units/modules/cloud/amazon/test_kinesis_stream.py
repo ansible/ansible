@@ -98,11 +98,15 @@ class AnsibleKinesisStreamFunctions(unittest.TestCase):
             kinesis_stream.find_stream(client, 'test', check_mode=True)
         )
         should_return = {
+            'OpenShardsCount': 5,
+            'ClosedShardsCount': 0,
+            'ShardsCount': 5,
             'HasMoreShards': True,
             'RetentionPeriodHours': 24,
             'StreamName': 'test',
             'StreamARN': 'arn:aws:kinesis:east-side:123456789:stream/test',
-            'StreamStatus': 'ACTIVE'
+            'StreamStatus': 'ACTIVE',
+            'EncryptionType': 'NONE'
         }
         self.assertTrue(success)
         self.assertEqual(stream, should_return)
@@ -115,11 +119,15 @@ class AnsibleKinesisStreamFunctions(unittest.TestCase):
             )
         )
         should_return = {
+            'OpenShardsCount': 5,
+            'ClosedShardsCount': 0,
+            'ShardsCount': 5,
             'HasMoreShards': True,
             'RetentionPeriodHours': 24,
             'StreamName': 'test',
             'StreamARN': 'arn:aws:kinesis:east-side:123456789:stream/test',
-            'StreamStatus': 'ACTIVE'
+            'StreamStatus': 'ACTIVE',
+            'EncryptionType': 'NONE'
         }
         self.assertTrue(success)
         self.assertEqual(stream, should_return)
@@ -230,14 +238,27 @@ class AnsibleKinesisStreamFunctions(unittest.TestCase):
         )
         self.assertFalse(success)
 
+    def test_update_shard_count(self):
+        client = boto3.client('kinesis', region_name=aws_region)
+        success, err_msg = (
+            kinesis_stream.update_shard_count(
+                client, 'test', 5, check_mode=True
+            )
+        )
+        self.assertTrue(success)
+
     def test_update(self):
         client = boto3.client('kinesis', region_name=aws_region)
         current_stream = {
+            'OpenShardsCount': 5,
+            'ClosedShardsCount': 0,
+            'ShardsCount': 1,
             'HasMoreShards': True,
             'RetentionPeriodHours': 24,
             'StreamName': 'test',
             'StreamARN': 'arn:aws:kinesis:east-side:123456789:stream/test',
-            'StreamStatus': 'ACTIVE'
+            'StreamStatus': 'ACTIVE',
+            'EncryptionType': 'NONE'
         }
         tags = {
             'env': 'development',
@@ -245,7 +266,7 @@ class AnsibleKinesisStreamFunctions(unittest.TestCase):
         }
         success, changed, err_msg = (
             kinesis_stream.update(
-                client, current_stream, 'test', retention_period=48,
+                client, current_stream, 'test', number_of_shards=2, retention_period=48,
                 tags=tags, check_mode=True
             )
         )
@@ -266,14 +287,40 @@ class AnsibleKinesisStreamFunctions(unittest.TestCase):
             )
         )
         should_return = {
+            'open_shards_count': 5,
+            'closed_shards_count': 0,
+            'shards_count': 5,
             'has_more_shards': True,
             'retention_period_hours': 24,
             'stream_name': 'test',
             'stream_arn': 'arn:aws:kinesis:east-side:123456789:stream/test',
             'stream_status': 'ACTIVE',
+            'encryption_type': 'NONE',
             'tags': tags,
         }
         self.assertTrue(success)
         self.assertTrue(changed)
         self.assertEqual(results, should_return)
         self.assertEqual(err_msg, 'Kinesis Stream test updated successfully.')
+
+    def test_enable_stream_encription(self):
+        client = boto3.client('kinesis', region_name=aws_region)
+        success, changed, err_msg, results = (
+            kinesis_stream.start_stream_encryption(
+                client, 'test', encryption_type='KMS', key_id='', wait=True, wait_timeout=60, check_mode=True
+            )
+        )
+        self.assertTrue(success)
+        self.assertTrue(changed)
+        self.assertEqual(err_msg, 'Kinesis Stream test encryption started successfully.')
+
+    def test_dsbale_stream_encryption(self):
+        client = boto3.client('kinesis', region_name=aws_region)
+        success, changed, err_msg, results = (
+            kinesis_stream.stop_stream_encryption(
+                client, 'test', encryption_type='KMS', key_id='', wait=True, wait_timeout=60, check_mode=True
+            )
+        )
+        self.assertTrue(success)
+        self.assertTrue(changed)
+        self.assertEqual(err_msg, 'Kinesis Stream test encryption stopped successfully.')

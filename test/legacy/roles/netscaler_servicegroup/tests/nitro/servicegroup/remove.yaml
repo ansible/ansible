@@ -1,0 +1,16 @@
+---
+
+- name: Remove servicegroup
+  delegate_to: localhost
+  register: result
+  check_mode: "{{ check_mode }}"
+  netscaler_servicegroup:
+
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+
+    state: absent
+
+    servicegroupname: service-group-1
+    servicetype: HTTP

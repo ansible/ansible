@@ -1,39 +1,12 @@
 # -*- coding: utf-8 -*-
-#
-# (c) 2016, René Moser <mail@renemoser.net>
-#
-# This code is part of Ansible, but is an independent component.
-# This particular file snippet, and this file snippet only, is BSD licensed.
-# Modules you write using this snippet, which is embedded dynamically by Ansible
-# still belong to the author of the module, and may assign their own license
-# to the complete work.
-#
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
-#
-#    * Redistributions of source code must retain the above copyright
-#      notice, this list of conditions and the following disclaimer.
-#    * Redistributions in binary form must reproduce the above copyright notice,
-#      this list of conditions and the following disclaimer in the documentation
-#      and/or other materials provided with the distribution.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# Copyright (c) 2016, René Moser <mail@renemoser.net>
+# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
 import os
 
-# import module snippets
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils.six import integer_types, string_types
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import fetch_url
 
 EXO_DNS_BASEURL = "https://api.exoscale.ch/dns/v1"
@@ -41,11 +14,11 @@ EXO_DNS_BASEURL = "https://api.exoscale.ch/dns/v1"
 
 def exo_dns_argument_spec():
     return dict(
-        api_key=dict(default=None, no_log=True),
-        api_secret=dict(default=None, no_log=True),
-        api_timeout=dict(type='int', default=10),
-        api_region=dict(default='cloudstack'),
-        validate_certs=dict(default='yes', type='bool'),
+        api_key=dict(default=os.environ.get('CLOUDSTACK_KEY'), no_log=True),
+        api_secret=dict(default=os.environ.get('CLOUDSTACK_SECRET'), no_log=True),
+        api_timeout=dict(type='int', default=os.environ.get('CLOUDSTACK_TIMEOUT') or 10),
+        api_region=dict(default=os.environ.get('CLOUDSTACK_REGION') or 'cloudstack'),
+        validate_certs=dict(default=True, type='bool'),
     )
 
 
@@ -58,7 +31,7 @@ class ExoDns(object):
     def __init__(self, module):
         self.module = module
 
-        self.api_key = self.module.params. get('api_key')
+        self.api_key = self.module.params.get('api_key')
         self.api_secret = self.module.params.get('api_secret')
         if not (self.api_key and self.api_secret):
             try:
@@ -66,9 +39,8 @@ class ExoDns(object):
                 config = self.read_config(ini_group=region)
                 self.api_key = config['key']
                 self.api_secret = config['secret']
-            except Exception:
-                e = get_exception()
-                self.module.fail_json(msg="Error while processing config: %s" % e)
+            except Exception as e:
+                self.module.fail_json(msg="Error while processing config: %s" % to_native(e))
 
         self.headers = {
             'X-DNS-Token': "%s:%s" % (self.api_key, self.api_secret),
@@ -133,9 +105,8 @@ class ExoDns(object):
         try:
             return self.module.from_json(to_text(response.read()))
 
-        except Exception:
-            e = get_exception()
-            self.module.fail_json(msg="Could not process response into json: %s" % e)
+        except Exception as e:
+            self.module.fail_json(msg="Could not process response into json: %s" % to_native(e))
 
     def has_changed(self, want_dict, current_dict, only_keys=None):
         changed = False

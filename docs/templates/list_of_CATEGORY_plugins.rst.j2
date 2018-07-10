@@ -1,0 +1,36 @@
+.. _@{ title.lower() + '_' + plugin_type + 's' }@:
+
+@{ title }@ @{ plugin_type }@
+@{ '`' * title | length }@````````
+
+{% if blurb %}
+@{ blurb }@
+
+{% endif %}
+.. toctree:: :maxdepth: 1
+{% if category['_modules'] %}
+
+{% for module in category['_modules'] | sort %}
+  @{ module }@{% if module_info[module]['deprecated'] %} **(D)**{% endif%}{% if module_info[module]['doc']['short_description'] %} -- @{ module_info[module]['doc']['short_description'] }@{% endif %} <plugins/@{ module_info[module]['primary_category'] }@/@{ module }@>
+{% endfor %}
+{% endif %}
+
+{% for name, info in subcategories.items() | sort %}
+
+.. _@{ name.lower() + '_' + title.lower() + '_' + plugin_type + 's' }@:
+
+@{ name.title() }@
+@{ '-' * name | length }@
+
+.. toctree:: :maxdepth: 1
+
+{% for module in info['_modules'] | sort %}
+  :ref:`@{ module }@_@{ plugin_type }@`{% if module_info[module]['deprecated'] %} **(D)**{% endif%} -- @{ module_info[module]['doc']['short_description'] }@
+{% endfor %}
+
+{% endfor %}
+
+.. note::
+    - **(D)**: This marks a module as deprecated, which means a module is kept for backwards compatibility but usage is discouraged.
+      The module documentation details page may explain more about this rationale.
+

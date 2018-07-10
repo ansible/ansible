@@ -1,23 +1,13 @@
 #!/usr/bin/python
 
 # (c) 2017, NetApp, Inc
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -51,14 +41,14 @@ options:
   infinite:
     description:
     - Set True if the volume is an Infinite Volume.
-    choices: ['True', 'False']
-    default: 'False'
+    type: bool
+    default: 'no'
 
   online:
     description:
     - Whether the specified volume is online, or not.
-    choices: ['True', 'False']
-    default: 'True'
+    type: bool
+    default: 'yes'
 
   aggregate_name:
     description:
@@ -78,7 +68,26 @@ options:
     description:
     - Name of the vserver to use.
     required: true
-    default: None
+
+  junction_path:
+    description:
+    - Junction path where to mount the volume
+    required: false
+    version_added: '2.6'
+
+  export_policy:
+    description:
+    - Export policy to set for the specified junction path.
+    required: false
+    default: default
+    version_added: '2.6'
+
+  snapshot_policy:
+    description:
+    - Snapshot policy to set for the specified volume.
+    required: false
+    default: default
+    version_added: '2.6'
 
 '''
 
@@ -96,6 +105,9 @@ EXAMPLES = """
         hostname: "{{ netapp_hostname }}"
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"
+        junction_path: /ansibleVolume
+        export_policy: all_nfs_networks
+        snapshot_policy: daily
 
     - name: Make FlexVol offline
       na_cdot_volume:
@@ -114,10 +126,12 @@ RETURN = """
 
 
 """
+import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 import ansible.module_utils.netapp as netapp_utils
+
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
@@ -151,6 +165,9 @@ class NetAppCDOTVolume(object):
                                     'pb', 'eb', 'zb', 'yb'], type='str'),
             aggregate_name=dict(type='str'),
             vserver=dict(required=True, type='str', default=None),
+            junction_path=dict(required=False, type='str', default=None),
+            export_policy=dict(required=False, type='str', default='default'),
+            snapshot_policy=dict(required=False, type='str', default='default'),
         ))
 
         self.module = AnsibleModule(
@@ -170,6 +187,9 @@ class NetAppCDOTVolume(object):
         self.is_online = p['is_online']
         self.size_unit = p['size_unit']
         self.vserver = p['vserver']
+        self.junction_path = p['junction_path']
+        self.export_policy = p['export_policy']
+        self.snapshot_policy = p['snapshot_policy']
 
         if p['size'] is not None:
             self.size = p['size'] * self._size_unit_map[self.size_unit]
@@ -235,18 +255,26 @@ class NetAppCDOTVolume(object):
         return return_value
 
     def create_volume(self):
+        create_parameters = {'volume': self.name,
+                             'containing-aggr-name': self.aggregate_name,
+                             'size': str(self.size),
+                             }
+        if self.junction_path:
+            create_parameters['junction-path'] = str(self.junction_path)
+        if self.export_policy != 'default':
+            create_parameters['export-policy'] = str(self.export_policy)
+        if self.snapshot_policy != 'default':
+            create_parameters['snapshot-policy'] = str(self.snapshot_policy)
+
         volume_create = netapp_utils.zapi.NaElement.create_node_with_children(
-            'volume-create', **{'volume': self.name,
-                                'containing-aggr-name': self.aggregate_name,
-                                'size': str(self.size)})
+            'volume-create', **create_parameters)
 
         try:
             self.server.invoke_successfully(volume_create,
                                             enable_tunneling=True)
-        except netapp_utils.zapi.NaApiError:
-            err = get_exception()
-            self.module.fail_json(msg='Error provisioning volume %s of size %s' % (self.name, self.size),
-                                  exception=str(err))
+        except netapp_utils.zapi.NaApiError as e:
+            self.module.fail_json(msg='Error provisioning volume %s of size %s: %s' % (self.name, self.size, to_native(e)),
+                                  exception=traceback.format_exc())
 
     def delete_volume(self):
         if self.is_infinite:
@@ -255,15 +283,14 @@ class NetAppCDOTVolume(object):
         else:
             volume_delete = netapp_utils.zapi.NaElement.create_node_with_children(
                 'volume-destroy', **{'name': self.name, 'unmount-and-offline':
-                    'true'})
+                                     'true'})
 
         try:
             self.server.invoke_successfully(volume_delete,
                                             enable_tunneling=True)
-        except netapp_utils.zapi.NaApiError:
-            err = get_exception()
-            self.module.fail_json(msg='Error deleting volume %s' % self.name,
-                                  exception=str(err))
+        except netapp_utils.zapi.NaApiError as e:
+            self.module.fail_json(msg='Error deleting volume %s: %s' % (self.name, to_native(e)),
+                                  exception=traceback.format_exc())
 
     def rename_volume(self):
         """
@@ -284,10 +311,9 @@ class NetAppCDOTVolume(object):
         try:
             self.server.invoke_successfully(volume_rename,
                                             enable_tunneling=True)
-        except netapp_utils.zapi.NaApiError:
-            err = get_exception()
-            self.module.fail_json(msg='Error renaming volume %s' % self.name,
-                                  exception=str(err))
+        except netapp_utils.zapi.NaApiError as e:
+            self.module.fail_json(msg='Error renaming volume %s: %s' % (self.name, to_native(e)),
+                                  exception=traceback.format_exc())
 
     def resize_volume(self):
         """
@@ -308,10 +334,9 @@ class NetAppCDOTVolume(object):
         try:
             self.server.invoke_successfully(volume_resize,
                                             enable_tunneling=True)
-        except netapp_utils.zapi.NaApiError:
-            err = get_exception()
-            self.module.fail_json(msg='Error re-sizing volume %s' % self.name,
-                                  exception=str(err))
+        except netapp_utils.zapi.NaApiError as e:
+            self.module.fail_json(msg='Error re-sizing volume %s: %s' % (self.name, to_native(e)),
+                                  exception=traceback.format_exc())
 
     def change_volume_state(self):
         """
@@ -346,10 +371,10 @@ class NetAppCDOTVolume(object):
         try:
             self.server.invoke_successfully(volume_change_state,
                                             enable_tunneling=True)
-        except netapp_utils.zapi.NaApiError:
-            err = get_exception()
-            self.module.fail_json(msg='Error changing the state of volume %s to %s' % (self.name, state_requested),
-                                  exception=str(err))
+        except netapp_utils.zapi.NaApiError as e:
+            self.module.fail_json(msg='Error changing the state of volume %s to %s: %s' %
+                                  (self.name, state_requested, to_native(e)),
+                                  exception=traceback.format_exc())
 
     def apply(self):
         changed = False

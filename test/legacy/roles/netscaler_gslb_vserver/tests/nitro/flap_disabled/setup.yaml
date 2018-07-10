@@ -1,0 +1,39 @@
+---
+
+- name: flap gslb vserver
+  register: result
+  check_mode: "{{ check_mode }}"
+  delegate_to: localhost
+  netscaler_gslb_vserver:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+
+    name: gslb-vserver-2
+    servicetype: HTTP
+    lbmethod: SOURCEIPHASH
+    netmask: 255.255.255.0
+    v6persistmasklen: 128
+
+    disabled: "{{ item|int % 2 }}"
+  with_sequence: count=20
+  delay: 1
+
+- name: flap gslb vserver
+  register: result
+  check_mode: "{{ check_mode }}"
+  delegate_to: localhost
+  netscaler_gslb_vserver:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+
+    name: gslb-vserver-2
+    servicetype: HTTP
+    lbmethod: SOURCEIPHASH
+    netmask: 255.255.255.0
+    v6persistmasklen: 128
+
+    disabled: "{{ item|int % 2 }}"
+  with_sequence: count=20
+  delay: 5

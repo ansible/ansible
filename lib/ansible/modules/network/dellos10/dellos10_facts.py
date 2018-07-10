@@ -1,25 +1,14 @@
 #!/usr/bin/python
 #
 # (c) 2015 Peter Sprygada, <psprygada@ansible.com>
-#
 # Copyright (c) 2017 Dell Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -34,19 +23,19 @@ description:
   - Collects a base set of device facts from a remote device that
     is running OS10.  This module prepends all of the
     base network fact keys with C(ansible_net_<fact>).  The facts
-    module always collects a base set of facts from the device
+    module will always collect a base set of facts from the device
     and can enable or disable collection of additional facts.
 extends_documentation_fragment: dellos10
 options:
   gather_subset:
     description:
-      - When supplied, this argument restricts the facts collected
+      - When supplied, this argument will restrict the facts collected
         to a given subset.  Possible values for this argument include
-        all, hardware, config, and interfaces.  You can specify a list of
-        values to include a larger subset.  You can also use values with an initial M(!) to specify that a specific subset should
+        all, hardware, config, and interfaces.  Can specify a list of
+        values to include a larger subset.  Values can also be used
+        with an initial C(M(!)) to specify that a specific subset should
         not be collected.
-    required: false
-    default: '!config'
+    default: [ '!config' ]
 """
 
 EXAMPLES = """
@@ -67,8 +56,8 @@ EXAMPLES = """
 
 RETURN = """
 ansible_net_gather_subset:
-  description: The list of fact subsets collected from the device.
-  returned: Always.
+  description: The list of fact subsets collected from the device
+  returned: always
   type: list
 
 # default
@@ -77,78 +66,77 @@ ansible_net_name:
   returned: Always.
   type: str
 ansible_net_version:
-  description: The operating system version running on the remote device.
-  returned: Always.
+  description: The operating system version running on the remote device
+  returned: always
   type: str
 ansible_net_servicetag:
   description: The service tag number of the remote device.
-  returned: Always.
+  returned: always
   type: str
 ansible_net_model:
   description: The model name returned from the device.
-  returned: Always.
+  returned: always
   type: str
 ansible_net_hostname:
-  description: The configured hostname of the device.
-  returned: Always.
+  description: The configured hostname of the device
+  returned: always
   type: str
 
 # hardware
 ansible_net_cpu_arch:
   description: CPU Architecture of the remote device.
-  returned: When hardware is configured.
+  returned: when hardware is configured
   type: str
 ansible_net_memfree_mb:
-  description: The available free memory on the remote device in MB.
-  returned: When hardware is configured.
+  description: The available free memory on the remote device in Mb
+  returned: when hardware is configured
   type: int
 ansible_net_memtotal_mb:
-  description: The total memory on the remote device in MB.
-  returned: When hardware is configured.
+  description: The total memory on the remote device in Mb
+  returned: when hardware is configured
   type: int
 
 # config
 ansible_net_config:
-  description: The current active config from the device.
-  returned: When config is configured.
+  description: The current active config from the device
+  returned: when config is configured
   type: str
 
 # interfaces
 ansible_net_all_ipv4_addresses:
-  description: All IPv4 addresses configured on the device.
-  returned: When interfaces is configured
+  description: All IPv4 addresses configured on the device
+  returned: when interfaces is configured
   type: list
 ansible_net_all_ipv6_addresses:
-  description: All IPv6 addresses configured on the device.
-  returned: When interfaces is configured.
+  description: All IPv6 addresses configured on the device
+  returned: when interfaces is configured
   type: list
 ansible_net_interfaces:
-  description: A hash of all interfaces running on the system.
-  returned: When interfaces is configured.
+  description: A hash of all interfaces running on the system
+  returned: when interfaces is configured
   type: dict
 ansible_net_neighbors:
-  description: The list of LLDP neighbors from the remote device.
-  returned: When interfaces is configured.
+  description: The list of LLDP neighbors from the remote device
+  returned: when interfaces is configured
   type: dict
 """
 
 import re
-
-from ansible.module_utils.dellos10 import run_commands
-from ansible.module_utils.dellos10 import dellos10_argument_spec, check_args
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import iteritems
-from ansible.module_utils.six.moves import zip
 
 try:
     from lxml import etree as ET
 except ImportError:
     import xml.etree.ElementTree as ET
 
+from ansible.module_utils.network.dellos10.dellos10 import run_commands
+from ansible.module_utils.network.dellos10.dellos10 import dellos10_argument_spec, check_args
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import iteritems
+
 
 class FactsBase(object):
 
-    COMMANDS = list()
+    COMMANDS = []
 
     def __init__(self, module):
         self.module = module
@@ -167,25 +155,22 @@ class Default(FactsBase):
     COMMANDS = [
         'show version | display-xml',
         'show system | display-xml',
-        'show running-configuration | grep hostname'
     ]
 
     def populate(self):
         super(Default, self).populate()
         data = self.responses[0]
-        xml_data = ET.fromstring(data)
+        xml_data = ET.fromstring(data.encode('utf8'))
 
         self.facts['name'] = self.parse_name(xml_data)
         self.facts['version'] = self.parse_version(xml_data)
+        self.facts['model'] = self.parse_model(xml_data)
+        self.facts['hostname'] = self.parse_hostname(xml_data)
 
         data = self.responses[1]
-        xml_data = ET.fromstring(data)
+        xml_data = ET.fromstring(data.encode('utf8'))
 
-        self.facts['servicetag'] = self.parse_serialnum(xml_data)
-        self.facts['model'] = self.parse_model(xml_data)
-
-        data = self.responses[2]
-        self.facts['hostname'] = self.parse_hostname(data)
+        self.facts['servicetag'] = self.parse_servicetag(xml_data)
 
     def parse_name(self, data):
         sw_name = data.find('./data/system-sw-state/sw-version/sw-name')
@@ -202,18 +187,20 @@ class Default(FactsBase):
             return ""
 
     def parse_hostname(self, data):
-        match = re.search(r'hostname\s+(\S+)', data, re.M)
-        if match:
-            return match.group(1)
+        hostname = data.find('./data/system-state/system-status/hostname')
+        if hostname is not None:
+            return hostname.text
+        else:
+            return ""
 
     def parse_model(self, data):
-        prod_name = data.find('./data/system/node/mfg-info/product-name')
+        prod_name = data.find('./data/system-sw-state/sw-version/sw-platform')
         if prod_name is not None:
             return prod_name.text
         else:
             return ""
 
-    def parse_serialnum(self, data):
+    def parse_servicetag(self, data):
         svc_tag = data.find('./data/system/node/unit/mfg-info/service-tag')
         if svc_tag is not None:
             return svc_tag.text
@@ -225,7 +212,7 @@ class Hardware(FactsBase):
 
     COMMANDS = [
         'show version | display-xml',
-        'show processes memory | grep Total'
+        'show processes node-id 1 | grep Mem:'
     ]
 
     def populate(self):
@@ -233,15 +220,15 @@ class Hardware(FactsBase):
         super(Hardware, self).populate()
         data = self.responses[0]
 
-        xml_data = ET.fromstring(data)
+        xml_data = ET.fromstring(data.encode('utf8'))
 
         self.facts['cpu_arch'] = self.parse_cpu_arch(xml_data)
 
         data = self.responses[1]
         match = self.parse_memory(data)
         if match:
-            self.facts['memtotal_mb'] = int(match[0]) / 1024
-            self.facts['memfree_mb'] = int(match[2]) / 1024
+            self.facts['memtotal_mb'] = int(match[0]) // 1024
+            self.facts['memfree_mb'] = int(match[2]) // 1024
 
     def parse_cpu_arch(self, data):
         cpu_arch = data.find('./data/system-sw-state/sw-version/cpu-arch')
@@ -251,7 +238,7 @@ class Hardware(FactsBase):
             return ""
 
     def parse_memory(self, data):
-        return re.findall(r'\:\s*(\d+)', data, re.M)
+        return re.findall(r'(\d+)', data, re.M)
 
 
 class Config(FactsBase):
@@ -267,22 +254,66 @@ class Interfaces(FactsBase):
 
     COMMANDS = [
         'show interface | display-xml',
+        'show lldp neighbors | display-xml'
     ]
+
+    def __init__(self, module):
+        self.intf_facts = dict()
+        self.lldp_facts = dict()
+        super(Interfaces, self).__init__(module)
 
     def populate(self):
         super(Interfaces, self).populate()
         self.facts['all_ipv4_addresses'] = list()
         self.facts['all_ipv6_addresses'] = list()
 
-        data = self.responses[0]
+        int_show_data = (self.responses[0]).splitlines()
+        pattern = '?xml version'
+        data = ''
+        skip = True
 
-        xml_data = ET.fromstring(data)
+        # The output returns multiple xml trees
+        # parse them before handling.
+        for line in int_show_data:
+            if pattern in line:
+                if skip is False:
+                    xml_data = ET.fromstring(data.encode('utf8'))
+                    self.populate_interfaces(xml_data)
+                    data = ''
+                else:
+                    skip = False
 
-        self.facts['interfaces'] = self.populate_interfaces(xml_data)
-        self.facts['neighbors'] = self.populate_neighbors(xml_data)
+            data += line
+
+        if skip is False:
+            xml_data = ET.fromstring(data.encode('utf8'))
+            self.populate_interfaces(xml_data)
+
+        self.facts['interfaces'] = self.intf_facts
+
+        lldp_data = (self.responses[1]).splitlines()
+        data = ''
+        skip = True
+        # The output returns multiple xml trees
+        # parse them before handling.
+        for line in lldp_data:
+            if pattern in line:
+                if skip is False:
+                    xml_data = ET.fromstring(data.encode('utf8'))
+                    self.populate_neighbors(xml_data)
+                    data = ''
+                else:
+                    skip = False
+
+            data += line
+
+        if skip is False:
+            xml_data = ET.fromstring(data.encode('utf8'))
+            self.populate_neighbors(xml_data)
+
+        self.facts['neighbors'] = self.lldp_facts
 
     def populate_interfaces(self, interfaces):
-        int_facts = dict()
 
         for interface in interfaces.findall('./data/interfaces/interface'):
             intf = dict()
@@ -296,15 +327,19 @@ class Interfaces(FactsBase):
             intf['mtu'] = self.parse_item(interface, 'mtu')
             intf['type'] = self.parse_item(interface, 'type')
 
-            int_facts[name] = intf
+            self.intf_facts[name] = intf
 
-        for interface in interfaces.findall('./data/interfaces-state/interface'):
+        for interface in interfaces.findall('./bulk/data/interface'):
             name = self.parse_item(interface, 'name')
-            intf = int_facts[name]
-            intf['bandwidth'] = self.parse_item(interface, 'speed')
-            intf['adminstatus'] = self.parse_item(interface, 'admin-status')
-            intf['operstatus'] = self.parse_item(interface, 'oper-status')
-            intf['macaddress'] = self.parse_item(interface, 'phys-address')
+            try:
+                intf = self.intf_facts[name]
+                intf['bandwidth'] = self.parse_item(interface, 'speed')
+                intf['adminstatus'] = self.parse_item(interface, 'admin-status')
+                intf['operstatus'] = self.parse_item(interface, 'oper-status')
+                intf['macaddress'] = self.parse_item(interface, 'phys-address')
+            except KeyError:
+                # skip the reserved interfaces
+                pass
 
         for interface in interfaces.findall('./data/ports/ports-state/port'):
             name = self.parse_item(interface, 'name')
@@ -314,19 +349,18 @@ class Interfaces(FactsBase):
             typ, sname = name.split('-eth')
             name = "ethernet" + sname
             try:
-                intf = int_facts[name]
+                intf = self.intf_facts[name]
                 intf['mediatype'] = mediatype
             except:
                 # fanout
-                for subport in xrange(1, 5):
+                for subport in range(1, 5):
                     name = "ethernet" + sname + ":" + str(subport)
                     try:
-                        intf = int_facts[name]
+                        intf = self.intf_facts[name]
                         intf['mediatype'] = mediatype
                     except:
+                        # valid case to handle 2x50G
                         pass
-
-        return int_facts
 
     def add_ip_address(self, address, family):
         if family == 'ipv4':
@@ -364,30 +398,31 @@ class Interfaces(FactsBase):
         return ip_address
 
     def parse_ipv6_address(self, interface):
-        ipv6 = interface.find('ipv6')
-        ip_address = ""
-        if ipv6 is not None:
-            ipv6_addr = ipv6.find('./address/ipv6-address')
+
+        ip_address = list()
+
+        for addr in interface.findall('./ipv6/ipv6-addresses/address'):
+
+            ipv6_addr = addr.find('./ipv6-address')
+
             if ipv6_addr is not None:
-                ip_address = ipv6_addr.text
-                self.add_ip_address(ip_address, 'ipv6')
+                ip_address.append(ipv6_addr.text)
+                self.add_ip_address(ipv6_addr.text, 'ipv6')
 
         return ip_address
 
     def populate_neighbors(self, interfaces):
-        lldp_facts = dict()
-        for interface in interfaces.findall('./data/interfaces-state/interface'):
+        for interface in interfaces.findall('./bulk/data/interface'):
             name = interface.find('name').text
             rem_sys_name = interface.find('./lldp-rem-neighbor-info/info/rem-system-name')
             if rem_sys_name is not None:
-                lldp_facts[name] = list()
+                self.lldp_facts[name] = list()
                 fact = dict()
                 fact['host'] = rem_sys_name.text
                 rem_sys_port = interface.find('./lldp-rem-neighbor-info/info/rem-lldp-port-id')
                 fact['port'] = rem_sys_port.text
-                lldp_facts[name].append(fact)
+                self.lldp_facts[name].append(fact)
 
-        return lldp_facts
 
 FACT_SUBSETS = dict(
     default=Default,

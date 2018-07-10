@@ -5,12 +5,12 @@
   eos_config:
     lines: no ip domain-name
     match: none
-    provider: "{{ eapi }}"
+  become: yes
 
 - name: configure domain_name
   eos_system:
     domain_name: eng.ansible.com
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -20,7 +20,7 @@
 - name: verify domain_name
   eos_system:
     domain_name: eng.ansible.com
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -31,6 +31,6 @@
   eos_config:
     lines: no ip domain-name
     match: none
-    provider: "{{ eapi }}"
+  become: yes
 
 - debug: msg="END eapi/set_domain_name.yaml"

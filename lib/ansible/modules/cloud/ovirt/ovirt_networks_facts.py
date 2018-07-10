@@ -19,7 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -59,7 +59,7 @@ EXAMPLES = '''
 RETURN = '''
 ovirt_networks:
     description: "List of dictionaries describing the networks. Network attribues are mapped to dictionary keys,
-                  all networks attributes can be found at following url: https://ovirt.example.com/ovirt-engine/api/model#types/network."
+                  all networks attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/network."
     returned: On success.
     type: list
 '''

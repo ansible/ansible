@@ -1,0 +1,62 @@
+all:
+    children:
+        local:
+            hosts:
+                testhost:
+                    ansible_host: 127.0.0.1
+                    ansible_connection: local
+                testhost2:
+                    ansible_host: 127.0.0.1
+                    ansible_connection: local
+                # For testing delegate_to
+                testhost3:
+                    ansible_ssh_host: 127.0.0.3
+                testhost4:
+                    ansible_ssh_host: 127.0.0.4
+                # For testing fact gathering
+                'facthost[0:20]':
+                    ansible_host: 1270.0.0.1
+                    ansible_connection: local
+            vars:
+                parent_var: 6000
+                groups_tree_var: 5000
+
+        binary_modules:
+            hosts:
+                testhost_binary_modules:
+                    ansible_host: 127.0.0.1
+                    ansible_connection: local
+
+        inven_overridehosts:
+            desc: |
+                the following inline declarations are accompanied# by (preferred) group_vars/ and host_vars/ variables and
+                are used in testing of variable precedence
+            hosts:
+                invenoverride:
+                    ansible_ssh_host: 127.0.0.1
+                    ansible_connection: local
+            vars:
+                foo: foo
+                var_dir: vars
+
+        arbitrary_grandparent:
+            children:
+                arbitrary_parent:
+                    children:
+                        local:
+                vars:
+                    groups_tree_var: 4000
+                    overridden_in_parent: 1000
+            vars:
+                groups_tree_var: 3000
+                grandparent_var: 2000
+                overridden_in_parent: 2000
+        amazon:
+            hosts:
+                localhost:
+                    ansible_ssh_host: 127.0.0.1
+                    ansible_connection: local
+    vars:
+        extra_var_override: FROM_INVENTORY
+        inven_var: inventory_var
+        unicode_host_var: CaféEñyei

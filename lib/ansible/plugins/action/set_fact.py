@@ -18,8 +18,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.constants import mk_boolean as boolean
 from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import isidentifier
 
@@ -33,8 +33,12 @@ class ActionModule(ActionBase):
             task_vars = dict()
 
         result = super(ActionModule, self).run(tmp, task_vars)
+        del tmp  # tmp no longer has any effect
 
         facts = dict()
+
+        cacheable = boolean(self._task.args.pop('cacheable', False))
+
         if self._task.args:
             for (k, v) in iteritems(self._task.args):
                 k = self._templar.template(k)
@@ -46,9 +50,10 @@ class ActionModule(ActionBase):
                     return result
 
                 if isinstance(v, string_types) and v.lower() in ('true', 'false', 'yes', 'no'):
-                    v = boolean(v)
+                    v = boolean(v, strict=False)
                 facts[k] = v
 
         result['changed'] = False
         result['ansible_facts'] = facts
+        result['_ansible_facts_cacheable'] = cacheable
         return result

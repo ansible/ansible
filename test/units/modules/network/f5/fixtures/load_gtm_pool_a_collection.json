@@ -1,0 +1,44 @@
+{
+    "kind": "tm:gtm:pool:a:acollectionstate",
+    "selfLink": "https://localhost/mgmt/tm/gtm/pool/a?expandSubcollections=true&ver=13.0.0",
+    "items": [
+        {
+            "kind": "tm:gtm:pool:a:astate",
+            "name": "foo.pool",
+            "partition": "Common",
+            "fullPath": "/Common/foo.pool",
+            "generation": 216,
+            "selfLink": "https://localhost/mgmt/tm/gtm/pool/a/~Common~foo.pool?ver=13.0.0",
+            "alternateMode": "round-robin",
+            "dynamicRatio": "disabled",
+            "enabled": true,
+            "fallbackIp": "any",
+            "fallbackMode": "return-to-dns",
+            "limitMaxBps": 0,
+            "limitMaxBpsStatus": "disabled",
+            "limitMaxConnections": 0,
+            "limitMaxConnectionsStatus": "disabled",
+            "limitMaxPps": 0,
+            "limitMaxPpsStatus": "disabled",
+            "loadBalancingMode": "round-robin",
+            "manualResume": "disabled",
+            "maxAnswersReturned": 1,
+            "monitor": "default",
+            "qosHitRatio": 5,
+            "qosHops": 0,
+            "qosKilobytesSecond": 3,
+            "qosLcs": 30,
+            "qosPacketRate": 1,
+            "qosRtt": 50,
+            "qosTopology": 0,
+            "qosVsCapacity": 0,
+            "qosVsScore": 0,
+            "ttl": 30,
+            "verifyMemberAvailability": "enabled",
+            "membersReference": {
+                "link": "https://localhost/mgmt/tm/gtm/pool/a/~Common~foo.pool/members?ver=13.0.0",
+                "isSubcollection": true
+            }
+        }
+    ]
+}

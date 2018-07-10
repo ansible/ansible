@@ -1,0 +1,29 @@
+---
+- name: set a fact from vault_encrypted_example1_releases
+  set_fact:
+    example1_releases: "{{ vault_encrypted_example1_releases }}"
+
+- name: Assert that a embedded vault of a multiline string with a vault id works
+  assert:
+    that:
+      - "vault_encrypted_example1_releases is defined"
+      - "example1_releases is defined"
+      - "example1_releases.startswith('Ansible Releases')"
+      # - '"{{ vault_encrypted_example1_releases }}" == "Setec Astronomy"'
+
+- name: Assert that a embedded vault with a different vault id works
+  assert:
+    that:
+      - "vault_encrypted_example2_hello == 'Hello world'"
+
+- name: Assert that a embedded vault with no vault id and format 1.2  works
+  assert:
+    that:
+      - "vault_encrypted_example3_foobar == 'Foobar'"
+      #- name: Assert that a multi line embedded vault works, including new line
+      #  assert:
+        #    that:
+          #      - vault_encrypted_var == "Setec Astronomy\n"
+
+# TODO: add a expected fail here
+# - debug: var=vault_encrypted_one_line_var_with_embedded_template

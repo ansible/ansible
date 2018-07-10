@@ -1,0 +1,39 @@
+---
+- debug: msg="START eos eapi/net_l3_interface.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+
+- name: Set test interface
+  set_fact:
+    test_interface_1: ethernet1
+
+- name: Delete interface ipv4 and ipv6 address(setup)
+  net_l3_interface:
+    name: "{{ test_interface_1 }}"
+    state: absent
+  become: yes
+  register: result
+
+- name: Configure interface ipv4 address using platform agnostic module
+  net_l3_interface:
+    name: "{{ test_interface_1 }}"
+    ipv4: 192.108.0.1/24
+    state: present
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface {{ test_interface_1 }}" in result.commands'
+      - '"ip address 192.108.0.1/24" in result.commands'
+
+- name: Delete interface ipv4 and ipv6 address(teardown)
+  net_l3_interface:
+    name: "{{ test_interface_1 }}"
+    state: absent
+  become: yes
+  register: result
+
+- debug: msg="END eos eapi/net_l3_interface.yaml on connection={{ ansible_connection }}"

@@ -4,22 +4,13 @@
 # (c) 2014, Jasper N. Brouwer <jasper@nerdsweide.nl>
 # (c) 2014, Ramon de la Fuente <ramon@delafuente.nl>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -54,9 +45,6 @@ options:
         Returned in the C(deploy_helper.project_path) fact.
 
   state:
-    required: False
-    choices: [ present, finalize, absent, clean, query ]
-    default: present
     description:
       - the state of the project.
         C(query) will only gather facts,
@@ -65,57 +53,52 @@ options:
           deployed release and optionally clean old releases,
         C(clean) will remove failed & old releases,
         C(absent) will remove the project folder (synonymous to the M(file) module with C(state=absent))
+    choices: [ present, finalize, absent, clean, query ]
+    default: present
 
   release:
-    required: False
-    default: None
     description:
       - the release version that is being deployed. Defaults to a timestamp format %Y%m%d%H%M%S (i.e. '20141119223359').
         This parameter is optional during C(state=present), but needs to be set explicitly for C(state=finalize).
         You can use the generated fact C(release={{ deploy_helper.new_release }}).
 
   releases_path:
-    required: False
-    default: releases
     description:
       - the name of the folder that will hold the releases. This can be relative to C(path) or absolute.
         Returned in the C(deploy_helper.releases_path) fact.
+    default: releases
 
   shared_path:
-    required: False
-    default: shared
     description:
       - the name of the folder that will hold the shared resources. This can be relative to C(path) or absolute.
         If this is set to an empty string, no shared folder will be created.
         Returned in the C(deploy_helper.shared_path) fact.
+    default: shared
 
   current_path:
-    required: False
-    default: current
     description:
       - the name of the symlink that is created when the deploy is finalized. Used in C(finalize) and C(clean).
         Returned in the C(deploy_helper.current_path) fact.
+    default: current
 
   unfinished_filename:
-    required: False
-    default: DEPLOY_UNFINISHED
     description:
       - the name of the file that indicates a deploy has not finished. All folders in the releases_path that
         contain this file will be deleted on C(state=finalize) with clean=True, or C(state=clean). This file is
         automatically deleted from the I(new_release_path) during C(state=finalize).
+    default: DEPLOY_UNFINISHED
 
   clean:
-    required: False
-    default: True
     description:
       - Whether to run the clean procedure in case of C(state=finalize).
+    type: bool
+    default: 'yes'
 
   keep_releases:
-    required: False
-    default: 5
     description:
       - the number of old releases to keep when cleaning. Used in C(finalize) and C(clean). Any unfinished builds
         will be deleted first, so only correct releases will count. The current version will not count.
+    default: 5
 
 notes:
   - Facts are only returned for C(state=query) and C(state=present). If you use both, you should pass any overridden
@@ -282,10 +265,13 @@ EXAMPLES = '''
 - debug:
     var: deploy_helper
 '''
+import os
+import shutil
+import time
+import traceback
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 
 class DeployHelper(object):
@@ -344,9 +330,8 @@ class DeployHelper(object):
         if not self.module.check_mode:
             try:
                 shutil.rmtree(path, ignore_errors=False)
-            except Exception:
-                e = get_exception()
-                self.module.fail_json(msg="rmtree failed: %s" % str(e))
+            except Exception as e:
+                self.module.fail_json(msg="rmtree failed: %s" % to_native(e), exception=traceback.format_exc())
 
         return True
 

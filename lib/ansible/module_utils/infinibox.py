@@ -82,9 +82,9 @@ def infinibox_argument_spec():
     """Return standard base dictionary used for the argument_spec argument in AnsibleModule"""
 
     return dict(
-        system = dict(required=True),
-        user = dict(),
-        password = dict(no_log=True),
+        system=dict(required=True),
+        user=dict(),
+        password=dict(no_log=True),
     )
 
 

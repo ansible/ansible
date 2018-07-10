@@ -1,0 +1,299 @@
+---
+- debug: msg="START junos_interface netconf/basic.yaml on connection={{ ansible_connection }}"
+
+- name: setup remove interface
+  junos_interface:
+    name: ge-0/0/1
+    description: test-interface
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Create interface
+  junos_interface:
+    name: ge-0/0/1
+    description: test-interface
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>ge-0/0/1</name>' in config.xml"
+      - "'<description>test-interface</description>' in config.xml"
+
+- name: Create interface (idempotent)
+  junos_interface:
+    name: ge-0/0/1
+    description: test-interface
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Deactivate interface configuration
+  junos_interface:
+    name: ge-0/0/1
+    description: test-interface
+    state: present
+    active: False
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<interface inactive=\"inactive\">' in config.xml"
+      - "'<name>ge-0/0/1</name>' in config.xml"
+
+- name: Activate interface configuration
+  junos_interface:
+    name: ge-0/0/1
+    description: test-interface
+    state: present
+    active: True
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>ge-0/0/1</name>' in config.xml"
+
+- name: Configure interface attributes
+  junos_interface:
+    name: ge-0/0/1
+    description: test-interface
+    state: present
+    speed: 1g
+    mtu: 256
+    duplex: full
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>ge-0/0/1</name>' in config.xml"
+      - "'<link-mode>full-duplex</link-mode>' in config.xml"
+      - "'<mtu>256</mtu>' in config.xml"
+      - "'<speed>1g</speed>' in config.xml"
+      - "'<description>test-interface</description>' in config.xml"
+
+- name: Disable interface
+  junos_interface:
+    name: ge-0/0/1
+    description: test-interface
+    enabled: False
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - result.diff.prepared is search("\+ *disable")
+
+- name: Enable interface
+  junos_interface:
+    name: ge-0/0/1
+    description: test-interface
+    enabled: True
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - result.diff.prepared is search("\- *disable")
+
+- name: Delete interface
+  junos_interface:
+    name: ge-0/0/1
+    description: test-interface
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>ge-0/0/1</name>' not in config.xml"
+
+- name: Aggregate setup- delete interface ge-0/0/1
+  junos_interface:
+    name: ge-0/0/1
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Aggregate setup- delete interface ge-0/0/2
+  junos_interface:
+    name: ge-0/0/2
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Set interface on aggregate
+  junos_interface:
+    aggregate:
+      - { name: ge-0/0/1, description: test-interface-1,  speed: 1g, mtu: 512}
+      - { name: ge-0/0/2, description: test-interface-2,  speed: 10m, mtu: 256}
+    duplex: full
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - result.diff.prepared is search("\+ *ge-0/0/1")
+      - result.diff.prepared is search("\+ *description test-interface-1")
+      - result.diff.prepared is search("\+ *speed 1g")
+      - result.diff.prepared is search("\+ *mtu 512")
+      - result.diff.prepared is search("\+ *link-mode full-duplex")
+      - result.diff.prepared is search("\+ *description test-interface-2")
+      - result.diff.prepared is search("\+ *speed 10m")
+      - result.diff.prepared is search("\+ * mtu 256")
+      - result.diff.prepared is search("\+ *link-mode full-duplex")
+
+- name: Set interface on aggregate (idempotent)
+  junos_interface:
+    aggregate:
+      - { name: ge-0/0/1, description: test-interface-1,  speed: 1g, mtu: 512 }
+      - { name: ge-0/0/2, description: test-interface-2,  speed: 10m, mtu: 256 }
+    duplex: full
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Disable interface on aggregate
+  junos_interface:
+    aggregate:
+      - name: ge-0/0/1
+      - name: ge-0/0/2
+    enabled: False
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - result.diff.prepared is search("\+ *disable")
+
+- name: Enable interface on aggregate
+  junos_interface:
+    aggregate:
+      - name: ge-0/0/1
+      - name: ge-0/0/2
+    enabled: True
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - result.diff.prepared is search("\- *disable")
+
+- name: Deactivate interface configuration on aggregate
+  junos_interface:
+    aggregate:
+      - { name: ge-0/0/1, description: test-interface-1,  speed: 1g, mtu: 512 }
+      - { name: ge-0/0/2, description: test-interface-2,  speed: 10m, mtu: 256 }
+    duplex: full
+    active: False
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - result.diff.prepared is search("! *inactive[:] ge-0/0/1")
+      - result.diff.prepared is search("! *inactive[:] ge-0/0/2")
+
+- name: Activate interface configuration on aggregate
+  junos_interface:
+    aggregate:
+      - { name: ge-0/0/1, description: test-interface-1,  speed: 1g, mtu: 512 }
+      - { name: ge-0/0/2, description: test-interface-2,  speed: 10m, mtu: 256 }
+    duplex: full
+    active: True
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - result.diff.prepared is search("! *active[:] ge-0/0/1")
+      - result.diff.prepared is search("! *active[:] ge-0/0/2")
+
+- name: Delete interface on aggregate
+  junos_interface:
+    aggregate:
+      - name: ge-0/0/1
+      - name: ge-0/0/2
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - result.diff.prepared is search("\- *ge-0/0/1")
+      - result.diff.prepared is search("\- *description test-interface-1")
+      - result.diff.prepared is search("\- *speed 1g")
+      - result.diff.prepared is search("\- *mtu 512")
+      - result.diff.prepared is search("\- *link-mode full-duplex")
+      - result.diff.prepared is search("\- *description test-interface-2")
+      - result.diff.prepared is search("\- *speed 10m")
+      - result.diff.prepared is search("\- * mtu 256")
+      - result.diff.prepared is search("\- *link-mode full-duplex")
+
+- name: Delete interface on aggregate (idempotent)
+  junos_interface:
+    aggregate:
+      - name: ge-0/0/1
+      - name: ge-0/0/2
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- debug: msg="END junos_interface netconf/basic.yaml on connection={{ ansible_connection }}"

@@ -7,15 +7,13 @@
 # func-nagios - Schedule downtime and enables/disable notifications
 # Copyright 2011, Red Hat, Inc.
 # Tim Bielawa <tbielawa@redhat.com>
-#
-# This software may be freely redistributed under the terms of the GNU
-# general public license version 2 or any later version.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -48,31 +46,25 @@ options:
   host:
     description:
       - Host to operate on in Nagios.
-    required: false
-    default: null
   cmdfile:
     description:
       - Path to the nagios I(command file) (FIFO pipe).
         Only required if auto-detection fails.
-    required: false
     default: auto-detected
   author:
     description:
      - Author to leave downtime comments as.
        Only usable with the C(downtime) action.
-    required: false
     default: Ansible
   comment:
     version_added: "2.0"
     description:
      - Comment for C(downtime) action.
-    required: false
     default: Scheduling downtime
   minutes:
     description:
       - Minutes to schedule downtime for.
       - Only usable with the C(downtime) action.
-    required: false
     default: 30
   services:
     description:
@@ -233,7 +225,7 @@ def which_cmdfile():
         '/etc/icinga/icinga.cfg',
         # icinga installed from source (default location)
         '/usr/local/icinga/etc/icinga.cfg',
-        ]
+    ]
 
     for path in locations:
         if os.path.exists(path):
@@ -259,8 +251,7 @@ def main():
         'command',
         'servicegroup_host_downtime',
         'servicegroup_service_downtime',
-        ]
-
+    ]
 
     module = AnsibleModule(
         argument_spec=dict(
@@ -273,8 +264,8 @@ def main():
             cmdfile=dict(default=which_cmdfile()),
             services=dict(default=None, aliases=['service']),
             command=dict(required=False, default=None),
-            )
         )
+    )
 
     action = module.params['action']
     host = module.params['host']
@@ -596,7 +587,6 @@ class Nagios(object):
             for service in services:
                 dt_del_cmd_str = self._fmt_dt_del_str(cmd, host, svc=service, comment=comment)
                 self._write_command(dt_del_cmd_str)
-
 
     def schedule_hostgroup_host_downtime(self, hostgroup, minutes=30):
         """
@@ -936,7 +926,7 @@ class Nagios(object):
         cmd = [
             "DISABLE_HOST_SVC_NOTIFICATIONS",
             "DISABLE_HOST_NOTIFICATIONS"
-            ]
+        ]
         nagios_return = True
         return_str_list = []
         for c in cmd:
@@ -964,7 +954,7 @@ class Nagios(object):
         cmd = [
             "ENABLE_HOST_SVC_NOTIFICATIONS",
             "ENABLE_HOST_NOTIFICATIONS"
-            ]
+        ]
         nagios_return = True
         return_str_list = []
         for c in cmd:
@@ -1029,19 +1019,19 @@ class Nagios(object):
                                            minutes=self.minutes)
 
         elif self.action == 'delete_downtime':
-            if self.services=='host':
+            if self.services == 'host':
                 self.delete_host_downtime(self.host)
-            elif self.services=='all':
+            elif self.services == 'all':
                 self.delete_host_downtime(self.host, comment='')
             else:
                 self.delete_host_downtime(self.host, services=self.services)
 
         elif self.action == "servicegroup_host_downtime":
             if self.servicegroup:
-                self.schedule_servicegroup_host_downtime(servicegroup = self.servicegroup, minutes = self.minutes)
+                self.schedule_servicegroup_host_downtime(servicegroup=self.servicegroup, minutes=self.minutes)
         elif self.action == "servicegroup_service_downtime":
             if self.servicegroup:
-                self.schedule_servicegroup_svc_downtime(servicegroup = self.servicegroup, minutes = self.minutes)
+                self.schedule_servicegroup_svc_downtime(servicegroup=self.servicegroup, minutes=self.minutes)
 
         # toggle the host AND service alerts
         elif self.action == 'silence':
@@ -1079,7 +1069,7 @@ class Nagios(object):
 
         # wtf?
         else:
-            self.module.fail_json(msg="unknown action specified: '%s'" % \
+            self.module.fail_json(msg="unknown action specified: '%s'" %
                                       self.action)
 
         self.module.exit_json(nagios_commands=self.command_results,

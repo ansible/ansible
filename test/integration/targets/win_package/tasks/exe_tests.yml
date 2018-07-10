@@ -1,0 +1,303 @@
+---
+- name: install local exe (check mode)
+  win_package:
+    path: '{{test_win_package_path}}\7z.exe'
+    product_id: '{{test_win_package_exe_id}}'
+    arguments: /S
+    state: present
+  register: install_local_exe_check
+  check_mode: yes
+
+- name: get result of install local exe (check mode)
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{{test_win_package_exe_id}}
+  register: install_local_exe_actual_check
+
+- name: assert install local exe (check mode)
+  assert:
+    that:
+    - install_local_exe_check is changed
+    - install_local_exe_check.reboot_required == False
+    - install_local_exe_actual_check.exists == False
+
+- name: install local exe
+  win_package:
+    path: '{{test_win_package_path}}\7z.exe'
+    product_id: '{{test_win_package_exe_id}}'
+    arguments: /S
+    state: present
+  register: install_local_exe
+
+- name: get result of install local exe
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{{test_win_package_exe_id}}
+  register: install_local_exe_actual
+
+- name: assert install local exe
+  assert:
+    that:
+    - install_local_exe is changed
+    - install_local_exe.reboot_required == False
+    - install_local_exe.rc == 0
+    - install_local_exe_actual.exists == True
+
+- name: install local exe (idempotent)
+  win_package:
+    path: '{{test_win_package_path}}\7z.exe'
+    product_id: '{{test_win_package_exe_id}}'
+    arguments: /S
+    state: present
+  register: install_local_exe_idempotent
+
+- name: assert install local exe (idempotent)
+  assert:
+    that:
+    - install_local_exe_idempotent is not changed
+
+- name: uninstall local exe with path (check mode)
+  win_package:
+    path: C:\Program Files\7-Zip\Uninstall.exe
+    product_id: '{{test_win_package_exe_id}}'
+    arguments: /S
+    state: absent
+  register: uninstall_path_local_exe_check
+  check_mode: yes
+
+- name: get result of uninstall local exe with path (check mode)
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{{test_win_package_exe_id}}
+  register: uninstall_path_local_exe_actual_check
+
+- name: assert uninstall local exe with path (check mode)
+  assert:
+    that:
+    - uninstall_path_local_exe_check is changed
+    - uninstall_path_local_exe_check.reboot_required == False
+    - uninstall_path_local_exe_actual_check.exists == True
+
+- name: uninstall local exe with path
+  win_package:
+    path: C:\Program Files\7-Zip\Uninstall.exe
+    product_id: '{{test_win_package_exe_id}}'
+    arguments: /S
+    state: absent
+  register: uninstall_path_local_exe
+
+- name: get result of uninstall local exe with path
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{{test_win_package_exe_id}}
+  register: uninstall_path_local_exe_actual
+
+- name: assert uninstall local exe with path
+  assert:
+    that:
+    - uninstall_path_local_exe is changed
+    - uninstall_path_local_exe.reboot_required == False
+    - uninstall_path_local_exe.rc == 0
+    - uninstall_path_local_exe_actual.exists == False
+
+- name: uninstall local exe with path (idempotent)
+  win_package:
+    path: C:\Program Files\7-Zip\Uninstall.exe
+    product_id: '{{test_win_package_exe_id}}'
+    arguments: /S
+    state: absent
+  register: uninstall_path_local_exe_idempotent
+
+- name: assert uninstall local exe with path (idempotent)
+  assert:
+    that:
+    - uninstall_path_local_exe_idempotent is not changed
+
+- name: install url exe (check mode)
+  win_package:
+    path: '{{test_win_package_exe_url}}'
+    product_id: '{{test_win_package_exe_id}}'
+    arguments: /S
+    state: present
+  register: install_url_exe_check
+  check_mode: yes
+
+- name: get result of install url exe (check mode)
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{{test_win_package_exe_id}}
+  register: install_url_exe_actual_check
+
+- name: assert install url exe (check mode)
+  assert:
+    that:
+    - install_url_exe_check is changed
+    - install_url_exe_check.reboot_required == False
+    - install_url_exe_actual_check.exists == False
+
+- name: install url exe
+  win_package:
+    path: '{{test_win_package_exe_url}}'
+    product_id: '{{test_win_package_exe_id}}'
+    arguments: /S
+    state: present
+  register: install_url_exe
+
+- name: get result of install url exe
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{{test_win_package_exe_id}}
+  register: install_url_exe_actual
+
+- name: assert install url exe
+  assert:
+    that:
+    - install_url_exe is changed
+    - install_url_exe.reboot_required == False
+    - install_url_exe.rc == 0
+    - install_url_exe_actual.exists == True
+
+- name: install url exe (idempotent)
+  win_package:
+    path: '{{test_win_package_exe_url}}'
+    product_id: '{{test_win_package_exe_id}}'
+    arguments: /S
+    state: present
+  register: install_url_exe_again
+
+- name: assert install url exe (idempotent)
+  assert:
+    that:
+    - install_url_exe_again is not changed
+
+- name: uninstall local exe with product_id (check mode)
+  win_package:
+    product_id: '{{test_win_package_exe_id}}'
+    arguments: /S
+    state: absent
+  register: uninstall_id_local_exe_check
+  check_mode: yes
+
+- name: get result of uninstall local exe with product_id (check mode)
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{{test_win_package_exe_id}}
+  register: uninstall_id_local_exe_actual_check
+
+- name: assert uninstall local exe with product_id (check mode)
+  assert:
+    that:
+    - uninstall_id_local_exe_check is changed
+    - uninstall_id_local_exe_check.reboot_required == False
+    - uninstall_id_local_exe_actual_check.exists == True
+
+- name: uninstall local exe with product_id
+  win_package:
+    product_id: '{{test_win_package_exe_id}}'
+    arguments: /S
+    state: absent
+  register: uninstall_id_local_exe
+
+- name: get result of uninstall local exe with product_id
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{{test_win_package_exe_id}}
+  register: uninstall_id_local_exe_actual
+
+- name: assert uninstall local exe with product_id
+  assert:
+    that:
+    - uninstall_id_local_exe is changed
+    - uninstall_id_local_exe.reboot_required == False
+    - uninstall_id_local_exe.rc == 0
+    - uninstall_id_local_exe_actual.exists == False
+
+- name: uninstall local exe with product_id (idempotent)
+  win_package:
+    product_id: '{{test_win_package_exe_id}}'
+    arguments: /S
+    state: absent
+  register: uninstall_id_local_exe_idempotent
+
+- name: assert uninstall local exe with product_id (idempotent)
+  assert:
+    that:
+    - uninstall_id_local_exe_idempotent is not changed
+
+- name: install exe checking path
+  win_package:
+    path: '{{test_win_package_path}}\7z.exe'
+    arguments: /S
+    creates_path: C:\Program Files\7-Zip\7z.exe
+  register: install_exe_create_path
+
+- name: get result of install exe checking path
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{{test_win_package_exe_id}}
+  register: install_exe_create_path_actual
+
+- name: assert install exe checking path
+  assert:
+    that:
+    - install_exe_create_path.changed == True
+    - install_exe_create_path_actual.exists == True
+
+- name: install exe checking path (idempotent)
+  win_package:
+    path: '{{test_win_package_path}}\7z.exe'
+    arguments: /S
+    creates_path: C:\Program Files\7-Zip\7z.exe
+  register: install_exe_create_path_again
+
+- name: assert install exe checking path (idempotent)
+  assert:
+    that:
+    - not install_exe_create_path_again.changed == True
+
+- name: install exe checking path and version
+  win_package:
+    path: '{{test_win_package_path}}\7z.exe'
+    arguments: /S
+    creates_path: C:\Program Files\7-Zip\7z.exe
+    creates_version: '16.04'
+  register: install_exe_create_version_match
+
+- name: assert install exe checking path and version
+  assert:
+    that:
+    - install_exe_create_version_match is not changed
+
+- name: install exe checking path and version mismatch
+  win_package:
+    path: '{{test_win_package_path}}\7z.exe'
+    arguments: /S
+    creates_path: C:\Program Files\7-Zip\7z.exe
+    creates_version: fail-version
+  register: install_exe_create_version_mismatch
+
+- name: assert install exe checking path and version mistmatch
+  assert:
+    that:
+    - install_exe_create_version_mismatch is changed
+
+- name: install exe checking service
+  win_package:
+    path: '{{test_win_package_path}}\7z.exe'
+    arguments: /S
+    creates_service: Netlogon
+  register: install_exe_create_service_match
+
+- name: assert install exe checking service
+  assert:
+    that:
+    - install_exe_create_service_match is not changed
+
+- name: install exe checking service mismatch
+  win_package:
+    path: '{{test_win_package_path}}\7z.exe'
+    arguments: /S
+    creates_service: fake-service
+  register: install_exe_create_service_mismatch
+
+- name: assert install exe checking service mismatch
+  assert:
+    that:
+    - install_exe_create_service_mismatch is changed
+ 
+- name: uninstall exe post tests
+  win_package:
+    arguments: /S
+    product_id: '{{test_win_package_exe_id}}'
+    state: absent

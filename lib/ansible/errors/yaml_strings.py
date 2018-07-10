@@ -31,7 +31,7 @@ __all__ = [
 
 YAML_SYNTAX_ERROR = """\
 Syntax Error while loading YAML.
-"""
+  %s"""
 
 YAML_POSITION_DETAILS = """\
 The error appears to have been in '%s': line %s, column %s, but may

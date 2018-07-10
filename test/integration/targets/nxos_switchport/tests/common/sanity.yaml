@@ -1,0 +1,155 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_switchport sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+# Select interface for test
+- set_fact: intname="{{ nxos_int1 }}"
+
+- name: "Interface selected for this test"
+  debug: msg="{{ intname }}"
+
+- name: "Setup interface"
+  nxos_config: &default
+    lines:
+      - "default interface {{ intname }}"
+  ignore_errors: yes
+
+- name: "Setup vlans"
+  nxos_vlan:
+    vlan_range: "5-10,20"
+
+- block:
+  - name: Ensure interface is in L2 state
+    nxos_interface:
+      interface: "{{ intname }}"
+      mode: 'layer2'
+
+  - name: Ensure interface is in its default switchport state
+    nxos_switchport: &def_swi
+      interface: "{{ intname }}"
+      provider: "{{ connection }}"
+      state: unconfigured
+
+  - name: Ensure interface is configured for access vlan 20
+    nxos_switchport: &acc_vl
+      interface: "{{ intname }}"
+      mode: access
+      access_vlan: 20
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "access vlan Idempotence"
+    nxos_switchport: *acc_vl
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Ensure interface only has vlans 5-10 as trunk vlans
+    nxos_switchport: &tr_vl
+      interface: "{{ intname }}"
+      mode: trunk
+      native_vlan: 10
+      trunk_allowed_vlans: 5-10
+    register: result
+
+  - assert: *true
+
+  - name: "trunk vlan Idempotence"
+    nxos_switchport: *tr_vl
+    register: result
+
+  - assert: *false
+
+  - name: Ensure interface is a trunk port and ensure 2-50 are being tagged (doesn't mean others aren't also being tagged)
+    nxos_switchport: &tag
+      interface: "{{ intname }}"
+      mode: trunk
+      native_vlan: 10
+      trunk_vlans: 2-50
+    register: result
+
+  - assert: *true
+
+  - name: "tag vlan Idempotence"
+    nxos_switchport: *tag
+    register: result
+
+  - assert: *false
+
+  - name: Remove full trunk vlan range 2-50.
+    nxos_switchport: &no_tag
+      interface: "{{ intname }}"
+      mode: trunk
+      trunk_vlans: 2-50
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - name: Check Idempotence Remove full trunk vlan range 2-50.
+    nxos_switchport: *no_tag
+    register: result
+
+  - assert: *false
+
+  - name: Reconfigure interface trunk port and ensure 2-50 are being tagged
+    nxos_switchport: *tag
+    register: result
+
+  - assert: *true
+
+  - name: Check Idempotence Reconfigure interface trunk port and ensure 2-50 are being tagged
+    nxos_switchport: *tag
+    register: result
+
+  - assert: *false
+
+  - name: Remove partial trunk vlan range 30-4094 are removed
+    nxos_switchport: &partial
+      interface: "{{ intname }}"
+      mode: trunk
+      trunk_vlans: 30-4094
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - name: Check Idempotence Remove partial trunk vlan range 30-4094 are removed
+    nxos_switchport: *partial
+    register: result
+
+  - assert: *false
+
+  - name: put interface default state
+    nxos_switchport: *def_swi
+    register: result
+
+  - assert: *true
+
+  - name: "default state idempotence"
+    nxos_switchport: *def_swi
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: "remove vlans"
+    nxos_vlan:
+      vlan_range: "5-10,20"
+      provider: "{{ connection }}"
+      state: absent
+    ignore_errors: yes
+
+  - name: "default interface"
+    nxos_config: *default
+    ignore_errors: yes
+
+- debug: msg="END connection={{ ansible_connection }} nxos_switchport sanity test"

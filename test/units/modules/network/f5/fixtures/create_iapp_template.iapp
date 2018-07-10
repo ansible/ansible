@@ -1,0 +1,56 @@
+cli admin-partitions {
+    update-partition Common
+}
+
+sys application template foo.iapp {
+
+    actions {
+        definition {
+
+            implementation {
+                set cfg { ltm virtual forwarding-repro {
+    destination 0.0.0.0:any
+    description "something 1"
+    mask any
+    profiles {
+        fastL4 { }
+    }
+    source 1.1.1.1/32
+    translate-address disabled
+    translate-port disabled
+    vlans { __forwarding_vlans__ }
+    vlans-enabled
+} }
+
+
+                if {![info exists {::var__forwarding_vlans}] || (${::var__forwarding_vlans} == "")} {
+                    set {::var__forwarding_vlans} "{}"
+                    puts "Info: assigning empty string to variable {::var__forwarding_vlans}"
+                }
+
+
+                set cfg [string map "__forwarding_vlans__ ${::var__forwarding_vlans} __app_service__ $tmsh::app_name.app/$tmsh::app_name " $cfg]
+                set fileId [open /var/tmp/demo.repro.cfg "w"]
+                puts -nonewline $fileId $cfg
+                close $fileId
+
+
+                tmsh::load sys config merge file /var/tmp/demo.repro.cfg
+            }
+
+            presentation {
+
+                include "/Common/f5.apl_common"
+                section var {
+                        string forwarding_vlans display "xxlarge"
+                }
+
+                text {
+                        var "General variables"
+                        var.forwarding_vlans "__var__forwarding_vlans__"
+                }
+            }
+            role-acl { admin manager resource-admin }
+        }
+    }
+}

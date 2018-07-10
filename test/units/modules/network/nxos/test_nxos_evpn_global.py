@@ -19,7 +19,6 @@
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
-import json
 
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.nxos import nxos_evpn_global
@@ -31,25 +30,32 @@ class TestNxosEvpnGlobalModule(TestNxosModule):
     module = nxos_evpn_global
 
     def setUp(self):
+        super(TestNxosEvpnGlobalModule, self).setUp()
         self.mock_get_config = patch('ansible.modules.network.nxos.nxos_evpn_global.get_config')
         self.get_config = self.mock_get_config.start()
 
         self.mock_load_config = patch('ansible.modules.network.nxos.nxos_evpn_global.load_config')
         self.load_config = self.mock_load_config.start()
 
+        self.mock_get_capabilities = patch('ansible.modules.network.nxos.nxos_evpn_global.get_capabilities')
+        self.get_capabilities = self.mock_get_capabilities.start()
+        self.get_capabilities.return_value = {'network_api': 'cliconf'}
+
     def tearDown(self):
+        super(TestNxosEvpnGlobalModule, self).tearDown()
         self.mock_get_config.stop()
         self.mock_load_config.stop()
+        self.mock_get_capabilities.stop()
 
-    def load_fixtures(self, commands=None):
+    def load_fixtures(self, commands=None, device=''):
         self.load_config.return_value = None
 
     def start_configured(self, *args, **kwargs):
-        self.get_config.return_value = load_fixture('nxos_evpn_global/configured.cfg')
+        self.get_config.return_value = load_fixture('nxos_evpn_global', 'configured.cfg')
         return self.execute_module(*args, **kwargs)
 
     def start_unconfigured(self, *args, **kwargs):
-        self.get_config.return_value = load_fixture('nxos_evpn_global/unconfigured.cfg')
+        self.get_config.return_value = load_fixture('nxos_evpn_global', 'unconfigured.cfg')
         return self.execute_module(*args, **kwargs)
 
     def test_nxos_evpn_global_enable(self):
@@ -61,4 +67,3 @@ class TestNxosEvpnGlobalModule(TestNxosModule):
         set_module_args(dict(nv_overlay_evpn=False))
         commands = ['no nv overlay evpn']
         self.start_configured(changed=True, commands=commands)
-

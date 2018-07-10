@@ -2,24 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Johan Wiren <johan.wiren.se@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -50,7 +39,7 @@ options:
     description:
       - Whether to include dependencies or not.
     required: false
-    choices: [ "yes", "no" ]
+    type: bool
     default: "yes"
   repository:
     description:
@@ -61,6 +50,7 @@ options:
     description:
       - Install gem in user's local gems cache or for all users
     required: false
+    type: bool
     default: "yes"
     version_added: "1.3"
   executable:
@@ -68,6 +58,13 @@ options:
     - Override the path to the gem executable
     required: false
     version_added: "1.4"
+  install_dir:
+    description:
+    - Install the gems into a specific directory.
+      These gems will be independant from the global installed ones.
+      Specifying this requires user_install to be false.
+    required: false
+    version_added: "2.6"
   env_shebang:
     description:
       - Rewrite the shebang line on installed scripts to use /usr/bin/env.
@@ -121,14 +118,19 @@ EXAMPLES = '''
 
 import re
 
+from ansible.module_utils.basic import AnsibleModule
+
+
 def get_rubygems_path(module):
     if module.params['executable']:
-        return module.params['executable'].split(' ')
+        result = module.params['executable'].split(' ')
     else:
-        return [ module.get_bin_path('gem', True) ]
+        result = [module.get_bin_path('gem', True)]
+    return result
+
 
 def get_rubygems_version(module):
-    cmd = get_rubygems_path(module) + [ '--version' ]
+    cmd = get_rubygems_path(module) + ['--version']
     (rc, out, err) = module.run_command(cmd, check_rc=True)
 
     match = re.match(r'^(\d+)\.(\d+)\.(\d+)', out)
@@ -137,6 +139,13 @@ def get_rubygems_version(module):
 
     return tuple(int(x) for x in match.groups())
 
+
+def get_rubygems_environ(module):
+    if module.params['install_dir']:
+        return {'GEM_HOME': module.params['install_dir']}
+    return None
+
+
 def get_installed_versions(module, remote=False):
 
     cmd = get_rubygems_path(module)
@@ -144,10 +153,12 @@ def get_installed_versions(module, remote=False):
     if remote:
         cmd.append('--remote')
         if module.params['repository']:
-            cmd.extend([ '--source', module.params['repository'] ])
+            cmd.extend(['--source', module.params['repository']])
     cmd.append('-n')
     cmd.append('^%s$' % module.params['name'])
-    (rc, out, err) = module.run_command(cmd, check_rc=True)
+
+    environ = get_rubygems_environ(module)
+    (rc, out, err) = module.run_command(cmd, environ_update=environ, check_rc=True)
     installed_versions = []
     for line in out.splitlines():
         match = re.match(r"\S+\s+\((.+)\)", line)
@@ -157,8 +168,8 @@ def get_installed_versions(module, remote=False):
                 installed_versions.append(version.split()[0])
     return installed_versions
 
-def exists(module):
 
+def exists(module):
     if module.params['state'] == 'latest':
         remoteversions = get_installed_versions(module, remote=True)
         if remoteversions:
@@ -172,19 +183,25 @@ def exists(module):
             return True
     return False
 
+
 def uninstall(module):
 
     if module.check_mode:
         return
     cmd = get_rubygems_path(module)
+    environ = get_rubygems_environ(module)
     cmd.append('uninstall')
+    if module.params['install_dir']:
+        cmd.extend(['--install-dir', module.params['install_dir']])
+
     if module.params['version']:
-        cmd.extend([ '--version', module.params['version'] ])
+        cmd.extend(['--version', module.params['version']])
     else:
         cmd.append('--all')
         cmd.append('--executable')
     cmd.append(module.params['name'])
-    module.run_command(cmd, check_rc=True)
+    module.run_command(cmd, environ_update=environ, check_rc=True)
+
 
 def install(module):
 
@@ -200,9 +217,9 @@ def install(module):
     cmd = get_rubygems_path(module)
     cmd.append('install')
     if module.params['version']:
-        cmd.extend([ '--version', module.params['version'] ])
+        cmd.extend(['--version', module.params['version']])
     if module.params['repository']:
-        cmd.extend([ '--source', module.params['repository'] ])
+        cmd.extend(['--source', module.params['repository']])
     if not module.params['include_dependencies']:
         cmd.append('--ignore-dependencies')
     else:
@@ -212,6 +229,8 @@ def install(module):
         cmd.append('--user-install')
     else:
         cmd.append('--no-user-install')
+    if module.params['install_dir']:
+        cmd.extend(['--install-dir', module.params['install_dir']])
     if module.params['pre_release']:
         cmd.append('--pre')
     if not module.params['include_doc']:
@@ -224,41 +243,45 @@ def install(module):
         cmd.append('--env-shebang')
     cmd.append(module.params['gem_source'])
     if module.params['build_flags']:
-        cmd.extend([ '--', module.params['build_flags'] ])
+        cmd.extend(['--', module.params['build_flags']])
     module.run_command(cmd, check_rc=True)
+
 
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            executable           = dict(required=False, type='path'),
-            gem_source           = dict(required=False, type='path'),
-            include_dependencies = dict(required=False, default=True, type='bool'),
-            name                 = dict(required=True, type='str'),
-            repository           = dict(required=False, aliases=['source'], type='str'),
-            state                = dict(required=False, default='present', choices=['present','absent','latest'], type='str'),
-            user_install         = dict(required=False, default=True, type='bool'),
-            pre_release          = dict(required=False, default=False, type='bool'),
-            include_doc          = dict(required=False, default=False, type='bool'),
-            env_shebang          = dict(required=False, default=False, type='bool'),
-            version              = dict(required=False, type='str'),
-            build_flags          = dict(required=False, type='str'),
+        argument_spec=dict(
+            executable=dict(required=False, type='path'),
+            gem_source=dict(required=False, type='path'),
+            include_dependencies=dict(required=False, default=True, type='bool'),
+            name=dict(required=True, type='str'),
+            repository=dict(required=False, aliases=['source'], type='str'),
+            state=dict(required=False, default='present', choices=['present', 'absent', 'latest'], type='str'),
+            user_install=dict(required=False, default=True, type='bool'),
+            install_dir=dict(required=False, type='path'),
+            pre_release=dict(required=False, default=False, type='bool'),
+            include_doc=dict(required=False, default=False, type='bool'),
+            env_shebang=dict(required=False, default=False, type='bool'),
+            version=dict(required=False, type='str'),
+            build_flags=dict(required=False, type='str'),
         ),
-        supports_check_mode = True,
-        mutually_exclusive = [ ['gem_source','repository'], ['gem_source','version'] ],
+        supports_check_mode=True,
+        mutually_exclusive=[['gem_source', 'repository'], ['gem_source', 'version']],
     )
 
     if module.params['version'] and module.params['state'] == 'latest':
         module.fail_json(msg="Cannot specify version when state=latest")
     if module.params['gem_source'] and module.params['state'] == 'latest':
         module.fail_json(msg="Cannot maintain state=latest when installing from local source")
+    if module.params['user_install'] and module.params['install_dir']:
+        module.fail_json(msg="install_dir requires user_install=false")
 
     if not module.params['gem_source']:
         module.params['gem_source'] = module.params['name']
 
     changed = False
 
-    if module.params['state'] in [ 'present', 'latest']:
+    if module.params['state'] in ['present', 'latest']:
         if not exists(module):
             install(module)
             changed = True
@@ -276,8 +299,6 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

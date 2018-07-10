@@ -1,15 +1,13 @@
 ---
-- debug: msg="START cli/all_facts.yaml"
+- debug: msg="START cli/all_facts.yaml on connection={{ ansible_connection }}"
 
 
 - name: test getting all facts
   eos_facts:
-    provider: "{{ cli }}"
     gather_subset:
       - all
+  become: yes
   register: result
-
-
 
 - assert:
     that:
@@ -28,4 +26,4 @@
       - "result.ansible_facts.ansible_net_memfree_mb > 1"
       - "result.ansible_facts.ansible_net_memtotal_mb > 1"
 
-- debug: msg="END cli/all_facts.yaml"
+- debug: msg="END cli/all_facts.yaml on connection={{ ansible_connection }}"

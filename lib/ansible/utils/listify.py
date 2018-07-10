@@ -36,6 +36,6 @@ def listify_lookup_plugin_terms(terms, templar, loader, fail_on_undefined=True, 
         terms = templar.template(terms, fail_on_undefined=fail_on_undefined)
 
     if isinstance(terms, string_types) or not isinstance(terms, Iterable):
-        terms = [ terms ]
+        terms = [terms]
 
     return terms

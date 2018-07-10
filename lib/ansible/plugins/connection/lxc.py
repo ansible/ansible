@@ -1,22 +1,33 @@
 # (c) 2015, Joerg Thalheim <joerg@higgsboson.tk>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = """
+    author: Joerg Thalheim <joerg@higgsboson.tk>
+    connection: lxc
+    short_description: Run tasks in lxc containers via lxc python library
+    description:
+        - Run commands or put/fetch files to an existing lxc container using lxc python library
+    version_added: "2.0"
+    options:
+      remote_addr:
+        description:
+            - Container identifier
+        default: inventory_hostname
+        vars:
+            - name: ansible_host
+            - name: ansible_lxc_host
+      executable:
+        default: /bin/sh
+        description:
+            - Shell executable
+        vars:
+            - name: ansible_executable
+            - name: ansible_lxc_executable
+"""
 
 import os
 import shutil
@@ -34,7 +45,7 @@ except ImportError:
 
 from ansible import constants as C
 from ansible import errors
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.plugins.connection import ConnectionBase
 
 
@@ -44,6 +55,7 @@ class Connection(ConnectionBase):
     transport = 'lxc'
     has_pipelining = True
     become_methods = frozenset(C.BECOME_METHODS)
+    default_user = 'root'
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
@@ -68,7 +80,7 @@ class Connection(ConnectionBase):
             raise errors.AnsibleError("%s is not running" % self.container_name)
 
     def _communicate(self, pid, in_data, stdin, stdout, stderr):
-        buf = { stdout: [], stderr: [] }
+        buf = {stdout: [], stderr: []}
         read_fds = [stdout, stderr]
         if in_data:
             write_fds = [stdin]
@@ -104,12 +116,13 @@ class Connection(ConnectionBase):
         ''' run a command on the chroot '''
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
-        executable = to_bytes(self._play_context.executable, errors='surrogate_or_strict')
-        local_cmd = [executable, '-c', to_bytes(cmd, errors='surrogate_or_strict')]
+        # python2-lxc needs bytes. python3-lxc needs text.
+        executable = to_native(self._play_context.executable, errors='surrogate_or_strict')
+        local_cmd = [executable, '-c', to_native(cmd, errors='surrogate_or_strict')]
 
         read_stdout, write_stdout = None, None
         read_stderr, write_stderr = None, None
-        read_stdin, write_stdin   = None, None
+        read_stdin, write_stdin = None, None
 
         try:
             read_stdout, write_stdout = os.pipe()

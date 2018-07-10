@@ -1,45 +1,31 @@
 ---
+- debug: msg="START cli/basic-login.yaml on connection={{ ansible_connection }}"
 
-- name: setup - remove login
-  eos_banner:
-    banner: login
-    state: absent
-    authorize: yes
-    provider: "{{ cli }}"
+- name: Remove previous login banner
+  eos_config:
+    lines: no banner login
+  become: yes
 
-- name: Set login
-  eos_banner:
+- name: Create login banner
+  eos_banner: &multiline
     banner: login
     text: |
-      this is my login banner
-      that has a multiline
-      string
+      Junk login banner
+      over multiple lines
     state: present
-    authorize: yes
-    provider: "{{ cli }}"
+  become: yes
   register: result
-
-- debug:
-    msg: "{{ result }}"
 
 - assert:
     that:
       - "result.changed == true"
-      - "'this is my login banner' in result.commands"
-      - "'that has a multiline' in result.commands"
+      - "'banner login' in result.commands[0]" # does this break due to "contains?"
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "'ansible_1' in result.session_name"
 
-- name: Set login again (idempotent)
-  eos_banner:
-    banner: login
-    text: |
-      this is my login banner
-      that has a multiline
-      string
-    state: present
-    authorize: yes
-    provider: "{{ cli }}"
+- name: Create login banner again (idempotent)
+  eos_banner: *multiline
+  become: yes
   register: result
 
 - assert:
@@ -49,6 +35,31 @@
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "result.session_name is not defined"
 
+- name: Remove login
+  eos_banner: &remove
+    banner: login
+    state: absent
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'no banner login' in result.commands" # does this break due to "contains?"
+      # Ensure sessions contains epoc. Will fail after 18th May 2033
+      - "'ansible_1' in result.session_name"
+
+- name: Remove login again (idempotent)
+  eos_banner: *remove
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.commands | length == 0"
+      # Ensure sessions contains epoc. Will fail after 18th May 2033
+      - "result.session_name is not defined"
 
 # FIXME add in tests for everything defined in docs
 # FIXME Test state:absent + test:

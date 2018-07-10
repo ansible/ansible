@@ -3,23 +3,13 @@
 
 # (c) 2015-2016, Vlad Glagolev <scm@vaygr.net>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -46,9 +36,7 @@ options:
             - multiple names can be given, separated by commas
             - special value '*' in conjunction with states C(latest) or
               C(rebuild) will update or rebuild the whole system respectively
-        required: false
         aliases: ["spell"]
-        default: null
 
     state:
         description:
@@ -57,7 +45,6 @@ options:
             - state C(latest) always triggers C(update_cache=yes)
             - state C(rebuild) implies cast of all specified spells, not only
               those existed before
-        required: false
         choices: ["present", "latest", "absent", "cast", "dispelled", "rebuild"]
         default: "present"
 
@@ -70,31 +57,25 @@ options:
               contains more than one spell
             - providers must be supplied in the form recognized by Sorcery, e.g.
               'openssl(SSL)'
-        required: false
-        default: null
 
     update:
         description:
             - Whether or not to update sorcery scripts at the very first stage
-        required: false
-        choices: ["yes", "no"]
-        default: "no"
+        type: bool
+        default: 'no'
 
     update_cache:
         description:
             - Whether or not to update grimoire collection before casting spells
-        required: false
+        type: bool
+        default: 'no'
         aliases: ["update_codex"]
-        choices: ["yes", "no"]
-        default: "no"
 
     cache_valid_time:
         description:
             - Time in seconds to invalidate grimoire collection on update
             - especially useful for SCM and rsync grimoires
             - makes sense only in pair with C(update_cache)
-        required: false
-        default: null
 '''
 
 
@@ -241,7 +222,7 @@ def codex_list(module):
     if rc != 0:
         module.fail_json(msg="unable to list grimoire collection, fix your Codex")
 
-    rex = re.compile("^\s*\[\d+\] : (?P<grim>[\w\-\+\.]+) : [\w\-\+\./]+(?: : (?P<ver>[\w\-\+\.]+))?\s*$")
+    rex = re.compile(r"^\s*\[\d+\] : (?P<grim>[\w\-+.]+) : [\w\-+./]+(?: : (?P<ver>[\w\-+.]+))?\s*$")
 
     # drop 4-line header and empty trailing line
     for line in stdout.splitlines()[4:-1]:
@@ -617,17 +598,17 @@ def manage_spells(module):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(default=None, aliases=['spell'], type='list'),
-            state = dict(default='present', choices=['present', 'latest',
-                         'absent', 'cast', 'dispelled', 'rebuild']),
-            depends = dict(default=None),
-            update = dict(default=False, type='bool'),
-            update_cache = dict(default=False, aliases=['update_codex'], type='bool'),
-            cache_valid_time = dict(default=0, type='int')
+        argument_spec=dict(
+            name=dict(default=None, aliases=['spell'], type='list'),
+            state=dict(default='present', choices=['present', 'latest',
+                                                   'absent', 'cast', 'dispelled', 'rebuild']),
+            depends=dict(default=None),
+            update=dict(default=False, type='bool'),
+            update_cache=dict(default=False, aliases=['update_codex'], type='bool'),
+            cache_valid_time=dict(default=0, type='int')
         ),
-        required_one_of = [['name', 'update', 'update_cache']],
-        supports_check_mode = True
+        required_one_of=[['name', 'update', 'update_cache']],
+        supports_check_mode=True
     )
 
     if os.geteuid() != 0:

@@ -20,25 +20,46 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from io import StringIO
+import sys
 
 from ansible.compat.tests import mock
 from ansible.compat.tests import unittest
+from ansible.compat.tests.mock import MagicMock
+from ansible.compat.tests.mock import patch
 from ansible.errors import AnsibleError
 from ansible.playbook.play_context import PlayContext
-
 from ansible.plugins.connection import ConnectionBase
-#from ansible.plugins.connection.accelerate import Connection as AccelerateConnection
-#from ansible.plugins.connection.chroot import Connection as ChrootConnection
-#from ansible.plugins.connection.funcd import Connection as FuncdConnection
-#from ansible.plugins.connection.jail import Connection as JailConnection
-#from ansible.plugins.connection.libvirt_lxc import Connection as LibvirtLXCConnection
+# from ansible.plugins.connection.accelerate import Connection as AccelerateConnection
+# from ansible.plugins.connection.chroot import Connection as ChrootConnection
+# from ansible.plugins.connection.funcd import Connection as FuncdConnection
+# from ansible.plugins.connection.jail import Connection as JailConnection
+# from ansible.plugins.connection.libvirt_lxc import Connection as LibvirtLXCConnection
 from ansible.plugins.connection.lxc import Connection as LxcConnection
 from ansible.plugins.connection.local import Connection as LocalConnection
 from ansible.plugins.connection.paramiko_ssh import Connection as ParamikoConnection
 from ansible.plugins.connection.ssh import Connection as SSHConnection
 from ansible.plugins.connection.docker import Connection as DockerConnection
-#from ansible.plugins.connection.winrm import Connection as WinRmConnection
+# from ansible.plugins.connection.winrm import Connection as WinRmConnection
 from ansible.plugins.connection.network_cli import Connection as NetworkCliConnection
+
+PY3 = sys.version_info[0] == 3
+
+builtin_import = __import__
+
+mock_ncclient = MagicMock(name='ncclient')
+
+
+def import_mock(name, *args):
+    if name.startswith('ncclient'):
+        return mock_ncclient
+    return builtin_import(name, *args)
+
+if PY3:
+    with patch('builtins.__import__', side_effect=import_mock):
+        from ansible.plugins.connection.netconf import Connection as NetconfConnection
+else:
+    with patch('__builtin__.__import__', side_effect=import_mock):
+        from ansible.plugins.connection.netconf import Connection as NetconfConnection
 
 
 class TestConnectionBaseClass(unittest.TestCase):
@@ -57,30 +78,37 @@ class TestConnectionBaseClass(unittest.TestCase):
         class ConnectionModule1(ConnectionBase):
             pass
         with self.assertRaises(TypeError):
-            ConnectionModule1()
+            ConnectionModule1()  # pylint: disable=abstract-class-instantiated
 
         class ConnectionModule2(ConnectionBase):
             def get(self, key):
                 super(ConnectionModule2, self).get(key)
 
         with self.assertRaises(TypeError):
-            ConnectionModule2()
+            ConnectionModule2()  # pylint: disable=abstract-class-instantiated
 
     def test_subclass_success(self):
         class ConnectionModule3(ConnectionBase):
+
             @property
             def transport(self):
                 pass
+
             def _connect(self):
                 pass
+
             def exec_command(self):
                 pass
+
             def put_file(self):
                 pass
+
             def fetch_file(self):
                 pass
+
             def close(self):
                 pass
+
         self.assertIsInstance(ConnectionModule3(self.play_context, self.in_stream), ConnectionModule3)
 
 #    def test_accelerate_connection_module(self):
@@ -134,7 +162,9 @@ class TestConnectionBaseClass(unittest.TestCase):
 
     def test_network_cli_connection_module(self):
         self.assertIsInstance(NetworkCliConnection(self.play_context, self.in_stream), NetworkCliConnection)
-        self.assertIsInstance(NetworkCliConnection(self.play_context, self.in_stream), ParamikoConnection)
+
+    def test_netconf_connection_module(self):
+        self.assertIsInstance(NetconfConnection(self.play_context, self.in_stream), NetconfConnection)
 
     def test_check_password_prompt(self):
         local = (
@@ -190,17 +220,23 @@ debug1: Sending command: /bin/sh -c 'sudo -H -S  -p "[sudo via ansible, key=ouzm
 '''
 
         class ConnectionFoo(ConnectionBase):
+
             @property
             def transport(self):
                 pass
+
             def _connect(self):
                 pass
+
             def exec_command(self):
                 pass
+
             def put_file(self):
                 pass
+
             def fetch_file(self):
                 pass
+
             def close(self):
                 pass
 

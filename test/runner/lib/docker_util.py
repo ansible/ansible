@@ -12,13 +12,24 @@ from lib.executor import (
 
 from lib.util import (
     ApplicationError,
-    EnvironmentConfig,
     run_command,
     common_environment,
     display,
+    find_executable,
+)
+
+from lib.config import (
+    EnvironmentConfig,
 )
 
 BUFFER_SIZE = 256 * 256
+
+
+def docker_available():
+    """
+    :rtype: bool
+    """
+    return find_executable('docker', required=False)
 
 
 def get_docker_container_id():
@@ -43,6 +54,17 @@ def get_docker_container_id():
         return container_ids.pop()
 
     raise ApplicationError('Found multiple container_id candidates: %s\n%s' % (sorted(container_ids), contents))
+
+
+def get_docker_container_ip(args, container_id):
+    """
+    :type args: EnvironmentConfig
+    :type container_id: str
+    :rtype: str
+    """
+    results = docker_inspect(args, container_id)
+    ipaddress = results[0]['NetworkSettings']['IPAddress']
+    return ipaddress
 
 
 def docker_pull(args, image):
@@ -91,19 +113,23 @@ def docker_get(args, container_id, src, dst):
                     options=['-i'], stdout=dst_fd, capture=True)
 
 
-def docker_run(args, image, options):
+def docker_run(args, image, options, cmd=None):
     """
     :type args: EnvironmentConfig
     :type image: str
     :type options: list[str] | None
+    :type cmd: list[str] | None
     :rtype: str | None, str | None
     """
     if not options:
         options = []
 
+    if not cmd:
+        cmd = []
+
     for _ in range(1, 3):
         try:
-            return docker_command(args, ['run'] + options + [image], capture=True)
+            return docker_command(args, ['run'] + options + [image] + cmd, capture=True)
         except SubprocessError as ex:
             display.error(ex)
             display.warning('Failed to run docker image "%s". Waiting a few seconds before trying again.' % image)

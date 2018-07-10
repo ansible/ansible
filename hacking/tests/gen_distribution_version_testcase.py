@@ -32,6 +32,7 @@ filelist = [
     '/etc/altlinux-release',
     '/etc/os-release',
     '/etc/coreos/update.conf',
+    '/usr/lib/os-release',
 ]
 
 fcont = {}
@@ -60,7 +61,7 @@ parsed = json.loads(ansible_out[ansible_out.index('{'):])
 ansible_facts = {}
 for fact in facts:
     try:
-        ansible_facts[fact] = parsed['ansible_facts']['ansible_'+fact]
+        ansible_facts[fact] = parsed['ansible_facts']['ansible_' + fact]
     except:
         ansible_facts[fact] = "N/A"
 
@@ -74,4 +75,3 @@ output = {
 }
 
 print(json.dumps(output, indent=4))
-

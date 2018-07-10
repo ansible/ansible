@@ -1,0 +1,36 @@
+---
+- debug: msg="START connection={{ ansible_connection }}/sanity.yaml"
+- debug: msg="Using provider={{ connection.transport }}/sanity.yaml"
+  when: ansible_connection == "local"
+
+- block:
+  - name: update role to priv-14
+    nxos_config:
+      lines:
+        - username admin role priv-14
+        - no username admin role priv-15
+        - enable secret 0 cisco
+
+  - name: reset_connection
+    meta: reset_connection
+
+  - name: run commands with become
+    nxos_command:
+      commands: 'show privilege'
+    become: yes
+    register: result
+  
+  - assert:
+      that:
+        - "'Current privilege level: 15' in result['stdout'][0]"
+
+  always:
+  - name: teardown
+    nxos_config:
+      lines:
+        - username admin role priv-15
+        - no username admin role priv-14
+        - no enable secret
+    ignore_errors: yes
+
+- debug: msg="END connection={{ ansible_connection }}/sanity.yaml" 

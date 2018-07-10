@@ -27,44 +27,36 @@ $msg_file = Get-AnsibleParam -obj $params -name "msg_file" -type "path"
 $start_sound_path = Get-AnsibleParam -obj $params -name "start_sound_path" -type "path"
 $end_sound_path = Get-AnsibleParam -obj $params -name "end_sound_path" -type "path"
 $voice = Get-AnsibleParam -obj $params -name "voice" -type "str"
-$speech_speed = Get-AnsibleParam -obj $params -name "speech_speed" -type "str"
+$speech_speed = Get-AnsibleParam -obj $params -name "speech_speed" -type "int" -default 0
 
 $result = @{
     changed = $false
 }
 
-$speed = 0
 $words = $null
 
-if ($speech_speed -ne $null) {
-   try {
-      $speed = [convert]::ToInt32($speech_speed, 10)
-   } catch {
-      Fail-Json $result "speech_speed needs to a integer in the range -10 to 10.  The value $speech_speed could not be converted to an integer."
-   }
-   if ($speed -lt -10 -or $speed -gt 10) {
-      Fail-Json $result "speech_speed needs to a integer in the range -10 to 10.  The value $speech_speed is outside this range."
-   }
+f ($speech_speed -lt -10 -or $speech_speed -gt 10) {
+   Fail-Json $result "speech_speed needs to a integer in the range -10 to 10.  The value $speech_speed is outside this range."
 }
 
-if ($msg_file -ne $null -and $msg -ne $null) {
+if ($msg_file -and $msg) {
    Fail-Json $result "Please specify either msg_file or msg parameters, not both"
 }
 
-if ($msg_file -eq $null -and $msg -eq $null -and $start_sound_path -eq $null -and $end_sound_path -eq $null) {
+if (-not $msg_file -and -not $msg -and -not $start_sound_path -and -not $end_sound_path) {
    Fail-Json $result "No msg_file, msg, start_sound_path, or end_sound_path parameters have been specified.  Please specify at least one so the module has something to do"
 }
 
-if ($msg_file -ne $null) {
-   if (Test-Path $msg_file) {
+if ($msg_file) {
+   if (Test-Path -Path $msg_file) {
       $words = Get-Content $msg_file | Out-String
    } else {
       Fail-Json $result "Message file $msg_file could not be found or opened.  Ensure you have specified the full path to the file, and the ansible windows user has permission to read the file."
    }
 }
 
-if ($start_sound_path -ne $null) {
-   if (Test-Path $start_sound_path) {
+if ($start_sound_path) {
+   if (Test-Path -Path $start_sound_path) {
       if (-not $check_mode) {
          (new-object Media.SoundPlayer $start_sound_path).playSync()
       }
@@ -73,14 +65,14 @@ if ($start_sound_path -ne $null) {
    }
 }
 
-if ($msg -ne $null) {
+if ($msg) {
    $words = $msg
 }
 
-if ($words -ne $null) {
+if ($words) {
    Add-Type -AssemblyName System.speech
    $tts = New-Object System.Speech.Synthesis.SpeechSynthesizer
-   if ($voice -ne $null) {
+   if ($voice) {
       try {
          $tts.SelectVoice($voice)
       } catch  [System.Management.Automation.MethodInvocationException] {
@@ -89,8 +81,8 @@ if ($words -ne $null) {
    }
 
    $result.voice = $tts.Voice.Name
-   if ($speed -ne 0) {
-      $tts.Rate = $speed
+   if ($speech_speed -ne 0) {
+      $tts.Rate = $speech_speed
    }
    if (-not $check_mode) {
        $tts.Speak($words)
@@ -98,8 +90,8 @@ if ($words -ne $null) {
    $tts.Dispose()
 }
 
-if ($end_sound_path -ne $null) {
-   if (Test-Path $end_sound_path) {
+if ($end_sound_path) {
+   if (Test-Path -Path $end_sound_path) {
       if (-not $check_mode) {
          (new-object Media.SoundPlayer $end_sound_path).playSync()
       }

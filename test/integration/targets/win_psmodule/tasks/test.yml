@@ -1,0 +1,207 @@
+---
+
+- name: install module from Powershell Gallery
+  win_psmodule:
+    name: "{{ powershell_module }}"
+    state: present
+  register: module_setup
+
+- name: test Powershell Gallery module setup
+  assert:
+    that:
+      - "module_setup is changed"
+      - "module_setup.output == 'Module {{ powershell_module }} installed'"
+
+- name: check idempotency reinstalling module
+  win_psmodule:
+    name: "{{ powershell_module }}"
+    state: present
+  register: module_reinstall
+
+- name: test win_psmodule idempotency
+  assert:
+    that:
+      - "module_reinstall is not changed"
+
+- name: check module install with allow_clobber not active
+  win_psmodule:
+    name: "{{ allow_clobber_module }}"
+  register: fail_allow_clobber
+  ignore_errors: yes
+
+- name: test allow_clobber has failed
+  assert:
+    that:
+      - "fail_allow_clobber is failed"
+
+- name: check module install with allow_clobber active
+  win_psmodule:
+    name: "{{ allow_clobber_module }}"
+    allow_clobber: yes
+  register: ok_allow_clobber
+
+- name: test module install with allow_clobber active
+  assert:
+    that:
+      - "ok_allow_clobber is changed"
+
+- name: check wrong module install attempt
+  win_psmodule: 
+    name: "{{ wrong_module }}"
+    state: present
+  ignore_errors: yes
+  register: module_fail
+
+- name: test module setup fails
+  assert:
+    that:
+      - "module_fail is failed"
+
+- name: check fake custom ps repository registration attempt
+  win_psmodule:
+    name: "{{ wrong_module }}"
+    repository: Fake repository
+    url: http://my_fake_repo.com/repo/
+  ignore_errors: yes
+  register: repo_fail
+
+- name: test fake custom ps repository registration attempt
+  assert:
+    that:
+      - "repo_fail is failed"
+
+- name: check module is installed
+  win_shell: (Get-Module -Name {{ powershell_module }} -ListAvailable).Name
+  register: module_check
+
+- name: test module is installed
+  assert:
+    that:
+      - "module_check.stdout_lines[0] == '{{ powershell_module }}'"
+
+- name: check allow_clobber module is installed
+  win_shell: (Get-Module -Name {{ allow_clobber_module }} -ListAvailable).Name
+  register: allow_clobber_check
+
+- name: test allow_clobber module is installed
+  assert:
+    that:
+      - "allow_clobber_check.stdout_lines[0] == '{{ allow_clobber_module }}'"
+
+- name: remove installed powershell module
+  win_psmodule:
+    name: powershell-yaml
+    state: absent
+  register: module_uninstall
+
+- name: test powershell module removal
+  assert:
+    that:
+      - "module_uninstall is changed"
+      - "module_uninstall.output == 'Module {{ powershell_module }} removed'"
+
+- name: check module is uninstalled
+  win_shell: (Get-Module -Name {{ powershell_module }} -ListAvailable).Name
+  register: module_check
+
+- name: test module is no more present
+  assert:
+    that:
+      - "module_check.stdout == ''"
+
+- name: check idempotency re-removing module
+  win_psmodule:
+    name: "{{ powershell_module }}"
+    state: absent
+  register: module_uninstall_2
+
+- name: test idempotency
+  assert:
+    that:
+      - "module_uninstall_2 is not changed"
+
+- name: check removing allow_clobber module
+  win_psmodule:
+    name: "{{ allow_clobber_module }}"
+    state: absent
+  register: module_uninstall_3
+
+- name: test removing allow_clobber module
+  assert:
+    that:
+      - "module_uninstall_2 is not changed"
+      - "module_uninstall_3 is changed"
+
+- name: Create repository path
+  win_file:
+    path: "{{custom_repo_path}}"
+    state: directory
+
+- name: Make sure sample module is uninstalled
+  win_psmodule:
+    name: "{{ powershell_module }}"
+    state: absent
+  register: module_uninstall_4
+
+- name: Copy some module to custom repo
+  win_shell: |
+
+    # Need PSGet 1.6.0 for publishing and named repo usage
+    $psg = [PSCustomObject]@{ n="PowerShellGet"; v="1.6.0"};
+    Remove-Module -Name $psg.n -Force -EA SilentlyContinue;
+    Import-PackageProvider -Name $psg.n -RequiredVersion $psg.v -EV missingProvider -Force | Out-Null;
+
+    if($missingProvider){
+      Install-PackageProvider -Name $psg.n -RequiredVersion $psg.v -Confirm:$false -Force | Out-Null;
+      
+      # Unload previous version
+      Remove-Module -Name $psg.n -Force -EA SilentlyContinue;
+      Import-PackageProvider -Name $psg.n -RequiredVersion $psg.v -Force | Out-Null;
+    }
+
+    $modName = "{{powershell_module}}";
+    $temp = $env:Temp;
+
+    Save-Module -Name $modName -Repository PSGallery -Path $temp | Out-Null;
+
+    $repoName = "{{custom_repo_name}}";
+    $repoPath = "{{custom_repo_path}}";
+
+    if(!(Test-Path $repoPath)){
+      New-Item -Type Directory $repoPath -Force | Out-Null;
+    }
+
+    Register-PSRepository -Name $repoName -SourceLocation $repoPath -InstallationPolicy Trusted | Out-Null;
+    
+    Publish-Module -Path "$temp\\$modName" -Repository $repoName -Force -Confirm:$false | Out-Null;
+    Get-ChildItem "$repoPath\\*" | ? Name -match "$modName.*.nupkg" | % Name;
+    
+  register: saved_package
+
+- name: Validate sample module in custom repo
+  assert:
+    that:
+      - "powershell_module in (saved_package.stdout_lines | last)"
+
+- name: Install module from custom Powershell repository
+  win_psmodule:
+    name: "{{ powershell_module }}"
+    state: present
+    repository: "{{custom_repo_name}}"
+    url: "{{custom_repo_path}}"
+  register: module_from_custom_repo
+
+- name: Test custom Powershell repository module install
+  assert:
+    that:
+      - "module_from_custom_repo is changed"
+      - "module_from_custom_repo.output == 'Module {{ powershell_module }} installed'"
+
+- name: Verify module was installed from custom repo
+  win_shell: (Get-InstalledModule -Name "{{powershell_module}}").Repository
+  register: is_package_customrepo
+
+- name: Validate sample module is installed from custom repo
+  assert:
+    that:
+      - "is_package_customrepo.stdout_lines[0] == custom_repo_name"

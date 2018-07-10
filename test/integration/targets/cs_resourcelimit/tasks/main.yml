@@ -5,7 +5,7 @@
 - name: verify setup domain
   assert:
     that:
-    - dom|success
+    - dom is successful
 
 - name: setup account
   cs_account:
@@ -21,7 +21,7 @@
 - name: verify setup account
   assert:
     that:
-    - acc|success
+    - acc is successful
 
 - name: test failed unkonwn type
   cs_resourcelimit:
@@ -33,7 +33,7 @@
 - name: verify test failed unkonwn type
   assert:
     that:
-    - rl|failed
+    - rl is failed
 
 - name: test failed missing type
   cs_resourcelimit:
@@ -42,18 +42,61 @@
 - name: verify test failed missing type
   assert:
     that:
-    - rl|failed
+    - rl is failed
 
 - name: setup resource limits domain
   cs_resourcelimit:
     type: instance
-    limit: 20
+    limit: 10
     domain: "{{ cs_resource_prefix }}-domain"
   register: rl
 - name: verify setup resource limits domain
   assert:
     that:
-    - rl|success
+    - rl is successful
+    - rl.domain == "{{ cs_resource_prefix }}-domain"
+    - rl.limit == 10
+
+- name: set resource limits domain to 20 in check mode
+  cs_resourcelimit:
+    type: instance
+    limit: 20
+    domain: "{{ cs_resource_prefix }}-domain"
+  register: rl
+  check_mode: true
+- name: verify setup resource limits domain to 20 in check mode
+  assert:
+    that:
+    - rl is successful
+    - rl is changed
+    - rl.domain == "{{ cs_resource_prefix }}-domain"
+    - rl.limit == 10
+
+- name: set resource limits domain to 20
+  cs_resourcelimit:
+    type: instance
+    limit: 20
+    domain: "{{ cs_resource_prefix }}-domain"
+  register: rl
+- name: verify setup resource limits domain to 20
+  assert:
+    that:
+    - rl is successful
+    - rl is changed
+    - rl.domain == "{{ cs_resource_prefix }}-domain"
+    - rl.limit == 20
+
+- name: set resource limits domain to 20 idempotence
+  cs_resourcelimit:
+    type: instance
+    limit: 20
+    domain: "{{ cs_resource_prefix }}-domain"
+  register: rl
+- name: verify setup resource limits domain to 20 idempotence
+  assert:
+    that:
+    - rl is successful
+    - rl is not changed
     - rl.domain == "{{ cs_resource_prefix }}-domain"
     - rl.limit == 20
 

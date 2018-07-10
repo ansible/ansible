@@ -2,24 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016, Adam Števko <adam.stevko@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -37,7 +26,6 @@ options:
         description:
             - IP tunnel interface name.
         required: true
-        aliases: [ "tunnel", "link" ]
     temporary:
         description:
             - Specifies that the IP tunnel interface is temporary. Temporary IP tunnel
@@ -50,6 +38,7 @@ options:
         required: false
         default: "ipv4"
         choices: [ "ipv4", "ipv6", "6to4" ]
+        aliases: ['tunnel_type']
     local_address:
         description:
             - Literat IP address or hostname corresponding to the tunnel source.
@@ -69,17 +58,17 @@ options:
 '''
 
 EXAMPLES = '''
-name: Create IPv4 tunnel interface 'iptun0'
-dladm_iptun: name=iptun0 local_address=192.0.2.23 remote_address=203.0.113.10 state=present
+- name: Create IPv4 tunnel interface 'iptun0'
+  dladm_iptun: name=iptun0 local_address=192.0.2.23 remote_address=203.0.113.10 state=present
 
-name: Change IPv4 tunnel remote address
-dladm_iptun: name=iptun0 type=ipv4 local_address=192.0.2.23 remote_address=203.0.113.11
+- name: Change IPv4 tunnel remote address
+  dladm_iptun: name=iptun0 type=ipv4 local_address=192.0.2.23 remote_address=203.0.113.11
 
-name: Create IPv6 tunnel interface 'tun0'
-dladm_iptun: name=tun0 type=ipv6 local_address=192.0.2.23 remote_address=203.0.113.42
+- name: Create IPv6 tunnel interface 'tun0'
+  dladm_iptun: name=tun0 type=ipv6 local_address=192.0.2.23 remote_address=203.0.113.42
 
-name: Remove 'iptun0' tunnel interface
-dladm_iptun: name=iptun0 state=absent
+- name: Remove 'iptun0' tunnel interface
+  dladm_iptun: name=iptun0 state=absent
 '''
 
 RETURN = '''
@@ -215,7 +204,6 @@ class IPTun(object):
             self.module.fail_json(msg='Failed to query tunnel interface %s properties' % self.name,
                                   err=err,
                                   rc=rc)
-
 
 
 def main():

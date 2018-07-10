@@ -22,20 +22,27 @@ __metaclass__ = type
 from os.path import isdir, isfile, isabs, exists, lexists, islink, samefile, ismount
 from ansible import errors
 
+
 class TestModule(object):
     ''' Ansible file jinja2 tests '''
 
     def tests(self):
         return {
             # file testing
-            'is_dir'  : isdir,
-            'is_file' : isfile,
-            'is_link' : islink,
-            'exists' : exists,
-            'link_exists' : lexists,
+            'is_dir': isdir,
+            'directory': isdir,
+            'is_file': isfile,
+            'file': isfile,
+            'is_link': islink,
+            'link': islink,
+            'exists': exists,
+            'link_exists': lexists,
 
             # path testing
-            'is_abs' : isabs,
-            'is_same_file' : samefile,
-            'is_mount' : ismount,
+            'is_abs': isabs,
+            'abs': isabs,
+            'is_same_file': samefile,
+            'same_file': samefile,
+            'is_mount': ismount,
+            'mount': ismount,
         }

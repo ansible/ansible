@@ -1,59 +1,46 @@
 #!/usr/bin/python
-# Copyright 2016 Google Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# -*- coding: utf-8 -*-
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+# Copyright: (c) 2016, Google Inc.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
 module: gcpubsub
 version_added: "2.3"
-short_description: Create and Delete Topics/Subscriptions, Publish and pull messages on PubSub.
+short_description: Create and Delete Topics/Subscriptions, Publish and pull messages on PubSub
 description:
     - Create and Delete Topics/Subscriptions, Publish and pull messages on PubSub.
       See U(https://cloud.google.com/pubsub/docs) for an overview.
 requirements:
-  - "python >= 2.6"
-  - "google-auth >= 0.5.0"
-  - "google-cloud-pubsub >= 0.22.0"
+  - google-auth >= 0.5.0
+  - google-cloud-pubsub >= 0.22.0
 notes:
   - Subscription pull happens before publish.  You cannot publish and pull in the same task.
 author:
-  - "Tom Melendez (@supertom) <tom@supertom.com>"
+  - Tom Melendez (@supertom) <tom@supertom.com>
 options:
   topic:
     description:
-       - GCP pubsub topic name.  Only the name, not the full path, is required.
-    required: True
+       - GCP pubsub topic name.
+       - Only the name, not the full path, is required.
+    required: yes
   subscription:
     description:
        - Dictionary containing a subscripton name associated with a topic (required), along with optional ack_deadline, push_endpoint and pull.
          For pulling from a subscription, message_ack (bool), max_messages (int) and return_immediate are available as subfields.
          See subfields name, push_endpoint and ack_deadline for more information.
-    required: False
   name:
     description: Subfield of subscription. Required if subscription is specified. See examples.
-    required: False
   ack_deadline:
     description: Subfield of subscription. Not required. Default deadline for subscriptions to ACK the message before it is resent. See examples.
-    required: False
   pull:
     description:
         - Subfield of subscription. Not required. If specified, messages will be retrieved from topic via the provided subscription name.
@@ -63,95 +50,93 @@ options:
     description:
         - Subfield of subscription.  Not required.  If specified, message will be sent to an endpoint.
           See U(https://cloud.google.com/pubsub/docs/advanced#push_endpoints) for more information.
-    required: False
   publish:
     description:
         - List of dictionaries describing messages and attributes to be published.  Dictionary is in message(str):attributes(dict) format.
           Only message is required.
-    required: False
   state:
     description:
-        - State of the topic or queue (absent, present). Applies to the most granular resource. Remove the most granular resource.  If subcription is
-          specified we remove it.  If only topic is specified, that is what is removed. Note that a topic can be removed without first removing the
-          subscription.
-    required: False
-    default: "present"
+        - State of the topic or queue.
+        - Applies to the most granular resource.
+        - If subscription isspecified we remove it.
+        - If only topic is specified, that is what is removed.
+        - NOTE - A topic can be removed without first removing the subscription.
+    choices: [ absent, present ]
+    default: present
 '''
+
 EXAMPLES = '''
-# Create a topic and publish a message to it
 # (Message will be pushed; there is no check to see if the message was pushed before
-# Topics:
-## Create Topic
-gcpubsub:
-  topic: ansible-topic-example
-  state: present
+- name: Create a topic and publish a message to it
+  gcpubsub:
+    topic: ansible-topic-example
+    state: present
 
-## Delete Topic
-### Subscriptions associated with topic are not deleted.
-gcpubsub:
-  topic: ansible-topic-example
-  state: absent
+# Subscriptions associated with topic are not deleted.
+- name: Delete Topic
+  gcpubsub:
+    topic: ansible-topic-example
+    state: absent
 
-## Messages: publish multiple messages, with attributes (key:value available with the message)
-### setting absent will keep the messages from being sent
-gcpubsub:
-  topic: "{{ topic_name }}"
-  state: present
-  publish:
-    - message: "this is message 1"
-      attributes:
-        mykey1: myvalue
-        mykey2: myvalu2
-        mykey3: myvalue3
-    - message: "this is message 2"
-      attributes:
-        server: prod
-        sla: "99.9999"
-        owner: fred
+# Setting absent will keep the messages from being sent
+- name: Publish multiple messages, with attributes (key:value available with the message)
+  gcpubsub:
+    topic: '{{ topic_name }}'
+    state: present
+    publish:
+      - message: this is message 1
+        attributes:
+          mykey1: myvalue
+          mykey2: myvalu2
+          mykey3: myvalue3
+      - message: this is message 2
+        attributes:
+          server: prod
+          sla: "99.9999"
+          owner: fred
 
-# Subscriptions
-## Create Subscription (pull)
-gcpubsub:
-  topic: ansible-topic-example
-  subscription:
-  - name: mysub
-  state: present
+- name: Create Subscription (pull)
+  gcpubsub:
+    topic: ansible-topic-example
+    subscription:
+    - name: mysub
+    state: present
 
-## Create Subscription with ack_deadline and push endpoint
-### pull is default, ack_deadline is not required
-gcpubsub:
-  topic: ansible-topic-example
-  subscription:
-  - name: mysub
-    ack_deadline: "60"
-    push_endpoint: http://pushendpoint.example.com
-  state: present
+# pull is default, ack_deadline is not required
+- name: Create Subscription with ack_deadline and push endpoint
+  gcpubsub:
+    topic: ansible-topic-example
+    subscription:
+    - name: mysub
+      ack_deadline: "60"
+      push_endpoint: http://pushendpoint.example.com
+    state: present
 
-## Subscription change from push to pull
-### setting push_endpoint to "None" converts subscription to pull.
-gcpubsub:
-  topic: ansible-topic-example
-  subscription:
-    name: mysub
-    push_endpoint: "None"
+# Setting push_endpoint to "None" converts subscription to pull.
+- name: Subscription change from push to pull
+  gcpubsub:
+    topic: ansible-topic-example
+    subscription:
+      name: mysub
+      push_endpoint: "None"
 
-## Delete subscription
 ### Topic will not be deleted
-gcpubsub:
-  topic: ansible-topic-example
-  subscription:
-  - name: mysub
-  state: absent
+- name: Delete subscription
+  gcpubsub:
+    topic: ansible-topic-example
+    subscription:
+    - name: mysub
+    state: absent
 
-## Pull messages from subscription
-### only pull keyword is required.
-gcpubsub:
-  topic: ansible-topic-example
-  subscription:
-    name: ansible-topic-example-sub
-    pull:
-      message_ack: yes
-      max_messages: "100"
+# only pull keyword is required.
+- name: Pull messages from subscription
+  gcpubsub:
+    topic: ansible-topic-example
+    subscription:
+      name: ansible-topic-example-sub
+      pull:
+        message_ack: yes
+        max_messages: "100"
 '''
 
 RETURN = '''
@@ -186,9 +171,6 @@ topic:
     type: str
     sample: "mytopic"
 '''
-CLOUD_CLIENT = 'google-cloud-pubsub'
-CLOUD_CLIENT_MINIMUM_VERSION = '0.22.0'
-CLOUD_CLIENT_USER_AGENT = 'ansible-pubsub-0.1'
 
 try:
     from ast import literal_eval
@@ -202,6 +184,14 @@ try:
 except ImportError as e:
     HAS_GOOGLE_CLOUD_PUBSUB = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.gcp import check_min_pkg_version, get_google_cloud_credentials
+
+
+CLOUD_CLIENT = 'google-cloud-pubsub'
+CLOUD_CLIENT_MINIMUM_VERSION = '0.22.0'
+CLOUD_CLIENT_USER_AGENT = 'ansible-pubsub-0.1'
+
 
 def publish_messages(message_list, topic):
     with topic.batch() as batch:
@@ -213,24 +203,24 @@ def publish_messages(message_list, topic):
             batch.publish(bytes(msg), **attrs)
     return True
 
+
 def pull_messages(pull_params, sub):
     """
     :rtype: tuple (output, changed)
     """
     changed = False
-    max_messages=pull_params.get('max_messages', None)
+    max_messages = pull_params.get('max_messages', None)
     message_ack = pull_params.get('message_ack', 'no')
     return_immediately = pull_params.get('return_immediately', False)
 
-    output= []
-    pulled = sub.pull(return_immediately=return_immediately,
-                    max_messages=max_messages)
+    output = []
+    pulled = sub.pull(return_immediately=return_immediately, max_messages=max_messages)
 
     for ack_id, msg in pulled:
         msg_dict = {'message_id': msg.message_id,
                     'attributes': msg.attributes,
                     'data': msg.data,
-                    'ack_id': ack_id }
+                    'ack_id': ack_id}
         output.append(msg_dict)
 
     if message_ack:
@@ -243,14 +233,17 @@ def pull_messages(pull_params, sub):
 
 def main():
 
-    module = AnsibleModule(argument_spec=dict(
-        topic=dict(required=True),
-        state=dict(choices=['absent', 'present'], default='present'),
-        publish=dict(type='list', default=None),
-        subscription=dict(type='dict', default=None),
-        service_account_email=dict(),
-        credentials_file=dict(),
-        project_id=dict(), ),)
+    module = AnsibleModule(
+        argument_spec=dict(
+            topic=dict(type='str', required=True),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            publish=dict(type='list'),
+            subscription=dict(type='dict'),
+            service_account_email=dict(type='str'),
+            credentials_file=dict(type='str'),
+            project_id=dict(type='str'),
+        ),
+    )
 
     if not HAS_PYTHON26:
         module.fail_json(
@@ -285,7 +278,7 @@ def main():
                            ack_deadline=mod_params['subscription'].get('ack_deadline', None),
                            push_endpoint=mod_params['subscription'].get('push_endpoint', None))
 
-    if mod_params['state'] ==  'absent':
+    if mod_params['state'] == 'absent':
         # Remove the most granular resource.  If subcription is specified
         # we remove it.  If only topic is specified, that is what is removed.
         # Note that a topic can be removed without first removing the subscription.
@@ -299,7 +292,7 @@ def main():
             if t.exists():
                 t.delete()
                 changed = True
-    elif mod_params['state'] ==  'present':
+    elif mod_params['state'] == 'present':
         if not t.exists():
             t.create()
             changed = True
@@ -312,7 +305,7 @@ def main():
                 # Subscription operations
                 # TODO(supertom): if more 'update' operations arise, turn this into a function.
                 s.reload()
-                push_endpoint=mod_params['subscription'].get('push_endpoint', None)
+                push_endpoint = mod_params['subscription'].get('push_endpoint', None)
                 if push_endpoint is not None:
                     if push_endpoint != s.push_endpoint:
                         if push_endpoint == 'None':
@@ -331,13 +324,9 @@ def main():
         if mod_params['publish'] and len(mod_params['publish']) > 0:
             changed = publish_messages(mod_params['publish'], t)
 
-
     json_output['changed'] = changed
     json_output.update(mod_params)
     module.exit_json(**json_output)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.gcp import *
 if __name__ == '__main__':
     main()

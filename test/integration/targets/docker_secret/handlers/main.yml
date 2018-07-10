@@ -1,0 +1,3 @@
+- name: disable_swarm 
+  command: docker swarm leave --force
+  ignore_errors: yes

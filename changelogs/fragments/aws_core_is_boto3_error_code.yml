@@ -1,0 +1,4 @@
+---
+minor_changes:
+  - Add `is_boto3_error_code` function to `module_utils/aws/core.py` to make it
+    easier for modules to handle special AWS error codes.

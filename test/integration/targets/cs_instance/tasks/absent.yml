@@ -1,0 +1,115 @@
+---
+- name: test destroy instance in check mode
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    state: absent
+  register: instance
+  check_mode: true
+- name: verify destroy instance in check mode
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.state != "Destroyed"
+
+- name: test destroy instance
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    state: absent
+  register: instance
+- name: verify destroy instance
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.state == "Destroyed"
+
+- name: test destroy instance idempotence
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    state: absent
+  register: instance
+- name: verify destroy instance idempotence
+  assert:
+    that:
+    - instance is successful
+    - instance is not changed
+
+- name: test recover to stopped state and update a deleted instance in check mode
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+    state: stopped
+  register: instance
+  check_mode: true
+- name: verify test recover to stopped state and update a deleted instance in check mode
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+
+- name: test recover to stopped state and update a deleted instance
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+    state: stopped
+  register: instance
+- name: verify test recover to stopped state and update a deleted instance
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.state == "Stopped"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+
+- name: test recover to stopped state and update a deleted instance idempotence
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+    state: stopped
+  register: instance
+- name: verify test recover to stopped state and update a deleted instance idempotence
+  assert:
+    that:
+    - instance is successful
+    - instance is not changed
+    - instance.state == "Stopped"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+
+- name: test expunge instance in check mode
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    state: expunged
+  register: instance
+  check_mode: true
+- name: verify test expunge instance in check mode
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.state == "Stopped"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+
+- name: test expunge instance
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    state: expunged
+  register: instance
+- name: verify test expunge instance
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.state == "Stopped"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+
+- name: test expunge instance idempotence
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    state: expunged
+  register: instance
+- name: verify test expunge instance idempotence
+  assert:
+    that:
+    - instance is successful
+    - instance is not changed

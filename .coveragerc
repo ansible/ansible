@@ -20,5 +20,6 @@ data_file = test/results/coverage/coverage
 omit =
     */python*/dist-packages/*
     */python*/site-packages/*
-    */python*/distutils
+    */python*/distutils/*
+    */pyshared/*
     */pytest
