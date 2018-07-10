@@ -1,0 +1,4 @@
+bugfixes:
+- win_reboot - handle post reboots when running test_command - https://github.com/ansible/ansible/issues/41713
+- win_reboot - fix issue when overridding connection timeout hung the post reboot uptime check - https://github.com/ansible/ansible/issues/42185 https://github.com/ansible/ansible/issues/42294
+- win_reboot - fix for handling an already scheduled reboot and other minor log formatting issues

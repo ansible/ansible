@@ -204,6 +204,7 @@ class TestConnectionWinRM(object):
 
         conn = connection_loader.get('winrm', pc, new_stdin)
         conn.set_options(var_options=options, direct=direct)
+        conn._build_winrm_kwargs()
 
         for attr, expected in expected.items():
             actual = getattr(conn, attr)
@@ -236,6 +237,7 @@ class TestWinRMKerbAuth(object):
         new_stdin = StringIO()
         conn = connection_loader.get('winrm', pc, new_stdin)
         conn.set_options(var_options=options)
+        conn._build_winrm_kwargs()
 
         conn._kerb_auth("user@domain", "pass")
         mock_calls = mock_popen.mock_calls
@@ -264,6 +266,7 @@ class TestWinRMKerbAuth(object):
         new_stdin = StringIO()
         conn = connection_loader.get('winrm', pc, new_stdin)
         conn.set_options(var_options=options)
+        conn._build_winrm_kwargs()
 
         conn._kerb_auth("user@domain", "pass")
         mock_calls = mock_pexpect.mock_calls
@@ -292,6 +295,7 @@ class TestWinRMKerbAuth(object):
         conn = connection_loader.get('winrm', pc, new_stdin)
         options = {"_extras": {}, "ansible_winrm_kinit_cmd": "/fake/kinit"}
         conn.set_options(var_options=options)
+        conn._build_winrm_kwargs()
 
         with pytest.raises(AnsibleConnectionFailure) as err:
             conn._kerb_auth("user@domain", "pass")
@@ -314,6 +318,7 @@ class TestWinRMKerbAuth(object):
         conn = connection_loader.get('winrm', pc, new_stdin)
         options = {"_extras": {}, "ansible_winrm_kinit_cmd": "/fake/kinit"}
         conn.set_options(var_options=options)
+        conn._build_winrm_kwargs()
 
         with pytest.raises(AnsibleConnectionFailure) as err:
             conn._kerb_auth("user@domain", "pass")
@@ -337,6 +342,7 @@ class TestWinRMKerbAuth(object):
         new_stdin = StringIO()
         conn = connection_loader.get('winrm', pc, new_stdin)
         conn.set_options(var_options={"_extras": {}})
+        conn._build_winrm_kwargs()
 
         with pytest.raises(AnsibleConnectionFailure) as err:
             conn._kerb_auth("invaliduser", "pass")
@@ -361,6 +367,7 @@ class TestWinRMKerbAuth(object):
         new_stdin = StringIO()
         conn = connection_loader.get('winrm', pc, new_stdin)
         conn.set_options(var_options={"_extras": {}})
+        conn._build_winrm_kwargs()
 
         with pytest.raises(AnsibleConnectionFailure) as err:
             conn._kerb_auth("invaliduser", "pass")
@@ -383,6 +390,7 @@ class TestWinRMKerbAuth(object):
         new_stdin = StringIO()
         conn = connection_loader.get('winrm', pc, new_stdin)
         conn.set_options(var_options={"_extras": {}})
+        conn._build_winrm_kwargs()
 
         with pytest.raises(AnsibleConnectionFailure) as err:
             conn._kerb_auth("username", "password")
@@ -407,6 +415,7 @@ class TestWinRMKerbAuth(object):
         new_stdin = StringIO()
         conn = connection_loader.get('winrm', pc, new_stdin)
         conn.set_options(var_options={"_extras": {}})
+        conn._build_winrm_kwargs()
 
         with pytest.raises(AnsibleConnectionFailure) as err:
             conn._kerb_auth("username", "password")
