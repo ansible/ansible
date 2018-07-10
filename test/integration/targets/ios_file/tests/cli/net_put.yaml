@@ -65,6 +65,10 @@
   register: result
   ignore_errors: true
 
+- assert:
+    that:
+      - result.failed == true
+
 - name: copy file with non-ascii characters to ios in default mode(binary)
   net_put:
     src: nonascii.bin
