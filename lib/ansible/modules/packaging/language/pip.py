@@ -301,17 +301,17 @@ class Distribution:
         return self._distribution_name
 
     def is_satisfied_by(self, version_to_test):
-        if self._plain_distribution:
-            if hasattr(self._requirement, 'specifier'):
-                return self._requirement.specifier.contains(version_to_test)
-            else:
-                # old setuptools has no specifier, do fallback
-                version_to_test = LooseVersion(version_to_test)
-                for (op, ver) in self._requirement.specs:
-                    if not op_dict[op](version_to_test, LooseVersion(ver)):
-                        return False
-                return True
-        return False
+        if not self._plain_distribution:
+            return False
+        try:
+            return self._requirement.specifier.contains(version_to_test)
+        except AttributeError:
+            # old setuptools has no specifier, do fallback
+            version_to_test = LooseVersion(version_to_test)
+            for op, ver in self._requirement.specs:
+                if not op_dict[op](version_to_test, LooseVersion(ver)):
+                    return False
+            return True
 
     def __str__(self):
         if self._plain_distribution:
