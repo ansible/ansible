@@ -547,6 +547,19 @@
     name: "/tmp/non_existent_pkg.rpm"
     state: absent
 
+- name: get yum version
+  yum:
+    list: yum
+  register: yum_version
+
+- name: set yum_version
+  set_fact:
+    yum_version: "{{ yum_version.results | selectattr('yumstate','match','installed') | map(attribute='version') | list | first }}"
+
+- name: check wheter yum supports disableexcludes (>= 3.4)
+  set_fact:
+    supports_disable_excludes: yum_version is version_compare('3.4.0', '>=')
+
 - name: uninstall zip
   yum: name=zip state=removed
 
@@ -567,20 +580,24 @@
     line: "exclude=zip*"
     state: present
 
+# begin test case where disable_excludes is supported
 - name: install zip
   yum: name=zip state=latest
   register: yum_zip_result
   ignore_errors: True
+  when: supports_disable_excludes
 
 - name: verify packages did not install
   assert:
     that:
       - "yum_zip_result is failed"
+  when: supports_disable_excludes
 
 - name: install zip
   yum: name=zip state=latest disable_excludes=all
   register: yum_zip_result
       - "yum_result is changed"
+  when: supports_disable_excludes
 
 - name: remoe exclude zip
   lineinfile:
@@ -588,3 +605,29 @@
     regexp: (^exclude=zip*)
     line: "exclude="
     state: present
+  when: supports_disable_excludes
+# end test case where disable_excludes is supported
+
+# begin test case where disable_excludes is not supported
+- name: install zip
+  yum: name=zip state=latest disable_excludes=all
+  register: yum_zip_result
+      - "yum_result is failed"
+  ignore_errors: True
+  when: not supports_disable_excludes
+
+- name: remoe exclude zip
+  lineinfile:
+    dest: /etc/yum.conf
+    regexp: (^exclude=zip*)
+    line: "exclude="
+    state: present
+  when: not supports_disable_excludes
+
+- name: install zip
+  yum: name=zip state=latest
+  register: yum_zip_result
+      - "yum_result is changed"
+  when: not supports_disable_excludes
+# end test case where disable_excludes is not supported
+
