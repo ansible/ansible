@@ -108,6 +108,16 @@ EXAMPLES = '''
     keystore_pass: changeit
     keystore_create: yes
     state: present
+    
+- name: Import certificate trustcacert option
+  java_cert:
+    cert_path: "/tmp/mycert.cer"
+    cert_alias: "beeline-{{ inventory_hostname }}"
+    keystore_path: "/tmp/cacerts"
+    keystore_pass: changeit
+    keystore_create: yes
+    trust_ca_certs: yes
+    state: present
 '''
 
 RETURN = '''
@@ -148,7 +158,7 @@ def check_cert_present(module, executable, keystore_path, keystore_pass, alias):
     return False
 
 
-def import_cert_url(module, executable, url, port, keystore_path, keystore_pass, alias):
+def import_cert_url(module, executable, url, port, keystore_path, keystore_pass, alias, trust_ca_certs):
     ''' Import certificate from URL into keystore located at keystore_path '''
     import re
 
@@ -173,8 +183,9 @@ def import_cert_url(module, executable, url, port, keystore_path, keystore_pass,
     fetch_cmd = ("%s -printcert -rfc -sslserver %s %s:%d") % (executable, proxy_opts, url, port)
 
     import_cmd = ("%s -importcert -noprompt -keystore '%s' "
-                  "-storepass '%s' -alias '%s'") % (executable, keystore_path,
-                                                    keystore_pass, alias)
+                  "-storepass '%s' -alias '%s' %s") % (executable, keystore_path,
+                                                       keystore_pass, alias,
+                                                       ('-trustcacerts' if trust_ca_certs else ''))
 
     if module.check_mode:
         module.exit_json(changed=True)
@@ -357,7 +368,7 @@ def main():
 
             if url:
                 import_cert_url(module, executable, url, port, keystore_path,
-                                keystore_pass, cert_alias)
+                                keystore_pass, cert_alias, trust_ca_certs)
 
     module.exit_json(changed=False)
 
