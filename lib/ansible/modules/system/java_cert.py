@@ -34,7 +34,7 @@ options:
       - Imported certificate alias.
   trust_ca_certs:
     description:
-      - Indicator whether to use -trustcacerts option in keytool command or not
+      - Indicator whether to use -trustcacerts option in keytool command or not.
     choices: [ "yes", "no" ]
     default: "no"
   pkcs12_path:
