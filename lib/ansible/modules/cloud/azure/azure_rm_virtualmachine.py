@@ -1346,7 +1346,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             for interface in vm.network_profile.network_interfaces:
                 id_dict = azure_id_to_dict(interface.id)
                 nic_names.append(dict(name=id_dict['networkInterfaces'], resource_group=id_dict['resourceGroups']))
-            self.log('NIC names to delete {0}'.format(', '.join(nic_names)))
+            self.log('NIC names to delete {0}'.format(str(nic_names)))
             self.results['deleted_network_interfaces'] = nic_names
             if self.remove_on_absent.intersection(set(['all', 'public_ips'])):
                 # also store each nic's attached public IPs and delete after the NIC is gone
@@ -1356,7 +1356,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         if ipc.public_ip_address:
                             pip_dict = azure_id_to_dict(ipc.public_ip_address.id)
                             pip_names.append(dict(name=pip_dict['publicIPAddresses'], resource_group=pip_dict['resourceGroups']))
-                self.log('Public IPs to  delete are {0}'.format(', '.join(pip_names)))
+                self.log('Public IPs to  delete are {0}'.format(str(pip_names)))
                 self.results['deleted_public_ips'] = pip_names
 
         self.log("Deleting virtual machine {0}".format(self.name))
