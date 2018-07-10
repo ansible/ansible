@@ -29,9 +29,8 @@ import os
 import re
 import sys
 import warnings
-from collections import defaultdict
+from collections import defaultdict, Sequence
 from distutils.version import LooseVersion
-from functools import partial
 from pprint import PrettyPrinter
 
 try:
@@ -50,7 +49,6 @@ from six import iteritems, string_types
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.common.collections import is_sequence
 from ansible.plugins.loader import fragment_loader
 from ansible.utils import plugin_docs
 from ansible.utils.display import Display
@@ -155,9 +153,10 @@ def rst_xline(width, char="="):
 
     return char * width
 
+def test_list(value):
+    ''' Return true if the object is a list or tuple '''
 
-test_list = partial(is_sequence, include_strings=False)
-
+    return isinstance(value, Sequence) and not isinstance(value, string_types)
 
 def write_data(text, output_dir, outputname, module=None):
     ''' dumps module output to a file or the screen, as requested '''
