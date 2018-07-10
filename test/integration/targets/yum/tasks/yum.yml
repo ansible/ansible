@@ -552,13 +552,14 @@
     list: yum
   register: yum_version
 
-- name: set yum_version
+- name: set yum_version of installed version
   set_fact:
-    yum_version: "{{ yum_version.results | selectattr('yumstate','match','installed') | list | first }}"
+    yum_version: "{%- if item.yumstate == 'installed' -%}{{ item.version }}{%- else -%}{{ yum_version }}{%- endif -%}"
+  with_items: "{{ yum_version.results }}"
 
 - name: check wheter yum supports disableexcludes (>= 3.4)
   set_fact:
-    supports_disable_excludes: yum_version.version is version_compare('3.4.0', '>=')
+    supports_disable_excludes: yum_version is version_compare('3.4.0', '>=')
 
 - name: uninstall zip
   yum: name=zip state=removed
