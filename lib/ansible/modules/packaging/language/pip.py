@@ -374,7 +374,7 @@ def _get_packages(module, pip, chdir):
         if rc != 0:
             _fail(module, command, out, err)
 
-    return (command, out, err)
+    return command, out, err
 
 
 def _is_present(module, req, installed_pkgs, pkg_command):
