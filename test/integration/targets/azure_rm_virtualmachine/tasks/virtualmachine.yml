@@ -256,23 +256,24 @@
       state: absent
       vm_size: Standard_A0
 
+- set_fact:
+      niclist:
+         - name: testvm011
+           resource_group: "{{ resource_group }}"
+         - name: testvm012
+           resource_group: "{{ resource_group_secondary  }}"
+
 - name: Create NICs for dual nic VM
   azure_rm_networkinterface:
-      resource_group: "{{ resource_group }}"
-      name: "{{ item }}"
+      resource_group: "{{ item.resource_group }}"
+      name: "{{ item.name }}"
       virtual_network: testvm001
       subnet: testvm001
       security_group: testvm001
-  loop:
-    - testvm011
-    - testvm012
+  loop: "{{ niclist }}"
 
 - name: Create virtual machine with two NICs
   register: output
-  vars:
-    niclist:
-      - testvm011
-      - testvm012
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
       name: testvm003
@@ -297,10 +298,6 @@
         - azure_vm.properties.availabilitySet.id
 
 - name: Should be idempotent with a dual NICs
-  vars:
-    niclist:
-      - testvm011
-      - testvm012
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
       name: testvm003
