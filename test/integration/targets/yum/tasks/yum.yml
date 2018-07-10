@@ -554,11 +554,11 @@
 
 - name: set yum_version
   set_fact:
-    yum_version: "{{ yum_version.results | selectattr('yumstate','match','installed') | map(attribute='version') | list | first }}"
+    yum_version: "{{ yum_version.results | selectattr('yumstate','match','installed') | list | first }}"
 
 - name: check wheter yum supports disableexcludes (>= 3.4)
   set_fact:
-    supports_disable_excludes: yum_version is version_compare('3.4.0', '>=')
+    supports_disable_excludes: yum_version.version is version_compare('3.4.0', '>=')
 
 - name: uninstall zip
   yum: name=zip state=removed
