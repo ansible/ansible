@@ -226,8 +226,12 @@ class NailGun(object):
         try:
             file = open(os.getcwd() + params['content'], 'r')
             content = file.read()
+        except Exception as e:
+            self._module.fail_json(msg="Manifest import failed with %s" % to_native(e),
+                                   exception=traceback.format_exc())
         finally:
-            file.close()
+            if file:
+                file.close()
 
         manifest = self._entities.Subscription(self._server)
 
