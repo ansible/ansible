@@ -796,8 +796,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             plan=dict(type='dict'),
             zones=dict(type='list'),
             accept_terms=dict(type='bool', default=False),
-            license_type=dict(type='str'),
-            vm_identity=dict(type='str'),
+            license_type=dict(type='str', choices=['Windows_Server', 'Windows_Client', 'None']),
+            vm_identity=dict(type='str', choices=['SystemAssigned']),
             win_rm=dict(type='list')
         )
 
@@ -1196,12 +1196,12 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 ))
 
                         win_rm = self.compute_models.WinRMConfiguration(
-                            listeners = win_rm_listeners
+                            listeners=win_rm_listeners
                         )
 
                         if not vm_resource.os_profile.windows_configuration:
                             vm_resource.os_profile.windows_configuration = self.compute_models.WindowsConfiguration(
-                                win_rm = win_rm
+                                win_rm=win_rm
                             )
                         elif not vm_resource.os_profile.windows_configuration.win_rm:
                             vm_resource.os_profile.windows_configuration.win_rm = win_rm
