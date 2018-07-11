@@ -196,8 +196,8 @@ class PlayContext(Base):
         if passwords is None:
             passwords = {}
 
-        self.password = passwords.get('conn_pass', '')
-        self.become_pass = passwords.get('become_pass', '')
+        self._b_cli_password = passwords.get('conn_pass', '')
+        self._b_cli_become_pass = passwords.get('become_pass', '')
 
         self.prompt = ''
         self.success_key = ''
@@ -381,9 +381,9 @@ class PlayContext(Base):
         # become legacy updates -- from commandline
         if not new_info.become_pass:
             if new_info.become_method == 'sudo' and new_info.sudo_pass:
-                new_info.become_pass = new_info.sudo_pass
+                new_info.become_pass = to_bytes(new_info.sudo_pass, errors='surrogate_or_strict')
             elif new_info.become_method == 'su' and new_info.su_pass:
-                new_info.become_pass = new_info.su_pass
+                new_info.become_pass = to_bytes(new_info.su_pass, errors='surrogate_or_strict')
 
         # become legacy updates -- from inventory file (inventory overrides
         # commandline)
@@ -394,12 +394,12 @@ class PlayContext(Base):
             if new_info.become_method == 'sudo':
                 for sudo_pass_name in C.MAGIC_VARIABLE_MAPPING.get('sudo_pass'):
                     if sudo_pass_name in variables:
-                        setattr(new_info, 'become_pass', variables[sudo_pass_name])
+                        new_info['become_pass'] = to_bytes(variables[sudo_pass_name], errors='surrogate_or_strict')
                         break
             elif new_info.become_method == 'su':
                 for su_pass_name in C.MAGIC_VARIABLE_MAPPING.get('su_pass'):
                     if su_pass_name in variables:
-                        setattr(new_info, 'become_pass', variables[su_pass_name])
+                        new_info['become_pass'] = to_bytes(variables[su_pass_name], errors='surrogate_or_strict')
                         break
 
         # make sure we get port defaults if needed
