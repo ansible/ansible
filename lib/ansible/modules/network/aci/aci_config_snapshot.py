@@ -51,6 +51,7 @@ options:
     - Determines how many snapshots can exist for the Export Policy before the APIC starts to rollover.
     - Accepted values range between C(1) and C(10).
     - The APIC defaults to C(3) when unset.
+    type: int
   snapshot:
     description:
     - The name of the snapshot to delete.

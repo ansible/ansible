@@ -48,12 +48,14 @@ options:
     - The encapsulation ID associating the C(epg) with the interface path.
     - This acts as the secondary C(encap_id) when using micro-segmentation.
     - Accepted values are any valid encap ID for specified encap, currently ranges between C(1) and C(4096).
+    type: int
     aliases: [ vlan, vlan_id ]
   primary_encap_id:
     description:
     - Determines the primary encapsulation ID associating the C(epg)
       with the interface path when using micro-segmentation.
     - Accepted values are any valid encap ID for specified encap, currently ranges between C(1) and C(4096).
+    type: int
     aliases: [ primary_vlan, primary_vlan_id ]
   deploy_immediacy:
     description:
@@ -77,7 +79,8 @@ options:
   pod_id:
     description:
     - The pod number part of the tDn.
-    - C(pod_id) is usually an integer below 10.
+    - C(pod_id) is usually an integer below C(10).
+    type: int
     aliases: [ pod, pod_number ]
   leafs:
     description:
@@ -89,12 +92,13 @@ options:
   interface:
     description:
     - The C(interface) string value part of the tDn.
-    - Usually a policy group like "test-IntPolGrp" or an interface of the following format "1/7" depending on C(interface_type).
+    - Usually a policy group like C(test-IntPolGrp) or an interface of the following format C(1/7) depending on C(interface_type).
   extpaths:
     description:
     - The C(extpaths) integer value part of the tDn.
     - C(extpaths) is only used if C(interface_type) is C(fex).
     - Usually something like C(1011).
+    type: int
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.

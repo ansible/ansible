@@ -38,6 +38,7 @@ options:
     - Bounce Entry Aging Interval (range 150secs - 65535secs)
     - 0 is used for infinite.
     - The APIC defaults to C(630) when unset during creation.
+    type: int
   bounce_trigger:
     description:
     - Determines if the bounce entries are installed by RARP Flood or COOP Protocol.
@@ -47,21 +48,25 @@ options:
     description:
     - Hold Interval (range 5secs - 65535secs).
     - The APIC defaults to C(300) when unset during creation.
+    type: int
   local_ep_interval:
     description:
     - Local end point Aging Interval (range 120secs - 65535secs).
     - 0 is used for infinite.
     - The APIC defaults to C(900) when unset during creation.
+    type: int
   remote_ep_interval:
     description:
     - Remote end point Aging Interval (range 120secs - 65535secs).
     - O is used for infinite.
     - The APIC defaults to C(300) when unset during creation.
+    type: int
   move_frequency:
     description:
     - Move frequency per second (range 0secs - 65535secs).
     - 0 is used for none.
     - The APIC defaults to C(256) when unset during creation.
+    type: int
   description:
     description:
     - Description for the End point rentention policy.
