@@ -670,6 +670,23 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
     return False
 
 
+def ipmath(value, amount):
+    try:
+        ip = netaddr.IPAddress(value)
+    except netaddr.AddrFormatError:
+        msg = 'You must pass a valid IP address; {0} is invalid'.format(value)
+        raise errors.AnsibleFilterError(msg)
+
+    if not isinstance(amount, int):
+        msg = (
+            'You must pass an integer for arithmetic; '
+            '{0} is not a valid integer'
+        ).format(amount)
+        raise errors.AnsibleFilterError(msg)
+
+    return str(ip + amount)
+
+
 def ipwrap(value, query=''):
     try:
         if isinstance(value, (list, tuple, types.GeneratorType)):
@@ -1060,6 +1077,7 @@ class FilterModule(object):
         # IP addresses and networks
         'cidr_merge': cidr_merge,
         'ipaddr': ipaddr,
+        'ipmath': ipmath,
         'ipwrap': ipwrap,
         'ip4_hex': ip4_hex,
         'ipv4': ipv4,
