@@ -22,41 +22,47 @@ requirements:
   - etcd3
 description:
    - Sets or deletes values in etcd3 cluster using its v3 api.
-   - Needs python etcd3 lib to work
+   - Needs python etcd3 lib to work.
 options:
     key:
         description:
-            - the key where the information is stored in the cluster
+            - The key where the information is stored in the cluster.
         required: true
     value:
         description:
-            - the information stored
-        required: true
+            - The information stored.
+            - Required if C(state=present).
     host:
         description:
-            - the IP address of the cluster
+            - The IP address of the cluster.
         default: 'localhost'
     port:
         description:
-            - the port number used to connect to the cluster
+            - The port number used to connect to the cluster.
         default: 2379
     state:
         description:
-            - the state of the value for the key.
-            - can be present or absent
+            - The state of the value for the key.
+            - Can be present, absent or delete_range. If set to delete_range, the key is interpreted as a prefix and all keys with that prefix will be deleted.
+        choices: [ present, absent, absent_prefix ]
         required: true
 author:
     - Jean-Philippe Evrard (@evrardjp)
 """
 
 EXAMPLES = """
-# Store a value "bar" under the key "foo" for a cluster located "http://localhost:2379"
+# Store a value "bar" under the key "foo" for a cluster located at "http://localhost:2379"
 - etcd3:
     key: "foo"
     value: "baz3"
     host: "localhost"
     port: 2379
     state: "present"
+
+# Delete all keys beginning with "keys/foo" for a cluster installed on localhost
+- etcd3:
+    key: "keys/foo"
+    state: absent_prefix
 """
 
 RETURN = '''
@@ -86,10 +92,10 @@ def run_module():
     # the module
     module_args = dict(
         key=dict(type='str', required=True),
-        value=dict(type='str', required=True),
+        value=dict(type='str'),
         host=dict(type='str', default='localhost'),
         port=dict(type='int', default=2379),
-        state=dict(type='str', required=True, choices=['present', 'absent']),
+        state=dict(type='str', required=True, choices=['present', 'absent', 'absent_prefix']),
     )
 
     # seed the result dict in the object
@@ -107,13 +113,14 @@ def run_module():
     # supports check mode
     module = AnsibleModule(
         argument_spec=module_args,
-        supports_check_mode=True
+        supports_check_mode=True,
+        required_if=[["state", "present", ["value"]]]
     )
 
     result['key'] = module.params.get('key')
 
     if not etcd_found:
-        module.fail_json(msg="the python etcd3 module is required")
+        module.fail_json(msg="The python etcd3 module is required")
 
     allowed_keys = ['host', 'port', 'ca_cert', 'cert_key', 'cert_cert',
                     'timeout', 'user', 'password']
@@ -129,11 +136,12 @@ def run_module():
     except Exception as exp:
         module.fail_json(msg='Cannot connect to etcd cluster: %s' % (to_native(exp)),
                          exception=traceback.format_exc())
-    try:
-        cluster_value = etcd.get(module.params['key'])
-    except Exception as exp:
-        module.fail_json(msg='Cannot reach data: %s' % (to_native(exp)),
-                         exception=traceback.format_exc())
+    if module.params['key'] != "":
+        try:
+            cluster_value = etcd.get(module.params['key'])
+        except Exception as exp:
+            module.fail_json(msg='Cannot reach data: %s' % (to_native(exp)),
+                             exception=traceback.format_exc())
 
     # Make the cluster_value[0] a string for string comparisons
     result['old_value'] = to_native(cluster_value[0])
@@ -159,6 +167,18 @@ def run_module():
                     etcd.put(module.params['key'], module.params['value'])
                 except Exception as exp:
                     module.fail_json(msg='Cannot add or edit key %s: %s' % (module.params['key'], to_native(exp)),
+                                     exception=traceback.format_exc())
+                else:
+                    result['changed'] = True
+    elif module.params['state'] == 'absent_prefix':
+        if etcd.get_prefix(module.params['key']):
+            if module.check_mode:
+                result['changed'] = True
+            else:
+                try:
+                    etcd.delete_prefix(module.params['key'])
+                except Exception as exp:
+                    module.fail_json(msg='Cannot delete prefix %s: %s' % (module.params['key'], to_native(exp)),
                                      exception=traceback.format_exc())
                 else:
                     result['changed'] = True
