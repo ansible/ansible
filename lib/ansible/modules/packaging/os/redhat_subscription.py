@@ -331,7 +331,16 @@ class Rhsm(RegistrationBase):
             args.extend(['--serverurl', server_hostname])
 
         if org_id:
-            args.extend(['--org', org_id])
+            args.extend(['--org', org_id])  
+         
+        if server_proxy_hostname and server_proxy_port:
+            args.extend(['--proxy', server_proxy_hostname + ':' + server_proxy_port])
+            
+        if server_proxy_user:
+            args.extend(['--proxyuser', server_proxy_user])
+            
+        if server_proxy_password:
+            args.extend(['--proxypassword', server_proxy_password])
 
         if activationkey:
             args.extend(['--activationkey', activationkey])
@@ -350,12 +359,6 @@ class Rhsm(RegistrationBase):
                 args.extend(['--consumerid', consumer_id])
             if environment:
                 args.extend(['--environment', environment])
-            if server_proxy_hostname and server_proxy_port:
-                args.extend(['--proxy', server_proxy_hostname + ':' + server_proxy_port])
-            if server_proxy_user:
-                args.extend(['--proxyuser', server_proxy_user])
-            if server_proxy_password:
-                args.extend(['--proxypassword', server_proxy_password])
 
         rc, stderr, stdout = self.module.run_command(args, check_rc=True)
 
