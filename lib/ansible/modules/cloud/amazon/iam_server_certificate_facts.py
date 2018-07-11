@@ -101,6 +101,7 @@ try:
 except ImportError:
     pass  # caught by AnsibleAWSModule
 
+
 def _get_server_certs(connection, module, name, path):
     """
     Get one or more IAM server certificates facts based on name or path. If not found, return None.
@@ -160,7 +161,7 @@ def get_server_certs(connection, module):
 
 
 def main():
-    argument_spec =(
+    argument_spec = (
         dict(
             name=dict(type='str'),
             path=dict(type='str')
