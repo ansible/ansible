@@ -157,12 +157,12 @@ options:
       - Enable ASG metrics collection
     type: bool
     default: 'no'
-    version_added: "2.5"
+    version_added: "2.6"
   metrics_granularity:
     description:
       - When metrics_collection is enabled this will determine granularity of metrics collected by CloudWatch
     default: "1minute"
-    version_added: "2.5"
+    version_added: "2.6"
   metrics_list:
     description:
       - List of autoscaling metrics to collect when enabling metrics_collection
@@ -175,7 +175,7 @@ options:
         - 'GroupStandbyInstances'
         - 'GroupTerminatingInstances'
         - 'GroupTotalInstances'
-    version_added: "2.5"
+    version_added: "2.6"
 extends_documentation_fragment:
     - aws
     - ec2
