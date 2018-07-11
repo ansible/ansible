@@ -157,7 +157,7 @@ class AzureRMRegistriesFacts(AzureRMModuleBase):
         self.mgmt_client = None
         self.resource_group = None
         self.registry_name = None
-        super(AzureRMRegistriesFacts, self).__init__(self.module_arg_spec)
+        super(AzureRMRegistriesFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
