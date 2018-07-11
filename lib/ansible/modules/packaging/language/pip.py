@@ -646,11 +646,11 @@ def main():
         if extra_args:
             cmd += ' %s' % extra_args
 
+        cmd += ' '
         if name:
-            for distribution in distributions:
-                cmd += ' "%s"' % distribution
+            cmd += ' '.join('"%s"' % d for d in distributions)
         elif requirements:
-            cmd += ' -r %s' % requirements
+            cmd += '-r "%s"' % requirements
         else:
             module.exit_json(
                 changed=False,
