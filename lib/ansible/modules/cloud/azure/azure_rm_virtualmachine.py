@@ -316,7 +316,42 @@ options:
         description:
             - Specifies that the image or disk that is being used was licensed on-premises. This element is only
               used for images that contain the Windows Server operating system.
+            - Note: To unset this value, it has to be set to the string "None"
         version_added: 2.7
+        choices:
+            - Windows_Server
+            - Windows_Client
+            - None
+
+    vm_identity:
+        description:
+            - Identity for the virtual machine.
+        version_added: 2.7
+            Choices:
+                - SystemAssigned
+    win_rm:
+        description:
+            - List of Windows Remote Management configurations of the VM.
+        version_added: 2.7
+        suboptions:
+            protocol:
+                description:
+                    - Specifies the protocol of listener
+                choices:
+                    - http
+                    - https
+            source_vault:
+                description:
+                    - The relative URL of the Key Vault containing the certificate
+            certificate_url:
+                description:
+                    - This is the URL of a certificate that has been uploaded to Key Vault as a secret.
+            certificate_store:
+                description:
+                    - Specifies the certificate store on the Virtual Machine to which the certificate
+                      should be added. The specified certificate store is implicitly in the LocalMachine account.
+
+
 
 extends_documentation_fragment:
     - azure
@@ -763,7 +798,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             plan=dict(type='dict'),
             zones=dict(type='list'),
             accept_terms=dict(type='bool', default=False),
-            license_type=dict(type='str')
+            license_type=dict(type='str'),
+            vm_identity=dict(type='str'),
+            win_rm=dict(type='list')
         )
 
         self.resource_group = None
@@ -806,6 +843,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.accept_terms = None
         self.zones = None
         self.license_type = None
+        self.vm_identity = None
 
         self.results = dict(
             changed=False,
@@ -1005,6 +1043,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     differences.append('Zones')
                     changed = True
 
+                if vm_dict['properties'].get('licenseType') != self.license_type:
+                    differences.append('License Type')
+                    changed = True
                 self.differences = differences
 
             elif self.state == 'absent':
@@ -1097,8 +1138,6 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                                         promotion_code=self.plan.get('promotion_code'))
 
                     license_type = self.license_type
-                    if self.license_type is None:
-                        license_type = "None"
 
                     vm_resource = self.compute_models.VirtualMachine(
                         location=self.location,
@@ -1129,8 +1168,45 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         zones=self.zones,
                     )
 
-                    if self.license_type:
-                        vm_resource['license_type'] = license_type
+                    if self.license_type is not None:
+                        vm_resource.license_type = self.license_type
+
+                    if self.vm_identity:
+                        vm_resource.identity = self.compute_models.VirtualMachineIdentity(type=self.vm_identity)
+
+                    if self.win_rm:
+                        win_rm_listeners = list()
+                        for win_rm_listener in self.win_rm:
+                            win_rm_listeners.append(self.compute_models.WinRMListener(
+                                protocol = win_rm_listener.get('protocol'),
+                                certificate_url = win_rm_listener.get('certificate_url')
+                            ))
+                            if win_rm_listener.get('source_vault'):
+                                if not vm_resource.os_profile.secrets:
+                                    vm_resource.os_profile.secrets = list()
+
+                                vm_resource.os_profile.secrets.append(self.compute_models.VaultSecretGroup(
+                                    source_vault = self.compute_models.SubResource(
+                                        id=win_rm_listener.get('source_vault')
+                                    ),
+                                    vault_certificates = [
+                                        self.compute_models.VaultCertificate(
+                                            certificate_url = win_rm_listener.get('certificate_url'),
+                                            certificate_store = win_rm_listener.get('certificate_store')
+                                        ),
+                                    ]
+                                ))
+
+                        win_rm = self.compute_models.WinRMConfiguration(
+                            listeners = win_rm_listeners
+                        )
+
+                        if not vm_resource.os_profile.windows_configuration:
+                            vm_resource.os_profile.windows_configuration = self.compute_models.WindowsConfiguration(
+                                win_rm = win_rm
+                            )
+                        elif not vm_resource.os_profile.windows_configuration.win_rm:
+                            vm_resource.os_profile.windows_configuration.win_rm = win_rm
 
                     if self.admin_password:
                         vm_resource.os_profile.admin_password = self.admin_password
@@ -1304,9 +1380,11 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         availability_set=availability_set_resource,
                         network_profile=self.compute_models.NetworkProfile(
                             network_interfaces=nics
-                        ),
-                        license_type=license_type
+                        )
                     )
+
+                    if self.license_type is not None:
+                        vm_resource.license_type = self.license_type
 
                     if vm_dict.get('tags'):
                         vm_resource.tags = vm_dict['tags']
