@@ -3,8 +3,6 @@
 Python API
 ==========
 
-.. note:: This document is out of date; 'ansible.parsing.dataloader' and 'ansible.runner' are not available in the current version of Ansible.
-
 .. contents:: Topics
 
 .. note:: This API is intended for internal Ansible use. Ansible may make changes to this API at any time that could break backward compatibility with older versions of the API. Because of this, external use is not supported by Ansible. 
