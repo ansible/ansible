@@ -46,6 +46,8 @@ NIOS_HOST_RECORD = 'record:host'
 NIOS_IPV4_NETWORK = 'network'
 NIOS_IPV6_NETWORK = 'ipv6network'
 NIOS_ZONE = 'zone_auth'
+NIOS_PTR_RECORD = 'record:ptr'
+
 
 NIOS_PROVIDER_SPEC = {
     'host': dict(),
