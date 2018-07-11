@@ -13,7 +13,7 @@ from ansible.vars.clean import strip_internal_keys
 
 _IGNORE = ('failed', 'skipped')
 _PRESERVE = ('attempts', 'changed', 'retries')
-_SUB_PRESERVE = {'_ansible_delegated_vars': ('ansilbe_host', 'ansilbe_port', 'ansible_user', 'ansible_connection')}
+_SUB_PRESERVE = {'_ansible_delegated_vars': ('ansible_host', 'ansible_port', 'ansible_user', 'ansible_connection')}
 
 
 class TaskResult:
