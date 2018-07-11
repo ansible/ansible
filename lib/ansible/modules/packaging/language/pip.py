@@ -623,10 +623,15 @@ def main():
             # check invalid combination of arguments
             if version is not None:
                 if len(distributions) > 1:
-                    module.fail_json(msg="'version' is not available for installing multi-packages.")
+                    module.fail_json(
+                        msg="'version' argument is not ambiguous when installing multiple package distributions. "
+                            "Please spefify version restrictions next to each distribution in 'name' argument."
+                    )
                 if distributions[0].has_version_specifier:
-                    module.fail_json(msg="'version' argument conflicts with version specifier provided along with a package name."
-                                     "Please keep a version specifier, but remove the 'version' argument.")
+                    module.fail_json(
+                        msg="'version' argument conflicts with version specifier provided along with a package name. "
+                            "Please keep a version specifier, but remove the 'version' argument."
+                    )
                 distributions[0] = Distribution(distributions[0].distribution_name, version)
 
         if module.params['editable']:
