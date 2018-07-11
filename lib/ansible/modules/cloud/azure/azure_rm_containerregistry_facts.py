@@ -29,16 +29,6 @@ options:
     registry_name:
         description:
             - The name of the container registry.
-    format:
-        description:
-            - Format of the data returned.
-            - If C(raw) is selected information will be returned in raw format from Azure Python SDK.
-            - If C(curated) is selected the structure will be identical to input parameters of azure_rm_virtualmachine_scaleset module.
-            - In Ansible 2.5 and lower facts are always returned in raw format.
-        default: 'raw'
-        choices:
-            - 'curated'
-            - 'raw'
 
 extends_documentation_fragment:
     - azure
@@ -157,12 +147,6 @@ class AzureRMRegistriesFacts(AzureRMModuleBase):
             ),
             registry_name=dict(
                 type='str'
-            ),
-            format=dict(
-                type='str',
-                choices=['curated',
-                         'raw'],
-                default='raw'
             )
         )
         # store the results of the module operation
@@ -173,7 +157,6 @@ class AzureRMRegistriesFacts(AzureRMModuleBase):
         self.mgmt_client = None
         self.resource_group = None
         self.registry_name = None
-        self.format = None
         super(AzureRMRegistriesFacts, self).__init__(self.module_arg_spec)
 
     def exec_module(self, **kwargs):
@@ -190,11 +173,6 @@ class AzureRMRegistriesFacts(AzureRMModuleBase):
         return self.results
 
     def get(self):
-        '''
-        Gets facts of the specified Registry.
-
-        :return: deserialized Registryinstance state dictionary
-        '''
         response = None
         results = {}
         try:
@@ -210,11 +188,6 @@ class AzureRMRegistriesFacts(AzureRMModuleBase):
         return results
 
     def list_by_resource_group(self):
-        '''
-        Gets facts of the specified Registry.
-
-        :return: deserialized Registryinstance state dictionary
-        '''
         response = None
         results = {}
         try:
@@ -230,17 +203,16 @@ class AzureRMRegistriesFacts(AzureRMModuleBase):
         return results
 
     def format_item(self, item):
-        if self.format == 'curated':
-            return {
-                # resource_group
-                # name
-                # state
-                # location
-                # admin_user_enabled
-                # sku
-            }
-        else:
-            return item.as_dict()
+        d = item.as_dict()
+        d = {
+            'resource_group': self.resource_group,
+            'name': self.registry_name,
+            'location': d['location'],
+            'admin_user_enabled': d['admin_user_enabled'],
+            'sku': d['sku']['tier'].lower(),
+            'state': 'present'
+        }
+        return d
 
 
 def main():

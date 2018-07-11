@@ -33,16 +33,6 @@ options:
     database_name:
         description:
             - The name of the database.
-    format:
-        description:
-            - Format of the data returned.
-            - If C(raw) is selected information will be returned in raw format from Azure Python SDK.
-            - If C(curated) is selected the structure will be identical to input parameters of azure_rm_virtualmachine_scaleset module.
-            - In Ansible 2.5 and lower facts are always returned in raw format.
-        default: 'raw'
-        choices:
-            - 'curated'
-            - 'raw'
 
 extends_documentation_fragment:
     - azure
@@ -134,12 +124,6 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
             ),
             database_name=dict(
                 type='str'
-            ),
-            format=dict(
-                type='str',
-                choices=['curated',
-                         'raw'],
-                default='raw'
             )
         )
         # store the results of the module operation
@@ -151,7 +135,6 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
         self.resource_group = None
         self.server_name = None
         self.database_name = None
-        self.format = None
         super(AzureRMDatabasesFacts, self).__init__(self.module_arg_spec)
 
     def exec_module(self, **kwargs):
@@ -170,11 +153,6 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
         return self.results
 
     def get(self):
-        '''
-        Gets facts of the specified MySQL Database.
-
-        :return: deserialized MySQL Databaseinstance state dictionary
-        '''
         response = None
         results = {}
         try:
@@ -191,11 +169,6 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
         return results
 
     def list_by_server(self):
-        '''
-        Gets facts of the specified MySQL Database.
-
-        :return: deserialized MySQL Databaseinstance state dictionary
-        '''
         response = None
         results = {}
         try:
@@ -212,17 +185,16 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
         return results
 
     def format_item(self, item):
-        if self.format == 'curated':
-            return {
-                # resource_group
-                # server_name
-                # name
-                # charset
-                # collation
-                # state
-            }
-        else:
-            return item.as_dict()
+        d = item.as_dict()
+        d = {
+            'resource_group': self.resource_group,
+            'server_name': self.server_name,
+            'name': d['name'],
+            'charset': d['charset'],
+            'collation': d['collation'],
+            'state': 'present'
+        }
+        return d
 
 
 def main():

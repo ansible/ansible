@@ -29,16 +29,6 @@ options:
     server_name:
         description:
             - The name of the server.
-    format:
-        description:
-            - Format of the data returned.
-            - If C(raw) is selected information will be returned in raw format from Azure Python SDK.
-            - If C(curated) is selected the structure will be identical to input parameters of azure_rm_virtualmachine_scaleset module.
-            - In Ansible 2.5 and lower facts are always returned in raw format.
-        default: 'raw'
-        choices:
-            - 'curated'
-            - 'raw'
 
 extends_documentation_fragment:
     - azure
@@ -160,12 +150,6 @@ class AzureRMServersFacts(AzureRMModuleBase):
             ),
             server_name=dict(
                 type='str'
-            ),
-            format=dict(
-                type='str',
-                choices=['curated',
-                         'raw'],
-                default='raw'
             )
         )
         # store the results of the module operation
@@ -176,7 +160,6 @@ class AzureRMServersFacts(AzureRMModuleBase):
         self.mgmt_client = None
         self.resource_group = None
         self.server_name = None
-        self.format = None
         super(AzureRMServersFacts, self).__init__(self.module_arg_spec)
 
     def exec_module(self, **kwargs):
@@ -193,11 +176,6 @@ class AzureRMServersFacts(AzureRMModuleBase):
         return self.results
 
     def get(self):
-        '''
-        Gets facts of the specified MySQL Server.
-
-        :return: deserialized MySQL Serverinstance state dictionary
-        '''
         response = None
         results = {}
         try:
@@ -213,11 +191,6 @@ class AzureRMServersFacts(AzureRMModuleBase):
         return results
 
     def list_by_resource_group(self):
-        '''
-        Gets facts of the specified MySQL Server.
-
-        :return: deserialized MySQL Serverinstance state dictionary
-        '''
         response = None
         results = {}
         try:
@@ -233,27 +206,19 @@ class AzureRMServersFacts(AzureRMModuleBase):
         return results
 
     def format_item(self, item):
-        if self.format == 'curated':
-            return {
-                # resource_group
-                # name
-                # sku
-                #   name
-                #   tier
-                #   capacity
-                #   size
-                # location
-                # storage_mb
-                # version
-                # enforce_ssl
-                # admin_username
-                # admin_password
-                # create_mode
-                # state
-            }
-        else:
-            return item.as_dict()
-
+        d = item.as_dict()
+        d = {
+            'resource_group': self.resource_group,
+            'name': d['name'],
+            'sku': d['sku'],
+            'location': d['location'],
+            'storage_mb': d['storage_profile']['storage_mb'],
+            'version': d['version'],
+            'enforce_ssl': (d['ssl_enforcement'] == 'Enabled'),
+            'admin_username': d['administrator_login'],
+            'state': 'present'
+        }
+        return d
 
 def main():
     AzureRMServersFacts()

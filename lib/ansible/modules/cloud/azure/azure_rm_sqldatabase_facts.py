@@ -45,16 +45,6 @@ options:
     recommended_elastic_pool_name:
         description:
             - The name of the recommended elastic pool to be retrieved.
-    format:
-        description:
-            - Format of the data returned.
-            - If C(raw) is selected information will be returned in raw format from Azure Python SDK.
-            - If C(curated) is selected the structure will be identical to input parameters of azure_rm_virtualmachine_scaleset module.
-            - In Ansible 2.5 and lower facts are always returned in raw format.
-        default: 'raw'
-        choices:
-            - 'curated'
-            - 'raw'
 
 extends_documentation_fragment:
     - azure
@@ -194,12 +184,6 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
             ),
             recommended_elastic_pool_name=dict(
                 type='str'
-            ),
-            format=dict(
-                type='str',
-                choices=['curated',
-                         'raw'],
-                default='raw'
             )
         )
         # store the results of the module operation
@@ -215,7 +199,6 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
         self.filter = None
         self.elastic_pool_name = None
         self.recommended_elastic_pool_name = None
-        self.format = None
         super(AzureRMDatabasesFacts, self).__init__(self.module_arg_spec)
 
     def exec_module(self, **kwargs):
@@ -242,11 +225,6 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
         return self.results
 
     def get(self):
-        '''
-        Gets facts of the specified SQL Database.
-
-        :return: deserialized SQL Databaseinstance state dictionary
-        '''
         response = None
         results = {}
         try:
@@ -263,11 +241,6 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
         return results
 
     def list_by_server(self):
-        '''
-        Gets facts of the specified SQL Database.
-
-        :return: deserialized SQL Databaseinstance state dictionary
-        '''
         response = None
         results = {}
         try:
@@ -284,11 +257,6 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
         return results
 
     def list_by_elastic_pool(self):
-        '''
-        Gets facts of the specified SQL Database.
-
-        :return: deserialized SQL Databaseinstance state dictionary
-        '''
         response = None
         results = {}
         try:
@@ -306,11 +274,6 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
         return results
 
     def list_by_recommended_elastic_pool(self):
-        '''
-        Gets facts of the specified SQL Database.
-
-        :return: deserialized SQL Databaseinstance state dictionary
-        '''
         response = None
         results = {}
         try:
@@ -328,27 +291,26 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
         return results
 
     def format_item(self, item):
-        if self.format == 'curated':
-            return {
-                # resource_group
-                # server_name
-                # name
-                # location
-                # collation
-                # create_mode
-                # source_database_id
-                # restore_point_in_time
-                # recovery_services_recovery_....
-                # edition
-                # max_size_bytes
-                # elastic_pool_name
-                # read_scale
-                # sample_name
-                # zone_redundant
-                # state
-            }
-        else:
-            return item.as_dict()
+        d = item.as_dict()
+        d = {
+            'resource_group': self.resource_group,
+            'server_name': self.server_name,
+            'name': d['name'],
+            'location': d['location'],
+            'collation': d['collation'],
+            #'create_mode': 
+            #'source_database_id'
+            #'restore_point_in_time'
+            #'recovery_services_recovery_....'
+            #'edition'
+            'max_size_bytes': d['max_size_bytes'],
+            #'elastic_pool_name'
+            'read_scale': d['read_scale'],
+            #'sample_name'
+            'zone_redundant': d['zone_redundant'],
+            'state': 'present'
+        }
+        return d
 
 
 def main():

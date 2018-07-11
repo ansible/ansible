@@ -29,16 +29,6 @@ options:
     container_group_name:
         description:
             - The name of the container group.
-    format:
-        description:
-            - Format of the data returned.
-            - If C(raw) is selected information will be returned in raw format from Azure Python SDK.
-            - If C(curated) is selected the structure will be identical to input parameters of azure_rm_virtualmachine_scaleset module.
-            - In Ansible 2.5 and lower facts are always returned in raw format.
-        default: 'raw'
-        choices:
-            - 'curated'
-            - 'raw'
 
 extends_documentation_fragment:
     - azure
@@ -125,12 +115,6 @@ class AzureRMContainerGroupsFacts(AzureRMModuleBase):
             ),
             container_group_name=dict(
                 type='str'
-            ),
-            format=dict(
-                type='str',
-                choices=['curated',
-                         'raw'],
-                default='raw'
             )
         )
         # store the results of the module operation
@@ -141,7 +125,6 @@ class AzureRMContainerGroupsFacts(AzureRMModuleBase):
         self.mgmt_client = None
         self.resource_group = None
         self.container_group_name = None
-        self.format = None
         super(AzureRMContainerGroupsFacts, self).__init__(self.module_arg_spec)
 
     def exec_module(self, **kwargs):
@@ -158,11 +141,6 @@ class AzureRMContainerGroupsFacts(AzureRMModuleBase):
         return self.results
 
     def get(self):
-        '''
-        Gets facts of the specified Container Group.
-
-        :return: deserialized Container Groupinstance state dictionary
-        '''
         response = None
         results = {}
         try:
@@ -178,11 +156,6 @@ class AzureRMContainerGroupsFacts(AzureRMModuleBase):
         return results
 
     def list_by_resource_group(self):
-        '''
-        Gets facts of the specified Container Group.
-
-        :return: deserialized Container Groupinstance state dictionary
-        '''
         response = None
         results = {}
         try:
@@ -198,27 +171,40 @@ class AzureRMContainerGroupsFacts(AzureRMModuleBase):
         return results
 
     def format_item(self, item):
-        if self.format == 'curated':
-            return {
-                # resource_group
-                # name
-                # os_type
-                # ip_address
-                # ports
-                # location
-                # registry_login_server
-                # registry_login_username
-                # registry_password
-                # containers
-                #   name
-                #   image
-                #   memory
-                #   cpu
-                #   ports
-                # state
+        d = item.as_dict()
+        containers = d['containers']
+        ports = d['ip_address']['ports']
+
+        for port_index in range(len(ports)):
+            ports[port_index] = ports[port_index]['port']
+
+        for container_index in range(len(containers)):
+            old_container = containers[container_index]
+            new_container = {
+                'name': old_container['name'],
+                'image': old_container['image'],
+                'memory': old_container['resources']['requests']['memory_in_gb'],
+                'cpu': old_container['resources']['requests']['cpu'],
+                'ports': []
             }
-        else:
-            return self.format_item(item)
+            for port_index in range(len(old_container['ports'])):
+                new_container['ports'].append(old_container['ports'][port_index]['port'])
+            containers[container_index] = new_container
+
+        d = {
+            'resource_group': self.resource_group,
+            'name': d['name'],
+            'os_type': d['os_type'],
+            'ip_address': 'public' if d['ip_address']['type'] == 'Public' else 'none',
+            'ports': ports,
+            'location': d['location'],
+            #registry_login_server
+            #registry_login_username
+            #registry_password
+            'containers': containers,
+            'state': 'present'
+        }
+        return d
 
 
 def main():
