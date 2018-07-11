@@ -36,15 +36,9 @@ options:
     name:
         description:
             - PagerDuty unique subdomain. Obsolete. It is not used with PagerDuty REST v2 API.
-        required: false
     user:
         description:
             - PagerDuty user ID. Obsolete. Please, use token for authorization.
-        required: false
-    passwd:
-        description:
-            - PagerDuty user password. Obsolete. Please, use token for authorization.
-        required: false
     token:
         description:
             - A pagerduty token, generated on the pagerduty site. It is used for authorization.
@@ -53,16 +47,14 @@ options:
     requester_id:
         description:
             - ID of user making the request. Only needed when creating a maintenance_window.
-        required: true
         version_added: '1.8'
     service:
         description:
             - A comma separated list of PagerDuty service IDs.
         aliases: [ services ]
-    windows_id:
+    window_id:
         description:
             - ID of maintenance window. Only needed when absent a maintenance_window.
-        required: true
         version_added: '2.7.0'
     hours:
         description:
@@ -87,28 +79,21 @@ options:
 '''
 
 EXAMPLES = '''
-# List ongoing maintenance windows using a user/passwd
-- pagerduty:
-    name: companyabc
-    user: example@example.com
-    passwd: password123
-    state: ongoing
-
 # List ongoing maintenance windows using a token
 - pagerduty:
     name: companyabc
     token: xxxxxxxxxxxxxx
     state: ongoing
 
-# Create a 1 hour maintenance window for service FOO123, using a user/passwd
+# Create a 1 hour maintenance window for service FOO123
 - pagerduty:
     name: companyabc
     user: example@example.com
-    passwd: password123
+    token: yourtoken
     state: running
     service: FOO123
 
-# Create a 5 minute maintenance window for service FOO123, using a token
+# Create a 5 minute maintenance window for service FOO123
 - pagerduty:
     name: companyabc
     token: xxxxxxxxxxxxxx
@@ -122,7 +107,6 @@ EXAMPLES = '''
 - pagerduty:
     name: companyabc
     user: example@example.com
-    passwd: password123
     state: running
     service: FOO123
     hours: 4
@@ -133,9 +117,8 @@ EXAMPLES = '''
 - pagerduty:
     name: companyabc
     user: example@example.com
-    passwd: password123
     state: absent
-    service: '{{ pd_window.result.maintenance_window.id }}'
+    window_id: '{{ pd_window.result.maintenance_window.id }}'
 '''
 
 import datetime
@@ -148,11 +131,10 @@ from ansible.module_utils._text import to_bytes
 
 
 class PagerDutyRequest(object):
-    def __init__(self, module, name, user, passwd, token):
+    def __init__(self, module, name, user, token):
         self.module = module
         self.name = name
         self.user = user
-        self.passwd = passwd
         self.token = token
         self.headers = {
             'Content-Type': 'application/json',
@@ -221,11 +203,7 @@ class PagerDutyRequest(object):
         return False, json_out, True
 
     def _auth_header(self):
-        if self.token:
-            return "Token token=%s" % self.token
-
-        auth = base64.b64encode(to_bytes('%s:%s' % (self.user, self.passwd)).replace('\n', ''))
-        return "Basic %s" % auth
+        return "Token token=%s" % self.token
 
     def _read_response(self, response):
         try:
@@ -241,8 +219,7 @@ def main():
             state=dict(required=True, choices=['running', 'started', 'ongoing', 'absent']),
             name=dict(required=False),
             user=dict(required=False),
-            passwd=dict(required=False, no_log=True),
-            token=dict(required=False, no_log=True),
+            token=dict(required=True, no_log=True),
             service=dict(required=False, type='list', aliases=["services"]),
             window_id=dict(required=False),
             requester_id=dict(required=False),
@@ -256,7 +233,6 @@ def main():
     state = module.params['state']
     name = module.params['name']
     user = module.params['user']
-    passwd = module.params['passwd']
     service = module.params['service']
     window_id = module.params['window_id']
     hours = module.params['hours']
@@ -265,10 +241,7 @@ def main():
     desc = module.params['desc']
     requester_id = module.params['requester_id']
 
-    if not token and not (user or passwd):
-        module.fail_json(msg="neither user and passwd nor token specified")
-
-    pd = PagerDutyRequest(module, name, user, passwd, token)
+    pd = PagerDutyRequest(module, name, user, token)
 
     if state == "running" or state == "started":
         if not service:

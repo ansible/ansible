@@ -5,7 +5,7 @@ import json
 
 class PagerDutyTest(unittest.TestCase):
     def setUp(self):
-        self.pd = pagerduty.PagerDutyRequest(module=pagerduty, name='name', user='user', passwd='password', token='token')
+        self.pd = pagerduty.PagerDutyRequest(module=pagerduty, name='name', user='user', token='token')
 
     def _assert_ongoing_maintenance_windows(self, module, url, headers):
         self.assertEquals('https://api.pagerduty.com/maintenance_windows?filter=ongoing', url)

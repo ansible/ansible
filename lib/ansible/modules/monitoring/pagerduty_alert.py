@@ -26,7 +26,10 @@ requirements:
 options:
     name:
         description:
-            - PagerDuty unique subdomain.
+            - PagerDuty unique subdomain. Obsolete. It is not used with PagerDuty REST v2 API.
+    service_id:
+        description:
+            - ID of PagerDuty service when incidents will be triggered, acknowledged or resolved.
         required: true
     integration_key:
         description:
@@ -78,6 +81,7 @@ EXAMPLES = '''
     name: companyabc
     integration_key: xxx
     api_key: yourapikey
+    service_id: PDservice
     state: triggered
     desc: problem that led to this trigger
 
@@ -85,6 +89,7 @@ EXAMPLES = '''
 - pagerduty_alert:
     integration_key: xxx
     api_key: yourapikey
+    service_id: PDservice
     state: triggered
     desc: problem that led to this trigger
     incident_key: somekey
@@ -95,6 +100,7 @@ EXAMPLES = '''
 - pagerduty_alert:
     integration_key: xxx
     api_key: yourapikey
+    service_id: PDservice
     state: acknowledged
     incident_key: somekey
     desc: "some text for incident's log"
@@ -103,6 +109,7 @@ EXAMPLES = '''
 - pagerduty_alert:
     integration_key: xxx
     api_key: yourapikey
+    service_id: PDservice
     state: resolved
     incident_key: somekey
     desc: "some text for incident's log"
@@ -175,7 +182,7 @@ def send_event(module, service_key, event_type, desc,
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(required=True),
+            name=dict(required=False),
             service_id=dict(required=True),
             integration_key=dict(require=True),
             api_key=dict(required=True),
