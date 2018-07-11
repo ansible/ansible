@@ -179,9 +179,9 @@ class PagerDutyRequest(object):
 
     def _create_services_payload(self, service):
         if (isinstance(service, list)):
-            return [{'id': s, 'type':'service_reference'} for s in service]
+            return [{'id': s, 'type': 'service_reference'} for s in service]
         else:
-            return [{'id': service, 'type':'service_reference'}]
+            return [{'id': service, 'type': 'service_reference'}]
 
     def _compute_start_end_time(self, hours, minutes):
         now = datetime.datetime.utcnow()

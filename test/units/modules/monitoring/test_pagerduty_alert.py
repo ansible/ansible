@@ -14,9 +14,9 @@ class PagerDutyAlertsTest(unittest.TestCase):
 
     def _assert_compatibility_header(self, module, url, method, headers):
         self.assertDictContainsSubset(
-          {'Accept': 'application/vnd.pagerduty+json;version=2'},
-          headers,
-          'Accept:application/vnd.pagerduty+json;version=2 HTTP header not found'
+            {'Accept': 'application/vnd.pagerduty+json;version=2'},
+            headers,
+            'Accept:application/vnd.pagerduty+json;version=2 HTTP header not found'
         )
         return Response(), {'status': 200}
 
@@ -31,7 +31,9 @@ class PagerDutyAlertsTest(unittest.TestCase):
         pagerduty_alert.check(None, 'name', 'state', 'service_id', 'integration_key', 'api_key', http_call=self._assert_compatibility_header)
 
     def test_incident_key_in_url_when_it_is_given(self):
-        pagerduty_alert.check(None, 'name', 'state', 'service_id', 'integration_key', 'api_key', incident_key='incident_key_value', http_call=self._assert_incident_key)
+        pagerduty_alert.check(
+            None, 'name', 'state', 'service_id', 'integration_key', 'api_key', incident_key='incident_key_value', http_call=self._assert_incident_key
+        )
 
 
 class Response(object):

@@ -3,6 +3,7 @@ from ansible.modules.monitoring import pagerduty
 
 import json
 
+
 class PagerDutyTest(unittest.TestCase):
     def setUp(self):
         self.pd = pagerduty.PagerDutyRequest(module=pagerduty, name='name', user='user', token='token')
@@ -13,9 +14,9 @@ class PagerDutyTest(unittest.TestCase):
 
     def _assert_ongoing_window_with_v1_compatible_header(self, module, url, headers, data=None, method=None):
         self.assertDictContainsSubset(
-          {'Accept': 'application/vnd.pagerduty+json;version=2'},
-          headers,
-          'Accept:application/vnd.pagerduty+json;version=2 HTTP header not found'
+            {'Accept': 'application/vnd.pagerduty+json;version=2'},
+            headers,
+            'Accept:application/vnd.pagerduty+json;version=2 HTTP header not found'
         )
         return object(), {'status': 200}
 
@@ -37,9 +38,9 @@ class PagerDutyTest(unittest.TestCase):
 
     def _assert_create_window_with_v1_compatible_header(self, module, url, headers, data=None, method=None):
         self.assertDictContainsSubset(
-          {'Accept': 'application/vnd.pagerduty+json;version=2'},
-          headers,
-          'Accept:application/vnd.pagerduty+json;version=2 HTTP header not found'
+            {'Accept': 'application/vnd.pagerduty+json;version=2'},
+            headers,
+            'Accept:application/vnd.pagerduty+json;version=2 HTTP header not found'
         )
         return object(), {'status': 201}
 
@@ -82,9 +83,9 @@ class PagerDutyTest(unittest.TestCase):
 
     def _assert_absent_window_with_v1_compatible_header(self, module, url, headers, method=None):
         self.assertDictContainsSubset(
-          {'Accept': 'application/vnd.pagerduty+json;version=2'},
-          headers,
-          'Accept:application/vnd.pagerduty+json;version=2 HTTP header not found'
+            {'Accept': 'application/vnd.pagerduty+json;version=2'},
+            headers,
+            'Accept:application/vnd.pagerduty+json;version=2 HTTP header not found'
         )
         return object(), {'status': 204}
 
