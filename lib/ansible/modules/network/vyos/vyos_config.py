@@ -146,10 +146,15 @@ CONFIG_FILTERS = [
 def get_candidate(module):
     contents = module.params['src'] or module.params['lines']
 
-    if module.params['lines']:
-        contents = '\n'.join(contents)
+    if module.params['src']:
+        contents = format_commands(contents.splitlines())
 
+    contents = '\n'.join(contents)
     return contents
+
+
+def format_commands(commands):
+    return [line for line in commands if len(line.strip()) > 0]
 
 
 def diff_config(commands, config):
