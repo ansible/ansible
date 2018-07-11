@@ -45,8 +45,7 @@ EXAMPLES = """
   debug: msg="{{ lookup('url', 'https://ip-ranges.amazonaws.com/ip-ranges.json', split_lines=False) }}"
 
 - name: url lookup using authentication
-  debug: msg="{{item}}"
-  loop: "{{ lookup('url', 'https://some.private.site.com/file.txt', url_username='bob', url_password='hunter2') }}"
+  debug: msg="{{ lookup('url', 'https://some.private.site.com/file.txt', url_username='bob', url_password='hunter2') }}"
 """
 
 RETURN = """
