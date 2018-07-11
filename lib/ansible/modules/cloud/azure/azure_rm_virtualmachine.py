@@ -1176,21 +1176,21 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         win_rm_listeners = list()
                         for win_rm_listener in self.win_rm:
                             win_rm_listeners.append(self.compute_models.WinRMListener(
-                                protocol = win_rm_listener.get('protocol'),
-                                certificate_url = win_rm_listener.get('certificate_url')
+                                protocol=win_rm_listener.get('protocol'),
+                                certificate_url=win_rm_listener.get('certificate_url')
                             ))
                             if win_rm_listener.get('source_vault'):
                                 if not vm_resource.os_profile.secrets:
                                     vm_resource.os_profile.secrets = list()
 
                                 vm_resource.os_profile.secrets.append(self.compute_models.VaultSecretGroup(
-                                    source_vault = self.compute_models.SubResource(
+                                    source_vault=self.compute_models.SubResource(
                                         id=win_rm_listener.get('source_vault')
                                     ),
-                                    vault_certificates = [
+                                    vault_certificates=[
                                         self.compute_models.VaultCertificate(
-                                            certificate_url = win_rm_listener.get('certificate_url'),
-                                            certificate_store = win_rm_listener.get('certificate_store')
+                                            certificate_url=win_rm_listener.get('certificate_url'),
+                                            certificate_store=win_rm_listener.get('certificate_store')
                                         ),
                                     ]
                                 ))
