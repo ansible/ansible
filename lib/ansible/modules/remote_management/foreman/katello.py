@@ -86,21 +86,6 @@ options:
             - "prior ([lifecycle_environment,None])"
             - "content_view ([activation_key,None])"
             - "lifecycle_environment ([activation_key,None])"
-        choices:
-            - name
-            - organization
-            - content
-            - product
-            - basearch
-            - releaserver
-            - sync_date
-            - interval
-            - repositories
-            - from_environment
-            - to_environment
-            - prior
-            - content_view
-            - lifecycle_environment
         required: true
     task_timeout:
         description:
