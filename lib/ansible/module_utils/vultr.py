@@ -238,6 +238,7 @@ class Vultr:
 
                 if 'key' in config:
                     resource[config['key']] = resource[search_key]
+                    del resource[search_key]
 
         return resource
 
