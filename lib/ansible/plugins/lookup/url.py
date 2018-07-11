@@ -29,11 +29,11 @@ options:
   url_username:
     description: Username to use for HTTP authentication.
     type: string
-    default: ""
+    default: None
   url_password:
     description: Password to use for HTTP authentication.
     type: string
-    default: ""
+    default: None
 """
 
 EXAMPLES = """
