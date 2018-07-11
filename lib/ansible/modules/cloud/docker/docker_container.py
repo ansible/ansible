@@ -96,7 +96,6 @@ options:
     description:
       - Path to a file containing environment variables I(FOO=BAR).
       - If variable also present in C(env), then C(env) value will override.
-      - Requires docker-py >= 1.4.0.
   entrypoint:
     description:
       - Command that overwrites the default ENTRYPOINT of the image.
@@ -415,6 +414,12 @@ author:
 requirements:
     - "python >= 2.6"
     - "docker-py >= 1.7.0"
+    - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
+       module has been superseded by L(docker,https://pypi.org/project/docker/)
+       (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
+       For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
+       install the C(docker) Python module. Note that both modules should I(not)
+       be installed at the same time."
     - "Docker API >= 1.20"
 '''
 
@@ -1996,7 +2001,8 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
 
         init_supported = init_supported and LooseVersion(docker_version) >= LooseVersion('2.2')
         if self.module.params.get("init") and not init_supported:
-            self.fail('docker-py version is %s. Minimum version required is 2.2 to set init option.' % (docker_version,))
+            self.fail("docker or docker-py version is %s. Minimum version required is 2.2 to set init option. "
+                      "If you use the 'docker-py' module, you have to switch to the docker 'Python' package." % (docker_version,))
 
         self.HAS_INIT_OPT = init_supported
         self.HAS_AUTO_REMOVE_OPT = HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3
