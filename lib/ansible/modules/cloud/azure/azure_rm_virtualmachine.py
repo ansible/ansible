@@ -316,19 +316,18 @@ options:
         description:
             - Specifies that the image or disk that is being used was licensed on-premises. This element is only
               used for images that contain the Windows Server operating system.
-            - Note: To unset this value, it has to be set to the string "None"
+            - "Note: To unset this value, it has to be set to the string 'None'."
         version_added: 2.7
         choices:
             - Windows_Server
             - Windows_Client
             - None
-
     vm_identity:
         description:
             - Identity for the virtual machine.
         version_added: 2.7
-            Choices:
-                - SystemAssigned
+        choices:
+            - SystemAssigned
     win_rm:
         description:
             - List of Windows Remote Management configurations of the VM.
@@ -337,6 +336,7 @@ options:
             protocol:
                 description:
                     - Specifies the protocol of listener
+                required: true
                 choices:
                     - http
                     - https
@@ -350,8 +350,6 @@ options:
                 description:
                     - Specifies the certificate store on the Virtual Machine to which the certificate
                       should be added. The specified certificate store is implicitly in the LocalMachine account.
-
-
 
 extends_documentation_fragment:
     - azure
