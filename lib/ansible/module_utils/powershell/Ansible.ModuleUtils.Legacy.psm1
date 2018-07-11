@@ -17,7 +17,7 @@ Function Set-Attr($obj, $name, $value)
 #>
 
     # If the provided $obj is undefined, define one to be nice
-    if (-not $obj.GetType)
+    If (-not $obj.GetType)
     {
         $obj = @{ }
     }
@@ -44,7 +44,7 @@ Function Exit-Json($obj)
 #>
 
     # If the provided $obj is undefined, define one to be nice
-    if (-not $obj.GetType)
+    If (-not $obj.GetType)
     {
         $obj = @{ }
     }
@@ -259,7 +259,7 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
 }
 
 #Alias Get-attr-->Get-AnsibleParam for backwards compat. Only add when needed to ease debugging of scripts
-if (!(Get-Alias -Name "Get-attr" -ErrorAction SilentlyContinue))
+If (!(Get-Alias -Name "Get-attr" -ErrorAction SilentlyContinue))
 {
     New-Alias -Name Get-attr -Value Get-AnsibleParam
 }
@@ -299,15 +299,15 @@ Function Parse-Args($arguments, $supports_check_mode = $false)
     $params = Parse-Args $args
 #>
     $params = New-Object psobject
-    if ($arguments.Length -gt 0)
+    If ($arguments.Length -gt 0)
     {
         $params = Get-Content $arguments[0] | ConvertFrom-Json
     }
-    else {
+    Else {
         $params = $complex_args
     }
     $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
-    if ($check_mode -and -not $supports_check_mode)
+    If ($check_mode -and -not $supports_check_mode)
     {
         Exit-Json @{
             skipped = $true
@@ -338,20 +338,20 @@ Function Get-FileChecksum($path, $algorithm = 'sha1')
             default { Fail-Json @{} "Unsupported hash algorithm supplied '$algorithm'" }
         }
 
-        if ($PSVersionTable.PSVersion.Major -ge 4) {
+        If ($PSVersionTable.PSVersion.Major -ge 4) {
             $raw_hash = Get-FileHash $path -Algorithm $algorithm
             $hash = $raw_hash.Hash.ToLower()
-        } else {
+        } Else {
             $fp = [System.IO.File]::Open($path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite);
             $hash = [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "").ToLower();
             $fp.Dispose();
         }
     }
-    elseif (Test-Path -Path $path -PathType Container)
+    Elseif (Test-Path -Path $path -PathType Container)
     {
         $hash = "3";
     }
-    else
+    Else
     {
         $hash = "1";
     }
