@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_mysqlserver_facts
-version_added: "2.5"
+version_added: "2.7"
 short_description: Get MySQL Server facts.
 description:
     - Get facts of MySQL Server.
