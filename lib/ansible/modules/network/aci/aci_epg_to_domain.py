@@ -56,6 +56,7 @@ options:
     - The VLAN encapsulation for the EPG when binding a VMM Domain with static encap_mode.
     - This acts as the secondary encap when using useg.
     - Accepted values range between C(1) and C(4096).
+    type: int
   encap_mode:
     description:
     - The ecapsulataion method to be used.
@@ -74,6 +75,7 @@ options:
     description:
     - Determines the primary VLAN ID when using useg.
     - Accepted values range between C(1) and C(4096).
+    type: int
   resolution_immediacy:
     description:
     - Determines when the policies should be resolved and available.
