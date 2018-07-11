@@ -295,15 +295,15 @@ Converting subnet masks to CIDR notation
 Given a subnet in the form of network address and subnet mask, it can be converted into CIDR notation using ``ipaddr()``.  This can be useful for converting Ansible facts gathered about network configuration from subnet masks into CIDR format::
 
     ansible_default_ipv4: {
-        address: "192.168.0.11", 
-        alias: "eth0", 
-        broadcast: "192.168.0.255", 
-        gateway: "192.168.0.1", 
-        interface: "eth0", 
-        macaddress: "fa:16:3e:c4:bd:89", 
-        mtu: 1500, 
-        netmask: "255.255.255.0", 
-        network: "192.168.0.0", 
+        address: "192.168.0.11",
+        alias: "eth0",
+        broadcast: "192.168.0.255",
+        gateway: "192.168.0.1",
+        interface: "eth0",
+        macaddress: "fa:16:3e:c4:bd:89",
+        mtu: 1500,
+        netmask: "255.255.255.0",
+        network: "192.168.0.0",
         type: "ether"
     }
 
@@ -378,6 +378,28 @@ be automatically converted to a router address (with ``::1/48`` host address)::
     2002:c100:0200::1/48
 
 .. _6to4: https://en.wikipedia.org/wiki/6to4
+
+IP Math
+^^^^^^^
+
+.. versionadded:: 2.7
+
+``ipmath()`` filter can be used to do simple IP math/arithmetic.
+
+Here are a few simple examples::
+
+    # {{ '192.168.1.5' | ipmath(5) }}
+    192.168.1.10
+
+    # {{ '192.168.0.5' | ipmath(-10) }}
+    192.167.255.251
+
+    # {{ '2001::1' | ipmath(10) }}
+    2001::b
+
+    # {{ '2001::5' | ipmath(-10) }}
+    2000:ffff:ffff:ffff:ffff:ffff:ffff:fffb
+
 
 
 Subnet manipulation
@@ -527,5 +549,3 @@ convert it between various formats. Examples::
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-
