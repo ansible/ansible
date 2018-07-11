@@ -369,7 +369,9 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 # and make sure the attribute is of the type it should be
                 if value is not None:
                     if attribute.isa == 'string':
-                        value = to_text(value)
+                        # Values should have been converted from byte strings already.  This is
+                        # really for converting non-strings into strings (ints, floats, etc).
+                        value = to_text(value, errors='surrogate_or_strict', nonstring='simplerepr')
                     elif attribute.isa == 'int':
                         value = int(value)
                     elif attribute.isa == 'float':
