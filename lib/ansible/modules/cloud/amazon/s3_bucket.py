@@ -108,7 +108,7 @@ import json
 import os
 import time
 
-import ansible.module_utils.six.moves.urllib.parse as urlparse
+from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.six import string_types
 from ansible.module_utils.basic import to_text
 from ansible.module_utils.aws.core import AnsibleAWSModule
@@ -455,7 +455,7 @@ def destroy_bucket(s3_client, module):
 def is_fakes3(s3_url):
     """ Return True if s3_url has scheme fakes3:// """
     if s3_url is not None:
-        return urlparse.urlparse(s3_url).scheme in ('fakes3', 'fakes3s')
+        return urlparse(s3_url).scheme in ('fakes3', 'fakes3s')
     else:
         return False
 
@@ -465,7 +465,7 @@ def is_walrus(s3_url):
 
     We assume anything other than *.amazonaws.com is Walrus"""
     if s3_url is not None:
-        o = urlparse.urlparse(s3_url)
+        o = urlparse(s3_url)
         return not o.hostname.endswith('amazonaws.com')
     else:
         return False
