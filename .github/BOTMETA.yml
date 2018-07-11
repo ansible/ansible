@@ -317,7 +317,7 @@ files:
   $modules/clustering/consul_kv.py: sgargan
   $modules/clustering/consul_session.py: sgargan
   $modules/clustering/etcd3.py: evrardjp
-  $modules/clustering/k8s: chouseknecht maxamillion fabianvf flaper87
+  $modules/clustering/k8s: chouseknecht maxamillion fabianvf flaper87 willthames
   $modules/clustering/kubernetes.py: erjohnso supertom
   $modules/clustering/openshift: chouseknecht maxamillion fabianvf flaper87
   $modules/clustering/pacemaker_cluster.py:
@@ -864,8 +864,8 @@ files:
   $module_utils/network/ironware:
     maintainers: paulquack
     labels: networking
-  $module_utils/k8s_common.py:
-    maintainers: chouseknecht maxamillion fabianvf flaper87
+  $module_utils/k8s:
+    maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
     labels: clustering
   $module_utils/keycloak.py:
     maintainers: eikef
