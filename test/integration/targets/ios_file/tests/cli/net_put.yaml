@@ -1,5 +1,6 @@
 ---
-- debug: msg="START ios cli/net_put.yaml on connection={{ ansible_connection }}"
+- debug:
+    msg: "START ios cli/net_put.yaml on connection={{ ansible_connection }}"
 
 # Add minimal testcase to check args are passed correctly to
 # implementation module and module run is successful.
@@ -12,22 +13,13 @@
       - username {{ ansible_ssh_user }} privilege 15
     match: none
 
-- name: Delete existing file ios1.cfg if presen on remote host
+- name: Delete existing files if present on remote host
   ios_command:
-     commands:
-         - command: 'delete /force ios1.cfg'
-  ignore_errors: true
-
-- name: Delete existing file ios.cfg if presen on remote host
-  ios_command:
-     commands:
-         - command: 'delete /force ios.cfg'
-  ignore_errors: true
-
-- name: Delete existing file nonascii.bin if presen on remote host
-  ios_command:
-     commands:
-         - command: 'delete /force nonascii.bin'
+     commands: "{{ item }}"
+  loop:
+     - delete /force ios1.cfg
+     - delete /force ios.cfg
+     - delete /force nonascii.bin
   ignore_errors: true
 
 - name: copy file from controller to ios + scp (Default)
@@ -64,6 +56,10 @@
     mode: 'text'
   register: result
   ignore_errors: true
+
+- assert:
+    that:
+      - result.failed == true
 
 - name: copy file with non-ascii characters to ios in default mode(binary)
   net_put:
