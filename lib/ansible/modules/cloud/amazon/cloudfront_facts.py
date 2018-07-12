@@ -509,8 +509,12 @@ class CloudFrontServiceManager:
             else:
                 result = response.get(result_key)
             results.update(result)
-            args['NextToken'] = response.get('NextToken')
-            loop = args['NextToken'] is not None
+            args['Marker'] = response.get('NextMarker')
+            for key in response.keys():
+                if key.endswith('List'):
+                    args['Marker'] = response[key].get('NextMarker')
+                    break
+            loop = args['Marker'] is not None
         return results
 
     def keyed_list_helper(self, list_to_key):
