@@ -70,10 +70,7 @@ class PkgMgrFactCollector(BaseFactCollector):
     _platform = 'Generic'
     required_facts = set(['distribution'])
 
-    import q
-    @q.t
     def _check_fedora_versions(self, collected_facts):
-        import q; q(collected_facts['ansible_distribution_major_version'])
         try:
             if int(collected_facts['ansible_distribution_major_version']) < 15:
                 pkg_mgr_name = 'yum'
@@ -98,7 +95,6 @@ class PkgMgrFactCollector(BaseFactCollector):
         # that are debian based, this handles some of those scenarios as they
         # are reported/requested
         if pkg_mgr_name == 'apt':
-            import q; q(collected_facts['ansible_distribution'])
             if collected_facts['ansible_distribution'] == 'Fedora':
                 pkg_mgr_name = self._check_fedora_versions(collected_facts)
 
