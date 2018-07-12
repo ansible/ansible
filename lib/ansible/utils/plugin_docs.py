@@ -131,5 +131,5 @@ def get_docstub(filename, fragment_loader, verbose=False, ignore_errors=False):
 
     if data.get('doc', False):
         add_fragments(data['doc'], filename, fragment_loader=fragment_loader)
-    
+
     return data['doc'], data['plainexamples'], data['returndocs'], data['metadata']

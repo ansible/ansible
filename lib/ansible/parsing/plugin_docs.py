@@ -86,7 +86,7 @@ def read_docstub(filename, verbose=True, ignore_errors=True):
     """
     Quickly find short_description using string methods instead of node parsing.
     This does not return a full set of documentation strings and is intended for
-    operations like ansible-doc -l. 
+    operations like ansible-doc -l.
     """
 
     data = {
@@ -110,7 +110,7 @@ def read_docstub(filename, verbose=True, ignore_errors=True):
             if 'short_description:' in line:
                 capturing = True
                 doc_stub.append(line)
-            
+
         data['doc'] = AnsibleLoader(r"".join(doc_stub), file_name=filename).get_single_data()
 
     except:
@@ -120,3 +120,4 @@ def read_docstub(filename, verbose=True, ignore_errors=True):
             raise
 
     return data
+
