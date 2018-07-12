@@ -297,10 +297,10 @@ except ImportError:
     display = Display()
 
 
-NOT_SSH_ERRORS = ('Traceback (most recent call last):',  # Python-2.6 when there's an exception
-                                                         # while invoking a script via -m
-                  'PHP Parse error:',  # Php always returns error 255
-                  )
+b_NOT_SSH_ERRORS = (b'Traceback (most recent call last):',  # Python-2.6 when there's an exception
+                                                            # while invoking a script via -m
+                    b'PHP Parse error:',  # Php always returns error 255
+                    )
 
 SSHPASS_AVAILABLE = None
 
@@ -351,7 +351,7 @@ def _ssh_retry(func):
 
                 if return_tuple[0] == 255:
                     SSH_ERROR = True
-                    for signature in NOT_SSH_ERRORS:
+                    for signature in b_NOT_SSH_ERRORS:
                         if signature in return_tuple[1]:
                             SSH_ERROR = False
                             break
