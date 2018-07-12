@@ -1,0 +1,2 @@
+bugfixes:
+    - preseve delegation info on nolog https://github.com/ansible/ansible/issues/42344
