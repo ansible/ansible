@@ -216,6 +216,11 @@ EXAMPLES = '''
     dest: /src/ansible-examples
     archive: /tmp/ansible-examples.zip
 
+# Example clone a repo with separate git directory
+- git:
+    repo: https://github.com/ansible/ansible-examples.git
+    dest: /src/ansible-examples
+    separate_git_dir: /src/ansible-examples.git
 '''
 
 RETURN = '''
