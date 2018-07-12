@@ -75,8 +75,13 @@ def get_key_provider(key_arn, **kwargs):
         raise AnsibleError('You need to install "boto3" and "aws_encryption_sdk"'
                            'before using aws_kms filter')
 
+    if 'region_name' in kwargs:
+        region_name = kwargs['region']
+    else:
+        region_name = 'us-east-1'
+
     session = get_session(**kwargs)
-    client = session.client('kms', region_name='ap-southeast-2')
+    client = session.client('kms', region_name=region_name)
     key_provider = KMSMasterKeyProvider()
     regional_master_key = KMSMasterKey(client=client, key_id=key_arn)
     key_provider.add_master_key_provider(regional_master_key)
@@ -93,7 +98,7 @@ def aws_kms_encrypt(plaintext, key_arn, **kwargs):
         str: Encrypted item with KMS.
     """
     try:
-        ciphertext, encryptor_header = encrypt(  # pylint: disable=unused-variable
+        ciphertext, _ = encrypt(
             source=plaintext,
             key_provider=get_key_provider(key_arn=key_arn, **kwargs)
         )
@@ -112,7 +117,7 @@ def aws_kms_decrypt(ciphertext, key_arn, **kwargs):
         str: Decrypted plaintext item.
     """
     try:
-        cycled_plaintext, decrypted_header = decrypt(  # pylint: disable=unused-variable
+        cycled_plaintext, _ = decrypt(
             source=base64.b64decode(ciphertext),
             key_provider=get_key_provider(key_arn=key_arn, **kwargs)
         )
@@ -122,9 +127,13 @@ def aws_kms_decrypt(ciphertext, key_arn, **kwargs):
 
 
 class FilterModule(object):  # pylint: disable=too-few-public-methods
-    """ Filter module to provide functions """
+    """
+    Filter module to provide functions.
+    """
     def filters(self):  # pylint: disable=no-self-use
-        """ Filter module to provide functions """
+        """
+        Filter module to provide functions.
+        """
         return {
             'aws_kms_encrypt': aws_kms_encrypt,
             'aws_kms_decrypt': aws_kms_decrypt
