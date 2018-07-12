@@ -18,6 +18,7 @@
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
+
 __metaclass__ = type
 
 from ansible.compat.tests.mock import patch
@@ -83,12 +84,14 @@ class TestIosVrfModule(TestIosModule):
 
     def test_ios_vrf_purge_all(self):
         set_module_args(dict(purge=True))
-        commands = ['no vrf definition test_1', 'no vrf definition test_2', 'no vrf definition test_3']
+        commands = ['no vrf definition test_1', 'no vrf definition test_2', 'no vrf definition test_3', 'no vrf definition test_17',
+                    'no vrf definition test_18', 'no vrf definition test_19']
         self.execute_module(changed=True, commands=commands)
 
     def test_ios_vrf_purge_all_but_one(self):
         set_module_args(dict(name='test_1', purge=True))
-        commands = ['no vrf definition test_2', 'no vrf definition test_3']
+        commands = ['no vrf definition test_2', 'no vrf definition test_3', 'no vrf definition test_17', 'no vrf definition test_18',
+                    'no vrf definition test_19']
         self.execute_module(changed=True, commands=commands)
 
     def test_ios_vrfs_no_purge(self):
@@ -101,7 +104,7 @@ class TestIosVrfModule(TestIosModule):
         vrfs = [{'name': 'test_1'}, {'name': 'test_4'}]
         set_module_args(dict(vrfs=vrfs, purge=True))
         commands = ['vrf definition test_4', 'address-family ipv4', 'exit', 'address-family ipv6', 'exit', 'no vrf definition test_2',
-                    'no vrf definition test_3']
+                    'no vrf definition test_3', 'no vrf definition test_17', 'no vrf definition test_18', 'no vrf definition test_19']
         self.execute_module(changed=True, commands=commands)
 
     def test_ios_vrfs_global_arg(self):
@@ -126,8 +129,8 @@ class TestIosVrfModule(TestIosModule):
 
     def test_ios_vrf_route_both(self):
         set_module_args(dict(name='test_5', rd='2:100', route_both=['2:100', '3:100']))
-        commands = ['vrf definition test_5', 'address-family ipv4', 'exit', 'address-family ipv6', 'exit', 'rd 2:100', 'route-target both 2:100',
-                    'route-target both 3:100']
+        commands = ['vrf definition test_5', 'address-family ipv4', 'exit', 'address-family ipv6', 'exit', 'rd 2:100', 'route-target import 2:100',
+                    'route-target import 3:100', 'route-target export 2:100', 'route-target export 3:100']
         self.execute_module(changed=True, commands=commands, sort=False)
 
     def test_ios_vrf_route_import(self):
@@ -142,6 +145,68 @@ class TestIosVrfModule(TestIosModule):
                     'route-target export 4:100']
         self.execute_module(changed=True, commands=commands, sort=False)
 
-    def test_ios_vrf_route_both_exclusive(self):
+    def test_ios_vrf_route_both_mixed(self):
         set_module_args(dict(name='test_8', rd='5:100', route_both=['3:100', '4:100'], route_export=['3:100', '4:100']))
-        self.execute_module(failed=True)
+        self.execute_module(changed=True)
+
+    def test_ios_vrf_route_both_ipv4(self):
+        set_module_args(dict(name='test_9', rd='168.0.0.9:100', route_both_ipv4=['168.0.0.9:100', '3:100']))
+        commands = ['vrf definition test_9', 'address-family ipv4', 'exit', 'address-family ipv6', 'exit', 'rd 168.0.0.9:100', 'address-family ipv4',
+                    'route-target import 168.0.0.9:100', 'route-target import 3:100', 'exit-address-family', 'address-family ipv4',
+                    'route-target export 168.0.0.9:100', 'route-target export 3:100', 'exit-address-family']
+        self.execute_module(changed=True, commands=commands, sort=False)
+
+    def test_ios_vrf_route_import_ipv4(self):
+        set_module_args(dict(name='test_10', rd='168.0.0.10:100', route_import_ipv4=['168.0.0.10:100', '3:100']))
+        commands = ['vrf definition test_10', 'address-family ipv4', 'exit', 'address-family ipv6', 'exit', 'rd 168.0.0.10:100', 'address-family ipv4',
+                    'route-target import 168.0.0.10:100', 'route-target import 3:100', 'exit-address-family']
+        self.execute_module(changed=True, commands=commands, sort=False)
+
+    def test_ios_vrf_route_export_ipv4(self):
+        set_module_args(dict(name='test_11', rd='168.0.0.11:100', route_export_ipv4=['168.0.0.11:100', '3:100']))
+        commands = ['vrf definition test_11', 'address-family ipv4', 'exit', 'address-family ipv6', 'exit', 'rd 168.0.0.11:100', 'address-family ipv4',
+                    'route-target export 168.0.0.11:100', 'route-target export 3:100', 'exit-address-family']
+        self.execute_module(changed=True, commands=commands, sort=False)
+
+    def test_ios_vrf_route_both_ipv4_mixed(self):
+        set_module_args(dict(name='test_12', rd='168.0.0.12:100', route_both_ipv4=['168.0.0.12:100', '3:100'], route_export_ipv4=['168.0.0.15:100', '6:100']))
+        self.execute_module(changed=True)
+
+    def test_ios_vrf_route_both_ipv6(self):
+        set_module_args(dict(name='test_13', rd='2:100', route_both_ipv6=['2:100', '168.0.0.13:100']))
+        commands = ['vrf definition test_13', 'address-family ipv4', 'exit', 'address-family ipv6', 'exit', 'rd 2:100', 'address-family ipv6',
+                    'route-target import 2:100', 'route-target import 168.0.0.13:100', 'exit-address-family', 'address-family ipv6',
+                    'route-target export 2:100', 'route-target export 168.0.0.13:100', 'exit-address-family']
+        self.execute_module(changed=True, commands=commands, sort=False)
+
+    def test_ios_vrf_route_import_ipv6(self):
+        set_module_args(dict(name='test_14', rd='3:100', route_import_ipv6=['3:100', '168.0.0.14:100']))
+        commands = ['vrf definition test_14', 'address-family ipv4', 'exit', 'address-family ipv6', 'exit', 'rd 3:100', 'address-family ipv6',
+                    'route-target import 3:100', 'route-target import 168.0.0.14:100', 'exit-address-family']
+        self.execute_module(changed=True, commands=commands, sort=False)
+
+    def test_ios_vrf_route_export_ipv6(self):
+        set_module_args(dict(name='test_15', rd='4:100', route_export_ipv6=['168.0.0.15:100', '4:100']))
+        commands = ['vrf definition test_15', 'address-family ipv4', 'exit', 'address-family ipv6', 'exit', 'rd 4:100', 'address-family ipv6',
+                    'route-target export 168.0.0.15:100', 'route-target export 4:100', 'exit-address-family']
+        self.execute_module(changed=True, commands=commands, sort=False)
+
+    def test_ios_vrf_route_both_ipv6_mixed(self):
+        set_module_args(dict(name='test_16', rd='5:100', route_both_ipv6=['168.0.0.9:100', '4:100'], route_export_ipv6=['168.0.0.12:100', '6:100']))
+        self.execute_module(changed=True)
+
+    def test_ios_vrf_route_both_ipv6_mixed_idempotent(self):
+        set_module_args(dict(name='test_17', rd='2:100', route_import_ipv6=['168.0.0.14:100'], route_both_ipv6=['2:100', '168.0.0.13:100'],
+                             route_export_ipv6=['168.0.0.15:100', '4:100']))
+        self.execute_module(changed=False, commands=[], sort=False)
+
+    def test_ios_vrf_route_both_ipv4_mixed_idempotent(self):
+        set_module_args(dict(name='test_18', rd='168.0.0.9:100', route_import_ipv4=['168.0.0.10:600'], route_export_ipv4=['168.0.0.10:100'],
+                             route_both_ipv4=['168.0.0.9:100', '3:100']))
+        self.execute_module(changed=False, commands=[], sort=False)
+
+    def test_ios_vrf_all_route_both_idempotent(self):
+        set_module_args(dict(name='test_19', rd='10:700', route_both=['2:100', '2:101'], route_export=['2:102', '2:103'], route_import=['2:104', '2:105'],
+                             route_both_ipv4=['2:100', '2:101'], route_export_ipv4=['2:102', '2:103'], route_import_ipv4=['2:104', '2:105'],
+                             route_both_ipv6=['2:100', '2:101'], route_export_ipv6=['2:102', '2:103'], route_import_ipv6=['2:104', '2:105']))
+        self.execute_module(changed=False, commands=[], sort=False)
