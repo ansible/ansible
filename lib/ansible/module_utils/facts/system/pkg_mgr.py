@@ -94,7 +94,7 @@ class PkgMgrFactCollector(BaseFactCollector):
         # apt is easily installable and supported by distros other than those
         # that are debian based, this handles some of those scenarios as they
         # are reported/requested
-        if pkg_mgr_name == 'apt':
+        if pkg_mgr_name == 'apt' and collected_facts['ansible_os_family'] in ["RedHat", "Altlinux"]:
             if collected_facts['ansible_distribution'] == 'Fedora':
                 pkg_mgr_name = self._check_fedora_versions(collected_facts)
 
@@ -104,7 +104,7 @@ class PkgMgrFactCollector(BaseFactCollector):
         # pacman has become available by distros other than those that are Arch
         # based by virtue of a dependency to the systemd mkosi project, this
         # handles some of those scenarios as they are reported/requested
-        if pkg_mgr_name == 'pacman':
+        if pkg_mgr_name == 'pacman' and collected_facts['ansible_os_family'] in ["RedHat"]:
             if collected_facts['ansible_distribution'] == 'Fedora':
                 pkg_mgr_name = self._check_fedora_versions(collected_facts)
 

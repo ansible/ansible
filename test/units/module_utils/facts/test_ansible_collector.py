@@ -475,7 +475,8 @@ class TestPkgMgrFacts(TestCollectedFacts):
                       'pkg_mgr']
     collected_facts = {
         "ansible_distribution": "Fedora",
-        "ansible_distribution_major_version": "28"
+        "ansible_distribution_major_version": "28",
+        "ansible_os_family": "RedHat"
     }
 
 

@@ -226,7 +226,8 @@ class TestPkgMgrFacts(BaseFactsTest):
     collector_class = PkgMgrFactCollector
     collected_facts = {
         "ansible_distribution": "Fedora",
-        "ansible_distribution_major_version": "28"
+        "ansible_distribution_major_version": "28",
+        "ansible_os_family": "RedHat"
     }
 
     def test_collect(self):
@@ -253,6 +254,7 @@ class TestPkgMgrFactsAptFedora(BaseFactsTest):
     collected_facts = {
         "ansible_distribution": "Fedora",
         "ansible_distribution_major_version": "28",
+        "ansible_os_family": "RedHat",
         "ansible_pkg_mgr": "apt"
     }
 
