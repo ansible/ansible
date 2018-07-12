@@ -239,6 +239,16 @@ warnings:
     returned: error
     type: string
     sample: Your git version is too old to fully support the depth argument. Falling back to full checkouts.
+new_git_dir:
+    description: Contains the new path of .git directory if it's changed
+    returned: success
+    type: string
+    sample: /path/to/new/git/dir
+old_git_dir:
+    description: Contains the original path of .git directory if it's changed
+    returned: success
+    type: string
+    sample: /path/to/old/git/dir
 '''
 
 import filecmp
@@ -256,7 +266,7 @@ from ansible.module_utils.six import b, string_types
 from ansible.module_utils._text import to_native
 
 
-def relocate_repo(module, repo_dir, old_repo_dir, worktree_dir=None):
+def relocate_repo(module, result, repo_dir, old_repo_dir, worktree_dir):
     if os.path.exists(repo_dir):
         module.fail_json(msg='Separate-git-dir path %s already exists.' % repo_dir)
     if worktree_dir:
@@ -265,6 +275,8 @@ def relocate_repo(module, repo_dir, old_repo_dir, worktree_dir=None):
             shutil.move(old_repo_dir, repo_dir)
             with open(dot_git_file_path, 'w') as dot_git_file:
                 dot_git_file.write('gitdir: %s' % repo_dir)
+            result['old_git_dir'] = old_repo_dir
+            result['new_git_dir'] = repo_dir
         except (IOError, OSError) as err:
             module.fail_json(msg='Unable to move git dir. %s' % str(err))
             # if we already moved the .git dir, roll it back
@@ -468,7 +480,7 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
     cmd.extend([repo, dest])
     module.run_command(cmd, check_rc=True, cwd=dest_dirname)
     if needs_separate_git_dir_fallback:
-        relocate_repo(module, separate_git_dir, os.path.join(dest, ".git"), dest)
+        relocate_repo(module, result, separate_git_dir, os.path.join(dest, ".git"), dest)
 
     if bare and remote != 'origin':
         module.run_command([git_path, 'remote', 'add', remote, repo], check_rc=True, cwd=dest)
@@ -1075,7 +1087,7 @@ def main():
             if separate_git_dir and os.path.exists(repo_path) and separate_git_dir != repo_path:
                 result.update(changed=True)
                 if not module.check_mode:
-                    relocate_repo(module, separate_git_dir, repo_path, dest)
+                    relocate_repo(module, result, separate_git_dir, repo_path, dest)
                     repo_path = separate_git_dir
         except (IOError, ValueError) as err:
             # No repo path found
