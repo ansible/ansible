@@ -70,10 +70,9 @@ class GcpSession(object):
         self.product = product
         self._validate()
 
-    def get(self, url, body=None, **kwargs):
-        kwargs.update({'json': body, 'headers': self._headers()})
+    def get(self, url, body=None):
         try:
-            return self.session().get(url, **kwargs)
+            return self.session().get(url, json=body, headers=self._headers())
         except getattr(requests.exceptions, 'RequestException') as inst:
             self.module.fail_json(msg=inst.message)
 
@@ -106,15 +105,12 @@ class GcpSession(object):
         if not HAS_GOOGLE_LIBRARIES:
             self.module.fail_json(msg="Please install the google-auth library")
 
-        if 'auth_kind' not in self.module.params:
-            self.module.fail_json(msg="Auth kind parameter is missing")
-
-        if self.module.params.get('service_account_email') is not None and self.module.params['auth_kind'] != 'machineaccount':
+        if self.module.params['service_account_email'] is not None and self.module.params['auth_kind'] != 'machineaccount':
             self.module.fail_json(
                 msg="Service Acccount Email only works with Machine Account-based authentication"
             )
 
-        if self.module.params.get('service_account_file') is not None and self.module.params['auth_kind'] != 'serviceaccount':
+        if self.module.params['service_account_file'] is not None and self.module.params['auth_kind'] != 'serviceaccount':
             self.module.fail_json(
                 msg="Service Acccount File only works with Service Account-based authentication"
             )
