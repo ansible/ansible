@@ -1,0 +1,2 @@
+bugfixes:
+    - restores filtering out conflicting facts https://github.com/ansible/ansible/issues/41684
