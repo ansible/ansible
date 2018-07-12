@@ -31,6 +31,7 @@ if not HAS_BOTO3:
     pytestmark = pytest.mark.skip("test_api_gateway.py requires the `boto3` and `botocore` modules")
 
 import ansible.modules.cloud.amazon.aws_api_gateway as agw
+import ansible.module_utils.aws.core as core
 
 
 exit_return_dict = {}
@@ -53,8 +54,8 @@ def test_upload_api(monkeypatch):
     def return_fake_connection(*args, **kwargs):
         return FakeConnection()
 
-    monkeypatch.setattr(agw, "boto3_conn", return_fake_connection)
-    monkeypatch.setattr(agw.AnsibleModule, "exit_json", fake_exit_json)
+    monkeypatch.setattr(core, "boto3_conn", return_fake_connection)
+    monkeypatch.setattr(core.AnsibleAWSModule, "exit_json", fake_exit_json)
 
     set_module_args({
         "api_id": "fred",
