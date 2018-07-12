@@ -93,7 +93,7 @@ General
 =======
 
 * Investigate the cause of WinRM HTTPS read timeouts
-* WinRM persistence
+* WinRM connection persistence (improves performance)
 * Experiment with OpenSSH + powershell
 
 Modules
