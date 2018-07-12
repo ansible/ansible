@@ -6,7 +6,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -21,7 +20,7 @@ version_added: "2.5"
 requirements:
   - etcd3
 description:
-   - Sets or deletes values in etcd3 cluster using its v3 api.
+   - Get, Set or delete values in etcd3 cluster using its v3 api.
    - Needs python etcd3 lib to work
 options:
     key:
@@ -30,8 +29,8 @@ options:
         required: true
     value:
         description:
-            - the information stored
-        required: true
+            - the value should be associated with the given key, required if C(state) is C(present) or C(absent).
+        required: false
     host:
         description:
             - the IP address of the cluster
@@ -44,7 +43,7 @@ options:
         description:
             - the state of the value for the key.
             - can be present or absent
-        required: true
+        required: false
 author:
     - Jean-Philippe Evrard (@evrardjp)
 """
@@ -57,6 +56,16 @@ EXAMPLES = """
     host: "localhost"
     port: 2379
     state: "present"
+
+# Get the value of key "foo" on a cluter located "http://localhost:2379"
+- etcd3:
+    key: "foo"
+    host: "localhost"
+    port: 2379
+  register: foo
+
+- debug:
+  msg: "{{ foo.value }}"
 """
 
 RETURN = '''
@@ -67,6 +76,10 @@ key:
 old_value:
     description: The previous value in the cluster
     returned: always
+    type: str
+value:
+    description: The value of a key
+    returned: only when state and value is not present
     type: str
 '''
 
@@ -86,10 +99,10 @@ def run_module():
     # the module
     module_args = dict(
         key=dict(type='str', required=True),
-        value=dict(type='str', required=True),
+        value=dict(type='str', required=False),
         host=dict(type='str', default='localhost'),
         port=dict(type='int', default=2379),
-        state=dict(type='str', required=True, choices=['present', 'absent']),
+        state=dict(type='str', default=None, required=False, choices=['present', 'absent']),
     )
 
     # seed the result dict in the object
@@ -162,6 +175,18 @@ def run_module():
                                      exception=traceback.format_exc())
                 else:
                     result['changed'] = True
+    elif module.params['state'] is None and module.params['value'] is None:
+        try:
+            result['value'] = to_native(cluster_value[0])
+        except Exception as exp:
+            module.fail_json(
+                msg='Cannot get data from key %s: %s' %
+                    (
+                        module.params['key'],
+                        to_native(exp)
+                    ),
+                exception=traceback.format_exc()
+            )
     else:
         module.fail_json(msg="State not recognized")
 
@@ -179,6 +204,7 @@ def run_module():
 
 def main():
     run_module()
+
 
 if __name__ == '__main__':
     main()
