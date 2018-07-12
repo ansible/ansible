@@ -81,7 +81,7 @@ notes:
     Note that zone transactions must explicitly be permanent. This is a limitation in firewalld.
     This also means that you will have to reload firewalld after adding a zone that you wish to perform immediate actions on.
     The module will not take care of this for you implicitly because that would undo any previously performed immediate actions which were not
-    permanent. Therefor, if you require immediate access to a newly created zone it is recommended you reload firewalld immediately after the zone
+    permanent. Therefore, if you require immediate access to a newly created zone it is recommended you reload firewalld immediately after the zone
     creation returns with a changed state and before you perform any other immediate, non-permanent actions on that zone.
 requirements: [ 'firewalld >= 0.2.11' ]
 author: "Adam Miller (@maxamillion)"
