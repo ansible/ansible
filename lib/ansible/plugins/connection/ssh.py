@@ -1108,7 +1108,7 @@ class Connection(ConnectionBase):
             stdout, stderr = p.communicate()
             status_code = p.wait()
             if status_code != 0:
-                raise AnsibleError("Cannot reset connection:\n%s" % stderr)
+                display.warning("Failed to reset connection:%s" % stderr)
 
         self.close()
 

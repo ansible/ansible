@@ -158,7 +158,7 @@ class ActionModule(ActionBase):
                 try:
                     self._connection.set_option("connection_timeout",
                                                 connect_timeout)
-                    self._connection._reset()
+                    self._connection.reset()
                 except AttributeError:
                     display.warning("Connection plugin does not allow the "
                                     "connection timeout to be overridden")
@@ -178,7 +178,7 @@ class ActionModule(ActionBase):
             try:
                 self._connection.set_option("connection_timeout",
                                             connection_timeout_orig)
-                self._connection._reset()
+                self._connection.reset()
             except (AnsibleError, AttributeError) as e:
                 display.debug("Failed to reset connection_timeout back to default: %s" % to_native(e))
 
@@ -192,7 +192,7 @@ class ActionModule(ActionBase):
                     # (another reboot occurred) we need to reset the connection
                     # to make sure we are not re-using the same shell id
                     try:
-                        self._connection._reset()
+                        self._connection.reset()
                     except AttributeError:
                         pass
                     raise
