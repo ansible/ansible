@@ -90,6 +90,14 @@ options:
         active configuration is saved.
     type: bool
     default: 'no'
+  scratch:
+    version_added: "2.7"
+    description:
+      - The C(scratch) argument controles whether or not deletes
+        running config. When set to True, deletes configs before
+        configure commands.
+    type: bool
+    default: 'no'
 """
 
 EXAMPLES = """
@@ -185,6 +193,19 @@ def diff_config(commands, config):
     return list(updates)
 
 
+def get_commands(module, candidate, running):
+    connection = get_connection(module)
+    if module.params['scratch']:
+        current_config = get_config(module)
+        top_level_nodes = set(line.split()[1] for line in current_config.splitlines() if line.startswith("set") and len(line.split()) > 1)
+        commands = ["delete %s" % node for node in top_level_nodes]
+        commands = commands + candidate.splitlines()
+        return commands
+    else:
+        response = connection.get_diff(candidate=candidate, running=running, match=module.params['match'])
+        return response.get('config_diff')
+
+
 def sanitize_config(config, result):
     result['filtered'] = list()
     index_to_filter = list()
@@ -207,9 +228,7 @@ def run(module, result):
     candidate = get_candidate(module)
 
     # create loadable config that includes only the configuration updates
-    connection = get_connection(module)
-    response = connection.get_diff(candidate=candidate, running=config, match=module.params['match'])
-    commands = response.get('config_diff')
+    commands = get_commands(candidate=candidate, running=config, module=module)
     sanitize_config(commands, result)
 
     result['commands'] = commands
@@ -226,6 +245,8 @@ def run(module, result):
                                       'removed, please see the filtered key')
 
         result['changed'] = True
+        if module.params['scratch']:
+            result['changed'] = diff is not None
 
     if module._diff:
         result['diff'] = {'prepared': diff}
@@ -242,6 +263,7 @@ def main():
 
         config=dict(),
 
+        scratch=dict(type='bool', default=False),
         backup=dict(type='bool', default=False),
         save=dict(type='bool', default=False),
     )

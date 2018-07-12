@@ -18,6 +18,7 @@
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
+
 __metaclass__ = type
 
 from ansible.compat.tests.mock import patch, MagicMock
@@ -28,7 +29,6 @@ from .vyos_module import TestVyosModule, load_fixture
 
 
 class TestVyosConfigModule(TestVyosModule):
-
     module = vyos_config
 
     def setUp(self):
@@ -115,3 +115,13 @@ class TestVyosConfigModule(TestVyosModule):
         candidate = '\n'.join(lines)
         self.conn.get_diff = MagicMock(return_value=self.cliconf_obj.get_diff(candidate, None, match='none'))
         self.execute_module(changed=True, commands=lines, sort=False)
+
+    def test_vyos_scratch(self):
+        # pick from fixture file: vyos_config_config.cfg
+        lines = ['set system name-server 8.8.8.8',
+                 'set system name-server 8.8.4.4',
+                 'set system host-name test_vyos_scratch']
+        delete_lines = ['delete system', 'delete interfaces']
+        expected_lines = delete_lines + lines
+        set_module_args(dict(lines=lines, scratch=True))
+        self.execute_module(commands=expected_lines)
