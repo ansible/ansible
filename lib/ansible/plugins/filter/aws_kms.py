@@ -43,6 +43,8 @@ def role_arn_to_session(role_arn, role_session_name):
 def get_boto_session(**kwargs):
     """
     Get boto3 session object.
+    Returns:
+        boto3.Session: Returns a boto3.Session object.
     """
     valid_keys = [
         'profile_name',
@@ -103,7 +105,7 @@ def aws_kms_encrypt(plaintext, key_arn, **kwargs):
     """
     Encrypt with KMS.
     Args:
-        plaintext (str): Plain text item to ecrypt.
+        plaintext (str): Plain text item to encrypt.
         key_arn (str): AWS ARN to the KMS key.
     Returns:
         str: Encrypted item with KMS.
@@ -115,7 +117,7 @@ def aws_kms_encrypt(plaintext, key_arn, **kwargs):
         )
         return base64.b64encode(ciphertext)
     except AWSEncryptionSDKClientError as kms_ex:
-        raise AnsibleFilterError("Unable to encrypt vaule using KMS - {0}".format(kms_ex))
+        raise AnsibleFilterError("Unable to encrypt value using KMS - {0}".format(kms_ex))
 
 
 def aws_kms_decrypt(ciphertext, key_arn, **kwargs):
@@ -125,7 +127,7 @@ def aws_kms_decrypt(ciphertext, key_arn, **kwargs):
         ciphertext (str): Encrypted item to decrypt.
         key_arn (str): AWS ARN to the KMS key.
     Returns:
-        str: Decrypted plaintext item.
+        str: Decrypted plain text item.
     """
     try:
         cycled_plaintext, dummy = decrypt(
@@ -134,7 +136,7 @@ def aws_kms_decrypt(ciphertext, key_arn, **kwargs):
         )
         return cycled_plaintext.rstrip()
     except AWSEncryptionSDKClientError as kms_ex:
-        raise AnsibleFilterError("Unable to encrypt vaule using KMS - {0}".format(kms_ex))
+        raise AnsibleFilterError("Unable to encrypt value using KMS - {0}".format(kms_ex))
 
 
 class FilterModule(object):  # pylint: disable=too-few-public-methods
@@ -144,6 +146,8 @@ class FilterModule(object):  # pylint: disable=too-few-public-methods
     def filters(self):  # pylint: disable=no-self-use
         """
         Filter module to provide functions.
+        Returns:
+            dictionary: Dictionary with valid methods that can be called to use this plugin.
         """
         return {
             'aws_kms_encrypt': aws_kms_encrypt,
