@@ -323,7 +323,7 @@
 
 - name: Generate mac address with bad prefix
   debug:
-    var : "'52:54'|genmac"
+    var: "'52:54'|genmac"
   register: genmac_badprefix
   ignore_errors: yes
 

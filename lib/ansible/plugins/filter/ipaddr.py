@@ -1085,7 +1085,9 @@ def genmac(value):
         value = 'AC:DE:48'
 
     if not re.match("[0-9a-f]{2}([-:]?)[0-9a-f]{2}(\\1[0-9a-f]{2}){1}$", value.lower()):
-        raise errors.AnsibleFilterError('Invalid OUI prefix (%s) for genmac: 3 colon(:) or hyphen(-) with two hexadecimal digit is required or leave it empty.' % value)
+        raise errors.AnsibleFilterError('Invalid OUI prefix (%s) for genmac: 3 colon(:) '
+                                        'or hyphen(-) with two hexadecimal digit is '
+                                        'required or leave it empty.' % value)
 
     prefix = value.replace('-', ':')
     ret = '{0}:{1:02X}:{2:02X}:{3:02X}'.format(prefix,

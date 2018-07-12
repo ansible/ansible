@@ -511,7 +511,10 @@ class TestIpFilter(unittest.TestCase):
         self.assertRegex(genmac(prefix).lower(), expected)
 
         bad_prefix = "52:AC"
-        expected = 'Invalid OUI prefix (52:AC) for genmac: 3 colon(:) or hyphen(-) with two hexadecimal digit is required or leave it empty.'
+        expected = (
+           'Invalid OUI prefix (52:AC) for genmac: 3 colon(:) or hyphen(-) '
+           'with two hexadecimal digit is required or leave it empty.'
+        )
         with self.assertRaises(AnsibleFilterError) as exc:
             genmac(bad_prefix)
         self.assertEqual(exc.exception.message, expected)
