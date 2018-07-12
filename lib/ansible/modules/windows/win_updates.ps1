@@ -355,6 +355,8 @@ $update_script_block = {
         }
         
         Write-DebugLog -msg "Return value:`r`n$(ConvertTo-Json -InputObject $result -Depth 99)"
+
+        return $result
     }
 
     $check_mode = $arguments.check_mode
