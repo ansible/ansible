@@ -185,12 +185,16 @@ options:
             - When a default security group is created for a Linux host a rule will be added allowing inbound TCP
               connections to the default SSH port 22, and for a Windows host rules will be added allowing inbound
               access to RDP ports 3389 and 5986. Override the default ports by providing a list of open ports.
+    enable_accelerated_networking:
+        description:
+            - This enables accelerated networking on the network interface
+        type: bool
+        default: 'no'
+        version_added: 2.7
     enable_ip_forwarding:
         description:
             - This disable's Azure's check on the source and destination IPs for a network interface,
               allowing VMs attached to this network interface to route traffic to interfaces other than its own
-        aliases:
-            - ip_forwarding
         type: bool
         default: 'no'
         version_added: 2.7
@@ -550,6 +554,10 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                 ip_configuration_request = self.construct_ip_configuration_set(self.ip_configurations)
                 if ip_configuration_result != ip_configuration_request:
                     self.log("CHANGED: network interface {0} ip configurations".format(self.name))
+                    changed = True
+
+                if self.enable_accelerated_networking != results['enable_accelerated_networking']:
+                    self.log("CHANGED: network interface {0} accelerated networking".format(self.name))
                     changed = True
 
                 if self.enable_ip_forwarding != results['enable_ip_forwarding']:
