@@ -31,13 +31,13 @@ options:
         description:
             - ID of PagerDuty service when incidents will be triggered, acknowledged or resolved.
         required: true
-        version_added: '2.7.0'
+        version_added: "2.7"
     integration_key:
         description:
             - The GUID of one of your "Generic API" services.
             - This is the "integration key" listed on a "Integrations" tab of PagerDuty service.
         required: true
-        version_added: '2.7.0'
+        version_added: "2.7"
     state:
         description:
             - Type of event to be sent.
@@ -67,7 +67,7 @@ options:
             - For C(acknowledged) or C(resolved) I(state) - This should be the incident_key you received back when the incident was first opened by a
               trigger event. Acknowledge events referencing resolved or nonexistent incidents will be discarded.
         required: false
-        version_added: '2.7.0'
+        version_added: "2.7"
     client:
         description:
         - The name of the monitoring client that is triggering this event.

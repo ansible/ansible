@@ -38,7 +38,7 @@ options:
             - PagerDuty unique subdomain. Obsolete. It is not used with PagerDuty REST v2 API.
     user:
         description:
-            - PagerDuty user ID. Obsolete. Please, use token for authorization.
+            - PagerDuty user ID. Obsolete. Please, use I(token) for authorization.
     token:
         description:
             - A pagerduty token, generated on the pagerduty site. It is used for authorization.
@@ -55,7 +55,7 @@ options:
     window_id:
         description:
             - ID of maintenance window. Only needed when absent a maintenance_window.
-        version_added: '2.7.0'
+        version_added: "2.7"
     hours:
         description:
             - Length of maintenance window in hours.
