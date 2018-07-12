@@ -2800,7 +2800,7 @@ def doSecureStartupConfigBackUp(
         username + "@" + server + "/" + confPath + " vrf management\n"
     # debugOutput(command)
     response = waitForDeviceResponse(command, "(yes/no)", 3, obj)
-    if(response.lower().find("Error-101")):
+    if(response.lower().find('error-101')):
         command = password + "\n"
         retVal = retVal + waitForDeviceResponse(command, "#", timeout, obj)
         return retVal
@@ -2903,7 +2903,7 @@ def doSecureStartUpConfigRollback(
 
     # debugOutput(command)
     response = waitForDeviceResponse(command, "(yes/no)", 3, obj)
-    if(response.lower().find("Error-101")):
+    if(response.lower().find('error-101')):
         command = password + "\n"
         retVal = retVal + waitForDeviceResponse(command, "[n]", timeout, obj)
         command = "y\n"
@@ -3001,7 +3001,7 @@ def doSecureRunningConfigBackUp(
         username + "@" + server + "/" + confPath + " vrf management\n"
     # debugOutput(command)
     response = waitForDeviceResponse(command, "(yes/no)", 3, obj)
-    if(response.lower().find("Error-101")):
+    if(response.lower().find('error-101')):
         command = password + "\n"
         retVal = retVal + waitForDeviceResponse(command, "#", timeout, obj)
         return retVal
@@ -3100,7 +3100,7 @@ def doSecureRunningConfigRollback(
 
     # debugOutput(command)
     response = waitForDeviceResponse(command, "(yes/no)", 3, obj)
-    if(response.lower().find("Error-101")):
+    if(response.lower().find('error-101')):
         command = password + "\n"
         retVal = retVal + waitForDeviceResponse(command, "#", timeout, obj)
         return retVal
@@ -3164,7 +3164,7 @@ def doImageTransfer(
         return "Error-110"
     # debugOutput(command)
     response = waitForDeviceResponse(command, "[n]", 3, obj)
-    if(response.lower().find("Error-101")):
+    if(response.lower().find('error-101')):
         retVal = retVal
     else:
         retVal = retVal + response
@@ -3214,7 +3214,7 @@ def doSecureImageTransfer(
         server + "/" + imgPath + " system-image " + type + " vrf management \n"
     # debugOutput(command)
     response = waitForDeviceResponse(command, "[n]", 3, obj)
-    if(response.lower().find("Error-101")):
+    if(response.lower().find('error-101')):
         retVal = retVal
     else:
         retVal = retVal + response
@@ -3223,7 +3223,7 @@ def doSecureImageTransfer(
         command = "y\n"
         # debugOutput(command)
         response = waitForDeviceResponse(command, "(yes/no)?", 3, obj)
-        if(response.lower().find("Error-101")):
+        if(response.lower().find('error-101')):
             retVal = retVal
         else:
             retVal = retVal + response
@@ -3237,7 +3237,7 @@ def doSecureImageTransfer(
         command = "y\n"
         # debugOutput(command)
         response = waitForDeviceResponse(command, "(yes/no)?", 3, obj)
-        if(response.lower().find("Error-101")):
+        if(response.lower().find('error-101')):
             retVal = retVal
         else:
             retVal = retVal + response
@@ -3349,19 +3349,19 @@ def waitForDeviceResponse(command, prompt, timeout, obj):
 
 def checkOutputForError(output):
     retVal = ""
-    index = output.lower().find("error")
+    index = output.lower().find('error')
     startIndex = index + 6
     if(index == -1):
-        index = output.lower().find("invalid")
+        index = output.lower().find('invalid')
         startIndex = index + 8
         if(index == -1):
-            index = output.lower().find("cannot be enabled in l2 interface")
+            index = output.lower().find('cannot be enabled in l2 interface')
             startIndex = index + 34
             if(index == -1):
-                index = output.lower().find("incorrect")
+                index = output.lower().find('incorrect')
                 startIndex = index + 10
                 if(index == -1):
-                    index = output.lower().find("failure")
+                    index = output.lower().find('failure')
                     startIndex = index + 8
                     if(index == -1):
                         return None
