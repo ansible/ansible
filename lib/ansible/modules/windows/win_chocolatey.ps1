@@ -341,12 +341,12 @@ Function Choco-Install
         if ($state -in ("downgrade", "latest"))
         {
             Choco-Upgrade -package $package -version $version -force $force -timeout $timeout `
-                -skipscripts $skipscripts -source $source -user $source_username `
-                -password $source_password -installargs $installargs -packageparams $packageparams `
-                -allowemptychecksums $allowemptychecksums -ignorechecksums $ignorechecksums `
-                -ignoredependencies $ignoredependencies -allowdowngrade $allowdowngrade `
-                -proxy_url $proxy_url -proxy_username $proxy_username -proxy_password $proxy_password `
-                -allowprerelease $allowprerelease  
+                -skipscripts $skipscripts -source $source -installargs $installargs `
+                -packageparams $packageparams -allowemptychecksums $allowemptychecksums `
+                -ignorechecksums $ignorechecksums -ignoredependencies $ignoredependencies `
+                -allowdowngrade $allowdowngrade -allowprerelease $allowprerelease `
+                -proxy_url $proxy_url -proxy_username $proxy_username -proxy_password $proxy_password
+                 
             return
         }
         elseif (-not $force)
@@ -540,12 +540,11 @@ if ($state -in ("absent", "reinstalled")) {
 if ($state -in ("downgrade", "latest", "present", "reinstalled")) {
 
     Choco-Install -package $package -version $version -force $force -timeout $timeout `
-        -skipscripts $skipscripts -source $source -user $source_username -password $source_password `
-        -installargs $installargs -packageparams $packageparams -allowemptychecksums $allowemptychecksums `
-        -ignorechecksums $ignorechecksums -ignoredependencies $ignoredependencies `
-        -allowdowngrade ($state -eq "downgrade") -proxy_url $proxy_url `
-        -proxy_username $proxy_username -proxy_password $proxy_password `
-        -allowprerelease $allowprerelease 
+        -skipscripts $skipscripts -source $source -installargs $installargs -packageparams $packageparams `
+        -allowemptychecksums $allowemptychecksums -ignorechecksums $ignorechecksums `
+        -ignoredependencies $ignoredependencies -allowdowngrade ($state -eq "downgrade") `
+        -proxy_url $proxy_url -proxy_username $proxy_username -proxy_password $proxy_password `
+        -allowprerelease $allowprerelease
 }
 
 Exit-Json -obj $result
