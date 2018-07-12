@@ -1,13 +1,14 @@
 """
 (c) 2018, Archie Gunasekara <contact@achinthagunasekara.com>
 Module to handle encrypting and decrypting of items with KMS
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 """
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import base64
 from os.path import basename
-from ansible.errors import AnsibleError, AnsibleFilterError
+from ansible.errors import AnsibleFilterError
 
 try:
     import boto3
@@ -37,29 +38,27 @@ def role_arn_to_session(**args):
         aws_session_token=response['Credentials']['SessionToken'])
 
 
-def get_session(**kwargs):
+def get_boto_session(**kwargs):
     """
     Get boto3 session object.
     """
     try:
         if 'profile_name' in kwargs:
             return boto3.session.Session(profile_name=kwargs['profile_name'])
-
-        if 'role_to_assume' in kwargs:
+        elif 'role_to_assume' in kwargs:
             return role_arn_to_session(
-                RoleArn=kwargs['prorole_to_assume'],
-                RoleSessionName=basename(kwargs['prorole_to_assume'])
+                RoleArn=kwargs['role_to_assume'],
+                RoleSessionName=basename(kwargs['role_to_assume'])
             )
         elif 'aws_access_key_id' in kwargs and 'aws_secret_access_key' in kwargs:
             return boto3.Session(
                 aws_access_key_id=kwargs['aws_access_key_id'],
                 aws_secret_access_key=kwargs['aws_secret_access_key'],
             )
-
         return boto3.session.Session()
     except Exception as ex:
-        raise AnsibleError("Something went wrong while creating a "
-                           "boto3 session in aws_kms_plugin - {0}".format(ex))
+        raise AnsibleFilterError("Something went wrong while creating a "
+                                 "boto3 session in aws_kms_plugin - {0}".format(ex))
 
 
 def get_key_provider(key_arn, **kwargs):
@@ -72,16 +71,16 @@ def get_key_provider(key_arn, **kwargs):
     """
 
     if not HAS_DEPENDENCIES:
-        raise AnsibleError('You need to install "boto3" and "aws_encryption_sdk"'
-                           'before using aws_kms filter')
+        raise AnsibleFilterError('You need to install "boto3" and "aws_encryption_sdk"'
+                                 'before using aws_kms filter')
 
     if 'region_name' in kwargs:
         region_name = kwargs['region']
     else:
         region_name = 'us-east-1'
 
-    session = get_session(**kwargs)
-    client = session.client('kms', region_name=region_name)
+    boto_session = get_boto_session(**kwargs)
+    client = boto_session.client('kms', region_name=region_name)
     key_provider = KMSMasterKeyProvider()
     regional_master_key = KMSMasterKey(client=client, key_id=key_arn)
     key_provider.add_master_key_provider(regional_master_key)
