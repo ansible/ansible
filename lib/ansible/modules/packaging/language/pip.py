@@ -275,7 +275,6 @@ class Distribution:
     def __init__(self, name_string, version_string=None):
         self._plain_distribution = False
         self._distribution_name = name_string
-        self._requirement = Requirement.parse(name_string)
         if name_string.startswith('file:') or _is_vcs_url(name_string):
             return
 
@@ -284,6 +283,7 @@ class Distribution:
             version_string = version_string.lstrip()
             separator = '==' if version_string[0].isdigit() else ' '
             name_string = separator.join((name_string, version_string))
+        self._requirement = Requirement.parse(name_string)
         # old pkg_resource will replace 'setuptools' with 'distribute' when it already installed
         if self._requirement.project_name == "distribute":
             self._distribution_name = "setuptools"
