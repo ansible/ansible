@@ -301,20 +301,24 @@ def main():
         else:
             payload = dict()
         update = False
-        if meraki.params['syslog_default_rule']:
+        if meraki.params['syslog_default_rule'] is not None:
             payload['syslogDefaultRule'] = meraki.params['syslog_default_rule']
+            # meraki.fail_json(msg='Payload', payload=payload)
         try:
             if len(rules) - 1 != len(payload['rules']):  # Quick and simple check to avoid more processing
                 update = True
-            if meraki.params['syslog_default_rule']:
+            if meraki.params['syslog_default_rule'] is not None:
                 if rules[len(rules) - 1]['syslogEnabled'] != meraki.params['syslog_default_rule']:
                     update = True
             if update is False:
+                del rules[len(rules) - 1]  # Remove default rule for comparison
                 for r in range(len(rules) - 1):
-                    if meraki.is_update_required(rules[r], payload[r]) is True:
+                    if meraki.is_update_required(rules[r], payload['rules'][r]) is True:
                         update = True
         except KeyError:
             pass
+            # if meraki.params['syslog_default_rule']:
+            #     meraki.fail_json(msg='Compare', original=rules, proposed=payload)
         if update is True:
             response = meraki.request(path, method='PUT', payload=json.dumps(payload))
             if meraki.status == 200:
