@@ -298,7 +298,7 @@
 
 - name: assert no changes ocurred
   assert:
-    that: "version2.changed == False"
+    that: "not version2.changed"
 
 - name: test the check_mod
   pip:
@@ -320,7 +320,7 @@
 
 - name: assert changed
   assert:
-    that: "version4.changed == True"
+    that: "version4.changed"
 
 - name: uninstall test packages for next test
   pip:
@@ -376,7 +376,7 @@
 
 - name: assert no change
   assert:
-    that: "version9.changed == False"
+    that: "not version9.changed"
 
 - name: test install unsatisfied multi-packages with check_mode
   pip:
@@ -400,7 +400,7 @@
 
 - name: assert the install ran correctly
   assert:
-    that: "version11.changed == True"
+    that: "version11.changed"
 
 - name: test install multi package provided by one single string with check_mode
   pip:
@@ -410,7 +410,7 @@
 
 - name: assert no changes needed
   assert:
-    that: "version12.changed == False"
+    that: "not version12.changed"
 
 - name: clean up
   pip:

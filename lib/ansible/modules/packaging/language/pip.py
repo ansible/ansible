@@ -624,7 +624,7 @@ def main():
             if version is not None:
                 if len(distributions) > 1:
                     module.fail_json(
-                        msg="'version' argument is not ambiguous when installing multiple package distributions. "
+                        msg="'version' argument is ambiguous when installing multiple package distributions. "
                             "Please spefify version restrictions next to each distribution in 'name' argument."
                     )
                 if distributions[0].has_version_specifier:
