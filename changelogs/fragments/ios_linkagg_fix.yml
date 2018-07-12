@@ -1,0 +1,2 @@
+- bugfixes:
+    - ios_linkagg - fix picking correct interface names issue (https://github.com/ansible/ansible/pull/42557)
