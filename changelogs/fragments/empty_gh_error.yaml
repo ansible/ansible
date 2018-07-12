@@ -1,0 +1,2 @@
+bugfixes:
+    - emtpy host/group name is an error https://github.com/ansible/ansible/issues/42044
