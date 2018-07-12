@@ -42,13 +42,13 @@ options:
             - Type of event to be sent.
         required: true
         choices:
-            - 'triggered'
-            - 'acknowledged'
-            - 'resolved'
+            - 'trigger'
+            - 'acknowledge'
+            - 'resolve'
     desc:
         description:
             - A brief text summary of the event, used to generate the summaries/titles of any associated alerts.
-            - Required when C(state=triggered).
+            - Required when C(state=trigger).
         required: false
         default: 'Created by Ansible'
     api_version:
@@ -62,7 +62,7 @@ options:
     source:
         description:
             - The unique location of the affected system, preferably a hostname or FQDN.
-            - Required when C(state=triggered).
+            - Required when C(state=trigger).
             - An Ansible fact or registered variable is a good option for this value to identify the remote host and executor.
             - For example - C(ansible_hostname) or C(ansible_eth0.ipv4.address).
         required: false
@@ -70,7 +70,7 @@ options:
     severity:
         description:
             - The perceived severity of the status the event is describing with respect to the affected system.
-            - Required when C(state=triggered).
+            - Required when C(state=trigger).
         required: false
         choices:
             - 'critical'
@@ -82,10 +82,10 @@ options:
         description:
             - Identifies the incident to which this I(state) should be applied.
             - If omitted, it will be generated automatically by PagerDuty and returned in the Events API v2 response.
-            - For C(state=triggered) - If there's no open (i.e. unresolved) incident with this key, a new one will be created. If there's already an
+            - For C(state=trigger) - If there's no open (i.e. unresolved) incident with this key, a new one will be created. If there's already an
               open incident with a matching key, this event will be appended to that incident's log. The event key provides an easy way to "de-dup"
               problem reports.
-            - For C(state=acknowledged) or C(state=resolved) - This should be the incident_key you received back when the incident was first opened by a
+            - For C(state=acknowledge) or C(state=resolve) - This should be the incident_key you received back when the incident was first opened by a
               trigger event. Acknowledge events referencing resolved or nonexistent incidents will be discarded.
             - A MD5, SHA1, SHA512 or any string is a good option for this value.
             - Maximum permitted length of this property is I(255 characters).
@@ -120,7 +120,7 @@ EXAMPLES = '''
 # Trigger an incident with just the basic options
 - pagerduty_incident:
     routing_key: xxx
-    state: triggered
+    state: trigger
     severity: warning
     desc: problem that led to this trigger
     source: host.example.com
@@ -134,7 +134,7 @@ EXAMPLES = '''
 # Trigger an incident with more options
 - pagerduty_incident:
     routing_key: xxx
-    state: triggered
+    state: trigger
     severity: critical
     desc: problem that led to this trigger
     dedup_key: "{{ 'zzz' | hash('md5') }}"
@@ -148,13 +148,13 @@ EXAMPLES = '''
 # Acknowledge an incident based on incident_key
 - pagerduty_incident:
     routing_key: xxx
-    state: acknowledged
+    state: acknowledge
     dedup_key: somekey
 
 # Resolve an incident based on incident_key
 - pagerduty_incident:
     routing_key: xxx
-    state: resolved
+    state: resolve
     dedup_key: somekey
 '''
 
@@ -207,7 +207,7 @@ def run_module():
     module_args = dict(
         routing_key=dict(type='str', required=True, aliases=['service_key']),
         state=dict(type='str', required=True,
-                   choices=['triggered', 'acknowledged', 'resolved']),
+                   choices=['trigger', 'acknowledge', 'resolve']),
         api_version=dict(type='str', required=False, default='v2',
                          choices=['v1', 'v2']),
         desc=dict(type='str', required=False, default='Created by Ansible'),
@@ -260,24 +260,19 @@ def run_module():
     client_url = params['client_url']
     custom_details = params['custom_details']
 
-    state_action_dict = {
-        'triggered': 'trigger',
-        'acknowledged': 'acknowledge',
-        'resolved': 'resolve'
-    }
-
-    event_action = state_action_dict[state]
-
+    #
     if event_action != 'trigger' and dedup_key is None:
         module.fail_json(msg="dedup_key is required for "
                              "acknowledge or resolve events")
 
+    # Set URL and headers for Events API v1
     if api_version == 'v1':
         url = "https://events.pagerduty.com/generic/2010-04-15/create_event.json"
         headers = {
             "Accept": "application/vnd.pagerduty+json;version=2",
             "Content-type": "application/json"
         }
+    # Set URL and headers for v2 Events API v2
     else:
         url = "https://events.pagerduty.com/v2/enqueue"
         headers = {
@@ -293,7 +288,7 @@ def run_module():
     if api_version == 'v1':
         data = {
             "service_key": routing_key,
-            "event_type": event_action,
+            "event_type": state,
             "incident_key": dedup_key,
             "description": desc,
             "client": client,
@@ -304,7 +299,7 @@ def run_module():
     else:
         data = {
             "routing_key": routing_key,
-            "event_action": event_action,
+            "event_action": state,
             "dedup_key": dedup_key,
             "client": client,
             "client_url": client_url,

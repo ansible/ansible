@@ -75,6 +75,8 @@ Deprecation notices
 
 The following modules will be removed in Ansible 2.10. Please update your playbooks accordingly.
 
+* ``pagerduty_alert`` use :ref:`pagerduty_event <pagerduty_event_module>` instead.
+
 
 Noteworthy module changes
 -------------------------

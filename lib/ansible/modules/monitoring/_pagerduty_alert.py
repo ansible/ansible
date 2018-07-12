@@ -8,13 +8,17 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
 
 module: pagerduty_alert
+deprecated:
+    removed_in: '2.10'
+    why: This module supported only Events API v1. M(pagerduty_event) supports both v1 and v2 Events API.
+    alternative: Use M(pagerduty_event) instead.
 short_description: Trigger, acknowledge or resolve PagerDuty incidents
 description:
     - This module will let you trigger, acknowledge or resolve a PagerDuty incident by sending events
