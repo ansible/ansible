@@ -135,6 +135,12 @@ class AnsibleAWSModule(object):
     def warn(self, *args, **kwargs):
         return self._module.warn(*args, **kwargs)
 
+    def deprecate(self, *args, **kwargs):
+        return self._module.deprecate(*args, **kwargs)
+
+    def boolean(self, *args, **kwargs):
+        return self._module.boolean(*args, **kwargs)
+
     def md5(self, *args, **kwargs):
         return self._module.md5(*args, **kwargs)
 
