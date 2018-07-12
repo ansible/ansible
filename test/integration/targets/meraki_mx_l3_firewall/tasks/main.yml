@@ -184,7 +184,7 @@
   - assert:
       that:
         - query.data.1.syslogEnabled == False
-        disable_syslog.changed == True
+        - disable_syslog.changed == True
 
   always:
   - name: Delete all firewall rules

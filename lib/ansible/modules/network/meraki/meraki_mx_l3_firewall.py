@@ -313,7 +313,7 @@ def main():
             if update is False:
                 del rules[len(rules) - 1]  # Remove default rule for comparison
                 for r in range(len(rules) - 1):
-                    if meraki.is_update_required(rules[r], payload['rules'] [r]) is True:
+                    if meraki.is_update_required(rules[r], payload['rules'][r]) is True:
                         update = True
         except KeyError:
             pass
