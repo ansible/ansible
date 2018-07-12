@@ -181,7 +181,6 @@ def main():
     if pattern:
         worked = is_started = get_ps(module, pattern)
     else:
-        worked = False
         if location.get('service'):
             # standard tool that has been 'destandarized' by reimplementation in other OS/distros
             cmd = '%s %s status' % (location['service'], name)
