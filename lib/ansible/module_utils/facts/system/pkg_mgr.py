@@ -70,16 +70,17 @@ class PkgMgrFactCollector(BaseFactCollector):
     _platform = 'Generic'
     required_facts = set(['distribution'])
 
-    def _check_fedora_versions(self, collected_facts):
-        try:
-            if int(collected_facts['ansible_distribution_major_version']) < 15:
-                pkg_mgr_name = 'yum'
-            else:
+    def _check_rh_versions(self, collected_facts):
+        if collected_facts['ansible_distribution'] == 'Fedora':
+            try:
+                if int(collected_facts['ansible_distribution_major_version']) < 15:
+                    pkg_mgr_name = 'yum'
+                else:
+                    pkg_mgr_name = 'dnf'
+            except ValueError:
+                # If there's some new magical Fedora version in the future,
+                # just default to dnf
                 pkg_mgr_name = 'dnf'
-        except ValueError:
-            # If there's some new magical Fedora version in the future,
-            # just default to dnf
-            pkg_mgr_name = 'dnf'
         return pkg_mgr_name
 
     def collect(self, module=None, collected_facts=None):
@@ -95,18 +96,17 @@ class PkgMgrFactCollector(BaseFactCollector):
         # that are debian based, this handles some of those scenarios as they
         # are reported/requested
         if pkg_mgr_name == 'apt' and collected_facts['ansible_os_family'] in ["RedHat", "Altlinux"]:
-            if collected_facts['ansible_distribution'] == 'Fedora':
-                pkg_mgr_name = self._check_fedora_versions(collected_facts)
+            if collected_facts['ansible_os_family'] == 'RedHat':
+                pkg_mgr_name = self._check_rh_versions(collected_facts)
 
-            elif collected_facts['ansible_distribution'] == 'ALT Linux':
+            elif collected_facts['ansible_os_family'] == 'Altlinux':
                 pkg_mgr_name = 'apt_rpm'
 
         # pacman has become available by distros other than those that are Arch
         # based by virtue of a dependency to the systemd mkosi project, this
         # handles some of those scenarios as they are reported/requested
         if pkg_mgr_name == 'pacman' and collected_facts['ansible_os_family'] in ["RedHat"]:
-            if collected_facts['ansible_distribution'] == 'Fedora':
-                pkg_mgr_name = self._check_fedora_versions(collected_facts)
+            pkg_mgr_name = self._check_rh_versions(collected_facts)
 
         facts_dict['pkg_mgr'] = pkg_mgr_name
         return facts_dict
