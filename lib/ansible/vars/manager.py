@@ -308,7 +308,7 @@ class VariableManager:
 
             # finally, the facts caches for this host, if it exists
             try:
-                facts = self._fact_cache.get(host.name, {})
+                facts = wrap_var(self._fact_cache.get(host.name, {}))
                 all_vars.update(namespace_facts(facts))
 
                 # push facts to main namespace
