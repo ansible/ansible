@@ -120,4 +120,3 @@ def read_docstub(filename, verbose=True, ignore_errors=True):
             raise
 
     return data
-
