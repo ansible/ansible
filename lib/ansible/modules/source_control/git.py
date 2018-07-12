@@ -442,7 +442,7 @@ def get_submodule_versions(git_path, module, dest, version='HEAD'):
     return submodules
 
 
-def clone(git_path, module, repo, dest, remote, depth, version, bare,
+def clone(git_path, module, result, repo, dest, remote, depth, version, bare,
           reference, refspec, verify_commit, separate_git_dir):
     ''' makes a new git repo if it does not already exist '''
     dest_dirname = os.path.dirname(dest)
@@ -1137,7 +1137,7 @@ def main():
                     result['diff'] = diff
             module.exit_json(**result)
         # there's no git config, so clone
-        clone(git_path, module, repo, dest, remote, depth, version, bare, reference, refspec, verify_commit, separate_git_dir)
+        clone(git_path, module, result, repo, dest, remote, depth, version, bare, reference, refspec, verify_commit, separate_git_dir)
     elif not update:
         # Just return having found a repo already in the dest path
         # this does no checking that the repo is the actual repo
