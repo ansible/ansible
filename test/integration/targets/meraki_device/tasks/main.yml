@@ -195,7 +195,7 @@
         - update_device_idempotent.changed == False
 
   always:
-  - name: Remove a device
+  - name: Remove a device from a network
     meraki_device:
       auth_key: '{{auth_key}}'
       org_name: '{{test_org_name}}'
