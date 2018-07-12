@@ -59,7 +59,7 @@ def get_session(**kwargs):
         return boto3.session.Session()
     except Exception as ex:
         raise AnsibleError("Something went wrong while creating a "
-                           "boto3 session in aws_kms_plugin - {}".format(ex))
+                           "boto3 session in aws_kms_plugin - {0}".format(ex))
 
 
 def get_key_provider(key_arn, **kwargs):
@@ -98,13 +98,13 @@ def aws_kms_encrypt(plaintext, key_arn, **kwargs):
         str: Encrypted item with KMS.
     """
     try:
-        ciphertext, _ = encrypt(
+        ciphertext, dummy = encrypt(
             source=plaintext,
             key_provider=get_key_provider(key_arn=key_arn, **kwargs)
         )
         return base64.b64encode(ciphertext)
     except AWSEncryptionSDKClientError as kms_ex:
-        raise AnsibleFilterError("Unable to encrypt vaule using KMS - {}".format(kms_ex))
+        raise AnsibleFilterError("Unable to encrypt vaule using KMS - {0}".format(kms_ex))
 
 
 def aws_kms_decrypt(ciphertext, key_arn, **kwargs):
@@ -117,13 +117,13 @@ def aws_kms_decrypt(ciphertext, key_arn, **kwargs):
         str: Decrypted plaintext item.
     """
     try:
-        cycled_plaintext, _ = decrypt(
+        cycled_plaintext, dummy = decrypt(
             source=base64.b64decode(ciphertext),
             key_provider=get_key_provider(key_arn=key_arn, **kwargs)
         )
         return cycled_plaintext.rstrip()
     except AWSEncryptionSDKClientError as kms_ex:
-        raise AnsibleFilterError("Unable to encrypt vaule using KMS - {}".format(kms_ex))
+        raise AnsibleFilterError("Unable to encrypt vaule using KMS - {0}".format(kms_ex))
 
 
 class FilterModule(object):  # pylint: disable=too-few-public-methods
