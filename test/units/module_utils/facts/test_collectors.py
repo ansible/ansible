@@ -258,12 +258,8 @@ class TestPkgMgrFactsAptFedora(BaseFactsTest):
         "ansible_pkg_mgr": "apt"
     }
 
-    import ansible.module_utils.facts.system.pkg_mgr
-    ansible.module_utils.facts.system.pkg_mgr.os = Mock()
-    ansible.module_utils.facts.system.pkg_mgr.os.path = Mock()
-    ansible.module_utils.facts.system.pkg_mgr.os.path.exists = Mock(side_effect=_sanitize_os_path_apt_get)
-
-    def test_collect(self):
+    @patch('ansible.module_utils.facts.system.pkg_mgr.os.path.exists', side_effect=_sanitize_os_path_apt_get)
+    def test_collect(self, mock_os_path_exists):
         module = self._mock_module()
         fact_collector = self.collector_class()
         facts_dict = fact_collector.collect(module=module, collected_facts=self.collected_facts)
