@@ -1,0 +1,6 @@
+scaling_policy_prefix: ansible_test_
+scaling_policy_lc_name: "{{ scaling_policy_prefix }}_lc"
+scaling_policy_asg_name: "{{ scaling_policy_prefix }}_asg"
+scaling_policy_image_id:
+  us-east-1: ami-1d4e7a66 # ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-20170811
+  us-east-2: ami-dbbd9dbe # ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-20170811

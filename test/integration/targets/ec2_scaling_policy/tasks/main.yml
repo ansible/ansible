@@ -1,0 +1,203 @@
+---
+# __Test Outline__
+#
+# __ec2_scaling_policy__
+# create simplescaling scaling policy
+# update simplescaling scaling policy
+# remove simplescaling scaling policy
+# create stepscaling scaling policy
+# update stepscaling scaling policy
+# remove stepscaling scaling policy
+
+- block:
+    - name: setup AWS connection info
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          region: "{{ ec2_region }}"
+          ec2_access_key: "{{ ec2_access_key }}"
+          ec2_secret_key: "{{ ec2_secret_key }}"
+          security_token: "{{ security_token }}"
+      no_log: yes
+
+    - name: create trivial launch_configuration
+      ec2_lc:
+        name: "{{ scaling_policy_lc_name }}"
+        state: present
+        instance_type: t2.nano
+        image_id: "{{ scaling_policy_image_id[ec2_region] }}"
+        <<: *aws_connection_info
+
+    - name: create trivial ASG
+      ec2_asg:
+        name: "{{ scaling_policy_asg_name }}"
+        state: present
+        launch_config_name: "{{ scaling_policy_lc_name }}"
+        min_size: 1
+        max_size: 1
+        desired_capacity: 1
+        <<: *aws_connection_info
+
+    - name: Create Simple Scaling policy using implicit defaults
+      ec2_scaling_policy:
+        name: "{{ scaling_policy_prefix }}_simplescaling_policy"
+        asg_name: "{{ scaling_policy_asg_name }}"
+        state: present
+        adjustment_type: ChangeInCapacity
+        scaling_adjustment: 1
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result.policy_name == "{{ scaling_policy_prefix }}_simplescaling_policy"
+          - result.changed
+
+    - name: Update Simple Scaling policy using explicit defaults
+      ec2_scaling_policy:
+        name: "{{ scaling_policy_prefix }}_simplescaling_policy"
+        asg_name: "{{ scaling_policy_asg_name }}"
+        state: present
+        adjustment_type: ChangeInCapacity
+        scaling_adjustment: 1
+        policy_type: SimpleScaling
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result.policy_name == "{{ scaling_policy_prefix }}_simplescaling_policy"
+          - not result.changed
+
+    - name: min_adjustment_step is ignored with ChangeInCapacity
+      ec2_scaling_policy:
+        name: "{{ scaling_policy_prefix }}_simplescaling_policy"
+        asg_name: "{{ scaling_policy_asg_name }}"
+        state: present
+        adjustment_type: ChangeInCapacity
+        scaling_adjustment: 1
+        min_adjustment_step: 1
+        policy_type: SimpleScaling
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result.policy_name == "{{ scaling_policy_prefix }}_simplescaling_policy"
+          - not result.changed
+          - result.adjustment_type == "ChangeInCapacity"
+
+    - name: Change Simple Scaling policy adjustment_type to PercentChangeInCapacity
+      ec2_scaling_policy:
+        name: "{{ scaling_policy_prefix }}_simplescaling_policy"
+        asg_name: "{{ scaling_policy_asg_name }}"
+        state: present
+        adjustment_type: PercentChangeInCapacity
+        scaling_adjustment: 1
+        min_adjustment_step: 1
+        policy_type: SimpleScaling
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result.policy_name == "{{ scaling_policy_prefix }}_simplescaling_policy"
+          - result.changed
+          - result.adjustment_type == "PercentChangeInCapacity"
+
+    - name: Remove Simple Scaling policy
+      ec2_scaling_policy:
+        name: "{{ scaling_policy_prefix }}_simplescaling_policy"
+        asg_name: "{{ scaling_policy_asg_name }}"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result.changed
+
+    - name: Create Step Scaling policy
+      ec2_scaling_policy:
+        name: "{{ scaling_policy_prefix }}_stepscaling_policy"
+        asg_name: "{{ scaling_policy_asg_name }}"
+        state: present
+        policy_type: StepScaling
+        metric_aggregation: Maximum
+        step_adjustments:
+        - upper_bound: 20
+          scaling_adjustment: 50
+        - lower_bound: 20
+          scaling_adjustment: 100
+        adjustment_type: "PercentChangeInCapacity"
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result.policy_name == "{{ scaling_policy_prefix }}_stepscaling_policy"
+          - result.changed
+
+    - name: Add another step
+      ec2_scaling_policy:
+        name: "{{ scaling_policy_prefix }}_stepscaling_policy"
+        asg_name: "{{ scaling_policy_asg_name }}"
+        state: present
+        policy_type: StepScaling
+        metric_aggregation: Maximum
+        step_adjustments:
+        - upper_bound: 20
+          scaling_adjustment: 50
+        - lower_bound: 20
+          upper_bound: 40
+          scaling_adjustment: 75
+        - lower_bound: 40
+          scaling_adjustment: 100
+        adjustment_type: "PercentChangeInCapacity"
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result.policy_name == "{{ scaling_policy_prefix }}_stepscaling_policy"
+          - result.changed
+          - result.adjustment_type == "PercentChangeInCapacity"
+
+    - name: Remove Step Scaling policy
+      ec2_scaling_policy:
+        name: "{{ scaling_policy_prefix }}_stepscaling_policy"
+        asg_name: "{{ scaling_policy_asg_name }}"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result.changed
+
+  always:
+
+    # ============================================================
+    - name: remove the scaling policies
+      ec2_scaling_policy:
+        name: "{{ item }}"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+      with_items:
+        - "{{ scaling_policy_prefix }}_simplescaling_policy"
+        - "{{ scaling_policy_prefix }}_stepscaling_policy"
+      ignore_errors: yes
+
+    - name: remove the ASG
+      ec2_asg:
+        name: "{{ scaling_policy_asg_name }}"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: remove the Launch Configuration
+      ec2_lc:
+        name: "{{ scaling_policy_lc_name }}"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
