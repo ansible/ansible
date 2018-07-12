@@ -24,7 +24,6 @@ options:
     description:
       - Checkpoint identifier.
     required: True
-    type: str
 
   state:
     description:
@@ -33,7 +32,6 @@ options:
       - C(restored) return the domain configuration at the time that the checkpoint was created.
     default: present
     required: False
-    type: str
     choices:
       - present
       - absent
@@ -51,24 +49,20 @@ options:
             REST management interface.
         aliases:
             - url_password
-        type: str
         required: True
       server:
         description:
           - The DataPower® Gateway host.
-        type: str
         required: True
       server_port:
         description:
           - The DataPower® Gateway port.
-        type: int
         default: 5554
         required: False
       timeout:
         description:
           - Specifies the timeout in seconds for communicating with the device.
         default: 10
-        type: int
       use_proxy:
         description:
           - Control if the lookup will observe HTTP proxy environment variables when present.
@@ -81,7 +75,6 @@ options:
             This user must have administrative privileges.
         aliases:
             - url_username
-        type: str
         required: True
       validate_certs:
         description:
@@ -159,7 +152,7 @@ msg:
   type: string
   sample:
     - Configuration was created.
-    - Unknown error for (https://idg-host1:5554/mgmt/domains/config/). <urlopen error timed out>
+    - Unknown error for (https://idg-host1:5554/mgmt/domains/config/). <open_url error timed out>
 '''
 
 import json
@@ -176,20 +169,21 @@ try:
 except ImportError:
     HAS_IDG_DEPS = False
 
+
 def main():
 
     # Arguments/parameters that a user can pass to the module
     module_args = dict(
-        state = dict(type = 'str', choices = ['present', 'absent', 'restored'], default = 'present'), # Checkpoint state
-        idg_connection = dict(type = 'dict', options = idg_endpoint_spec, required = True), # IDG connection
-        domain = dict(type = 'str', required = True), # Domain
-        name = dict(type = 'str', required = True) # Checkpoint
+        state=dict(type='str', choices=['present', 'absent', 'restored'], default='present'),  # Checkpoint state
+        idg_connection=dict(type='dict', options=idg_endpoint_spec, required=True),  # IDG connection
+        domain=dict(type='str', required=True),  # Domain
+        name=dict(type='str', required=True)  # Checkpoint
     )
 
     # AnsibleModule instantiation
     module = AnsibleModule(
-        argument_spec = module_args,
-        supports_check_mode = True
+        argument_spec=module_args,
+        supports_check_mode=True
     )
 
     # Validates the dependence of the utility module
@@ -207,20 +201,20 @@ def main():
         chkpoint_name = module.params['name']
 
         # Result
-        result.update({"domain": domain_name}) # Add domain to result
+        result.update({"domain": domain_name})  # Add domain to result
         result['name'] = chkpoint_name
 
         # Init IDG API connect
-        idg_mgmt = IDG_API(ansible_module = module,
-                           idg_host = "https://{0}:{1}".format(idg_data_spec['server'], idg_data_spec['server_port']),
-                           headers = IDG_Utils.BASIC_HEADERS,
-                           http_agent = IDG_Utils.HTTP_AGENT_SPEC,
-                           use_proxy = idg_data_spec['use_proxy'],
-                           timeout = idg_data_spec['timeout'],
-                           validate_certs = idg_data_spec['validate_certs'],
-                           user = idg_data_spec['user'],
-                           password = idg_data_spec['password'],
-                           force_basic_auth = IDG_Utils.BASIC_AUTH_SPEC)
+        idg_mgmt = IDG_API(ansible_module=module,
+                           idg_host="https://{0}:{1}".format(idg_data_spec['server'], idg_data_spec['server_port']),
+                           headers=IDG_Utils.BASIC_HEADERS,
+                           http_agent=IDG_Utils.HTTP_AGENT_SPEC,
+                           use_proxy=idg_data_spec['use_proxy'],
+                           timeout=idg_data_spec['timeout'],
+                           validate_certs=idg_data_spec['validate_certs'],
+                           user=idg_data_spec['user'],
+                           password=idg_data_spec['password'],
+                           force_basic_auth=IDG_Utils.BASIC_AUTH_SPEC)
 
         # Variable to store the status of the action
         action_result = ''
@@ -228,29 +222,29 @@ def main():
         # Action messages:
 
         # Save checkpoint
-        save_act_msg = { "SaveCheckpoint": {  "ChkName": chkpoint_name }}
+        save_act_msg = {"SaveCheckpoint": {"ChkName": chkpoint_name}}
 
         # Rollback checkpoint
-        rollback_act_msg = { "RollbackCheckpoint": {  "ChkName": chkpoint_name }}
+        rollback_act_msg = {"RollbackCheckpoint": {"ChkName": chkpoint_name}}
 
         # Remove checkpoint
-        remove_act_msg = { "RemoveCheckpoint": {  "ChkName": chkpoint_name }}
+        remove_act_msg = {"RemoveCheckpoint": {"ChkName": chkpoint_name}}
 
-        ###
-        ### Here the action begins
-        ###
+        #
+        # Here the action begins
+        #
 
         # List of configured domains
-        chk_code, chk_msg, chk_data = idg_mgmt.api_call(IDG_API.URI_DOMAIN_LIST, method = 'GET')
+        chk_code, chk_msg, chk_data = idg_mgmt.api_call(IDG_API.URI_DOMAIN_LIST, method='GET')
 
-        if chk_code == 200 and chk_msg == 'OK': # If the answer is correct
+        if chk_code == 200 and chk_msg == 'OK':  # If the answer is correct
 
-            if isinstance(chk_data['domain'], dict): # if has only default domain
+            if isinstance(chk_data['domain'], dict):  # if has only default domain
                 configured_domains = [chk_data['domain']['name']]
             else:
                 configured_domains = [d['name'] for d in chk_data['domain']]
 
-            if domain_name in configured_domains: # Domain EXIST.
+            if domain_name in configured_domains:  # Domain EXIST.
 
                 # pdb.set_trace()
                 if state == 'present':
@@ -259,16 +253,16 @@ def main():
                     IDG_Utils.implement_check_mode(module, result)
 
                     # pdb.set_trace()
-                    create_code, create_msg, create_data = idg_mgmt.api_call(IDG_API.URI_ACTION.format(domain_name), method = 'POST',
-                                                                             data = json.dumps(save_act_msg))
+                    create_code, create_msg, create_data = idg_mgmt.api_call(IDG_API.URI_ACTION.format(domain_name), method='POST',
+                                                                             data=json.dumps(save_act_msg))
 
                     if create_code == 202 and create_msg == 'Accepted':
                         # Asynchronous actions save accepted. Wait for complete
-                        action_result = idg_mgmt.wait_for_action_end(IDG_API.URI_ACTION.format(domain_name), href = create_data['_links']['location']['href'],
-                                                                     state = state, domain = domain_name)
+                        action_result = idg_mgmt.wait_for_action_end(IDG_API.URI_ACTION.format(domain_name), href=create_data['_links']['location']['href'],
+                                                                     state=state)
 
                         # Create checkpoint completed. Get result
-                        dcr_code, dcr_msg, dcr_data = idg_mgmt.api_call(create_data['_links']['location']['href'], method = 'GET')
+                        dcr_code, dcr_msg, dcr_data = idg_mgmt.api_call(create_data['_links']['location']['href'], method='GET')
 
                         if dcr_code == 200 and dcr_msg == 'OK':
 
@@ -285,7 +279,7 @@ def main():
                                 result['changed'] = True
                         else:
                             # Can't retrieve the create checkpoint result
-                            module.fail_json(msg = to_native(IDG_API.ERROR_RETRIEVING_RESULT.format(state, domain_name)))
+                            module.fail_json(msg=to_native(IDG_API.ERROR_RETRIEVING_RESULT.format(state, domain_name)))
 
                     elif create_code == 200 and create_msg == 'OK':
                         # Successfully processed synchronized action
@@ -294,7 +288,7 @@ def main():
 
                     else:
                         # Create checkpoint not accepted
-                        module.fail_json(msg = to_native(IDG_API.ERROR_ACCEPTING_ACTION.format(state, domain_name)))
+                        module.fail_json(msg=to_native(IDG_API.ERROR_ACCEPTING_ACTION.format(state, domain_name)))
 
                 elif state == 'absent':
 
@@ -302,16 +296,16 @@ def main():
                     IDG_Utils.implement_check_mode(module, result)
 
                     # pdb.set_trace()
-                    rm_code, rm_msg, rm_data = idg_mgmt.api_call(IDG_API.URI_ACTION.format(domain_name), method = 'POST',
-                                                                 data = json.dumps(remove_act_msg))
+                    rm_code, rm_msg, rm_data = idg_mgmt.api_call(IDG_API.URI_ACTION.format(domain_name), method='POST',
+                                                                 data=json.dumps(remove_act_msg))
 
                     if rm_code == 202 and rm_msg == 'Accepted':
                         # Asynchronous actions remove accepted. Wait for complete
-                        action_result = idg_mgmt.wait_for_action_end(IDG_API.URI_ACTION.format(domain_name), href = rm_data['_links']['location']['href'],
-                                                                     state = state, domain = domain_name)
+                        action_result = idg_mgmt.wait_for_action_end(IDG_API.URI_ACTION.format(domain_name), href=rm_data['_links']['location']['href'],
+                                                                     state=state)
 
                         # Remove checkpoint completed. Get result
-                        drm_code, drm_msg, drm_data = idg_mgmt.api_call(rm_data['_links']['location']['href'], method = 'GET')
+                        drm_code, drm_msg, drm_data = idg_mgmt.api_call(rm_data['_links']['location']['href'], method='GET')
 
                         if drm_code == 200 and drm_msg == 'OK':
 
@@ -325,7 +319,7 @@ def main():
                                 result['changed'] = True
                         else:
                             # Can't retrieve the create checkpoint result
-                            module.fail_json(msg = to_native(IDG_API.ERROR_RETRIEVING_RESULT.format(state, domain_name)))
+                            module.fail_json(msg=to_native(IDG_API.ERROR_RETRIEVING_RESULT.format(state, domain_name)))
 
                     elif rm_code == 200 and rm_msg == 'OK':
                         # Successfully processed synchronized action
@@ -342,7 +336,7 @@ def main():
 
                     else:
                         # Create checkpoint not accepted
-                        module.fail_json(msg = to_native(IDG_API.ERROR_ACCEPTING_ACTION.format(state, domain_name)))
+                        module.fail_json(msg=to_native(IDG_API.ERROR_ACCEPTING_ACTION.format(state, domain_name)))
 
                 elif state == 'restored':
 
@@ -350,16 +344,16 @@ def main():
                     IDG_Utils.implement_check_mode(module, result)
 
                     # pdb.set_trace()
-                    bak_code, bak_msg, bak_data = idg_mgmt.api_call(IDG_API.URI_ACTION.format(domain_name), method = 'POST',
-                                                                    data = json.dumps(rollback_act_msg))
+                    bak_code, bak_msg, bak_data = idg_mgmt.api_call(IDG_API.URI_ACTION.format(domain_name), method='POST',
+                                                                    data=json.dumps(rollback_act_msg))
 
                     if bak_code == 202 and bak_msg == 'Accepted':
                         # Asynchronous actions remove accepted. Wait for complete
-                        action_result = idg_mgmt.wait_for_action_end(IDG_API.URI_ACTION.format(domain_name), href = bak_data['_links']['location']['href'],
-                                                                     state = state, domain = domain_name)
+                        action_result = idg_mgmt.wait_for_action_end(IDG_API.URI_ACTION.format(domain_name), href=bak_data['_links']['location']['href'],
+                                                                     state=state)
 
                         # Remove checkpoint completed. Get result
-                        dbak_code, dbak_msg, dbak_data = idg_mgmt.api_call(bak_data['_links']['location']['href'], method = 'GET')
+                        dbak_code, dbak_msg, dbak_data = idg_mgmt.api_call(bak_data['_links']['location']['href'], method='GET')
 
                         if dbak_code == 200 and dbak_msg == 'OK':
 
@@ -373,7 +367,7 @@ def main():
                                 result['changed'] = True
                         else:
                             # Can't retrieve the create checkpoint result
-                            module.fail_json(msg = to_native(IDG_API.ERROR_RETRIEVING_RESULT.format(state, domain_name)))
+                            module.fail_json(msg=to_native(IDG_API.ERROR_RETRIEVING_RESULT.format(state, domain_name)))
 
                     elif bak_code == 200 and bak_msg == 'OK':
                         # Successfully processed synchronized action
@@ -382,18 +376,18 @@ def main():
 
                     else:
                         # Create checkpoint not accepted
-                        module.fail_json(msg = to_native(IDG_API.ERROR_ACCEPTING_ACTION.format(state, domain_name)))
+                        module.fail_json(msg=to_native(IDG_API.ERROR_ACCEPTING_ACTION.format(state, domain_name)))
 
-            else: # Domain NOT EXIST.
+            else:  # Domain NOT EXIST.
                 # Can't work the configuration of non-existent domain
-                module.fail_json(msg = (IDG_API.ERROR_REACH_STATE + ' Domain not exist!').format(state, domain_name))
+                module.fail_json(msg=(IDG_API.ERROR_REACH_STATE + ' Domain not exist!').format(state, domain_name))
 
-        else: # Can't read domain's lists
-            module.fail_json(msg = IDG_API.ERROR_GET_DOMAIN_LIST)
+        else:  # Can't read domain's lists
+            module.fail_json(msg=IDG_API.ERROR_GET_DOMAIN_LIST)
 
     except Exception as e:
         # Uncontrolled exception
-        module.fail_json(msg = (IDG_Utils.UNCONTROLLED_EXCEPTION + '. {0}').format(to_native(e)))
+        module.fail_json(msg=(IDG_Utils.UNCONTROLLED_EXCEPTION + '. {0}').format(to_native(e)))
     else:
         # That's all folks!
         module.exit_json(**result)

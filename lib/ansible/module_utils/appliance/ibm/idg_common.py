@@ -13,17 +13,17 @@ import json
 
 # Seed the result
 result = dict(
-    changed = False,
-    name = 'default',
-    msg = 'the best is coming'
+    changed=False,
+    name='default',
+    msg='the best is coming'
 )
 
 # Socket information
 idg_endpoint_spec = url_argument_spec()
 idg_endpoint_spec.update(
-    timeout = dict(type = 'int', default = 10), # The socket level timeout in seconds
-    server = dict(type = 'str', required = True), # Remote IDG will be used.
-    server_port = dict(type = 'int', default = 5554), # Remote IDG port be used.
+    timeout=dict(type='int', default=10), # The socket level timeout in seconds
+    server=dict(type='str', required=True), # Remote IDG will be used.
+    server_port=dict(type='int', default=5554), # Remote IDG port be used.
     url_username=dict(required=False, aliases=['user']),
     url_password=dict(required=False, aliases=['password'], no_log=True),
 )
@@ -60,7 +60,7 @@ class IDG_Utils(object):
             # data is NOT empty
             try:
                 # Show warning
-                module.deprecate('Supplying `{0}` as a string is deprecated. Please use dict/hash format.'.format(desc), version = ver)
+                module.deprecate('Supplying `{0}` as a string is deprecated. Please use dict/hash format.'.format(desc), version=ver)
                 # Parse key:value,key:value,... string
                 return dict(item.split(':', 1) for item in data.split(','))
             except Exception:

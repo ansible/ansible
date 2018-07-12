@@ -97,16 +97,16 @@ class IDG_API(object):
                 pass
 
             resp = open_url(url,
-                            method = kwargs['method'],
-                            headers = self.headers,
-                            timeout = self.timeout,
-                            url_username = self.url_username,
-                            url_password = self.url_password,
-                            use_proxy = self.use_proxy,
-                            force_basic_auth = self.force_basic_auth,
-                            validate_certs = self.validate_certs,
-                            http_agent = self.http_agent,
-                            data = data)
+                            method=kwargs['method'],
+                            headers=self.headers,
+                            timeout=self.timeout,
+                            url_username=self.url_username,
+                            url_password=self.url_password,
+                            use_proxy=self.use_proxy,
+                            force_basic_auth=self.force_basic_auth,
+                            validate_certs=self.validate_certs,
+                            http_agent=self.http_agent,
+                            data=data)
 
         except HTTPError as e:
             # Get results with code different from 200
@@ -131,16 +131,16 @@ class IDG_API(object):
         while (action_result not in str_results) and (count < max_steps):
             # Wait to complete
             code, msg, data = self.api_call(uri + '/pending',
-                                                method = 'GET', data = None)
+                                                method='GET', data=None)
             count += 1
             if code == 200 and msg == 'OK':
                 action_result = self.get_operation_status(data['operations'], kwargs['href'])
                 if action_result not in str_results: sleep(self.SHORT_DELAY)
             else:
                 # Opps can't get status
-                self.ansible_module.fail_json(msg = to_native(self.ERROR_RETRIEVING_STATUS % (kwargs['state'], uri.rsplit('/', 1)[-1])))
+                self.ansible_module.fail_json(msg=to_native(self.ERROR_RETRIEVING_STATUS % (kwargs['state'], uri.rsplit('/', 1)[-1])))
 
         if count == max_steps:
-            self.ansible_module.fail_json(msg = to_native((self.ERROR_RETRIEVING_STATUS + 'Reached the maximum level of interactions') % (kwargs['state'], uri.rsplit('/', 1)[-1])))
+            self.ansible_module.fail_json(msg=to_native((self.ERROR_RETRIEVING_STATUS + 'Reached the maximum level of interactions') % (kwargs['state'], uri.rsplit('/', 1)[-1])))
         else:
             return action_result.capitalize()
