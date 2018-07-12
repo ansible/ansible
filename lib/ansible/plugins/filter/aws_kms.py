@@ -20,18 +20,20 @@ except ImportError:
     HAS_DEPENDENCIES = False
 
 
-def role_arn_to_session(**args):
+def role_arn_to_session(role_arn, role_session_name):
     """
-    Refer:
-    http://boto3.readthedocs.io/en/latest/reference/services/sts.html#STS.Client.assume_role
-    Usage :
-        session = role_arn_to_session(
-            RoleArn='arn:aws:iam::012345678901:role/example-role',
-            RoleSessionName='ExampleSessionName')
-        client = session.client('sqs')
+    Get credentials to using a given AES role.
+    Args:
+        role_arn: ARN of the role to use to get credentials.
+        role_session_name: A session name to use.
+    Returns:
+        boto3.Session: Returns a boto3.Session object.
     """
     client = boto3.client('sts')
-    response = client.assume_role(**args)
+    response = client.assume_role(
+        RoleArn=role_arn,
+        RoleSessionName=role_session_name
+    )
     return boto3.Session(
         aws_access_key_id=response['Credentials']['AccessKeyId'],
         aws_secret_access_key=response['Credentials']['SecretAccessKey'],
@@ -42,13 +44,23 @@ def get_boto_session(**kwargs):
     """
     Get boto3 session object.
     """
+    valid_keys = [
+        'profile_name',
+        'role_to_assume',
+        'aws_access_key_id',
+        'aws_secret_access_key'
+    ]
+    for key in kwargs:
+        if key not in valid_keys:
+            raise AnsibleFilterError("Invalid argument '{0}' was passed "
+                                     "into aws_kms_plugin".format(key))
     try:
         if 'profile_name' in kwargs:
             return boto3.session.Session(profile_name=kwargs['profile_name'])
         elif 'role_to_assume' in kwargs:
             return role_arn_to_session(
-                RoleArn=kwargs['role_to_assume'],
-                RoleSessionName=basename(kwargs['role_to_assume'])
+                role_arn=kwargs['role_to_assume'],
+                role_session_name=basename(kwargs['role_to_assume'])
             )
         elif 'aws_access_key_id' in kwargs and 'aws_secret_access_key' in kwargs:
             return boto3.Session(
