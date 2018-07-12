@@ -22,17 +22,9 @@ import pytest
 
 from units.compat import unittest
 from ansible.errors import AnsibleFilterError
-<<<<<<< HEAD
 from ansible.plugins.filter.ipaddr import (ipaddr, _netmask_query, nthhost, next_nth_usable, ipsubnet,
-=======
-from ansible.plugins.filter.ipaddr import (ipaddr, _netmask_query, nthhost, next_nth_usable,
-<<<<<<< HEAD
->>>>>>> Fix merge conflict
                                            previous_nth_usable, network_in_usable, network_in_network,
-                                           cidr_merge, ipmath)
-=======
-                                           previous_nth_usable, network_in_usable, network_in_network, cidr_merge, ipmath, genmac)
->>>>>>> Fix merge conflict
+                                           cidr_merge, ipmath, genmac)
 netaddr = pytest.importorskip('netaddr')
 
 
@@ -488,8 +480,6 @@ class TestIpFilter(unittest.TestCase):
         self.assertEqual(ipmath('192.168.1.5', 5), '192.168.1.10')
         self.assertEqual(ipmath('192.168.1.5', -5), '192.168.1.0')
         self.assertEqual(ipmath('192.168.0.5', -10), '192.167.255.251')
-<<<<<<< HEAD
-=======
 
         self.assertEqual(ipmath('2001::1', 8), '2001::9')
         self.assertEqual(ipmath('2001::1', 9), '2001::a')
@@ -511,6 +501,7 @@ class TestIpFilter(unittest.TestCase):
         )
         with self.assertRaises(AnsibleFilterError) as exc:
             ipmath('1.2.3.4', 'some_number')
+        self.assertEqual(exc.exception.message, expected)
 
     def test_genmac(self):
         expected = r"[0-9a-f]{2}([-:]?)[0-9a-f]{2}(\1[0-9a-f]{2}){4}$"
@@ -518,28 +509,11 @@ class TestIpFilter(unittest.TestCase):
         self.assertRegex(genmac(prefix).lower(), expected)
         prefix = 'AC-DE-48'
         self.assertRegex(genmac(prefix).lower(), expected)
->>>>>>> Fix merge conflict
 
-        self.assertEqual(ipmath('2001::1', 8), '2001::9')
-        self.assertEqual(ipmath('2001::1', 9), '2001::a')
-        self.assertEqual(ipmath('2001::1', 10), '2001::b')
-        self.assertEqual(ipmath('2001::5', -3), '2001::2')
-        self.assertEqual(
-            ipmath('2001::5', -10),
-            '2000:ffff:ffff:ffff:ffff:ffff:ffff:fffb'
-        )
-
-        expected = 'You must pass a valid IP address; invalid_ip is invalid'
+        bad_prefix = "52:AC"
+        expected = 'Invalid OUI prefix (52:AC) for genmac: 3 colon(:) or hyphen(-) with two hexadecimal digit is required or leave it empty.'
         with self.assertRaises(AnsibleFilterError) as exc:
-            ipmath('invalid_ip', 8)
-        self.assertEqual(exc.exception.message, expected)
-
-        expected = (
-            'You must pass an integer for arithmetic; '
-            'some_number is not a valid integer'
-        )
-        with self.assertRaises(AnsibleFilterError) as exc:
-            ipmath('1.2.3.4', 'some_number')
+            genmac(bad_prefix)
         self.assertEqual(exc.exception.message, expected)
 
     def test_ipsubnet(self):
