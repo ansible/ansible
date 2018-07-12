@@ -82,7 +82,7 @@ class ActionModule(ActionBase):
             display.vvv("wait_for_connection: attempting ping module test")
             # call connection reset between runs if it's there
             try:
-                self._connection._reset()
+                self._connection.reset()
             except AttributeError:
                 pass
 
