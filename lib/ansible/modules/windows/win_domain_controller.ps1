@@ -42,14 +42,14 @@ Function Get-MissingFeatures {
     }
 
     $missing_features = @($features | Where-Object InstallState -ne Installed)
-    
+
     return ,$missing_features # no, the comma's not a typo- allows us to return an empty array
 }
 
 Function Ensure-FeatureInstallation {
     # ensure RSAT-ADDS and AD-Domain-Services features are installed
 
-    Write-DebugLog "Ensuring required Windows features are installed..." 
+    Write-DebugLog "Ensuring required Windows features are installed..."
     $feature_result = Install-WindowsFeature $required_features
 
     If(-not $feature_result.Success) {
@@ -73,17 +73,6 @@ Function Get-DomainControllerDomain {
     }
 }
 
-Function Create-Credential {
-    Param(
-        [string] $cred_user,
-        [string] $cred_password
-    )
-
-    $cred = New-Object System.Management.Automation.PSCredential($cred_user, $($cred_password | ConvertTo-SecureString -AsPlainText -Force))
-
-    Return $cred
-}
-
 Function Get-OperationMasterRoles {
     $assigned_roles = @((Get-ADDomainController -Server localhost).OperationMasterRoles)
 
@@ -95,21 +84,21 @@ $result = @{
     reboot_required = $false
 }
 
-$param = Parse-Args -arguments $args -supports_check_mode $true
+$params = Parse-Args -arguments $args -supports_check_mode $true
 
-$dns_domain_name = Get-AnsibleParam $param "dns_domain_name"
-$safe_mode_password= Get-AnsibleParam $param "safe_mode_password"
-$domain_admin_user = Get-AnsibleParam $param "domain_admin_user" -failifempty $result
-$domain_admin_password= Get-AnsibleParam $param "domain_admin_password" -failifempty $result
-$local_admin_password= Get-AnsibleParam $param "local_admin_password"
-$database_path = Get-AnsibleParam $param "database_path" -type "path"
-$sysvol_path = Get-AnsibleParam $param "sysvol_path" -type "path"
-$read_only = Get-AnsibleParam $param "read_only" -type "bool" -default $false
-$site_name = Get-AnsibleParam $param "site_name" -type "str" -failifempty $read_only
+$dns_domain_name = Get-AnsibleParam -obj $params -name "dns_domain_name" -type "str"
+$safe_mode_password= Get-AnsibleParam -obj $params -name "safe_mode_password" -type "securestr"
+$domain_admin_user = Get-AnsibleParam -obj $params -name "domain_admin_user" -type "str" -failifempty $result
+$domain_admin_password= Get-AnsibleParam -obj $params -name "domain_admin_password" -type "securestr" -failifempty $result
+$local_admin_password= Get-AnsibleParam -obj $params -name "local_admin_password" -type "securestr"
+$database_path = Get-AnsibleParam -obj $params -name "database_path" -type "path"
+$sysvol_path = Get-AnsibleParam -obj $params -name "sysvol_path" -type "path"
+$read_only = Get-AnsibleParam -obj $params -name "read_only" -type "bool" -default $false
+$site_name = Get-AnsibleParam -obj $params -name "site_name" -type "str" -failifempty $read_only
 
-$state = Get-AnsibleParam $param "state" -validateset ("domain_controller", "member_server") -failifempty $result
-$log_path = Get-AnsibleParam $param "log_path"
-$_ansible_check_mode = Get-AnsibleParam $param "_ansible_check_mode" -default $false
+$state = Get-AnsibleParam -obj $params -name "state" -validateset ("domain_controller", "member_server") -failifempty $result
+$log_path = Get-AnsibleParam -obj $params -name "log_path" -type "path"
+$_ansible_check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
 $global:log_path = $log_path
 
@@ -164,14 +153,10 @@ Try {
         Ensure-FeatureInstallation | Out-Null
     }
 
-    $domain_admin_cred = Create-Credential -cred_user $domain_admin_user -cred_password $domain_admin_password
+    $domain_admin_cred = Create-PSCredential $domain_admin_user $domain_admin_password
 
     switch($state) {
         domain_controller {
-            If(-not $safe_mode_password) {
-                Fail-Json -message "safe_mode_password is required for state=domain_controller"
-            }
-
             If($current_dc_domain) {
                 # FUTURE: implement managed Remove/Add to change domains?
 
@@ -191,12 +176,11 @@ Try {
 
                 $result.reboot_required = $true
 
-                $safe_mode_secure = $safe_mode_password | ConvertTo-SecureString -AsPlainText -Force
                 Write-DebugLog "Installing domain controller..."
                 $install_params = @{
                     DomainName = $dns_domain_name
                     Credential = $domain_admin_cred
-                    SafeModeAdministratorPassword = $safe_mode_secure
+                    SafeModeAdministratorPassword = $safe_mode_password
                 }
                 if ($database_path) {
                     $install_params.DatabasePath = $database_path
@@ -218,9 +202,6 @@ Try {
             }
         }
         member_server {
-            If(-not $local_admin_password) {
-                Fail-Json -message "local_admin_password is required for state=domain_controller"
-            }
             # at this point we already know we're a DC and shouldn't be...
             Write-DebugLog "Need to uninstall domain controller..."
             $result.changed = $true
@@ -241,10 +222,8 @@ Try {
 
             $result.reboot_required = $true
 
-            $local_admin_secure = $local_admin_password | ConvertTo-SecureString -AsPlainText -Force
-
             Write-DebugLog "Uninstalling domain controller..."
-            $uninstall_result = Uninstall-ADDSDomainController -NoRebootOnCompletion -LocalAdministratorPassword $local_admin_secure -Credential $domain_admin_cred
+            $uninstall_result = Uninstall-ADDSDomainController -NoRebootOnCompletion -LocalAdministratorPassword $local_admin_password -Credential $domain_admin_cred
             Write-DebugLog "Uninstallation complete, needs reboot..."
         }
         default { throw ("invalid state {0}" -f $state) }

@@ -20,20 +20,20 @@ $result = @{
 $ErrorActionPreference = "Stop"
 
 $params = Parse-Args $args -supports_check_mode $true
-$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
 # Module control parameters
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent","query"
 $update_password = Get-AnsibleParam -obj $params -name "update_password" -type "str" -default "always" -validateset "always","on_create"
 $groups_action = Get-AnsibleParam -obj $params -name "groups_action" -type "str" -default "replace" -validateset "add","remove","replace"
 $domain_username = Get-AnsibleParam -obj $params -name "domain_username" -type "str"
-$domain_password = Get-AnsibleParam -obj $params -name "domain_password" -type "str" -failifempty ($domain_username -ne $null)
+$domain_password = Get-AnsibleParam -obj $params -name "domain_password" -type "securestr" -failifempty ($domain_username -ne $null)
 $domain_server = Get-AnsibleParam -obj $params -name "domain_server" -type "str"
 
 # User account parameters
 $username = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $description = Get-AnsibleParam -obj $params -name "description" -type "str"
-$password = Get-AnsibleParam -obj $params -name "password" -type "str"
+$password = Get-AnsibleParam -obj $params -name "password" -type "securestr"
 $password_expired = Get-AnsibleParam -obj $params -name "password_expired" -type "bool"
 $password_never_expires = Get-AnsibleParam -obj $params -name "password_never_expires" -type "bool"
 $user_cannot_change_password = Get-AnsibleParam -obj $params -name "user_cannot_change_password" -type "bool"
@@ -69,9 +69,7 @@ If (($password_expired -ne $null) -and ($password_never_expires -ne $null)) {
 
 $extra_args = @{}
 if ($domain_username -ne $null) {
-    $domain_password = ConvertTo-SecureString $domain_password -AsPlainText -Force
-    $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $domain_username, $domain_password
-    $extra_args.Credential = $credential
+    $extra_args.Credential = Create-PSCredential $domain_username $domain_password
 }
 if ($domain_server -ne $null) {
     $extra_args.Server = $domain_server
@@ -107,8 +105,7 @@ If ($state -eq 'present') {
 
         # Set the password if required
         If ($password -and (($new_user -and $update_password -eq "on_create") -or $update_password -eq "always")) {
-            $secure_password = ConvertTo-SecureString $password -AsPlainText -Force
-            Set-ADAccountPassword -Identity $username -Reset:$true -Confirm:$false -NewPassword $secure_password -WhatIf:$check_mode @extra_args
+            Set-ADAccountPassword -Identity $username -Reset:$true -Confirm:$false -NewPassword $password -WhatIf:$check_mode @extra_args
             $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
             $result.password_updated = $true
             $result.changed = $true
@@ -183,7 +180,7 @@ If ($state -eq 'present') {
                     $existing_value = $user_obj.$attribute_name
                     if ($existing_value -cne $attribute_value) {
                         $replace_attributes.$attribute_name = $attribute_value
-                    }                
+                    }
                 } else {
                     $add_attributes.$attribute_name = $attribute_value
                 }

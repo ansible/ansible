@@ -15,7 +15,7 @@ $diff_mode = Get-AnsibleParam -obj $Params -name "_ansible_diff" -type "bool" -d
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $display_name = Get-AnsibleParam -obj $params -name "display_name" -type "str"
 $domain_username = Get-AnsibleParam -obj $params -name "domain_username" -type "str"
-$domain_password = Get-AnsibleParam -obj $params -name "domain_password" -type "str" -failifempty ($domain_username -ne $null)
+$domain_password = Get-AnsibleParam -obj $params -name "domain_password" -type "securestr" -failifempty ($domain_username -ne $null)
 $description = Get-AnsibleParam -obj $params -name "description" -type "str"
 $category = Get-AnsibleParam -obj $params -name "category" -type "str" -validateset "distribution","security"
 $scope = Get-AnsibleParam -obj $params -name "scope" -type "str" -validateset "domainlocal","global","universal"
@@ -42,9 +42,7 @@ Import-Module ActiveDirectory
 
 $extra_args = @{}
 if ($domain_username -ne $null) {
-    $domain_password = ConvertTo-SecureString $domain_password -AsPlainText -Force
-    $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $domain_username, $domain_password
-    $extra_args.Credential = $credential
+    $extra_args.Credential = Create-PSCredential $domain_username $domain_password
 }
 if ($domain_server -ne $null) {
     $extra_args.Server = $domain_server
@@ -70,7 +68,7 @@ if ($state -eq "absent") {
         } catch {
             Fail-Json $result "failed to remove group $($name): $($_.Exception.Message)"
         }
-        
+
         $result.changed = $true
         if ($diff_mode) {
             $result.diff.prepared = "-[$name]"
@@ -113,7 +111,7 @@ if ($state -eq "absent") {
                         $group | Set-ADObject -ProtectedFromAccidentalDeletion $true -WhatIf:$check_mode -PassThru @extra_args | Out-Null
                     }
                 }
-                
+
                 $result.changed = $true
                 $diff_text += "-DistinguishedName = CN=$group_cn,$existing_path`n+DistinguishedName = CN=$group_cn,$organizational_unit`n"
 
@@ -204,7 +202,7 @@ if ($state -eq "absent") {
                     if ($existing_value -cne $attribute_value) {
                         $replace_attributes.$attribute_name = $attribute_value
                         $diff_text += "-$attribute_name = $existing_value`n+$attribute_name = $attribute_value`n"
-                    }                
+                    }
                 } else {
                     $add_attributes.$attribute_name = $attribute_value
                     $diff_text += "+$attribute_name = $attribute_value`n"

@@ -117,6 +117,19 @@ Function Expand-Environment($value)
     }
 }
 
+# Helper function to build a PSCredential object from username/password strings
+# The password can be passed either as a String or a SecureString
+Function Create-PSCredential($username, $password)
+{
+    if($password -isnot [System.Security.SecureString]) {
+        $password = $password.ToString() | ConvertTo-SecureString -AsPlainText -Force
+    }
+
+    $cred = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $username, $password
+
+    Return $cred
+}
+
 # Helper function to get an "attribute" from a psobject instance in powershell.
 # This is a convenience to make getting Members from an object easier and
 # slightly more pythonic
@@ -199,6 +212,9 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
         } elseif ($type -eq "str") {
             # Convert str types to real Powershell strings
             $value = $value.ToString()
+        } elseif ($type -eq "securestr") {
+            # Convert str types to real Powershell secure strings
+            $value = ConvertTo-SecureString $value.ToString() -AsPlainText -Force
         } elseif ($type -eq "bool") {
             # Convert boolean types to real Powershell booleans
             $value = $value | ConvertTo-Bool

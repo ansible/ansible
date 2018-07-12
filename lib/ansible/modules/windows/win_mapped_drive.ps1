@@ -16,7 +16,7 @@ $letter = Get-AnsibleParam -obj $params -name "letter" -type "str" -failifempty 
 $path = Get-AnsibleParam -obj $params -name "path" -type "path"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","present"
 $username = Get-AnsibleParam -obj $params -name "username" -type "str"
-$password = Get-AnsibleParam -obj $params -name "password" -type "str"
+$password = Get-AnsibleParam -obj $params -name "password" -type "securestr"
 
 $result = @{
     changed = $false
@@ -77,9 +77,7 @@ if ($state -eq "absent") {
 
     $extra_args = @{}
     if ($username -ne $null) {
-        $sec_password = ConvertTo-SecureString -String $password -AsPlainText -Force
-        $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $username, $sec_password
-        $extra_args.Credential = $credential
+        $extra_args.Credential = Create-PSCredential $username $password
     }
 
     $physical_drives = Get-PSDrive -PSProvider "FileSystem"
