@@ -302,3 +302,31 @@
     that:
       - 'var_host_info[0] == ansible_host'
       - 'var_host_info[1] == ansible_user'
+
+# GENMAC lookup
+
+- name: Generate mac address with OUI prefix
+  set_fact:
+    genmac_oui: "{{ lookup('genmac', '52:54:00') }}"
+
+- name: Generate mac address without OUI prefix
+  set_fact:
+    genmac_nooui: "{{ lookup('genmac') }}"
+
+- name: Generate mac address with custom format
+  set_fact:
+    genmac_oui_format: "{{ lookup('genmac', '52:54:00', format='cisco') }}"
+
+- name: Generate mac address with badprefix
+  debug:
+    var: "{{ lookup('genmac', '52:54') }}"
+  register: genmac_badprefix
+  ignore_errors: yes
+
+- name:  Verify genmac lookup
+  assert:
+    that:
+      - genmac_oui|hwaddr
+      - genmac_nooui|hwaddr
+      - genmac_oui_format|hwaddr
+      - "'Invalid OUI prefix' in genmac_badprefix.msg"

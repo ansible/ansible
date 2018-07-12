@@ -23,6 +23,7 @@ from functools import partial
 import types
 from ansible.module_utils import six
 import random
+import re
 
 try:
     import netaddr
@@ -1082,7 +1083,12 @@ def macaddr(value, query=''):
 def genmac(value):
     if not value:
         value = 'AC:DE:48'
-    ret = '{0}:{1:02X}:{2:02X}:{3:02X}'.format(value,
+
+    if not re.match("[0-9a-f]{2}([-:]?)[0-9a-f]{2}(\\1[0-9a-f]{2}){1}$", value.lower()):
+        raise errors.AnsibleFilterError('Invalid OUI prefix (%s) for genmac: 3 colon(:) or hyphen(-) with two hexadecimal digit is required or leave it empty.' % value)
+
+    prefix = value.replace('-', ':')
+    ret = '{0}:{1:02X}:{2:02X}:{3:02X}'.format(prefix,
                                                random.randint(0, 0xff),
                                                random.randint(0, 0xff),
                                                random.randint(0, 0xff))

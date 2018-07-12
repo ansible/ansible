@@ -311,3 +311,25 @@
     - assert:
         that:
           - "combined.key2 == 'is_defined'"
+
+# GENMAC filter
+- name: Gen mac address with OUI prefix
+  set_fact:
+    genmac_oui: "{{ '52:54:00'|genmac }}"
+
+- name: Generate mac address without OUI prefix
+  set_fact:
+    genmac_nooui: "{{ ''|genmac }}"
+
+- name: Generate mac address with bad prefix
+  debug:
+    var : "'52:54'|genmac"
+  register: genmac_badprefix
+  ignore_errors: yes
+
+- name:  Verify genmac filter
+  assert:
+    that:
+      - genmac_oui|hwaddr
+      - genmac_nooui|hwaddr
+      - "'Invalid OUI prefix' in genmac_badprefix.msg"
