@@ -143,6 +143,7 @@
     assert: &weak_ciphers
       that:
          - result.stdout_lines[0][0] == 'nxapi ssl ciphers weak'
+    when: platform is match('N9K') and major_version is version('9.2', '>=')
 
   - name: Configure NXAPI HTTP w/weak ciphers again
     nxos_nxapi: *configure_https_weak_ciphers
@@ -163,14 +164,11 @@
         - show run all | inc nxapi | inc ciphers
     register: result
 
-  - debug: msg="+++++++++++++++++++++++++++++++++++++++++++++++++++"
-  - debug: msg="{{ result }}"
-  - debug: msg="+++++++++++++++++++++++++++++++++++++++++++++++++++"
-
   - name: Assert strong ciphers configuration
     assert: &strong_ciphers
       that:
          - result.stdout_lines[0][0] == 'no nxapi ssl ciphers weak'
+    when: platform is match('N9K') and major_version is version('9.2', '>=')
 
   - name: Configure NXAPI HTTPs w/strong ciphers again
     nxos_nxapi: *configure_https_strong_ciphers
@@ -194,6 +192,7 @@
     assert: &default_configuration
       that:
          - result.stdout_lines[0][0] == 'nxapi ssl protocols TLSv1'
+    when: platform is match('N9K') and major_version is version('9.2', '>=')
 
   - name: Configure NXAPI HTTPs w/default again
     nxos_nxapi: *configure_https_default
@@ -219,6 +218,7 @@
     assert: &tlsv1_2_default_configuration
       that:
          - result.stdout_lines[0][0] == 'nxapi ssl protocols TLSv1 TLSv1.2'
+    when: platform is match('N9K') and major_version is version('9.2', '>=')
 
   - name: Configure NXAPI HTTPs w/TLS1.2 again
     nxos_nxapi: *configure_https_tlsv1_2_default
@@ -246,6 +246,7 @@
     assert: &tlsv1_2_tlsv1_1_configuration
       that:
          - result.stdout_lines[0][0] == 'nxapi ssl protocols TLSv1.1 TLSv1.2'
+    when: platform is match('N9K') and major_version is version('9.2', '>=')
 
   - name: Configure NXAPI HTTPs w/TLS1.2 TLS1.1 -default again
     nxos_nxapi: *configure_https_tlsv1_2_tlsv1_1

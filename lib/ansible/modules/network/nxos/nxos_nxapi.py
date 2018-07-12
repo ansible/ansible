@@ -124,13 +124,14 @@ updates:
 """
 import re
 
+from distutils.version import LooseVersion
 from ansible.module_utils.network.nxos.nxos import run_commands, load_config
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.network.nxos.nxos import get_capabilities
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 
-import json
+#import json
 
 def check_args(module, warnings):
     device_info = get_capabilities(module)
@@ -166,6 +167,10 @@ def map_obj_to_commands(want, have, module):
     send_commands = list()
     commands = dict()
 
+    device_info = get_capabilities(module).get('device_info')
+    os_version = device_info['network_os_version'][:3]
+    os_platform = device_info['network_os_platform'][:3]
+
     def needs_update(x):
         return want.get(x) is not None and (want.get(x) != have.get(x))
 
@@ -192,23 +197,24 @@ def map_obj_to_commands(want, have, module):
         if not want['sandbox']:
             commands['sandbox'] = 'no %s' % commands['sandbox']
 
-    if needs_update('ssl_strong_ciphers'):
-        commands['ssl_strong_ciphers'] = 'nxapi ssl ciphers weak'
-        if want['ssl_strong_ciphers'] == True:
-            commands['ssl_strong_ciphers'] = 'no nxapi ssl ciphers weak'
+    if os_platform == 'N9K' and LooseVersion(os_version) >= "9.2":
+        if needs_update('ssl_strong_ciphers'):
+            commands['ssl_strong_ciphers'] = 'nxapi ssl ciphers weak'
+            if want['ssl_strong_ciphers'] == True:
+                commands['ssl_strong_ciphers'] = 'no nxapi ssl ciphers weak'
 
-    have_ssl_protocols = ''
-    want_ssl_protocols = ''
-    for key, value in {'tlsv1_2':'TLSv1.2', 'tlsv1_1':'TLSv1.1', 'tlsv1_0':'TLSv1'}.iteritems():
-        if needs_update(key):
-            if want.get(key) == True:
-                want_ssl_protocols = " ".join([want_ssl_protocols, value])
-        elif have.get(key) == True:
-            have_ssl_protocols = " ".join([have_ssl_protocols, value])
+        have_ssl_protocols = ''
+        want_ssl_protocols = ''
+        for key, value in {'tlsv1_2':'TLSv1.2', 'tlsv1_1':'TLSv1.1', 'tlsv1_0':'TLSv1'}.iteritems():
+            if needs_update(key):
+                if want.get(key) == True:
+                    want_ssl_protocols = " ".join([want_ssl_protocols, value])
+            elif have.get(key) == True:
+                have_ssl_protocols = " ".join([have_ssl_protocols, value])
 
-    if len(want_ssl_protocols) > 0:
-        commands['ssl_protocols'] = 'nxapi ssl protocols%s' % (" ".join([want_ssl_protocols, have_ssl_protocols]))
-        
+        if len(want_ssl_protocols) > 0:
+            commands['ssl_protocols'] = 'nxapi ssl protocols%s' % (" ".join([want_ssl_protocols, have_ssl_protocols]))
+
     send_commands.extend(commands.values())
 
     return send_commands
