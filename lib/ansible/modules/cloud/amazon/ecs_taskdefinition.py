@@ -325,9 +325,10 @@ def main():
         if not module.botocore_at_least('1.10.44'):
             module.fail_json(msg='botocore needs to be version 1.10.44 or higher to use execution_role_arn')
 
-    for container in module.params.get('containers', []):
-        for environment in container.get('environment', []):
-            environment['value'] = to_text(environment['value'])
+    if module.params['containers']:
+        for container in module.params['containers']:
+            for environment in container.get('environment', []):
+                environment['value'] = to_text(environment['value'])
 
     if module.params['state'] == 'present':
         if 'containers' not in module.params or not module.params['containers']:
