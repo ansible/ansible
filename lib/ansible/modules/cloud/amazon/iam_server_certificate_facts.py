@@ -10,7 +10,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: iam_server_certificate_facts
@@ -118,7 +117,7 @@ def _get_server_certs(connection, module, name, path):
 
     try:
         if name:
-            response['certificates'].append(connection.get_server_certificate(ServerCertificateName=name))
+            response['certificates'].append(connection.get_server_certificate(ServerCertificateName=name))['ServerCertificate']
         elif path:
             server_certs = connection.list_server_certificates(PathPrefix=path)['ServerCertificateMetadataList']
         else:
@@ -126,11 +125,12 @@ def _get_server_certs(connection, module, name, path):
 
         if not name:
             for server_cert in server_certs:
-                response['certificates'].append(connection.get_server_certificate(ServerCertificateName=server_cert['ServerCertificateName']))
+                response['certificates'].append(
+                    connection.get_server_certificate(ServerCertificateName=server_cert['ServerCertificateName'])['ServerCertificate'])
 
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == 'NoSuchEntity':
-            return ['certificates']
+            return response['certificates']
         else:
             module.fail_json_aws(e, msg="The specified server certificates could not be found ")
     except botocore.exceptions.BotoCoreError as e:
@@ -153,7 +153,7 @@ def get_server_certs(connection, module):
     # Snake case the certificates results
     list_of_snaked_server_certs = list()
 
-    if not list_of_server_certs:
+    if list_of_server_certs:
         for server_cert in list_of_server_certs:
             list_of_snaked_server_certs.append(camel_dict_to_snake_dict(server_cert))
 
@@ -174,6 +174,7 @@ def main():
     connection = module.client('iam')
 
     get_server_certs(connection, module)
+
 
 if __name__ == '__main__':
     main()
