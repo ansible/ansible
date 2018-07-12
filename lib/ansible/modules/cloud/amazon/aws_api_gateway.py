@@ -108,33 +108,33 @@ import json
 
 try:
     import botocore
-    HAS_BOTOCORE = True
 except ImportError:
-    HAS_BOTOCORE = False
+    # HAS_BOTOCORE taken care of in AnsibleAWSModule
+    pass
 
-from ansible.module_utils.basic import AnsibleModule, traceback
-from ansible.module_utils.ec2 import (AWSRetry, HAS_BOTO3, ec2_argument_spec, get_aws_connection_info,
-                                      boto3_conn, camel_dict_to_snake_dict)
+import traceback
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import (AWSRetry, camel_dict_to_snake_dict)
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            api_id=dict(type='str', required=False),
-            state=dict(type='str', default='present', choices=['present', 'absent']),
-            swagger_file=dict(type='path', default=None, aliases=['src', 'api_file']),
-            swagger_dict=dict(type='json', default=None),
-            swagger_text=dict(type='str', default=None),
-            stage=dict(type='str', default=None),
-            deploy_desc=dict(type='str', default="Automatic deployment by Ansible."),
-        )
+    argument_spec = dict(
+        api_id=dict(type='str', required=False),
+        state=dict(type='str', default='present', choices=['present', 'absent']),
+        swagger_file=dict(type='path', default=None, aliases=['src', 'api_file']),
+        swagger_dict=dict(type='json', default=None),
+        swagger_text=dict(type='str', default=None),
+        stage=dict(type='str', default=None),
+        deploy_desc=dict(type='str', default="Automatic deployment by Ansible."),
     )
 
     mutually_exclusive = [['swagger_file', 'swagger_dict', 'swagger_text']]  # noqa: F841
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False,
-                           mutually_exclusive=mutually_exclusive)
+    module = AnsibleAWSModule(
+        argument_spec=argument_spec,
+        supports_check_mode=False,
+        mutually_exclusive=mutually_exclusive,
+    )
 
     api_id = module.params.get('api_id')
     state = module.params.get('state')   # noqa: F841
@@ -144,27 +144,9 @@ def main():
     stage = module.params.get('stage')
     deploy_desc = module.params.get('deploy_desc')
 
-#    check_mode = module.check_mode
-    changed = False
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='Python module "boto3" is missing, please install boto3')
-
-    if not HAS_BOTOCORE:
-        module.fail_json(msg='Python module "botocore" is missing, please install it')
-
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-    try:
-        client = boto3_conn(module, conn_type='client', resource='apigateway',
-                            region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except botocore.exceptions.NoRegionError:
-        module.fail_json(msg="Region must be specified as a parameter, in "
-                         "AWS_DEFAULT_REGION environment variable or in boto configuration file")
-    except (botocore.exceptions.ValidationError, botocore.exceptions.ClientError) as e:
-        fail_json_aws(module, e, msg="connecting to AWS")
+    client = module.client('apigateway')
 
     changed = True   # for now it will stay that way until we can sometimes avoid change
-
     conf_res = None
     dep_res = None
     del_res = None
@@ -221,7 +203,7 @@ def create_empty_api(module, client):
     try:
         awsret = create_api(client, name="ansible-temp-api", description=desc)
     except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
-        fail_json_aws(module, e, msg="creating API")
+        module.fail_json_aws(e, msg="creating API")
     return awsret["id"]
 
 
@@ -234,7 +216,7 @@ def delete_rest_api(module, client, api_id):
     try:
         delete_response = delete_api(client, api_id=api_id)
     except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
-        fail_json_aws(module, e, msg="deleting API {}".format(api_id))
+        module.fail_json_aws(e, msg="deleting API {}".format(api_id))
     return delete_response
 
 
@@ -253,7 +235,7 @@ def ensure_api_in_correct_state(module, client, api_id=None, api_data=None, stag
     try:
         configure_response = configure_api(client, api_data=api_data, api_id=api_id)
     except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
-        fail_json_aws(module, e, msg="configuring API {}".format(api_id))
+        module.fail_json_aws(e, msg="configuring API {}".format(api_id))
 
     deploy_response = None
 
@@ -263,40 +245,9 @@ def ensure_api_in_correct_state(module, client, api_id=None, api_data=None, stag
                                                 description=deploy_desc)
         except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
             msg = "deploying api {} to stage {}".format(api_id, stage)
-            fail_json_aws(module, e, msg)
+            module.fail_json_aws(e, msg)
 
     return configure_response, deploy_response
-
-
-# There is a PR open to merge fail_json_aws this into the standard module code;
-# see https://github.com/ansible/ansible/pull/23882
-def fail_json_aws(module, exception, msg=None):
-    """call fail_json with processed exception
-    function for converting exceptions thrown by AWS SDK modules,
-    botocore, boto3 and boto, into nice error messages.
-    """
-    last_traceback = traceback.format_exc()
-
-    try:
-        except_msg = exception.message
-    except AttributeError:
-        except_msg = str(exception)
-
-    if msg is not None:
-        message = '{}: {}'.format(msg, except_msg)
-    else:
-        message = except_msg
-
-    try:
-        response = exception.response
-    except AttributeError:
-        response = None
-
-    if response is None:
-        module.fail_json(msg=message, traceback=last_traceback)
-    else:
-        module.fail_json(msg=message, traceback=last_traceback,
-                         **camel_dict_to_snake_dict(response))
 
 
 retry_params = {"tries": 10, "delay": 5, "backoff": 1.2}
