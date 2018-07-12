@@ -265,7 +265,7 @@ def main():
     meraki.params['follow_redirects'] = 'all'
 
     query_urls = {'device': '/networks/{net_id}/devices'}
-    query_org_urls = {'device': '/organizations/{org_id}/deviceStatuses'}
+    query_org_urls = {'device': '/organizations/{org_id}/inventory'}
     query_device_urls = {'device': '/networks/{net_id}/devices/'}
     claim_device_urls = {'device': '/networks/{net_id}/devices/claim'}
     bind_org_urls = {'device': '/organizations/{org_id}/claim'}
