@@ -261,7 +261,7 @@ def run_module():
     custom_details = params['custom_details']
 
     #
-    if event_action != 'trigger' and dedup_key is None:
+    if state != 'trigger' and dedup_key is None:
         module.fail_json(msg="dedup_key is required for "
                              "acknowledge or resolve events")
 
@@ -333,22 +333,22 @@ def run_module():
         if info['status'] != 200:
             if info['status'] == 403:
                 module.fail_json(msg="failed to {0}. Reason: {1}"
-                                 .format(event_action, '403 Rate Limited'),
+                                 .format(state, '403 Rate Limited'),
                                  url=url, headers=headers, data=json.dumps(data))
             else:
                 module.fail_json(msg="failed to {0}. Reason: {1} Body: {2}"
-                                 .format(event_action, info['msg'], info['body']),
+                                 .format(state, info['msg'], info['body']),
                                  url=url, headers=headers, data=json.dumps(data))
     # Handle v2 API response
     if api_version == 'v2':
         if info['status'] != 202:
             if info['status'] == 429:
                 module.fail_json(msg="failed to {0}. Reason: {1}"
-                                 .format(event_action, '429 Too Many Requests'),
+                                 .format(state, '429 Too Many Requests'),
                                  url=url, headers=headers, data=json.dumps(data))
             else:
                 module.fail_json(msg="failed to {0}. Reason: {1} Body: {2}"
-                                 .format(event_action, info['msg'], info['body']),
+                                 .format(state, info['msg'], info['body']),
                                  url=url, headers=headers, data=json.dumps(data))
 
     result['api_version'] = api_version
