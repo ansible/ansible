@@ -28,7 +28,6 @@ options:
   user_summary:
     description:
       - A descriptive summary for the domain.
-    required: False
 
   admin_state:
     description:
@@ -36,7 +35,6 @@ options:
       - C(enabled), To make active.
       - C(disabled), To make inactive.
     default: enabled
-    required: False
     choices:
       - enabled
       - disabled
@@ -46,7 +44,6 @@ options:
       - Whether the configuration file is local or remote.
       - NOT YET IMPLEMENTED, its value are fixed so as not to affect the immutability
     default: local
-    required: False
 
   config_permissions_mode:
     description:
@@ -54,28 +51,24 @@ options:
         files that are run in the domain.
       - NOT YET IMPLEMENTED, its value are fixed so as not to affect the immutability
     default: scope-domain
-    required: False
 
   import_format:
     description:
       - The format of the remote configuration file.
       - NOT YET IMPLEMENTED, its value are fixed so as not to affect the immutability
     default: ZIP
-    required: False
 
   local_ip_rewrite:
     description:
       - Whether to rewrite local IP addresses during import.
       - NOT YET IMPLEMENTED, its value are fixed so as not to affect the immutability
     default: True
-    required: False
     type: bool
 
   max_chkpoints:
     description:
       - The maximum number of configuration checkpoints to support.
     default: 3
-    required: False
 
   state:
     description:
@@ -144,7 +137,6 @@ options:
         description:
           - Control if the lookup will observe HTTP proxy environment variables when present.
         default: False
-        required: False
       user:
         description:
           - The username to connect to the REST management interface with.
@@ -162,62 +154,54 @@ options:
     description:
       - Which types of events to generate when files
         are added to or deleted from the U(local://) directory.
-    required: False
+    default:
+      audit: False
+      log: False
     suboptions:
       audit:
         description:
           - Generate audit events.
-        default: False
         type: bool
-        required: False
       log:
         description:
           - Generate log events.
-        default: False
         type: bool
-        required: False
 
   file_map:
     description:
       - Which file permissions to apply to the U(local://) directory.
-    required: False
+    default:
+      display: True
+      exec: True
+      copyfrom: True
+      copyto: True
+      delete: True
+      subdir: True
     suboptions:
       display:
         description:
           - File content can be displayed for the U(local://) directory.
-        default: True
         type: bool
-        required: False
       exec:
         description:
           - Files in the U(local://) directory can be run as scripts.
-        default: True
         type: bool
-        required: False
       copyfrom:
         description:
           - Files can be copied from the U(local://) directory.
-        default: True
         type: bool
-        required: False
       copyto:
         description:
           - Files can be copied to the U(local://) directory.
-        default: True
         type: bool
-        required: False
       delete:
         description:
           - Files can be deleted from the U(local://) directory.
-        default: True
         type: bool
-        required: False
       subdir:
         description:
           - Subdirectories can be created in the U(local://) directory.
-        default: True
         type: bool
-        required: False
 
 notes:
   - This documentation was developed mostly from the content
@@ -331,8 +315,8 @@ def main():
 
     # Quiesce configuration
     quiescemap_spec = {
-        'delay': dict(type='int'),  # Specifies the interval of time in seconds to wait before initiating the quiesce action.
-        'timeout': dict(type='int')  # Specifies the length of time in seconds to wait for all transactions to complete.
+        'delay': dict(type='int', default=0),  # Specifies the interval of time in seconds to wait before initiating the quiesce action.
+        'timeout': dict(type='int', default=60)  # Specifies the length of time in seconds to wait for all transactions to complete.
     }
 
     module_args = dict(
@@ -349,9 +333,9 @@ def main():
         max_chkpoints=dict(type='int', default=3),  # The maximum number of configuration checkpoints to support.
         # TODO !!!
         # It is better to guarantee immutability while waiting.
-        config_mode=dict(type='str', choices=['local'], default='local'),
-        config_permissions_mode=dict(type='str', choices=['scope-domain'], default='scope-domain'),
-        import_format=dict(type='str', choices=['ZIP'], default='ZIP'),
+        config_mode=dict(type='str', default='local'),
+        config_permissions_mode=dict(type='str', default='scope-domain'),
+        import_format=dict(type='str', default='ZIP'),
         local_ip_rewrite=dict(type='bool', default=True)
     )
 

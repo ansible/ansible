@@ -93,7 +93,6 @@ options:
       - Include all files in the local directory for the domain?
       - Only be taken into account during the export
     default: False
-    required: False
     type: bool
 
   persisted:
@@ -101,7 +100,6 @@ options:
       - Export from persisted or running configuration?
       - Only be taken into account during the export
     default: False
-    required: False
     type: bool
 
   internal_files:
@@ -109,7 +107,6 @@ options:
       - Export internal configuration files?
       - Only be taken into account during the export
     default: True
-    required: False
     type: bool
 
   input_file:
@@ -123,7 +120,6 @@ options:
       - Overwrite local files
       - Only be taken into account during the import
     default: False
-    required: False
     type: bool
 
   overwrite_objects:
@@ -131,7 +127,6 @@ options:
       - Overwrite objects that exist
       - Only be taken into account during the import
     default: False
-    required: False
     type: bool
 
   dry_run:
@@ -139,7 +134,6 @@ options:
       - Import package (on) or validate the import operation without importing (off).
       - Only be taken into account during the import
     default: False
-    required: False
     type: bool
 
   rewrite_local_ip:
@@ -147,7 +141,6 @@ options:
       - The local address bindings of services in the import package are rewritten on import to their equivalent interfaces
       - Only be taken into account during the import
     default: False
-    required: False
     type: bool
 
 notes:

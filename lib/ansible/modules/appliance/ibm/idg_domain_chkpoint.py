@@ -25,6 +25,11 @@ options:
       - Checkpoint identifier.
     required: True
 
+  domain:
+    description:
+      - Domain identifier.
+    required: True
+
   state:
     description:
       - Specifies the current state of the checkpoint inside the domain.
@@ -40,7 +45,6 @@ options:
   idg_connection:
     description:
       - A dict object containing connection details.
-    type: dict
     required: True
     suboptions:
       password:
