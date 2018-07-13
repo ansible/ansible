@@ -200,7 +200,7 @@ vars:
       - security-level 50
       - ip address 192.168.13.1 255.255.255.0 standby 192.168.13.2
     provider: "{{ cli }}"
-    parents: ["interface vlan 13"]
+    parents: ["interface Vlan13"]
   register: interface
 - name: Show interface update
   debug: msg="{{ interface }}"
