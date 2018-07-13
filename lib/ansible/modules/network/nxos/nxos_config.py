@@ -393,7 +393,7 @@ def main():
 
     try:
         info = get_capabilities(module)
-        api = info.get('network_api', 'nxapi')
+        api = info.get('network_api')
         device_info = info.get('device_info', {})
         os_platform = device_info.get('network_os_platform', '')
     except ConnectionError:
