@@ -4,40 +4,56 @@
 # Copyright: (c) 2018, Remy Mudingay <remy.mudingay@esss.se>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+# Reference: https://docs.ansible.com/ansible/2.6/dev_guide/developing_modules_general.html
+
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '0.1',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
 module: zpool
+
 short_description: Manage zfs zpools
+
+version_added: "2.6"
+
 description:
   - Manage virtual storage pools using zfs zpools
-version_added: "0.1"
+
 options:
   name:
     description:
       - Pool name
     required: true
+
+  add:
+    description:
+      -  Add devices (spare or mirror to an existing zpool)
+      choices: [ true, false ]
+
   raid_level:
     description:
       - type of pool
     choices: [ mirror, raidz, raidz1, raidz2 ]
+
   devices:
     description:
       - full path to list of block devices such as hdd, nvme or nvme
+
   spare:
     description:
       - full path to list of block devices such as hdd, nvme or nvme
+
   state:
     description:
       - Create or delete the pool
     choices: [ absent, present ]
     required: true
+
 author:
 - Remy Mudingay
 '''
@@ -73,6 +89,23 @@ EXAMPLES = '''
       - /dev/sde
     state: present
 
+- name: Add devices to an existing zpool
+  zpool:
+    name: rpool
+    add: true
+    devices:
+    - /dev/sdf
+    raid_level: mirror
+    state: present
+
+- name: Add spare dev to an existing zpool
+  zpool:
+    name: rpool
+    add: true
+    spare:
+    - /dev/sdf
+    state: present
+
 - name: Destroy an existing zpool
   zpool:
     name: rpool
@@ -83,30 +116,18 @@ import os
 
 from ansible.module_utils.basic import AnsibleModule
 
-
 class Zpool(object):
 
-    def __init__(self, module, name, raid_level, devices, spare, state):
+    def __init__(self, module, name, state, raid_level, devices, spare, add):
         self.module = module
         self.name = name
+        self.raid_level = raid_level
+        self.devices = devices
+        self.spare = spare
+        self.state = state
+        self.add = add
         self.changed = False
         self.zpool_cmd = module.get_bin_path('zpool', True)
-        self.pool = name.split('/')[0]
-        self.is_solaris = os.uname()[0] == 'SunOS'
-        self.enhanced_sharing = self.check_enhanced_sharing()
-
-
-    def check_enhanced_sharing(self):
-        if self.is_solaris and not self.is_openzfs:
-            cmd = [self.zpool_cmd]
-            cmd.extend(['get', 'version'])
-            cmd.append(self.pool)
-            (rc, out, err) = self.module.run_command(cmd, check_rc=True)
-            version = out.splitlines()[-1].split()[2]
-            if int(version) >= 34:
-                return True
-        return False
-
 
     def exists(self):
         cmd = [self.zpool_cmd, 'list', self.name]
@@ -116,13 +137,15 @@ class Zpool(object):
         else:
             return False
 
-
     def create(self):
         if self.module.check_mode:
             self.changed = True
             return
         cmd = [self.zpool_cmd]
-        action = 'create'
+        if self.add == True:
+            action = 'add'
+        else:
+            action = 'create'
         cmd.append(action)
         cmd.append(self.name)
         cmd.append(self.raid_level)
@@ -134,7 +157,6 @@ class Zpool(object):
         else:
             self.module.fail_json(msg=err)
 
-
     def destroy(self):
         if self.module.check_mode:
             self.changed = True
@@ -145,12 +167,13 @@ class Zpool(object):
             self.changed = True
         else:
             self.module.fail_json(msg=err)
+
+# Will use this in the future to add mirrored drives
 def is_even(x):
     if x % 2 == 0:
         return True
     else:
         return False
-
 
 def main():
 
@@ -158,70 +181,50 @@ def main():
         argument_spec=dict(
             name=dict(type='str', required=True),
             state=dict(type='str', required=True, choices=['absent', 'present']),
+            raid_level=dict(type='str', required=False, choices=['mirror', 'raidz', 'raidz1', 'raidz2']),
             devices=dict(type='list', default=None),
-            raid_level=dict(type='str', required=False, choices=['mirror','raidz', 'raidz1', 'raidz2']),
             spare=dict(type='list', default=None),
+            add=dict(type='bool', default=False),
         ),
     )
 
-    #parameters = self.module.params
-
-    state = module.params.get('state')
     name = module.params.get('name')
-    devices = module.params.get('devices')
+    state = module.params.get('state')
+    add = module.params.get('add')
     raid_level = module.params.get('raid_level')
+    devices = module.params.get('devices')
     spare = module.params.get('spare')
+
+    if raid_level is None:
+        raid_level = ''
+
+    if devices is None or not devices:
+        devices = ''
+    else:
+        devices = ' '.join(devices)
+
+    if spare is None or not spare:
+        spare = ''
+        spares = spare
+    else:
+        spares = ' '.join(spare)
+        spare = 'spare ' + spares
 
     result = dict(
         name=name,
         state=state,
-        devices=devices,
         raid_level=raid_level,
+        devices=devices,
         spare=spare,
     )
 
-    zpool = Zpool(module, name, state, raid_level, devices, spare)
-
-    if raid_level  == 'mirror':
-        if len(devices) >= 2 and is_even(len(devices)):
-            device_count = len(devices)/2
-            devcount = 0
-            for index, item in enumerate(devices):
-                dev1 = item[devcount]
-                devcount += 1
-                dev2 = item[devcount]
-                devcount += 1
-                devs = [ dev1, dev2 ]
-                devicelist = ' '.join(devs)
-        #returning a string instead of a list!
-        devices = ' mirror ', devicelist
-
-    elif raid_level == 'raidz':
-        if len(devices) == 3:
-            dev = ' '.join(devices)
-            devices = 'raidz ', dev
-    elif raid_level == 'raidz1':
-        if len(devices) == 6:
-            dev = ' '.join(devices)
-            devices = 'raidz1 ', dev
-    elif raid_level == 'raidz2':
-        if len(devices) == 6:
-            dev = ' '.join(devices)
-            devices = 'raidz2 ', dev
-
-
-    if devices is None:
-        devices = []
-
-    if spare is None:
-        spare = []
-        spares = spare
-    else:
-        spares = ' '.join(spare)
-        spare = 'spare ', spares
+    zpool = Zpool(module, name, state, raid_level, devices, spare, add)
 
     if state == 'present':
-        if zpool.exists() is False:
+        if zpool.exists():
+            zpool.create()
+        elif zpool.exists() is False and (add == False or add == 'false'):
+            print('here')
             zpool.create()
 
     elif state == 'absent':
