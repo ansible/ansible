@@ -81,7 +81,7 @@ def signed_request(method="GET", service=None, host=None, uri=None, query=None, 
 
     t = datetime.datetime.utcnow()
     amz_date = t.strftime('%Y%m%dT%H%M%SZ')
-    datestamp = t.strftime('%Y%m%d') # Date w/o time, used in credential scope
+    datestamp = t.strftime('%Y%m%d')  # Date w/o time, used in credential scope
     algorithm = 'AWS4-HMAC-SHA256'
 
     # AWS stuff
@@ -125,7 +125,7 @@ def signed_request(method="GET", service=None, host=None, uri=None, query=None, 
 
     cannonical_headers = "\n".join([
         key.lower().strip() + ":" + value for key, value in headers.items()
-    ]) + '\n' # Note additional trailing newline
+    ]) + '\n'  # Note additional trailing newline
 
     cannonical_request = "\n".join([
         method,
