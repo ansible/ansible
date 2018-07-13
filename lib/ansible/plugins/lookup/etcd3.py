@@ -78,8 +78,7 @@ class Etcd3:
         try:
             client = etcd3.client(host, port)
             resp = []
-            print("ok")
-            for value, _ in client.get_prefix(key):
+            for value, i in client.get_prefix(key):
                 if value is not None:
                     resp.append(json.loads(value))
             if len(resp) < 1:
