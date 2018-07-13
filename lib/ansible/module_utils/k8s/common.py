@@ -148,8 +148,11 @@ class K8sAnsibleMixin(object):
             elif key in auth_args and value is None:
                 env_value = os.getenv('K8S_AUTH_{0}'.format(key.upper()), None)
                 if env_value is not None:
-                    setattr(configuration, key, env_value)
-                    auth[key] = env_value
+                    if key == 'api_key':
+                        setattr(configuration, key, {'authorization': "Bearer {0}".format(env_value)})
+                    else:
+                        setattr(configuration, key, env_value)
+                        auth[key] = env_value
 
         kubernetes.client.Configuration.set_default(configuration)
 
