@@ -1,6 +1,9 @@
 # (C) Unknown?
 
-import datetime, hashlib, hmac, operator
+import datetime
+import hashlib
+import hmac
+import operator
 
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.ec2 import get_aws_connection_info
@@ -136,7 +139,7 @@ def signed_request(method="GET", service=None, host=None, uri=None, query=None, 
 
     # Make auth header with that info
 
-    authorization_header = "{} Credential={}/{}, SignedHeaders={}, Signature={}".format(
+    authorization_header = "{0} Credential={1}/{2}, SignedHeaders={3}, Signature={4}".format(
         algorithm, access_key, credential_scope, signed_headers, signature
     )
 
@@ -155,4 +158,3 @@ def signed_request(method="GET", service=None, host=None, uri=None, query=None, 
     final_headers.update(headers)
 
     return open_url(url, method=method, data=body, headers=final_headers)
-
