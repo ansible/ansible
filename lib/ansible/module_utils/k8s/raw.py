@@ -43,10 +43,10 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                                          supports_check_mode=True,
                                          **kwargs)
 
-        kind = self.params.pop('kind')
-        api_version = self.params.pop('api_version')
-        name = self.params.pop('name')
-        namespace = self.params.pop('namespace')
+        self.kind = self.params.pop('kind')
+        self.api_version = self.params.pop('api_version')
+        self.name = self.params.pop('name')
+        self.namespace = self.params.pop('namespace')
         resource_definition = self.params.pop('resource_definition')
         if resource_definition:
             self.resource_definitions = [resource_definition]
@@ -56,11 +56,11 @@ class KubernetesRawModule(KubernetesAnsibleModule):
 
         if not resource_definition and not src:
             self.resource_definitions = [{
-                'kind': kind,
-                'apiVersion': api_version,
+                'kind': self.kind,
+                'apiVersion': self.api_version,
                 'metadata': {
-                    'name': name,
-                    'namespace': namespace
+                    'name': self.name,
+                    'namespace': self.namespace
                 }
             }]
 
@@ -69,14 +69,13 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         results = []
         self.client = self.get_api_client()
         for definition in self.resource_definitions:
-            kind = definition.get('kind')
+            kind = definition.get('kind', self.kind)
             search_kind = kind
             if kind.lower().endswith('list'):
                 search_kind = kind[:-4]
-            api_version = definition.get('apiVersion')
+            api_version = definition.get('apiVersion', self.api_version)
             resource = self.find_resource(search_kind, api_version, fail=True)
-            definition['kind'] = resource.kind
-            definition['apiVersion'] = resource.group_version
+            definition = self.set_defaults(resource, definition)
             result = self.perform_action(resource, definition)
             changed = changed or result['changed']
             results.append(result)
@@ -91,10 +90,21 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             }
         })
 
+    def set_defaults(self, resource, definition):
+        definition['kind'] = resource.kind
+        definition['apiVersion'] = resource.group_version
+        if not definition.get('metadata'):
+            definition['metadata'] = {}
+        if self.name and not definition['metadata'].get('name'):
+            definition['metadata']['name'] = self.name
+        if resource.namespaced and self.namespace and not definition['metadata'].get('namespace'):
+            definition['metadata']['namespace'] = self.namespace
+        return definition
+
     def perform_action(self, resource, definition):
         result = {'changed': False, 'result': {}}
-        state = self.params.pop('state', None)
-        force = self.params.pop('force', False)
+        state = self.params.get('state', None)
+        force = self.params.get('force', False)
         name = definition.get('metadata', {}).get('name')
         namespace = definition.get('metadata', {}).get('namespace')
         existing = None
