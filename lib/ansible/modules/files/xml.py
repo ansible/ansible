@@ -109,7 +109,7 @@ options:
   strip_cdata_tags:
     description:
       - Remove CDATA tags surrounding text values.
-      - Note that this might break your XML file if text values contain characters that could be interpreted as XML
+      - Note that this might break your XML file if text values contain characters that could be interpreted as XML.
     type: bool
     default: 'no'
     version_added: '2.7'
