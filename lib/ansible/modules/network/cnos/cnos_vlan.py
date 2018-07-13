@@ -218,15 +218,6 @@ def main():
     outputfile = module.params['outputfile']
 
     output = ""
-    time.sleep(2)
-
-    # Enable and enter configure terminal then send command
-    cmd = [{'command': '\n', 'prompt': None, 'answer': None}]
-    output = output + str(cnos.run_cnos_commands(module, cmd))
-
-    # Make terminal length = 0
-    cmd = [{'command': 'terminal length 0', 'prompt': None, 'answer': None}]
-    output = output + str(cnos.run_cnos_commands(module, cmd))
 
     # Go to config mode
     cmd = [{'command': 'configure terminal', 'prompt': None, 'answer': None}]

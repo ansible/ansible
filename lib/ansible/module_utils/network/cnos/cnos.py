@@ -2213,7 +2213,6 @@ def vlanConfig(module, prompt, answer):
 
     retVal = ""
     # Wait time to get response from server
-    timeout = 2
     vlanArg1 = module.params['vlanArg1']
     vlanArg2 = module.params['vlanArg2']
     vlanArg3 = module.params['vlanArg3']
@@ -2298,7 +2297,6 @@ def vlanConfig(module, prompt, answer):
 def vlanAccessMapConfig(module, prompt, answer):
     retVal = ''
     # Wait time to get response from server
-    timeout = 2
     command = ''
     vlanArg3 = module.params['vlanArg3']
     vlanArg4 = module.params['vlanArg4']
@@ -2345,7 +2343,6 @@ def vlanAccessMapConfig(module, prompt, answer):
 
 def checkVlanNameNotAssigned(module, prompt, answer):
     retVal = "ok"
-    timeout = 2
     vlanId = module.params['vlanArg1']
     vlanName = module.params['vlanArg3']
     command = "show vlan id " + vlanId
@@ -2365,7 +2362,6 @@ def checkVlanNameNotAssigned(module, prompt, answer):
 def createVlan(module, prompt, answer):
 
     # vlan config command happens here. It creates if not present
-    timeout = 2
     vlanArg1 = module.params['vlanArg1']
     vlanArg2 = module.params['vlanArg2']
     vlanArg3 = module.params['vlanArg3']
