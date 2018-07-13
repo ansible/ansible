@@ -21,7 +21,7 @@ Cleaning Duty
 -------------
 
 - Drop Py2.6 for controllers
-- Remove dependency on simplejson
+- Remove dependency on simplejson `issue#42761 <https://github.com/ansible/ansible/issues/42761>`_
 
 
 Engine Improvements
@@ -31,7 +31,7 @@ Engine Improvements
 - Introduce a ``live`` keyword to provide modules the ability to push intermediate (live) updates `pr#13620 <https://github.com/ansible/ansible/pull/13620>`_
 - Create a configuration object for a top level content installation path for modules, plugins, roles, etc. 
 - Investigate what it will take to utilise the work performed by Mitogen maintainers.
-- Provide sane connection defaults by platform `ansible_platform`.
+- Provide sane connection defaults by platform `ansible_platform` `proposal <https://github.com/ansible/proposals/issues/77>`_
 - Refactor connection/shell/action/terminal/become plugins to allow looser coupling and more mix-and-match behaviour.
 - Investigate performance improvements in using threads as opposed to forks.
 - Jinja native types will allow for users to render a Python native type. `pr#32738 <https://github.com/ansible/ansible/pull/32738>`_
@@ -67,8 +67,8 @@ AWS
 Azure
 =====
 
-* Azure inventory plugin
-* Azure stack support for modules
+* Azure inventory plugin `issue <https://github.com/ansible/ansible/issues/42769>`__
+* Azure stack support for modules `project <https://github.com/nitzmahone/ansible/projects/2>`__
 
 
 Network
@@ -92,15 +92,15 @@ Windows
 General
 =======
 
-* Investigate the cause of WinRM HTTPS read timeouts
+* Investigate the cause of WinRM HTTPS read timeouts `issue <https://github.com/ansible/ansible/issues/41145>`__
 * WinRM connection persistence (improves performance)
-* Experiment with OpenSSH + powershell
+* Experiment with OpenSSH + powershell `pr#33074 <https://github.com/ansible/ansible/pull/33074>`_
 
 Modules
 =======
 
-* `win_domain` and `win_domain_controller` action wrappers
+* `win_domain` and `win_domain_controller` action wrappers `issue <https://github.com/ansible/ansible/issues/42764>`__
 * Add link to `win_file`
-* Hostname change support for `win_domain` and `win_domain_controller`
+* Hostname change support for `win_domain` and `win_domain_controller` `issue <https://github.com/ansible/ansible/issues/42768>`__
 
 
