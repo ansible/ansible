@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Allow more than one page of results by using the right pagination indicator ('NextMarker' instead of 'NextToken').
