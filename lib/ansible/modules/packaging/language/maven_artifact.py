@@ -425,7 +425,7 @@ class MavenDownloader:
                 parsed_url = urlparse(remote_url)
                 remote_md5 = self._local_md5(parsed_url.path)
             else:
-                remote_md5 = self._getContent(remote_url + '.md5', "Failed to retrieve MD5", False)
+                remote_md5 = self._getContent(remote_url + '.md5', "Failed to retrieve MD5", False).decode('utf-8', 'strict')
                 if(not remote_md5):
                     return "Cannot find md5 from " + remote_url
             if local_md5 == remote_md5:
@@ -438,7 +438,7 @@ class MavenDownloader:
     def _local_md5(self, file):
         md5 = hashlib.md5()
         with io.open(file, 'rb') as f:
-            for chunk in iter(lambda: f.read(8192), ''):
+            for chunk in iter(lambda: f.read(8192), b''):
                 md5.update(chunk)
         return md5.hexdigest()
 
