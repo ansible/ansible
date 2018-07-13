@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: cobbler_system
-version_added: '2.6'
+version_added: '2.7'
 short_description: Manage system ojects in Cobbler
 description:
 - Add, modify or remove systems in Cobbler
@@ -266,7 +266,7 @@ def main():
 
             for key, value in iteritems(module.params['properties']):
                 if key not in system:
-                    module.fail_json(msg="Property '{0}' is not a valid system property.".format(key))
+                    module.warn("Property '{0}' is not a valid system property.".format(key))
                 if system[key] != value:
                     try:
                         conn.modify_system(system_id, key, value, token)
@@ -295,7 +295,7 @@ def main():
                     if key == 'name':
                         continue
                     if key not in IFPROPS_MAPPING:
-                        module.fail_json(msg="Property '{0}' is not a valid system property.".format(key))
+                        module.warn("Property '{0}' is not a valid system property.".format(key))
                     if not system or system['interfaces'][device][IFPROPS_MAPPING[key]] != value:
                         interface_properties['{0}-{1}'.format(key, device)] = value
 
