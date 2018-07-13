@@ -108,10 +108,11 @@ options:
     default: 'no'
   strip_cdata_tags:
     description:
-      - Remove CDATA tags surrounding text values. This might break your XML
-        file if text values contain characters that could be interpreted as XML
+      - Remove CDATA tags surrounding text values.
+      - Note that this might break your XML file if text values contain characters that could be interpreted as XML
     type: bool
     default: 'no'
+    version_added: '2.7'
 requirements:
 - lxml >= 2.3.0
 notes:
@@ -808,7 +809,7 @@ def main():
 
     # Try to parse in the target XML file
     try:
-        parser = etree.XMLParser(remove_blank_text=pretty_print,strip_cdata=strip_cdata_tags)
+        parser = etree.XMLParser(remove_blank_text=pretty_print, strip_cdata=strip_cdata_tags)
         doc = etree.parse(infile, parser)
     except etree.XMLSyntaxError as e:
         module.fail_json(msg="Error while parsing document: %s (%s)" % (xml_file or 'xml_string', e))
