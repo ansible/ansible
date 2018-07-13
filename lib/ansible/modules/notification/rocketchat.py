@@ -29,6 +29,12 @@ options:
       - The domain for your environment without protocol. (i.e.
         C(example.com) or C(chat.example.com))
     required: true
+  path:
+    description:
+      - The path if you installed Rocket Chat in a subdirectory.
+    default: ''
+    required: false
+    version_added: "2.8"
   token:
     description:
       - Rocket Chat Incoming Webhook integration token.  This provides
@@ -99,6 +105,7 @@ EXAMPLES = """
 - name: Send notification message via Rocket Chat all options
   rocketchat:
     domain: chat.example.com
+    path: /sub-dir
     token: thetoken/generatedby/rocketchat
     msg: '{{ inventory_hostname }} completed'
     channel: #ansible
@@ -147,7 +154,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
 
 
-ROCKETCHAT_INCOMING_WEBHOOK = '%s://%s/hooks/%s'
+ROCKETCHAT_INCOMING_WEBHOOK = '%s://%s%s/hooks/%s'
 
 
 def build_payload_for_rocketchat(module, text, channel, username, icon_url, icon_emoji, link_names, color, attachments):
@@ -184,12 +191,12 @@ def build_payload_for_rocketchat(module, text, channel, username, icon_url, icon
     return payload
 
 
-def do_notify_rocketchat(module, domain, token, protocol, payload):
+def do_notify_rocketchat(module, domain, path, token, protocol, payload):
 
     if token.count('/') < 1:
         module.fail_json(msg="Invalid Token specified, provide a valid token")
 
-    rocketchat_incoming_webhook = ROCKETCHAT_INCOMING_WEBHOOK % (protocol, domain, token)
+    rocketchat_incoming_webhook = ROCKETCHAT_INCOMING_WEBHOOK % (protocol, domain, path, token)
 
     response, info = fetch_url(module, rocketchat_incoming_webhook, data=payload)
     if info['status'] != 200:
@@ -200,6 +207,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             domain=dict(type='str', required=True, default=None),
+            path=dict(type='str', required=False, default=''),
             token=dict(type='str', required=True, no_log=True),
             protocol=dict(type='str', default='https', choices=['http', 'https']),
             msg=dict(type='str', required=False, default=None),
@@ -215,6 +223,7 @@ def main():
     )
 
     domain = module.params['domain']
+    path = module.params['path']
     token = module.params['token']
     protocol = module.params['protocol']
     text = module.params['msg']
@@ -227,7 +236,7 @@ def main():
     attachments = module.params['attachments']
 
     payload = build_payload_for_rocketchat(module, text, channel, username, icon_url, icon_emoji, link_names, color, attachments)
-    do_notify_rocketchat(module, domain, token, protocol, payload)
+    do_notify_rocketchat(module, domain, path, token, protocol, payload)
 
     module.exit_json(msg="OK")
 
