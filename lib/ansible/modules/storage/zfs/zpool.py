@@ -26,7 +26,7 @@ options:
   add:
     description:
       -  Add devices (spare or mirror to an existing zpool)
-      choices: [ true, false ]
+    choices: [ true, false ]
   raid_level:
     description:
       - type of pool
@@ -104,8 +104,8 @@ import os
 
 from ansible.module_utils.basic import AnsibleModule
 
-class Zpool(object):
 
+class Zpool(object):
 
     def __init__(self, module, name, state, raid_level, devices, spare, add):
         self.module = module
@@ -118,7 +118,6 @@ class Zpool(object):
         self.changed = False
         self.zpool_cmd = module.get_bin_path('zpool', True)
 
-
     def exists(self):
         cmd = [self.zpool_cmd, 'list', self.name]
         (rc, out, err) = self.module.run_command(' '.join(cmd))
@@ -127,13 +126,12 @@ class Zpool(object):
         else:
             return False
 
-
     def create(self):
         if self.module.check_mode:
             self.changed = True
             return
         cmd = [self.zpool_cmd]
-        if self.add == True:
+        if self.add is True:
             action = 'add'
         else:
             action = 'create'
@@ -148,7 +146,6 @@ class Zpool(object):
         else:
             self.module.fail_json(msg=err)
 
-
     def destroy(self):
         if self.module.check_mode:
             self.changed = True
@@ -160,13 +157,11 @@ class Zpool(object):
         else:
             self.module.fail_json(msg=err)
 
-
 def is_even(x):
     if x % 2 == 0:
         return True
     else:
         return False
-
 
 def main():
 
@@ -181,7 +176,6 @@ def main():
         ),
     )
 
-
     name = module.params.get('name')
     state = module.params.get('state')
     add = module.params.get('add')
@@ -189,16 +183,13 @@ def main():
     devices = module.params.get('devices')
     spare = module.params.get('spare')
 
-
     if raid_level is False:
         raid_level = ''
-
 
     if devices is False or not devices:
         devices = ''
     else:
         devices = ' '.join(devices)
-
 
     if spare is False or not spare:
         spare = ''
@@ -206,7 +197,6 @@ def main():
     else:
         spares = ' '.join(spare)
         spare = 'spare ' + spares
-
 
     result = dict(
         name=name,
@@ -216,9 +206,7 @@ def main():
         spare=spare,
     )
 
-
     zpool = Zpool(module, name, state, raid_level, devices, spare, add)
-
 
     if state == 'present':
         if zpool.exists():
@@ -229,7 +217,6 @@ def main():
     elif state == 'absent':
         if zpool.exists():
             zpool.destroy()
-
 
     result['changed'] = zpool.changed
     module.exit_json(**result)
