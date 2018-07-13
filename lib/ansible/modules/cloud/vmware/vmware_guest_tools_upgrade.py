@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# Copyright: (c) 2018, Mike Klebolt  <michael.klebolt@centurylink.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -19,24 +20,26 @@ module: vmware_guest_tools_upgrade
 short_description: Module to upgrade VMTools
 version_added: "2.7"
 description:
-    - "This module upgrades the VMWare Tools on Windows and Linux guests."
+    - This module upgrades the VMWare Tools on Windows and Linux guests.
 requirements:
     - "python >= 2.6"
     - PyVmomi
+notes:
+    - In order to upgrade VMTools please poweron virtual machine before hand - either 'manually' or using module vmware_guest_powerstate.
 options:
    name:
         description:
-            - Name of the VM to work with
-            - This is required if UUID is not supplied.
+            - Name of the VM to work with.
+            - This is required if C(UUID) is not supplied.
    name_match:
         description:
-            - If multiple VMs matching the name, use the first or last found
+            - If multiple VMs matching the name, use the first or last found.
         default: 'first'
         choices: ['first', 'last']
    uuid:
         description:
             - UUID of the instance to manage if known, this is VMware's unique identifier.
-            - This is required if name is not supplied.
+            - This is required if c(name) is not supplied.
    folder:
         description:
             - Destination folder, absolute or relative path to find an existing guest.
@@ -54,10 +57,9 @@ options:
             - '   folder: /folder1/datacenter1/vm/folder2'
             - '   folder: vm/folder2'
             - '   folder: folder2'
-        default: /vm
    datacenter:
         description:
-            - Destination datacenter for the deploy operation
+            - Destination datacenter where virtual machine exists.
         required: True
 extends_documentation_fragment: vmware.documentation
 author:
@@ -66,7 +68,7 @@ author:
 
 EXAMPLES = '''
 - name: Upgrade VMWare Tools
-  vmware_guest_facts:
+  vmware_guest_tools_upgrade:
     hostname: 192.168.1.209
     username: administrator@vsphere.local
     password: vmware
@@ -126,10 +128,8 @@ class PyVmomiHelper(PyVmomi):
             try:
                 if vm.guest.guestFamily in ["linuxGuest", "windowsGuest"]:
                     task = vm.UpgradeTools()
-                wait_for_task(task)
-                result.update(
-                    changed=True,
-                )
+                changed, err_msg = wait_for_task(task)
+                result.update(changed=changed, msg=err_msg)
                 return result
             except Exception as exc:
                 result.update(
@@ -151,7 +151,7 @@ def main():
         name=dict(type='str'),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
-        folder=dict(type='str', default='/vm'),
+        folder=dict(type='str'),
         datacenter=dict(type='str', required=True),
     )
     module = AnsibleModule(argument_spec=argument_spec,
@@ -178,6 +178,8 @@ def main():
                 module.exit_json(msg=result['msg'], changed=result['changed'])
         except Exception as exc:
             module.fail_json(msg='Unknown error: %s' % exc)
+    else:
+        module.fail_json(msg='Unable to find VM %s' % module.params.get('uuid') or module.params.get('name'))
 
 
 if __name__ == '__main__':
