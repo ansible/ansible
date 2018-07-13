@@ -3,7 +3,7 @@ import pytest
 import unittest
 
 try:
-    import ansible.modules.cloud.amazon.s3 as s3
+    import ansible.modules.cloud.amazon.aws_s3 as s3
 except ImportError:
     pytestmark = pytest.mark.skip("This test requires the s3 Python libraries")
 
@@ -23,13 +23,6 @@ class TestUrlparse(unittest.TestCase):
     def test_is_fakes3(self):
         actual = s3.is_fakes3("fakes3://bla.blubb")
         self.assertEqual(True, actual)
-
-    def test_is_walrus(self):
-        actual = s3.is_walrus("trulywalrus_but_invalid_url")
-        # I don't know if this makes sense, but this is the current behaviour...
-        self.assertEqual(True, actual)
-        actual = s3.is_walrus("http://notwalrus.amazonaws.com")
-        self.assertEqual(False, actual)
 
     def test_get_s3_connection(self):
         aws_connect_kwargs = dict(aws_access_key_id="access_key",
