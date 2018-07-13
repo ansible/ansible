@@ -315,8 +315,8 @@ class CallbackModule(CallbackBase):
 
         self._display.display("", screen_only=True)
 
-        # print custom stats
-        if self.show_custom_stats:
+        # print custom stats if required
+        if stats.custom and self.show_custom_stats:
             self._display.banner("CUSTOM STATS: ")
             # per host
             # TODO: come up with 'pretty format'
