@@ -506,9 +506,9 @@ class TestIpFilter(unittest.TestCase):
     def test_genmac(self):
         expected = r"[0-9a-f]{2}([-:]?)[0-9a-f]{2}(\1[0-9a-f]{2}){4}$"
         prefix = '52:54:00'
-        self.assertRegex(genmac(prefix).lower(), expected)
+        self.assertRegexpMatches(genmac(prefix).lower(), expected)
         prefix = 'AC-DE-48'
-        self.assertRegex(genmac(prefix).lower(), expected)
+        self.assertRegexpMatches(genmac(prefix).lower(), expected)
 
         bad_prefix = "52:AC"
         expected = (
