@@ -55,14 +55,14 @@ class Cliconf(CliconfBase):
 
     def check_json_support(self):
         """
-        The method returns boolean value that determines whether JSON
-        structured output is supported on the device or not
+        The method returns 'json' if JSON structured output is
+        supported on the device
         """
         try:
             self.get('show version | json')
-            return True
-        except AnsibleConnectionFailure as exc:
-            return False
+            return 'json'
+        except AnsibleConnectionFailure:
+            pass
 
     def get_device_info(self):
         device_info = {}
@@ -110,8 +110,6 @@ class Cliconf(CliconfBase):
         if match_os_platform:
             device_info['network_os_platform'] = match_os_platform.group(1)
 
-        device_info['network_os_json_support'] = self.check_json_support()
-
         return device_info
 
     def get_config(self, source='running', format='text', flags=None):
@@ -136,12 +134,15 @@ class Cliconf(CliconfBase):
 
     def get_capabilities(self):
         result = {}
+        result['output'] = []
+        result['output'].append(self.check_json_support())
         result['rpc'] = self.get_base_rpc()
         result['device_info'] = self.get_device_info()
         if isinstance(self._connection, NetworkCli):
             result['network_api'] = 'cliconf'
         else:
             result['network_api'] = 'nxapi'
+
         return json.dumps(result)
 
     # Migrated from module_utils

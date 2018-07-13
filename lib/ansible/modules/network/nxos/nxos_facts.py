@@ -544,7 +544,7 @@ def main():
 
     capabilities = get_capabilities(module)
     if capabilities:
-        if not capabilities['device_info']['network_os_json_support']:
+        if 'json' not in capabilities['output']:
             module.fail_json(msg="this module requires JSON structured output support on the NX-OS device")
 
     warnings = list()
