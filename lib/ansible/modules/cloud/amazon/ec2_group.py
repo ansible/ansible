@@ -290,6 +290,7 @@ owner_id:
 
 import json
 import re
+import itertools
 from time import sleep
 from collections import namedtuple
 from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
@@ -315,7 +316,14 @@ current_account_id = None
 def rule_cmp(a, b):
     """Compare rules without descriptions"""
     for prop in ['port_range', 'protocol', 'target', 'target_type']:
-        if getattr(a, prop) != getattr(b, prop):
+        if prop == 'port_range' and to_text(a.protocol) == to_text(b.protocol):
+            # equal protocols can interchange `(-1, -1)` and `(None, None)`
+            if (a.port_range in ((None, None), (-1, -1))
+                   and b.port_range in ((None, None), (-1, -1))):
+                continue
+            else:
+                return False
+        elif getattr(a, prop) != getattr(b, prop):
             return False
     return True
 
@@ -388,7 +396,7 @@ def rule_from_group_permission(perm):
             # there may be several IP ranges here, which is ok
             yield Rule(
                 ports_from_permission(perm),
-                perm['IpProtocol'],
+                to_text(perm['IpProtocol']),
                 r[target_subkey],
                 target_type,
                 r.get('Description')
@@ -414,7 +422,7 @@ def rule_from_group_permission(perm):
 
             yield Rule(
                 ports_from_permission(perm),
-                perm['IpProtocol'],
+                to_text(perm['IpProtocol']),
                 target,
                 'group',
                 pair.get('Description')
@@ -801,6 +809,15 @@ def wait_for_rule_propagation(module, group, desired_ingress, desired_egress, pu
             current_rules = set(sum([list(rule_from_group_permission(p)) for p in group[rule_key]], []))
             if purge and len(current_rules ^ set(desired_rules)) == 0:
                 return group
+            elif purge:
+                conflicts = current_rules ^ set(desired_rules)
+                # For cases where set comparison is equivalent, but invalid port/proto exist
+                for a, b in itertools.combinations(conflicts, 2):
+                    if rule_cmp(a, b):
+                        conflicts.discard(a)
+                        conflicts.discard(b)
+                if not len(conflicts):
+                    return group
             elif current_rules.issuperset(desired_rules) and not purge:
                 return group
             sleep(10)
@@ -948,7 +965,7 @@ def main():
                 named_tuple_rule_list.append(
                     Rule(
                         port_range=(rule['from_port'], rule['to_port']),
-                        protocol=rule.get('proto', 'tcp'),
+                        protocol=to_text(rule.get('proto', 'tcp')),
                         target=target, target_type=target_type,
                         description=rule.get('rule_desc'),
                     )
