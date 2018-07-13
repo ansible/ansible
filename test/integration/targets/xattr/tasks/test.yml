@@ -1,7 +1,7 @@
 - name: Set attributes
   xattr:
     path: "{{ test_file }}"
-    key: foo
+    key: user.foo
     value: bar
   register: xattr_set_result
 

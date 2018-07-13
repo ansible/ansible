@@ -66,7 +66,7 @@ EXAMPLES = '''
 - name: Set the key 'user.foo' to value 'bar'
   xattr:
     path: /etc/foo.conf
-    key: user.foo
+    key: foo
     value: bar
 
 - name: Set the key 'trusted.glusterfs.volume-id' to value '0x817b94343f164f199e5b573b4ea1f914'
@@ -90,9 +90,7 @@ EXAMPLES = '''
     state: absent
 '''
 
-import operator
 import os
-import re
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
@@ -159,10 +157,10 @@ def _run_xattr(module, cmd, check_rc=True):
     # result = {'raw': out}
     result = {}
     for line in out.splitlines():
-        if re.match("^#", line) or line == "":
+        if line.startswith('#') or line == '':
             pass
-        elif re.search('=', line):
-            (key, val) = line.split("=")
+        elif '=' in line:
+            (key, val) = line.split('=')
             result[key] = val.strip('"')
         else:
             result[line] = ''
@@ -199,7 +197,11 @@ def main():
         module.fail_json(msg="%s needs a key parameter" % state)
 
     # Prepend the key with the namespace if defined
-    if key is not None and namespace is not None and len(namespace) > 0:
+    if (
+            key is not None and
+            namespace is not None and
+            len(namespace) > 0 and
+            not (namespace == 'user' and key.startswith('user.'))):
         key = '%s.%s' % (namespace, key)
 
     if (state == 'present' or value is not None):
