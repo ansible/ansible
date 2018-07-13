@@ -2,14 +2,14 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    author: 
+    author:
         - Caio Tedim <caiotedim(at)gmail(dot)com>
     lookup: etcd3
     short_description: get on etcd3 server
     description:
         - Retrieves data from etcd3 server
     options:
-        url: 
+        url:
             description:
                 - URL for etcd3 server
             default: 127.0.0.1:2379
@@ -20,7 +20,6 @@ DOCUMENTATION = '''
                 - Key to lookup on etcd3 server
             type: string
             required: True
-            
     response:
         - Return value in a json format
         - If key not found the return comes on stdout attribute
@@ -29,19 +28,13 @@ DOCUMENTATION = '''
 EXAMPLES = '''
     - name: "Get key from etcd3 server"
       debug: msg="{{ lookup('etcd3', key='test',url='127.0.0.1:2379').foo }}"
-      
     - name: "Get key from etcd3 server, this key is not-found"
       debug: msg="{{ lookup('etcd3', key='testt',url='127.0.0.1:2379').stdout }}"
 '''
 
 RETURN = '''
-    ok: [localhost] => {
-        "msg": "bar"
-    }
-    
-    ok: [localhost] => {
-        "msg": "key not-found"
-    }
+    _raw:
+        description: field data requested
 '''
 import json
 
@@ -54,7 +47,9 @@ try:
 except ImportError as e:
     HAS_ETCD3 = False
 
+
 class Etcd3:
+
     def __init__(self):
         if not HAS_ETCD3:
             raise AnsibleError('python-etcd3 is required for etcd3 lookup, '
@@ -103,6 +98,7 @@ class Etcd3:
             return False, None, None
         else:
             return True, address[0], address[1]
+
 
 class LookupModule(LookupBase):
 
