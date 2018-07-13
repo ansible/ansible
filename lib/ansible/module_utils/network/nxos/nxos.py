@@ -403,6 +403,8 @@ class Nxapi:
                 if 'Chassis' in info['name']:
                     device_info['network_os_platform'] = info['productid']
 
+        device_info['network_os_json_support'] = True
+
         return device_info
 
     def get_capabilities(self):

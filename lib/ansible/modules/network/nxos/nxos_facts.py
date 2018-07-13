@@ -39,7 +39,7 @@ author:
   - Gabriele Gerbino (@GGabriele)
 notes:
   - This module is only supported on the NX-OS device that supports JSON
-    structured output. NX-OS OS version should be 6.0(2)A8 or 7.x or later.
+    structured output.
 options:
   gather_subset:
     description:
@@ -544,9 +544,7 @@ def main():
 
     capabilities = get_capabilities(module)
     if capabilities:
-        os_version = capabilities['device_info']['network_os_version']
-        os_version_major = int(os_version[0])
-        if os_version_major < 7 and "6.0(2)A8" not in os_version:
+        if not capabilities['device_info']['network_os_json_support']:
             module.fail_json(msg="this module requires JSON structured output support on the NX-OS device")
 
     warnings = list()

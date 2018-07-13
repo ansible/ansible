@@ -53,6 +53,17 @@ class Cliconf(CliconfBase):
             resp = self._connection.send_request(command, **kwargs)
         return resp
 
+    def check_json_support(self):
+        """
+        The method returns boolean value that determines whether JSON
+        structured output is supported on the device or not
+        """
+        try:
+            self.get('show version | json')
+            return True
+        except AnsibleConnectionFailure as exc:
+            return False
+
     def get_device_info(self):
         device_info = {}
 
@@ -98,6 +109,8 @@ class Cliconf(CliconfBase):
                                       r'PID:\s+(\S+)', platform_reply, re.M)
         if match_os_platform:
             device_info['network_os_platform'] = match_os_platform.group(1)
+
+        device_info['network_os_json_support'] = self.check_json_support()
 
         return device_info
 
