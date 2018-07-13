@@ -83,7 +83,7 @@ class LookupModule(LookupBase):
             cidr = kwargs.get('cidr', 24)
         except IndexError:
             raise AnsibleError('missing CIDR argument in the form of xx')
-            
+
         provider = kwargs.pop('provider', {})
         wapi = WapiLookup(provider)
 
@@ -100,4 +100,3 @@ class LookupModule(LookupBase):
             return [avail_nets['networks']]
         except Exception as exc:
             raise AnsibleError(to_text(exc))
-
