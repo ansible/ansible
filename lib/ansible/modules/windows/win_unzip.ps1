@@ -101,7 +101,7 @@ $ext = [System.IO.Path]::GetExtension($src)
 
 If (-Not (Test-Path -LiteralPath $dest -PathType Container)){
     Try{
-        New-Item -ItemType "directory" -path $dest -WhatIf:$check_mode
+        New-Item -ItemType "directory" -path $dest -WhatIf:$check_mode | out-null
     } Catch {
         Fail-Json -obj $result -message "Error creating '$dest' directory! Msg: $($_.Exception.Message)"
     }
@@ -180,5 +180,4 @@ If ($delete_archive){
     }
     $result.removed = $true
 }
-
 Exit-Json $result
