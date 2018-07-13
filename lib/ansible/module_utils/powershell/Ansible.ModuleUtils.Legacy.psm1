@@ -198,7 +198,7 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
         if ($failifempty -eq $false) {
             $value = $default
         } else {
-            if (!$emptyattributefailmessage) {
+            if (-not $emptyattributefailmessage) {
                 $emptyattributefailmessage = "Get-AnsibleParam: Missing required argument: $name"
             }
             Fail-Json -obj $resultobj -message $emptyattributefailmessage
@@ -259,7 +259,7 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
 }
 
 #Alias Get-attr-->Get-AnsibleParam for backwards compat. Only add when needed to ease debugging of scripts
-If (!(Get-Alias -Name "Get-attr" -ErrorAction SilentlyContinue))
+If (-not(Get-Alias -Name "Get-attr" -ErrorAction SilentlyContinue))
 {
     New-Alias -Name Get-attr -Value Get-AnsibleParam
 }
@@ -347,7 +347,7 @@ Function Get-FileChecksum($path, $algorithm = 'sha1')
             $fp.Dispose();
         }
     }
-    Elseif (Test-Path -Path $path -PathType Container)
+    ElseIf (Test-Path -Path $path -PathType Container)
     {
         $hash = "3";
     }
