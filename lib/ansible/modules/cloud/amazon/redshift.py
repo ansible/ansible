@@ -286,7 +286,7 @@ def create_cluster(module, redshift):
                 params[p] = module.params.get(p)
 
     if d_b_name:
-        params[d_b_name] = d_b_name
+        params['d_b_name'] = d_b_name
 
     try:
         redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
@@ -307,19 +307,15 @@ def create_cluster(module, redshift):
         module.fail_json_aws(e, msg="Failed to create cluster")
 
     if wait:
+        attempts = wait_timeout // 60
+        waiter = redshift.get_waiter('cluster_available')
         try:
-            wait_timeout = time.time() + wait_timeout
-            time.sleep(5)
-
-            while wait_timeout > time.time() and resource['ClusterStatus'] != 'available':
-                time.sleep(5)
-                if wait_timeout <= time.time():
-                    module.fail_json(msg="Timeout waiting for resource %s" % resource.id)
-
-                resource = redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
-
-        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
-            module.fail_json_aws(e, msg="Failed to create cluster %s" % identifier)
+            waiter.wait(
+                    ClusterIdentifier = identifier,
+                    WaiterConfig = dict(MaxAttempts=attempts)
+            )
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                module.fail_json_aws(e, msg="Timeout waiting for the cluster creation")
 
     return(changed, _collect_facts(resource))
 
@@ -370,19 +366,15 @@ def delete_cluster(module, redshift):
         module.fail_json_aws(e, msg="Couldn't delete the %s cluster" % identifier)
 
     if wait:
+        attempts = wait_timeout // 60
+        waiter = redshift.get_waiter('cluster_deleted')
         try:
-            wait_timeout = time.time() + wait_timeout
-            resource = redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
-
-            while wait_timeout > time.time() and resource['ClusterStatus'] != 'deleting':
-                time.sleep(5)
-                if wait_timeout <= time.time():
-                    module.fail_json(msg="Timeout waiting for resource %s" % resource.id)
-
-                resource = redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
-
-        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
-            module.fail_json_aws(e, msg="Couldn't delete the %s cluster" % identifier)
+            waiter.wait(
+                    ClusterIdentifier = identifier,
+                    WaiterConfig = dict(MaxAttempts=attempts)
+            )
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                module.fail_json_aws(e, msg="Timeout deleting the cluster")
 
     return(True, {})
 
@@ -428,19 +420,15 @@ def modify_cluster(module, redshift):
         module.fail_json(e, msg="Couldn't modify redshift cluster %s " % identifier)
 
     if wait:
+        attempts = wait_timeout // 60
+        waiter = redshift.get_waiter('cluster_available')
         try:
-            wait_timeout = time.time() + wait_timeout
-            time.sleep(5)
-
-            while wait_timeout > time.time() and resource['ClusterStatus'] != 'available':
-                time.sleep(5)
-                if wait_timeout <= time.time():
-                    module.fail_json(msg="Timeout waiting for resource %s" % resource.id)
-
-                resource = redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
-
-        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
-            module.fail_json(e, msg="Couldn't modify redshift cluster %s" % identifier)
+            waiter.wait(
+                    ClusterIdentifier = identifier,
+                    WaiterConfig = dict(MaxAttempts=attempts)
+            )
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                module.fail_json_aws(e, msg="Timeout waiting for cluster creation")
 
     return(True, _collect_facts(resource))
 
@@ -503,10 +491,8 @@ def main():
         module.fail_json(msg=str("region not specified and unable to determine region from EC2_REGION."))
 
     # connect to the rds endpoint
-    try:
-        conn = boto3_conn(module, conn_type='client', resource='redshift', region=region, endpoint=ec2_url, **aws_connect_params)
-    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
-        module.fail_json_aws(e, msg="Exeption connecting to AWS")
+
+    conn = boto3_conn(module, conn_type='client', resource='redshift', region=region, endpoint=ec2_url, **aws_connect_params)
 
     changed = True
     if command == 'create':
