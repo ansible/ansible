@@ -148,7 +148,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                     k8s_obj = definition
                 else:
                     try:
-                        k8s_obj = resource.create(definition, namespace=namespace)
+                        k8s_obj = resource.create(definition, namespace=namespace).to_dict()
                     except ConflictError:
                         # Some resources, like ProjectRequests, can't be created multiple times,
                         # because the resources that they create don't match their kind
@@ -156,7 +156,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                         self.warn("{0} was not found, but creating it returned a 409 Conflict error. This can happen \
                                   if the resource you are creating does not directly create a resource of the same kind.".format(name))
                         return result
-                result['result'] = k8s_obj.to_dict()
+                result['result'] = k8s_obj
                 result['changed'] = True
                 result['method'] = 'create'
                 return result
