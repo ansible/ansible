@@ -80,7 +80,7 @@ EXAMPLES = """
     password: "{{ netapp_password }}"
 """
 
-RETURN = r"""
+RETURN = """
 lun_node:
     description: NetApp controller that is hosting the LUN.
     returned: success
