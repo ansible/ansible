@@ -1,0 +1,2 @@
+bugfixes:
+- win_security_policy - allows an empty string to reset a policy value https://github.com/ansible/ansible/issues/40869
