@@ -29,11 +29,13 @@ from ansible.utils.color import colorize, hostcolor
 # plugin are not also added to ansible.constants, so authors of derivative
 # callback plugins will eventually need to add a reference to the common docs
 # fragment for the 'default' callback plugin
-DEFAULT_SHOW_CUSTOM_STATS = C.SHOW_CUSTOM_STATS
-DEFAULT_DISPLAY_SKIPPED_HOSTS = C.DISPLAY_SKIPPED_HOSTS
-# These values reflect the defaults defined in the config fragment in the docs
-DEFAULT_DISPLAY_OK_HOSTS = True
-DEFAULT_DISPLAY_FAILED_STDERR = False
+
+# these are used to provide backwards compat with old plugins that subclass from default
+# but still don't use the new config system and/or fail to document the options
+COMPAT_OPTIONS = (('display_skipped_hosts', C.DISPLAY_SKIPPED_HOSTS),
+                  ('display_ok_hosts', True),
+                  ('show_custom_stats', C.SHOW_CUSTOM_STATS),
+                  ('display_failed_stderr', False),)
 
 
 class CallbackModule(CallbackBase):
@@ -54,6 +56,18 @@ class CallbackModule(CallbackBase):
         self._last_task_name = None
         super(CallbackModule, self).__init__()
 
+    def set_options(self, task_keys=None, var_options=None, direct=None):
+
+        super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+
+        # for backwards compat with plugins subclassing default, fallback to constants
+        for option, constant in COMPAT_OPTIONS:
+            try:
+                value = self.get_option(option)
+            except (AttributeError, KeyError):
+                value = constant
+            setattr(self, option, value)
+
     def v2_runner_on_failed(self, result, ignore_errors=False):
 
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
@@ -62,9 +76,7 @@ class CallbackModule(CallbackBase):
         if self._last_task_banner != result._task._uuid:
             self._print_task_banner(result._task)
 
-        use_stderr = self._plugin_options.get('display_failed_stderr', DEFAULT_DISPLAY_FAILED_STDERR)
-
-        self._handle_exception(result._result, use_stderr=use_stderr)
+        self._handle_exception(result._result, use_stderr=self.display_failed_stderr)
         self._handle_warnings(result._result)
 
         if result._task.loop and 'results' in result._result:
@@ -74,51 +86,52 @@ class CallbackModule(CallbackBase):
             if delegated_vars:
                 self._display.display("fatal: [%s -> %s]: FAILED! => %s" % (result._host.get_name(), delegated_vars['ansible_host'],
                                                                             self._dump_results(result._result)),
-                                      color=C.COLOR_ERROR, stderr=use_stderr)
+                                      color=C.COLOR_ERROR, stderr=self.display_failed_stderr)
             else:
                 self._display.display("fatal: [%s]: FAILED! => %s" % (result._host.get_name(), self._dump_results(result._result)),
-                                      color=C.COLOR_ERROR, stderr=use_stderr)
+                                      color=C.COLOR_ERROR, stderr=self.display_failed_stderr)
 
         if ignore_errors:
             self._display.display("...ignoring", color=C.COLOR_SKIP)
 
     def v2_runner_on_ok(self, result):
-        if not self._plugin_options.get('display_ok_hosts', DEFAULT_DISPLAY_OK_HOSTS):
-            return
 
-        delegated_vars = result._result.get('_ansible_delegated_vars', None)
+        if self.display_ok_hosts:
 
-        if self._last_task_banner != result._task._uuid:
-            self._print_task_banner(result._task)
+            delegated_vars = result._result.get('_ansible_delegated_vars', None)
 
-        if isinstance(result._task, TaskInclude):
-            return
-        elif result._result.get('changed', False):
-            if delegated_vars:
-                msg = "changed: [%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
+            if self._last_task_banner != result._task._uuid:
+                self._print_task_banner(result._task)
+
+            if isinstance(result._task, TaskInclude):
+                return
+            elif result._result.get('changed', False):
+                if delegated_vars:
+                    msg = "changed: [%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
+                else:
+                    msg = "changed: [%s]" % result._host.get_name()
+                color = C.COLOR_CHANGED
             else:
-                msg = "changed: [%s]" % result._host.get_name()
-            color = C.COLOR_CHANGED
-        else:
-            if delegated_vars:
-                msg = "ok: [%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
+                if delegated_vars:
+                    msg = "ok: [%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
+                else:
+                    msg = "ok: [%s]" % result._host.get_name()
+                color = C.COLOR_OK
+
+            self._handle_warnings(result._result)
+
+            if result._task.loop and 'results' in result._result:
+                self._process_items(result)
             else:
-                msg = "ok: [%s]" % result._host.get_name()
-            color = C.COLOR_OK
+                self._clean_results(result._result, result._task.action)
 
-        self._handle_warnings(result._result)
-
-        if result._task.loop and 'results' in result._result:
-            self._process_items(result)
-        else:
-            self._clean_results(result._result, result._task.action)
-
-            if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
-                msg += " => %s" % (self._dump_results(result._result),)
-            self._display.display(msg, color=color)
+                if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
+                    msg += " => %s" % (self._dump_results(result._result),)
+                self._display.display(msg, color=color)
 
     def v2_runner_on_skipped(self, result):
-        if self._plugin_options.get('display_skipped_hosts', DEFAULT_DISPLAY_SKIPPED_HOSTS):
+
+        if self.display_skipped_hosts:
 
             self._clean_results(result._result, result._task.action)
 
@@ -158,8 +171,7 @@ class CallbackModule(CallbackBase):
             self._last_task_name = task.get_name().strip()
 
             # Display the task banner immediately if we're not doing any filtering based on task result
-            if (self._plugin_options.get('display_skipped_hosts', DEFAULT_DISPLAY_SKIPPED_HOSTS) and
-                    self._plugin_options.get('display_ok_hosts', DEFAULT_DISPLAY_OK_HOSTS)):
+            if self.display_skipped_hosts and self.display_ok_hosts:
                 self._print_task_banner(task)
 
     def _print_task_banner(self, task):
@@ -222,30 +234,30 @@ class CallbackModule(CallbackBase):
                 self._display.display(diff)
 
     def v2_runner_item_on_ok(self, result):
-        if not self._plugin_options.get('display_ok_hosts', DEFAULT_DISPLAY_OK_HOSTS):
-            return
 
-        delegated_vars = result._result.get('_ansible_delegated_vars', None)
-        self._clean_results(result._result, result._task.action)
-        if isinstance(result._task, TaskInclude):
-            return
-        elif result._result.get('changed', False):
-            msg = 'changed'
-            color = C.COLOR_CHANGED
-        else:
-            msg = 'ok'
-            color = C.COLOR_OK
+        if self.display_ok_hosts:
 
-        if delegated_vars:
-            msg += ": [%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
-        else:
-            msg += ": [%s]" % result._host.get_name()
+            delegated_vars = result._result.get('_ansible_delegated_vars', None)
+            self._clean_results(result._result, result._task.action)
+            if isinstance(result._task, TaskInclude):
+                return
+            elif result._result.get('changed', False):
+                msg = 'changed'
+                color = C.COLOR_CHANGED
+            else:
+                msg = 'ok'
+                color = C.COLOR_OK
 
-        msg += " => (item=%s)" % (self._get_item_label(result._result),)
+            if delegated_vars:
+                msg += ": [%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
+            else:
+                msg += ": [%s]" % result._host.get_name()
 
-        if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
-            msg += " => %s" % self._dump_results(result._result)
-        self._display.display(msg, color=color)
+            msg += " => (item=%s)" % (self._get_item_label(result._result),)
+
+            if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
+                msg += " => %s" % self._dump_results(result._result)
+            self._display.display(msg, color=color)
 
     def v2_runner_item_on_failed(self, result):
 
@@ -263,7 +275,7 @@ class CallbackModule(CallbackBase):
         self._display.display(msg + " (item=%s) => %s" % (self._get_item_label(result._result), self._dump_results(result._result)), color=C.COLOR_ERROR)
 
     def v2_runner_item_on_skipped(self, result):
-        if self._plugin_options.get('display_skipped_hosts', DEFAULT_DISPLAY_SKIPPED_HOSTS):
+        if self.display_skipped_hosts:
             self._clean_results(result._result, result._task.action)
             msg = "skipping: [%s] => (item=%s) " % (result._host.get_name(), self._get_item_label(result._result))
             if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
@@ -303,8 +315,8 @@ class CallbackModule(CallbackBase):
 
         self._display.display("", screen_only=True)
 
-        # print custom stats
-        if self._plugin_options.get('show_custom_stats', DEFAULT_SHOW_CUSTOM_STATS) and stats.custom:
+        # print custom stats if required
+        if stats.custom and self.show_custom_stats:
             self._display.banner("CUSTOM STATS: ")
             # per host
             # TODO: come up with 'pretty format'
