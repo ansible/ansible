@@ -7,7 +7,7 @@ import operator
 
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.ec2 import get_aws_connection_info
-import ansible.module_utils.six.moves.urllib.parse.urlencode as urlencode
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 
 
 def hexdigest(s):
