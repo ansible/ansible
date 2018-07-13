@@ -22,18 +22,21 @@ __metaclass__ = type
 
 DOCUMENTATION = """
 ---
-lookup: nios_next_ip
-version_added: "2.5"
-short_description: Return the next available IP address for a network
+lookup: nios_next_network
+version_added: ""
+short_description: Return the next available network for a network
 description:
-  - Uses the Infoblox WAPI API to return the next available IP addresses
+  - Uses the Infoblox WAPI API to return the next available network addresses
     for a given network CIDR
 requirements:
   - infoblox_client
 extends_documentation_fragment: nios
 options:
     _terms:
-      description: The CIDR network to retrieve the next addresses from
+      description: The CIDR network to retrieve the next network from
+      required: True
+    cidr:
+      description: The CIDR of the network to retrieve the next network from
       required: True
     num:
       description: The number of IP addresses to return
@@ -42,23 +45,23 @@ options:
     exclude:
       description: The number of IP addresses to return
       required: false
-      default: []
+      default: ''
 """
 
 EXAMPLES = """
 - name: return next available IP address for network 192.168.10.0/24
   set_fact:
-    ipaddr: "{{ lookup('nios_next_ip', '192.168.10.0/24', provider={'host': 'nios01', 'username': 'admin', 'password': 'password'}) }}"
+    ipaddr: "{{ lookup('nios_next_network', '192.168.10.0/24', cidr=24, provider={'host': 'nios01', 'username': 'admin', 'password': 'password'}) }}"
 
 - name: return the next 3 available IP addresses for network 192.168.10.0/24
   set_fact:
-    ipaddr: "{{ lookup('nios_next_ip', '192.168.10.0/24', num=3, provider={'host': 'nios01', 'username': 'admin', 'password': 'password'}) }}"
+    ipaddr: "{{ lookup('nios_next_network', '192.168.10.0/24', cidr=24, num=3, provider={'host': 'nios01', 'username': 'admin', 'password': 'password'}) }}"
 """
 
 RETURN = """
 _list:
   description:
-    - The list of next IP addresses available
+    - The list of next network addresses available
   returned: always
   type: list
 """
@@ -75,12 +78,16 @@ class LookupModule(LookupBase):
         try:
             network = terms[0]
         except IndexError:
-            raise AnsibleError('missing argument in the form of A.B.C.D/E')
-
+            raise AnsibleError('missing network argument in the form of A.B.C.D/E')
+        try:
+            cidr = kwargs.get('cidr', 24)
+        except IndexError:
+            raise AnsibleError('missing CIDR argument in the form of xx')
+            
         provider = kwargs.pop('provider', {})
         wapi = WapiLookup(provider)
 
-        network_obj = wapi.get_object('network', {'network': network})
+        network_obj = wapi.get_object('networkcontainer', {'network': network})
         if network_obj is None:
             raise AnsibleError('unable to find network object %s' % network)
 
@@ -89,7 +96,8 @@ class LookupModule(LookupBase):
 
         try:
             ref = network_obj[0]['_ref']
-            avail_ips = wapi.call_func('next_available_ip', ref, {'num': num, 'exclude': excludeIP})
-            return [avail_ips['ips']]
+            avail_nets = wapi.call_func('next_available_network', ref, {'cidr': cidr, 'num': num, 'exclude': excludeIP})
+            return [avail_nets['networks']]
         except Exception as exc:
             raise AnsibleError(to_text(exc))
+
