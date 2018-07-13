@@ -169,6 +169,8 @@ if ($secedit_ini.$section.ContainsKey($key)) {
         $secedit_ini.$section.$key = $value
         $will_change = $true
     }
+} elseif ([string]$value -eq "") {
+      # Value is requested to be removed, and has already been removed, do nothing
 } else {
     if ($diff_mode) {
         $result.diff.prepared = @"
@@ -194,6 +196,8 @@ if ($will_change -eq $true) {
             if ($new_value -cne $value) {
                 Fail-Json $result "Failed to change the value for key '$key' in section '$section', the value is still $new_value"
             }
+        } elseif ([string]$value -eq "") {
+            # Value was empty, so OK if no longer in the result
         } else {
             Fail-Json $result "The key '$key' in section '$section' is not a valid key, cannot set this value"
         }
