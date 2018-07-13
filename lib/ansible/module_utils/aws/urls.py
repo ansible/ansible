@@ -7,7 +7,8 @@ import operator
 
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.ec2 import get_aws_connection_info
-import ansible.module_utils.six.moves.urllib.urlencode as urlencode
+import ansible.module_utils.six.moves.urllib.parse.urlencode as urlencode
+
 
 def hexdigest(s):
     """
@@ -15,8 +16,7 @@ def hexdigest(s):
     """
     return hashlib.sha256(s.encode('utf-8')).hexdigest()
 
-# Request parameters are in the query string. Query string values must
-# be URL-encoded (space=%20). The parameters must be sorted by name.
+
 def format_querystring(params=None):
     """
     Returns properly url-encoded query string from the provided params dict.
@@ -26,7 +26,10 @@ def format_querystring(params=None):
 
     if not params:
         return ""
+
+    # Query string values must be URL-encoded (space=%20). The parameters must be sorted by name.
     return urlencode(sorted(params.items(), operator.itemgetter(0)))
+
 
 # Key derivation functions. See:
 # http://docs.aws.amazon.com/general/latest/gr/signature-v4-examples.html#signature-v4-examples-python
@@ -35,6 +38,7 @@ def sign(key, msg):
     Return digest for key applied to msg
     '''
     return hmac.new(key, msg.encode('utf-8'), hashlib.sha256).digest()
+
 
 def get_signature_key(key, dateStamp, regionName, serviceName):
     '''
@@ -45,6 +49,7 @@ def get_signature_key(key, dateStamp, regionName, serviceName):
     kService = sign(kRegion, serviceName)
     kSigning = sign(kService, 'aws4_request')
     return kSigning
+
 
 # Reference: https://docs.aws.amazon.com/general/latest/gr/sigv4-signed-request-examples.html
 def signed_request(method="GET", service=None, host=None, uri=None, query=None, body="", module=None, boto3=True, headers=None):
@@ -72,16 +77,16 @@ def signed_request(method="GET", service=None, host=None, uri=None, query=None, 
     :returns: HTTPResponse
     """
 
-    # Values
+    # "Constants"
 
-    ## "Constants"
     t = datetime.datetime.utcnow()
     amz_date = t.strftime('%Y%m%dT%H%M%SZ')
     datestamp = t.strftime('%Y%m%d') # Date w/o time, used in credential scope
     algorithm = 'AWS4-HMAC-SHA256'
 
-    ## AWS stuff
-    region, _, boto_params = get_aws_connection_info(module, boto3)
+    # AWS stuff
+
+    region, dummy, boto_params = get_aws_connection_info(module, boto3)
 
     access_key = boto_params["aws_access_key_id"]
     secret_key = boto_params["aws_secret_access_key"]
@@ -93,7 +98,8 @@ def signed_request(method="GET", service=None, host=None, uri=None, query=None, 
 
     credential_scope = '/'.join([datestamp, region, service, 'aws4_request'])
 
-    ## Argument Defaults
+    # Argument Defaults
+
     uri = uri or "/"
     query_string = format_querystring(query) if query else ""
 
@@ -118,7 +124,7 @@ def signed_request(method="GET", service=None, host=None, uri=None, query=None, 
     # Setup Cannonical request to generate auth token
 
     cannonical_headers = "\n".join([
-        key.lower().strip() + ":" + value for key,value in headers.items()
+        key.lower().strip() + ":" + value for key, value in headers.items()
     ]) + '\n' # Note additional trailing newline
 
     cannonical_request = "\n".join([
