@@ -16,7 +16,7 @@ author: "Dario Zanzico (@dariko)"
 short_description: docker swarm service
 description: |
   Manage docker services. Allows live altering of already defined services
-version_added: "2.6"
+version_added: "2.7"
 options:
   name:
     required: true
@@ -1028,7 +1028,7 @@ def main():
         client.module.fail_json(
             msg=("docker python library version is %s. " +
                  "this module requires version 2.0.0 or greater")
-                % docker_version)
+            % docker_version)
 
     dsm = DockerServiceManager(client)
     msg, changed, rebuilt, changes, facts = dsm.run()
