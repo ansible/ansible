@@ -1,0 +1,2 @@
+bugfixes:
+    - fix typoe in sysvinit that breaks update.rc-d detection https://github.com/ansible/ansible/issues/42734
