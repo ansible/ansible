@@ -593,12 +593,13 @@ def _is_binary(b_module_data):
     return bool(start.translate(None, textchars))
 
 
-def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression, async_timeout, become,
-                       become_method, become_user, become_password, become_flags, environment):
-    """
-    Given the source of the module, convert it to a Jinja2 template to insert
-    module code and return whether it's a new or old style module.
-    """
+def get_module_info(module_name, module_path):
+
+    with open(module_path, 'rb') as f:
+
+        # read in the module source
+        b_module_data = f.read()
+
     module_substyle = module_style = 'old'
 
     # module_style is something important to calling code (ActionBase).  It
@@ -633,7 +634,42 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
     elif b'WANT_JSON' in b_module_data:
         module_substyle = module_style = 'non_native_want_json'
 
-    shebang = None
+    ret = {
+        'name': module_name, 'path': module_path, 'data': b_module_data,
+        'style': module_style, 'substyle': module_substyle,
+        'interpreter': None, 'interpreter_args': None
+    }
+
+    if module_style != 'binary':
+        b_lines = b_module_data.split(b"\n", 1)
+        if b_lines[0].startswith(b"#!"):
+            b_shebang = b_lines[0].strip()
+            # shlex.split on python-2.6 needs bytes.  On python-3.x it needs text
+            args = shlex.split(to_native(b_shebang[2:], errors='surrogate_or_strict'))
+
+            # _get_shebang() takes text strings
+            args = [to_text(a, errors='surrogate_or_strict') for a in args]
+
+            ret['shebang'] = b_shebang
+            ret['interpreter'] = args[0]
+            ret['interpreter_args'] = args[1:]
+
+    return ret
+
+
+def _find_module_utils(module_info, module_args, task_vars, templar, module_compression, async_timeout, become,
+                       become_method, become_user, become_password, become_flags, environment):
+    """
+    Given the source of the module, convert it to a Jinja2 template to insert
+    module code and return whether it's a new or old style module.
+    """
+
+    module_name = module_info['name']
+    b_module_data = module_info['data']
+    module_style = module_info['style']
+    module_substyle = module_info['substyle']
+    module_interpreter = module_info['interpreter']
+
     # Neither old-style, non_native_want_json nor binary modules should be modified
     # except for the shebang line (Done by modify_module)
     if module_style in ('old', 'non_native_want_json', 'binary'):
@@ -868,7 +904,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
     return (b_module_data, module_style, shebang)
 
 
-def modify_module(module_name, module_path, module_args, templar, task_vars=None, module_compression='ZIP_STORED', async_timeout=0, become=False,
+def modify_module(module_info, module_args, templar, task_vars=None, module_compression='ZIP_STORED', async_timeout=0, become=False,
                   become_method=None, become_user=None, become_password=None, become_flags=None, environment=None):
     """
     Used to insert chunks of code into modules before transfer rather than
@@ -893,12 +929,7 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
     task_vars = {} if task_vars is None else task_vars
     environment = {} if environment is None else environment
 
-    with open(module_path, 'rb') as f:
-
-        # read in the module source
-        b_module_data = f.read()
-
-    (b_module_data, module_style, shebang) = _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression,
+    (b_module_data, module_style, shebang) = _find_module_utils(module_info, module_args, task_vars, templar, module_compression,
                                                                 async_timeout=async_timeout, become=become, become_method=become_method,
                                                                 become_user=become_user, become_password=become_password, become_flags=become_flags,
                                                                 environment=environment)
@@ -907,21 +938,16 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
         return (b_module_data, module_style, to_text(shebang, nonstring='passthru'))
     elif shebang is None:
         b_lines = b_module_data.split(b"\n", 1)
-        if b_lines[0].startswith(b"#!"):
-            b_shebang = b_lines[0].strip()
-            # shlex.split on python-2.6 needs bytes.  On python-3.x it needs text
-            args = shlex.split(to_native(b_shebang[2:], errors='surrogate_or_strict'))
 
-            # _get_shebang() takes text strings
-            args = [to_text(a, errors='surrogate_or_strict') for a in args]
-            interpreter = args[0]
-            b_new_shebang = to_bytes(_get_shebang(interpreter, task_vars, templar, args[1:])[0],
+        if module_info['interpreter'] is not None:
+            b_new_shebang = to_bytes(_get_shebang(module_info['interpreter'], task_vars, templar, module_info['interpreter_args'])[0],
                                      errors='surrogate_or_strict', nonstring='passthru')
+            b_shebang = None
 
             if b_new_shebang:
                 b_lines[0] = b_shebang = b_new_shebang
 
-            if os.path.basename(interpreter).startswith(u'python'):
+            if os.path.basename(module_info['interpreter']).startswith(u'python'):
                 b_lines.insert(1, b_ENCODING_STRING)
 
             shebang = to_text(b_shebang, nonstring='passthru', errors='surrogate_or_strict')

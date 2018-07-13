@@ -29,7 +29,12 @@ def fake_old_module_open(mocker):
 
 
 def test_shebang(fake_old_module_open, templar):
-    (data, style, shebang) = modify_module('fake_module', 'fake_path', {}, templar)
+    module_info = {
+        'name': 'fake_module',
+        'path': 'fake_path',
+    }
+
+    (data, style, shebang) = modify_module(module_info, {}, templar)
     assert shebang == '#!/usr/bin/python'
 
 
@@ -38,5 +43,10 @@ def test_shebang_task_vars(fake_old_module_open, templar):
         'ansible_python_interpreter': '/usr/bin/python3'
     }
 
-    (data, style, shebang) = modify_module('fake_module', 'fake_path', {}, templar, task_vars=task_vars)
+    module_info = {
+        'name': 'fake_module',
+        'path': 'fake_path',
+    }
+
+    (data, style, shebang) = modify_module(module_info, {}, templar, task_vars=task_vars)
     assert shebang == '#!/usr/bin/python3'

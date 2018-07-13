@@ -18,7 +18,7 @@ from abc import ABCMeta, abstractmethod
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail
-from ansible.executor.module_common import modify_module
+from ansible.executor.module_common import modify_module, get_module_info
 from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.six import binary_type, string_types, text_type, iteritems, with_metaclass
 from ansible.module_utils.six.moves import shlex_quote
@@ -153,7 +153,21 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         final_environment = dict()
         self._compute_environment_string(final_environment)
 
-        (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args, self._templar,
+        module_info = get_module_info(module_name, module_path)
+
+        # TODO: hide this functionality behind a config toggle
+        if module_info['interpreter'] is not None:
+            interpreter = os.path.basename(module_info['interpreter'])
+            # TODO: don't run this on non-POSIX platforms
+            if ('ansible_' + interpreter + '_interpreter') not in task_vars:
+                # TODO: make list of binary names configurable on a per-interpreter basis
+                result = self._low_level_execute_command('which python python3', sudoable=False)
+                # The 'which' command will exit with '1' when not all arguments are found, which isn't
+                # necessarily an error.
+                if result['rc'] <= 1 and len(result['stdout_lines']) > 0:
+                    task_vars['ansible_' + interpreter + '_interpreter'] = result['stdout_lines'][0]
+
+        (module_data, module_style, module_shebang) = modify_module(module_info, module_args, self._templar,
                                                                     task_vars=task_vars,
                                                                     module_compression=self._play_context.module_compression,
                                                                     async_timeout=self._task.async_val,
