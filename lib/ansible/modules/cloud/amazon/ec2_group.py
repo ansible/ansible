@@ -722,7 +722,7 @@ def validate_ip(module, cidr_ip):
 
 
 def update_tags(client, module, group_id, current_tags, tags, purge_tags):
-    tags_need_modify, tags_to_delete = compare_aws_tags(current_tags, tags, purge_tags)
+    tags_need_modify, tags_to_delete = compare_aws_tags(current_tags, {k: to_text(v) for k, v in tags.items()}, purge_tags)
 
     if not module.check_mode:
         if tags_to_delete:
