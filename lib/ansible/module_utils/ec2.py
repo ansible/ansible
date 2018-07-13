@@ -29,6 +29,8 @@
 import os
 import re
 
+from functools import wraps
+
 from ansible.module_utils.ansible_release import __version__
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.cloud import CloudRetry
@@ -106,9 +108,9 @@ class AWSRetry(CloudRetry):
         return response_code in retry_on or not_found.search(response_code)
 
 
-def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None, **params):
+def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None, retry_decorator=None, **params):
     try:
-        return _boto3_conn(conn_type=conn_type, resource=resource, region=region, endpoint=endpoint, **params)
+        return _boto3_conn(conn_type=conn_type, resource=resource, region=region, endpoint=endpoint, retry_decorator=retry_decorator, **params)
     except ValueError as e:
         module.fail_json(msg="Couldn't connect to AWS: %s" % to_native(e))
     except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError, botocore.exceptions.NoCredentialsError) as e:
@@ -118,7 +120,7 @@ def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None
                          "environment variables or module parameters" % module._name)
 
 
-def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **params):
+def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, retry_decorator=None, **params):
     profile = params.pop('profile_name', None)
 
     if conn_type not in ['both', 'resource', 'client']:
@@ -126,6 +128,11 @@ def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **par
                          'must specify either both, resource, or client to '
                          'the conn_type parameter in the boto3_conn function '
                          'call')
+
+    if conn_type == 'resource' and retry_decorator:
+        raise ValueError('There is an issue in the calling code. Retry decorators '
+                         'only work on clients, but boto3_conn was called with a '
+                         'retry decorator for a resource.')
 
     if params.get('config'):
         config = params.pop('config')
@@ -138,6 +145,15 @@ def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **par
         profile_name=profile,
     )
 
+    # We register the event listener regardless so that aws_retry_supported property
+    # is present allowing common code to detect if retries are enabled
+    #
+    # It's important that these event listeners are registered to
+    # the least specific thing possible so they go last and decorate
+    # the functions added by other listeners
+    # See: http://boto3.readthedocs.io/en/latest/guide/events.html#a-hierarchical-structure
+    session.events.register('creating-client-class', _RetryClientDecoratingEventListener(retry_decorator))
+
     if conn_type == 'resource':
         return session.resource(resource, config=config, region_name=region, endpoint_url=endpoint, **params)
     elif conn_type == 'client':
@@ -149,6 +165,57 @@ def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **par
 
 
 boto3_inventory_conn = _boto3_conn
+
+
+class _RetryClientDecoratingEventListener(object):
+    """
+    Boto3 event listener that effectively decorates all methods of the client
+    with the retry decorator if aws_retry=True is passed as an argument to the calls.
+
+    This allows for use of AWSRetry decorators without extracting all the boto3 calls
+    into methods to decorate. Rather when this listener has been added to a boto3 session
+    the retry can be enabled for a given call.
+
+    Clients that are created with this event listener accept an extra aws_retry boolean
+    parameter to each method.
+
+    If aws_retry=True is passed when calling a method then the method is effectively
+    decorated with the retry decorator passed to the constructor.
+    """
+
+    __never_wait = (
+        'get_paginator', 'can_paginate',
+        'get_waiter', 'generate_presigned_url',
+    )
+
+    def __init__(self, retry):
+        self._retry = retry
+
+    @staticmethod
+    def _get_retry_options(aws_retry=None, **kwargs):
+        return aws_retry, kwargs
+
+    def _create_optional_retry_wrapper_function(self, unwrapped):
+        retrying_wrapper = self._retry(unwrapped)
+
+        @wraps(unwrapped)
+        def deciding_wrapper(*args, **kwargs):
+            aws_retry, real_kwargs = self._get_retry_options(**kwargs)
+            if aws_retry:
+                ret = retrying_wrapper(*args, **real_kwargs)
+            else:
+                ret = unwrapped(*args, **real_kwargs)
+            return ret
+        return deciding_wrapper
+
+    def __call__(self, class_attributes, **kwargs):
+        if self._retry:
+            for name, v in class_attributes.items():
+                if callable(v) and name not in self.__never_wait:
+                    class_attributes[name] = self._create_optional_retry_wrapper_function(v)
+            class_attributes['aws_retry_supported'] = True
+        else:
+            class_attributes['aws_retry_supported'] = False
 
 
 def boto_exception(err):

@@ -58,10 +58,12 @@ using the `aws_retry` argument. By default, no retries are used.
 The call will be retried the specified number of times, so the calling functions
 don't need to be wrapped in the backoff decorator.
 
+You can determine if a given client has a retry_decorator by checking the boolean
+aws_retry_supported property.
+
 """
 
 import traceback
-from functools import wraps
 from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule
@@ -140,9 +142,8 @@ class AnsibleAWSModule(object):
 
     def client(self, service, retry_decorator=None):
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(self, boto3=True)
-        conn = boto3_conn(self, conn_type='client', resource=service,
-                          region=region, endpoint=ec2_url, **aws_connect_kwargs)
-        return conn if retry_decorator is None else _RetryingBotoClientWrapper(conn, retry_decorator)
+        return boto3_conn(self, conn_type='client', resource=service,
+                          region=region, endpoint=ec2_url, retry_decorator=retry_decorator, **aws_connect_kwargs)
 
     def resource(self, service):
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(self, boto3=True)
@@ -221,39 +222,6 @@ class AnsibleAWSModule(object):
         """
         existing = self._gather_versions()
         return LooseVersion(existing['botocore_version']) >= LooseVersion(desired)
-
-
-class _RetryingBotoClientWrapper(object):
-    __never_wait = (
-        'get_paginator', 'can_paginate',
-        'get_waiter', 'generate_presigned_url',
-    )
-
-    def __init__(self, client, retry):
-        self.client = client
-        self.retry = retry
-
-    def _create_optional_retry_wrapper_function(self, unwrapped):
-        retrying_wrapper = self.retry(unwrapped)
-
-        @wraps(unwrapped)
-        def deciding_wrapper(aws_retry=False, *args, **kwargs):
-            if aws_retry:
-                return retrying_wrapper(*args, **kwargs)
-            else:
-                return unwrapped(*args, **kwargs)
-        return deciding_wrapper
-
-    def __getattr__(self, name):
-        unwrapped = getattr(self.client, name)
-        if name in self.__never_wait:
-            return unwrapped
-        elif callable(unwrapped):
-            wrapped = self._create_optional_retry_wrapper_function(unwrapped)
-            setattr(self, name, wrapped)
-            return wrapped
-        else:
-            return unwrapped
 
 
 def is_boto3_error_code(code, e=None):
