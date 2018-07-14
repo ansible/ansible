@@ -294,7 +294,6 @@ def main():
     result['status'][module.params['state']]['rc'] = None
     result['status'][module.params['state']]['stdout'] = None
     result['status'][module.params['state']]['stderr'] = None
-
     if action:
         action = re.sub(r'p?ed$', '', action.lower())
 
