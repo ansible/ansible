@@ -39,54 +39,9 @@ options:
       - exported
       - saved
 
-  idg_connection:
-    description:
-      - A dict object containing connection details.
-    required: True
-    suboptions:
-      password:
-        description:
-          - The password for the user account used to connect to the
-            REST management interface.
-        aliases:
-            - url_password
-        required: True
-      server:
-        description:
-          - The DataPower® Gateway host.
-        required: True
-      server_port:
-        description:
-          - The DataPower® Gateway port.
-        default: 5554
-        required: False
-      timeout:
-        description:
-          - Specifies the timeout in seconds for communicating with the device.
-        default: 10
-      use_proxy:
-        description:
-          - Control if the lookup will observe HTTP proxy environment variables when present.
-        default: False
-        type: bool
-        required: False
-      user:
-        description:
-          - The username to connect to the REST management interface with.
-            This user must have administrative privileges.
-        aliases:
-            - url_username
-        required: True
-      validate_certs:
-        description:
-          - Control SSL handshake validation.
-        default: True
-        type: bool
-
   user_summary:
     description:
       - A descriptive summary for the export.
-    required: False
 
   all_files:
     description:
@@ -113,7 +68,6 @@ options:
     description:
       - The base64-encoded BLOB to import
       - Only be taken into account during the import
-    required: False
 
   overwrite_files:
     description:
@@ -143,11 +97,7 @@ options:
     default: False
     type: bool
 
-notes:
-  - This documentation was developed mostly from the content
-    provided by IBM in its web administration interface.
-  - For more information consult the official documentation.
-    U(https://www.ibm.com/support/knowledgecenter/SS9H2Y_7.7.0/com.ibm.dp.doc/welcome.html)
+extends_documentation_fragment: idg
 
 author:
   - David Grau Merconchini (@dgraum)
@@ -267,7 +217,7 @@ def main():
     try:
 
         # Parse arguments to dict
-        idg_data_spec = IDG_Utils.parse_to_dict(module.params['idg_connection'], 'IDGConnection', IDG_Utils.ANSIBLE_VERSION)
+        idg_data_spec = IDG_Utils.parse_to_dict(module, module.params['idg_connection'], 'IDGConnection', IDG_Utils.ANSIBLE_VERSION)
 
         # Status & domain
         state = module.params['state']

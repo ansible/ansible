@@ -21,12 +21,13 @@ result = dict(
 # Socket information
 idg_endpoint_spec = url_argument_spec()
 idg_endpoint_spec.update(
-    timeout=dict(type='int', default=10), # The socket level timeout in seconds
-    server=dict(type='str', required=True), # Remote IDG will be used.
-    server_port=dict(type='int', default=5554), # Remote IDG port be used.
+    timeout=dict(type='int', default=10),  # The socket level timeout in seconds
+    server=dict(type='str', required=True),  # Remote IDG will be used.
+    server_port=dict(type='int', default=5554),  # Remote IDG port be used.
     url_username=dict(required=False, aliases=['user']),
     url_password=dict(required=False, aliases=['password'], no_log=True),
 )
+
 
 class IDG_Utils(object):
     """ Class class with very useful things """
@@ -40,7 +41,7 @@ class IDG_Utils(object):
     UNCONTROLLED_EXCEPTION = 'Unknown exception'
 
     # Connection agreements
-    BASIC_HEADERS = { "Content-Type": "application/json" }
+    BASIC_HEADERS = {"Content-Type": "application/json"}
     ANSIBLE_VERSION = '2.7'
     BASIC_AUTH_SPEC = True
     HTTP_AGENT_SPEC = None
@@ -52,7 +53,7 @@ class IDG_Utils(object):
             module.exit_json(**result)
 
     @staticmethod
-    def parse_to_dict(data, desc, ver):
+    def parse_to_dict(module, data, desc, ver):
         # Interpret data as a dictionary
         if isinstance(data, dict):
             return data

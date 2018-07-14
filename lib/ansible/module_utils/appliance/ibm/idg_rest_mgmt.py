@@ -9,8 +9,8 @@ __metaclass__ = type
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils._text import to_native
 from ansible.module_utils.urls import open_url, ConnectionError, SSLValidationError
+from ansible.module_utils.six import string_types
 
-import six
 import json
 from time import sleep
 # import pdb
@@ -18,6 +18,7 @@ from time import sleep
 #############################
 # Class
 #############################
+
 
 class IDG_API(object):
     """ Class for managing communication with
@@ -79,9 +80,9 @@ class IDG_API(object):
     @staticmethod
     def status_text(arg):
         # If exist the status field brings the status
-        if isinstance(arg, six.string_types):
+        if isinstance(arg, string_types):
             return arg
-        elif isinstance(arg['status'], six.string_types):
+        elif isinstance(arg['status'], string_types):
             return arg['status']
         else:
             return None
@@ -130,17 +131,18 @@ class IDG_API(object):
 
         while (action_result not in str_results) and (count < max_steps):
             # Wait to complete
-            code, msg, data = self.api_call(uri + '/pending',
-                                                method='GET', data=None)
+            code, msg, data = self.api_call(uri + '/pending', method='GET', data=None)
             count += 1
             if code == 200 and msg == 'OK':
                 action_result = self.get_operation_status(data['operations'], kwargs['href'])
-                if action_result not in str_results: sleep(self.SHORT_DELAY)
+                if action_result not in str_results:
+                    sleep(self.SHORT_DELAY)
             else:
                 # Opps can't get status
                 self.ansible_module.fail_json(msg=to_native(self.ERROR_RETRIEVING_STATUS % (kwargs['state'], uri.rsplit('/', 1)[-1])))
 
         if count == max_steps:
-            self.ansible_module.fail_json(msg=to_native((self.ERROR_RETRIEVING_STATUS + 'Reached the maximum level of interactions') % (kwargs['state'], uri.rsplit('/', 1)[-1])))
+            self.ansible_module.fail_json(msg=to_native((self.ERROR_RETRIEVING_STATUS + 'Reached the maximum level of interactions') % (kwargs['state'],
+                                                        uri.rsplit('/', 1)[-1])))
         else:
             return action_result.capitalize()
