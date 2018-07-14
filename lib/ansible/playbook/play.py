@@ -61,6 +61,7 @@ class Play(Base, Taggable, Become):
     _gather_facts = FieldAttribute(isa='bool', default=None, always_post_validate=True)
     _gather_subset = FieldAttribute(isa='barelist', default=None, always_post_validate=True)
     _gather_timeout = FieldAttribute(isa='int', default=None, always_post_validate=True)
+    _gather_interpreters = FieldAttribute(isa='bool', default=None, always_post_validate=True)
 
     # Variable Attributes
     _vars_files = FieldAttribute(isa='list', default=[], priority=99)

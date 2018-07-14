@@ -278,7 +278,7 @@ class Task(Base, Conditional, Taggable, Become):
                 try:
                     env[k] = templar.template(v, convert_bare=False)
                 except AnsibleUndefinedVariable as e:
-                    if self.action in ('setup', 'gather_facts') and 'ansible_env' in to_native(e):
+                    if self.action in ('setup', 'gather_facts', 'gather_interpreters') and 'ansible_env' in to_native(e):
                         # ignore as fact gathering sets ansible_env
                         return
                     raise

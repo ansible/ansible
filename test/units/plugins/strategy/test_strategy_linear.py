@@ -54,6 +54,7 @@ class TestStrategyLinear(unittest.TestCase):
 
         mock_var_manager = MagicMock()
         mock_var_manager._fact_cache = dict()
+        mock_var_manager._nonpersistent_fact_cache = dict()
         mock_var_manager.get_vars.return_value = dict()
 
         p = Playbook.load('test_play.yml', loader=fake_loader, variable_manager=mock_var_manager)
@@ -65,6 +66,7 @@ class TestStrategyLinear(unittest.TestCase):
             hosts.append(host)
 
         mock_var_manager._fact_cache['host00'] = dict()
+        mock_var_manager._nonpersistent_fact_cache['host00'] = dict()
 
         inventory = MagicMock()
         inventory.get_hosts.return_value = hosts

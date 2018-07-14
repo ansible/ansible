@@ -26,6 +26,7 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
+from ansible.utils.vars import combine_vars
 
 
 try:
@@ -43,6 +44,7 @@ class HostState:
         self._blocks = blocks[:]
 
         self.cur_block = 0
+        self.cur_setup_task = 0
         self.cur_regular_task = 0
         self.cur_rescue_task = 0
         self.cur_always_task = 0
@@ -98,7 +100,7 @@ class HostState:
         if not isinstance(other, HostState):
             return False
 
-        for attr in ('_blocks', 'cur_block', 'cur_regular_task', 'cur_rescue_task', 'cur_always_task',
+        for attr in ('_blocks', 'cur_block', 'cur_setup_task', 'cur_regular_task', 'cur_rescue_task', 'cur_always_task',
                      'run_state', 'fail_state', 'pending_setup', 'cur_dep_chain',
                      'tasks_child_state', 'rescue_child_state', 'always_child_state'):
             if getattr(self, attr) != getattr(other, attr):
@@ -112,6 +114,7 @@ class HostState:
     def copy(self):
         new_state = HostState(self._blocks)
         new_state.cur_block = self.cur_block
+        new_state.cur_setup_task = self.cur_setup_task
         new_state.cur_regular_task = self.cur_regular_task
         new_state.cur_rescue_task = self.cur_rescue_task
         new_state.cur_always_task = self.cur_always_task
@@ -172,6 +175,16 @@ class PlayIterator:
         # Gathering facts with run_once would copy the facts from one host to
         # the others.
         setup_block.run_once = False
+
+        interpreters_task = Task(block=setup_block)
+        interpreters_task.action = 'gather_interpreters'
+        interpreters_task.name = 'Gathering interpreters'
+        interpreters_task.tags = ['always']
+        interpreters_task.set_loader(self._play._loader)
+        # short circuit fact gathering if the entire playbook is conditional
+        if self._play._included_conditional is not None:
+            interpreters_task.when = self._play._included_conditional[:]
+
         setup_task = Task(block=setup_block)
         setup_task.action = 'setup'
         setup_task.name = 'Gathering Facts'
@@ -187,7 +200,8 @@ class PlayIterator:
         # short circuit fact gathering if the entire playbook is conditional
         if self._play._included_conditional is not None:
             setup_task.when = self._play._included_conditional[:]
-        setup_block.block = [setup_task]
+
+        setup_block.block = [interpreters_task, setup_task]
 
         setup_block = setup_block.filter_tagged_tasks(play_context, all_vars)
         self._blocks.append(setup_block)
@@ -284,29 +298,36 @@ class PlayIterator:
                 return (state, None)
 
             if state.run_state == self.ITERATING_SETUP:
-                # First, we check to see if we were pending setup. If not, this is
-                # the first trip through ITERATING_SETUP, so we set the pending_setup
-                # flag and try to determine if we do in fact want to gather facts for
-                # the specified host.
-                if not state.pending_setup:
-                    state.pending_setup = True
+                gathering = C.DEFAULT_GATHERING
 
-                    # Gather facts if the default is 'smart' and we have not yet
-                    # done it for this host; or if 'explicit' and the play sets
-                    # gather_facts to True; or if 'implicit' and the play does
-                    # NOT explicitly set gather_facts to False.
+                # The setup block is always self._blocks[0], as we inject it
+                # during the play compilation in __init__ above.
+                setup_block = self._blocks[0]
 
-                    gathering = C.DEFAULT_GATHERING
-                    implied = self._play.gather_facts is None or boolean(self._play.gather_facts, strict=False)
+                if state.cur_setup_task < len(setup_block.block):
+                    tmp_task = setup_block.block[state.cur_setup_task]
+
+                    if tmp_task.action == 'setup':
+                        play_attr_value = boolean(self._play.gather_facts, strict=False)
+                        implied = self._play.gather_facts is None or play_attr_value
+                    elif tmp_task.action == 'gather_interpreters':
+                        play_attr_value = boolean(self._play.gather_interpreters, strict=False)
+                        # If 'gather_interpreters' is not specified, use 'gather_facts' value
+                        implied = (play_attr_value or (self._play.gather_interpreters is None and
+                                   self._play.gather_facts is None or boolean(self._play.gather_facts, strict=False)))
+
+                    # Grab persistent and nonpersistent facts from host to look for
+                    # "guard" variables for use with 'smart' gathering
+                    host_facts = self._variable_manager._fact_cache.get(host.name, {})
+                    host_facts = combine_vars(host_facts, self._variable_manager._nonpersistent_fact_cache.get(host.name, {}))
 
                     if (gathering == 'implicit' and implied) or \
-                       (gathering == 'explicit' and boolean(self._play.gather_facts, strict=False)) or \
-                       (gathering == 'smart' and implied and not (self._variable_manager._fact_cache.get(host.name, {}).get('module_setup', False))):
-                        # The setup block is always self._blocks[0], as we inject it
-                        # during the play compilation in __init__ above.
-                        setup_block = self._blocks[0]
-                        if setup_block.has_tasks() and len(setup_block.block) > 0:
-                            task = setup_block.block[0]
+                       (gathering == 'explicit' and play_attr_value) or \
+                       (gathering == 'smart' and implied and
+                       not (host_facts.get('module_' + tmp_task.action, False))):
+                            task = tmp_task
+
+                    state.cur_setup_task += 1
                 else:
                     # This is the second trip through ITERATING_SETUP, so we clear
                     # the flag and move onto the next block in the list while setting

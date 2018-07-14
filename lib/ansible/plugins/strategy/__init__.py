@@ -602,9 +602,9 @@ class StrategyBase:
                         else:
                             cacheable = result_item.pop('_ansible_facts_cacheable', False)
                             for target_host in host_list:
-                                if not original_task.action == 'set_fact' or cacheable:
+                                if original_task.action not in ('set_fact', 'gather_interpreters') or cacheable:
                                     self._variable_manager.set_host_facts(target_host, result_item['ansible_facts'].copy())
-                                if original_task.action == 'set_fact':
+                                if original_task.action in ('set_fact', 'gather_interpreters'):
                                     self._variable_manager.set_nonpersistent_facts(target_host, result_item['ansible_facts'].copy())
 
                     if 'ansible_stats' in result_item and 'data' in result_item['ansible_stats'] and result_item['ansible_stats']['data']:

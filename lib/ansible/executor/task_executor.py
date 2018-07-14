@@ -624,7 +624,7 @@ class TaskExecutor:
                 return failed_when_result
 
             if 'ansible_facts' in result:
-                if self._task.action in ('set_fact', 'include_vars'):
+                if self._task.action in ('set_fact', 'include_vars', 'gather_interpreters'):
                     vars_copy.update(result['ansible_facts'])
                 else:
                     vars_copy.update(namespace_facts(result['ansible_facts']))
@@ -685,7 +685,7 @@ class TaskExecutor:
             variables[self._task.register] = wrap_var(result)
 
         if 'ansible_facts' in result:
-            if self._task.action in ('set_fact', 'include_vars'):
+            if self._task.action in ('set_fact', 'include_vars', 'gather_interpreters'):
                 variables.update(result['ansible_facts'])
             else:
                 variables.update(namespace_facts(result['ansible_facts']))

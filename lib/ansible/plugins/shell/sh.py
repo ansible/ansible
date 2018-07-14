@@ -40,6 +40,12 @@ class ShellModule(ShellBase):
     _SHELL_GROUP_LEFT = '('
     _SHELL_GROUP_RIGHT = ')'
 
+    def find_binary(self, bins):
+        if not isinstance(bins, list):
+            bins = [bins]
+        cmd = ['which'] + bins
+        return ' '.join(cmd)
+
     def checksum(self, path, python_interp):
         # In the following test, each condition is a check and logical
         # comparison (|| or &&) that sets the rc value.  Every check is run so
