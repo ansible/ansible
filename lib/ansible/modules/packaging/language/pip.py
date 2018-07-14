@@ -26,7 +26,7 @@ options:
       - As of 2.2 you can supply a list of names.
   version:
     description:
-      - The version number to install of the Python library specified in the I(name) parameter.
+      - The version number or expression to install of the Python library specified in the I(name) parameter.
   requirements:
     description:
       - The path to a pip requirements file, which should be local to the remote system.
@@ -249,8 +249,10 @@ def _get_cmd_options(module, cmd):
 def _get_full_name(name, version=None):
     if version is None or version == "":
         resp = name
-    else:
+    elif re.match(r'^\d', version) is not None:
         resp = name + '==' + version
+    else:
+        resp = name + version
     return resp
 
 
