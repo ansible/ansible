@@ -33,6 +33,8 @@ options:
     allowed_vlans:
         description:
         - List of VLAN numbers to be allowed on switchport.
+        - Relevant only for trunk ports.
+        - Defaults to C(all) if not specified.
     enabled:
         description:
         - Whether a switchport should be enabled or disabled.
