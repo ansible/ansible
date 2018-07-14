@@ -412,7 +412,6 @@ def modify_cluster(module, redshift):
                                     **snake_dict_to_camel_dict(params, capitalize_first=True))
         except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
             module.fail_json(e, msg="Couldn't modify redshift cluster %s " % identifier)
-
     try:
         resource = redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
