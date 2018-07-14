@@ -294,12 +294,15 @@ def main():
     result['status'][module.params['state']]['rc'] = None
     result['status'][module.params['state']]['stdout'] = None
     result['status'][module.params['state']]['stderr'] = None
+
     if action:
         action = re.sub(r'p?ed$', '', action.lower())
 
         def runme(doit):
 
-            cmd = "%s %s %s %s" % (script, doit, name, module.params['arguments'])
+            args = module.params['arguments']
+            cmd = "%s %s %s" % (script, doit, "" if args is None else args)
+
             # how to run
             if module.params['daemonize']:
                 (rc, out, err) = daemonize(cmd)
