@@ -300,7 +300,6 @@ def create_cluster(module, redshift):
                                     **snake_dict_to_camel_dict(params, capitalize_first=True))
         except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
             module.fail_json_aws(e, msg="Failed to create cluster")
-
     try:
         resource = redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
@@ -311,8 +310,8 @@ def create_cluster(module, redshift):
         waiter = redshift.get_waiter('cluster_available')
         try:
             waiter.wait(
-                    ClusterIdentifier = identifier,
-                    WaiterConfig = dict(MaxAttempts=attempts)
+                ClusterIdentifier=identifier,
+                WaiterConfig=dict(MaxAttempts=attempts)
             )
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 module.fail_json_aws(e, msg="Timeout waiting for the cluster creation")
@@ -370,8 +369,8 @@ def delete_cluster(module, redshift):
         waiter = redshift.get_waiter('cluster_deleted')
         try:
             waiter.wait(
-                    ClusterIdentifier = identifier,
-                    WaiterConfig = dict(MaxAttempts=attempts)
+                ClusterIdentifier=identifier,
+                WaiterConfig=dict(MaxAttempts=attempts)
             )
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 module.fail_json_aws(e, msg="Timeout deleting the cluster")
@@ -424,8 +423,8 @@ def modify_cluster(module, redshift):
         waiter = redshift.get_waiter('cluster_available')
         try:
             waiter.wait(
-                    ClusterIdentifier = identifier,
-                    WaiterConfig = dict(MaxAttempts=attempts)
+                    ClusterIdentifier=identifier,
+                    WaiterConfig=dict(MaxAttempts=attempts)
             )
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 module.fail_json_aws(e, msg="Timeout waiting for cluster creation")
