@@ -258,7 +258,7 @@ def main():
                 elif location.get('chkconfig'):
                     (rc, out, err) = module.run_command("%s --level %s %s off" % (location['chkconfig'], ''.join(runlevels), name))
     else:
-        if enabled != None and enabled != runlevel_status["enabled"]:
+        if enabled is not None and enabled != runlevel_status["enabled"]:
             result['changed'] = True
             result['status']['enabled']['changed'] = True
 
