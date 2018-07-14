@@ -234,7 +234,7 @@ def main():
     meraki.params['follow_redirects'] = 'all'
 
     query_urls = {'vlan': '/networks/{net_id}/vlans'}
-    query_url = {'vlan': '/networks/{net_id}/vlans/'}
+    query_url = {'vlan': '/networks/{net_id}/vlans/{vlan_id}'}
     create_url = {'vlan': '/networks/{net_id}/vlans'}
     update_url = {'vlan': '/networks/{net_id}/vlans/'}
     delete_url = {'vlan': '/networks/{net_id}/vlans/'}
@@ -261,7 +261,7 @@ def main():
         if not meraki.params['vlan_id']:
             meraki.result['data'] = get_vlans(meraki, net_id)
         else:
-            path = meraki.construct_path('get_one', net_id=net_id) + str(meraki.params['vlan_id'])
+            path = meraki.construct_path('get_one', net_id=net_id, custom={'vlan_id': meraki.params['vlan_id']})
             response = meraki.request(path, method='GET')
             meraki.result['data'] = response
     elif meraki.params['state'] == 'present':
@@ -276,7 +276,7 @@ def main():
             meraki.result['changed'] = True
             meraki.result['data'] = response
         else:
-            path = meraki.construct_path('get_one', net_id=net_id) + str(meraki.params['vlan_id'])
+            path = meraki.construct_path('get_one', net_id=net_id, custom={'vlan_id': meraki.params['vlan_id']})
             original = meraki.request(path, method='GET')
             if meraki.params['dns_nameservers']:
                 if meraki.params['dns_nameservers'] not in ('opendns', 'google_dns', 'upstream_dns'):
