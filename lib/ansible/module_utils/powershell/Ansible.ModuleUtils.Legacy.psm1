@@ -4,7 +4,6 @@
 Set-StrictMode -Version 2.0
 $ErrorActionPreference = "Stop"
 
-
 Function Set-Attr($obj, $name, $value)
 {
 <#
@@ -31,7 +30,6 @@ Function Set-Attr($obj, $name, $value)
         $obj | Add-Member -Force -MemberType NoteProperty -Name $name -Value $value
     }
 }
-
 
 Function Exit-Json($obj)
 {
@@ -92,7 +90,6 @@ Function Fail-Json($obj, $message = $null)
     Exit 1
 }
 
-
 Function Add-Warning($obj, $message)
 {
 <#
@@ -130,7 +127,6 @@ Function Add-DeprecationWarning($obj, $message, $version = $null)
         version = $version
     }
 }
-
 
 Function Expand-Environment($value)
 {
@@ -264,7 +260,6 @@ If (-not(Get-Alias -Name "Get-attr" -ErrorAction SilentlyContinue))
     New-Alias -Name Get-attr -Value Get-AnsibleParam
 }
 
-
 Function ConvertTo-Bool
 {
 <#
@@ -326,7 +321,7 @@ Function Get-FileChecksum($path, $algorithm = 'sha1')
     Helper function to calculate a hash of a file in a way which PowerShell 3
     and above can handle
 #>
-    if (Test-Path -Path $path -PathType Leaf)
+    If (Test-Path -Path $path -PathType Leaf)
     {
         switch ($algorithm)
         {
