@@ -101,12 +101,18 @@ class FileLock:
 
     def unlock(self):
         '''
-        Unlock the file descriptor locked by set_lock
+        Make sure lock file is available for everyone and Unlock the file descriptor
+        locked by set_lock
 
         :returns: True
         '''
         if not self.lockfd:
             return True
+
+        try:
+            os.chmod(self.lockfd.name, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+        except OSError:  # ignore failed chmod
+            pass
 
         try:
             fcntl.flock(self.lockfd, fcntl.LOCK_UN)
