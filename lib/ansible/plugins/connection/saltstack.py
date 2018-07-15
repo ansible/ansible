@@ -64,6 +64,14 @@ class Connection(ConnectionBase):
         if in_data:
             raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
+        # Fixes an issue where tilde '~' is not resolved to the actual user home
+        get_current_user_home = self.client.cmd(self.host, 'cmd.exec_code_all', ['bash', 'echo ~'])[self.host]
+        if get_current_user_home and get_current_user_home['retcode'] == 0:
+            current_user_home = get_current_user_home['stdout']
+        else:
+            raise errors.AnsibleError("Cannot get home path of the user that running salt on %s" % self.host)
+        cmd = cmd.replace('~', current_user_home)
+
         self._display.vvv("EXEC %s" % (cmd), host=self.host)
         # need to add 'true;' to work around https://github.com/saltstack/salt/issues/28077
         res = self.client.cmd(self.host, 'cmd.exec_code_all', ['bash', 'true;' + cmd])
