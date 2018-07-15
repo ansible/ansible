@@ -56,7 +56,7 @@ Function Get-ChocolateySources {
     param($choco_app)
 
     $choco_config_path = "$(Split-Path -Path (Split-Path -Path $choco_app.Path))\config\chocolatey.config"
-    if (-not (Test-Path -Path $choco_config_path)) {
+    if (-not (Test-Path -LiteralPath $choco_config_path)) {
         Fail-Json -obj $result -message "Expecting Chocolatey config file to exist at '$choco_config_path'"
     }
 
@@ -145,7 +145,7 @@ Function Set-RawChocolateySourceAttribute {
     # for us to preserve the existing value when changing another attirbute is
     # to store it manually by editing the XML
     $choco_config_path = "$(Split-Path -Path (Split-Path -Path $choco_app.Path))\config\chocolatey.config"
-    if (-not (Test-Path -Path $choco_config_path)) {
+    if (-not (Test-Path -LiteralPath $choco_config_path)) {
         Fail-Json -obj $result -message "Expecting Chocolatey config file to exist at '$choco_config_path'"
     }
 
@@ -239,7 +239,7 @@ Function New-ChocolateySource {
     $command = Argv-ToString -arguments $arguments
     $res = Run-Command -command $command
     if ($res.rc -ne 0) {
-        Fail-Json -obj $result -message "Failed to add Chocolatey source '$name': $($_.stderr)"
+        Fail-Json -obj $result -message "Failed to add Chocolatey source '$name': $($res.stderr)"
     }
     if ($encrypted_source_password -and $null -ne $source_password) {
         Set-RawChocolateySourceAttribute -choco_app $choco_app -name $name -attribute password -value $source_password
