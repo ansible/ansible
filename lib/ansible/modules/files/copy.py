@@ -233,6 +233,8 @@ import os
 import os.path
 import shutil
 import filecmp
+import pwd
+import grp
 import stat
 import errno
 import tempfile
@@ -277,7 +279,7 @@ def adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list,
         changed = adjust_recursive_directory_permissions(working_dir, new_directory_list, module, directory_args, changed)
     return changed
 
-
+ 
 def copy_diff_files(src, dest, module):
     changed = False
     diff_files = filecmp.dircmp(src, dest).diff_files
@@ -288,6 +290,12 @@ def copy_diff_files(src, dest, module):
             src_item_path = os.path.join(src, item)
             dest_item_path = os.path.join(dest, item)
             shutil.copyfile(src_item_path, dest_item_path)
+            if mode is not None:
+                module.set_mode_if_different(dest_item_path, mode, False)
+            if owner is not None:
+                module.set_owner_if_different(dest_item_path, owner, False)
+            if group is not None:
+                module.set_group_if_different(dest_item_path, group, False)
             changed = True
     return changed
 
@@ -303,8 +311,23 @@ def copy_left_only(src, dest, module):
             dest_item_path = os.path.join(dest, item)
             if os.path.isfile(src_item_path):
                 shutil.copyfile(src_item_path, dest_item_path)
+                if mode is not None:
+                    module.set_mode_if_different(dest_item_path, mode, False)
+                if owner is not None:
+                    module.set_owner_if_different(dest_item_path, owner, False)
+                if group is not None:
+                    module.set_group_if_different(dest_item_path, group, False)
             if os.path.isdir(src_item_path):
                 shutil.copytree(src_item_path, dest_item_path)
+                uid = pwd.getpwnam(module.owner).pw_uid
+                gid = grp.getgrnam(module.group).gr_gid
+                for root, dirs, files in os.walk(dest_item_path, topdown=False):
+                for dir in [os.dest_item_path.join(root,d) for d in dirs]:
+                    os.chmod(dir, module.mode)
+                    os.chown(dir, uid, gid)
+                for file in [os.dest_item_path.join(root, f) for f in files]:
+                    os.chmod(file, module.mode)
+                    os.chown(file, uid, gid)
             changed = True
     return changed
 
