@@ -259,8 +259,8 @@ def main():
                 elif command == "GetLogs":
                     result["log"] = rf_utils.get_logs()
 
-    # Return data back or fail with proper message
-    module.exit_json(redfish_facts=result)
+    # Return data back
+    module.exit_json(ansible_facts=dict(redfish_facts=result))
 
 if __name__ == '__main__':
     main()
