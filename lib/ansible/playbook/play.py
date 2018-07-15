@@ -233,6 +233,10 @@ class Play(Base, Taggable, Become):
 
         if len(self.roles) > 0:
             for r in self.roles:
+                # Don't insert tasks from ``import/include_role``, preventing
+                # duplicate execution at the wrong time
+                if r.from_include:
+                    continue
                 block_list.extend(r.compile(play=self))
 
         return block_list
