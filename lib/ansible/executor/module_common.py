@@ -134,21 +134,24 @@ def _ansiballz_main():
         sys.path = [p for p in sys.path if p != scriptdir]
 
     import base64
+    import imp
     import shutil
     import tempfile
-    import zipimport
     import zipfile
 
     if sys.version_info < (3,):
         bytes = str
+        MOD_DESC = ('.py', 'U', imp.PY_SOURCE)
         PY3 = False
     else:
         unicode = str
+        MOD_DESC = ('.py', 'r', imp.PY_SOURCE)
         PY3 = True
 
     ZIPDATA = """%(zipdata)s"""
 
-    def invoke_module(modlib_path, json_params):
+    # Note: temp_path isn't needed once we switch to zipimport
+    def invoke_module(modlib_path, temp_path, json_params):
         # When installed via setuptools (including python setup.py install),
         # ansible may be installed with an easy-install.pth file.  That file
         # may load the system-wide install of ansible rather than the one in
@@ -164,6 +167,13 @@ def _ansiballz_main():
         zinfo.filename = 'sitecustomize.py'
         zinfo.date_time = ( %(year)i, %(month)i, %(day)i, %(hour)i, %(minute)i, %(second)i)
         z.writestr(zinfo, sitecustomize)
+        # Note: Remove the following section when we switch to zipimport
+        # Write the module to disk for imp.load_module
+        module = os.path.join(temp_path, '__main__.py')
+        with open(module, 'wb') as f:
+            f.write(z.read('__main__.py'))
+            f.close()
+        # End pre-zipimport section
         z.close()
 
         # Put the zipped up module_utils we got from the controller first in the python path so that we
@@ -175,8 +185,8 @@ def _ansiballz_main():
         basic._ANSIBLE_ARGS = json_params
 %(coverage)s
         # Run the module!  By importing it as '__main__', it thinks it is executing as a script
-        importer = zipimport.zipimporter(modlib_path)
-        importer.load_module('__main__')
+        with open(module, 'rb') as mod:
+            imp.load_module('__main__', mod, module, MOD_DESC)
 
         # Ansible modules must exit themselves
         print('{"msg": "New-style module did not handle its own exit", "failed": true}')
@@ -296,7 +306,9 @@ def _ansiballz_main():
         # There's a race condition with the controller removing the
         # remote_tmpdir and this module executing under async.  So we cannot
         # store this in remote_tmpdir (use system tempdir instead)
-        temp_path = tempfile.mkdtemp(prefix='ansible_')
+        # Only need to use [ansible_module]_payload_ in the temp_path until we move to zipimport
+        # (this helps ansible-test produce coverage stats)
+        temp_path = tempfile.mkdtemp(prefix='ansible_%(ansible_module)s_payload_')
 
         zipped_mod = os.path.join(temp_path, 'ansible_%(ansible_module)s_payload.zip')
         with open(zipped_mod, 'wb') as modlib:
@@ -305,7 +317,8 @@ def _ansiballz_main():
         if len(sys.argv) == 2:
             exitcode = debug(sys.argv[1], zipped_mod, ANSIBALLZ_PARAMS)
         else:
-            invoke_module(zipped_mod, ANSIBALLZ_PARAMS)
+            # Note: temp_path isn't needed once we switch to zipimport
+            invoke_module(zipped_mod, temp_path, ANSIBALLZ_PARAMS)
     finally:
         try:
             shutil.rmtree(temp_path)
