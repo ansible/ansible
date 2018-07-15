@@ -106,3 +106,8 @@ class TestRouterosCommandModule(TestRouterosModule):
         commands = ['/system resource print', '/system resource print']
         set_module_args(dict(commands=commands, wait_for=wait_for, match='all'))
         self.execute_module(failed=True)
+
+    def test_routeros_command_wait_for_2(self):
+        wait_for = 'result[0] contains "wireless"'
+        set_module_args(dict(commands=['/system package print'], wait_for=wait_for))
+        self.execute_module()
