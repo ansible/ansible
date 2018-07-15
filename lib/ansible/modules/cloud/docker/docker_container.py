@@ -164,9 +164,10 @@ options:
       - Override default signal used to kill a running container.
   kernel_memory:
     description:
-      - "Kernel memory limit (format: <number>[<unit>]). Number is a positive integer.
-        Unit can be one of b, k, m, or g. Minimum is 4M."
-    default: 0
+      - "Kernel memory limit (format: C(<number>[<unit>])). Number is a positive integer.
+        Unit is optional and can be C(b) (bytes), C(k) (kilobytes), C(m) (megabytes), or C(g) (gigabytes).
+        Minimum is C(4m)."
+    default: '0'
   labels:
      description:
        - Dictionary of key value pairs.
@@ -197,19 +198,19 @@ options:
       - Container MAC address (e.g. 92:d0:c6:0a:29:33)
   memory:
     description:
-      - "Memory limit (format: <number>[<unit>]). Number is a positive integer.
-        Unit can be one of b, k, m, or g"
+      - "Memory limit (format: C(<number>[<unit>])). Number is a positive integer.
+        Unit is optional and can be C(b) (bytes), C(k) (kilobytes), C(m) (megabytes), or C(g) (gigabytes)."
     default: '0'
   memory_reservation:
     description:
-      - "Memory soft limit (format: <number>[<unit>]). Number is a positive integer.
-        Unit can be one of b, k, m, or g"
-    default: 0
+      - "Memory soft limit (format: C(<number>[<unit>])). Number is a positive integer.
+        Unit is optional and can be C(b) (bytes), C(k) (kilobytes), C(m) (megabytes), or C(g) (gigabytes)."
+    default: '0'
   memory_swap:
     description:
-      - Total memory limit (memory + swap, format:<number>[<unit>]).
-        Number is a positive integer. Unit can be one of b, k, m, or g.
-    default: 0
+      - "Total memory limit (memory + swap, format:C(<number>[<unit>])).
+        Unit is optional and can be C(b) (bytes), C(k) (kilobytes), C(m) (megabytes), or C(g) (gigabytes)."
+    default: '0'
   memory_swappiness:
     description:
         - Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100.
@@ -321,9 +322,9 @@ options:
     default: 0
   shm_size:
     description:
-      - Size of `/dev/shm`. The format is `<number><unit>`. `number` must be greater than `0`.
-        Unit is optional and can be `b` (bytes), `k` (kilobytes), `m` (megabytes), or `g` (gigabytes).
-      - Omitting the unit defaults to bytes. If you omit the size entirely, the system uses `64m`.
+      - Size of C(/dev/shm). The format is C(<number><unit>). C(number) must be greater than C(0).
+        Unit is optional and can be C(b) (bytes), C(k) (kilobytes), C(m) (megabytes), or C(g) (gigabytes).
+      - Omitting the unit defaults to bytes. If you omit the size entirely, the system uses C(64m).
   security_opts:
     description:
       - List of security options in the form of C("label:user:User")
