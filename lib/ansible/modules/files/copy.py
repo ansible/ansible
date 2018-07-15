@@ -78,7 +78,7 @@ options:
     description:
       - If C(no), it will search for I(src) at originating/master machine.
       - If C(yes) it will go to the remote/target machine for the I(src). Default is C(no).
-      - I(remote_src) support recursive copying.
+      - I(remote_src) supports recursive copying in version 2.7 and higher.
       - I(remote_src) only works with C(mode=preserve) as of version 2.6.
     type: bool
     default: 'no'
@@ -290,12 +290,12 @@ def copy_diff_files(src, dest, module):
             src_item_path = os.path.join(src, item)
             dest_item_path = os.path.join(dest, item)
             shutil.copyfile(src_item_path, dest_item_path)
-            if mode is not None:
-                module.set_mode_if_different(dest_item_path, mode, False)
-            if owner is not None:
-                module.set_owner_if_different(dest_item_path, owner, False)
-            if group is not None:
-                module.set_group_if_different(dest_item_path, group, False)
+            if module.mode is not None:
+                module.set_mode_if_different(dest_item_path, module.mode, False)
+            if module.owner is not None:
+                module.set_owner_if_different(dest_item_path, module.owner, False)
+            if module.group is not None:
+                module.set_group_if_different(dest_item_path, module.group, False)
             changed = True
     return changed
 
@@ -311,23 +311,23 @@ def copy_left_only(src, dest, module):
             dest_item_path = os.path.join(dest, item)
             if os.path.isfile(src_item_path):
                 shutil.copyfile(src_item_path, dest_item_path)
-                if mode is not None:
-                    module.set_mode_if_different(dest_item_path, mode, False)
-                if owner is not None:
-                    module.set_owner_if_different(dest_item_path, owner, False)
-                if group is not None:
-                    module.set_group_if_different(dest_item_path, group, False)
+                if module.mode is not None:
+                    module.set_mode_if_different(dest_item_path, module.mode, False)
+                if module.owner is not None:
+                    module.set_owner_if_different(dest_item_path, module.owner, False)
+                if module.group is not None:
+                    module.set_group_if_different(dest_item_path, module.group, False)
             if os.path.isdir(src_item_path):
                 shutil.copytree(src_item_path, dest_item_path)
                 uid = pwd.getpwnam(module.owner).pw_uid
                 gid = grp.getgrnam(module.group).gr_gid
                 for root, dirs, files in os.walk(dest_item_path, topdown=False):
-                for dir in [os.dest_item_path.join(root,d) for d in dirs]:
-                    os.chmod(dir, module.mode)
-                    os.chown(dir, uid, gid)
-                for file in [os.dest_item_path.join(root, f) for f in files]:
-                    os.chmod(file, module.mode)
-                    os.chown(file, uid, gid)
+                    for dir in [os.path.join(root,d) for d in dirs]:
+                        os.chmod(dir, module.mode)
+                        os.chown(dir, uid, gid)
+                    for file in [os.path.join(root, f) for f in files]:
+                        os.chmod(file, module.mode)
+                        os.chown(file, uid, gid)
             changed = True
     return changed
 
