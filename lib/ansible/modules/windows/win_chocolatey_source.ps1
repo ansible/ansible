@@ -33,8 +33,8 @@ $result = @{
 }
 if ($diff) {
     $result.diff = @{
-        before = $null
-        after = $null
+        before = @{}
+        after = @{}
     }
 }
 
@@ -285,11 +285,15 @@ if (-not $choco_app) {
 $actual_sources = Get-ChocolateySources -choco_app $choco_app
 $actual_source = $actual_sources | Where-Object { $_.name -eq $name }
 if ($diff) {
-    $before = $actual_source.Clone()
-    # remove the secret info for the diff output (while these are encrypted) we
-    # are best not to return them
-    $before.Remove("source_password")
-    $before.Remove("certificate_password")
+    if ($null -ne $actual_source) {
+        $before = $actual_source.Clone()
+        # remove the secret info for the diff output (while these are encrypted) we
+        # are best not to return them
+        $before.Remove("source_password")
+        $before.Remove("certificate_password")
+    } else {
+        $before = @{}
+    }
     $result.diff.before = $before
 }
 
@@ -401,7 +405,7 @@ if ($state -eq "absent" -and $null -ne $actual_source) {
 
 # finally remove the diff if there was no change
 if (-not $result.changed -and $diff) {
-    $result.diff = $null
+    $result.diff = @{}
 }
 
 Exit-Json -obj $result

@@ -92,17 +92,29 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: create HTTP source
+- name: remove the default public source
   win_chocolatey_source:
+    name: chocolatey
+    state: absent
 
-- name: remove source
+- name: add new internal source
   win_chocolatey_source:
+    name: internal repo
+    state: present
+    source: http://chocolatey-server/chocolatey
 
 - name: create HTTP source with credentials
   win_chocolatey_source:
+    name: internal repo
+    state: present
+    source: https://chocolatey-server/chocolatey
+    source_username: username
+    source_password: password
 
 - name: disable Chocolatey source
   win_chocolatey_source:
+    name: chocoaltey
+    state: disabled
 '''
 
 RETURN = r'''
