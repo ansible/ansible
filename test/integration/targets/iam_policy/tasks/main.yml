@@ -239,12 +239,14 @@
         policy_name: "{{ iam_policy_name }}"
         state: absent
         <<: *aws_connection_info
+      ignore_errors: yes
     # ============================================================
     - name: Delete user for tests
       iam_user:
-       name: "{{ iam_user_name }}"
-       state: absent
-       <<: *aws_connection_info
+        name: "{{ iam_user_name }}"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
     # ============================================================
     - name: Delete policy for role
       iam_policy:
@@ -253,12 +255,14 @@
         policy_name: "{{ iam_policy_name }}"
         state: absent
         <<: *aws_connection_info
+      ignore_errors: yes
     # ============================================================
     - name: Delete role for tests
       iam_role:
-       name: "{{ iam_role_name }}"
-       state: absent
-       <<: *aws_connection_info
+        name: "{{ iam_role_name }}"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
     # ============================================================
     - name: Delete policy for group
       iam_policy:
@@ -267,9 +271,11 @@
         policy_name: "{{ iam_policy_name }}"
         state: absent
         <<: *aws_connection_info
+      ignore_errors: yes
     # ============================================================
     - name: Delete group for tests
       iam_group:
-       name: "{{ iam_group_name }}"
-       state: absent
-       <<: *aws_connection_info
+        name: "{{ iam_group_name }}"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
