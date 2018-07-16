@@ -221,7 +221,7 @@
   assert:
     that:
     - modify_source is changed
-    - modify_source_actual.stdout_lines == ["test'|\"source 123^|C:\\chocolatey repos2|False|username2|C:\\cert2.pfx|5|True|True|True"]
+    - modify_source_actual.stdout_lines == ["test'|\"source 123^|C:\\chocolatey repos2|False|username2|C:\\cert2.pfx|5|False|True|True"]
 
 - name: edit an existing source (idempotent)
   win_chocolatey_source:

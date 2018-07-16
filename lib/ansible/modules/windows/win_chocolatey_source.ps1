@@ -38,20 +38,6 @@ if ($diff) {
     }
 }
 
-Function Get-PrettyXml {
-    param([xml]$xml)
-
-    $string_writer = New-Object -TypeName System.IO.StringWriter
-    $xml_writer = New-Object -TypeName System.Xml.XmlTextWriter $string_writer
-    $xml_writer.Formatting = "indented"
-    $xml_writer.Indentation = 2
-    $xml.WriteContentTo($xml_writer)
-    $xml_writer.Flush()
-    $string_writer.Flush()
-
-    return $string_writer.ToString()
-}
-
 Function Get-ChocolateySources {
     param($choco_app)
 
@@ -78,10 +64,6 @@ Function Get-ChocolateySources {
         if ($null -ne $source_username) {
             $source_username = $source_username.Value
         }
-        $source_password = $xml_source.Attributes.GetNamedItem("password")
-        if ($null -ne $source_password) {
-            $source_password = $source_password.Value
-        }
 
         # 0.9.9.9+
         $priority = $xml_source.Attributes.GetNamedItem("priority")
@@ -93,10 +75,6 @@ Function Get-ChocolateySources {
         $certificate = $xml_source.Attributes.GetNamedItem("certificate")
         if ($null -ne $certificate) {
             $certificate = $certificate.Value
-        }
-        $certificate_password = $xml_source.Attributes.GetNamedItem("certificatePassword")
-        if ($null -ne $certificate_password) {
-            $certificate_password = $certificate_password.Value
         }
 
         # 0.10.4+
@@ -125,41 +103,10 @@ Function Get-ChocolateySources {
             bypass_proxy = $bypass_proxy
             allow_self_service = $allow_self_service
             admin_only = $admin_only
-
-            source_password = $source_password
-            certificate_password = $certificate_password
         }
         $sources.Add($source_info) > $null
     }
     return ,$sources
-}
-
-Function Set-RawChocolateySourceAttribute {
-    param(
-        $choco_app,
-        $name,
-        $attribute,
-        $value
-    )
-    # for private attributes like password/certificatePassword, the only way
-    # for us to preserve the existing value when changing another attirbute is
-    # to store it manually by editing the XML
-    $choco_config_path = "$(Split-Path -Path (Split-Path -Path $choco_app.Path))\config\chocolatey.config"
-    if (-not (Test-Path -LiteralPath $choco_config_path)) {
-        Fail-Json -obj $result -message "Expecting Chocolatey config file to exist at '$choco_config_path'"
-    }
-
-    try {
-        [xml]$choco_config = Get-Content -Path $choco_config_path
-    } catch {
-        Fail-Json -obj $result -message "Failed to parse Chocolatey config file at '$choco_config_path': $($_.Exception.Message)"
-    }
-    $source = $choco_config.chocolatey.sources.GetEnumerator() | Where-Object { $_.id -eq $name }
-    $source.$attribute = $value
-    $new_xml = Get-PrettyXml -xml $choco_config
-    if (-not $check_mode) {
-        [System.IO.File]::WriteAllText($choco_config_path, $new_xml)
-    }
 }
 
 Function New-ChocolateySource {
@@ -171,10 +118,8 @@ Function New-ChocolateySource {
         $source,
         $source_username,
         $source_password,
-        [switch]$encrypted_source_password,
         $certificate,
         $certificate_password,
-        [switch]$encrypted_certificate_password,
         $priority,
         $bypass_proxy,
         $allow_self_service,
@@ -190,12 +135,7 @@ Function New-ChocolateySource {
         $arguments.Add("--user") > $null
         $arguments.Add($source_username) > $null
         $arguments.Add("--password") > $null
-        if ($encrypted_source_password) {
-            # use a placeholder for now
-            $arguments.Add("pass") > $null
-        } else {
-            $arguments.Add($source_password) > $null
-        }
+        $arguments.Add($source_password) > $null
     }
     if ($null -ne $certificate) {
         $arguments.Add("--cert") > $null
@@ -203,12 +143,7 @@ Function New-ChocolateySource {
     }
     if ($null -ne $certificate_password) {
         $arguments.Add("--certpassword") > $null
-        if ($encrypted_certificate_password) {
-            # use a placeholder for now
-            $arguments.Add("pass") > $null
-        } else {
-            $arguments.Add($certificate_password) > $null
-        }
+        $arguments.Add($certificate_password) > $null
     }
     if ($null -ne $priority) {
         $arguments.Add("--priority") > $null
@@ -240,12 +175,6 @@ Function New-ChocolateySource {
     $res = Run-Command -command $command
     if ($res.rc -ne 0) {
         Fail-Json -obj $result -message "Failed to add Chocolatey source '$name': $($res.stderr)"
-    }
-    if ($encrypted_source_password -and $null -ne $source_password) {
-        Set-RawChocolateySourceAttribute -choco_app $choco_app -name $name -attribute password -value $source_password
-    }
-    if ($encrypted_certificate_password -and $null -ne $certificate_password) {
-        Set-RawChocolateySourceAttribute -choco_app $choco_app -name $name -attribute certificatePassword -value $certificate_password
     }
 
     $source_info = @{
@@ -287,10 +216,6 @@ $actual_source = $actual_sources | Where-Object { $_.name -eq $name }
 if ($diff) {
     if ($null -ne $actual_source) {
         $before = $actual_source.Clone()
-        # remove the secret info for the diff output (while these are encrypted) we
-        # are best not to return them
-        $before.Remove("source_password")
-        $before.Remove("certificate_password")
     } else {
         $before = @{}
     }
@@ -301,71 +226,51 @@ if ($state -eq "absent" -and $null -ne $actual_source) {
     Remove-ChocolateySource -choco_app $choco_app -name $name
     $result.changed = $true
 } elseif ($state -in ("disabled", "present")) {
+    $change = $false
     if ($null -eq $actual_source) {
-        $actual_source = New-ChocolateySource -choco_app $choco_app -name $name -source $source `
-            -source_username $source_username -source_password $source_password `
-            -encrypted_source_password:$false -certificate $certificate `
-            -certificate_password $certificate_password -encrypted_certificate_password:$false `
-            -priority $priority -bypass_proxy $bypass_proxy -allow_self_service $allow_self_service `
-            -admin_only $admin_only
-        $result.changed = $true
+        $change = $true
     } else {
-        $change = $false
-
-        # start with baseline that copies the existing source definition
-        $new_args = $actual_source.Clone()
-        $new_args.choco_app = $choco_app
-        $new_args.encrypted_source_password = $true
-        $new_args.encrypted_certificate_password = $true
-
-        if ($source -ne $new_args.source) {
+        if ($source -ne $actual_source.source) {
             $change = $true
-            $new_args.source = $source
         }
-        if ($null -ne $source_username -and $source_username -ne $new_args.source_username) {
+        if ($null -ne $source_username -and $source_username -ne $actual_source.source_username) {
             $change = $true
-            $new_args.source_username = $source_username
         }
-        if ($null -ne $source_password) {
-            $new_args.source_password = $source_password
-            $new_args.encrypted_source_password = $false
-            if ($update_password -eq "always") {
-                $change = $true
-            }
-        }
-        if ($null -ne $certificate -and $certificate -ne $new_args.certificate) {
+        if ($null -ne $source_password -and $update_password -eq "always") {
             $change = $true
-            $new_args.certificate = $certificate
         }
-        if ($null -ne $certificate_password) {
-            $new_args.certificate_password = $certificate_password
-            $new_args.encrypted_certificate_password = $false
-            if ($update_password -eq "always") {
-                $change = $true
-            }
-        }
-        if ($null -ne $priority -and $priority -ne $new_args.priority) {
+        if ($null -ne $certificate -and $certificate -ne $actual_source.certificate) {
             $change = $true
-            $new_args.priority = $priority
         }
-        if ($null -ne $bypass_proxy -and $bypass_proxy -ne $new_args.bypass_proxy) {
+        if ($null -ne $certificate_password -and $update_password -eq "always") {
             $change = $true
-            $new_args.bypass_proxy = $bypass_proxy
         }
-        if ($null -ne $allow_self_service -and $allow_self_service -ne $new_args.allow_self_service) {
+        if ($null -ne $priority -and $priority -ne $actual_source.priority) {
             $change = $true
-            $new_args.allow_self_service = $allow_self_service
         }
-        if ($null -ne $admin_only -and $admin_only -ne $new_args.admin_only) {
+        if ($null -ne $bypass_proxy -and $bypass_proxy -ne $actual_source.bypass_proxy) {
             $change = $true
-            $new_args.admin_only = $admin_only
+        }
+        if ($null -ne $allow_self_service -and $allow_self_service -ne $actual_source.allow_self_service) {
+            $change = $true
+        }
+        if ($null -ne $admin_only -and $admin_only -ne $actual_source.admin_only) {
+            $change = $true
         }
 
         if ($change) {
             Remove-ChocolateySource -choco_app $choco_app -name $name
-            $actual_source = New-ChocolateySource @new_args
             $result.changed = $true
         }
+    }
+
+    if ($change) {
+        $actual_source = New-ChocolateySource -choco_app $choco_app -name $name -source $source `
+            -source_username $source_username -source_password $source_password `
+            -certificate $certificate -certificate_password $certificate_password `
+            -priority $priority -bypass_proxy $bypass_proxy -allow_self_service $allow_self_service `
+            -admin_only $admin_only
+        $result.changed = $true
     }
 
     # enable/disable the source if necessary
@@ -377,7 +282,7 @@ if ($state -eq "absent" -and $null -ne $actual_source) {
         $command = Argv-ToString -arguments $arguments
         $res = Run-Command -command $command
         if ($res.rc -ne 0) {
-            Fail-Json -obj $result -message "Failed to enable Chocolatey source '$name': $($_.res.stderr)"
+            Fail-Json -obj $result -message "Failed to enable Chocolatey source '$name': $($res.stderr)"
         }
         $actual_source.disabled = $false
         $result.changed = $true
@@ -389,7 +294,7 @@ if ($state -eq "absent" -and $null -ne $actual_source) {
         $command = Argv-ToString -arguments $arguments
         $res = Run-Command -command $command
         if ($res.rc -ne 0) {
-            Fail-Json -obj $result -message "Failed to disable Chocolatey source '$name': $($_.res.stderr)"
+            Fail-Json -obj $result -message "Failed to disable Chocolatey source '$name': $($res.stderr)"
         }
         $actual_source.disabled = $true
         $result.changed = $true
@@ -397,8 +302,6 @@ if ($state -eq "absent" -and $null -ne $actual_source) {
 
     if ($diff) {
         $after = $actual_source
-        $after.Remove("source_password")
-        $after.Remove("certificate_password")
         $result.diff.after = $after
     }
 }
