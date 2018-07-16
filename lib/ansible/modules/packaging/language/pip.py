@@ -259,9 +259,9 @@ op_dict = {">=": operator.ge, "<=": operator.le, ">": operator.gt,
 class Distribution:
     """Python distribution package metadata wrapper.
 
-    A wrapper class for Requirement, which provides API to parse package name
-    and version specifier, providing fallback if the installed setuptools version
-    doesn't support required features.
+    A wrapper class for Requirement, which provides
+    API to parse package name, version specifier,
+    test whether a package is already satisfied.
     """
 
     def __init__(self, name_string, version_string=None):
@@ -318,23 +318,17 @@ def _is_valid_distribution_name(name):
 
 
 def _recover_distribution_name(names):
-    """Recover distribution names from user's raw input."""
-    distribution_parts = []
+    """Recover distribution names as list from user's raw input."""
+    name_parts = []
+    distribution_names = []
     for name in names:
         if _is_valid_distribution_name(name):
-            if len(distribution_parts) > 0:
-                yield ",".join(distribution_parts)
-            distribution_parts = []
-        distribution_parts.append(name)
-    yield ",".join(distribution_parts)
-
-
-def _get_distributions_from_names(module, names):
-    """Parse distribution name to instances of Distribution."""
-    try:
-        return [Distribution(name) for name in _recover_distribution_name(names)]
-    except ValueError as e:
-        module.fail_json(msg=str(e))
+            if len(name_parts) > 0:
+                distribution_names.append(",".join(name_parts))
+            name_parts = []
+        name_parts.append(name)
+    distribution_names.append(",".join(name_parts))
+    return distribution_names
 
 
 def _get_cmd_options(module, cmd):
@@ -607,7 +601,12 @@ def main():
                     has_vcs = True
                     break
 
-            distributions = _get_distributions_from_names(module, name)
+            # convert raw input distribution names to distribution instances
+            try:
+                distributions = [Distribution(dist) for dist in _recover_distribution_name(name)]
+            except ValueError as e:
+                # if users input some invalid distribution names, show them the parsing error
+                module.fail_json(msg=str(e))
             # check invalid combination of arguments
             if version is not None:
                 if len(distributions) > 1:
