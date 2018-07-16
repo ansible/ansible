@@ -299,18 +299,19 @@ def main():
 
     argument_spec.update(nxos_argument_spec)
 
+    required_if = [("file_pull", True, ["remote_file", "remote_scp_server"]),
+                   ("file_pull", False, ["local_file"])]
+
     rt = [['remote_scp_server',
            'remote_scp_server_user',
            'remote_scp_server_password']]
 
     module = AnsibleModule(argument_spec=argument_spec,
+                           required_if=required_if,
                            required_together=rt,
                            supports_check_mode=True)
 
     file_pull = module.params['file_pull']
-    local_file = module.params['local_file']
-    remote_file = module.params['remote_file']
-    remote_scp_server = module.params['remote_scp_server']
 
     if file_pull:
         if not HAS_PEXPECT:
@@ -318,17 +319,6 @@ def main():
                 msg='library pexpect is required but does not appear to be '
                     'installed. It can be installed using `pip install pexpect`'
             )
-
-        if not remote_file:
-            module.fail_json(
-                msg='remote file is required when it is copied from the device'
-            )
-
-        if not remote_scp_server:
-            module.fail_json(
-                msg='remote scp server is required when a file is copied from the device'
-            )
-
     else:
         if not HAS_PARAMIKO:
             module.fail_json(
@@ -341,12 +331,6 @@ def main():
                 msg='library scp is required but does not appear to be '
                     'installed. It can be installed using `pip install scp`'
             )
-
-        if not local_file:
-            module.fail_json(
-                msg='local file is required when it is copied to the device'
-            )
-
     warnings = list()
     check_args(module, warnings)
     results = dict(changed=False, warnings=warnings)
