@@ -345,7 +345,7 @@ class NailGun(object):
             sync_plan.update()
         else:
             response = sync_plan.create()
-            sync_plan.id = response[0].id
+            sync_plan.id = response.id
 
         if products:
             ids = []
