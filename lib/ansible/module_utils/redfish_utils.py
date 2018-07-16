@@ -223,13 +223,12 @@ class RedfishUtils(object):
             logs['Description'] = data['Description']
             # Get all log entries for each type of log found
             for logEntry in data[u'Members']:
-                entry = {}
                 # I only extract some fields - Are these entry names standard?
-                entry['Name'] = logEntry[u'Name']
-                entry['Created'] = logEntry[u'Created']
-                entry['Message'] = logEntry[u'Message']
-                entry['Severity'] = logEntry[u'Severity']
-                list_of_log_entries.append(entry)
+                list_of_log_entries.append(dict(
+                    Name=logEntry[u'Name'],
+                    Created=logEntry[u'Created'],
+                    Message=logEntry[u'Message'],
+                    Severity=logEntry[u'Severity']))
             log_name = log_svcs_uri.split('/')[-1]
             logs[log_name] = list_of_log_entries
             list_of_logs.append(logs)
@@ -297,11 +296,9 @@ class RedfishUtils(object):
             if response['ret'] is False:
                 return response
             data = response['data']
-            controller = {}
-            controller['Name'] = data[u'Name']      # Name of storage controller
-            controller['Health'] = data[u'Status'][u'Health']
-            controllers_details.append(controller)
-
+            controllers_details.append(dict(
+                Name=data[u'Name'],
+                Health=data[u'Status'][u'Health']))
         result["entries"] = controllers_details
         return result
 
@@ -338,15 +335,13 @@ class RedfishUtils(object):
             data = response['data']
 
             for device in data[u'Devices']:
-                disk = {}
-                disk['Controller'] = data[u'Name']  # Name of storage controller
-                disk['Name'] = device[u'Name']
-                disk['Manufacturer'] = device[u'Manufacturer']
-                disk['Model'] = device[u'Model']
-                disk['State'] = device[u'Status'][u'State']
-                disk['Health'] = device[u'Status'][u'Health']
-                disks_details.append(disk)
-
+                disks_details.append(dict(
+                    Controller=data[u'Name'],
+                    Name=device[u'Name'],
+                    Manufacturer=device[u'Manufacturer'],
+                    Model=device[u'Model'],
+                    State=device[u'Status'][u'State'],
+                    Health=device[u'Status'][u'Health']))
         result["entries"] = disks_details
         return result
 
@@ -420,12 +415,11 @@ class RedfishUtils(object):
             data = response['data']
 
             if not data[u'UserName'] == "":        # only care if name is not empty
-                user = {}
-                user['Id'] = data[u'Id']
-                user['Name'] = data[u'Name']
-                user['UserName'] = data[u'UserName']
-                user['RoleId'] = data[u'RoleId']
-                allusers_details.append(user)
+                allusers_details.append(dict(
+                    Id=data[u'Id'],
+                    Name=data[u'Name'],
+                    UserName=data[u'UserName'],
+                    RoleId=data[u'RoleId']))
         result["entries"] = allusers_details
         return result
 
@@ -735,13 +729,12 @@ class RedfishUtils(object):
                 data = response['data']
 
                 for device in data[u'Fans']:
-                    fan = {}
-                    # There is more information available but this is most important
-                    fan['Name'] = device[u'FanName']
-                    fan['RPMs'] = device[u'Reading']
-                    fan['State'] = device[u'Status'][u'State']
-                    fan['Health'] = device[u'Status'][u'Health']
-                    fan_details.append(fan)
+                    fan_details.append(dict(
+                        # There is more information available but this is most important
+                        Name=device[u'FanName'],
+                        RPMs=device[u'Reading'],
+                        State=device[u'Status'][u'State'],
+                        Health=device[u'Status'][u'Health']))
                 result["entries"] = fan_details
         return result
 
@@ -770,22 +763,20 @@ class RedfishUtils(object):
         for cpu in data[u'Members']:
             cpu_list.append(cpu[u'@odata.id'])
         for c in cpu_list:
-            cpu = {}
             uri = self.root_uri + c
             response = self.get_request(uri)
             if response['ret'] is False:
                 return response
             data = response['data']
-
-            cpu['Name'] = data[u'Id']
-            cpu['Manufacturer'] = data[u'Manufacturer']
-            cpu['Model'] = data[u'Model']
-            cpu['MaxSpeedMHz'] = data[u'MaxSpeedMHz']
-            cpu['TotalCores'] = data[u'TotalCores']
-            cpu['TotalThreads'] = data[u'TotalThreads']
-            cpu['State'] = data[u'Status'][u'State']
-            cpu['Health'] = data[u'Status'][u'Health']
-            cpu_details.append(cpu)
+            cpu_details.append(dict(
+                Name=data[u'Id'],
+                Manufacturer=data[u'Manufacturer'],
+                Model=data[u'Model'],
+                MaxSpeedMHz=data[u'MaxSpeedMHz'],
+                TotalCores=data[u'TotalCores'],
+                TotalThreads=data[u'TotalThreads'],
+                State=data[u'Status'][u'State'],
+                Health=data[u'Status'][u'Health']))
         result["entries"] = cpu_details
         return result
 
