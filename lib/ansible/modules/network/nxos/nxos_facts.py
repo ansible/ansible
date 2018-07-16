@@ -38,8 +38,7 @@ author:
   - Jason Edelman (@jedelman8)
   - Gabriele Gerbino (@GGabriele)
 notes:
-  - This module is only supported on the NX-OS device that supports JSON
-    structured output. NX-OS OS version should be 6.0(2)A8 or 7.x or later.
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
 options:
   gather_subset:
     description:
@@ -172,7 +171,7 @@ vlan_list:
 import re
 
 from ansible.module_utils.network.nxos.nxos import run_commands, get_config
-from ansible.module_utils.network.nxos.nxos import get_capabilities
+from ansible.module_utils.network.nxos.nxos import get_capabilities, get_interface_type
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types, iteritems
@@ -215,29 +214,47 @@ class FactsBase(object):
 
 class Default(FactsBase):
 
-    VERSION_MAP_7K = frozenset([
-        ('sys_ver_str', 'version'),
-        ('proc_board_id', 'serialnum'),
-        ('chassis_id', 'model'),
-        ('isan_file_name', 'image'),
-        ('host_name', 'hostname')
-    ])
-
-    VERSION_MAP = frozenset([
-        ('kickstart_ver_str', 'version'),
-        ('proc_board_id', 'serialnum'),
-        ('chassis_id', 'model'),
-        ('kick_file_name', 'image'),
-        ('host_name', 'hostname')
-    ])
-
     def populate(self):
-        data = self.run('show version', output='json')
+        data = self.run('show version')
         if data:
-            if data.get('sys_ver_str'):
-                self.facts.update(self.transform_dict(data, self.VERSION_MAP_7K))
-            else:
-                self.facts.update(self.transform_dict(data, self.VERSION_MAP))
+            self.facts['version'] = self.parse_version(data)
+            self.facts['serialnum'] = self.parse_serialnum(data)
+            self.facts['model'] = self.parse_model(data)
+            self.facts['image'] = self.parse_image(data)
+            self.facts['hostname'] = self.parse_hostname(data)
+
+    def parse_version(self, data):
+        match = re.search(r'\s+system:\s+version (\S+)', data, re.M)
+        if match:
+            return match.group(1)
+        else:
+            match = re.search(r'\s+kickstart:\s+version (\S+)', data, re.M)
+            if match:
+                return match.group(1)
+
+    def parse_serialnum(self, data):
+        match = re.search(r'Processor Board ID\s+(\S+)', data, re.M)
+        if match:
+            return match.group(1)
+
+    def parse_model(self, data):
+        match = re.search(r'Hardware\n\s+cisco\s+(\S+\s+\S+)', data, re.M)
+        if match:
+            return match.group(1)
+
+    def parse_image(self, data):
+        match = re.search(r'\s+system image file is:\s+(\S+)', data, re.M)
+        if match:
+            return match.group(1)
+        else:
+            match = re.search(r'\s+kickstart image file is:\s+(\S+)', data, re.M)
+            if match:
+                return match.group(1)
+
+    def parse_hostname(self, data):
+        match = re.search(r'\s+Device name:\s+(\S+)', data, re.M)
+        if match:
+            return match.group(1)
 
 
 class Config(FactsBase):
@@ -254,36 +271,28 @@ class Hardware(FactsBase):
         if data:
             self.facts['filesystems'] = self.parse_filesystems(data)
 
-        data = self.run('show system resources', output='json')
+        data = self.run('show system resources')
         if data:
-            self.facts['memtotal_mb'] = int(data['memory_usage_total']) / 1024
-            self.facts['memfree_mb'] = int(data['memory_usage_free']) / 1024
+            self.facts['memtotal_mb'] = self.parse_memtotal_mb(data)
+            self.facts['memfree_mb'] = self.parse_memfree_mb(data)
 
     def parse_filesystems(self, data):
         return re.findall(r'^Usage for (\S+)//', data, re.M)
 
+    def parse_memtotal_mb(self, data):
+        match = re.search(r'(\S+)K(\s+|)total', data, re.M)
+        if match:
+            memtotal = match.group(1)
+            return int(memtotal) / 1024
+
+    def parse_memfree_mb(self, data):
+        match = re.search(r'(\S+)K(\s+|)free', data, re.M)
+        if match:
+            memfree = match.group(1)
+            return int(memfree) / 1024
+
 
 class Interfaces(FactsBase):
-
-    INTERFACE_MAP = frozenset([
-        ('state', 'state'),
-        ('desc', 'description'),
-        ('eth_bw', 'bandwidth'),
-        ('eth_duplex', 'duplex'),
-        ('eth_speed', 'speed'),
-        ('eth_mode', 'mode'),
-        ('eth_hw_addr', 'macaddress'),
-        ('eth_mtu', 'mtu'),
-        ('eth_hw_desc', 'type')
-    ])
-
-    INTERFACE_SVI_MAP = frozenset([
-        ('svi_line_proto', 'state'),
-        ('svi_bw', 'bandwidth'),
-        ('svi_mac', 'macaddress'),
-        ('svi_mtu', 'mtu'),
-        ('type', 'type')
-    ])
 
     INTERFACE_IPV4_MAP = frozenset([
         ('eth_ip_addr', 'address'),
@@ -301,11 +310,12 @@ class Interfaces(FactsBase):
     ])
 
     def ipv6_structure_op_supported(self):
-        data = self.run('show version', output='json')
+        data = get_capabilities(self.module)
         if data:
+            nxos_os_version = data['device_info']['network_os_version']
             unsupported_versions = ['I2', 'F1', 'A8']
             for ver in unsupported_versions:
-                if ver in data.get('kickstart_ver_str'):
+                if ver in nxos_os_version:
                     return False
             return True
 
@@ -313,44 +323,136 @@ class Interfaces(FactsBase):
         self.facts['all_ipv4_addresses'] = list()
         self.facts['all_ipv6_addresses'] = list()
 
-        data = self.run('show interface', output='json')
+        data = self.run('show interface')
         if data:
-            self.facts['interfaces'] = self.populate_interfaces(data)
+            interfaces = self.parse_interfaces(data)
+            self.facts['interfaces'] = self.populate_interfaces(interfaces)
 
-        data = self.run('show ipv6 interface', output='json') if self.ipv6_structure_op_supported() else None
-        if data and not isinstance(data, string_types):
-            self.parse_ipv6_interfaces(data)
+        data = self.run('show ipv6 interface') if self.ipv6_structure_op_supported() else None
+        if data:
+            interfaces = self.parse_interfaces(data)
+            self.populate_ipv6_interfaces(interfaces)
 
         data = self.run('show lldp neighbors')
         if data:
             self.facts['neighbors'] = self.populate_neighbors(data)
 
-        data = self.run('show cdp neighbors detail', output='json')
+        data = self.run('show cdp neighbors detail')
         if data:
             self.facts['neighbors'] = self.populate_neighbors_cdp(data)
 
-    def populate_interfaces(self, data):
-        interfaces = dict()
-        for item in data['TABLE_interface']['ROW_interface']:
-            name = item['interface']
-
-            intf = dict()
-            if 'type' in item:
-                intf.update(self.transform_dict(item, self.INTERFACE_SVI_MAP))
+    def parse_interfaces(self, data):
+        parsed = dict()
+        key = ''
+        for line in data.split('\n'):
+            if len(line) == 0:
+                continue
+            elif line.startswith('admin') or line[0] == ' ':
+                parsed[key] += '\n%s' % line
             else:
-                intf.update(self.transform_dict(item, self.INTERFACE_MAP))
+                match = re.match(r'^(\S+)', line)
+                if match:
+                    key = match.group(1)
+                    if not key.startswith('admin') or not key.startswith('IPv6 Interface'):
+                        parsed[key] = line
+        return parsed
 
-            if 'eth_ip_addr' in item:
-                intf['ipv4'] = self.transform_dict(item, self.INTERFACE_IPV4_MAP)
-                self.facts['all_ipv4_addresses'].append(item['eth_ip_addr'])
+    def populate_interfaces(self, interfaces):
+        facts = dict()
+        for key, value in iteritems(interfaces):
+            intf = dict()
+            if get_interface_type(key) == 'svi':
+                intf['state'] = self.parse_state(key, value, type='svi')
+                intf['macaddress'] = self.parse_macaddress(value, type='svi')
+                intf['mtu'] = self.parse_mtu(value, type='svi')
+                intf['bandwidth'] = self.parse_bandwidth(value, type='svi')
+                intf['type'] = self.parse_type(value, type='svi')
+                if 'Internet Address' in value:
+                    intf['ipv4'] = self.parse_ipv4_address(value, type='svi')
+                facts[key] = intf
+            else:
+                intf['state'] = self.parse_state(value)
+                intf['description'] = self.parse_description(value)
+                intf['macaddress'] = self.parse_macaddress(value)
+                intf['mode'] = self.parse_mode(value)
+                intf['mtu'] = self.parse_mtu(value)
+                intf['bandwidth'] = self.parse_bandwidth(value)
+                intf['duplex'] = self.parse_duplex(value)
+                intf['speed'] = self.parse_speed(value)
+                intf['type'] = self.parse_type(value)
+                if 'Internet Address' in value:
+                    intf['ipv4'] = self.parse_ipv4_address(value)
+                facts[key] = intf
 
-            if 'svi_ip_addr' in item:
-                intf['ipv4'] = self.transform_dict(item, self.INTERFACE_SVI_IPV4_MAP)
-                self.facts['all_ipv4_addresses'].append(item['svi_ip_addr'])
+        return facts
 
-            interfaces[name] = intf
+    def parse_state(self, value, type='ethernet'):
+        if type == 'svi':
+            match = re.search(r'line protocol is (\S+)', value, re.M)
+        else:
+            match = re.search(r'%s is (\S+)' % key, value, re.M)
 
-        return interfaces
+        if match:
+            return match.group(1)
+
+    def parse_macaddress(self, value, type='ethernet'):
+        if type == 'svi':
+            match = re.search(r'address is  (\S+)', value, re.M)
+        else:
+            match = re.search(r'address: (\S+)', value, re.M)
+
+        if match:
+            return match.group(1)
+
+    def parse_mtu(self, value, type='ethernet'):
+        match = re.search(r'MTU (\S+)', value, re.M)
+        if match:
+            return match.group(1)
+
+    def parse_bandwidth(self, value, type='ethernet'):
+        match = re.search(r'BW (\S+)', value, re.M)
+        if match:
+            return match.group(1)
+
+    def parse_type(self, value, type='ethernet'):
+        if type == 'svi':
+            match = re.search(r'Hardware is (\S+)', value, re.M)
+        else:
+            match = re.search(r'Hardware:  (\S+),', value, re.M)
+
+        if match:
+            return match.group(1)
+
+    def parse_description(self, value, type='ethernet'):
+        match = re.search(r'Description: (.+)$', value, re.M)
+        if match:
+            return match.group(1)
+
+    def parse_mode(self, value, type='ethernet'):
+        match = re.search(r'Port mode is (\S+)', value, re.M)
+        if match:
+            return match.group(1)
+
+    def parse_duplex(self, value, type='ethernet'):
+        match = re.search(r'(\S+)-duplex', value, re.M)
+        if match:
+            return match.group(1)
+
+    def parse_speed(self, value, type='ethernet'):
+        match = re.search(r'duplex, (.+)$', value, re.M)
+        if match:
+            return match.group(1)
+
+    def parse_ipv4_address(self, value, type='ethernet'):
+        ipv4 = {}
+        match = re.search(r'Internet Address is (.+)$', value, re.M)
+        if match:
+            address = match.group(1)
+            addr = address.split('/')[0]
+            ipv4['address'] = address.split('/')[0]
+            ipv4['masklen'] = address.split('/')[1]
+            self.facts['all_ipv4_addresses'].append(addr)
+        return ipv4
 
     def populate_neighbors(self, data):
         objects = dict()
@@ -387,41 +489,56 @@ class Interfaces(FactsBase):
         return objects
 
     def populate_neighbors_cdp(self, data):
-        objects = dict()
-        data = data['TABLE_cdp_neighbor_detail_info']['ROW_cdp_neighbor_detail_info']
+        facts = dict()
 
-        if isinstance(data, dict):
-            data = [data]
+        for item in data.split('----------------------------------------'):
+            if item == '':
+                continue
+            local_intf = self.parse_lldp_intf(item)
+            if local_intf not in facts:
+                facts[local_inft] = list()
 
-        for item in data:
-            local_intf = item['intf_id']
-            objects[local_intf] = list()
-            nbor = dict()
-            nbor['port'] = item['port_id']
-            nbor['sysname'] = item['device_id']
-            objects[local_intf].append(nbor)
+            fact = dict()
+            fact['port'] = self.parse_lldp_port(item)
+            dact['sysname'] = self.parse_lldp_sysname(item)
+            facts[local_intf].append(facts)
 
-        return objects
+        return facts
 
-    def parse_ipv6_interfaces(self, data):
-        try:
-            data = data['TABLE_intf']
-            if data:
-                if isinstance(data, dict):
-                    data = [data]
-                for item in data:
-                    name = item['ROW_intf']['intf-name']
-                    intf = self.facts['interfaces'][name]
-                    intf['ipv6'] = self.transform_dict(item, self.INTERFACE_IPV6_MAP)
-                    try:
-                        addr = item['ROW_intf']['addr']
-                    except KeyError:
-                        addr = item['ROW_intf']['TABLE_addr']['ROW_addr']['addr']
-                    self.facts['all_ipv6_addresses'].append(addr)
-            else:
-                return ""
-        except TypeError:
-            return ""
+    def parse_lldp_intf(self, data):
+        match = re.search(r'Interface: (\S+)', data, re.M)
+        if match:
+            return match.group(1)
+
+    def parse_lldp_port(self, data):
+        match = re.search(r'Port ID \(outgoing port\): (\S+)', data, re.M)
+        if match:
+            return match.group(1)
+
+    def parse_lldp_sysname(self, data):
+        match = re.search(r'Device ID:(.+)$', data, re.M)
+        if match:
+            return match.group(1)
+
+    def populate_ipv6_interfaces(self, interfaces):
+        facts = dict()
+        for key, value in iteritems(interfaces):
+            intf = dict()
+            intf['ipv6'] = self.parse_ipv6_address(value)
+            facts[key] = intf
+
+    def parse_ipv6_address(self, value):
+        ipv6 = {}
+        match_addr = re.search(r'IPv6 address: (\S+)', value, re.M)
+        if match_addr:
+            addr = match.group(1)
+            ipv6['address'] = addr
+            self.facts['all_ipv6_addresses'].append(addr)
+        match_subnet = re.search(r'IPv6 subnet:  (\S+)', value, re.M)
+        if match_subnet:
+            ipv6['subnet'] = match_subnet.group(1)
+
+        return ipv6
 
 
 class Legacy(FactsBase):
