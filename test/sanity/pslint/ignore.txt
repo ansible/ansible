@@ -6,7 +6,6 @@ lib/ansible/module_utils/powershell/Ansible.ModuleUtils.ArgvParser.psm1 PSUseApp
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.CommandUtil.psm1 PSUseApprovedVerbs
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.FileUtil.psm1 PSProvideCommentHelp
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.FileUtil.psm1 PSUseOutputTypeCorrectly
-lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 PSAvoidUsingCmdletAliases
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 PSAvoidUsingWMICmdlet
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 PSUseApprovedVerbs
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.LinkUtil.psm1 PSUseApprovedVerbs
