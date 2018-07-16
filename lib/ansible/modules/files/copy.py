@@ -282,6 +282,9 @@ def adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list,
 
 def copy_diff_files(src, dest, module):
     changed = False
+#    mode = module.params['mode']
+    owner = module.params['owner']
+    group = module.params['group']
     diff_files = filecmp.dircmp(src, dest).diff_files
     if len(diff_files):
         changed = True
@@ -290,18 +293,21 @@ def copy_diff_files(src, dest, module):
             src_item_path = os.path.join(src, item)
             dest_item_path = os.path.join(dest, item)
             shutil.copyfile(src_item_path, dest_item_path)
-            if module.mode is not None:
-                module.set_mode_if_different(dest_item_path, module.mode, False)
-            if module.owner is not None:
-                module.set_owner_if_different(dest_item_path, module.owner, False)
-            if module.group is not None:
-                module.set_group_if_different(dest_item_path, module.group, False)
+#            if mode is not None:
+#                module.set_mode_if_different(dest_item_path, mode, False)
+            if owner is not None:
+                module.set_owner_if_different(dest_item_path, owner, False)
+            if group is not None:
+                module.set_group_if_different(dest_item_path, group, False)
             changed = True
     return changed
 
 
 def copy_left_only(src, dest, module):
     changed = False
+#    mode = module.params['mode']
+    owner = module.params['owner']
+    group = module.params['group']
     left_only = filecmp.dircmp(src, dest).left_only
     if len(left_only):
         changed = True
@@ -311,22 +317,22 @@ def copy_left_only(src, dest, module):
             dest_item_path = os.path.join(dest, item)
             if os.path.isfile(src_item_path):
                 shutil.copyfile(src_item_path, dest_item_path)
-                if module.mode is not None:
-                    module.set_mode_if_different(dest_item_path, module.mode, False)
-                if module.owner is not None:
-                    module.set_owner_if_different(dest_item_path, module.owner, False)
-                if module.group is not None:
-                    module.set_group_if_different(dest_item_path, module.group, False)
+#                if mode is not None:
+#                    module.set_mode_if_different(dest_item_path, mode, False)
+                if owner is not None:
+                    module.set_owner_if_different(dest_item_path, owner, False)
+                if group is not None:
+                    module.set_group_if_different(dest_item_path, group, False)
             if os.path.isdir(src_item_path):
                 shutil.copytree(src_item_path, dest_item_path)
-                uid = pwd.getpwnam(module.owner).pw_uid
-                gid = grp.getgrnam(module.group).gr_gid
-                for root, dirs, files in os.walk(dest_item_path, topdown=False):
-                    for dir in [os.path.join(root, d) for d in dirs]:
-                        os.chmod(dir, module.mode)
+                uid = pwd.getpwnam(owner).pw_uid
+                gid = grp.getgrnam(group).gr_gid
+                for dirpath, dirnames, filenames in os.walk(dest_item_path, topdown=False):
+                    for dir in [os.path.join(dirpath, d) for d in dirnames]:
+#                        os.chmod(dir, mode)
                         os.chown(dir, uid, gid)
-                    for file in [os.path.join(root, f) for f in files]:
-                        os.chmod(file, module.mode)
+                    for file in [os.path.join(dirpath, f) for f in filenames]:
+#                        os.chmod(file, mode)
                         os.chown(file, uid, gid)
             changed = True
     return changed
