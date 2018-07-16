@@ -1,0 +1,2 @@
+bugfixes:
+  - vultr - Do not fail trying to load configuration from ini files if required variables have been set as environment variables.
