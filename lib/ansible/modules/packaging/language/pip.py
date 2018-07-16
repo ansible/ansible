@@ -266,7 +266,7 @@ class Distribution:
 
     def __init__(self, name_string, version_string=None):
         self._plain_distribution = False
-        self._distribution_name = name_string
+        self.distribution_name = name_string
         if name_string.startswith('file:') or _is_vcs_url(name_string):
             return
 
@@ -278,19 +278,15 @@ class Distribution:
         self._requirement = Requirement.parse(name_string)
         # old pkg_resource will replace 'setuptools' with 'distribute' when it already installed
         if self._requirement.project_name == "distribute":
-            self._distribution_name = "setuptools"
+            self.distribution_name = "setuptools"
         else:
-            self._distribution_name = self._requirement.project_name
+            self.distribution_name = self._requirement.project_name
 
     @property
     def has_version_specifier(self):
         if self._plain_distribution:
             return bool(self._requirement.specs)
         return False
-
-    @property
-    def distribution_name(self):
-        return self._distribution_name
 
     def is_satisfied_by(self, version_to_test):
         if not self._plain_distribution:
@@ -308,7 +304,7 @@ class Distribution:
     def __str__(self):
         if self._plain_distribution:
             return str(self._requirement)
-        return self._distribution_name
+        return self.distribution_name
 
 
 def _is_vcs_url(name):
