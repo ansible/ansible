@@ -16,7 +16,7 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "b
 $include_volumes = Get-AnsibleParam -obj $params -name "include_volumes" -type "list"
 $exclude_volumes = Get-AnsibleParam -obj $params -name "exclude_volumes" -type "list"
 $freespace_consolidation = Get-AnsibleParam -obj $params -name "freespace_consolidation" -type "bool" -default $false
-$priority = Get-AnsibleParam -obj $params -name "priority" -type "string" -default "low" -validateset "low","normal"
+$priority = Get-AnsibleParam -obj $params -name "priority" -type "str" -default "low" -validateset "low","normal"
 $parallel = Get-AnsibleParam -obj $params -name "parallel" -type "bool" -default $false
 
 $result = @{

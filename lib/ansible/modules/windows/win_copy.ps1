@@ -1,5 +1,5 @@
 #!powershell
-# This file is part of Ansible
+# -*- coding: utf-8 -*-
 
 # Copyright: (c) 2015, Jon Hawkesworth (@jhawkesworth) <figs@unity.demon.co.uk>
 # Copyright: (c) 2017, Ansible Project

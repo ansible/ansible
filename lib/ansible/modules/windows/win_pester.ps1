@@ -1,9 +1,8 @@
 #!powershell
-# This file is part of Ansible
+# -*- coding: utf-8 -*-
 
+# Copyright: (c) 2017, Erwan Quelin (@equelin) <erwan.quelin@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
-# Author: Erwan Quelin (mail:erwan.quelin@gmail.com - GitHub: @equelin - Twitter: @erwanquelin)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
 

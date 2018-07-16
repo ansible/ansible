@@ -1,7 +1,7 @@
 #!powershell
-# This file is part of Ansible
+# -*- coding: utf-8 -*-
 
-# (c) 2017, Jordan Borean <jborean93@gmail.com>, and others
+# Copyright: (c) 2017, Jordan Borean <jborean93@gmail.com>, and others
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy

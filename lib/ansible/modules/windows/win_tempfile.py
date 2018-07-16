@@ -28,6 +28,7 @@ options:
     description:
       - Location where temporary file or directory should be created.
       - If path is not specified default system temporary directory (%TEMP%) will be used.
+    type: path
     default: '%TEMP%'
   prefix:
     description:

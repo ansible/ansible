@@ -1,4 +1,5 @@
 #!powershell
+# -*- coding: utf-8 -*-
 
 # Copyright: (c) 2015, Corwin Brown <corwin@corwinbrown.com>
 # Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>

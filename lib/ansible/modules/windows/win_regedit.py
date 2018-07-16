@@ -79,6 +79,7 @@ options:
       other hive saved as a file.
     - Using this function requires the user to have the C(SeRestorePrivilege)
       and C(SeBackupPrivilege) privileges enabled.
+    type: path
     version_added: '2.5'
 notes:
 - Check-mode C(-C/--check) and diff output C(-D/--diff) are supported, so that you can test every change against the active configuration before
