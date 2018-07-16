@@ -149,3 +149,52 @@ def get_zone_id(zone_name, current_zones):
         msg = 'Zone ID could not be returned as duplicate zone names were detected'
 
     return(zone_exists, msg, counter, zone_id)
+
+
+def get_product_ips(api_key, product):
+    '''
+    Returns a list of IPs allocated to the product. Function
+    execution is considered successful unless msg var is populated.
+    '''
+    ips = []
+    msg = None
+    payload = { 'name': product }
+
+    api_method = 'server.info'
+    has_failed, _msg, response = memset_api_call(api_key=api_key, api_method=api_method, payload=payload)
+
+    if has_failed:
+        # return the API failure to the user
+        msg = _msg
+    elif len(response.json()['ips']) == 0:
+        # this should never happen
+        msg = "{0} has no IPs assigned." . format(product)
+    else:
+        for ip in response.json()['ips']:
+            ips.append(ip['address'])
+
+    return(ips, msg)
+
+
+def get_primary_ip(api_key, product):
+    '''
+    Returns the primary IP of any product which should have one
+    (servers, loadbalancers). Function execution is considered
+    successful unless msg var is populated.
+    '''
+    primary_ip, msg = None, None
+    payload = { 'name': product }
+
+    api_method = 'server.info'
+    has_failed, _msg, response = memset_api_call(api_key=api_key, api_method=api_method, payload=payload)
+
+    if has_failed:
+        # return the API failure to the user
+        msg = _msg
+    elif not response.json()['primary_ip']:
+        # this should never happen
+        msg = "{0} has no primary IP." . format(product)
+    else:
+        primary_ip = response.json()['primary_ip']
+
+    return(primary_ip, msg)
