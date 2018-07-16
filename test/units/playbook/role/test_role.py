@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import collections
+import logging
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock
@@ -34,6 +35,8 @@ from units.mock.path import mock_unfrackpath_noop
 from ansible.playbook.role import Role
 from ansible.playbook.role.include import RoleInclude
 from ansible.playbook.role import hash_params
+
+log = logging.getLogger(__name__)
 
 
 class TestHashParams(unittest.TestCase):
@@ -378,3 +381,32 @@ class TestRole(unittest.TestCase):
         r = Role.load(i, play=mock_play)
 
         self.assertEqual(r.get_name(), "foo_complex")
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_serialize(self):
+
+        fake_loader = DictDataLoader({
+            "/etc/ansible/roles/foo_vars/defaults/main/foo/bar.yml": """
+            foo: bar
+            """,
+            "/etc/ansible/roles/foo_vars/vars/main/bar/foo.yml": """
+            foo: bam
+            """,
+        })
+
+        mock_play = MagicMock()
+        mock_play.ROLE_CACHE = {}
+
+        i = RoleInclude.load('foo_vars', play=mock_play, loader=fake_loader)
+        r = Role.load(i, play=mock_play)
+
+        res = r.serialize()
+        log.debug('res: %s', res)
+
+        self.assertEqual(r._default_vars, dict(foo='bar'))
+        self.assertEqual(r._role_vars, dict(foo='bam'))
+
+        r2 = Role.load(i, play=mock_play)
+        r2.deserialize(res)
+
+        log.debug('r2: %s', r2)
