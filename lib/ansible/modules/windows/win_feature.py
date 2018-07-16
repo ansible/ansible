@@ -28,6 +28,7 @@ options:
     description:
       - Names of roles or features to install as a single feature or a comma-separated list of features.
     required: yes
+    type: list
   state:
     description:
       - State of the features or roles on the system.

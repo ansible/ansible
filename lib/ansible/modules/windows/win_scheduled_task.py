@@ -92,7 +92,7 @@ options:
       for a list of trigger types and their options.
     - The suboption options listed below are not required for all trigger
       types, read the description for more details.
-    action: list
+    type: list
     suboptions:
       type:
         description:
@@ -159,7 +159,6 @@ options:
           instead of mon.
         - Required when C(type) is C(weekly), C(type=session_state_change).
         - Optional when C(type=monthlydow).
-        type: list
       days_of_month:
         description:
         - The days of the month from 1 to 31 for the triggers.
@@ -213,6 +212,7 @@ options:
     - DEPRECATED since 2.5, use the C(triggers) option list with the type of
       C(monthlydow) or C(weekly).
     - Will be removed in 2.7.
+    type: list
   frequency:
     description:
     - The frequency of the task to run.

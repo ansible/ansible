@@ -85,6 +85,7 @@ options:
   timeout:
     description:
     - The maximum number of seconds to wait for.
+    type: int
     default: 300
 author:
 - Jordan Borean (@jborean93)

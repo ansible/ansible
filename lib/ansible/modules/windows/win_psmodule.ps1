@@ -10,11 +10,11 @@
 
 $params = Parse-Args $args -supports_check_mode $true
 
-$name = Get-AnsibleParam -obj $params "name" -type "str" -failifempty $true
-$repo = Get-AnsibleParam -obj $params "repository" -type "str" 
-$url = Get-AnsibleParam -obj $params "url" -type "str"
-$state = Get-AnsibleParam -obj $params "state" -type "str" -default "present" -validateset "present", "absent"
-$allow_clobber = Get-AnsibleParam -obj $params "allow_clobber" -type "bool" -default $false
+$name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
+$repo = Get-AnsibleParam -obj $params -name "repository" -type "str"
+$url = Get-AnsibleParam -obj $params -name "url" -type "str"
+$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present", "absent"
+$allow_clobber = Get-AnsibleParam -obj $params -name "allow_clobber" -type "bool" -default $false
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
 
 $result = @{"changed" = $false
