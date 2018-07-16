@@ -14,8 +14,8 @@ $diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -d
 
 # Modules parameters
 
-$path = Get-AnsibleParam -obj $params -name "path" -type "string" -failifempty $true
-$minimum_version = Get-AnsibleParam -obj $params -name "minimum_version" -type "string" -failifempty $false
+$path = Get-AnsibleParam -obj $params -name "path" -type "str" -failifempty $true
+$minimum_version = Get-AnsibleParam -obj $params -name "minimum_version" -type "str" -failifempty $false
 
 $result = @{
     changed = $false

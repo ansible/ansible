@@ -13,7 +13,7 @@ $src = Get-AnsibleParam -obj $params -name "src" -type "path" -failifempty $true
 $dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
 $purge = Get-AnsibleParam -obj $params -name "purge" -type "bool" -default $false
 $recurse = Get-AnsibleParam -obj $params -name "recurse" -type "bool" -default $false
-$flags = Get-AnsibleParam -obj $params -name "flags" -type "string"
+$flags = Get-AnsibleParam -obj $params -name "flags" -type "str"
 
 $result = @{
     changed = $false
