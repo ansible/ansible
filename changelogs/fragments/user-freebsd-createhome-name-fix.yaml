@@ -1,0 +1,2 @@
+bugfixes:
+  - user - use correct attribute name in FreeBSD for creat_home (https://github.com/ansible/ansible/pull/42711)
