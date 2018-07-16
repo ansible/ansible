@@ -146,7 +146,7 @@ class ConnectionProcess(object):
         self.shutdown()
 
     def command_timeout(self, signum, frame):
-        display.display('command timeout triggered, timeout value is %s secs' %  self.connection.get_option('persistent_command_timeout'), log_only=True)
+        display.display('command timeout triggered, timeout value is %s secs' % self.connection.get_option('persistent_command_timeout'), log_only=True)
         self.shutdown()
 
     def handler(self, signum, frame):
