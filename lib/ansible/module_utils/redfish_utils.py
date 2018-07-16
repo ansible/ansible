@@ -18,9 +18,6 @@ class RedfishUtils(object):
         self.root_uri = root_uri
         self.creds = creds
         self._init_session()
-        self.default_system_id = None
-        self.default_chassis_id = None
-        self.default_manager_id = None
         return
 
     # The following functions are to send GET/POST/PATCH/DELETE requests
