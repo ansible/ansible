@@ -407,6 +407,8 @@ class Nxapi:
 
     def get_capabilities(self):
         result = {}
+        result['output'] = []
+        result['output'].append('json')
         result['device_info'] = self.get_device_info()
         result['network_api'] = 'nxapi'
         return result
