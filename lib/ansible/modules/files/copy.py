@@ -290,6 +290,7 @@ def chown_recursive(path, owner, group):
         for file in [os.path.join(dirpath, f) for f in filenames]:
             os.chown(file, uid, gid)
 
+
 def copy_diff_files(src, dest, module):
     changed = False
     owner = module.params['owner']
