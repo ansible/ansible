@@ -64,7 +64,7 @@ EXAMPLES = '''
         - add int swp1
         - add int swp2
 
-- name: Set hostname to Cumulus-1 and commit the change
+- name: Modify hostname to Cumulus-1 and commit the change
   nclu:
     commands:
         - add hostname Cumulus-1
