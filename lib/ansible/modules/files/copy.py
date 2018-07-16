@@ -282,7 +282,6 @@ def adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list,
 
 def copy_diff_files(src, dest, module):
     changed = False
-    # mode = module.params['mode']
     owner = module.params['owner']
     group = module.params['group']
     diff_files = filecmp.dircmp(src, dest).diff_files
@@ -293,8 +292,6 @@ def copy_diff_files(src, dest, module):
             src_item_path = os.path.join(src, item)
             dest_item_path = os.path.join(dest, item)
             shutil.copyfile(src_item_path, dest_item_path)
-            # if mode is not None:
-                # module.set_mode_if_different(dest_item_path, mode, False)
             if owner is not None:
                 module.set_owner_if_different(dest_item_path, owner, False)
             if group is not None:
@@ -305,9 +302,11 @@ def copy_diff_files(src, dest, module):
 
 def copy_left_only(src, dest, module):
     changed = False
-    # mode = module.params['mode']
     owner = module.params['owner']
     group = module.params['group']
+    follow = module.params['follow']
+    uid = pwd.getpwnam(owner).pw_uid
+    gid = grp.getgrnam(group).gr_gid
     left_only = filecmp.dircmp(src, dest).left_only
     if len(left_only):
         changed = True
@@ -315,25 +314,23 @@ def copy_left_only(src, dest, module):
         for item in left_only:
             src_item_path = os.path.join(src, item)
             dest_item_path = os.path.join(dest, item)
+
             if os.path.isfile(src_item_path):
                 shutil.copyfile(src_item_path, dest_item_path)
-                # if mode is not None:
-                    # module.set_mode_if_different(dest_item_path, mode, False)
                 if owner is not None:
                     module.set_owner_if_different(dest_item_path, owner, False)
                 if group is not None:
                     module.set_group_if_different(dest_item_path, group, False)
+
             if os.path.isdir(src_item_path):
-                shutil.copytree(src_item_path, dest_item_path)
-                uid = pwd.getpwnam(owner).pw_uid
-                gid = grp.getgrnam(group).gr_gid
-                for dirpath, dirnames, filenames in os.walk(dest_item_path, topdown=False):
-                    for dir in [os.path.join(dirpath, d) for d in dirnames]:
-                        # os.chmod(dir, mode)
-                        os.chown(dir, uid, gid)
-                    for file in [os.path.join(dirpath, f) for f in filenames]:
-                        # os.chmod(file, mode)
-                        os.chown(file, uid, gid)
+                shutil.copytree(src_item_path, dest_item_path, symlinks=follow)
+            for dirpath, dirnames, filenames in os.walk(dest_item_path):
+                os.chown(dirpath, uid, gid)
+                for dir in [os.path.join(dirpath, d) for d in dirnames]:
+                    os.chown(dir, uid, gid)
+                for file in [os.path.join(dirpath, f) for f in filenames]:
+                    os.chown(file, uid, gid)
+
             changed = True
     return changed
 
@@ -350,6 +347,16 @@ def copy_common_dirs(src, dest, module):
             changed = True
     return changed
 
+
+def chown_recursive(path, owner, group):
+    uid = pwd.getpwnam(owner).pw_uid
+    gid = grp.getgrnam(group).gr_gid
+    for dirpath, dirnames, filenames in os.walk(path):
+        os.chown(dirpath, uid, gid)
+        for dir in [os.path.join(dirpath, d) for d in dirnames]:
+            os.chown(dir, uid, gid)
+        for file in [os.path.join(dirpath, f) for f in filenames]:
+            os.chown(file, uid, gid)
 
 def main():
 
@@ -533,7 +540,17 @@ def main():
                     changed = True
 
             if not os.path.exists(dest):
-                shutil.copytree(b_src, dest)
+                shutil.copytree(b_src, dest, symlinks=follow)
+                owner = module.params['owner']
+                group = module.params['group']
+                uid = pwd.getpwnam(owner).pw_uid
+                gid = grp.getgrnam(group).gr_gid
+                for dirpath, dirnames, filenames in os.walk(dest):
+                    os.chown(dirpath, uid, gid)
+                    for dir in [os.path.join(dirpath, d) for d in dirnames]:
+                        os.chown(dir, uid, gid)
+                    for file in [os.path.join(dirpath, f) for f in filenames]:
+                        os.chown(file, uid, gid)
                 changed = True
 
     res_args = dict(
