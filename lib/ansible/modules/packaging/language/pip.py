@@ -23,12 +23,10 @@ options:
   name:
     description:
       - The name of a Python library to install or the url of the remote package.
-      - As of 2.2 you can supply a list of names.
-      - As of 2.7, you can supply a list of names with version specifiers.
+      - This can be a list (since 2.2) and contain version specifiers (since 2.7).
   version:
     description:
       - The version number to install of the Python library specified in the I(name) parameter.
-      - As of 2.7, you can supply version specifiers.
   requirements:
     description:
       - The path to a pip requirements file, which should be local to the remote system.
@@ -124,23 +122,17 @@ EXAMPLES = '''
 
 # Install (Bottle) python package on version 0.11.
 - pip:
-    name: bottle
-    version: 0.11
+    name: bottle==0.11
 
-# Install (bottle) python package with version specifiers (only in 2.7)
+# Install (bottle) python package with version specifiers
 - pip:
-    name: bottle
-    version: '>0.10,<0.20,!=0.11'
+    name: bottle>0.10,<0.20,!=0.11
 
-# Install multi python packages with version specifiers (only in 2.7)
+# Install multi python packages with version specifiers
 - pip:
     name:
-      - 'django>1.11.0,<1.12.0'
-      - 'bottle>0.10,<0.20,!=0.11'
-
-# 2.7 also support multi packages in one name string
-- pip:
-    name: 'djang>1.11.0,<1.12.0,bottle>0.10,<0.20,!=0.11'
+      - django>1.11.0,<1.12.0
+      - bottle>0.10,<0.20,!=0.11
 
 # Install (MyApp) using one of the remote protocols (bzr+,hg+,git+,svn+). You do not have to supply '-e' option in extra_args.
 - pip:
@@ -625,13 +617,14 @@ def main():
                 if len(distributions) > 1:
                     module.fail_json(
                         msg="'version' argument is ambiguous when installing multiple package distributions. "
-                            "Please spefify version restrictions next to each distribution in 'name' argument."
+                            "Please specify version restrictions next to each distribution in 'name' argument."
                     )
                 if distributions[0].has_version_specifier:
                     module.fail_json(
-                        msg="'version' argument conflicts with version specifier provided along with a package name. "
-                            "Please keep a version specifier, but remove the 'version' argument."
+                        msg="The 'version' argument conflicts with any version specifier provided along with a package name. "
+                            "Please keep the version specifier, but remove the 'version' argument."
                     )
+                # if the version specifier is provided by version, append that into the distribution
                 distributions[0] = Distribution(distributions[0].distribution_name, version)
 
         if module.params['editable']:
