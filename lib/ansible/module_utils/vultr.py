@@ -225,20 +225,27 @@ class Vultr:
 
         self.module.fail_json(msg="Could not find %s with %s: %s" % (resource, key, value))
 
+    def normalize_result(self, resource):
+        for search_key, config in self.returns.items():
+            if search_key in resource:
+                if 'convert_to' in config:
+                    if config['convert_to'] == 'int':
+                        resource[search_key] = int(resource[search_key])
+                    elif config['convert_to'] == 'float':
+                        resource[search_key] = float(resource[search_key])
+                    elif config['convert_to'] == 'bool':
+                        resource[search_key] = True if resource[search_key] == 'yes' else False
+
+                if 'key' in config:
+                    resource[config['key']] = resource[search_key]
+
+        return resource
+
     def get_result(self, resource):
         if resource:
-            for search_key, config in self.returns.items():
-                if search_key in resource:
-                    if 'convert_to' in config:
-                        if config['convert_to'] == 'int':
-                            resource[search_key] = int(resource[search_key])
-                        elif config['convert_to'] == 'float':
-                            resource[search_key] = float(resource[search_key])
-                        elif config['convert_to'] == 'bool':
-                            resource[search_key] = True if resource[search_key] == 'yes' else False
+            if isinstance(resource, list):
+                self.result[self.namespace] = [self.normalize_result(item) for item in resource]
+            else:
+                self.result[self.namespace] = self.normalize_result(resource)
 
-                    if 'key' in config:
-                        self.result[self.namespace][config['key']] = resource[search_key]
-                    else:
-                        self.result[self.namespace][search_key] = resource[search_key]
         return self.result
