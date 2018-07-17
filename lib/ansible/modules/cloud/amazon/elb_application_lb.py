@@ -119,7 +119,7 @@ options:
     description:
       - The time in seconds to use in conjunction with I(wait).
     version_added: 2.6
-  keep_rules:
+  purge_rules:
     description:
       - Keeps the existing load balancer rules in place. Will modify and add, but will not delete.
     version_added: 2.7
@@ -448,7 +448,7 @@ def create_or_update_elb(elb_obj):
             rules_to_add, rules_to_modify, rules_to_delete = rules_obj.compare_rules()
 
             # Delete rules
-            if not elb_obj.module.params['keep_rules']:
+            if not elb_obj.module.params['purge_rules']:
                 for rule in rules_to_delete:
                     rule_obj = ELBListenerRule(elb_obj.connection, elb_obj.module, {'RuleArn': rule}, rules_obj.listener_arn)
                     rule_obj.delete()
@@ -530,7 +530,7 @@ def main():
             tags=dict(type='dict'),
             wait_timeout=dict(type='int'),
             wait=dict(default=False, type='bool'),
-            keep_rules=dict(default=False, type='bool')
+            purge_rules=dict(default=False, type='bool')
         )
     )
 
