@@ -30,3 +30,4 @@
 - include: disk_size_d1_c1_f0.yml
 - include: network_with_device.yml
 - include: disk_mode_d1_c1_f0.yml
+- include: linked_clone_d1_c1_f0.yml
