@@ -1,5 +1,4 @@
 #!powershell
-# -*- coding: utf-8 -*-
 
 # Copyright: (c) 2017, Noah Sparks <nsparks@outlook.com>
 # Copyright: (c) 2015, Henrik Wallström <henrik@wallstroms.nu>

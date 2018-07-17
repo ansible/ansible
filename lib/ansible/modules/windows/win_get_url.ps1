@@ -1,5 +1,4 @@
 #!powershell
-# -*- coding: utf-8 -*-
 
 # Copyright: (c) 2015, Paul Durivage <paul.durivage@rackspace.com>
 # Copyright: (c) 2015, Tal Auslander <tal@cloudshare.com>

@@ -1,5 +1,4 @@
 #!powershell
-# -*- coding: utf-8 -*-
 
 # Copyright: (c) 2014, Trond Hindenes <trond@hindenes.com>, and others
 # Copyright: (c) 2017, Ansible Project
