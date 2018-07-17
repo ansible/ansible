@@ -25,43 +25,53 @@ DOCUMENTATION = '''
 module: nxos_file_copy
 extends_documentation_fragment: nxos
 version_added: "2.2"
-short_description: Copy a file to a remote NXOS device over SCP.
+short_description: Copy a file to a remote NXOS device.
 description:
-  - Copy a file to the flash (or bootflash) remote network device
-    on NXOS devices. This module only supports the use of connection
-    C(network_cli) or C(Cli) transport with connection C(local).
+  - This module supports two different workflows for copying a file
+    to flash (or bootflash) on NXOS devices.  Files can either be (1) pushed
+    from the Ansible Server to the device or (2) pulled from a remote SCP
+    file server to the device.  File copies are initiated from the NXOS
+    device to the remote SCP server.  This module only supports the
+    use of connection C(network_cli) or C(Cli) transport with connection C(local).
 author:
   - Jason Edelman (@jedelman8)
   - Gabriele Gerbino (@GGabriele)
 notes:
-  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
-  - The feature must be enabled with feature scp-server if
-    the file is being pushed to the device. If file_pull
-    is True, feature scp-server is not needed.
-  - If the file is already present, no transfer will
-    take place if file_pull is False.
+  - Tested against NXOS 7.0(3)I2(5), 7.0(3)I4(6), 7.0(3)I5(3),
+    7.0(3)I6(1), 7.0(3)I7(3), 6.0(2)A8(8), 7.0(3)F3(4), 7.3(0)D1(1),
+    8.3(0)
+
+  - When pushing files (file_pull is False) to the NXOS device,
+    feature scp-server must be enabled.
+  - When pulling files (file_pull is True) to the NXOS device,
+    feature scp-server is not required.
+  - When pulling files (file_pull is True) to the NXOS device,
+    no transfer will take place if the file is already present.
   - Check mode will tell you if the file would be copied.
 requirements:
-  - paramiko
-  - SCPClient
-  - pexpect
+  - paramiko (required when file_pull is False)
+  - SCPClient (required when file_pull is False)
+  - pexpect (required when file_pull is True)
 options:
   local_file:
     description:
-      - Path to local file. Local directory must exist.
-        If file_pull is True, this is optional, but when
-        specified, the remote file name is renamed to this.
+      - When (file_pull is False) this is the path to the local file on the Ansible Server.
+        The local directory must exist.
+      - When (file_pull is True) this is the file name used rename the remote file when copied.
+        This is optional when file_pull is True.
   remote_file:
     description:
-      - Remote file path of the copy. Remote directories must exist.
+      - When (file_pull is False) this is remote file path on the NXOS device.
         If omitted, the name of the local file will be used.
-        If file_pull is True, this is the full path of the file
-        to be copied on the device and this is required.
+        The remote directory must exist.
+      - When (file_pull is True) this is the full path to the file on the remote SCP
+        server to be copied to the NXOS device.
   file_system:
     description:
       - The remote file system of the device. If omitted,
         devices that support a I(file_system) parameter will use
         their default values.
+    default: bootflash:
   connect_ssh_port:
     description:
       - SSH port to connect to server during transfer of file
@@ -69,10 +79,11 @@ options:
     version_added: "2.5"
   file_pull:
     description:
-      - Whether or not to pull the remote file from the device. If True,
-        remote file will be copied to local file on the device. If the
-        file already exists on the device, it will be overwritten, and
-        the operation is NOT idempotent.
+      - When (False) File is copied from the Ansible Server to the NXOS device.
+      - When (True) File is copied from a remote SCP server to the NXOS device.
+        In this mode, the file copy is initiated from the NXOS device.
+      - If the file is already present on the device it will be overwritten and
+        therefore the operation is NOT idempotent.
     type: bool
     default: False
     version_added: "2.7"
@@ -100,9 +111,21 @@ options:
 '''
 
 EXAMPLES = '''
-- nxos_file_copy:
-    local_file: "./test_file.txt"
-    remote_file: "test_file.txt"
+# File copy from ansible server to nxos device
+  - name: "copy from server to device"
+    nxos_file_copy:
+      local_file: "./test_file.txt"
+      remote_file: "test_file.txt"
+
+# Initiate file copy from nxos device from SCP server to copy it to the nxos device
+  - name: "initiate file copy from device"
+    nxos_file_copy:
+      nxos_file_copy:
+      file_pull: True
+      remote_file: "/mydir/abc"
+      remote_scp_server: "192.168.0.1"
+      remote_scp_server_user: "myUser"
+      remote_scp_server_password: "myPassword"
 '''
 
 RETURN = '''
@@ -302,13 +325,13 @@ def main():
     required_if = [("file_pull", True, ["remote_file", "remote_scp_server"]),
                    ("file_pull", False, ["local_file"])]
 
-    rt = [['remote_scp_server',
-           'remote_scp_server_user',
-           'remote_scp_server_password']]
+    required_together = [['remote_scp_server',
+                          'remote_scp_server_user',
+                          'remote_scp_server_password']]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            required_if=required_if,
-                           required_together=rt,
+                           required_together=required_together,
                            supports_check_mode=True)
 
     file_pull = module.params['file_pull']
