@@ -236,6 +236,8 @@ class CallbackModule(CallbackBase):
     def v2_runner_item_on_ok(self, result):
 
         if self.display_ok_hosts:
+            if self._last_task_banner != result._task._uuid:
+                self._print_task_banner(result._task)
 
             delegated_vars = result._result.get('_ansible_delegated_vars', None)
             self._clean_results(result._result, result._task.action)
@@ -260,6 +262,8 @@ class CallbackModule(CallbackBase):
             self._display.display(msg, color=color)
 
     def v2_runner_item_on_failed(self, result):
+        if self._last_task_banner != result._task._uuid:
+            self._print_task_banner(result._task)
 
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
         self._clean_results(result._result, result._task.action)
@@ -276,6 +280,9 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_item_on_skipped(self, result):
         if self.display_skipped_hosts:
+            if self._last_task_banner != result._task._uuid:
+                self._print_task_banner(result._task)
+
             self._clean_results(result._result, result._task.action)
             msg = "skipping: [%s] => (item=%s) " % (result._host.get_name(), self._get_item_label(result._result))
             if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
