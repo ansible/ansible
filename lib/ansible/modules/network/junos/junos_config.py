@@ -63,8 +63,8 @@ options:
         statements on the remote device.
   confirm:
     description:
-      - The C(confirm) argument will configure a time out value for
-        the commit to be confirmed before it is automatically
+      - The C(confirm) argument will configure a time out value in minutes
+        for the commit to be confirmed before it is automatically
         rolled back.  If the C(confirm) argument is set to False, this
         argument is silently ignored.  If the value for this argument
         is set to 0, the commit is confirmed immediately.
@@ -149,6 +149,13 @@ EXAMPLES = """
       - set vlans vlan01 description "Test vlan"
     comment: update config
 
+- name: Set routed VLAN interface (RVI) IPv4 address
+  junos_config:
+    lines:
+      - set vlans vlan01 vlan-id 1
+      - set interfaces irb unit 10 family inet address 10.0.0.1/24
+      - set vlans vlan01 l3-interface irb.10
+
 - name: rollback the configuration to id 10
   junos_config:
     rollback: 10
@@ -156,6 +163,13 @@ EXAMPLES = """
 - name: zero out the current configuration
   junos_config:
     zeroize: yes
+
+- name: Set VLAN access and trunking
+  junos_config:
+    lines:
+      - set vlans vlan02 vlan-id 6
+      - set interfaces ge-0/0/6.0 family ethernet-switching interface-mode access vlan members vlan02
+      - set interfaces ge-0/0/6.0 family ethernet-switching interface-mode trunk vlan members vlan02
 
 - name: confirm a previous commit
   junos_config:

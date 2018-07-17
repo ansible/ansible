@@ -20,8 +20,10 @@ author: "Felix Fontein (@felixfontein)"
 version_added: "2.7"
 short_description: Revoke certificates with the ACME protocol.
 description:
-   - "Allows to revoke certificates with the ACME protocol. This protocol
-      is, for example, used by Let's Encrypt."
+   - "Allows to revoke certificates with the ACME protocol, for example
+      for certificates obtained by the M(acme_certificate) module. The
+      ACME protocol is used by some Certificate Authorities such as
+      L(Let's Encrypt,https://letsencrypt.org/)."
    - "Note that exactly one of C(account_key_src), C(account_key_content),
       C(private_key_src) or C(private_key_content) must be specified."
    - "Also note that in general, trying to revoke an already revoked
@@ -48,7 +50,7 @@ options:
       - "Content of the certificate's private key."
       - "Note that exactly one of C(account_key_src), C(account_key_content),
          C(private_key_src) or C(private_key_content) must be specified."
-      - "Warning: the content will be written into a temporary file, which will
+      - "I(Warning): the content will be written into a temporary file, which will
          be deleted by Ansible when the module completes. Since this is an
          important private key — it can be used to change the account key,
          or to revoke your certificates without knowing their private keys

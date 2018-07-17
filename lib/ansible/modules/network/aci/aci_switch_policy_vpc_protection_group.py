@@ -32,6 +32,7 @@ options:
   protection_group_id:
     description:
     - The Explicit vPC Protection Group ID.
+    type: int
     aliases: [ id ]
     required: yes
   vpc_domain_policy:
@@ -41,10 +42,12 @@ options:
   switch_1_id:
     description:
     - The ID of the first Leaf Switch for the Explicit vPC Protection Group.
+    type: int
     required: yes
   switch_2_id:
     description:
     - The ID of the Second Leaf Switch for the Explicit vPC Protection Group.
+    type: int
     required: yes
   state:
     description:

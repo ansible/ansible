@@ -26,9 +26,9 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 import json
+
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback, return_values
-from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.connection import Connection, ConnectionError
 
 _DEVICE_CONFIGS = {}
@@ -100,33 +100,8 @@ def get_config(module):
 
 
 def run_commands(module, commands, check_rc=True):
-    responses = list()
     connection = get_connection(module)
-
-    for cmd in to_list(commands):
-        try:
-            cmd = json.loads(cmd)
-            command = cmd['command']
-            prompt = cmd['prompt']
-            answer = cmd['answer']
-        except:
-            command = cmd
-            prompt = None
-            answer = None
-
-        try:
-            out = connection.get(command, prompt, answer)
-        except ConnectionError as exc:
-            module.fail_json(msg=to_text(exc))
-
-        try:
-            out = to_text(out, errors='surrogate_or_strict')
-        except UnicodeError:
-            module.fail_json(msg=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))
-
-        responses.append(out)
-
-    return responses
+    return connection.run_commands(commands=commands, check_rc=check_rc)
 
 
 def load_config(module, commands, commit=False, comment=None):
@@ -134,7 +109,6 @@ def load_config(module, commands, commit=False, comment=None):
 
     try:
         resp = connection.edit_config(candidate=commands, commit=commit, comment=comment)
-        resp = json.loads(resp)
     except ConnectionError as exc:
         module.fail_json(msg=to_text(exc))
 

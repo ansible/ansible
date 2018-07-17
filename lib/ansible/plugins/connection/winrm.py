@@ -181,12 +181,11 @@ class Connection(ConnectionBase):
 
         super(Connection, self).__init__(*args, **kwargs)
 
-    def set_options(self, task_keys=None, var_options=None, direct=None):
-        if not HAS_WINRM:
-            return
-
-        super(Connection, self).set_options(task_keys=None, var_options=var_options, direct=direct)
-
+    def _build_winrm_kwargs(self):
+        # this used to be in set_options, as win_reboot needs to be able to
+        # override the conn timeout, we need to be able to build the args
+        # after setting individual options. This is called by _connect before
+        # starting the WinRM connection
         self._winrm_host = self.get_option('remote_addr')
         self._winrm_user = self.get_option('remote_user')
         self._winrm_pass = self._play_context.password
@@ -479,11 +478,12 @@ class Connection(ConnectionBase):
 
         super(Connection, self)._connect()
         if not self.protocol:
+            self._build_winrm_kwargs()  # build the kwargs from the options set
             self.protocol = self._winrm_connect()
             self._connected = True
         return self
 
-    def _reset(self):  # used by win_reboot (and any other action that might need to bounce the state)
+    def reset(self):
         self.protocol = None
         self.shell_id = None
         self._connect()

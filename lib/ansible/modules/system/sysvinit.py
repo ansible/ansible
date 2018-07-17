@@ -155,7 +155,7 @@ def main():
 
     # locate binaries for service management
     paths = ['/sbin', '/usr/sbin', '/bin', '/usr/bin']
-    binaries = ['chkconfig', ' update-rc.d', 'insserv', 'service']
+    binaries = ['chkconfig', 'update-rc.d', 'insserv', 'service']
 
     # Keeps track of the service status for various runlevels because we can
     # operate on multiple runlevels at once
@@ -258,7 +258,7 @@ def main():
                 elif location.get('chkconfig'):
                     (rc, out, err) = module.run_command("%s --level %s %s off" % (location['chkconfig'], ''.join(runlevels), name))
     else:
-        if enabled != runlevel_status["enabled"]:
+        if enabled is not None and enabled != runlevel_status["enabled"]:
             result['changed'] = True
             result['status']['enabled']['changed'] = True
 
@@ -299,7 +299,9 @@ def main():
 
         def runme(doit):
 
-            cmd = "%s %s %s %s" % (script, doit, name, module.params['arguments'])
+            args = module.params['arguments']
+            cmd = "%s %s %s" % (script, doit, "" if args is None else args)
+
             # how to run
             if module.params['daemonize']:
                 (rc, out, err) = daemonize(cmd)

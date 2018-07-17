@@ -5,6 +5,7 @@
   nxos_config: &clear
     lines: no ip access-list test
     match: none
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: configure sub level command using block replace
@@ -16,6 +17,7 @@
       - 40 permit ip 192.0.2.4/32 any log
     parents: ip access-list test
     replace: block
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -36,6 +38,7 @@
       - 40 permit ip 192.0.2.4/32 any log
     parents: ip access-list test
     replace: block
+    provider: "{{ connection }}"
   register: result
 
 - assert:

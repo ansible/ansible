@@ -410,7 +410,7 @@ def load_config(module, command_filter, commit=False, replace=False,
 
         try:
             conn.edit_config(cmd_filter)
-        except ConnectionError:
+        except ConnectionError as exc:
             module.fail_json(msg=to_text(exc))
 
         if module._diff:

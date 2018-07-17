@@ -106,6 +106,27 @@
           - eks_create is changed
           - eks_create.name == eks_cluster_name
 
+    - name: create EKS cluster with same details but wait for it to become active
+      aws_eks_cluster:
+        name: "{{ eks_cluster_name }}"
+        security_groups: "{{ eks_security_groups | json_query('[].name') }}"
+        subnets: "{{ setup_subnets.results | json_query('[].subnet.id') }}"
+        role_arn: "{{ iam_role.arn }}"
+        wait: yes
+        <<: *aws_connection_info
+      register: eks_create
+
+    - name: Check that EKS cluster is active and has CA and endpoint data
+      assert:
+        that:
+          - eks_create is not changed
+          - eks_create.name == eks_cluster_name
+          - eks_create.status == "ACTIVE"
+          - eks_create.certificate_authority.data is defined
+          - eks_create.certificate_authority.data != ""
+          - eks_create.endpoint is defined
+          - eks_create.endpoint != ""
+
     - name: create EKS cluster with same details but using SG ids
       aws_eks_cluster:
         name: "{{ eks_cluster_name }}"
@@ -146,6 +167,9 @@
       register: eks_delete
       ignore_errors: yes
 
+    - pause:
+        minutes: 5
+
     - debug:
         msg: "{{ eks_security_groups|reverse|list }}"
 
@@ -153,6 +177,19 @@
       set_fact:
         additional_eks_sg:
           - name: "{{ eks_cluster_name }}-workers-sg"
+
+    - name: set all security group rule lists to empty to remove circular dependency
+      ec2_group:
+        name: "{{ item.name }}"
+        description: "{{ item.description }}"
+        state: present
+        rules: []
+        rules_egress: []
+        purge_rules: yes
+        purge_rules_egress: yes
+        vpc_id: '{{ setup_vpc.vpc.id }}'
+        <<: *aws_connection_info
+      with_items: "{{ eks_security_groups }}"
 
     - name: remove security groups
       ec2_group:

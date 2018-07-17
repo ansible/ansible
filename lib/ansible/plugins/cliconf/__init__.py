@@ -19,12 +19,13 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
 from functools import wraps
 
+from ansible.plugins import AnsiblePlugin
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.six import with_metaclass
+
 
 try:
     from scp import SCPClient
@@ -49,7 +50,7 @@ def enable_mode(func):
     return wrapped
 
 
-class CliconfBase(with_metaclass(ABCMeta, object)):
+class CliconfBase(AnsiblePlugin):
     """
     A base class for implementing cli connections
 
@@ -84,6 +85,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
     __rpc__ = ['get_config', 'edit_config', 'get_capabilities', 'get', 'enable_response_logging', 'disable_response_logging']
 
     def __init__(self, connection):
+        super(CliconfBase, self).__init__()
         self._connection = connection
         self.history = list()
         self.response_logging = False
@@ -163,7 +165,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         self.response_logging = False
 
     @abstractmethod
-    def get_config(self, source='running', filter=None, format='text'):
+    def get_config(self, source='running', filter=None, format=None):
         """Retrieves the specified configuration from the device
 
         This method will retrieve the configuration specified by source and
@@ -215,7 +217,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         pass
 
     @abstractmethod
-    def get(self, command=None, prompt=None, answer=None, sendonly=False, newline=True):
+    def get(self, command=None, prompt=None, answer=None, sendonly=False, newline=True, output=None):
         """Execute specified command on remote device
         This method will retrieve the specified data and
         return it to the caller as a string.
@@ -225,6 +227,9 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         :param answer: the string to respond to the prompt with
         :param sendonly: bool to disable waiting for response, default is false
         :param newline: bool to indicate if newline should be added at end of answer or not
+        :param output: For devices that support fetching command output in different
+            format, this keyword argument is used to specify the output in which
+            response is to be retrieved.
         :return:
         """
         pass
@@ -257,13 +262,14 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
                     'supports_onbox_diff: <bool>,          # identify if on box diff capability is supported or not
                     'supports_generate_diff: <bool>,       # identify if diff capability is supported within plugin
                     'supports_multiline_delimiter: <bool>, # identify if multiline demiliter is supported within config
-                    'support_diff_match: <bool>,           # identify if match is supported
-                    'support_diff_ignore_lines: <bool>,    # identify if ignore line in diff is supported
-                    'support_config_replace': <bool>,      # identify if running config replace with candidate config is supported
+                    'supports_diff_match: <bool>,           # identify if match is supported
+                    'supports_diff_ignore_lines: <bool>,    # identify if ignore line in diff is supported
+                    'supports_config_replace': <bool>,      # identify if running config replace with candidate config is supported
                 }
                 'format': [list of supported configuration format],
                 'diff_match': [list of supported match values],
                 'diff_replace': [list of supported replace values],
+                'output': [list of supported command output format]
             }
         :return: capability as json string
         """
@@ -369,3 +375,24 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
                }
 
         """
+        pass
+
+    def run_commands(self, commands=None, check_rc=True):
+        """
+        Execute a list of commands on remote host and return the list of response
+        :param commands: The list of command that needs to be executed on remote host.
+                The individual command in list can either be a command string or command dict.
+                If the command is dict the valid keys are
+                {
+                    'command': <command to be executed>
+                    'prompt': <expected prompt on executing the command>,
+                    'answer': <answer for the prompt>,
+                    'output': <the format in which command output should be rendered eg: 'json', 'text'>,
+                    'sendonly': <Boolean flag to indicate if it command execution response should be ignored or not>
+                }
+        :param check_rc: Boolean flag to check if returned response should be checked for error or not.
+                         If check_rc is False the error output is appended in return response list, else if the
+                         value is True an exception is raised.
+        :return: List of returned response
+        """
+        pass

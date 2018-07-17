@@ -96,7 +96,6 @@ options:
     description:
       - Path to a file containing environment variables I(FOO=BAR).
       - If variable also present in C(env), then C(env) value will override.
-      - Requires docker-py >= 1.4.0.
   entrypoint:
     description:
       - Command that overwrites the default ENTRYPOINT of the image.
@@ -422,6 +421,12 @@ author:
 requirements:
     - "python >= 2.6"
     - "docker-py >= 1.7.0"
+    - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
+       module has been superseded by L(docker,https://pypi.org/project/docker/)
+       (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
+       For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
+       install the C(docker) Python module. Note that both modules should I(not)
+       be installed at the same time."
     - "Docker API >= 1.20"
 '''
 
@@ -605,6 +610,7 @@ docker_container:
 import os
 import re
 import shlex
+from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import human_to_bytes
 from ansible.module_utils.docker_common import HAS_DOCKER_PY_2, HAS_DOCKER_PY_3, AnsibleDockerClient, DockerBaseClass
@@ -616,6 +622,7 @@ try:
         from docker.types import Ulimit, LogConfig
     else:
         from docker.utils.types import Ulimit, LogConfig
+    from ansible.module_utils.docker_common import docker_version
 except:
     # missing docker-py handled in ansible.module_utils.docker
     pass
@@ -915,10 +922,9 @@ class TaskParameters(DockerBaseClass):
             devices='devices',
             pid_mode='pid_mode',
             tmpfs='tmpfs',
-            init='init'
         )
 
-        if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
+        if self.client.HAS_AUTO_REMOVE_OPT:
             # auto_remove is only supported in docker>=2
             host_config_params['auto_remove'] = 'auto_remove'
 
@@ -926,6 +932,9 @@ class TaskParameters(DockerBaseClass):
             # cpu_shares and volume_driver moved to create_host_config in > 3
             host_config_params['cpu_shares'] = 'cpu_shares'
             host_config_params['volume_driver'] = 'volume_driver'
+
+        if self.client.HAS_INIT_OPT:
+            host_config_params['init'] = 'init'
 
         params = dict()
         for key, value in host_config_params.items():
@@ -2000,6 +2009,27 @@ class ContainerManager(DockerBaseClass):
         return response
 
 
+class AnsibleDockerClientContainer(AnsibleDockerClient):
+
+    def __init__(self, **kwargs):
+        super(AnsibleDockerClientContainer, self).__init__(**kwargs)
+
+        docker_api_version = self.version()['ApiVersion']
+        init_supported = LooseVersion(docker_api_version) >= LooseVersion('1.25')
+        if self.module.params.get("init") and not init_supported:
+            self.fail('docker API version is %s. Minimum version required is 1.25 to set init option.' % (docker_api_version,))
+
+        init_supported = init_supported and LooseVersion(docker_version) >= LooseVersion('2.2')
+        if self.module.params.get("init") and not init_supported:
+            self.fail("docker or docker-py version is %s. Minimum version required is 2.2 to set init option. "
+                      "If you use the 'docker-py' module, you have to switch to the docker 'Python' package." % (docker_version,))
+
+        self.HAS_INIT_OPT = init_supported
+        self.HAS_AUTO_REMOVE_OPT = HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3
+        if self.module.params.get('auto_remove') and not self.HAS_AUTO_REMOVE_OPT:
+            self.fail("'auto_remove' is not compatible with the 'docker-py' Python package. It requires the newer 'docker' Python package.")
+
+
 def main():
     argument_spec = dict(
         auto_remove=dict(type='bool', default=False),
@@ -2085,14 +2115,11 @@ def main():
         ('state', 'present', ['image'])
     ]
 
-    client = AnsibleDockerClient(
+    client = AnsibleDockerClientContainer(
         argument_spec=argument_spec,
         required_if=required_if,
         supports_check_mode=True
     )
-
-    if (not (HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3)) and client.module.params.get('auto_remove'):
-        client.module.fail_json(msg="'auto_remove' is not compatible with the 'docker-py' Python package. It requires the newer 'docker' Python package.")
 
     cm = ContainerManager(client)
     client.module.exit_json(**cm.results)

@@ -20,10 +20,10 @@ author: "Michael Gruener (@mgruener)"
 version_added: "2.2"
 short_description: Create SSL certificates with an ACME protocol endpoint
 description:
-   - "Create and renew SSL certificates with a CA supporting the ACME protocol,
-      such as Let's Encrypt (U(https://letsencrypt.org)). For details see
-      U(https://letsencrypt.org). The current implementation supports the
-      C(http-01) and C(dns-01) challenges."
+   - "Create and renew SSL certificates with a CA supporting the
+      L(ACME protocol,https://tools.ietf.org/html/draft-ietf-acme-acme-12),
+      such as L(Let's Encrypt,https://letsencrypt.org/). The current
+      implementation supports the C(http-01) and C(dns-01) challenges."
    - "To use this module, it has to be executed twice. Either as two
       different tasks in the same run or during two runs. Note that the output
       of the first run needs to be recorded and passed to the second run as the
@@ -34,12 +34,16 @@ description:
       C(dns-01) the necessary dns record has to be created.
       It is I(not) the responsibility of this module to perform these steps."
    - "For details on how to fulfill these challenges, you might have to read through
-      U(https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-8).
+      L(the specification,https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-8).
       Also, consider the examples provided for this module."
    - "Although the defaults are chosen so that the module can be used with
       the Let's Encrypt CA, the module can be used with any service using the ACME
       v1 or v2 protocol."
    - "At least one of C(dest) and C(fullchain_dest) must be specified."
+   - "Note that this module includes basic account management functionality.
+      If you want to have more control over your ACME account, use the M(acme_account)
+      module and disable account management for this module using the C(modify_account)
+      option."
    - "Note: this module was called C(letsencrypt) before Ansible 2.6. The usage
       did not change."
 extends_documentation_fragment:
@@ -49,6 +53,10 @@ options:
     description:
       - "The email address associated with this account."
       - "It will be used for certificate expiration warnings."
+      - "Note that when C(modify_account) is not set to C(no) and you also
+         used the M(acme_account) module to specify more than one contact
+         for your account, this module will update your account and restrict
+         it to the (at most one) contact email address specified here."
   agreement:
     description:
       - "URI to a terms of service document you agree to when using the
@@ -67,9 +75,9 @@ options:
     description:
       - "Boolean indicating whether the module should create the account if
          necessary, and update its contact data."
-      - "Set to C(no) if you want to use C(acme_account) to manage your
-         account instead, and to avoid accidental creation of a new account
-         using an old key if you changed the account key with C(acme_account)."
+      - "Set to C(no) if you want to use the M(acme_account) module to manage
+         your account instead, and to avoid accidental creation of a new account
+         using an old key if you changed the account key with M(acme_account)."
       - "If set to C(no), C(terms_agreed) and C(account_email) are ignored."
     type: bool
     default: 'yes'
@@ -97,6 +105,10 @@ options:
          the second run of the module only."
       - "The value that must be used here will be provided by a previous use
          of this module. See the examples for more details."
+      - "Note that for ACME v2, only the C(order_uri) entry of C(data) will
+         be used. For ACME v1, C(data) must be non-empty to indicate the
+         second stage is active; all needed data will be taken from the
+         CSR."
       - "I(Note): the C(data) option was marked as C(no_log) up to
          Ansible 2.5. From Ansible 2.6 on, it is no longer marked this way
          as it causes error messages to be come unusable, and C(data) does
@@ -363,7 +375,7 @@ class ACMEClient(object):
         self.authorizations = None
         self.cert_days = -1
         self.order_uri = self.data.get('order_uri') if self.data else None
-        self.finalize_uri = self.data.get('finalize_uri') if self.data else None
+        self.finalize_uri = None
 
         # Make sure account exists
         modify_account = module.params['modify_account']
@@ -461,11 +473,11 @@ class ACMEClient(object):
             keyauthorization = self.account.get_keyauthorization(token)
 
             if type == 'http-01':
-                # https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-8.3
+                # https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-8.3
                 resource = '.well-known/acme-challenge/' + token
                 data[type] = {'resource': resource, 'resource_value': keyauthorization}
             elif type == 'dns-01':
-                # https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-8.5
+                # https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-8.4
                 resource = '_acme-challenge'
                 value = nopad_b64(hashlib.sha256(to_bytes(keyauthorization)).digest())
                 record = (resource + domain[1:]) if domain.startswith('*.') else (resource + '.' + domain)
@@ -519,7 +531,7 @@ class ACMEClient(object):
             result['uri'] = auth['uri']
             if self._add_or_update_auth(domain, result):
                 self.changed = True
-            # draft-ietf-acme-acme-02
+            # https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-6.1.2
             # "status (required, string): ...
             # If this field is missing, then the default value is "pending"."
             if self.version == 1 and 'status' not in result:
@@ -537,7 +549,7 @@ class ACMEClient(object):
         '''
         Create a new certificate based on the csr.
         Return the certificate object as dict
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4
+        https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.4
         '''
         openssl_csr_cmd = [self._openssl_bin, "req", "-in", self.csr, "-outform", "DER"]
         dummy, out, dummy = self.module.run_command(openssl_csr_cmd, check_rc=True)
@@ -573,7 +585,7 @@ class ACMEClient(object):
     def _download_cert(self, url):
         '''
         Download and parse the certificate chain.
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4.2
+        https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.4.2
         '''
         resp, info = fetch_url(self.module, url, headers={'Accept': 'application/pem-certificate-chain'})
         try:
@@ -647,7 +659,7 @@ class ACMEClient(object):
     def _new_order_v2(self):
         '''
         Start a new certificate order (ACME v2 protocol).
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4
+        https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.4
         '''
         identifiers = []
         for domain in self.domains:
@@ -679,11 +691,15 @@ class ACMEClient(object):
         Return True if this is the first execution of this module, i.e. if a
         sufficient data object from a first run has not been provided.
         '''
-        if (self.data is None) or ('authorizations' not in self.data):
+        if self.data is None:
             return True
-        if self.finalize_uri is None and self.version != 1:
-            return True
-        return False
+        if self.version == 1:
+            # As soon as self.data is a non-empty object, we are in the second stage.
+            return not self.data
+        else:
+            # We are in the second stage if data.order_uri is given (which has been
+            # stored in self.order_uri by the constructor).
+            return self.order_uri is None
 
     def start_challenges(self):
         '''
@@ -725,8 +741,42 @@ class ACMEClient(object):
         Verify challenges for all domains of the CSR.
         '''
         self.authorizations = {}
-        for domain, auth in self.data['authorizations'].items():
-            self.authorizations[domain] = auth
+
+        # Step 1: obtain challenge information
+        if self.version == 1:
+            # For ACME v1, we attempt to create new authzs. Existing ones
+            # will be returned instead.
+            for domain in self.domains:
+                new_auth = self._new_authz_v1(domain)
+                self._add_or_update_auth(domain, new_auth)
+        else:
+            # For ACME v2, we obtain the order object by fetching the
+            # order URI, and extract the information from there.
+            resp, info = fetch_url(self.module, self.order_uri)
+            try:
+                result = resp.read()
+            except AttributeError:
+                result = info.get('body')
+
+            if not result:
+                raise ModuleFailException("Cannot download order from {0}: {1} (headers: {2})".format(self.order_uri, result, info))
+
+            if info['status'] not in [200]:
+                raise ModuleFailException("Error on downloading order: CODE: {0} RESULT: {1}".format(info['status'], result))
+
+            result = self.module.from_json(result.decode('utf8'))
+            for auth_uri in result['authorizations']:
+                auth_data = simple_get(self.module, auth_uri)
+                auth_data['uri'] = auth_uri
+                domain = auth_data['identifier']['value']
+                if auth_data.get('wildcard', False):
+                    domain = '*.{0}'.format(domain)
+                self.authorizations[domain] = auth_data
+
+            self.finalize_uri = result['finalize']
+
+        # Step 2: validate challenges
+        for domain, auth in self.authorizations.items():
             if auth['status'] == 'pending':
                 self._validate_challenges(domain, auth)
 
@@ -771,7 +821,7 @@ class ACMEClient(object):
         '''
         Deactivates all valid authz's. Does not raise exceptions.
         https://community.letsencrypt.org/t/authorization-deactivation/19860/2
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.5.2
+        https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.5.2
         '''
         authz_deactivate = {
             'status': 'deactivated'
@@ -826,7 +876,7 @@ def main():
         supports_check_mode=True,
     )
     if module._name == 'letsencrypt':
-        module.deprecate("The 'letsencrypt' module is being renamed 'acme_certificate'", version=2.10)
+        module.deprecate("The 'letsencrypt' module is being renamed 'acme_certificate'", version='2.10')
 
     # AnsibleModule() changes the locale, so change it back to C because we rely on time.strptime() when parsing certificate dates.
     module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')

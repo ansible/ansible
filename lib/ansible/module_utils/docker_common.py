@@ -167,14 +167,15 @@ class AnsibleDockerClient(Client):
 
         if HAS_DOCKER_MODELS and HAS_DOCKER_SSLADAPTER:
             self.fail("Cannot have both the docker-py and docker python modules installed together as they use the same namespace and "
-                      "cause a corrupt installation. Please uninstall both packages, and re-install only the docker-py or docker python module")
+                      "cause a corrupt installation. Please uninstall both packages, and re-install only the docker-py or docker python "
+                      "module. It is recommended to install the docker module if no support for Python 2.6 is required.")
 
         if not HAS_DOCKER_PY:
-            self.fail("Failed to import docker-py - %s. Try `pip install docker-py`" % HAS_DOCKER_ERROR)
+            self.fail("Failed to import docker or docker-py - %s. Try `pip install docker` or `pip install docker-py` (Python 2.6)" % HAS_DOCKER_ERROR)
 
         if LooseVersion(docker_version) < LooseVersion(MIN_DOCKER_VERSION):
-            self.fail("Error: docker-py version is %s. Minimum version required is %s." % (docker_version,
-                                                                                           MIN_DOCKER_VERSION))
+            self.fail("Error: docker / docker-py version is %s. Minimum version required is %s." % (docker_version,
+                                                                                                    MIN_DOCKER_VERSION))
 
         self.debug = self.module.params.get('debug')
         self.check_mode = self.module.check_mode
@@ -186,10 +187,6 @@ class AnsibleDockerClient(Client):
             self.fail("Docker API error: %s" % exc)
         except Exception as exc:
             self.fail("Error connecting: %s" % exc)
-
-        docker_api_version = self.version()["ApiVersion"]
-        if self.module.params.get("init") and LooseVersion(docker_api_version) < LooseVersion("1.25"):
-            self.fail("docker API version is %s. Minimum version required is 1.25 to set init option." % (docker_api_version,))
 
     def log(self, msg, pretty_print=False):
         pass

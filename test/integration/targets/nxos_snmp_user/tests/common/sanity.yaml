@@ -6,6 +6,7 @@
 - name: Remove snmp user
   nxos_snmp_user: &remove
     user: ntc
+    provider: "{{ connection }}"
     state: absent
 
 - pause:
@@ -20,6 +21,7 @@
       pwd: N$tOpe%1
       privacy: HelloU$er1
       encrypt: true
+      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -30,6 +32,7 @@
     nxos_snmp_user: &chg
       user: ntc
       group: network-admin
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -46,6 +49,7 @@
     nxos_snmp_user: &remg
       user: ntc
       group: network-admin
+      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -64,6 +68,7 @@
     nxos_snmp_user: &remove1
       user: ntc
       group: network-operator
+      provider: "{{ connection }}"
       state: absent
     register: result
 

@@ -172,7 +172,7 @@ from ansible.module_utils.six import (
 )
 from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils._text import to_native, to_bytes, to_text
-from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
+from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
 
 
 # Note: When getting Sequence from collections, it matches with strings.  If
@@ -930,20 +930,35 @@ class AnsibleModule(object):
 
     @property
     def tmpdir(self):
-        # if _ansible_tmpdir was not set, the module needs to create it and
-        # clean it up once finished.
+        # if _ansible_tmpdir was not set and we have a remote_tmp,
+        # the module needs to create it and clean it up once finished.
+        # otherwise we create our own module tmp dir from the system defaults
         if self._tmpdir is None:
+            basedir = None
+
             basedir = os.path.expanduser(os.path.expandvars(self._remote_tmp))
             if not os.path.exists(basedir):
-                self.warn("Module remote_tmp %s did not exist and was created "
-                          "with a mode of 0700, this may cause issues when "
-                          "running as another user. To avoid this, create the "
-                          "remote_tmp dir with the correct permissions "
-                          "manually" % basedir)
-                os.makedirs(basedir, mode=0o700)
+                try:
+                    os.makedirs(basedir, mode=0o700)
+                except (OSError, IOError) as e:
+                    self.warn("Unable to use %s as temporary directory, "
+                              "failing back to system: %s" % (basedir, to_native(e)))
+                    basedir = None
+                else:
+                    self.warn("Module remote_tmp %s did not exist and was "
+                              "created with a mode of 0700, this may cause"
+                              " issues when running as another user. To "
+                              "avoid this, create the remote_tmp dir with "
+                              "the correct permissions manually" % basedir)
 
             basefile = "ansible-moduletmp-%s-" % time.time()
-            tmpdir = tempfile.mkdtemp(prefix=basefile, dir=basedir)
+            try:
+                tmpdir = tempfile.mkdtemp(prefix=basefile, dir=basedir)
+            except (OSError, IOError) as e:
+                self.fail_json(
+                    msg="Failed to create remote module tmp path at dir %s "
+                        "with prefix %s: %s" % (basedir, basefile, to_native(e))
+                )
             if not self._keep_remote_files:
                 atexit.register(shutil.rmtree, tmpdir)
             self._tmpdir = tmpdir

@@ -91,8 +91,11 @@ class ActionModule(_ActionModule):
         elif self._play_context.connection in ('netconf', 'network_cli'):
             provider = self._task.args.get('provider', {})
             if any(provider.values()):
-                display.warning('provider is unnecessary when using %s and will be ignored' % self._play_context.connection)
-                del self._task.args['provider']
+                # for legacy reasons provider value is required for junos_facts(optional) and junos_package
+                # modules as it uses junos_eznc library to connect to remote host
+                if not (self._task.action == 'junos_facts' or self._task.action == 'junos_package'):
+                    display.warning('provider is unnecessary when using %s and will be ignored' % self._play_context.connection)
+                    del self._task.args['provider']
 
             if (self._play_context.connection == 'network_cli' and self._task.action not in CLI_SUPPORTED_MODULES) or \
                     (self._play_context.connection == 'netconf' and self._task.action == 'junos_netconf'):

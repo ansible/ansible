@@ -18,7 +18,7 @@ You can also use the site to share roles that you create. By authenticating with
 them available to the Ansible community. Imported roles become available in the Galaxy search index and visible on the site, allowing users to
 discover and download them.
 
-Learn more by viewing `the About page <https://galaxy.ansible.com/intro>`_.
+Learn more by viewing `the About page <https://galaxy.ansible.com/docs/>`_.
 
 The command line tool
 `````````````````````

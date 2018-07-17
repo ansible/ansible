@@ -35,13 +35,15 @@ options:
   max_links:
     description:
     - Maximum links (range 1-16).
+    - Accepted values range between 1 and 16.
     - The APIC defaults to C(16) when unset during creation.
-    choices: [ Ranges from 1 to 16 ]
+    type: int
   min_links:
     description:
     - Minimum links (range 1-16).
+    - Accepted values range between 1 and 16.
     - The APIC defaults to C(1) when unset during creation.
-    choices: [ Ranges from 1 to 16 ]
+    type: int
   mode:
     description:
     - Port channel interface policy mode.

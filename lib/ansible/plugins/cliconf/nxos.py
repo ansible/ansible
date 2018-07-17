@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import json
+import re
 
 from itertools import chain
 
@@ -56,20 +57,47 @@ class Cliconf(CliconfBase):
         device_info = {}
 
         device_info['network_os'] = 'nxos'
-        reply = self.get('show version | json')
-        data = json.loads(reply)
-        platform_reply = self.get('show inventory | json')
-        platform_info = json.loads(platform_reply)
+        reply = self.get('show version')
+        platform_reply = self.get('show inventory')
 
-        device_info['network_os_version'] = data.get('sys_ver_str') or data.get('kickstart_ver_str')
-        device_info['network_os_model'] = data['chassis_id']
-        device_info['network_os_hostname'] = data['host_name']
-        device_info['network_os_image'] = data.get('isan_file_name') or data.get('kick_file_name')
+        match_sys_ver = re.search(r'\s+system:\s+version (\S+)', reply, re.M)
+        if match_sys_ver:
+            device_info['network_os_version'] = match_sys_ver.group(1)
+        else:
+            match_kick_ver = re.search(r'\s+kickstart:\s+version (\S+)', reply, re.M)
+            if match_kick_ver:
+                device_info['network_os_version'] = match_kick_ver.group(1)
 
-        inventory_table = platform_info['TABLE_inv']['ROW_inv']
-        for info in inventory_table:
-            if 'Chassis' in info['name']:
-                device_info['network_os_platform'] = info['productid']
+        if 'network_os_version' not in device_info:
+            match_sys_ver = re.search(r'\s+NXOS:\s+version (\S+)', reply, re.M)
+            if match_sys_ver:
+                device_info['network_os_version'] = match_sys_ver.group(1)
+
+        match_chassis_id = re.search(r'Hardware\n\s+cisco\s+(\S+\s+\S+)', reply, re.M)
+        if match_chassis_id:
+            device_info['network_os_model'] = match_chassis_id.group(1)
+
+        match_host_name = re.search(r'\s+Device name:\s+(\S+)', reply, re.M)
+        if match_host_name:
+            device_info['network_os_hostname'] = match_host_name.group(1)
+
+        match_isan_file_name = re.search(r'\s+system image file is:\s+(\S+)', reply, re.M)
+        if match_isan_file_name:
+            device_info['network_os_image'] = match_isan_file_name.group(1)
+        else:
+            match_kick_file_name = re.search(r'\s+kickstart image file is:\s+(\S+)', reply, re.M)
+            if match_kick_file_name:
+                device_info['network_os_image'] = match_kick_file_name.group(1)
+
+        if 'network_os_image' not in device_info:
+            match_isan_file_name = re.search(r'\s+NXOS image file is:\s+(\S+)', reply, re.M)
+            if match_isan_file_name:
+                device_info['network_os_image'] = match_isan_file_name.group(1)
+
+        match_os_platform = re.search(r'NAME: "Chassis",\s+DESCR:.*\n'
+                                      r'PID:\s+(\S+)', platform_reply, re.M)
+        if match_os_platform:
+            device_info['network_os_platform'] = match_os_platform.group(1)
 
         return device_info
 

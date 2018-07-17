@@ -12,7 +12,7 @@ import tempfile
 
 import pytest
 
-from ansible.compat.tests.mock import patch
+from ansible.compat.tests.mock import patch, MagicMock
 
 
 class TestAnsibleModuleTmpDir:
@@ -87,3 +87,25 @@ class TestAnsibleModuleTmpDir:
 
         if not stat_exists:
             assert makedirs['called']
+
+    @pytest.mark.parametrize('stdin', ({"_ansible_tmpdir": None,
+                                        "_ansible_remote_tmp": "$HOME/.test",
+                                        "_ansible_keep_remote_files": True},),
+                             indirect=['stdin'])
+    def test_tmpdir_makedirs_failure(self, am, monkeypatch):
+
+        mock_mkdtemp = MagicMock(return_value="/tmp/path")
+        mock_makedirs = MagicMock(side_effect=OSError("Some OS Error here"))
+
+        monkeypatch.setattr(tempfile, 'mkdtemp', mock_mkdtemp)
+        monkeypatch.setattr(os.path, 'exists', lambda x: False)
+        monkeypatch.setattr(os, 'makedirs', mock_makedirs)
+
+        actual = am.tmpdir
+        assert actual == "/tmp/path"
+        assert mock_makedirs.call_args[0] == (os.path.expanduser(os.path.expandvars("$HOME/.test")),)
+        assert mock_makedirs.call_args[1] == {"mode": 0o700}
+
+        # because makedirs failed the dir should be None so it uses the System tmp
+        assert mock_mkdtemp.call_args[1]['dir'] is None
+        assert mock_mkdtemp.call_args[1]['prefix'].startswith("ansible-moduletmp-")

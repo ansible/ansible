@@ -11,7 +11,7 @@ Here are some commonly asked questions and their answers.
 How can I set the PATH or any other environment variable for a task or entire playbook?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Setting environment variables can be done with the `environment` keyword. It can be used at the task or the play level::
+Setting environment variables can be done with the `environment` keyword. It can be used at the task or other levels in the play::
 
     environment:
       PATH: "{{ ansible_env.PATH }}:/thingy/bin"
@@ -130,6 +130,12 @@ requires Python 2, you can also report a bug on our `bug tracker
 <https://github.com/ansible/ansible/issues>`_ so that the incompatibility can be fixed in a future release.
 
 Do not replace the shebang lines of your python modules.  Ansible will do this for you automatically at deploy time.
+
+Also, this works for ANY interpreter, i.e ruby: `ansible_ruby_interpreter`, perl: `ansible_perl_interpreter`, etc,
+so you can use this for custom modules written in any scripting language and control the interpreter location.
+
+Keep in mind that if you put `env` in your module shebang line (`#!/usr/bin/env <other>`),
+this facility will be ignored so you will be at the mercy of the remote `$PATH`.
 
 .. _installation_faqs:
 
@@ -258,18 +264,34 @@ Ansible by default gathers "facts" about the machines under management, and thes
 
     ansible -m setup hostname
 
-This will print out a dictionary of all of the facts that are available for that particular host. You might want to pipe the output to a pager.
+This will print out a dictionary of all of the facts that are available for that particular host. You might want to pipe the output to a pager.This does NOT include inventory variables or internal 'magic' variables. See the next question if you need more than just 'facts'.
+
 
 .. _browse_inventory_vars:
 
-How do I see all the inventory vars defined for my host?
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+How do I see all the inventory variables defined for my host?
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-By running the following command, you can see vars resulting from what you've defined in the inventory:
+By running the following command, you can see inventory variables for a host:
+
+.. code-block:: shell-session
+
+    ansible-inventory --list --yaml
+
+
+.. _browse_host_vars:
+
+How do I see all the variables specific to my host?
++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+To see all host specific variables, which might include facts and other sources:
 
 .. code-block:: shell-session
 
     ansible -m debug -a "var=hostvars['hostname']" localhost
+
+Unless you are using a fact cache, you normally need to use a play that gathers facts first, for facts included in the task above.
+
 
 .. _host_loops:
 
@@ -314,6 +336,19 @@ via a role parameter or other input.  Variable names can be built by adding stri
 The trick about going through hostvars is necessary because it's a dictionary of the entire namespace of variables.  'inventory_hostname'
 is a magic variable that indicates the current host you are looping over in the host loop.
 
+Also see dynamic_variables_.
+
+
+.. _access_group_variable:
+
+How do I access a group variable?
++++++++++++++++++++++++++++++++++
+
+Techinically, you don't, Ansible does not really use groups directly. Groups are label for host selection and a way to bulk assign variables, they are not a first class entity, Ansible only cares about Hosts and Tasks.
+
+That said, you could just access the variable by selecting a host that is part of that group, see first_host_in_a_group_ below for an example.
+
+
 .. _first_host_in_a_group:
 
 How do I access a variable of the first host in a group?
@@ -351,28 +386,37 @@ The "copy" module has a recursive parameter.  However, take a look at the "synch
 How do I access shell environment variables?
 ++++++++++++++++++++++++++++++++++++++++++++
 
-If you just need to access existing variables, use the 'env' lookup plugin.  For example, to access the value of the HOME
-environment variable on the management machine::
+If you just need to access existing variables ON THE CONTROLLER, use the 'env' lookup plugin.
+For example, to access the value of the HOME environment variable on the management machine::
 
    ---
    # ...
      vars:
         local_home: "{{ lookup('env','HOME') }}"
 
-If you need to set environment variables, see the Advanced Playbooks section about environments.
 
-Remote environment variables are available via facts in the 'ansible_env' variable:
+For environment variables on the TARGET machines, they are available via facts in the 'ansible_env' variable:
 
 .. code-block:: jinja
 
    {{ ansible_env.SOME_VARIABLE }}
+
+If you need to set environment variables for TASK execution, see the Advanced Playbooks section about environments.
+There is no set way to set environment variables on your target machines, you can use template/replace/other modules to do so,
+but the exact files to edit vary depending on your OS and distribution and local configuration.
 
 .. _user_passwords:
 
 How do I generate crypted passwords for the user module?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-The mkpasswd utility that is available on most Linux systems is a great option:
+Ansible ad-hoc command is the easiest option:
+
+.. code-block:: shell-session
+
+    ansible all -i localhost, -m debug -a "msg={{ 'mypassword' | password_hash('sha512', 'mysecretsalt') }}"
+
+The mkpasswd utility that is available on most Linux systems is also a great option:
 
 .. code-block:: shell-session
 
@@ -418,6 +462,8 @@ safer to use the array notation for variables.
     item['region']['Mid-Atlantic']
     It is {{ temperature['Celsius']['-3'] }} outside.
 
+Also array notation allows for dynamic variable composition, see dynamic_variables_.
+
 Can I get training on Ansible?
 ++++++++++++++++++++++++++++++
 
@@ -425,13 +471,14 @@ Yes!  See our `services page <https://www.ansible.com/consulting>`_ for informat
 
 We also offer free web-based training classes on a regular basis. See our `webinar page <https://www.ansible.com/webinars-training>`_ for more info on upcoming webinars.
 
+
 .. _web_interface:
 
 Is there a web interface / REST API / etc?
 ++++++++++++++++++++++++++++++++++++++++++
 
-Yes!  Ansible, Inc makes a great product that makes Ansible even more powerful
-and easy to use. See :doc:`../reference_appendices/tower`.
+Yes!  Ansible, Inc makes a great product that makes Ansible even more powerful and easy to use. See :doc:`../reference_appendices/tower`.
+
 
 .. _docs_contributions:
 
@@ -439,6 +486,7 @@ How do I submit a change to the documentation?
 ++++++++++++++++++++++++++++++++++++++++++++++
 
 Great question!  Documentation for Ansible is kept in the main project git repository, and complete instructions for contributing can be found in the docs README `viewable on GitHub <https://github.com/ansible/ansible/blob/devel/docs/docsite/README.md>`_.  Thanks!
+
 
 .. _keep_secret_data:
 
@@ -477,8 +525,7 @@ A steadfast rule is 'always use ``{{ }}`` except when ``when:``'.
 Conditionals are always run through Jinja2 as to resolve the expression,
 so ``when:``, ``failed_when:`` and ``changed_when:`` are always templated and you should avoid adding ``{{ }}``.
 
-In most other cases you should always use the brackets, even if previously you could use variables without specifying (like ``loop`` or ``with_`` clauses),
-as this made it hard to distinguish between an undefined variable and a string.
+In most other cases you should always use the brackets, even if previously you could use variables without specifying (like ``loop`` or ``with_`` clauses), as this made it hard to distinguish between an undefined variable and a string.
 
 Another rule is 'moustaches don't stack'. We often see this:
 
@@ -486,17 +533,27 @@ Another rule is 'moustaches don't stack'. We often see this:
 
      {{ somevar_{{other_var}} }}
 
-The above DOES NOT WORK, if you need to use a dynamic variable use the hostvars or vars dictionary as appropriate:
+The above DOES NOT WORK as you expect, if you need to use a dynamic variable use the following as appropriate:
 
 .. code-block:: jinja
 
     {{ hostvars[inventory_hostname]['somevar_' + other_var] }}
+
+For 'non host vars' you can use the vars lookup plugin:
+
+.. code-block:: jinja
+
+     {{ lookup('vars', 'somevar_' + other_var) }}
+
+
+.. _why_no_wheel:
 
 Why don't you ship in X format?
 +++++++++++++++++++++++++++++++
 
 Several reasons, in most cases it has to do with maintainability, there are tons of ways to ship software and it is a herculean task to try to support them all.
 In other cases there are technical issues, for example, for python wheels, our dependencies are not present so there is little to no gain.
+
 
 .. _i_dont_see_my_question:
 

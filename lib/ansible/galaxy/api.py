@@ -152,7 +152,7 @@ class GalaxyAPI(object):
             args['alternate_role_name'] = role_name
         elif github_repo.startswith('ansible-role'):
             args['alternate_role_name'] = github_repo[len('ansible-role') + 1:]
-        data = self.__call_galaxy(url, args=urlencode(args))
+        data = self.__call_galaxy(url, args=urlencode(args), method="POST")
         if data.get('results', None):
             return data['results']
         return data
@@ -279,7 +279,7 @@ class GalaxyAPI(object):
             "github_repo": github_repo,
             "secret": secret
         })
-        data = self.__call_galaxy(url, args=args)
+        data = self.__call_galaxy(url, args=args, method="POST")
         return data
 
     @g_connect

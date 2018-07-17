@@ -183,7 +183,6 @@ class InventoryManager(object):
         for name in C.INVENTORY_ENABLED:
             plugin = inventory_loader.get(name)
             if plugin:
-                plugin.set_options()
                 self._inventory_plugins.append(plugin)
             else:
                 display.warning('Failed to load inventory plugin, skipping %s' % name)
@@ -224,7 +223,9 @@ class InventoryManager(object):
         parsed = False
         display.debug(u'Examining possible inventory source: %s' % source)
 
+        # use binary for path functions
         b_source = to_bytes(source)
+
         # process directories as a collection of inventories
         if os.path.isdir(b_source):
             display.debug(u'Searching for inventory files in directory: %s' % source)
@@ -236,9 +237,9 @@ class InventoryManager(object):
                     continue
 
                 # recursively deal with directory entries
-                b_fullpath = os.path.join(b_source, i)
-                parsed_this_one = self.parse_source(b_fullpath, cache=cache)
-                display.debug(u'parsed %s as %s' % (to_text(b_fullpath), parsed_this_one))
+                fullpath = to_text(os.path.join(b_source, i), errors='surrogate_or_strict')
+                parsed_this_one = self.parse_source(fullpath, cache=cache)
+                display.debug(u'parsed %s as %s' % (fullpath, parsed_this_one))
                 if not parsed:
                     parsed = parsed_this_one
         else:
@@ -268,16 +269,16 @@ class InventoryManager(object):
                         # in case plugin fails 1/2 way we dont want partial inventory
                         plugin.parse(self._inventory, self._loader, source, cache=cache)
                         parsed = True
-                        display.vvv('Parsed %s inventory source with %s plugin' % (to_text(source), plugin_name))
+                        display.vvv('Parsed %s inventory source with %s plugin' % (source, plugin_name))
                         break
                     except AnsibleParserError as e:
-                        display.debug('%s was not parsable by %s' % (to_text(source), plugin_name))
+                        display.debug('%s was not parsable by %s' % (source, plugin_name))
                         failures.append({'src': source, 'plugin': plugin_name, 'exc': e})
                     except Exception as e:
-                        display.debug('%s failed to parse %s' % (plugin_name, to_text(source)))
+                        display.debug('%s failed to parse %s' % (plugin_name, source))
                         failures.append({'src': source, 'plugin': plugin_name, 'exc': AnsibleError(e)})
                 else:
-                    display.debug('%s did not meet %s requirements' % (to_text(source), plugin_name))
+                    display.debug('%s did not meet %s requirements' % (source, plugin_name))
             else:
                 if not parsed and failures:
                     # only if no plugin processed files should we show errors.
@@ -286,9 +287,9 @@ class InventoryManager(object):
                         if hasattr(fail['exc'], 'tb'):
                             display.vvv(to_text(fail['exc'].tb))
                     if C.INVENTORY_ANY_UNPARSED_IS_FAILED:
-                        raise AnsibleError(u'Completely failed to parse inventory source %s' % (to_text(source)))
+                        raise AnsibleError(u'Completely failed to parse inventory source %s' % (source))
         if not parsed:
-            display.warning("Unable to parse %s as an inventory source" % to_text(source))
+            display.warning("Unable to parse %s as an inventory source" % source)
 
         # clear up, jic
         self._inventory.current_source = None

@@ -209,5 +209,5 @@ Appendix
 
 - [1] - https://docs.ansible.com/ansible/latest/vault.html
 
-- [2] - http://docs.ansible.com/ansible-tower/latest/html/userguide/credentials.html
+- [2] - https://docs.ansible.com/ansible-tower/latest/html/userguide/credentials.html
 

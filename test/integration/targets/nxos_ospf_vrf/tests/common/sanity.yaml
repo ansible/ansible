@@ -6,6 +6,7 @@
 - name: "Enable feature OSPF"
   nxos_feature:
     feature: ospf
+    provider: "{{ connection }}"
     state: enabled
   ignore_errors: yes
 
@@ -22,6 +23,7 @@
       timer_throttle_lsa_max: 3000
       vrf: test
       passive_interface: true
+      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -47,6 +49,7 @@
       log_adjacency: log
       vrf: default
       passive_interface: true
+      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -67,6 +70,7 @@
       timer_throttle_spf_hold: default
       passive_interface: false
       vrf: default
+      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -82,6 +86,7 @@
     nxos_ospf_vrf: &unconfig1
       ospf: 2
       vrf: default
+      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -97,6 +102,7 @@
     nxos_ospf_vrf: &unconfig
       ospf: 1
       vrf: test
+      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -112,6 +118,7 @@
   - name: "Disable feature OSPF"
     nxos_feature:
       feature: ospf
+      provider: "{{ connection }}"
       state: disabled
     ignore_errors: yes
 

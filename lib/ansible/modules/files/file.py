@@ -33,7 +33,7 @@ author:
 options:
   path:
     description:
-      - 'path to the file being managed.  Aliases: I(dest), I(name)'
+      - Path to the file being managed.
     required: true
     aliases: [ dest, name ]
   state:
@@ -212,18 +212,24 @@ def get_state(path):
     ''' Find out current state '''
 
     b_path = to_bytes(path, errors='surrogate_or_strict')
-    if os.path.lexists(b_path):
-        if os.path.islink(b_path):
-            return 'link'
-        elif os.path.isdir(b_path):
-            return 'directory'
-        elif os.stat(b_path).st_nlink > 1:
-            return 'hard'
+    try:
+        if os.path.lexists(b_path):
+            if os.path.islink(b_path):
+                return 'link'
+            elif os.path.isdir(b_path):
+                return 'directory'
+            elif os.stat(b_path).st_nlink > 1:
+                return 'hard'
 
-        # could be many other things, but defaulting to file
-        return 'file'
+            # could be many other things, but defaulting to file
+            return 'file'
 
-    return 'absent'
+        return 'absent'
+    except OSError as e:
+        if e.errno == errno.ENOENT:  # It may already have been removed
+            return 'absent'
+        else:
+            raise
 
 
 # This should be moved into the common file utilities
@@ -322,6 +328,9 @@ def execute_touch(path, follow):
     b_path = to_bytes(path, errors='surrogate_or_strict')
     prev_state = get_state(b_path)
 
+    # Unfortunately, touch always changes the file because it updates file's timestamp
+    result = {'dest': path, 'changed': True}
+
     if not module.check_mode:
         if prev_state == 'absent':
             # Create an empty file if the filename did not already exist
@@ -369,8 +378,8 @@ def execute_touch(path, follow):
                     os.remove(b_path)
             raise
 
-    # Unfortunately, touch always changes the file because it updates file's timestamp
-    return {'dest': path, 'changed': True, 'diff': diff}
+        result['diff'] = diff
+    return result
 
 
 def ensure_file_attributes(path, follow):

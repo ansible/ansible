@@ -13,6 +13,7 @@ from ansible.vars.clean import strip_internal_keys
 
 _IGNORE = ('failed', 'skipped')
 _PRESERVE = ('attempts', 'changed', 'retries')
+_SUB_PRESERVE = {'_ansible_delegated_vars': ('ansible_host', 'ansible_port', 'ansible_user', 'ansible_connection')}
 
 
 class TaskResult:
@@ -114,9 +115,19 @@ class TaskResult:
 
         if self._task.no_log or self._result.get('_ansible_no_log', False):
             x = {"censored": "the output has been hidden due to the fact that 'no_log: true' was specified for this result"}
+
+            # preserve full
             for preserve in _PRESERVE:
                 if preserve in self._result:
                     x[preserve] = self._result[preserve]
+
+            # preserve subset
+            for sub in _SUB_PRESERVE:
+                if sub in self._result:
+                    x[sub] = {}
+                    for key in _SUB_PRESERVE[sub]:
+                        x[sub][key] = self._result[sub][key]
+
             result._result = x
         elif self._result:
             result._result = deepcopy(self._result)

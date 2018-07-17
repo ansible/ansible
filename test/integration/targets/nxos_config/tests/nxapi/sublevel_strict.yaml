@@ -11,6 +11,7 @@
       - 50 permit ip 192.0.2.5/32 any log
     parents: ip access-list test
     match: none
+    provider: "{{ connection }}"
 
 - name: configure sub level command using strict match
   nxos_config:
@@ -23,6 +24,7 @@
     before: no ip access-list test
     match: strict
     replace: block
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -44,6 +46,7 @@
       - 40 permit ip 192.0.2.4/32 any log
     parents: ip access-list test
     match: strict
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -54,5 +57,6 @@
   nxos_config:
     lines: no ip access-list test
     match: none
+    provider: "{{ connection }}"
 
 - debug: msg="END nxapi/sublevel_strict.yaml"
