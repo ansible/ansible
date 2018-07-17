@@ -272,7 +272,10 @@ def main():
             if user is None:
                 changed = False
             else:
-                cloud.delete_user(user['id'])
+                if domain:
+                    cloud.delete_user(user['id'], domain_id=domain_id)
+                else:
+                    cloud.delete_user(user['id'])
                 changed = True
             module.exit_json(changed=changed)
 
