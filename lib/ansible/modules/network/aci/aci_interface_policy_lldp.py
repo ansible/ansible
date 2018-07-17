@@ -35,13 +35,13 @@ options:
   receive_state:
     description:
     - Enable or disable Receive state.
-    - The APIC defaults to C(enabled) when unset during creation.
-    choices: [ disabled, enabled ]
+    - The APIC defaults to C(yes) when unset during creation.
+    type: bool
   transmit_state:
     description:
     - Enable or Disable Transmit state.
-    - The APIC defaults to C(enabled) when unset during creation.
-    choices: [ disabled, enabled ]
+    - The APIC defaults to C(yes) when unset during creation.
+    type: bool
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.

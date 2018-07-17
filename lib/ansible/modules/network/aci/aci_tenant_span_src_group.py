@@ -28,8 +28,8 @@ options:
   admin_state:
     description:
     - Enable or disable the span sources.
-    - The APIC defaults to C(enabled) when unset during creation.
-    choices: [ enabled, disabled ]
+    - The APIC defaults to C(yes) when unset during creation.
+    type: bool
   description:
     description:
     - The description for Span source group.

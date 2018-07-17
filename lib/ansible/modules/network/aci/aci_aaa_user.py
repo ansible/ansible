@@ -37,6 +37,7 @@ options:
   aaa_password_lifetime:
     description:
     - The lifetime of the locally-authenticated user password.
+    type: int
   aaa_password_update_required:
     description:
     - Whether this account needs password update.

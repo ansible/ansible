@@ -32,6 +32,7 @@ options:
   polling_interval:
     description:
     - Polling interval in minutes.
+    type: int
   url_protocol:
     description:
     - The Firmware download protocol.

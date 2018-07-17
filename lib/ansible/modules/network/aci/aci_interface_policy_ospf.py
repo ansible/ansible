@@ -73,6 +73,7 @@ options:
     - C(passive) -- The interface does not participate in the OSPF protocol and
       will not establish adjacencies or send routing updates. However the
       interface is announced as part of the routing network.
+    type: list
     choices: [ advert-subnet, bfd, mtu-ignore, passive ]
   dead_interval:
     description:
@@ -84,6 +85,7 @@ options:
       routing instability.
     - Accepted values range between C(1) and C(65535).
     - The APIC defaults to C(40) when unset during creation.
+    type: int
   hello_interval:
     description:
     - The interval between hello packets that OSPF sends on the interface.
@@ -91,6 +93,7 @@ options:
     - This value must be the same for all routers and access servers on a specific network.
     - Accepted values range between C(1) and C(65535).
     - The APIC defaults to C(10) when unset during creation.
+    type: int
   prefix_suppression:
     description:
     - Whether prefix suppressions is enabled or disabled.
@@ -101,6 +104,7 @@ options:
     - The priority for the OSPF interface profile.
     - Accepted values ranges between C(0) and C(255).
     - The APIC defaults to C(1) when unset during creation.
+    type: int
   retransmit_interval:
     description:
     - The interval between LSA retransmissions.
@@ -108,6 +112,7 @@ options:
     - If no acknowlegment is received at the end of the interval, then the LSA is resent.
     - Accepted values range between C(1) and C(65535).
     - The APIC defaults to C(5) when unset during creation.
+    type: int
   transmit_delay:
     description:
     - The delay time needed to send an LSA update packet.
@@ -115,6 +120,7 @@ options:
     - You should take into account the transmission and propagation delays for the interface when you set this value.
     - Accepted values range between C(1) and C(450).
     - The APIC defaults to C(1) when unset during creation.
+    type: int
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.

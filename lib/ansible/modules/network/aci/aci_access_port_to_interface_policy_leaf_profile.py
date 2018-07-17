@@ -47,22 +47,22 @@ options:
     - The description to assign to the C(leaf_port_blk)
   from_port:
     description:
-    - The beggining (from range) of the port range block for the leaf access port block.
+    - The beginning (from-range) of the port range block for the leaf access port block.
     aliases: [ from, fromPort, from_port_range ]
     required: yes
   to_port:
     description:
-    - The end (to range) of the port range block for the leaf access port block.
+    - The end (to-range) of the port range block for the leaf access port block.
     aliases: [ to, toPort, to_port_range ]
     required: yes
   from_card:
     description:
-    - The beggining (from range) of the card range block for the leaf access port block.
+    - The beginning (from-range) of the card range block for the leaf access port block.
     aliases: [ from_card_range ]
     version_added: '2.6'
   to_card:
     description:
-    - The end (to range) of the card range block for the leaf access port block.
+    - The end (to-range) of the card range block for the leaf access port block.
     aliases: [ to_card_range ]
     version_added: '2.6'
   policy_group:
