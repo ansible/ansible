@@ -22,9 +22,8 @@ except ImportError:
     HAS_PYVMOMI = False
 
 from ansible.module_utils._text import to_text
-from ansible.module_utils.six import integer_types, iteritems, string_types
+from ansible.module_utils.six import integer_types, iteritems, string_types, raise_from
 from ansible.module_utils.basic import env_fallback
-from ansible.module_utils import six
 
 
 class TaskError(Exception):
@@ -57,7 +56,7 @@ def wait_for_task(task, max_backoff=64, timeout=3600):
             except AttributeError:
                 pass
             finally:
-                six.raise_from(TaskError(error_msg), task.info.error)
+                raise_from(TaskError(error_msg), task.info.error)
         if task.info.state in [vim.TaskInfo.State.running, vim.TaskInfo.State.queued]:
             sleep_time = min(2 ** failure_counter + randint(1, 1000), max_backoff)
             time.sleep(sleep_time)
