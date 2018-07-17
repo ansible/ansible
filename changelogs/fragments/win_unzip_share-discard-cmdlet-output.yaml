@@ -1,0 +1,3 @@
+bugfixes:
+- win_share - discard any cmdlet output we don't use to ensure only the return json is received by Ansible
+- win_unzip - discard any cmdlet output we don't use to ensure only the return json is received by Ansible
