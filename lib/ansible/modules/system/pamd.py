@@ -684,8 +684,6 @@ class PamdService(object):
         if lines[1].startswith("# Updated by Ansible"):
             lines.pop(1)
 
-        lines.insert(1, "# Updated by Ansible - " + datetime.now().isoformat())
-
         return '\n'.join(lines)
 
 
