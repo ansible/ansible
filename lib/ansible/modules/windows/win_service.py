@@ -24,6 +24,7 @@ options:
       service.
     - This works by C(dependency_action) to either add/remove or set the
       services in this list.
+    type: list
     version_added: "2.3"
   dependency_action:
     description:

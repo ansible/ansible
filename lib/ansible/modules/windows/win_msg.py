@@ -26,6 +26,7 @@ options:
   display_seconds:
     description:
       - How long to wait for receiver to acknowledge message, in seconds.
+    type: int
     default: 10
   wait:
     description:

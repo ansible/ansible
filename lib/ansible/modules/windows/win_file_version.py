@@ -23,6 +23,7 @@ options:
       - File to get version.
       - Always provide absolute path.
     required: yes
+    type: path
 author:
 - Sam Liu (@SamLiu79)
 '''

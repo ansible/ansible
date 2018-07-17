@@ -34,8 +34,9 @@ options:
     description:
       - The type of event you would like to audit for.
       - Accepts a list. See examples.
-    choices: [ failure, none, success ]
     required: yes
+    type: list
+    choices: [ failure, none, success ]
 '''
 
 EXAMPLES = r'''

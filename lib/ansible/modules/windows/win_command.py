@@ -29,12 +29,15 @@ options:
   creates:
     description:
       - A path or path filter pattern; when the referenced path exists on the target host, the task will be skipped.
+    type: path
   removes:
     description:
       - A path or path filter pattern; when the referenced path B(does not) exist on the target host, the task will be skipped.
+    type: path
   chdir:
     description:
       - Set the specified path as the current working directory before executing a command.
+    type: path
   stdin:
     description:
     - Set the stdin of the command directly to the specified value.

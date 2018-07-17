@@ -27,6 +27,7 @@ options:
   port:
     description:
     - UDP port to use for magic Wake-on-LAN packet.
+    type: int
     default: 7
 author:
 - Dag Wieers (@dagwieers)

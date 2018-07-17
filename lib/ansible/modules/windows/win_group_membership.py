@@ -30,6 +30,7 @@ options:
       - Accepts all local, domain and service user types as username,
         favoring domain lookups when in a domain.
     required: yes
+    type: list
   state:
     description:
       - Desired state of the members in the group.

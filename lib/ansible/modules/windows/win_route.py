@@ -30,6 +30,7 @@ options:
   metric:
     description:
         - Metric used by the static route.
+    type: int
     default: 1
   state:
     description:

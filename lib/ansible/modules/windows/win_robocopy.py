@@ -25,10 +25,12 @@ options:
     description:
     - Source file/directory to sync.
     required: yes
+    type: path
   dest:
     description:
     - Destination file/directory to sync (Will receive contents of src).
     required: yes
+    type: path
   recurse:
     description:
     - Includes all subdirectories (Toggles the C(/e) flag to RoboCopy).

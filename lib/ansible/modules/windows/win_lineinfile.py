@@ -24,6 +24,7 @@ options:
       - Note that the Windows path delimiter C(\) must be escaped as C(\\) when the line is double quoted.
       - Before 2.3 this option was only usable as I(dest), I(destfile) and I(name).
     required: yes
+    type: path
     aliases: [ dest, destfile, name ]
   regexp:
     description:

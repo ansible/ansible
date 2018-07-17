@@ -37,6 +37,7 @@ options:
     - Will check the existance of the path specified and use the result to
       determine whether the package is already installed.
     - You can use this in conjunction with C(product_id) and other C(creates_*).
+    type: path
     version_added: '2.4'
   creates_service:
     description:
@@ -59,6 +60,7 @@ options:
       C(3010).
     - A return code of C(3010) usually means that a reboot is required, the
       C(reboot_required) return value is set if the return code is C(3010).
+    type: list
     default: [0, 3010]
   password:
     description:

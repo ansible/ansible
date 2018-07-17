@@ -29,10 +29,12 @@ options:
           skipped and not installed.
         - Each entry can either be the KB article or Update title as a regex
           according to the PowerShell regex rules.
+        type: list
         version_added: '2.5'
     category_names:
         description:
         - A scalar or list of categories to install updates from
+        type: list
         default: [ CriticalUpdates, SecurityUpdates, UpdateRollups ]
         choices:
         - Application
@@ -73,6 +75,7 @@ options:
     log_path:
         description:
         - If set, C(win_updates) will append update progress to the specified file. The directory must already exist.
+        type: path
     whitelist:
         description:
         - A list of update titles or KB numbers that can be used to specify
@@ -84,6 +87,7 @@ options:
         - The whitelist is only validated on updates that were found based on
           I(category_names). It will not force the module to install an update
           if it was not in the category specified.
+        type: list
         version_added: '2.5'
     use_scheduled_task:
         description:
