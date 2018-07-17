@@ -219,13 +219,6 @@ def main():
 
     output = ""
 
-    # Go to config mode
-    cmd = [{'command': 'configure terminal', 'prompt': None, 'answer': None}]
-    output = output + str(cnos.run_cnos_commands(module, cmd))
-    if(output.find('Error') != -1):
-        cmd = [{'command': 'configure device', 'prompt': None, 'answer': None}]
-        output = output + str(cnos.run_cnos_commands(module, cmd))
-
     # Send the CLi command
     output = output + str(cnos.vlanConfig(module, "(config)#", None))
 
