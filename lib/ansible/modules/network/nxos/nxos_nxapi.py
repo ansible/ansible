@@ -103,6 +103,7 @@ options:
     required: false
     default: no
     type: bool
+    version_added: "2.7"
   tlsv1_0:
     description:
       - Controls the use of the Transport Layer Security version 1.0 is
@@ -111,6 +112,7 @@ options:
     required: false
     default: yes
     type: bool
+    version_added: "2.7"
   tlsv1_1:
     description:
       - Controls the use of the Transport Layer Security version 1.1 is
@@ -119,6 +121,7 @@ options:
     required: false
     default: no
     type: bool
+    version_added: "2.7"
   tlsv1_2:
     description:
       - Controls the use of the Transport Layer Security version 1.2 is
@@ -127,6 +130,7 @@ options:
     required: false
     default: no
     type: bool
+    version_added: "2.7"
 """
 
 EXAMPLES = """
@@ -231,16 +235,16 @@ def map_obj_to_commands(want, have, module):
     if (os_platform == 'N9K' or os_platform == 'N3K') and LooseVersion(os_version) >= "9.2":
         if needs_update('ssl_strong_ciphers'):
             commands['ssl_strong_ciphers'] = 'nxapi ssl ciphers weak'
-            if want['ssl_strong_ciphers'] == True:
+            if want['ssl_strong_ciphers'] is True:
                 commands['ssl_strong_ciphers'] = 'no nxapi ssl ciphers weak'
 
         have_ssl_protocols = ''
         want_ssl_protocols = ''
-        for key, value in {'tlsv1_2':'TLSv1.2', 'tlsv1_1':'TLSv1.1', 'tlsv1_0':'TLSv1'}.iteritems():
+        for key, value in {'tlsv1_2': 'TLSv1.2', 'tlsv1_1': 'TLSv1.1', 'tlsv1_0': 'TLSv1'}.items():
             if needs_update(key):
-                if want.get(key) == True:
+                if want.get(key) is True:
                     want_ssl_protocols = " ".join([want_ssl_protocols, value])
-            elif have.get(key) == True:
+            elif have.get(key) is True:
                 have_ssl_protocols = " ".join([have_ssl_protocols, value])
 
         if len(want_ssl_protocols) > 0:
