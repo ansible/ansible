@@ -15,14 +15,14 @@
 - name: NTP Server absent
   ucs_ntp_server: &ntp_server_absent
     <<: *login_info
-    name: pool.ntp.org
+    ntp_server: pool.ntp.org
     state: absent
 
 # Test present (check_mode)
 - name: NTP Server present (check_mode)
   ucs_ntp_server: &ntp_server_present
     <<: *login_info
-    name: pool.ntp.org
+    ntp_server: pool.ntp.org
   check_mode: yes
   register: cm_ntp_server_present
 
@@ -53,7 +53,7 @@
 - name: NTP NTP Server change (check_mode)
   ucs_ntp_server: &ntp_server_change
     <<: *ntp_server_present
-    name: 10.10.10.10
+    ntp_server: 10.10.10.10
   check_mode: yes
   register: cm_ntp_ntp_server_change
 

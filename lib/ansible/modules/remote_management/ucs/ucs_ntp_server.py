@@ -22,20 +22,22 @@ description:
 options:
   state:
     description:
-    - If C(absent), will remove an ntp server.
-    - If C(present), will add or update an ntp server.
+    - If C(absent), will remove an NTP server.
+    - If C(present), will add or update an NTP server.
     choices: [absent, present]
     default: present
 
-  name:
+  ntp_server:
     description:
-    - The ntp server ip address or hostname.
+    - NTP server IP address or hostname.
     - Enter up to 63 characters that form a valid hostname.
     - Enter a valid IPV4 Address.
+    aliases: [ name ]
+    default: ""
 
   description:
     description:
-    - A user-defined description of the ntp server.
+    - A user-defined description of the NTP server.
     - Enter up to 256 characters.
     - "You can use any characters or spaces except the following:"
     - "` (accent mark), \ (backslash), ^ (carat), \" (double quote), = (equal sign), > (greater than), < (less than), or ' (single quote)."
@@ -51,39 +53,39 @@ version_added: "2.7"
 '''
 
 EXAMPLES = r'''
-- name: Configure ntp server
+- name: Configure NTP server
   ucs_ntp_server:
     hostname: 172.16.143.150
     username: admin
     password: password
-    name: 10.10.10.10
+    ntp_server: 10.10.10.10
     description: Internal NTP Server by IP address
     state: present
 
-- name: Configure ntp server
+- name: Configure NTP server
   ucs_ntp_server:
     hostname: 172.16.143.150
     username: admin
     password: password
-    name: pool.ntp.org
+    ntp_server: pool.ntp.org
     description: External NTP Server by hostname
     state: present
 
-- name: Remove ntp server
+- name: Remove NTP server
   ucs_ntp_server:
     hostname: 172.16.143.150
     username: admin
     password: password
+    ntp_server: 10.10.10.10
     state: absent
-    name: 10.10.10.10
 
-- name: Remove ntp server
+- name: Remove NTP server
   ucs_ntp_server:
     hostname: 172.16.143.150
     username: admin
     password: password
+    ntp_server: pool.ntp.org
     state: absent
-    name: pool.ntp.org
 '''
 
 RETURN = r'''
@@ -97,7 +99,7 @@ from ansible.module_utils.remote_management.ucs import UCSModule, ucs_argument_s
 def run_module():
     argument_spec = ucs_argument_spec
     argument_spec.update(
-        name=dict(type='str'),
+        ntp_server=dict(type='str', aliases=['name']),
         description=dict(type='str', aliases=['descr'], default=''),
         state=dict(type='str', default='present', choices=['present', 'absent']),
     )
@@ -106,7 +108,7 @@ def run_module():
         argument_spec,
         supports_check_mode=True,
         required_if=[
-            ['state', 'present', ['name']],
+            ['state', 'present', ['ntp_server']],
         ],
     )
     # UCSModule verifies ucsmsdk is present and exits on failure.  Imports are below ucs object creation.
@@ -121,7 +123,7 @@ def run_module():
         mo_exists = False
         props_match = False
 
-        dn = 'sys/svc-ext/datetime-svc/ntp-' + module.params['name']
+        dn = 'sys/svc-ext/datetime-svc/ntp-' + module.params['ntp_server']
 
         mo = ucs.login_handle.query_dn(dn)
         if mo:
@@ -144,7 +146,7 @@ def run_module():
                 if not module.check_mode:
                     # update/add mo
                     mo = CommNtpProvider(parent_mo_or_dn='sys/svc-ext/datetime-svc',
-                                         name=module.params['name'],
+                                         name=module.params['ntp_server'],
                                          descr=module.params['description'])
                     ucs.login_handle.add_mo(mo, modify_present=True)
                     ucs.login_handle.commit()
