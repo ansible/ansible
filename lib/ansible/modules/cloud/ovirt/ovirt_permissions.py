@@ -174,7 +174,7 @@ def _object_service(connection, module):
         object_id = sdk_object.id
 
     object_service = objects_service.service(object_id)
-    if module.params['quota_name'] and object_type != 'data_center':
+    if module.params['quota_name'] and object_type == 'data_center':
         quotas_service = object_service.quotas_service()
         return quotas_service.quota_service(get_id_by_name(quotas_service, module.params['quota_name']))
     return object_service
