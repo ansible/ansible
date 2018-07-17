@@ -884,6 +884,7 @@ EXAMPLES = '''
     copy:
       content: "{{ myvm.vm.remote_vv_file }}"
       dest: ~/vvfile.vv
+
   - name: Run remote viewer with file
     command: remote-viewer ~/vvfile.vv
 
