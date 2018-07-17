@@ -77,12 +77,12 @@ Network
 General
 =======
 
-* Refactor the apis in cliconf and netconf plugins so that they have a uniform signature across supported network platforms.
+* Refactor the APIs in cliconf and netconf plugins so that they have a uniform signature across supported network platforms.
 
 Modules
 =======
 
-* New ``net_config`` module
+* New ``cli_config`` module
 * New ``cli_command`` module
 * Refactor ``netconf_config`` module to add additional functionality. `proposal #104 <https://github.com/ansible/proposals/issues/104>`_
 
