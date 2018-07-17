@@ -168,6 +168,7 @@ from ansible.module_utils.network.nxos.nxos import get_capabilities
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 
+
 def check_args(module, warnings):
     device_info = get_capabilities(module)
 
