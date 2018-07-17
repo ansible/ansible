@@ -501,7 +501,15 @@ def connect_to_api(module, disconnect_atexit=True):
 
     service_instance = None
     try:
-        service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password, sslContext=ssl_context, port=port)
+        connect_args = dict(
+            host=hostname,
+            user=username,
+            pwd=password,
+            port=port,
+        )
+        if ssl_context:
+            connect_args.update(sslContext=ssl_context)
+        service_instance = connect.SmartConnect(**connect_args)
     except vim.fault.InvalidLogin as invalid_login:
         module.fail_json(msg="Unable to log on to vCenter or ESXi API at %s:%s as %s: %s" % (hostname, port, username, invalid_login.msg))
     except vim.fault.NoPermission as no_permission:
