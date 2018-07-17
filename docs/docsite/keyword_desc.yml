@@ -57,7 +57,7 @@ pre_tasks: A list of tasks to execute before :term:`roles`.
 remote_user: User used to log into the target via the connection plugin.
 register: Name of variable that will contain task status and module return data.
 rescue: List of tasks in a :term:`block` that run if there is a task error in the main :term:`block` list.
-retries: "Number of retries before giving up in a :term:`until` loop. This setting is only used in combination with :term:`until`."
+retries: "Number of retries before giving up on a failure. Can be used with :term:`until` or :term:`failed_when` to change failure condition."
 roles: List of roles to be imported into the play
 run_once: Boolean that will bypass the host loop, forcing the task to attempt to execute on the first host available and afterwards apply any results and facts to all active hosts in the same batch.
 serial: |

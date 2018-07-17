@@ -1,8 +1,8 @@
-- shell: '{{ ansible_python.executable }} -c "import tempfile; print(tempfile.mkstemp()[1])"'
+- tempfile:
   register: tempfilepath
 
 - set_fact:
-    until_tempfile_path: "{{ tempfilepath.stdout }}"
+    until_tempfile_path: "{{ tempfilepath.path }}"
 
 - name: loop with default retries
   shell: echo "run" >> {{ until_tempfile_path }} && wc -w < {{ until_tempfile_path }} | tr -d ' '
@@ -32,6 +32,31 @@
 - file:
     path: "{{ until_tempfile_path }}"
     state: absent
+
+- name: Test retries without until
+  shell: echo "run" >> {{ until_tempfile_path }}; false
+  retries: 3
+  delay: 0.01
+  ignore_errors: true
+
+- name: validate output
+  shell: wc -l < {{ until_tempfile_path }}
+  register: runcount
+
+- assert:
+    that: runcount.stdout | int == 4 # initial + 3 retries
+
+- name: Test retries with failed_when without until
+  shell: 'true'
+  register: failed_when_retries
+  failed_when: True
+  retries: 3
+  delay: 0.01
+  ignore_errors: true
+
+- assert:
+    that:
+      - failed_when_retries.attempts == 3
 
 - name: Test failed_when impacting until
   shell: 'true'

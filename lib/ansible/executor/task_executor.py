@@ -618,16 +618,15 @@ class TaskExecutor:
             self._task.args = remove_omit(self._task.args, omit_token)
 
         # Read some values from the task, so that we can modify them if need be
-        if self._task.until:
-            retries = self._task.retries
-            if retries is None:
+        retries = self._task.retries
+        if retries is None or retries <= 0:
+            if self._task.until:
                 retries = 3
-            elif retries <= 0:
-                retries = 1
             else:
-                retries += 1
-        else:
-            retries = 1
+                retries = 0
+
+        # first attempt counts as a retry
+        retries += 1
 
         delay = self._task.delay
         if delay < 0:
@@ -708,7 +707,7 @@ class TaskExecutor:
                     result['failed'] = False
 
             # Make attempts and retries available early to allow their use in changed/failed_when
-            if self._task.until:
+            if self._task.until or retries != 1:
                 result['attempts'] = attempt
 
             # set the changed property if it was missing.
@@ -731,7 +730,10 @@ class TaskExecutor:
             if retries > 1:
                 cond = Conditional(loader=self._loader)
                 cond.when = self._task.until
-                if cond.evaluate_conditional(templar, vars_copy):
+
+                if cond.when and cond.evaluate_conditional(templar, vars_copy):
+                    break
+                elif not cond.when and not result['failed']:
                     break
                 else:
                     # no conditional check, or it failed, so sleep for the specified time
