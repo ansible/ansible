@@ -30,17 +30,20 @@ options:
     - Destination file for the shortcuting file.
     - File name should have a C(.lnk) or C(.url) extension.
     required: yes
+    type: path
   args:
     description:
     - Additional arguments for the executable defined in C(src).
   directory:
     description:
     - Working directory for executable defined in C(src).
+    type: path
   icon:
     description:
     - Icon used for the shortcut.
     - File name should have a C(.ico) extension.
     - The file name is followed by a comma and the number in the library file (.dll) or use 0 for an image file.
+    type: path
   hotkey:
     description:
     - Key combination for the shortcut.

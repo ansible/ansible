@@ -80,6 +80,7 @@ options:
   timeout:
     description:
       - The time to allow chocolatey to finish before timing out.
+    type: int
     default: 2700
     version_added: '2.3'
     aliases: [ execution_timeout ]
