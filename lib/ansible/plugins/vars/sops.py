@@ -1,13 +1,26 @@
 # -*- coding: utf-8 -*-
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #
-# Contributer: Brandon Schlueter <b@schlueter.blue> [:schlueter]
-# Contributor: Julien Vehent <jvehent@mozilla.com> [:ulfr]
-# Contributor: Daniel Thornton <daniel@relud.com>
-# Contributor: Alexis Metaireau <alexis@mozilla.com> [:alexis]
-# Contributor: Rémy Hubscher <natim@mozilla.com> [:natim]
+#  Copyright 2018 Brandon Schlueter <b@schlueter.blue> [:schlueter]
+#                 Julien Vehent <jvehent@mozilla.com> [:ulfr]
+#                 Daniel Thornton <daniel@relud.com>
+#                 Alexis Metaireau <alexis@mozilla.com> [:alexis]
+#                 Rémy Hubscher <natim@mozilla.com> [:natim]
+#
+# This file is part of Ansible.
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -38,7 +51,7 @@ try:
     import boto3
 except ImportError:
     raise AnsibleError("The vars plugin sops requires boto3.")
-    
+
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import Cipher, modes, algorithms
 
