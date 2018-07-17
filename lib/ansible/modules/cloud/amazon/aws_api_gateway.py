@@ -320,7 +320,10 @@ def get_oldest_stage(client, api_id):
 
     # Find the oldest one
     sorted_list = sorted(api_stages["item"], key=lambda k: k['lastUpdatedDate'])
-    oldest_name = sorted_list[0]["stageName"]
+    f stages_count == 0:
+        oldest_name = None
+    else:
+        oldest_name = sorted_list[0]["stageName"]
 
     return api_stages, stages_count, oldest_name
 
