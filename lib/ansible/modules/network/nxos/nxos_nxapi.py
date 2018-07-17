@@ -94,6 +94,39 @@ options:
     choices: ['present', 'absent']
     required: false
     default: present
+  ssl_strong_ciphers:
+    description:
+      - Controls the use of whether strong or weak ciphers are configured.
+        By default, this feature is disabled and weak ciphers are
+        configured.  To enable the use of strong ciphers, set the value of
+        this argument to True.
+    required: false
+    default: no
+    type: bool
+  tlsv1_0:
+    description:
+      - Controls the use of the Transport Layer Security version 1.0 is
+        configured.  By default, this feature is enabled.  To disable the
+        use of TLSV1.0, set the value of this argument to True.
+    required: false
+    default: yes
+    type: bool
+  tlsv1_1:
+    description:
+      - Controls the use of the Transport Layer Security version 1.1 is
+        configured.  By default, this feature is disabled.  To enable the
+        use of TLSV1.1, set the value of this argument to True.
+    required: false
+    default: no
+    type: bool
+  tlsv1_2:
+    description:
+      - Controls the use of the Transport Layer Security version 1.2 is
+        configured.  By default, this feature is disabled.  To enable the
+        use of TLSV1.2, set the value of this argument to True.
+    required: false
+    default: no
+    type: bool
 """
 
 EXAMPLES = """
@@ -195,7 +228,7 @@ def map_obj_to_commands(want, have, module):
         if not want['sandbox']:
             commands['sandbox'] = 'no %s' % commands['sandbox']
 
-    if os_platform == 'N9K' and LooseVersion(os_version) >= "9.2":
+    if (os_platform == 'N9K' or os_platform == 'N3K') and LooseVersion(os_version) >= "9.2":
         if needs_update('ssl_strong_ciphers'):
             commands['ssl_strong_ciphers'] = 'nxapi ssl ciphers weak'
             if want['ssl_strong_ciphers'] == True:
@@ -265,7 +298,7 @@ def parse_ssl_strong_ciphers(data):
     return {'ssl_strong_ciphers': value == 'no'}
 
 
-def parse_protocols(data):
+def parse_ssl_protocols(data):
     tlsv1_0 = re.search(r'(?<!\S)TLSv1(?!\S)', data, re.M) is not None
     tlsv1_1 = re.search(r'(?<!\S)TLSv1.1(?!\S)', data, re.M) is not None
     tlsv1_2 = re.search(r'(?<!\S)TLSv1.2(?!\S)', data, re.M) is not None
@@ -289,7 +322,7 @@ def map_config_to_obj(module):
     obj.update(parse_https(out))
     obj.update(parse_sandbox(out))
     obj.update(parse_ssl_strong_ciphers(out))
-    obj.update(parse_protocols(out))
+    obj.update(parse_ssl_protocols(out))
 
     return obj
 
