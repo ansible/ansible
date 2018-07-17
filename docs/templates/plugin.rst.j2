@@ -117,9 +117,8 @@ Parameters
                 {% endfor %}
                 {# parameter name with required and/or introduced label #}
                 <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
-                    <b>@{ key }@</b>
+                    <b>@{ key }@{% if value.get('required', False) %}<div style="color: red; display:inline">**</div>{% endif %}</b>
                     {% if value.get('type', None) %}<br/><div style="font-size: small; color: red">@{ value.type }@</div>{% endif %}
-                    {% if value.get('required', False) %}<br/><div style="font-size: small; color: red">required</div>{% endif %}
                     {% if value.version_added %}<br/><div style="font-size: small; color: darkgreen">(added in @{value.version_added}@)</div>{% endif %}
                 </td>
                 {# default / choices #}
@@ -201,7 +200,8 @@ Parameters
             {% endif %}
         {% endfor %}
     </table>
-    <br/>
+    <div style="color: red; display:inline"><b>**</b></div> This parameter is required for this @{ plugin_type }@ to work.
+    <br/><br/>
 
 {% endif %}
 
