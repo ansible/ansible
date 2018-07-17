@@ -164,6 +164,10 @@ def run_commands(module, commands, check_rc=True):
 
 def run_cnos_commands(module, commands, check_rc=True):
     retVal = ''
+    enter_config = {'command': 'configure terminal', 'prompt': None, 'answer': None}
+    exit_config = {'command': 'end', 'prompt': None, 'answer': None}
+    commands.insert(0, enter_config)
+    commands.append(exit_config)
     for cmd in commands:
         retVal = retVal + '>> ' + cmd['command'] + '\n'
     try:
@@ -2211,7 +2215,7 @@ def bgpConfig(
 
 def vlanConfig(module, prompt, answer):
 
-    retVal = ""
+    retVal = ''
     # Wait time to get response from server
     vlanArg1 = module.params['vlanArg1']
     vlanArg2 = module.params['vlanArg2']
@@ -2231,8 +2235,7 @@ def vlanConfig(module, prompt, answer):
             command = command + vlanArg2
             # debugOutput(command)
             cmd = [{'command': command, 'prompt': None, 'answer': None}]
-            retVal = str(run_cnos_commands(module, cmd))
-            retVal = retVal + vlanAccessMapConfig(module, prompt, answer)
+            retVal = retVal + vlanAccessMapConfig(module, cmd)
             return retVal
         else:
             retVal = "Error-130"
@@ -2294,7 +2297,7 @@ def vlanConfig(module, prompt, answer):
 # EOM
 
 
-def vlanAccessMapConfig(module, prompt, answer):
+def vlanAccessMapConfig(module, cmd):
     retVal = ''
     # Wait time to get response from server
     command = ''
@@ -2331,12 +2334,10 @@ def vlanAccessMapConfig(module, prompt, answer):
         retVal = "Error-138"
         return retVal
 
-    cmd = [{'command': command, 'prompt': None, 'answer': None}]
+    inner_cmd = [{'command': command, 'prompt': None, 'answer': None}]
+    cmd.extend(inner_cmd)
     retVal = retVal + str(run_cnos_commands(module, cmd))
     # debugOutput(command)
-    command = 'exit'
-    cmd = [{'command': command, 'prompt': None, 'answer': None}]
-    retVal = retVal + str(run_cnos_commands(module, cmd, False))
     return retVal
 # EOM
 
@@ -2368,11 +2369,10 @@ def createVlan(module, prompt, answer):
     vlanArg4 = module.params['vlanArg4']
     vlanArg5 = module.params['vlanArg5']
     deviceType = module.params['deviceType']
-
+    retVal = ''
     command = 'vlan ' + vlanArg1
     # debugOutput(command)
     cmd = [{'command': command, 'prompt': None, 'answer': None}]
-    retVal = str(run_cnos_commands(module, cmd))
     command = ""
     if(vlanArg2 == "name"):
         # debugOutput("name")
@@ -2546,13 +2546,10 @@ def createVlan(module, prompt, answer):
     else:
         retVal = "Error-154"
         return retVal
-    cmd = [{'command': command, 'prompt': None, 'answer': None}]
+    inner_cmd = [{'command': command, 'prompt': None, 'answer': None}]
+    cmd.extend(inner_cmd)
     retVal = retVal + str(run_cnos_commands(module, cmd))
-    # Come back to config mode
-    command = 'exit'
     # debugOutput(command)
-    cmd = [{'command': command, 'prompt': None, 'answer': None}]
-    retVal = retVal + str(run_cnos_commands(module, cmd))
     return retVal
 # EOM
 
