@@ -78,11 +78,6 @@ options:
     type: list
     default: domain,private,public
     aliases: [ profile ]
-  interfacetypes:
-    description:
-      - The interface types this rule applies to.
-    type: list
-    default: [ any ]
   force:
     description:
     - Replace any existing rule by removing it first.
