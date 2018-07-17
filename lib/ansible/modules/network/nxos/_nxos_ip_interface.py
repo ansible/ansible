@@ -179,6 +179,7 @@ except ImportError:
 
 from ansible.module_utils.network.nxos.nxos import load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
+from ansible.module_utils.network.nxos.nxos import get_interface_type
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -207,23 +208,6 @@ def execute_show_command(command, module):
     body = run_commands(module, [cmd])
 
     return body
-
-
-def get_interface_type(interface):
-    if interface.upper().startswith('ET'):
-        return 'ethernet'
-    elif interface.upper().startswith('VL'):
-        return 'svi'
-    elif interface.upper().startswith('LO'):
-        return 'loopback'
-    elif interface.upper().startswith('MG'):
-        return 'management'
-    elif interface.upper().startswith('MA'):
-        return 'management'
-    elif interface.upper().startswith('PO'):
-        return 'portchannel'
-    else:
-        return 'unknown'
 
 
 def is_default(interface, module):

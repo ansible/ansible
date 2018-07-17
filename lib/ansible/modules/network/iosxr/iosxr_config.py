@@ -27,6 +27,8 @@ extends_documentation_fragment: iosxr
 notes:
   - Tested against IOS XRv 6.1.2
   - This module does not support netconf connection
+  - Abbreviated commands are NOT idempotent, see
+    L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
   - Avoid service disrupting changes (viz. Management IP) from config replace.
   - Do not use C(end) in the replace config file.
 options:
@@ -113,8 +115,9 @@ options:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
         changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory.  If the directory does not
-        exist, it is created.
+        folder in the playbook root directory or role root directory, if
+        playbook is part of an ansible role. If the directory does not exist,
+        it is created.
     type: bool
     default: 'no'
     version_added: "2.2"
@@ -151,6 +154,14 @@ EXAMPLES = """
     src: config.cfg
     replace: config
     backup: yes
+
+- name: for idempotency, use full-form commands
+  iosxr_config:
+    lines:
+      # - shut
+      - shutdown
+    # parents: int g0/0/0/1
+    parents: interface GigabitEthernet0/0/0/1
 """
 
 RETURN = """
@@ -165,12 +176,49 @@ backup_path:
   type: string
   sample: /playbooks/ansible/backup/iosxr01.2016-07-16@22:28:34
 """
+import re
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.iosxr.iosxr import load_config, get_config
 from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, copy_file
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 
 DEFAULT_COMMIT_COMMENT = 'configured by iosxr_config'
+
+CONFIG_MISPLACED_CHILDREN = [
+    re.compile(r'^end-\s*(.+)$')
+]
+
+# Objects defined in Route-policy Language guide of IOS_XR.
+# Reconfiguring these objects replace existing configurations.
+# Hence these objects should be played direcly from candidate
+# configurations
+CONFIG_BLOCKS_FORCED_IN_DIFF = [
+    {
+        'start': re.compile(r'route-policy'),
+        'end': re.compile(r'end-policy')
+    },
+    {
+        'start': re.compile(r'prefix-set'),
+        'end': re.compile(r'end-set')
+    },
+    {
+        'start': re.compile(r'as-path-set'),
+        'end': re.compile(r'end-set')
+    },
+    {
+        'start': re.compile(r'community-set'),
+        'end': re.compile(r'end-set')
+    },
+    {
+        'start': re.compile(r'rd-set'),
+        'end': re.compile(r'end-set')
+    },
+    {
+        'start': re.compile(r'extcommunity-set'),
+        'end': re.compile(r'end-set')
+    }
+]
 
 
 def copy_file_to_node(module):
@@ -197,17 +245,87 @@ def check_args(module, warnings):
                         'removed in the future')
 
 
+# A list of commands like {end-set, end-policy, ...} are part of configuration
+# block like { prefix-set, as-path-set , ... } but they are not indented properly
+# to be included with their parent. sanitize_config will add indentation to
+# end-* commands so they are included with their parents
+def sanitize_config(config, force_diff_prefix=None):
+    conf_lines = config.split('\n')
+    for regex in CONFIG_MISPLACED_CHILDREN:
+        for index, line in enumerate(conf_lines):
+            m = regex.search(line)
+            if m and m.group(0):
+                if force_diff_prefix:
+                    conf_lines[index] = '  ' + m.group(0) + force_diff_prefix
+                else:
+                    conf_lines[index] = '  ' + m.group(0)
+    conf = ('\n').join(conf_lines)
+    return conf
+
+
+def mask_config_blocks_from_diff(config, candidate, force_diff_prefix):
+    conf_lines = config.split('\n')
+    candidate_lines = candidate.split('\n')
+
+    for regex in CONFIG_BLOCKS_FORCED_IN_DIFF:
+        block_index_start_end = []
+        for index, line in enumerate(candidate_lines):
+            startre = regex['start'].search(line)
+            if startre and startre.group(0):
+                start_index = index
+            else:
+                endre = regex['end'].search(line)
+                if endre and endre.group(0):
+                    end_index = index
+                    new_block = True
+                    for prev_start, prev_end in block_index_start_end:
+                        if start_index == prev_start:
+                            # This might be end-set of another regex
+                            # otherwise we would be having new start
+                            new_block = False
+                            break
+                    if new_block:
+                        block_index_start_end.append((start_index, end_index))
+
+        for start, end in block_index_start_end:
+            diff = False
+            if candidate_lines[start] in conf_lines:
+                run_conf_start_index = conf_lines.index(candidate_lines[start])
+            else:
+                diff = False
+                continue
+            for i in range(start, end + 1):
+                if conf_lines[run_conf_start_index] == candidate_lines[i]:
+                    run_conf_start_index = run_conf_start_index + 1
+                else:
+                    diff = True
+                    break
+            if diff:
+                run_conf_start_index = conf_lines.index(candidate_lines[start])
+                for i in range(start, end + 1):
+                    conf_lines[run_conf_start_index] = conf_lines[run_conf_start_index] + force_diff_prefix
+                    run_conf_start_index = run_conf_start_index + 1
+
+    conf = ('\n').join(conf_lines)
+    return conf
+
+
 def get_running_config(module):
     contents = module.params['config']
     if not contents:
         contents = get_config(module)
+    if module.params['src']:
+        contents = mask_config_blocks_from_diff(contents, module.params['src'], "ansible")
+        contents = sanitize_config(contents)
     return NetworkConfig(indent=1, contents=contents)
 
 
 def get_candidate(module):
     candidate = NetworkConfig(indent=1)
     if module.params['src']:
-        candidate.load(module.params['src'])
+        config = module.params['src']
+        config = sanitize_config(config)
+        candidate.load(config)
     elif module.params['lines']:
         parents = module.params['parents'] or list()
         candidate.add(module.params['lines'], parents=parents)

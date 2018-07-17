@@ -9,8 +9,7 @@
     dest: host
     name: 172.16.0.1
     state: absent
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - name: Set up host logging using platform agnostic module
@@ -18,8 +17,7 @@
     dest: host
     name: 172.16.0.1
     state: present
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -32,8 +30,7 @@
     dest: host
     name: 172.16.0.1
     state: absent
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - debug: msg="END eos eapi/net_logging.yaml on connection={{ ansible_connection }}"

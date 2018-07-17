@@ -3,8 +3,6 @@
 Python API
 ==========
 
-.. note:: This document is out of date; 'ansible.parsing.dataloader' and 'ansible.runner' are not available in the current version of Ansible.
-
 .. contents:: Topics
 
 .. note:: This API is intended for internal Ansible use. Ansible may make changes to this API at any time that could break backward compatibility with older versions of the API. Because of this, external use is not supported by Ansible. 
@@ -15,7 +13,7 @@ write plugins, and you can plug in inventory data from external data sources.  T
 gives a basic overview and examples of the Ansible execution and playbook API.
 
 If you would like to use Ansible programmatically from a language other than Python, trigger events asynchronously, 
-or have access control and logging demands, please see the `Ansible Tower documentation <http://docs.ansible.com/ansible-tower/>`_.
+or have access control and logging demands, please see the `Ansible Tower documentation <https://docs.ansible.com/ansible-tower/>`_.
 
 .. note:: Because Ansible relies on forking processes, this API is not thread safe.
 
@@ -103,8 +101,8 @@ This example is a simple demonstration that shows how to minimally run a couple 
         if tqm is not None:
             tqm.cleanup()
         
-         # Remove ansible tmpdir
-         shutil.rmtree(C.DEFAULT_LOCAL_TMP, True)
+        # Remove ansible tmpdir
+        shutil.rmtree(C.DEFAULT_LOCAL_TMP, True)
 
 
 .. note:: Ansible emits warnings and errors via the display object, which prints directly to stdout, stderr and the Ansible log.

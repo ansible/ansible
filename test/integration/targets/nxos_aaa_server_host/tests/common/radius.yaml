@@ -7,8 +7,8 @@
   nxos_aaa_server_host: &remove
     server_type: radius
     address: 8.8.8.8
-    state: absent
     provider: "{{ connection }}"
+    state: absent
   ignore_errors: yes
 
 - block:
@@ -16,8 +16,8 @@
     nxos_aaa_server_host: &configure_default_radius
       server_type: radius
       address: 8.8.8.8
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: &true
@@ -51,8 +51,8 @@
       host_timeout: 25
       auth_port: 2083
       acct_port: 2084
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
  
   - assert: *true
@@ -70,8 +70,8 @@
       host_timeout: default
       auth_port: 1000
       acct_port: default
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -91,8 +91,8 @@
       acct_port: 2084
       encrypt_type: 0
       key: hello
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -118,8 +118,8 @@
       acct_port: 2084
       encrypt_type: 7
       key: hello
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -139,8 +139,8 @@
       acct_port: default
       encrypt_type: 7
       key: default
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -159,8 +159,8 @@
       auth_port: default
       acct_port: default
       key: default
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true

@@ -37,6 +37,8 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+CLI_SUPPORTED_MODULES = ['junos_netconf', 'junos_command']
+
 
 class ActionModule(_ActionModule):
 
@@ -54,6 +56,12 @@ class ActionModule(_ActionModule):
             pc = copy.deepcopy(self._play_context)
             pc.network_os = 'junos'
             pc.remote_addr = provider['host'] or self._play_context.remote_addr
+
+            if provider['transport'] == 'cli' and self._task.action not in CLI_SUPPORTED_MODULES:
+                return {'failed': True, 'msg': "Transport type '%s' is not valid for '%s' module. "
+                                               "Please see https://docs.ansible.com/ansible/latest/network/user_guide/platform_junos.html"
+                                               % (provider['transport'], self._task.action)}
+
             if self._task.action == 'junos_netconf' or (provider['transport'] == 'cli' and self._task.action == 'junos_command'):
                 pc.connection = 'network_cli'
                 pc.port = int(provider['port'] or self._play_context.port or 22)
@@ -64,10 +72,13 @@ class ActionModule(_ActionModule):
             pc.remote_user = provider['username'] or self._play_context.connection_user
             pc.password = provider['password'] or self._play_context.password
             pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
-            pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
+            pc.timeout = int(provider['timeout']) if provider['timeout'] else None
 
             display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
             connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
+
+            if connection._play_context.timeout is None:
+                connection._play_context.timeout = connection.get_option('persistent_command_timeout')
 
             socket_path = connection.run()
             display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
@@ -80,9 +91,17 @@ class ActionModule(_ActionModule):
         elif self._play_context.connection in ('netconf', 'network_cli'):
             provider = self._task.args.get('provider', {})
             if any(provider.values()):
-                display.warning('provider is unnecessary when using connection=%s and will be ignored' % self._play_context.connection)
-        else:
-            return {'failed': True, 'msg': 'Connection type %s is not valid for this module' % self._play_context.connection}
+                # for legacy reasons provider value is required for junos_facts(optional) and junos_package
+                # modules as it uses junos_eznc library to connect to remote host
+                if not (self._task.action == 'junos_facts' or self._task.action == 'junos_package'):
+                    display.warning('provider is unnecessary when using %s and will be ignored' % self._play_context.connection)
+                    del self._task.args['provider']
+
+            if (self._play_context.connection == 'network_cli' and self._task.action not in CLI_SUPPORTED_MODULES) or \
+                    (self._play_context.connection == 'netconf' and self._task.action == 'junos_netconf'):
+                return {'failed': True, 'msg': "Connection type '%s' is not valid for '%s' module. "
+                                               "Please see https://docs.ansible.com/ansible/latest/network/user_guide/platform_junos.html"
+                                               % (self._play_context.connection, self._task.action)}
 
         if (self._play_context.connection == 'local' and pc.connection == 'network_cli') or self._play_context.connection == 'network_cli':
             # make sure we are in the right cli context which should be

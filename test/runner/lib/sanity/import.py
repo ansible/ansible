@@ -41,7 +41,7 @@ class ImportTest(SanityMultipleVersion):
         :type args: SanityConfig
         :type targets: SanityTargets
         :type python_version: str
-        :rtype: SanityResult
+        :rtype: TestResult
         """
         with open('test/sanity/import/skip.txt', 'r') as skip_fd:
             skip_paths = skip_fd.read().splitlines()

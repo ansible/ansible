@@ -67,7 +67,7 @@ options:
           specified. If no tags are specified, it removes all existing tags for the distribution. When I(purge_tags=no), existing tags are kept and I(tags)
           are added, if specified.
       default: 'no'
-      choices: ['yes', 'no']
+      type: bool
 
     alias:
       description:
@@ -85,7 +85,7 @@ options:
         - Specifies whether existing aliases will be removed before adding new aliases. When I(purge_aliases=yes), existing aliases are removed and I(aliases)
           are added.
       default: 'no'
-      choices: ['yes', 'no']
+      type: bool
 
     default_root_object:
       description:
@@ -245,7 +245,7 @@ options:
       description:
         - A boolean value that specifies whether the distribution is enabled or disabled.
       default: 'yes'
-      choices: ['yes', 'no']
+      type: bool
 
     viewer_certificate:
       description:
@@ -280,13 +280,13 @@ options:
     ipv6_enabled:
       description:
         - Determines whether IPv6 support is enabled or not.
-      choices: ['yes', 'no']
+      type: bool
       default: 'no'
 
     wait:
       description:
         - Specifies whether the module waits until the distribution has completed processing the creation or update.
-      choices: ['yes', 'no']
+      type: bool
       default: 'no'
 
     wait_timeout:
@@ -1319,7 +1319,10 @@ class CloudFrontValidationManager(object):
         ])
         self.__valid_viewer_certificate_minimum_protocol_versions = set([
             'SSLv3',
-            'TLSv1'
+            'TLSv1',
+            'TLSv1_2016',
+            'TLSv1.1_2016',
+            'TLSv1.2_2018'
         ])
         self.__valid_viewer_certificate_certificate_sources = set([
             'cloudfront',
@@ -1691,7 +1694,7 @@ class CloudFrontValidationManager(object):
                                               rest not in geo_restriction_items])
             valid_restrictions = ansible_list_to_cloudfront_list(geo_restriction_items)
             valid_restrictions['restriction_type'] = geo_restriction.get('restriction_type')
-            return valid_restrictions
+            return {'geo_restriction': valid_restrictions}
         except Exception as e:
             self.module.fail_json_aws(e, msg="Error validating restrictions")
 

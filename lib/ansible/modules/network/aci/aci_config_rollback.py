@@ -41,24 +41,21 @@ options:
   fail_on_decrypt:
     description:
     - Determines if the APIC should fail the rollback if unable to decrypt secured data.
-    - The APIC defaults new Import Policies to C(yes).
+    - The APIC defaults to C(yes) when unset.
     type: bool
-    default: 'yes'
   import_mode:
     description:
     - Determines how the import should be handled by the APIC.
-    - The APIC defaults new Import Policies to C(atomic).
+    - The APIC defaults to C(atomic) when unset.
     choices: [ atomic, best-effort ]
-    default: atomic
   import_policy:
     description:
     - The name of the Import Policy to use for config rollback.
   import_type:
     description:
     - Determines how the current and snapshot configuration should be compared for replacement.
-    - The APIC defaults new Import Policies to C(replace).
+    - The APIC defaults to C(replace) when unset.
     choices: [ merge, replace ]
-    default: replace
   snapshot:
     description:
     - The name of the snapshot to rollback to, or the base snapshot to use for comparison.

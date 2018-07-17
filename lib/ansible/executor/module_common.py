@@ -143,12 +143,6 @@ if sys.version_info < (3,):
 else:
     unicode = str
     PY3 = True
-try:
-    # Python-2.6+
-    from io import BytesIO as IOStream
-except ImportError:
-    # Python < 2.6
-    from StringIO import StringIO as IOStream
 
 ZIPDATA = """%(zipdata)s"""
 
@@ -826,7 +820,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
                 become_required = True
 
         for m in set(module_names):
-            m = to_text(m)
+            m = to_text(m).rstrip()  # tolerate windows line endings
             mu_path = ps_module_utils_loader.find_plugin(m, ".psm1")
             if not mu_path:
                 raise AnsibleError('Could not find imported module support code for \'%s\'.' % m)

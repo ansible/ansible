@@ -37,7 +37,7 @@ options:
             - Whether the connection should start on boot.
             - Whether the connection profile can be automatically activated
         type: bool
-        default: 'yes'
+        default: True
     conn_name:
         description:
             - 'Where conn_name will be the name used to call the connection. when not provided a default name is generated: <type>[-<ifname>][-<num>]'
@@ -58,7 +58,7 @@ options:
         description:
             - This is the type of device or network connection that you wish to create for a bond, team or bridge.
         choices: [ "balance-rr", "active-backup", "balance-xor", "broadcast", "802.3ad", "balance-tlb", "balance-alb" ]
-        default: balence-rr
+        default: balance-rr
     master:
         description:
             - master <master (ifname, or connection UUID or conn_name) of bridge, team, bond master connection profile.
@@ -467,7 +467,7 @@ try:
 
     from gi.repository import NetworkManager, NMClient
     HAVE_NM_CLIENT = True
-except ImportError:
+except (ImportError, ValueError):
     HAVE_NM_CLIENT = False
 
 from ansible.module_utils.basic import AnsibleModule
@@ -1053,7 +1053,7 @@ class Nmcli(object):
         params = {'vlan.parent': self.vlandev,
                   'vlan.id': self.vlanid,
                   'ipv4.address': self.ip4,
-                  'ipv4.geteway': self.gw4,
+                  'ipv4.gateway': self.gw4,
                   'ipv4.dns': self.dns4,
                   'ipv6.address': self.ip6,
                   'ipv6.gateway': self.gw6,
@@ -1156,7 +1156,7 @@ def main():
     # Parsing argument file
     module = AnsibleModule(
         argument_spec=dict(
-            autoconnect=dict(required=False, default=None, type='bool'),
+            autoconnect=dict(required=False, default=True, type='bool'),
             state=dict(required=True, choices=['present', 'absent'], type='str'),
             conn_name=dict(required=True, type='str'),
             master=dict(required=False, default=None, type='str'),

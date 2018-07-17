@@ -1,10 +1,10 @@
 ---
+- debug: msg="START eapi/basic-motd.yaml on connection={{ ansible_connection }}"
 
 - name: Remove previous motd banner
   eos_config:
     lines: no banner motd
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
 
 - name: Set motd
   eos_banner:
@@ -14,15 +14,14 @@
       that has a multiline
       string
     state: present
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
     that:
       - "result.changed == true"
-      - "result.commands.0.cmd == 'banner motd'"
-      - "result.commands.0.input == 'this is my motd banner\nthat has a multiline\nstring'"
+      - "'this is my motd banner' in result.commands"
+      - "'that has a multiline' in result.commands"
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "'ansible_1' in result.session_name"
 
@@ -34,8 +33,7 @@
       that has a multiline
       string
     state: present
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -53,14 +51,13 @@
       that has a multiline
       string
     state: absent
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
     that:
       - "result.changed == true"
-      - "result.commands.0.cmd == 'no banner motd'"
+      - "'no banner motd' in result.commands"
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "'ansible_1' in result.session_name"
 
@@ -72,8 +69,7 @@
       that has a multiline
       string
     state: absent
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -82,6 +78,7 @@
       - "result.commands | length == 0"
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "result.session_name is not defined"
+
 # FIXME add in tests for everything defined in docs
 # FIXME Test state:absent + test:
 # FIXME Without powers ensure "privileged mode required"

@@ -21,8 +21,8 @@ author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
 description:
     - Retrieve facts about a one or more OpenStack users
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 options:
    name:
      description:
@@ -124,7 +124,7 @@ def main():
 
     module = AnsibleModule(argument_spec)
 
-    shade, opcloud = openstack_cloud_from_module(module)
+    sdk, opcloud = openstack_cloud_from_module(module)
     try:
         name = module.params['name']
         domain = module.params['domain']
@@ -153,7 +153,7 @@ def main():
         module.exit_json(changed=False, ansible_facts=dict(
             openstack_users=users))
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

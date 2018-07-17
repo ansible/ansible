@@ -91,7 +91,7 @@ options:
       - ramdisk I(eri) to use for the instance
   wait:
     description:
-      - wait for the instance to reach its desired state before returning.  Does not wait for SSH, see 'wait_for' example for details.
+      - wait for the instance to reach its desired state before returning.  Does not wait for SSH, see 'wait_for_connection' example for details.
     type: bool
     default: 'no'
   wait_timeout:
@@ -179,8 +179,8 @@ options:
     description:
       - a list of hash/dictionaries of volumes to add to the new instance; '[{"key":"value", "key":"value"}]'; keys allowed
         are - device_name (str; required), delete_on_termination (bool; False), device_type (deprecated), ephemeral (str),
-        encrypted (bool; False), snapshot (str), volume_type (str), iops (int) - device_type is deprecated use volume_type,
-        iops must be set when volume_type='io1', ephemeral and snapshot are mutually exclusive.
+        encrypted (bool; False), snapshot (str), volume_type (str), volume_size (int, GB), iops (int) - device_type
+        is deprecated use volume_type, iops must be set when volume_type='io1', ephemeral and snapshot are mutually exclusive.
   ebs_optimized:
     version_added: "1.6"
     description:
@@ -359,7 +359,7 @@ EXAMPLES = '''
   hosts: localhost
   gather_facts: False
   vars:
-    key_name: my_keypair
+    keypair: my_keypair
     instance_type: m1.small
     security_group: my_securitygroup
     image: my_ami_id
@@ -384,12 +384,10 @@ EXAMPLES = '''
       with_items: "{{ ec2.instances }}"
 
     - name: Wait for SSH to come up
-      wait_for:
-        host: "{{ item.public_dns_name }}"
-        port: 22
+      delegate_to: "{{ item.public_dns_name }}"
+      wait_for_connection:
         delay: 60
         timeout: 320
-        state: started
       with_items: "{{ ec2.instances }}"
 
 - name: Configure instance(s)

@@ -57,7 +57,7 @@ options:
   routes:
     description: List of routes in the route table.
         Routes are specified as dicts containing the keys 'dest' and one of 'gateway_id',
-        'instance_id', 'interface_id', or 'vpc_peering_connection_id'.
+        'instance_id', 'network_interface_id', or 'vpc_peering_connection_id'.
         If 'gateway_id' is specified, you can refer to the VPC's IGW by using the value 'igw'.
         Routes are required for present states.
   state:
@@ -256,7 +256,7 @@ def find_subnets(connection, module, vpc_id, identified_subnets):
     'Name' tag, or a CIDR such as 10.0.0.0/8.
 
     Note that this function is duplicated in other ec2 modules, and should
-    potentially be moved into potentially be moved into a shared module_utils
+    potentially be moved into a shared module_utils
     """
     subnet_ids = []
     subnet_names = []
@@ -294,7 +294,7 @@ def find_subnets(connection, module, vpc_id, identified_subnets):
             module.fail_json_aws(e, msg="Couldn't find subnet with names %s" % subnet_names)
 
         for name in subnet_names:
-            matching_count = len([1 for s in subnets_by_name if s.tags.get('Name') == name])
+            matching_count = len([1 for s in subnets_by_name for t in s.get('Tags', []) if t['Key'] == 'Name' and t['Value'] == name])
             if matching_count == 0:
                 module.fail_json(msg='Subnet named "{0}" does not exist'.format(name))
             elif matching_count > 1:

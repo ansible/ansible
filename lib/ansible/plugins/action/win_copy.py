@@ -274,8 +274,8 @@ class ActionModule(ActionBase):
             dict(
                 dest=dest,
                 src=tmp_src,
-                original_basename=source_rel,
-                mode="single"
+                _original_basename=source_rel,
+                _copy_mode="single"
             )
         )
         copy_args.pop('content', None)
@@ -317,7 +317,7 @@ class ActionModule(ActionBase):
             dict(
                 src=tmp_src,
                 dest=dest,
-                mode="explode"
+                _copy_mode="explode"
             )
         )
         copy_args.pop('content', None)
@@ -380,7 +380,7 @@ class ActionModule(ActionBase):
             new_module_args = self._task.args.copy()
             new_module_args.update(
                 dict(
-                    mode="remote",
+                    _copy_mode="remote",
                     dest=dest,
                     src=source,
                     force=force
@@ -467,7 +467,7 @@ class ActionModule(ActionBase):
         query_args = self._task.args.copy()
         query_args.update(
             dict(
-                mode="query",
+                _copy_mode="query",
                 dest=check_dest,
                 force=force,
                 files=source_files['files'],

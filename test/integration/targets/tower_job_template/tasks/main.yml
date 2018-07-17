@@ -44,7 +44,7 @@
     project: Job Template Test Project
     inventory: Demo Inventory
     playbook: hello_world.yml
-    machine_credential: Demo Credential
+    credential: Demo Credential
     job_type: run
     state: present
   register: result

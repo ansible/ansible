@@ -53,6 +53,7 @@ options:
       is kept when modifying the task.
     - This module only supports the C(ExecAction) type but can still delete the
       older legacy types.
+    type: list
     suboptions:
       path:
         description:
@@ -78,6 +79,7 @@ options:
     - DEPRECATED since 2.5, use the C(actions) option instead to specify a list
       of actions to run.
     - Will be removed in 2.7.
+    type: path
 
   # Trigger options
   triggers:
@@ -90,6 +92,7 @@ options:
       for a list of trigger types and their options.
     - The suboption options listed below are not required for all trigger
       types, read the description for more details.
+    type: list
     suboptions:
       type:
         description:
@@ -209,6 +212,7 @@ options:
     - DEPRECATED since 2.5, use the C(triggers) option list with the type of
       C(monthlydow) or C(weekly).
     - Will be removed in 2.7.
+    type: list
   frequency:
     description:
     - The frequency of the task to run.
@@ -330,6 +334,7 @@ options:
     - C(0) means the task is compatible with the AT command.
     - C(1) means the task is compatible with Task Scheduler 1.0.
     - C(2) means the task is compatible with Task Scheduler 2.0.
+    type: int
     choices: [ 0, 1, 2 ]
     version_added: '2.5'
   delete_expired_task_after:
@@ -372,6 +377,7 @@ options:
       before starting itself.
     - C(2) will not start a new instance if another is running.
     - C(3) will stop other instances of the task and start the new one.
+    type: int
     choices: [ 0, 1, 2, 3 ]
     version_added: '2.5'
   priority:
@@ -380,11 +386,13 @@ options:
     - When creating a new task the default if C(7).
     - See U(https://msdn.microsoft.com/en-us/library/windows/desktop/aa383512.aspx)
       for details on the priority levels.
+    type: int
     version_added: '2.5'
   restart_count:
     description:
     - The number of times that the Task Scheduler will attempt to restart the
       task.
+    type: int
     version_added: '2.5'
   restart_interval:
     description:
@@ -439,7 +447,7 @@ EXAMPLES = r'''
       arguments: /c whoami
     triggers:
     - type: daily
-      start_boundary: 2017-10-09T09:00:00
+      start_boundary: '2017-10-09T09:00:00'
     username: SYSTEM
     state: present
     enabled: yes

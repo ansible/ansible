@@ -290,7 +290,7 @@ Ansible will read all the files in these directories in lexicographical order. A
 All hosts that are in the 'raleigh' group will have the variables defined in these files
 available to them. This can be very useful to keep your variables organized when a single
 file starts to be too big, or when you want to use :doc:`Ansible Vault<playbooks_vault>` on a part of a group's
-variables. 
+variables.
 
 Tip: The ``group_vars/`` and ``host_vars/`` directories can exist in
 the playbook directory OR the inventory directory. If both paths exist, variables in the playbook
@@ -322,7 +322,7 @@ Starting in Ansible version 2.4, users can use the group variable ``ansible_grou
     a_group:
         testvar: a
         ansible_group_priority: 10
-    b_group
+    b_group：
         testvar: b
 
 In this example, if both groups have the same priority, the result would normally have been ``testvar == b``, but since we are giving the ``a_group`` a higher priority the result will be ``testvar == a``.
@@ -335,6 +335,8 @@ List of Behavioral Inventory Parameters
 As described above, setting the following variables control how Ansible interacts with remote hosts.
 
 Host connection:
+
+.. include:: shared_snippets/SSH_password_prompt.txt
 
 ansible_connection
     Connection type to the host. This can be the name of any of ansible's connection plugins. SSH protocol types are ``smart``, ``ssh`` or ``paramiko``.  The default is smart. Non-SSH based types are described in the next section.
@@ -388,21 +390,30 @@ ansible_become_flags
 
 Remote host environment parameters:
 
+.. _ansible_shell_type:
+
 ansible_shell_type
-    The shell type of the target system. You should not use this setting unless you have set the ``ansible_shell_executable`` to a non-Bourne (sh) compatible shell.
-    By default commands are formatted using ``sh``-style syntax.
-    Setting this to ``csh`` or ``fish`` will cause commands executed on target systems to follow those shell's syntax instead.
+    The shell type of the target system. You should not use this setting unless you have set the
+    :ref:`ansible_shell_executable<ansible_shell_executable>` to a non-Bourne (sh) compatible shell.  By default commands are
+    formatted using ``sh``-style syntax.  Setting this to ``csh`` or ``fish`` will cause commands
+    executed on target systems to follow those shell's syntax instead.
+
+.. _ansible_python_interpreter:
+
 ansible_python_interpreter
     The target host python path. This is useful for systems with more
     than one Python or not located at :command:`/usr/bin/python` such as \*BSD, or where :command:`/usr/bin/python`
     is not a 2.X series Python.  We do not use the :command:`/usr/bin/env` mechanism as that requires the remote user's
     path to be set right and also assumes the :program:`python` executable is named python, where the executable might
     be named something like :program:`python2.6`.
+
 ansible_*_interpreter
-    Works for anything such as ruby or perl and works just like ``ansible_python_interpreter``.
+    Works for anything such as ruby or perl and works just like :ref:`ansible_python_interpreter<ansible_python_interpreter>`.
     This replaces shebang of modules which will run on that host.
 
 .. versionadded:: 2.1
+
+.. _ansible_shell_executable:
 
 ansible_shell_executable
     This sets the shell the ansible controller will use on the target machine,

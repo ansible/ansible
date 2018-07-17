@@ -38,44 +38,49 @@ options:
     description:
     - The name of the end point group.
     aliases: [ epg_name ]
+  description:
+    description:
+    - Description for the static path to EPG binding.
+    aliases: [ descr ]
+    version_added: '2.7'
   encap_id:
     description:
     - The encapsulation ID associating the C(epg) with the interface path.
     - This acts as the secondary C(encap_id) when using micro-segmentation.
+    - Accepted values are any valid encap ID for specified encap, currently ranges between C(1) and C(4096).
+    type: int
     aliases: [ vlan, vlan_id ]
-    choices: [ Valid encap IDs for specified encap, currently 1 to 4096 ]
   primary_encap_id:
     description:
     - Determines the primary encapsulation ID associating the C(epg)
       with the interface path when using micro-segmentation.
+    - Accepted values are any valid encap ID for specified encap, currently ranges between C(1) and C(4096).
+    type: int
     aliases: [ primary_vlan, primary_vlan_id ]
-    choices: [ Valid encap IDs for specified encap, currently 1 to 4096 ]
   deploy_immediacy:
     description:
     - The Deployement Immediacy of Static EPG on PC, VPC or Interface.
-    - The APIC defaults the Deployement Immediacy to C(lazy).
+    - The APIC defaults to C(lazy) when unset during creation.
     choices: [ immediate, lazy ]
-    default: lazy
   interface_mode:
     description:
     - Determines how layer 2 tags will be read from and added to frames.
     - Values C(802.1p) and C(native) are identical.
     - Values C(access) and C(untagged) are identical.
     - Values C(regular), C(tagged) and C(trunk) are identical.
-    - The APIC defaults the mode to C(trunk).
+    - The APIC defaults to C(trunk) when unset during creation.
     choices: [ 802.1p, access, native, regular, tagged, trunk, untagged ]
-    default: trunk
     aliases: [ interface_mode_name, mode ]
   interface_type:
     description:
     - The type of interface for the static EPG deployement.
-    - The APIC defaults the C(interface_type) to C(switch_port).
     choices: [ fex, port_channel, switch_port, vpc ]
     default: switch_port
   pod_id:
     description:
     - The pod number part of the tDn.
-    - C(pod_id) is usually an integer below 10.
+    - C(pod_id) is usually an integer below C(10).
+    type: int
     aliases: [ pod, pod_number ]
   leafs:
     description:
@@ -87,12 +92,13 @@ options:
   interface:
     description:
     - The C(interface) string value part of the tDn.
-    - Usually a policy group like "test-IntPolGrp" or an interface of the following format "1/7" depending on C(interface_type).
+    - Usually a policy group like C(test-IntPolGrp) or an interface of the following format C(1/7) depending on C(interface_type).
   extpaths:
     description:
     - The C(extpaths) integer value part of the tDn.
     - C(extpaths) is only used if C(interface_type) is C(fex).
-    - Usually something like '1011'.
+    - Usually something like C(1011).
+    type: int
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -266,6 +272,7 @@ def main():
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),  # Not required for querying all objects
         epg=dict(type='str', aliases=['epg_name']),  # Not required for querying all objects
+        description=dict(type='str', aliases=['descr']),
         encap_id=dict(type='int', aliases=['vlan', 'vlan_id']),
         primary_encap_id=dict(type='int', aliases=['primary_vlan', 'primary_vlan_id']),
         deploy_immediacy=dict(type='str', choices=['immediate', 'lazy']),
@@ -292,15 +299,17 @@ def main():
     tenant = module.params['tenant']
     ap = module.params['ap']
     epg = module.params['epg']
+    description = module.params['description']
     encap_id = module.params['encap_id']
     primary_encap_id = module.params['primary_encap_id']
     deploy_immediacy = module.params['deploy_immediacy']
     interface_mode = module.params['interface_mode']
     interface_type = module.params['interface_type']
     pod_id = module.params['pod_id']
-    # Users are likely to use integers for leaf IDs, which would raise an exception when using the join method
-    leafs = [str(leaf) for leaf in module.params['leafs']]
+    leafs = module.params['leafs']
     if leafs is not None:
+        # Users are likely to use integers for leaf IDs, which would raise an exception when using the join method
+        leafs = [str(leaf) for leaf in module.params['leafs']]
         if len(leafs) == 1:
             if interface_type != 'vpc':
                 leafs = leafs[0]
@@ -343,7 +352,7 @@ def main():
 
     INTERFACE_TYPE_MAPPING = dict(
         fex='topology/pod-{0}/paths-{1}/extpaths-{2}/pathep-[eth{3}]'.format(pod_id, leafs, extpaths, interface),
-        port_channel='topology/pod-{0}/paths-{1}/pathep-[eth{2}]'.format(pod_id, leafs, interface),
+        port_channel='topology/pod-{0}/paths-{1}/pathep-[{2}]'.format(pod_id, leafs, interface),
         switch_port='topology/pod-{0}/paths-{1}/pathep-[eth{2}]'.format(pod_id, leafs, interface),
         vpc='topology/pod-{0}/protpaths-{1}/pathep-[{2}]'.format(pod_id, leafs, interface),
     )
@@ -386,6 +395,7 @@ def main():
         aci.payload(
             aci_class='fvRsPathAtt',
             class_config=dict(
+                descr=description,
                 encap=encap_id,
                 primaryEncap=primary_encap_id,
                 instrImedcy=deploy_immediacy,

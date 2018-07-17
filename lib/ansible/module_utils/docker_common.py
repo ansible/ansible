@@ -37,7 +37,7 @@ try:
     from docker import __version__ as docker_version
     from docker.errors import APIError, TLSParameterError, NotFound
     from docker.tls import TLSConfig
-    from docker.constants import DEFAULT_TIMEOUT_SECONDS, DEFAULT_DOCKER_API_VERSION
+    from docker.constants import DEFAULT_DOCKER_API_VERSION
     from docker import auth
 
     if LooseVersion(docker_version) >= LooseVersion('3.0.0'):
@@ -56,24 +56,45 @@ except ImportError as exc:
     HAS_DOCKER_ERROR = str(exc)
     HAS_DOCKER_PY = False
 
+
+# The next 2 imports ``docker.models`` and ``docker.ssladapter`` are used
+# to ensure the user does not have both ``docker`` and ``docker-py`` modules
+# installed, as they utilize the same namespace are are incompatible
+try:
+    # docker
+    import docker.models
+    HAS_DOCKER_MODELS = True
+except ImportError:
+    HAS_DOCKER_MODELS = False
+
+try:
+    # docker-py
+    import docker.ssladapter
+    HAS_DOCKER_SSLADAPTER = True
+except ImportError:
+    HAS_DOCKER_SSLADAPTER = False
+
+
 DEFAULT_DOCKER_HOST = 'unix://var/run/docker.sock'
 DEFAULT_TLS = False
 DEFAULT_TLS_VERIFY = False
+DEFAULT_TLS_HOSTNAME = 'localhost'
 MIN_DOCKER_VERSION = "1.7.0"
+DEFAULT_SSL_VERSION = "1.0"
+DEFAULT_TIMEOUT_SECONDS = 60
 
 DOCKER_COMMON_ARGS = dict(
-    docker_host=dict(type='str', aliases=['docker_url']),
-    tls_hostname=dict(type='str'),
-    api_version=dict(type='str', aliases=['docker_api_version']),
-    timeout=dict(type='int'),
+    docker_host=dict(type='str', aliases=['docker_url'], default=DEFAULT_DOCKER_HOST),
+    tls_hostname=dict(type='str', default=DEFAULT_TLS_HOSTNAME),
+    api_version=dict(type='str', aliases=['docker_api_version'], default='auto'),
+    timeout=dict(type='int', default=DEFAULT_TIMEOUT_SECONDS),
     cacert_path=dict(type='str', aliases=['tls_ca_cert']),
     cert_path=dict(type='str', aliases=['tls_client_cert']),
     key_path=dict(type='str', aliases=['tls_client_key']),
-    ssl_version=dict(type='str'),
-    tls=dict(type='bool'),
-    tls_verify=dict(type='bool'),
-    debug=dict(type='bool', default=False),
-    filter_logger=dict(type='bool', default=False),
+    ssl_version=dict(type='str', default=DEFAULT_SSL_VERSION),
+    tls=dict(type='bool', default=DEFAULT_TLS),
+    tls_verify=dict(type='bool', default=DEFAULT_TLS_VERIFY),
+    debug=dict(type='bool', default=False)
 )
 
 DOCKER_MUTUALLY_EXCLUSIVE = [
@@ -144,12 +165,17 @@ class AnsibleDockerClient(Client):
             required_together=required_together_params,
             required_if=required_if)
 
+        if HAS_DOCKER_MODELS and HAS_DOCKER_SSLADAPTER:
+            self.fail("Cannot have both the docker-py and docker python modules installed together as they use the same namespace and "
+                      "cause a corrupt installation. Please uninstall both packages, and re-install only the docker-py or docker python "
+                      "module. It is recommended to install the docker module if no support for Python 2.6 is required.")
+
         if not HAS_DOCKER_PY:
-            self.fail("Failed to import docker-py - %s. Try `pip install docker-py`" % HAS_DOCKER_ERROR)
+            self.fail("Failed to import docker or docker-py - %s. Try `pip install docker` or `pip install docker-py` (Python 2.6)" % HAS_DOCKER_ERROR)
 
         if LooseVersion(docker_version) < LooseVersion(MIN_DOCKER_VERSION):
-            self.fail("Error: docker-py version is %s. Minimum version required is %s." % (docker_version,
-                                                                                           MIN_DOCKER_VERSION))
+            self.fail("Error: docker / docker-py version is %s. Minimum version required is %s." % (docker_version,
+                                                                                                    MIN_DOCKER_VERSION))
 
         self.debug = self.module.params.get('debug')
         self.check_mode = self.module.check_mode

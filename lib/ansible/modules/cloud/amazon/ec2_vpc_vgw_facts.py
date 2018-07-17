@@ -124,10 +124,8 @@ def list_virtual_gateways(client, module):
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
 
-    snaked_vgws = [camel_dict_to_snake_dict(get_virtual_gateway_info(vgw))
-                   for vgw in all_virtual_gateways['VpnGateways']]
-
-    module.exit_json(virtual_gateways=snaked_vgws)
+    return [camel_dict_to_snake_dict(get_virtual_gateway_info(vgw))
+            for vgw in all_virtual_gateways['VpnGateways']]
 
 
 def main():
@@ -154,7 +152,7 @@ def main():
     # call your function here
     results = list_virtual_gateways(connection, module)
 
-    module.exit_json(result=results)
+    module.exit_json(virtual_gateways=results)
 
 
 if __name__ == '__main__':

@@ -9,16 +9,16 @@
     deadtime: default
     server_timeout: default
     directed_request: default
-    state: default
     provider: "{{ connection }}"
+    state: default
   ignore_errors: yes
 
 - block:
   - name: "Configure radius server defaults"
     nxos_aaa_server: &configure_default_radius
       server_type: radius
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - name: "Check Idempotence"
@@ -35,8 +35,8 @@
       server_timeout: 9
       deadtime: 20
       directed_request: enabled
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
   
   - assert: &true
@@ -60,8 +60,8 @@
       server_type: radius
       encrypt_type: 7
       global_key: test_key
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
    
   - assert: *true
@@ -79,8 +79,8 @@
       server_timeout: default
       global_key: default
       directed_request: default
-      state: default
       provider: "{{ connection }}"
+      state: default
     register: result
 
   - assert: *true

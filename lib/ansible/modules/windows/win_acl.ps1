@@ -1,7 +1,8 @@
 #!powershell
-# Copyright 2015, Phil Schwartz <schwartzmx@gmail.com>
-# Copyright 2015, Trond Hindenes
-# Copyright 2015, Hans-Joachim Kliemeck <git@kliemeck.de>
+
+# Copyright: (c) 2015, Phil Schwartz <schwartzmx@gmail.com>
+# Copyright: (c) 2015, Trond Hindenes
+# Copyright: (c) 2015, Hans-Joachim Kliemeck <git@kliemeck.de>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
@@ -120,7 +121,16 @@ namespace Ansible {
 }
 "@
 
+$params = Parse-Args $args;
+$_remote_tmp = Get-AnsibleParam $params "_ansible_remote_tmp" -type "path" -default $env:TMP
+
+$original_tmp = $env:TMP
+$original_temp = $env:TEMP
+$env:TMP = $_remote_tmp
+$env:TEMP = $_remote_tmp
 add-type $AdjustTokenPrivileges
+$env:TMP = $original_tmp
+$env:TEMP = $original_temp
 
 Function SetPrivilegeTokens() {
     # Set privilege tokens only if admin.
@@ -143,7 +153,7 @@ Function SetPrivilegeTokens() {
 }
 
 
-$params = Parse-Args $args;
+
 
 $result = @{
     changed = $false

@@ -26,7 +26,7 @@ author:
 - Russell Teague (@mtnbikenc)
 - Maxime de Roucy (@tchernomax)
 notes:
-- Tested on vSphere 5.5
+- Tested on vSphere 5.5, 6.0 and 6.5
 requirements:
 - python >= 2.6
 - PyVmomi
@@ -34,12 +34,34 @@ options:
   datacenter_name:
     description:
     - Name of the datacenter to add the host.
+    - Aliases added in version 2.6.
     required: yes
+    aliases: ['datacenter']
   cluster_name:
     description:
     - Name of the cluster to add the host.
-    - Required parameter from version 2.5.
-    required: yes
+    - If C(folder) is not set, then this parameter is required.
+    - Aliases added in version 2.6.
+    aliases: ['cluster']
+  folder:
+    description:
+    - Name of the folder under which host to add.
+    - If C(cluster_name) is not set, then this parameter is required.
+    - "For example, if there is a datacenter 'dc1' under folder called 'Site1' then, this value will be '/Site1/dc1/host'."
+    - "Here 'host' is an invisible folder under VMware Web Client."
+    - "Another example, if there is a nested folder structure like '/myhosts/india/pune' under
+       datacenter 'dc2', then C(folder) value will be '/dc2/host/myhosts/india/pune'."
+    - "Other Examples: "
+    - "  - '/Site2/dc2/Asia-Cluster/host'"
+    - "  - '/dc3/Asia-Cluster/host'"
+    version_added: "2.6"
+  add_connected:
+    description:
+    - If set to C(True), then the host should be connected as soon as it is added.
+    - This parameter is ignored if state is set to a value other than C(present).
+    default: True
+    type: 'bool'
+    version_added: "2.6"
   esxi_hostname:
     description:
     - ESXi hostname to manage.
@@ -50,30 +72,28 @@ options:
     - Required for adding a host.
     - Optional for reconnect.
     - Unused for removing.
-    - No longer required parameter from version 2.5.
+    - No longer a required parameter from version 2.5.
   esxi_password:
     description:
     - ESXi password.
     - Required for adding a host.
     - Optional for reconnect.
     - Unused for removing.
-    - No longer required parameter from version 2.5.
+    - No longer a required parameter from version 2.5.
   state:
     description:
-    - "present: add the host if it's absent else do nothing."
-    - "absent: remove the host if it's present else do nothing."
-    - "add_or_reconnect: add the host if it's absent else reconnect it."
-    - "reconnect: reconnect the host if it's present else fail."
+    - If set to C(present), then add the host if host is absent.
+    - If set to C(present), then do nothing if host already exists.
+    - If set to C(absent), then remove the host if host is present.
+    - If set to C(absent), then do nothing if host already does not exists.
+    - If set to C(add_or_reconnect), then add the host if it's absent else reconnect it.
+    - If set to C(reconnect), then reconnect the host if it's present else fail.
     default: present
-    choices:
-    - present
-    - absent
-    - add_or_reconnect
-    - reconnect
+    choices: ['present', 'absent', 'add_or_reconnect', 'reconnect']
   esxi_ssl_thumbprint:
     description:
-    - "Specifying the hostsystem's certificate's thumbprint."
-    - "Use following command to get hostsystem's certificate's thumbprint - "
+    - "Specifying the hostsystem certificate's thumbprint."
+    - "Use following command to get hostsystem certificate's thumbprint - "
     - "# openssl x509 -in /etc/vmware/ssl/rui.crt -fingerprint -sha1 -noout"
     version_added: 2.5
     default: ''
@@ -92,6 +112,19 @@ EXAMPLES = r'''
     esxi_username: '{{ esxi_username }}'
     esxi_password: '{{ esxi_password }}'
     state: present
+
+- name: Add ESXi Host to vCenter under a specific folder
+  vmware_host:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter_name: datacenter_name
+    folder: '/Site2/Asia-Cluster/host'
+    esxi_hostname: '{{ esxi_hostname }}'
+    esxi_username: '{{ esxi_username }}'
+    esxi_password: '{{ esxi_password }}'
+    state: present
+    add_connected: True
 
 - name: Reconnect ESXi Host (with username/password set)
   vmware_host:
@@ -127,10 +160,14 @@ EXAMPLES = r'''
     esxi_password: '{{ esxi_password }}'
     esxi_ssl_thumbprint: "3C:A5:60:6F:7A:B7:C4:6C:48:28:3D:2F:A5:EC:A3:58:13:88:F6:DD"
     state: present
-
 '''
 
 RETURN = r'''
+result:
+    description: metadata about the new host system added
+    returned: on successful addition
+    type: str
+    sample: "'vim.ComputeResource:domain-s222'"
 '''
 
 try:
@@ -149,13 +186,13 @@ class VMwareHost(PyVmomi):
         super(VMwareHost, self).__init__(module)
         self.datacenter_name = module.params['datacenter_name']
         self.cluster_name = module.params['cluster_name']
+        self.folder_name = module.params['folder']
         self.esxi_hostname = module.params['esxi_hostname']
         self.esxi_username = module.params['esxi_username']
         self.esxi_password = module.params['esxi_password']
         self.state = module.params['state']
         self.esxi_ssl_thumbprint = module.params.get('esxi_ssl_thumbprint', '')
-        self.cluster = None
-        self.host = None
+        self.cluster = self.folder = self.host = None
 
     def process_state(self):
         # Currently state_update_host is not implemented.
@@ -186,20 +223,33 @@ class VMwareHost(PyVmomi):
         except Exception as e:
             self.module.fail_json(msg=to_native(e))
 
-    def add_host_to_vcenter(self):
+    def get_host_connect_spec(self):
+        """
+        Function to return Host connection specification
+        Returns: host connection specification
+
+        """
         host_connect_spec = vim.host.ConnectSpec()
         host_connect_spec.hostName = self.esxi_hostname
         host_connect_spec.userName = self.esxi_username
         host_connect_spec.password = self.esxi_password
         host_connect_spec.force = True
         host_connect_spec.sslThumbprint = self.esxi_ssl_thumbprint
-        as_connected = True
+        return host_connect_spec
+
+    def add_host_to_vcenter(self):
+        host_connect_spec = self.get_host_connect_spec()
+        as_connected = self.params.get('add_connected')
         esxi_license = None
         resource_pool = None
 
         for count in range(0, 2):
             try:
-                task = self.cluster.AddHost_Task(host_connect_spec, as_connected, resource_pool, esxi_license)
+                task = None
+                if self.folder:
+                    task = self.folder.AddStandaloneHost(spec=host_connect_spec, addConnected=as_connected)
+                elif self.cluster:
+                    task = self.cluster.AddHost_Task(host_connect_spec, as_connected, resource_pool, esxi_license)
                 success, result = wait_for_task(task)
                 return success, result
             except TaskError as task_error_exception:
@@ -211,6 +261,14 @@ class VMwareHost(PyVmomi):
                 else:
                     self.module.fail_json(msg="Failed to add host %s to vCenter: %s" % (self.esxi_hostname,
                                                                                         to_native(task_error.msg)))
+            except vmodl.fault.NotSupported:
+                self.module.fail_json(msg="Failed to add host %s to vCenter as host is"
+                                          " being added to a folder %s whose childType"
+                                          " property does not contain"
+                                          " \"ComputeResource\"." % (self.esxi_hostname, self.folder_name))
+            except Exception as generic_exc:
+                self.module.fail_json(msg="Failed to add host %s to vCenter: %s" % (self.esxi_hostname,
+                                                                                    to_native(generic_exc)))
 
         self.module.fail_json(msg="Failed to add host %s to vCenter" % self.esxi_hostname)
 
@@ -220,12 +278,7 @@ class VMwareHost(PyVmomi):
         reconnecthost_args['reconnectSpec'].syncState = True
 
         if self.esxi_username is not None or self.esxi_password is not None:
-            reconnecthost_args['cnxSpec'] = vim.host.ConnectSpec()
-            reconnecthost_args['cnxSpec'].hostName = self.esxi_hostname
-            reconnecthost_args['cnxSpec'].userName = self.esxi_username
-            reconnecthost_args['cnxSpec'].password = self.esxi_password
-            reconnecthost_args['cnxSpec'].force = True
-            reconnecthost_args['cnxSpec'].sslThumbprint = self.esxi_ssl_thumbprint
+            reconnecthost_args['cnxSpec'] = self.get_host_connect_spec()
 
             for count in range(0, 2):
                 try:
@@ -290,8 +343,24 @@ class VMwareHost(PyVmomi):
         self.module.exit_json(changed=changed, result=str(result))
 
     def check_host_state(self):
-        self.host, self.cluster = find_host_by_cluster_datacenter(self.module, self.content, self.datacenter_name,
-                                                                  self.cluster_name, self.esxi_hostname)
+        if self.cluster_name:
+            self.host, self.cluster = find_host_by_cluster_datacenter(self.module, self.content,
+                                                                      self.datacenter_name, self.cluster_name,
+                                                                      self.esxi_hostname)
+        elif self.folder_name:
+            si = self.content.searchIndex
+            folder_obj = si.FindByInventoryPath(self.folder_name)
+            if folder_obj and isinstance(folder_obj, vim.Folder):
+                self.folder = folder_obj
+
+            if self.folder is None:
+                self.module.fail_json(msg="Failed to get host system details from"
+                                          " the given folder %s" % self.folder_name,
+                                      details="This could either mean that the value of folder is"
+                                              " invalid or the provided folder does not exists.")
+            for child in self.folder.childEntity:
+                if child and isinstance(child, vim.HostSystem) and child.name == self.esxi_hostname:
+                    self.host = child
 
         if self.host is None:
             return 'absent'
@@ -302,15 +371,17 @@ class VMwareHost(PyVmomi):
 def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(
-        datacenter_name=dict(type='str', required=True),
-        cluster_name=dict(type='str', required=True),
+        datacenter_name=dict(type='str', required=True, aliases=['datacenter']),
+        cluster_name=dict(type='str', aliases=['cluster']),
         esxi_hostname=dict(type='str', required=True),
-        esxi_username=dict(type='str', required=False),
-        esxi_password=dict(type='str', required=False, no_log=True),
+        esxi_username=dict(type='str'),
+        esxi_password=dict(type='str', no_log=True),
         esxi_ssl_thumbprint=dict(type='str', default=''),
         state=dict(default='present',
                    choices=['present', 'absent', 'add_or_reconnect', 'reconnect'],
-                   type='str')
+                   type='str'),
+        folder=dict(type='str'),
+        add_connected=dict(type='bool', default=True),
     )
 
     module = AnsibleModule(
@@ -319,6 +390,12 @@ def main():
         required_if=[
             ['state', 'present', ['esxi_username', 'esxi_password']],
             ['state', 'add_or_reconnect', ['esxi_username', 'esxi_password']]
+        ],
+        required_one_of=[
+            ['cluster_name', 'folder'],
+        ],
+        mutually_exclusive=[
+            ['cluster_name', 'folder'],
         ]
     )
 

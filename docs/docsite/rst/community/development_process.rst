@@ -1,3 +1,5 @@
+.. _community_development_process:
+
 The Ansible Development Process
 ===============================
 
@@ -8,7 +10,7 @@ This section discusses how the Ansible development and triage process works.
 Road Maps
 =========
 
-The Ansible Core team provides a road map for each upcoming release. These road maps can be found `here <http://docs.ansible.com/ansible/devel/roadmap/>`_.
+The Ansible Core team provides a road map for each upcoming release. These road maps can be found :ref:`here <roadmaps>`.
 
 .. Roadmaps are User-oriented.  We should also list the Roadmap Projects and the Blocker Bug
    Projects here
@@ -79,6 +81,13 @@ pull request to backport the change to a previous stable branch.
     about the purpose of that branch. It is not required to use this format,
     but it can be helpful, especially when making multiple backport PRs for
     multiple stable branches.
+
+.. note::
+
+    If you prefer, you can use CPython's cherry-picker tool to backport commits
+    from devel to stable branches in Ansible. Take a look at the `cherry-picker
+    documentation <https://pypi.org/p/cherry-picker#cherry-picking>`_ for
+    details on installing, configuring, and using it.
 
 
 Ansibullbot

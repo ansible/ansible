@@ -413,6 +413,38 @@ def _win_query(v):
 
 
 # ---- IP address and network filters ----
+
+# Returns a minified list of subnets or a single subnet that spans all of
+# the inputs.
+def cidr_merge(value, action='merge'):
+    if not hasattr(value, '__iter__'):
+        raise errors.AnsibleFilterError('cidr_merge: expected iterable, got ' + repr(value))
+
+    if action == 'merge':
+        try:
+            return [str(ip) for ip in netaddr.cidr_merge(value)]
+        except Exception as e:
+            raise errors.AnsibleFilterError('cidr_merge: error in netaddr:\n%s' % e)
+
+    elif action == 'span':
+        # spanning_cidr needs at least two values
+        if len(value) == 0:
+            return None
+        elif len(value) == 1:
+            try:
+                return str(netaddr.IPNetwork(value[0]))
+            except Exception as e:
+                raise errors.AnsibleFilterError('cidr_merge: error in netaddr:\n%s' % e)
+        else:
+            try:
+                return str(netaddr.spanning_cidr(value))
+            except Exception as e:
+                raise errors.AnsibleFilterError('cidr_merge: error in netaddr:\n%s' % e)
+
+    else:
+        raise errors.AnsibleFilterError("cidr_merge: invalid action '%s'" % action)
+
+
 def ipaddr(value, query='', version=False, alias='ipaddr'):
     ''' Check if string is an IP address or network and filter it '''
 
@@ -636,6 +668,23 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
             raise errors.AnsibleFilterError(alias + ': unknown filter type: %s' % query)
 
     return False
+
+
+def ipmath(value, amount):
+    try:
+        ip = netaddr.IPAddress(value)
+    except netaddr.AddrFormatError:
+        msg = 'You must pass a valid IP address; {0} is invalid'.format(value)
+        raise errors.AnsibleFilterError(msg)
+
+    if not isinstance(amount, int):
+        msg = (
+            'You must pass an integer for arithmetic; '
+            '{0} is not a valid integer'
+        ).format(amount)
+        raise errors.AnsibleFilterError(msg)
+
+    return str(ip + amount)
 
 
 def ipwrap(value, query=''):
@@ -1026,7 +1075,9 @@ class FilterModule(object):
     ''' IP address and network manipulation filters '''
     filter_map = {
         # IP addresses and networks
+        'cidr_merge': cidr_merge,
         'ipaddr': ipaddr,
+        'ipmath': ipmath,
         'ipwrap': ipwrap,
         'ip4_hex': ip4_hex,
         'ipv4': ipv4,

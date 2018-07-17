@@ -34,8 +34,10 @@ options:
     aliases: [ descr ]
   max_end_points:
     description:
-    - Maximum number of end points (range 0-12000).
-    - The APIC defaults new port-security policies to C(0).
+    - Maximum number of end points.
+    - Accepted values range between C(0) and C(12000).
+    - The APIC defaults to C(0) when unset during creation.
+    type: int
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -172,8 +174,6 @@ def main():
         description=dict(type='str', aliases=['descr']),
         max_end_points=dict(type='int'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(

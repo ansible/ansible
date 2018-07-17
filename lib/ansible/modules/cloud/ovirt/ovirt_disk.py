@@ -529,7 +529,7 @@ class DisksModule(BaseModule):
     def _update_check(self, entity):
         return (
             equal(self._module.params.get('description'), entity.description) and
-            equal(self.param('quota_id'), getattr(entity.quota, 'id')) and
+            equal(self.param('quota_id'), getattr(entity.quota, 'id', None)) and
             equal(convert_to_bytes(self._module.params.get('size')), entity.provisioned_size) and
             equal(self._module.params.get('shareable'), entity.shareable)
         )
@@ -553,6 +553,18 @@ class DiskAttachmentsModule(DisksModule):
             equal(self._module.params.get('interface'), str(entity.interface)) and
             equal(self._module.params.get('bootable'), entity.bootable)
         )
+
+
+def searchable_attributes(module):
+    """
+    Return all searchable disk attributes passed to module.
+    """
+    attributes = {
+        'name': module.params.get('name'),
+        'Storage.name': module.params.get('storage_domain'),
+        'vm_names': module.params.get('vm_name'),
+    }
+    return dict((k, v) for k, v in attributes.items() if v is not None)
 
 
 def main():
@@ -616,8 +628,9 @@ def main():
         if state in ('present', 'detached', 'attached'):
             ret = disks_module.create(
                 entity=disk,
+                search_params=searchable_attributes(module),
                 result_state=otypes.DiskStatus.OK if lun is None else None,
-                fail_condition=lambda d: d.status == otypes.DiskStatus.ILLEGAL,
+                fail_condition=lambda d: d.status == otypes.DiskStatus.ILLEGAL if lun is None else False,
             )
             is_new_disk = ret['changed']
             ret['changed'] = ret['changed'] or disks_module.update_storage_domains(ret['id'])

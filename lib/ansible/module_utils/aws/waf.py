@@ -30,6 +30,7 @@ This module adds shared support for Web Application Firewall modules
 """
 
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry
+from ansible.module_utils.aws.waiters import get_waiter
 
 try:
     import botocore
@@ -183,6 +184,13 @@ def get_change_token(client, module):
 
 
 @AWSRetry.backoff(tries=10, delay=2, backoff=2.0, catch_extra_error_codes=['WAFStaleDataException'])
-def run_func_with_change_token_backoff(client, module, params, func):
+def run_func_with_change_token_backoff(client, module, params, func, wait=False):
     params['ChangeToken'] = get_change_token(client, module)
-    return func(**params)
+    result = func(**params)
+    if wait:
+        get_waiter(
+            client, 'change_token_in_sync',
+        ).wait(
+            ChangeToken=result['ChangeToken']
+        )
+    return result

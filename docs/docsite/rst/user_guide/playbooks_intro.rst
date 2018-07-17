@@ -62,39 +62,6 @@ For starters, here's a playbook that contains just one play::
       remote_user: root
       tasks:
       - name: ensure apache is at the latest version
-        yum: 
-          name: httpd
-          state: latest
-      - name: write the apache config file
-        template:
-          src: /srv/httpd.j2
-          dest: /etc/httpd.conf
-        notify:
-        - restart apache
-      - name: ensure apache is running (and enable it at boot)
-        service:
-          name: httpd
-          state: started
-          enabled: yes
-      handlers:
-        - name: restart apache
-          service:
-            name: httpd
-            state: restarted
-
-When working with tasks that have really long parameters or modules that take 
-many parameters, you can break tasks items over multiple lines to improve the 
-structure. Below is another version of the above example but using
-YAML dictionaries to supply the modules with their ``key=value`` arguments.::
-
-    ---
-    - hosts: webservers
-      vars:
-        http_port: 80
-        max_clients: 200
-      remote_user: root
-      tasks:
-      - name: ensure apache is at the latest version
         yum:
           name: httpd
           state: latest
@@ -193,7 +160,7 @@ Support for running things as another user is also available (see :doc:`become`)
       remote_user: yourname
       become: yes
 
-You can also use become on a particular task instead of the whole play::
+You can also use keyword ``become`` on a particular task instead of the whole play::
 
     ---
     - hosts: webservers

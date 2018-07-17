@@ -38,19 +38,35 @@ The 'AnsibleAWSModule' module provides similar, but more restricted,
 interfaces to the normal Ansible module.  It also includes the
 additional methods for connecting to AWS using the standard module arguments
 
-      m.resource('lambda') # - get an AWS connection as a boto3 resource.
+    m.resource('lambda') # - get an AWS connection as a boto3 resource.
 
 or
 
-      m.client('sts') # - get an AWS connection as a boto3 client.
+    m.client('sts') # - get an AWS connection as a boto3 client.
 
+To make use of AWSRetry easier, it can now be wrapped around any call from a
+module-created client. To add retries to a client, create a client:
+
+    m.client('ec2', retry_decorator=AWSRetry.jittered_backoff(retries=10))
+
+Any calls from that client can be made to use the decorator passed at call-time
+using the `aws_retry` argument. By default, no retries are used.
+
+    ec2 = m.client('ec2', retry_decorator=AWSRetry.jittered_backoff(retries=10))
+    ec2.describe_instances(InstanceIds=['i-123456789'], aws_retry=True)
+
+The call will be retried the specified number of times, so the calling functions
+don't need to be wrapped in the backoff decorator.
 
 """
+
+import traceback
+from functools import wraps
+from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict, ec2_argument_spec, boto3_conn, get_aws_connection_info
-import traceback
 
 # We will also export HAS_BOTO3 so end user modules can use it.
 __all__ = ('AnsibleAWSModule', 'HAS_BOTO3',)
@@ -119,10 +135,20 @@ class AnsibleAWSModule(object):
     def warn(self, *args, **kwargs):
         return self._module.warn(*args, **kwargs)
 
-    def client(self, service):
+    def deprecate(self, *args, **kwargs):
+        return self._module.deprecate(*args, **kwargs)
+
+    def boolean(self, *args, **kwargs):
+        return self._module.boolean(*args, **kwargs)
+
+    def md5(self, *args, **kwargs):
+        return self._module.md5(*args, **kwargs)
+
+    def client(self, service, retry_decorator=None):
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(self, boto3=True)
-        return boto3_conn(self, conn_type='client', resource=service,
+        conn = boto3_conn(self, conn_type='client', resource=service,
                           region=region, endpoint=ec2_url, **aws_connect_kwargs)
+        return conn if retry_decorator is None else _RetryingBotoClientWrapper(conn, retry_decorator)
 
     def resource(self, service):
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(self, boto3=True)
@@ -154,8 +180,105 @@ class AnsibleAWSModule(object):
         except AttributeError:
             response = None
 
-        if response is None:
-            self._module.fail_json(msg=message, exception=last_traceback)
+        failure = dict(
+            msg=message,
+            exception=last_traceback,
+            **self._gather_versions()
+        )
+
+        if response is not None:
+            failure.update(**camel_dict_to_snake_dict(response))
+
+        self._module.fail_json(**failure)
+
+    def _gather_versions(self):
+        """Gather AWS SDK (boto3 and botocore) dependency versions
+
+        Returns {'boto3_version': str, 'botocore_version': str}
+        Returns {} if neither are installed
+        """
+        if not HAS_BOTO3:
+            return {}
+        import boto3
+        import botocore
+        return dict(boto3_version=boto3.__version__,
+                    botocore_version=botocore.__version__)
+
+    def boto3_at_least(self, desired):
+        """Check if the available boto3 version is greater than or equal to a desired version.
+
+        Usage:
+            if module.params.get('assign_ipv6_address') and not module.boto3_at_least('1.4.4'):
+                # conditionally fail on old boto3 versions if a specific feature is not supported
+                module.fail_json(msg="Boto3 can't deal with EC2 IPv6 addresses before version 1.4.4.")
+        """
+        existing = self._gather_versions()
+        return LooseVersion(existing['boto3_version']) >= LooseVersion(desired)
+
+    def botocore_at_least(self, desired):
+        """Check if the available botocore version is greater than or equal to a desired version.
+
+        Usage:
+            if not module.botocore_at_least('1.2.3'):
+                module.fail_json(msg='The Serverless Elastic Load Compute Service is not in botocore before v1.2.3')
+            if not module.botocore_at_least('1.5.3'):
+                module.warn('Botocore did not include waiters for Service X before 1.5.3. '
+                            'To wait until Service X resources are fully available, update botocore.')
+        """
+        existing = self._gather_versions()
+        return LooseVersion(existing['botocore_version']) >= LooseVersion(desired)
+
+
+class _RetryingBotoClientWrapper(object):
+    __never_wait = (
+        'get_paginator', 'can_paginate',
+        'get_waiter', 'generate_presigned_url',
+    )
+
+    def __init__(self, client, retry):
+        self.client = client
+        self.retry = retry
+
+    def _create_optional_retry_wrapper_function(self, unwrapped):
+        retrying_wrapper = self.retry(unwrapped)
+
+        @wraps(unwrapped)
+        def deciding_wrapper(aws_retry=False, *args, **kwargs):
+            if aws_retry:
+                return retrying_wrapper(*args, **kwargs)
+            else:
+                return unwrapped(*args, **kwargs)
+        return deciding_wrapper
+
+    def __getattr__(self, name):
+        unwrapped = getattr(self.client, name)
+        if name in self.__never_wait:
+            return unwrapped
+        elif callable(unwrapped):
+            wrapped = self._create_optional_retry_wrapper_function(unwrapped)
+            setattr(self, name, wrapped)
+            return wrapped
         else:
-            self._module.fail_json(msg=message, exception=last_traceback,
-                                   **camel_dict_to_snake_dict(response))
+            return unwrapped
+
+
+def is_boto3_error_code(code, e=None):
+    """Check if the botocore exception is raised by a specific error code.
+
+    Returns ClientError if the error code matches, a dummy exception if it does not have an error code or does not match
+
+    Example:
+    try:
+        ec2.describe_instances(InstanceIds=['potato'])
+    except is_boto3_error_code('InvalidInstanceID.Malformed'):
+        # handle the error for that code case
+    except botocore.exceptions.ClientError as e:
+        # handle the generic error case for all other codes
+    """
+    from botocore.exceptions import ClientError
+    if e is None:
+        import sys
+        dummy, e, dummy = sys.exc_info()
+    if isinstance(e, ClientError) and e.response['Error']['Code'] == code:
+        return ClientError
+    return type('NeverEverRaisedException', (Exception,), {})

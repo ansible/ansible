@@ -57,6 +57,17 @@ options:
     default: 'yes'
     aliases: [ thirsty ]
     version_added: "1.1"
+  mode:
+    description:
+      - "Mode the file or directory should be. For those used to I(/usr/bin/chmod) remember that
+        modes are actually octal numbers.  You must either specify the leading zero so that
+        Ansible's YAML parser knows it is an octal number (like C(0644) or C(01777)) or quote it
+        (like C('644') or C('0644') so Ansible receives a string and can do its own conversion from
+        string into number.  Giving Ansible a number without following one of these rules will end
+        up with a decimal number which will have unexpected results.  As of version 1.8, the mode
+        may be specified as a symbolic mode (for example, C(u+rwx) or C(u=rw,g=r,o=r)).  As of
+        version 2.3, the mode may also be the special string C(preserve).  C(preserve) means that
+        the file will be given the same permissions as the source file."
   directory_mode:
     description:
       - When doing a recursive copy set the mode for the directories. If this is not set we will use the system
@@ -68,6 +79,7 @@ options:
       - If C(no), it will search for I(src) at originating/master machine.
       - If C(yes) it will go to the remote/target machine for the I(src). Default is C(no).
       - Currently I(remote_src) does not support recursive copying.
+      - I(remote_src) only works with C(mode=preserve) as of version 2.6.
     type: bool
     default: 'no'
     version_added: "2.0"
@@ -220,22 +232,31 @@ state:
 import os
 import os.path
 import shutil
+import stat
+import errno
 import tempfile
 import traceback
 
-# import module snippets
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes, to_native
+
+
+class AnsibleModuleError(Exception):
+    def __init__(self, results):
+        self.results = results
 
 
 def split_pre_existing_dir(dirname):
     '''
     Return the first pre-existing directory and a list of the new directories that will be created.
     '''
-
     head, tail = os.path.split(dirname)
     b_head = to_bytes(head, errors='surrogate_or_strict')
+    if head == '':
+        return ('.', [tail])
     if not os.path.exists(b_head):
+        if head == '/':
+            raise AnsibleModuleError(results={'msg': "The '/' directory doesn't exist on this machine."})
         (pre_existing_dir, new_directory_list) = split_pre_existing_dir(head)
     else:
         return (head, [tail])
@@ -262,7 +283,7 @@ def main():
         # not checking because of daisy chain to file module
         argument_spec=dict(
             src=dict(type='path'),
-            original_basename=dict(type='str'),  # used to handle 'dest is a directory' via template, a slight hack
+            _original_basename=dict(type='str'),  # used to handle 'dest is a directory' via template, a slight hack
             content=dict(type='str', no_log=True),
             dest=dict(type='path', required=True),
             backup=dict(type='bool', default=False),
@@ -286,10 +307,12 @@ def main():
     b_dest = to_bytes(dest, errors='surrogate_or_strict')
     backup = module.params['backup']
     force = module.params['force']
-    original_basename = module.params.get('original_basename', None)
+    _original_basename = module.params.get('_original_basename', None)
     validate = module.params.get('validate', None)
     follow = module.params['follow']
     mode = module.params['mode']
+    owner = module.params['owner']
+    group = module.params['group']
     remote_src = module.params['remote_src']
     checksum = module.params['checksum']
 
@@ -299,6 +322,12 @@ def main():
         module.fail_json(msg="Source %s not readable" % (src))
     if os.path.isdir(b_src):
         module.fail_json(msg="Remote copy does not support recursive copy of directory: %s" % (src))
+
+    # Preserve is usually handled in the action plugin but mode + remote_src has to be done on the
+    # remote host
+    if module.params['mode'] == 'preserve':
+        module.params['mode'] = '0%03o' % stat.S_IMODE(os.stat(b_src).st_mode)
+    mode = module.params['mode']
 
     checksum_src = module.sha1(src)
     checksum_dest = None
@@ -318,13 +347,18 @@ def main():
         )
 
     # Special handling for recursive copy - create intermediate dirs
-    if original_basename and dest.endswith(os.sep):
-        dest = os.path.join(dest, original_basename)
+    if _original_basename and dest.endswith(os.sep):
+        dest = os.path.join(dest, _original_basename)
         b_dest = to_bytes(dest, errors='surrogate_or_strict')
         dirname = os.path.dirname(dest)
         b_dirname = to_bytes(dirname, errors='surrogate_or_strict')
-        if not os.path.exists(b_dirname) and os.path.isabs(b_dirname):
-            (pre_existing_dir, new_directory_list) = split_pre_existing_dir(dirname)
+        if not os.path.exists(b_dirname):
+            try:
+                (pre_existing_dir, new_directory_list) = split_pre_existing_dir(dirname)
+            except AnsibleModuleError as e:
+                e.result['msg'] += ' Could not copy to {0}'.format(dest)
+                module.fail_json(**e.results)
+
             os.makedirs(b_dirname)
             directory_args = module.load_file_common_arguments(module.params)
             directory_mode = module.params["directory_mode"]
@@ -336,8 +370,8 @@ def main():
 
     if os.path.isdir(b_dest):
         basename = os.path.basename(src)
-        if original_basename:
-            basename = original_basename
+        if _original_basename:
+            basename = _original_basename
         dest = os.path.join(dest, basename)
         b_dest = to_bytes(dest, errors='surrogate_or_strict')
 
@@ -379,9 +413,12 @@ def main():
                 if validate:
                     # if we have a mode, make sure we set it on the temporary
                     # file source as some validations may require it
-                    # FIXME: should we do the same for owner/group here too?
                     if mode is not None:
                         module.set_mode_if_different(src, mode, False)
+                    if owner is not None:
+                        module.set_owner_if_different(src, owner, False)
+                    if group is not None:
+                        module.set_group_if_different(src, group, False)
                     if "%s" not in validate:
                         module.fail_json(msg="validate must contain %%s: %s" % (validate))
                     (rc, out, err) = module.run_command(validate % src)
@@ -390,9 +427,17 @@ def main():
                 b_mysrc = b_src
                 if remote_src:
                     _, b_mysrc = tempfile.mkstemp(dir=os.path.dirname(b_dest))
-                    shutil.copy2(b_src, b_mysrc)
+
+                    shutil.copyfile(b_src, b_mysrc)
+                    try:
+                        shutil.copystat(b_src, b_mysrc)
+                    except OSError as err:
+                        if err.errno == errno.ENOSYS and mode == "preserve":
+                            module.warn("Unable to copy stats {0}".format(to_native(b_src)))
+                        else:
+                            raise
                 module.atomic_move(b_mysrc, dest, unsafe_writes=module.params['unsafe_writes'])
-            except IOError:
+            except (IOError, OSError):
                 module.fail_json(msg="failed to copy: %s to %s" % (src, dest), traceback=traceback.format_exc())
         changed = True
     else:
@@ -410,6 +455,7 @@ def main():
         res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'])
 
     module.exit_json(**res_args)
+
 
 if __name__ == '__main__':
     main()

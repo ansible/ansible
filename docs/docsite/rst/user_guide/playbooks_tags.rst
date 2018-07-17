@@ -86,10 +86,13 @@ You can apply tags to more than tasks, but they ONLY affect the tasks themselves
       tasks:
         ...
 
-You may also apply tags to roles::
+You may also apply tags to the tasks imported by roles::
 
     roles:
-      - { role: webserver, port: 5000, tags: [ 'web', 'foo' ] }
+      - role: webserver
+        vars:
+          port: 5000
+        tags: [ 'web', 'foo' ]
 
 And import statements::
 
@@ -99,6 +102,8 @@ And import statements::
 All of these apply the specified tags to EACH task inside the play, imported
 file, or role, so that these tasks can be selectively run when the playbook
 is invoked with the corresponding tags.
+
+There is no way to 'import only these tags'; you probably want to split into smaller roles/includes if you find yourself looking for such a feature.
 
 The above information does not apply to `include_tasks` or other dynamic includes,
 as the attributes applied to an include, only affect the include itself.

@@ -1,9 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# This file is part of Ansible
-
-# (c) 2014, Paul Durivage <paul.durivage@rackspace.com>, Trond Hindenes <trond@hindenes.com> and others
+# Copyright: (c) 2014, Paul Durivage <paul.durivage@rackspace.com>
+# Copyright: (c) 2014, Trond Hindenes <trond@hindenes.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
@@ -27,18 +26,12 @@ options:
     description:
       - Names of roles or features to install as a single feature or a comma-separated list of features.
     required: yes
+    type: list
   state:
     description:
       - State of the features or roles on the system.
     choices: [ absent, present ]
     default: present
-  restart:
-    description:
-      - Restarts the computer automatically when installation is complete, if restarting is required by the roles or features installed.
-      - DEPRECATED in Ansible 2.4, as unmanaged reboots cause numerous issues under Ansible. Check the C(reboot_required) return value
-        from this module to determine if a reboot is necessary, and if so, use the M(win_reboot) action to perform it.
-    type: bool
-    default: 'no'
   include_sub_features:
     description:
       - Adds all subfeatures of the specified feature.

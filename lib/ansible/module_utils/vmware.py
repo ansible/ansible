@@ -1,26 +1,16 @@
 # -*- coding: utf-8 -*-
+# Copyright: (c) 2015, Joseph Callen <jcallen () csc.com>
+# Copyright: (c) 2018, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# (c) 2015, Joseph Callen <jcallen () csc.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 import atexit
 import os
 import ssl
 import time
+from random import randint
 
 try:
     # requests is required for exception handling of the ConnectionError
@@ -32,8 +22,7 @@ except ImportError:
     HAS_PYVMOMI = False
 
 from ansible.module_utils._text import to_text
-from ansible.module_utils.urls import fetch_url
-from ansible.module_utils.six import integer_types, iteritems, string_types
+from ansible.module_utils.six import integer_types, iteritems, string_types, raise_from
 from ansible.module_utils.basic import env_fallback
 
 
@@ -41,20 +30,50 @@ class TaskError(Exception):
     pass
 
 
-def wait_for_task(task):
+def wait_for_task(task, max_backoff=64, timeout=3600):
+    """Wait for given task using exponential back-off algorithm.
+
+    Args:
+        task: VMware task object
+        max_backoff: Maximum amount of sleep time in seconds
+        timeout: Timeout for the given task in seconds
+
+    Returns: Tuple with True and result for successful task
+    Raises: TaskError on failure
+    """
+    failure_counter = 0
+    start_time = time.time()
 
     while True:
+        if time.time() - start_time >= timeout:
+            raise TaskError("Timeout")
         if task.info.state == vim.TaskInfo.State.success:
             return True, task.info.result
         if task.info.state == vim.TaskInfo.State.error:
+            error_msg = task.info.error
             try:
-                raise TaskError(task.info.error)
+                error_msg = error_msg.msg
             except AttributeError:
-                raise TaskError("An unknown error has occurred")
-        if task.info.state == vim.TaskInfo.State.running:
-            time.sleep(15)
-        if task.info.state == vim.TaskInfo.State.queued:
-            time.sleep(15)
+                pass
+            finally:
+                raise_from(TaskError(error_msg), task.info.error)
+        if task.info.state in [vim.TaskInfo.State.running, vim.TaskInfo.State.queued]:
+            sleep_time = min(2 ** failure_counter + randint(1, 1000), max_backoff)
+            time.sleep(sleep_time)
+            failure_counter += 1
+
+
+def wait_for_vm_ip(content, vm, timeout=300):
+    facts = dict()
+    interval = 15
+    while timeout > 0:
+        facts = gather_vm_facts(content, vm)
+        if facts['ipv4'] or facts['ipv6']:
+            break
+        time.sleep(interval)
+        timeout -= interval
+
+    return facts
 
 
 def find_obj(content, vimtype, name, first=True):
@@ -92,23 +111,6 @@ def find_dvspg_by_name(dv_switch, portgroup_name):
     return None
 
 
-def find_entity_child_by_path(content, entityRootFolder, path):
-
-    entity = entityRootFolder
-    searchIndex = content.searchIndex
-    paths = path.split("/")
-    try:
-        for path in paths:
-            entity = searchIndex.FindChild(entity, path)
-
-        if entity.name == paths[-1]:
-            return entity
-    except:
-        pass
-
-    return None
-
-
 # Maintain for legacy, or remove with 2.1 ?
 # Should be replaced with find_cluster_by_name
 def find_cluster_by_name_datacenter(datacenter, cluster_name):
@@ -120,6 +122,18 @@ def find_cluster_by_name_datacenter(datacenter, cluster_name):
     return None
 
 
+def find_object_by_name(content, name, obj_type, folder=None, recurse=True):
+    if not isinstance(obj_type, list):
+        obj_type = [obj_type]
+
+    objects = get_all_objs(content, obj_type, folder=folder, recurse=recurse)
+    for obj in objects:
+        if obj.name == name:
+            return obj
+
+    return None
+
+
 def find_cluster_by_name(content, cluster_name, datacenter=None):
 
     if datacenter:
@@ -127,22 +141,11 @@ def find_cluster_by_name(content, cluster_name, datacenter=None):
     else:
         folder = content.rootFolder
 
-    clusters = get_all_objs(content, [vim.ClusterComputeResource], folder)
-    for cluster in clusters:
-        if cluster.name == cluster_name:
-            return cluster
-
-    return None
+    return find_object_by_name(content, cluster_name, [vim.ClusterComputeResource], folder=folder)
 
 
 def find_datacenter_by_name(content, datacenter_name):
-
-    datacenters = get_all_objs(content, [vim.Datacenter])
-    for dc in datacenters:
-        if dc.name == datacenter_name:
-            return dc
-
-    return None
+    return find_object_by_name(content, datacenter_name, [vim.Datacenter])
 
 
 def get_parent_datacenter(obj):
@@ -161,37 +164,23 @@ def get_parent_datacenter(obj):
 
 
 def find_datastore_by_name(content, datastore_name):
-
-    datastores = get_all_objs(content, [vim.Datastore])
-    for ds in datastores:
-        if ds.name == datastore_name:
-            return ds
-
-    return None
+    return find_object_by_name(content, datastore_name, [vim.Datastore])
 
 
 def find_dvs_by_name(content, switch_name):
-
-    # https://github.com/vmware/govmomi/issues/879
-    # https://github.com/ansible/ansible/pull/31798#issuecomment-336936222
-    try:
-        vmware_distributed_switches = get_all_objs(content, [vim.dvs.VmwareDistributedVirtualSwitch])
-    except IndexError:
-        vmware_distributed_switches = get_all_objs(content, [vim.DistributedVirtualSwitch])
-
-    for dvs in vmware_distributed_switches:
-        if dvs.name == switch_name:
-            return dvs
-    return None
+    return find_object_by_name(content, switch_name, [vim.DistributedVirtualSwitch])
 
 
 def find_hostsystem_by_name(content, hostname):
+    return find_object_by_name(content, hostname, [vim.HostSystem])
 
-    host_system = get_all_objs(content, [vim.HostSystem])
-    for host in host_system:
-        if host.name == hostname:
-            return host
-    return None
+
+def find_resource_pool_by_name(content, resource_pool_name):
+    return find_object_by_name(content, resource_pool_name, [vim.ResourcePool])
+
+
+def find_network_by_name(content, network_name):
+    return find_object_by_name(content, network_name, [vim.Network])
 
 
 def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster=None, folder=None, match_first=False):
@@ -231,11 +220,14 @@ def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster
 
 
 def find_vm_by_name(content, vm_name, folder=None, recurse=True):
+    return find_object_by_name(content, vm_name, [vim.VirtualMachine], folder=folder, recurse=recurse)
 
-    vms = get_all_objs(content, [vim.VirtualMachine], folder, recurse=recurse)
-    for vm in vms:
-        if vm.name == vm_name:
-            return vm
+
+def find_host_portgroup_by_name(host, portgroup_name):
+
+    for portgroup in host.config.network.portgroup:
+        if portgroup.spec.name == portgroup_name:
+            return portgroup
     return None
 
 
@@ -307,8 +299,14 @@ def gather_vm_facts(content, vm):
 
     # facts that may or may not exist
     if vm.summary.runtime.host:
-        host = vm.summary.runtime.host
-        facts['hw_esxi_host'] = host.summary.config.name
+        try:
+            host = vm.summary.runtime.host
+            facts['hw_esxi_host'] = host.summary.config.name
+        except vim.fault.NoPermission:
+            # User does not have read permission for the host system,
+            # proceed without this value. This value does not contribute or hamper
+            # provisioning or power management operations.
+            pass
     if vm.summary.runtime.dasVmProtection:
         facts['hw_guest_ha_state'] = vm.summary.runtime.dasVmProtection.dasProtected
 
@@ -331,7 +329,7 @@ def gather_vm_facts(content, vm):
             for item in vm.layout.disk:
                 for disk in item.diskFile:
                     facts['hw_files'].append(disk)
-    except:
+    except BaseException:
         pass
 
     facts['hw_folder'] = PyVmomi.get_vm_path(content, vm)
@@ -355,7 +353,7 @@ def gather_vm_facts(content, vm):
         for device in vmnet:
             net_dict[device.macAddress] = list(device.ipAddress)
 
-    for k, v in iteritems(net_dict):
+    for dummy, v in iteritems(net_dict):
         for ipaddress in v:
             if ipaddress:
                 if '::' in ipaddress:
@@ -364,7 +362,7 @@ def gather_vm_facts(content, vm):
                     facts['ipv4'] = ipaddress
 
     ethernet_idx = 0
-    for idx, entry in enumerate(vm.config.hardware.device):
+    for entry in vm.config.hardware.device:
         if not hasattr(entry, 'macAddress'):
             continue
 
@@ -374,6 +372,14 @@ def gather_vm_facts(content, vm):
         else:
             mac_addr = mac_addr_dash = None
 
+        if (hasattr(entry, 'backing') and hasattr(entry.backing, 'port') and
+                hasattr(entry.backing.port, 'portKey') and hasattr(entry.backing.port, 'portgroupKey')):
+            port_group_key = entry.backing.port.portgroupKey
+            port_key = entry.backing.port.portKey
+        else:
+            port_group_key = None
+            port_key = None
+
         factname = 'hw_eth' + str(ethernet_idx)
         facts[factname] = {
             'addresstype': entry.addressType,
@@ -382,6 +388,8 @@ def gather_vm_facts(content, vm):
             'ipaddresses': net_dict.get(entry.macAddress, None),
             'macaddress_dash': mac_addr_dash,
             'summary': entry.deviceInfo.summary,
+            'portgroup_portkey': port_key,
+            'portgroup_key': port_group_key,
         }
         facts['hw_interfaces'].append('eth' + str(ethernet_idx))
         ethernet_idx += 1
@@ -492,20 +500,28 @@ def connect_to_api(module, disconnect_atexit=True):
 
     service_instance = None
     try:
-        service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password, sslContext=ssl_context, port=port)
-    except vim.fault.InvalidLogin as e:
-        module.fail_json(msg="Unable to log on to vCenter or ESXi API at %s:%s as %s: %s" % (hostname, port, username, e.msg))
-    except vim.fault.NoPermission as e:
+        connect_args = dict(
+            host=hostname,
+            user=username,
+            pwd=password,
+            port=port,
+        )
+        if ssl_context:
+            connect_args.update(sslContext=ssl_context)
+        service_instance = connect.SmartConnect(**connect_args)
+    except vim.fault.InvalidLogin as invalid_login:
+        module.fail_json(msg="Unable to log on to vCenter or ESXi API at %s:%s as %s: %s" % (hostname, port, username, invalid_login.msg))
+    except vim.fault.NoPermission as no_permission:
         module.fail_json(msg="User %s does not have required permission"
-                             " to log on to vCenter or ESXi API at %s:%s : %s" % (username, hostname, port, e.msg))
-    except (requests.ConnectionError, ssl.SSLError) as e:
-        module.fail_json(msg="Unable to connect to vCenter or ESXi API at %s on TCP/%s: %s" % (hostname, port, e))
-    except vmodl.fault.InvalidRequest as e:
+                             " to log on to vCenter or ESXi API at %s:%s : %s" % (username, hostname, port, no_permission.msg))
+    except (requests.ConnectionError, ssl.SSLError) as generic_req_exc:
+        module.fail_json(msg="Unable to connect to vCenter or ESXi API at %s on TCP/%s: %s" % (hostname, port, generic_req_exc))
+    except vmodl.fault.InvalidRequest as invalid_request:
         # Request is malformed
         module.fail_json(msg="Failed to get a response from server %s:%s as "
-                             "request is malformed: %s" % (hostname, port, e.msg))
-    except Exception as e:
-        module.fail_json(msg="Unknown error while connecting to vCenter or ESXi API at %s:%s : %s" % (hostname, port, e))
+                             "request is malformed: %s" % (hostname, port, invalid_request.msg))
+    except Exception as generic_exc:
+        module.fail_json(msg="Unknown error while connecting to vCenter or ESXi API at %s:%s : %s" % (hostname, port, generic_exc))
 
     if service_instance is None:
         module.fail_json(msg="Unknown error while connecting to vCenter or ESXi API at %s:%s" % (hostname, port))
@@ -527,103 +543,6 @@ def get_all_objs(content, vimtype, folder=None, recurse=True):
     for managed_object_ref in container.view:
         obj.update({managed_object_ref: managed_object_ref.name})
     return obj
-
-
-def fetch_file_from_guest(module, content, vm, username, password, src, dest):
-    """ Use VMWare's filemanager api to fetch a file over http """
-
-    result = {'failed': False}
-
-    tools_status = vm.guest.toolsStatus
-    if tools_status == 'toolsNotInstalled' or tools_status == 'toolsNotRunning':
-        result['failed'] = True
-        result['msg'] = "VMwareTools is not installed or is not running in the guest"
-        return result
-
-    # https://github.com/vmware/pyvmomi/blob/master/docs/vim/vm/guest/NamePasswordAuthentication.rst
-    creds = vim.vm.guest.NamePasswordAuthentication(
-        username=username, password=password
-    )
-
-    # https://github.com/vmware/pyvmomi/blob/master/docs/vim/vm/guest/FileManager/FileTransferInformation.rst
-    fti = content.guestOperationsManager.fileManager. \
-        InitiateFileTransferFromGuest(vm, creds, src)
-
-    result['size'] = fti.size
-    result['url'] = fti.url
-
-    # Use module_utils to fetch the remote url returned from the api
-    rsp, info = fetch_url(module, fti.url, use_proxy=False,
-                          force=True, last_mod_time=None,
-                          timeout=10, headers=None)
-
-    # save all of the transfer data
-    for k, v in iteritems(info):
-        result[k] = v
-
-    # exit early if xfer failed
-    if info['status'] != 200:
-        result['failed'] = True
-        return result
-
-    # attempt to read the content and write it
-    try:
-        with open(dest, 'wb') as f:
-            f.write(rsp.read())
-    except Exception as e:
-        result['failed'] = True
-        result['msg'] = str(e)
-
-    return result
-
-
-def push_file_to_guest(module, content, vm, username, password, src, dest, overwrite=True):
-    """ Use VMWare's filemanager api to fetch a file over http """
-
-    result = {'failed': False}
-
-    tools_status = vm.guest.toolsStatus
-    if tools_status == 'toolsNotInstalled' or tools_status == 'toolsNotRunning':
-        result['failed'] = True
-        result['msg'] = "VMwareTools is not installed or is not running in the guest"
-        return result
-
-    # https://github.com/vmware/pyvmomi/blob/master/docs/vim/vm/guest/NamePasswordAuthentication.rst
-    creds = vim.vm.guest.NamePasswordAuthentication(
-        username=username, password=password
-    )
-
-    # the api requires a filesize in bytes
-    fdata = None
-    try:
-        # filesize = os.path.getsize(src)
-        filesize = os.stat(src).st_size
-        with open(src, 'rb') as f:
-            fdata = f.read()
-        result['local_filesize'] = filesize
-    except Exception as e:
-        result['failed'] = True
-        result['msg'] = "Unable to read src file: %s" % str(e)
-        return result
-
-    # https://www.vmware.com/support/developer/converter-sdk/conv60_apireference/vim.vm.guest.FileManager.html#initiateFileTransferToGuest
-    file_attribute = vim.vm.guest.FileManager.FileAttributes()
-    url = content.guestOperationsManager.fileManager. \
-        InitiateFileTransferToGuest(vm, creds, dest, file_attribute,
-                                    filesize, overwrite)
-
-    # PUT the filedata to the url ...
-    rsp, info = fetch_url(module, url, method="put", data=fdata,
-                          use_proxy=False, force=True, last_mod_time=None,
-                          timeout=10, headers=None)
-
-    result['msg'] = str(rsp.read())
-
-    # save all of the transfer data
-    for k, v in iteritems(info):
-        result[k] = v
-
-    return result
 
 
 def run_command_in_guest(content, vm, username, password, program_path, program_args, program_cwd, program_env):
@@ -1042,7 +961,7 @@ class PyVmomi(object):
                 folder_name = fp.name + '/' + folder_name
                 try:
                     fp = fp.parent
-                except:
+                except BaseException:
                     break
             folder_name = '/' + folder_name
         return folder_name
@@ -1133,7 +1052,7 @@ class PyVmomi(object):
         if not self.is_vcenter():
             hosts = get_all_objs(self.content, [vim.HostSystem]).keys()
             if hosts:
-                host_obj_list.append(hosts[0])
+                host_obj_list.append(list(hosts)[0])
         else:
             if cluster_name:
                 cluster_obj = self.find_cluster_by_name(cluster_name=cluster_name)
@@ -1213,7 +1132,7 @@ class PyVmomi(object):
         """
         Function to get datastore cluster managed object by name
         Args:
-            datastore_cluster: Name of datastore cluster
+            datastore_cluster_name: Name of datastore cluster
 
         Returns: Datastore cluster managed object if found else None
 

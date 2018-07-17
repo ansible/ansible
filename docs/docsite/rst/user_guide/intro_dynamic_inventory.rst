@@ -10,7 +10,7 @@ Often a user of a configuration management system will want to keep inventory
 in a different software system.  Ansible provides a basic text-based system as described in
 :ref:`inventory` but what if you want to use something else?
 
-Frequent examples include pulling inventory from a cloud provider, LDAP, `Cobbler <http://cobbler.github.com>`_,
+Frequent examples include pulling inventory from a cloud provider, LDAP, `Cobbler <https://cobbler.github.io>`_,
 or a piece of expensive enterprisey CMDB software.
 
 Ansible easily supports all of these options via an external inventory system.  The contrib/inventory directory contains some of these already -- including options for EC2/Eucalyptus, Rackspace Cloud, and OpenStack, examples of some of which will be detailed below.
@@ -25,7 +25,7 @@ For information about writing your own dynamic inventory source, see :ref:`devel
 Example: The Cobbler External Inventory Script
 ``````````````````````````````````````````````
 
-It is expected that many Ansible users with a reasonable amount of physical hardware may also be `Cobbler <http://cobbler.github.com>`_ users.  (note: Cobbler was originally written by Michael DeHaan and is now led by James Cammarata, who also works for Ansible, Inc).
+It is expected that many Ansible users with a reasonable amount of physical hardware may also be `Cobbler <https://cobbler.github.io>`_ users.  (note: Cobbler was originally written by Michael DeHaan and is now led by James Cammarata, who also works for Ansible, Inc).
 
 While primarily used to kickoff OS installations and manage DHCP and DNS, Cobbler has a generic
 layer that allows it to represent data for multiple configuration management systems (even at the same time), and has
@@ -248,7 +248,7 @@ Example: OpenStack External Inventory Script
 
 If you use an OpenStack based cloud, instead of manually maintaining your own inventory file, you can use the openstack.py dynamic inventory to pull information about your compute instances directly from OpenStack.
 
-You can download the latest version of the OpenStack inventory script `here <https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack.py>`_
+You can download the latest version of the OpenStack inventory script `here <https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack_inventory.py>`_.
 
 You can use the inventory script explicitly (by passing the `-i openstack.py` argument to Ansible) or implicitly (by placing the script at `/etc/ansible/hosts`).
 
@@ -289,7 +289,7 @@ Implicit use of inventory script
 
 Download the latest version of the OpenStack dynamic inventory script, make it executable and copy it to `/etc/ansible/hosts`::
 
-    wget https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack.py
+    wget https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack_inventory.py
     chmod +x openstack.py
     sudo cp openstack.py /etc/ansible/hosts
 

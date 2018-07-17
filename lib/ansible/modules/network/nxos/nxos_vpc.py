@@ -101,6 +101,18 @@ EXAMPLES = '''
     pkl_src: 10.1.100.2
     pkl_dest: 192.168.100.4
     auto_recovery: true
+
+- name: Configure VPC with delay restore and existing keepalive VRF
+  nxos_vpc:
+    domain: 10
+    role_priority: 28672
+    system_priority: 2000
+    delay_restore: 180
+    peer_gw: true
+    pkl_src: 1.1.1.2
+    pkl_dest: 1.1.1.1
+    pkl_vrf: vpckeepalive
+    auto_recovery: true
 '''
 
 RETURN = '''
@@ -178,7 +190,15 @@ def get_auto_recovery_default(module):
 
 def get_vpc(module):
     body = run_commands(module, ['show vpc | json'])[0]
-    domain = str(body['vpc-domain-id'])
+    if body:
+        domain = str(body['vpc-domain-id'])
+    else:
+        body = run_commands(module, ['show run vpc | inc domain'])[0]
+        if body:
+            domain = body.split()[2]
+        else:
+            domain = 'not configured'
+
     vpc = {}
     if domain != 'not configured':
         run = get_config(module, flags=['vpc'])

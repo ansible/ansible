@@ -43,7 +43,6 @@ class EnvironmentConfig(CommonConfig):
         self.remote = args.remote  # type: str
 
         self.docker_privileged = args.docker_privileged if 'docker_privileged' in args else False  # type: bool
-        self.docker_util = docker_qualify_image(args.docker_util if 'docker_util' in args else '')  # type: str
         self.docker_pull = args.docker_pull if 'docker_pull' in args else False  # type: bool
         self.docker_keep_git = args.docker_keep_git if 'docker_keep_git' in args else False  # type: bool
         self.docker_memory = args.docker_memory if 'docker_memory' in args else None
@@ -69,6 +68,9 @@ class EnvironmentConfig(CommonConfig):
 
         if self.delegate:
             self.requirements = True
+
+        self.inject_httptester = args.inject_httptester if 'inject_httptester' in args else False  # type: bool
+        self.httptester = docker_qualify_image(args.httptester if 'httptester' in args else '')  # type: str
 
     @property
     def python_executable(self):
@@ -137,6 +139,7 @@ class SanityConfig(TestConfig):
         self.test = args.test  # type: list [str]
         self.skip_test = args.skip_test  # type: list [str]
         self.list_tests = args.list_tests  # type: bool
+        self.allow_disabled = args.allow_disabled  # type: bool
 
         if args.base_branch:
             self.base_branch = args.base_branch  # str
@@ -160,7 +163,12 @@ class IntegrationConfig(TestConfig):
 
         self.start_at = args.start_at  # type: str
         self.start_at_task = args.start_at_task  # type: str
-        self.allow_destructive = args.allow_destructive if 'allow_destructive' in args else False  # type: bool
+        self.allow_destructive = args.allow_destructive  # type: bool
+        self.allow_root = args.allow_root  # type: bool
+        self.allow_disabled = args.allow_disabled  # type: bool
+        self.allow_unstable = args.allow_unstable  # type: bool
+        self.allow_unstable_changed = args.allow_unstable_changed  # type: bool
+        self.allow_unsupported = args.allow_unsupported  # type: bool
         self.retry_on_error = args.retry_on_error  # type: bool
         self.continue_on_error = args.continue_on_error  # type: bool
         self.debug_strategy = args.debug_strategy  # type: bool

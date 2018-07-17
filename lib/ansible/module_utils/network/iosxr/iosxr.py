@@ -260,31 +260,25 @@ def build_xml(container, xmap=None, params=None, opcode=None):
             for item in subtree_list:
                 container_ele.append(item)
 
-    return etree.tostring(root)
+    return etree.tostring(root, encoding='unicode')
 
 
 def etree_find(root, node):
     try:
-        element = etree.fromstring(root).find('.//' + to_bytes(node, errors='surrogate_then_replace').strip())
-    except Exception:
-        element = etree.fromstring(etree.tostring(root)).find('.//' + to_bytes(node, errors='surrogate_then_replace').strip())
+        root = etree.fromstring(to_bytes(root))
+    except (ValueError, etree.XMLSyntaxError):
+        pass
 
-    if element is not None:
-        return element
-
-    return None
+    return root.find('.//%s' % node.strip())
 
 
 def etree_findall(root, node):
     try:
-        element = etree.fromstring(root).findall('.//' + to_bytes(node, errors='surrogate_then_replace').strip())
-    except Exception:
-        element = etree.fromstring(etree.tostring(root)).findall('.//' + to_bytes(node, errors='surrogate_then_replace').strip())
+        root = etree.fromstring(to_bytes(root))
+    except (ValueError, etree.XMLSyntaxError):
+        pass
 
-    if element is not None:
-        return element
-
-    return None
+    return root.findall('.//%s' % node.strip())
 
 
 def is_cliconf(module):
@@ -401,6 +395,8 @@ def load_config(module, command_filter, commit=False, replace=False,
                 commit_config(module)
             else:
                 discard_config(module)
+        except ConnectionError as exc:
+            module.fail_json(msg=to_text(exc))
         finally:
             # conn.unlock(target = 'candidate')
             pass
@@ -411,7 +407,11 @@ def load_config(module, command_filter, commit=False, replace=False,
         cmd_filter.insert(0, 'configure terminal')
         if admin:
             cmd_filter.insert(0, 'admin')
-        conn.edit_config(cmd_filter)
+
+        try:
+            conn.edit_config(cmd_filter)
+        except ConnectionError as exc:
+            module.fail_json(msg=to_text(exc))
 
         if module._diff:
             diff = get_config_diff(module)
@@ -426,6 +426,8 @@ def load_config(module, command_filter, commit=False, replace=False,
         elif commit:
             commit_config(module, comment=comment)
             conn.edit_config('end')
+            if admin:
+                conn.edit_config('exit')
         else:
             conn.discard_changes()
 
@@ -452,12 +454,18 @@ def run_command(module, commands):
             sendonly = False
             newline = True
 
-        out = conn.get(command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline)
+        try:
+            out = conn.get(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline)
+        except ConnectionError as exc:
+            module.fail_json(msg=to_text(exc))
 
         try:
-            responses.append(to_text(out, errors='surrogate_or_strict'))
+            out = to_text(out, errors='surrogate_or_strict')
         except UnicodeError:
-            module.fail_json(msg=u'failed to decode output from {0}:{1}'.format(cmd, to_text(out)))
+            module.fail_json(msg=u'Failed to decode output from {0}: {1}'.format(cmd, to_text(out)))
+
+        responses.append(out)
+
     return responses
 
 

@@ -35,7 +35,7 @@ options:
     description:
       - Remove CIDRs that are associated with the VPC and are not specified in C(cidr_block).
     default: no
-    choices: [ 'yes', 'no' ]
+    type: bool
     version_added: '2.5'
   tenancy:
     description:
@@ -46,12 +46,12 @@ options:
     description:
       - Whether to enable AWS DNS support.
     default: yes
-    choices: [ 'yes', 'no' ]
+    type: bool
   dns_hostnames:
     description:
       - Whether to enable AWS hostname support.
     default: yes
-    choices: [ 'yes', 'no' ]
+    type: bool
   dhcp_opts_id:
     description:
       - the id of the DHCP options to use for this vpc
@@ -166,9 +166,11 @@ except ImportError:
 
 from time import sleep, time
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (boto3_conn, get_aws_connection_info, ec2_argument_spec, camel_dict_to_snake_dict,
-                                      ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict, AWSRetry)
+from ansible.module_utils.ec2 import (AWSRetry, camel_dict_to_snake_dict, compare_aws_tags,
+                                      ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict)
 from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_native
+from ansible.module_utils.network.common.utils import to_subnet
 
 
 def vpc_exists(module, vpc, name, cidr_block, multi):
@@ -229,16 +231,17 @@ def get_vpc(module, connection, vpc_id):
 
 
 def update_vpc_tags(connection, module, vpc_id, tags, name):
-
     if tags is None:
         tags = dict()
 
     tags.update({'Name': name})
+    tags = dict((k, to_native(v)) for k, v in tags.items())
     try:
         current_tags = dict((t['Key'], t['Value']) for t in connection.describe_tags(Filters=[{'Name': 'resource-id', 'Values': [vpc_id]}])['Tags'])
-        if tags != current_tags:
+        tags_to_update, dummy = compare_aws_tags(current_tags, tags, False)
+        if tags_to_update:
             if not module.check_mode:
-                tags = ansible_dict_to_boto3_tag_list(tags)
+                tags = ansible_dict_to_boto3_tag_list(tags_to_update)
                 vpc_obj = AWSRetry.backoff(
                     delay=1, tries=5,
                     catch_extra_error_codes=['InvalidVpcID.NotFound'],
@@ -311,9 +314,26 @@ def wait_for_vpc_attribute(connection, module, vpc_id, attribute, expected_value
         module.fail_json(msg="Failed to wait for {0} to be updated".format(attribute))
 
 
+def get_cidr_network_bits(module, cidr_block):
+    fixed_cidrs = []
+    for cidr in cidr_block:
+        split_addr = cidr.split('/')
+        if len(split_addr) == 2:
+            # this_ip is a IPv4 CIDR that may or may not have host bits set
+            # Get the network bits.
+            valid_cidr = to_subnet(split_addr[0], split_addr[1])
+            if cidr != valid_cidr:
+                module.warn("One of your CIDR addresses ({0}) has host bits set. To get rid of this warning, "
+                            "check the network mask and make sure that only network bits are set: {1}.".format(cidr, valid_cidr))
+            fixed_cidrs.append(valid_cidr)
+        else:
+            # let AWS handle invalid CIDRs
+            fixed_cidrs.append(cidr)
+    return fixed_cidrs
+
+
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         name=dict(required=True),
         cidr_block=dict(type='list', required=True),
         tenancy=dict(choices=['default', 'dedicated'], default='default'),
@@ -325,7 +345,6 @@ def main():
         multi_ok=dict(type='bool', default=False),
         purge_cidrs=dict(type='bool', default=False),
     )
-    )
 
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
@@ -333,7 +352,7 @@ def main():
     )
 
     name = module.params.get('name')
-    cidr_block = module.params.get('cidr_block')
+    cidr_block = get_cidr_network_bits(module, module.params.get('cidr_block'))
     purge_cidrs = module.params.get('purge_cidrs')
     tenancy = module.params.get('tenancy')
     dns_support = module.params.get('dns_support')
@@ -345,8 +364,12 @@ def main():
 
     changed = False
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
+    connection = module.client(
+        'ec2',
+        retry_decorator=AWSRetry.jittered_backoff(
+            retries=8, delay=3, catch_extra_error_codes=['InvalidVpcID.NotFound']
+        )
+    )
 
     if dns_hostnames and not dns_support:
         module.fail_json(msg='In order to enable DNS Hostnames you must also enable DNS support')
@@ -396,8 +419,8 @@ def main():
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 module.fail_json_aws(e, msg="Failed to update tags")
 
-        current_dns_enabled = connection.describe_vpc_attribute(Attribute='enableDnsSupport', VpcId=vpc_id)['EnableDnsSupport']['Value']
-        current_dns_hostnames = connection.describe_vpc_attribute(Attribute='enableDnsHostnames', VpcId=vpc_id)['EnableDnsHostnames']['Value']
+        current_dns_enabled = connection.describe_vpc_attribute(Attribute='enableDnsSupport', VpcId=vpc_id, aws_retry=True)['EnableDnsSupport']['Value']
+        current_dns_hostnames = connection.describe_vpc_attribute(Attribute='enableDnsHostnames', VpcId=vpc_id, aws_retry=True)['EnableDnsHostnames']['Value']
         if current_dns_enabled != dns_support:
             changed = True
             if not module.check_mode:

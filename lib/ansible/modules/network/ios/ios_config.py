@@ -35,6 +35,8 @@ description:
 extends_documentation_fragment: ios
 notes:
   - Tested against IOS 15.6
+  - Abbreviated commands are NOT idempotent, see
+    L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
 options:
   lines:
     description:
@@ -117,8 +119,9 @@ options:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
         changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory.  If the directory does not
-        exist, it is created.
+        folder in the playbook root directory or role root directory, if
+        playbook is part of an ansible role. If the directory does not exist,
+        it is created.
     type: bool
     default: 'no'
     version_added: "2.2"
@@ -238,11 +241,11 @@ EXAMPLES = """
 - name: load new acl into device
   ios_config:
     lines:
-      - 10 permit ip host 1.1.1.1 any log
-      - 20 permit ip host 2.2.2.2 any log
-      - 30 permit ip host 3.3.3.3 any log
-      - 40 permit ip host 4.4.4.4 any log
-      - 50 permit ip host 5.5.5.5 any log
+      - 10 permit ip host 192.0.2.1 any log
+      - 20 permit ip host 192.0.2.2 any log
+      - 30 permit ip host 192.0.2.3 any log
+      - 40 permit ip host 192.0.2.4 any log
+      - 50 permit ip host 192.0.2.5 any log
     parents: ip access-list extended test
     before: no ip access-list extended test
     match: exact
@@ -261,6 +264,14 @@ EXAMPLES = """
 - name: save running to startup when modified
   ios_config:
     save_when: modified
+
+- name: for idempotency, use full-form commands
+  ios_config:
+    lines:
+      # - shut
+      - shutdown
+    # parents: int gig1/0/11
+    parents: interface GigabitEthernet1/0/11
 """
 
 RETURN = """
@@ -268,29 +279,26 @@ updates:
   description: The set of commands that will be pushed to the remote device
   returned: always
   type: list
-  sample: ['hostname foo', 'router ospf 1', 'router-id 1.1.1.1']
+  sample: ['hostname foo', 'router ospf 1', 'router-id 192.0.2.1']
 commands:
   description: The set of commands that will be pushed to the remote device
   returned: always
   type: list
-  sample: ['hostname foo', 'router ospf 1', 'router-id 1.1.1.1']
+  sample: ['hostname foo', 'router ospf 1', 'router-id 192.0.2.1']
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
   type: string
   sample: /playbooks/ansible/backup/ios_config.2016-07-16@22:28:34
 """
-import re
-import time
+import json
 
-from ansible.module_utils.network.ios.ios import run_commands, get_config, load_config
-from ansible.module_utils.network.ios.ios import get_defaults_flag
+from ansible.module_utils.network.ios.ios import run_commands, get_config
+from ansible.module_utils.network.ios.ios import get_defaults_flag, get_connection
 from ansible.module_utils.network.ios.ios import ios_argument_spec
 from ansible.module_utils.network.ios.ios import check_args as ios_check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
-from ansible.module_utils.six import iteritems
 
 
 def check_args(module, warnings):
@@ -301,70 +309,29 @@ def check_args(module, warnings):
                                  'single character')
 
 
-def extract_banners(config):
-    banners = {}
-    banner_cmds = re.findall(r'^banner (\w+)', config, re.M)
-    for cmd in banner_cmds:
-        regex = r'banner %s \^C(.+?)(?=\^C)' % cmd
-        match = re.search(regex, config, re.S)
-        if match:
-            key = 'banner %s' % cmd
-            banners[key] = match.group(1).strip()
+def get_candidate_config(module):
+    candidate = ''
+    if module.params['src']:
+        candidate = module.params['src']
 
-    for cmd in banner_cmds:
-        regex = r'banner %s \^C(.+?)(?=\^C)' % cmd
-        match = re.search(regex, config, re.S)
-        if match:
-            config = config.replace(str(match.group(1)), '')
+    elif module.params['lines']:
+        candidate_obj = NetworkConfig(indent=1)
+        parents = module.params['parents'] or list()
+        candidate_obj.add(module.params['lines'], parents=parents)
+        candidate = dumps(candidate_obj, 'raw')
 
-    config = re.sub(r'banner \w+ \^C\^C', '!! banner removed', config)
-    return (config, banners)
-
-
-def diff_banners(want, have):
-    candidate = {}
-    for key, value in iteritems(want):
-        if value != have.get(key):
-            candidate[key] = value
     return candidate
 
 
-def load_banners(module, banners):
-    delimiter = module.params['multiline_delimiter']
-    for key, value in iteritems(banners):
-        key += ' %s' % delimiter
-        for cmd in ['config terminal', key, value, delimiter, 'end']:
-            obj = {'command': cmd, 'sendonly': True}
-            run_commands(module, [cmd])
-        time.sleep(0.1)
-        run_commands(module, ['\n'])
-
-
-def get_running_config(module, current_config=None):
-    contents = module.params['running_config']
-    if not contents:
+def get_running_config(module, current_config=None, flags=None):
+    running = module.params['running_config']
+    if not running:
         if not module.params['defaults'] and current_config:
-            contents, banners = extract_banners(current_config.config_text)
+            running = current_config
         else:
-            flags = get_defaults_flag(module) if module.params['defaults'] else []
-            contents = get_config(module, flags=flags)
-    contents, banners = extract_banners(contents)
-    return NetworkConfig(indent=1, contents=contents), banners
+            running = get_config(module, flags=flags)
 
-
-def get_candidate(module):
-    candidate = NetworkConfig(indent=1)
-    banners = {}
-
-    if module.params['src']:
-        src, banners = extract_banners(module.params['src'])
-        candidate.load(src)
-
-    elif module.params['lines']:
-        parents = module.params['parents'] or list()
-        candidate.add(module.params['lines'], parents=parents)
-
-    return candidate, banners
+    return running
 
 
 def save_config(module, result):
@@ -433,10 +400,14 @@ def main():
     check_args(module, warnings)
     result['warnings'] = warnings
 
+    diff_ignore_lines = module.params['diff_ignore_lines']
     config = None
+    contents = None
+    flags = get_defaults_flag(module) if module.params['defaults'] else []
+    connection = get_connection(module)
 
     if module.params['backup'] or (module._diff and module.params['diff_against'] == 'running'):
-        contents = get_config(module)
+        contents = get_config(module, flags=flags)
         config = NetworkConfig(indent=1, contents=contents)
         if module.params['backup']:
             result['__backup__'] = contents
@@ -446,20 +417,15 @@ def main():
         replace = module.params['replace']
         path = module.params['parents']
 
-        candidate, want_banners = get_candidate(module)
+        candidate = get_candidate_config(module)
+        running = get_running_config(module, contents, flags=flags)
 
-        if match != 'none':
-            config, have_banners = get_running_config(module, config)
-            path = module.params['parents']
-            configobjs = candidate.difference(config, path=path, match=match, replace=replace)
-        else:
-            configobjs = candidate.items
-            have_banners = {}
+        response = connection.get_diff(candidate=candidate, running=running, match=match, diff_ignore_lines=diff_ignore_lines, path=path, replace=replace)
+        config_diff = response['config_diff']
+        banner_diff = response['banner_diff']
 
-        banners = diff_banners(want_banners, have_banners)
-
-        if configobjs or banners:
-            commands = dumps(configobjs, 'commands').split('\n')
+        if config_diff or banner_diff:
+            commands = config_diff.split('\n')
 
             if module.params['before']:
                 commands[:0] = module.params['before']
@@ -469,22 +435,20 @@ def main():
 
             result['commands'] = commands
             result['updates'] = commands
-            result['banners'] = banners
+            result['banners'] = banner_diff
 
             # send the configuration commands to the device and merge
             # them with the current running config
             if not module.check_mode:
                 if commands:
-                    load_config(module, commands)
-                if banners:
-                    load_banners(module, banners)
+                    connection.edit_config(candidate=commands)
+                if banner_diff:
+                    connection.edit_banner(candidate=json.dumps(banner_diff), multiline_delimiter=module.params['multiline_delimiter'])
 
             result['changed'] = True
 
-    running_config = None
+    running_config = module.params['running_config']
     startup_config = None
-
-    diff_ignore_lines = module.params['diff_ignore_lines']
 
     if module.params['save_when'] == 'always' or module.params['save']:
         save_config(module, result)
@@ -504,7 +468,7 @@ def main():
             output = run_commands(module, 'show running-config')
             contents = output[0]
         else:
-            contents = running_config.config_text
+            contents = running_config
 
         # recreate the object in order to process diff_ignore_lines
         running_config = NetworkConfig(indent=1, contents=contents, ignore_lines=diff_ignore_lines)
@@ -543,7 +507,6 @@ def main():
                 })
 
     module.exit_json(**result)
-
 
 if __name__ == '__main__':
     main()

@@ -7,24 +7,24 @@
 - name: setup
   vyos_config:
     lines:
-      - delete system name-server 1.1.1.1
+      - delete system name-server 192.0.2.1
     match: none
 
 - name: configure name servers using platform agnostic module
   net_system:
     name_servers:
-      - 1.1.1.1
+      - 192.0.2.1
   register: result
 
 - assert:
     that:
       - result.changed == true
-      - result.commands[0]  is search("set system name-server '1.1.1.1'")
+      - result.commands[0]  is search("set system name-server '192.0.2.1'")
 
 - name: setup
   vyos_config:
     lines:
-      - delete system name-server 1.1.1.1
+      - delete system name-server 192.0.2.1
     match: none
 
 - debug: msg="END vyos cli/net_system.yaml on connection={{ ansible_connection }}"

@@ -1,4 +1,4 @@
-.. _playbook_tests:
+.. _playbooks_tests:
 
 Tests
 -----
@@ -74,7 +74,7 @@ The ``version`` test can also be used to evaluate the ``ansible_distribution_ver
 
     {{ ansible_distribution_version is version('12.04', '>=') }}
 
-If ``ansible_distribution_version`` is greater than or equal to 12, this test returns True, otherwise False.
+If ``ansible_distribution_version`` is greater than or equal to 12.04, this test returns True, otherwise False.
 
 The ``version`` test accepts the following operators::
 
@@ -119,7 +119,7 @@ You can use `any` and `all` to check if any or all elements in a list are true o
   vars:
     mylist:
         - 1
-        - 3 == 3
+        - "{{ 3 == 3 }}"
         - True
     myotherlist:
         - False
@@ -138,7 +138,7 @@ You can use `any` and `all` to check if any or all elements in a list are true o
 Testing paths
 `````````````
 
-.. note:: In 2.5 the follwing tests were renamed to remove the ``is_`` prefix
+.. note:: In 2.5 the following tests were renamed to remove the ``is_`` prefix
 
 The following tests can provide information about a path on the controller::
 

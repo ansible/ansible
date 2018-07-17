@@ -13,7 +13,7 @@ Ansible contains a number of extra modules for interacting with CloudStack based
 
 Prerequisites
 `````````````
-Prerequisites for using the CloudStack modules are minimal. In addition to Ansible itself, all of the modules require the python library ``cs`` https://pypi.python.org/pypi/cs.
+Prerequisites for using the CloudStack modules are minimal. In addition to Ansible itself, all of the modules require the python library ``cs`` https://pypi.org/project/cs/
 
 You'll need this Python module installed on the execution host, usually your workstation.
 

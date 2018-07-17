@@ -31,6 +31,12 @@ from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.connection import Connection, ConnectionError
 
 try:
+    from ncclient.xml_ import NCElement
+    HAS_NCCLIENT = True
+except ImportError:
+    HAS_NCCLIENT = False
+
+try:
     from lxml.etree import Element, fromstring, XMLSyntaxError
 except ImportError:
     from xml.etree.ElementTree import Element, fromstring
@@ -100,3 +106,36 @@ class NetconfConnection(Connection):
                 return warnings
             except XMLSyntaxError:
                 raise ConnectionError(rpc_error)
+
+
+def transform_reply():
+    return b'''<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+    <xsl:output method="xml" indent="no"/>
+
+    <xsl:template match="/|comment()|processing-instruction()">
+        <xsl:copy>
+            <xsl:apply-templates/>
+        </xsl:copy>
+    </xsl:template>
+
+    <xsl:template match="*">
+        <xsl:element name="{local-name()}">
+            <xsl:apply-templates select="@*|node()"/>
+        </xsl:element>
+    </xsl:template>
+
+    <xsl:template match="@*">
+        <xsl:attribute name="{local-name()}">
+            <xsl:value-of select="."/>
+        </xsl:attribute>
+    </xsl:template>
+    </xsl:stylesheet>
+    '''
+
+
+# Note: Workaround for ncclient 0.5.3
+def remove_namespaces(data):
+    if not HAS_NCCLIENT:
+        raise ImportError("ncclient is required but does not appear to be installed.  "
+                          "It can be installed using `pip install ncclient`")
+    return NCElement(data, transform_reply()).data_xml

@@ -1,5 +1,5 @@
 ---
-- debug: msg="START eapi/backup.yaml"
+- debug: msg="START eapi/backup.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   eos_config:
@@ -9,14 +9,14 @@
     parents:
       - interface Ethernet2
     match: none
-    provider: "{{ eapi }}"
+  become: yes
 
 - name: collect any backup files
   find:
     paths: "{{ role_path }}/backup"
     pattern: "{{ inventory_hostname_short }}_config*"
   register: backup_files
-  delegate_to: localhost
+  connection: local
 
 - name: delete backup files
   file:
@@ -28,7 +28,7 @@
   eos_config:
     src: basic/config.j2
     backup: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -41,10 +41,10 @@
     paths: "{{ role_path }}/backup"
     pattern: "{{ inventory_hostname_short }}_config*"
   register: backup_files
-  delegate_to: localhost
+  connection: local
 
 - assert:
     that:
       - "backup_files.files is defined"
 
-- debug: msg="END eapi/backup.yaml"
+- debug: msg="END eapi/backup.yaml on connection={{ ansible_connection }}"

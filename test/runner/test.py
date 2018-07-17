@@ -88,7 +88,7 @@ def main():
         try:
             args.func(config)
         except Delegate as ex:
-            delegate(config, ex.exclude, ex.require)
+            delegate(config, ex.exclude, ex.require, ex.integration_targets)
 
         display.review_warnings()
     except ApplicationWarning as ex:
@@ -225,6 +225,26 @@ def parse_args():
                              action='store_true',
                              help='allow destructive tests (--local and --tox only)')
 
+    integration.add_argument('--allow-root',
+                             action='store_true',
+                             help='allow tests requiring root when not root')
+
+    integration.add_argument('--allow-disabled',
+                             action='store_true',
+                             help='allow tests which have been marked as disabled')
+
+    integration.add_argument('--allow-unstable',
+                             action='store_true',
+                             help='allow tests which have been marked as unstable')
+
+    integration.add_argument('--allow-unstable-changed',
+                             action='store_true',
+                             help='allow tests which have been marked as unstable when focused changes are detected')
+
+    integration.add_argument('--allow-unsupported',
+                             action='store_true',
+                             help='allow tests which have been marked as unsupported')
+
     integration.add_argument('--retry-on-error',
                              action='store_true',
                              help='retry failed test with increased verbosity')
@@ -258,6 +278,7 @@ def parse_args():
                                    config=PosixIntegrationConfig)
 
     add_extra_docker_options(posix_integration)
+    add_httptester_options(posix_integration, argparse)
 
     network_integration = subparsers.add_parser('network-integration',
                                                 parents=[integration],
@@ -336,6 +357,10 @@ def parse_args():
                         choices=[test.name for test in sanity_get_tests()],
                         help='tests to skip').completer = complete_sanity_test
 
+    sanity.add_argument('--allow-disabled',
+                        action='store_true',
+                        help='allow tests to run which are disabled by default')
+
     sanity.add_argument('--list-tests',
                         action='store_true',
                         help='list available tests')
@@ -360,6 +385,7 @@ def parse_args():
 
     add_environments(shell, tox_version=True)
     add_extra_docker_options(shell)
+    add_httptester_options(shell, argparse)
 
     coverage_common = argparse.ArgumentParser(add_help=False, parents=[common])
 
@@ -586,6 +612,29 @@ def add_extra_coverage_options(parser):
                         help='generate empty report of all python source files')
 
 
+def add_httptester_options(parser, argparse):
+    """
+    :type parser: argparse.ArgumentParser
+    :type argparse: argparse
+    """
+    group = parser.add_mutually_exclusive_group()
+
+    group.add_argument('--httptester',
+                       metavar='IMAGE',
+                       default='quay.io/ansible/http-test-container:1.0.0',
+                       help='docker image to use for the httptester container')
+
+    group.add_argument('--disable-httptester',
+                       dest='httptester',
+                       action='store_const',
+                       const='',
+                       help='do not use the httptester container')
+
+    parser.add_argument('--inject-httptester',
+                        action='store_true',
+                        help=argparse.SUPPRESS)  # internal use only
+
+
 def add_extra_docker_options(parser, integration=True):
     """
     :type parser: argparse.ArgumentParser
@@ -604,11 +653,6 @@ def add_extra_docker_options(parser, integration=True):
 
     if not integration:
         return
-
-    docker.add_argument('--docker-util',
-                        metavar='IMAGE',
-                        default='ansible/ansible@sha256:fa5def8c294fc50813af131c0b5737594d852abac9cbe7ba38e17bf1c8476f3f',  # httptester
-                        help='docker utility image to provide test services')
 
     docker.add_argument('--docker-privileged',
                         action='store_true',

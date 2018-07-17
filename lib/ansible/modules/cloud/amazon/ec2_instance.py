@@ -55,7 +55,7 @@ options:
       tower_address:
         description:
         - IP address or DNS name of Tower server. Must be accessible via this address from the VPC that this instance will be launched in.
-      template_id:
+      job_template_id:
         description:
         - Either the integer ID of the Tower Job Template, or the name (name supported only for Tower 3.2+)
       host_config_key:
@@ -108,7 +108,7 @@ options:
   volumes:
     description:
     - A list of block device mappings, by default this will always use the AMI root device so the volumes option is primarily for adding more storage.
-    - A mapping contains the (optional) keys device_name, virtual_name, ebs.device_type, ebs.device_size, ebs.kms_key_id,
+    - A mapping contains the (optional) keys device_name, virtual_name, ebs.volume_type, ebs.volume_size, ebs.kms_key_id,
       ebs.iops, and ebs.delete_on_termination.
     - For more information about each parameter, see U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_BlockDeviceMapping.html)
   launch_template:
@@ -171,26 +171,48 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# Terminate every instance in a region. Use with caution.
-- ec2_instance_facts:
+# Terminate every running instance in a region. Use with EXTREME caution.
+- ec2_instance:
     state: absent
     filters:
       instance-state-name: running
 
-# Gather facts about all instances in AZ ap-southeast-2a
-- ec2_instance_facts:
-    filters:
-      availability-zone: ap-southeast-2a
-
-# Gather facts about a particular instance using ID
-- ec2_instance_facts:
+# restart a particular instance by its ID
+- ec2_instance:
+    state: restarted
     instance_ids:
       - i-12345678
 
-# Gather facts about any instance with a tag key Name and value Example
-- ec2_instance_facts:
-    filters:
-      "tag:Name": Example
+# start an instance with a public IP address
+- ec2_instance:
+    name: "public-compute-instance"
+    key_name: "prod-ssh-key"
+    vpc_subnet_id: subnet-5ca1ab1e
+    instance_type: c5.large
+    security_group: default
+    network:
+      assign_public_ip: true
+    image_id: ami-123456
+    tags:
+      Environment: Testing
+
+# start an instance and have it begin a Tower callback on boot
+- ec2_instance:
+    name: "tower-callback-test"
+    key_name: "prod-ssh-key"
+    vpc_subnet_id: subnet-5ca1ab1e
+    security_group: default
+    tower_callback:
+      # IP or hostname of tower server
+      tower_address: 1.2.3.4
+      job_template_id: 876
+      host_config_key: '[secret config key goes here]'
+    network:
+      assign_public_ip: true
+    image_id: ami-123456
+    cpu_credit_specification: unlimited
+    tags:
+      SomeThing: "A value"
 '''
 
 RETURN = '''
@@ -600,6 +622,7 @@ import re
 import uuid
 import string
 import textwrap
+import time
 from collections import namedtuple
 
 try:
@@ -608,7 +631,7 @@ try:
 except ImportError:
     pass
 
-from ansible.module_utils.six import text_type
+from ansible.module_utils.six import text_type, string_types
 from ansible.module_utils.six.moves.urllib import parse as urlparse
 from ansible.module_utils._text import to_bytes, to_native
 import ansible.module_utils.ec2 as ec2_utils
@@ -649,7 +672,7 @@ def tower_callback_script(tower_conf, windows=False, passwd=None):
             if p not in tower_conf:
                 module.fail_json(msg="Incomplete tower_callback configuration. tower_callback.{0} not set.".format(p))
 
-        if isinstance(tower_conf['job_template_id'], text_type):
+        if isinstance(tower_conf['job_template_id'], string_types):
             tower_conf['job_template_id'] = urlparse.quote(tower_conf['job_template_id'])
         tpl = string.Template(textwrap.dedent("""#!/bin/bash
         set -x
@@ -713,6 +736,47 @@ def manage_tags(match, new_tags, purge_tags, ec2):
 def build_volume_spec(params):
     volumes = params.get('volumes') or []
     return [ec2_utils.snake_dict_to_camel_dict(v, capitalize_first=True) for v in volumes]
+
+
+def add_or_update_instance_profile(instance, desired_profile_name):
+    instance_profile_setting = instance.get('IamInstanceProfile')
+    if instance_profile_setting and desired_profile_name:
+        if desired_profile_name in (instance_profile_setting.get('Name'), instance_profile_setting.get('Arn')):
+            # great, the profile we asked for is what's there
+            return False
+        else:
+            desired_arn = determine_iam_role(desired_profile_name)
+            if instance_profile_setting.get('Arn') == desired_arn:
+                return False
+        # update association
+        ec2 = module.client('ec2')
+        try:
+            association = ec2.describe_iam_instance_profile_associations(Filters=[{'Name': 'instance-id', 'Values': [instance['InstanceId']]}])
+        except botocore.exceptions.ClientError as e:
+            # check for InvalidAssociationID.NotFound
+            module.fail_json_aws(e, "Could not find instance profile association")
+        try:
+            resp = ec2.replace_iam_instance_profile_association(
+                AssociationId=association['IamInstanceProfileAssociations'][0]['AssociationId'],
+                IamInstanceProfile={'Arn': determine_iam_role(desired_profile_name)}
+            )
+            return True
+        except botocore.exceptions.ClientError as e:
+            module.fail_json_aws(e, "Could not associate instance profile")
+
+    if not instance_profile_setting and desired_profile_name:
+        # create association
+        ec2 = module.client('ec2')
+        try:
+            resp = ec2.associate_iam_instance_profile(
+                IamInstanceProfile={'Arn': determine_iam_role(desired_profile_name)},
+                InstanceId=instance['InstanceId']
+            )
+            return True
+        except botocore.exceptions.ClientError as e:
+            module.fail_json_aws(e, "Could not associate new instance profile")
+
+    return False
 
 
 def build_network_spec(params, ec2=None):
@@ -789,7 +853,7 @@ def build_network_spec(params, ec2=None):
             'DeviceIndex': idx,
         }
 
-        if isinstance(interface_params, text_type):
+        if isinstance(interface_params, string_types):
             # naive case where user gave
             # network_interfaces: [eni-1234, eni-4567, ....]
             # put into normal data structure so we don't dupe code
@@ -805,7 +869,6 @@ def build_network_spec(params, ec2=None):
 
         if interface_params.get('ipv6_addresses'):
             spec['Ipv6Addresses'] = [{'Ipv6Address': a} for a in interface_params.get('ipv6_addresses', [])]
-            spec['Ipv6AddressCount'] = len(spec['Ipv6Addresses'])
 
         if interface_params.get('private_ip_address'):
             spec['PrivateIpAddress'] = interface_params.get('private_ip_address')
@@ -1082,7 +1145,7 @@ def change_network_attachments(instance, params, ec2):
         for inty in params.get('network').get('interfaces'):
             if isinstance(inty, dict) and 'id' in inty:
                 new_ids.append(inty['id'])
-            elif isinstance(inty, text_type):
+            elif isinstance(inty, string_types):
                 new_ids.append(inty)
         # network.interfaces can create the need to attach new interfaces
         old_ids = [inty['NetworkInterfaceId'] for inty in instance['NetworkInterfaces']]
@@ -1270,9 +1333,9 @@ def pretty_instance(i):
 def determine_iam_role(name_or_arn):
     if re.match(r'^arn:aws:iam::\d+:instance-profile/[\w+=/,.@-]+$', name_or_arn):
         return name_or_arn
-    iam = module.client('iam')
+    iam = module.client('iam', retry_decorator=AWSRetry.jittered_backoff())
     try:
-        role = iam.get_instance_profile(InstanceProfileName=name_or_arn)
+        role = iam.get_instance_profile(InstanceProfileName=name_or_arn, aws_retry=True)
         return role['InstanceProfile']['Arn']
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == 'NoSuchEntity':
@@ -1291,6 +1354,8 @@ def handle_existing(existing_matches, changed, ec2, state):
     changes = diff_instance_and_params(existing_matches[0], module.params)
     for c in changes:
         ec2.modify_instance_attribute(**c)
+    changed |= bool(changes)
+    changed |= add_or_update_instance_profile(existing_matches[0], module.params.get('instance_role'))
     changed |= change_network_attachments(existing_matches[0], module.params, ec2)
     altered = find_instances(ec2, ids=[i['InstanceId'] for i in existing_matches])
     module.exit_json(
@@ -1313,7 +1378,7 @@ def ensure_present(existing_matches, changed, ec2, state):
             )
     try:
         instance_spec = build_run_instance_spec(module.params)
-        instance_response = AWSRetry.jittered_backoff()(ec2.run_instances)(**instance_spec)
+        instance_response = run_instances(ec2, **instance_spec)
         instances = instance_response['Instances']
         instance_ids = [i['InstanceId'] for i in instances]
 
@@ -1338,6 +1403,20 @@ def ensure_present(existing_matches, changed, ec2, state):
         )
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
         module.fail_json_aws(e, msg="Failed to create new EC2 instance")
+
+
+@AWSRetry.jittered_backoff()
+def run_instances(ec2, **instance_spec):
+    try:
+        return ec2.run_instances(**instance_spec)
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == 'InvalidParameterValue' and "Invalid IAM Instance Profile ARN" in e.response['Error']['Message']:
+            # If the instance profile has just been created, it takes some time to be visible by ec2
+            # So we wait 10 second and retry the run_instances
+            time.sleep(10)
+            return ec2.run_instances(**instance_spec)
+        else:
+            raise e
 
 
 def main():
@@ -1405,7 +1484,7 @@ def main():
             # only need to change instances that aren't already stopped
             filters['instance-state-name'] = ['stopping', 'pending', 'running']
 
-        if isinstance(module.params.get('instance_ids'), text_type):
+        if isinstance(module.params.get('instance_ids'), string_types):
             filters['instance-id'] = [module.params.get('instance_ids')]
         elif isinstance(module.params.get('instance_ids'), list) and len(module.params.get('instance_ids')):
             filters['instance-id'] = module.params.get('instance_ids')

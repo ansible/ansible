@@ -16,8 +16,8 @@ This cycle can be extended in order to allow for larger changes to be properly
 implemented and tested before a new release is made available.
 
 Ansible has a graduated support structure that extends to three major releases.
-For more information, read about the :ref: `_development_and_stable_versiona_maintenance_workflow` or see
-the chart in :ref:`schedule` for the degrees to which current releases are supported.
+For more information, read about the :ref:`development_and_stable_version_maintenance_workflow` or
+see the chart in :ref:`release_schedule` for the degrees to which current releases are supported.
 
 .. note:: Support for three major releases began with Ansible-2.4. Ansible-2.3 and older versions
     are only supported for two releases.
@@ -29,10 +29,8 @@ latest features and security fixes.
 Older, unsupported versions of Ansible can contain unfixed security
 vulnerabilities (*CVE*).
 
-You can refer to the `porting guides`_ for tips on updating your Ansible
+You can refer to the :ref:`porting guides<porting_guides>` for tips on updating your Ansible
 playbooks to run on newer versions.
-
-.. _porting guides: https://docs.ansible.com/ansible/porting_guides.html
 
 .. _release_schedule:
 
@@ -42,13 +40,14 @@ Release status
 ===============   ==========================   =================================================
 Ansible Release   Latest Version               Status
 ===============   ==========================   =================================================
-devel             `2.5`_ (unreleased, trunk)   In development
-2.4               `2.4.3`_ (2018-01-31)        Supported (security **and** general bug fixes)
-2.3               `2.3.3`_ (2017-12-20)        Supported (security **and** critical bug fixes)
-2.2               `2.2.3`_ (2017-05-09)        Unsupported (end of life)
-2.1               `2.1.6`_ (2017-06-01)        Unsupported (end of life)
-2.0               `2.0.2`_ (2016-04-19)        Unsupported (end of life)
-1.9               `1.9.6`_ (2016-04-15)        Unsupported (end of life)
+devel             2.6 (unreleased, trunk)      In development
+`2.5`_            2.5.4 (2018-05-31)           Supported (security **and** general bugfixes)
+`2.4`_            2.4.4 (2018-01-31)           Supported (security **and** critical bug fixes)
+`2.3`_            2.3.3 (2017-12-20)           Unsupported (end of life)
+`2.2`_            2.2.3 (2017-05-09)           Unsupported (end of life)
+`2.1`_            2.1.6 (2017-06-01)           Unsupported (end of life)
+`2.0`_            2.0.2 (2016-04-19)           Unsupported (end of life)
+`1.9`_            1.9.6 (2016-04-15)           Unsupported (end of life)
 <1.9              n/a                          Unsupported (end of life)
 ===============   ==========================   =================================================
 
@@ -56,18 +55,21 @@ devel             `2.5`_ (unreleased, trunk)   In development
     security and general bug fixes when it is first released, security and critical bug fixes when
     2.5 is released, and **only** security fixes once 2.6 is released.
 
-.. _2.5: https://github.com/ansible/ansible/blob/devel/CHANGELOG.md
-.. _2.4.3: https://github.com/ansible/ansible/blob/stable-2.4/CHANGELOG.md
-.. _2.3.3: https://github.com/ansible/ansible/blob/stable-2.3/CHANGELOG.md
-.. _2.2.3: https://github.com/ansible/ansible/blob/stable-2.2/CHANGELOG.md
-.. _2.1.6: https://github.com/ansible/ansible/blob/stable-2.1/CHANGELOG.md
-.. _2.0.2: https://github.com/ansible/ansible/blob/stable-2.0/CHANGELOG.md
-.. _1.9.6: https://github.com/ansible/ansible/blob/stable-1.9/CHANGELOG.md
+.. Comment: devel used to point here but we're currently revamping our changelog process and have no
+   link to a static changelog for devel _2.6: https://github.com/ansible/ansible/blob/devel/CHANGELOG.md
+.. _2.6: https://github.com/ansible/ansible/blob/stable-2.6/changelogs/CHANGELOG-v2.6.rst
+.. _2.5: https://github.com/ansible/ansible/blob/stable-2.5/changelogs/CHANGELOG-v2.5.rst
+.. _2.4: https://github.com/ansible/ansible/blob/stable-2.4/CHANGELOG.md
+.. _2.3: https://github.com/ansible/ansible/blob/stable-2.3/CHANGELOG.md
+.. _2.2: https://github.com/ansible/ansible/blob/stable-2.2/CHANGELOG.md
+.. _2.1: https://github.com/ansible/ansible/blob/stable-2.1/CHANGELOG.md
+.. _2.0: https://github.com/ansible/ansible/blob/stable-2.0/CHANGELOG.md
+.. _1.9: https://github.com/ansible/ansible/blob/stable-1.9/CHANGELOG.md
 
 .. _support_life:
 .. _methods:
 
-.. _development_and_stable_versiona_maintenance_workflow:
+.. _development_and_stable_version_maintenance_workflow:
 
 Development and stable version maintenance workflow
 ```````````````````````````````````````````````````
@@ -89,14 +91,19 @@ security fixes to releases which are two releases old. This work is tracked on t
 The fixes that land in supported stable branches will eventually be released
 as a new version when necessary.
 
-For more information on the changes included in each new version, you can refer
-to the changelog_, available on GitHub.
-
 Note that while there are no guarantees for providing fixes for unsupported
 releases of Ansible, there can sometimes be exceptions for critical issues.
 
 .. _GitHub: https://github.com/ansible/ansible
-.. _changelog: https://github.com/ansible/ansible/blob/devel/CHANGELOG.md
+
+Changelogs
+~~~~~~~~~~~~~~~~~~
+
+Since 2.5, we've logged changes to ``stable-<version>`` git branches at ``stable-<version>/changelogs/CHANGELOG-v<version>.rst``.
+For example, here's the changelog for 2.5_ on GitHub.
+
+Older versions logged changes to ``stable-<version>/CHANGELOG.md``. For example,
+here's the CHANGELOG for 2.4_.
 
 
 Release candidates
@@ -157,8 +164,6 @@ For modules/plugins, we keep the documentation after the removal for users of ol
        Testing strategies
    :ref:`ansible_community_guide`
        Community information and contributing
-   `Ansible Changelog <https://github.com/ansible/ansible/blob/devel/CHANGELOG.md>`_
-       Documentation of the improvements for each version of Ansible
    `Ansible release tarballs <https://releases.ansible.com/ansible/>`_
        Ansible release tarballs
    `Development Mailing List <http://groups.google.com/group/ansible-devel>`_

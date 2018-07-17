@@ -9,7 +9,7 @@ This section discusses the behavioral changes between Ansible 2.3 and Ansible 2.
 It is intended to assist in updating your playbooks, plugins and other parts of your Ansible infrastructure so they will work with this version of Ansible.
 
 
-We suggest you read this page along with `Ansible Changelog <https://github.com/ansible/ansible/blob/stable-2.4/CHANGELOG.md#2.4>`_ to understand what updates you may need to make.
+We suggest you read this page along with `Ansible Changelog for 2.4 <https://github.com/ansible/ansible/blob/stable-2.4/CHANGELOG.md>`_ to understand what updates you may need to make.
 
 This document is part of a collection on porting. The complete list of porting guides can be found at :ref:`porting guides <porting_guides>`.
 
@@ -28,7 +28,7 @@ Inventory has been refactored to be implemented via plugins and now allows for m
 
 One exception is the ``inventory_dir``, which is now a host variable; previously it could only have one value so it was set globally.
 This means you can no longer use it early in plays to determine ``hosts:`` or similar keywords.
-This also changes the behaviour of ``add_hosts`` and the implicit localhost; 
+This also changes the behaviour of ``add_hosts`` and the implicit localhost;
 because they no longer automatically inherit the global value, they default to ``None``. See the module documentation for more information.
 
 The ``inventory_file`` remains mostly unchanged, as it was always host specific.
@@ -77,7 +77,7 @@ Modules
 
 Major changes in popular modules are detailed here
 
-* The :ref:`win_shell <win_shell>` and :ref:`win_command <win_command>` modules now properly preserve quoted arguments in the command-line. Tasks that attempted to work around the issue by adding extra quotes/escaping may need to be reworked to remove the superfluous escaping. See `Issue 23019 <https://github.com/ansible/ansible/issues/23019>`_ for additional detail.
+* The :ref:`win_shell <win_shell_module>` and :ref:`win_command <win_command_module>` modules now properly preserve quoted arguments in the command-line. Tasks that attempted to work around the issue by adding extra quotes/escaping may need to be reworked to remove the superfluous escaping. See `Issue 23019 <https://github.com/ansible/ansible/issues/23019>`_ for additional detail.
 
 Modules removed
 ---------------
@@ -89,17 +89,17 @@ The following modules no longer exist:
 Deprecation notices
 -------------------
 
-The following modules will be removed in Ansible 2.8. Please update update your playbooks accordingly.
+The following modules will be removed in Ansible 2.8. Please update your playbooks accordingly.
 
-* :ref:`azure <azure>`, use :ref:`azure_rm_virtualmachine <azure_rm_virtualmachine>`, which uses the new Resource Manager SDK.
-* :ref:`win_msi <win_msi>`, use :ref:`win_package <win_package>` instead
+* :ref:`azure <azure_module>`, use :ref:`azure_rm_virtualmachine <azure_rm_virtualmachine_module>`, which uses the new Resource Manager SDK.
+* :ref:`win_msi <win_msi_module>`, use :ref:`win_package <win_package_module>` instead
 
 Noteworthy module changes
 -------------------------
 
-* The :ref:`win_get_url <win_get_url>`  module has the dictionary ``win_get_url`` in its results deprecated, its content is now also available directly in the resulting output, like other modules. This dictionary will be removed in Ansible 2.8.
-* The :ref:`win_unzip <win_unzip>` module no longer includes the dictionary ``win_unzip`` in its results; the contents are now included directly in the resulting output, like other modules.
-* The :ref:`win_package <win_package>` module return values ``exit_code`` and ``restart_required`` have been deprecated in favour of ``rc`` and ``reboot_required`` respectively. The deprecated return values will be removed in Ansible 2.6.
+* The :ref:`win_get_url <win_get_url_module>`  module has the dictionary ``win_get_url`` in its results deprecated, its content is now also available directly in the resulting output, like other modules. This dictionary will be removed in Ansible 2.8.
+* The :ref:`win_unzip <win_unzip_module>` module no longer includes the dictionary ``win_unzip`` in its results; the contents are now included directly in the resulting output, like other modules.
+* The :ref:`win_package <win_package_module>` module return values ``exit_code`` and ``restart_required`` have been deprecated in favour of ``rc`` and ``reboot_required`` respectively. The deprecated return values will be removed in Ansible 2.6.
 
 
 Plugins

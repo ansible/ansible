@@ -124,17 +124,23 @@ The name used for the role can be a simple name (see :ref:`role_search_path` bel
 
     - hosts: webservers
       roles:
-        - { role: '/path/to/my/roles/common' }
+        - role: '/path/to/my/roles/common'
 
-Roles can accept parameters::
+Roles can accept other keywords::
 
     ---
 
     - hosts: webservers
       roles:
         - common
-        - { role: foo_app_instance, dir: '/opt/a', app_port: 5000 }
-        - { role: foo_app_instance, dir: '/opt/b', app_port: 5001 }
+        - role: foo_app_instance
+          vars:
+             dir: '/opt/a'
+             app_port: 5000
+        - role: foo_app_instance
+          vars:
+             dir: '/opt/b'
+             app_port: 5001
 
 Or, using the newer syntax::
 
@@ -149,7 +155,7 @@ Or, using the newer syntax::
           app_port: 5000
       ...
 
-You can conditionally execute a role. This is not generally recommended with the classic syntax, but is common when using ``import_role`` or ``include_role``::
+You can conditionally import a role and execute it's tasks::
 
     ---
 
@@ -159,12 +165,17 @@ You can conditionally execute a role. This is not generally recommended with the
           name: some_role
         when: "ansible_os_family == 'RedHat'"
 
-Finally, you may wish to assign tags to the roles you specify. You can do so inline::
+
+
+Finally, you may wish to assign tags to the tasks inside the roles you specify. You can do::
 
     ---
 
     - hosts: webservers
       roles:
+        - role: bar
+          tags: ["foo"]
+        # using YAML shorthand, this is equivalent to the above
         - { role: foo, tags: ["bar", "baz"] }
 
 Or, again, using the newer syntax::
@@ -180,7 +191,20 @@ Or, again, using the newer syntax::
         - baz
 
 .. note::
-    This *tags all of the tasks in that role with the tags specified*, appending to any tags that are specified inside the role. The tags in this example will *not* be added to tasks inside an ``include_role``. Tag the ``include_role`` task directly in order to apply tags to tasks in included roles. If you find yourself building a role with lots of tags and you want to call subsets of the role at different times, you should consider just splitting that role into multiple roles.
+    This *tags all of the tasks in that role with the tags specified*, appending to any tags that are specified inside the role.
+
+On the other hand you might just want to tag the import of the role itself::
+
+    - hosts: webservers
+      tasks:
+      - include_role:
+          name: bar
+        tags:
+         - foo
+
+.. note:: The tags in this example will *not* be added to tasks inside an ``include_role``, you can use a surrounding ``block`` directive to do both.
+
+.. note:: There is no facility to import a role while specifying a subset of tags to execute. If you find yourself building a role with lots of tags and you want to call subsets of the role at different times, you should consider just splitting that role into multiple roles.
 
 Role Duplication and Execution
 ``````````````````````````````
@@ -205,8 +229,10 @@ Example 1 - passing different parameters::
     ---
     - hosts: webservers
       roles:
-      - { role: foo, message: "first" }
-      - { role: foo, message: "second" }
+      - role: foo
+        vars:
+             message: "first"
+      - { role: foo, vars: { message: "second" } }
 
 In this example, because each role definition has different parameters, ``foo`` will run twice.
 
@@ -243,9 +269,16 @@ Role dependencies allow you to automatically pull in other roles when using a ro
 
     ---
     dependencies:
-      - { role: common, some_parameter: 3 }
-      - { role: apache, apache_port: 80 }
-      - { role: postgres, dbname: blarg, other_parameter: 12 }
+      - role: common
+        vars:
+          some_parameter: 3
+      - role: apache
+        vars:
+          apache_port: 80
+      - role: postgres
+        vars:
+          dbname: blarg
+          other_parameter: 12
 
 .. note::
     Role dependencies must use the classic role definition style.
@@ -259,17 +292,25 @@ For example, a role named ``car`` depends on a role named ``wheel`` as follows::
 
     ---
     dependencies:
-    - { role: wheel, n: 1 }
-    - { role: wheel, n: 2 }
-    - { role: wheel, n: 3 }
-    - { role: wheel, n: 4 }
+    - role: wheel
+      vars:
+         n: 1
+    - role: wheel
+      vars:
+         n: 2
+    - role: wheel
+      vars:
+         n: 3
+    - role: wheel
+      vars:
+         n: 4
 
 And the ``wheel`` role depends on two roles: ``tire`` and ``brake``. The ``meta/main.yml`` for wheel would then contain the following::
 
     ---
     dependencies:
-    - { role: tire }
-    - { role: brake }
+    - role: tire
+    - role: brake
 
 And the ``meta/main.yml`` for ``tire`` and ``brake`` would contain the following::
 
@@ -354,14 +395,14 @@ Ansible Galaxy
 
 `Ansible Galaxy <https://galaxy.ansible.com>`_ is a free site for finding, downloading, rating, and reviewing all kinds of community developed Ansible roles and can be a great way to get a jumpstart on your automation projects.
 
-You can sign up with social auth, and the download client 'ansible-galaxy' is included in Ansible 1.4.2 and later.
+The client ``ansible-galaxy`` is included in Ansible. The Galaxy client allows you to download roles from Ansible Galaxy, and also provides an excellent default framework for creating your own roles. 
 
-Read the "About" page on the Galaxy site for more information.
+Read the Ansible Galaxy documentation <https://galaxy.ansible.com/docs/>_ page for more information
 
 .. seealso::
 
    :ref:`ansible_galaxy`
-       How to share roles on galaxy, role management
+       How to create new roles, share roles on Galaxy, role management
    :ref:`yaml_syntax`
        Learn about YAML syntax
    :ref:`working_with_playbooks`

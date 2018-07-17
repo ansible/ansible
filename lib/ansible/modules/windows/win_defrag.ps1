@@ -1,10 +1,11 @@
 #!powershell
-# -*- coding: utf-8 -*-
 
 # Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.ArgvParser
+#Requires -Module Ansible.ModuleUtils.CommandUtil
 
 $ErrorActionPreference = "Stop"
 
@@ -14,7 +15,7 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "b
 $include_volumes = Get-AnsibleParam -obj $params -name "include_volumes" -type "list"
 $exclude_volumes = Get-AnsibleParam -obj $params -name "exclude_volumes" -type "list"
 $freespace_consolidation = Get-AnsibleParam -obj $params -name "freespace_consolidation" -type "bool" -default $false
-$priority = Get-AnsibleParam -obj $params -name "priority" -type "string" -default "low" -validateset "low","normal"
+$priority = Get-AnsibleParam -obj $params -name "priority" -type "str" -default "low" -validateset "low","normal"
 $parallel = Get-AnsibleParam -obj $params -name "parallel" -type "bool" -default $false
 
 $result = @{
@@ -27,119 +28,59 @@ if (-not (Get-Command -Name $executable -ErrorAction SilentlyContinue)) {
     Fail-Json $result "Command '$executable' not found in $env:PATH."
 }
 
-$util_def = @'
-using System;
-using System.ComponentModel;
-using System.IO;
-using System.Threading;
-
-namespace Ansible.Command {
-
-    public static class NativeUtil {
-
-        public static void GetProcessOutput(StreamReader stdoutStream, StreamReader stderrStream, out string stdout, out string stderr) {
-            var sowait = new EventWaitHandle(false, EventResetMode.ManualReset);
-            var sewait = new EventWaitHandle(false, EventResetMode.ManualReset);
-
-            string so = null, se = null;
-
-            ThreadPool.QueueUserWorkItem((s)=> {
-                so = stdoutStream.ReadToEnd();
-                sowait.Set();
-            });
-
-            ThreadPool.QueueUserWorkItem((s) => {
-                se = stderrStream.ReadToEnd();
-                sewait.Set();
-            });
-
-            foreach(var wh in new WaitHandle[] { sowait, sewait })
-                wh.WaitOne();
-
-            stdout = so;
-            stderr = se;
-        }
-    }
-}
-'@
-
-Add-Type -TypeDefinition $util_def
-
-$arguments = ""
+$arguments = @()
 
 if ($include_volumes) {
     foreach ($volume in $include_volumes) {
         if ($volume.Length -eq 1) {
-            $arguments += " $($volume):"
+            $arguments += "$($volume):"
         } else {
-            $arguments += " $volume"
+            $arguments += $volume
         }
     }
 } else {
-    $arguments = " /C"
+    $arguments += "/C"
 }
 
 if ($exclude_volumes) {
-    $arguments += " /E"
+    $arguments += "/E"
     foreach ($volume in $exclude_volumes) {
         if ($volume.Length -eq 1) {
-            $arguments += " $($volume):"
+            $arguments += "$($volume):"
         } else {
-            $arguments += " $volume"
+            $arguments += $volume
         }
     }
 }
 
 if ($check_mode) {
-    $arguments += " /A"
+    $arguments += "/A"
 } elseif ($freespace_consolidation) {
-    $arguments += " /X"
+    $arguments += "/X"
 }
 
 if ($priority -eq "normal") {
-    $arguments += " /H"
+    $arguments += "/H"
 }
 
 if ($parallel) {
-    $arguments += " /M"
+    $arguments += "/M"
 }
 
-$arguments += " /V"
+$arguments += "/V"
 
-$proc = New-Object System.Diagnostics.Process
-$psi = $proc.StartInfo
-$psi.FileName = $executable
-$psi.Arguments = $arguments
-$psi.RedirectStandardOutput = $true
-$psi.RedirectStandardError = $true
-$psi.UseShellExecute = $false
-
-$result.cmd = "$executable$arguments"
+$argument_string = Argv-ToString -arguments $arguments
 
 $start_datetime = [DateTime]::UtcNow
+$result.cmd = "$executable $argument_string"
 
-Try {
-    $proc.Start() | Out-Null # will always return $true for non shell-exec cases
-} Catch [System.ComponentModel.Win32Exception] {
-    # fail nicely for "normal" error conditions
-    # FUTURE: this probably won't work on Nano Server
-    $excep = $_
-    $result.rc = $excep.Exception.NativeErrorCode
-    Fail-Json $result $excep.Exception.Message
-}
-
-$stdout = $stderr = [string] $null
-
-[Ansible.Command.NativeUtil]::GetProcessOutput($proc.StandardOutput, $proc.StandardError, [ref] $stdout, [ref] $stderr) | Out-Null
-
-$result.stdout = $stdout
-$result.stderr = $stderr
-
-$proc.WaitForExit() | Out-Null
-
-$result.rc = $proc.ExitCode
+$command_result = Run-Command -command "$executable $argument_string"
 
 $end_datetime = [DateTime]::UtcNow
+
+$result.stdout = $command_result.stdout
+$result.stderr = $command_result.stderr
+$result.rc = $command_result.rc
 
 $result.start = $start_datetime.ToString("yyyy-MM-dd hh:mm:ss.ffffff")
 $result.end = $end_datetime.ToString("yyyy-MM-dd hh:mm:ss.ffffff")

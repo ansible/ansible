@@ -1,4 +1,4 @@
-:tocdepth: 3
+.. _ansible_documentation:
 
 Ansible Documentation
 =====================
@@ -28,19 +28,19 @@ Ansible releases a new major release of Ansible approximately every two months. 
    porting_guides/porting_guides
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
    :caption: Using Ansible
 
    user_guide/index
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
    :caption: Contributing to Ansible
 
    community/index
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
    :caption: Extending Ansible
 
    dev_guide/index
@@ -63,10 +63,16 @@ Ansible releases a new major release of Ansible approximately every two months. 
 
 .. toctree::
    :maxdepth: 2
+   :caption: Ansible for VMWare
+
+   vmware/index
+
+.. toctree::
+   :maxdepth: 2
    :caption: Ansible for Network Automation
 
    network/index
-   network/getting_started
+   network/getting_started/index
 
 .. toctree::
    :maxdepth: 2
@@ -95,8 +101,4 @@ Ansible releases a new major release of Ansible approximately every two months. 
    :maxdepth: 2
    :caption: Roadmaps
 
-   roadmap/ROADMAP_2_1.rst
-   roadmap/ROADMAP_2_2.rst
-   roadmap/ROADMAP_2_3.rst
-   roadmap/ROADMAP_2_4.rst
-   roadmap/ROADMAP_2_5.rst
+   roadmap/index.rst

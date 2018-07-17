@@ -134,7 +134,7 @@ If you need to skip the whole task depending on the loop variable being defined,
 If using a dict in a loop::
 
         - command: echo {{ item.key }}
-          loop: "{{ lookup('dict', mydict|default({})) }}"
+          loop: "{{ query('dict', mydict|default({})) }}"
           when: item.value > 5
 
 .. _loading_in_custom_facts:
@@ -169,7 +169,8 @@ Or with a role::
 
     - hosts: webservers
       roles:
-         - { role: debian_stock_config, when: ansible_os_family == 'Debian' }
+         - role: debian_stock_config
+           when: ansible_os_family == 'Debian'
 
 You will note a lot of 'skipped' output by default in Ansible when using this approach on systems that don't match the criteria.
 Read up on the 'group_by' module in the :doc:`modules` docs for a more streamlined way to accomplish the same thing.
@@ -250,7 +251,7 @@ The following example shows how to template out a configuration file that was ve
       template:
           src: "{{ item }}"
           dest: /etc/myapp/foo.conf
-      loop: "{{lookup('first_found', { 'files': myfiles, 'paths': mypaths})}}"
+      loop: "{{ query('first_found', { 'files': myfiles, 'paths': mypaths}) }}"
       vars:
         myfiles:
           - "{{ansible_distribution}}.conf"
@@ -336,6 +337,7 @@ Possible values::
     ClearLinux
     Coreos
     Debian
+    Fedora
     Gentoo
     Mandriva
     NA

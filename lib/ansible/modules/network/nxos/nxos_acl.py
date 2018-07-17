@@ -158,7 +158,7 @@ EXAMPLES = '''
     seq: 10
     action: permit
     proto: tcp
-    src: 1.1.1.1/24
+    src: 192.0.2.1/24
     dest: any
     state: present
 '''
@@ -168,7 +168,7 @@ commands:
     description: commands sent to the device
     returned: always
     type: list
-    sample: ["ip access-list ANSIBLE", "10 permit tcp 1.1.1.1/24 any"]
+    sample: ["ip access-list ANSIBLE", "10 permit tcp 192.0.2.1/24 any"]
 '''
 from ansible.module_utils.network.nxos.nxos import load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
@@ -203,6 +203,7 @@ def get_acl(module, acl_name, seq_number):
         for acl in all_acl_body:
             if acl.get('acl_name') == acl_name:
                 acl_body = acl
+                break
 
     try:
         acl_entries = acl_body['TABLE_seqno']['ROW_seqno']
@@ -226,7 +227,7 @@ def get_acl(module, acl_name, seq_number):
             temp['action'] = 'remark'
         else:
             temp['action'] = each.get('permitdeny')
-            temp['proto'] = each.get('proto', each.get('proto_str', each.get('ip')))
+            temp['proto'] = str(each.get('proto', each.get('proto_str', each.get('ip'))))
             temp['src'] = each.get('src_any', each.get('src_ip_prefix'))
             temp['src_port_op'] = each.get('src_port_op')
             temp['src_port1'] = each.get('src_port1_num')
@@ -458,13 +459,35 @@ def main():
     delta_options = {}
 
     if not existing_core.get('remark'):
-        delta_core = dict(
+        dcore = dict(
             set(proposed_core.items()).difference(
                 existing_core.items())
         )
-        delta_options = dict(
-            set(proposed_options.items()).difference(
-                existing_options.items())
+        if not dcore:
+            # check the diff in the other way just in case
+            dcore = dict(
+                set(existing_core.items()).difference(
+                    proposed_core.items())
+            )
+        delta_core = dcore
+        if delta_core:
+            delta_options = proposed_options
+        else:
+            doptions = dict(
+                set(proposed_options.items()).difference(
+                    existing_options.items())
+            )
+            # check the diff in the other way just in case
+            if not doptions:
+                doptions = dict(
+                    set(existing_options.items()).difference(
+                        proposed_options.items())
+                )
+            delta_options = doptions
+    else:
+        delta_core = dict(
+            set(proposed_core.items()).difference(
+                existing_core.items())
         )
 
     if state == 'present':

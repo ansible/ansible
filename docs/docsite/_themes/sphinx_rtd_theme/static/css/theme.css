@@ -421,51 +421,17 @@ table {
        max-width: 100%;
 }
 
-
-.outer-elbow-container {
-    display: flex;
-    height: 100%;
-    flex-direction: row;
-}
-
-.elbow-placeholder {
+.documentation-table td.elbow-placeholder {
     border-left: 1px solid #000;
-    height: 100%;
+    border-top: 0px;
     width: 30px;
+    min-width: 30px;
 }
 
-.elbow-key {
-    height: 100%;
-    padding: 4px;
-    border-top: 1px solid #000;
-    flex-grow: 1;
-    border-left: 1px solid #000;
-}
-
-.elbow-blocker {
-    height: 0;
-    overflow: hidden;
-}
-
-.return-value-column {
-    height: 1px
-}
-
-.return-value-column td {
-    height: inherit
-}
-
-@-moz-document url-prefix() {
-    .return-value-column td {
-        height: 100%
-    }
-}
-
-.cell-border {
+.documentation-table th, .documentation-table td {
     padding: 4px;
     border-left: 1px solid #000;
     border-top: 1px solid #000;
-    height: 100%;
 }
 
 .documentation-table {
@@ -1678,7 +1644,7 @@ code.code-large,.rst-content tt.code-large{font-size:90%}
 [data-menu-wrap].move-right{right:-100%;left:auto;opacity:0}
 .wy-body-for-nav{background:#fcfcfc}
 .wy-grid-for-nav{position:relative;width:100%;height:100%}
-.wy-nav-side{position:fixed;float: left;top:0;bottom:0;left:0;padding-bottom:2em;width:300px;overflow-x:hidden;overflow-y:hidden;min-height:100%;background:#343131;z-index:0;margin-top: 45px}
+.wy-nav-side{position:fixed;float: left;top:0;bottom:0;left:0;padding-bottom:2em;width:300px;overflow-x:hidden;overflow-y:hidden;min-height:100%;background:#343131;z-index:0;margin-top:0px;top:45px;}
 .wy-side-scroll{position:relative;overflow-x:hidden;overflow-y:scroll;height:100%}
 .wy-nav-top{display:none;background:#2980B9;color:#fff;padding:.4045em .809em;position:relative;line-height:50px;text-align:center;font-size:100%;*zoom:1}
 .wy-nav-top:before,.wy-nav-top:after{display:table;content:""}
@@ -1686,11 +1652,11 @@ code.code-large,.rst-content tt.code-large{font-size:90%}
 .wy-nav-top a{color:#fff;font-weight:bold}
 .wy-nav-top img{margin-right:12px;height:45px;width:45px;background-color:#2980B9;padding:5px;border-radius:100%}
 .wy-nav-top i{font-size:30px;float:left;cursor:pointer;padding-top:inherit}
-@media screen and (max-width: 768px){.wy-nav-content-wrap{margin-top: 30px;margin-left: 300px;width: 100%;float:left;background:#fcfcfc;min-height:100%;position:fixed;}
+@media screen and (max-width: 768px){.wy-nav-content-wrap{margin-top: 30px;margin-left: 300px;width: 100%;float:left;background:#fcfcfc;min-height:100%;position:fixed;top:15px;}
 }
-@media screen and (min-width: 768px){.wy-nav-content-wrap{margin-top: 30px;margin-left: 300px;width: calc(100% - 300px);float:left;background:#fcfcfc;min-height:100%}
+@media screen and (min-width: 768px){.wy-nav-content-wrap{margin-top: 0px;margin-left: 300px;width: calc(100% - 300px);float:left;background:#fcfcfc;min-height:100%}
 }
-.wy-nav-content{padding:1.618em 3.236em;height:100%;margin:auto;overflow-x: hidden;overflow-y: scroll;position: fixed;width: inherit}
+.wy-nav-content{padding:1.618em 3.236em;height:100%;margin:auto;overflow-x: hidden;overflow-y: scroll;position: fixed;width: inherit;padding-bottom: 50px;-webkit-overflow-scrolling: touch}
 .wy-body-mask{position:fixed;width:100%;height:100%;background:rgba(0,0,0,0.2);display:none;z-index:499}
 .wy-body-mask.on{display:block}
 footer{color:gray}
@@ -1714,8 +1680,8 @@ footer span.commit code,footer span.commit .rst-content tt,.rst-content footer s
 .wy-side-scroll{width:auto}
 .wy-side-nav-search{width:auto}
 .wy-menu.wy-menu-vertical{width:auto}
-.wy-nav-content-wrap{margin-left:0}
-.wy-nav-content-wrap .wy-nav-content{padding:1.618em}
+.wy-nav-content-wrap{margin-left:0;top:15px;}
+.wy-nav-content-wrap .wy-nav-content{padding:1.618em;padding-bottom: 100px}
 .wy-nav-content-wrap.shift{position:fixed;min-width:100%;left:85%;top:0;height:100%;overflow:hidden}
 }
 @media screen and (min-width: 1100px){.wy-nav-content-wrap{background:rgba(0,0,0,0.05)}
@@ -1835,6 +1801,49 @@ footer span.commit code,footer span.commit .rst-content tt,.rst-content footer s
 .rst-content .versionmodified{font-style:italic}
 @media screen and (max-width: 480px){.rst-content .sidebar{width:100%}
 }
+@media screen and (min-width: 768px) {
+    
+    .DocSite-globalNav{
+        display: block
+    }
+    
+    #sideBanner{
+        display: block;
+    }
+    
+    .DocSite-sideNav{
+        display: none;
+    }
+    
+    .ansibleNav{
+        height: 45px;
+        width: 100%;
+        font-size: 13px;
+        padding: 0px 60px 0px 0px;
+    }
+
+    .ansibleNav ul {
+        float: right;
+        display: flex;
+        flex-wrap: nowrap;
+        margin-top: 13px;
+    }
+    
+        
+    .ansibleNav ul li{
+        padding: 0px;
+        border-bottom: none;
+    }
+    
+    .ansibleNav ul li a {
+        color: #fff;
+        text-decoration: none;
+        text-transform: uppercase;
+        padding: 8px 13px;
+    }
+}
+
+
 span[id*='MathJax-Span']{color:#404040}
 .math{text-align:center}
 @font-face{font-family:"Inconsolata";font-style:normal;font-weight:400;src:local("Inconsolata"),local("Inconsolata-Regular"),url(../fonts/Inconsolata-Regular.ttf) format("truetype")}

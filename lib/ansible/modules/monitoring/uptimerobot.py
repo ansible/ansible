@@ -61,7 +61,7 @@ from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import fetch_url
 
 
-API_BASE = "http://api.uptimerobot.com/"
+API_BASE = "https://api.uptimerobot.com/"
 
 API_ACTIONS = dict(
     status='getMonitors?',

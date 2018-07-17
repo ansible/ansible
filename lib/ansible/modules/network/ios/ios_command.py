@@ -37,8 +37,6 @@ description:
 extends_documentation_fragment: ios
 notes:
   - Tested against IOS 15.6
-  - If a command sent to the device requires answering a prompt, it is possible
-    to pass a dict containing I(command), I(answer) and I(prompt). See examples.
 options:
   commands:
     description:
@@ -46,7 +44,11 @@ options:
         configured provider. The resulting output from the command
         is returned. If the I(wait_for) argument is provided, the
         module is not returned until the condition is satisfied or
-        the number of retries has expired.
+        the number of retries has expired. If a command sent to the
+        device requires answering a prompt, it is possible to pass
+        a dict containing I(command), I(answer) and I(prompt).
+        Common answers are 'y' or "\\r" (carriage return, must be
+        double quotes). See examples.
     required: true
   wait_for:
     description:
@@ -84,7 +86,7 @@ options:
     default: 1
 """
 
-EXAMPLES = """
+EXAMPLES = r"""
 tasks:
   - name: run show version on remote devices
     ios_command:
@@ -109,12 +111,15 @@ tasks:
       wait_for:
         - result[0] contains IOS
         - result[1] contains Loopback0
-  - name: run command that requires answering a prompt
+  - name: run commands that require answering a prompt
     ios_command:
       commands:
+        - command: 'clear counters GigabitEthernet0/1'
+          prompt: 'Clear "show interface" counters on this interface \[confirm\]'
+          answer: 'y'
         - command: 'clear counters GigabitEthernet0/2'
-          prompt: 'Clear "show interface" counters on this interface [confirm]'
-          answer: c
+          prompt: '[confirm]'
+          answer: "\r"
 """
 
 RETURN = """

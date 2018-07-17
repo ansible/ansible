@@ -90,7 +90,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import CustomNetworkConfig
 from ansible.module_utils.network.common.utils import remove_default_spec
 from ansible.module_utils.network.nxos.nxos import get_config, load_config
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, normalize_interface
 
 
 def search_obj_in_list(name, lst):
@@ -122,7 +122,6 @@ def map_obj_to_commands(updates, module):
                 if command:
                     command.append('exit')
                     command.insert(0, 'interface {0}'.format(name))
-                    command.insert(1, 'no switchport')
             commands.extend(command)
 
         elif state == 'present' and obj_in_have:
@@ -135,10 +134,8 @@ def map_obj_to_commands(updates, module):
                 if command:
                     command.append('exit')
                     command.insert(0, 'interface {0}'.format(name))
-                    command.insert(1, 'no switchport')
                 elif not ipv4 and not ipv6:
                     command.append('interface {0}'.format(name))
-                    command.append('no switchport')
             commands.extend(command)
 
     return commands
@@ -154,10 +151,14 @@ def map_params_to_obj(module):
                 if item.get(key) is None:
                     item[key] = module.params[key]
 
-            obj.append(item.copy())
+            d = item.copy()
+            name = d['name']
+            d['name'] = normalize_interface(name)
+            obj.append(d)
+
     else:
         obj.append({
-            'name': module.params['name'],
+            'name': normalize_interface(module.params['name']),
             'ipv4': module.params['ipv4'],
             'ipv6': module.params['ipv6'],
             'state': module.params['state']
@@ -178,7 +179,7 @@ def map_config_to_obj(want, module):
         if config:
             match_name = re.findall(r'interface (\S+)', config, re.M)
             if match_name:
-                obj['name'] = match_name[0]
+                obj['name'] = normalize_interface(match_name[0])
 
             match_ipv4 = re.findall(r'ip address (\S+)', config, re.M)
             if match_ipv4:

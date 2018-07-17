@@ -84,7 +84,7 @@ class ForemanInventory(object):
         try:
             self.foreman_url = config.get('foreman', 'url')
             self.foreman_user = config.get('foreman', 'user')
-            self.foreman_pw = config.get('foreman', 'password')
+            self.foreman_pw = config.get('foreman', 'password', raw=True)
             self.foreman_ssl_verify = config.getboolean('foreman', 'ssl_verify')
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError) as e:
             print("Error parsing configuration: %s" % e, file=sys.stderr)
@@ -228,10 +228,6 @@ class ForemanInventory(object):
                 params[name] = param['value']
 
         return params
-
-    def _get_facts_by_id(self, hid):
-        url = "%s/api/v2/hosts/%s/facts" % (self.foreman_url, hid)
-        return self._get_json(url)
 
     def _get_facts(self, host):
         """Fetch all host facts of the host"""

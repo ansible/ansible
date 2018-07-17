@@ -75,7 +75,7 @@ options:
             I(present) or I(latest).
         required: false
         default: "no"
-        choices: [ "yes", "no" ]
+        type: bool
     disable_recommends:
         version_added: "1.8"
         description:
@@ -83,21 +83,21 @@ options:
             install recommended packages.
         required: false
         default: "yes"
-        choices: [ "yes", "no" ]
+        type: bool
     force:
         version_added: "2.2"
         description:
           - Adds C(--force) option to I(zypper). Allows to downgrade packages and change vendor or architecture.
         required: false
         default: "no"
-        choices: [ "yes", "no" ]
+        type: bool
     update_cache:
         version_added: "2.2"
         description:
           - Run the equivalent of C(zypper refresh) before the operation. Disabled in check mode.
         required: false
         default: "no"
-        choices: [ "yes", "no" ]
+        type: bool
         aliases: [ "refresh" ]
     oldpackage:
         version_added: "2.2"
@@ -106,7 +106,7 @@ options:
             version is specified as part of the package name.
         required: false
         default: "no"
-        choices: [ "yes", "no" ]
+        type: bool
     extra_args:
         version_added: "2.4"
         required: false
@@ -488,7 +488,7 @@ def main():
     update_cache = module.params['update_cache']
 
     # remove empty strings from package list
-    name = filter(None, name)
+    name = list(filter(None, name))
 
     # Refresh repositories
     if update_cache and not module.check_mode:

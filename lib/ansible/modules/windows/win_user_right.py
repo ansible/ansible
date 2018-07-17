@@ -38,6 +38,7 @@ options:
       SERVERNAME\user-group where SERVERNAME is the name of the remote server.
     - You can also add special local accounts like SYSTEM and others.
     required: yes
+    type: list
   action:
     description:
     - C(add) will add the users/groups to the existing right.

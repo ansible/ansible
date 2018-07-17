@@ -114,7 +114,8 @@ options:
     version_added: "2.0"
   wait_timeout:
     description:
-      - how long before wait instances to become viable when replaced.  Used in conjunction with instance_ids option.
+      - How long to wait for instances to become viable when replaced.  If you experience the error "Waited too long for ELB instances to be healthy",
+        try increasing this value.
     default: 300
     version_added: "1.8"
   wait_for_instances:
@@ -156,12 +157,12 @@ options:
       - Enable ASG metrics collection
     type: bool
     default: 'no'
-    version_added: "2.5"
+    version_added: "2.6"
   metrics_granularity:
     description:
       - When metrics_collection is enabled this will determine granularity of metrics collected by CloudWatch
     default: "1minute"
-    version_added: "2.5"
+    version_added: "2.6"
   metrics_list:
     description:
       - List of autoscaling metrics to collect when enabling metrics_collection
@@ -174,7 +175,7 @@ options:
         - 'GroupStandbyInstances'
         - 'GroupTerminatingInstances'
         - 'GroupTotalInstances'
-    version_added: "2.5"
+    version_added: "2.6"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -1354,7 +1355,6 @@ def wait_for_term_inst(connection, term_instances):
     wait_timeout = module.params.get('wait_timeout')
     group_name = module.params.get('name')
     as_group = describe_autoscaling_groups(connection, group_name)[0]
-    props = get_properties(as_group)
     count = 1
     wait_timeout = time.time() + wait_timeout
     while wait_timeout > time.time() and count > 0:

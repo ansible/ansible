@@ -42,6 +42,17 @@
     that:
       - 'git_result.stdout == "4e739a34719654db7b04896966e2354e1256ea5d"'
 
+- name: SPECIFIC-REVISION | update to HEAD from detached HEAD state
+  git:
+    repo: "{{ repo_dir }}/format1"
+    dest: "{{ checkout_dir }}"
+    version: HEAD
+  register: git_result
+
+- assert:
+    that:
+      - git_result is changed
+
 # Test a revision not available under refs/heads/ or refs/tags/
 
 - name: SPECIFIC-REVISION | attempt to get unavailable revision

@@ -90,6 +90,7 @@ options:
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Obezimnaka Boms (@ozboms)"
@@ -211,7 +212,7 @@ RECORD_ARGSPECS = dict(
         target=dict(type='str', required=True, aliases=['entry'])
     ),
     TXT=dict(
-        value=dict(type='str', required=True, aliases=['entry'])
+        value=dict(type='list', required=True, aliases=['entry'])
     ),
     # FUTURE: ensure all record types are supported (see https://github.com/Azure/azure-sdk-for-python/tree/master/azure-mgmt-dns/azure/mgmt/dns/models)
 )
@@ -375,7 +376,11 @@ class AzureRMRecordSet(AzureRMModuleBase):
 def gethash(self):
     if not getattr(self, '_cachedhash', None):
         spec = inspect.getargspec(self.__init__)
-        valuetuple = tuple([getattr(self, x, None) for x in spec.args if x != 'self'])
+        valuetuple = tuple(
+            map(lambda v: v if not isinstance(v, list) else str(v), [
+                getattr(self, x, None) for x in spec.args if x != 'self'
+            ])
+        )
         self._cachedhash = hash(valuetuple)
     return self._cachedhash
 

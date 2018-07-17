@@ -18,7 +18,7 @@ description:
 - Bind Bridge Domain to L3 Out on Cisco ACI fabrics.
 notes:
 - The C(bd) and C(l3out) parameters should exist before using this module.
-  The M(aci_bd) and M(aci_l3out) can be used for these.
+  The M(aci_bd) and C(aci_l3out) can be used for these.
 - More information about the internal APIC class B(fv:RsBDToOut) from
   L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
@@ -166,8 +166,6 @@ def main():
         l3out=dict(type='str'),  # Not required for querying all objects
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(

@@ -56,6 +56,17 @@ if ($use_basic_parsing) {
     Add-DeprecationWarning -obj $result -message "Since Ansible 2.5, use_basic_parsing does not change any behaviour, this option will be removed" -version 2.7
 }
 
+if ($status_code) {
+    $status_code = foreach ($code in $status_code) {
+        try {
+            [int]$code
+        }
+        catch [System.InvalidCastException] {
+            Fail-Json -obj $result -message "Failed to convert '$code' to an integer. Status codes must be provided in numeric format."
+        }
+    }
+}
+
 $client = [System.Net.WebRequest]::Create($url)
 $client.Method = $method
 $client.Timeout = $timeout * 1000
@@ -265,7 +276,7 @@ if ($return_content -or $dest) {
 }
 
 if ($status_code -notcontains $response.StatusCode) {
-    Fail-Json -obj $result -message "Status code of request '$($response.StatusCode)' is not in list of valid status codes $status_code."
+    Fail-Json -obj $result -message "Status code of request '$([int]$response.StatusCode)' is not in list of valid status codes $status_code : '$($response.StatusCode)'."
 }
 
 Exit-Json -obj $result
