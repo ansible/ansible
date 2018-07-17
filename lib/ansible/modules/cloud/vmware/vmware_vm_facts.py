@@ -151,9 +151,10 @@ class VmwareVmFacts(PyVmomi):
             }
 
             vm_type = self.module.params.get('vm_type')
-            if vm_type == 'vm' and vm.config.template is False:
+            is_template = _get_vm_prop(vm, ('config', 'template'))
+            if vm_type == 'vm' and not is_template:
                 _virtual_machines.update(virtual_machine)
-            elif vm_type == 'template' and vm.config.template:
+            elif vm_type == 'template' and is_template:
                 _virtual_machines.update(virtual_machine)
             elif vm_type == 'all':
                 _virtual_machines.update(virtual_machine)
