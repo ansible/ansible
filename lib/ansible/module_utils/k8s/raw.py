@@ -26,7 +26,7 @@ from ansible.module_utils.common.dict_transformations import dict_merge
 
 try:
     import yaml
-    from openshift.dynamic.exceptions import DynamicApiError, NotFoundError, ConflictError
+    from openshift.dynamic.exceptions import DynamicApiError, NotFoundError, ConflictError, ForbiddenError
 except ImportError:
     # Exceptions handled in common
     pass
@@ -122,7 +122,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
 
         self.remove_aliases()
 
-        if definition['kind'].endswith('list'):
+        if definition['kind'].endswith('List'):
             result['result'] = resource.get(namespace=namespace).to_dict()
             result['changed'] = False
             result['method'] = 'get'
@@ -132,6 +132,11 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             existing = resource.get(name=name, namespace=namespace)
         except NotFoundError:
             pass
+        except ForbiddenError as exc:
+            if definition['kind'] in ['Project', 'ProjectRequest'] and state != 'absent':
+                return self.create_project_request(definition)
+            self.fail_json(msg='Failed to retrieve requested object: {0}'.format(exc.body),
+                           error=exc.status, status=exc.status, reason=exc.reason)
         except DynamicApiError as exc:
             self.fail_json(msg='Failed to retrieve requested object: {0}'.format(exc.body),
                            error=exc.status, status=exc.status, reason=exc.reason)
@@ -166,6 +171,9 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                         self.warn("{0} was not found, but creating it returned a 409 Conflict error. This can happen \
                                   if the resource you are creating does not directly create a resource of the same kind.".format(name))
                         return result
+                    except DynamicApiError as exc:
+                        self.fail_json(msg="Failed to create object: {0}".format(exc.body),
+                                       error=exc.status, status=exc.status, reason=exc.reason)
                 result['result'] = k8s_obj
                 result['changed'] = True
                 result['method'] = 'create'
@@ -205,3 +213,18 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             result['method'] = 'patch'
             result['diff'] = diffs
             return result
+
+    def create_project_request(self, definition):
+        definition['kind'] = 'ProjectRequest'
+        result = {'changed': False, 'result': {}}
+        resource = self.find_resource('ProjectRequest', definition['apiVersion'], fail=True)
+        if not self.check_mode:
+            try:
+                k8s_obj = resource.create(definition)
+                result['result'] = k8s_obj.to_dict()
+            except DynamicApiError as exc:
+                self.fail_json(msg="Failed to create object: {0}".format(exc.body),
+                               error=exc.status, status=exc.status, reason=exc.reason)
+        result['changed'] = True
+        result['method'] = 'create'
+        return result
