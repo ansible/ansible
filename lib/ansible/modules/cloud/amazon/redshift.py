@@ -422,8 +422,8 @@ def modify_cluster(module, redshift):
         waiter = redshift.get_waiter('cluster_available')
         try:
             waiter.wait(
-                    ClusterIdentifier=identifier,
-                    WaiterConfig=dict(MaxAttempts=attempts)
+                ClusterIdentifier=identifier,
+                WaiterConfig=dict(MaxAttempts=attempts)
             )
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 module.fail_json_aws(e, msg="Timeout waiting for cluster creation")
