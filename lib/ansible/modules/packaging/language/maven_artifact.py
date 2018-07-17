@@ -76,6 +76,11 @@ options:
             - Specifies a timeout in seconds for the connection attempt
         default: 10
         version_added: "2.3"
+    chunk_size:
+        description:
+            - Chunk size in bytes when downloading artifacts
+        default: 8192
+        version_added: "2.7"
     validate_certs:
         description:
             - If C(no), SSL certificates will not be validated. This should only be set to C(no) when no other option exists.
@@ -385,8 +390,9 @@ class MavenDownloader:
                 return "Can not find local file: " + parsed_url.path
         else:
             response = self._request(url, "Failed to download artifact " + str(artifact))
+            chunk_size = self.module.params.get('chunk_size')
             with io.open(filename, 'wb') as f:
-                self._write_chunks(response, f, report_hook=self.chunk_report)
+                self._write_chunks(response, f, chunk_size=chunk_size, report_hook=self.chunk_report)
         if verify_download:
             invalid_md5 = self.is_invalid_md5(filename, url)
             if invalid_md5:
@@ -403,7 +409,7 @@ class MavenDownloader:
         if bytes_so_far >= total_size:
             sys.stdout.write('\n')
 
-    def _write_chunks(self, response, filehandle, chunk_size=8192, report_hook=None):
+    def _write_chunks(self, response, filehandle, chunk_size, report_hook=None):
         total_size = response.info().get('Content-Length').strip()
         total_size = int(total_size)
         bytes_so_far = 0
@@ -441,7 +447,7 @@ class MavenDownloader:
     def _local_md5(self, file):
         md5 = hashlib.md5()
         with io.open(file, 'rb') as f:
-            for chunk in iter(lambda: f.read(8192), ''):
+            for chunk in iter(lambda: f.read(self.module.params.get('chunk_size')), ''):
                 md5.update(chunk)
         return md5.hexdigest()
 
@@ -459,6 +465,7 @@ def main():
             password=dict(default=None, no_log=True, aliases=['aws_secret_access_key']),
             state=dict(default="present", choices=["present", "absent"]),  # TODO - Implement a "latest" state
             timeout=dict(default=10, type='int'),
+            chunk_size=dict(default=8192, type='int'),
             dest=dict(type="path", default=None),
             validate_certs=dict(required=False, default=True, type='bool'),
             keep_name=dict(required=False, default=False, type='bool'),
