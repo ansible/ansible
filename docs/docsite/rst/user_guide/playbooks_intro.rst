@@ -160,7 +160,7 @@ Support for running things as another user is also available (see :doc:`become`)
       remote_user: yourname
       become: yes
 
-You can also use become on a particular task instead of the whole play::
+You can also use keyword ``become`` on a particular task instead of the whole play::
 
     ---
     - hosts: webservers
