@@ -281,6 +281,7 @@ ansible_facts:
         "subnet": {}
         "volumes": {
             "ansible_data": {
+                "bandwidth": null,
                 "hosts": [
                     [
                         "host1",
@@ -288,7 +289,8 @@ ansible_facts:
                     ]
                 ],
                 "serial": "43BE47C12334399B000114A6",
-                "size": 1099511627776
+                "size": 1099511627776,
+                "source": null
             }
         }
 '''
@@ -450,10 +452,27 @@ def generate_vol_dict(array):
     for vol in range(0, len(vols)):
         volume = vols[vol]['name']
         volume_facts[volume] = {
+            'source': vols[vol]['source'],
             'size': vols[vol]['size'],
             'serial': vols[vol]['serial'],
-            'hosts': []
+            'hosts': [],
+            'bandwidth': ""
         }
+    api_version = array._list_available_rest_versions()
+    if AC_REQUIRED_API_VERSION in api_version:
+        qvols = array.list_volumes(qos=True)
+        for qvol in range(0, len(qvols)):
+            volume = qvols[qvol]['name']
+            qos = qvols[qvol]['bandwidth_limit']
+            volume_facts[volume]['bandwidth'] = qos
+        vvols = array.list_volumes(protocol_endpoint=True)
+        for vvol in range(0, len(vvols)):
+            volume = vvols[vvol]['name']
+            volume_facts[volume] = {
+                'source': vols[vol]['source'],
+                'serial': vols[vol]['serial'],
+                'hosts': []
+            }
     cvols = array.list_volumes(connect=True)
     for cvol in range(0, len(cvols)):
         volume = cvols[cvol]['name']
@@ -541,7 +560,7 @@ def main():
     subset_test = (test in valid_subsets for test in subset)
     if not all(subset_test):
         module.fail_json(msg="value must gather_subset must be one or more of: %s, got: %s"
-                             % (",".join(valid_subsets), ",".join(subset)))
+                         % (",".join(valid_subsets), ",".join(subset)))
 
     facts = {}
 
