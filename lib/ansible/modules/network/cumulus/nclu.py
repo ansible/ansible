@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
+ANSIBLE_METADATA = {'metadata_version': '1.2',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -185,7 +185,8 @@ def run_nclu(module, command_list, command_string, commit, atomic, abort, descri
     # Run all of the net commands
     output_lines = []
     for line in commands:
-        output_lines += [command_helper(module, line.strip(), "Failed on line %s" % line)]
+        if line.strip():
+          output_lines += [command_helper(module, line.strip(), "Failed on line %s" % line)]
     output = "\n".join(output_lines)
 
     # If pending changes changed, report a change.
