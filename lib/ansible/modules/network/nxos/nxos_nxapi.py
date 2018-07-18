@@ -204,8 +204,18 @@ def map_obj_to_commands(want, have, module):
     commands = dict()
 
     device_info = get_capabilities(module).get('device_info')
-    os_version = device_info['network_os_version'][:3]
-    os_platform = device_info['network_os_platform'][:3]
+    if device_info is None:
+        raise TypeError
+
+    os_version = device_info.get('network_os_version')
+    if os_version is None:
+        raise TypeError
+    os_version = os_version[:3]
+
+    os_platform = device_info.get('network_os_platform')
+    if os_platform is None:
+        raise TypeError
+    os_platform = os_platform[:3]
 
     def needs_update(x):
         return want.get(x) is not None and (want.get(x) != have.get(x))
