@@ -96,8 +96,8 @@ lun_serial:
     returned: success
     type: string
     sample: 80E7/]LZp1Tt
-lun_naa_id: The Network Address Authority (NAA) identifier for the LUN.
-    description:
+lun_naa_id: 
+    description: The Network Address Authority (NAA) identifier for the LUN.
     returned: success
     type: string
     sample: 600a0980383045372f5d4c5a70315474
@@ -132,8 +132,8 @@ class NetAppOntapLUNMap(object):
             initiator_group_name=dict(required=True, type='str'),
             path=dict(type='str'),
             vserver=dict(required=True, type='str'),
-            lun_id=dict(required=False, type='str', default=None)),
-        )
+            lun_id=dict(required=False, type='str', default=None),
+        ))
 
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
@@ -142,7 +142,7 @@ class NetAppOntapLUNMap(object):
             ],
             supports_check_mode=True
         )
-      
+
         self.result = dict(
             changed=False,
         )
@@ -233,7 +233,7 @@ class NetAppOntapLUNMap(object):
             self.server.invoke_successfully(lun_map_create, enable_tunneling=True)
         except netapp_utils.zapi.NaApiError as e:
             self.module.fail_json(msg="Error mapping lun %s of initiator_group_name %s: %s" %
-                                      (self.path, self.initiator_group_name, to_native(e)),
+                                  (self.path, self.initiator_group_name, to_native(e)),
                                   exception=traceback.format_exc())
 
     def delete_lun_map(self):
@@ -246,7 +246,7 @@ class NetAppOntapLUNMap(object):
             self.server.invoke_successfully(lun_map_delete, enable_tunneling=True)
         except netapp_utils.zapi.NaApiError as e:
             self.module.fail_json(msg="Error unmapping lun %s of initiator_group_name %s: %s" %
-                                      (self.path, self.initiator_group_name, to_native(e)),
+                                  (self.path, self.initiator_group_name, to_native(e)),
                                   exception=traceback.format_exc())
 
     def apply(self):
