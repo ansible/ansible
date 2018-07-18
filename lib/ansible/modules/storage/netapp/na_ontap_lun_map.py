@@ -96,7 +96,7 @@ lun_serial:
     returned: success
     type: string
     sample: 80E7/]LZp1Tt
-lun_naa_id: 
+lun_naa_id:
     description: The Network Address Authority (NAA) identifier for the LUN.
     returned: success
     type: string
