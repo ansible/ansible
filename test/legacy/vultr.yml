@@ -8,6 +8,7 @@
     - { role: vr_account_facts, tags: test_vr_account_facts }
     - { role: vr_user, tags: test_vr_user }
     - { role: vr_ssh_key, tags: test_vr_ssh_key }
+    - { role: vr_ssh_key_facts, tags: test_vr_ssh_key_facts }
     - { role: vr_firewall_group, tags: test_vr_firewall_group }
     - { role: vr_firewall_rule, tags: test_vr_firewall_rule }
     - { role: vr_startup_script, tags: test_vr_startup_script }
