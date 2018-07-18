@@ -1,0 +1,2 @@
+bugfixes:
+    - fix nmap config example https://github.com/ansible/ansible/pull/42925
