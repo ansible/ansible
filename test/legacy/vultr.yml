@@ -11,6 +11,7 @@
     - { role: vr_firewall_group, tags: test_vr_firewall_group }
     - { role: vr_firewall_rule, tags: test_vr_firewall_rule }
     - { role: vr_os_facts, tags: test_vr_os_facts }
+    - { role: vr_plan_facts, tags: test_vr_plan_facts }
     - { role: vr_region_facts, tags: test_vr_region_facts }
     - { role: vr_server, tags: test_vr_server }
     - { role: vr_ssh_key, tags: test_vr_ssh_key }
