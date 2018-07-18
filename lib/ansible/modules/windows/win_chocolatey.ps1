@@ -33,6 +33,7 @@ $skipscripts = Get-AnsibleParam -obj $params -name "skip_scripts" -type "bool" -
 $proxy_url = Get-AnsibleParam -obj $params -name "proxy_url" -type "str"
 $proxy_username = Get-AnsibleParam -obj $params -name "proxy_username" -type "str"
 $proxy_password = Get-AnsibleParam -obj $params -name "proxy_password" -type "str" -failifempty ($proxy_username -ne $null)
+$extra_flags = Get-AnsibleParam -obj $params -name "extra_flags" -type "str"
 
 $result = @{
     changed = $false 
@@ -192,7 +193,8 @@ Function Choco-Upgrade
         [bool] $allowprerelease,
         [string] $proxy_url,
         [string] $proxy_username,
-        [string] $proxy_password
+        [string] $proxy_password,
+        [string] $extra_flags
     )
 
     if (-not (Choco-IsInstalled $package))
@@ -201,6 +203,11 @@ Function Choco-Upgrade
     }
 
     $options = @( "-y", $package, "--timeout", "$timeout", "--failonunfound" )
+
+    if ($extra_flags)
+    {
+        $options += "$extra_flags"
+    }
 
     if ($check_mode)
     {
@@ -327,7 +334,8 @@ Function Choco-Install
         [bool] $allowprerelease,
         [string] $proxy_url,
         [string] $proxy_username,
-        [string] $proxy_password
+        [string] $proxy_password,
+        [string] $extra_flags
     )
 
     if (Choco-IsInstalled $package)
@@ -340,7 +348,7 @@ Function Choco-Install
                 -ignorechecksums $ignorechecksums -ignoredependencies $ignoredependencies `
                 -allowdowngrade $allowdowngrade -proxy_url $proxy_url `
                 -proxy_username $proxy_username -proxy_password $proxy_password `
-                -allowprerelease $allowprerelease
+                -allowprerelease $allowprerelease -extra_flags $extra_flags
             return
         }
         elseif (-not $force)
@@ -350,6 +358,11 @@ Function Choco-Install
     }
 
     $options = @( "-y", $package, "--timeout", "$timeout", "--failonunfound" )
+
+    if ($extra_flags)
+    {
+        $options += "$extra_flags"
+    }
 
     if ($check_mode)
     {
@@ -529,7 +542,7 @@ if ($state -in ("downgrade", "latest", "present", "reinstalled")) {
         -ignorechecksums $ignorechecksums -ignoredependencies $ignoredependencies `
         -allowdowngrade ($state -eq "downgrade") -proxy_url $proxy_url `
         -proxy_username $proxy_username -proxy_password $proxy_password `
-        -allowprerelease $allowprerelease
+        -allowprerelease $allowprerelease -extra_flags $extra_flags
 }
 
 Exit-Json -obj $result
