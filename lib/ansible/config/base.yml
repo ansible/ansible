@@ -211,6 +211,14 @@ COLOR_CHANGED:
   ini:
   - {key: changed, section: colors}
   yaml: {key: display.colors.changed}
+COLOR_CONSOLE_PROMPT:
+  name: "Color for ansible-console's prompt task status"
+  default: white
+  description: Defines the default color to use for ansible-console
+  env: [{name: ANSIBLE_COLOR_CONSOLE_PROMPT}]
+  ini:
+  - {key: console_prompt, section: colors}
+  version_added: "2.7"
 COLOR_DEBUG:
   name: Color for debug statements
   default: dark gray
