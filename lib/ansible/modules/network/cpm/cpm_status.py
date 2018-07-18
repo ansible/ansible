@@ -34,7 +34,7 @@ short_description: Get status and parameters from WTI OOB and PDU devices
 description:
     - "Get various status and parameters from WTI OOB and PDU devices"
 options:
-  CPM_action:
+  cpm_action:
     description:
       - This is the Action to send the module.
     required: true
@@ -107,7 +107,8 @@ def run_module():
     # the module
     module_args = dict(
         name=dict(type='str', required=False),
-        cpm_action=dict(choices=['temperature', 'firmware', 'status', 'alarms'], required=True),
+        cpm_action=dict(choices=['temperature', 'firmware', 'status', 'alarms'],
+                   required=True),
         cpm_url=dict(type='str', required=True),
         cpm_username=dict(type='str', required=True),
         cpm_password=dict(type='str', required=True, no_log=True),
