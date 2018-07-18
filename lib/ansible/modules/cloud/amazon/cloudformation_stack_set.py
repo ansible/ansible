@@ -81,7 +81,7 @@ options:
     - 'CAPABILITY_NAMED_IAM'
   regions:
     description:
-    - A list of AWS regions to create instances of a stack in. The `region` parameter chooses where the Stack Set is created, and `regions`
+    - A list of AWS regions to create instances of a stack in. The I(region) parameter chooses where the Stack Set is created, and I(regions)
       specifies the region for stack instances.
     - At least one region must be specified to create a stack set. On updates, if fewer regions are specified only the specified regions will
       have their stack instances updated.
@@ -93,6 +93,8 @@ options:
   administration_role_arn:
     description:
     - ARN of the administration role, meaning the role that CloudFormation Stack Sets use to assume the roles in your child accounts.
+    - This defaults to I(arn:aws:iam::{{ account ID }}:role/AWSCloudFormationStackSetAdministrationRole) where I({{ account ID }}) is replaced with the
+      account number of the current IAM role/user/STS credentials.
     aliases:
     - admin_role_arn
     - admin_role
@@ -101,6 +103,7 @@ options:
     description:
     - ARN of the execution role, meaning the role that CloudFormation Stack Sets assumes in your child accounts.
     - This MUST NOT be an ARN, and the roles must exist in each child account specified.
+    - The default name for the execution role is I(AWSCloudFormationStackSetExecutionRole)
     aliases:
     - exec_role_name
     - exec_role
@@ -116,13 +119,13 @@ author: "Ryan Scott Brown (@ryansb)"
 extends_documentation_fragment:
 - aws
 - ec2
-requirements: [ boto3>=1.6, botocore>=1.8 ]
+requirements: [ boto3>=1.6, botocore>=1.10.26 ]
 '''
 
 EXAMPLES = '''
 - name: Create a stack set with instances in two accounts
   cloudformation_stack_set:
-    name: my_stack
+    name: my-stack
     description: Test stack in two accounts
     state: present
     template_url: https://s3.amazonaws.com/my-bucket/cloudformation.template
@@ -132,7 +135,7 @@ EXAMPLES = '''
 
 - name: on subsequent calls, templates are optional but parameters and tags can be altered
   cloudformation_stack_set:
-    name: my_stack
+    name: my-stack
     state: present
     parameters:
       InstanceName: my_stacked_instance
@@ -145,7 +148,7 @@ EXAMPLES = '''
 
 - name: The same type of update, but wait for the update to complete in all stacks
   cloudformation_stack_set:
-    name: my_stack
+    name: my-stack
     state: present
     wait: true
     parameters:
@@ -570,17 +573,19 @@ def main():
             # TODO: need to check the template and other settings for correct check mode
             module.exit_json(changed=False, msg='No changes detected', meta=[])
 
+    changed = False
     if state == 'present':
         if not existing_stack_set:
             # on create this parameter has a different name, and cannot be referenced later in the job log
             stack_params['ClientRequestToken'] = 'Ansible-StackSet-Create-{0}'.format(operation_uuid)
+            changed = True
             create_stack_set(module, stack_params, cfn)
         else:
             stack_params['OperationId'] = 'Ansible-StackSet-Update-{0}'.format(operation_uuid)
             operation_ids.append(stack_params['OperationId'])
             if module.params.get('regions'):
                 stack_params['OperationPreferences'] = get_operation_preferences(module)
-            update_stack_set(module, stack_params, cfn)
+            changed |= update_stack_set(module, stack_params, cfn)
 
         # now create/update any appropriate stack instances
         new_stack_instances, existing_stack_instances, unspecified_stack_instances = compare_stack_instances(
@@ -592,6 +597,7 @@ def main():
         )
         if new_stack_instances:
             operation_ids.append('Ansible-StackInstance-Create-{0}'.format(operation_uuid))
+            changed = True
             cfn.create_stack_instances(
                 StackSetName=module.params['name'],
                 Accounts=list(set(acct for acct, region in new_stack_instances)),
@@ -657,7 +663,7 @@ def main():
     result.update(**describe_stack_tree(module, stack_params['StackSetName'], operation_ids=operation_ids))
     if any(o['status'] == 'FAILED' for o in result['operations']):
         module.fail_json(msg="One or more operations failed to execute", **result)
-    module.exit_json(**result)
+    module.exit_json(changed=changed, **result)
 
 
 if __name__ == '__main__':
