@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # (C) 2018 Red Hat Inc.
@@ -34,7 +33,7 @@ short_description: Get status and parameters from WTI OOB and PDU devices
 description:
     - "Get various status and parameters from WTI OOB and PDU devices"
 options:
-  CPM_action:
+  cpm_action:
     description:
       - This is the Action to send the module.
     required: true
@@ -53,8 +52,8 @@ options:
     description:
       - Designates to use an https connection or http connection.
     required: false
+    type: bool
     default: True
-    choices: [ True, False ]
 """
 
 EXAMPLES = """
@@ -106,8 +105,8 @@ def run_module():
     # define the available arguments/parameters that a user can pass to
     # the module
     module_args = dict(
-        name=dict(type='str', required=False),
-        cpm_action=dict(choices=['temperature', 'firmware', 'status', 'alarms'], required=True),
+        cpm_action=dict(choices=['temperature', 'firmware', 'status', 'alarms'],
+                   required=True),
         cpm_url=dict(type='str', required=True),
         cpm_username=dict(type='str', required=True),
         cpm_password=dict(type='str', required=True, no_log=True),
