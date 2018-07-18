@@ -106,8 +106,7 @@ def run_module():
     # define the available arguments/parameters that a user can pass to
     # the module
     module_args = dict(
-        cpm_action=dict(choices=['temperature', 'firmware', 'status', 'alarms'],
-                                required=True),
+        cpm_action=dict(choices=['temperature', 'firmware', 'status', 'alarms'], required=True),
         cpm_url=dict(type='str', required=True),
         cpm_username=dict(type='str', required=True),
         cpm_password=dict(type='str', required=True, no_log=True),
@@ -130,21 +129,13 @@ def run_module():
         protocol = "http://"
 
     if (module.params['cpm_action'] == 'temperature'):
-        result['data'] = request(module,
-             protocol + module.params['cpm_url'] + "/api/v2/status/temperature",
-             module.params['cpm_username'], module.params['cpm_password'], 8)
+        result['data'] = request(module, protocol + module.params['cpm_url'] + "/api/v2/status/temperature", module.params['cpm_username'], module.params['cpm_password'], 8)
     elif (module.params['cpm_action'] == 'firmware'):
-        result['data'] = request(module,
-             protocol + module.params['cpm_url'] + "/api/v2/status/firmware",
-             module.params['cpm_username'], module.params['cpm_password'], 8)
+        result['data'] = request(module, protocol + module.params['cpm_url'] + "/api/v2/status/firmware", module.params['cpm_username'], module.params['cpm_password'], 8)
     elif (module.params['cpm_action'] == 'status'):
-        result['data'] = request(module,
-             protocol + module.params['cpm_url'] + "/api/v2/status/status",
-             module.params['cpm_username'], module.params['cpm_password'], 8)
+        result['data'] = request(module, protocol + module.params['cpm_url'] + "/api/v2/status/status", module.params['cpm_username'], module.params['cpm_password'], 8)
     elif (module.params['cpm_action'] == 'alarms'):
-        result['data'] = request(module,
-             protocol + module.params['cpm_url'] + "/api/v2/status/alarms",
-             module.params['cpm_username'], module.params['cpm_password'], 8)
+        result['data'] = request(module, protocol + module.params['cpm_url'] + "/api/v2/status/alarms", module.params['cpm_username'], module.params['cpm_password'], 8)
     else:
         module.fail_json(msg='Status command not recognized.', **result)
 
