@@ -30,7 +30,8 @@ author: "Rob White (@wimnat)"
 options:
   force:
     description:
-      - When trying to delete a bucket, delete all keys in the bucket first (an s3 bucket must be empty for a successful deletion)
+      - When trying to delete a bucket, delete all keys (including versions and delete markers)
+        in the bucket first (an s3 bucket must be empty for a successful deletion)
     type: bool
     default: 'no'
   name:
@@ -417,6 +418,13 @@ def paginated_list(s3_client, **pagination_params):
         yield [data['Key'] for data in page.get('Contents', [])]
 
 
+def paginated_versions_list(s3_client, **pagination_params):
+    pg = s3_client.get_paginator('list_object_versions')
+    for page in pg.paginate(**pagination_params):
+        # We have to merge the Versions and DeleteMarker lists here, as DeleteMarkers can still prevent a bucket deletion
+        yield [(data['Key'], data['VersionId']) for data in (page.get('Versions', []) + page.get('DeleteMarkers', []))]
+
+
 def destroy_bucket(s3_client, module):
 
     force = module.params.get("force")
@@ -432,10 +440,10 @@ def destroy_bucket(s3_client, module):
         module.exit_json(changed=False)
 
     if force:
-        # if there are contents then we need to delete them before we can delete the bucket
+        # if there are contents then we need to delete them (including versions) before we can delete the bucket
         try:
-            for keys in paginated_list(s3_client, Bucket=name):
-                formatted_keys = [{'Key': key} for key in keys]
+            for key_version_pairs in paginated_versions_list(s3_client, Bucket=name):
+                formatted_keys = [{'Key': key, 'VersionId': version} for key, version in key_version_pairs]
                 if formatted_keys:
                     s3_client.delete_objects(Bucket=name, Delete={'Objects': formatted_keys})
         except (BotoCoreError, ClientError) as e:
