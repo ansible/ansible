@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
 # This code is part of Ansible, but is an independent component.
 # This particular file snippet, and this file snippet only, is BSD licensed.
 # Modules you write using this snippet, which is embedded dynamically by
@@ -29,23 +32,28 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # Contains utility methods
-# WTI Networking
+# CPM Networking
 #
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import base64, json, codecs
+import base64
+import codecs
 
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.urls import fetch_url
 
-def request(wtimodule, url, user, passwd, timeout, data=None, method=None):
-    auth = to_text(base64.b64encode(to_bytes('{0}:{1}'.format(user, passwd), errors='surrogate_or_strict')))
 
-    response, info = fetch_url(wtimodule, url, data=data, method=method, timeout=timeout, headers={'Content-Type': 'application/json', 'Authorization': "Basic %s" % auth})
+def request(cpmmodule, url, user, passwd, timeout, data=None, method=None):
+    auth = to_text(base64.b64encode(to_bytes('{0}:{1}'.format(user, passwd),
+    errors='surrogate_or_strict')))
+
+    response, info = fetch_url(cpmmodule, url, data=data, method=method,
+    timeout=timeout, headers={'Content-Type': 'application/json',
+    'Authorization': "Basic %s" % auth})
 
     if info['status'] not in (200, 201, 204):
-        wtimodule.fail_json(msg=info['msg'])
+        cpmmodule.fail_json(msg=info['msg'])
 
     # Search for body in both http body and http data
     if response is not None:
