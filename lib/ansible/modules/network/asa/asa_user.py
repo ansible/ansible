@@ -18,15 +18,19 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'network'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 DOCUMENTATION = """
 ---
 module: asa_user
-version_added: "2.4"
+version_added: "2.7"
 author: "Stefan Schlesinger (@sts)"
 short_description: Manage the aggregate of local users on Cisco ASA device
 description:
@@ -171,7 +175,7 @@ def map_obj_to_commands(updates, module):
             continue
 
         if needs_update(want, have, 'privilege'):
-            add(commands, want, 'password %s privilege %s' % ( want['configured_password'], want['privilege'] ))
+            add(commands, want, 'password %s privilege %s' % (want['configured_password'], want['privilege']))
 
         if needs_update(want, have, 'configured_password'):
             if update_password == 'always' or not have:
@@ -284,6 +288,7 @@ def update_objects(want, have):
 global warnings
 warnings = list()
 
+
 def main():
     """ main entry point for module execution
     """
@@ -319,10 +324,8 @@ def main():
                            supports_check_mode=True)
 
     if module.params['password'] and not module.params['configured_password']:
-        warn(
-            'The "password" argument is used to authenticate the current connection. ' +
-            'To set a user password use "configured_password" instead.'
-        )
+        warnings = 'The "password" argument is used to authenticate the current connection. ' +
+                   'To set a user password use "configured_password" instead.'
 
     result = {'changed': False}
     if warnings:
@@ -338,7 +341,7 @@ def main():
         have_users = [x['name'] for x in have]
         for item in set(have_users).difference(want_users):
             if item != 'admin':
-                commands.append(user_del_cmd(item))
+                commands.append('no username %s', item)
 
     result['commands'] = commands
 
