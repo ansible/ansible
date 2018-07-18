@@ -66,7 +66,7 @@ def spectrum_accelerate_spec():
     return dict(
         endpoints=dict(required=True),
         username=dict(required=True),
-        password=dict(required=True),
+        password=dict(no_log=True, required=True),
     )
 
 
