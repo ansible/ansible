@@ -194,7 +194,7 @@ Function Choco-Upgrade
         [string] $proxy_url,
         [string] $proxy_username,
         [string] $proxy_password,
-        [bool] $x86
+        [bool] $x86,
     )
 
     if (-not (Choco-IsInstalled $package))
@@ -335,7 +335,7 @@ Function Choco-Install
         [string] $proxy_url,
         [string] $proxy_username,
         [string] $proxy_password,
-        [bool] $x86
+        [bool] $x86,
     )
 
     if (Choco-IsInstalled $package)

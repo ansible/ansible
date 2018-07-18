@@ -53,7 +53,7 @@ options:
       - Specify source rather than using default chocolatey repository.
   x86:
     description:
-      - Install 32 bit version
+      - Install 32 bit version.
     version_added: '2.7'
     type: bool
     default: 'no'
