@@ -86,6 +86,11 @@ options:
             - If you specify this field along with sourceImage or sourceSnapshot, the value of
               sizeGb must not be less than the size of the sourceImage or the size of the snapshot.
         required: false
+    type:
+        description:
+            - URL of the disk type resource describing which disk type to use to create the disk.
+              Provide this when creating the disk.
+        required: false
     source_image:
         description:
             - The source image used to create this disk. If the source image is deleted, this
@@ -100,15 +105,26 @@ options:
               family. Replace the image name with family/family-name:  global/images/family/my-private-family
               .'
         required: false
-    type:
-        description:
-            - URL of the disk type resource describing which disk type to use to create the disk.
-              Provide this when creating the disk.
-        required: false
     zone:
         description:
             - A reference to the zone where the disk resides.
         required: true
+    source_image_encryption_key:
+        description:
+            - The customer-supplied encryption key of the source image. Required if the source
+              image is protected by a customer-supplied encryption key.
+        required: false
+        suboptions:
+            raw_key:
+                description:
+                    - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648 base64
+                      to either encrypt or decrypt this resource.
+                required: false
+            sha256:
+                description:
+                    - The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied encryption key
+                      that protects this resource.
+                required: false
     disk_encryption_key:
         description:
             - Encrypts the disk using a customer-supplied encryption key.
@@ -131,28 +147,12 @@ options:
                     - The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied encryption key
                       that protects this resource.
                 required: false
-    source_image_encryption_key:
-        description:
-            - The customer-supplied encryption key of the source image. Required if the source
-              image is protected by a customer-supplied encryption key.
-        required: false
-        suboptions:
-            raw_key:
-                description:
-                    - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648 base64
-                      to either encrypt or decrypt this resource.
-                required: false
-            sha256:
-                description:
-                    - The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied encryption key
-                      that protects this resource.
-                required: false
     source_snapshot:
         description:
             - 'The source snapshot used to create this disk. You can provide this as a partial or
               full URL to the resource. For example, the following are valid values: *
-              U(https://www.googleapis.com/compute/v1/projects/project/global/) snapshots/snapshot *
-              projects/project/global/snapshots/snapshot * global/snapshots/snapshot .'
+              `U(https://www.googleapis.com/compute/v1/projects/project/global/snapshots/snapshot`)
+              * `projects/project/global/snapshots/snapshot` * `global/snapshots/snapshot` .'
         required: false
     source_snapshot_encryption_key:
         description:
@@ -248,6 +248,18 @@ RETURN = '''
               sizeGb must not be less than the size of the sourceImage or the size of the snapshot.
         returned: success
         type: int
+    type:
+        description:
+            - URL of the disk type resource describing which disk type to use to create the disk.
+              Provide this when creating the disk.
+        returned: success
+        type: str
+    users:
+        description:
+            - 'Links to the users of the disk (attached instances) in form: project/zones/zone/instances/instance
+              .'
+        returned: success
+        type: list
     source_image:
         description:
             - The source image used to create this disk. If the source image is deleted, this
@@ -263,48 +275,11 @@ RETURN = '''
               .'
         returned: success
         type: str
-    type:
-        description:
-            - URL of the disk type resource describing which disk type to use to create the disk.
-              Provide this when creating the disk.
-        returned: success
-        type: str
-    users:
-        description:
-            - 'Links to the users of the disk (attached instances) in form: project/zones/zone/instances/instance
-              .'
-        returned: success
-        type: list
     zone:
         description:
             - A reference to the zone where the disk resides.
         returned: success
         type: str
-    disk_encryption_key:
-        description:
-            - Encrypts the disk using a customer-supplied encryption key.
-            - After you encrypt a disk with a customer-supplied key, you must provide the same
-              key if you use the disk later (e.g. to create a disk snapshot or an image, or to
-              attach the disk to a virtual machine).
-            - Customer-supplied encryption keys do not protect access to metadata of the disk.
-            - If you do not provide an encryption key when creating the disk, then the disk will
-              be encrypted using an automatically generated key and you do not need to provide
-              a key to use the disk later.
-        returned: success
-        type: complex
-        contains:
-            raw_key:
-                description:
-                    - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648 base64
-                      to either encrypt or decrypt this resource.
-                returned: success
-                type: str
-            sha256:
-                description:
-                    - The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied encryption key
-                      that protects this resource.
-                returned: success
-                type: str
     source_image_encryption_key:
         description:
             - The customer-supplied encryption key of the source image. Required if the source
@@ -333,14 +308,39 @@ RETURN = '''
               was used.
         returned: success
         type: str
+    disk_encryption_key:
+        description:
+            - Encrypts the disk using a customer-supplied encryption key.
+            - After you encrypt a disk with a customer-supplied key, you must provide the same
+              key if you use the disk later (e.g. to create a disk snapshot or an image, or to
+              attach the disk to a virtual machine).
+            - Customer-supplied encryption keys do not protect access to metadata of the disk.
+            - If you do not provide an encryption key when creating the disk, then the disk will
+              be encrypted using an automatically generated key and you do not need to provide
+              a key to use the disk later.
+        returned: success
+        type: complex
+        contains:
+            raw_key:
+                description:
+                    - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648 base64
+                      to either encrypt or decrypt this resource.
+                returned: success
+                type: str
+            sha256:
+                description:
+                    - The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied encryption key
+                      that protects this resource.
+                returned: success
+                type: str
     source_snapshot:
         description:
             - 'The source snapshot used to create this disk. You can provide this as a partial or
               full URL to the resource. For example, the following are valid values: *
-              U(https://www.googleapis.com/compute/v1/projects/project/global/) snapshots/snapshot *
-              projects/project/global/snapshots/snapshot * global/snapshots/snapshot .'
+              `U(https://www.googleapis.com/compute/v1/projects/project/global/snapshots/snapshot`)
+              * `projects/project/global/snapshots/snapshot` * `global/snapshots/snapshot` .'
         returned: success
-        type: str
+        type: dict
     source_snapshot_encryption_key:
         description:
             - The customer-supplied encryption key of the source snapshot. Required if the source
@@ -396,18 +396,18 @@ def main():
             licenses=dict(type='list', elements='str'),
             name=dict(required=True, type='str'),
             size_gb=dict(type='int'),
-            source_image=dict(type='str'),
             type=dict(type='str'),
+            source_image=dict(type='str'),
             zone=dict(required=True, type='str'),
-            disk_encryption_key=dict(type='dict', options=dict(
-                raw_key=dict(type='str'),
-                sha256=dict(type='str')
-            )),
             source_image_encryption_key=dict(type='dict', options=dict(
                 raw_key=dict(type='str'),
                 sha256=dict(type='str')
             )),
-            source_snapshot=dict(type='str'),
+            disk_encryption_key=dict(type='dict', options=dict(
+                raw_key=dict(type='str'),
+                sha256=dict(type='str')
+            )),
+            source_snapshot=dict(type='dict'),
             source_snapshot_encryption_key=dict(type='dict', options=dict(
                 raw_key=dict(type='str'),
                 sha256=dict(type='str')
@@ -462,16 +462,16 @@ def delete(module, link, kind):
 def resource_to_request(module):
     request = {
         u'kind': 'compute#disk',
-        u'diskEncryptionKey': DiskDiskEncryKey(module.params.get('disk_encryption_key', {}), module).to_request(),
         u'sourceImageEncryptionKey': DiskSourImagEncrKey(module.params.get('source_image_encryption_key', {}), module).to_request(),
+        u'diskEncryptionKey': DiskDiskEncryKey(module.params.get('disk_encryption_key', {}), module).to_request(),
         u'sourceSnapshotEncryptionKey': DiskSourSnapEncrKey(module.params.get('source_snapshot_encryption_key', {}), module).to_request(),
         u'description': module.params.get('description'),
         u'labels': module.params.get('labels'),
         u'licenses': module.params.get('licenses'),
         u'name': module.params.get('name'),
         u'sizeGb': module.params.get('size_gb'),
-        u'sourceImage': module.params.get('source_image'),
-        u'type': disk_type_selflink(module.params.get('type'), module.params)
+        u'type': disk_type_selflink(module.params.get('type'), module.params),
+        u'sourceImage': module.params.get('source_image')
     }
     return_vals = {}
     for k, v in request.items():
@@ -548,9 +548,9 @@ def response_to_hash(module, response):
         u'licenses': response.get(u'licenses'),
         u'name': module.params.get('name'),
         u'sizeGb': response.get(u'sizeGb'),
-        u'sourceImage': module.params.get('source_image'),
         u'type': response.get(u'type'),
-        u'users': response.get(u'users')
+        u'users': response.get(u'users'),
+        u'sourceImage': module.params.get('source_image')
     }
 
 
@@ -600,7 +600,7 @@ def raise_if_errors(response, err_path, module):
         module.fail_json(msg=errors)
 
 
-class DiskDiskEncryKey(object):
+class DiskSourImagEncrKey(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -621,7 +621,7 @@ class DiskDiskEncryKey(object):
         })
 
 
-class DiskSourImagEncrKey(object):
+class DiskDiskEncryKey(object):
     def __init__(self, request, module):
         self.module = module
         if request:
