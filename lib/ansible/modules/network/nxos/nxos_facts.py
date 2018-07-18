@@ -362,16 +362,16 @@ class Interfaces(FactsBase):
         for key, value in iteritems(interfaces):
             intf = dict()
             if get_interface_type(key) == 'svi':
-                intf['state'] = self.parse_state(key, value, type='svi')
-                intf['macaddress'] = self.parse_macaddress(value, type='svi')
-                intf['mtu'] = self.parse_mtu(value, type='svi')
-                intf['bandwidth'] = self.parse_bandwidth(value, type='svi')
-                intf['type'] = self.parse_type(value, type='svi')
+                intf['state'] = self.parse_state(key, value, intf_type='svi')
+                intf['macaddress'] = self.parse_macaddress(value, intf_type='svi')
+                intf['mtu'] = self.parse_mtu(value, intf_type='svi')
+                intf['bandwidth'] = self.parse_bandwidth(value, intf_type='svi')
+                intf['type'] = self.parse_type(value, intf_type='svi')
                 if 'Internet Address' in value:
-                    intf['ipv4'] = self.parse_ipv4_address(value, type='svi')
+                    intf['ipv4'] = self.parse_ipv4_address(value, intf_type='svi')
                 facts[key] = intf
             else:
-                intf['state'] = self.parse_state(value)
+                intf['state'] = self.parse_state(key, value)
                 intf['description'] = self.parse_description(value)
                 intf['macaddress'] = self.parse_macaddress(value)
                 intf['mode'] = self.parse_mode(value)
@@ -386,8 +386,9 @@ class Interfaces(FactsBase):
 
         return facts
 
-    def parse_state(self, value, type='ethernet'):
-        if type == 'svi':
+    def parse_state(self, key, value, intf_type='ethernet'):
+        match = None
+        if intf_type == 'svi':
             match = re.search(r'line protocol is (\S+)', value, re.M)
         else:
             match = re.search(r'%s is (\S+)' % key, value, re.M)
@@ -395,8 +396,9 @@ class Interfaces(FactsBase):
         if match:
             return match.group(1)
 
-    def parse_macaddress(self, value, type='ethernet'):
-        if type == 'svi':
+    def parse_macaddress(self, value, intf_type='ethernet'):
+        match = None
+        if intf_type == 'svi':
             match = re.search(r'address is  (\S+)', value, re.M)
         else:
             match = re.search(r'address: (\S+)', value, re.M)
@@ -404,18 +406,19 @@ class Interfaces(FactsBase):
         if match:
             return match.group(1)
 
-    def parse_mtu(self, value, type='ethernet'):
+    def parse_mtu(self, value, intf_type='ethernet'):
         match = re.search(r'MTU (\S+)', value, re.M)
         if match:
             return match.group(1)
 
-    def parse_bandwidth(self, value, type='ethernet'):
+    def parse_bandwidth(self, value, intf_type='ethernet'):
         match = re.search(r'BW (\S+)', value, re.M)
         if match:
             return match.group(1)
 
-    def parse_type(self, value, type='ethernet'):
-        if type == 'svi':
+    def parse_type(self, value, intf_type='ethernet'):
+        match = None
+        if intf_type == 'svi':
             match = re.search(r'Hardware is (\S+)', value, re.M)
         else:
             match = re.search(r'Hardware:  (\S+),', value, re.M)
@@ -423,27 +426,27 @@ class Interfaces(FactsBase):
         if match:
             return match.group(1)
 
-    def parse_description(self, value, type='ethernet'):
+    def parse_description(self, value, intf_type='ethernet'):
         match = re.search(r'Description: (.+)$', value, re.M)
         if match:
             return match.group(1)
 
-    def parse_mode(self, value, type='ethernet'):
+    def parse_mode(self, value, intf_type='ethernet'):
         match = re.search(r'Port mode is (\S+)', value, re.M)
         if match:
             return match.group(1)
 
-    def parse_duplex(self, value, type='ethernet'):
+    def parse_duplex(self, value, intf_type='ethernet'):
         match = re.search(r'(\S+)-duplex', value, re.M)
         if match:
             return match.group(1)
 
-    def parse_speed(self, value, type='ethernet'):
+    def parse_speed(self, value, intf_type='ethernet'):
         match = re.search(r'duplex, (.+)$', value, re.M)
         if match:
             return match.group(1)
 
-    def parse_ipv4_address(self, value, type='ethernet'):
+    def parse_ipv4_address(self, value, intf_type='ethernet'):
         ipv4 = {}
         match = re.search(r'Internet Address is (.+)$', value, re.M)
         if match:
@@ -496,11 +499,11 @@ class Interfaces(FactsBase):
                 continue
             local_intf = self.parse_lldp_intf(item)
             if local_intf not in facts:
-                facts[local_inft] = list()
+                facts[local_intf] = list()
 
             fact = dict()
             fact['port'] = self.parse_lldp_port(item)
-            dact['sysname'] = self.parse_lldp_sysname(item)
+            fact['sysname'] = self.parse_lldp_sysname(item)
             facts[local_intf].append(facts)
 
         return facts
@@ -531,7 +534,7 @@ class Interfaces(FactsBase):
         ipv6 = {}
         match_addr = re.search(r'IPv6 address: (\S+)', value, re.M)
         if match_addr:
-            addr = match.group(1)
+            addr = match_addr.group(1)
             ipv6['address'] = addr
             self.facts['all_ipv6_addresses'].append(addr)
         match_subnet = re.search(r'IPv6 subnet:  (\S+)', value, re.M)
