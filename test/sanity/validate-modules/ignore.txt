@@ -911,7 +911,6 @@ lib/ansible/modules/network/nxos/nxos_bgp_neighbor_af.py E325
 lib/ansible/modules/network/nxos/nxos_bgp_neighbor_af.py E326
 lib/ansible/modules/network/nxos/nxos_command.py E326
 lib/ansible/modules/network/nxos/nxos_config.py E324
-lib/ansible/modules/network/nxos/nxos_file_copy.py E324
 lib/ansible/modules/network/nxos/nxos_gir.py E326
 lib/ansible/modules/network/nxos/nxos_igmp_interface.py E326
 lib/ansible/modules/network/nxos/nxos_interface.py E324
