@@ -30,13 +30,15 @@ controller-side section.
 Minimum Version of Python-3.x and Python-2.x
 --------------------------------------------
 
-In both controller side and module code, we support Python-3.5 or greater and Python-2.6 or
-greater.  Python-3.5 was chosen as a minimum because it is the earliest Python-3 version
-adopted as the default Python by a Long Term Support (LTS) Linux distribution (in this case, Ubuntu-16.04).
-Previous LTS Linux distributions shipped with a Python-2 version which users can rely upon instead of the 
-Python-3 version.
+On the controller we support Python-3.5 or greater and Python-2.7 or greater.  Module-side, we
+support Python-3.5 or greater and Python-2.6 or greater.
 
-For Python-2, the default is for modules to run on at least Python-2.6.  This allows
+Python-3.5 was chosen as a minimum because it is the earliest Python-3 version adopted as the
+default Python by a Long Term Support (LTS) Linux distribution (in this case, Ubuntu-16.04).
+Previous LTS Linux distributions shipped with a Python-2 version which users can rely upon instead
+of the Python-3 version.
+
+For Python 2, the default is for modules to run on at least Python-2.6.  This allows
 users with older distributions that are stuck on Python-2.6 to manage their
 machines.  Modules are allowed to drop support for Python-2.6 when one of
 their dependent libraries requires a higher version of Python.  This is not an

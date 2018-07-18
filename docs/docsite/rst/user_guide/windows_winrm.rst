@@ -685,8 +685,8 @@ would an IPv4 address or hostname::
 
 
 .. Note:: The ipaddress library is only included by default in Python 3.x. To
-    use IPv6 addresses in Python 2.6 and 2.7, make sure to run
-    ``pip install ipaddress`` which installs a backported package.
+    use IPv6 addresses in Python 2.7, make sure to run ``pip install ipaddress`` which installs
+    a backported package.
 
 HTTPS Certificate Validation
 ````````````````````````````
