@@ -1,20 +1,10 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -111,16 +101,6 @@ EXAMPLES = """
     commands:
       - command: show version
         output: json
-
-- name: using cli transport, check whether the switch is in maintenance mode
-  cli_command:
-    commands: show maintenance
-    wait_for: result[0] contains 'Under Maintenance'
-
-- name: using cli transport, check whether the switch is in maintenance mode using json output
-  cli_command:
-    commands: show maintenance | json
-    wait_for: result[0].units.System.state eq 'underMaintenance'
 """
 
 RETURN = """
@@ -142,9 +122,9 @@ failed_conditions:
 """
 import time
 
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.connection import Connection
+from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.network.common.utils import ComplexList
 
@@ -161,14 +141,13 @@ def to_lines(output):
 
 
 def parse_commands(module, warnings):
-    spec = dict(
+    transform = ComplexList(dict(
         command=dict(key=True),
         output=dict(),
         prompt=dict(),
         answer=dict()
-    )
+    ), module)
 
-    transform = ComplexList(spec, module)
     commands = transform(module.params['commands'])
 
     if module.check_mode:
@@ -198,30 +177,28 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    result = {'changed': False}
-
     warnings = list()
-    # check_args(module, warnings)
-    commands = parse_commands(module, warnings)
-    if warnings:
-        result['warnings'] = warnings
+    result = {'changed': False, 'warnings': warnings}
 
     wait_for = module.params['wait_for'] or list()
-
     try:
         conditionals = [Conditional(c) for c in wait_for]
     except AttributeError as exc:
-        module.fail_json(msg=to_native(exc))
+        module.fail_json(msg=to_text(exc))
 
+    commands = parse_commands(module, warnings)
     retries = module.params['retries']
     interval = module.params['interval']
     match = module.params['match']
 
     connection = Connection(module._socket_path)
-    while retries > 0:
+    for attempt in range(retries):
         responses = []
-        for command in commands:
-            responses.append(connection.get(**command))
+        try:
+            for command in commands:
+                responses.append(connection.get(**command))
+        except ConnectionError as exc:
+            module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
         for item in list(conditionals):
             if item(responses):
@@ -234,7 +211,6 @@ def main():
             break
 
         time.sleep(interval)
-        retries -= 1
 
     if conditionals:
         failed_conditions = [item.raw for item in conditionals]
@@ -242,7 +218,6 @@ def main():
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
     result.update({
-        'changed': False,
         'stdout': responses,
         'stdout_lines': to_lines(responses)
     })
