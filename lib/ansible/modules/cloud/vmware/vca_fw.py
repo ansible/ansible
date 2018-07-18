@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 # Copyright: (c) 2015, VMware, Inc. All Rights Reserved.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -13,18 +14,19 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: vca_fw
-short_description: add remove firewall rules in a gateway  in a vca
+short_description: Manage firewall rules in a gateway in a VCA environment
 description:
-  - Adds or removes firewall rules from a gateway in a vca environment
+  - Manage firewall rules in a gateway in a VCA environment.
 version_added: "2.0"
 author:
 - Peter Sprygada (@privateip)
 options:
     fw_rules:
       description:
-        - A list of firewall rules to be added to the gateway, Please see examples on valid entries
-      required: True
-      default: false
+        - A list of firewall rules to be added to the gateway.
+        - Please see examples on valid entries.
+      required: yes
+      type: list
 extends_documentation_fragment: vca.documentation
 '''
 
@@ -36,23 +38,22 @@ EXAMPLES = '''
   connection: local
   tasks:
    - vca_fw:
-       instance_id: 'b15ff1e5-1024-4f55-889f-ea0209726282'
-       vdc_name: 'benz_ansible'
-       state: 'absent'
+       instance_id: b15ff1e5-1024-4f55-889f-ea0209726282
+       vdc_name: benz_ansible
+       state: absent
        fw_rules:
-         - description: "ben testing"
-           source_ip: "Any"
+         - description: ben testing
+           source_ip: Any
            dest_ip: 192.0.2.23
-         - description: "ben testing 2"
+         - description: ben testing 2
            source_ip: 192.0.2.50
-           source_port: "Any"
-           dest_port: "22"
+           source_port: Any
+           dest_port: 22
            dest_ip: 192.0.2.101
-           is_enable: "true"
-           enable_logging: "false"
-           protocol: "Tcp"
-           policy: "allow"
-
+           is_enable: yes
+           enable_logging: no
+           protocol: Tcp
+           policy: allow
 '''
 
 try:
@@ -162,9 +163,9 @@ def main():
     argument_spec = vca_argument_spec()
     argument_spec.update(
         dict(
-            fw_rules=dict(required=True, type='list'),
-            gateway_name=dict(default='gateway'),
-            state=dict(default='present', choices=['present', 'absent'])
+            fw_rules=dict(type='list', required=True),
+            gateway_name=dict(type='str', default='gateway'),
+            state=dict(default='present', choices=['absent', 'present'])
         )
     )
 

@@ -73,7 +73,7 @@ options:
   name_match:
     description:
     - If multiple virtual machines matching the name, use the first or last found.
-    default: 'first'
+    default: first
     choices: [ first, last ]
   uuid:
     description:
@@ -87,7 +87,7 @@ options:
     - If this value is not set, virtual machine is created without using a template.
     - If the virtual machine already exists, this parameter will be ignored.
     - This parameter is case sensitive.
-    aliases: [ 'template_src' ]
+    aliases: [ template_src ]
   is_template:
     description:
     - Flag the instance as a template.
@@ -292,7 +292,7 @@ options:
     - ' - C(hostname) (string): Computer hostname (default: shorted C(name) parameter). Allowed characters are alphanumeric (uppercase and lowercase)
           and minus, rest of the characters are dropped as per RFC 952.'
     - 'Parameters related to Windows customization:'
-    - ' - C(autologon) (bool): Auto logon after virtual machine customization (default: False).'
+    - ' - C(autologon) (bool): Auto logon after virtual machine customization (default: C(no)).'
     - ' - C(autologoncount) (int): Number of autologon after reboot (default: 1).'
     - ' - C(domainadmin) (string): User used to join in AD domain (mandatory with C(joindomain)).'
     - ' - C(domainadminpassword) (string): Password used to join in AD domain (mandatory with C(joindomain)).'
@@ -330,7 +330,7 @@ EXAMPLES = r'''
     hostname: "{{ vcenter_ip }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    validate_certs: False
+    validate_certs: no
     folder: /DC1/vm/
     name: test_vm_0001
     state: poweredon
@@ -360,7 +360,7 @@ EXAMPLES = r'''
     hostname: "{{ vcenter_ip }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    validate_certs: False
+    validate_certs: no
     folder: /testvms
     name: testvm_2
     state: poweredon
@@ -375,15 +375,15 @@ EXAMPLES = r'''
       num_cpu_cores_per_socket: 3
       scsi: paravirtual
       memory_reservation: 512
-      memory_reservation_lock: True
+      memory_reservation_lock: yes
       mem_limit: 8096
       mem_reservation: 4096
       cpu_limit: 8096
       cpu_reservation: 4096
       max_connections: 5
-      hotadd_cpu: True
-      hotremove_cpu: True
-      hotadd_memory: False
+      hotadd_cpu: yes
+      hotremove_cpu: yes
+      hotadd_memory: no
       version: 12 # Hardware version of virtual machine
     cdrom:
       type: iso
@@ -400,7 +400,7 @@ EXAMPLES = r'''
     hostname: "{{ vcenter_ip }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    validate_certs: False
+    validate_certs: no
     datacenter: datacenter1
     cluster: cluster
     name: testvm-2
@@ -433,7 +433,7 @@ EXAMPLES = r'''
     hostname: "{{ vcenter_ip }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    validate_certs: False
+    validate_certs: no
     uuid: "{{ vm_uuid }}"
     name: new_name
     state: present
@@ -444,7 +444,7 @@ EXAMPLES = r'''
     hostname: "{{ vcenter_ip }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    validate_certs: False
+    validate_certs: no
     uuid: "{{ vm_uuid }}"
     state: absent
   delegate_to: localhost
@@ -454,7 +454,7 @@ EXAMPLES = r'''
     hostname: "{{ vcenter_ip }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    validate_certs: False
+    validate_certs: no
     name: vm_name
     state: present
     vapp_properties:
@@ -471,7 +471,7 @@ EXAMPLES = r'''
     hostname: "{{ vcenter_ip }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    validate_certs: False
+    validate_certs: no
     uuid: "{{ vm_uuid }}"
     state: poweredoff
   delegate_to: localhost

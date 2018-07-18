@@ -1,4 +1,6 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright: (c) 2015, Ansible, Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -14,82 +16,87 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: vca_vapp
-short_description: Manages vCloud Air vApp instances.
+short_description: Manages vCloud Air vApp instances
 description:
-  - This module will actively managed vCloud Air vApp instances.  Instances
-    can be created and deleted as well as both deployed and undeployed.
+  - This module will actively managed vCloud Air vApp instances.
+  - Instances can be created and deleted as well as both deployed and undeployed.
 version_added: "2.0"
 author:
 - Peter Sprygada (@privateip)
 options:
   vapp_name:
     description:
-      - The name of the vCloud Air vApp instance
+      - The name of the vCloud Air vApp instance.
     required: yes
   template_name:
     description:
-      - The name of the vApp template to use to create the vApp instance.  If
-        the I(state) is not `absent` then the I(template_name) value must be
-        provided.  The I(template_name) must be previously uploaded to the
-        catalog specified by I(catalog_name)
+      - The name of the vApp template to use to create the vApp instance.
+      - If the I(state) is not C(absent) then the I(template_name) value must
+        be provided.
+      - The I(template_name) must be previously uploaded to the catalog
+        specified by I(catalog_name).
   network_name:
     description:
       - The name of the network that should be attached to the virtual machine
-        in the vApp.  The virtual network specified must already be created in
-        the vCloud Air VDC.  If the I(state) is not 'absent' then the
-        I(network_name) argument must be provided.
+        in the vApp.
+      - The virtual network specified must already be created in the vCloud Air VDC.
+      - If the I(state) is not 'absent' then the I(network_name) argument must
+        be provided.
   network_mode:
     description:
       - Configures the mode of the network connection.
+    choices: [ dhcp, pool, static ]
     default: pool
-    choices: ['pool', 'dhcp', 'static']
   vm_name:
     description:
       - The name of the virtual machine instance in the vApp to manage.
   vm_cpus:
     description:
-      - The number of vCPUs to configure for the VM in the vApp.   If the
-        I(vm_name) argument is provided, then this becomes a per VM setting
-        otherwise it is applied to all VMs in the vApp.
+      - The number of vCPUs to configure for the VM in the vApp.
+      - If the I(vm_name) argument is provided, then this becomes a per VM
+        setting otherwise it is applied to all VMs in the vApp.
+    type: int
   vm_memory:
     description:
-      - The amount of memory in MB to allocate to VMs in the vApp.  If the
-        I(vm_name) argument is provided, then this becomes a per VM setting
-        otherise it is applied to all VMs in the vApp.
+      - The amount of memory in MB to allocate to VMs in the vApp.
+      - If the I(vm_name) argument is provided, then this becomes a per VM
+        setting otherise it is applied to all VMs in the vApp.
+    type: int
   operation:
     description:
       - Specifies an operation to be performed on the vApp.
+    choices: [ noop, poweroff, poweron, reboot, reset, shutdown, suspend ]
     default: noop
-    choices: ['noop', 'poweron', 'poweroff', 'suspend', 'shutdown', 'reboot', 'reset']
   state:
     description:
       - Configures the state of the vApp.
+    choices: [ absent, deployed, present, undeployed ]
     default: present
-    choices: ['present', 'absent', 'deployed', 'undeployed']
   username:
     description:
-      - The vCloud Air username to use during authentication
+      - The vCloud Air username to use during authentication.
   password:
     description:
-      - The vCloud Air password to use during authentication
+      - The vCloud Air password to use during authentication.
   org:
     description:
       - The org to login to for creating vapp, mostly set when the service_type is vdc.
   instance_id:
     description:
-      - The instance id in a vchs environment to be used for creating the vapp
+      - The instance id in a vchs environment to be used for creating the vapp.
+    type: int
   host:
     description:
       - The authentication host to be used when service type  is vcd.
   api_version:
     description:
-      - The api version to be used with the vca
+      - The api version to be used with the vca.
     default: "5.7"
   service_type:
     description:
       - The type of service we are authenticating against
+    choices: [ vca, vcd, vchs ]
     default: vca
-    choices: [ "vca", "vchs", "vcd" ]
   vdc_name:
     description:
       - The name of the virtual data center (VDC) where the vm should be created or contains the vAPP.
@@ -102,7 +109,7 @@ EXAMPLES = '''
   vca_vapp:
     vapp_name: tower
     state: present
-    template_name: 'Ubuntu Server 12.04 LTS (amd64 20150127)'
+    template_name: Ubuntu Server 12.04 LTS (amd64 20150127)
     vdc_name: VDC1
     instance_id: '<your instance id here>'
     username: '<your username here>'
@@ -293,17 +300,17 @@ def get_vm_details(module):
 
 def main():
     argument_spec = dict(
-        vapp_name=dict(required=True),
-        vdc_name=dict(required=True),
-        template_name=dict(),
-        catalog_name=dict(default='Public Catalog'),
-        network_name=dict(),
-        network_mode=dict(default='pool', choices=['dhcp', 'static', 'pool']),
-        vm_name=dict(),
-        vm_cpus=dict(),
-        vm_memory=dict(),
-        operation=dict(default=DEFAULT_VAPP_OPERATION, choices=VAPP_OPERATIONS),
-        state=dict(default='present', choices=VAPP_STATES)
+        vapp_name=dict(type='str', required=True),
+        vdc_name=dict(type='str', required=True),
+        template_name=dict(type='str'),
+        catalog_name=dict(type='str', default='Public Catalog'),
+        network_name=dict(type='str'),
+        network_mode=dict(type='str', default='pool', choices=['dhcp', 'static', 'pool']),
+        vm_name=dict(type='str'),
+        vm_cpus=dict(type='int'),
+        vm_memory=dict(type='int'),
+        operation=dict(type='str', default=DEFAULT_VAPP_OPERATION, choices=VAPP_OPERATIONS),
+        state=dict(type='str', default='present', choices=VAPP_STATES)
     )
 
     module = VcaAnsibleModule(argument_spec=argument_spec,

@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 # Copyright: (c) 2015, VMware, Inc. All Rights Reserved.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -13,56 +14,49 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: vca_nat
-short_description: add remove nat rules in a gateway  in a vca
+short_description: Manage NAT rules in a gateway in a VCA environment
 description:
-  - Adds or removes nat rules from a gateway in a vca environment
+  - Manage NAT rules in a gateway in a VCA environment.
 version_added: "2.0"
 author: Peter Sprygada (@privateip)
 options:
-    purge_rules:
-      description:
-        - If set to true, it will delete all rules in the gateway that are not given as parameter to this module.
-      type: bool
-      default: false
     nat_rules:
       description:
-        - A list of rules to be added to the gateway, Please see examples on valid entries
-      required: True
-      default: false
+        - A list of NAT rules to be added to the gateway.
+        - Please see examples on valid entries.
+      required: yes
+      type: list
+    purge_rules:
+      description:
+        - Whether to purge the existing rules prior to adding new rules.
+        - If set to C(yes), it will delete all rules in the gateway that are not given as parameter to this module.
+      type: bool
+      default: 'no'
 extends_documentation_fragment: vca.documentation
 '''
 
 EXAMPLES = '''
+- name: Add a source NAT rule
+  vca_nat:
+    instance_id: b15ff1e5-1024-4f55-889f-ea0209726282
+    vdc_name: benz_ansible
+    state: present
+    nat_rules:
+    - rule_type: SNAT
+      original_ip: 192.0.2.42
+      translated_ip: 203.0.113.23
 
-#An example for a source nat
-
-- hosts: localhost
-  connection: local
-  tasks:
-   - vca_nat:
-       instance_id: 'b15ff1e5-1024-4f55-889f-ea0209726282'
-       vdc_name: 'benz_ansible'
-       state: 'present'
-       nat_rules:
-         - rule_type: SNAT
-           original_ip: 192.0.2.42
-           translated_ip: 203.0.113.23
-
-#example for a DNAT
-- hosts: localhost
-  connection: local
-  tasks:
-   - vca_nat:
-       instance_id: 'b15ff1e5-1024-4f55-889f-ea0209726282'
-       vdc_name: 'benz_ansible'
-       state: 'present'
-       nat_rules:
-         - rule_type: DNAT
-           original_ip: 203.0.113.23
-           original_port: 22
-           translated_ip: 192.0.2.42
-           translated_port: 22
-
+- name: Add a destination NAT rule
+  vca_nat:
+    instance_id: b15ff1e5-1024-4f55-889f-ea0209726282
+    vdc_name: benz_ansible
+    state: present
+    nat_rules:
+    - rule_type: DNAT
+      original_ip: 203.0.113.23
+      original_port: 22
+      translated_ip: 192.0.2.42
+      translated_port: 22
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -123,9 +117,9 @@ def main():
     argument_spec.update(
         dict(
             nat_rules=dict(type='list', default=[]),
-            gateway_name=dict(default='gateway'),
-            purge_rules=dict(default=False, type='bool'),
-            state=dict(default='present', choices=['present', 'absent'])
+            gateway_name=dict(type='str', default='gateway'),
+            purge_rules=dict(type='bool', default=False),
+            state=dict(default='present', choices=['absent', 'present'])
         )
     )
 
