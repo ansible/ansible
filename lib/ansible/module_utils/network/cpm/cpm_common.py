@@ -45,11 +45,11 @@ from ansible.module_utils.urls import fetch_url
 
 def request(cpmmodule, url, user, passwd, timeout, data=None, method=None):
     auth = to_text(base64.b64encode(to_bytes('{0}:{1}'.format(user, passwd),
-    errors='surrogate_or_strict')))
+                  errors='surrogate_or_strict')))
 
     response, info = fetch_url(cpmmodule, url, data=data, method=method,
     timeout=timeout, headers={'Content-Type': 'application/json',
-    'Authorization': "Basic %s" % auth})
+                             'Authorization': "Basic %s" % auth})
 
     if info['status'] not in (200, 201, 204):
         cpmmodule.fail_json(msg=info['msg'])
