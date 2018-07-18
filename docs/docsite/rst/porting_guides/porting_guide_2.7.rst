@@ -14,6 +14,14 @@ This document is part of a collection on porting. The complete list of porting g
 
 .. contents:: Topics
 
+Python Compatibility
+====================
+
+Ansible has dropped compatibility with Python-2.6 on the controller (The host where :command:`/usr/bin/ansible`
+or :command:`/usr/bin/ansible-playbook` is run).  Modules shipped with Ansible can still be used to
+manage hosts which only have Python-2.6.  You just need to have a host with Python-2.7 or Python-3.5
+or greater to manage those hosts from.
+
 Playbook
 ========
 
