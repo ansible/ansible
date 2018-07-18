@@ -1,12 +1,25 @@
 #!/usr/bin/python
-from ansible.module_utils.basic import AnsibleModule
-try:
-    from storops import VNXSystem
-    from storops.exception import VNXCredentialError, VNXStorageGroupError, \
-        VNXAluAlreadyAttachedError, VNXAttachAluError, VNXDetachAluNotFoundError
-    HAS_LIB = True
-except:
-    HAS_LIB = False
+#
+# (c) 2018, Luca 'remix_tj' Lorenzetto <lorenzetto.luca@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+from __future__ import (absolute_import, division, print_function)
+
+__metaclass__ = type
 
 
 ANSIBLE_METADATA = {
@@ -74,7 +87,18 @@ EXAMPLES = '''
 RETURN = '''
 hluid:
     description: LUNID that hosts attached to the storage group will see
+    type: int
+    returned: success
 '''
+
+from ansible.module_utils.basic import AnsibleModule
+try:
+    from storops import VNXSystem
+    from storops.exception import VNXCredentialError, VNXStorageGroupError, \
+        VNXAluAlreadyAttachedError, VNXAttachAluError, VNXDetachAluNotFoundError
+    HAS_LIB = True
+except:
+    HAS_LIB = False
 
 
 def run_module():
@@ -123,7 +147,6 @@ def run_module():
                         result['hluid'] = sg.attach_alu(alu)
                     except VNXAluAlreadyAttachedError:
                         result['hluid'] = sg.get_hlu(alu)
-                        pass
                     except (VNXAttachAluError, VNXStorageGroupError) as e:
                         module.fail_json(msg='Error attaching {}: '
                                              '{} '.format(alu, str(e)),
