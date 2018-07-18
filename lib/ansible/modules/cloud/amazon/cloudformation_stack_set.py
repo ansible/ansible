@@ -297,7 +297,7 @@ def update_stack_set(module, stack_params, cfn):
     return
 
 
-def compare_stack_instances(module, cfn, stack_set_name, accounts, regions):
+def compare_stack_instances(cfn, stack_set_name, accounts, regions):
     instance_list = cfn.list_stack_instances(
         aws_retry=True,
         StackSetName=stack_set_name,
@@ -559,7 +559,6 @@ def main():
             module.exit_json(changed=True, msg='New stack set would be created', meta=[])
         elif state == 'present' and existing_stack_set:
             new_stacks, existing_stacks, unspecified_stacks = compare_stack_instances(
-                module,
                 cfn,
                 module.params['name'],
                 module.params['accounts'],
@@ -589,7 +588,6 @@ def main():
 
         # now create/update any appropriate stack instances
         new_stack_instances, existing_stack_instances, unspecified_stack_instances = compare_stack_instances(
-            module,
             cfn,
             module.params['name'],
             module.params['accounts'],
@@ -635,7 +633,6 @@ def main():
             module.fail_json_aws(e, msg='Cannot delete stack {0} while there is an operation in progress'.format(module.params['name']))
         except is_boto3_error_code('StackSetNotEmptyException'):
             delete_instances_op = 'Ansible-StackInstance-Delete-{0}'.format(operation_uuid)
-            #AWSRetry.jittered_backoff(retries=3, delay=10, catch_extra_error_codes=['OperationInProgressException'])(
             cfn.delete_stack_instances(
                 StackSetName=module.params['name'],
                 Accounts=module.params['accounts'],
@@ -652,13 +649,6 @@ def main():
                 StackSetName=module.params['name'],
             )
             module.exit_json(changed=True, msg='Stack set {0} deleted'.format(module.params['name']))
-
-        # absent state is different because of the way delete_stack works.
-        # problem is it it doesn't give an error if stack isn't found
-        # so must describe the stack first
-        raise NotImplementedError("Oooooops")
-
-        module.exit_json(msg='Stack set {0} deleted'.format(module.params['name']))
 
     result.update(**describe_stack_tree(module, stack_params['StackSetName'], operation_ids=operation_ids))
     if any(o['status'] == 'FAILED' for o in result['operations']):
