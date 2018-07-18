@@ -37,8 +37,8 @@ class Cliconf(CliconfBase):
         host = self.get(b'show hostname')
         hostname = to_text(host, errors='surrogate_or_strict').strip()
         if data:
-            device_info['network_os_version'] = parse_version(data)
-            device_info['network_os_model'] = parse_model(data)
+            device_info['network_os_version'] = self.parse_version(data)
+            device_info['network_os_model'] = self.parse_model(data)
             device_info['network_os_hostname'] = hostname
 
         return device_info
