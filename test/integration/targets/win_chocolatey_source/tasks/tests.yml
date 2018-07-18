@@ -1,0 +1,243 @@
+---
+- name: create source (check mode)
+  win_chocolatey_source:
+    name: chocolatey
+    source: https://chocolatey.org/api/v2/
+    state: present
+  register: create_check
+  check_mode: yes
+
+- name: check if source exists (check mode)
+  win_command: choco.exe source list -r
+  register: create_actual_check
+
+- name: assert create source (check mode)
+  assert:
+    that:
+    - create_check is changed
+    - create_actual_check.stdout_lines == []
+
+- name: create source
+  win_chocolatey_source:
+    name: chocolatey
+    source: https://chocolatey.org/api/v2/
+    state: present
+  register: create
+
+- name: check if source exists
+  win_command: choco.exe source list -r
+  register: create_actual
+
+- name: assert create source
+  assert:
+    that:
+    - create is changed
+    - create_actual.stdout_lines == ["chocolatey|https://chocolatey.org/api/v2/|False|||0|False|False|False"]
+
+- name: create source (idempotent)
+  win_chocolatey_source:
+    name: chocolatey
+    source: https://chocolatey.org/api/v2/
+    state: present
+  register: create_again
+
+- name: assert create source (idempotent)
+  assert:
+    that:
+    - not create_again is changed
+
+- name: remove source (check mode)
+  win_chocolatey_source:
+    name: chocolatey
+    state: absent
+  register: remove_check
+  check_mode: yes
+
+- name: check if source is removed (check mode)
+  win_command: choco.exe source list -r
+  register: remove_actual_check
+
+- name: assert remove source (check mode)
+  assert:
+    that:
+    - remove_check is changed
+    - remove_actual_check.stdout == create_actual.stdout
+
+- name: remove source
+  win_chocolatey_source:
+    name: chocolatey
+    state: absent
+  register: remove
+
+- name: check if source is removed
+  win_command: choco.exe source list -r
+  register: remove_actual
+
+- name: assert remove source
+  assert:
+    that:
+    - remove is changed
+    - remove_actual.stdout_lines == []
+
+- name: remove source (idempotent)
+  win_chocolatey_source:
+    name: chocolatey
+    state: absent
+  register: remove_again
+
+- name: assert remove source (idempotent)
+  assert:
+    that:
+    - not remove_again is changed
+
+- name: create a disabled service (check mode)
+  win_chocolatey_source:
+    name: '{{ test_chocolatey_name }}'
+    source: C:\chocolatey repos
+    source_username: username
+    source_password: password
+    certificate: C:\cert.pfx
+    certificate_password: password
+    bypass_proxy: yes
+    priority: 1
+    state: disabled
+  register: create_special_check
+  check_mode: yes
+
+- name: check if source is created (check mode)
+  win_command: choco.exe source list -r
+  register: create_special_actual_check
+
+- name: assert create a disabled service (check mode)
+  assert:
+    that:
+    - create_special_check is changed
+    - create_special_actual_check.stdout_lines == []
+
+- name: create a disabled service
+  win_chocolatey_source:
+    name: '{{ test_chocolatey_name }}'
+    source: C:\chocolatey repos
+    source_username: username
+    source_password: password
+    certificate: C:\cert.pfx
+    certificate_password: password
+    bypass_proxy: yes
+    priority: 1
+    state: disabled
+  register: create_special
+
+- name: check if source is created
+  win_command: choco.exe source list -r
+  register: create_special_actual
+
+- name: assert create a disabled service
+  assert:
+    that:
+    - create_special is changed
+    - create_special_actual.stdout_lines == ["test'|\"source 123^|C:\\chocolatey repos|True|username|C:\\cert.pfx|1|True|False|False"]
+
+- name: create a disabled service pass always update
+  win_chocolatey_source:
+    name: '{{ test_chocolatey_name }}'
+    source: C:\chocolatey repos
+    source_username: username
+    source_password: password
+    certificate: C:\cert.pfx
+    certificate_password: password
+    bypass_proxy: yes
+    priority: 1
+    state: disabled
+  register: create_special_pass_always
+
+- name: assert create a disabled service pass always update
+  assert:
+    that:
+    - create_special_pass_always is changed
+
+- name: create a disabled service (idempotent)
+  win_chocolatey_source:
+    name: '{{ test_chocolatey_name }}'
+    source: C:\chocolatey repos
+    source_username: username
+    source_password: password
+    certificate: C:\cert.pfx
+    certificate_password: password
+    bypass_proxy: yes
+    priority: 1
+    state: disabled
+    update_password: on_create
+  register: create_special_again
+
+- name: assert create a disabled service (idempotent)
+  assert:
+    that:
+    - not create_special_again is changed
+
+- name: edit an existing source (check mode)
+  win_chocolatey_source:
+    name: '{{ test_chocolatey_name }}'
+    source: C:\chocolatey repos2
+    source_username: username2
+    source_password: password2
+    certificate: C:\cert2.pfx
+    priority: '5'
+    state: present
+    update_password: on_create
+    admin_only: yes
+    allow_self_service: yes
+  register: modify_source_check
+  check_mode: yes
+
+- name: check if source is changed (check mode)
+  win_command: choco.exe source list -r
+  register: modify_source_check_actual
+
+- name: assert edit an existing source (check mode)
+  assert:
+    that:
+    - modify_source_check is changed
+    - modify_source_check_actual.stdout_lines == create_special_actual.stdout_lines
+
+- name: edit an existing source
+  win_chocolatey_source:
+    name: '{{ test_chocolatey_name }}'
+    source: C:\chocolatey repos2
+    source_username: username2
+    source_password: password2
+    certificate: C:\cert2.pfx
+    priority: '5'
+    state: present
+    update_password: on_create
+    admin_only: yes
+    allow_self_service: yes
+  register: modify_source
+
+- name: check if source is changed
+  win_command: choco.exe source list -r
+  register: modify_source_actual
+
+- name: assert edit an existing source
+  assert:
+    that:
+    - modify_source is changed
+    - modify_source_actual.stdout_lines == ["test'|\"source 123^|C:\\chocolatey repos2|False|username2|C:\\cert2.pfx|5|False|True|True"]
+
+- name: edit an existing source (idempotent)
+  win_chocolatey_source:
+    name: '{{ test_chocolatey_name }}'
+    source: C:\chocolatey repos2
+    source_username: username2
+    source_password: password2
+    certificate: C:\cert2.pfx
+    priority: '5'
+    state: present
+    update_password: on_create
+    admin_only: yes
+    allow_self_service: yes
+  register: modify_source_again
+
+- name: assert edit an existing source (idempotent)
+  assert:
+    that:
+    - not modify_source_again is changed
