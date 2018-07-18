@@ -26,7 +26,7 @@ from ansible.module_utils.common.dict_transformations import dict_merge
 
 try:
     import yaml
-    from openshift.dynamic.exceptions import DynamicApiError, NotFoundError, ConflictError
+    from openshift.dynamic.exceptions import DynamicApiError, NotFoundError, ConflictError, ForbiddenError
 except ImportError:
     # Exceptions handled in common
     pass
@@ -46,10 +46,10 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                                          supports_check_mode=True,
                                          **kwargs)
 
-        kind = self.params.pop('kind')
-        api_version = self.params.pop('api_version')
-        name = self.params.pop('name')
-        namespace = self.params.pop('namespace')
+        self.kind = self.params.pop('kind')
+        self.api_version = self.params.pop('api_version')
+        self.name = self.params.pop('name')
+        self.namespace = self.params.pop('namespace')
         resource_definition = self.params.pop('resource_definition')
         if resource_definition:
             if isinstance(resource_definition, string_types):
@@ -67,11 +67,11 @@ class KubernetesRawModule(KubernetesAnsibleModule):
 
         if not resource_definition and not src:
             self.resource_definitions = [{
-                'kind': kind,
-                'apiVersion': api_version,
+                'kind': self.kind,
+                'apiVersion': self.api_version,
                 'metadata': {
-                    'name': name,
-                    'namespace': namespace
+                    'name': self.name,
+                    'namespace': self.namespace
                 }
             }]
 
@@ -80,14 +80,13 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         results = []
         self.client = self.get_api_client()
         for definition in self.resource_definitions:
-            kind = definition.get('kind')
+            kind = definition.get('kind', self.kind)
             search_kind = kind
             if kind.lower().endswith('list'):
                 search_kind = kind[:-4]
-            api_version = definition.get('apiVersion')
+            api_version = definition.get('apiVersion', self.api_version)
             resource = self.find_resource(search_kind, api_version, fail=True)
-            definition['kind'] = resource.kind
-            definition['apiVersion'] = resource.group_version
+            definition = self.set_defaults(resource, definition)
             result = self.perform_action(resource, definition)
             changed = changed or result['changed']
             results.append(result)
@@ -102,17 +101,28 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             }
         })
 
+    def set_defaults(self, resource, definition):
+        definition['kind'] = resource.kind
+        definition['apiVersion'] = resource.group_version
+        if not definition.get('metadata'):
+            definition['metadata'] = {}
+        if self.name and not definition['metadata'].get('name'):
+            definition['metadata']['name'] = self.name
+        if resource.namespaced and self.namespace and not definition['metadata'].get('namespace'):
+            definition['metadata']['namespace'] = self.namespace
+        return definition
+
     def perform_action(self, resource, definition):
         result = {'changed': False, 'result': {}}
         state = self.params.get('state', None)
         force = self.params.get('force', False)
-        name = definition.get('metadata', {}).get('name')
-        namespace = definition.get('metadata', {}).get('namespace')
+        name = definition['metadata'].get('name')
+        namespace = definition['metadata'].get('namespace')
         existing = None
 
         self.remove_aliases()
 
-        if definition['kind'].endswith('list'):
+        if definition['kind'].endswith('List'):
             result['result'] = resource.get(namespace=namespace).to_dict()
             result['changed'] = False
             result['method'] = 'get'
@@ -122,6 +132,11 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             existing = resource.get(name=name, namespace=namespace)
         except NotFoundError:
             pass
+        except ForbiddenError as exc:
+            if definition['kind'] in ['Project', 'ProjectRequest'] and state != 'absent':
+                return self.create_project_request(definition)
+            self.fail_json(msg='Failed to retrieve requested object: {0}'.format(exc.body),
+                           error=exc.status, status=exc.status, reason=exc.reason)
         except DynamicApiError as exc:
             self.fail_json(msg='Failed to retrieve requested object: {0}'.format(exc.body),
                            error=exc.status, status=exc.status, reason=exc.reason)
@@ -148,7 +163,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                     k8s_obj = definition
                 else:
                     try:
-                        k8s_obj = resource.create(definition, namespace=namespace)
+                        k8s_obj = resource.create(definition, namespace=namespace).to_dict()
                     except ConflictError:
                         # Some resources, like ProjectRequests, can't be created multiple times,
                         # because the resources that they create don't match their kind
@@ -156,7 +171,10 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                         self.warn("{0} was not found, but creating it returned a 409 Conflict error. This can happen \
                                   if the resource you are creating does not directly create a resource of the same kind.".format(name))
                         return result
-                result['result'] = k8s_obj.to_dict()
+                    except DynamicApiError as exc:
+                        self.fail_json(msg="Failed to create object: {0}".format(exc.body),
+                                       error=exc.status, status=exc.status, reason=exc.reason)
+                result['result'] = k8s_obj
                 result['changed'] = True
                 result['method'] = 'create'
                 return result
@@ -195,3 +213,18 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             result['method'] = 'patch'
             result['diff'] = diffs
             return result
+
+    def create_project_request(self, definition):
+        definition['kind'] = 'ProjectRequest'
+        result = {'changed': False, 'result': {}}
+        resource = self.find_resource('ProjectRequest', definition['apiVersion'], fail=True)
+        if not self.check_mode:
+            try:
+                k8s_obj = resource.create(definition)
+                result['result'] = k8s_obj.to_dict()
+            except DynamicApiError as exc:
+                self.fail_json(msg="Failed to create object: {0}".format(exc.body),
+                               error=exc.status, status=exc.status, reason=exc.reason)
+        result['changed'] = True
+        result['method'] = 'create'
+        return result

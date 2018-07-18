@@ -229,7 +229,9 @@ files:
   $modules/cloud/docker/docker_network.py: keitwb olsaki
   $modules/cloud/docker/docker_secret.py:
   $modules/cloud/docker/docker_service.py: $team_ansible
-  $modules/cloud/google/: rambleraptor erjohnso
+  $modules/cloud/google/:
+    maintainers: rambleraptor erjohnso
+    ignored: supertom
   $modules/cloud/google/gc_storage.py: supertom
   $modules/cloud/google/gcdns_record.py: walbert947
   $modules/cloud/google/gcdns_zone.py: walbert947
@@ -310,7 +312,7 @@ files:
   $modules/cloud/vmware/vmware_host.py: dagwieers
   $modules/cloud/vmware/vmware_vm_shell.py: chrrrles
   $modules/cloud/vmware/vsphere_guest.py: dagwieers
-  $modules/cloud/vultr/: resmo
+  $modules/cloud/vultr/: $team_vultr
   $modules/cloud/webfaction/: quentinsf
   $modules/clustering/consul.py: sgargan
   $modules/clustering/consul_acl.py: sgargan
@@ -364,13 +366,13 @@ files:
   $modules/files/tempfile.py:
   $modules/files/template.py: $team_ansible
   $modules/files/unarchive.py:
-    labels: unarchive
+    labels: m:unarchive
     maintainers: pileofrogs
     ignored: dagwieers
   $modules/files/xattr.py: $team_ansible bcoca
   $modules/files/xml.py:
     ignored: magnus919
-    labels: xml
+    labels: m:xml
     maintainers: sm4rk0 cmprescott
   $modules/identity/cyberark/:
     notified: cyberark-bizdev
@@ -910,6 +912,11 @@ files:
   $module_utils/remote_management/ucs:
     maintainers: $team_ucs
     labels: ucs
+  $module_utils/vultr.py:
+    maintainers: $team_vultr
+    labels:
+    - vultr
+    - cloud
   $module_utils/vmware:
     maintainers: $team_vmware
     labels: vmware
@@ -1230,5 +1237,6 @@ macros:
   team_tower: ghjm jlaska matburt wwitzel3 simfarm ryanpetrello rooftopcellist AlanCoding
   team_ucs: dsoper2 johnamcdonough vallard vvb dagwieers
   team_vmware: Akasurde dav1x warthog9
+  team_vultr: resmo Spredzy
   team_windows: dagwieers jborean93 jhawkesworth nitzmahone
   team_windows_core: nitzmahone jborean93

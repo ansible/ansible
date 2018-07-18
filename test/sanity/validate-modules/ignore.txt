@@ -96,7 +96,6 @@ lib/ansible/modules/cloud/amazon/elb_application_lb.py E324
 lib/ansible/modules/cloud/amazon/elb_classic_lb_facts.py E323
 lib/ansible/modules/cloud/amazon/elb_instance.py E326
 lib/ansible/modules/cloud/amazon/elb_target.py E327
-lib/ansible/modules/cloud/amazon/elb_target_group.py E322
 lib/ansible/modules/cloud/amazon/elb_target_group.py E324
 lib/ansible/modules/cloud/amazon/elb_target_group.py E325
 lib/ansible/modules/cloud/amazon/elb_target_group.py E326
@@ -676,10 +675,6 @@ lib/ansible/modules/net_tools/snmp_facts.py E322
 lib/ansible/modules/net_tools/snmp_facts.py E324
 lib/ansible/modules/network/a10/a10_server_axapi3.py E326
 lib/ansible/modules/network/a10/a10_virtual_server.py E324
-lib/ansible/modules/network/aci/aci_interface_policy_l2.py E326
-lib/ansible/modules/network/aci/aci_interface_policy_lldp.py E326
-lib/ansible/modules/network/aci/aci_interface_policy_mcp.py E326
-lib/ansible/modules/network/aci/aci_tenant_span_src_group.py E326
 lib/ansible/modules/network/aos/_aos_blueprint_param.py E325
 lib/ansible/modules/network/asa/asa_config.py E324
 lib/ansible/modules/network/bigswitch/bigmon_policy.py E324

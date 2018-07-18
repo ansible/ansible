@@ -43,9 +43,9 @@ class Vultr:
         # For caching HTTP API responses
         self.api_cache = dict()
 
-        # Reads the config from vultr.ini
         try:
-            config = self.read_ini_config()
+            config = self.read_env_variables()
+            config.update(self.read_ini_config())
         except KeyError:
             config = {}
 
@@ -60,6 +60,9 @@ class Vultr:
             self.fail_json(msg="One of the following settings, "
                                "in section '%s' in the ini config file has not an int value: timeout, retries. "
                                "Error was %s" % (self.module.params.get('api_account'), to_native(e)))
+
+        if not self.api_config.get('api_key'):
+            self.module.fail_json(msg="The API key is not speicied. Please refer to the documentation.")
 
         # Common vultr returns
         self.result['vultr_api'] = {
@@ -76,18 +79,18 @@ class Vultr:
             'Accept': 'application/json',
         }
 
-    def read_ini_config(self):
-        ini_group = self.module.params.get('api_account')
-
+    def read_env_variables(self):
         keys = ['key', 'timeout', 'retries', 'endpoint']
         env_conf = {}
         for key in keys:
             if 'VULTR_API_%s' % key.upper() not in os.environ:
-                break
-            else:
-                env_conf[key] = os.environ['VULTR_API_%s' % key.upper()]
-        else:
-            return env_conf
+                continue
+            env_conf[key] = os.environ['VULTR_API_%s' % key.upper()]
+
+        return env_conf
+
+    def read_ini_config(self):
+        ini_group = self.module.params.get('api_account')
 
         paths = (
             os.path.join(os.path.expanduser('~'), '.vultr.ini'),
@@ -95,11 +98,13 @@ class Vultr:
         )
         if 'VULTR_API_CONFIG' in os.environ:
             paths += (os.path.expanduser(os.environ['VULTR_API_CONFIG']),)
-        if not any((os.path.exists(c) for c in paths)):
-            self.module.fail_json(msg="Config file not found. Tried : %s" % ", ".join(paths))
 
         conf = configparser.ConfigParser()
         conf.read(paths)
+
+        if not conf._sections.get(ini_group):
+            return dict()
+
         return dict(conf.items(ini_group))
 
     def fail_json(self, **kwargs):
@@ -220,20 +225,28 @@ class Vultr:
 
         self.module.fail_json(msg="Could not find %s with %s: %s" % (resource, key, value))
 
+    def normalize_result(self, resource):
+        for search_key, config in self.returns.items():
+            if search_key in resource:
+                if 'convert_to' in config:
+                    if config['convert_to'] == 'int':
+                        resource[search_key] = int(resource[search_key])
+                    elif config['convert_to'] == 'float':
+                        resource[search_key] = float(resource[search_key])
+                    elif config['convert_to'] == 'bool':
+                        resource[search_key] = True if resource[search_key] == 'yes' else False
+
+                if 'key' in config:
+                    resource[config['key']] = resource[search_key]
+                    del resource[search_key]
+
+        return resource
+
     def get_result(self, resource):
         if resource:
-            for search_key, config in self.returns.items():
-                if search_key in resource:
-                    if 'convert_to' in config:
-                        if config['convert_to'] == 'int':
-                            resource[search_key] = int(resource[search_key])
-                        elif config['convert_to'] == 'float':
-                            resource[search_key] = float(resource[search_key])
-                        elif config['convert_to'] == 'bool':
-                            resource[search_key] = True if resource[search_key] == 'yes' else False
+            if isinstance(resource, list):
+                self.result[self.namespace] = [self.normalize_result(item) for item in resource]
+            else:
+                self.result[self.namespace] = self.normalize_result(resource)
 
-                    if 'key' in config:
-                        self.result[self.namespace][config['key']] = resource[search_key]
-                    else:
-                        self.result[self.namespace][search_key] = resource[search_key]
         return self.result
