@@ -190,6 +190,11 @@ class RecordManager(object):
             if self.zone[-1] != '.':
                 self.zone += '.'
 
+        if module.params['record'][-1] != '.':
+            self.fqdn = module.params['record'] + '.' + self.zone
+        else:
+            self.fqdn = module.params['record']
+
         if module.params['key_name']:
             try:
                 self.keyring = dns.tsigkeyring.from_text({
@@ -326,11 +331,25 @@ class RecordManager(object):
             response = self.__do_update(update)
             self.dns_rc = dns.message.Message.rcode(response)
             if self.dns_rc == 0:
-                return 1
+                if self.ttl_changed():
+                    return 2
+                else:
+                    return 1
             else:
                 return 2
         else:
             return 0
+
+    def ttl_changed(self):
+        query = dns.message.make_query(self.fqdn, self.module.params['type'])
+
+        try:
+            lookup = dns.query.tcp(query, self.module.params['server'], timeout=10, port=self.module.params['port'])
+        except (socket_error, dns.exception.Timeout) as e:
+            self.module.fail_json(msg='DNS server error: (%s): %s' % (e.__class__.__name__, to_native(e)))
+
+        current_ttl = lookup.answer[0].ttl
+        return current_ttl != self.module.params['ttl']
 
 
 def main():
