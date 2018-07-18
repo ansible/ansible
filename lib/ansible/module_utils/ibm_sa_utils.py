@@ -13,6 +13,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 from functools import wraps
 from ansible.module_utils._text import to_native
@@ -48,7 +50,7 @@ def connect_ssl(module):
     password = module.params['password']
     if not (username and password and endpoints):
         module.fail_json(
-            "Username, password or endpoints arguments" +
+            msg="Username, password or endpoints arguments "
             "are missing from the module arguments")
 
     try:
@@ -57,7 +59,7 @@ def connect_ssl(module):
                                                            endpoints)
     except errors.CommandFailedConnectionError as e:
         module.fail_json(
-            "Connection with Spectrum Accelerate system has " +
+            msg="Connection with Spectrum Accelerate system has "
             "failed: {[0]}.".format(to_native(e)))
 
 

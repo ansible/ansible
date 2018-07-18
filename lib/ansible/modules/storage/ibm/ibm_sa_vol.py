@@ -27,21 +27,21 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: ibm_sa_vol
-short_description: Handle volumes on an IBM Spectrum Accelerate storage array.
+short_description: Handle volumes on an IBM Spectrum Accelerate storage array
 version_added: "2.7"
 
 description:
     - "This module creates or deletes volumes to be used on
-        IBM Spectrum Accelerate storage systems"
+        IBM Spectrum Accelerate storage systems."
 
 options:
     vol:
         description:
-            - Volume name
+            - Volume name.
         required: true
     pool:
         description:
-            - Volume pool
+            - Volume pool.
         required: false
     state:
         description:
@@ -58,23 +58,23 @@ extends_documentation_fragment:
     - ibm_storage
 
 author:
-    - Tzur Eliyahu (tzure@il.ibm.com
+    - Tzur Eliyahu (tzure@il.ibm.com)
 '''
 
 EXAMPLES = '''
-- name: Create new vol.
+- name: Create a new volume.
   ibm_sa_vol:
-    vol: test_vol
-    pool: test_pool
+    vol: volume_name
+    pool: pool_name
     size: 17
     state: present
     username: admin
     password: secret
     endpoints: hostdev-system
 
-- name: Delete vol.
+- name: Delete an existing volume.
   ibm_sa_vol:
-    vol: test_vol
+    vol: volume_name
     state: absent
     username: admin
     password: secret
