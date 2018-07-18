@@ -386,7 +386,10 @@ class MavenDownloader:
         else:
             response = self._request(url, "Failed to download artifact " + str(artifact))
             with io.open(filename, 'wb') as f:
-                self._write_chunks(response, f, report_hook=self.chunk_report)
+                try:
+                    shutil.copyfileobj(response, f)
+                except Exception as e:
+                    module.fail_json(msg="failed to write in file: %s" % to_native(e), exception=traceback.format_exc())
         if verify_download:
             invalid_md5 = self.is_invalid_md5(filename, url)
             if invalid_md5:
@@ -394,32 +397,6 @@ class MavenDownloader:
                 os.remove(filename)
                 return invalid_md5
         return None
-
-    def chunk_report(self, bytes_so_far, chunk_size, total_size):
-        percent = float(bytes_so_far) / total_size
-        percent = round(percent * 100, 2)
-        sys.stdout.write("Downloaded %d of %d bytes (%0.2f%%)\r" %
-                         (bytes_so_far, total_size, percent))
-        if bytes_so_far >= total_size:
-            sys.stdout.write('\n')
-
-    def _write_chunks(self, response, filehandle, chunk_size=8192, report_hook=None):
-        total_size = response.info().get('Content-Length').strip()
-        total_size = int(total_size)
-        bytes_so_far = 0
-
-        while True:
-            chunk = response.read(chunk_size)
-            bytes_so_far += len(chunk)
-
-            if not chunk:
-                break
-
-            filehandle.write(chunk)
-            if report_hook:
-                report_hook(bytes_so_far, chunk_size, total_size)
-
-        return bytes_so_far
 
     def is_invalid_md5(self, file, remote_url):
         if os.path.exists(file):
