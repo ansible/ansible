@@ -1,21 +1,9 @@
 #!/usr/bin/python
 #
-# (c) 2018, Luca 'remix_tj' Lorenzetto <lorenzetto.luca@gmail.com>
+# Copyright (c) 2018, Luca 'remix_tj' Lorenzetto <lorenzetto.luca@gmail.com>
 #
-# This file is part of Ansible
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import (absolute_import, division, print_function)
 
@@ -37,7 +25,7 @@ short_description: Manage storage group member
 version_added: "2.7"
 
 description:
-    - "This module manages the members of an existing storage group"
+    - "This module manages the members of an existing storage group."
 
 extends_documentation_fragment:
   - emc.emc_vnx
@@ -45,11 +33,11 @@ extends_documentation_fragment:
 options:
     name:
         description:
-            - Name of the Storage group to manage
+            - Name of the Storage group to manage.
         required: true
     lunid:
         description:
-            - Lun id to be added
+            - Lun id to be added.
         required: true
     state:
         description:
@@ -86,12 +74,14 @@ EXAMPLES = '''
 
 RETURN = '''
 hluid:
-    description: LUNID that hosts attached to the storage group will see
+    description: LUNID that hosts attached to the storage group will see.
     type: int
     returned: success
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+
 try:
     from storops import VNXSystem
     from storops.exception import VNXCredentialError, VNXStorageGroupError, \
@@ -106,7 +96,8 @@ def run_module():
         name=dict(type='str', required=True),
         sp_address=dict(type='str', required=True),
         sp_user=dict(type='str', required=False, default='sysadmin'),
-        sp_password=dict(type='str', required=False, default='sysadmin'),
+        sp_password=dict(type='str', required=False, default='sysadmin',
+                         no_log=True),
         lunid=dict(type='int', required=True),
         state=dict(default='present', choices=['present', 'absent']),
     )
@@ -148,8 +139,8 @@ def run_module():
                     except VNXAluAlreadyAttachedError:
                         result['hluid'] = sg.get_hlu(alu)
                     except (VNXAttachAluError, VNXStorageGroupError) as e:
-                        module.fail_json(msg='Error attaching {}: '
-                                             '{} '.format(alu, str(e)),
+                        module.fail_json(msg='Error attaching {0}: '
+                                             '{1} '.format(alu, to_native(e)),
                                          **result)
                 else:
                     result['hluid'] = sg.get_hlu(alu)
@@ -160,15 +151,15 @@ def run_module():
                     # being not attached when using absent is OK
                     pass
                 except VNXStorageGroupError as e:
-                    module.fail_json(msg='Error detaching alu {}: '
-                                         '{} '.format(alu, str(e)),
+                    module.fail_json(msg='Error detaching alu {0}: '
+                                         '{1} '.format(alu, to_native(e)),
                                      **result)
         else:
                 module.fail_json(msg='No such storage group named '
-                                     '{}'.format(module.params['name']),
+                                     '{0}'.format(module.params['name']),
                                      **result)
     except VNXCredentialError as e:
-            module.fail_json(msg='{}'.format(str(e)), **result)
+            module.fail_json(msg='{0}'.format(to_native(e)), **result)
 
     module.exit_json(**result)
 
