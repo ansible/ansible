@@ -31,12 +31,11 @@ options:
         required: True
     endpoints:
         description:
-            - The hostname or management IP of
-                Spectrum Accelerate storage system.
+            - The hostname or management IP of Spectrum Accelerate storage system.
         required: True
 notes:
   - This module requires pyxcli python library.
-      Use 'pip install pyxcli' in order to get pyxcli.
+    Use 'pip install pyxcli' in order to get pyxcli.
 requirements:
   - "python >= 2.7"
   - pyxcli
