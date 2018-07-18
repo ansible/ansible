@@ -149,12 +149,10 @@ options:
                 required: false
     source_snapshot:
         description:
-            - 'The source snapshot used to create this disk. You can provide
-              this as a partial or full URL to the resource. For example, the
-              following are valid values: *
-              U(https://www.googleapis.com/compute/v1/projects/project/global/)
-              snapshots/snapshot * projects/project/global/snapshots/snapshot *
-              global/snapshots/snapshot .'
+            - 'The source snapshot used to create this disk. You can provide this as a partial or
+              full URL to the resource. For example, the following are valid values: *
+              U(https://www.googleapis.com/compute/v1/projects/project/global/) snapshots/snapshot *
+              projects/project/global/snapshots/snapshot * global/snapshots/snapshot .'
         required: false
     source_snapshot_encryption_key:
         description:
@@ -337,12 +335,10 @@ RETURN = '''
         type: str
     source_snapshot:
         description:
-            - 'The source snapshot used to create this disk. You can provide
-              this as a partial or full URL to the resource. For example, the
-              following are valid values: *
-              U(https://www.googleapis.com/compute/v1/projects/project/global/)
-              snapshots/snapshot * projects/project/global/snapshots/snapshot *
-              global/snapshots/snapshot .'
+            - 'The source snapshot used to create this disk. You can provide this as a partial or
+              full URL to the resource. For example, the following are valid values: *
+              U(https://www.googleapis.com/compute/v1/projects/project/global/) snapshots/snapshot *
+              projects/project/global/snapshots/snapshot * global/snapshots/snapshot .'
         returned: success
         type: str
     source_snapshot_encryption_key:

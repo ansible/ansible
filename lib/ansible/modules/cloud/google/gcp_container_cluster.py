@@ -123,15 +123,13 @@ options:
                 required: false
             labels:
                 description:
-                    - 'The map of Kubernetes labels (key/value pairs) to be
-                      applied to each node. These will added in addition to any
-                      default label(s) that Kubernetes may apply to the node. In
-                      case of conflict in label keys, the applied set may differ
-                      depending on the Kubernetes version -- it''s best to assume
-                      the behavior is undefined and conflicts should be avoided. For
-                      more information, including usage and the valid values, see:
-                      U(http://kubernetes.io/v1.1/docs/user-guide/labels.html) An
-                      object containing a list of "key": value pairs.'
+                    - 'The map of Kubernetes labels (key/value pairs) to be applied to each node.
+                      These will added in addition to any default label(s) that Kubernetes may apply to
+                      the node. In case of conflict in label keys, the applied set may differ depending
+                      on the Kubernetes version -- it''s best to assume the behavior is undefined and
+                      conflicts should be avoided. For more information, including usage and the valid
+                      values, see: U(http://kubernetes.io/v1.1/docs/user-guide/labels.html) An object
+                      containing a list of "key": value pairs.'
                     - 'Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.'
                 required: false
             local_ssd_count:
@@ -365,15 +363,13 @@ RETURN = '''
                 type: str
             labels:
                 description:
-                    - 'The map of Kubernetes labels (key/value pairs) to be
-                      applied to each node. These will added in addition to any
-                      default label(s) that Kubernetes may apply to the node. In
-                      case of conflict in label keys, the applied set may differ
-                      depending on the Kubernetes version -- it''s best to assume
-                      the behavior is undefined and conflicts should be avoided. For
-                      more information, including usage and the valid values, see:
-                      U(http://kubernetes.io/v1.1/docs/user-guide/labels.html) An
-                      object containing a list of "key": value pairs.'
+                    - 'The map of Kubernetes labels (key/value pairs) to be applied to each node.
+                      These will added in addition to any default label(s) that Kubernetes may apply to
+                      the node. In case of conflict in label keys, the applied set may differ depending
+                      on the Kubernetes version -- it''s best to assume the behavior is undefined and
+                      conflicts should be avoided. For more information, including usage and the valid
+                      values, see: U(http://kubernetes.io/v1.1/docs/user-guide/labels.html) An object
+                      containing a list of "key": value pairs.'
                     - 'Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.'
                 returned: success
                 type: dict
