@@ -146,6 +146,15 @@ options:
         The disabled plugins will not persist beyond the transaction.
     required: false
     version_added: "2.5"
+  disable_excludes:
+    description:
+      - Disable the excludes defined in YUM config files.
+      - If set to C(all), disables all excludes.
+      - If set to C(main), disable excludes defined in [main] in yum.conf.
+      - If set to C(repoid), disable excludes defined for given repo id.
+    required: false
+    choices: [ all, main, repoid ]
+    version_added: "2.7"
 notes:
   - When used with a `loop:` each package will be processed individually,
     it is much more efficient to pass the list directly to the `name` option.
@@ -298,7 +307,8 @@ def_qf = "%{epoch}:%{name}-%{version}-%{release}.%{arch}"
 rpmbin = None
 
 
-def yum_base(conf_file=None, installroot='/', enabled_plugins=None, disabled_plugins=None):
+def yum_base(conf_file=None, installroot='/', enabled_plugins=None,
+             disabled_plugins=None, disable_excludes=None):
     my = yum.YumBase()
     my.preconf.debuglevel = 0
     my.preconf.errorlevel = 0
@@ -321,6 +331,8 @@ def yum_base(conf_file=None, installroot='/', enabled_plugins=None, disabled_plu
             cachedir = yum.misc.getCacheDir()
             my.repos.setCacheDir(cachedir)
             my.conf.cache = 0
+    if disable_excludes:
+        my.conf.disable_excludes = disable_excludes
 
     return my
 
@@ -367,10 +379,11 @@ def po_to_envra(po):
     return '%s:%s-%s-%s.%s' % (po.epoch, po.name, po.version, po.release, po.arch)
 
 
-def is_group_env_installed(name, conf_file, en_plugins=None, dis_plugins=None, installroot='/'):
+def is_group_env_installed(name, conf_file, en_plugins=None, dis_plugins=None,
+                           installroot='/', disable_excludes=None):
     name_lower = name.lower()
 
-    my = yum_base(conf_file, installroot, en_plugins, dis_plugins)
+    my = yum_base(conf_file, installroot, en_plugins, dis_plugins, disable_excludes)
     if yum.__version_info__ >= (3, 4):
         groups_list = my.doGroupLists(return_evgrps=True)
     else:
@@ -392,7 +405,8 @@ def is_group_env_installed(name, conf_file, en_plugins=None, dis_plugins=None, i
     return False
 
 
-def is_installed(module, repoq, pkgspec, conf_file, qf=None, en_repos=None, dis_repos=None, en_plugins=None, dis_plugins=None, is_pkg=False, installroot='/'):
+def is_installed(module, repoq, pkgspec, conf_file, qf=None, en_repos=None, dis_repos=None, en_plugins=None, dis_plugins=None, is_pkg=False,
+                 installroot='/', disable_excludes=None):
     if en_repos is None:
         en_repos = []
     if dis_repos is None:
@@ -403,7 +417,7 @@ def is_installed(module, repoq, pkgspec, conf_file, qf=None, en_repos=None, dis_
     if not repoq:
         pkgs = []
         try:
-            my = yum_base(conf_file, installroot, en_plugins, dis_plugins)
+            my = yum_base(conf_file, installroot, en_plugins, dis_plugins, disable_excludes)
             for rid in dis_repos:
                 my.repos.disableRepo(rid)
             for rid in en_repos:
@@ -454,7 +468,8 @@ def is_installed(module, repoq, pkgspec, conf_file, qf=None, en_repos=None, dis_
     return []
 
 
-def is_available(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, dis_repos=None, en_plugins=None, dis_plugins=None, installroot='/'):
+def is_available(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, dis_repos=None, en_plugins=None, dis_plugins=None,
+                 installroot='/', disable_excludes=None):
     if en_repos is None:
         en_repos = []
     if dis_repos is None:
@@ -464,7 +479,7 @@ def is_available(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, di
 
         pkgs = []
         try:
-            my = yum_base(conf_file, installroot, en_plugins, dis_plugins)
+            my = yum_base(conf_file, installroot, en_plugins, dis_plugins, disable_excludes)
             for rid in dis_repos:
                 my.repos.disableRepo(rid)
             for rid in en_repos:
@@ -498,7 +513,8 @@ def is_available(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, di
     return []
 
 
-def is_update(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, dis_repos=None, en_plugins=None, dis_plugins=None, installroot='/'):
+def is_update(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, dis_repos=None, en_plugins=None, dis_plugins=None,
+              installroot='/', disable_excludes=None):
     if en_repos is None:
         en_repos = []
     if dis_repos is None:
@@ -511,7 +527,7 @@ def is_update(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, dis_r
         updates = []
 
         try:
-            my = yum_base(conf_file, installroot, en_plugins, dis_plugins)
+            my = yum_base(conf_file, installroot, en_plugins, dis_plugins, disable_excludes)
             for rid in dis_repos:
                 my.repos.disableRepo(rid)
             for rid in en_repos:
@@ -552,7 +568,7 @@ def is_update(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, dis_r
 
 def what_provides(module, repoq, yum_basecmd, req_spec, conf_file, qf=def_qf,
                   en_repos=None, dis_repos=None, en_plugins=None,
-                  dis_plugins=None, installroot='/'):
+                  dis_plugins=None, installroot='/', disable_excludes=None):
     if en_repos is None:
         en_repos = []
     if dis_repos is None:
@@ -562,7 +578,7 @@ def what_provides(module, repoq, yum_basecmd, req_spec, conf_file, qf=def_qf,
 
         pkgs = []
         try:
-            my = yum_base(conf_file, installroot, en_plugins, dis_plugins)
+            my = yum_base(conf_file, installroot, en_plugins, dis_plugins, disable_excludes)
             for rid in dis_repos:
                 my.repos.disableRepo(rid)
             for rid in en_repos:
@@ -609,7 +625,7 @@ def what_provides(module, repoq, yum_basecmd, req_spec, conf_file, qf=def_qf,
             out += out2
             pkgs = set([p for p in out.split('\n') if p.strip()])
             if not pkgs:
-                pkgs = is_installed(module, repoq, req_spec, conf_file, qf=qf, installroot=installroot)
+                pkgs = is_installed(module, repoq, req_spec, conf_file, qf=qf, installroot=installroot, disable_excludes=disable_excludes)
             return pkgs
         else:
             module.fail_json(msg='Error from repoquery: %s: %s' % (cmd, err + err2))
@@ -741,7 +757,7 @@ def repolist(module, repoq, qf="%{repoid}"):
     return ret
 
 
-def list_stuff(module, repoquerybin, conf_file, stuff, installroot='/', disablerepo='', enablerepo=''):
+def list_stuff(module, repoquerybin, conf_file, stuff, installroot='/', disablerepo='', enablerepo='', disable_excludes=None):
 
     qf = "%{name}|%{epoch}|%{version}|%{release}|%{arch}|%{repoid}"
     # is_installed goes through rpm instead of repoquery so it needs a slightly different format
@@ -757,19 +773,24 @@ def list_stuff(module, repoquerybin, conf_file, stuff, installroot='/', disabler
         repoq += ['-c', conf_file]
 
     if stuff == 'installed':
-        return [pkg_to_dict(p) for p in sorted(is_installed(module, repoq, '-a', conf_file, qf=is_installed_qf, installroot=installroot)) if p.strip()]
+        return [pkg_to_dict(p) for p in sorted(is_installed(module, repoq, '-a', conf_file, qf=is_installed_qf,
+                                                            installroot=installroot, disable_excludes=disable_excludes)) if p.strip()]
 
     if stuff == 'updates':
-        return [pkg_to_dict(p) for p in sorted(is_update(module, repoq, '-a', conf_file, qf=qf, installroot=installroot)) if p.strip()]
+        return [pkg_to_dict(p) for p in sorted(is_update(module, repoq, '-a', conf_file, qf=qf,
+                                                         installroot=installroot, disable_excludes=disable_excludes)) if p.strip()]
 
     if stuff == 'available':
-        return [pkg_to_dict(p) for p in sorted(is_available(module, repoq, '-a', conf_file, qf=qf, installroot=installroot)) if p.strip()]
+        return [pkg_to_dict(p) for p in sorted(is_available(module, repoq, '-a', conf_file, qf=qf,
+                                                            installroot=installroot, disable_excludes=disable_excludes)) if p.strip()]
 
     if stuff == 'repos':
         return [dict(repoid=name, state='enabled') for name in sorted(repolist(module, repoq)) if name.strip()]
 
-    return [pkg_to_dict(p) for p in sorted(is_installed(module, repoq, stuff, conf_file, qf=is_installed_qf, installroot=installroot) +
-                                           is_available(module, repoq, stuff, conf_file, qf=qf, installroot=installroot)) if p.strip()]
+    return [pkg_to_dict(p) for p in sorted(is_installed(module, repoq, stuff, conf_file, qf=is_installed_qf,
+                                                        installroot=installroot, disable_excludes=disable_excludes) +
+                                           is_available(module, repoq, stuff, conf_file, qf=qf, installroot=installroot,
+                                                        disable_excludes=disable_excludes)) if p.strip()]
 
 
 def exec_install(module, items, action, pkgs, res, yum_basecmd):
@@ -807,7 +828,8 @@ def exec_install(module, items, action, pkgs, res, yum_basecmd):
     return res
 
 
-def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, en_plugins, dis_plugins, installroot='/', allow_downgrade=False):
+def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, en_plugins, dis_plugins, installroot='/',
+            allow_downgrade=False, disable_excludes=None):
 
     pkgs = []
     downgrade_pkgs = []
@@ -841,15 +863,15 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, e
                 module.fail_json(msg="Failed to get nevra information from RPM package: %s" % spec)
             installed_pkgs = is_installed(module, repoq, envra, conf_file, en_repos=en_repos,
                                           dis_repos=dis_repos, en_plugins=en_plugins,
-                                          dis_plugins=dis_plugins, installroot=installroot)
+                                          dis_plugins=dis_plugins, installroot=installroot, disable_excludes=disable_excludes)
             if installed_pkgs:
                 res['results'].append('%s providing %s is already installed' % (installed_pkgs[0], package))
                 continue
 
             (name, ver, rel, epoch, arch) = splitFilename(envra)
             installed_pkgs = is_installed(module, repoq, name, conf_file, en_repos=en_repos,
-                                          dis_repos=dis_repos, en_plugins=en_plugins,
-                                          dis_plugins=dis_plugins, installroot=installroot)
+                                          dis_repos=dis_repos, en_plugins=en_plugins, dis_plugins=dis_plugins,
+                                          installroot=installroot, disable_excludes=disable_excludes)
 
             # case for two same envr but differrent archs like x86_64 and i686
             if len(installed_pkgs) == 2:
@@ -884,7 +906,8 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, e
 
         # groups
         elif spec.startswith('@'):
-            if is_group_env_installed(spec, conf_file, en_plugins=en_plugins, dis_plugins=dis_plugins, installroot=installroot):
+            if is_group_env_installed(spec, conf_file, en_plugins=en_plugins, dis_plugins=dis_plugins, installroot=installroot,
+                                      disable_excludes=disable_excludes):
                 continue
 
             pkg = spec
@@ -898,7 +921,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, e
                 installed_pkgs = is_installed(module, repoq, spec, conf_file, en_repos=en_repos,
                                               dis_repos=dis_repos, en_plugins=en_plugins,
                                               dis_plugins=dis_plugins, is_pkg=True,
-                                              installroot=installroot)
+                                              installroot=installroot, disable_excludes=disable_excludes)
                 if installed_pkgs:
                     res['results'].append('%s providing %s is already installed' % (installed_pkgs[0], spec))
                     continue
@@ -906,7 +929,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, e
             # look up what pkgs provide this
             pkglist = what_provides(module, repoq, yum_basecmd, spec, conf_file, en_repos=en_repos,
                                     dis_repos=dis_repos, en_plugins=en_plugins, dis_plugins=dis_plugins,
-                                    installroot=installroot)
+                                    installroot=installroot, disable_excludes=disable_excludes)
             if not pkglist:
                 res['msg'] += "No package matching '%s' found available, installed or updated" % spec
                 res['results'].append("No package matching '%s' found available, installed or updated" % spec)
@@ -928,7 +951,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, e
             for this in pkglist:
                 if is_installed(module, repoq, this, conf_file, en_repos=en_repos, dis_repos=dis_repos,
                                 en_plugins=en_plugins, dis_plugins=dis_plugins, is_pkg=True,
-                                installroot=installroot):
+                                installroot=installroot, disable_excludes=disable_excludes):
                     found = True
                     res['results'].append('%s providing %s is already installed' % (this, spec))
                     break
@@ -940,7 +963,8 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, e
             # highly irritating
             if not found:
                 if is_installed(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos,
-                                en_plugins=en_plugins, dis_plugins=dis_plugins, installroot=installroot):
+                                en_plugins=en_plugins, dis_plugins=dis_plugins, installroot=installroot,
+                                disable_excludes=disable_excludes):
                     found = True
                     res['results'].append('package providing %s is already installed' % (spec))
 
@@ -960,7 +984,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, e
                     # Check if any version of the requested package is installed
                     inst_pkgs = is_installed(module, repoq, name, conf_file, en_repos=en_repos,
                                              dis_repos=dis_repos, en_plugins=en_plugins,
-                                             dis_plugins=dis_plugins, is_pkg=True)
+                                             dis_plugins=dis_plugins, is_pkg=True, disable_excludes=disable_excludes)
                     if inst_pkgs:
                         (cur_name, cur_ver, cur_rel, cur_epoch, cur_arch) = splitFilename(inst_pkgs[0])
                         compare = compareEVR((cur_epoch, cur_ver, cur_rel), (epoch, ver, rel))
@@ -989,7 +1013,8 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, e
     return res
 
 
-def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, en_plugins, dis_plugins, installroot='/'):
+def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, en_plugins, dis_plugins,
+           installroot='/', disable_excludes=None):
 
     pkgs = []
     res = {}
@@ -1000,11 +1025,11 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, en
 
     for pkg in items:
         if pkg.startswith('@'):
-            installed = is_group_env_installed(pkg, conf_file, en_plugins=en_plugins, dis_plugins=dis_plugins, installroot=installroot)
+            installed = is_group_env_installed(pkg, conf_file, en_plugins=en_plugins, dis_plugins=dis_plugins, installroot=installroot,
+                                               disable_excludes=disable_excludes)
         else:
-            installed = is_installed(module, repoq, pkg, conf_file, en_repos=en_repos,
-                                     dis_repos=dis_repos, en_plugins=en_plugins,
-                                     dis_plugins=dis_plugins, installroot=installroot)
+            installed = is_installed(module, repoq, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos, en_plugins=en_plugins,
+                                     dis_plugins=dis_plugins, installroot=installroot, disable_excludes=disable_excludes)
 
         if installed:
             pkgs.append(pkg)
@@ -1035,11 +1060,11 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, en
         # at this point we check to see if the pkg is no longer present
         for pkg in pkgs:
             if pkg.startswith('@'):
-                installed = is_group_env_installed(pkg, conf_file, en_plugins=en_plugins, dis_plugins=dis_plugins, installroot=installroot)
+                installed = is_group_env_installed(pkg, conf_file, en_plugins=en_plugins, dis_plugins=dis_plugins,
+                                                   installroot=installroot, disable_excludes=disable_excludes)
             else:
-                installed = is_installed(module, repoq, pkg, conf_file, en_repos=en_repos,
-                                         dis_repos=dis_repos, en_plugins=en_plugins,
-                                         dis_plugins=dis_plugins, installroot=installroot)
+                installed = is_installed(module, repoq, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos, en_plugins=en_plugins,
+                                         dis_plugins=dis_plugins, installroot=installroot, disable_excludes=disable_excludes)
 
             if installed:
                 module.fail_json(**res)
@@ -1095,7 +1120,8 @@ def parse_check_update(check_update_output):
     return updates
 
 
-def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, en_plugins, dis_plugins, update_only, installroot='/'):
+def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, en_plugins, dis_plugins, update_only,
+           installroot='/', disable_excludes=None):
 
     res = {}
     res['results'] = []
@@ -1155,9 +1181,8 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, en
                     module.fail_json(msg="Failed to get nevra information from RPM package: %s" % spec)
 
                 # local rpm files can't be updated
-                if not is_installed(module, repoq, envra, conf_file, en_repos=en_repos,
-                                    dis_repos=dis_repos, en_plugins=en_plugins,
-                                    dis_plugins=dis_plugins, installroot=installroot):
+                if not is_installed(module, repoq, envra, conf_file, en_repos=en_repos, dis_repos=dis_repos, en_plugins=en_plugins,
+                                    dis_plugins=dis_plugins, installroot=installroot, disable_excludes=disable_excludes):
                     pkgs['install'].append(spec)
                 continue
 
@@ -1172,22 +1197,22 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, en
                     module.fail_json(msg="Failed to get nevra information from RPM package: %s" % spec)
 
                 # local rpm files can't be updated
-                if not is_installed(module, repoq, envra, conf_file, en_repos=en_repos,
-                                    dis_repos=dis_repos, en_plugins=en_plugins,
-                                    dis_plugins=dis_plugins, installroot=installroot):
+                if not is_installed(module, repoq, envra, conf_file, en_repos=en_repos, dis_repos=dis_repos, en_plugins=en_plugins,
+                                    dis_plugins=dis_plugins, installroot=installroot, disable_excludes=disable_excludes):
                     pkgs['install'].append(package)
                 continue
 
             # dep/pkgname  - find it
             else:
                 if is_installed(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos,
-                                en_plugins=en_plugins, dis_plugins=dis_plugins, installroot=installroot) or update_only:
+                                en_plugins=en_plugins, dis_plugins=dis_plugins, installroot=installroot,
+                                disable_excludes=disable_excludes) or update_only:
                     pkgs['update'].append(spec)
                 else:
                     pkgs['install'].append(spec)
             pkglist = what_provides(module, repoq, yum_basecmd, spec, conf_file, en_repos=en_repos,
                                     dis_repos=dis_repos, en_plugins=en_plugins, dis_plugins=dis_plugins,
-                                    installroot=installroot)
+                                    installroot=installroot, disable_excludes=disable_excludes)
             # FIXME..? may not be desirable to throw an exception here if a single package is missing
             if not pkglist:
                 res['msg'] += "No package matching '%s' found available, installed or updated" % spec
@@ -1200,7 +1225,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, en
                 if spec in pkgs['install'] and is_available(module, repoq, pkg, conf_file,
                                                             en_repos=en_repos, dis_repos=dis_repos,
                                                             en_plugins=en_plugins, dis_plugins=dis_plugins,
-                                                            installroot=installroot):
+                                                            installroot=installroot, disable_excludes=disable_excludes):
                     nothing_to_do = False
                     break
 
@@ -1220,7 +1245,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, en
 
             if not is_installed(module, repoq, spec, conf_file, en_repos=en_repos,
                                 dis_repos=dis_repos, en_plugins=en_plugins,
-                                dis_plugins=dis_plugins, installroot=installroot) and update_only:
+                                dis_plugins=dis_plugins, installroot=installroot, disable_excludes=disable_excludes) and update_only:
                 res['results'].append("Packages providing %s not installed due to update_only specified" % spec)
                 continue
             if nothing_to_do:
@@ -1285,7 +1310,8 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, en
 
 def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
            disable_gpg_check, exclude, repoq, skip_broken, update_only, security,
-           bugfix, installroot='/', allow_downgrade=False, disable_plugin=None, enable_plugin=None):
+           bugfix, installroot='/', allow_downgrade=False, disable_plugin=None,
+           enable_plugin=None, disable_excludes=None):
 
     # fedora will redirect yum to dnf, which has incompatibilities
     # with how this module expects yum to operate. If yum-deprecated
@@ -1328,6 +1354,9 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
         e_cmd = ['--exclude=%s' % exclude]
         yum_basecmd.extend(e_cmd)
 
+    if disable_excludes:
+        yum_basecmd.extend(['--disableexcludes=%s' % disable_excludes])
+
     if installroot != '/':
         # do not setup installroot by default, because of error
         # CRITICAL:yum.cli:Config Error: Error accessing file for config file:////etc/yum.conf
@@ -1364,7 +1393,7 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
         if module.params.get('update_cache'):
             module.run_command(yum_basecmd + ['clean', 'expire-cache'])
 
-        my = yum_base(conf_file, installroot, enable_plugin, disable_plugin)
+        my = yum_base(conf_file, installroot, enable_plugin, disable_plugin, disable_excludes)
         try:
             if disablerepo:
                 my.repos.disableRepo(disablerepo)
@@ -1387,9 +1416,10 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
             yum_basecmd.append('--nogpgcheck')
         res = install(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos,
                       enable_plugin, disable_plugin, installroot=installroot,
-                      allow_downgrade=allow_downgrade)
+                      allow_downgrade=allow_downgrade, disable_excludes=disable_excludes)
     elif state in ['removed', 'absent']:
-        res = remove(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos, enable_plugin, disable_plugin, installroot=installroot)
+        res = remove(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos, enable_plugin, disable_plugin,
+                     installroot=installroot, disable_excludes=disable_excludes)
     elif state == 'latest':
         if disable_gpg_check:
             yum_basecmd.append('--nogpgcheck')
@@ -1397,7 +1427,8 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
             yum_basecmd.append('--security')
         if bugfix:
             yum_basecmd.append('--bugfix')
-        res = latest(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos, enable_plugin, disable_plugin, update_only, installroot=installroot)
+        res = latest(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos, enable_plugin, disable_plugin, update_only,
+                     installroot=installroot, disable_excludes=disable_excludes)
     else:
         # should be caught by AnsibleModule argument_spec
         module.fail_json(msg="we should never get here unless this all failed",
@@ -1440,6 +1471,7 @@ def main():
             bugfix=dict(required=False, type='bool', default=False),
             enable_plugin=dict(type='list', default=[]),
             disable_plugin=dict(type='list', default=[]),
+            disable_excludes=dict(type='str', default=None, choices=['all', 'main', 'repoid']),
         ),
         required_one_of=[['name', 'list']],
         mutually_exclusive=[['name', 'list']],
@@ -1458,6 +1490,8 @@ def main():
     params = module.params
     enable_plugin = params.get('enable_plugin')
     disable_plugin = params.get('disable_plugin')
+    if params['disable_excludes'] and yum.__version_info__ < (3, 4):
+        module.fail_json(msg="'disable_includes' is available in yum version 3.4 and onwards.")
 
     if params['list']:
         repoquerybin = ensure_yum_utils(module)
@@ -1465,13 +1499,13 @@ def main():
             module.fail_json(msg="repoquery is required to use list= with this module. Please install the yum-utils package.")
         results = {'results': list_stuff(module, repoquerybin, params['conf_file'],
                                          params['list'], params['installroot'],
-                                         params['disablerepo'], params['enablerepo'])}
+                                         params['disablerepo'], params['enablerepo'], params['disable_excludes'])}
     else:
         # If rhn-plugin is installed and no rhn-certificate is available on
         # the system then users will see an error message using the yum API.
         # Use repoquery in those cases.
 
-        my = yum_base(params['conf_file'], params['installroot'], enable_plugin, disable_plugin)
+        my = yum_base(params['conf_file'], params['installroot'], enable_plugin, disable_plugin, params['disable_excludes'])
         # A sideeffect of accessing conf is that the configuration is
         # loaded and plugins are discovered
         my.conf
@@ -1502,7 +1536,7 @@ def main():
         results = ensure(module, state, pkg, params['conf_file'], enablerepo,
                          disablerepo, disable_gpg_check, exclude, repoquery,
                          skip_broken, update_only, security, bugfix, params['installroot'], allow_downgrade,
-                         disable_plugin=disable_plugin, enable_plugin=enable_plugin)
+                         disable_plugin=disable_plugin, enable_plugin=enable_plugin, disable_excludes=params['disable_excludes'])
         if repoquery:
             results['msg'] = '%s %s' % (
                 results.get('msg', ''),
