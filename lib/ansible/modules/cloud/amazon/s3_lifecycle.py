@@ -415,8 +415,9 @@ def destroy_lifecycle_rule(client, module):
     try:
         if lifecycle_obj['Rules']:
             client.put_bucket_lifecycle_configuration(Bucket=name, LifecycleConfiguration=lifecycle_obj)
-        else:
-            client.delete_lifecycle_configuration(Bucket=name)
+        elif current_lifecycle_rules:
+            changed = True
+            client.delete_bucket_lifecycle(Bucket=name)
     except (ClientError, BotoCoreError) as e:
         module.fail_json_aws(e)
     module.exit_json(changed=changed)
