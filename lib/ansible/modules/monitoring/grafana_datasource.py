@@ -39,19 +39,24 @@ options:
     description:
       - The URL of the datasource.
     required: true
+    aliases: [ ds_url ]
   access:
     description:
       - The access mode for this datasource.
     choices: [ direct, proxy ]
     default: proxy
-  grafana_user:
+  url_username:
     description:
       - The Grafana API user.
     default: admin
-  grafana_password:
+    aliases: [ grafana_user ]
+    version_added: 2.7
+  url_password:
     description:
       - The Grafana API password.
     default: admin
+    aliases: [ grafana_password ]
+    version_added: 2.7
   grafana_api_key:
     description:
       - The Grafana API key.
@@ -161,17 +166,23 @@ options:
     required: false
     description:
       - TLS certificate path used by ansible to query grafana api
-    version_added: 2.6
+    version_added: 2.8
   client_key:
     required: false
     description:
       - TLS private key path used by ansible to query grafana api
-    version_added: 2.6
+    version_added: 2.8
   validate_certs:
     description:
       - Whether to validate the Grafana certificate.
     type: bool
     default: 'yes'
+  use_proxy:
+    description:
+      - Boolean of whether or not to use proxy.
+    default: 'yes'
+    type: bool
+    version_added: 2.8
 '''
 
 EXAMPLES = '''
@@ -184,7 +195,7 @@ EXAMPLES = '''
     grafana_password: "xxxxxx"
     org_id: "1"
     ds_type: "elasticisearch"
-    url: "https://elastic.company.com:9200"
+    ds_url: "https://elastic.company.com:9200"
     database: "[logstash_]YYYY.MM.DD"
     basic_auth_user: "grafana"
     basic_auth_password: "******"
@@ -203,7 +214,7 @@ EXAMPLES = '''
     grafana_password: "xxxxxx"
     org_id: "1"
     ds_type: "influxdb"
-    url: "https://influx.company.com:8086"
+    ds_url: "https://influx.company.com:8086"
     database: "telegraf"
     time_interval: ">10s"
     tls_ca_cert: "/etc/ssl/certs/ca.pem"
@@ -269,7 +280,7 @@ import json
 import base64
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.urls import fetch_url, url_argument_spec
 from ansible.module_utils._text import to_bytes
 
 __metaclass__ = type
@@ -283,6 +294,17 @@ def grafana_switch_organisation(module, grafana_url, org_id, headers):
     r, info = fetch_url(module, '%s/api/user/using/%d' % (grafana_url, org_id), headers=headers, method='POST')
     if info['status'] != 200:
         raise GrafanaAPIException('Unable to switch to organization %s : %s' % (org_id, info))
+
+
+def grafana_headers(module, data):
+    headers = {'content-type': 'application/json; charset=utf8'}
+    if 'grafana_api_key' in data and data['grafana_api_key']:
+        headers['Authorization'] = "Bearer %s" % data['grafana_api_key']
+    else:
+        module.params['force_basic_auth'] = True
+        grafana_switch_organisation(module, data['grafana_url'], data['org_id'], headers)
+
+    return headers
 
 
 def grafana_datasource_exists(module, grafana_url, name, headers):
@@ -379,13 +401,7 @@ def grafana_create_datasource(module, data):
     payload['jsonData'] = json_data
 
     # define http header
-    headers = {'content-type': 'application/json; charset=utf8'}
-    if 'grafana_api_key' in data and data['grafana_api_key'] is not None:
-        headers['Authorization'] = "Bearer %s" % data['grafana_api_key']
-    else:
-        auth = base64.b64encode(to_bytes('%s:%s' % (data['grafana_user'], data['grafana_password'])).replace('\n', ''))
-        headers['Authorization'] = 'Basic %s' % auth
-        grafana_switch_organisation(module, data['grafana_url'], data['org_id'], headers)
+    headers = grafana_headers(module, data)
 
     # test if datasource already exists
     datasource_exists, ds = grafana_datasource_exists(module, data['grafana_url'], data['name'], headers=headers)
@@ -438,14 +454,7 @@ def grafana_create_datasource(module, data):
 
 def grafana_delete_datasource(module, data):
 
-    # define http headers
-    headers = {'content-type': 'application/json'}
-    if 'grafana_api_key' in data and data['grafana_api_key']:
-        headers['Authorization'] = "Bearer %s" % data['grafana_api_key']
-    else:
-        auth = base64.b64encode(to_bytes('%s:%s' % (data['grafana_user'], data['grafana_password'])).replace('\n', ''))
-        headers['Authorization'] = 'Basic %s' % auth
-        grafana_switch_organisation(module, data['grafana_url'], data['org_id'], headers)
+    headers = grafana_headers(module, data)
 
     # test if datasource already exists
     datasource_exists, ds = grafana_datasource_exists(module, data['grafana_url'], data['name'], headers=headers)
@@ -473,53 +482,59 @@ def grafana_delete_datasource(module, data):
 
 
 def main():
+    # use the predefined argument spec for url
+    argument_spec = url_argument_spec()
+    # remove unnecessary arguments
+    del argument_spec['force']
+    del argument_spec['force_basic_auth']
+    del argument_spec['http_agent']
+
+    argument_spec.update(
+        name=dict(required=True, type='str'),
+        state=dict(choices=['present', 'absent'],
+                   default='present'),
+        grafana_url=dict(type='str', required=True),
+        url_username=dict(aliases=['grafana_user'], default='admin'),
+        url_password=dict(aliases=['grafana_password'], default='admin', no_log=True),
+        ds_type=dict(choices=['graphite',
+                              'prometheus',
+                              'elasticsearch',
+                              'influxdb',
+                              'opentsdb',
+                              'mysql',
+                              'postgres',
+                              'alexanderzobnin-zabbix-datasource']),
+        url=dict(required=True, type='str', aliases=['ds_url']),
+        access=dict(default='proxy', choices=['proxy', 'direct']),
+        grafana_api_key=dict(type='str', no_log=True),
+        database=dict(type='str'),
+        user=dict(default='', type='str'),
+        password=dict(default='', no_log=True, type='str'),
+        basic_auth_user=dict(type='str'),
+        basic_auth_password=dict(type='str', no_log=True),
+        with_credentials=dict(default=False, type='bool'),
+        tls_client_cert=dict(type='str', no_log=True),
+        tls_client_key=dict(type='str', no_log=True),
+        tls_ca_cert=dict(type='str', no_log=True),
+        tls_skip_verify=dict(type='bool', default=False),
+        is_default=dict(default=False, type='bool'),
+        org_id=dict(default=1, type='int'),
+        es_version=dict(type='int', default=5, choices=[2, 5, 56]),
+        max_concurrent_shard_requests=dict(type='int', default=256),
+        time_field=dict(default='@timestamp', type='str'),
+        time_interval=dict(type='str'),
+        interval=dict(type='str', choices=['', 'Hourly', 'Daily', 'Weekly', 'Monthly', 'Yearly'], default=''),
+        tsdb_version=dict(type='int', default=1, choices=[1, 2, 3]),
+        tsdb_resolution=dict(type='str', default='second', choices=['second', 'millisecond']),
+        sslmode=dict(default='disable', choices=['disable', 'require', 'verify-ca', 'verify-full']),
+        trends=dict(default=False, type='bool'),
+    )
+
     module = AnsibleModule(
-        argument_spec=dict(
-            name=dict(required=True, type='str'),
-            state=dict(choices=['present', 'absent'],
-                       default='present'),
-            grafana_url=dict(required=True, type='str'),
-            ds_type=dict(choices=['graphite',
-                                  'prometheus',
-                                  'elasticsearch',
-                                  'influxdb',
-                                  'opentsdb',
-                                  'mysql',
-                                  'postgres',
-                                  'alexanderzobnin-zabbix-datasource']),
-            url=dict(required=True, type='str'),
-            access=dict(default='proxy', choices=['proxy', 'direct']),
-            grafana_user=dict(default='admin'),
-            grafana_password=dict(default='admin', no_log=True),
-            grafana_api_key=dict(type='str', no_log=True),
-            database=dict(type='str'),
-            user=dict(default='', type='str'),
-            password=dict(default='', no_log=True, type='str'),
-            basic_auth_user=dict(type='str'),
-            basic_auth_password=dict(type='str', no_log=True),
-            with_credentials=dict(default=False, type='bool'),
-            tls_client_cert=dict(type='str', no_log=True),
-            tls_client_key=dict(type='str', no_log=True),
-            tls_ca_cert=dict(type='str', no_log=True),
-            tls_skip_verify=dict(type='bool', default=False),
-            is_default=dict(default=False, type='bool'),
-            org_id=dict(default=1, type='int'),
-            es_version=dict(type='int', default=5, choices=[2, 5, 56]),
-            max_concurrent_shard_requests=dict(type='int', default=256),
-            time_field=dict(default='@timestamp', type='str'),
-            time_interval=dict(type='str'),
-            interval=dict(type='str', choices=['', 'Hourly', 'Daily', 'Weekly', 'Monthly', 'Yearly'], default=''),
-            tsdb_version=dict(type='int', default=1, choices=[1, 2, 3]),
-            tsdb_resolution=dict(type='str', default='second', choices=['second', 'millisecond']),
-            sslmode=dict(default='disable', choices=['disable', 'require', 'verify-ca', 'verify-full']),
-            trends=dict(default=False, type='bool'),
-            client_cert=dict(type='path'),
-            client_key=dict(type='path'),
-            validate_certs=dict(type='bool', default=True)
-        ),
+        argument_spec=argument_spec,
         supports_check_mode=False,
-        required_together=[['grafana_user', 'grafana_password', 'org_id'], ['tls_client_cert', 'tls_client_key']],
-        mutually_exclusive=[['grafana_user', 'grafana_api_key'], ['tls_ca_cert', 'tls_skip_verify']],
+        required_together=[['url_username', 'url_password', 'org_id'], ['tls_client_cert', 'tls_client_key']],
+        mutually_exclusive=[['url_username', 'grafana_api_key'], ['tls_ca_cert', 'tls_skip_verify']],
         required_if=[
             ['ds_type', 'opentsdb', ['tsdb_version', 'tsdb_resolution']],
             ['ds_type', 'influxdb', ['database']],
