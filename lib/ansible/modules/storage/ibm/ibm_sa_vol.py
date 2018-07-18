@@ -27,7 +27,7 @@ DOCUMENTATION = '''
 ---
 module: ibm_sa_vol
 short_description: Handle volumes on an IBM Spectrum Accelerate storage array.
-version_added: "2.6"
+version_added: "2.7"
 
 description:
     - "This module creates or deletes volumes to be used on

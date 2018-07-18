@@ -15,6 +15,7 @@
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
 from functools import wraps
+from ansible.module_utils._text import to_native
 
 PYXCLI_INSTALLED = True
 try:
@@ -36,7 +37,7 @@ def xcli_wrapper(func):
         try:
             return func(module, *args, **kwargs)
         except errors.CommandExecutionError as e:
-            module.fail_json(msg=str(e))
+            module.fail_json(msg=to_native(e))
     return wrapper
 
 
@@ -57,7 +58,7 @@ def connect_ssl(module):
     except errors.CommandFailedConnectionError as e:
         module.fail_json(
             "Connection with Spectrum Accelerate system has " +
-            "failed: {[0]}.".format(str(e)))
+            "failed: {[0]}.".format(to_native(e)))
 
 
 def spectrum_accelerate_spec():
@@ -65,7 +66,7 @@ def spectrum_accelerate_spec():
     return dict(
         endpoints=dict(required=True),
         username=dict(required=True),
-        password=dict(no_log=True),
+        password=dict(required=True),
     )
 
 
