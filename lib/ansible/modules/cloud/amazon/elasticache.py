@@ -82,7 +82,7 @@ options:
       - Set instance tags
     required: false
     default: {}
-    version_added: "2.6"
+    version_added: "2.7"
   purge_tags:
     description:
       - If yes, existing tags will be purged from the resource to match exactly
@@ -92,7 +92,7 @@ options:
     required: false
     default: yes
     choices: [ 'yes', 'no' ]
-    version_added: "2.6"
+    version_added: "2.7"
 
 extends_documentation_fragment:
     - aws
