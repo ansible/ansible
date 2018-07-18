@@ -42,30 +42,40 @@ options:
   local_luns:
     description:
     - List of Local LUNs used by the storage profile.
-    - "Each list element has the following suboptions:"
-    - "= name"
-    - "  The name of the local LUN (required)."
-    - "- size"
-    - "  Size of this LUN in GB. The size can range from 1 to 10240 GB."
-    - "- auto_deploy"
-    - "  Whether the local LUN should be automatically deployed or not."
-    - "  choices: [auto-deploy, no-auto-deploy]"
-    - "  default: auto-deploy"
-    - "- expand_to_avail"
-    - "  Specifies that this LUN can be expanded to use the entire available disk group."
-    - "  For each service profile, only one LUN can use this option."
-    - "  Expand To Available option is not supported for already deployed LUN."
-    - "  choices: ['yes', 'no']"
-    - "  default: 'no'"
-    - "- fractional_size"
-    - "  Fractional size of this LUN in MB."
-    - "- disk_policy_name"
-    - "  The disk group configuration policy to be applied to this local LUN."
-    - "- state"
-    - "  If present, will verify local LUN is present on profile."
-    - "  If absent, will verify local LUN is absent on profile."
-    - "  choices: [present, absent]"
-    - "  default: present"
+    suboptions:
+      name:
+        description:
+        - The name of the local LUN.
+        required: yes
+      size:
+        description:
+        - Size of this LUN in GB. The size can range from 1 to 10240 GB.
+        default: '1'
+      auto_deploy:
+        description:
+        - Whether the local LUN should be automatically deployed or not.
+        choices: [auto-deploy, no-auto-deploy]
+        default: auto-deploy
+      expand_to_avail:
+        description:
+        - Specifies that this LUN can be expanded to use the entire available disk group.
+          For each service profile, only one LUN can use this option.
+          Expand To Available option is not supported for already deployed LUN.
+        choices: ['yes', 'no']
+        default: 'no'
+      fractional_size:
+        description:
+        - Fractional size of this LUN in MB.
+        default: '0'
+      disk_policy_name:
+        description:
+        - The disk group configuration policy to be applied to this local LUN.
+      state:
+        description:
+        - If present, will verify local LUN is present on profile.
+          If absent, will verify local LUN is absent on profile.
+        choices: [present, absent]
+        default: present
   org_dn:
     description:
     - The distinguished name (dn) of the organization where the resource is assigned.
@@ -122,12 +132,21 @@ from ansible.module_utils.remote_management.ucs import UCSModule, ucs_argument_s
 
 
 def main():
+    local_lun = dict(
+        name=dict(type='str', required=True),
+        state=dict(type='str', default='present', choices=['present', 'absent']),
+        size=dict(type='str', default='1'),
+        auto_deploy=dict(type='str', default='auto-deploy', choices=['auto-deploy', 'no-auto-deploy']),
+        expand_to_avail=dict(type='str', default='no', choices=['no', 'yes']),
+        fractional_size=dict(type='str', default='0'),
+        disk_policy_name=dict(type='str', default=''),
+    )
     argument_spec = ucs_argument_spec
     argument_spec.update(
         org_dn=dict(type='str', default='org-root'),
         name=dict(type='str', required=True),
         description=dict(type='str', aliases=['descr'], default=''),
-        local_luns=dict(type='list'),
+        local_luns=dict(type='list', elements='dict', options=local_lun),
         state=dict(type='str', default='present', choices=['present', 'absent']),
     )
 
@@ -162,19 +181,6 @@ def main():
                     ucs.login_handle.commit()
                 ucs.result['changed'] = True
         else:
-            # set default params for lists which can't be done in the argument_spec
-            if module.params.get('local_luns'):
-                for lun in module.params['local_luns']:
-                    if not lun.get('state'):
-                        lun['state'] = 'present'
-                    if not lun.get('size'):
-                        lun['size'] = '1'
-                    if not lun.get('auto_deploy'):
-                        lun['auto_deploy'] = 'auto-deploy'
-                    if not lun.get('expand_to_avail'):
-                        lun['expand_to_avail'] = 'no'
-                    if not lun.get('fractional_size'):
-                        lun['fractional_size'] = '0'
             if mo_exists:
                 # check top-level mo props
                 kwargs = dict(descr=module.params['description'])
