@@ -22,18 +22,24 @@ short_description: Manage Grafana dashboards
 description:
   - Create, update, delete, export Grafana dashboards via API.
 options:
-  grafana_url:
+  url:
     description:
       - The Grafana URL.
     required: true
-  grafana_user:
+    aliases: [ grafana_url ]
+    version_added: 2.7
+  url_username:
     description:
       - The Grafana API user.
     default: admin
-  grafana_password:
+    aliases: [ grafana_user ]
+    version_added: 2.7
+  url_password:
     description:
       - The Grafana API password.
     default: admin
+    aliases: [ grafana_password ]
+    version_added: 2.7
   grafana_api_key:
     description:
       - The Grafana API key.
@@ -78,6 +84,22 @@ options:
       - This should only be used on personally controlled sites using self-signed certificates.
     type: bool
     default: 'yes'
+  client_cert:
+    description:
+      - PEM formatted certificate chain file to be used for SSL client authentication.
+      - This file can also include the key as well, and if the key is included, client_key is not required
+    version_added: 2.7
+  client_key:
+    description:
+      - PEM formatted file that contains your private key to be used for SSL client
+      - authentication. If client_cert contains both the certificate and key, this option is not required
+    version_added: 2.7
+  use_proxy:
+    description:
+      - Boolean of whether or not to use proxy.
+    default: 'yes'
+    type: bool
+    version_added: 2.7
 '''
 
 EXAMPLES = '''
@@ -96,7 +118,9 @@ EXAMPLES = '''
     - name: Export dashboard
       grafana_dashboard:
         grafana_url: http://grafana.company.com
-        grafana_api_key: "{{ grafana_api_key }}"
+        grafana_user: "admin"
+        grafana_password: "{{ grafana_password }}"
+        org_id: 1
         state: export
         uid: "000000653"
         path: "/path/to/dashboards/000000653.json"
@@ -148,8 +172,6 @@ def grafana_headers(module, data):
     if 'grafana_api_key' in data and data['grafana_api_key']:
         headers['Authorization'] = "Bearer %s" % data['grafana_api_key']
     else:
-        module.params['url_username'] = data.get('grafana_user')
-        module.params['url_password'] = data.get('grafana_password')
         module.params['force_basic_auth'] = True
         grafana_switch_organisation(module, data['grafana_url'], data['org_id'], headers)
 
@@ -355,24 +377,29 @@ def grafana_export_dashboard(module, data):
 
 
 def main():
+    # use the predefined argument spec for url
+    argument_spec = url_argument_spec()
+    # remove unnecessary arguments
+    del argument_spec['force']
+    del argument_spec['force_basic_auth']
+    del argument_spec['http_agent']
+    argument_spec.update(
+        state=dict(choices=['present', 'absent', 'export'], default='present'),
+        url=dict(aliases=['grafana_url'], required=True),
+        url_username=dict(aliases=['grafana_user'], default='admin'),
+        url_password=dict(aliases=['grafana_password'], default='admin', no_log=True),
+        grafana_api_key=dict(type='str', no_log=True),
+        org_id=dict(default=1, type='int'),
+        uid=dict(type='str'),
+        slug=dict(type='str'),
+        path=dict(type='str'),
+        overwrite=dict(type='bool', default=False),
+        message=dict(type='str'),
+    )
     module = AnsibleModule(
-        argument_spec=dict(
-            state=dict(choices=['present', 'absent', 'export'],
-                       default='present'),
-            grafana_url=dict(required=True),
-            grafana_user=dict(default='admin'),
-            grafana_password=dict(default='admin', no_log=True),
-            grafana_api_key=dict(type='str', no_log=True),
-            org_id=dict(default=1, type='int'),
-            uid=dict(type='str'),
-            slug=dict(type='str'),
-            path=dict(type='str'),
-            overwrite=dict(type='bool', default=False),
-            message=dict(type='str'),
-            validate_certs=dict(type='bool', default=True)
-        ),
+        argument_spec=argument_spec,
         supports_check_mode=False,
-        required_together=[['grafana_user', 'grafana_password', 'org_id']],
+        required_together=[['url_username', 'url_password', 'org_id']],
         mutually_exclusive=[['grafana_user', 'grafana_api_key'], ['uid', 'slug']],
     )
 
