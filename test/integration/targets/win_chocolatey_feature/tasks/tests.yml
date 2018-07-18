@@ -1,0 +1,95 @@
+---
+- name: fail on invalid feature
+  win_chocolatey_feature:
+    name: failFeature
+    state: enabled
+  register: fail_res
+  failed_when: '"Invalid feature name ''failFeature'' specified, valid features are: " not in fail_res.msg'
+
+- name: enable disabled feature (check mode)
+  win_chocolatey_feature:
+    name: checksumFiles
+    state: enabled
+  check_mode: yes
+  register: enable_check
+
+- name: get actual state of feature (check mode)
+  win_command: choco.exe feature list -r
+  register: enable_actual_check
+
+- name: assert enable disabled feature (check mode)
+  assert:
+    that:
+    - enable_check is changed
+    - enable_actual_check.stdout_lines|choco_checksum_state == False
+
+- name: enable disabled feature
+  win_chocolatey_feature:
+    name: checksumFiles
+    state: enabled
+  register: enable
+
+- name: get actual state of feature
+  win_command: choco.exe feature list -r
+  register: enable_actual
+
+- name: assert enable disabled feature
+  assert:
+    that:
+    - enable is changed
+    - enable_actual.stdout_lines|choco_checksum_state == True
+
+- name: enable disabled feature (idempotent)
+  win_chocolatey_feature:
+    name: checksumFiles
+    state: enabled
+  register: enable_again
+
+- name: assert enable disabled feature (idempotent)
+  assert:
+    that:
+    - not enable_again is changed
+
+- name: disable enabled feature (check mode)
+  win_chocolatey_feature:
+    name: checksumFiles
+    state: disabled
+  check_mode: yes
+  register: disable_check
+
+- name: get actual state of feature (check mode)
+  win_command: choco.exe feature list -r
+  register: disable_actual_check
+
+- name: assert disable enabled feature (check mode)
+  assert:
+    that:
+    - disable_check is changed
+    - disable_actual_check.stdout_lines|choco_checksum_state == True
+
+- name: disable enabled feature
+  win_chocolatey_feature:
+    name: checksumFiles
+    state: disabled
+  register: disable
+
+- name: get actual state of feature
+  win_command: choco.exe feature list -r
+  register: disable_actual
+
+- name: assert disable enabled feature
+  assert:
+    that:
+    - disable is changed
+    - disable_actual.stdout_lines|choco_checksum_state == False
+
+- name: disable enabled feature (idempotent)
+  win_chocolatey_feature:
+    name: checksumFiles
+    state: disabled
+  register: disable_again
+
+- name: assert disable enabled feature (idempotent)
+  assert:
+    that:
+    - not disable_again is changed
