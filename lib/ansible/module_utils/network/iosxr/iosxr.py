@@ -336,7 +336,7 @@ def discard_config(module):
 
 
 def commit_config(module, comment=None, confirmed=False, confirm_timeout=None,
-        persist=False, check=False, label=None):
+                  persist=False, check=False, label=None):
     conn = get_connection(module)
     reply = None
 
@@ -373,6 +373,7 @@ def get_config(module, config_filter=None, source='running'):
     cfg = out.strip()
 
     return cfg
+
 
 def check_existing_commit_labels(conn, label):
     out = conn.get(command='show configuration history detail | include %s' % label)
@@ -420,10 +421,11 @@ def load_config(module, command_filter, commit=False, replace=False,
         if label:
             old_label = check_existing_commit_labels(conn, label)
             if old_label:
-                module.fail_json(msg='commit label {%s} is already used for'
+                module.fail_json(
+                    msg='commit label {%s} is already used for'
                     ' an earlier commit, please choose a different label'
-                    ' and rerun task' % label)
-
+                    ' and rerun task' % label
+                )
         cmd_filter.insert(0, 'configure terminal')
         if admin:
             cmd_filter.insert(0, 'admin')

@@ -139,10 +139,9 @@ options:
     description:
       - Allows a commit label to be specified to be included when the
         configuration is committed. A valid label must begin with an alphabet
-        and not exceed 30 characters, only alphabets, digits, hyphen(-) and
-        underscore(_) are allowed. If the configuration is not changed or
+        and not exceed 30 characters, only alphabets, digits, hyphens and
+        underscores are allowed. If the configuration is not changed or
         committed, this argument is ignored.
-    default: 'none'
     version_added: "2.7"
 """
 
@@ -256,8 +255,10 @@ def check_args(module, warnings):
             module.fail_json(msg='label argument must begin with an alphabet')
         valid_chars = re.match(r'[\w-]*$', label)
         if not valid_chars:
-            module.fail_json(msg='label argument must only contain alphabets,' +
-                    'digits, underscores(_) or hyphens(-)')
+            module.fail_json(
+                msg='label argument must only contain alphabets,' +
+                'digits, underscores or hyphens'
+            )
     if module.params['force']:
         warnings.append('The force argument is deprecated, please use '
                         'match=none instead.  This argument will be '
@@ -396,9 +397,11 @@ def run(module, result):
             result['commands'] = commands
 
         commit = not check_mode
-        diff = load_config(module, commands, commit=commit,
-                replace=replace_config, comment=comment, admin=admin,
-                label=label)
+        diff = load_config(
+            module, commands, commit=commit,
+            replace=replace_config, comment=comment, admin=admin,
+            label=label
+        )
         if diff:
             result['diff'] = dict(prepared=diff)
 
