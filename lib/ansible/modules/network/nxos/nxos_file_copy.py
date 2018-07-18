@@ -40,7 +40,6 @@ notes:
   - Tested against NXOS 7.0(3)I2(5), 7.0(3)I4(6), 7.0(3)I5(3),
     7.0(3)I6(1), 7.0(3)I7(3), 6.0(2)A8(8), 7.0(3)F3(4), 7.3(0)D1(1),
     8.3(0)
-
   - When pushing files (file_pull is False) to the NXOS device,
     feature scp-server must be enabled.
   - When pulling files (file_pull is True) to the NXOS device,
@@ -57,11 +56,11 @@ options:
     description:
       - When (file_pull is False) this is the path to the local file on the Ansible Server.
         The local directory must exist.
-      - When (file_pull is True) this is the file name used rename the remote file when copied.
-        This is optional when file_pull is True.
+      - When (file_pull is True) this is the file name used when the remote file is copied
+        from the SCP server to the NXOS device.
   remote_file:
     description:
-      - When (file_pull is False) this is remote file path on the NXOS device.
+      - When (file_pull is False) this is the remote file path on the NXOS device.
         If omitted, the name of the local file will be used.
         The remote directory must exist.
       - When (file_pull is True) this is the full path to the file on the remote SCP
@@ -117,7 +116,7 @@ EXAMPLES = '''
       local_file: "./test_file.txt"
       remote_file: "test_file.txt"
 
-# Initiate file copy from nxos device from SCP server to copy it to the nxos device
+# Initiate file copy from the nxos device to transfer file from an SCP server back to the nxos device
   - name: "initiate file copy from device"
     nxos_file_copy:
       nxos_file_copy:
