@@ -18,3 +18,4 @@
     - { role: vr_ssh_key_facts, tags: test_vr_ssh_key_facts }
     - { role: vr_startup_script, tags: test_vr_startup_script }
     - { role: vr_user, tags: test_vr_user }
+    - { role: vr_user_facts, tags: test_vr_user_facts }
