@@ -318,7 +318,11 @@ class WapiModule(WapiBase):
             update = True
             return ib_obj, update, new_name
         if (ib_obj_type == NIOS_HOST_RECORD):
-            test_obj_filter = dict([('name', name), ('view', obj_filter['view'])])
+            if 'configure_for_dns' in obj_filter:
+                if not obj_filter['configure_for_dns']:
+                    test_obj_filter = dict([('name', name)])
+            else:
+                test_obj_filter = dict([('name', name), ('view', obj_filter['view'])])
         else:
             test_obj_filter = dict([('name', name)])
         ib_obj = self.get_object(ib_obj_type, test_obj_filter.copy(), return_fields=ib_spec.keys())
