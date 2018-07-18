@@ -142,6 +142,10 @@ class NetAppOntapLUNMap(object):
             ],
             supports_check_mode=True
         )
+      
+        self.result = dict(
+            changed=False,
+        )
 
         p = self.module.params
 
@@ -246,21 +250,23 @@ class NetAppOntapLUNMap(object):
                                   exception=traceback.format_exc())
 
     def apply(self):
-        changed = False
         netapp_utils.ems_log_event("na_ontap_lun_map", self.server)
         lun_details = self.get_lun()
         lun_map_details = self.get_lun_map()
 
+        if self.state == 'present' and lun_details:
+            self.result.update(lun_details)
+
         if self.state == 'present' and not lun_map_details:
-            changed = True
+            self.result['changed'] = True
             if not self.module.check_mode:
                 self.create_lun_map()
         elif self.state == 'absent' and lun_map_details:
-            changed = True
+            self.result['changed'] = True
             if not self.module.check_mode:
                 self.delete_lun_map()
 
-        self.module.exit_json(changed=changed, **lun_details)
+        self.module.exit_json(**self.result)
 
 
 def main():
