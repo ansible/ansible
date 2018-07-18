@@ -65,41 +65,44 @@
       - '"ansibulluser" in user_names.stdout_lines'
 
 # https://github.com/ansible/ansible/issues/42484
-- name: create user specifying home
-  user:
-    name: ansibulluser
-    state: present
-    home: /home/ansibulluser
-  register: user_test3_0
+# Skipping macOS for now since there is a bug when changing home directory
+- block:
+    - name: create user specifying home
+      user:
+        name: ansibulluser
+        state: present
+        home: "{{ user_home_prefix[ansible_system] }}/ansibulluser"
+      register: user_test3_0
 
-- name: create user again specifying home
-  user:
-    name: ansibulluser
-    state: present
-    home: /home/ansibulluser
-  register: user_test3_1
+    - name: create user again specifying home
+      user:
+        name: ansibulluser
+        state: present
+        home: "{{ user_home_prefix[ansible_system] }}/ansibulluser"
+      register: user_test3_1
 
-- name: change user home
-  user:
-    name: ansibulluser
-    state: present
-    home: /home/ansibulluser-mod
-  register: user_test3_2
+    - name: change user home
+      user:
+        name: ansibulluser
+        state: present
+        home: "{{ user_home_prefix[ansible_system] }}/ansibulluser-mod"
+      register: user_test3_2
 
-- name: change user home back
-  user:
-    name: ansibulluser
-    state: present
-    home: /home/ansibulluser
-  register: user_test3_3
+    - name: change user home back
+      user:
+        name: ansibulluser
+        state: present
+        home: "{{ user_home_prefix[ansible_system] }}/ansibulluser"
+      register: user_test3_3
 
-- name: validate results for testcase 3
-  assert:
-    that:
-      - user_test3_0 is not changed
-      - user_test3_1 is not changed
-      - user_test3_2 is changed
-      - user_test3_3 is changed
+    - name: validate results for testcase 3
+      assert:
+        that:
+          - user_test3_0 is not changed
+          - user_test3_1 is not changed
+          - user_test3_2 is changed
+          - user_test3_3 is changed
+  when: ansible_system != 'Darwin'
 
 
 ## user check
