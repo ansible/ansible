@@ -159,7 +159,7 @@ class ElasticLoadBalancerV2(object):
         if self.subnets is not None:
             # Convert subnets to subnet_mappings format for comparison
             for subnet in self.subnets:
-                subnet_mappings.append({'SubnetId': subnet})
+                subnet_mappings.append({ 'SubnetId': subnet })
 
         if self.subnet_mappings is not None:
             # Use this directly since we're comparing as a mapping
@@ -168,7 +168,7 @@ class ElasticLoadBalancerV2(object):
         # Build a subnet_mapping style struture of what's currently
         # on the load balancer
         for subnet in self.elb['AvailabilityZones']:
-            this_mapping = {'SubnetId': subnet['SubnetId']}
+            this_mapping = { 'SubnetId': subnet['SubnetId'] }
             for address in subnet['LoadBalancerAddresses']:
                 if 'AllocationId' in address:
                     this_mapping['AllocationId'] = address['AllocationId']
