@@ -28,12 +28,20 @@ import socket
 import sys
 import time
 
+try:  # py3
+    from io import StringIO
+except ImportError:
+    try:  # py2, C version
+        from cStringIO import StringIO
+    except ImportError:  # py2 pure python version
+        from StringIO import StringIO
+
 from ansible.cli import CLI
 from ansible import constants as C
 from ansible.errors import AnsibleOptionsError
-from ansible.module_utils._text import to_native, to_text
-from ansible.plugins.loader import module_loader
-from ansible.utils.cmd_functions import run_cmd
+from ansible.module_utils._text import to_native
+from ansible.cli.adhoc import AdHocCLI
+from ansible.cli.playbook import PlaybookCLI
 
 try:
     from __main__ import display
@@ -70,18 +78,6 @@ class PullCLI(CLI):
                                  'on the host hostname and finally a playbook named *local.yml*.', }
 
     SKIP_INVENTORY_DEFAULTS = True
-
-    def _get_inv_cli(self):
-
-        inv_opts = ''
-        if getattr(self.options, 'inventory'):
-            for inv in self.options.inventory:
-                if isinstance(inv, list):
-                    inv_opts += " -i '%s' " % ','.join(inv)
-                elif ',' in inv or os.path.exists(inv):
-                    inv_opts += ' -i %s ' % inv
-
-        return inv_opts
 
     def parse(self):
         ''' create an options parser for bin/ansible '''
@@ -159,49 +155,20 @@ class PullCLI(CLI):
         display.verbosity = self.options.verbosity
         self.validate_conflicts(vault_opts=True)
 
-    def run(self):
-        ''' use Runner lib to do SSH things '''
-
-        super(PullCLI, self).run()
-
-        # log command line
-        now = datetime.datetime.now()
-        display.display(now.strftime("Starting Ansible Pull at %F %T"))
-        display.display(' '.join(sys.argv))
-
-        # Build Checkout command
-        # Now construct the ansible command
-        node = platform.node()
-        host = socket.getfqdn()
-        limit_opts = 'localhost,%s,127.0.0.1' % ','.join(set([host, node, host.split('.')[0], node.split('.')[0]]))
-        base_opts = '-c local '
-        if self.options.verbosity > 0:
-            base_opts += ' -%s' % ''.join(["v" for x in range(0, self.options.verbosity)])
-
-        # Attempt to use the inventory passed in as an argument
-        # It might not yet have been downloaded so use localhost as default
-        inv_opts = self._get_inv_cli()
-        if not inv_opts:
-            inv_opts = " -i localhost, "
-
-        # SCM specific options
+    def _fetch_repo(self):
+        # setup module specific options from CLI
         if self.options.module_name == 'git':
             repo_opts = "name=%s dest=%s" % (self.options.url, self.options.dest)
             if self.options.checkout:
                 repo_opts += ' version=%s' % self.options.checkout
-
             if self.options.accept_host_key:
                 repo_opts += ' accept_hostkey=yes'
-
             if self.options.private_key_file:
                 repo_opts += ' key_file=%s' % self.options.private_key_file
-
             if self.options.verify:
                 repo_opts += ' verify_commit=yes'
-
             if self.options.tracksubs:
                 repo_opts += ' track_submodules=yes'
-
             if not self.options.fullclone:
                 repo_opts += ' depth=1'
         elif self.options.module_name == 'subversion':
@@ -221,90 +188,57 @@ class PullCLI(CLI):
         else:
             raise AnsibleOptionsError('Unsupported (%s) SCM module for pull, choices are: %s' % (self.options.module_name, ','.join(self.REPO_CHOICES)))
 
-        # options common to all supported SCMS
         if self.options.clean:
             repo_opts += ' force=yes'
 
-        path = module_loader.find_plugin(self.options.module_name)
-        if path is None:
-            raise AnsibleOptionsError(("module '%s' not found.\n" % self.options.module_name))
-
-        bin_path = os.path.dirname(os.path.abspath(sys.argv[0]))
-        # hardcode local and inventory/host as this is just meant to fetch the repo
-        cmd = '%s/ansible %s %s -m %s -a "%s" all -l "%s"' % (bin_path, inv_opts, base_opts, self.options.module_name, repo_opts, limit_opts)
+        # none takes place of $0
+        adhoc_args = [None, '-i', 'localhost,', '-m', self.options.module_name, '-a', repo_opts, 'localhost', '-c', 'local']
 
         for ev in self.options.extra_vars:
-            cmd += ' -e "%s"' % ev
+            adhoc_args.extend(['-e', ev])
+
+        if self.options.verbosity > 0:
+            verbose = ''
+            verbose += '-%s' % ''.join(["v" for x in range(0, self.options.verbosity)])
+            adhoc_args.extend([verbose])
+
+        adhoc = AdHocCLI(adhoc_args)
+        adhoc.parse()
 
         # Nap?
         if self.options.sleep:
             display.display("Sleeping for %d seconds..." % self.options.sleep)
             time.sleep(self.options.sleep)
 
-        # RUN the Checkout command
         display.debug("running ansible with VCS module to checkout repo")
-        display.vvvv('EXEC: %s' % cmd)
-        rc, b_out, b_err = run_cmd(cmd, live=True)
+        # redirect stds
+        old_stdout = sys.stdout
+        old_stderr = sys.stderr
+        mystdout = StringIO()
+        mystderr = StringIO()
+
+        # actually run command
+        display.debug("running ansible with VCS module to checkout repo")
+        rc = adhoc.run()
+
+        display.debug(mystdout.getvalue())
+        display.debug(mystderr.getvalue())
+
+        # restore normalcy
+        sys.stdout = old_stdout
+        sys.stderr = old_stderr
 
         if rc != 0:
             if self.options.force:
                 display.warning("Unable to update repository. Continuing with (forced) run of playbook.")
             else:
-                return rc
-        elif self.options.ifchanged and b'"changed": true' not in b_out:
+                display.error("Unable to fetch repository. Quitting")
+                sys.exit(0)
+        elif self.options.ifchanged and '"changed": true' not in mystdout.getvalue():
             display.display("Repository has not changed, quitting.")
-            return 0
-
-        playbook = self.select_playbook(self.options.dest)
-        if playbook is None:
-            raise AnsibleOptionsError("Could not find a playbook to run.")
-
-        # Build playbook command
-        cmd = '%s/ansible-playbook %s %s' % (bin_path, base_opts, playbook)
-        if self.options.vault_password_files:
-            for vault_password_file in self.options.vault_password_files:
-                cmd += " --vault-password-file=%s" % vault_password_file
-        if self.options.vault_ids:
-            for vault_id in self.options.vault_ids:
-                cmd += " --vault-id=%s" % vault_id
-
-        for ev in self.options.extra_vars:
-            cmd += ' -e "%s"' % ev
-        if self.options.ask_sudo_pass or self.options.ask_su_pass or self.options.become_ask_pass:
-            cmd += ' --ask-become-pass'
-        if self.options.skip_tags:
-            cmd += ' --skip-tags "%s"' % to_native(u','.join(self.options.skip_tags))
-        if self.options.tags:
-            cmd += ' -t "%s"' % to_native(u','.join(self.options.tags))
-        if self.options.subset:
-            cmd += ' -l "%s"' % self.options.subset
+            sys.exit(0)
         else:
-            cmd += ' -l "%s"' % limit_opts
-        if self.options.check:
-            cmd += ' -C'
-        if self.options.diff:
-            cmd += ' -D'
-
-        os.chdir(self.options.dest)
-
-        # redo inventory options as new files might exist now
-        inv_opts = self._get_inv_cli()
-        if inv_opts:
-            cmd += inv_opts
-
-        # RUN THE PLAYBOOK COMMAND
-        display.debug("running ansible-playbook to do actual work")
-        display.debug('EXEC: %s' % cmd)
-        rc, b_out, b_err = run_cmd(cmd, live=True)
-
-        if self.options.purge:
-            os.chdir('/')
-            try:
-                shutil.rmtree(self.options.dest)
-            except Exception as e:
-                display.error(u"Failed to remove %s: %s" % (self.options.dest, to_text(e)))
-
-        return rc
+            display.display("Repository retrieved.")
 
     def try_playbook(self, path):
         if not os.path.exists(path):
@@ -315,7 +249,7 @@ class PullCLI(CLI):
 
     def select_playbook(self, path):
         playbook = None
-        if len(self.args) > 0 and self.args[0] is not None:
+        if self.args and self.args[0] is not None:
             playbook = os.path.join(path, self.args[0])
             rc = self.try_playbook(playbook)
             if rc != 0:
@@ -338,3 +272,83 @@ class PullCLI(CLI):
             if playbook is None:
                 display.warning("\n".join(errors))
             return playbook
+
+    def run(self):
+        ''' fetch a repo and run included playbook for this host '''
+
+        super(PullCLI, self).run()
+
+        # log command line
+        now = datetime.datetime.now()
+        display.display(now.strftime("Starting Ansible Pull at %F %T"))
+        display.display(' '.join(sys.argv))
+
+        # run adhoc to retrieve the repo
+        self._fetch_repo()
+
+        # select playbook
+        playbook = self.select_playbook(self.options.dest)
+        if playbook is None:
+            raise AnsibleOptionsError("Could not find a playbook to run.")
+
+        # get playbook arguments
+        playbook_args = [None, '-c', 'local', playbook]
+
+        for ev in self.options.extra_vars:
+            playbook_args.extend(['-e', ev])
+
+        if self.options.verbosity > 0:
+            verbose = ''
+            verbose += '-%s' % ''.join(["v" for x in range(0, self.options.verbosity)])
+            playbook_args.extend([verbose])
+        if self.options.ask_sudo_pass or self.options.ask_su_pass or self.options.become_ask_pass:
+            playbook_args.extend(['--ask-become-pass'])
+        if self.options.vault_password_files:
+            for vault_password_file in self.options.vault_password_files:
+                playbook_args.extend(['--vault-password-file', vault_password_file])
+        if self.options.skip_tags:
+            playbook_args.extend(['--skip-tags', to_native(u','.join(self.options.skip_tags))])
+        if self.options.tags:
+            playbook_args.extend(['-t', to_native(u','.join(self.options.tags))])
+        if self.options.subset:
+            playbook_args.extend(['-l', self.options.subset])
+        else:
+            node = platform.node()
+            host = socket.getfqdn()
+            subset = "localhost,%s,127.0.0.1" % ','.join(set([host, node, host.split('.')[0], node.split('.')[0]]))
+            playbook_args.extend(['-l', subset])
+        if self.options.check:
+            playbook_args.extend(['-C'])
+        if self.options.diff:
+            playbook_args.extend(['-D'])
+
+        os.chdir(self.options.dest)
+
+        # inventory options
+        if getattr(self.options, 'inventory', []):
+            inv_opts = ''
+            for inv in self.options.inventory:
+                if isinstance(inv, list):
+                    inv_opts += "%s" % ','.join(inv)
+                elif ',' in inv or os.path.exists(inv):
+                    inv_opts += "%s" % inv
+        else:
+            inv_opts = ''
+
+        playbook_args.extend(['-i', inv_opts])
+
+        ansible_playbook = PlaybookCLI(playbook_args)
+        ansible_playbook.parse()
+
+        # RUN THE PLAYBOOK COMMAND
+        display.debug("running ansible-playbook to do actual work")
+        rc = ansible_playbook.run()
+
+        if self.options.purge:
+            os.chdir('/')
+            try:
+                shutil.rmtree(self.options.dest)
+            except Exception as e:
+                display.error("Failed to remove %s: %s" % (self.options.dest, to_native(e)))
+
+        return rc
