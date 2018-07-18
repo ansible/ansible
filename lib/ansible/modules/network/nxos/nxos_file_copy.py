@@ -71,7 +71,7 @@ options:
       - The remote file system of the device. If omitted,
         devices that support a I(file_system) parameter will use
         their default values.
-    default: bootflash:
+    default: "bootflash:"
   connect_ssh_port:
     description:
       - SSH port to connect to server during transfer of file
