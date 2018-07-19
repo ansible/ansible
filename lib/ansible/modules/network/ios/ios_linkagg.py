@@ -130,7 +130,7 @@ def map_obj_to_commands(updates, module):
 
         elif state == 'present':
             cmd = ['interface port-channel {0}'.format(group),
-                   'end']
+                   'exit']
             if not obj_in_have:
                 if not group:
                     module.fail_json(msg='group is a required option')
