@@ -176,14 +176,14 @@ Function Install-Chocolatey {
     if ($null -eq $choco_app) {
         # We need to install chocolatey
         # Enable TLS1.1/TLS1.2 if they're available but disabled (eg. .NET 4.5)
-        $security_protcols = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::SystemDefault
+        $security_protocols = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::SystemDefault
         if ([Net.SecurityProtocolType].GetMember("Tls11").Count -gt 0) {
-            $security_protcols = $security_protcols -bor [Net.SecurityProtocolType]::Tls11
+            $security_protocols = $security_protcols -bor [Net.SecurityProtocolType]::Tls11
         }
         if ([Net.SecurityProtocolType].GetMember("Tls12").Count -gt 0) {
-            $security_protcols = $security_protcols -bor [Net.SecurityProtocolType]::Tls12
+            $security_protocols = $security_protcols -bor [Net.SecurityProtocolType]::Tls12
         }
-        [Net.ServicePointManager]::SecurityProtocol = $security_protcols
+        [Net.ServicePointManager]::SecurityProtocol = $security_protocols
 
         $client = New-Object -TypeName System.Net.WebClient
         $environment = @{}
@@ -223,11 +223,14 @@ Function Install-Chocolatey {
         if (-not $check_mode) {
             $res = Run-Command -command "powershell.exe -" -stdin $install_script -environment $environment
             if ($res.rc -ne 0) {
-                Fail-Json -obj $result -message "Chocolatey bootstrap installation failed. RC: $($res.rc), STDOUT: $($res.stdout), STDERR: $($res.stderr)"
+                $result.rc = $res.rc
+                $result.stdout = $res.stdout
+                $result.stderr = $res.stderr
+                Fail-Json -obj $result -message "Chocolatey bootstrap installation failed."
             }
+            Add-Warning -obj $result -message "Chocolatey was missing from this system, so it was installed during this task run."
         }
         $result.changed = $true
-        Add-Warning -obj $result -message "Chocolatey was missing from this system, so it was installed during this task run."
 
         # locate the newly installed choco.exe
         $choco_app = Get-Command -Name choco.exe -CommandType Application -ErrorAction SilentlyContinue

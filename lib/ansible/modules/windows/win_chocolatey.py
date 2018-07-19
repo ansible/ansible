@@ -98,7 +98,7 @@ options:
     - params
   proxy_url:
     description:
-    - Proxy url used to install chocolatey and the package.
+    - Proxy URL used to install chocolatey and the package.
     - Use M(win_chocolatey_config) with the name C(proxy) to control this
       option globally.
     type: str
@@ -248,7 +248,7 @@ EXAMPLES = r'''
     source: https://someserver/api/v2/
 
 - name: Install git from a pre configured source (win_chocolatey_source)
-  win_chocoaltey:
+  win_chocolatey:
     name: git
     source: internal_repo
 
@@ -281,7 +281,10 @@ EXAMPLES = r'''
 
 - name: uninstall multiple packages
   win_chocolatey:
-    name: procexp, putty, windirstat
+    name:
+    - procexp
+    - putty
+    - windirstat
     state: absent
 
 - name: Install curl using proxy
