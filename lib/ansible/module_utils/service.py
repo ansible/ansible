@@ -48,8 +48,12 @@ def sysv_is_enabled(name, runlevel=None):
     :kw runlevel: runlevel to check (default: None)
     '''
     if runlevel:
+        if not os.path.isdir('/etc/rc0.d/'):
+            return bool(glob.glob('/etc/init.d/rc%s.d/S??%s' % (runlevel, name)))
         return bool(glob.glob('/etc/rc%s.d/S??%s' % (runlevel, name)))
     else:
+        if not os.path.isdir('/etc/rc0.d/'):
+            return bool(glob.glob('/etc/init.d/rc?.d/S??%s' % name))
         return bool(glob.glob('/etc/rc?.d/S??%s' % name))
 
 
