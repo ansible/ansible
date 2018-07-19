@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright: (c) 2017, F5 Networks Inc.
+# Copyright (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -8,6 +8,7 @@ __metaclass__ = type
 
 
 import os
+import socket
 import sys
 
 from ansible.module_utils.urls import open_url, fetch_url
@@ -165,6 +166,14 @@ class Response(object):
         self.reason = None
         self.request = None
 
+    @property
+    def content(self):
+        return self._content.decode('utf-8')
+
+    @property
+    def raw_content(self):
+        return self._content
+
     def json(self):
         return _json.loads(self._content)
 
@@ -270,7 +279,7 @@ class iControlRestSession(object):
 
         try:
             result = open_url(request.url, **params)
-            response._content = result.read().decode('utf-8')
+            response._content = result.read()
             response.status = result.getcode()
             response.url = result.geturl()
             response.msg = "OK (%s bytes)" % result.headers.get('Content-Length', 'unknown')
@@ -311,3 +320,152 @@ def debug_prepared_request(url, method, headers, data=None):
             kwargs = _json.loads(data.decode('utf-8'))
             result = result + " -d '" + _json.dumps(kwargs, sort_keys=True) + "'"
     return result
+
+
+def download_file(client, url, dest):
+    """Download a file from the remote device
+
+    This method handles the chunking needed to download a file from
+    a given URL on the BIG-IP.
+
+    Arguments:
+        client (object): The F5RestClient connection object.
+        url (string): The URL to download.
+        dest (string): The location on (Ansible controller) disk to store the file.
+
+    Returns:
+        bool: True on success. False otherwise.
+    """
+    with open(dest, 'wb') as fileobj:
+        chunk_size = 512 * 1024
+        start = 0
+        end = chunk_size - 1
+        size = 0
+        current_bytes = 0
+
+        while True:
+            content_range = "%s-%s/%s" % (start, end, size)
+            headers = {
+                'Content-Range': content_range,
+                'Content-Type': 'application/octet-stream'
+            }
+            data = {
+                'headers': headers,
+                'verify': False,
+                'stream': False
+            }
+            response = client.api.get(url, headers=headers, json=data)
+            if response.status == 200:
+                # If the size is zero, then this is the first time through
+                # the loop and we don't want to write data because we
+                # haven't yet figured out the total size of the file.
+                if size > 0:
+                    current_bytes += chunk_size
+                    fileobj.write(response.raw_content)
+            # Once we've downloaded the entire file, we can break out of
+            # the loop
+            if end == size:
+                break
+            crange = response.headers['content-range']
+            # Determine the total number of bytes to read.
+            if size == 0:
+                size = int(crange.split('/')[-1]) - 1
+                # If the file is smaller than the chunk_size, the BigIP
+                # will return an HTTP 400. Adjust the chunk_size down to
+                # the total file size...
+                if chunk_size > size:
+                    end = size
+                # ...and pass on the rest of the code.
+                continue
+            start += chunk_size
+            if (current_bytes + chunk_size) > size:
+                end = size
+            else:
+                end = start + chunk_size - 1
+    return True
+
+
+def upload_file(client, url, dest):
+    """Upload a file to an arbitrary URL.
+
+    Arguments:
+        client (object): The F5RestClient connection object.
+        url (string): The URL to upload a file to.
+        dest (string): The file to be uploaded.
+
+    Returns:
+        bool: True on success. False otherwise.
+
+    Raises:
+        F5ModuleError: Raised if ``retries`` limit is exceeded.
+    """
+    with open(dest, 'rb') as fileobj:
+        size = os.stat(dest).st_size
+
+        # This appears to be the largest chunk size that iControlREST can handle.
+        #
+        # The trade-off you are making by choosing a chunk size is speed, over size of
+        # transmission. A lower chunk size will be slower because a smaller amount of
+        # data is read from disk and sent via HTTP. Lots of disk reads are slower and
+        # There is overhead in sending the request to the BIG-IP.
+        #
+        # Larger chunk sizes are faster because more data is read from disk in one
+        # go, and therefore more data is transmitted to the BIG-IP in one HTTP request.
+        #
+        # If you are transmitting over a slow link though, it may be more reliable to
+        # transmit many small chunks that fewer large chunks. It will clearly take
+        # longer, but it may be more robust.
+        chunk_size = 1024 * 7168
+        start = 0
+        retries = 0
+        basename = os.path.basename(dest)
+        url = '{0}/{1}'.format(url.rstrip('/'), basename)
+
+        while True:
+            if retries == 3:
+                # Retries are used here to allow the REST API to recover if you kill
+                # an upload mid-transfer.
+                #
+                # There exists a case where retrying a new upload will result in the
+                # API returning the POSTed payload (in bytes) with a non-200 response
+                # code.
+                #
+                # Retrying (after seeking back to 0) seems to resolve this problem.
+                raise F5ModuleError(
+                    "Failed to upload file too many times."
+                )
+            try:
+                file_slice = fileobj.read(chunk_size)
+                if not file_slice:
+                    break
+
+                current_bytes = len(file_slice)
+                if current_bytes < chunk_size:
+                    end = size
+                else:
+                    end = start + current_bytes
+                headers = {
+                    'Content-Range': '%s-%s/%s' % (start, end - 1, size),
+                    'Content-Type': 'application/octet-stream'
+                }
+
+                # Data should always be sent using the ``data`` keyword and not the
+                # ``json`` keyword. This allows bytes to be sent (such as in the case
+                # of uploading ISO files.
+                response = client.api.post(url, headers=headers, data=file_slice)
+
+                if response.status != 200:
+                    # When this fails, the output is usually the body of whatever you
+                    # POSTed. This is almost always unreadable because it is a series
+                    # of bytes.
+                    #
+                    # Therefore, including an empty exception here.
+                    raise F5ModuleError()
+                start += current_bytes
+            except F5ModuleError:
+                # You must seek back to the beginning of the file upon exception.
+                #
+                # If this is not done, then you risk uploading a partial file.
+                fileobj.seek(0)
+                retries += 1
+    return True
