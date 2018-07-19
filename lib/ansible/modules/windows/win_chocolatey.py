@@ -51,6 +51,15 @@ options:
   source:
     description:
       - Specify source rather than using default chocolatey repository.
+      - This will statelessly pull a package from a non-configured source.
+  source_username:
+    description:
+      - Username used to authenticate against C(source).
+    version_added: '2.7'
+  source_password:
+    description:
+      - Password used to authenticate against C(source).
+    version_added: '2.7'
   install_args:
     description:
       - Arguments to pass to the native installer.
