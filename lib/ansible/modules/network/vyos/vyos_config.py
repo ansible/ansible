@@ -228,7 +228,7 @@ def run(module, result):
         result['changed'] = True
 
     if module._diff:
-        result['diff'] = diff
+        result['diff'] = {'prepared': diff}
 
 
 def main():
