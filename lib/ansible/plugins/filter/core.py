@@ -206,12 +206,10 @@ def regex_escape(string):
 
 def from_yaml(data):
     if isinstance(data, string_types):
-        try:
-            return yaml.safe_load(data)
-        except yaml.composer.ComposerError as e:
-            if e.context == 'expected a single document in the stream':
-                return yaml.safe_load_all(data)
-            raise
+        parsed = list(yaml.safe_load_all(data))
+        if len(parsed) == 1:
+            return parsed[1]
+        return parsed
     return data
 
 
