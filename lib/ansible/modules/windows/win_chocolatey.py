@@ -144,8 +144,6 @@ options:
       authentication.
     - It is recommended you define the credentials on a source with
       M(win_chocolatey_source) instead of passing it per task.
-    - This value is only used by Chocolatey when installing packages, it is
-      ignored when downloading and installing Chocolatey itself from I(source).
     type: str
     version_added: '2.7'
   source_password:
@@ -154,8 +152,6 @@ options:
     - This value is exposed as a command argument and any privileged account
       can see this value when the module is running Chocolatey, define the
       credentials with a source with M(win_chocolatey_source) to avoid this.
-    - This value is only used by Chocolatey when installing packages, it is
-      ignored when downloading and installing Chocolatey itself from I(source).
     type: str
     version_added: '2.7'
   state:
@@ -184,6 +180,17 @@ options:
     version_added: '2.3'
     aliases:
     - execution_timeout
+  validate_certs:
+    description:
+    - Used when downloading the Chocolatey install script if Chocolatey is not
+      already installed, this does not affect the Chocolatey package install
+      process.
+    - When C(no), no SSL certificates will be validated.
+    - This should only be used on personally controlled sites using self-signed
+      certificate.
+    type: bool
+    default: 'yes'
+    version_added: '2.7'
   version:
     description:
     - Specific version of the package to be installed.
@@ -255,7 +262,7 @@ EXAMPLES = r'''
 - name: ensure Chocolatey itself is installed and use internal repo as source
   win_chocolatey:
     name: chocolatey
-    source: https://someserver/chocolatey
+    source: http://someserver/chocolatey
 
 - name: Uninstall git
   win_chocolatey:

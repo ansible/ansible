@@ -38,11 +38,16 @@ $source_username = Get-AnsibleParam -obj $params -name "source_username" -type "
 $source_password = Get-AnsibleParam -obj $params -name "source_password" -type "str" -failifempty ($null -ne $source_username)
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","downgrade","latest","present","reinstalled"
 $timeout = Get-AnsibleParam -obj $params -name "timeout" -type "int" -default 2700 -aliases "execution_timeout"
+$validate_certs = Get-AnsibleParam -obj $params -name "validate_certs" -type "bool" -default $true
 $version = Get-AnsibleParam -obj $params -name "version" -type "str"
 
 $result = @{
     changed = $false
     rc = 0
+}
+
+if (-not $validate_certs) {
+    [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
 }
 
 Function Get-CommonChocolateyArguments {
@@ -213,13 +218,25 @@ Function Install-Chocolatey {
                 # manually
                 # we need to strip the path off the URL and append install.ps1
                 $uri_info = [System.Uri]$source
-                $script_url = "$($uri_info.Scheme)/$($uri_info.Authority)/install.ps1"
+                $script_url = "$($uri_info.Scheme)://$($uri_info.Authority)/install.ps1"
+            }
+            if ($source_username) {
+                # while the choco-server does not require creds on install.ps1,
+                # Net.WebClient will only send the credentials if the initial
+                # req fails so we will add the creds in case the source URL
+                # is not choco-server and requires authentication
+                $sec_source_password = ConvertTo-SecureString -String $source_password -AsPlainText -Force
+                $client.Credentials = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $source_username, $sec_source_password
             }
         } else {
             $script_url = "https://chocolatey.org/install.ps1"
         }
 
-        $install_script = $client.DownloadString($script_url)
+        try {
+            $install_script = $client.DownloadString($script_url)
+        } catch {
+            Fail-Json -obj $result -message "Failed to download Chocolatey script from '$script_url': $($_.Exception.Message)"
+        }
         if (-not $check_mode) {
             $res = Run-Command -command "powershell.exe -" -stdin $install_script -environment $environment
             if ($res.rc -ne 0) {
@@ -245,15 +262,14 @@ Function Install-Chocolatey {
             $choco_app = Get-Command -Name $choco_path -CommandType Application -ErrorAction SilentlyContinue
         }
     }
+    if ($check_mode -and $null -eq $choco_app) {
+        $result.skipped = $true
+        $result.msg = "Skipped check mode run on win_chocolatey as choco.exe cannot be found on the system"
+        Exit-Json -obj $result
+    }
 
     if (-not (Test-Path -Path $choco_app.Path)) {
-        if ($check_mode) {
-            $result.skipped = $true
-            $result.msg = "Skipped check mode run on win_chocolatey as choco.exe cannot be found on the system"
-            Exit-Json -obj $result
-        } else {
-            Fail-Json -obj $result -message "Failed to find choco.exe, make sure it is added to the PATH or the env var 'ChocolateyInstall' is set"
-        }
+        Fail-Json -obj $result -message "Failed to find choco.exe, make sure it is added to the PATH or the env var 'ChocolateyInstall' is set"
     }
 
     $actual_version = Get-ChocolateyPackageVersion -choco_path $choco_app.Path -name chocolatey
