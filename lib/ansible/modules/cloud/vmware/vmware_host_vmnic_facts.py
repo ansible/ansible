@@ -92,15 +92,15 @@ class HostVmnicMgr(PyVmomi):
                 host_vmnic_facts['all'] = [pnic.device for pnic in nw_config.pnic]
 
                 vswitch_vmnics = []
+                proxy_switch_vmnics = []
                 if nw_config.vswitch:
                     for vswitch in nw_config.vswitch:
                         for vnic in vswitch.spec.bridge.nicDevice:
                             vswitch_vmnics.append(vnic)
 
-                proxy_switch_vmnics = []
-                if nw_config.vswitch:
+                if nw_config.proxySwitch:
                     for proxy_config in nw_config.proxySwitch:
-                        for proxy_nic in proxy_config.spec.bridge.nicDevice:
+                        for proxy_nic in proxy_config.spec.backing.pnicSpec:
                             proxy_switch_vmnics.append(proxy_nic.pnicDevice)
 
                 used_vmics = proxy_switch_vmnics + vswitch_vmnics
