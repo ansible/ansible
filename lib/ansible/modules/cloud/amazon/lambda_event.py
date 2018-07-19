@@ -428,7 +428,6 @@ def main():
     else:
         module.fail_json('Please select `stream` or `sqs` as the event type')
 
-
     module.exit_json(**results)
 
 
