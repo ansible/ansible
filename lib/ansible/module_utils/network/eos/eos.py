@@ -341,7 +341,11 @@ class Eapi:
             commands = ['configure session %s' % session, 'abort']
             self.send_request(commands)
             err = response['error']
-            self._module.fail_json(msg=err['message'], code=err['code'])
+            error_text = []
+            for data in err['data']:
+                error_text.extend(data.get('errors', []))
+            error_text = '\n'.join(error_text) or err['message']
+            self._module.fail_json(msg=error_text, code=err['code'])
 
         commands = ['configure session %s' % session, 'show session-config diffs']
         if commit:
