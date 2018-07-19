@@ -1,0 +1,30 @@
+# Copyright (c) 2018, Yanis Guenane <yanis+ansible@guenane.org>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: Create the record
+  vr_dns_domain:
+    name: '{{ dns_domain_name }}'
+    server_ip: '{{ dns_domain_server_ip }}'
+
+- name: test gather vultr dns domain facts in check mode
+  vr_dns_domain_facts:
+  check_mode: yes
+
+- name: verify test gather vultr dns domain facts in check mode
+  assert:
+    that:
+    - ansible_facts.vultr_dns_domain_facts|selectattr('domain','equalto','{{ dns_domain_name }}') | list | count == 1
+
+- name: test gather vultr dns domain facts
+  vr_dns_domain_facts:
+
+- name: verify test gather vultr dns domain facts
+  assert:
+    that:
+    - ansible_facts.vultr_dns_domain_facts|selectattr('domain','equalto','{{ dns_domain_name }}') | list | count == 1
+
+- name: Delete the record
+  vr_dns_domain:
+    name: '{{ dns_domain_name }}'
+    server_ip: '{{ dns_domain_server_ip }}'
+    state: absent
