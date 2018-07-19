@@ -522,6 +522,13 @@ class Ec2Inventory(object):
                     filters[filter_key] = filter_value
                 self.ec2_instance_filters.append(filters.copy())
 
+        # Groups what will be formed of tag value only
+        self.ec2_groupnames_as_tag_value_only = []
+        if config.has_option('ec2', 'groupnames_as_tag_value_only'):
+            groupnames_as_tag_value_only = [g for g in config.get('ec2', 'groupnames_as_tag_value_only').split(',') if g]
+            for g in groupnames_as_tag_value_only:
+                self.ec2_groupnames_as_tag_value_only.append(g)
+
     def parse_cli_args(self):
         ''' Command line argument processing '''
 
@@ -1051,7 +1058,10 @@ class Ec2Inventory(object):
 
                 for v in values:
                     if v:
-                        key = self.to_safe("tag_" + k + "=" + v)
+                        if k in self.ec2_groupnames_as_tag_value_only:
+                            key = self.to_safe(v)
+                        else:
+                            key = self.to_safe("tag_" + k + "=" + v)
                     else:
                         key = self.to_safe("tag_" + k)
                     self.push(self.inventory, key, hostname)
