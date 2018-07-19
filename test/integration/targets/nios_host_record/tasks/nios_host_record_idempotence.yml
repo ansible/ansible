@@ -36,11 +36,6 @@
     provider: "{{ nios_provider }}"
   register: ipv4_create2
 
-- assert:
-    that:
-      - "ipv4_create1.changed"
-      - "not ipv4_create2.changed"
-
 - name: add a comment to an existing host record
   nios_host_record:
     name: host.ansible.com
