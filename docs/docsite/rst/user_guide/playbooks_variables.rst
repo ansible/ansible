@@ -876,7 +876,8 @@ Another important thing to consider (for all versions) is that connection variab
 
     ansible -u lola myhost
 
-This will still connect as ``ramon`` because the value from the inventory takes priority.
+This will still connect as ``ramon`` because the value from the variable takes priority (in this case, the variable came from the inventory, but the same would be true no matter where the variable was defined).
+
 For plays/tasks this is also true for ``remote_user``. Assuming the same inventory config, the following play::
 
  - hosts: myhost
