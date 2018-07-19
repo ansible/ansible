@@ -23,7 +23,7 @@ options:
     description:
     - If C(present), will verify that the storage profile is present and will create if needed.
     - If C(absent), will verify that the storage profile is absent and will delete if needed.
-    choices: [present, absent]
+    choices: [ absent, present ]
     default: present
   name:
     description:
@@ -38,7 +38,7 @@ options:
     - Enter up to 256 characters.
     - "You can use any characters or spaces except the following:"
     - "` (accent mark), \ (backslash), ^ (carat), \" (double quote), = (equal sign), > (greater than), < (less than), or ' (single quote)."
-    aliases: [descr]
+    aliases: [ descr ]
   local_luns:
     description:
     - List of Local LUNs used by the storage profile.
@@ -49,19 +49,20 @@ options:
         required: yes
       size:
         description:
-        - Size of this LUN in GB. The size can range from 1 to 10240 GB.
+        - Size of this LUN in GB.
+        - The size can range from 1 to 10240 GB.
         default: '1'
       auto_deploy:
         description:
         - Whether the local LUN should be automatically deployed or not.
-        choices: [auto-deploy, no-auto-deploy]
+        choices: [ auto-deploy, no-auto-deploy ]
         default: auto-deploy
       expand_to_avail:
         description:
         - Specifies that this LUN can be expanded to use the entire available disk group.
-          For each service profile, only one LUN can use this option.
-          Expand To Available option is not supported for already deployed LUN.
-        choices: ['yes', 'no']
+        - For each service profile, only one LUN can use this option.
+        - Expand To Available option is not supported for already deployed LUN.
+        type: bool
         default: 'no'
       fractional_size:
         description:
@@ -72,9 +73,9 @@ options:
         - The disk group configuration policy to be applied to this local LUN.
       state:
         description:
-        - If present, will verify local LUN is present on profile.
-          If absent, will verify local LUN is absent on profile.
-        choices: [present, absent]
+        - If C(present), will verify local LUN is present on profile.
+          If C(absent), will verify local LUN is absent on profile.
+        choices: [ absent, present ]
         default: present
   org_dn:
     description:
