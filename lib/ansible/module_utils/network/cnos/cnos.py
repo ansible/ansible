@@ -2554,15 +2554,17 @@ def createVlan(module, prompt, answer):
 # EOM
 
 
-def vlagConfig(
-        obj, deviceType, prompt, timeout, vlagArg1, vlagArg2, vlagArg3,
-        vlagArg4):
+def vlagConfig(module, prompt, answer):
 
-    retVal = ""
-    # Wait time to get response from server
-    timeout = timeout
+    retVal = ''
     # vlag config command happens here.
-    command = "vlag "
+    command = 'vlag '
+
+    vlagArg1 = module.params['vlagArg1']
+    vlagArg2 = module.params['vlagArg2']
+    vlagArg3 = module.params['vlagArg3']
+    vlagArg4 = module.params['vlagArg4']
+    deviceType = module.params['deviceType']
 
     if(vlagArg1 == "enable"):
         # debugOutput("enable")
@@ -2718,10 +2720,8 @@ def vlagConfig(
         return retVal
 
     # debugOutput(command)
-    command = command + "\n"
-    # debugOutput(command)
-    retVal = retVal + waitForDeviceResponse(command, "(config)#", timeout, obj)
-
+    cmd = [{'command': command, 'prompt': None, 'answer': None}]
+    retVal = retVal + str(run_cnos_commands(module, cmd))
     return retVal
 # EOM
 
