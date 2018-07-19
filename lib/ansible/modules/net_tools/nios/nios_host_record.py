@@ -40,6 +40,7 @@ options:
     aliases:
       - dns_view
   configure_for_dns:
+    version_added: "2.7"
     description:
       - Sets the DNS to particular parent. If user needs to bypass DNS
         user can make the value to false.
