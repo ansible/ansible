@@ -198,7 +198,7 @@ class FactsBase(object):
         try:
             return resp[0]
         except IndexError:
-            self.warnings.append('command %s failed, facts will not be populated' % command_string)
+            self.warnings.append('command %s failed, facts for this command will not be populated' % command_string)
             return None
 
     def transform_dict(self, data, keymap):
