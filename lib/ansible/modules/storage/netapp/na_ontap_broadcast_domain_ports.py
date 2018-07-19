@@ -26,6 +26,10 @@ options:
     - Whether the specified broadcast domain should exist or not.
     choices: ['present', 'absent']
     default: present
+  vserver:
+    description:
+    - The name of the vserver
+    required: true
   broadcast_domain:
     description:
     - Specify the broadcast_domain name
@@ -43,6 +47,7 @@ EXAMPLES = """
     - name: create broadcast domain ports
       na_ontap_broadcast_domain_ports:
         state=present
+        vserver={{ Vserver name }}
         username={{ netapp_username }}
         password={{ netapp_password }}
         hostname={{ netapp_hostname }}
@@ -51,6 +56,7 @@ EXAMPLES = """
     - name: delete broadcast domain ports
       na_ontap_broadcast_domain_ports:
         state=absent
+        vserver={{ Vserver name }}
         username={{ netapp_username }}
         password={{ netapp_password }}
         hostname={{ netapp_hostname }}
@@ -82,6 +88,7 @@ class NetAppOntapBroadcastDomainPorts(object):
         self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
             state=dict(required=False, choices=['present', 'absent'], default='present'),
+            vserver=dict(required=False, type='str'),
             broadcast_domain=dict(required=True, type='str'),
             ipspace=dict(required=False, type='str', default=None),
             ports=dict(required=True, type='list'),
@@ -96,6 +103,7 @@ class NetAppOntapBroadcastDomainPorts(object):
 
         # set up state variables
         self.state = parameters['state']
+        self.vserver = parameters['vserver']
         self.broadcast_domain = parameters['broadcast_domain']
         self.ipspace = parameters['ipspace']
         self.ports = parameters['ports']

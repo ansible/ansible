@@ -35,8 +35,7 @@ options:
     - Specify the required mtu for the broadcast domain
   ipspace:
     description:
-    - Specify the required ipspace for the broadcast domain.
-    - A domain ipspace can not be modified after the domain has been created
+    - Specify the required ipspace for the broadcast domain
   ports:
     description:
     - Specify the ports associated with this broadcast domain. Should be comma separated
