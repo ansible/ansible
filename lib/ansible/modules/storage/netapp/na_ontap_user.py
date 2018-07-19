@@ -20,7 +20,7 @@ short_description: useradmin configuration and management
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: Chhaya Gunawat (chhayag@netapp.com), Laurent Nicolas(laurentn@netapp.com)
+author: Sumit Kumar (sumit4@netapp.com)
 
 description:
 - Create or destroy users.
@@ -42,7 +42,7 @@ options:
     description:
     - Application to grant access to.
     required: true
-    choices: ['console', 'http','ontapi','rsh','snmp','service-processor','sp','ssh','telnet']
+    choices: ['console', 'http','ontapi','rsh','snmp','sp','ssh','telnet']
 
   authentication_method:
     description:
@@ -127,7 +127,7 @@ class NetAppOntapUser(object):
 
             application=dict(required=True, type='str', choices=[
                 'console', 'http', 'ontapi', 'rsh',
-                'snmp', 'sp', 'service-processor', 'ssh', 'telnet']),
+                'snmp', 'sp', 'ssh', 'telnet']),
             authentication_method=dict(required=True, type='str',
                                        choices=['community', 'password',
                                                 'publickey', 'domain',
@@ -293,7 +293,6 @@ class NetAppOntapUser(object):
             else:
                 self.module.fail_json(msg='Error unlocking user %s: %s' % (self.name, to_native(error)),
                                       exception=traceback.format_exc())
-        return True
 
     def delete_user(self):
         user_delete = netapp_utils.zapi.NaElement.create_node_with_children(

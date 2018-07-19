@@ -36,9 +36,6 @@ from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.api import basic_auth_argument_spec
 
-import os
-import ssl
-
 HAS_NETAPP_LIB = False
 try:
     from netapp_lib.api.zapi import zapi
@@ -87,9 +84,7 @@ def na_ontap_host_argument_spec():
         hostname=dict(required=True, type='str'),
         username=dict(required=True, type='str', aliases=['user']),
         password=dict(required=True, type='str', aliases=['pass'], no_log=True),
-        https=dict(required=False, type='bool', default=False),
-        no_cert_verify=dict(required=False, type='bool', default=False),
-        http_port=dict(required=False, type='int')
+        https=dict(required=False, type='bool', default=False)
     )
 
 
@@ -122,8 +117,6 @@ def setup_na_ontap_zapi(module, vserver=None):
     username = module.params['username']
     password = module.params['password']
     https = module.params['https']
-    no_cert_verify = module.params['no_cert_verify']
-    port = module.params['http_port']
 
     if HAS_NETAPP_LIB:
         # set up zapi
@@ -133,23 +126,14 @@ def setup_na_ontap_zapi(module, vserver=None):
         if vserver:
             server.set_vserver(vserver)
         # Todo : Replace hard-coded values with configurable parameters.
-        server.set_api_version(major=1, minor=110)
+        server.set_api_version(major=1, minor=21)
         # default is HTTP
-        if https:
-            if port is None:
-                port = 443
-            transport_type = 'HTTPS'
-            # HACK to bypass certificate verification
-            if no_cert_verify is True:
-                if (not os.environ.get('PYTHONHTTPSVERIFY', '') and
-                    getattr(ssl, '_create_unverified_context', None)):
-                    ssl._create_default_https_context = ssl._create_unverified_context
+        if https is True:
+            server.set_port(443)
+            server.set_transport_type('HTTPS')
         else:
-            if port is None:
-                port = 80
-            transport_type = 'HTTP'
-        server.set_transport_type(transport_type)
-        server.set_port(port)
+            server.set_port(80)
+            server.set_transport_type('HTTP')
         server.set_server_type('FILER')
         return server
     else:
@@ -169,7 +153,7 @@ def setup_ontap_zapi(module, vserver=None):
         if vserver:
             server.set_vserver(vserver)
         # Todo : Replace hard-coded values with configurable parameters.
-        server.set_api_version(major=1, minor=110)
+        server.set_api_version(major=1, minor=21)
         server.set_port(80)
         server.set_server_type('FILER')
         server.set_transport_type('HTTP')

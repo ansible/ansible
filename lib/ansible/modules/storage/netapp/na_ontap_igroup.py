@@ -35,7 +35,7 @@ options:
 
   name:
     description:
-    - The name of the igroup to manage.
+    - The name of the lun to manage.
     required: true
 
   initiator_group_type:
@@ -44,9 +44,9 @@ options:
     - Required when C(state=present).
     choices: ['fcp', 'iscsi', 'mixed']
 
-  from_name:
+  new_name:
     description:
-    - Name of igroup to rename to name.
+    - New name to be given to initiator group.
 
   ostype:
     description:
@@ -64,6 +64,7 @@ options:
     description:
     -  Forcibly remove the initiator even if there are existing LUNs mapped to this initiator group.
     type: bool
+    default: False
 
   vserver:
     description:
@@ -77,7 +78,7 @@ EXAMPLES = '''
       na_ontap_igroup:
         state: present
         name: ansibleIgroup3
-        initiator_group_type: iscsi
+        initiator-group-type: iscsi
         ostype: linux
         initiator: iqn.1994-05.com.redhat:scspa0395855001.rtp.openenglab.netapp.com
         vserver: ansibleVServer
@@ -87,10 +88,9 @@ EXAMPLES = '''
 
     - name: rename Igroup
       na_ontap_igroup:
-        state: present
-        from_name: ansibleIgroup3
-        name: testexamplenewname
-        initiator_group_type: iscsi
+        state: absent
+        name: ansibleIgroup3
+        initiator-group-type: iscsi
         ostype: linux
         initiator: iqn.1994-05.com.redhat:scspa0395855001.rtp.openenglab.netapp.com
         vserver: ansibleVServer
@@ -102,7 +102,7 @@ EXAMPLES = '''
       na_ontap_igroup:
         state: absent
         name: ansibleIgroup3
-        initiator_group_type: iscsi
+        initiator-group-type: iscsi
         ostype: linux
         initiator: iqn.1994-05.com.redhat:scspa0395855001.rtp.openenglab.netapp.com
         vserver: ansibleVServer
@@ -133,7 +133,7 @@ class NetAppOntapIgroup(object):
             state=dict(required=False, choices=[
                        'present', 'absent'], default='present'),
             name=dict(required=True, type='str'),
-            from_name=dict(required=False, type='str', default=None),
+            new_name=dict(required=False, type='str', default=None),
             ostype=dict(required=False, type='str'),
             initiator_group_type=dict(required=False, type='str',
                                       choices=['fcp', 'iscsi', 'mixed']),
@@ -157,7 +157,7 @@ class NetAppOntapIgroup(object):
         self.initiator_group_type = params['initiator_group_type']
         self.initiator = params['initiator']
         self.vserver = params['vserver']
-        self.from_name = params['from_name']
+        self.new_name = params['new_name']
         self.force_remove_initiator = params['force_remove_initiator']
         self.bind_portset = params['bind_portset']
 
@@ -168,7 +168,7 @@ class NetAppOntapIgroup(object):
             self.server = netapp_utils.setup_na_ontap_zapi(
                 module=self.module, vserver=self.vserver)
 
-    def get_igroup(self, name):
+    def get_igroup(self):
         """
         Return details about the igroup
         :param:
@@ -179,7 +179,7 @@ class NetAppOntapIgroup(object):
         """
         igroup_info = netapp_utils.zapi.NaElement('igroup-get-iter')
         igroup_attributes = netapp_utils.zapi.NaElement('initiator-group-info')
-        igroup_attributes.add_new_child('initiator-group-name', name)
+        igroup_attributes.add_new_child('initiator-group-name', self.name)
         query = netapp_utils.zapi.NaElement('query')
         query.add_child_elem(igroup_attributes)
         igroup_info.add_child_elem(query)
@@ -193,7 +193,7 @@ class NetAppOntapIgroup(object):
                 'attributes-list').get_child_by_name(
                     'igroup-attributes')
             return_value = {
-                'name': name,
+                'name': self.name,
             }
 
         return return_value
@@ -287,8 +287,8 @@ class NetAppOntapIgroup(object):
         Rename the igroup.
         """
         igroup_rename = netapp_utils.zapi.NaElement.create_node_with_children(
-            'igroup-rename', **{'initiator-group-name': self.from_name, 'initiator-group-new-name': str(
-                self.name)})
+            'igroup-rename', **{'initiator-group-name': self.name, 'initiator-group-new-name': str(
+                self.new_name)})
         try:
             self.server.invoke_successfully(igroup_rename,
                                             enable_tunneling=True)
@@ -301,49 +301,46 @@ class NetAppOntapIgroup(object):
         igroup_exists = False
         rename_igroup = False
         initiator_changed = False
+        check = False
         netapp_utils.ems_log_event("na_ontap_igroup", self.server)
-        igroup_details = self.get_igroup(self.name)
+        igroup_detail = self.get_igroup()
 
-        if igroup_details is not None:
+        if igroup_detail:
             igroup_exists = True
             if self.state == 'absent':
                 changed = True
+
             elif self.state == 'present':
+                if self.new_name is not None and self.new_name != self.name:
+                    rename_igroup = True
+                    changed = True
+                if changed:
+                    check = True
                 if self.initiator:
                     changed = True
         else:
             if self.state == 'present':
-                # create by default, or rename if from_name exists
                 changed = True
-                if self.from_name:
-                    igroup_details = self.get_igroup(self.from_name)
-                    if igroup_details is not None:
-                        rename_igroup = True
-                        igroup_exists = True
-                    else:
-                        self.module.fail_json(msg='Error renaming igroup %s does not exist' % (self.from_name))
 
         if changed:
-            changed = False
             if self.module.check_mode:
                 pass
             else:
                 if self.state == 'present':
                     if not igroup_exists:
                         self.create_igroup()
-                        changed = True
                     else:
                         if self.initiator:
-                            changed = self.add_initiator()
+                            initiator_changed = self.add_initiator()
                         if rename_igroup:
                             self.rename_igroup()
-                            changed = True
+                        if (not check) and (not initiator_changed):
+                            changed = False
 
                 elif self.state == 'absent':
                     if self.initiator:
                         self.remove_initiator()
                     self.delete_igroup()
-                    changed = True
 
         self.module.exit_json(changed=changed)
 

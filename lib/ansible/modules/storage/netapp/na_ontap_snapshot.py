@@ -60,6 +60,11 @@ options:
   vserver:
     description:
     - The Vserver name
+  new_comment:
+    description:
+      A human readable comment attached with the snapshot.
+      The size of the comment can be at most 255 characters.
+      This will replace the existing comment
 '''
 EXAMPLES = """
     - name: create SnapShot
@@ -91,7 +96,7 @@ EXAMPLES = """
       na_ontap_snapshot:
         state=present
         snapshot={{ snapshot name }}
-        comment="New comments are great"
+        new_comment="New comments are great"
         volume={{ vol name }}
         vserver={{ vserver name }}
         username={{ netapp username }}
@@ -128,6 +133,7 @@ class NetAppOntapSnapshot(object):
             ignore_owners=dict(required=False, type="bool", default=False),
             snapshot_instance_uuid=dict(required=False, type="str"),
             vserver=dict(required=True, type="str"),
+            new_comment=dict(required=False, type="str"),
 
         ))
         self.module = AnsibleModule(
@@ -150,6 +156,9 @@ class NetAppOntapSnapshot(object):
         # these are the optional variables for deleting a snapshot\
         self.ignore_owners = parameters['ignore_owners']
         self.snapshot_instance_uuid = parameters['snapshot_instance_uuid']
+        # These are the optional for Modify.
+        # You can NOT change a snapcenter name
+        self.new_comment = parameters['new_comment']
 
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(
@@ -222,8 +231,7 @@ class NetAppOntapSnapshot(object):
         attributes = netapp_utils.zapi.NaElement("attributes")
         snapshot_info_obj = netapp_utils.zapi.NaElement("snapshot-info")
         snapshot_info_obj.add_new_child("name", self.snapshot)
-        if self.comment is not None:
-            snapshot_info_obj.add_new_child("comment", self.comment)
+        snapshot_info_obj.add_new_child("comment", self.new_comment)
         attributes.add_child_elem(snapshot_info_obj)
         snapshot_obj.add_child_elem(attributes)
         try:
@@ -275,8 +283,8 @@ class NetAppOntapSnapshot(object):
         if existing_snapshot is not None:
             if self.state == 'absent':
                 changed = True
-            elif self.state == 'present' and self.comment is not None:
-                if existing_snapshot['comment'] != self.comment:
+            elif self.state == 'present' and self.new_comment:
+                if existing_snapshot['comment'] != self.new_comment:
                     comment_changed = True
                     changed = True
         else:

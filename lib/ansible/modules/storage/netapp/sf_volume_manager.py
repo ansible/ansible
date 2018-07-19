@@ -46,17 +46,12 @@ options:
         description:
         - Should the volume provide 512-byte sector emulation?
         - Required when C(state=present)
-        required: false
 
     qos:
         description: Initial quality of service settings for this volume. Configure as dict in playbooks.
-        required: false
-        default: None
 
     attributes:
         description: A YAML dictionary of attributes that you would like to apply on this volume.
-        required: false
-        default: None
 
     volume_id:
         description:
@@ -64,25 +59,19 @@ options:
         - In order to create multiple volumes with the same name, but different volume_ids, please declare the I(volume_id)
           parameter with an arbitrary value. However, the specified volume_id will not be assigned to the newly created
           volume (since it's an auto-generated property).
-        required: false
-        default: None
 
     size:
         description:
         - The size of the volume in (size_unit).
         - Required when C(state = present).
-        required: false
 
     size_unit:
         description:
         - The unit used to interpret the size parameter.
-        required: false
         choices: ['bytes', 'b', 'kb', 'mb', 'gb', 'tb', 'pb', 'eb', 'zb', 'yb']
         default: 'gb'
 
     access:
-        required: false
-        choices: ['readOnly', 'readWrite', 'locked', 'replicationTarget']
         description:
         - "Access allowed for the volume."
         - "readOnly: Only read operations are allowed."
@@ -90,7 +79,7 @@ options:
         - "locked: No reads or writes are allowed."
         - "replicationTarget: Identify a volume as the target volume for a paired set of volumes. If the volume is not paired, the access status is locked."
         - "If unspecified, the access settings of the clone will be the same as the source."
-        default: None
+        choices: ['readOnly', 'readWrite', 'locked', 'replicationTarget']
 
 '''
 
@@ -154,7 +143,7 @@ class SolidFireVolume(object):
         self.argument_spec.update(dict(
             state=dict(required=True, choices=['present', 'absent']),
             name=dict(required=True, type='str'),
-            account_id=dict(required=True, type='str'),
+            account_id=dict(required=True, type='int'),
 
             enable512e=dict(type='bool', aliases=['512emulation']),
             qos=dict(required=False, type='dict', default=None),
@@ -201,14 +190,14 @@ class SolidFireVolume(object):
         else:
             self.sfe = netapp_utils.create_sf_connection(module=self.module)
 
-    def get_volume(self, id_num):
+    def get_volume(self):
         """
             Return volume object if found
 
             :return: Details about the volume. None if not found.
             :rtype: dict
         """
-        volume_list = self.sfe.list_volumes_for_account(account_id=id_num)
+        volume_list = self.sfe.list_volumes_for_account(account_id=self.account_id)
         for volume in volume_list.volumes:
             if volume.name == self.name:
                 # Update self.volume_id
@@ -221,10 +210,10 @@ class SolidFireVolume(object):
                         return volume
         return None
 
-    def create_volume(self, id_num):
+    def create_volume(self):
         try:
             self.sfe.create_volume(name=self.name,
-                                   account_id=id_num,
+                                   account_id=self.account_id,
                                    total_size=self.size,
                                    enable512e=self.enable512e,
                                    qos=self.qos,
@@ -255,16 +244,11 @@ class SolidFireVolume(object):
             self.module.fail_json(msg="Error updating volume %s" % self.name,
                                   exception=to_native(err))
 
-    def get_account_id(self):
-        account = self.sfe.get_account_by_name(self.account_id)
-        return account.account.account_id
-
     def apply(self):
         changed = False
         volume_exists = False
         update_volume = False
-        id_num = self.get_account_id()
-        volume_detail = self.get_volume(id_num)
+        volume_detail = self.get_volume()
 
         if volume_detail:
             volume_exists = True
@@ -311,7 +295,7 @@ class SolidFireVolume(object):
             else:
                 if self.state == 'present':
                     if not volume_exists:
-                        self.create_volume(id_num)
+                        self.create_volume()
                         result_message = "Volume created"
                     elif update_volume:
                         self.update_volume()
