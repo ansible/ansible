@@ -37,7 +37,13 @@
   user:
     name: ansibulluser
     state: present
-  register: user_test0
+  register: user_test0_0
+
+- name: create the user again
+  user:
+    name: ansibulluser
+    state: present
+  register: user_test0_1
 
 - debug:
     var: user_test0
@@ -54,8 +60,49 @@
 - name: validate results for testcase 0
   assert:
     that:
-      - user_test0 is changed
+      - user_test0_0 is changed
+      - user_test0_1 is not changed
       - '"ansibulluser" in user_names.stdout_lines'
+
+# https://github.com/ansible/ansible/issues/42484
+# Skipping macOS for now since there is a bug when changing home directory
+- block:
+    - name: create user specifying home
+      user:
+        name: ansibulluser
+        state: present
+        home: "{{ user_home_prefix[ansible_system] }}/ansibulluser"
+      register: user_test3_0
+
+    - name: create user again specifying home
+      user:
+        name: ansibulluser
+        state: present
+        home: "{{ user_home_prefix[ansible_system] }}/ansibulluser"
+      register: user_test3_1
+
+    - name: change user home
+      user:
+        name: ansibulluser
+        state: present
+        home: "{{ user_home_prefix[ansible_system] }}/ansibulluser-mod"
+      register: user_test3_2
+
+    - name: change user home back
+      user:
+        name: ansibulluser
+        state: present
+        home: "{{ user_home_prefix[ansible_system] }}/ansibulluser"
+      register: user_test3_3
+
+    - name: validate results for testcase 3
+      assert:
+        that:
+          - user_test3_0 is not changed
+          - user_test3_1 is not changed
+          - user_test3_2 is changed
+          - user_test3_3 is changed
+  when: ansible_system != 'Darwin'
 
 
 ## user check
@@ -65,7 +112,7 @@
     name: "{{ user_names.stdout_lines | random }}"
     state: present
     create_home: no
-  with_sequence: start=1 end=5
+  loop: "{{ range(1, 5+1) | list }}"
   register: user_test1
 
 - debug:
