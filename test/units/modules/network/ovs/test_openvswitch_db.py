@@ -41,6 +41,12 @@ test_name_side_effect_matrix = {
     'test_openvswitch_db_present_updates_key': [
         (0, 'openvswitch_db_disable_in_band_true.cfg', None),
         (0, None, None)],
+    'test_openvswitch_db_present_missing_key_on_map': [
+        (0, 'openvswitch_db_disable_in_band_true.cfg', None),
+        (0, None, None)],
+    'test_openvswitch_db_present_stp_enable': [
+        (0, 'openvswitch_db_disable_in_band_true.cfg', None),
+        (0, None, None)],
 }
 
 
@@ -122,3 +128,20 @@ class TestOpenVSwitchDBModule(TestOpenVSwitchModule):
             commands=['/usr/bin/ovs-vsctl -t 5 set Bridge test-br other_config'
                       ':disable-in-band=False'],
             test_name='test_openvswitch_db_present_updates_key')
+
+    def test_openvswitch_db_present_missing_key_on_map(self):
+        set_module_args(dict(state='present',
+                             table='Bridge', record='test-br',
+                             col='other_config',
+                             value='False'))
+        self.execute_module(
+            failed=True,
+            test_name='test_openvswitch_db_present_idempotent')
+
+    def test_openvswitch_db_present_stp_enable(self):
+        set_module_args(dict(state='present',
+                             table='Bridge', record='test-br',
+                             col='stp_enable',
+                             value='False'))
+        self.execute_module(changed=True,
+                            test_name='test_openvswitch_db_present_stp_enable')

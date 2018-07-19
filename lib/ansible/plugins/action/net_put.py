@@ -83,9 +83,13 @@ class ActionModule(ActionBase):
             src = self._task.args.get('src')
             filename = str(uuid.uuid4())
             cwd = self._loader.get_basedir()
-            output_file = cwd + '/' + filename
-            with open(output_file, 'w') as f:
-                f.write(src)
+            output_file = os.path.join(cwd, filename)
+            try:
+                with open(output_file, 'wb') as f:
+                    f.write(to_bytes(src, encoding='utf-8'))
+            except Exception:
+                os.remove(output_file)
+                raise
         else:
             try:
                 output_file = self._get_binary_src_file(src)

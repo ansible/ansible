@@ -410,7 +410,13 @@ but the exact files to edit vary depending on your OS and distribution and local
 How do I generate crypted passwords for the user module?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-The mkpasswd utility that is available on most Linux systems is a great option:
+Ansible ad-hoc command is the easiest option:
+
+.. code-block:: shell-session
+
+    ansible all -i localhost, -m debug -a "msg={{ 'mypassword' | password_hash('sha512', 'mysecretsalt') }}"
+
+The mkpasswd utility that is available on most Linux systems is also a great option:
 
 .. code-block:: shell-session
 

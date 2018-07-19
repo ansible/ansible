@@ -1,6 +1,7 @@
  - name: Prepare random number
    set_fact:
      rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+     parameter: {}
    run_once: yes
 
  - name: Clearing (if) previous disks were created
@@ -174,6 +175,7 @@
    azure_rm_managed_disk_facts:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
+   register: fact
 
  - assert:
        that:
@@ -186,6 +188,19 @@
  - assert:
        that:
            - "azure_managed_disk | length > 0"
+
+ - set_fact:
+     parameter: "{{parameter |combine({item.key: item.value})}}"
+   when: "{{item.key not in ['id', 'changed'] and item.value != None}}"
+   with_dict: "{{ fact.ansible_facts.azure_managed_disk[0] }}"
+
+ - name: Create disk with facts return value
+   azure_rm_managed_disk: "{{ parameter | combine({'resource_group': resource_group}) }}"
+   register: output
+
+ - assert:
+       that:
+           - not output.changed
 
  - name: Create virtual network
    azure_rm_virtualnetwork:

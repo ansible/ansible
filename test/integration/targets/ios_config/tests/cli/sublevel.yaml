@@ -7,13 +7,11 @@
       - 'no ip access-list extended test'
       - 'no ip access-list standard test'
     match: none
-    provider: "{{ cli }}"
 
 - name: configure sub level command
   ios_config:
     lines: ['permit ip any any log']
     parents: ['ip access-list extended test']
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -26,7 +24,6 @@
   ios_config:
     lines: ['permit ip any any log']
     parents: ['ip access-list extended test']
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -38,6 +35,5 @@
     lines:
       - 'no ip access-list extended test'
     match: none
-    provider: "{{ cli }}"
 
 - debug: msg="END cli/sublevel.yaml on connection={{ ansible_connection }}"

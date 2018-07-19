@@ -82,6 +82,13 @@ pull request to backport the change to a previous stable branch.
     but it can be helpful, especially when making multiple backport PRs for
     multiple stable branches.
 
+.. note::
+
+    If you prefer, you can use CPython's cherry-picker tool to backport commits
+    from devel to stable branches in Ansible. Take a look at the `cherry-picker
+    documentation <https://pypi.org/p/cherry-picker#cherry-picking>`_ for
+    details on installing, configuring, and using it.
+
 
 Ansibullbot
 ===========

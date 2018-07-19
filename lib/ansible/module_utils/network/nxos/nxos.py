@@ -382,8 +382,34 @@ class Nxapi:
         else:
             return []
 
+    def get_device_info(self):
+        device_info = {}
+
+        device_info['network_os'] = 'nxos'
+        reply = self.run_commands({'command': 'show version', 'output': 'json'})
+        data = reply[0]
+
+        platform_reply = self.run_commands({'command': 'show inventory', 'output': 'json'})
+        platform_info = platform_reply[0]
+
+        device_info['network_os_version'] = data.get('sys_ver_str') or data.get('kickstart_ver_str')
+        device_info['network_os_model'] = data['chassis_id']
+        device_info['network_os_hostname'] = data['host_name']
+        device_info['network_os_image'] = data.get('isan_file_name') or data.get('kick_file_name')
+
+        if platform_info:
+            inventory_table = platform_info['TABLE_inv']['ROW_inv']
+            for info in inventory_table:
+                if 'Chassis' in info['name']:
+                    device_info['network_os_platform'] = info['productid']
+
+        return device_info
+
     def get_capabilities(self):
-        return {}
+        result = {}
+        result['device_info'] = self.get_device_info()
+        result['network_api'] = 'nxapi'
+        return result
 
 
 def is_json(cmd):

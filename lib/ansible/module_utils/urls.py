@@ -734,7 +734,12 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             if https_proxy:
                 proxy_parts = generic_urlparse(urlparse(https_proxy))
                 port = proxy_parts.get('port') or 443
-                s = socket.create_connection((proxy_parts.get('hostname'), port))
+                proxy_hostname = proxy_parts.get('hostname', None)
+                if proxy_hostname is None or proxy_parts.get('scheme') == '':
+                    raise ProxyError("Failed to parse https_proxy environment variable."
+                                     " Please make sure you export https proxy as 'https_proxy=<SCHEME>://<IP_ADDRESS>:<PORT>'")
+
+                s = socket.create_connection((proxy_hostname, port))
                 if proxy_parts.get('scheme') == 'http':
                     s.sendall(to_bytes(self.CONNECT_COMMAND % (self.hostname, self.port), errors='surrogate_or_strict'))
                     if proxy_parts.get('username'):

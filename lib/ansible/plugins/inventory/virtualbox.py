@@ -16,6 +16,10 @@ DOCUMENTATION = '''
       - constructed
       - inventory_cache
     options:
+        plugin:
+            description: token that ensures this is a source file for the 'virtualbox' plugin
+            required: True
+            choices: ['virtualbox']
         running_only:
             description: toggles showing all vms vs only those currently running
             type: boolean

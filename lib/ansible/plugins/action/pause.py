@@ -39,9 +39,14 @@ except ImportError:
 
 try:
     import curses
-    curses.setupterm()
-    HAS_CURSES = True
-except (ImportError, curses.error):
+
+    # Nest the try except since curses.error is not available if curses did not import
+    try:
+        curses.setupterm()
+        HAS_CURSES = True
+    except curses.error:
+        HAS_CURSES = False
+except ImportError:
     HAS_CURSES = False
 
 if HAS_CURSES:

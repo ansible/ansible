@@ -22,8 +22,8 @@ import os
 import copy
 
 
-from ansible.module_utils.six import iteritems
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import iteritems, string_types
 
 try:
     import kubernetes
@@ -51,6 +51,16 @@ try:
 except ImportError:
     pass
 
+
+def list_dict_str(value):
+    if isinstance(value, list):
+        return value
+    elif isinstance(value, dict):
+        return value
+    elif isinstance(value, string_types):
+        return value
+    raise TypeError
+
 ARG_ATTRIBUTES_BLACKLIST = ('property_path',)
 
 COMMON_ARG_SPEC = {
@@ -63,6 +73,7 @@ COMMON_ARG_SPEC = {
         'default': False,
     },
     'resource_definition': {
+        'type': list_dict_str,
         'aliases': ['definition', 'inline']
     },
     'src': {
@@ -137,8 +148,11 @@ class K8sAnsibleMixin(object):
             elif key in auth_args and value is None:
                 env_value = os.getenv('K8S_AUTH_{0}'.format(key.upper()), None)
                 if env_value is not None:
-                    setattr(configuration, key, env_value)
-                    auth[key] = env_value
+                    if key == 'api_key':
+                        setattr(configuration, key, {'authorization': "Bearer {0}".format(env_value)})
+                    else:
+                        setattr(configuration, key, env_value)
+                        auth[key] = env_value
 
         kubernetes.client.Configuration.set_default(configuration)
 

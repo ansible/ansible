@@ -821,8 +821,7 @@ def main():
             module.fail_json(msg="Source '%s' failed to transfer" % src)
         # If remote_src=true, and src= contains ://, try and download the file to a temp directory.
         elif '://' in src:
-            tempdir = os.path.dirname(os.path.realpath(__file__))
-            package = os.path.join(tempdir, str(src.rsplit('/', 1)[1]))
+            new_src = os.path.join(module.tmpdir, to_native(src.rsplit('/', 1)[1], errors='surrogate_or_strict'))
             try:
                 rsp, info = fetch_url(module, src)
                 # If download fails, raise a proper exception
@@ -830,7 +829,7 @@ def main():
                     raise Exception(info['msg'])
 
                 # open in binary mode for python3
-                f = open(package, 'wb')
+                f = open(new_src, 'wb')
                 # Read 1kb at a time to save on ram
                 while True:
                     data = rsp.read(BUFSIZE)
@@ -841,7 +840,7 @@ def main():
 
                     f.write(data)
                 f.close()
-                src = package
+                src = new_src
             except Exception as e:
                 module.fail_json(msg="Failure downloading %s, %s" % (src, to_native(e)))
         else:

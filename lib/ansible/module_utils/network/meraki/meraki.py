@@ -249,7 +249,7 @@ class MerakiModule(object):
                 return template['id']
         self.fail_json(msg='No configuration template named {0} found'.format(name))
 
-    def construct_path(self, action, function=None, org_id=None, net_id=None, org_name=None):
+    def construct_path(self, action, function=None, org_id=None, net_id=None, org_name=None, custom=None):
         """Build a path from the URL catalog.
 
         Uses function property from class for catalog lookup.
@@ -261,8 +261,10 @@ class MerakiModule(object):
             built_path = self.url_catalog[action][function]
         if org_name:
             org_id = self.get_org_id(org_name)
-
-        built_path = built_path.format(org_id=org_id, net_id=net_id)
+        if custom:
+            built_path = built_path.format(org_id=org_id, net_id=net_id, **custom)
+        else:
+            built_path = built_path.format(org_id=org_id, net_id=net_id)
         return built_path
 
     def request(self, path, method=None, payload=None):

@@ -54,11 +54,13 @@ options:
   route_control:
     description:
     - Route Control enforcement direction. The only allowed values are export or import,export.
-    choices: [ 'export', 'import' ]
+    type: list
+    choices: [ export, import ]
     aliases: [ route_control_enforcement ]
   l3protocol:
     description:
     - Routing protocol for the L3Out
+    type: list
     choices: [ static, bgp, ospf, pim ]
   description:
     description:
