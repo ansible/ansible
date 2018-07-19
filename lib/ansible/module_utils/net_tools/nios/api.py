@@ -25,7 +25,7 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-
+import q
 import os
 from functools import partial
 from ansible.module_utils._text import to_native
@@ -318,9 +318,9 @@ class WapiModule(WapiBase):
             update = True
             return ib_obj, update, new_name
         if (ib_obj_type == NIOS_HOST_RECORD):
-            if 'configure_for_dns' in obj_filter:
-                if not obj_filter['configure_for_dns']:
-                    test_obj_filter = dict([('name', name)])
+            # to check only by name if dns bypassing is set
+            if not obj_filter['configure_for_dns']:
+                test_obj_filter = dict([('name', name)])
             else:
                 test_obj_filter = dict([('name', name), ('view', obj_filter['view'])])
         else:
