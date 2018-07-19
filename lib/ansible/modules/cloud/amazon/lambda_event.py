@@ -423,9 +423,11 @@ def main():
 
     validate_params(module, aws)
 
-    this_module_function = getattr(this_module, 'lambda_event_{0}'.format(module.params['event_source'].lower()))
+    if module.params['event_source'].lower() in ('stream', 'sqs'):
+        results = lambda_event_stream(module, aws)
+    else:
+        module.fail_json('Please select `stream` or `sqs` as the event type')
 
-    results = this_module_function(module, aws)
 
     module.exit_json(**results)
 
