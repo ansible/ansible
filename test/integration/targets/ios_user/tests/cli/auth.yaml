@@ -38,3 +38,41 @@
 
   - name: reset connection
     meta: reset_connection
+
+
+- block:
+  - name: Create user with sshkey
+    ios_user:
+      name: ssh_user
+      privilege: 15
+      role: network-operator
+      state: present
+      provider: "{{ cli }}"
+      sshkey: "{{ lookup('file', 'files/test_rsa.pub') }}"
+
+  - name: test sshkey login
+    shell: "ssh ssh_user@{{ ansible_ssh_host }} -p {{ ansible_ssh_port|default(22) }} -o IdentityFile={{ role_path }}/files/test_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o PubkeyAuthentication=yes show version"
+
+  - name: test login without sshkey (should fail)
+    expect:
+      command: "ssh ssh_user@{{ ansible_ssh_host }} -p {{ ansible_ssh_port|default(22) }} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o PubkeyAuthentication=no show version"
+      responses:
+        (?i)password: badpass
+    ignore_errors: yes
+    register: results
+
+  - name: check that attempt failed
+    assert:
+      that:
+        - results.failed
+
+  always:
+  - name: delete user
+    ios_user:
+      name: ssh_user
+      state: absent
+      provider: "{{ cli }}"
+    register: result
+
+  - name: reset connection
+    meta: reset_connection
