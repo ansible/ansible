@@ -2618,7 +2618,8 @@ class AnsibleModule(object):
                                 if unsafe_writes and e.errno == errno.EBUSY:
                                     self._unsafe_writes(b_tmp_dest_name, b_dest)
                                 else:
-                                    self.fail_json(msg='Unable to rename file: %s to %s: %s' % (src, dest, to_native(e)),
+                                    self.fail_json(msg='Unable to make %s into to %s, failed final rename from %s: %s' %
+                                                       (src, dest, b_tmp_dest_name, to_native(e)),
                                                    exception=traceback.format_exc())
                         except (shutil.Error, OSError, IOError) as e:
                             self.fail_json(msg='Failed to replace file: %s to %s: %s' % (src, dest, to_native(e)),
