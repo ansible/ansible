@@ -266,7 +266,7 @@ def main():
             'db_engine_version': dict(type='str', choices=['1.0.1']),
             'port': dict(type='int', default=8182),
             'master_username': dict(type='str'),
-            'master_password': dict(type='str'),
+            'master_password': dict(type='str', no_log=True),
             'option_group': dict(type='str'),
             'backup_window': dict(type='str'),
             'maintenance_window': dict(type='str'),
