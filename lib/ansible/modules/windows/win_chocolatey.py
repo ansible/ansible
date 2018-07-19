@@ -166,7 +166,7 @@ EXAMPLES = r'''
 - name: Install notepadplusplus 32 bit version
   win_chocolatey:
     name: notepadplusplus
-    x86: yes
+    architecture: 'x86'
 
 - name: Install git from specified repository
   win_chocolatey:
