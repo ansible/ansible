@@ -22,7 +22,7 @@ description:
     using the Infoblox WAPI interface over REST.
   - Updates instances of host record object from Infoblox NIOS servers.
 requirements:
-  - infoblox_client
+  - infoblox-client
 extends_documentation_fragment: nios
 options:
   name:

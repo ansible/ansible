@@ -21,7 +21,7 @@ description:
     Infoblox NIOS servers.  This module manages NIOS C(record:srv) objects
     using the Infoblox WAPI interface over REST.
 requirements:
-  - infoblox_client
+  - infoblox-client
 extends_documentation_fragment: nios
 options:
   name:
