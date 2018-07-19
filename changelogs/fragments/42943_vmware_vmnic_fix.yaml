@@ -1,0 +1,2 @@
+bugfixes:
+- VMware handle pnic in proxyswitch (https://github.com/ansible/ansible/pull/42996)
