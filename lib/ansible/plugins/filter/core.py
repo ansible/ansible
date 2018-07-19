@@ -206,10 +206,13 @@ def regex_escape(string):
 
 def from_yaml(data):
     if isinstance(data, string_types):
-        parsed = list(yaml.safe_load_all(data))
-        if len(parsed) == 1:
-            return parsed[1]
-        return parsed
+        return yaml.safe_load(data)
+    return data
+
+
+def from_yaml_all(data):
+    if isinstance(data, string_types):
+        return yaml.safe_load_all(data)
     return data
 
 
@@ -603,6 +606,7 @@ class FilterModule(object):
             'to_yaml': to_yaml,
             'to_nice_yaml': to_nice_yaml,
             'from_yaml': from_yaml,
+            'from_yaml_all': from_yaml_all,
 
             # path
             'basename': partial(unicode_wrap, os.path.basename),
