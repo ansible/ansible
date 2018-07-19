@@ -49,7 +49,13 @@ options:
 
   nodes:
     description:
-    - List of node for the aggregate
+    - Node(s) for the aggregate to be created on.  If no node specified, mgmt lif home will be used.
+    - If multiple nodes specified an aggr stripe will be made.
+
+  disk_type:
+    description:
+    - Type of disk to use to build aggregate
+    choices: ['ATA', 'BSAS', 'FCAL', 'FSAS', 'LUN', 'MSATA', 'SAS', 'SSD', 'VMDISK']
 
   disk_count:
     description:
@@ -58,6 +64,14 @@ options:
     - The smallest disks in this pool join the aggregate first, unless the C(disk-size) argument is provided.
     - Either C(disk-count) or C(disks) must be supplied. Range [0..2^31-1].
     - Required when C(state=present).
+
+  disk_size:
+    description:
+    - Disk size to use in 4K block size.  Disks within 10% of specified size will be used.
+
+  raid_size:
+    description:
+    - Sets the maximum number of drives per raid group.
 
   unmount_volumes:
     type: bool
@@ -137,7 +151,11 @@ class NetAppOntapAggregate(object):
             name=dict(required=True, type='str'),
             rename=dict(required=False, type='str'),
             disk_count=dict(required=False, type='int', default=None),
+            disk_type=dict(required=False, choices=['ATA', 'BSAS', 'FCAL', 'FSAS', 'LUN', 'MSATA', 'SAS', 'SSD',
+                                                    'VMDISK']),
+            disk_size=dict(required=False, type='int'),
             nodes=dict(required=False, type='list'),
+            raid_size=dict(required=False, type='str'),
             unmount_volumes=dict(required=False, type='bool'),
         ))
 
@@ -157,7 +175,10 @@ class NetAppOntapAggregate(object):
         self.name = parameters['name']
         self.rename = parameters['rename']
         self.disk_count = parameters['disk_count']
+        self.disk_type = parameters['disk_type']
+        self.disk_size = parameters['disk_size']
         self.nodes = parameters['nodes']
+        self.raid_size = parameters['raid_size']
         self.unmount_volumes = parameters['unmount_volumes']
 
         if HAS_NETAPP_LIB is False:
@@ -255,6 +276,12 @@ class NetAppOntapAggregate(object):
             aggr_create.add_child_elem(nodes_obj)
             for node in self.nodes:
                 nodes_obj.add_new_child('node-name', node)
+        if self.disk_type is not None:
+            aggr_create.add_new_child('disk-type', self.disk_type)
+        if self.raid_size is not None:
+            aggr_create.add_new_child('raid-size', self.raid_size)
+        if self.disk_size is not None:
+            aggr_create.add_new_child('raid-size', self.disk_size)
         try:
             self.server.invoke_successfully(aggr_create,
                                             enable_tunneling=False)

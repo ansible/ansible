@@ -22,27 +22,27 @@ extends_documentation_fragment:
     - netapp.eseries
 options:
   state:
+    required: true
     description:
     - Whether the specified volume should exist or not.
-    required: true
     choices: ['present', 'absent']
   name:
+    required: true
     description:
     - The name of the volume to manage
-    required: true
   storage_pool_name:
+    required: true
     description:
     - "Required only when requested state is 'present'.  The name of the storage pool the volume should exist on."
-    required: true
   size_unit:
     description:
     - The unit used to interpret the size parameter
     choices: ['bytes', 'b', 'kb', 'mb', 'gb', 'tb', 'pb', 'eb', 'zb', 'yb']
     default: 'gb'
   size:
+    required: true
     description:
     - "Required only when state = 'present'.  The size of the volume in (size_unit)."
-    required: true
   segment_size_kb:
     description:
     - The segment size of the new volume
@@ -50,8 +50,8 @@ options:
   thin_provision:
     description:
     - Whether the volume should be thin provisioned.  Thin volumes can only be created on disk pools (raidDiskPool).
-    type: bool
-    default: 'no'
+    default: False
+    choices: ['yes','no','true','false']
   thin_volume_repo_size:
     description:
     - Initial size of the thin volume repository volume (in size_unit)
@@ -63,13 +63,12 @@ options:
   ssd_cache_enabled:
     description:
     - Whether an existing SSD cache should be enabled on the volume (fails if no SSD cache defined)
-    - The default value is to ignore existing SSD cache setting.
-    type: bool
+    default: None (ignores existing SSD cache setting)
+    choices: ['yes','no','true','false']
   data_assurance_enabled:
     description:
     - If data assurance should be enabled for the volume
-    type: bool
-    default: 'no'
+    default: false
 
 # TODO: doc thin volume parameters
 

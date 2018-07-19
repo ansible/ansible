@@ -288,7 +288,7 @@ class Host(object):
     def create_host(self):
         post_body = dict(
             name=self.name,
-            hostType=dict(index=self.host_type_index),
+            host_type=dict(index=self.host_type_index),
             groupId=self.group_id,
             ports=self.ports
         )

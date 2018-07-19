@@ -63,7 +63,9 @@ options:
             - If false, the synchronization will be suspended if the amount of unsynchronized data exceeds the CoW Repository capacity on the secondary
               and the failures point will be preserved.
             - "NOTE: This only has impact for newly launched syncs."
-        type: bool
+        choices:
+            - yes
+            - no
         default: no
 """
 EXAMPLES = """
