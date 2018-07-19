@@ -10,6 +10,7 @@
     - { role: vr_dns_domain_facts, tags: test_vr_dns_domain_facts }
     - { role: vr_dns_record, tags: test_vr_dns_record }
     - { role: vr_firewall_group, tags: test_vr_firewall_group }
+    - { role: vr_firewall_group_facts, tags: test_vr_firewall_group_facts }
     - { role: vr_firewall_rule, tags: test_vr_firewall_rule }
     - { role: vr_os_facts, tags: test_vr_os_facts }
     - { role: vr_plan_facts, tags: test_vr_plan_facts }
