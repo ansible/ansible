@@ -221,6 +221,7 @@ def main():
         if not worked:
             # hail mary
             if rc == 0:
+                is_started = True
                 worked = True
             # ps for luck, can only assure positive match
             elif get_ps(module, name):
