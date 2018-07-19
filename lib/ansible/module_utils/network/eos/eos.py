@@ -153,7 +153,7 @@ class Cli:
         try:
             response = conn.edit_config(commands, commit, replace)
         except ConnectionError as exc:
-            message = getattr(exc, 'err', exc)
+            message = getattr(exc, 'err', to_text(exc))
             if "check mode is not supported without configuration session" in message:
                 self._module.warn("EOS can not check config without config session")
                 response = {'changed': True}
