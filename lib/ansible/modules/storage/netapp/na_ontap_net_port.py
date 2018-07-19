@@ -45,6 +45,7 @@ options:
   duplex_admin:
     description:
     - Specifies the user preferred duplex setting of the port.
+    - Valid values auto, half, full
   speed_admin:
     description:
     - Specifies the user preferred speed setting of the port.

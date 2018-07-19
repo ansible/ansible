@@ -64,12 +64,12 @@ options:
     - "Only required when the requested state is 'present'.  The RAID level of the storage pool to be created."
   erase_secured_drives:
     required: false
-    type: bool
+    choices: ['true', 'false']
     description:
     - Whether to erase secured disks before adding to storage pool
   secure_pool:
     required: false
-    type: bool
+    choices: ['true', 'false']
     description:
     - Whether to convert to a secure storage pool. Will only work if all drives in the pool are security capable.
   reserve_drive_count:

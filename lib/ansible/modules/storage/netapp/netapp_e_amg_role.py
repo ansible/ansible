@@ -52,7 +52,7 @@ options:
             - Whether to avoid synchronization prior to role reversal
         required: no
         default: no
-        type: bool
+        choices: [yes, no]
     force:
         description:
             - Whether to force the role reversal regardless of the online-state of the primary
