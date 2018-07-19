@@ -260,6 +260,32 @@
     state: removed
   register: yum_result
 
+# Test download_only
+- name: install sos
+  yum:
+    name: sos
+    state: latest
+    download_only: true
+  register: yum_result
+
+- name: verify download of sos (part 1 -- yum "install" succeeded)
+  assert:
+    that:
+        - "yum_result is success"
+        - "yum_result is changed"
+
+- name: uninstall sos (noop)
+  yum:
+    name: sos
+    state: removed
+  register: yum_result
+
+- name: verify download of sos (part 2 -- nothing removed during uninstall)
+  assert:
+    that:
+        - "yum_result is success"
+        - "not yum_result is changed"
+
 - name: install group
   yum:
     name: "@Development Tools"
