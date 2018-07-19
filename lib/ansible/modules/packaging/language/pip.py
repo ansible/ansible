@@ -319,6 +319,9 @@ def _is_valid_distribution_name(name):
 
 def _recover_distribution_name(names):
     """Recover distribution names as list from user's raw input."""
+    # rebuild input name to a flat list so we can tolerate any combination of input
+    names = [one_part for one_line in names for one_part in one_line.split(",")]
+    # reconstruct the names
     name_parts = []
     distribution_names = []
     for name in names:
