@@ -204,8 +204,10 @@ def regex_escape(string):
     return re.escape(string)
 
 
-def from_yaml(data):
+def from_yaml(data, multidoc=False):
     if isinstance(data, string_types):
+        if multidoc:
+            return yaml.safe_load_all(data)
         return yaml.safe_load(data)
     return data
 
