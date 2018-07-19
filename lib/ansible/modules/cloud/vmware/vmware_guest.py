@@ -871,17 +871,10 @@ class PyVmomiHelper(PyVmomi):
         # set cpu/memory/etc
         if 'hardware' in self.params:
             if 'num_cpus' in self.params['hardware']:
-                try:
-                    num_cpus = int(self.params['hardware']['num_cpus'])
-                except ValueError as e:
-                    self.module.fail_json(msg="hardware.num_cpus attribute should be an integer value.")
+                num_cpus = int(self.params['hardware']['num_cpus'])
 
                 if 'num_cpu_cores_per_socket' in self.params['hardware']:
-                    try:
-                        num_cpu_cores_per_socket = int(self.params['hardware']['num_cpu_cores_per_socket'])
-                    except ValueError as e:
-                        self.module.fail_json(msg="hardware.num_cpu_cores_per_socket attribute "
-                                                  "should be an integer value.")
+                    num_cpu_cores_per_socket = int(self.params['hardware']['num_cpu_cores_per_socket'])
                     if num_cpus % num_cpu_cores_per_socket != 0:
                         self.module.fail_json(msg="hardware.num_cpus attribute should be a multiple "
                                                   "of hardware.num_cpu_cores_per_socket")
@@ -898,12 +891,7 @@ class PyVmomiHelper(PyVmomi):
                 self.module.fail_json(msg="hardware.num_cpus attribute is mandatory for VM creation")
 
             if 'memory_mb' in self.params['hardware']:
-                try:
-                    self.configspec.memoryMB = int(self.params['hardware']['memory_mb'])
-                except ValueError:
-                    self.module.fail_json(msg="Failed to parse hardware.memory_mb value."
-                                              " Please refer the documentation and provide"
-                                              " correct value.")
+                self.configspec.memoryMB = int(self.params['hardware']['memory_mb'])
                 if vm_obj is None or self.configspec.memoryMB != vm_obj.config.hardware.memoryMB:
                     self.change_detected = True
             # memory_mb is mandatory for VM creation
@@ -926,15 +914,8 @@ class PyVmomiHelper(PyVmomi):
                     self.change_detected = True
 
             if 'memory_reservation' in self.params['hardware']:
-                memory_reservation_mb = 0
-                try:
-                    memory_reservation_mb = int(self.params['hardware']['memory_reservation'])
-                except ValueError as e:
-                    self.module.fail_json(msg="Failed to set memory_reservation value."
-                                              "Valid value for memory_reservation value in MB (integer): %s" % e)
-
                 mem_alloc = vim.ResourceAllocationInfo()
-                mem_alloc.reservation = memory_reservation_mb
+                mem_alloc.reservation = int(self.params['hardware']['memory_reservation'])
                 self.configspec.memoryAllocation = mem_alloc
                 if vm_obj is None or self.configspec.memoryAllocation.reservation != vm_obj.config.memoryAllocation.reservation:
                     self.change_detected = True
@@ -1840,13 +1821,8 @@ class PyVmomiHelper(PyVmomi):
 
     def get_scsi_type(self):
         disk_controller_type = "paravirtual"
-        # set cpu/memory/etc
-        if 'hardware' in self.params:
-            if 'scsi' in self.params['hardware']:
-                if self.params['hardware']['scsi'] in ['buslogic', 'paravirtual', 'lsilogic', 'lsilogicsas']:
-                    disk_controller_type = self.params['hardware']['scsi']
-                else:
-                    self.module.fail_json(msg="hardware.scsi attribute should be 'paravirtual' or 'lsilogic'")
+        if 'hardware' in self.params and 'scsi' in self.params['hardware']:
+            disk_controller_type = self.params['hardware']['scsi']
         return disk_controller_type
 
     def find_folder(self, searchpath):
@@ -2241,7 +2217,28 @@ def main():
         guest_id=dict(type='str'),
         disk=dict(type='list', default=[]),
         cdrom=dict(type='dict', default={}),
-        hardware=dict(type='dict', default={}),
+        hardware=dict(
+            type='dict',
+            default={},
+            options=dict(
+                hotadd_cpu=dict(type='bool', default=False),
+                hotremove_cpu=dict(type='bool', default=False),
+                hotadd_memory=dict(type='bool', default=False),
+                memory_mb=dict(type='int'),
+                num_cpus=dict(type='int'),
+                num_cpu_cores_per_socket=dict(type='int'),
+                nested_virt=dict(type='bool', default=False),
+                scsi=dict(choices=['buslogic', 'lsilogic', 'lsilogicsas', 'paravirtual'], default='paravirtual'),
+                memory_reservation=dict(type='int'),
+                memory_reservation_lock=dict(type='bool', default=False),
+                max_connections=dict(type='int'),
+                mem_limit=dict(type='int'),
+                mem_reservation=dict(type='int'),
+                cpu_limit=dict(type='int'),
+                cpu_reservation=dict(type='int'),
+                version=dict(type='int', default=10),
+            )
+        ),
         force=dict(type='bool', default=False),
         datacenter=dict(type='str', default='ha-datacenter'),
         esxi_hostname=dict(type='str'),
