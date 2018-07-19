@@ -992,7 +992,7 @@ To search a string with a regex, use the "regex_search" filter::
 To search for all occurrences of regex matches, use the "regex_findall" filter::
 
     # Return a list of all IPv4 addresses in the string
-    {{ 'Some DNS servers are 8.8.8.8 and 8.8.4.4' | regex_findall('\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b') }}
+    {{ 'Some DNS servers are 8.8.8.8 and 8.8.4.4' | regex_findall('\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b') }}
 
 
 To replace text in a string with regex, use the "regex_replace" filter::
