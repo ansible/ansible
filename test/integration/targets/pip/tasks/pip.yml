@@ -412,6 +412,12 @@
   assert:
     that: "not version12.changed"
 
+- name: test module can parse the combination of multi-packages one line and git url
+  pip:
+    name:
+      - git+https://github.com/dvarrazzo/pyiso8601#egg=pyiso8601
+      - "{{pip_test_pkg_ver[0]}},{{pip_test_pkg_ver[1]}}"
+
 - name: clean up
   pip:
     name: "{{ pip_test_packages }}"
