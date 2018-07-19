@@ -40,9 +40,10 @@ options:
     aliases:
       - dns_view
   configure_for_dns:
-  description:
+    description:
       - Sets the DNS to particular parent. If user needs to bypass DNS
         user can make the value to false.
+    type: bool
     required: false
     default: true
     aliases:
@@ -53,8 +54,6 @@ options:
         accepts a list of values (see suboptions)
     aliases:
       - ipv4
-      - dhcp
-      - mac
     suboptions:
       ipv4addr:
         description:
@@ -67,7 +66,6 @@ options:
           - Configure the host_record over DHCP instead of DNS, if user
             changes it to true, user need to mention MAC address to configure
         required: false
-        default: null
         aliases:
           - dhcp
       mac:
@@ -75,14 +73,14 @@ options:
           - Configures the hardware MAC address for the host record. If user makes
             DHCP to true, user need to mention MAC address.
         required: false
-        default: null
+        aliases:
+          - mac
   ipv6addrs:
     description:
       - Configures the IPv6 addresses for the host record.  This argument
         accepts a list of values (see options)
     aliases:
       - ipv6
-      - dhcp
     suboptions:
       ipv6addr:
         description:
@@ -95,7 +93,6 @@ options:
           - Configure the host_record over DHCP instead of DNS, if user
             changes it to true, user need to mention MAC address to configure
         required: false
-        default: null
         aliases:
           - dhcp
   aliases:
@@ -257,7 +254,7 @@ def main():
 
         ipv4addrs=dict(type='list', aliases=['ipv4'], elements='dict', options=ipv4addr_spec, transform=ipv4addrs),
         ipv6addrs=dict(type='list', aliases=['ipv6'], elements='dict', options=ipv6addr_spec, transform=ipv6addrs),
-        configure_for_dns=dict(type='bool', required=False, aliases=['dns'], ib_req=True),
+        configure_for_dns=dict(type='bool', default=True, required=False, aliases=['dns'], ib_req=True),
         aliases=dict(type='list'),
 
         ttl=dict(type='int'),
