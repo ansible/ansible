@@ -126,7 +126,8 @@ class TaskResult:
                 if sub in self._result:
                     x[sub] = {}
                     for key in _SUB_PRESERVE[sub]:
-                        x[sub][key] = self._result[sub][key]
+                        if key in self._result[sub]:
+                            x[sub][key] = self._result[sub][key]
 
             result._result = x
         elif self._result:
