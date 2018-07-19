@@ -1739,32 +1739,36 @@ class ContainerManager(DockerBaseClass):
 
     def present(self, state):
         container = self._get_container(self.parameters.name)
-        image = self._get_image()
-        self.log(image, pretty_print=True)
-        if not container.exists:
-            # New container
-            self.log('No container found')
-            new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
-            if new_container:
-                container = new_container
-        else:
-            # Existing container
-            different, differences = container.has_different_configuration(image)
-            image_different = False
-            if not self.parameters.ignore_image:
-                image_different = self._image_is_different(image, container)
-            if image_different or different or self.parameters.recreate:
-                self.diff['differences'] = differences
-                if image_different:
-                    self.diff['image_different'] = True
-                self.log("differences")
-                self.log(differences, pretty_print=True)
-                if container.running:
-                    self.container_stop(container.Id)
-                self.container_remove(container.Id)
+
+        # If the image parameter was passed then we need to deal with the image
+        # version comparison, otherwise we should not care
+        if self.parameters.image:
+            image = self._get_image()
+            self.log(image, pretty_print=True)
+            if not container.exists:
+                # New container
+                self.log('No container found')
                 new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
                 if new_container:
                     container = new_container
+            else:
+                # Existing container
+                different, differences = container.has_different_configuration(image)
+                image_different = False
+                if not self.parameters.ignore_image:
+                    image_different = self._image_is_different(image, container)
+                if image_different or different or self.parameters.recreate:
+                    self.diff['differences'] = differences
+                    if image_different:
+                        self.diff['image_different'] = True
+                    self.log("differences")
+                    self.log(differences, pretty_print=True)
+                    if container.running:
+                        self.container_stop(container.Id)
+                    self.container_remove(container.Id)
+                    new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
+                    if new_container:
+                        container = new_container
 
         if container and container.exists:
             container = self.update_limits(container)
