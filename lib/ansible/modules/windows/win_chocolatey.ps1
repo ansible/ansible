@@ -33,7 +33,7 @@ $skipscripts = Get-AnsibleParam -obj $params -name "skip_scripts" -type "bool" -
 $proxy_url = Get-AnsibleParam -obj $params -name "proxy_url" -type "str"
 $proxy_username = Get-AnsibleParam -obj $params -name "proxy_username" -type "str"
 $proxy_password = Get-AnsibleParam -obj $params -name "proxy_password" -type "str" -failifempty ($proxy_username -ne $null)
-$x86 = Get-AnsibleParam -obj $params -name "x86"  -type "bool" -default $false
+$architecture = Get-AnsibleParam -obj $params -name "architecture"  -type "str" -default "default" -validateset "default","x86"
 
 $result = @{
     changed = $false 
@@ -194,7 +194,7 @@ Function Choco-Upgrade
         [string] $proxy_url,
         [string] $proxy_username,
         [string] $proxy_password,
-        [bool] $x86
+        [string] $architecture
     )
 
     if (-not (Choco-IsInstalled $package))
@@ -204,9 +204,8 @@ Function Choco-Upgrade
 
     $options = @( "-y", $package, "--timeout", "$timeout", "--failonunfound" )
 
-    if ($x86)
-    {
-        $options += "--x86"
+    switch ($architecture) {
+      "x86" { $options += "--x86" ; break}
     }
 
     if ($check_mode)
@@ -313,6 +312,7 @@ Function Choco-Upgrade
     $result.failed = $false
 }
 
+
 Function Choco-Install
 {
     [CmdletBinding()]
@@ -335,7 +335,7 @@ Function Choco-Install
         [string] $proxy_url,
         [string] $proxy_username,
         [string] $proxy_password,
-        [bool] $x86
+        [string] $architecture
     )
 
     if (Choco-IsInstalled $package)
@@ -348,7 +348,7 @@ Function Choco-Install
                 -ignorechecksums $ignorechecksums -ignoredependencies $ignoredependencies `
                 -allowdowngrade $allowdowngrade -proxy_url $proxy_url `
                 -proxy_username $proxy_username -proxy_password $proxy_password `
-                -allowprerelease $allowprerelease -x86 $x86
+                -allowprerelease $allowprerelease -architecture $architecture
             return
         }
         elseif (-not $force)
@@ -359,9 +359,8 @@ Function Choco-Install
 
     $options = @( "-y", $package, "--timeout", "$timeout", "--failonunfound" )
 
-    if ($x86)
-    {
-        $options += "--x86"
+    switch ($architecture) {
+      "x86" { $options += "--x86" ; break}
     }
 
     if ($check_mode)
@@ -542,7 +541,7 @@ if ($state -in ("downgrade", "latest", "present", "reinstalled")) {
         -ignorechecksums $ignorechecksums -ignoredependencies $ignoredependencies `
         -allowdowngrade ($state -eq "downgrade") -proxy_url $proxy_url `
         -proxy_username $proxy_username -proxy_password $proxy_password `
-        -allowprerelease $allowprerelease -x86 $x86
+        -allowprerelease $allowprerelease -architecture $architecture
 }
 
 Exit-Json -obj $result

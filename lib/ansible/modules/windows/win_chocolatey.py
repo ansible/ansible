@@ -51,12 +51,15 @@ options:
   source:
     description:
       - Specify source rather than using default chocolatey repository.
-  x86:
+  architecture:
     description:
-      - Install 32 bit version.
+      - Allows installation of alternative architecture packages, for example,
+        32bit on 64bit windows.
     version_added: '2.7'
-    type: bool
-    default: 'no'
+    choices:
+      - default
+      - x86
+    default: default
   install_args:
     description:
       - Arguments to pass to the native installer.
