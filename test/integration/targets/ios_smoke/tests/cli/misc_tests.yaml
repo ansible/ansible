@@ -19,4 +19,22 @@
     provider: "{{ cli }}"
   register: result
 
+- name: run ios commands to test command_timeout
+  ios_command:
+    commands:
+    - show running-config all
+    - show interfaces
+    - show running-config all
+  vars:
+    ansible_command_timeout: 1
+  ignore_errors: True
+  register: result
+  when: ansible_connection == 'network_cli'
+
+- assert:
+    that:
+      - 'result.failed == true'
+      - "'timeout trying to send command' in result.module_stderr"
+  when: ansible_connection == 'network_cli'
+
 - debug: msg="END ios_smoke cli/misc_tests.yaml on connection={{ ansible_connection }}"
