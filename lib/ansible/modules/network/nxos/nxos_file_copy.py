@@ -29,7 +29,7 @@ short_description: Copy a file to a remote NXOS device.
 description:
   - This module supports two different workflows for copying a file
     to flash (or bootflash) on NXOS devices.  Files can either be (1) pushed
-    from the Ansible Server to the device or (2) pulled from a remote SCP
+    from the Ansible controller to the device or (2) pulled from a remote SCP
     file server to the device.  File copies are initiated from the NXOS
     device to the remote SCP server.  This module only supports the
     use of connection C(network_cli) or C(Cli) transport with connection C(local).
@@ -54,10 +54,9 @@ requirements:
 options:
   local_file:
     description:
-      - When (file_pull is False) this is the path to the local file on the Ansible Server.
+      - When (file_pull is False) this is the path to the local file on the Ansible controller.
         The local directory must exist.
-      - When (file_pull is True) this is the file name used when the remote file is copied
-        from the SCP server to the NXOS device.
+      - When (file_pull is True) this is the file name used on the NXOS device.
   remote_file:
     description:
       - When (file_pull is False) this is the remote file path on the NXOS device.
@@ -78,8 +77,8 @@ options:
     version_added: "2.5"
   file_pull:
     description:
-      - When (False) File is copied from the Ansible Server to the NXOS device.
-      - When (True) File is copied from a remote SCP server to the NXOS device.
+      - When (False) file is copied from the Ansible controller to the NXOS device.
+      - When (True) file is copied from a remote SCP server to the NXOS device.
         In this mode, the file copy is initiated from the NXOS device.
       - If the file is already present on the device it will be overwritten and
         therefore the operation is NOT idempotent.
@@ -110,7 +109,7 @@ options:
 '''
 
 EXAMPLES = '''
-# File copy from ansible server to nxos device
+# File copy from ansible controller to nxos device
   - name: "copy from server to device"
     nxos_file_copy:
       local_file: "./test_file.txt"
@@ -121,6 +120,7 @@ EXAMPLES = '''
     nxos_file_copy:
       nxos_file_copy:
       file_pull: True
+      local_file: "xyz"
       remote_file: "/mydir/abc"
       remote_scp_server: "192.168.0.1"
       remote_scp_server_user: "myUser"
@@ -338,19 +338,19 @@ def main():
     if file_pull:
         if not HAS_PEXPECT:
             module.fail_json(
-                msg='library pexpect is required but does not appear to be '
+                msg='library pexpect is required when file_pull is True but does not appear to be '
                     'installed. It can be installed using `pip install pexpect`'
             )
     else:
         if not HAS_PARAMIKO:
             module.fail_json(
-                msg='library paramiko is required but does not appear to be '
+                msg='library paramiko is required when file_pull is False but does not appear to be '
                     'installed. It can be installed using `pip install paramiko`'
             )
 
         if not HAS_SCP:
             module.fail_json(
-                msg='library scp is required but does not appear to be '
+                msg='library scp is required when file_pull is False but does not appear to be '
                     'installed. It can be installed using `pip install scp`'
             )
     warnings = list()
