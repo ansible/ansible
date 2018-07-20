@@ -154,11 +154,11 @@ def get_zone_id(zone_name, current_zones):
 def get_product_ips(api_key, product):
     '''
     Returns a list of IPs allocated to the product. Function
-    execution is considered successful unless msg var is populated.
+    execution is considered successful unless msg var is not None.
     '''
     ips = []
     msg = None
-    payload = { 'name': product }
+    payload = {'name': product}
 
     api_method = 'server.info'
     has_failed, _msg, response = memset_api_call(api_key=api_key, api_method=api_method, payload=payload)
@@ -180,10 +180,10 @@ def get_primary_ip(api_key, product):
     '''
     Returns the primary IP of any product which should have one
     (servers, loadbalancers). Function execution is considered
-    successful unless msg var is populated.
+    successful unless msg var is not None.
     '''
     primary_ip, msg = None, None
-    payload = { 'name': product }
+    payload = {'name': product}
 
     api_method = 'server.info'
     has_failed, _msg, response = memset_api_call(api_key=api_key, api_method=api_method, payload=payload)
