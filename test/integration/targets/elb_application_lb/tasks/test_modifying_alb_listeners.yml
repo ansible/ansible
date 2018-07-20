@@ -88,7 +88,7 @@
         - not alb.changed
         - alb.listeners[0].rules|length == 2
 
-  - name: test a rule can be added and other rules will not be removed when purge_rules is no
+  - name: test a rule can be added and other rules will not be removed when purge_rules is no.
     elb_application_lb:
       name: "{{ alb_name }}"
       subnets: "{{ alb_subnets }}"
