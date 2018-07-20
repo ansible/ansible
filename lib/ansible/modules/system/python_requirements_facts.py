@@ -85,7 +85,10 @@ not_found:
   - riquests
 '''
 
-import re, sys, importlib, pkg_resources, operator
+import re
+import sys
+import pkg_resources
+import operator
 from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule
