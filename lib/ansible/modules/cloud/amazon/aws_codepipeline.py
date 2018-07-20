@@ -185,6 +185,8 @@ pipeline:
 import traceback
 from ansible.module_utils._text import to_native
 from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
+import botocore
 
 def create_pipeline(client, name, role_arn, artifact_store, stages, version, module):
     pipeline_dict = {'name': name, 'roleArn': role_arn, 'artifactStore': artifact_store, 'stages': stages}
