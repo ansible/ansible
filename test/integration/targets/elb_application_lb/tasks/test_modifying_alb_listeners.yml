@@ -94,7 +94,7 @@
       subnets: "{{ alb_subnets }}"
       security_groups: "{{ sec_group.group_id }}"
       state: present
-      purge_listeners: no
+      purge_rules: no
       listeners:
         - Protocol: HTTP
           Port: 80
