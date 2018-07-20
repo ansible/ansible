@@ -49,7 +49,6 @@ options:
                 description:
                     - When using git you can specify the clone depth as an integer here.
                 required: false
-                type: int
             buildspec:
                 description:
                     - The build spec declaration to use for the builds in this build project. Leave empty if part of the code project.
@@ -58,7 +57,6 @@ options:
                 description:
                     - Enable this flag to ignore SSL warnings while connecting to the project source code.
                 required: false
-                type: bool
     artifacts:
         description:
             - Information about the build output artifacts for the build project.
@@ -125,14 +123,12 @@ options:
             environment_variables:
                 description:
                     - A set of environment variables to make available to builds for the build project. List of dictionaries with name and value fields.
-                    - "Example: { name: 'MY_ENV_VARIABLE', value 'test' }"
+                    - "Example: { name: 'MY_ENV_VARIABLE', value: 'test' }"
                 required: false
-                type: list
             privileged_mode:
                 description:
                     - Enables running the Docker daemon inside a Docker container. Set to true only if the build project is be used to build Docker images.
                 required: false
-                type: bool
     service_role:
         description:
             - The ARN of the AWS IAM role that enables AWS CodeBuild to interact with dependent AWS services on behalf of the AWS account.
