@@ -281,11 +281,6 @@ project:
       returned: always
       type: string
       sample: 2018-04-17T16:56:03.245000+02:00
-    last_modified:
-      description: Timestamp of the time the project was last updated.
-      returned: always
-      type: string
-      sample: 2018-04-17T16:56:03.245000+02:00
 '''
 
 import traceback
@@ -313,19 +308,27 @@ def create_or_update_project(client, params, module):
 
     # Check if project with that name aleady exists and if so update existing:
     found = describe_project(client=client, name=name, module=module)
+    changed = False
 
     if 'name' in found:
-        found_last_modified = found['lastModified']
+        found_project = found
         resp = update_project(client=client, params=formatted_params, module=module)
-        update_last_modified = resp['project']['lastModified']
+        updated_project = resp['project']
 
-        if update_last_modified > found_last_modified:
-            resp['updated'] = True
-        return resp
+        # Prep both dicts for sensible change comparison:
+        found_project.pop('lastModified')
+        updated_project.pop('lastModified')
+        if 'tags' not in updated_project:
+            updated_project['tags'] = []
+
+        if updated_project != found_project:
+            changed = True
+        return resp, changed
     # Or create new project:
     try:
         resp = client.create_project(**formatted_params)
-        return resp
+        changed = True
+        return resp, changed
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Unable create project {0}: {1}".format(name, to_native(e)),
                          exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
@@ -349,9 +352,14 @@ def update_project(client, params, module):
 
 
 def delete_project(client, name, module):
+    found = describe_project(client=client, name=name, module=module)
+    changed = False
+    if 'name' in found:
+        # Mark as changed when a project with that name existed before calling delete
+        changed = True
     try:
         resp = client.delete_project(name=name)
-        return resp
+        return resp, changed
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Unable delete project {0}: {1}".format(name, to_native(e)),
                          exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
@@ -364,11 +372,12 @@ def describe_project(client, name, module):
     project = {}
     try:
         projects = client.batch_get_projects(names=[name])['projects']
-        if len(projects) > 0 and isinstance(projects[0], dict):
+        if len(projects) > 0:
             project = projects[0]
         return project
     except botocore.exceptions.ClientError as e:
-        return project
+        module.fail_json(msg="Client error when describing project {0}: {1}".format(name, to_native(e)),
+                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
     except botocore.exceptions.BotoCoreError as e:
         module.fail_json(msg="Error when calling client.batch_get_projects {0}: {1}".format(name, to_native(e)),
                          exception=traceback.format_exc())
@@ -403,15 +412,12 @@ def main():
     changed = False
 
     if state == 'present':
-        project_result = create_or_update_project(
+        project_result, changed = create_or_update_project(
             client=client_conn,
             params=module.params,
             module=module)
-        if project_result['updated']:
-            changed = True
     elif state == 'absent':
-        project_result = delete_project(client=client_conn, name=module.params['name'], module=module)
-        changed = True
+        project_result, changed = delete_project(client=client_conn, name=module.params['name'], module=module)
 
     module.exit_json(changed=changed, **camel_dict_to_snake_dict(project_result))
 
