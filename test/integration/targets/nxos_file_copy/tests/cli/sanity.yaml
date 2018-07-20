@@ -57,7 +57,7 @@
   - name: "Copy file using file_pull"
     nxos_file_copy: &copy_pull
       file_pull: True
-      file_pull_timeout: 60
+      file_pull_timeout: 1200
       local_file: "network-integration_copy.cfg"
       remote_file: "/network-integration.cfg"
       remote_scp_server: "{{ inventory_hostname_short }}"
