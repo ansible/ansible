@@ -209,9 +209,9 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a cluster
   gcp_container_cluster:
-      name: 'cluster-nodepool'
+      name: "cluster-nodepool"
       initial_node_count: 4
-      zone: 'us-central1-a'
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -221,13 +221,13 @@ EXAMPLES = '''
   register: cluster
 - name: create a node pool
   gcp_container_node_pool:
-      name: testObject
+      name: "testObject"
       initial_node_count: 4
       cluster: "{{ cluster }}"
-      zone: 'us-central1-a'
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
+      zone: us-central1-a
+      project: "testProject"
+      auth_kind: "service_account"
+      service_account_file: "/tmp/auth.pem"
       scopes:
         - https://www.googleapis.com/auth/cloud-platform
       state: present

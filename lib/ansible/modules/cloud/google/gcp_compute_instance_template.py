@@ -373,7 +373,7 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a network
   gcp_compute_network:
-      name: 'network-instancetemplate'
+      name: "network-instancetemplate"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -383,8 +383,8 @@ EXAMPLES = '''
   register: network
 - name: create a address
   gcp_compute_address:
-      name: 'address-instancetemplate'
-      region: 'us-west1'
+      name: "address-instancetemplate"
+      region: us-west1
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -394,23 +394,23 @@ EXAMPLES = '''
   register: address
 - name: create a instance template
   gcp_compute_instance_template:
-      name: testObject
+      name: "testObject"
       properties:
         disks:
-          - auto_delete: true
-            boot: true
-            initialize_params:
-              source_image: 'projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts'
+        - auto_delete: true
+          boot: true
+          initialize_params:
+            source_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts
         machine_type: n1-standard-1
         network_interfaces:
-          - network: "{{ network }}"
-            access_configs:
-              - name: 'test-config'
-                type: 'ONE_TO_ONE_NAT'
-                nat_ip: "{{ address }}"
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
+        - network: "{{ network }}"
+          access_configs:
+          - name: test-config
+            type: ONE_TO_ONE_NAT
+            nat_ip: "{{ address }}"
+      project: "testProject"
+      auth_kind: "service_account"
+      service_account_file: "/tmp/auth.pem"
       scopes:
         - https://www.googleapis.com/auth/compute
       state: present

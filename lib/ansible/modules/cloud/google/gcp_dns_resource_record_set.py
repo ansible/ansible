@@ -78,9 +78,9 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a managed zone
   gcp_dns_managed_zone:
-      name: 'managedzone-rrs'
-      dns_name: 'testzone-4.com.'
-      description: 'test zone'
+      name: "managedzone-rrs"
+      dns_name: testzone-4.com.
+      description: test zone
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -90,16 +90,16 @@ EXAMPLES = '''
   register: managed_zone
 - name: create a resource record set
   gcp_dns_resource_record_set:
-      name: 'www.testzone-4.com.'
+      name: www.testzone-4.com.
       managed_zone: "{{ managed_zone }}"
-      type: 'A'
+      type: A
       ttl: 600
       target:
-        - 10.1.2.3
-        - 40.5.6.7
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
+      - 10.1.2.3
+      - 40.5.6.7
+      project: "testProject"
+      auth_kind: "service_account"
+      service_account_file: "/tmp/auth.pem"
       scopes:
         - https://www.googleapis.com/auth/ndev.clouddns.readwrite
       state: present

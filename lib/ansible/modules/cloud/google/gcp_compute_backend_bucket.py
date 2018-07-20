@@ -82,7 +82,7 @@ notes:
 EXAMPLES = '''
 - name: create a bucket
   gcp_storage_bucket:
-      name: 'bucket-backendbucket'
+      name: "bucket-backendbucket"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -92,13 +92,13 @@ EXAMPLES = '''
   register: bucket
 - name: create a backend bucket
   gcp_compute_backend_bucket:
-      name: testObject
+      name: "testObject"
       bucket_name: "{{ bucket.name }}"
-      description: "A BackendBucket to connect LNB w/ Storage Bucket"
+      description: A BackendBucket to connect LNB w/ Storage Bucket
       enable_cdn: true
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
+      project: "testProject"
+      auth_kind: "service_account"
+      service_account_file: "/tmp/auth.pem"
       scopes:
         - https://www.googleapis.com/auth/cloud-platform
       state: present

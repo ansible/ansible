@@ -15,8 +15,8 @@
 # Pre-test setup
 - name: delete a address
   gcp_compute_address:
-      name: 'test-address1'
-      region: 'us-west1'
+      name: test-address1
+      region: us-west1
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -26,8 +26,8 @@
 #----------------------------------------------------------
 - name: create a address
   gcp_compute_address:
-      name: 'test-address1'
-      region: 'us-west1'
+      name: test-address1
+      region: us-west1
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -51,8 +51,8 @@
 # ----------------------------------------------------------------------------
 - name: create a address that already exists
   gcp_compute_address:
-      name: 'test-address1'
-      region: 'us-west1'
+      name: test-address1
+      region: us-west1
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -68,8 +68,8 @@
 #----------------------------------------------------------
 - name: delete a address
   gcp_compute_address:
-      name: 'test-address1'
-      region: 'us-west1'
+      name: test-address1
+      region: us-west1
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -95,8 +95,8 @@
 # ----------------------------------------------------------------------------
 - name: delete a address that does not exist
   gcp_compute_address:
-      name: 'test-address1'
-      region: 'us-west1'
+      name: test-address1
+      region: us-west1
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"

@@ -15,7 +15,7 @@
 # Pre-test setup
 - name: create a disk
   gcp_compute_disk:
-      name: 'disk-image'
+      name: "disk-image"
       zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -124,7 +124,7 @@
 # Post-test teardown
 - name: delete a disk
   gcp_compute_disk:
-      name: 'disk-image'
+      name: "disk-image"
       zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"

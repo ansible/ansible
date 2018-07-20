@@ -15,9 +15,9 @@
 # Pre-test setup
 - name: create a cluster
   gcp_container_cluster:
-      name: 'cluster-nodepool'
+      name: "cluster-nodepool"
       initial_node_count: 4
-      zone: 'us-central1-a'
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -30,7 +30,7 @@
       name: "{{ resource_name }}"
       initial_node_count: 4
       cluster: "{{ cluster }}"
-      zone: 'us-central1-a'
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -43,7 +43,7 @@
       name: "{{ resource_name }}"
       initial_node_count: 4
       cluster: "{{ cluster }}"
-      zone: 'us-central1-a'
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -61,7 +61,7 @@
       name: "{{ resource_name }}"
       initial_node_count: 4
       cluster: "{{ cluster }}"
-      zone: 'us-central1-a'
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -79,7 +79,7 @@
       name: "{{ resource_name }}"
       initial_node_count: 4
       cluster: "{{ cluster }}"
-      zone: 'us-central1-a'
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -97,7 +97,7 @@
       name: "{{ resource_name }}"
       initial_node_count: 4
       cluster: "{{ cluster }}"
-      zone: 'us-central1-a'
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -113,9 +113,9 @@
 # Post-test teardown
 - name: delete a cluster
   gcp_container_cluster:
-      name: 'cluster-nodepool'
+      name: "cluster-nodepool"
       initial_node_count: 4
-      zone: 'us-central1-a'
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"

@@ -252,17 +252,17 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a instance
   gcp_sql_instance:
-      name: testObject
+      name: "testObject"
       settings:
         ip_configuration:
           authorized_networks:
-            - name: 'google dns server'
-              value: '8.8.8.8/32'
+          - name: google dns server
+            value: 8.8.8.8/32
         tier: db-n1-standard-1
       region: us-central1
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
+      project: "testProject"
+      auth_kind: "service_account"
+      service_account_file: "/tmp/auth.pem"
       scopes:
         - https://www.googleapis.com/auth/sqlservice.admin
       state: present

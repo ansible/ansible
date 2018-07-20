@@ -183,7 +183,7 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a disk
   gcp_compute_disk:
-      name: 'disk-image'
+      name: "disk-image"
       zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -194,11 +194,11 @@ EXAMPLES = '''
   register: disk
 - name: create a image
   gcp_compute_image:
-      name: testObject
+      name: "testObject"
       source_disk: "{{ disk }}"
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
+      project: "testProject"
+      auth_kind: "service_account"
+      service_account_file: "/tmp/auth.pem"
       scopes:
         - https://www.googleapis.com/auth/compute
       state: present

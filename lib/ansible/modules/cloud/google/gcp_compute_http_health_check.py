@@ -109,14 +109,14 @@ notes:
 EXAMPLES = '''
 - name: create a http health check
   gcp_compute_http_health_check:
-      name: testObject
+      name: "testObject"
       healthy_threshold: 10
       port: 8080
       timeout_sec: 2
       unhealthy_threshold: 5
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
+      project: "testProject"
+      auth_kind: "service_account"
+      service_account_file: "/tmp/auth.pem"
       scopes:
         - https://www.googleapis.com/auth/compute
       state: present

@@ -19,8 +19,8 @@
       settings:
         ip_configuration:
           authorized_networks:
-            - name: 'google dns server'
-              value: '8.8.8.8/32'
+          - name: google dns server
+            value: 8.8.8.8/32
         tier: db-n1-standard-1
       region: us-central1
       project: "{{ gcp_project }}"
@@ -36,8 +36,8 @@
       settings:
         ip_configuration:
           authorized_networks:
-            - name: 'google dns server'
-              value: '8.8.8.8/32'
+          - name: google dns server
+            value: 8.8.8.8/32
         tier: db-n1-standard-1
       region: us-central1
       project: "{{ gcp_project }}"
@@ -67,8 +67,8 @@
       settings:
         ip_configuration:
           authorized_networks:
-            - name: 'google dns server'
-              value: '8.8.8.8/32'
+          - name: google dns server
+            value: 8.8.8.8/32
         tier: db-n1-standard-1
       region: us-central1
       project: "{{ gcp_project }}"
@@ -90,8 +90,8 @@
       settings:
         ip_configuration:
           authorized_networks:
-            - name: 'google dns server'
-              value: '8.8.8.8/32'
+          - name: google dns server
+            value: 8.8.8.8/32
         tier: db-n1-standard-1
       region: us-central1
       project: "{{ gcp_project }}"
@@ -123,8 +123,8 @@
       settings:
         ip_configuration:
           authorized_networks:
-            - name: 'google dns server'
-              value: '8.8.8.8/32'
+          - name: google dns server
+            value: 8.8.8.8/32
         tier: db-n1-standard-1
       region: us-central1
       project: "{{ gcp_project }}"

@@ -179,14 +179,14 @@ notes:
 EXAMPLES = '''
 - name: create a disk
   gcp_compute_disk:
-      name: testObject
+      name: "testObject"
       size_gb: 50
       disk_encryption_key:
-        raw_key: 'SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0='
-      zone: 'us-central1-a'
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
+        raw_key: SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0=
+      zone: us-central1-a
+      project: "testProject"
+      auth_kind: "service_account"
+      service_account_file: "/tmp/auth.pem"
       scopes:
         - https://www.googleapis.com/auth/compute
       state: present

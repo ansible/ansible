@@ -15,7 +15,7 @@
 # Pre-test setup
 - name: create a network
   gcp_compute_network:
-      name: 'network-subnetwork'
+      name: "network-subnetwork"
       auto_create_subnetworks: true
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -26,10 +26,10 @@
   register: network
 - name: delete a subnetwork
   gcp_compute_subnetwork:
-      name: 'ansiblenet'
-      region: 'us-west1'
+      name: ansiblenet
+      region: us-west1
       network: "{{ network }}"
-      ip_cidr_range: '172.16.0.0/16'
+      ip_cidr_range: 172.16.0.0/16
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -39,10 +39,10 @@
 #----------------------------------------------------------
 - name: create a subnetwork
   gcp_compute_subnetwork:
-      name: 'ansiblenet'
-      region: 'us-west1'
+      name: ansiblenet
+      region: us-west1
       network: "{{ network }}"
-      ip_cidr_range: '172.16.0.0/16'
+      ip_cidr_range: 172.16.0.0/16
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -58,10 +58,10 @@
 # ----------------------------------------------------------------------------
 - name: create a subnetwork that already exists
   gcp_compute_subnetwork:
-      name: 'ansiblenet'
-      region: 'us-west1'
+      name: ansiblenet
+      region: us-west1
       network: "{{ network }}"
-      ip_cidr_range: '172.16.0.0/16'
+      ip_cidr_range: 172.16.0.0/16
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -77,10 +77,10 @@
 #----------------------------------------------------------
 - name: delete a subnetwork
   gcp_compute_subnetwork:
-      name: 'ansiblenet'
-      region: 'us-west1'
+      name: ansiblenet
+      region: us-west1
       network: "{{ network }}"
-      ip_cidr_range: '172.16.0.0/16'
+      ip_cidr_range: 172.16.0.0/16
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -96,10 +96,10 @@
 # ----------------------------------------------------------------------------
 - name: delete a subnetwork that does not exist
   gcp_compute_subnetwork:
-      name: 'ansiblenet'
-      region: 'us-west1'
+      name: ansiblenet
+      region: us-west1
       network: "{{ network }}"
-      ip_cidr_range: '172.16.0.0/16'
+      ip_cidr_range: 172.16.0.0/16
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -116,7 +116,7 @@
 # Post-test teardown
 - name: delete a network
   gcp_compute_network:
-      name: 'network-subnetwork'
+      name: "network-subnetwork"
       auto_create_subnetworks: true
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"

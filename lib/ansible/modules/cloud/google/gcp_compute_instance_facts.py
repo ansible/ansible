@@ -57,10 +57,12 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name:  a instance facts
   gcp_compute_instance_facts:
-      zone: 'us-central1-a'
+      zone: us-central1-a
+      filters:
+      - name = testObject
       project: testProject
       auth_kind: service_account
-      service_account_file: /tmp/auth.pem
+      service_account_file: "/tmp/auth.pem"
       scopes:
         - https://www.googleapis.com/auth/compute
 '''

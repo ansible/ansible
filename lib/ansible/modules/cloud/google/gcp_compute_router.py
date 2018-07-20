@@ -117,7 +117,7 @@ notes:
 EXAMPLES = '''
 - name: create a network
   gcp_compute_network:
-      name: 'network-router'
+      name: "network-router"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -127,19 +127,19 @@ EXAMPLES = '''
   register: network
 - name: create a router
   gcp_compute_router:
-      name: testObject
+      name: "testObject"
       network: "{{ network }}"
       bgp:
         asn: 64514
-        advertise_mode: 'CUSTOM'
+        advertise_mode: CUSTOM
         advertised_groups:
-          - 'ALL_SUBNETS'
+        - ALL_SUBNETS
         advertised_ip_ranges:
-          - range: '1.2.3.4'
-          - range: '6.7.0.0/16'
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
+        - range: 1.2.3.4
+        - range: 6.7.0.0/16
+      project: "testProject"
+      auth_kind: "service_account"
+      service_account_file: "/tmp/auth.pem"
       scopes:
         - https://www.googleapis.com/auth/compute
       state: present

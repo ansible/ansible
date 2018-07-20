@@ -76,8 +76,8 @@ notes:
 EXAMPLES = '''
 - name: create a address
   gcp_compute_address:
-      name: 'address-vpngateway'
-      region: 'us-west1'
+      name: "address-vpngateway"
+      region: us-west1
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -87,7 +87,7 @@ EXAMPLES = '''
   register: address
 - name: create a network
   gcp_compute_network:
-      name: 'network-vpngateway'
+      name: "network-vpngateway"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -97,12 +97,12 @@ EXAMPLES = '''
   register: network
 - name: create a target vpn gateway
   gcp_compute_target_vpn_gateway:
-      name: testObject
+      name: "testObject"
       region: us-west1
       network: "{{ network }}"
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
+      project: "testProject"
+      auth_kind: "service_account"
+      service_account_file: "/tmp/auth.pem"
       scopes:
         - https://www.googleapis.com/auth/compute
       state: present

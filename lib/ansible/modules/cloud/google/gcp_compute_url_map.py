@@ -147,8 +147,8 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a instance group
   gcp_compute_instance_group:
-      name: 'instancegroup-urlmap'
-      zone: 'us-central1-a'
+      name: "instancegroup-urlmap"
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -158,7 +158,7 @@ EXAMPLES = '''
   register: instancegroup
 - name: create a http health check
   gcp_compute_http_health_check:
-      name: 'httphealthcheck-urlmap'
+      name: "httphealthcheck-urlmap"
       healthy_threshold: 10
       port: 8080
       timeout_sec: 2
@@ -172,11 +172,11 @@ EXAMPLES = '''
   register: healthcheck
 - name: create a backend service
   gcp_compute_backend_service:
-      name: 'backendservice-urlmap'
+      name: "backendservice-urlmap"
       backends:
-        - group: "{{ instancegroup }}"
+      - group: "{{ instancegroup }}"
       health_checks:
-        - "{{ healthcheck.selfLink }}"
+      - "{{ healthcheck.selfLink }}"
       enable_cdn: true
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -187,11 +187,11 @@ EXAMPLES = '''
   register: backendservice
 - name: create a url map
   gcp_compute_url_map:
-      name: testObject
+      name: "testObject"
       default_service: "{{ backendservice }}"
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
+      project: "testProject"
+      auth_kind: "service_account"
+      service_account_file: "/tmp/auth.pem"
       scopes:
         - https://www.googleapis.com/auth/compute
       state: present

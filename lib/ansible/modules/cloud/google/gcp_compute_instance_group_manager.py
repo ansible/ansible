@@ -109,7 +109,7 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a network
   gcp_compute_network:
-      name: 'network-instancetemplate'
+      name: "network-instancetemplate"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -119,8 +119,8 @@ EXAMPLES = '''
   register: network
 - name: create a address
   gcp_compute_address:
-      name: 'address-instancetemplate'
-      region: 'us-west1'
+      name: "address-instancetemplate"
+      region: us-west1
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -133,17 +133,17 @@ EXAMPLES = '''
       name: "{{ resource_name }}"
       properties:
         disks:
-          - auto_delete: true
-            boot: true
-            initialize_params:
-              source_image: 'projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts'
+        - auto_delete: true
+          boot: true
+          initialize_params:
+            source_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts
         machine_type: n1-standard-1
         network_interfaces:
-          - network: "{{ network }}"
-            access_configs:
-              - name: 'test-config'
-                type: 'ONE_TO_ONE_NAT'
-                nat_ip: "{{ address }}"
+        - network: "{{ network }}"
+          access_configs:
+          - name: test-config
+            type: ONE_TO_ONE_NAT
+            nat_ip: "{{ address }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -153,14 +153,14 @@ EXAMPLES = '''
   register: instancetemplate
 - name: create a instance group manager
   gcp_compute_instance_group_manager:
-      name: testObject
-      base_instance_name: 'test1-child'
+      name: "testObject"
+      base_instance_name: test1-child
       instance_template: "{{ instancetemplate }}"
       target_size: 3
-      zone: 'us-west1-a'
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
+      zone: us-west1-a
+      project: "testProject"
+      auth_kind: "service_account"
+      service_account_file: "/tmp/auth.pem"
       scopes:
         - https://www.googleapis.com/auth/compute
       state: present

@@ -15,7 +15,7 @@
 # Pre-test setup
 - name: create a network
   gcp_compute_network:
-      name: 'network-instancetemplate'
+      name: "network-instancetemplate"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -25,8 +25,8 @@
   register: network
 - name: create a address
   gcp_compute_address:
-      name: 'address-instancetemplate'
-      region: 'us-west1'
+      name: "address-instancetemplate"
+      region: us-west1
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -39,17 +39,17 @@
       name: "{{ resource_name }}"
       properties:
         disks:
-          - auto_delete: true
-            boot: true
-            initialize_params:
-              source_image: 'projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts'
+        - auto_delete: true
+          boot: true
+          initialize_params:
+            source_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts
         machine_type: n1-standard-1
         network_interfaces:
-          - network: "{{ network }}"
-            access_configs:
-              - name: 'test-config'
-                type: 'ONE_TO_ONE_NAT'
-                nat_ip: "{{ address }}"
+        - network: "{{ network }}"
+          access_configs:
+          - name: test-config
+            type: ONE_TO_ONE_NAT
+            nat_ip: "{{ address }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -62,17 +62,17 @@
       name: "{{ resource_name }}"
       properties:
         disks:
-          - auto_delete: true
-            boot: true
-            initialize_params:
-              source_image: 'projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts'
+        - auto_delete: true
+          boot: true
+          initialize_params:
+            source_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts
         machine_type: n1-standard-1
         network_interfaces:
-          - network: "{{ network }}"
-            access_configs:
-              - name: 'test-config'
-                type: 'ONE_TO_ONE_NAT'
-                nat_ip: "{{ address }}"
+        - network: "{{ network }}"
+          access_configs:
+          - name: test-config
+            type: ONE_TO_ONE_NAT
+            nat_ip: "{{ address }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -99,17 +99,17 @@
       name: "{{ resource_name }}"
       properties:
         disks:
-          - auto_delete: true
-            boot: true
-            initialize_params:
-              source_image: 'projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts'
+        - auto_delete: true
+          boot: true
+          initialize_params:
+            source_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts
         machine_type: n1-standard-1
         network_interfaces:
-          - network: "{{ network }}"
-            access_configs:
-              - name: 'test-config'
-                type: 'ONE_TO_ONE_NAT'
-                nat_ip: "{{ address }}"
+        - network: "{{ network }}"
+          access_configs:
+          - name: test-config
+            type: ONE_TO_ONE_NAT
+            nat_ip: "{{ address }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -128,17 +128,17 @@
       name: "{{ resource_name }}"
       properties:
         disks:
-          - auto_delete: true
-            boot: true
-            initialize_params:
-              source_image: 'projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts'
+        - auto_delete: true
+          boot: true
+          initialize_params:
+            source_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts
         machine_type: n1-standard-1
         network_interfaces:
-          - network: "{{ network }}"
-            access_configs:
-              - name: 'test-config'
-                type: 'ONE_TO_ONE_NAT'
-                nat_ip: "{{ address }}"
+        - network: "{{ network }}"
+          access_configs:
+          - name: test-config
+            type: ONE_TO_ONE_NAT
+            nat_ip: "{{ address }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -167,17 +167,17 @@
       name: "{{ resource_name }}"
       properties:
         disks:
-          - auto_delete: true
-            boot: true
-            initialize_params:
-              source_image: 'projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts'
+        - auto_delete: true
+          boot: true
+          initialize_params:
+            source_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts
         machine_type: n1-standard-1
         network_interfaces:
-          - network: "{{ network }}"
-            access_configs:
-              - name: 'test-config'
-                type: 'ONE_TO_ONE_NAT'
-                nat_ip: "{{ address }}"
+        - network: "{{ network }}"
+          access_configs:
+          - name: test-config
+            type: ONE_TO_ONE_NAT
+            nat_ip: "{{ address }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -194,8 +194,8 @@
 # Post-test teardown
 - name: delete a address
   gcp_compute_address:
-      name: 'address-instancetemplate'
-      region: 'us-west1'
+      name: "address-instancetemplate"
+      region: us-west1
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -205,7 +205,7 @@
   register: address
 - name: delete a network
   gcp_compute_network:
-      name: 'network-instancetemplate'
+      name: "network-instancetemplate"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"

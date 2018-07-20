@@ -128,7 +128,7 @@ notes:
 EXAMPLES = '''
 - name: create a network
   gcp_compute_network:
-      name: 'network-route'
+      name: "network-route"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -138,16 +138,16 @@ EXAMPLES = '''
   register: network
 - name: create a route
   gcp_compute_route:
-      name: testObject
-      dest_range: '192.168.6.0/24'
-      next_hop_gateway: 'global/gateways/default-internet-gateway'
+      name: "testObject"
+      dest_range: 192.168.6.0/24
+      next_hop_gateway: global/gateways/default-internet-gateway
       network: "{{ network }}"
       tags:
-        - backends
-        - databases
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
+      - backends
+      - databases
+      project: "testProject"
+      auth_kind: "service_account"
+      service_account_file: "/tmp/auth.pem"
       scopes:
         - https://www.googleapis.com/auth/compute
       state: present

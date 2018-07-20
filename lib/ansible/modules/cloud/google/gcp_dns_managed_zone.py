@@ -73,12 +73,12 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a managed zone
   gcp_dns_managed_zone:
-      name: testObject
+      name: "testObject"
       dns_name: test.somewild2.example.com.
-      description: 'test zone'
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
+      description: test zone
+      project: "testProject"
+      auth_kind: "service_account"
+      service_account_file: "/tmp/auth.pem"
       scopes:
         - https://www.googleapis.com/auth/ndev.clouddns.readwrite
       state: present

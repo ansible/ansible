@@ -87,8 +87,8 @@ notes:
 EXAMPLES = '''
 - name: create a instance group
   gcp_compute_instance_group:
-      name: 'instancegroup-targethttpsproxy'
-      zone: 'us-central1-a'
+      name: "instancegroup-targethttpsproxy"
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -98,7 +98,7 @@ EXAMPLES = '''
   register: instancegroup
 - name: create a http health check
   gcp_compute_http_health_check:
-      name: 'httphealthcheck-targethttpsproxy'
+      name: "httphealthcheck-targethttpsproxy"
       healthy_threshold: 10
       port: 8080
       timeout_sec: 2
@@ -112,11 +112,11 @@ EXAMPLES = '''
   register: healthcheck
 - name: create a backend service
   gcp_compute_backend_service:
-      name: 'backendservice-targethttpsproxy'
+      name: "backendservice-targethttpsproxy"
       backends:
-        - group: "{{ instancegroup }}"
+      - group: "{{ instancegroup }}"
       health_checks:
-        - "{{ healthcheck.selfLink }}"
+      - "{{ healthcheck.selfLink }}"
       enable_cdn: true
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -127,7 +127,7 @@ EXAMPLES = '''
   register: backendservice
 - name: create a url map
   gcp_compute_url_map:
-      name: 'urlmap-targethttpsproxy'
+      name: "urlmap-targethttpsproxy"
       default_service: "{{ backendservice }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -138,11 +138,10 @@ EXAMPLES = '''
   register: urlmap
 - name: create a ssl certificate
   gcp_compute_ssl_certificate:
-      name: 'sslcert-targethttpsproxy'
-      description: |
-        "A certificate for testing. Do not use this certificate in production"
+      name: "sslcert-targethttpsproxy"
+      description: A certificate for testing. Do not use this certificate in production
       certificate: |
-        -----BEGIN CERTIFICATE-----
+        --BEGIN CERTIFICATE--
         MIICqjCCAk+gAwIBAgIJAIuJ+0352Kq4MAoGCCqGSM49BAMCMIGwMQswCQYDVQQG
         EwJVUzETMBEGA1UECAwKV2FzaGluZ3RvbjERMA8GA1UEBwwIS2lya2xhbmQxFTAT
         BgNVBAoMDEdvb2dsZSwgSW5jLjEeMBwGA1UECwwVR29vZ2xlIENsb3VkIFBsYXRm
@@ -158,13 +157,13 @@ EXAMPLES = '''
         0YLKineDNq/BMAwGA1UdEwQFMAMBAf8wCgYIKoZIzj0EAwIDSQAwRgIhALs4vy+O
         M3jcqgA4fSW/oKw6UJxp+M6a+nGMX+UJR3YgAiEAvvl39QRVAiv84hdoCuyON0lJ
         zqGNhIPGq2ULqXKK8BY=
-        -----END CERTIFICATE-----
+        --END CERTIFICATE--
       private_key: |
-        -----BEGIN EC PRIVATE KEY-----
+        --BEGIN EC PRIVATE KEY--
         MHcCAQEEIObtRo8tkUqoMjeHhsOh2ouPpXCgBcP+EDxZCB/tws15oAoGCCqGSM49
         AwEHoUQDQgAEHGzpcRJ4XzfBJCCPMQeXQpTXwlblimODQCuQ4mzkzTv0dXyB750f
         OGN02HtkpBOZzzvUARTR10JQoSe2/5PIwQ==
-        -----END EC PRIVATE KEY-----
+        --END EC PRIVATE KEY--
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -174,13 +173,13 @@ EXAMPLES = '''
   register: sslcert
 - name: create a target https proxy
   gcp_compute_target_https_proxy:
-      name: testObject
+      name: "testObject"
       ssl_certificates:
-        - "{{ sslcert }}"
+      - "{{ sslcert }}"
       url_map: "{{ urlmap }}"
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
+      project: "testProject"
+      auth_kind: "service_account"
+      service_account_file: "/tmp/auth.pem"
       scopes:
         - https://www.googleapis.com/auth/compute
       state: present

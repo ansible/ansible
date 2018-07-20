@@ -15,8 +15,8 @@
 # Pre-test setup
 - name: create a instance group
   gcp_compute_instance_group:
-      name: 'instancegroup-targettcpproxy'
-      zone: 'us-central1-a'
+      name: "instancegroup-targettcpproxy"
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -26,7 +26,7 @@
   register: instancegroup
 - name: create a health check
   gcp_compute_health_check:
-      name: 'healthcheck-targettcpproxy'
+      name: "healthcheck-targettcpproxy"
       type: TCP
       tcp_health_check:
         port_name: service-health
@@ -44,12 +44,12 @@
   register: healthcheck
 - name: create a backend service
   gcp_compute_backend_service:
-      name: 'backendservice-targettcpproxy'
+      name: "backendservice-targettcpproxy"
       backends:
-        - group: "{{ instancegroup }}"
+      - group: "{{ instancegroup }}"
       health_checks:
-        - "{{ healthcheck.selfLink }}"
-      protocol: 'TCP'
+      - "{{ healthcheck.selfLink }}"
+      protocol: TCP
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -60,7 +60,7 @@
 - name: delete a target tcp proxy
   gcp_compute_target_tcp_proxy:
       name: "{{ resource_name }}"
-      proxy_header: 'PROXY_V1'
+      proxy_header: PROXY_V1
       service: "{{ backendservice }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -72,7 +72,7 @@
 - name: create a target tcp proxy
   gcp_compute_target_tcp_proxy:
       name: "{{ resource_name }}"
-      proxy_header: 'PROXY_V1'
+      proxy_header: PROXY_V1
       service: "{{ backendservice }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -90,7 +90,7 @@
 - name: create a target tcp proxy that already exists
   gcp_compute_target_tcp_proxy:
       name: "{{ resource_name }}"
-      proxy_header: 'PROXY_V1'
+      proxy_header: PROXY_V1
       service: "{{ backendservice }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -108,7 +108,7 @@
 - name: delete a target tcp proxy
   gcp_compute_target_tcp_proxy:
       name: "{{ resource_name }}"
-      proxy_header: 'PROXY_V1'
+      proxy_header: PROXY_V1
       service: "{{ backendservice }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -126,7 +126,7 @@
 - name: delete a target tcp proxy that does not exist
   gcp_compute_target_tcp_proxy:
       name: "{{ resource_name }}"
-      proxy_header: 'PROXY_V1'
+      proxy_header: PROXY_V1
       service: "{{ backendservice }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -144,12 +144,12 @@
 # Post-test teardown
 - name: delete a backend service
   gcp_compute_backend_service:
-      name: 'backendservice-targettcpproxy'
+      name: "backendservice-targettcpproxy"
       backends:
-        - group: "{{ instancegroup }}"
+      - group: "{{ instancegroup }}"
       health_checks:
-        - "{{ healthcheck.selfLink }}"
-      protocol: 'TCP'
+      - "{{ healthcheck.selfLink }}"
+      protocol: TCP
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -159,7 +159,7 @@
   register: backendservice
 - name: delete a health check
   gcp_compute_health_check:
-      name: 'healthcheck-targettcpproxy'
+      name: "healthcheck-targettcpproxy"
       type: TCP
       tcp_health_check:
         port_name: service-health
@@ -177,8 +177,8 @@
   register: healthcheck
 - name: delete a instance group
   gcp_compute_instance_group:
-      name: 'instancegroup-targettcpproxy'
-      zone: 'us-central1-a'
+      name: "instancegroup-targettcpproxy"
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"

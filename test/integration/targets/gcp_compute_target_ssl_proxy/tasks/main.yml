@@ -15,8 +15,8 @@
 # Pre-test setup
 - name: create a instance group
   gcp_compute_instance_group:
-      name: 'instancegroup-targetsslproxy'
-      zone: 'us-central1-a'
+      name: "instancegroup-targetsslproxy"
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -26,7 +26,7 @@
   register: instancegroup
 - name: create a health check
   gcp_compute_health_check:
-      name: 'healthcheck-targetsslproxy'
+      name: "healthcheck-targetsslproxy"
       type: TCP
       tcp_health_check:
         port_name: service-health
@@ -44,12 +44,12 @@
   register: healthcheck
 - name: create a backend service
   gcp_compute_backend_service:
-      name: 'backendservice-targetsslproxy'
+      name: "backendservice-targetsslproxy"
       backends:
-        - group: "{{ instancegroup }}"
+      - group: "{{ instancegroup }}"
       health_checks:
-        - "{{ healthcheck.selfLink }}"
-      protocol: 'SSL'
+      - "{{ healthcheck.selfLink }}"
+      protocol: SSL
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -59,11 +59,10 @@
   register: backendservice
 - name: create a ssl certificate
   gcp_compute_ssl_certificate:
-      name: 'sslcert-targetsslproxy'
-      description: |
-        "A certificate for testing. Do not use this certificate in production"
+      name: "sslcert-targetsslproxy"
+      description: A certificate for testing. Do not use this certificate in production
       certificate: |
-        -----BEGIN CERTIFICATE-----
+        --BEGIN CERTIFICATE--
         MIICqjCCAk+gAwIBAgIJAIuJ+0352Kq4MAoGCCqGSM49BAMCMIGwMQswCQYDVQQG
         EwJVUzETMBEGA1UECAwKV2FzaGluZ3RvbjERMA8GA1UEBwwIS2lya2xhbmQxFTAT
         BgNVBAoMDEdvb2dsZSwgSW5jLjEeMBwGA1UECwwVR29vZ2xlIENsb3VkIFBsYXRm
@@ -79,13 +78,13 @@
         0YLKineDNq/BMAwGA1UdEwQFMAMBAf8wCgYIKoZIzj0EAwIDSQAwRgIhALs4vy+O
         M3jcqgA4fSW/oKw6UJxp+M6a+nGMX+UJR3YgAiEAvvl39QRVAiv84hdoCuyON0lJ
         zqGNhIPGq2ULqXKK8BY=
-        -----END CERTIFICATE-----
+        --END CERTIFICATE--
       private_key: |
-        -----BEGIN EC PRIVATE KEY-----
+        --BEGIN EC PRIVATE KEY--
         MHcCAQEEIObtRo8tkUqoMjeHhsOh2ouPpXCgBcP+EDxZCB/tws15oAoGCCqGSM49
         AwEHoUQDQgAEHGzpcRJ4XzfBJCCPMQeXQpTXwlblimODQCuQ4mzkzTv0dXyB750f
         OGN02HtkpBOZzzvUARTR10JQoSe2/5PIwQ==
-        -----END EC PRIVATE KEY-----
+        --END EC PRIVATE KEY--
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -97,7 +96,7 @@
   gcp_compute_target_ssl_proxy:
       name: "{{ resource_name }}"
       ssl_certificates:
-        - "{{ sslcert }}"
+      - "{{ sslcert }}"
       service: "{{ backendservice }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -110,7 +109,7 @@
   gcp_compute_target_ssl_proxy:
       name: "{{ resource_name }}"
       ssl_certificates:
-        - "{{ sslcert }}"
+      - "{{ sslcert }}"
       service: "{{ backendservice }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -137,7 +136,7 @@
   gcp_compute_target_ssl_proxy:
       name: "{{ resource_name }}"
       ssl_certificates:
-        - "{{ sslcert }}"
+      - "{{ sslcert }}"
       service: "{{ backendservice }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -156,7 +155,7 @@
   gcp_compute_target_ssl_proxy:
       name: "{{ resource_name }}"
       ssl_certificates:
-        - "{{ sslcert }}"
+      - "{{ sslcert }}"
       service: "{{ backendservice }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -185,7 +184,7 @@
   gcp_compute_target_ssl_proxy:
       name: "{{ resource_name }}"
       ssl_certificates:
-        - "{{ sslcert }}"
+      - "{{ sslcert }}"
       service: "{{ backendservice }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -203,11 +202,10 @@
 # Post-test teardown
 - name: delete a ssl certificate
   gcp_compute_ssl_certificate:
-      name: 'sslcert-targetsslproxy'
-      description: |
-        "A certificate for testing. Do not use this certificate in production"
+      name: "sslcert-targetsslproxy"
+      description: A certificate for testing. Do not use this certificate in production
       certificate: |
-        -----BEGIN CERTIFICATE-----
+        --BEGIN CERTIFICATE--
         MIICqjCCAk+gAwIBAgIJAIuJ+0352Kq4MAoGCCqGSM49BAMCMIGwMQswCQYDVQQG
         EwJVUzETMBEGA1UECAwKV2FzaGluZ3RvbjERMA8GA1UEBwwIS2lya2xhbmQxFTAT
         BgNVBAoMDEdvb2dsZSwgSW5jLjEeMBwGA1UECwwVR29vZ2xlIENsb3VkIFBsYXRm
@@ -223,13 +221,13 @@
         0YLKineDNq/BMAwGA1UdEwQFMAMBAf8wCgYIKoZIzj0EAwIDSQAwRgIhALs4vy+O
         M3jcqgA4fSW/oKw6UJxp+M6a+nGMX+UJR3YgAiEAvvl39QRVAiv84hdoCuyON0lJ
         zqGNhIPGq2ULqXKK8BY=
-        -----END CERTIFICATE-----
+        --END CERTIFICATE--
       private_key: |
-        -----BEGIN EC PRIVATE KEY-----
+        --BEGIN EC PRIVATE KEY--
         MHcCAQEEIObtRo8tkUqoMjeHhsOh2ouPpXCgBcP+EDxZCB/tws15oAoGCCqGSM49
         AwEHoUQDQgAEHGzpcRJ4XzfBJCCPMQeXQpTXwlblimODQCuQ4mzkzTv0dXyB750f
         OGN02HtkpBOZzzvUARTR10JQoSe2/5PIwQ==
-        -----END EC PRIVATE KEY-----
+        --END EC PRIVATE KEY--
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -239,12 +237,12 @@
   register: sslcert
 - name: delete a backend service
   gcp_compute_backend_service:
-      name: 'backendservice-targetsslproxy'
+      name: "backendservice-targetsslproxy"
       backends:
-        - group: "{{ instancegroup }}"
+      - group: "{{ instancegroup }}"
       health_checks:
-        - "{{ healthcheck.selfLink }}"
-      protocol: 'SSL'
+      - "{{ healthcheck.selfLink }}"
+      protocol: SSL
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -254,7 +252,7 @@
   register: backendservice
 - name: delete a health check
   gcp_compute_health_check:
-      name: 'healthcheck-targetsslproxy'
+      name: "healthcheck-targetsslproxy"
       type: TCP
       tcp_health_check:
         port_name: service-health
@@ -272,8 +270,8 @@
   register: healthcheck
 - name: delete a instance group
   gcp_compute_instance_group:
-      name: 'instancegroup-targetsslproxy'
-      zone: 'us-central1-a'
+      name: "instancegroup-targetsslproxy"
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"

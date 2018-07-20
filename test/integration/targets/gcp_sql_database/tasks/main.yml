@@ -15,12 +15,12 @@
 # Pre-test setup
 - name: create a instance
   gcp_sql_instance:
-      name: 'instance-database'
+      name: "instance-database"
       settings:
         ip_configuration:
           authorized_networks:
-            - name: 'google dns server'
-              value: '8.8.8.8/32'
+          - name: google dns server
+            value: 8.8.8.8/32
         tier: db-n1-standard-1
       region: us-central1
       project: "{{ gcp_project }}"
@@ -33,7 +33,7 @@
 - name: delete a database
   gcp_sql_database:
       name: "{{ resource_name }}"
-      charset: 'utf8'
+      charset: utf8
       instance: "{{ instance }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -45,7 +45,7 @@
 - name: create a database
   gcp_sql_database:
       name: "{{ resource_name }}"
-      charset: 'utf8'
+      charset: utf8
       instance: "{{ instance }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -71,7 +71,7 @@
 - name: create a database that already exists
   gcp_sql_database:
       name: "{{ resource_name }}"
-      charset: 'utf8'
+      charset: utf8
       instance: "{{ instance }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -89,7 +89,7 @@
 - name: delete a database
   gcp_sql_database:
       name: "{{ resource_name }}"
-      charset: 'utf8'
+      charset: utf8
       instance: "{{ instance }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -117,7 +117,7 @@
 - name: delete a database that does not exist
   gcp_sql_database:
       name: "{{ resource_name }}"
-      charset: 'utf8'
+      charset: utf8
       instance: "{{ instance }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -135,12 +135,12 @@
 # Post-test teardown
 - name: delete a instance
   gcp_sql_instance:
-      name: 'instance-database'
+      name: "instance-database"
       settings:
         ip_configuration:
           authorized_networks:
-            - name: 'google dns server'
-              value: '8.8.8.8/32'
+          - name: google dns server
+            value: 8.8.8.8/32
         tier: db-n1-standard-1
       region: us-central1
       project: "{{ gcp_project }}"

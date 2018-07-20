@@ -98,7 +98,7 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a bucket
   gcp_storage_bucket:
-      name: 'bucket-bac'
+      name: "bucket-bac"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -109,11 +109,11 @@ EXAMPLES = '''
 - name: create a bucket access control
   gcp_storage_bucket_access_control:
       bucket: "{{ bucket }}"
-      entity: 'user-alexstephen@google.com'
-      role: 'WRITER'
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
+      entity: user-alexstephen@google.com
+      role: WRITER
+      project: "testProject"
+      auth_kind: "service_account"
+      service_account_file: "/tmp/auth.pem"
       scopes:
         - https://www.googleapis.com/auth/devstorage.full_control
       state: present
