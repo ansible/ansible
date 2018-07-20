@@ -1643,4 +1643,13 @@ YAML_FILENAME_EXTENSIONS:
     - section: defaults
       key: yaml_valid_extensions
   type: list
+NETCONF_SSH_CONFIG:
+  description: This variable is used to enable bastion/jump host with netconf connection. If set to True the bastion/jump
+               host ssh settings should be present in ~/.ssh/config file, alternatively it can be set
+               to custom ssh configuration file path to read the bastion/jump host settings.
+  env: [{name: ANSIBLE_NETCONF_SSH_CONFIG}]
+  ini:
+  - {key: ssh_config, section: netconf_connection}
+  yaml: {key: netconf_connection.ssh_config}
+  default: null
 ...
