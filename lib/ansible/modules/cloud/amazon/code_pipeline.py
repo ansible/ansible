@@ -13,16 +13,16 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: code_pipeline
+module: aws_codepipeline
 short_description: Create or delete AWS CodePipeline
 notes:
     - for details of the parameters and returns see U(http://boto3.readthedocs.io/en/latest/reference/services/codepipeline.html)
 description:
     - Create or delete a CodePipeline on AWS.
-version_added: "2.6"
+version_added: "2.7"
 author:
     - Stefan Horning (@stefanhorning) <horning@mediapeers.com>
-requirements: [ json, botocore, boto3 ]
+requirements: [ botocore, boto3 ]
 options:
     name:
         description:
@@ -36,10 +36,24 @@ options:
         description:
             - Location information where articacts are stored (on S3). Dictionary with fields type and location.
         required: true
+        suboptions:
+            type:
+                description:
+                    - Type of the artifacts storage (only 'S3' is currently supported).
+            location:
+                description:
+                    - Bucket name for artifacts.
     stages:
         description:
-            - List of stages to perfoem in the CodePipeline. List of dictionaries
+            - List of stages to perform in the CodePipeline. List of dictionaries containing name and actions for each stage.
         required: true
+        suboptions:
+            name:
+                description:
+                    - Name of the stage (step) in the codepipeline
+            actions:
+                description:
+                    - List of action configurations for that stage.
     version:
         description:
             - Version number of the pipeline. This number is automatically incremented when a pipeline is updated.
@@ -163,21 +177,14 @@ pipeline:
       returned: always
       type: list
     version:
-      description: THe version number of the pipeline. This number is auto incremented when pipeline params are changed.
+      description: The version number of the pipeline. This number is auto incremented when pipeline params are changed.
       returned: always
       type: int
 '''
 
 import traceback
 from ansible.module_utils._text import to_native
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict, boto3_conn, ec2_argument_spec, get_aws_connection_info
-
-try:
-    import botocore
-except ImportError:
-    pass  # will be detected by imported HAS_BOTO3
-
+from ansible.module_utils.aws.core import AnsibleAWSModule
 
 def create_pipeline(client, name, role_arn, artifact_store, stages, version, module):
     pipeline_dict = {'name': name, 'roleArn': role_arn, 'artifactStore': artifact_store, 'stages': stages}
@@ -221,37 +228,29 @@ def delete_pipeline(client, name, module):
 def describe_pipeline(client, name, version, module):
     pipeline = {}
     try:
-        if isinstance(version, int) is int:
+        if version is not None:
             pipeline = client.get_pipeline(name=name, version=version)
             return pipeline
         else:
             pipeline = client.get_pipeline(name=name)
             return pipeline
-    except botocore.exceptions.ClientError as e:
+    except is_boto3_error_code('PipelineNotFoundException'):
         return pipeline
-    except botocore.exceptions.BotoCoreError as e:
-        module.fail_json(msg="Error when calling client.get_pipeline {0}: {1}".format(name, to_native(e)),
-                         exception=traceback.format_exc())
-
+    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:  # pylint: disable=duplicate-except
+            module.fail_json_aws(e)
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         name=dict(required=True, type='str'),
         role_arn=dict(required=True, type='str'),
         artifact_store=dict(required=True, type='dict'),
         stages=dict(required=True, type='list'),
-        version=dict(required=False, type='int'),
+        version=dict(type='int'),
         state=dict(choices=['present', 'absent'], default='present')
-    ))
+    )
 
-    module = AnsibleModule(argument_spec=argument_spec)
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 is required.')
-
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-    client_conn = boto3_conn(module, conn_type='client', resource='codepipeline', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    module = AnsibleAWSModule(argument_spec=argument_spec)
+    client_conn = module.client('codepipeline')
 
     state = module.params.get('state')
     changed = False
@@ -267,7 +266,7 @@ def main():
             pipeline_dict['roleArn'] = module.params['role_arn']
             pipeline_dict['artifactStore'] = module.params['artifact_store']
             pipeline_dict['stages'] = module.params['stages']
-            if isinstance(module.params['version'], int):
+            if module.params['version'] is not None:
                 pipeline_dict['version'] = module.params['version']
 
             pipeline_result = update_pipeline(client=client_conn, pipeline_dict=pipeline_dict, module=module)
