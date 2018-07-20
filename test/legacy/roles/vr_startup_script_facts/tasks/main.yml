@@ -1,0 +1,30 @@
+# Copyright (c) 2018, Yanis Guenane <yanis+ansible@guenane.org>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: Create the script
+  vr_startup_script:
+    name: '{{ startup_script_name }}'
+    script_type: '{{ startup_script_type }}'
+    script: '{{ startup_script_content }}'
+
+- name: test gather vultr startup script facts in check mode
+  vr_startup_script_facts:
+  check_mode: yes
+
+- name: verify test gather vultr startup script facts in check mode
+  assert:
+    that:
+    - ansible_facts.vultr_startup_script_facts|selectattr('name','equalto','{{ startup_script_name }}') | list | count == 1
+
+- name: test gather vultr startup script facts
+  vr_startup_script_facts:
+
+- name: verify test gather vultr startup script facts
+  assert:
+    that:
+    - ansible_facts.vultr_startup_script_facts|selectattr('name','equalto','{{ startup_script_name }}') | list | count == 1
+
+- name: Delete the script
+  vr_startup_script:
+    name: '{{ startup_script_name }}'
+    state: absent

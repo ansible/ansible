@@ -1,0 +1,3 @@
+startup_script_name: myteststartupscript
+startup_script_type: boot
+startup_script_content: "#!/bin/bash\necho Hello World > /root/hello"
