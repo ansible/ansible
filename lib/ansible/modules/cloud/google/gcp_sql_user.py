@@ -339,7 +339,7 @@ def async_op_url(module, extra_data=None):
 def wait_for_operation(module, response):
     op_result = return_if_object(module, response, 'sql#operation')
     if op_result is None:
-        return None
+        return {}
     status = navigate_hash(op_result, ['status'])
     wait_for_completion(status, op_result, module)
     return fetch_wrapped_resource(module, 'sql#user', 'sql#usersList', 'items')
