@@ -6,6 +6,8 @@ Other Tools And Programs
 
 The Ansible community provides several useful tools for working with the Ansible project. This is a list of some of the most popular of these tools.
 
+If you know of any other tools that should be added, this list can be updated by clicking "Edit on GitHub" on the top right of this page.
+
 *******
 Editors
 *******
@@ -21,12 +23,14 @@ YAML. You can install it on Linux, OSX and Windows.
 * `Language YAML <https://github.com/atom/language-yaml>`_
 
 
-Pycharm
+PyCharm
 =======
 
 Is a full IDE to develop Python software. It has all the needed parts to be able to write
 python scripts and complete software. Is a little overkill for writing roles/playbooks but, it can
-be a very useful tool if you write modules and submit code for Ansible.
+be a very useful tool if you write modules and submit code for Ansible. Can be used to debug the Ansible engine.
+
+* Yaml supported out of the box
 
 
 Sublime
@@ -62,7 +66,7 @@ Validating Playbooks
 ********************
 
 - `Ansible Lint <https://github.com/willthames/ansible-lint>`_ is a widely used, highly configurable best-practices linter for Ansible playbooks.
-- `Ansible Review <http://willthames.github.io/2016/06/28/announcing-ansible-review.html>`_ is an extension of Ansible Lint designed for code review.
+- `Ansible Review <https://github.com/willthames/ansible-review>`_ is an extension of Ansible Lint designed for code review.
 - `Molecule <http://github.com/metacloud/molecule>`_ A testing framework for Ansible plays and roles.
 
 ********
