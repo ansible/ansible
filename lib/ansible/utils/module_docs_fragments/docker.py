@@ -61,8 +61,7 @@ options:
             - tls_client_key
     ssl_version:
         description:
-            - Provide a valid SSL version number. Default value determined by docker-py, currently 1.0.
-        default: "1.0"
+            - Provide a valid SSL version number. Default value determined by ssl.py module.
     tls:
         description:
             -  Secure the connection to the API by using TLS without verifying the authenticity of the Docker host
