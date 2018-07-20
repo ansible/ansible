@@ -19,13 +19,8 @@ description:
 version_added: "2.7"
 options:
   dependencies:
-    description:
-    - A list of version-likes or module names to check for installation. Supported operators: <, >, <=, >=, or ==
-    examples:
-    - ansible
-    - boto3>=1.6
-    - requests>2
-
+    description: A list of version-likes or module names to check for installation. Supported operators: <, >, <=, >=, or ==
+    examples: '[ansible, boto3>=1.6, requests>2]'
 author:
 - Will Thames (@willthames)
 - Ryan Scott Brown (@ryan_sb)
