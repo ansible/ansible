@@ -60,7 +60,7 @@ AWS
 * Inventory plugin for RDS
 * Count support for `ec2_instance`
 * `aws_eks` module `pr #41183 <https://github.com/ansible/ansible/pull/41183>`_
-* Cloudformation stack sets support
+* Cloudformation stack sets support (`PR#41669 <https://github.com/ansible/ansible/pull/41669>`_)
 * RDS instance and snapshot modules
 * Diff mode improvements for cloud modules
 
