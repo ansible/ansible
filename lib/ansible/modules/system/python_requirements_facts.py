@@ -86,9 +86,15 @@ not_found:
 
 import re
 import sys
-import pkg_resources
 import operator
-from distutils.version import LooseVersion
+
+HAS_DISTUTILS = False
+try:
+    import pkg_resources
+    from distutils.version import LooseVersion
+    HAS_DISTUTILS = True
+except ImportError:
+    pass
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -108,6 +114,13 @@ def main():
         ),
         supports_check_mode=True,
     )
+    if not HAS_DISTUTILS:
+        module.fail_json(
+            msg='Could not import "distutils" and "pkg_resources" libraries to introspect python environment.',
+            python=sys.executable,
+            python_version=sys.version,
+            python_system_path=sys.path,
+        )
     pkg_dep_re = re.compile(r'(^[a-zA-Z][a-zA-Z0-9_]+)(==|[><]=?)?([0-9.]+)?$')
 
     results = dict(
