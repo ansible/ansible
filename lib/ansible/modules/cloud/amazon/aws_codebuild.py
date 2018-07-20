@@ -19,7 +19,7 @@ notes:
     - for details of the parameters and returns see U(http://boto3.readthedocs.io/en/latest/reference/services/codebuild.html)
 description:
     - Create or delete a CodeBuild projects on AWS, used for building code artifacts from source code.
-version_added: "2.6"
+version_added: "2.7"
 author:
     - Stefan Horning (@stefanhorning) <horning@mediapeers.com>
 requirements: [ botocore, boto3 ]
