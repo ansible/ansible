@@ -138,6 +138,35 @@ options:
     vars:
     - name: ansible_psrp_configuration_name
     default: Microsoft.PowerShell
+
+  persistent_connect_timeout:
+    type: int
+    description:
+      - Configures, in seconds, the amount of time to wait when trying to
+        initially establish a persistent connection.  If this value expires
+        before the connection to the remote device is completed, the connection
+        will fail
+    default: 30
+    ini:
+      - section: persistent_connection
+        key: connect_timeout
+    env:
+      - name: ANSIBLE_PERSISTENT_CONNECT_TIMEOUT
+  persistent_command_timeout:
+    type: int
+    description:
+      - Configures, in seconds, the amount of time to wait for a command to
+        return from the remote device.  If this timer is exceeded before the
+        command returns, the connection plugin will raise an exception and
+        close
+    default: 10
+    ini:
+      - section: persistent_connection
+        key: command_timeout
+    env:
+      - name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT
+    vars:
+      - name: ansible_command_timeout
 """
 
 import base64
@@ -146,6 +175,7 @@ import os
 
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.errors import AnsibleFileNotFound
+from ansible.module_utils.connection import Connection as SocketConnection
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase
@@ -180,7 +210,8 @@ class Connection(ConnectionBase):
     become_methods = ['runas']
     allow_executable = False
     has_pipelining = True
-    allow_extras = True
+    # allow_extras = True  # TODO: doesn't work with ansible-connection
+    force_persistence = True
 
     def __init__(self, *args, **kwargs):
         self.always_pipeline_modules = True
@@ -238,10 +269,12 @@ class Connection(ConnectionBase):
         self._connect()
 
     def exec_command(self, cmd, in_data=None, sudoable=True):
-        super(Connection, self).exec_command(cmd, in_data=in_data,
-                                             sudoable=sudoable)
+        connection = SocketConnection(self.socket_path)
+        out = connection.run_command(cmd, to_text(in_data))
+        return tuple(out)
 
-        if cmd == "-" and not in_data.startswith(b"#!"):
+    def run_command(self, cmd, in_data):
+        if cmd == "-" and not in_data.startswith("#!"):
             # The powershell plugin sets cmd to '-' when we are executing a
             # PowerShell script with in_data being the script to execute.
             script = in_data
@@ -464,8 +497,9 @@ if ($bytes_read -gt 0) {
         supported_args = []
         for auth_kwarg in AUTH_KWARGS.values():
             supported_args.extend(auth_kwarg)
-        extra_args = set([v.replace('ansible_psrp_', '') for v in
-                          self.get_option('_extras')])
+        #extra_args = set([v.replace('ansible_psrp_', '') for v in
+        #                  self.get_option('_extras')])
+        extra_args = set([])
         unsupported_args = extra_args.difference(supported_args)
 
         for arg in unsupported_args:
