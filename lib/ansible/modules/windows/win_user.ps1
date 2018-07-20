@@ -40,82 +40,50 @@ function Get-Group($grp) {
     return
 }
 
-Function Invoke-Win32Api {
-    # Inspired by - Call a Win32 API in PowerShell without compiling C# code on
-    # the disk
-    # http://www.leeholmes.com/blog/2007/10/02/managing-ini-files-with-powershell/
-    # https://blogs.technet.microsoft.com/heyscriptingguy/2013/06/27/use-powershell-to-interact-with-the-windows-api-part-3/
-    param(
-        [Parameter(Mandatory=$true)] [String]$DllName,
-        [Parameter(Mandatory=$true)] [String]$MethodName,
-        [Parameter(Mandatory=$true)] [Type]$ReturnType,
-        [Type[]]$ParameterTypes = [Type[]]@(),
-        [Object[]]$Parameters = [Object[]]@()
-    )
-    $assembly = New-Object -TypeName System.Reflection.AssemblyName -ArgumentList "Win32ApiAssembly"
-    $dynamic_assembly = [AppDomain]::CurrentDomain.DefineDynamicAssembly($assembly, [Reflection.Emit.AssemblyBuilderAccess]::Run)
-
-    $dynamic_module = $dynamic_assembly.DefineDynamicModule("Win32Module", $false)
-    $dynamic_type = $dynamic_module.DefineType("Win32Type", [Reflection.TypeAttributes]"Public, Class")
-
-    # Need to manually get the reference type if the ParameterType is [Ref], we
-    # define this based on the Parameter type at the same index
-    $parameter_types = $ParameterTypes.Clone()
-    for ($i = 0; $i -lt $ParameterTypes.Length; $i++) {
-        if ($ParameterTypes[$i] -eq [Ref]) {
-            $parameter_types[$i]  = $Parameters[$i].Value.GetType().MakeByRefType()
-        }
-    }
-
-    # Next, the method is created where we specify the name, parameters and
-    # return type that is expected
-    $dynamic_method = $dynamic_type.DefineMethod(
-        $MethodName,
-        [Reflection.MethodAttributes]"Public, Static",
-        $ReturnType,
-        $parameter_types
-    )
-
-    # Build the attributes (DllImport) part of the method where the DLL
-    # SetLastError and CharSet are applied
-    $constructor = [Runtime.InteropServices.DllImportAttribute].GetConstructor([String])
-    $method_fields = [Reflection.FieldInfo[]]@(
-        [Runtime.InteropServices.DllImportAttribute].GetField("SetLastError"),
-        [Runtime.InteropServices.DllImportAttribute].GetField("CharSet")
-    )
-    $method_fields_values = [Object[]]@($true, [Runtime.InteropServices.CharSet]::Auto)
-    $custom_attributes = New-Object -TypeName Reflection.Emit.CustomAttributeBuilder -ArgumentList @(
-        $constructor,
-        $DllName,
-        $method_fields,
-        $method_fields_values
-    )
-    $dynamic_method.SetCustomAttribute($custom_attributes)
-
-    $win32_type = $dynamic_type.CreateType()
-    $result = $win32_type::$MethodName.Invoke($Parameters)
-    return $result
-}
-
 Function Test-LocalCredential {
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingUserNameAndPassWordParams", "", Justification="We need to use the plaintext pass in the Win32 call, also the source isn't a secure string to using that is just a waste of time/code")]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingPlainTextForPassword", "", Justification="See above")]
     param([String]$Username, [String]$Password)
 
+    $platform_util = @'
+using System;
+using System.Runtime.InteropServices;
+
+namespace Ansible
+{
+    public class WinUserPInvoke
+    {
+        [DllImport("advapi32.dll", SetLastError = true)]
+        public static extern bool LogonUser(
+            string lpszUsername,
+            string lpszDomain,
+            string lpszPassword,
+            UInt32 dwLogonType,
+            UInt32 dwLogonProvider,
+            out IntPtr phToken);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool CloseHandle(
+            IntPtr hObject);
+    }
+}
+'@
+
+    $original_tmp = $env:TMP
+    $original_temp = $env:TEMP
+    $env:TMP = $_remote_tmp
+    $env:TEMP = $_remote_tmp
+    Add-Type -TypeDefinition $platform_util
+    $env:TMP = $original_tmp
+    $env:TEMP = $original_temp
+
     $handle = [IntPtr]::Zero
-    $logon_res = Invoke-Win32Api -DllName advapi32.dll `
-        -MethodName LogonUserW `
-        -ReturnType ([bool]) `
-        -ParameterTypes @([String], [String], [String], [UInt32], [UInt32], [Ref]) `
-        -Parameters @($Username, $null, $Password, $LOGON32_LOGON_NETWORK, $LOGON32_PROVIDER_DEFAULT, [Ref]$handle)
+    $logon_res = [Ansible.WinUserPInvoke]::LogonUser($Username, $null, $Password,
+        $LOGON32_LOGON_NETWORK, $LOGON32_PROVIDER_DEFAULT, [Ref]$handle)
 
     if ($logon_res) {
         $valid_credentials = $true
-        Invoke-Win32Api -DllName kernel32.dll `
-            -MethodName CloseHandle `
-            -ReturnType ([bool]) `
-            -ParameterTypes @([IntPtr]) `
-            -Parameters @($handle) > $null
+        [Ansible.WinUserPInvoke]::CloseHandle($handle) > $null
     } else {
         $err_code = [System.Runtime.InteropServices.Marshal]::GetLastWin32Error()
         # following errors indicate the creds are correct but the user was
@@ -146,6 +114,7 @@ Function Test-LocalCredential {
 ########
 
 $params = Parse-Args $args;
+$_remote_tmp = Get-AnsibleParam $params "_ansible_remote_tmp" -type "path" -default $env:TMP
 
 $result = @{
     changed = $false
