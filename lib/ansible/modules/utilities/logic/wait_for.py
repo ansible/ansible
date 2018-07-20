@@ -27,6 +27,7 @@ description:
        absent on the filesystem.
      - In 1.8 and later, this module can also be used to wait for active connections to be closed before continuing, useful if a node
        is being rotated out of a load balancer pool.
+     - In 2.7 and later, this module can wait for a filelock to become available on non-windows hosts.
      - For Windows targets, use the M(win_wait_for) module instead.
 version_added: "0.7"
 options:
@@ -57,16 +58,17 @@ options:
     version_added: "2.3"
   state:
     description:
-      - Either C(present), C(started), or C(stopped), C(absent), or C(drained).
       - When checking a port C(started) will ensure the port is open, C(stopped) will check that it is closed, C(drained) will check for active connections.
       - When checking for a file or a search string C(present) or C(started) will ensure that the file or string is present before continuing,
         C(absent) will check that file is absent or removed.
-    choices: [ absent, drained, present, started, stopped ]
+      - C(unlocked) will ensure that a C(path) file is unlocked for writing. (Added in 2.7)
+    choices: [ absent, drained, present, started, stopped, unlocked ]
     default: started
   path:
     version_added: "1.4"
     description:
       - Path to a file on the filesystem that must exist before continuing.
+      - Specify state C(unlocked) to test if a file lock is present.
   search_regex:
     version_added: "1.4"
     description:
@@ -139,6 +141,13 @@ EXAMPLES = r'''
     path: /var/lock/file.lock
     state: absent
 
+- name: Wait for /var/lib/dpkg/lock to become unlocked, or, fail
+  wait_for:
+    path: /var/lib/dpkg/lock
+    state: unlocked
+    timeout: 5
+  become: true
+
 - name: Wait until the process is finished and pid was destroyed
   wait_for:
     path: /proc/3466/status
@@ -180,6 +189,7 @@ import select
 import socket
 import sys
 import time
+import fcntl
 
 from ansible.module_utils.basic import AnsibleModule, load_platform_subclass
 from ansible.module_utils._text import to_native
@@ -436,7 +446,7 @@ def main():
             active_connection_states=dict(type='list', default=['ESTABLISHED', 'FIN_WAIT1', 'FIN_WAIT2', 'SYN_RECV', 'SYN_SENT', 'TIME_WAIT']),
             path=dict(type='path'),
             search_regex=dict(type='str'),
-            state=dict(type='str', default='started', choices=['absent', 'drained', 'present', 'started', 'stopped']),
+            state=dict(type='str', default='started', choices=['absent', 'drained', 'present', 'started', 'stopped', 'unlocked']),
             exclude_hosts=dict(type='list'),
             sleep=dict(type='int', default=1),
             msg=dict(type='str'),
@@ -460,6 +470,8 @@ def main():
 
     if port and path:
         module.fail_json(msg="port and path parameter can not both be passed to wait_for")
+    if port and state == 'unlocked':
+        module.fail_json(msg="state=unlocked should only be used for checking a path in the wait_for module")
     if path and state == 'stopped':
         module.fail_json(msg="state=stopped should only be used for checking a port in the wait_for module")
     if path and state == 'drained':
@@ -619,9 +631,36 @@ def main():
             elapsed = datetime.datetime.utcnow() - start
             module.fail_json(msg=msg or "Timeout when waiting for %s:%s to drain" % (host, port), elapsed=elapsed.seconds)
 
+    elif state == 'unlocked':
+        # wait for start condition
+        end = start + datetime.timedelta(seconds=timeout)
+        while datetime.datetime.utcnow() < end:
+            if path:
+                try:
+                    os.stat(path)
+                except OSError as e:
+                    elapsed = datetime.datetime.utcnow() - start
+                    module.fail_json(msg=msg or "Failed to stat %s, %s" % (path, e.strerror), elapsed=elapsed.seconds)
+                # File exists.  Check if we can get lock
+                try:
+                    f = open(path, 'w')
+                    try:
+                        fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                        f.close()
+                        break
+                    except:
+                        pass
+                except IOError as e:
+                    elapsed = datetime.datetime.utcnow() - start
+                    module.fail_json(msg=msg or "Failed to obtain lock on %s, %s" % (path, e.strerror), elapsed=elapsed.seconds)
+
+            time.sleep(module.params['sleep'])
+        else:
+            elapsed = datetime.datetime.utcnow() - start
+            module.fail_json(msg=msg or "Timeout when waiting for %s to be unlocked." % (path), elapsed=elapsed.seconds)
+
     elapsed = datetime.datetime.utcnow() - start
     module.exit_json(state=state, port=port, search_regex=search_regex, path=path, elapsed=elapsed.seconds)
-
 
 if __name__ == '__main__':
     main()
