@@ -93,12 +93,12 @@ General
 =======
 
 * Investigate the cause of WinRM HTTPS read timeouts `issue #41145 <https://github.com/ansible/ansible/issues/41145>`__
-* WinRM connection persistence (improves performance)
+* WinRM connection persistence (improves performance) `pr #41729 <https://github.com/ansible/ansible/pull/41729>`__
 * Experiment with OpenSSH + powershell `pr #33074 <https://github.com/ansible/ansible/pull/33074>`_
 
 Modules
 =======
 
 * `win_domain` and `win_domain_controller` action wrappers `issue #42764 <https://github.com/ansible/ansible/issues/42764>`__
-* Add link to `win_file`
+* Add link to `win_file` `issue #43060 <https://github.com/ansible/ansible/issues/43060>`__
 * Hostname change support for `win_domain` and `win_domain_controller` `issue #42768 <https://github.com/ansible/ansible/issues/42768>`__
