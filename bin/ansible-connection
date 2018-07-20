@@ -141,16 +141,30 @@ class ConnectionProcess(object):
             self.shutdown()
 
     def connect_timeout(self, signum, frame):
-        display.display('persistent connection idle timeout triggered, timeout value is %s secs'
-                        % self.connection.get_option('persistent_connect_timeout'), log_only=True)
+        msg = 'persistent connection idle timeout triggered, timeout value is %s secs' % self.connection.get_option('persistent_connect_timeout')
+        display.display(msg, log_only=True)
+        raise Exception(msg)
+
+        # allow time for exception msg send over socket to receive at other end before shutting down
+        time.sleep(0.5)
         self.shutdown()
 
     def command_timeout(self, signum, frame):
-        display.display('command timeout triggered, timeout value is %s secs' % self.connection.get_option('persistent_command_timeout'), log_only=True)
+        msg = 'command timeout triggered, timeout value is %s secs' % self.connection.get_option('persistent_command_timeout')
+        display.display(msg, log_only=True)
+        raise Exception(msg)
+
+        # allow time for exception msg send over socket to receive at other end before shutting down
+        time.sleep(0.5)
         self.shutdown()
 
     def handler(self, signum, frame):
-        display.display('signal handler called with signal %s' % signum, log_only=True)
+        msg = 'signal handler called with signal %s' % signum
+        display.display(msg, log_only=True)
+        raise Exception(msg)
+
+        # allow time for exception msg send over socket to receive at other end before shutting down
+        time.sleep(0.5)
         self.shutdown()
 
     def shutdown(self):
