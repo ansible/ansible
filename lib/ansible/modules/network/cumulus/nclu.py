@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016-2017, Cumulus Networks <ce-ceng@cumulusnetworks.com>
+# (c) 2016-2018, Cumulus Networks <ce-ceng@cumulusnetworks.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -185,7 +185,8 @@ def run_nclu(module, command_list, command_string, commit, atomic, abort, descri
     # Run all of the net commands
     output_lines = []
     for line in commands:
-        output_lines += [command_helper(module, line.strip(), "Failed on line %s" % line)]
+        if line.strip():
+            output_lines += [command_helper(module, line.strip(), "Failed on line %s" % line)]
     output = "\n".join(output_lines)
 
     # If pending changes changed, report a change.
