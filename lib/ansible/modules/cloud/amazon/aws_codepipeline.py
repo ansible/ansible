@@ -186,7 +186,13 @@ import traceback
 from ansible.module_utils._text import to_native
 from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-import botocore
+
+
+try:
+    import botocore
+except ImportError:
+    pass  # will be detected by imported HAS_BOTO3
+
 
 def create_pipeline(client, name, role_arn, artifact_store, stages, version, module):
     pipeline_dict = {'name': name, 'roleArn': role_arn, 'artifactStore': artifact_store, 'stages': stages}
@@ -240,6 +246,7 @@ def describe_pipeline(client, name, version, module):
         return pipeline
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:  # pylint: disable=duplicate-except
             module.fail_json_aws(e)
+
 
 def main():
     argument_spec = dict(
