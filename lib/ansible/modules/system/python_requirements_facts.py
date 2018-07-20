@@ -14,6 +14,14 @@ short_description: Show python path and assert dependency versions
 description:
     - Get info about available Python requirements on the target host, including listing required libraries and gathering versions.
 version_added: "2.7"
+options:
+  dependencies:
+    description:
+    - A list of version-likes or module names to check for installation. Supported operators: <, >, <=, >=, or ==
+    examples:
+    - ansible
+    - boto3>=1.6
+    - requests>2
 
 author:
 - Will Thames (@willthames)
