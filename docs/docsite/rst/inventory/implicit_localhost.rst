@@ -22,7 +22,7 @@ In a case like this (or ``local_action``) when Ansible needs to contact a 'local
         ansible_python_interpreter: "{{ansible_playbook_python}}"
 
 This ensures that the proper connection and Python are used to execute your tasks locally.
-You can override the built-in implicit version by creating a ``localhost`` host entry in your inventory. At that point, all implicit behaviors are ignored; the ``localhost`` in inventory is treated just like any other host. Group and host vars will appy, including connection vars, which includes the ``ansible_python_interpreter`` setting. This will also affect ``delegate_to: localhost`` and ``local_action``, the latter being an alias to the former.
+You can override the built-in implicit version by creating a ``localhost`` host entry in your inventory. At that point, all implicit behaviors are ignored; the ``localhost`` in inventory is treated just like any other host. Group and host vars will apply, including connection vars, which includes the ``ansible_python_interpreter`` setting. This will also affect ``delegate_to: localhost`` and ``local_action``, the latter being an alias to the former.
 
 .. note::
   - This host is not targetable via any group, however it will use vars from ``host_vars`` and from the 'all' group.
