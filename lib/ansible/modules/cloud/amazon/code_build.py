@@ -66,7 +66,7 @@ options:
         suboptions:
             type:
                 description:
-                    - The type of build output for artifacts. Can be one of the following: CODEPIPELINE, NO_ARTIFACTS, S3
+                    - "The type of build output for artifacts. Can be one of the following: CODEPIPELINE, NO_ARTIFACTS, S3"
                 required: true
             location:
                 description:
