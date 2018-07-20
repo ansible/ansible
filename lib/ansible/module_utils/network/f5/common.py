@@ -12,9 +12,11 @@ import re
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.network.common.utils import to_list, ComplexList
+from ansible.module_utils.network.common.utils import to_list
+from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE
 from collections import defaultdict
 
 try:
@@ -191,13 +193,44 @@ def run_commands(module, commands, check_rc=True):
     return responses
 
 
+def flatten_boolean(value):
+    truthy = list(BOOLEANS_TRUE) + ['enabled']
+    falsey = list(BOOLEANS_FALSE) + ['disabled']
+    if value is None:
+        return None
+    elif value in truthy:
+        return 'yes'
+    elif value in falsey:
+        return 'no'
+
+
 def cleanup_tokens(client):
     try:
-        resource = client.api.shared.authz.tokens_s.token.load(
-            name=client.api.icrs.token
-        )
-        resource.delete()
-    except Exception:
+        # isinstance cannot be used here because to import it creates a
+        # circular dependency with teh module_utils.network.f5.bigip file.
+        #
+        # TODO(consider refactoring cleanup_tokens)
+        if 'F5RestClient' in type(client).__name__:
+            token = client._client.headers.get('X-F5-Auth-Token', None)
+            if not token:
+                return
+            uri = "https://{0}:{1}/mgmt/shared/authz/tokens/{2}".format(
+                client.provider['server'],
+                client.provider['server_port'],
+                token
+            )
+            resp = client.api.delete(uri)
+            try:
+                resp.json()
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
+            return True
+        else:
+            resource = client.api.shared.authz.tokens_s.token.load(
+                name=client.api.icrs.token
+            )
+            resource.delete()
+    except Exception as ex:
         pass
 
 
@@ -260,6 +293,27 @@ def is_valid_fqdn(host):
         if len(parts) > 1:
             return True
     return False
+
+
+def transform_name(partition='', name='', sub_path=''):
+    if name:
+        name = name.replace('/', '~')
+    if partition:
+        partition = '~' + partition
+    else:
+        if sub_path:
+            F5ModuleError(
+                'When giving the subPath component include partition as well.'
+            )
+
+    if sub_path and partition:
+        sub_path = '~' + sub_path
+
+    if name and partition:
+        name = '~' + name
+
+    result = partition + sub_path + name
+    return result
 
 
 def dict2tuple(items):
@@ -342,6 +396,12 @@ def is_uuid(uuid=None):
         return False
     pattern = r'[A-Za-z0-9]{8}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{12}'
     if re.match(pattern, uuid):
+        return True
+    return False
+
+
+def on_bigip():
+    if os.path.exists('/usr/bin/tmsh'):
         return True
     return False
 
