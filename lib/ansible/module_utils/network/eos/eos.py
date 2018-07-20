@@ -153,7 +153,7 @@ class Cli:
         try:
             response = conn.edit_config(commands, commit, replace)
         except ConnectionError as exc:
-            message = getattr(exc, 'err', exc)
+            message = getattr(exc, 'err', to_text(exc))
             if "check mode is not supported without configuration session" in message:
                 self._module.warn("EOS can not check config without config session")
                 response = {'changed': True}
@@ -341,7 +341,11 @@ class Eapi:
             commands = ['configure session %s' % session, 'abort']
             self.send_request(commands)
             err = response['error']
-            self._module.fail_json(msg=err['message'], code=err['code'])
+            error_text = []
+            for data in err['data']:
+                error_text.extend(data.get('errors', []))
+            error_text = '\n'.join(error_text) or err['message']
+            self._module.fail_json(msg=error_text, code=err['code'])
 
         commands = ['configure session %s' % session, 'show session-config diffs']
         if commit:

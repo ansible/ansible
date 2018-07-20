@@ -46,7 +46,8 @@ class TerminalModule(TerminalBase):
         re.compile(br"'[^']' +returned error code: ?\d+"),
         re.compile(br"[^\r\n]\/bin\/(?:ba)?sh"),
         re.compile(br"% More than \d+ OSPF instance", re.I),
-        re.compile(br"Maximum number of pending sessions has been reached")
+        re.compile(br"% Subnet [0-9a-f.:/]+ overlaps", re.I),
+        re.compile(br"Maximum number of pending sessions has been reached"),
     ]
 
     def on_open_shell(self):
