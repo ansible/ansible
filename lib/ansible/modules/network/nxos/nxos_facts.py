@@ -174,6 +174,7 @@ from ansible.module_utils.network.nxos.nxos import run_commands, get_config
 from ansible.module_utils.network.nxos.nxos import get_capabilities, get_interface_type
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.six import string_types, iteritems
 
 
@@ -200,17 +201,55 @@ class FactsBase(object):
             self.warnings.append('command %s failed, facts for this command will not be populated' % command_string)
             return None
 
+    def transform_dict(self, data, keymap):
+        transform = dict()
+        for key, fact in keymap:
+            if key in data:
+                transform[fact] = data[key]
+        return transform
+
+    def transform_iterable(self, iterable, keymap):
+        for item in iterable:
+            yield self.transform_dict(item, keymap)
+
 
 class Default(FactsBase):
 
+    VERSION_MAP_7K = frozenset([
+        ('sys_ver_str', 'version'),
+        ('proc_board_id', 'serialnum'),
+        ('chassis_id', 'model'),
+        ('isan_file_name', 'image'),
+        ('host_name', 'hostname')
+    ])
+
+    VERSION_MAP = frozenset([
+        ('kickstart_ver_str', 'version'),
+        ('proc_board_id', 'serialnum'),
+        ('chassis_id', 'model'),
+        ('kick_file_name', 'image'),
+        ('host_name', 'hostname')
+    ])
+
     def populate(self):
-        data = self.run('show version')
+        data = None
+
+        try:
+            data = self.run('show version', output='json')
+        except ConnectionError:
+            data = self.run('show version')
         if data:
-            self.facts['version'] = self.parse_version(data)
-            self.facts['serialnum'] = self.parse_serialnum(data)
-            self.facts['model'] = self.parse_model(data)
-            self.facts['image'] = self.parse_image(data)
-            self.facts['hostname'] = self.parse_hostname(data)
+            if isinstance(data, dict):
+                if data.get('sys_ver_str'):
+                    self.facts.update(self.transform_dict(data, self.VERSION_MAP_7K))
+                else:
+                    self.facts.update(self.transform_dict(data, self.VERSION_MAP))
+            else:
+                self.facts['version'] = self.parse_version(data)
+                self.facts['serialnum'] = self.parse_serialnum(data)
+                self.facts['model'] = self.parse_model(data)
+                self.facts['image'] = self.parse_image(data)
+                self.facts['hostname'] = self.parse_hostname(data)
 
     def parse_version(self, data):
         match = re.search(r'\s+system:\s+version\s*(\S+)', data, re.M)
@@ -260,10 +299,18 @@ class Hardware(FactsBase):
         if data:
             self.facts['filesystems'] = self.parse_filesystems(data)
 
-        data = self.run('show system resources')
+        data = None
+        try:
+            data = self.run('show system resources', output='json')
+        except ConnectionError:
+            data = self.run('show system resources')
         if data:
-            self.facts['memtotal_mb'] = self.parse_memtotal_mb(data)
-            self.facts['memfree_mb'] = self.parse_memfree_mb(data)
+            if isinstance(data, dict):
+                self.facts['memtotal_mb'] = int(data['memory_usage_total']) / 1024
+                self.facts['memfree_mb'] = int(data['memory_usage_free']) / 1024
+            else:
+                self.facts['memtotal_mb'] = self.parse_memtotal_mb(data)
+                self.facts['memfree_mb'] = self.parse_memfree_mb(data)
 
     def parse_filesystems(self, data):
         return re.findall(r'^Usage for (\S+)//', data, re.M)
@@ -283,6 +330,41 @@ class Hardware(FactsBase):
 
 class Interfaces(FactsBase):
 
+    INTERFACE_MAP = frozenset([
+        ('state', 'state'),
+        ('desc', 'description'),
+        ('eth_bw', 'bandwidth'),
+        ('eth_duplex', 'duplex'),
+        ('eth_speed', 'speed'),
+        ('eth_mode', 'mode'),
+        ('eth_hw_addr', 'macaddress'),
+        ('eth_mtu', 'mtu'),
+        ('eth_hw_desc', 'type')
+    ])
+
+    INTERFACE_SVI_MAP = frozenset([
+        ('svi_line_proto', 'state'),
+        ('svi_bw', 'bandwidth'),
+        ('svi_mac', 'macaddress'),
+        ('svi_mtu', 'mtu'),
+        ('type', 'type')
+    ])
+
+    INTERFACE_IPV4_MAP = frozenset([
+        ('eth_ip_addr', 'address'),
+        ('eth_ip_mask', 'masklen')
+    ])
+
+    INTERFACE_SVI_IPV4_MAP = frozenset([
+        ('svi_ip_addr', 'address'),
+        ('svi_ip_mask', 'masklen')
+    ])
+
+    INTERFACE_IPV6_MAP = frozenset([
+        ('addr', 'address'),
+        ('prefix', 'subnet')
+    ])
+
     def ipv6_structure_op_supported(self):
         data = get_capabilities(self.module)
         if data:
@@ -296,24 +378,106 @@ class Interfaces(FactsBase):
     def populate(self):
         self.facts['all_ipv4_addresses'] = list()
         self.facts['all_ipv6_addresses'] = list()
+        data = None
 
-        data = self.run('show interface')
+        try:
+            data = self.run('show interface', output='json')
+        except ConnectionError:
+            data = self.run('show interface')
         if data:
-            interfaces = self.parse_interfaces(data)
-            self.facts['interfaces'] = self.populate_interfaces(interfaces)
+            if isinstance(data, dict):
+                self.facts['interfaces'] = self.populate_structured_interfaces(data)
+            else:
+                interfaces = self.parse_interfaces(data)
+                self.facts['interfaces'] = self.populate_interfaces(interfaces)
 
-        data = self.run('show ipv6 interface') if self.ipv6_structure_op_supported() else None
+        if self.ipv6_structure_op_supported():
+            try:
+                data = self.run('show ipv6 interface', output='json')
+            except ConnectionError:
+                data = self.run('show ipv6 interface')
+        else:
+            data = None
         if data:
-            interfaces = self.parse_interfaces(data)
-            self.populate_ipv6_interfaces(interfaces)
+            if isinstance(data, dict):
+                self.populate_structured_ipv6_interfaces(data)
+            else:
+                interfaces = self.parse_interfaces(data)
+                self.populate_ipv6_interfaces(interfaces)
 
         data = self.run('show lldp neighbors')
         if data:
             self.facts['neighbors'] = self.populate_neighbors(data)
 
-        data = self.run('show cdp neighbors detail')
+        try:
+            data = self.run('show cdp neighbors detail', output='json')
+        except ConnectionError:
+            data = self.run('show cdp neighbors detail')
         if data:
-            self.facts['neighbors'] = self.populate_neighbors_cdp(data)
+            if isinstance(data, dict):
+                self.facts['neighbors'] = self.populate_structured_neighbors_cdp(data)
+            else:
+                self.facts['neighbors'] = self.populate_neighbors_cdp(data)
+
+    def populate_structured_interfaces(self, data):
+        interfaces = dict()
+        for item in data['TABLE_interface']['ROW_interface']:
+            name = item['interface']
+
+            intf = dict()
+            if 'type' in item:
+                intf.update(self.transform_dict(item, self.INTERFACE_SVI_MAP))
+            else:
+                intf.update(self.transform_dict(item, self.INTERFACE_MAP))
+
+            if 'eth_ip_addr' in item:
+                intf['ipv4'] = self.transform_dict(item, self.INTERFACE_IPV4_MAP)
+                self.facts['all_ipv4_addresses'].append(item['eth_ip_addr'])
+
+            if 'svi_ip_addr' in item:
+                intf['ipv4'] = self.transform_dict(item, self.INTERFACE_SVI_IPV4_MAP)
+                self.facts['all_ipv4_addresses'].append(item['svi_ip_addr'])
+
+            interfaces[name] = intf
+
+        return interfaces
+
+    def populate_structured_ipv6_interfaces(self, data):
+        try:
+            data = data['TABLE_intf']
+            if data:
+                if isinstance(data, dict):
+                    data = [data]
+                for item in data:
+                    name = item['ROW_intf']['intf-name']
+                    intf = self.facts['interfaces'][name]
+                    intf['ipv6'] = self.transform_dict(item, self.INTERFACE_IPV6_MAP)
+                    try:
+                        addr = item['ROW_intf']['addr']
+                    except KeyError:
+                        addr = item['ROW_intf']['TABLE_addr']['ROW_addr']['addr']
+                    self.facts['all_ipv6_addresses'].append(addr)
+            else:
+                return ""
+        except TypeError:
+            return ""
+
+    def populate_structured_neighbors_cdp(self, data):
+        objects = dict()
+        data = data['TABLE_cdp_neighbor_detail_info']['ROW_cdp_neighbor_detail_info']
+
+        if isinstance(data, dict):
+            data = [data]
+
+        for item in data:
+            local_intf = item['intf_id']
+            objects[local_intf] = list()
+            nbor = dict()
+            nbor['port'] = item['port_id']
+            nbor['sysname'] = item['device_id']
+            objects[local_intf].append(nbor)
+
+        return objects
 
     def parse_interfaces(self, data):
         parsed = dict()
@@ -521,32 +685,142 @@ class Interfaces(FactsBase):
 class Legacy(FactsBase):
     # facts from nxos_facts 2.1
 
+    VERSION_MAP = frozenset([
+        ('host_name', '_hostname'),
+        ('kickstart_ver_str', '_os'),
+        ('chassis_id', '_platform')
+    ])
+
+    MODULE_MAP = frozenset([
+        ('model', 'model'),
+        ('modtype', 'type'),
+        ('ports', 'ports'),
+        ('status', 'status')
+    ])
+
+    FAN_MAP = frozenset([
+        ('fanname', 'name'),
+        ('fanmodel', 'model'),
+        ('fanhwver', 'hw_ver'),
+        ('fandir', 'direction'),
+        ('fanstatus', 'status')
+    ])
+
+    POWERSUP_MAP = frozenset([
+        ('psmodel', 'model'),
+        ('psnum', 'number'),
+        ('ps_status', 'status'),
+        ('actual_out', 'actual_output'),
+        ('actual_in', 'actual_in'),
+        ('total_capa', 'total_capacity')
+    ])
+
     def populate(self):
-        data = self.run('show version')
-        if data:
-            self.facts['_hostname'] = self.parse_hostname(data)
-            self.facts['_os'] = self.parse_os(data)
-            self.facts['_platform'] = self.parse_platform(data)
+        data = None
 
-        data = self.run('show interface')
+        try:
+            data = self.run('show version')
+        except ConnectionError:
+            data = self.run('show version', output='json')
         if data:
-            self.facts['_interfaces_list'] = self.parse_interfaces(data)
+            if isinstance(data, dict):
+                self.facts.update(self.transform_dict(data, self.VERSION_MAP))
+            else:
+                self.facts['_hostname'] = self.parse_hostname(data)
+                self.facts['_os'] = self.parse_os(data)
+                self.facts['_platform'] = self.parse_platform(data)
 
-        data = self.run('show vlan brief')
+        try:
+            data = self.run('show interface', output='json')
+        except ConnectionError:
+            data = self.run('show interface')
         if data:
-            self.facts['_vlan_list'] = self.parse_vlans(data)
+            if isinstance(data, dict):
+                self.facts['_interfaces_list'] = self.parse_structured_interfaces(data)
+            else:
+                self.facts['_interfaces_list'] = self.parse_interfaces(data)
 
-        data = self.run('show module')
+        try:
+            data = self.run('show vlan brief', output='json')
+        except ConnectionError:
+            data = self.run('show vlan brief')
         if data:
-            self.facts['_module'] = self.parse_module(data)
+            if isinstance(data, dict):
+                self.facts['_vlan_list'] = self.parse_structured_vlans(data)
+            else:
+                self.facts['_vlan_list'] = self.parse_vlans(data)
 
-        data = self.run('show environment fan')
+        try:
+            data = self.run('show module', output='json')
+        except ConnectionError:
+            data = self.run('show module')
         if data:
-            self.facts['_fan_info'] = self.parse_fan_info(data)
+            if isinstance(data, dict):
+                self.facts['_module'] = self.parse_structured_module(data)
+            else:
+                self.facts['_module'] = self.parse_module(data)
 
-        data = self.run('show environment power')
+        try:
+            data = self.run('show environment fan', output='json')
+        except ConnectionError:
+            data = self.run('show environment fan')
         if data:
-            self.facts['_power_supply_info'] = self.parse_power_supply_info(data)
+            if isinstance(data, dict):
+                self.facts['_fan_info'] = self.parse_structured_fan_info(data)
+            else:
+                self.facts['_fan_info'] = self.parse_fan_info(data)
+
+        try:
+            data = self.run('show environment power', output='json')
+        except ConnectionError:
+            data = self.run('show environment power')
+        if data:
+            if isinstance(data, dict):
+                self.facts['_power_supply_info'] = self.parse_structured_power_supply_info(data)
+            else:
+                self.facts['_power_supply_info'] = self.parse_power_supply_info(data)
+
+    def parse_structured_interfaces(self, data):
+        objects = list()
+        for item in data['TABLE_interface']['ROW_interface']:
+            objects.append(item['interface'])
+        return objects
+
+    def parse_structured_vlans(self, data):
+        objects = list()
+        data = data['TABLE_vlanbriefxbrief']['ROW_vlanbriefxbrief']
+        if isinstance(data, dict):
+            objects.append(data['vlanshowbr-vlanid-utf'])
+        elif isinstance(data, list):
+            for item in data:
+                objects.append(item['vlanshowbr-vlanid-utf'])
+        return objects
+
+    def parse_structured_module(self, data):
+        data = data['TABLE_modinfo']['ROW_modinfo']
+        if isinstance(data, dict):
+            data = [data]
+        objects = list(self.transform_iterable(data, self.MODULE_MAP))
+        return objects
+
+    def parse_structured_fan_info(self, data):
+        objects = list()
+        if data.get('fandetails'):
+            data = data['fandetails']['TABLE_faninfo']['ROW_faninfo']
+        elif data.get('fandetails_3k'):
+            data = data['fandetails_3k']['TABLE_faninfo']['ROW_faninfo']
+        else:
+            return objects
+        objects = list(self.transform_iterable(data, self.FAN_MAP))
+        return objects
+
+    def parse_structured_power_supply_info(self, data):
+        if data.get('powersup').get('TABLE_psinfo_n3k'):
+            data = data['powersup']['TABLE_psinfo_n3k']['ROW_psinfo_n3k']
+        else:
+            data = data['powersup']['TABLE_psinfo']['ROW_psinfo']
+        objects = list(self.transform_iterable(data, self.POWERSUP_MAP))
+        return objects
 
     def parse_hostname(self, data):
         match = re.search(r'\s+Device name:\s+(\S+)', data, re.M)
