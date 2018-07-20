@@ -117,8 +117,8 @@ options:
                 required: true
             compute_type:
                 description:
-                    - Information about the compute resources the build project will use. Available values include:
-                    - BUILD_GENERAL1_SMALL, BUILD_GENERAL1_MEDIUM, BUILD_GENERAL1_LARGE
+                    - Information about the compute resources the build project will use.
+                    - "Available values include: BUILD_GENERAL1_SMALL, BUILD_GENERAL1_MEDIUM, BUILD_GENERAL1_LARGE"
                 required: true
             environment_variables:
                 description:
