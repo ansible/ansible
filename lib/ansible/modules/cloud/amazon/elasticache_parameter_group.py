@@ -37,7 +37,7 @@ options:
     description:
       - The name of the cache parameter group family that the cache parameter group can be used with.
         Required when creating a cache parameter group.
-    choices: ['memcached1.4', 'redis2.6', 'redis2.8', 'redis3.2']
+    choices: ['memcached1.4', 'redis2.6', 'redis2.8', 'redis3.2', 'redis4.0']
   name:
     description:
      - A user-specified name for the cache parameter group.
@@ -285,7 +285,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            group_family=dict(type='str', choices=['memcached1.4', 'redis2.6', 'redis2.8', 'redis3.2']),
+            group_family=dict(type='str', choices=['memcached1.4', 'redis2.6', 'redis2.8', 'redis3.2', 'redis4.0']),
             name=dict(required=True, type='str'),
             description=dict(default='', type='str'),
             state=dict(required=True),
