@@ -262,32 +262,33 @@ def copy_file_from_remote(module, local, file_system='bootflash:'):
     try:
         child = pexpect.spawn('ssh ' + username + '@' + hostname + ' -p' + str(port))
         # response could be unknown host addition or Password
-        index = child.expect(['yes', 'Password'])
+        index = child.expect(['yes', '(?i)Password'])
         if index == 0:
             child.sendline('yes')
-            child.expect('Password')
+            child.expect('(?i)Password')
         child.sendline(password)
         child.expect('#')
         command = ('copy scp://' + module.params['remote_scp_server_user'] +
                    '@' + module.params['remote_scp_server'] + module.params['remote_file'] +
                    ' ' + file_system + local + ' vrf management')
+
         child.sendline(command)
         # response could be remote host connection time out,
         # there is already an existing file with the same name,
         # unknown host addition or password
-        index = child.expect(['timed out', 'existing', 'yes', 'password'], timeout=180)
+        index = child.expect(['timed out', 'existing', 'yes', '(?i)password'], timeout=180)
         if index == 0:
             module.fail_json(msg='Timeout occured due to remote scp server not responding')
         elif index == 1:
             child.sendline('y')
             # response could be unknown host addition or Password
-            sub_index = child.expect(['yes', 'password'])
+            sub_index = child.expect(['yes', '(?i)password'])
             if sub_index == 0:
                 child.sendline('yes')
-                child.expect('password')
+                child.expect('(?i)password')
         elif index == 2:
             child.sendline('yes')
-            child.expect('password')
+            child.expect('(?i)password')
         child.sendline(module.params['remote_scp_server_password'])
         fpt = module.params['file_pull_timeout']
         # response could be that there is no space left on device,
