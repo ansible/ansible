@@ -122,6 +122,8 @@ options:
   purge_rules:
     description:
       - Keeps the existing load balancer rules in place. Will modify and add, but will not delete.
+    default: yes
+    type: bool
     version_added: 2.7
 extends_documentation_fragment:
     - aws
