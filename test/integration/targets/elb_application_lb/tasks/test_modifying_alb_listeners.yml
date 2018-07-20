@@ -88,13 +88,13 @@
         - not alb.changed
         - alb.listeners[0].rules|length == 2
 
-  - name: test a rule can be added and other rules will not be removed without purge_listeners
+  - name: test a rule can be added and other rules will not be removed when purge_rules is no
     elb_application_lb:
       name: "{{ alb_name }}"
       subnets: "{{ alb_subnets }}"
       security_groups: "{{ sec_group.group_id }}"
       state: present
-      purge_rules: no
+      purge_listeners: no
       listeners:
         - Protocol: HTTP
           Port: 80
