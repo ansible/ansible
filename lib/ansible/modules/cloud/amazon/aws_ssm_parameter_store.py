@@ -181,7 +181,7 @@ def create_update_parameter(client, module):
             if existing_parameter['Parameter']['Value'] != args['Value']:
                 (changed, response) = update_parameter(client, module, args)
 
-            if args['Description']:
+            if args.get('Description'):
                 # Description field not available from get_parameter function so get it from describe_parameters
                 describe_existing_parameter = None
                 try:
