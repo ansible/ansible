@@ -2,8 +2,8 @@
 # Copyright (c) 2018 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-__metaclass__ = type
 from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -19,7 +19,8 @@ description:
 version_added: "2.7"
 options:
   dependencies:
-    description: A list of version-likes or module names to check for installation. Supported operators: <, >, <=, >=, or ==
+    description: >
+      A list of version-likes or module names to check for installation. Supported operators: <, >, <=, >=, or ==
     examples: '[ansible, boto3>=1.6, requests>2]'
 author:
 - Will Thames (@willthames)
@@ -99,6 +100,7 @@ operations = {
     '==': operator.eq,
 }
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -117,10 +119,10 @@ def main():
     for dep in (module.params.get('dependencies') or []):
         match = pkg_dep_re.match(dep)
         if match is None:
-            module.fail_json(msg="Failed to parse version requirement '{0}'. Must be formatted like 'ansible>2.6'".format(dep) )
+            module.fail_json(msg="Failed to parse version requirement '{0}'. Must be formatted like 'ansible>2.6'".format(dep))
         pkg, op, version = match.groups()
         if op is not None and op not in operations:
-            module.fail_json(msg="Failed to parse version requirement '{0}'. Operator must be one of >, <, <=, >=, or ==".format(dep) )
+            module.fail_json(msg="Failed to parse version requirement '{0}'. Operator must be one of >, <, <=, >=, or ==".format(dep))
         try:
             existing = pkg_resources.get_distribution(pkg).version
         except pkg_resources.DistributionNotFound:
