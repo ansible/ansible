@@ -45,7 +45,8 @@ class TerminalModule(TerminalBase):
         re.compile(br"[^\r\n]+ not found", re.I),
         re.compile(br"'[^']' +returned error code: ?\d+"),
         re.compile(br"[^\r\n]\/bin\/(?:ba)?sh"),
-        re.compile(br"% More than \d+ OSPF instance", re.I)
+        re.compile(br"% More than \d+ OSPF instance", re.I),
+        re.compile(br"% Subnet [0-9a-f.:/]+ overlaps", re.I),
     ]
 
     def on_open_shell(self):

@@ -87,7 +87,12 @@ class HttpApi:
             else:
                 commands.append(command)
 
-        response = self.send_request(commands)
+        try:
+            response = self.send_request(commands)
+        except Exception:
+            commands = ['configure session %s' % session, 'abort']
+            response = self.send_request(commands, output='text')
+            raise
 
         commands = ['configure session %s' % session, 'show session-config diffs']
         if commit:
@@ -153,7 +158,13 @@ class HttpApi:
 def handle_response(response):
     if 'error' in response:
         error = response['error']
-        raise ConnectionError(error['message'], code=error['code'])
+
+        error_text = []
+        for data in error['data']:
+            error_text.extend(data.get('errors', []))
+        error_text = '\n'.join(error_text) or error['message']
+
+        raise ConnectionError(error_text, code=error['code'])
 
     results = []
     for result in response['result']:
