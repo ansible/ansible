@@ -84,9 +84,19 @@ class UnsafeProxy(object):
         return obj
 
 
-# inherit from MutableMapping to pass type checks
+class AnsibleObjectProxyMixin(object):
+    def _set_resolve(self):
+        try:
+            self.transform('', resolve=True)
+        except TypeError:
+            #  Doesn't accept the keyword argument resolve
+            def resolve(self):
+                raise NotImplementedError()
+            self.resolve = resolve.__get__(self)
+
+
 @python_2_unicode_compatible
-class AnsibleDictProxy(MutableMapping):
+class AnsibleDictProxy(MutableMapping, AnsibleObjectProxyMixin):
     """
     Abstract mapping that wraps a dict, transforming keys and values before
     returning them.
@@ -111,7 +121,7 @@ class AnsibleDictProxy(MutableMapping):
       (and so all values set directly by the user) unaltered.
     - `__eq__` compares the underlying dictionaries to avoid `transform`ing as much as possible. i.e. we assume
       `transform(value) == value`
-    - `copy` does not preserve the cache
+    - `copy` does not preserve the cache, but pickling and unpickling does
 
     Known Uses:
     - AnsibleUnsafeDict: inherits from AnsibleUnsafe with `transform` set to `wrap_var`
@@ -130,6 +140,8 @@ class AnsibleDictProxy(MutableMapping):
             self.wrapped_dict = d
         else:
             self.wrapped_dict = d.wrapped_dict
+
+        self._set_resolve()
 
         self._cache = {}
 
