@@ -38,6 +38,7 @@ from functools import partial
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import cPickle
+from ansible.parsing.ajson import AnsibleJSONEncoder
 
 
 def write_to_file_descriptor(fd, obj):
@@ -141,7 +142,7 @@ class Connection(object):
                                   '\nSee the socket_path issue catergory in Network Debug and Troubleshooting Guide')
 
         try:
-            data = json.dumps(req)
+            data = json.dumps(req, cls=AnsibleJSONEncoder)
             out = self.send(data)
             response = json.loads(out)
 
