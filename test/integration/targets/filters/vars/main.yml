@@ -5,6 +5,18 @@ some_structure:
     warp: 9
     where: endor
 
+one_hash:
+  boop: 9
+  zoom: fast
+
+two_hash:
+  boop: 12
+  zoom: loud
+
+three_hash:
+  boop: 15
+  zoom: 65
+
 users:
   - name: steve
     hosts:

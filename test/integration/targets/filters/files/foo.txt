@@ -28,6 +28,12 @@ Failed  = False
 Success = True
 Skipped = False
 
+The combine filter produces a merged hash from many hashes, recursively
+or not
+
+merged_hash = {u'boop': 15, u'zoom': 65}
+recursive_merged_hash = {u'boop': 12, u'zoom': u'loud'}
+
 The mandatory filter fails if a variable is not defined and returns the value.
 To avoid breaking this test, this variable is already defined.
 

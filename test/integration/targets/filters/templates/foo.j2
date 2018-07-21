@@ -22,6 +22,12 @@ Failed  = {{ some_registered_var is failed }}
 Success = {{ some_registered_var is successful }}
 Skipped = {{ some_registered_var is skipped }}
 
+The combine filter produces a merged hash from many hashes, recursively
+or not
+
+merged_hash = {{ one_hash | combine(two_hash, three_hash, recursive=False) }}
+recursive_merged_hash = {{ one_hash | combine(three_hash, two_hash, recursive=True) }}
+
 The mandatory filter fails if a variable is not defined and returns the value.
 To avoid breaking this test, this variable is already defined.
 
