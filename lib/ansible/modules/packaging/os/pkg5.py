@@ -42,8 +42,8 @@ options:
   be_name:
     description:
       - Name for new BE.
+    version_added: "2.7"
     type: str
-    default: 'no'
 '''
 EXAMPLES = '''
 - name: Install Vim
