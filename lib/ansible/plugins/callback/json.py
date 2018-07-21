@@ -101,8 +101,8 @@ class CallbackModule(CallbackBase):
             summary[h] = s
 
         custom_stats = {
-            'global' : {},
-            'hosts' : {}
+            'global': {},
+            'hosts': {}
         }
 
         if self.get_option('show_custom_stats') and stats.custom:
@@ -112,14 +112,12 @@ class CallbackModule(CallbackBase):
                     custom_stats['global'] = stats.custom[k]
                     continue
 
-                custom_stats['hosts'].update(
-                         { self._convert_host_to_name(k):  stats.custom[k] }
-                    )
+                custom_stats['hosts'].update({self._convert_host_to_name(k): stats.custom[k]})
 
         output = {
             'plays': self.results,
             'stats': summary,
-            'custom_stats': custom_stats,
+            'custom_stats': custom_stats
         }
 
         self._display.display(json.dumps(output, indent=4, sort_keys=True))
