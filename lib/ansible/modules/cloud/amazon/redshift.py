@@ -220,7 +220,7 @@ except ImportError:
     pass  # handled by AnsibleAWSModule
 
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info, snake_dict_to_camel_dict
-from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
 
 
 def _collect_facts(resource):
@@ -291,7 +291,7 @@ def create_cluster(module, redshift):
     try:
         redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
         changed = False
-    except botocore.exceptions.ClientError as e:
+    except is_boto3_error_code('ClusterNotFound'):
         try:
             redshift.create_cluster(ClusterIdentifier=identifier,
                                     NodeType=node_type,
@@ -361,9 +361,9 @@ def delete_cluster(module, redshift):
             ClusterIdentifier=identifier,
             **snake_dict_to_camel_dict(params, capitalize_first=True)
         )
-    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
-        module.fail_json_aws(e, msg="Couldn't delete the %s cluster" % identifier)
-
+    except is_boto3_error_code('ClusterNotFound'):
+        return(False, {})
+    
     if wait:
         attempts = wait_timeout // 60
         waiter = redshift.get_waiter('cluster_deleted')
