@@ -59,6 +59,7 @@ from ansible.module_utils.six import (
     string_types, text_type, iteritems,
     python_2_unicode_compatible)
 from ansible.module_utils._text import to_text
+from ansible.errors import AnsibleAssertionError
 
 
 __all__ = ['UnsafeProxy', 'AnsibleUnsafe', 'wrap_var', 'AnsibleDictProxy']
@@ -179,7 +180,8 @@ class AnsibleDictProxy(MutableMapping, AnsibleObjectProxyMixin):
 
     # WARNING: Resolve is potentially data-modifying
     def resolve(self):
-        assert isinstance(self.wrapped_dict, dict)
+        if not isinstance(self.wrapped_dict, dict):
+            raise AnsibleAssertionError()
         return self.transform(self.wrapped_dict, resolve=True)
 
     def __iter__(self):

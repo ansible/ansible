@@ -6,15 +6,20 @@ some_structure:
     where: endor
 
 one_hash:
-  boop: 9
+  boop:
+    number: 9
+    label: text
   zoom: fast
 
 two_hash:
-  boop: 12
+  boop:
+    number: 12
+    label: text2
   zoom: loud
 
 three_hash:
-  boop: 15
+  boop:
+    number: 15
   zoom: 65
 
 users:

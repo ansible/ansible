@@ -31,8 +31,8 @@ Skipped = False
 The combine filter produces a merged hash from many hashes, recursively
 or not
 
-merged_hash = {u'boop': 15, u'zoom': 65}
-recursive_merged_hash = {u'boop': 12, u'zoom': u'loud'}
+merged_hash = {"boop": {"number": 15}, "zoom": 65}
+recursive_merged_hash = {"boop": {"label": "text2", "number": 15}, "zoom": 65}
 
 The mandatory filter fails if a variable is not defined and returns the value.
 To avoid breaking this test, this variable is already defined.

@@ -25,8 +25,8 @@ Skipped = {{ some_registered_var is skipped }}
 The combine filter produces a merged hash from many hashes, recursively
 or not
 
-merged_hash = {{ one_hash | combine(two_hash, three_hash, recursive=False) }}
-recursive_merged_hash = {{ one_hash | combine(three_hash, two_hash, recursive=True) }}
+merged_hash = {{ one_hash | combine(two_hash, three_hash, recursive=False) | to_json(sort_keys=true) }}
+recursive_merged_hash = {{ one_hash | combine(two_hash, three_hash, recursive=True) | to_json(sort_keys=true) }}
 
 The mandatory filter fails if a variable is not defined and returns the value.
 To avoid breaking this test, this variable is already defined.
