@@ -283,7 +283,7 @@ def create_or_delete(args=None):
     retvals['changed'] = has_changed
     retvals['failed'] = has_failed
     for val in ['msg', 'memset_api']:
-        if val is not None:
+        if eval(val) is not None:
             retvals[val] = eval(val)
 
     return(retvals)
