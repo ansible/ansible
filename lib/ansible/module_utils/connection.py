@@ -132,7 +132,7 @@ class Connection(object):
             return partial(self.__rpc__, name)
 
     def _exec_jsonrpc(self, name, *args, **kwargs):
-        from ansible.parsing.ajson import AnsibleJSONEncoder
+        from ansible.parsing.ajson import AnsibleJSONEncoder, AnsibleJSONDecoder
 
         req = request_builder(name, *args, **kwargs)
         reqid = req['id']
@@ -144,7 +144,7 @@ class Connection(object):
         try:
             data = json.dumps(req, cls=AnsibleJSONEncoder)
             out = self.send(data)
-            response = json.loads(out)
+            response = json.loads(out, cls=AnsibleJSONDecoder)
 
         except socket.error as e:
             raise ConnectionError('unable to connect to socket. See the socket_path issue catergory in Network Debug and Troubleshooting Guide',
