@@ -38,7 +38,6 @@ from functools import partial
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import cPickle
-from ansible.parsing.ajson import AnsibleJSONEncoder
 
 
 def write_to_file_descriptor(fd, obj):
@@ -133,6 +132,7 @@ class Connection(object):
             return partial(self.__rpc__, name)
 
     def _exec_jsonrpc(self, name, *args, **kwargs):
+        from ansible.parsing.ajson import AnsibleJSONEncoder
 
         req = request_builder(name, *args, **kwargs)
         reqid = req['id']
