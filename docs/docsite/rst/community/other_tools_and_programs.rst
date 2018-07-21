@@ -30,7 +30,7 @@ Is a full IDE to develop Python software. It has all the needed parts to be able
 python scripts and complete software. Is a little overkill for writing roles/playbooks but, it can
 be a very useful tool if you write modules and submit code for Ansible. Can be used to debug the Ansible engine.
 
-* Yaml supported out of the box
+* YAML supported out of the box
 
 
 Sublime
@@ -39,16 +39,16 @@ Sublime
 You can customize GUI with themes, install packages and do the same type of work. You can install it on
 Linux, OSX and Windows
 
-* `GitGutter <https://packagecontrol.io/packages/GitGutter>`_ - plug-in to show information about files in a git repository
-* `SideBarEnhancements <https://packagecontrol.io/packages/SideBarEnhancements>`_ - Provides enhancements to the operations on Sidebar of Files and Folders
-* `Sublime Linter <https://packagecontrol.io/packages/SublimeLinter>`_ - The code linting framework for Sublime Text 3
-* `Pretty YAML <https://packagecontrol.io/packages/Pretty%20YAML>`_ - Prettify YAML plugin for Sublime Text 2 & 3
-* `Yamllint <https://packagecontrol.io/packages/SublimeLinter-contrib-yamllint>`_ - Sublime wrapper around yamllint
+* `GitGutter <https://packagecontrol.io/packages/GitGutter>`_ - plug-in to show information about files in a git repository.
+* `SideBarEnhancements <https://packagecontrol.io/packages/SideBarEnhancements>`_ - Provides enhancements to the operations on Sidebar of Files and Folders.
+* `Sublime Linter <https://packagecontrol.io/packages/SublimeLinter>`_ - The code linting framework for Sublime Text 3.
+* `Pretty YAML <https://packagecontrol.io/packages/Pretty%20YAML>`_ - Prettify YAML plugin for Sublime Text 2 and 3.
+* `Yamllint <https://packagecontrol.io/packages/SublimeLinter-contrib-yamllint>`_ - Sublime wrapper around yamllint.
 
 VS Code
 =======
 
-Also similar like Atom & sublime but, made by Microsoft. Its also open source and free.
+Also similar like Atom & Sublime but, made by Microsoft. Its also open source and free.
 
 
 * `YAML Support by Red Hat <https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml>`_ - Provides YAML support via yaml-language-server with built-in Kubernetes and Kedge syntax support.
@@ -56,7 +56,7 @@ Also similar like Atom & sublime but, made by Microsoft. Its also open source an
 * `Visual Studio Code extension for Ansible <https://marketplace.visualstudio.com/items?itemName=vscoss.vscode-ansible>`_ - Autocompletion, syntax highlighting
 
 vim
-====
+===
 
 * `Ansible vim <https://github.com/pearofducks/ansible-vim>`_  - vim syntax plugin for Ansible 2.x, it supports YAML playbooks, Jinja2 templates, and Ansible's hosts files.
 
@@ -88,13 +88,13 @@ Others
 
 - `Ansigenome <https://github.com/nickjj/ansigenome>`_ is a command line tool designed to help you manage your Ansible roles.
 - `Awesome Ansible <https://github.com/jdauphant/awesome-ansible>`_ is a collaboratively curated list of awesome Ansible resources.
-- `Ansible cmdb` <https://github.com/fboender/ansible-cmdb`_ - Takes the output of Ansible's fact gathering and converts it into a static HTML overview page containing system configuration information
-- `Ansible Shell` <https://github.com/dominis/ansible-shell`_ - Interactive shell for Ansible with built-in tab completion for all the modules
-- `Ansible Silo` <https://github.com/groupon/ansible-silo`_ - Ansible in a self-contained environment via Docker.
-- `AWX` <https://github.com/ansible/awx`_ - AWX provides a web-based user interface, REST API, and task engine built on top of Ansible. It is the upstream project for Tower, a commercial derivative of AWX.
-- `Mitogen for Ansible` <https://mitogen.readthedocs.io/en/latest/ansible.html`_ - Uses the `Mitogen <https://github.com/dw/mitogen/>`_ library to execute Ansible playbooks in a more efficient way (decreases the execution time).
-- `OpsTools-ansible` <https://github.com/centos-opstools/opstools-ansible`_ - The project opstools-ansible is to use Ansible to configure an environment that provides the support of `OpsTools` <https://wiki.centos.org/SpecialInterestGroup/OpsTools>, namely centralized logging and analysis, availability monitoring, and performance monitoring.
-- `TD4A` <https://github.com/cidrblock/td4a`_ - Template designer for automation - TD4A is a visual design aid for building and testing jinja2 templates. It will combine data in yaml format with a jinja2 template and render the output.
+- `Ansible cmdb <https://github.com/fboender/ansible-cmdb>`_ - Takes the output of Ansible's fact gathering and converts it into a static HTML overview page containing system configuration information.
+- `Ansible Shell <https://github.com/dominis/ansible-shell>`_ - Interactive shell for Ansible with built-in tab completion for all the modules.
+- `Ansible Silo <https://github.com/groupon/ansible-silo>`_ - Ansible in a self-contained environment via Docker.
+- `AWX <https://github.com/ansible/awx>`_ - AWX provides a web-based user interface, REST API, and task engine built on top of Ansible. It is the upstream project for Tower, a commercial derivative of AWX.
+- `Mitogen for Ansible <https://mitogen.readthedocs.io/en/latest/ansible.html>`_ - Uses the `Mitogen <https://github.com/dw/mitogen/>`_ library to execute Ansible playbooks in a more efficient way (decreases the execution time).
+- `OpsTools-ansible <https://github.com/centos-opstools/opstools-ansible>`_ - The project opstools-ansible is to use Ansible to configure an environment that provides the support of `OpsTools <https://wiki.centos.org/SpecialInterestGroup/OpsTools>`_, namely centralized logging and analysis, availability monitoring, and performance monitoring.
+- `TD4A <https://github.com/cidrblock/td4a>`_ - Template designer for automation - TD4A is a visual design aid for building and testing jinja2 templates. It will combine data in yaml format with a jinja2 template and render the output.
 
 
 *****************
