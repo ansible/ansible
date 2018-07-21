@@ -659,8 +659,6 @@ lib/ansible/modules/net_tools/basics/uri.py E326
 lib/ansible/modules/net_tools/cloudflare_dns.py E317
 lib/ansible/modules/net_tools/cloudflare_dns.py E325
 lib/ansible/modules/net_tools/cloudflare_dns.py E327
-lib/ansible/modules/net_tools/dnsimple.py E325
-lib/ansible/modules/net_tools/dnsimple.py E327
 lib/ansible/modules/net_tools/haproxy.py E317
 lib/ansible/modules/net_tools/haproxy.py E324
 lib/ansible/modules/net_tools/haproxy.py E325
