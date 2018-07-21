@@ -109,7 +109,8 @@ class PlaybookCLI(CLI):
         # limit if only implicit localhost was in inventory to start with.
         #
         # Fix this when we rewrite inventory by making localhost a real host (and thus show up in list_hosts())
-        hosts = CLI.get_host_list(inventory, self.options.subset)
+        if not self.options.syntax:
+            hosts = CLI.get_host_list(inventory, self.options.subset)
 
         # flush fact cache if requested
         if self.options.flush_cache:
