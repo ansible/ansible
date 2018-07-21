@@ -201,9 +201,9 @@ class AnsibleDictProxy(MutableMapping, AnsibleObjectProxyMixin):
         return False
 
     def __str__(self):
-        return u'{{{contents}}}'.format(
-            contents=', '.join('{key}: {val}'.format(key=repr(key), val=repr(val))
-                               for key, val in iteritems(self)))
+        return text_type('{{{contents}}}'.format(
+                         contents=', '.join('{key}: {val}'.format(key=repr(key), val=repr(val))
+                                            for key, val in iteritems(self))))
 
     def __repr__(self):
         return self.__str__()
