@@ -269,13 +269,13 @@ Source an OpenStack RC file::
 
 .. note::
 
-    An OpenStack RC file contains the environment variables required by the client tools to establish a connection with the cloud provider, such as the authentication URL, user name, password and region name. For more information on how to download, create or source an OpenStack RC file, please refer to `Set environment variables using the OpenStack RC file <http://docs.openstack.org/user-guide/common/cli_set_environment_variables_using_openstack_rc.html>`_.
+    An OpenStack RC file contains the environment variables required by the client tools to establish a connection with the cloud provider, such as the authentication URL, user name, password and region name. For more information on how to download, create or source an OpenStack RC file, please refer to `Set environment variables using the OpenStack RC file <https://docs.openstack.org/user-guide/common/cli_set_environment_variables_using_openstack_rc.html>`_.
 
 You can confirm the file has been successfully sourced by running a simple command, such as `nova list` and ensuring it return no errors.
 
 .. note::
 
-    The OpenStack command line clients are required to run the `nova list` command. For more information on how to install them, please refer to `Install the OpenStack command-line clients <http://docs.openstack.org/user-guide/common/cli_install_openstack_command_line_clients.html>`_.
+    The OpenStack command line clients are required to run the `nova list` command. For more information on how to install them, please refer to `Install the OpenStack command-line clients <https://docs.openstack.org/user-guide/common/cli_install_openstack_command_line_clients.html>`_.
 
 You can test the OpenStack dynamic inventory script manually to confirm it is working as expected::
 
@@ -380,7 +380,7 @@ the dynamic groups as empty in the static inventory file. For example::
 
    :doc:`intro_inventory`
        All about static inventory files
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

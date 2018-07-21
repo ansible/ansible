@@ -124,11 +124,11 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
       name: http-role
 
     # from Bitbucket
-    - src: git+http://bitbucket.org/willthames/git-ansible-galaxy
+    - src: git+https://bitbucket.org/willthames/git-ansible-galaxy
       version: v1.4
 
     # from Bitbucket, alternative syntax and caveats
-    - src: http://bitbucket.org/willthames/hg-ansible-galaxy
+    - src: https://bitbucket.org/willthames/hg-ansible-galaxy
       scm: hg
 
     # from GitLab or other git-based scm
@@ -165,7 +165,7 @@ Content of the *webserver.yml* file:
     - src: https://github.com/bennojoy/nginx
 
     # from Bitbucket
-    - src: git+http://bitbucket.org/willthames/git-ansible-galaxy
+    - src: git+https://bitbucket.org/willthames/git-ansible-galaxy
       version: v1.4
 
 Dependencies
@@ -455,7 +455,7 @@ This only removes the role from Galaxy. It does not remove or alter the actual G
 Travis integrations
 -------------------
 
-You can create an integration or connection between a role in Galaxy and `Travis <http://travis-ci.org>`_. Once the connection is established, a build in Travis will
+You can create an integration or connection between a role in Galaxy and `Travis <https://travis-ci.org>`_. Once the connection is established, a build in Travis will
 automatically trigger an import in Galaxy, updating the search index with the latest information about the role.
 
 You create the integration using the ``setup`` command, but before an integration can be created, you must first authenticate using the ``login`` command; you will
@@ -511,7 +511,7 @@ Provide the ID of the integration to be disabled. You can find the ID by using t
 
    :ref:`playbooks_reuse_roles`
        All about ansible roles
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

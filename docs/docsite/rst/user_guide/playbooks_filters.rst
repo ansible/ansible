@@ -781,7 +781,7 @@ An idempotent method to generate unique hashes per system is to use a salt that 
     {{ 'secretpassword'|password_hash('sha512', 65534|random(seed=inventory_hostname)|string) }}
 
 Hash types available depend on the master system running ansible,
-'hash' depends on hashlib password_hash depends on passlib (http://passlib.readthedocs.io/en/stable/lib/passlib.hash.html).
+'hash' depends on hashlib password_hash depends on passlib (https://passlib.readthedocs.io/en/stable/lib/passlib.hash.html).
 
 .. _combine_filter:
 
@@ -1227,7 +1227,7 @@ to be added to core so everyone can make use of them.
        Playbook organization by roles
    :doc:`playbooks_best_practices`
        Best practices in playbooks
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

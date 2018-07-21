@@ -121,7 +121,7 @@ To enable the Ansible Engine repository, run the following command:
 
     $ sudo subscription-manager repos --enable rhel-7-server-ansible-2.6-rpms
 
-RPMs for currently supported versions of RHEL, CentOS, and Fedora are available from `EPEL <http://fedoraproject.org/wiki/EPEL>`_ as well as `releases.ansible.com <https://releases.ansible.com/ansible/rpm>`_.
+RPMs for currently supported versions of RHEL, CentOS, and Fedora are available from `EPEL <https://fedoraproject.org/wiki/EPEL>`_ as well as `releases.ansible.com <https://releases.ansible.com/ansible/rpm>`_.
 
 Ansible version 2.4 and later can manage earlier operating systems that contain Python 2.6 or higher.
 
@@ -397,7 +397,7 @@ bugs and feature ideas.
        Learning ansible's configuration management language
    :ref:`installation_faqs`
        Ansible Installation related to FAQs
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
