@@ -93,24 +93,27 @@ memset_api:
   returned: when changed or state == present
   type: complex
   contains:
-    protocol:
-      description: The protocol to be loadbalanced.
-      returned: always
-      type: string
-      sample: https
-    name:
-      description: The name of the service.
-      returned: always
-      type: string
-      sample: my_https_service
     enabled:
       description: Whether the service is enabled.
-      returned: always
+      returned: when state=present
       type: boolean
       sample: true
+    load_balancer:
+      description: The name of the loadbalancer product.
+      returned: always
+      type: string
+      sample: lbtestyaa1
+    port:
+      description: The port the service is exposed on.
+      returned: when state=present
+    protocol:
+      description: The protocol to be loadbalanced.
+      returned: when state=present
+      type: string
+      sample: https
     servers:
       description: List of dictionaries of the servers attached to the service.
-      returned: always
+      returned: when state=present
       type: list
       sample: [
         {
@@ -122,16 +125,16 @@ memset_api:
           "weight": "10"
         }
       ]
-    virtual_ip:
-      description: The IP address the service is exposed on.
+    service_name:
+      description: The name of the service.
       returned: always
       type: string
+      sample: my_https_service
+    virtual_ip:
+      description: The IP address the service is exposed on.
+      returned: when state=present
+      type: string
       sample: 1.2.3.4
-    port:
-      description: The port exposed to the Internet.
-      returned: always
-      type: integer
-      sample: 443
 '''
 
 import re
@@ -154,7 +157,7 @@ def api_validation(args=None):
     if not 1 <= args['port'] <= 65535:
         errors['port'] = "Port must be in the range 1 > 65535 (inclusive)."
     if len(ips) == 0:
-        errors['virtual_ip'] = msg
+        errors['misc'] = msg
     if args['virtual_ip'] and args['virtual_ip'] not in ips:
             errors['virtual_ip'] = "{0} is not assigned to {1}" . format(args['virtual_ip'], args['load_balancer'])
 
