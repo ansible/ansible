@@ -43,7 +43,7 @@ class ACMEProvider(CloudProvider):
         if os.environ.get('ANSIBLE_ACME_CONTAINER'):
             self.image = os.environ.get('ANSIBLE_ACME_CONTAINER')
         else:
-            self.image = 'quay.io/ansible/acme-test-container:1.0.0'
+            self.image = 'quay.io/ansible/acme-test-container:1.0.1'
         self.container_name = ''
 
     def filter(self, targets, exclude):
