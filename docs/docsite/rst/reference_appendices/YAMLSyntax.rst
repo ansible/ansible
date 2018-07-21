@@ -228,7 +228,7 @@ value::
        Complete playbook files from the github project source
    `Wikipedia YAML syntax reference <https://en.wikipedia.org/wiki/YAML>`_
        A good guide to YAML syntax
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel and #yaml for YAML specific questions

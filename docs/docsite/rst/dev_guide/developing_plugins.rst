@@ -356,7 +356,7 @@ When shipped as part of a role, the plugin will be available as soon as the role
        Learn about how to develop dynamic inventory sources
    :doc:`developing_modules`
        Learn about how to write Ansible modules
-   `Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `Mailing List <https://groups.google.com/group/ansible-devel>`_
        The development mailing list
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

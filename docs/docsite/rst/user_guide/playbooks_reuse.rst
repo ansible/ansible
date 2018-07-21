@@ -83,5 +83,5 @@ Using ``import*`` can also have some limitations when compared to dynamic includ
        How to share roles on galaxy, role management
    `GitHub Ansible examples <https://github.com/ansible/ansible-examples>`_
        Complete playbook files from the GitHub project source
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups

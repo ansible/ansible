@@ -103,7 +103,7 @@ The following topics will discuss how to develop and work with modules:
        Learn about the Python API for playbook and task execution
    `GitHub modules directory <https://github.com/ansible/ansible/tree/devel/lib/ansible/modules>`_
        Browse module source code
-   `Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `Mailing List <https://groups.google.com/group/ansible-devel>`_
        Development mailing list
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

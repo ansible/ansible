@@ -545,14 +545,14 @@ the code in Ansible to trigger that failure.
        The documentation of the earliest supported unittest framework - from Python 2.6
    `pytest: helps you write better programs <https://docs.pytest.org/en/latest/>`_
        The documentation of pytest - the framework actually used to run Ansible unit tests
-   `Development Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `Development Mailing List <https://groups.google.com/group/ansible-devel>`_
        Mailing list for development topics
-   `Testing Your Code (from The Hitchhiker's Guide to Python!) <http://docs.python-guide.org/en/latest/writing/tests/>`_
+   `Testing Your Code (from The Hitchhiker's Guide to Python!) <https://docs.python-guide.org/en/latest/writing/tests/>`_
        General advice on testing Python code
    `Uncle Bob's many videos on YouTube <https://www.youtube.com/watch?v=QedpQjxBPMA&list=PLlu0CT-JnSasQzGrGzddSczJQQU7295D2>`_
        Unit testing is a part of the of various philosophies of software development, including
        Extreme Programming (XP), Clean Coding.  Uncle Bob talks through how to benfit from this
-   `"Why Most Unit Testing is Waste" http://rbcs-us.com/documents/Why-Most-Unit-Testing-is-Waste.pdf`
+   `"Why Most Unit Testing is Waste" https://rbcs-us.com/documents/Why-Most-Unit-Testing-is-Waste.pdf`
        An article warning against the costs of unit testing
    `'A Response to "Why Most Unit Testing is Waste"' https://henrikwarne.com/2014/09/04/a-response-to-why-most-unit-testing-is-waste/` 
        An response pointing to how to maintain the value of unit tests

@@ -317,7 +317,7 @@ In this example Ansible will start the software upgrade on the front ends only i
        An introduction to playbooks
    `Ansible Examples on GitHub <https://github.com/ansible/ansible-examples>`_
        Many examples of full-stack deployments
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
