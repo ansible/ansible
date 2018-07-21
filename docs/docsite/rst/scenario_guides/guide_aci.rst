@@ -41,7 +41,7 @@ More information
 Various resources exist to start learning ACI, here is a list of interesting articles from the community.
 
 - `Adam Raffe: Learning ACI <https://adamraffe.com/learning-aci/>`_
-- `Luca Relandini: ACI for dummies <http://lucarelandini.blogspot.be/2015/03/aci-for-dummies.html>`_
+- `Luca Relandini: ACI for dummies <https://lucarelandini.blogspot.be/2015/03/aci-for-dummies.html>`_
 - `Cisco DevNet Learning Labs about ACI <https://learninglabs.cisco.com/labs/tags/ACI>`_
 
 
@@ -503,5 +503,5 @@ You will find our roadmap, an overview of open ACI issues and pull-requests and 
        The Ansible Network community page, includes contact information and meeting information.
    `#ansible-network <https://webchat.freenode.net/?channels=ansible-network>`_
        The #ansible-network IRC chat channel on Freenode.net.
-   `User Mailing List <http://groups.google.com/group/ansible-project>`_
+   `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!

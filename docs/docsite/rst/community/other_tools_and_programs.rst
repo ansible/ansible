@@ -87,7 +87,7 @@ Tools for Validating Playbooks
 
 - `Ansible Lint <https://github.com/willthames/ansible-lint>`_ - widely used, highly configurable best-practices linter for Ansible playbooks.
 - `Ansible Review <https://github.com/willthames/ansible-review>`_ - an extension of Ansible Lint designed for code review.
-- `Molecule <http://github.com/metacloud/molecule>`_ is a testing framework for Ansible plays and roles.
+- `Molecule <https://github.com/metacloud/molecule>`_ is a testing framework for Ansible plays and roles.
 - `yamllint <https://yamllint.readthedocs.io/en/stable/>`__ is a command-line utility to check syntax validity including key repetition and indentation issues.
 
 
@@ -96,11 +96,11 @@ Other Tools
 ***********
 
 - `Ansible cmdb <https://github.com/fboender/ansible-cmdb>`_ - takes the output of Ansible's fact gathering and converts it into a static HTML overview page containing system configuration information.
-- `Ansible Inventory Grapher <http://github.com/willthames/ansible-inventory-grapher>`_ - visually displays inventory inheritance hierarchies and at what level a variable is defined in inventory.
+- `Ansible Inventory Grapher <https://github.com/willthames/ansible-inventory-grapher>`_ - visually displays inventory inheritance hierarchies and at what level a variable is defined in inventory.
 - `Ansible Shell <https://github.com/dominis/ansible-shell>`_ - an interactive shell for Ansible with built-in tab completion for all the modules.
 - `Ansible Silo <https://github.com/groupon/ansible-silo>`_ - a self-contained Ansible environment via Docker.
 - `Ansigenome <https://github.com/nickjj/ansigenome>`_ - a command line tool designed to help you manage your Ansible roles.
-- `ARA <http://github.com/openstack/ara>`_ - records Ansible playbook runs and makes the recorded data available and intuitive for users and systems by integrating with Ansible as a callback plugin.
+- `ARA <https://github.com/openstack/ara>`_ - records Ansible playbook runs and makes the recorded data available and intuitive for users and systems by integrating with Ansible as a callback plugin.
 - `Awesome Ansible <https://github.com/jdauphant/awesome-ansible>`_ - a collaboratively curated list of awesome Ansible resources.
 - `AWX <https://github.com/ansible/awx>`_ - provides a web-based user interface, REST API, and task engine built on top of Ansible. AWX is the upstream project for Tower, a commercial derivative of AWX.
 - `Mitogen for Ansible <https://mitogen.readthedocs.io/en/latest/ansible.html>`_ - uses the `Mitogen <https://github.com/dw/mitogen/>`_ library to execute Ansible playbooks in a more efficient way (decreases the execution time).
