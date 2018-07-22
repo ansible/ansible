@@ -182,7 +182,7 @@ if (!$sid) {
 If (Test-Path -Path $path -PathType Leaf) {
     $inherit = "None"
 }
-ElseIf ($inherit -eq "") {
+ElseIf ($null -eq $inherit) {
     $inherit = "ContainerInherit, ObjectInherit"
 }
 
