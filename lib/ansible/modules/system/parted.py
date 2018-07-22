@@ -327,7 +327,7 @@ def format_disk_size(size_bytes, unit):
 
     # Shortcut
     if size_bytes == 0:
-        return 0.0
+        return 0.0, 'b'
 
     # Cases where we default to 'compact'
     if unit in ['', 'compact', 'cyl', 'chs']:
