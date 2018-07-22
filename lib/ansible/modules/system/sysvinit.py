@@ -310,8 +310,8 @@ def main():
                 (rc, out, err) = module.run_command(cmd)
             # FIXME: ERRORS
 
-            if rc != 0:
-                module.fail_json(msg="Failed to %s service: %s" % (action, name))
+            if err != "":
+                module.fail_json(msg="Failed to %s service: %s" % (action, name), rc=rc, out=out, err=err)
 
             return (rc, out, err)
 
