@@ -396,7 +396,7 @@ class Host(object):
         if len(proxy_list) < 1:
             self._module.fail_json(msg="Proxy not found: %s" % proxy_name)
         else:
-            return proxy_list[0]['proxyid']
+            return int(proxy_list[0]['proxyid'])
 
     # get group ids by group names
     def get_group_ids_by_group_names(self, group_names):
@@ -763,7 +763,7 @@ def main():
 
         # If proxy is not specified as a module parameter, use the existing setting
         if proxy is None:
-            proxy_id = zabbix_host_obj['proxy_hostid']
+            proxy_id = int(zabbix_host_obj['proxy_hostid'])
 
         if state == "absent":
             # remove host
