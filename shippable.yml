@@ -35,6 +35,12 @@ matrix:
     - env: T=windows/2012-R2/3
     - env: T=windows/2016/3
 
+    - env: T=windows/2008/4
+    - env: T=windows/2008-R2/4
+    - env: T=windows/2012/4
+    - env: T=windows/2012-R2/4
+    - env: T=windows/2016/4
+
     - env: T=network
 
     - env: T=osx/10.11/1
