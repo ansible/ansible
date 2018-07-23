@@ -1,4 +1,9 @@
 ---
+- name: make sure win output dir exists
+  win_file:
+    path: "{{win_output_dir}}"
+    state: directory
+
 - name: reboot with defaults
   win_reboot:
 
