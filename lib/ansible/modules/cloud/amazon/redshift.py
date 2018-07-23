@@ -363,7 +363,7 @@ def delete_cluster(module, redshift):
         )
     except is_boto3_error_code('ClusterNotFound'):
         return(False, {})
-    
+
     if wait:
         attempts = wait_timeout // 60
         waiter = redshift.get_waiter('cluster_deleted')
