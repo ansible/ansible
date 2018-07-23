@@ -1,0 +1,2 @@
+bugfixes:
+- urls - Only assume GET method if data is empty, otherwise POST
