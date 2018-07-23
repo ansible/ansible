@@ -73,7 +73,7 @@ certificates:
             description: Returns an array of complex objects as described below.
             returned: always
             type: complex
-            contains: 
+            contains:
                 server_certificate_id:
                     description: The 21 character certificate id
                     returned: always
@@ -132,7 +132,8 @@ def _get_server_certs(connection, module, name, path):
 
     try:
         if name:
-            response['certificates'].append(connection.get_server_certificate(ServerCertificateName=name))['ServerCertificate']
+            response['certificates'].append(connection.get_server_certificate(ServerCertificateName=name))[
+                'ServerCertificate']
         elif path:
             server_certs = connection.list_server_certificates(PathPrefix=path)['ServerCertificateMetadataList']
         else:
@@ -141,7 +142,8 @@ def _get_server_certs(connection, module, name, path):
         if not name:
             for server_cert in server_certs:
                 response['certificates'].append(
-                    connection.get_server_certificate(ServerCertificateName=server_cert['ServerCertificateName'])['ServerCertificate'])
+                    connection.get_server_certificate(ServerCertificateName=server_cert['ServerCertificateName'])[
+                        'ServerCertificate'])
 
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == 'NoSuchEntity':
