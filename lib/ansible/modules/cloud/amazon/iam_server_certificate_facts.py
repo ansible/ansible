@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: iam_server_certificate_facts
-short_description: Retrieve the facts of a server certificate
+short_description: Retrieve the facts of a server certificate either based on name or path
 description:
   - Retrieve the attributes of a server certificate
 version_added: "2.2"
@@ -54,41 +54,56 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-server_certificate_id:
-    description: The 21 character certificate id
+certificates:
+    description: Returns an array of complex objects as described below.
     returned: success
-    type: str
-    sample: "ADWAJXWTZAXIPIMQHMJPO"
-certificate_body:
-    description: The asn1der encoded PEM string
-    returned: success
-    type: str
-    sample: "-----BEGIN CERTIFICATE-----\nbunch of random data\n-----END CERTIFICATE-----"
-server_certificate_name:
-    description: The name of the server certificate
-    returned: success
-    type: str
-    sample: "server-cert-name"
-arn:
-    description: The Amazon resource name of the server certificate
-    returned: success
-    type: str
-    sample: "arn:aws:iam::911277865346:server-certificate/server-cert-name"
-path:
-    description: The path of the server certificate
-    returned: success
-    type: str
-    sample: "/"
-expiration:
-    description: The date and time this server certificate will expire, in ISO 8601 format.
-    returned: success
-    type: str
-    sample: "2017-06-15T12:00:00+00:00"
-upload_date:
-    description: The date and time this server certificate was uploaded, in ISO 8601 format.
-    returned: success
-    type: str
-    sample: "2015-04-25T00:36:40+00:00"
+    type: complex
+    contains:
+        certificate_body:
+            description: The asn1der encoded PEM string
+            returned: always
+            type: str
+            sample: "-----BEGIN CERTIFICATE-----\nbunch of random data\n-----END CERTIFICATE-----"
+        certificate_chain:
+            description: The asn1der encoded PEM string
+            returned: always
+            type: str
+            sample: "-----BEGIN CERTIFICATE-----\nbunch of random data\n-----END CERTIFICATE-----"
+        server_certificate_metadata:
+            description: Returns an array of complex objects as described below.
+            returned: always
+            type: complex
+            contains: 
+                server_certificate_id:
+                    description: The 21 character certificate id
+                    returned: always
+                    type: str
+                    sample: "ADWAJXWTZAXIPIMQHMJPO"
+                server_certificate_name:
+                    description: The name of the server certificate
+                    returned: always
+                    type: str
+                    sample: "server-cert-name"
+                arn:
+                    description: The Amazon resource name of the server certificate
+                    returned: always
+                    type: str
+                    sample: "arn:aws:iam::911277865346:server-certificate/server-cert-name"
+                path:
+                    description: The path of the server certificate
+                    returned: always
+                    type: str
+                    sample: "/"
+                expiration:
+                    description: The date and time this server certificate will expire, in ISO 8601 format.
+                    returned: always
+                    type: str
+                    sample: "2017-06-15T12:00:00+00:00"
+                upload_date:
+                    description: The date and time this server certificate was uploaded, in ISO 8601 format.
+                    returned: always
+                    type: str
+                    sample: "2015-04-25T00:36:40+00:00"
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
