@@ -1111,7 +1111,7 @@ class PyVmomiHelper(PyVmomi):
                 for dvp in dvps:
                     if hasattr(dvp.config.defaultPortConfig, 'vlan') and \
                             isinstance(dvp.config.defaultPortConfig.vlan.vlanId, int) and \
-                            str(dvp.config.defaultPortConfig.vlan.vlanId) == network['vlan']:
+                            str(dvp.config.defaultPortConfig.vlan.vlanId) == str(network['vlan']):
                         network['name'] = dvp.config.name
                         break
                     if 'dvswitch_name' in network and \
