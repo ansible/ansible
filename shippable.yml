@@ -79,6 +79,9 @@ matrix:
     - env: T=aws/2.7/1
     - env: T=aws/3.6/1
 
+    - env: T=aws/2.7/2
+    - env: T=aws/3.6/2
+
     - env: T=azure/2.7/1
     - env: T=azure/3.6/1
 
@@ -87,6 +90,9 @@ matrix:
 
     - env: T=azure/2.7/3
     - env: T=azure/3.6/3
+
+    - env: T=azure/2.7/4
+    - env: T=azure/3.6/4
 
     - env: T=vcenter/2.7/1
     - env: T=vcenter/3.6/1
