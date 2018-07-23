@@ -13,12 +13,6 @@ lib/ansible/modules/windows/setup.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/setup.ps1 PSAvoidUsingEmptyCatchBlock
 lib/ansible/modules/windows/setup.ps1 PSUseDeclaredVarsMoreThanAssignments
 lib/ansible/modules/windows/win_certificate_store.ps1 PSAvoidUsingPlainTextForPassword
-lib/ansible/modules/windows/win_chocolatey.ps1 PSAvoidUsingConvertToSecureStringWithPlainText
-lib/ansible/modules/windows/win_chocolatey.ps1 PSAvoidUsingPlainTextForPassword
-lib/ansible/modules/windows/win_chocolatey.ps1 PSAvoidUsingUserNameAndPassWordParams
-lib/ansible/modules/windows/win_chocolatey.ps1 PSUseApprovedVerbs
-lib/ansible/modules/windows/win_chocolatey.ps1 PSUseDeclaredVarsMoreThanAssignments
-lib/ansible/modules/windows/win_chocolatey.ps1 PSUseOutputTypeCorrectly
 lib/ansible/modules/windows/win_copy.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_copy.ps1 PSUseDeclaredVarsMoreThanAssignments
 lib/ansible/modules/windows/win_dns_client.ps1 PSAvoidGlobalVars

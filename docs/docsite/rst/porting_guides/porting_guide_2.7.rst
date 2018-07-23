@@ -100,9 +100,13 @@ The following modules will be removed in Ansible 2.10. Please update your playbo
 Noteworthy module changes
 -------------------------
 
-Check mode is now supported in the ``command`` and ``shell`` modules. However, only when ``creates`` or ``removes`` is
-specified. If either of these are specified, the module will check for existence of the file and report the correct
-changed status, if they are not included the module will skip like it had done previously.
+* Check mode is now supported in the ``command`` and ``shell`` modules. However, only when ``creates`` or ``removes`` is
+  specified. If either of these are specified, the module will check for existence of the file and report the correct
+  changed status, if they are not included the module will skip like it had done previously.
+
+* The ``win_chocolatey`` module originally required the ``proxy_username`` and ``proxy_password`` to
+  escape any double quotes in the value. This is no longer required and the escaping may cause further
+  issues.
 
 Plugins
 =======
