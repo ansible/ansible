@@ -101,8 +101,6 @@ rule_sets:
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry
 
-import traceback
-
 try:
     from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
