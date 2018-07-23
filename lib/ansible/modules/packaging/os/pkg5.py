@@ -41,7 +41,7 @@ options:
     aliases: [ accept, accept_licences ]
   be_name:
     description:
-      - Name for new BE.
+      - creates a new boot environment with the given name
     version_added: "2.7"
     type: str
 '''
