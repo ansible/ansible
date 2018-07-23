@@ -35,8 +35,9 @@ options:
             service.  C(reloaded) will always reload. B(At least one of state
             and enabled are required.) Note that reloaded will start the
             service if it is not already started, even if your chosen init
-            system wouldn't normally.
-        choices: [ reloaded, restarted, running, started, stopped ]
+            system wouldn't normally. C(status) will simply return whether
+            or not the service is running
+        choices: [ status, reloaded, restarted, running, started, stopped ]
     sleep:
         description:
         - If the service is being C(restarted) then sleep this many seconds
@@ -1522,7 +1523,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(type='str', required=True),
-            state=dict(type='str', choices=['running', 'started', 'stopped', 'reloaded', 'restarted']),
+            state=dict(type='str', choices=['status', 'running', 'started', 'stopped', 'reloaded', 'restarted']),
             sleep=dict(type='int'),
             pattern=dict(type='str'),
             enabled=dict(type='bool'),
@@ -1567,6 +1568,10 @@ def main():
         service.check_ps()
     else:
         service.get_service_status()
+
+    if module.params['state'] == 'status':
+        result['running'] = service.running
+        module.exit_json(**result)
 
     # Calculate if request will change service state
     service.check_service_changed()
