@@ -136,6 +136,18 @@ performance_mode:
     returned: always
     type: str
     sample: "generalPurpose"
+throughput_mode:
+    description: mode of throughput for the file system (requires boto3 >= 1.7.57)
+    returned: always
+    type: str
+    sample: "bursting"
+    version_added: 2.7
+provisioned_throughput_in_mibps:
+    description: throughput provisioned in Mibps (requires boto3 >= 1.7.57)
+    returned: when throughput_mode is set to "provisioned"
+    type: float
+    sample: 15.0
+    version_added: 2.7
 tags:
     description: tags on the efs instance
     returned: always
