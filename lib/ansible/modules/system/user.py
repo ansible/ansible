@@ -197,11 +197,11 @@ options:
     uid_min:
         description:
             - Minimal UID
-        version_added: "2.6"
+        version_added: "2.7"
     uid_max:
         description:
             - Max UID
-        version_added: "2.6"
+        version_added: "2.7"
 
 '''
 
