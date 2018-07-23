@@ -30,6 +30,7 @@ import shlex
 import zipfile
 import random
 import re
+from distutils.version import LooseVersion
 from io import BytesIO
 
 from ansible.release import __version__, __author__
@@ -421,6 +422,74 @@ class ModuleDepFinder(ast.NodeVisitor):
         self.generic_visit(node)
 
 
+class PSModuleDepFinder():
+
+    def __init__(self):
+        self.modules = dict()
+        self.ps_version = None
+        self.os_version = None
+        self.become = False
+
+        self._re_module = re.compile(to_bytes(r'(?i)^#\s*requires\s+\-module(?:s?)\s*(Ansible\.ModuleUtils\..+)'))
+        self._re_ps_version = re.compile(to_bytes(r'(?i)^#requires\s+\-version\s+([0-9]+(\.[0-9]+){0,3})$'))
+        self._re_os_version = re.compile(to_bytes(r'(?i)^#ansiblerequires\s+\-osversion\s+([0-9]+(\.[0-9]+){0,3})$'))
+        self._re_become = re.compile(to_bytes(r'(?i)^#ansiblerequires\s+\-become$'))
+
+    def scan_module(self, module_data):
+        lines = module_data.split(b'\n')
+        module_utils = set()
+
+        for line in lines:
+            module_util_match = self._re_module.match(line)
+            if module_util_match:
+                # tolerate windows line endings by stripping any remaining newline chars
+                module_util_name = to_text(module_util_match.group(1).rstrip())
+                if module_util_name not in self.modules.keys():
+                    module_utils.add(module_util_name)
+
+            ps_version_match = self._re_ps_version.match(line)
+            if ps_version_match:
+                self._parse_version_match(ps_version_match, "ps_version")
+
+            os_version_match = self._re_os_version.match(line)
+            if os_version_match:
+                self._parse_version_match(os_version_match, "os_version")
+
+            # once become is set, no need to keep on checking recursively
+            if not self.become:
+                become_match = self._re_become.match(line)
+                if become_match:
+                    self.become = True
+
+        # recursively drill into each Requires to see if there are any more
+        # requirements
+        for m in set(module_utils):
+            m = to_text(m)
+            mu_path = ps_module_utils_loader.find_plugin(m, ".psm1")
+            if not mu_path:
+                raise AnsibleError('Could not find imported module support code for \'%s\'.' % m)
+
+            module_util_data = to_bytes(_slurp(mu_path))
+            self.modules[m] = module_util_data
+            self.scan_module(module_util_data)
+
+    def _parse_version_match(self, match, attribute):
+        new_version = to_text(match.group(1)).rstrip()
+
+        # PowerShell cannot cast a string of "1" to Version, it must have at
+        # least the major.minor for it to be valid so we append 0
+        if match.group(2) is None:
+            new_version = "%s.0" % new_version
+
+        existing_version = getattr(self, attribute, None)
+        if existing_version is None:
+            setattr(self, attribute, new_version)
+        else:
+            # determine which is the latest version and set that
+            if LooseVersion(new_version) > LooseVersion(existing_version):
+                setattr(self, attribute, new_version)
+
+
 def _slurp(path):
     if not os.path.exists(path):
         raise AnsibleError("imported module support code does not exist at %s" % os.path.abspath(path))
@@ -785,61 +854,21 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
             exec_manifest['become_flags'] = become_flags
             exec_manifest["become"] = to_text(base64.b64encode(to_bytes(become_wrapper)))
 
-        lines = b_module_data.split(b'\n')
-        module_names = set()
-        become_required = False
-        min_os_version = None
-        min_ps_version = None
+        finder = PSModuleDepFinder()
+        finder.scan_module(b_module_data)
 
-        requires_module_list = re.compile(to_bytes(r'(?i)^#\s*requires\s+\-module(?:s?)\s*(Ansible\.ModuleUtils\..+)'))
-        requires_ps_version = re.compile(to_bytes(r'(?i)^#requires\s+\-version\s+([0-9]+(\.[0-9]+){0,3})$'))
-        requires_os_version = re.compile(to_bytes(r'(?i)^#ansiblerequires\s+\-osversion\s+([0-9]+(\.[0-9]+){0,3})$'))
-        requires_become = re.compile(to_bytes(r'(?i)^#ansiblerequires\s+\-become$'))
+        for name, data in finder.modules.items():
+            b64_data = to_text(base64.b64encode(data))
+            exec_manifest['powershell_modules'][name] = b64_data
 
-        for line in lines:
-            module_util_line_match = requires_module_list.match(line)
-            if module_util_line_match:
-                module_names.add(module_util_line_match.group(1))
-
-            requires_ps_version_match = requires_ps_version.match(line)
-            if requires_ps_version_match:
-                min_ps_version = to_text(requires_ps_version_match.group(1))
-                # Powershell cannot cast a string of "1" to version, it must
-                # have at least the major.minor for it to work so we append 0
-                if requires_ps_version_match.group(2) is None:
-                    min_ps_version = "%s.0" % min_ps_version
-
-            requires_os_version_match = requires_os_version.match(line)
-            if requires_os_version_match:
-                min_os_version = to_text(requires_os_version_match.group(1))
-                if requires_os_version_match.group(2) is None:
-                    min_os_version = "%s.0" % min_os_version
-
-            requires_become_match = requires_become.match(line)
-            if requires_become_match:
-                become_required = True
-
-        for m in set(module_names):
-            m = to_text(m).rstrip()  # tolerate windows line endings
-            mu_path = ps_module_utils_loader.find_plugin(m, ".psm1")
-            if not mu_path:
-                raise AnsibleError('Could not find imported module support code for \'%s\'.' % m)
-            exec_manifest["powershell_modules"][m] = to_text(
-                base64.b64encode(
-                    to_bytes(
-                        _slurp(mu_path)
-                    )
-                )
-            )
-
-        exec_manifest['min_ps_version'] = min_ps_version
-        exec_manifest['min_os_version'] = min_os_version
-        if become_required and 'become' not in exec_manifest["actions"]:
-            exec_manifest["actions"].insert(0, 'become')
-            exec_manifest["become_user"] = "SYSTEM"
-            exec_manifest["become_password"] = None
+        exec_manifest['min_ps_version'] = finder.ps_version
+        exec_manifest['min_os_version'] = finder.os_version
+        if finder.become and 'become' not in exec_manifest['actions']:
+            exec_manifest['actions'].insert(0, 'become')
+            exec_manifest['become_user'] = 'SYSTEM'
+            exec_manifest['become_password'] = None
             exec_manifest['become_flags'] = None
-            exec_manifest["become"] = to_text(base64.b64encode(to_bytes(become_wrapper)))
+            exec_manifest['become'] = to_text(base64.b64encode(to_bytes(become_wrapper)))
 
         # FUTURE: smuggle this back as a dict instead of serializing here; the connection plugin may need to modify it
         module_json = json.dumps(exec_manifest)
