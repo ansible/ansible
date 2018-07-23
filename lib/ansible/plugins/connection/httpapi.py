@@ -249,3 +249,13 @@ class Connection(NetworkConnectionBase):
         self._auth = response.info().get('Set-Cookie')
 
         return response
+
+    def close(self)
+        '''
+        Close the active connection to the device
+        '''
+        # only close the connection if its connected.
+        if self._connected:
+            display.debug("closing ssh connection to device",
+                    host=self._play_context.remote_addr)
+
