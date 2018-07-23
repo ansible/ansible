@@ -609,7 +609,7 @@ def main():
                 distributions = [Distribution(dist) for dist in _recover_distribution_name(name)]
             except ValueError as e:
                 # if users input some invalid distribution names, show them the parsing error
-                module.fail_json(msg=str(e))
+                module.fail_json(msg="Can not parse package name '%s', error: '%s'" % (dist, str(e)))
             # check invalid combination of arguments
             if version is not None:
                 if len(distributions) > 1:
