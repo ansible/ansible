@@ -59,6 +59,12 @@ class TestIosVlanModule(TestIosModule):
         ]
         self.assertEqual(result['commands'], expected_commands)
 
+    def test_ios_vlan_id_startwith_9(self):
+        set_module_args({'vlan_id': '9', 'name': 'vlan9', 'state': 'present'})
+        result = self.execute_module(changed=False)
+        expected_commands = []
+        self.assertEqual(result['commands'], expected_commands)
+
     def test_ios_vlan_rename(self):
         set_module_args({'vlan_id': '2', 'name': 'test', 'state': 'present'})
         result = self.execute_module(changed=True)
@@ -120,6 +126,14 @@ class TestIosVlanModule(TestIosModule):
                 ],
                 'state': 'active',
                 'vlan_id': '2',
+            },
+            {
+                'name': 'vlan9',
+                'interfaces': [
+                    'GigabitEthernet1/0/6',
+                ],
+                'state': 'active',
+                'vlan_id': '9',
             },
             {
                 'name': 'fddi-default',
