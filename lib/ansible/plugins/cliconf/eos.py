@@ -25,7 +25,7 @@ import time
 from itertools import chain
 
 from ansible.errors import AnsibleConnectionFailure
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase, enable_mode
 from ansible.plugins.connection.network_cli import Connection as NetworkCli
@@ -137,12 +137,13 @@ class Cliconf(CliconfBase):
                 if check_rc:
                     raise
                 out = getattr(e, 'err', e)
+            out = to_text(out, errors='surrogate_or_strict')
 
             if out is not None:
                 try:
                     out = json.loads(out)
                 except ValueError:
-                    out = str(out).strip()
+                    out = out.strip()
 
                 responses.append(out)
 
