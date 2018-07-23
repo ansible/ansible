@@ -22,6 +22,20 @@ or :command:`/usr/bin/ansible-playbook` is run).  Modules shipped with Ansible c
 manage hosts which only have Python-2.6.  You just need to have a host with Python-2.7 or Python-3.5
 or greater to manage those hosts from.
 
+One thing that this does affect is the ability to use :command:`/usr/bin/ansible-pull` to manage
+a host which has Python-2.6.  ``ansible-pull`` runs on the host being managed but it is a controller
+script, not a module so it will need an updated Python.  Actively developed Linux distros which ship
+with Python-2.6 have some means to install newer Python versions (For instance, you can install
+Python-2.7 via an SCL on RHEL-6) but you may need to also install Python bindings for many common
+modules to work (For RHEL-6, for instance, selinux bindings and yum would have to be installed for
+the updated Python install).
+
+The decision to drop Python-2.6 support on the controller was made because many dependent libraries
+are becoming unavailable there.  In particular, python-cryptography is no longer available for Python-2.6
+and the last release of pycrypto (the alternative to python-cryptography) has known security bugs
+which will never be fixed.
+
+
 Playbook
 ========
 
