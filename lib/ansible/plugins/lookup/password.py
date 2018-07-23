@@ -104,7 +104,7 @@ from ansible.utils.path import makedirs_safe
 
 DEFAULT_LENGTH = 20
 VALID_PARAMS = frozenset(('length', 'encrypt', 'chars'))
-LOCKFILE_NAME = "ansible_lookup_password.lockfile"
+LOCKFILE_NAME = to_bytes("ansible_lookup_password.lockfile")
 
 
 def _parse_parameters(term):
