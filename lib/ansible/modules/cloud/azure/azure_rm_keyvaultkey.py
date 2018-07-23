@@ -86,7 +86,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 try:
     import re
     import codecs
-    from azure.keyvault import KeyVaultClient, KeyVaultId
+    from azure.keyvault import KeyVaultClient, KeyVaultId, KeyVaultAuthentication
     from azure.keyvault.models import KeyAttributes, JsonWebKey
     from azure.common.credentials import ServicePrincipalCredentials
     from azure.keyvault.models.key_vault_error import KeyVaultErrorException
@@ -138,7 +138,24 @@ class AzureRMKeyVaultKey(AzureRMModuleBase):
             setattr(self, key, kwargs[key])
 
         # Create KeyVaultClient
-        self.client = KeyVaultClient(self.azure_credentials)
+        def auth_callback(server, resource, scope):
+            if self.credentials['client_id'] is None or self.credentials['secret'] is None:
+                self.fail('Please specify client_id, secret and tenant to access azure Key Vault.')
+
+            tenant = self.credentials.get('tenant')
+            if not self.credentials['tenant']:
+                tenant = "common"
+
+            authcredential = ServicePrincipalCredentials(
+                client_id=self.credentials['client_id'],
+                secret=self.credentials['secret'],
+                tenant=tenant,
+                resource="https://vault.azure.net")
+
+            token = authcredential.token
+            return token['token_type'], token['access_token']
+
+        self.client = KeyVaultClient(KeyVaultAuthentication(auth_callback))
 
         results = dict()
         changed = False
@@ -187,7 +204,7 @@ class AzureRMKeyVaultKey(AzureRMModuleBase):
 
     def create_key(self, name, tags, kty='RSA'):
         ''' Creates a key '''
-        key_bundle = self.client.create_key(self.keyvault_uri, name, kty, tags=tags)
+        key_bundle = self.client.create_key(vault_base_url=self.keyvault_uri, key_name=name, kty=kty, tags=tags)
         key_id = KeyVaultId.parse_key_id(key_bundle.key.kid)
         return key_id.id
 
