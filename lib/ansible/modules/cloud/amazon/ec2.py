@@ -150,9 +150,9 @@ options:
   source_dest_check:
     version_added: "1.6"
     description:
-      - Enable or Disable the Source/Destination checks (for NAT instances and Virtual Routers)
+      - Enable or Disable the Source/Destination checks (for NAT instances and Virtual Routers).
+        When initially creating an instance the EC2 API defaults this to True.
     type: bool
-    default: 'yes'
   termination_protection:
     version_added: "2.0"
     description:
