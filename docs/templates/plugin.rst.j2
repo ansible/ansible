@@ -222,7 +222,7 @@ Notes
 Examples
 --------
 
-.. code-block:: ansible-yaml+jinja
+.. code-block:: yaml+jinja
 
 {%   for example in examples %}
 {%     if example['description'] %}@{ example['description'] | indent(4, True) }@{% endif %}

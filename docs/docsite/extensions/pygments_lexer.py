@@ -59,8 +59,8 @@ class AnsibleYamlLexer(ExtendedRegexLexer):
     .. versionadded:: 0.11
     """
 
-    name = 'Ansible-YAML'
-    aliases = ['ansible-yaml']
+    name = 'YAML'
+    aliases = ['yaml']
     filenames = ['*.yaml', '*.yml']
     mimetypes = ['text/x-yaml']
 
@@ -467,8 +467,8 @@ class AnsibleYamlJinjaLexer(DelegatingLexer):
     .. versionadded:: 2.0
     """
 
-    name = 'Ansible-YAML+Jinja'
-    aliases = ['ansible-yaml+jinja']
+    name = 'YAML+Jinja'
+    aliases = ['yaml+jinja']
     filenames = ['*.sls']
     mimetypes = ['text/x-yaml+jinja']
 
