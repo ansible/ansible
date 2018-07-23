@@ -20,7 +20,8 @@ Expected
 Cleaning Duty
 -------------
 
-- Drop Py2.6 for controllers
+- Drop Py2.6 for controllers  `Docs PR #42971 <https://github.com/ansible/ansible/pull/42971>`_ and
+  `issue #42972 <https://github.com/ansible/ansible/issues/42972>`_
 - Remove dependency on simplejson `issue #42761 <https://github.com/ansible/ansible/issues/42761>`_
 
 
@@ -29,11 +30,12 @@ Engine Improvements
 
 - Make ``become`` plugin based. `pr #38861 <https://github.com/ansible/ansible/pull/38861>`_ 
 - Introduce a ``live`` keyword to provide modules the ability to push intermediate (live) updates `pr #13620 <https://github.com/ansible/ansible/pull/13620>`_
-- Create a configuration object for a top level content installation path for modules, plugins, roles, etc. 
-- Investigate what it will take to utilise the work performed by Mitogen maintainers.
+- Add content_path for mazer installed content `pr #42867 <https://github.com/ansible/ansible/pull/42867/>`_
+- Investigate what it will take to utilise the work performed by Mitogen maintainers. `pr #41749 <https://github.com/ansible/ansible/pull/41749>`_, `branch <https://github.com/jimi-c/ansible/tree/abadger-ansiballz-one-interpreter>`_ and talk to jimi-c
 - Provide sane connection defaults by platform `ansible_platform` `proposal #77 <https://github.com/ansible/proposals/issues/77>`_
-- Refactor connection/shell/action/terminal/become plugins to allow looser coupling and more mix-and-match behaviour.
-- Investigate performance improvements in using threads as opposed to forks.
+- Refactor connection/shell/action/terminal/become plugins to allow looser coupling and more mix-and-match behaviour.(nitzmahone)
+- Investigate performance improvements in using threads as opposed to forks `branch from jimi-c
+  <https://github.com/ansible/ansible/tree/threading_plus_forking>`_
 - Jinja native types will allow for users to render a Python native type. `pr #32738 <https://github.com/ansible/ansible/pull/32738>`_
 
 
@@ -41,12 +43,13 @@ Core Modules
 ------------
 
 - Include feature changes and improvements
-  
+
   - Create new argument `apply` that will allow for included tasks to inherit explicitly provided attributes. `pr #39236 <https://github.com/ansible/ansible/pull/39236>`_
   - Create "private" functionality for allowing vars/default sot be exposed outside of roles. `pr #41330 <https://github.com/ansible/ansible/pull/41330>`_
 
-- Provide a parameter for the `template` module to output to different encoding formats.
-- `reboot` module for Linux hosts
+- Provide a parameter for the `template` module to output to different encoding formats `pr
+  #42171 <https://github.com/ansible/ansible/pull/42171>`_
+- `reboot` module for Linux hosts (@sdoran)
 
 Cloud Modules
 -------------
