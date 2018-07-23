@@ -104,6 +104,7 @@ from ansible.utils.path import makedirs_safe
 
 DEFAULT_LENGTH = 20
 VALID_PARAMS = frozenset(('length', 'encrypt', 'chars'))
+LOCKFILE_NAME = "ansible_lookup_password.lockfile"
 
 
 def _parse_parameters(term):
@@ -281,20 +282,23 @@ class LookupModule(LookupBase):
             content = None
             changed = False
             writer_process = False
-            if not os.path.exists(b_path):
+            if not os.path.exists(b_path) and b_path != to_bytes('/dev/null'):
                 try:
-                    fd = os.open("./ansible_password_lookup.lockfile", os.O_CREAT | os.O_EXCL)
+                    b_pathdir = os.path.dirname(b_path)
+                    makedirs_safe(b_pathdir, mode=0o700)
+                    lockfile = os.path.join(b_pathdir, LOCKFILE_NAME)
+                    fd = os.open(lockfile, os.O_CREAT | os.O_EXCL)
                     writer_process = True
                     os.close(fd)
                 except OSError as e:
                     if e.strerror == 'File exists':
                         timeout = 0
-                        while os.path.exists("./ansible_password_lookup.lockfile"):
+                        while os.path.exists(lockfile):
                             time.sleep(0.1)
                             timeout += 1
                             if timeout > 20:
-                                raise AnsibleError("Password lookup cannot get the lock in 2 seconds, abort...\n"
-                                                   "This may caused by un-removed lockfile, you can manually remove it")
+                                raise AnsibleError("Password lookup cannot get the lock in 2 seconds, abort..."
+                                                   "This may caused by un-removed lockfile, you can manually remove it at %s and try again" % lockfile)
                     else:
                         raise
             if not writer_process:
@@ -314,7 +318,7 @@ class LookupModule(LookupBase):
             if changed and writer_process and b_path != to_bytes('/dev/null'):
                 content = _format_content(plaintext_password, salt, encrypt=params['encrypt'])
                 _write_password_file(b_path, content)
-                os.remove("./ansible_password_lookup.lockfile")
+                os.remove(lockfile)
 
             if params['encrypt']:
                 password = do_encrypt(plaintext_password, params['encrypt'], salt=salt)
