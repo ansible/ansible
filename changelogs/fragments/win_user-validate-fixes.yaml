@@ -1,0 +1,2 @@
+bugfixes:
+- win_user - Use LogonUser to validate the password as it does not rely on SMB/RPC to be available https://github.com/ansible/ansible/issues/24884
