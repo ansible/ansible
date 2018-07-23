@@ -194,6 +194,15 @@ options:
         type: bool
         default: 'no'
         version_added: "2.4"
+    uid_min:
+        description:
+            - Minimal UID
+        version_added: "2.6"
+    uid_max:
+        description:
+            - Max UID
+        version_added: "2.6"
+
 '''
 
 EXAMPLES = '''
@@ -414,6 +423,8 @@ class User(object):
         self.password_lock = module.params['password_lock']
         self.groups = None
         self.local = module.params['local']
+        self.uid_min = None
+        self.uid_max = None
 
         if module.params['groups'] is not None:
             self.groups = ','.join(module.params['groups'])
@@ -428,6 +439,12 @@ class User(object):
             self.ssh_file = module.params['ssh_key_file']
         else:
             self.ssh_file = os.path.join('.ssh', 'id_%s' % self.ssh_type)
+
+        if module.params['uid_min'] is not None:
+            self.uid_min = module.params['uid_min']
+
+        if module.params['uid_max'] is not None:
+            self.uid_max = module.params['uid_max']
 
     def execute_command(self, cmd, use_unsafe_shell=False, data=None, obey_checkmode=True):
         if self.module.check_mode and obey_checkmode:
@@ -536,6 +553,14 @@ class User(object):
 
         if self.system:
             cmd.append('-r')
+
+        if self.uid_min is not None:
+            cmd.append('-K')
+            cmd.append('UID_MIN=%d' % self.uid_min)
+
+        if self.uid_max is not None:
+            cmd.append('-K')
+            cmd.append('UID_MAX=%d' % self.uid_max)
 
         cmd.append(self.name)
         return self.execute_command(cmd)
@@ -923,6 +948,28 @@ class FreeBsdUser(User):
             self.name,
         ]
 
+        # looking for first lower uid from range
+        file_obj = (self.SHADOWFILE, 'r')
+
+        uidminmax = [x for x in range(self.uid_min,self.uid_max+1)]
+        uids = []
+        for pwdline in file_obj:
+            pwdline = pwdline.strip()
+            fields = pwdline.split(":")
+            uid = int(fields[2])
+
+            if uid >= uid_min and uid <= uid_max:
+                            uids.append(uid)
+
+        file_obj.close()
+        
+        uids.sort()
+
+        listoffreeuids = (set(uids) ^ set(uidminmax))
+
+        if len(listoffreeuids) > 0:
+            self.uid = next(iter(listoffreeuids))
+
         if self.uid is not None:
             cmd.append('-u')
             cmd.append(self.uid)
@@ -968,8 +1015,6 @@ class FreeBsdUser(User):
             cmd.append('-e')
             cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
-        # system cannot be handled currently - should we error if its requested?
-        # create the user
         (rc, out, err) = self.execute_command(cmd)
         if rc is not None and rc != 0:
             self.module.fail_json(name=self.name, msg=err, rc=rc)
@@ -1008,11 +1053,10 @@ class FreeBsdUser(User):
             cmd.append(self.comment)
 
         if self.home is not None:
-            if (info[5] != self.home and self.move_home) or (not os.path.exists(self.home) and self.create_home):
+            if (info[5] != self.home and self.move_home) or (not os.path.exists(self.home) and self.createhome):
                 cmd.append('-m')
-            if info[5] != self.home:
-                cmd.append('-d')
-                cmd.append(self.home)
+            cmd.append('-d')
+            cmd.append(self.home)
 
             if self.skeleton is not None:
                 cmd.append('-k')
@@ -1158,6 +1202,9 @@ class OpenBSDUser(User):
     def create_user(self):
         cmd = [self.module.get_bin_path('useradd', True)]
 
+        if self.rawoptions is not None:
+            cmd.append(self.rawoptions)
+
         if self.uid is not None:
             cmd.append('-u')
             cmd.append(self.uid)
@@ -1202,6 +1249,14 @@ class OpenBSDUser(User):
             if self.skeleton is not None:
                 cmd.append('-k')
                 cmd.append(self.skeleton)
+
+        if self.uid_min is not None:
+            cmd.append('-uid_start')
+            cmd.append(self.uid_min)
+
+        if self.uid_max is not None:
+            cmd.append('-uid_end')
+            cmd.append(self.uid_max)
 
         cmd.append(self.name)
         return self.execute_command(cmd)
@@ -1324,6 +1379,9 @@ class NetBSDUser(User):
     def create_user(self):
         cmd = [self.module.get_bin_path('useradd', True)]
 
+        if self.rawoptions is not None:
+            cmd.append(self.rawoptions)
+
         if self.uid is not None:
             cmd.append('-u')
             cmd.append(self.uid)
@@ -1363,6 +1421,10 @@ class NetBSDUser(User):
         if self.password is not None:
             cmd.append('-p')
             cmd.append(self.password)
+
+        if self.uid_min is not None and self.uid_max is not None:
+            cmd.append('-r')
+            cmd.append('%d..%d' % (self.uid_min, self.uid_max))
 
         if self.create_home:
             cmd.append('-m')
@@ -1512,6 +1574,9 @@ class SunOS(User):
 
     def create_user(self):
         cmd = [self.module.get_bin_path('useradd', True)]
+
+        if self.rawoptions is not None:
+            cmd.append(self.rawoptions)
 
         if self.uid is not None:
             cmd.append('-u')
@@ -1963,6 +2028,7 @@ class DarwinUser(User):
         if self.uid is None:
             self.uid = str(self._get_next_uid(self.system))
 
+
         # Homedir is not created by default
         if self.create_home:
             if self.home is None:
@@ -2071,6 +2137,9 @@ class AIX(User):
 
     def create_user_useradd(self, command_name='useradd'):
         cmd = [self.module.get_bin_path(command_name, True)]
+
+        if self.rawoptions is not None:
+            cmd.append(self.rawoptions)
 
         if self.uid is not None:
             cmd.append('-u')
@@ -2213,6 +2282,9 @@ class HPUX(User):
 
     def create_user(self):
         cmd = ['/usr/sam/lbin/useradd.sam']
+
+        if self.rawoptions is not None:
+            cmd.append(self.rawoptions)
 
         if self.uid is not None:
             cmd.append('-u')
@@ -2387,6 +2459,9 @@ def main():
             expires=dict(type='float'),
             password_lock=dict(type='bool'),
             local=dict(type='bool'),
+            rawoptions=dict(type='str'),
+            uid_min=dict(type='int'),
+            uid_max=dict(type='int'),
         ),
         supports_check_mode=True
     )
