@@ -1,5 +1,4 @@
-#
-#  Copyright 2018 Red Hat | Ansible
+# Copyright 2018 Red Hat | Ansible
 #
 # This file is part of Ansible
 #
@@ -27,6 +26,7 @@ from ansible.module_utils.six import iteritems, string_types
 
 try:
     import kubernetes
+    import openshift
     from openshift.dynamic import DynamicClient
     from openshift.dynamic.exceptions import ResourceNotFoundError, ResourceNotUniqueError
     HAS_K8S_MODULE_HELPER = True
@@ -258,6 +258,7 @@ class KubernetesAnsibleModule(AnsibleModule, K8sAnsibleMixin):
 
         if not HAS_K8S_MODULE_HELPER:
             self.fail_json(msg="This module requires the OpenShift Python client. Try `pip install openshift`")
+        self.openshift_version = openshift.__version__
 
         if not HAS_YAML:
             self.fail_json(msg="This module requires PyYAML. Try `pip install PyYAML`")
