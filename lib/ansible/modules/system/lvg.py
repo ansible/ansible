@@ -154,10 +154,6 @@ def main():
     elif state == 'present':
         module.fail_json(msg="No physical volumes given.")
 
-    # LVM always uses real paths not symlinks so replace symlinks with actual path
-    for idx, dev in enumerate(dev_list):
-        dev_list[idx] = os.path.realpath(dev)
-
     if state == 'present':
         # check given devices
         for test_dev in dev_list:
@@ -235,7 +231,7 @@ def main():
                     module.fail_json(msg="Refuse to remove non-empty volume group %s without force=yes" % (vg))
 
         # resize VG
-        current_devs = [os.path.realpath(pv['name']) for pv in pvs if pv['vg_name'] == vg]
+        current_devs = [pv['name'] for pv in pvs if pv['vg_name'] == vg]
         devs_to_remove = list(set(current_devs) - set(dev_list))
         devs_to_add = list(set(dev_list) - set(current_devs))
 
