@@ -239,7 +239,7 @@ class Eapi:
 
         return response
 
-    def run_commands(self, commands):
+    def run_commands(self, commands, check_rc=True):
         """Runs list of commands on remote device and returns results
         """
         output = None
