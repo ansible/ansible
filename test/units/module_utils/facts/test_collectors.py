@@ -224,8 +224,42 @@ class TestPkgMgrFacts(BaseFactsTest):
     valid_subsets = ['pkg_mgr']
     fact_namespace = 'ansible_pkgmgr'
     collector_class = PkgMgrFactCollector
+    collected_facts = {
+        "ansible_distribution": "Fedora",
+        "ansible_distribution_major_version": "28",
+        "ansible_os_family": "RedHat"
+    }
 
     def test_collect(self):
+        module = self._mock_module()
+        fact_collector = self.collector_class()
+        facts_dict = fact_collector.collect(module=module, collected_facts=self.collected_facts)
+        self.assertIsInstance(facts_dict, dict)
+        self.assertIn('pkg_mgr', facts_dict)
+
+
+def _sanitize_os_path_apt_get(path):
+    if path == '/usr/bin/apt-get':
+        return True
+    else:
+        return False
+
+
+class TestPkgMgrFactsAptFedora(BaseFactsTest):
+    __test__ = True
+    gather_subset = ['!all', 'pkg_mgr']
+    valid_subsets = ['pkg_mgr']
+    fact_namespace = 'ansible_pkgmgr'
+    collector_class = PkgMgrFactCollector
+    collected_facts = {
+        "ansible_distribution": "Fedora",
+        "ansible_distribution_major_version": "28",
+        "ansible_os_family": "RedHat",
+        "ansible_pkg_mgr": "apt"
+    }
+
+    @patch('ansible.module_utils.facts.system.pkg_mgr.os.path.exists', side_effect=_sanitize_os_path_apt_get)
+    def test_collect(self, mock_os_path_exists):
         module = self._mock_module()
         fact_collector = self.collector_class()
         facts_dict = fact_collector.collect(module=module, collected_facts=self.collected_facts)

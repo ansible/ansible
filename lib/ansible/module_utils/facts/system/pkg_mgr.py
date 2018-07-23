@@ -68,6 +68,20 @@ class PkgMgrFactCollector(BaseFactCollector):
     name = 'pkg_mgr'
     _fact_ids = set()
     _platform = 'Generic'
+    required_facts = set(['distribution'])
+
+    def _check_rh_versions(self, collected_facts):
+        if collected_facts['ansible_distribution'] == 'Fedora':
+            try:
+                if int(collected_facts['ansible_distribution_major_version']) < 15:
+                    pkg_mgr_name = 'yum'
+                else:
+                    pkg_mgr_name = 'dnf'
+            except ValueError:
+                # If there's some new magical Fedora version in the future,
+                # just default to dnf
+                pkg_mgr_name = 'dnf'
+        return pkg_mgr_name
 
     def collect(self, module=None, collected_facts=None):
         facts_dict = {}
@@ -78,10 +92,21 @@ class PkgMgrFactCollector(BaseFactCollector):
             if os.path.exists(pkg['path']):
                 pkg_mgr_name = pkg['name']
 
-        if pkg_mgr_name == 'apt' and \
-                os.path.exists('/usr/bin/rpm') and \
-                not os.path.exists('/usr/bin/dpkg'):
-            pkg_mgr_name = 'apt_rpm'
+        # apt is easily installable and supported by distros other than those
+        # that are debian based, this handles some of those scenarios as they
+        # are reported/requested
+        if pkg_mgr_name == 'apt' and collected_facts['ansible_os_family'] in ["RedHat", "Altlinux"]:
+            if collected_facts['ansible_os_family'] == 'RedHat':
+                pkg_mgr_name = self._check_rh_versions(collected_facts)
+
+            elif collected_facts['ansible_os_family'] == 'Altlinux':
+                pkg_mgr_name = 'apt_rpm'
+
+        # pacman has become available by distros other than those that are Arch
+        # based by virtue of a dependency to the systemd mkosi project, this
+        # handles some of those scenarios as they are reported/requested
+        if pkg_mgr_name == 'pacman' and collected_facts['ansible_os_family'] in ["RedHat"]:
+            pkg_mgr_name = self._check_rh_versions(collected_facts)
 
         facts_dict['pkg_mgr'] = pkg_mgr_name
         return facts_dict
