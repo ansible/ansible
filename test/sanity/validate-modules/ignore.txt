@@ -1733,7 +1733,6 @@ lib/ansible/modules/network/nxos/nxos_lldp.py E326
 lib/ansible/modules/network/nxos/nxos_ntp_auth.py E324
 lib/ansible/modules/network/nxos/nxos_ntp_options.py E325
 lib/ansible/modules/network/nxos/nxos_ntp_options.py E326
-lib/ansible/modules/network/nxos/nxos_nxapi.py E324
 lib/ansible/modules/network/nxos/nxos_nxapi.py E325
 lib/ansible/modules/network/nxos/nxos_nxapi.py E326
 lib/ansible/modules/network/nxos/nxos_ospf_vrf.py E325

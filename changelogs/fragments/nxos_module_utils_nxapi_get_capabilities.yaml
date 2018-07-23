@@ -1,0 +1,2 @@
+bugfixes:
+- get_capabilities in nxapi module_utils should not return empty dictionary (https://github.com/ansible/ansible/pull/42688).
