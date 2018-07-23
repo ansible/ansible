@@ -176,7 +176,12 @@ class Cli:
                 prompt = None
                 answer = None
 
-            out = connection.get(command, prompt, answer)
+            try:
+                out = connection.get(command, prompt, answer)
+            except ConnectionError as exc:
+                if check_rc:
+                    raise
+                out = getattr(exc, 'err', exc)
             out = to_text(out, errors='surrogate_or_strict')
 
             try:
@@ -338,7 +343,7 @@ class Eapi:
 
         return response
 
-    def run_commands(self, commands):
+    def run_commands(self, commands, check_rc=True):
         """Runs list of commands on remote device and returns results
         """
         output = None
@@ -493,9 +498,9 @@ def get_config(module, flags=None):
     return conn.get_config(flags)
 
 
-def run_commands(module, commands):
+def run_commands(module, commands, check_rc=True):
     conn = get_connection(module)
-    return conn.run_commands(to_command(module, commands))
+    return conn.run_commands(to_command(module, commands), check_rc)
 
 
 def load_config(module, config, commit=False, replace=False):

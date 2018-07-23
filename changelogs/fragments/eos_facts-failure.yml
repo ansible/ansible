@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - eos_facts - fix failure when lldp will be disabled 
+    (https://github.com/ansible/ansible/pull/42347)
