@@ -137,6 +137,7 @@ EXAMPLES = '''
 '''
 
 import os
+import platform
 import re
 import tempfile
 
@@ -194,6 +195,9 @@ def read_interfaces_lines(module, line_strings):
             lines.append(lineDict(line))
             currently_processing = "NONE"
         elif words[0] == "source-directory":
+            os_infos = platform.dist()
+            if os_infos[0] == 'Ubuntu' and os_infos[1] >= '16.04':
+                line = re.sub(r'^source-directory\s(.*)', 'source \\1/*', line)
             lines.append(lineDict(line))
             currently_processing = "NONE"
         elif words[0] == "iface":

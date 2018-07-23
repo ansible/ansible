@@ -220,3 +220,11 @@ class TestInterfacesFileModule(unittest.TestCase):
                 self.compareInterfacesToFile(ifaces, testfile, "%s_%s.json" % (testfile, testname))
                 # Restore backup
                 move(backupp, path)
+
+    def test_fix_sourcedir(self):
+        for testfile in self.getTestFiles():
+            path = os.path.join(fixture_path, testfile)
+            lines, ifaces = interfaces_file.read_interfaces_file(module, path)
+            # self.compareInterfacesLinesToFile(lines, testfile)
+            # self.compareInterfacesToFile(ifaces, testfile)
+        self.assertTrue(len([]) == 1)
