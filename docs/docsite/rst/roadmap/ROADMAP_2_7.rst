@@ -10,12 +10,16 @@ Release Schedule
 Expected
 ========
 
-- 2018-09-06 Core Freeze (Engine and Core Modules/Plugins)
-- 2018-09-06 Alpha Release 1
-- 2018-09-13 Community Freeze (Non-Core Modules/Plugins)
-- 2018-09-13 Beta Release 1
-- 2018-09-27 Release Candidate 1
+- 2018-08-23 Core Freeze (Engine and Core Modules/Plugins)
+- 2018-08-23 Alpha Release 1
+- 2018-08-30 Community Freeze (Non-Core Modules/Plugins)
+- 2018-08-30 Beta Release 1
+- 2018-09-06 Release Candidate 1 (If needed)
+- 2018-09-13 Release Candidate 2 (If needed)
+- 2018-09-20 Release Candidate 3 (If needed)
+- 2018-09-27 Release Candidate 4 (If needed)
 - 2018-10-04 General Availability
+
 
 Cleaning Duty
 -------------
