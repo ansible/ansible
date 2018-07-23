@@ -1,0 +1,416 @@
+---
+- name: install package (check mode)
+  win_chocolatey:
+    name: '{{ test_choco_package1 }}'
+    state: present
+  check_mode: yes
+  register: install_check
+
+- name: get result of install package (check mode)
+  win_command: choco.exe list --local-only --exact --limit-output {{ test_choco_package1|quote }}
+  register: install_actual_check
+
+- name: assert install package (check mode)
+  assert:
+    that:
+    - install_check is changed
+    - install_actual_check.stdout_lines == []
+
+- name: install package
+  win_chocolatey:
+    name: '{{ test_choco_package1 }}'
+    state: present
+  register: install
+
+- name: get result of install package
+  win_command: choco.exe list --local-only --exact --limit-output {{ test_choco_package1|quote }}
+  register: install_actual
+
+- name: get package info of install package
+  win_shell: Get-Content -Path '{{ test_choco_path }}\{{ test_choco_package1 }}-0.1.0.txt' -Raw
+  register: install_actual_info
+
+- name: assert install package
+  assert:
+    that:
+    - install is changed
+    - install_actual.stdout_lines == [test_choco_package1 + "|0.1.0"]
+    - (install_actual_info.stdout|from_json).allow_empty_checksums == False
+    - (install_actual_info.stdout|from_json).force == False
+    - (install_actual_info.stdout|from_json).force_x86 == False
+    - (install_actual_info.stdout|from_json).ignore_checksums == False
+    - (install_actual_info.stdout|from_json).install_args == None
+    - (install_actual_info.stdout|from_json).package_params == {}
+    - (install_actual_info.stdout|from_json).proxy_url == None
+    - (install_actual_info.stdout|from_json).source == "normal"
+    - (install_actual_info.stdout|from_json).timeout == "2700000"
+
+- name: install package (idempotent)
+  win_chocolatey:
+    name: '{{ test_choco_package1 }}'
+    state: present
+  register: install_again
+
+- name: assert install package (idempotent)
+  assert:
+    that:
+    - not install_again is changed
+
+- name: remove package (check mode)
+  win_chocolatey:
+    name: '{{ test_choco_package1 }}'
+    state: absent
+  check_mode: yes
+  register: remove_check
+
+- name: get result of remove package (check mode)
+  win_command: choco.exe list --local-only --exact --limit-output {{ test_choco_package1|quote }}
+  register: remove_actual_check
+
+- name: assert remove package (check mode)
+  assert:
+    that:
+    - remove_check is changed
+    - remove_actual_check.stdout_lines == [test_choco_package1 + "|0.1.0"]
+
+- name: remove package
+  win_chocolatey:
+    name: '{{ test_choco_package1 }}'
+    state: absent
+  register: remove
+
+- name: get result of remove package
+  win_command: choco.exe list --local-only --exact --limit-output {{ test_choco_package1|quote }}
+  register: remove_actual
+
+- name: check if removed package file still exists
+  win_stat:
+    path: '{{ test_choco_path }}\{{ test_choco_package1 }}-0.1.0.txt'
+  register: remove_actual_info
+
+- name: assert remove package
+  assert:
+    that:
+    - remove is changed
+    - remove_actual.stdout_lines == []
+    - remove_actual_info.stat.exists == False
+
+- name: remove package (idempotent)
+  win_chocolatey:
+    name: '{{ test_choco_package1 }}'
+    state: absent
+  register: remove_again
+
+- name: assert remove_package (idempotent)
+  assert:
+    that:
+    - not remove_again is changed
+
+- name: install multiple packages with timeout
+  win_chocolatey:
+    name: '{{ test_choco_packages }}'
+    state: present
+    timeout: 1000
+  register: install_multiple
+
+- name: get list of installed packages with timeout
+  win_command: choco.exe list --local-only --limit-output ansible
+  register: install_multiple_actual
+
+- name: get info on package 1
+  win_shell: Get-Content -Path '{{ test_choco_path }}\{{ test_choco_package1 }}-0.1.0.txt' -Raw
+  register: install_multiple_package1
+
+- name: get info on package 2
+  win_shell: Get-Content -Path '{{ test_choco_path }}\{{ test_choco_package2 }}-1.0.0.txt' -Raw
+  register: install_multiple_package2
+
+- name: assert install multiple packages with timeout
+  assert:
+    that:
+    - install_multiple is changed
+    - install_multiple_actual.stdout_lines == [test_choco_package1 + "|0.1.0", test_choco_package2 + "|1.0.0"]
+    - (install_multiple_package1.stdout|from_json).allow_empty_checksums == False
+    - (install_multiple_package1.stdout|from_json).force == False
+    - (install_multiple_package1.stdout|from_json).force_x86 == False
+    - (install_multiple_package1.stdout|from_json).ignore_checksums == False
+    - (install_multiple_package1.stdout|from_json).install_args == None
+    - (install_multiple_package1.stdout|from_json).package_params == {}
+    - (install_multiple_package1.stdout|from_json).proxy_url == None
+    - (install_multiple_package1.stdout|from_json).source == "normal"
+    - (install_multiple_package1.stdout|from_json).timeout == "1000000"
+    - (install_multiple_package2.stdout|from_json).allow_empty_checksums == False
+    - (install_multiple_package2.stdout|from_json).force == False
+    - (install_multiple_package2.stdout|from_json).force_x86 == False
+    - (install_multiple_package2.stdout|from_json).ignore_checksums == False
+    - (install_multiple_package2.stdout|from_json).install_args == None
+    - (install_multiple_package2.stdout|from_json).package_params == {}
+    - (install_multiple_package2.stdout|from_json).proxy_url == None
+    - (install_multiple_package2.stdout|from_json).source == "normal"
+    - (install_multiple_package2.stdout|from_json).timeout == "1000000"
+
+- name: install multiple packages (idempotent)
+  win_chocolatey:
+    name: '{{ test_choco_packages }}'
+    state: present
+  register: install_multiple_again
+
+- name: assert install multiple packages (idempotent)
+  assert:
+    that:
+    - not install_multiple_again is changed
+
+- name: remove multiple packages
+  win_chocolatey:
+    name: '{{ test_choco_packages }}'
+    state: absent
+  register: remove_multiple
+
+- name: get list of installed packages after removal
+  win_command: choco.exe list --local-only --limit-output ansible
+  register: remove_multiple_actual
+
+- name: get info on package 1
+  win_stat:
+    path: '{{ test_choco_path }}\{{ test_choco_package1 }}-0.1.0.txt'
+  register: remove_multiple_package1
+
+- name: get info on package 2
+  win_stat:
+    path: '{{ test_choco_path }}\{{ test_choco_package2 }}-1.0.0.txt'
+  register: remove_multiple_package2
+
+- name: assert remove multiple packages
+  assert:
+    that:
+    - remove_multiple is changed
+    - remove_multiple_actual.stdout_lines == []
+    - remove_multiple_package1.stat.exists == False
+    - remove_multiple_package2.stat.exists == False
+
+- name: remove multiple packages (idempotent)
+  win_chocolatey:
+    name: '{{ test_choco_packages }}'
+    state: absent
+  register: remove_multiple_again
+
+- name: assert remove multiple packages (idempotent)
+  assert:
+    that:
+    - not remove_multiple_again is changed
+
+- name: install package with params
+  win_chocolatey:
+    name: '{{ test_choco_package1 }}'
+    state: present
+    install_args: /install_arg 1 /install_arg 2
+    package_params: /param1 /param2:value
+    allow_empty_checksums: yes
+    architecture: x86
+    force: yes
+    ignore_checksums: yes
+    proxy_url: http://proxyhost
+    version: 0.0.1
+  register: install_params
+
+- name: get result of install package with params
+  win_command: choco.exe list --local-only --limit-output --exact {{ test_choco_package1|quote }}
+  register: install_params_actual
+
+- name: get info of install package with params
+  win_shell: Get-Content -Path '{{ test_choco_path }}\{{ test_choco_package1 }}-0.0.1.txt'
+  register: install_params_info
+
+- name: assert install package with params
+  assert:
+    that:
+    - install_params is changed
+    - install_params_actual.stdout_lines == [test_choco_package1 + "|0.0.1"]
+    - (install_params_info.stdout|from_json).allow_empty_checksums == True
+    - (install_params_info.stdout|from_json).force == True
+    - (install_params_info.stdout|from_json).force_x86 == True
+    - (install_params_info.stdout|from_json).ignore_checksums == True
+    - (install_params_info.stdout|from_json).install_args == "/install_arg 1 /install_arg 2"
+    - (install_params_info.stdout|from_json).package_params.keys()|count == 2
+    - (install_params_info.stdout|from_json).package_params.param1 == True
+    - (install_params_info.stdout|from_json).package_params.param2 == "value"
+    - (install_params_info.stdout|from_json).proxy_url == "http://proxyhost"
+    - (install_params_info.stdout|from_json).source == "normal"
+    - (install_params_info.stdout|from_json).timeout == "2700000"
+
+- name: install package with version (idempotent)
+  win_chocolatey:
+    name: '{{ test_choco_package1 }}'
+    state: present
+    version: 0.0.1
+  register: install_with_version
+
+- name: assert install package with version (idempotent)
+  assert:
+    that:
+    - not install_with_version is changed
+
+- name: fail to install side by side package
+  win_chocolatey:
+    name: '{{ test_choco_package1 }}'
+    state: present
+    version: 0.1.0
+  register: fail_multiple_versions
+  failed_when: fail_multiple_versions.msg != "Chocolatey package '" + test_choco_package1 + "' is already installed at version '0.0.1' but was expecting '0.1.0'. Either change the expected version, set state=latest, set allow_multiple_versions=yes, or set force=yes to continue"
+
+- name: force the upgrade of an existing version
+  win_chocolatey:
+    name: '{{ test_choco_package1 }}'
+    state: present
+    version: 0.1.0
+    force: yes
+  register: force_different_version
+
+- name: get result of force the upgrade of an existing version
+  win_command: choco.exe list --local-only --limit-output --exact {{ test_choco_package1|quote }}
+  register: force_different_version_actual
+
+- name: get result of forced package install file
+  win_stat:
+    path: '{{ test_choco_path }}\{{ test_choco_package1 }}-0.1.0.txt'
+  register: force_different_version_info
+
+- name: assert force the upgrade of an existing version
+  assert:
+    that:
+    - force_different_version is changed
+    - force_different_version_actual.stdout_lines == [test_choco_package1 + "|0.1.0"]
+    - force_different_version_info.stat.exists
+
+- name: remove package after force clobbered everything
+  win_chocolatey:
+    name: '{{ test_choco_package1 }}'
+    state: absent
+  ignore_errors: yes  # the mock package created doesn't really handle force well
+
+- name: install package with reference to source name
+  win_chocolatey:
+    name: '{{ test_choco_package1 }}'
+    state: present
+    source: ansible-test-override
+  register: install_source_name
+
+- name: get result of install package with reference to source name
+  win_command: choco.exe list --local-only --limit-output --exact {{ test_choco_package1|quote }}
+  register: install_source_name_actual
+
+- name: get result fo installed package with reference to source name info
+  win_shell: Get-Content -Path '{{ test_choco_path }}\{{ test_choco_package1 }}-0.1.0.txt' -Raw
+  register: install_source_name_info
+
+- name: assert install package with reference to source name
+  assert:
+    that:
+    - install_source_name is changed
+    - install_source_name_actual.stdout_lines == [test_choco_package1 + "|0.1.0"]
+    - (install_source_name_info.stdout|from_json).source == "override"
+
+- name: reinstall package without source override
+  win_chocolatey:
+    name: '{{ test_choco_package1 }}'
+    state: reinstalled
+  register: reinstalled_package
+
+- name: get result of reinstalled package without source override
+  win_shell: Get-Content -Path '{{ test_choco_path }}\{{ test_choco_package1 }}-0.1.0.txt' -Raw
+  register: reinstalled_package_info
+
+- name: assert reinstall package without source override
+  assert:
+    that:
+    - reinstalled_package is changed
+    - (reinstalled_package_info.stdout|from_json).source == "normal"
+
+- name: downgrade package
+  win_chocolatey:
+    name: '{{ test_choco_package1 }}'
+    state: downgrade
+    version: 0.0.1
+  register: downgraded_package
+
+- name: get result of downgrade package
+  win_command: choco.exe list --local-only --limit-output --exact {{ test_choco_package1|quote }}
+  register: downgraded_package_actual
+
+- name: assert downgrade package
+  assert:
+    that:
+    - downgraded_package is changed
+    - downgraded_package_actual.stdout_lines == [test_choco_package1 + "|0.0.1"]
+
+- name: downgrade package (idempotent)
+  win_chocolatey:
+    name: '{{ test_choco_package1 }}'
+    state: downgrade
+    version: 0.0.1
+  register: downgraded_package_again
+
+- name: assert downgrade package (idempotent)
+  assert:
+    that:
+    - not downgraded_package_again is changed
+
+- name: downgrade package without version specified
+  win_chocolatey:
+    name: '{{ test_choco_package1 }}'
+    state: downgrade
+  register: downgrade_without_version
+
+- name: get result of downgrade without version
+  win_command: choco.exe list --local-only --limit-output --exact {{ test_choco_package1|quote }}
+  register: downgrade_without_version_actual
+
+- name: assert downgrade package without version specified
+  assert:
+    that:
+    - not downgrade_without_version is changed
+    - downgrade_without_version_actual.stdout_lines == [test_choco_package1 + "|0.0.1"]
+
+- name: upgrade package
+  win_chocolatey:
+    name: '{{ test_choco_package1 }}'
+    state: latest
+  register: upgrade_package
+
+- name: get result of upgrade package
+  win_command: choco.exe list --local-only --limit-output --exact {{ test_choco_package1|quote }}
+  register: upgrade_package_actual
+
+- name: assert upgrade package
+  assert:
+    that:
+    - upgrade_package is changed
+    - upgrade_package_actual.stdout_lines == [test_choco_package1 + "|0.1.0"]
+
+- name: upgrade package (idempotent)
+  win_chocolatey:
+    name: '{{ test_choco_package1 }}'
+    state: latest
+  register: upgrade_package_again
+
+- name: assert upgrade package (idempotent)
+  assert:
+    that:
+    - not upgrade_package_again is changed
+
+- name: install prerelease package
+  win_chocolatey:
+    name: '{{ test_choco_package2 }}'
+    state: present
+    allow_prerelease: yes
+  register: install_prerelease
+
+- name: get result of install prerelease package
+  win_command: choco.exe list --local-only --limit-output --exact {{ test_choco_package2|quote }}
+  register: install_prerelease_actual
+
+- name: assert install prerelease package
+  assert:
+    that:
+    - install_prerelease is changed
+    - install_prerelease_actual.stdout_lines == [test_choco_package2 + "|1.0.1-beta1"]

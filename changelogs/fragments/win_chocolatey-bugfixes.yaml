@@ -1,0 +1,9 @@
+bugfixes:
+- win_chocolatey - fix issue where state=downgrade would upgrade a package if no version was set
+
+minor_changes:
+- win_chocolatey - Add support for username and password on source feeds
+- win_chocolatey - Add support for installing Chocolatey itself from a source feed
+- win_chocolatey - Removed the need to manually escape double quotes in the proxy username and password
+- win_chocolatey - Will no longer upgrade Chocolatey in check mode
+- win_chocolatey - Added ability to specify multiple packages as a list in 1 module invocation
