@@ -213,12 +213,13 @@ class Cliconf(CliconfBase):
                 if check_rc:
                     raise
                 out = getattr(e, 'err', e)
+            out = to_text(out, errors='surrogate_or_strict')
 
             if out is not None:
                 try:
                     out = json.loads(out)
                 except ValueError:
-                    out = to_text(out, errors='surrogate_or_strict').strip()
+                    out = out.strip()
 
                 responses.append(out)
         return responses
