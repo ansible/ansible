@@ -949,24 +949,25 @@ class FreeBsdUser(User):
         ]
 
         # looking for first lower uid from range
-        file_obj = (self.SHADOWFILE, 'r')
+        if self.uid_min is not None and self.uid_max is not None:
+          file_obj = (self.SHADOWFILE, 'r')
 
-        uidminmax = [x for x in range(self.uid_min, self.uid_max)]
-        uids = []
-        for pwdline in file_obj:
-            pwdline = pwdline.strip()
-            fields = pwdline.split(":")
-            uid = int(fields[2])
+          uidminmax = [x for x in range(self.uid_min, self.uid_max)]
+          uids = []
+          for pwdline in file_obj:
+              pwdline = pwdline.strip()
+              fields = pwdline.split(":")
+              uid = int(fields[2])
 
-            if uid >= self.uid_min and uid <= self.uid_max:
-                            uids.append(uid)
+              if uid >= self.uid_min and uid <= self.uid_max:
+                              uids.append(uid)
 
-        file_obj.close()
-        uids.sort()
-        listoffreeuids = (set(uids) ^ set(uidminmax))
+          file_obj.close()
+          uids.sort()
+          listoffreeuids = (set(uids) ^ set(uidminmax))
 
-        if len(listoffreeuids) > 0:
-            self.uid = next(iter(listoffreeuids))
+          if len(listoffreeuids) > 0:
+              self.uid = next(iter(listoffreeuids))
 
         if self.uid is not None:
             cmd.append('-u')
