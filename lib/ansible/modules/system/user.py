@@ -951,20 +951,18 @@ class FreeBsdUser(User):
         # looking for first lower uid from range
         file_obj = (self.SHADOWFILE, 'r')
 
-        uidminmax = [x for x in range(self.uid_min,self.uid_max+1)]
+        uidminmax = [x for x in range(self.uid_min, self.uid_max)]
         uids = []
         for pwdline in file_obj:
             pwdline = pwdline.strip()
             fields = pwdline.split(":")
             uid = int(fields[2])
 
-            if uid >= uid_min and uid <= uid_max:
+            if uid >= self.uid_min and uid <= self.uid_max:
                             uids.append(uid)
 
         file_obj.close()
-        
         uids.sort()
-
         listoffreeuids = (set(uids) ^ set(uidminmax))
 
         if len(listoffreeuids) > 0:
@@ -1205,9 +1203,6 @@ class OpenBSDUser(User):
     def create_user(self):
         cmd = [self.module.get_bin_path('useradd', True)]
 
-        if self.rawoptions is not None:
-            cmd.append(self.rawoptions)
-
         if self.uid is not None:
             cmd.append('-u')
             cmd.append(self.uid)
@@ -1381,9 +1376,6 @@ class NetBSDUser(User):
 
     def create_user(self):
         cmd = [self.module.get_bin_path('useradd', True)]
-
-        if self.rawoptions is not None:
-            cmd.append(self.rawoptions)
 
         if self.uid is not None:
             cmd.append('-u')
@@ -1577,9 +1569,6 @@ class SunOS(User):
 
     def create_user(self):
         cmd = [self.module.get_bin_path('useradd', True)]
-
-        if self.rawoptions is not None:
-            cmd.append(self.rawoptions)
 
         if self.uid is not None:
             cmd.append('-u')
@@ -2031,7 +2020,6 @@ class DarwinUser(User):
         if self.uid is None:
             self.uid = str(self._get_next_uid(self.system))
 
-
         # Homedir is not created by default
         if self.create_home:
             if self.home is None:
@@ -2140,9 +2128,6 @@ class AIX(User):
 
     def create_user_useradd(self, command_name='useradd'):
         cmd = [self.module.get_bin_path(command_name, True)]
-
-        if self.rawoptions is not None:
-            cmd.append(self.rawoptions)
 
         if self.uid is not None:
             cmd.append('-u')
@@ -2285,9 +2270,6 @@ class HPUX(User):
 
     def create_user(self):
         cmd = ['/usr/sam/lbin/useradd.sam']
-
-        if self.rawoptions is not None:
-            cmd.append(self.rawoptions)
 
         if self.uid is not None:
             cmd.append('-u')
@@ -2462,7 +2444,6 @@ def main():
             expires=dict(type='float'),
             password_lock=dict(type='bool'),
             local=dict(type='bool'),
-            rawoptions=dict(type='str'),
             uid_min=dict(type='int'),
             uid_max=dict(type='int'),
         ),
