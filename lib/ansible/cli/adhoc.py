@@ -134,6 +134,10 @@ class AdHocCLI(CLI):
                 err = err + ' (did you mean to run ansible-playbook?)'
             raise AnsibleOptionsError(err)
 
+        # Avoid modules that don't work with ad-hoc
+        if self.options.module_name in ('import_playbook',):
+            raise AnsibleOptionsError("'%s' is not a valid action for ad-hoc commands" % self.options.module_name)
+
         play_ds = self._play_ds(pattern, self.options.seconds, self.options.poll_interval)
         play = Play().load(play_ds, variable_manager=variable_manager, loader=loader)
 
