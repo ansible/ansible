@@ -24,7 +24,7 @@ import copy
 
 from ansible import constants as C
 from ansible.module_utils._text import to_text
-from ansible.module_utils.connection import Connection
+from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.plugins.action.normal import ActionModule as _ActionModule
 from ansible.module_utils.network.common.utils import load_provider
 from ansible.module_utils.network.ios.ios import ios_provider_spec
@@ -86,11 +86,14 @@ class ActionModule(_ActionModule):
             socket_path = self._connection.socket_path
 
         conn = Connection(socket_path)
-        out = conn.get_prompt()
-        while to_text(out, errors='surrogate_then_replace').strip().endswith(')#'):
-            display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
-            conn.send_command('exit')
+        try:
             out = conn.get_prompt()
+            while to_text(out, errors='surrogate_then_replace').strip().endswith(')#'):
+                display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
+                conn.send_command('exit')
+                out = conn.get_prompt()
+        except ConnectionError as exc:
+            return {'failed': True, 'msg': to_text(exc)}
 
         result = super(ActionModule, self).run(task_vars=task_vars)
         return result
