@@ -209,6 +209,7 @@ class Connection(NetworkConnectionBase):
                 httpapi.set_become(self._play_context)
                 httpapi.login(self.get_option('remote_user'), self.get_option('password'))
                 display.vvvv('loaded API plugin for network_os %s' % self._network_os, host=self._play_context.remote_addr)
+                self._httpapi = httpapi
             else:
                 raise AnsibleConnectionFailure('unable to load API plugin for network_os %s' % self._network_os)
             self._implementation_plugins.append(httpapi)
@@ -250,12 +251,14 @@ class Connection(NetworkConnectionBase):
 
         return response
 
-    def close(self)
+    def close(self):
         '''
-        Close the active connection to the device
+        Close the active session to the device
         '''
         # only close the connection if its connected.
         if self._connected:
-            display.debug("closing ssh connection to device",
-                    host=self._play_context.remote_addr)
-
+            display.vvvv("closing http(s) connection to device",
+                         host=self._play_context.remote_addr)
+            if self._httpapi:
+                self._httpapi.logout()
+            self._connected = False
