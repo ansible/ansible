@@ -8,6 +8,8 @@
 ########
 $ADS_UF_PASSWD_CANT_CHANGE = 64
 $ADS_UF_DONT_EXPIRE_PASSWD = 65536
+$LOGON32_LOGON_NETWORK = 3
+$LOGON32_PROVIDER_DEFAULT = 0
 
 $adsi = [ADSI]"WinNT://$env:COMPUTERNAME"
 
@@ -38,9 +40,81 @@ function Get-Group($grp) {
     return
 }
 
+Function Test-LocalCredential {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingUserNameAndPassWordParams", "", Justification="We need to use the plaintext pass in the Win32 call, also the source isn't a secure string to using that is just a waste of time/code")]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingPlainTextForPassword", "", Justification="See above")]
+    param([String]$Username, [String]$Password)
+
+    $platform_util = @'
+using System;
+using System.Runtime.InteropServices;
+
+namespace Ansible
+{
+    public class WinUserPInvoke
+    {
+        [DllImport("advapi32.dll", SetLastError = true)]
+        public static extern bool LogonUser(
+            string lpszUsername,
+            string lpszDomain,
+            string lpszPassword,
+            UInt32 dwLogonType,
+            UInt32 dwLogonProvider,
+            out IntPtr phToken);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool CloseHandle(
+            IntPtr hObject);
+    }
+}
+'@
+
+    $original_tmp = $env:TMP
+    $original_temp = $env:TEMP
+    $env:TMP = $_remote_tmp
+    $env:TEMP = $_remote_tmp
+    Add-Type -TypeDefinition $platform_util
+    $env:TMP = $original_tmp
+    $env:TEMP = $original_temp
+
+    $handle = [IntPtr]::Zero
+    $logon_res = [Ansible.WinUserPInvoke]::LogonUser($Username, $null, $Password,
+        $LOGON32_LOGON_NETWORK, $LOGON32_PROVIDER_DEFAULT, [Ref]$handle)
+
+    if ($logon_res) {
+        $valid_credentials = $true
+        [Ansible.WinUserPInvoke]::CloseHandle($handle) > $null
+    } else {
+        $err_code = [System.Runtime.InteropServices.Marshal]::GetLastWin32Error()
+        # following errors indicate the creds are correct but the user was
+        # unable to log on for other reasons, which we don't care about
+        $success_codes = @(
+            0x0000052F,  # ERROR_ACCOUNT_RESTRICTION
+            0x00000530,  # ERROR_INVALID_LOGON_HOURS
+            0x00000531,  # ERROR_INVALID_WORKSTATION
+            0x00000569  # ERROR_LOGON_TYPE_GRANTED
+        )
+
+        if ($err_code -eq 0x0000052E) {
+            # ERROR_LOGON_FAILURE - the user or pass was incorrect
+            $valid_credentials = $false
+        } elseif ($err_code -in $success_codes) {
+            $valid_credentials = $true
+        } else {
+            # an unknown failure, raise an Exception for this
+            $win32_exp = New-Object -TypeName System.ComponentModel.Win32Exception -ArgumentList $err_code
+            $err_msg = "LogonUserW failed: $($win32_exp.Message) (Win32ErrorCode: $err_code)"
+            throw New-Object -TypeName System.ComponentModel.Win32Exception -ArgumentList $err_code, $err_msg
+        }
+    }
+
+    return $valid_credentials
+}
+
 ########
 
 $params = Parse-Args $args;
+$_remote_tmp = Get-AnsibleParam $params "_ansible_remote_tmp" -type "path" -default $env:TMP
 
 $result = @{
     changed = $false
@@ -91,16 +165,16 @@ If ($state -eq 'present') {
             $result.changed = $true
         }
         ElseIf (($password -ne $null) -and ($update_password -eq 'always')) {
-            [void][system.reflection.assembly]::LoadWithPartialName('System.DirectoryServices.AccountManagement')
-            $host_name = [System.Net.Dns]::GetHostName()
-            $pc = New-Object -TypeName System.DirectoryServices.AccountManagement.PrincipalContext 'Machine', $host_name
-
             # ValidateCredentials will fail if either of these are true- just force update...
             If($user_obj.AccountDisabled -or $user_obj.PasswordExpired) {
                 $password_match = $false
             }
             Else {
-                $password_match = $pc.ValidateCredentials($username, $password)
+                try {
+                    $password_match = Test-LocalCredential -Username $username -Password $password
+                } catch [System.ComponentModel.Win32Exception] {
+                    Fail-Json -obj $result -message "Failed to validate the user's credentials: $($_.Exception.Message)"
+                }
             }
 
             If (-not $password_match) {
