@@ -62,18 +62,6 @@ $start_when_available = Get-AnsibleParam -obj $params -name "start_when_availabl
 $stop_if_going_on_batteries = Get-AnsibleParam -obj $params -name "stop_if_going_on_batteries" -type "bool"
 $wake_to_run = Get-AnsibleParam -obj $params -name "wake_to_run" -type "bool"
 
-# deprecated action arguments - use actions instead
-$old_arguments = Get-AnsibleParam -obj $params -name "arguments" -type "str" -aliases "argument"
-$old_executable = Get-AnsibleParam -obj $params -name "executable" -type "path" -failifempty ($old_arguments -ne $null) -aliases "execute"
-
-# deprecated principal arguments - use logon_type instead
-$store_password = Get-AnsibleParam -obj $params -name "store_password" -type "bool"
-
-# deprecated trigger arguments - use triggers instead
-$old_days_of_week = Get-AnsibleParam -obj $params -name "days_of_week" -type "list"
-$old_frequency = Get-AnsibleParam -obj $params -name "frequency" -type "str"
-$old_time = Get-AnsibleParam -obj $params -name "time" -type "str"
-
 $result = @{
     changed = $false
 }
@@ -707,34 +695,10 @@ if ($group) {
     $group_sid = Convert-ToSID -account_name $group
 }
 
-# Convert the older arguments to the newer format if required
-if ($old_executable -ne $null) {
-    Add-DeprecationWarning -obj $result -message "executable option is deprecated, please use the actions list option instead" -version 2.7
-    if ($actions -ne $null) {
-        Fail-Json -obj $result -message "actions and executable are mutually exclusive, use actions by itself instead"
-    }
-
-    $new_action = @{ path = $old_executable }
-    if ($old_arguments -ne $null) {
-        Add-DeprecationWarning -obj $result -message "arguments option is deprecated, please use the actions list option instead" -version 2.7
-        $new_action.arguments = $old_arguments
-    }
-    $actions = @($new_action)
-}
-
 # validate store_password and logon_type
 if ($logon_type -ne $null) {
     $full_enum_name = "TASK_LOGON_$($logon_type.ToUpper())"
     $logon_type = [TASK_LOGON_TYPE]::$full_enum_name
-}
-if ($store_password -ne $null) {
-    Add-DeprecationWarning -obj $result -message "store_password option is deprecated, please use logon_type: password instead" -version 2.7
-    if ($logon_type -ne $null) {
-        Fail-Json -obj $result -message "logon_type and store_password are mutually exclusive, use logon_type=password instead"
-    }
-    if ($store_password -eq $true -and $password -ne $null) {
-        $logon_type = [TASK_LOGON_TYPE]::TASK_LOGON_PASSWORD
-    }
 }
 
 # now validate the logon_type option with the other parameters
@@ -776,47 +740,6 @@ for ($i = 0; $i -lt $actions.Count; $i++) {
         Fail-Json -obj $result -message "action entry must contain the key 'path'"
     }
     $actions[$i] = $action
-}
-
-# convert deprecated trigger args to new format
-$deprecated_trigger = $null
-if ($old_frequency -ne $null) {
-    # once, daily, weekly
-    Add-DeprecationWarning -obj $result -message "" -version 2.7
-    if ($triggers.Count -eq 0) {
-        $deprecated_trigger = @{type = $null}
-        switch ($frequency) {
-            once { $deprecated_trigger.type = [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_TIME }
-            daily { $deprecated_trigger.type = [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_DAILY }
-            weekly { $deprecated_trigger.type = [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_WEEKLY }
-        }
-    } else {
-        Add-Warning -obj $result -message "the trigger list is already specified, ignoring the frequency option as it is deprecated"
-    }
-}
-if ($old_days_of_week -ne $null) {
-    Add-DeprecationWarning -obj $result -message "days_of_week is deprecated, use the triggers list with 'monthlydow' type" -version 2.7
-    if ($triggers.Count -eq 0) {
-        $deprecated_trigger.days_of_week = $old_days_of_week
-    } else {
-        Add-Warning -obj $result -message "the trigger list is already specified, ignoring the days_of_week option as it is deprecated"
-    }
-}
-if ($old_time -ne $null) {
-    Add-DeprecationWarning -obj $result -message "old_time is deprecated, use the triggers list to specify the 'start_boundary'" -version 2.7
-    if ($triggers.Count -eq 0) {
-        try {
-            $old_time_cast = [datetime]$old_time
-        } catch [System.InvalidCastException] {
-            Fail-Json -obj $result -message "failed to convert time '$old_time' to the DateTime format"
-        }
-        $deprecated_trigger.start_boundary = ($old_time_cast | Get-Date -Format s)
-    } else {
-        Add-Warning -obj $result -message "the trigger list is already specified, ignoring the time option as it is deprecated"
-    }
-}
-if ($deprecated_trigger -ne $null) {
-    $triggers += $deprecated_trgger
 }
 
 # convert and validate the triggers - and convert PSCustomObject to Hashtable
