@@ -114,8 +114,7 @@ commands:
 
 import re
 
-
-from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
@@ -130,6 +129,7 @@ def map_obj_to_commands(updates, module):
     for w in want:
         state = w['state']
         del w['state']
+
 
         if state == 'absent' and w in have:
             if w['facility'] is not None:
@@ -148,6 +148,10 @@ def map_obj_to_commands(updates, module):
         if state == 'present' and w not in have:
             if w['facility'] is None:
                 if w['dest']:
+                    if w['dest'] == 'console'and int(w['dest_level']) > 2:
+                        if get_console_speed(module) < 38400:
+                            module.fail_json(msg='Baud rate of console should be 38400 to increase severity level.')
+
                     if w['dest'] not in ('logfile', 'server'):
                         commands.append('logging {} {}'.format(w['dest'], w['dest_level']))
 
@@ -176,6 +180,18 @@ def map_obj_to_commands(updates, module):
                                                                  w['facility_level']))
 
     return commands
+
+
+def get_console_speed(module):
+    speed = None
+    cmd = 'show line Console | section Speed'
+    console_config = run_commands(module, cmd)
+
+    match = re.search(r'Speed:(?:\s+) (\d+)', str(console_config), re.M)
+    if match:
+        speed = int(match.group(1))
+
+    return speed
 
 
 def parse_name(line, dest):
