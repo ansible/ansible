@@ -86,7 +86,6 @@ instance:
 
 
 import atexit
-import requests
 from pyVmomi import vim
 from pyVim.connect import SmartConnect, Disconnect
 from tools import tasks
@@ -102,7 +101,6 @@ if hasattr(requests.packages.urllib3, 'disable_warnings'):
     requests.packages.urllib3.disable_warnings
 
 def update_virtual_nic_state(si, vm_obj, nic_number, new_nic_state):
-
     nic_prefix_label = 'Network adapter '
     nic_label = nic_prefix_label + str(nic_number)
     virtual_nic_device = None
@@ -112,7 +110,6 @@ def update_virtual_nic_state(si, vm_obj, nic_number, new_nic_state):
             virtual_nic_device = dev
     if not virtual_nic_device:
         raise RuntimeError('Virtual {} could not be found.'.format(nic_label))
-
     virtual_nic_spec = vim.vm.device.VirtualDeviceSpec()
     virtual_nic_spec.operation = \
         vim.vm.device.VirtualDeviceSpec.Operation.remove \
@@ -184,10 +181,8 @@ def main():
     vm_obj = get_obj(content, [vim.VirtualMachine], args.params['name'])
 
     if vm_obj:
-       
         update_virtual_nic_state(si, vm_obj, args.params['nic_number'], args.params['nic_state'])
-        msg = ('VM NIC {} successfully' \
-              ' state changed to {}').format(args.params['nic_number'], args.params['nic_state'])
+        msg = ('VM NIC {} successfully'' state changed to {}').format(args.params['nic_number'], args.params['nic_state'])
         args.exit_json(msg=msg ,changed=True)
     else:
         msg = ("VM not found")
