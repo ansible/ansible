@@ -144,7 +144,7 @@ from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves import cPickle
-from ansible.module_utils.six.moves.urllib.error import URLError
+from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.urls import open_url
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import cliconf_loader, httpapi_loader
@@ -222,30 +222,43 @@ class Connection(NetworkConnectionBase):
 
             self._connected = True
 
+    def close(self):
+        '''
+        Close the active session to the device
+        '''
+        # only close the connection if its connected.
+        if self._connected:
+            display.vvvv("closing http(s) connection to device", host=self._play_context.remote_addr)
+            self.logout()
+
+        super(Connection, self).close()
+
     def send(self, path, data, **kwargs):
         '''
         Sends the command to the device over api
         '''
         url_kwargs = dict(
             timeout=self.get_option('timeout'), validate_certs=self.get_option('validate_certs'),
+            headers={},
         )
         url_kwargs.update(kwargs)
         if self._auth:
-            url_kwargs['headers']['Cookie'] = self._auth
+            url_kwargs['headers'].update(self._auth)
         else:
             url_kwargs['url_username'] = self.get_option('remote_user')
             url_kwargs['url_password'] = self.get_option('password')
 
         try:
             response = open_url(self._url + path, data=data, **url_kwargs)
-        except URLError as exc:
-            if exc.reason == 'Unauthorized' and self._auth:
+        except HTTPError as exc:
+            if exc.code == 401 and self._auth:
                 # Stored auth appears to be invalid, clear and retry
                 self._auth = None
                 self.login(self.get_option('remote_user'), self.get_option('password'))
                 return self.send(path, data, **kwargs)
             raise AnsibleConnectionFailure('Could not connect to {0}: {1}'.format(self._url, exc.reason))
 
-        self._auth = response.info().get('Set-Cookie')
+        # Try to assign a new auth token if one is given
+        self._auth = self.update_auth(response) or self._auth
 
         return response
