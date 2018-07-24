@@ -29,6 +29,11 @@ class HttpApiBase(AnsiblePlugin):
         pass
 
     def logout(self):
+        """ Call to implement session logout.
+
+        Method to clear session gracefully e.g. tokens granted in login
+        need to be revoked.
+        """
         pass
 
     def update_auth(self, response):

@@ -222,6 +222,17 @@ class Connection(NetworkConnectionBase):
 
             self._connected = True
 
+    def close(self):
+        '''
+        Close the active session to the device
+        '''
+        # only close the connection if its connected.
+        if self._connected:
+            display.vvvv("closing http(s) connection to device", host=self._play_context.remote_addr)
+            self.logout()
+
+        super(Connection, self).close()
+
     def send(self, path, data, **kwargs):
         '''
         Sends the command to the device over api
