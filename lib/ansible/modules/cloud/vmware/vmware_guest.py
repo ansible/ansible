@@ -254,6 +254,11 @@ options:
     - A custom value object takes two fields C(key) and C(value).
     - Incorrect key and values will be ignored.
     version_added: '2.3'
+  bootorder:
+    description:
+    - Define a boot device ordered by preference list. Valid values are 'ethernet', 'hdd' and 'cdrom'
+    - If there is more than one device of the same type (ie. two ethernet devices) they are added to bootOrder without any specific order.
+    version_added: '2.6.1'
   networks:
     description:
     - A list of networks (in the order of the NICs).
@@ -2100,6 +2105,26 @@ class PyVmomiHelper(PyVmomi):
                 task = vm.ReconfigVM_Task(vm_custom_spec)
                 self.wait_for_task(task)
 
+            # Set the boot device order
+            if self.params['bootorder']:
+                vm_custom_spec = vim.vm.ConfigSpec()
+                vm_custom_spec.bootOptions = vim.vm.BootOptions(bootOrder=[])
+
+                for bootdev in self.params['bootorder']:
+                    if bootdev == "ethernet":
+                        for device in self.get_vm_network_interfaces(vm=vm):
+                            vm_custom_spec.bootOptions.bootOrder.append(vim.vm.BootOptions.BootableEthernetDevice(deviceKey=device.key))
+                    elif bootdev == "cdrom":
+                        cdromdev = self.get_vm_cdrom_device(vm=vm)
+                        if not cdromdev is None:
+                            vm_custom_spec.bootOptions.bootOrder.append(vim.vm.BootOptions.BootableCdromDevice())
+                    elif bootdev == "hdd":
+                        for device in [x for x in vm.config.hardware.device if isinstance(x, vim.vm.device.VirtualDisk)]:
+                            vm_custom_spec.bootOptions.bootOrder.append(vim.vm.BootOptions.BootableDiskDevice(deviceKey=device.key))
+
+                task = vm.ReconfigVM_Task(vm_custom_spec)
+                self.wait_for_task(task)
+
             if self.params['wait_for_ip_address'] or self.params['state'] in ['poweredon', 'restarted']:
                 set_vm_power_state(self.content, vm, 'poweredon', force=False)
 
@@ -2244,6 +2269,7 @@ def main():
         is_template=dict(type='bool', default=False),
         annotation=dict(type='str', aliases=['notes']),
         customvalues=dict(type='list', default=[]),
+	bootorder=dict(type='list', default=[]),
         name=dict(type='str'),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
