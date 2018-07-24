@@ -22,6 +22,18 @@
       - createrepo  # used by el6 version of rpmfluff
     when:
       - ansible_distribution not in ['Fedora']
+      - ansible_python["version"]["major"] == 2
+
+  - name: Install rpmfluff and deps
+    package:
+      name: "{{ item }}"
+    with_items:
+      - python3-rpmfluff
+      - createrepo_c
+      - createrepo  # used by el6 version of rpmfluff
+    when:
+      - ansible_distribution not in ['Fedora']
+      - ansible_python["version"]["major"] == 3
 
   - name: Copy script for creating a repo
     copy:
