@@ -164,7 +164,8 @@ def run_commands(module, commands, check_rc=True):
 
 def run_cnos_commands(module, commands, check_rc=True):
     retVal = ''
-    enter_config = {'command': 'configure terminal', 'prompt': None, 'answer': None}
+    enter_config = {'command': 'configure terminal', 'prompt': None,
+                    'answer': None}
     exit_config = {'command': 'end', 'prompt': None, 'answer': None}
     commands.insert(0, enter_config)
     commands.append(exit_config)
@@ -226,7 +227,7 @@ def interfaceConfig(module, prompt, functionality, answer):
     interfaceArg8 = module.params['interfaceArg6']
     interfaceArg9 = module.params['interfaceArg7']
     deviceType = module.params['deviceType']
-    
+
     if(interfaceArg1 == "port-channel"):
         command = command + " " + interfaceArg1 + " " + interfaceArg2
         # debugOutput(command)
@@ -243,7 +244,8 @@ def interfaceConfig(module, prompt, functionality, answer):
                 value = checkSanityofVariable(
                     deviceType, "portchannel_interface_string", interfaceArg2)
                 if(value == "ok"):
-                    cmd = [{'command': command, 'prompt': None, 'answer': None}]
+                    cmd = [{'command': command, 'prompt': None,
+                            'answer': None}]
                 else:
                     retVal = "Error-102"
                     return retVal
@@ -265,12 +267,13 @@ def interfaceConfig(module, prompt, functionality, answer):
                     deviceType, "ethernet_interface_string", interfaceArg2)
                 if(value == "ok"):
                     command = command + interfaceArg1 + " " + interfaceArg2
-                    cmd = [{'command': command, 'prompt': None, 'answer': None}]
+                    cmd = [{'command': command, 'prompt': None,
+                            'answer': None}]
                 else:
                     retVal = "Error-102"
                     return retVal
 
-        retVal = retVal + interfaceLevel2Config(module, cmd, prompt, answer)	
+        retVal = retVal + interfaceLevel2Config(module, cmd, prompt, answer)
     elif(interfaceArg1 == "loopback"):
         value = checkSanityofVariable(
             deviceType, "loopback_interface_value", interfaceArg2)
@@ -1317,15 +1320,17 @@ def interfaceLevel2Config(module, cmd, prompt, answer):
         command = "exit"
         # debugOutput(command)
         cmd = [{'command': command, 'prompt': None, 'answer': None}]
-        #retVal = retVal + str(run_cnos_commands(module, cmd))
+        # retVal = retVal + str(run_cnos_commands(module, cmd))
     return retVal
 # EOM
 
 
-def portChannelConfig((module, prompt, answer)
-        
+def portChannelConfig(module, prompt, answer):
     retVal = ''
     command = ''
+    portChArg1 = module.params['interfaceArg1']
+    portChArg2 = module.params['interfaceArg2']
+    portChArg3 = module.params['interfaceArg3']
     if(portChArg1 == "port-channel" and prompt == "(config)#"):
         command = command + portChArg1 + " load-balance ethernet "
         if(portChArg2 == "destination-ip" or
@@ -1353,7 +1358,6 @@ def portChannelConfig((module, prompt, answer)
         else:
             retVal = "Error-232"
             return retVal
-
 # EOM
 
 
