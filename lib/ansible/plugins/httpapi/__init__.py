@@ -28,6 +28,17 @@ class HttpApiBase(AnsiblePlugin):
         """
         pass
 
+    def logout(self):
+        pass
+
+    def update_auth(self, response):
+        """Return per-request auth token.
+
+        The response should be a dictionary that can be plugged into the
+        headers of a request. The default implementation uses cookie data.
+        """
+        return {'Cookie': response.info().get('Set-Cookie')}
+
     @abstractmethod
     def send_request(self, data, **message_kwargs):
         """Prepares and sends request(s) to device."""
