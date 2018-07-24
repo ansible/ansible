@@ -35,7 +35,7 @@ from ansible.utils.path import unfrackpath, makedirs_safe
 from ansible.utils.display import Display
 from ansible.utils.jsonrpc import JsonRpcServer
 
-
+import q
 @contextmanager
 def file_lock(lock_path):
     """
@@ -130,6 +130,7 @@ class ConnectionProcess(object):
 
         except Exception as e:
             # socket.accept() will raise EINTR if the socket.close() is called
+            q("--execption raised--")
             if hasattr(e, 'errno'):
                 if e.errno != errno.EINTR:
                     self.exception = traceback.format_exc()
@@ -137,8 +138,10 @@ class ConnectionProcess(object):
                 self.exception = traceback.format_exc()
 
         finally:
-            # when done, close the connection properly and cleanup
-            # the socket file so it can be recreated
+            # allow time for any exception msg send over socket to receive at other end before shutting down
+            time.sleep(0.1)
+
+            # when done, close the connection properly and cleanup the socket file so it can be recreated
             self.shutdown()
 
     def connect_timeout(self, signum, frame):
@@ -146,27 +149,15 @@ class ConnectionProcess(object):
         display.display(msg, log_only=True)
         raise Exception(msg)
 
-        # allow time for exception msg send over socket to receive at other end before shutting down
-        time.sleep(0.5)
-        self.shutdown()
-
     def command_timeout(self, signum, frame):
         msg = 'command timeout triggered, timeout value is %s secs' % self.connection.get_option('persistent_command_timeout')
         display.display(msg, log_only=True)
         raise Exception(msg)
 
-        # allow time for exception msg send over socket to receive at other end before shutting down
-        time.sleep(0.5)
-        self.shutdown()
-
     def handler(self, signum, frame):
         msg = 'signal handler called with signal %s' % signum
         display.display(msg, log_only=True)
         raise Exception(msg)
-
-        # allow time for exception msg send over socket to receive at other end before shutting down
-        time.sleep(0.5)
-        self.shutdown()
 
     def shutdown(self):
         """ Shuts down the local domain socket
