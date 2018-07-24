@@ -17,7 +17,7 @@
     package:
       name: "{{ item }}"
     with_items:
-      - python-rpmfluff
+      - python{{ ansible_python_version.split(".")[0] }}-rpmfluff
       - createrepo_c
       - createrepo  # used by el6 version of rpmfluff
     when:
