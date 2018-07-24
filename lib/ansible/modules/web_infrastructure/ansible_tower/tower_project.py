@@ -147,18 +147,18 @@ def main():
                 except (exc.NotFound) as excinfo:
                     module.fail_json(msg='Failed to update project, organization not found: {0}'.format(organization), changed=False)
 
-                if scm_type:
+                if scm_credential:
                     try:
                         cred_res = tower_cli.get_resource('credential')
                         cred = cred_res.get(name=scm_credential)
+                        scm_credential = cred['id']
                     except (exc.NotFound) as excinfo:
                         module.fail_json(msg='Failed to update project, credential not found: {0}'.format(scm_credential), changed=False)
 
-                credential = cred['id'] if scm_type else None
                 result = project.modify(name=name, description=description,
                                         organization=org['id'],
                                         scm_type=scm_type, scm_url=scm_url, local_path=local_path,
-                                        scm_branch=scm_branch, scm_clean=scm_clean, credential=credential,
+                                        scm_branch=scm_branch, scm_clean=scm_clean, credential=scm_credential,
                                         scm_delete_on_update=scm_delete_on_update,
                                         scm_update_on_launch=scm_update_on_launch,
                                         create_on_missing=True)
