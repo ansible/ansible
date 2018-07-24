@@ -121,7 +121,7 @@ options:
     version_added: 2.6
   purge_rules:
     description:
-      - Keeps the existing load balancer rules in place. Will modify and add, but will not delete.
+      - When set to no, keep the existing load balancer rules in place. Will modify and add, but will not delete.
     default: yes
     type: bool
     version_added: 2.7
