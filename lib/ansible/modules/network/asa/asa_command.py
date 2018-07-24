@@ -98,10 +98,15 @@ vars:
     provider: "{{ cli }}"
     context: system
 
--  asa_command:
+- asa_command:
     commands:
-      - ping 8.8.8.8
-    wait_for: result[0] contains rate
+      - ping 8.8.8.8 repeat 101 size 350 
+    authorize: yes
+    auth_pass: "{{ ansible_become_pass }}"
+    wait_for:
+      - result[0] contains 100
+    timeout: 100
+    retries: 2
 """
 
 RETURN = """
