@@ -255,8 +255,6 @@ except ImportError:
     # handled by AnsibleAWSModule
     pass
 
-import ansible.module_utils.ec2
-# import a class, otherwise we'll use a fully qualified path
 from ansible.module_utils.ec2 import AWSRetry, boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list, camel_dict_to_snake_dict
 from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
 from ansible.module_utils._text import to_native
@@ -294,7 +292,7 @@ def update_stack_set(module, stack_params, cfn):
             max_wait=module.params.get('wait_timeout'),
         )
 
-    return
+    return True
 
 
 def compare_stack_instances(cfn, stack_set_name, accounts, regions):
@@ -540,7 +538,7 @@ def main():
             stack_params['Parameters'].append({'ParameterKey': k, 'ParameterValue': str(v)})
 
     if module.params.get('tags') and isinstance(module.params.get('tags'), dict):
-        stack_params['Tags'] = ansible.module_utils.ec2.ansible_dict_to_boto3_tag_list(module.params['tags'])
+        stack_params['Tags'] = ansible_dict_to_boto3_tag_list(module.params['tags'])
 
     if module.params.get('administration_role_arn'):
         # TODO loosen the semantics here to autodetect the account ID and build the ARN
