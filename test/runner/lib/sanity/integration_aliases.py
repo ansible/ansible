@@ -3,6 +3,7 @@ from __future__ import absolute_import, print_function
 
 import json
 import textwrap
+import re
 
 from lib.sanity import (
     SanitySingleVersion,
@@ -26,6 +27,10 @@ from lib.target import (
 
 from lib.cloud import (
     get_cloud_platforms,
+)
+
+from lib.util import (
+    display,
 )
 
 
@@ -68,6 +73,66 @@ class IntegrationAliasesTest(SanitySingleVersion):
 
     Consider adding integration tests before or alongside changes.
     """
+
+    def __init__(self):
+        super(IntegrationAliasesTest, self).__init__()
+
+        self._shippable_yml_lines = []  # type: list[str]
+        self._shippable_test_groups = {}  # type: dict[str, set[int]]
+
+    @property
+    def shippable_yml_lines(self):
+        """
+        :rtype: list[str]
+        """
+        if not self._shippable_yml_lines:
+            with open('shippable.yml', 'r') as shippable_yml_fd:
+                self._shippable_yml_lines = shippable_yml_fd.read().splitlines()
+
+        return self._shippable_yml_lines
+
+    @property
+    def shippable_test_groups(self):
+        """
+        :rtype: dict[str, set[int]]
+        """
+        if not self._shippable_test_groups:
+            matches = [re.search(r'^[ #]+- env: T=(?P<group>[^/]+)/(?P<params>.+)/(?P<number>[1-9])$', line) for line in self.shippable_yml_lines]
+            entries = [(match.group('group'), int(match.group('number'))) for match in matches if match]
+
+            for key, value in entries:
+                if key not in self._shippable_test_groups:
+                    self._shippable_test_groups[key] = set()
+
+                self._shippable_test_groups[key].add(value)
+
+        return self._shippable_test_groups
+
+    def format_shippable_group_alias(self, name, fallback=''):
+        """
+        :type name: str
+        :type fallback: str
+        :rtype: str
+        """
+        group_numbers = self.shippable_test_groups.get(name, None)
+
+        if group_numbers:
+            if min(group_numbers) != 1:
+                display.warning('Min test group "%s" in shippable.yml is %d instead of 1.' % (name, min(group_numbers)), unique=True)
+
+            if max(group_numbers) != len(group_numbers):
+                display.warning('Max test group "%s" in shippable.yml is %d instead of %d.' % (name, max(group_numbers), len(group_numbers)), unique=True)
+
+            if len(group_numbers) > 1:
+                alias = 'shippable/%s/group[%d-%d]/' % (name, min(group_numbers), max(group_numbers))
+            else:
+                alias = 'shippable/%s/group%d/' % (name, min(group_numbers))
+        elif fallback:
+            alias = 'shippable/%s/group%d/' % (fallback, 1)
+        else:
+            raise Exception('cannot find test group "%s" in shippable.yml' % name)
+
+        return alias
 
     def test(self, args, targets):
         """
@@ -123,13 +188,13 @@ class IntegrationAliasesTest(SanitySingleVersion):
 
         messages += self.check_ci_group(
             targets=tuple(filter_targets(posix_targets, ['cloud/'], include=False, directories=False, errors=False)),
-            find='posix/ci/group[1-3]/',
+            find=self.format_shippable_group_alias('linux').replace('linux', 'posix'),
         )
 
         for cloud in clouds:
             messages += self.check_ci_group(
                 targets=tuple(filter_targets(posix_targets, ['cloud/%s/' % cloud], include=True, directories=False, errors=False)),
-                find='posix/ci/cloud/group[1-5]/%s/' % cloud,
+                find=self.format_shippable_group_alias(cloud, 'cloud'),
             )
 
         return messages
@@ -144,7 +209,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
 
         messages += self.check_ci_group(
             targets=windows_targets,
-            find='windows/ci/group[1-3]/',
+            find=self.format_shippable_group_alias('windows'),
         )
 
         return messages

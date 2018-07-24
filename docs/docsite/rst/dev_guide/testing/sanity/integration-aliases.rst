@@ -13,10 +13,11 @@ Tests must be configured to run in exactly one group. This is done by adding the
 
 The following are examples of some of the available groups:
 
-- ``posix/ci/group1``
-- ``windows/ci/group2``
-- ``posix/ci/cloud/group3/azure``
-- ``posix/ci/cloud/group4/aws``
+- ``shippable/posix/group1``
+- ``shippable/windows/group2``
+- ``shippable/azure/group3``
+- ``shippable/aws/group1``
+- ``shippable/cloud/group1``
 
 Groups are used to balance tests across multiple CI jobs to minimize test run time.
 They also improve efficiency by keeping tests with similar requirements running together.
