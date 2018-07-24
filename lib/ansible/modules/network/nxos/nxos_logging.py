@@ -130,7 +130,6 @@ def map_obj_to_commands(updates, module):
         state = w['state']
         del w['state']
 
-
         if state == 'absent' and w in have:
             if w['facility'] is not None:
                 if not w['dest']:
