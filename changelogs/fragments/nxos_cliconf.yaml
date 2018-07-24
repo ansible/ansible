@@ -1,0 +1,4 @@
+bugfixes:
+- Refactor nxos cliconf get_device_info for non structured output supported devices (https://github.com/ansible/ansible/pull/42089).
+- Fix regex network_os_platform nxos (https://github.com/ansible/ansible/pull/42288).
+- Fix get_device_info nxos zero or more whitespace regex (https://github.com/ansible/ansible/pull/43178).

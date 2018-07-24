@@ -1,0 +1,3 @@
+bugfixes:
+- nxos_facts warning message improved (https://github.com/ansible/ansible/pull/42969).
+- Add text output along with structured output in nxos_facts (https://github.com/ansible/ansible/pull/42886).
