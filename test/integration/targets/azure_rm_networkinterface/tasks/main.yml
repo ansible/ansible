@@ -3,6 +3,14 @@
     rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
   run_once: yes
 
+- name: get all public ip addresses
+  azure_rm_publicipaddress_facts:
+  register: output
+
+- name: DUMP ALL PUBLIC IP ADDRESSES IN SUBSCRIPTION
+  debug:
+    var: output
+
 - name: Create virtual network
   azure_rm_virtualnetwork:
       resource_group: "{{ resource_group_secondary }}"
@@ -125,6 +133,14 @@
     that:
       - output.changed
       - output.state.ip_configuration.subnet.name == 'tn{{ rpfx }}'
+
+- name: get all public ip addresses
+  azure_rm_publicipaddress_facts:
+  register: output
+
+- name: DUMP ALL PUBLIC IP ADDRESSES IN SUBSCRIPTION
+  debug:
+    var: output
 
 - name: Update the NIC with mutilple ip configurations (check mode)
   azure_rm_networkinterface:

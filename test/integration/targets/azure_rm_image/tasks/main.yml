@@ -7,6 +7,14 @@
       security_group_name: "sg{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
       blob_name: "blob{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
 
+- name: get all public ip addresses
+  azure_rm_publicipaddress_facts:
+  register: output
+
+- name: DUMP ALL PUBLIC IP ADDRESSES IN SUBSCRIPTION
+  debug:
+    var: output
+
 - name: Create storage account
   azure_rm_storageaccount:
       resource_group: "{{ resource_group }}"
