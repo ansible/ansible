@@ -300,7 +300,7 @@ def main():
     # need to add logic to check when changes occur or not
     errorMsg = cnos.checkOutputForError(output)
     if(errorMsg is None):
-        module.exit_json(changed=True, msg="vlag configurations accomplished")
+        module.exit_json(changed=True, msg="VLAG configurations accomplished")
     else:
         module.fail_json(msg=errorMsg)
 
