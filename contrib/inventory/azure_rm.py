@@ -601,10 +601,11 @@ class AzureInventory(object):
                 computer_name=(machine.os_profile.computer_name if machine.os_profile else None),
                 provisioning_state=machine.provisioning_state,
             )
-
+            mdisk = self._compute_client.disks.get(resource_group, machine.storage_profile.os_disk.name)
             host_vars['os_disk'] = dict(
                 name=machine.storage_profile.os_disk.name,
                 operating_system_type=machine.storage_profile.os_disk.os_type.value
+                date_created=mdisk.time_created.strftime('%Y-%m-%d')
             )
 
             if self.include_powerstate:
