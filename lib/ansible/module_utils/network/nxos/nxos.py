@@ -164,7 +164,7 @@ class Cli:
         responses = []
         try:
             resp = connection.edit_config(config, replace=replace)
-            if  isinstance(resp, collections.Mapping):
+            if isinstance(resp, collections.Mapping):
                 resp = resp['response']
         except ConnectionError as e:
             code = getattr(e, 'code', 1)
@@ -496,9 +496,11 @@ def get_capabilities(module):
     conn = get_connection(module)
     return conn.get_capabilities()
 
+
 def get_diff(self, candidate=None, running=None, match='line', diff_ignore_lines=None, path=None, replace='line'):
     conn = self.get_connection()
     return conn.get_diff(candidate=candidate, running=running, match=match, diff_ignore_lines=diff_ignore_lines, path=path, replace=replace)
+
 
 def normalize_interface(name):
     """Return the normalized interface name
