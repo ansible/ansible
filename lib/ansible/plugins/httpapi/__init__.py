@@ -32,3 +32,10 @@ class HttpApiBase(AnsiblePlugin):
     def send_request(self, data, **message_kwargs):
         """Prepares and sends request(s) to device."""
         pass
+
+    def logout(self):
+        """ Call to implement session logout.
+        Method to clear session gracefully e.g. tokens granted in login
+        need to be revoked.
+        """
+        pass
