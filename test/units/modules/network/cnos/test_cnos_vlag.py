@@ -53,4 +53,3 @@ class TestCnosVlagModule(TestCnosModule):
         result = self.execute_module(changed=True)
         expected_result = 'VLAG configurations accomplished'
         self.assertEqual(result['msg'], expected_result)
-
