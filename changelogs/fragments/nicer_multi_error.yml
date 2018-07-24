@@ -1,0 +1,2 @@
+bugfixes:
+    - nicer error when multiprocessing breaks https://github.com/ansible/ansible/issues/43090
