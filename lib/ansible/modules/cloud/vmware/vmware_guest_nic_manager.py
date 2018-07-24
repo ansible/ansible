@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -13,7 +16,7 @@ short_description: Manages virtual machines in vCenter
 description: >
    This module can be used to configure VNICs on virtual machines,
    manage NIC state as connect , disconnect or delete.
-version_added: '2.x'
+version_added: '2.4'
 author:
 - Mohd Umar Mubeen (@mohdumar321) <umar.shiats@gmail.com>
 requirements:
@@ -68,14 +71,27 @@ EXAMPLES = '''
       nic_state: "{{nic_state}}"
       nic_number: "{{nic_number}}"
 '''
+RETURN = r'''
+instance:
+    description: metadata about the virtual machine
+    returned: always
+    type: dict
+    sample: None
+'''
+
+
 
 import atexit
+import requests
 from pyVmomi import vim
 from pyVim.connect import SmartConnect, Disconnect
 from tools import tasks
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text, to_native
-from ansible.module_utils.vmware import (find_obj, gather_vm_facts, get_all_objs, compile_folder_path_for_object, serialize_spec,vmware_argument_spec, set_vm_power_state, PyVmomi)
+from ansible.module_utils.vmware import (find_obj, gather_vm_facts, get_all_objs,
+                                         compile_folder_path_for_object, serialize_spec,
+                                         vmware_argument_spec, set_vm_power_state, PyVmomi,
+                                         find_dvs_by_name, find_dvspg_by_name)
 
 # disable  urllib3 warnings
 if hasattr(requests.packages.urllib3, 'disable_warnings'):
@@ -125,14 +141,13 @@ def update_virtual_nic_state(si, vm_obj, nic_number, new_nic_state):
 
 def get_args():
     argument_spec = vmware_argument_spec()
-    argument_spec.update(dict(hostname=dict(type='str', required=True),
-                              username=dict(type='str', required=True),
-                              password=dict(type='str', required=True),
-                              port=dict(type='int', default='443'),
-                              name=dict(type='str', required=True),
-                              uuid=dict(type='str', required=True),
-                              nic_state=dict(type='str', default='connect',
-                   choices=['connect', 'disconnect' , 'delete']),
+    argument_spec.update(dict(hostname=dict(type='str' , required=True), 
+                              username=dict(type='str' , required=True), 
+                              password=dict(type='str' , required=True), 
+                              port=dict(type='int' , default='443'), 
+                              name=dict(type='str' , required=True), 
+                              uuid=dict(type='str' , required=True), 
+                              nic_state=dict(type='str' , default='connect', choices=['connect', 'disconnect' , 'delete']),
                               nic_number=dict(type='str')))
     module = AnsibleModule(argument_spec=argument_spec)
     return module
@@ -162,7 +177,6 @@ def main():
     atexit.register(Disconnect, si)
 
     content = si.RetrieveContent()
-    print ('Searching for VM {}').format(args.params['name'])
     vm_obj = get_obj(content, [vim.VirtualMachine], args.params['name'])
 
     if vm_obj:
