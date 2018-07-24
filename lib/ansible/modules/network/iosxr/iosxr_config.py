@@ -135,6 +135,14 @@ options:
     type: bool
     default: 'no'
     version_added: "2.4"
+  label:
+    description:
+      - Allows a commit label to be specified to be included when the
+        configuration is committed. A valid label must begin with an alphabet
+        and not exceed 30 characters, only alphabets, digits, hyphens and
+        underscores are allowed. If the configuration is not changed or
+        committed, this argument is ignored.
+    version_added: "2.7"
 """
 
 EXAMPLES = """
@@ -239,6 +247,18 @@ def check_args(module, warnings):
     if module.params['comment']:
         if len(module.params['comment']) > 60:
             module.fail_json(msg='comment argument cannot be more than 60 characters')
+    if module.params['label']:
+        label = module.params['label']
+        if len(label) > 30:
+            module.fail_json(msg='label argument cannot be more than 30 characters')
+        if not label[0].isalpha():
+            module.fail_json(msg='label argument must begin with an alphabet')
+        valid_chars = re.match(r'[\w-]*$', label)
+        if not valid_chars:
+            module.fail_json(
+                msg='label argument must only contain alphabets,' +
+                'digits, underscores or hyphens'
+            )
     if module.params['force']:
         warnings.append('The force argument is deprecated, please use '
                         'match=none instead.  This argument will be '
@@ -340,6 +360,7 @@ def run(module, result):
     comment = module.params['comment']
     admin = module.params['admin']
     check_mode = module.check_mode
+    label = module.params['label']
 
     candidate_config = get_candidate(module)
     running_config = get_running_config(module)
@@ -376,7 +397,11 @@ def run(module, result):
             result['commands'] = commands
 
         commit = not check_mode
-        diff = load_config(module, commands, commit=commit, replace=replace_config, comment=comment, admin=admin)
+        diff = load_config(
+            module, commands, commit=commit,
+            replace=replace_config, comment=comment, admin=admin,
+            label=label
+        )
         if diff:
             result['diff'] = dict(prepared=diff)
 
@@ -405,7 +430,8 @@ def main():
         config=dict(),
         backup=dict(type='bool', default=False),
         comment=dict(default=DEFAULT_COMMIT_COMMENT),
-        admin=dict(type='bool', default=False)
+        admin=dict(type='bool', default=False),
+        label=dict()
     )
 
     argument_spec.update(iosxr_argument_spec)
