@@ -47,7 +47,7 @@ EXAMPLES = '''
     # inventory.config file in YAML format
     plugin: nmap
     strict: False
-    network: 192.168.0.0/24
+    address: 192.168.0.0/24
 '''
 
 import os
