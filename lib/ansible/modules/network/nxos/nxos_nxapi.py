@@ -169,14 +169,12 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 
 
-def check_args(module, warnings):
-    device_info = get_capabilities(module)
-
-    network_api = device_info.get('network_api', 'nxapi')
+def check_args(module, warnings, capabilities):
+    network_api = capabilities.get('network_api', 'nxapi')
     if network_api == 'nxapi':
         module.fail_json(msg='module not supported over nxapi transport')
 
-    os_platform = device_info['device_info']['network_os_platform']
+    os_platform = capabilities['device_info']['network_os_platform']
     if '7K' not in os_platform and module.params['sandbox']:
         module.fail_json(msg='sandbox or enable_sandbox is supported on NX-OS 7K series of switches')
 
@@ -199,11 +197,11 @@ def check_args(module, warnings):
     return warnings
 
 
-def map_obj_to_commands(want, have, module):
+def map_obj_to_commands(want, have, module, capabilities):
     send_commands = list()
     commands = dict()
 
-    device_info = get_capabilities(module).get('device_info')
+    device_info = capabilities.get('device_info')
     if device_info is None:
         raise TypeError
 
@@ -386,14 +384,16 @@ def main():
     warning_msg += " when params 'http, http_port, https, https_port' are not set in the playbook"
     module.deprecate(msg=warning_msg, version="2.11")
 
-    check_args(module, warnings)
+    capabilities = get_capabilities(module)
+
+    check_args(module, warnings, capabilities)
 
     result = {'changed': False, 'warnings': warnings}
 
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
 
-    commands = map_obj_to_commands(want, have, module)
+    commands = map_obj_to_commands(want, have, module, capabilities)
     result['commands'] = commands
 
     if commands:
