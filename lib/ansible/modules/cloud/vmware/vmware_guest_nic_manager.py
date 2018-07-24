@@ -97,8 +97,8 @@ from ansible.module_utils.vmware import (find_obj, gather_vm_facts, get_all_objs
                                          find_dvs_by_name, find_dvspg_by_name)
 
 # disable  urllib3 warnings
-if hasattr(requests.packages.urllib3, 'disable_warnings'):
-    requests.packages.urllib3.disable_warnings
+#if hasattr(requests.packages.urllib3, 'disable_warnings'):
+#    requests.packages.urllib3.disable_warnings
 
 def update_virtual_nic_state(si, vm_obj, nic_number, new_nic_state):
     nic_prefix_label = 'Network adapter '
