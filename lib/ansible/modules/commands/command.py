@@ -50,9 +50,9 @@ options:
     version_added: "0.6"
   warn:
     description:
-      - If command_warnings are on in ansible.cfg, do not warn about this particular line if set to C(no).
+      - If command_warnings are on in ansible.cfg, do not warn about this particular line if set to C(false).
     type: bool
-    default: 'yes'
+    default: 'true'
     version_added: "1.8"
   stdin:
     version_added: "2.4"
@@ -100,6 +100,11 @@ EXAMPLES = '''
 - name: safely use templated variable to run command. Always use the quote filter to avoid injection issues.
   command: cat {{ myfile|quote }}
   register: myoutput
+  
+- name: Use sed and avoid warning 
+  command: sed -i "s/;env\[HOSTNAME\] = /env[HOSTNAME] = /" /etc/php/7.2/fpm/pool.d/www.conf
+  args:
+    warn: false
 '''
 
 RETURN = '''
