@@ -263,41 +263,41 @@ def _is_vcs_url(name):
     return re.match(_VCS_RE, name)
 
 
-def _is_valid_distribution_name(name):
-    """Test whether a name is distribution name or version specifier."""
+def _is_valid_package_name(name):
+    """Test whether a name is package name or version specifier."""
     return not name.lstrip().startswith(tuple(op_dict.keys()))
 
 
-def _recover_distribution_name(names):
-    """Recover distribution names as list from user's raw input.
-    
+def _recover_package_name(names):
+    """Recover package names as list from user's raw input.
+
     :input: a mixed and invalid list of names or version specifiers
     :return: a list of valid package name
 
     eg.
     input: ['django>1.11.1', '<1.11.3', 'ipaddress', 'simpleproject>1.1.0', '<2.0.0']
     return: ['django>1.11.1,<1.11.3', 'ipaddress', 'simpleproject>1.1.0,<2.0.0']
-    
+
     input: ['django>1.11.1,<1.11.3,ipaddress', 'simpleproject>1.1.0,<2.0.0']
     return: ['django>1.11.1,<1.11.3', 'ipaddress', 'simpleproject>1.1.0,<2.0.0']
     """
     # rebuild input name to a flat list so we can tolerate any combination of input
     tmp = []
     for one_line in names:
-      tmp = tmp + one_line.split(",")
+        tmp = tmp + one_line.split(",")
     names = tmp
 
     # reconstruct the names
     name_parts = []
-    distribution_names = []
+    package_names = []
     for name in names:
-        if _is_valid_distribution_name(name):
+        if _is_valid_package_name(name):
             if name_parts:
-                distribution_names.append(",".join(name_parts))
+                package_names.append(",".join(name_parts))
             name_parts = []
         name_parts.append(name)
-    distribution_names.append(",".join(name_parts))
-    return distribution_names
+    package_names.append(",".join(name_parts))
+    return package_names
 
 
 def _get_cmd_options(module, cmd):
@@ -336,7 +336,7 @@ def _is_present(module, req, installed_pkgs, pkg_command):
         else:
             continue
 
-        if pkg_name.lower() == req.distribution_name and req.is_satisfied_by(pkg_version):
+        if pkg_name.lower() == req.package_name and req.is_satisfied_by(pkg_version):
             return True
 
     return False
@@ -474,7 +474,7 @@ def setup_virtualenv(module, env, chdir, out, err):
     return out, err
 
 
-class Distribution:
+class Package:
     """Python distribution package metadata wrapper.
 
     A wrapper class for Requirement, which provides
@@ -483,13 +483,13 @@ class Distribution:
     """
 
     def __init__(self, name_string, version_string=None):
-        self._plain_distribution = False
-        self.distribution_name = name_string
+        self._plain_package = False
+        self.package_name = name_string
         self._requirement = None
         if name_string.startswith('file:') or _is_vcs_url(name_string):
             return
 
-        self._plain_distribution = True
+        self._plain_package = True
         if version_string:
             version_string = version_string.lstrip()
             separator = '==' if version_string[0].isdigit() else ' '
@@ -497,18 +497,18 @@ class Distribution:
         self._requirement = Requirement.parse(name_string)
         # old pkg_resource will replace 'setuptools' with 'distribute' when it already installed
         if self._requirement.project_name == "distribute":
-            self.distribution_name = "setuptools"
+            self.package_name = "setuptools"
         else:
-            self.distribution_name = self._requirement.project_name
+            self.package_name = self._requirement.project_name
 
     @property
     def has_version_specifier(self):
-        if self._plain_distribution:
+        if self._plain_package:
             return bool(self._requirement.specs)
         return False
 
     def is_satisfied_by(self, version_to_test):
-        if not self._plain_distribution:
+        if not self._plain_package:
             return False
         try:
             return self._requirement.specifier.contains(version_to_test)
@@ -521,9 +521,9 @@ class Distribution:
             )
 
     def __str__(self):
-        if self._plain_distribution:
+        if self._plain_package:
             return str(self._requirement)
-        return self.distribution_name
+        return self.package_name
 
 
 def main():
@@ -622,28 +622,28 @@ def main():
                     has_vcs = True
                     break
 
-            # convert raw input distribution names to distribution instances
+            # convert raw input package names to Package instances
             try:
-                distributions = []
-                for dist in _recover_distribution_name(name):
-                    distributions.append(Distribution(dist))
+                packages = []
+                for dist in _recover_package_name(name):
+                    packages.append(Package(dist))
             except ValueError as e:
-                # if users input some invalid distribution names, show them the parsing error
+                # if users input some invalid package names, show them the parsing error
                 module.fail_json(msg="Can not parse package name '%s', error: '%s'" % (dist, str(e)))
             # check invalid combination of arguments
             if version is not None:
-                if len(distributions) > 1:
+                if len(packages) > 1:
                     module.fail_json(
                         msg="'version' argument is ambiguous when installing multiple package distributions. "
-                            "Please specify version restrictions next to each distribution in 'name' argument."
+                            "Please specify version restrictions next to each package in 'name' argument."
                     )
-                if distributions[0].has_version_specifier:
+                if packages[0].has_version_specifier:
                     module.fail_json(
                         msg="The 'version' argument conflicts with any version specifier provided along with a package name. "
                             "Please keep the version specifier, but remove the 'version' argument."
                     )
-                # if the version specifier is provided by version, append that into the distribution
-                distributions[0] = Distribution(distributions[0].distribution_name, version)
+                # if the version specifier is provided by version, append that into the package
+                packages[0] = Package(packages[0].package_name, version)
 
         if module.params['editable']:
             args_list = []  # used if extra_args is not used at all
@@ -659,7 +659,7 @@ def main():
 
         cmd += ' '
         if name:
-            cmd += ' '.join('"%s"' % d for d in distributions)
+            cmd += ' '.join('"%s"' % d for d in packages)
         elif requirements:
             cmd += '-r "%s"' % requirements
         else:
@@ -692,8 +692,8 @@ def main():
                                 pkg_list.append(formatted_dep)
                                 out += '%s\n' % formatted_dep
 
-                for distribution in distributions:
-                    is_present = _is_present(module, distribution, pkg_list, pkg_cmd)
+                for package in packages:
+                    is_present = _is_present(module, package, pkg_list, pkg_cmd)
                     if (state == 'present' and not is_present) or (state == 'absent' and is_present):
                         changed = True
                         break
