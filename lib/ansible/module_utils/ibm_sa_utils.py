@@ -91,5 +91,5 @@ def build_pyxcli_command(fields):
 def is_pyxcli_installed(module):
     if not PYXCLI_INSTALLED:
         module.fail_json(
-            msg='pyxcli is required, use \'pip install pyxcli\' ' +
+            msg='pyxcli is required, use \'pip install pyxcli\' '
             'in order to install it.')
