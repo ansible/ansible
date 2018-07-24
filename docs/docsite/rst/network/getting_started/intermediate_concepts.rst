@@ -39,7 +39,7 @@ The ``backup`` directory and the files in it get created when you run modules li
 Tracking Changes to Inventory and Playbooks: Source Control with Git
 ================================================================================
 
-As you expand your inventory, roles and playbooks, you should place your Ansible projects under source control. We recommend ``git`` for source control. ``git`` provides an audit trail, letting you you track changes, roll back mistakes, view history and share the workload of managing, maintaining and expanding your Ansible ecosystem. There are plenty of tutorials and guides to using ``git`` available.
+As you expand your inventory, roles and playbooks, you should place your Ansible projects under source control. We recommend ``git`` for source control. ``git`` provides an audit trail, letting you track changes, roll back mistakes, view history and share the workload of managing, maintaining and expanding your Ansible ecosystem. There are plenty of tutorials and guides to using ``git`` available.
 
 Resources and Next Steps
 ================================================================================
