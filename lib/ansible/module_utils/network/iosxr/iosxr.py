@@ -27,6 +27,7 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 import json
+import re
 from difflib import Differ
 from copy import deepcopy
 from time import sleep
@@ -334,7 +335,8 @@ def discard_config(module):
     conn.discard_changes()
 
 
-def commit_config(module, comment=None, confirmed=False, confirm_timeout=None, persist=False, check=False):
+def commit_config(module, comment=None, confirmed=False, confirm_timeout=None,
+                  persist=False, check=False, label=None):
     conn = get_connection(module)
     reply = None
 
@@ -344,7 +346,7 @@ def commit_config(module, comment=None, confirmed=False, confirm_timeout=None, p
         if is_netconf(module):
             reply = conn.commit(confirmed=confirmed, timeout=confirm_timeout, persist=persist)
         elif is_cliconf(module):
-            reply = conn.commit(comment=comment)
+            reply = conn.commit(comment=comment, label=label)
 
     return reply
 
@@ -373,8 +375,18 @@ def get_config(module, config_filter=None, source='running'):
     return cfg
 
 
+def check_existing_commit_labels(conn, label):
+    out = conn.get(command='show configuration history detail | include %s' % label)
+    label_exist = re.search(label, out, re.M)
+    if label_exist:
+        return True
+    else:
+        return False
+
+
 def load_config(module, command_filter, commit=False, replace=False,
-                comment=None, admin=False, running=None, nc_get_filter=None):
+                comment=None, admin=False, running=None, nc_get_filter=None,
+                label=None):
 
     conn = get_connection(module)
 
@@ -404,6 +416,16 @@ def load_config(module, command_filter, commit=False, replace=False,
     elif is_cliconf(module):
         # to keep the pre-cliconf behaviour, make a copy, avoid adding commands to input list
         cmd_filter = deepcopy(command_filter)
+        # If label is present check if label already exist before entering
+        # config mode
+        if label:
+            old_label = check_existing_commit_labels(conn, label)
+            if old_label:
+                module.fail_json(
+                    msg='commit label {%s} is already used for'
+                    ' an earlier commit, please choose a different label'
+                    ' and rerun task' % label
+                )
         cmd_filter.insert(0, 'configure terminal')
         if admin:
             cmd_filter.insert(0, 'admin')
@@ -424,7 +446,7 @@ def load_config(module, command_filter, commit=False, replace=False,
             cmd.append('end')
             conn.edit_config(cmd)
         elif commit:
-            commit_config(module, comment=comment)
+            commit_config(module, comment=comment, label=label)
             conn.edit_config('end')
             if admin:
                 conn.edit_config('exit')
