@@ -1,4 +1,4 @@
-#!/usr/bin/python
+  #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2012, Stephen Fromm <sfromm@gmail.com>
@@ -993,6 +993,8 @@ class FreeBsdUser(User):
             cmd.append('-e')
             cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
+        # system cannot be handled currently - should we error if its requested?
+        # create the user
         (rc, out, err) = self.execute_command(cmd)
         if rc is not None and rc != 0:
             self.module.fail_json(name=self.name, msg=err, rc=rc)
@@ -1036,8 +1038,6 @@ class FreeBsdUser(User):
             if info[5] != self.home:
                 cmd.append('-d')
                 cmd.append(self.home)
-            cmd.append('-d')
-            cmd.append(self.home)
 
             if self.skeleton is not None:
                 cmd.append('-k')
