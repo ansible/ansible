@@ -29,7 +29,7 @@ from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.stats import AggregateStats
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
@@ -101,7 +101,10 @@ class TaskQueueManager:
         self._failed_hosts = dict()
         self._unreachable_hosts = dict()
 
-        self._final_q = multiprocessing.Queue()
+        try:
+            self._final_q = multiprocessing.Queue()
+        except OSError as e:
+            raise AnsibleError("Unable to use multiprocessing, this is normally caused by lack of access to /dev/shm: %s" % to_native(e))
 
         # A temporary file (opened pre-fork) used by connection
         # plugins for inter-process locking.
