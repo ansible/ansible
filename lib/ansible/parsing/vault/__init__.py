@@ -927,7 +927,7 @@ class VaultEditor:
         """ create a new encrypted file """
 
         dirname = os.path.dirname(filename)
-        if not os.path.exists(dirname):
+        if dirname and not os.path.exists(dirname):
             display.warning("%s does not exist, creating..." % dirname)
             makedirs_safe(dirname)
 
