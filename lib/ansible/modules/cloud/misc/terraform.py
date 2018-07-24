@@ -38,6 +38,12 @@ options:
       - The path to the root of the Terraform directory with the
         vars.tf/main.tf/etc to use.
     required: true
+  workspace:
+    description:
+      - The terraform workspace to work with.
+    required: false
+    default: default
+    version_added: 2.7
   plan_file:
     description:
       - The path to an existing Terraform plan file to apply. If this is not
@@ -166,6 +172,29 @@ def init_plugins(bin_path, project_path):
         module.fail_json(msg="Failed to initialize Terraform modules:\r\n{0}".format(err))
 
 
+def workspace_output_to_list(data):
+    """Convert the `terraform workspace list` command output to a list"""
+    return [item.replace('* ', '').strip() for item in data.split('\n') if item]
+
+
+def init_workspace(bin_path, project_path, workspace):
+    command = [bin_path, 'workspace', 'list']
+    rc, out, err = module.run_command(command, cwd=project_path)
+    if rc != 0:
+        module.fail_json(msg="Failed to list Terraform workspaces:\r\n{0}".format(err))
+    workspaces = workspace_output_to_list(out)
+    if workspace not in workspaces:
+        command = [bin_path, 'workspace', 'new', workspace]
+        rc, out, err = module.run_command(command, cwd=project_path)
+        if rc != 0:
+            module.fail_json(msg="Failed to create workspace:\r\n{0}".format(err))
+    else:
+        command = [bin_path, 'workspace', 'select', workspace]
+        rc, out, err = module.run_command(command, cwd=project_path)
+        if rc != 0:
+            module.fail_json(msg="Failed to select workspace:\r\n{0}".format(err))
+
+
 def build_plan(bin_path, project_path, variables_args, state_file, targets, plan_path=None):
     if plan_path is None:
         f, plan_path = tempfile.mkstemp(suffix='.tfplan')
@@ -198,6 +227,7 @@ def main():
         argument_spec=dict(
             project_path=dict(required=True, type='path'),
             binary_path=dict(type='path'),
+            workspace=dict(required=False, type='str', default='default'),
             state=dict(default='present', choices=['present', 'absent', 'planned']),
             variables=dict(type='dict'),
             variables_file=dict(type='path'),
@@ -214,6 +244,7 @@ def main():
 
     project_path = module.params.get('project_path')
     bin_path = module.params.get('binary_path')
+    workspace = module.params.get('workspace')
     state = module.params.get('state')
     variables = module.params.get('variables') or {}
     variables_file = module.params.get('variables_file')
@@ -228,6 +259,8 @@ def main():
 
     if force_init:
         init_plugins(command[0], project_path)
+
+    init_workspace(command[0], project_path, workspace)
 
     variables_args = []
     for k, v in variables.items():
@@ -300,7 +333,7 @@ def main():
     else:
         outputs = json.loads(outputs_text)
 
-    module.exit_json(changed=changed, state=state, outputs=outputs, stdout=out, stderr=err, command=' '.join(command))
+    module.exit_json(changed=changed, state=state, workspace=workspace, outputs=outputs, stdout=out, stderr=err, command=' '.join(command))
 
 
 if __name__ == '__main__':
