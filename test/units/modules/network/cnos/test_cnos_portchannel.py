@@ -84,4 +84,3 @@ class TestCnosPortchannelModule(TestCnosModule):
         result = self.execute_module(changed=True)
         expected_result = 'Port Channel Configuration is done'
         self.assertEqual(result['msg'], expected_result)
-
