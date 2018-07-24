@@ -87,7 +87,7 @@ class Cliconf(CliconfBase):
         :return: Configuration diff in  json format.
                {
                    'config_diff': '',
-                   'banner_diff': ''
+                   'banner_diff': {}
                }
 
         """
@@ -119,34 +119,16 @@ class Cliconf(CliconfBase):
             configdiffobjs = candidate_obj.items
             have_banners = {}
 
-        configdiff = dumps(configdiffobjs, 'commands') if configdiffobjs else ''
-        diff['config_diff'] = configdiff if configdiffobjs else {}
-
+        diff['config_diff'] = dumps(configdiffobjs, 'commands') if configdiffobjs else ''
         banners = self._diff_banners(want_banners, have_banners)
-
         diff['banner_diff'] = banners if banners else {}
         return diff
 
     @enable_mode
-    def edit_config(self, candidate=None, commit=True, replace=False, comment=None):
+    def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
         resp = {}
         operations = self.get_device_operations()
-
-        if not candidate:
-            raise ValueError("must provide a candidate config to load")
-
-        if commit not in (True, False):
-            raise ValueError("'commit' must be a bool, got %s" % commit)
-
-        if replace not in (True, False):
-            raise ValueError("'replace' must be a bool, got %s" % replace)
-
-        if comment and not operations['supports_commit_comment']:
-            raise ValueError("commit comment is not supported")
-
-        operations = self.get_device_operations()
-        if replace and not operations['supports_replace']:
-            raise ValueError("configuration replace is not supported")
+        self.check_edit_config_capabiltiy(operations, candidate, commit, replace, comment)
 
         results = []
         if commit:

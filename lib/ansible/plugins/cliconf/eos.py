@@ -66,17 +66,6 @@ class Cliconf(CliconfBase):
         else:
             raise ValueError("Invalid connection type")
 
-    def _get_command_with_output(self, command, output):
-        options_values = self.get_option_values()
-        if output not in options_values['output']:
-            raise ValueError("'output' value %s is invalid. Valid values are %s" % (output, ','.join(options_values['output'])))
-
-        if output == 'json' and not command.endswith('| json'):
-            cmd = '%s | json' % command
-        else:
-            cmd = command
-        return cmd
-
     def send_command(self, command, **kwargs):
         """Executes a cli command and returns the results
         This method will execute the CLI command on the connection and return
@@ -108,32 +97,19 @@ class Cliconf(CliconfBase):
         return self.send_command(cmd)
 
     @enable_mode
-    def edit_config(self, candidate=None, commit=True, replace=False, comment=None):
-
-        if not candidate:
-            raise ValueError("must provide a candidate config to load")
-
-        if commit not in (True, False):
-            raise ValueError("'commit' must be a bool, got %s" % commit)
+    def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
 
         operations = self.get_device_operations()
-        if replace not in (True, False):
-            raise ValueError("'replace' must be a bool, got %s" % replace)
-
-        if replace and not operations['supports_replace']:
-            raise ValueError("configuration replace is supported only with configuration session")
-
-        if comment and not operations['supports_commit_comment']:
-            raise ValueError("commit comment is not supported")
+        self.check_edit_config_capabiltiy(operations, candidate, commit, replace, comment)
 
         if (commit is False) and (not self.supports_sessions):
             raise ValueError('check mode is not supported without configuration session')
 
-        response = {}
+        resp = {}
         session = None
         if self.supports_sessions:
             session = 'ansible_%s' % int(time.time())
-            response.update({'session': session})
+            resp.update({'session': session})
             self.send_command('configure session %s' % session)
             if replace:
                 self.send_command('rollback clean-config')
@@ -164,11 +140,11 @@ class Cliconf(CliconfBase):
                     self.discard_changes(session)
                     raise AnsibleConnectionFailure(e.message)
 
-        response['response'] = results
+        resp['response'] = results
         if self.supports_sessions:
             out = self.send_command('show session-config diffs')
             if out:
-                response['diff'] = out.strip()
+                resp['diff'] = out.strip()
 
             if commit:
                 self.commit()
@@ -176,7 +152,7 @@ class Cliconf(CliconfBase):
                 self.discard_changes(session)
         else:
             self.send_command('end')
-        return response
+        return resp
 
     def get(self, command, prompt=None, answer=None, sendonly=False, output=None):
         if output:
@@ -250,8 +226,7 @@ class Cliconf(CliconfBase):
         else:
             configdiffobjs = candidate_obj.items
 
-        configdiff = dumps(configdiffobjs, 'commands') if configdiffobjs else ''
-        diff['config_diff'] = configdiff if configdiffobjs else {}
+        diff['config_diff'] = dumps(configdiffobjs, 'commands') if configdiffobjs else ''
         return diff
 
     @property
@@ -322,3 +297,14 @@ class Cliconf(CliconfBase):
         result['device_operations'] = self.get_device_operations()
         result.update(self.get_option_values())
         return json.dumps(result)
+
+    def _get_command_with_output(self, command, output):
+        options_values = self.get_option_values()
+        if output not in options_values['output']:
+            raise ValueError("'output' value %s is invalid. Valid values are %s" % (output, ','.join(options_values['output'])))
+
+        if output == 'json' and not command.endswith('| json'):
+            cmd = '%s | json' % command
+        else:
+            cmd = command
+        return cmd

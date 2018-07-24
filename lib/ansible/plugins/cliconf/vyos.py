@@ -66,23 +66,12 @@ class Cliconf(CliconfBase):
             out = self.send_command('show configuration commands')
         return out
 
-    def edit_config(self, candidate=None, commit=True, replace=False, comment=None):
+    def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
         resp = {}
-        if not candidate:
-            raise ValueError('must provide a candidate config to load')
-
-        if commit not in (True, False):
-            raise ValueError("'commit' must be a bool, got %s" % commit)
-
-        if replace not in (True, False):
-            raise ValueError("'replace' must be a bool, got %s" % replace)
-
         operations = self.get_device_operations()
-        if replace and not operations['supports_replace']:
-            raise ValueError("configuration replace is not supported")
+        self.check_edit_config_capabiltiy(operations, candidate, commit, replace, comment)
 
         results = []
-
         for cmd in chain(['configure'], to_list(candidate)):
             if not isinstance(cmd, collections.Mapping):
                 cmd = {'command': cmd}

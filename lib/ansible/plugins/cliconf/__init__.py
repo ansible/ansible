@@ -189,7 +189,7 @@ class CliconfBase(AnsiblePlugin):
         pass
 
     @abstractmethod
-    def edit_config(self, candidate=None, commit=True, replace=False, diff=False, comment=None):
+    def edit_config(self, candidate=None, commit=True, replace=None, diff=False, comment=None):
         """Loads the candidate configuration into the network device
 
         This method will load the specified candidate config into the device
@@ -203,8 +203,10 @@ class CliconfBase(AnsiblePlugin):
         :param commit: Boolean value that indicates if the device candidate
             configuration should be  pushed in the running configuration or discarded.
 
-        :param replace: Boolean flag to indicate if running configuration should be completely
-                        replace by candidate configuration.
+        :param replace: If the value is True/False it indicates if running configuration should be completely
+                        replace by candidate configuration. If can also take configuration file path as value,
+                        the file in this case should be present on the remote host in the mentioned path as a
+                        prerequisite.
         :param comment: Commit comment provided it is supported by remote host
         :return: Returns a json string with contains configuration applied on remote host, the returned
                  response on executing configuration commands and platform relevant data.
@@ -396,3 +398,20 @@ class CliconfBase(AnsiblePlugin):
         :return: List of returned response
         """
         pass
+
+    def check_edit_config_capabiltiy(self, operations, candidate=None, commit=True, replace=None, comment=None):
+
+        if not candidate and not replace:
+            raise ValueError("must provide a candidate or replace to load configuration")
+
+        if commit not in (True, False):
+            raise ValueError("'commit' must be a bool, got %s" % commit)
+
+        if replace and not operations['supports_replace']:
+            raise ValueError("configuration replace is not supported")
+
+        if comment and not operations.get('supports_commit_comment', False):
+            raise ValueError("commit comment is not supported")
+
+        if replace and not operations.get('supports_replace', False):
+            raise ValueError("configuration replace is not supported")
