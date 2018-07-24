@@ -15,30 +15,18 @@ $ansible_privilege_util_namespaces = @(
 $ansible_privilege_util_code = @'
 namespace Ansible.PrivilegeUtil
 {
-    public class Win32Exception : System.ComponentModel.Win32Exception
+    [Flags]
+    public enum PrivilegeAttributes : uint
     {
-        private string _msg;
-        public Win32Exception(string message) : this(Marshal.GetLastWin32Error(), message) { }
-        public Win32Exception(int errorCode, string message) : base(errorCode)
-        {
-            _msg = String.Format("{0} ({1}, Win32ErrorCode {2})", message, base.Message, errorCode);
-        }
-        public override string Message { get { return _msg; } }
-        public static explicit operator Win32Exception(string message) { return new Win32Exception(message); }
+        Disabled = 0x00000000,
+        EnabledByDefault = 0x00000001,
+        Enabled = 0x00000002,
+        Removed = 0x00000004,
+        UsedForAccess = 0x80000000,
     }
 
-    public class NativeHelpers
+    internal class NativeHelpers
     {
-        [Flags]
-        public enum PrivilegeAttributes : uint
-        {
-            Disabled = 0x00000000,
-            EnabledByDefault = 0x00000001,
-            Enabled = 0x00000002,
-            Removed = 0x00000004,
-            UsedForAccess = 0x80000000,
-        }
-
         [StructLayout(LayoutKind.Sequential)]
         internal struct LUID
         {
@@ -108,9 +96,22 @@ namespace Ansible.PrivilegeUtil
             out IntPtr TokenHandle);
     }
 
-    public class Helpers
+    public class Win32Exception : System.ComponentModel.Win32Exception
+    {
+        private string _msg;
+        public Win32Exception(string message) : this(Marshal.GetLastWin32Error(), message) { }
+        public Win32Exception(int errorCode, string message) : base(errorCode)
+        {
+            _msg = String.Format("{0} ({1}, Win32ErrorCode {2})", message, base.Message, errorCode);
+        }
+        public override string Message { get { return _msg; } }
+        public static explicit operator Win32Exception(string message) { return new Win32Exception(message); }
+    }
+
+    public class Privileges
     {
         private static readonly UInt32 TOKEN_PRIVILEGES = 3;
+
 
         public static bool CheckPrivilegeName(string name)
         {
@@ -143,13 +144,13 @@ namespace Ansible.PrivilegeUtil
             return SetTokenPrivileges(token, new Dictionary<string, bool?>() { { privilege, true } });
         }
 
-        public static Dictionary<String, NativeHelpers.PrivilegeAttributes> GetAllPrivilegeInfo(SafeHandle token)
+        public static Dictionary<String, PrivilegeAttributes> GetAllPrivilegeInfo(SafeHandle token)
         {
             IntPtr hToken = IntPtr.Zero;
             if (!NativeMethods.OpenProcessToken(token, TokenAccessLevels.Query, out hToken))
                 throw new Win32Exception("OpenProcessToken() failed");
 
-            Dictionary<String, NativeHelpers.PrivilegeAttributes> info = new Dictionary<String, NativeHelpers.PrivilegeAttributes>();
+            Dictionary<String, PrivilegeAttributes> info = new Dictionary<String, PrivilegeAttributes>();
             try
             {
                 UInt32 tokenLength = 0;
@@ -204,17 +205,17 @@ namespace Ansible.PrivilegeUtil
                 if (!NativeMethods.LookupPrivilegeValue(null, entry.Key, out luid))
                     throw new Win32Exception(String.Format("LookupPrivilegeValue({0}) failed", entry.Key));
 
-                NativeHelpers.PrivilegeAttributes attributes;
+                PrivilegeAttributes attributes;
                 switch (entry.Value)
                 {
                     case true:
-                        attributes = NativeHelpers.PrivilegeAttributes.Enabled;
+                        attributes = PrivilegeAttributes.Enabled;
                         break;
                     case false:
-                        attributes = NativeHelpers.PrivilegeAttributes.Disabled;
+                        attributes = PrivilegeAttributes.Disabled;
                         break;
                     default:
-                        attributes = NativeHelpers.PrivilegeAttributes.Removed;
+                        attributes = PrivilegeAttributes.Removed;
                         break;
                 }
 
@@ -311,7 +312,7 @@ namespace Ansible.PrivilegeUtil
             foreach (NativeHelpers.LUID_AND_ATTRIBUTES privilege in oldStatePrivileges)
             {
                 string name = GetPrivilegeName(privilege.Luid);
-                previousState.Add(name, privilege.Attributes.HasFlag(NativeHelpers.PrivilegeAttributes.Enabled));
+                previousState.Add(name, privilege.Attributes.HasFlag(PrivilegeAttributes.Enabled));
             }
 
             return previousState;
@@ -368,19 +369,19 @@ Function Import-PrivilegeUtil {
         Set-AnsiblePrivilege
 
     The above cmdlets give the ability to manage permissions on the current
-    process token but the underlying .NET classes are also exposes for greater
+    process token but the underlying .NET classes are also exposed for greater
     control. The following functions can be used by calling the .NET class
 
-    [Ansible.PrivilegeUtil.Helpers]::CheckPrivilegeName($name)
-    [Ansible.PrivilegeUtil.Helpers]::DisablePrivilege($process, $name)
-    [Ansible.PrivilegeUtil.Helpers]::DisableAllPrivileges($process)
-    [Ansible.PrivilegeUtil.Helpers]::EnablePrivilege($process, $name)
-    [Ansible.PrivilegeUtil.Helpers]::GetAllPrivilegeInfo($process)
-    [Ansible.PrivilegeUtil.Helpers]::RemovePrivilege($process, $name)
-    [Ansible.PrivilegeUtil.Helpers]::SetTokenPrivileges($process, $new_state)
+    [Ansible.PrivilegeUtil.Privileges]::CheckPrivilegeName($name)
+    [Ansible.PrivilegeUtil.Privileges]::DisablePrivilege($process, $name)
+    [Ansible.PrivilegeUtil.Privielges]::DisableAllPrivileges($process)
+    [Ansible.PrivilegeUtil.Privileges]::EnablePrivilege($process, $name)
+    [Ansible.PrivilegeUtil.Privileges]::GetAllPrivilegeInfo($process)
+    [Ansible.PrivilegeUtil.Privileges]::RemovePrivilege($process, $name)
+    [Ansible.PrivilegeUtil.Privileges]::SetTokenPrivileges($process, $new_state)
 
     Here is a brief explanation of each type of arg
-    $process = The process handle to manipulate, use '[Ansible.PrivilegeUtils.Helpers]::GetCurrentProcess() to get the current process handle
+    $process = The process handle to manipulate, use '[Ansible.PrivilegeUtils.Privileges]::GetCurrentProcess() to get the current process handle
     $name = The name of the privilege, this is the constant value from https://docs.microsoft.com/en-us/windows/desktop/SecAuthZ/privilege-constants, e.g. SeAuditPrivilege
     $new_state = 'System.Collections.Generic.Dictionary`2[[System.String], [System.Nullable`1[System.Boolean]]]'
         The key is the constant name as a string, the value is a ternary boolean where
@@ -436,15 +437,15 @@ Function Get-AnsiblePrivilege {
         [Parameter(Mandatory=$true)][String]$Name
     )
 
-    if (-not [Ansible.PrivilegeUtil.Helpers]::CheckPrivilegeName($Name)) {
+    if (-not [Ansible.PrivilegeUtil.Privileges]::CheckPrivilegeName($Name)) {
         throw [System.ArgumentException] "Invalid privilege name '$Name'"
     }
 
-    $process_token = [Ansible.PrivilegeUtil.Helpers]::GetCurrentProcess()
-    $privilege_info = [Ansible.PrivilegeUtil.Helpers]::GetAllPrivilegeInfo($process_token)
+    $process_token = [Ansible.PrivilegeUtil.Privileges]::GetCurrentProcess()
+    $privilege_info = [Ansible.PrivilegeUtil.Privileges]::GetAllPrivilegeInfo($process_token)
     if ($privilege_info.ContainsKey($Name)) {
         $status = $privilege_info.$Name
-        return $status.HasFlag([Ansible.PrivilegeUtil.NativeHelpers+PrivilegeAttributes]::Enabled)
+        return $status.HasFlag([Ansible.PrivilegeUtil.PrivilegeAttributes]::Enabled)
     } else {
         return $null
     }
@@ -472,11 +473,9 @@ Function Remove-AnsiblePrivilege {
         return  # no change need to occur
     }
 
-    $process_token = [Ansible.PrivilegeUtil.Helpers]::GetCurrentProcess()
+    $process_token = [Ansible.PrivilegeUtil.Privileges]::GetCurrentProcess()
     if ($PSCmdlet.ShouldProcess($Name, "Remove the privilege $Name")) {
-        $new_state = New-Object -TypeName 'System.Collections.Generic.Dictionary`2[[System.String], [System.Nullable`1[System.Boolean]]]'
-        $new_state.Add($Name, $null)
-        [Ansible.PrivilegeUtil.Helpers]::SetTokenPrivileges($process_token, $new_state) > $null
+        [Ansible.PrivilegeUtil.Privileges]::RemovePrivilege($process_token, $Name)
     }
 }
 
@@ -513,11 +512,11 @@ Function Set-AnsiblePrivilege {
         throw [System.InvalidOperationException] "Cannot $($action.ToLower()) the privilege '$Name' as it has been removed from the token"
     }
 
-    $process_token = [Ansible.PrivilegeUtil.Helpers]::GetCurrentProcess()
+    $process_token = [Ansible.PrivilegeUtil.Privileges]::GetCurrentProcess()
     if ($PSCmdlet.ShouldProcess($Name, "$action the privilege $Name")) {
         $new_state = New-Object -TypeName 'System.Collections.Generic.Dictionary`2[[System.String], [System.Nullable`1[System.Boolean]]]'
         $new_state.Add($Name, $Value)
-        [Ansible.PrivilegeUtil.Helpers]::SetTokenPrivileges($process_token, $new_state) > $null
+        [Ansible.PrivilegeUtil.Privileges]::SetTokenPrivileges($process_token, $new_state) > $null
     }
 }
 

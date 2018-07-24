@@ -60,7 +60,7 @@ namespace Ansible.RegEdit
         public static explicit operator Win32Exception(string message) { return new Win32Exception(message); }
     }
 
-    public class Util
+    public class Hive
     {
         [DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         private static extern int RegLoadKey(
@@ -306,14 +306,14 @@ if ($hive) {
     if (Test-Path -Path HKLM:\ANSIBLE) {
         Add-Warning -obj $result -message "hive already loaded at HKLM:\ANSIBLE, had to unload hive for win_regedit to continue"
         try {
-            [Ansible.RegEdit.Util]::UnloadHive("ANSIBLE")
+            [Ansible.RegEdit.Hive]::UnloadHive("ANSIBLE")
         } catch [System.ComponentModel.Win32Exception] {
             Fail-Json -obj $result -message "failed to unload registry hive HKLM:\ANSIBLE from $($hive): $($_.Exception.Message)"
         }
     }
 
     try {
-        [Ansible.RegEdit.Util]::LoadHive("ANSIBLE", $hive)
+        [Ansible.RegEdit.Hive]::LoadHive("ANSIBLE", $hive)
     } catch [System.ComponentModel.Win32Exception] {
         Fail-Json -obj $result -message "failed to load registry hive from '$hive' to HKLM:\ANSIBLE: $($_.Exception.Message)"
     }
@@ -484,7 +484,7 @@ $key_prefix[$path]
         [GC]::Collect()
         [GC]::WaitForPendingFinalizers()
         try {
-            [Ansible.RegEdit.Util]::UnloadHive("ANSIBLE")
+            [Ansible.RegEdit.Hive]::UnloadHive("ANSIBLE")
         } catch [System.ComponentModel.Win32Exception] {
             Fail-Json -obj $result -message "failed to unload registry hive HKLM:\ANSIBLE from $($hive): $($_.Exception.Message)"
         }

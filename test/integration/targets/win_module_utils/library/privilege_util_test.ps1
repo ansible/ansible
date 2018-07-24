@@ -63,7 +63,7 @@ foreach ($raw_privilege in $raw_privilege_output) {
     $split = $raw_privilege.TrimEnd() -split " "
     $actual_privileges."$($split[0])" = ($split[-1] -eq "Enabled")
 }
-$process = [Ansible.PrivilegeUtil.Helpers]::GetCurrentProcess()
+$process = [Ansible.PrivilegeUtil.Privileges]::GetCurrentProcess()
 
 ### Test variables ###
 Assert-Equals -actual ($ansible_privilege_util_namespaces -is [array]) -expected $true
@@ -81,16 +81,16 @@ foreach ($privilege in $total_privileges) {
 }
 
 # test c# GetAllPrivilegeInfo
-$actual = [Ansible.PrivilegeUtil.Helpers]::GetAllPrivilegeInfo($process)
+$actual = [Ansible.PrivilegeUtil.Privileges]::GetAllPrivilegeInfo($process)
 Assert-Equals -actual $actual.GetType().Name -expected 'Dictionary`2'
 Assert-Equals -actual $actual.Count -expected $actual_privileges.Count
 foreach ($privilege in $total_privileges) {
     if ($actual_privileges.ContainsKey($privilege)) {
         $actual_value = $actual.$privilege
         if ($actual_privileges.$privilege) {
-            Assert-Equals -actual $actual_value.HasFlag([Ansible.PrivilegeUtil.NativeHelpers+PrivilegeAttributes]::Enabled) -expected $true
+            Assert-Equals -actual $actual_value.HasFlag([Ansible.PrivilegeUtil.PrivilegeAttributes]::Enabled) -expected $true
         } else {
-            Assert-Equals -actual $actual_value.HasFlag([Ansible.PrivilegeUtil.NativeHelpers+PrivilegeAttributes]::Enabled) -expected $false
+            Assert-Equals -actual $actual_value.HasFlag([Ansible.PrivilegeUtil.PrivilegeAttributes]::Enabled) -expected $false
         }
     }
 }
@@ -125,47 +125,47 @@ Assert-Equals -actual $actual -expected $null
 
 ### Test C# code ###
 # test CheckPrivilegeName
-Assert-Equals -actual ([Ansible.PrivilegeUtil.Helpers]::CheckPrivilegeName($total_privileges[0])) -expected $true
-Assert-Equals -actual ([Ansible.PrivilegeUtil.Helpers]::CheckPrivilegeName("SeFake")) -expected $false
+Assert-Equals -actual ([Ansible.PrivilegeUtil.Privileges]::CheckPrivilegeName($total_privileges[0])) -expected $true
+Assert-Equals -actual ([Ansible.PrivilegeUtil.Privileges]::CheckPrivilegeName("SeFake")) -expected $false
 
 # test DisablePrivilege
 # ensure we start in an enabled state
 Set-AnsiblePrivilege -Name SeTimeZonePrivilege -Value $true
-$actual = [Ansible.PrivilegeUtil.Helpers]::DisablePrivilege($process, "SeTimeZonePrivilege")
+$actual = [Ansible.PrivilegeUtil.Privileges]::DisablePrivilege($process, "SeTimeZonePrivilege")
 Assert-Equals -actual $actual.GetType().Name -expected 'Dictionary`2'
 Assert-Equals -actual $actual.Count -expected 1
 Assert-Equals -actual $actual.SeTimeZonePrivilege -expected $true
 
-$actual = [Ansible.PrivilegeUtil.Helpers]::DisablePrivilege($process, "SeTimeZonePrivilege")
+$actual = [Ansible.PrivilegeUtil.Privileges]::DisablePrivilege($process, "SeTimeZonePrivilege")
 Assert-Equals -actual $actual.GetType().Name -expected 'Dictionary`2'
 Assert-Equals -actual $actual.Count -expected 0
 
 # test DisableAllPrivileges
-$actual_disable_all = [Ansible.PrivilegeUtil.Helpers]::DisableAllPrivileges($process)
+$actual_disable_all = [Ansible.PrivilegeUtil.Privileges]::DisableAllPrivileges($process)
 Assert-Equals -actual $actual_disable_all.GetType().Name -expected 'Dictionary`2'
 
-$actual = [Ansible.PrivilegeUtil.Helpers]::DisableAllPrivileges($process)
+$actual = [Ansible.PrivilegeUtil.Privileges]::DisableAllPrivileges($process)
 Assert-Equals -actual $actual.GetType().Name -expected 'Dictionary`2'
 Assert-Equals -actual $actual.Count -expected 0
 
 # test EnablePrivilege
-$actual = [Ansible.PrivilegeUtil.Helpers]::EnablePrivilege($process, "SeTimeZonePrivilege")
+$actual = [Ansible.PrivilegeUtil.Privileges]::EnablePrivilege($process, "SeTimeZonePrivilege")
 Assert-Equals -actual $actual.GetType().Name -expected 'Dictionary`2'
 Assert-Equals -actual $actual.Count -expected 1
 Assert-Equals -actual $actual.SeTimeZonePrivilege -expected $false
 
-$actual = [Ansible.PrivilegeUtil.Helpers]::EnablePrivilege($process, "SeTimeZonePrivilege")
+$actual = [Ansible.PrivilegeUtil.Privileges]::EnablePrivilege($process, "SeTimeZonePrivilege")
 Assert-Equals -actual $actual.GetType().Name -expected 'Dictionary`2'
 Assert-Equals -actual $actual.Count -expected 0
 
 # test SetTokenPrivileges
-$actual = [Ansible.PrivilegeUtil.Helpers]::SetTokenPrivileges($process, $actual_disable_all)
+$actual = [Ansible.PrivilegeUtil.Privileges]::SetTokenPrivileges($process, $actual_disable_all)
 Assert-Equals -actual $actual_disable_all.GetType().Name -expected 'Dictionary`2'
 Assert-Equals -actual $actual.ContainsKey("SeTimeZonePrivilege") -expected $false
 Assert-Equals -actual $actual.Count -expected $actual_disable_all.Count
 
 # test RemovePrivilege
-[Ansible.PrivilegeUtil.Helpers]::RemovePrivilege($process, "SeTimeZonePrivilege")
+[Ansible.PrivilegeUtil.Privileges]::RemovePrivilege($process, "SeTimeZonePrivilege")
 $actual = Get-AnsiblePrivilege -Name SeTimeZonePrivilege
 Assert-Equals -actual $actual -expected $null
 
