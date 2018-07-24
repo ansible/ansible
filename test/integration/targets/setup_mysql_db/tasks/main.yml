@@ -34,6 +34,7 @@
         - '{{ ansible_os_family }}-{{ ansible_distribution_major_version }}{{ python_suffix }}.yml'
         - '{{ ansible_distribution }}{{ python_suffix }}.yml'
         - '{{ ansible_os_family }}{{ python_suffix }}.yml'
+        - '{{ ansible_os_family }}.yml'
         - 'default{{ python_suffix }}.yml'
       paths: '../vars'
 
