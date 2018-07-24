@@ -648,6 +648,13 @@ class PathMapper(object):
                         test_command: test_target,
                     }
 
+                cloud_target = 'cloud/%s/' % name
+
+                if cloud_target in self.integration_targets_by_alias:
+                    return {
+                        'integration': cloud_target,
+                    }
+
             return all_tests(self.args)  # test infrastructure, run all tests
 
         if path.startswith('test/utils/'):
