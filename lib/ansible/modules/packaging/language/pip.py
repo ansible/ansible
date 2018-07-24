@@ -22,7 +22,7 @@ version_added: "0.7"
 options:
   name:
     description:
-      - The name of a Python library to install or the url of the remote package.
+      - The name of a Python library to install or the url(bzr+,hg+,git+,svn+) of the remote package.
       - This can be a list (since 2.2) and contain version specifiers (since 2.7).
   version:
     description:
@@ -252,64 +252,15 @@ from ansible.module_utils.six import PY3
 _SPECIAL_PACKAGE_CHECKERS = {'setuptools': 'import setuptools; print(setuptools.__version__)',
                              'pip': 'import pkg_resources; print(pkg_resources.get_distribution("pip").version)'}
 
+_VCS_RE = re.compile(r'(svn|git|hg|bzr)\+')
+
 op_dict = {">=": operator.ge, "<=": operator.le, ">": operator.gt,
            "<": operator.lt, "==": operator.eq, "!=": operator.ne}
 
 
-class Distribution:
-    """Python distribution package metadata wrapper.
-
-    A wrapper class for Requirement, which provides
-    API to parse package name, version specifier,
-    test whether a package is already satisfied.
-    """
-
-    def __init__(self, name_string, version_string=None):
-        self._plain_distribution = False
-        self.distribution_name = name_string
-        if name_string.startswith('file:') or _is_vcs_url(name_string):
-            return
-
-        self._plain_distribution = True
-        if version_string:
-            version_string = version_string.lstrip()
-            separator = '==' if version_string[0].isdigit() else ' '
-            name_string = separator.join((name_string, version_string))
-        self._requirement = Requirement.parse(name_string)
-        # old pkg_resource will replace 'setuptools' with 'distribute' when it already installed
-        if self._requirement.project_name == "distribute":
-            self.distribution_name = "setuptools"
-        else:
-            self.distribution_name = self._requirement.project_name
-
-    @property
-    def has_version_specifier(self):
-        if self._plain_distribution:
-            return bool(self._requirement.specs)
-        return False
-
-    def is_satisfied_by(self, version_to_test):
-        if not self._plain_distribution:
-            return False
-        try:
-            return self._requirement.specifier.contains(version_to_test)
-        except AttributeError:
-            # old setuptools has no specifier, do fallback
-            version_to_test = LooseVersion(version_to_test)
-            return all(
-                op_dict[op](version_to_test, LooseVersion(ver))
-                for op, ver in self._requirement.specs
-            )
-
-    def __str__(self):
-        if self._plain_distribution:
-            return str(self._requirement)
-        return self.distribution_name
-
-
 def _is_vcs_url(name):
     """Test whether a name is a vcs url or not."""
-    return re.match(r'(svn|git|hg|bzr)\+', name)
+    return re.match(_VCS_RE, name)
 
 
 def _is_valid_distribution_name(name):
@@ -318,15 +269,30 @@ def _is_valid_distribution_name(name):
 
 
 def _recover_distribution_name(names):
-    """Recover distribution names as list from user's raw input."""
+    """Recover distribution names as list from user's raw input.
+    
+    :input: a mixed and invalid list of names or version specifiers
+    :return: a list of valid package name
+
+    eg.
+    input: ['django>1.11.1', '<1.11.3', 'ipaddress', 'simpleproject>1.1.0', '<2.0.0']
+    return: ['django>1.11.1,<1.11.3', 'ipaddress', 'simpleproject>1.1.0,<2.0.0']
+    
+    input: ['django>1.11.1,<1.11.3,ipaddress', 'simpleproject>1.1.0,<2.0.0']
+    return: ['django>1.11.1,<1.11.3', 'ipaddress', 'simpleproject>1.1.0,<2.0.0']
+    """
     # rebuild input name to a flat list so we can tolerate any combination of input
-    names = [one_part for one_line in names for one_part in one_line.split(",")]
+    tmp = []
+    for one_line in names:
+      tmp = tmp + one_line.split(",")
+    names = tmp
+
     # reconstruct the names
     name_parts = []
     distribution_names = []
     for name in names:
         if _is_valid_distribution_name(name):
-            if len(name_parts) > 0:
+            if name_parts:
                 distribution_names.append(",".join(name_parts))
             name_parts = []
         name_parts.append(name)
@@ -506,6 +472,58 @@ def setup_virtualenv(module, env, chdir, out, err):
     if rc != 0:
         _fail(module, cmd, out, err)
     return out, err
+
+
+class Distribution:
+    """Python distribution package metadata wrapper.
+
+    A wrapper class for Requirement, which provides
+    API to parse package name, version specifier,
+    test whether a package is already satisfied.
+    """
+
+    def __init__(self, name_string, version_string=None):
+        self._plain_distribution = False
+        self.distribution_name = name_string
+        self._requirement = None
+        if name_string.startswith('file:') or _is_vcs_url(name_string):
+            return
+
+        self._plain_distribution = True
+        if version_string:
+            version_string = version_string.lstrip()
+            separator = '==' if version_string[0].isdigit() else ' '
+            name_string = separator.join((name_string, version_string))
+        self._requirement = Requirement.parse(name_string)
+        # old pkg_resource will replace 'setuptools' with 'distribute' when it already installed
+        if self._requirement.project_name == "distribute":
+            self.distribution_name = "setuptools"
+        else:
+            self.distribution_name = self._requirement.project_name
+
+    @property
+    def has_version_specifier(self):
+        if self._plain_distribution:
+            return bool(self._requirement.specs)
+        return False
+
+    def is_satisfied_by(self, version_to_test):
+        if not self._plain_distribution:
+            return False
+        try:
+            return self._requirement.specifier.contains(version_to_test)
+        except AttributeError:
+            # old setuptools has no specifier, do fallback
+            version_to_test = LooseVersion(version_to_test)
+            return all(
+                op_dict[op](version_to_test, LooseVersion(ver))
+                for op, ver in self._requirement.specs
+            )
+
+    def __str__(self):
+        if self._plain_distribution:
+            return str(self._requirement)
+        return self.distribution_name
 
 
 def main():
