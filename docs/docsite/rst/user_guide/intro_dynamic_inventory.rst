@@ -246,19 +246,22 @@ explicitly clear the cache, you can run the ec2.py script with the ``--refresh-c
 Example: OpenStack External Inventory Script
 ````````````````````````````````````````````
 
-If you use an OpenStack based cloud, instead of manually maintaining your own inventory file, you can use the openstack.py dynamic inventory to pull information about your compute instances directly from OpenStack.
+If you use an OpenStack based cloud, instead of manually maintaining your own inventory file, you can use the openstack_inventory.py dynamic inventory to pull information about your compute instances directly from OpenStack.
 
-You can download the latest version of the OpenStack inventory script `here <https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack.py>`_
+You can download the latest version of the OpenStack inventory script `here <https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack_inventory.py>`_.
 
-You can use the inventory script explicitly (by passing the `-i openstack.py` argument to Ansible) or implicitly (by placing the script at `/etc/ansible/hosts`).
+You can use the inventory script explicitly (by passing the `-i openstack_inventory.py` argument to Ansible) or implicitly (by placing the script at `/etc/ansible/hosts`).
 
 Explicit use of inventory script
 ++++++++++++++++++++++++++++++++
 
 Download the latest version of the OpenStack dynamic inventory script and make it executable::
 
-    wget https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack.py
-    chmod +x openstack.py
+    wget https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack_inventory.py
+    chmod +x openstack_inventory.py
+
+.. note::
+    Do not name it `openstack.py`. This name will conflict with imports from openstacksdk.
 
 Source an OpenStack RC file::
 
@@ -276,22 +279,22 @@ You can confirm the file has been successfully sourced by running a simple comma
 
 You can test the OpenStack dynamic inventory script manually to confirm it is working as expected::
 
-    ./openstack.py --list
+    ./openstack_inventory.py --list
 
-After a few moments you should see some JSON output with information about your compute instances. 
+After a few moments you should see some JSON output with information about your compute instances.
 
-Once you confirm the dynamic inventory script is working as expected, you can tell Ansible to use the `openstack.py` script as an inventory file, as illustrated below::
+Once you confirm the dynamic inventory script is working as expected, you can tell Ansible to use the `openstack_inventory.py` script as an inventory file, as illustrated below::
 
-    ansible -i openstack.py all -m ping
+    ansible -i openstack_inventory.py all -m ping
 
 Implicit use of inventory script
 ++++++++++++++++++++++++++++++++
 
 Download the latest version of the OpenStack dynamic inventory script, make it executable and copy it to `/etc/ansible/hosts`::
 
-    wget https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack.py
-    chmod +x openstack.py
-    sudo cp openstack.py /etc/ansible/hosts
+    wget https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack_inventory.py
+    chmod +x openstack_inventory.py
+    sudo cp openstack_inventory.py /etc/ansible/hosts
 
 Download the sample configuration file, modify it to suit your needs and copy it to `/etc/ansible/openstack.yml`::
 
@@ -308,9 +311,9 @@ After a few moments you should see some JSON output with information about your 
 Refresh the cache
 +++++++++++++++++
 
-Note that the OpenStack dynamic inventory script will cache results to avoid repeated API calls. To explicitly clear the cache, you can run the openstack.py (or hosts) script with the ``--refresh`` parameter::
+Note that the OpenStack dynamic inventory script will cache results to avoid repeated API calls. To explicitly clear the cache, you can run the openstack_inventory.py (or hosts) script with the ``--refresh`` parameter::
 
-    ./openstack.py --refresh --list
+    ./openstack_inventory.py --refresh --list
 
 .. _other_inventory_scripts:
 
@@ -381,4 +384,3 @@ the dynamic groups as empty in the static inventory file. For example::
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-

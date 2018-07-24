@@ -7,6 +7,7 @@
   nxos_logging: &clog
     dest: console
     dest_level: 0
+    provider: "{{ connection }}"
     state: present
   register: result
 
@@ -28,6 +29,7 @@
     dest: logfile
     name: test
     dest_level: 1
+    provider: "{{ connection }}"
     state: present
   register: result
 
@@ -46,6 +48,7 @@
   nxos_logging: &molog
     dest: module
     dest_level: 2
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -63,6 +66,7 @@
   nxos_logging: &mlog
     dest: monitor
     dest_level: 3
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -80,6 +84,7 @@
   nxos_logging: &flog
     facility: daemon
     facility_level: 4
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -93,6 +98,27 @@
 
 - assert: *false
 
+- name: Configure Remote Logging
+  nxos_logging: &rlog
+    dest: server
+    remote_server: test-syslogserver.com
+    facility: auth
+    dest_level: 1
+    state: present
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging server test-syslogserver.com 1 facility auth" in result.commands'
+
+- name: Configure Remote Logging (idempotent)
+  nxos_logging: *rlog
+  register: result
+
+- assert: *false
+
 - name: remove logging as collection tearDown
   nxos_logging: &agg
     aggregate:
@@ -101,6 +127,8 @@
       - { dest: monitor, dest_level: 3 }
       - { dest: logfile, dest_level: 1, name: test }
       - { facility: daemon, facility_level: 4 }
+      - { dest: server, remote_server: test-syslogserver.com, facility: auth, dest_level: 1 }
+    provider: "{{ connection }}"
     state: absent
   register: result
 
@@ -111,6 +139,7 @@
       - '"no logging level daemon" in result.commands'
       - '"no logging monitor" in result.commands'
       - '"no logging module" in result.commands'
+      - '"no logging server test-syslogserver.com" in result.commands'
 
 - name: remove aggregate logging (idempotent)
   nxos_logging: *agg

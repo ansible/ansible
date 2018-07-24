@@ -64,6 +64,8 @@ notes:
        use the C(command) module when possible.
     -  " C(creates), C(removes), and C(chdir) can be specified after the command.
        For instance, if you only want to run a command if a certain file does not exist, use this."
+    -  Check mode is supported when passing C(creates) or C(removes). If running in check mode and either of these are specified, the module will
+       check for the existence of the file and report the correct changed status. If these are not supplied, the task will be skipped.
     -  The C(executable) parameter is removed since version 2.4. If you have a need for this parameter, use the M(shell) module instead.
     -  For Windows targets, use the M(win_command) module instead.
 author:
@@ -77,7 +79,9 @@ EXAMPLES = '''
   register: mymotd
 
 - name: Run the command if the specified file does not exist.
-  command: /usr/bin/make_database.sh arg1 arg2 creates=/path/to/database
+  command: /usr/bin/make_database.sh arg1 arg2
+  args:
+    creates: /path/to/database
 
 # You can also use the 'args' form to provide the options.
 - name: This command will change the working directory to somedir/ and will only run when /path/to/database doesn't exist.
@@ -140,7 +144,7 @@ def check_command(module, commandline):
                 'mount': 'mount', 'rpm': 'yum, dnf or zypper', 'yum': 'yum', 'apt-get': 'apt',
                 'tar': 'unarchive', 'unzip': 'unarchive', 'sed': 'replace, lineinfile or template',
                 'dnf': 'dnf', 'zypper': 'zypper'}
-    become = ['sudo', 'su', 'pbrun', 'pfexec', 'runas', 'pmrun']
+    become = ['sudo', 'su', 'pbrun', 'pfexec', 'runas', 'pmrun', 'machinectl']
     if isinstance(commandline, list):
         command = commandline[0]
     else:
@@ -183,7 +187,8 @@ def main():
             # The default for this really comes from the action plugin
             warn=dict(type='bool', default=True),
             stdin=dict(required=False),
-        )
+        ),
+        supports_check_mode=True,
     )
     shell = module.params['_uses_shell']
     chdir = module.params['chdir']
@@ -243,7 +248,13 @@ def main():
 
     startd = datetime.datetime.now()
 
-    rc, out, err = module.run_command(args, executable=executable, use_unsafe_shell=shell, encoding=None, data=stdin)
+    if not module.check_mode:
+        rc, out, err = module.run_command(args, executable=executable, use_unsafe_shell=shell, encoding=None, data=stdin)
+    elif creates or removes:
+        rc = 0
+        out = err = b'Command would have run if not in check mode'
+    else:
+        module.exit_json(msg="skipped, running in check mode", skipped=True)
 
     endd = datetime.datetime.now()
     delta = endd - startd

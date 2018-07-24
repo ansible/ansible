@@ -34,8 +34,10 @@ options:
     aliases: [ descr ]
   max_end_points:
     description:
-    - Maximum number of end points (range 0-12000).
+    - Maximum number of end points.
+    - Accepted values range between C(0) and C(12000).
     - The APIC defaults to C(0) when unset during creation.
+    type: int
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.

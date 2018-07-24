@@ -1089,6 +1089,21 @@ class DragonFlyBsdService(FreeBsdService):
     platform = 'DragonFly'
     distribution = None
 
+    def service_enable(self):
+        if self.enable:
+            self.rcconf_value = "YES"
+        else:
+            self.rcconf_value = "NO"
+
+        rcfiles = ['/etc/rc.conf']  # Overkill?
+        for rcfile in rcfiles:
+            if os.path.isfile(rcfile):
+                self.rcconf_file = rcfile
+
+        self.rcconf_key = "%s" % string.replace(self.name, "-", "_")
+
+        return self.service_enable_rcconf()
+
 
 class OpenBsdService(Service):
     """

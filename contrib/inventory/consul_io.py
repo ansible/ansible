@@ -200,7 +200,7 @@ try:
     import consul
 except ImportError as e:
     sys.exit("""failed=True msg='python-consul required for this module.
-See http://python-consul.readthedocs.org/en/latest/#installation'""")
+See https://python-consul.readthedocs.io/en/latest/#installation'""")
 
 from six import iteritems
 

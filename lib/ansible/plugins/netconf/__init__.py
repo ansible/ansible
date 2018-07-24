@@ -32,6 +32,11 @@ try:
 except ImportError:
     raise AnsibleError("ncclient is not installed")
 
+try:
+    from lxml.etree import Element, SubElement, tostring, fromstring
+except ImportError:
+    from xml.etree.ElementTree import Element, SubElement, tostring, fromstring
+
 
 def ensure_connected(func):
     @wraps(func)
@@ -106,7 +111,7 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
             resp = self.m.rpc(obj)
             return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
         except RPCError as exc:
-            msg = exc.data_xml if hasattr(exc, 'data_xml') else exc.xml
+            msg = exc.xml
             raise Exception(to_xml(msg))
 
     @ensure_connected
@@ -175,6 +180,15 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
     @ensure_connected
+    def dispatch(self, request):
+        """Execute operation on the remote device
+        :request: is the rpc request including attributes as XML string
+        """
+        req = fromstring(request)
+        resp = self.m.dispatch(req)
+        return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+
+    @ensure_connected
     def lock(self, target=None):
         """
         Allows the client to lock the configuration system of a device.
@@ -229,13 +243,6 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
     @ensure_connected
-    def validate(self, *args, **kwargs):
-        """Validate the contents of the specified configuration.
-           :source: name of configuration data store"""
-        resp = self.m.validate(*args, **kwargs)
-        return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
-
-    @ensure_connected
     def get_schema(self, *args, **kwargs):
         """Retrieves the required schema from the device
         """
@@ -277,15 +284,15 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
     def get_device_operations(self, server_capabilities):
         operations = {}
         capabilities = '\n'.join(server_capabilities)
-        operations['supports_commit'] = True if ':candidate' in capabilities else False
-        operations['supports_defaults'] = True if ':with-defaults' in capabilities else False
-        operations['supports_confirm_commit'] = True if ':confirmed-commit' in capabilities else False
-        operations['supports_startup'] = True if ':startup' in capabilities else False
-        operations['supports_xpath'] = True if ':xpath' in capabilities else False
-        operations['supports_writeable_running'] = True if ':writable-running' in capabilities else False
+        operations['supports_commit'] = ':candidate' in capabilities
+        operations['supports_defaults'] = ':with-defaults' in capabilities
+        operations['supports_confirm_commit'] = ':confirmed-commit' in capabilities
+        operations['supports_startup'] = ':startup' in capabilities
+        operations['supports_xpath'] = ':xpath' in capabilities
+        operations['supports_writable_running'] = ':writable-running' in capabilities
 
         operations['lock_datastore'] = []
-        if operations['supports_writeable_running']:
+        if operations['supports_writable_running']:
             operations['lock_datastore'].append('running')
 
         if operations['supports_commit']:

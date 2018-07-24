@@ -44,6 +44,8 @@ class IncludedFile:
     def add_host(self, host):
         if host not in self._hosts:
             self._hosts.append(host)
+            return
+        raise ValueError()
 
     def __eq__(self, other):
         return other._filename == self._filename and other._args == self._args and other._task._parent._uuid == self._task._parent._uuid
@@ -91,6 +93,10 @@ class IncludedFile:
                         task_vars[loop_var] = include_variables[loop_var] = include_result[loop_var]
                     if index_var and index_var in include_result:
                         task_vars[index_var] = include_variables[index_var] = include_result[index_var]
+                    if '_ansible_item_label' in include_result:
+                        task_vars['_ansible_item_label'] = include_variables['_ansible_item_label'] = include_result['_ansible_item_label']
+                    if original_task.no_log and '_ansible_no_log' not in include_variables:
+                        task_vars['_ansible_no_log'] = include_variables['_ansible_no_log'] = original_task.no_log
 
                     if original_task.action in ('include', 'include_tasks'):
                         include_file = None
@@ -144,8 +150,6 @@ class IncludedFile:
                                 include_file = loader.path_dwim(include_result['include'])
 
                         include_file = templar.template(include_file)
-                        # Update the task args to reflect the expanded/templated path
-                        original_task.args['_raw_params'] = include_file
                         inc_file = IncludedFile(include_file, include_variables, original_task)
                     else:
                         # template the included role's name here
@@ -162,12 +166,24 @@ class IncludedFile:
 
                         inc_file = IncludedFile(role_name, include_variables, new_task, is_role=True)
 
-                    try:
-                        pos = included_files.index(inc_file)
-                        inc_file = included_files[pos]
-                    except ValueError:
-                        included_files.append(inc_file)
+                    idx = 0
+                    orig_inc_file = inc_file
+                    while 1:
+                        try:
+                            pos = included_files[idx:].index(orig_inc_file)
+                            # pos is relative to idx since we are slicing
+                            # use idx + pos due to relative indexing
+                            inc_file = included_files[idx + pos]
+                        except ValueError:
+                            included_files.append(orig_inc_file)
+                            inc_file = orig_inc_file
 
-                    inc_file.add_host(original_host)
+                        try:
+                            inc_file.add_host(original_host)
+                        except ValueError:
+                            # The host already exists for this include, advance forward, this is a new include
+                            idx += pos + 1
+                        else:
+                            break
 
         return included_files

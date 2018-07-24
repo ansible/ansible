@@ -103,7 +103,7 @@ Here is an example of a function::
     
 Here is an example of a class::
 
-  import unittest:
+  import unittest
       
   class AddTester(unittest.TestCase)
       
@@ -127,7 +127,7 @@ few basic tests for a module.  The class-based test allows more tidy set up and 
 of pre-requisites, so if you have many test cases for your module you may want to refactor
 to use that.  
 
-Assertions using the simple ``assert`` function inside the tests will give give full
+Assertions using the simple ``assert`` function inside the tests will give full
 information on the cause of the failure with a trace-back of functions called during the
 assertion.  This means that plain asserts are recommended over other external assertion
 libraries.

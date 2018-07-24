@@ -56,17 +56,17 @@ options:
   template:
     description:
       - Name, display text or id of the template to be used for creating the new instance.
-      - Required when using C(state=present).
+      - Required when using I(state=present).
       - Mutually exclusive with C(ISO) option.
   iso:
     description:
       - Name or id of the ISO to be used for creating the new instance.
-      - Required when using C(state=present).
+      - Required when using I(state=present).
       - Mutually exclusive with C(template) option.
   template_filter:
     description:
       - Name of the filter used to search for the template or iso.
-      - Used for params C(iso) or C(template) on C(state=present).
+      - Used for params C(iso) or C(template) on I(state=present).
       - The filter C(all) was added in 2.6.
     default: executable
     choices: [ all, featured, self, selfexecutable, sharedexecutable, executable, community ]
@@ -75,7 +75,7 @@ options:
   hypervisor:
     description:
       - Name the hypervisor to be used for creating the new instance.
-      - Relevant when using C(state=present), but only considered if not set on ISO/template.
+      - Relevant when using I(state=present), but only considered if not set on ISO/template.
       - If not set or found on ISO/template, first found hypervisor will be used.
     choices: [ KVM, VMware, BareMetal, XenServer, LXC, HyperV, UCS, OVM, Simulator ]
   keyboard:
@@ -94,7 +94,7 @@ options:
       - IPv6 address for default instance's network.
   ip_to_networks:
     description:
-      - "List of mappings in the form {'network': NetworkName, 'ip': 1.2.3.4}"
+      - "List of mappings in the form I({'network': NetworkName, 'ip': 1.2.3.4})"
       - Mutually exclusive with C(networks) option.
     aliases: [ ip_to_network ]
   disk_offering:
@@ -111,6 +111,12 @@ options:
     description:
       - List of security groups the instance to be applied to.
     aliases: [ security_group ]
+  host:
+    description:
+      - Host on which an instance should be deployed or started on.
+      - Only considered when I(state=started) or instance is running.
+      - Requires root admin privileges.
+    version_added: 2.6
   domain:
     description:
       - Domain the instance is related to.
@@ -135,20 +141,26 @@ options:
     description:
       - Optional data (ASCII) that can be sent to the instance upon a successful deployment.
       - The data will be automatically base64 encoded.
-      - Consider switching to HTTP_POST by using C(CLOUDSTACK_METHOD=post) to increase the HTTP_GET size limit of 2KB to 32 KB.
+      - Consider switching to HTTP_POST by using I(CLOUDSTACK_METHOD=post) to increase the HTTP_GET size limit of 2KB to 32 KB.
   force:
     description:
       - Force stop/start the instance if required to apply changes, otherwise a running instance will not be changed.
-    default: false
+    type: bool
+    default: no
   tags:
     description:
       - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
-      - "If you want to delete all tags, set a empty list e.g. C(tags: [])."
+      - "If you want to delete all tags, set a empty list e.g. I(tags: [])."
     aliases: [ tag ]
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    default: true
+    type: bool
+    default: yes
+  details:
+    description:
+      - Map to specify custom parameters.
+    version_added: '2.6'
 extends_documentation_fragment: cloudstack
 '''
 
@@ -222,7 +234,7 @@ EXAMPLES = '''
   delegate_to: localhost
 
 - name: remove an instance
-- cs_instance:
+  cs_instance:
     name: web-vm-1
     state: absent
   delegate_to: localhost
@@ -290,6 +302,12 @@ default_ip:
   returned: success
   type: string
   sample: 10.23.37.42
+default_ip6:
+  description: Default IPv6 address of the instance.
+  returned: success
+  type: string
+  sample: 2a04:c43:c00:a07:4b4:beff:fe00:74
+  version_added: '2.6'
 public_ip:
   description: Public IP address with instance via static NAT rule.
   returned: success
@@ -346,6 +364,12 @@ hypervisor:
   returned: success
   type: string
   sample: KVM
+host:
+  description: Hostname of hypervisor an instance is running on.
+  returned: success and instance is running
+  type: string
+  sample: host-01.example.com
+  version_added: 2.6
 instance_name:
   description: Internal name of the instance (ROOT admin only).
   returned: success
@@ -380,6 +404,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             'templatename': 'template',
             'templatedisplaytext': 'template_display_text',
             'keypair': 'ssh_key',
+            'hostname': 'host',
         }
         self.instance = None
         self.template = None
@@ -388,7 +413,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
     def get_service_offering_id(self):
         service_offering = self.module.params.get('service_offering')
 
-        service_offerings = self.query_api('listServiceOfferings', )
+        service_offerings = self.query_api('listServiceOfferings')
         if service_offerings:
             if not service_offering:
                 return service_offerings['serviceoffering'][0]['id']
@@ -397,6 +422,23 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                 if service_offering in [s['name'], s['id']]:
                     return s['id']
         self.fail_json(msg="Service offering '%s' not found" % service_offering)
+
+    def get_host_id(self):
+        host_name = self.module.params.get('host')
+        if not host_name:
+            return None
+
+        args = {
+            'type': 'routing',
+            'zoneid': self.get_zone(key='id'),
+        }
+        hosts = self.query_api('listHosts', **args)
+        if hosts:
+            for h in hosts['host']:
+                if h['name'] == host_name:
+                    return h['id']
+
+        self.fail_json(msg="Host '%s' not found" % host_name)
 
     def get_template_or_iso(self, key=None):
         template = self.module.params.get('template')
@@ -614,17 +656,18 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         return user_data
 
     def get_details(self):
-        res = None
+        details = self.module.params.get('details')
         cpu = self.module.params.get('cpu')
         cpu_speed = self.module.params.get('cpu_speed')
         memory = self.module.params.get('memory')
         if all([cpu, cpu_speed, memory]):
-            res = [{
+            details.extends({
                 'cpuNumber': cpu,
                 'cpuSpeed': cpu_speed,
                 'memory': memory,
-            }]
-        return res
+            })
+
+        return details
 
     def deploy_instance(self, start_vm=True):
         self.result['changed'] = True
@@ -659,6 +702,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         args['affinitygroupnames'] = self.module.params.get('affinity_groups')
         args['details'] = self.get_details()
         args['securitygroupnames'] = self.module.params.get('security_groups')
+        args['hostid'] = self.get_host_id()
 
         template_iso = self.get_template_or_iso()
         if 'hypervisor' not in template_iso:
@@ -706,7 +750,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             ssh_key_changed,
         ]
 
-        if True in changed:
+        if any(changed):
             force = self.module.params.get('force')
             instance_state = instance['state'].lower()
             if instance_state == 'stopped' or force:
@@ -749,6 +793,23 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             else:
                 self.module.warn("Changes won't be applied to running instances. " +
                                  "Use force=true to allow the instance %s to be stopped/started." % instance['name'])
+
+        # migrate to other host
+        host_changed = all([
+            instance['state'].lower() == 'running',
+            self.module.params.get('host'),
+            self.module.params.get('host') != instance.get('hostname')
+        ])
+        if host_changed:
+            self.result['changed'] = True
+            args_host = {
+                'virtualmachineid': instance['id'],
+                'hostid': self.get_host_id(),
+            }
+            if not self.module.check_mode:
+                res = self.query_api('migrateVirtualMachineWithVolume', **args_host)
+                instance = self.poll_job(res, 'virtualmachine')
+
         return instance
 
     def recover_instance(self, instance):
@@ -818,7 +879,11 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             if instance['state'].lower() in ['stopped', 'stopping']:
                 self.result['changed'] = True
                 if not self.module.check_mode:
-                    instance = self.query_api('startVirtualMachine', id=instance['id'])
+                    args = {
+                        'id': instance['id'],
+                        'hostid': self.get_host_id(),
+                    }
+                    instance = self.query_api('startVirtualMachine', **args)
 
                     poll_async = self.module.params.get('poll_async')
                     if poll_async:
@@ -873,8 +938,11 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                 self.result['affinity_groups'] = affinity_groups
             if 'nic' in instance:
                 for nic in instance['nic']:
-                    if nic['isdefault'] and 'ipaddress' in nic:
-                        self.result['default_ip'] = nic['ipaddress']
+                    if nic['isdefault']:
+                        if 'ipaddress' in nic:
+                            self.result['default_ip'] = nic['ipaddress']
+                        if 'ip6address' in nic:
+                            self.result['default_ip6'] = nic['ip6address']
         return self.result
 
 
@@ -905,6 +973,7 @@ def main():
         root_disk_size=dict(type='int'),
         keyboard=dict(choices=['de', 'de-ch', 'es', 'fi', 'fr', 'fr-be', 'fr-ch', 'is', 'it', 'jp', 'nl-be', 'no', 'pt', 'uk', 'us']),
         hypervisor=dict(choices=CS_HYPERVISORS),
+        host=dict(),
         security_groups=dict(type='list', aliases=['security_group']),
         affinity_groups=dict(type='list', aliases=['affinity_group']),
         domain=dict(),
@@ -915,6 +984,7 @@ def main():
         ssh_key=dict(),
         force=dict(type='bool', default=False),
         tags=dict(type='list', aliases=['tag']),
+        details=dict(type='dict'),
         poll_async=dict(type='bool', default=True),
     ))
 

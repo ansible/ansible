@@ -1,2 +1,0 @@
-bugfixes:
-- win_template - fix when specifying the dest option as a directory with and without the trailing slash https://github.com/ansible/ansible/issues/39886

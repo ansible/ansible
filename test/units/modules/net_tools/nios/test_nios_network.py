@@ -100,20 +100,20 @@ class TestNiosNetworkModule(TestNiosModule):
         self.assertTrue(res['changed'])
 
     def test_nios_network_ipv6_dhcp_update(self):
-        self.module.params = {'provider': None, 'state': 'present', 'network': 'fe80::/64',
+        self.module.params = {'provider': None, 'state': 'present', 'ipv6network': 'fe80::/64',
                               'comment': 'updated comment', 'extattrs': None}
 
         test_object = [
             {
                 "comment": "test comment",
                 "_ref": "ipv6network/ZG5zLm5ldHdvcmtfdmlldyQw:default/true",
-                "network": "fe80::/64",
+                "ipv6network": "fe80::/64",
                 "extattrs": {'options': {'name': 'test', 'value': 'ansible.com'}}
             }
         ]
 
         test_spec = {
-            "network": {"ib_req": True},
+            "ipv6network": {"ib_req": True},
             "comment": {},
             "extattrs": {}
         }
@@ -148,13 +148,13 @@ class TestNiosNetworkModule(TestNiosModule):
         wapi.delete_object.assert_called_once_with(ref)
 
     def test_nios_network_ipv6_create(self):
-        self.module.params = {'provider': None, 'state': 'present', 'network': 'fe80::/64',
+        self.module.params = {'provider': None, 'state': 'present', 'ipv6network': 'fe80::/64',
                               'comment': None, 'extattrs': None}
 
         test_object = None
 
         test_spec = {
-            "network": {"ib_req": True},
+            "ipv6network": {"ib_req": True},
             "comment": {},
             "extattrs": {}
         }
@@ -164,10 +164,10 @@ class TestNiosNetworkModule(TestNiosModule):
         res = wapi.run('testobject', test_spec)
 
         self.assertTrue(res['changed'])
-        wapi.create_object.assert_called_once_with('testobject', {'network': 'fe80::/64'})
+        wapi.create_object.assert_called_once_with('testobject', {'ipv6network': 'fe80::/64'})
 
     def test_nios_network_ipv6_remove(self):
-        self.module.params = {'provider': None, 'state': 'absent', 'network': 'fe80::/64',
+        self.module.params = {'provider': None, 'state': 'absent', 'ipv6network': 'fe80::/64',
                               'comment': None, 'extattrs': None}
 
         ref = "ipv6network/ZG5zLm5ldHdvcmtfdmlldyQw:ansible/false"
@@ -175,12 +175,12 @@ class TestNiosNetworkModule(TestNiosModule):
         test_object = [{
             "comment": "test comment",
             "_ref": ref,
-            "network": "fe80::/64",
+            "ipv6network": "fe80::/64",
             "extattrs": {'Site': {'value': 'test'}}
         }]
 
         test_spec = {
-            "network": {"ib_req": True},
+            "ipv6network": {"ib_req": True},
             "comment": {},
             "extattrs": {}
         }

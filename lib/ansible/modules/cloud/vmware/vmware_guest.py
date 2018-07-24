@@ -172,6 +172,11 @@ options:
     - '     Default: C(None) thick disk, no eagerzero.'
     - ' - C(datastore) (string): Datastore to use for the disk. If C(autoselect_datastore) is enabled, filter datastore selection.'
     - ' - C(autoselect_datastore) (bool): select the less used datastore. Specify only if C(datastore) is not specified.'
+    - ' - C(disk_mode) (string): Type of disk mode. Added in version 2.6'
+    - '     - Available options are :'
+    - '     - C(persistent): Changes are immediately and permanently written to the virtual disk. This is default.'
+    - '     - C(independent_persistent): Same as persistent, but not affected by snapshots.'
+    - '     - C(independent_nonpersistent): Changes to virtual disk are made to a redo log and discarded at power off, but not affected by snapshots.'
   cdrom:
     description:
     - A CD-ROM configuration for the virtual machine.
@@ -203,10 +208,12 @@ options:
     description:
     - Name of the existing snapshot to use to create a clone of a virtual machine.
     - This parameter is case sensitive.
+    - While creating linked clone using C(linked_clone) parameter, this parameter is required.
     version_added: '2.4'
   linked_clone:
     description:
     - Whether to create a linked clone from the snapshot specified.
+    - If specified, then C(snapshot_src) is required parameter.
     default: 'no'
     type: bool
     version_added: '2.4'
@@ -259,6 +266,8 @@ options:
     - 'Optional parameters per entry (used for virtual hardware):'
     - ' - C(device_type) (string): Virtual network device (one of C(e1000), C(e1000e), C(pcnet32), C(vmxnet2), C(vmxnet3) (default), C(sriov)).'
     - ' - C(mac) (string): Customize MAC address.'
+    - ' - C(dvswitch_name) (string): Name of the distributed vSwitch.
+          This value is required if multiple distributed portgroups exists with the same name. version_added 2.7'
     - 'Optional parameters per entry (used for OS customization):'
     - ' - C(type) (string): Type of IP assignment (either C(dhcp) or C(static)). C(dhcp) is default.'
     - ' - C(ip) (string): Static IP address (implies C(type: static)).'
@@ -388,7 +397,7 @@ EXAMPLES = r'''
   delegate_to: localhost
   register: deploy
 
-- name: Clone a virtual machine from Template and customize
+- name: Clone a virtual machine from Windows template and customize
   vmware_guest:
     hostname: "{{ vcenter_ip }}"
     username: "{{ vcenter_username }}"
@@ -420,6 +429,32 @@ EXAMPLES = r'''
       runonce:
       - powershell.exe -ExecutionPolicy Unrestricted -File C:\Windows\Temp\ConfigureRemotingForAnsible.ps1 -ForceNewSSLCert -EnableCredSSP
   delegate_to: localhost
+
+- name:  Clone a virtual machine from Linux template and customize
+  vmware_guest:
+    hostname: "{{ vcenter_server }}"
+    username: "{{ vcenter_user }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ datacenter }}"
+    state: present
+    folder: /DC1/vm
+    template: "{{ template }}"
+    name: "{{ vm_name }}"
+    cluster: DC1_C1
+    networks:
+      - name: VM Network
+        ip: 192.168.10.11
+        netmask: 255.255.255.0
+    wait_for_ip_address: True
+    customization:
+      domain: "{{ guest_domain }}"
+      dns_servers:
+        - 8.9.9.9
+        - 7.8.8.9
+      dns_suffix:
+        - example.com
+        - example2.com
 
 - name: Rename a virtual machine (requires the virtual machine's uuid)
   vmware_guest:
@@ -494,7 +529,8 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.vmware import (find_obj, gather_vm_facts, get_all_objs,
                                          compile_folder_path_for_object, serialize_spec,
-                                         vmware_argument_spec, set_vm_power_state, PyVmomi)
+                                         vmware_argument_spec, set_vm_power_state, PyVmomi,
+                                         find_dvs_by_name, find_dvspg_by_name)
 
 
 class PyVmomiDeviceHelper(object):
@@ -588,7 +624,6 @@ class PyVmomiDeviceHelper(object):
         diskspec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
         diskspec.device = vim.vm.device.VirtualDisk()
         diskspec.device.backing = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
-        diskspec.device.backing.diskMode = 'persistent'
         diskspec.device.controllerKey = scsi_ctl.device.key
 
         if self.next_disk_unit_number == 7:
@@ -1057,7 +1092,7 @@ class PyVmomiHelper(PyVmomi):
 
     def sanitize_network_params(self):
         """
-        Function to sanitize user provided network provided params
+        Sanitize user provided network provided params
 
         Returns: A sanitized list of network params, else fails
 
@@ -1075,10 +1110,17 @@ class PyVmomiHelper(PyVmomi):
                 dvps = self.cache.get_all_objs(self.content, [vim.dvs.DistributedVirtualPortgroup])
                 for dvp in dvps:
                     if hasattr(dvp.config.defaultPortConfig, 'vlan') and \
-                            dvp.config.defaultPortConfig.vlan.vlanId == int(network['vlan']):
+                            isinstance(dvp.config.defaultPortConfig.vlan.vlanId, int) and \
+                            str(dvp.config.defaultPortConfig.vlan.vlanId) == str(network['vlan']):
                         network['name'] = dvp.config.name
                         break
-                    if dvp.config.name == str(network['vlan']):
+                    if 'dvswitch_name' in network and \
+                            dvp.config.distributedVirtualSwitch.name == network['dvswitch_name'] and \
+                            dvp.config.name == network['vlan']:
+                        network['name'] = dvp.config.name
+                        break
+
+                    if dvp.config.name == network['vlan']:
                         network['name'] = dvp.config.name
                         break
                 else:
@@ -1185,7 +1227,17 @@ class PyVmomiHelper(PyVmomi):
 
             if hasattr(self.cache.get_network(network_name), 'portKeys'):
                 # VDS switch
-                pg_obj = find_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_name)
+                pg_obj = None
+                if 'dvswitch_name' in network_devices[key]:
+                    dvs_name = network_devices[key]['dvswitch_name']
+                    dvs_obj = find_dvs_by_name(self.content, dvs_name)
+                    if dvs_obj is None:
+                        self.module.fail_json(msg="Unable to find distributed virtual switch %s" % dvs_name)
+                    pg_obj = find_dvspg_by_name(dvs_obj, network_name)
+                    if pg_obj is None:
+                        self.module.fail_json(msg="Unable to find distributed port group %s" % network_name)
+                else:
+                    pg_obj = find_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_name)
 
                 if (nic.device.backing and
                    (not hasattr(nic.device.backing, 'port') or
@@ -1396,7 +1448,11 @@ class PyVmomiHelper(PyVmomi):
 
         # TODO: Maybe list the different domains from the interfaces here by default ?
         if 'dns_suffix' in self.params['customization']:
-            globalip.dnsSuffixList = self.params['customization']['dns_suffix']
+            dns_suffix = self.params['customization']['dns_suffix']
+            if isinstance(dns_suffix, list):
+                globalip.dnsSuffixList = " ".join(dns_suffix)
+            else:
+                globalip.dnsSuffixList = dns_suffix
         elif 'domain' in self.params['customization']:
             globalip.dnsSuffixList = self.params['customization']['domain']
 
@@ -1569,6 +1625,19 @@ class PyVmomiHelper(PyVmomi):
             else:
                 diskspec = self.device_helper.create_scsi_disk(scsi_ctl, disk_index)
                 disk_modified = True
+
+            if 'disk_mode' in expected_disk_spec:
+                disk_mode = expected_disk_spec.get('disk_mode', 'persistent').lower()
+                valid_disk_mode = ['persistent', 'independent_persistent', 'independent_nonpersistent']
+                if disk_mode not in valid_disk_mode:
+                    self.module.fail_json(msg="disk_mode specified is not valid."
+                                              " Should be one of ['%s']" % "', '".join(valid_disk_mode))
+
+                if (vm_obj and diskspec.device.backing.diskMode != disk_mode) or (vm_obj is None):
+                    diskspec.device.backing.diskMode = disk_mode
+                    disk_modified = True
+            else:
+                diskspec.device.backing.diskMode = "persistent"
 
             # is it thin?
             if 'type' in expected_disk_spec:
@@ -1945,17 +2014,25 @@ class PyVmomiHelper(PyVmomi):
                 # > pool: For a clone operation from a template to a virtual machine, this argument is required.
                 relospec.pool = resource_pool
 
-                if self.params['snapshot_src'] is not None and self.params['linked_clone']:
-                    relospec.diskMoveType = vim.vm.RelocateSpec.DiskMoveOptions.createNewChildDiskBacking
+                linked_clone = self.params.get('linked_clone')
+                snapshot_src = self.params.get('snapshot_src', None)
+                if linked_clone:
+                    if snapshot_src is not None:
+                        relospec.diskMoveType = vim.vm.RelocateSpec.DiskMoveOptions.createNewChildDiskBacking
+                    else:
+                        self.module.fail_json(msg="Parameter 'linked_src' and 'snapshot_src' are"
+                                                  " required together for linked clone operation.")
 
                 clonespec = vim.vm.CloneSpec(template=self.params['is_template'], location=relospec)
                 if self.customspec:
                     clonespec.customization = self.customspec
 
-                if self.params['snapshot_src'] is not None:
-                    snapshot = self.get_snapshots_by_name_recursively(snapshots=vm_obj.snapshot.rootSnapshotList, snapname=self.params['snapshot_src'])
+                if snapshot_src is not None:
+                    snapshot = self.get_snapshots_by_name_recursively(snapshots=vm_obj.snapshot.rootSnapshotList,
+                                                                      snapname=snapshot_src)
                     if len(snapshot) != 1:
-                        self.module.fail_json(msg='virtual machine "%(template)s" does not contain snapshot named "%(snapshot_src)s"' % self.params)
+                        self.module.fail_json(msg='virtual machine "%(template)s" does not contain'
+                                                  ' snapshot named "%(snapshot_src)s"' % self.params)
 
                     clonespec.snapshot = snapshot[0].snapshot
 

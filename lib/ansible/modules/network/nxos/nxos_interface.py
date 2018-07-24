@@ -1,20 +1,7 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# -*- coding: utf-8 -*-
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -215,7 +202,8 @@ import time
 from copy import deepcopy
 
 from ansible.module_utils.network.nxos.nxos import load_config, run_commands
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, normalize_interface
+from ansible.module_utils.network.nxos.nxos import get_interface_type
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import conditional, remove_default_spec
 
@@ -242,27 +230,6 @@ def search_obj_in_list(name, lst):
             return o
 
     return None
-
-
-def get_interface_type(interface):
-    """Gets the type of interface
-    """
-    if interface.upper().startswith('ET'):
-        return 'ethernet'
-    elif interface.upper().startswith('VL'):
-        return 'svi'
-    elif interface.upper().startswith('LO'):
-        return 'loopback'
-    elif interface.upper().startswith('MG'):
-        return 'management'
-    elif interface.upper().startswith('MA'):
-        return 'management'
-    elif interface.upper().startswith('PO'):
-        return 'portchannel'
-    elif interface.upper().startswith('NV'):
-        return 'nve'
-    else:
-        return 'unknown'
 
 
 def get_interfaces_dict(module):
@@ -293,46 +260,6 @@ def get_interfaces_dict(module):
     return interfaces
 
 
-def normalize_interface(name):
-    """Return the normalized interface name
-    """
-    if not name:
-        return None
-
-    def _get_number(name):
-        digits = ''
-        for char in name:
-            if char.isdigit() or char in '/.':
-                digits += char
-        return digits
-
-    if name.lower().startswith('et'):
-        if_type = 'Ethernet'
-    elif name.lower().startswith('vl'):
-        if_type = 'Vlan'
-    elif name.lower().startswith('lo'):
-        if_type = 'loopback'
-    elif name.lower().startswith('po'):
-        if_type = 'port-channel'
-    elif name.lower().startswith('nv'):
-        if_type = 'nve'
-    else:
-        if_type = None
-
-    number_list = name.split(' ')
-    if len(number_list) == 2:
-        number = number_list[-1].strip()
-    else:
-        number = _get_number(name)
-
-    if if_type:
-        proper_interface = if_type + number
-    else:
-        proper_interface = name
-
-    return proper_interface
-
-
 def get_vlan_interface_attributes(name, intf_type, module):
     """ Returns dictionary that has two k/v pairs:
         admin_state & description if not an svi, returns None
@@ -340,7 +267,7 @@ def get_vlan_interface_attributes(name, intf_type, module):
     command = 'show run interface {0} all'.format(name)
     try:
         body = execute_show_command(command, module)[0]
-    except IndexError:
+    except (IndexError, TypeError):
         return None
     if body:
         command_list = body.split('\n')
@@ -444,10 +371,12 @@ def map_obj_to_commands(updates, module):
 
         elif state == 'present':
             if obj_in_have:
-                if mode == 'layer2' and mode != obj_in_have.get('mode'):
-                    add_command_to_interface(interface, 'switchport', commands)
-                elif mode == 'layer3' and mode != obj_in_have.get('mode'):
-                    add_command_to_interface(interface, 'no switchport', commands)
+                # Don't run switchport command for loopback and svi interfaces
+                if get_interface_type(name) in ('ethernet', 'portchannel'):
+                    if mode == 'layer2' and mode != obj_in_have.get('mode'):
+                        add_command_to_interface(interface, 'switchport', commands)
+                    elif mode == 'layer3' and mode != obj_in_have.get('mode'):
+                        add_command_to_interface(interface, 'no switchport', commands)
 
                 if admin_state == 'up' and admin_state != obj_in_have.get('admin_state'):
                     add_command_to_interface(interface, 'no shutdown', commands)
@@ -484,10 +413,12 @@ def map_obj_to_commands(updates, module):
 
             else:
                 commands.append(interface)
-                if mode == 'layer2':
-                    commands.append('switchport')
-                elif mode == 'layer3':
-                    commands.append('no switchport')
+                # Don't run switchport command for loopback and svi interfaces
+                if get_interface_type(name) in ('ethernet', 'portchannel'):
+                    if mode == 'layer2':
+                        commands.append('switchport')
+                    elif mode == 'layer3':
+                        commands.append('no switchport')
 
                 if admin_state == 'up':
                     commands.append('no shutdown')
@@ -573,7 +504,7 @@ def map_config_to_obj(want, module):
         if body:
             try:
                 interface_table = body['TABLE_interface']['ROW_interface']
-            except KeyError:
+            except (KeyError, TypeError):
                 return list()
 
             if interface_table:
@@ -668,11 +599,12 @@ def check_declarative_intent_params(module, want):
             return
 
         cmd = [{'command': 'show interface {0}'.format(w['name']), 'output': 'text'}]
-        output = run_commands(module, cmd, check_rc=False)
-        if output:
-            out = output[0]
-        else:
+
+        try:
+            out = run_commands(module, cmd, check_rc=False)[0]
+        except (AttributeError, IndexError, TypeError):
             out = ''
+
         if want_tx_rate:
             match = re.search(r'output rate (\d+)', out, re.M)
             have_tx_rate = None

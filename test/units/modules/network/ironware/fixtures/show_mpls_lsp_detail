@@ -1,4 +1,4 @@
-LSP LSP1, to 1.1.1.1
+LSP LSP1, to 192.0.2.1
   From: (n/a), admin: DOWN, status: DOWN
   revert timer: 300 seconds
   Times primary LSP goes up since enabled: 1
@@ -17,7 +17,7 @@ LSP LSP1, to 1.1.1.1
    Backup LSP: DOWN
    Global revertiveness enabled with hold time 5 secs
    FRR Forwarding State: Pri(down), Backup(down)
-LSP LSP3, to 3.3.3.3
+LSP LSP3, to 192.0.2.3
   From: (n/a), admin: DOWN, status: DOWN
   Times primary LSP goes up since enabled: 0
   Metric: 0

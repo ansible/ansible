@@ -38,7 +38,6 @@ import sys
 
 from ansible import constants as C
 from ansible.cli import CLI
-from ansible.errors import AnsibleError
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -61,6 +60,9 @@ class ConsoleCLI(CLI, cmd.Cmd):
     modules = []
     ARGUMENTS = {'host-pattern': 'A name of a group in the inventory, a shell-like glob '
                                  'selecting hosts in inventory or any combination of the two separated by commas.'}
+
+    # use specific to console, but fallback to highlight for backwards compatibility
+    NORMAL_PROMPT = C.COLOR_CONSOLE_PROMPT or C.COLOR_HIGHLIGHT
 
     def __init__(self, args):
 
@@ -122,7 +124,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
             color = C.COLOR_ERROR
         else:
             prompt += "$ "
-            color = C.COLOR_HIGHLIGHT
+            color = self.NORMAL_PROMPT
         self.prompt = stringc(prompt, color)
 
     def list_modules(self):
@@ -361,7 +363,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
                     display.display(oc['short_description'])
                     display.display('Parameters:')
                     for opt in oc['options'].keys():
-                        display.display('  ' + stringc(opt, C.COLOR_HIGHLIGHT) + ' ' + oc['options'][opt]['description'][0])
+                        display.display('  ' + stringc(opt, self.NORMAL_PROMPT) + ' ' + oc['options'][opt]['description'][0])
                 else:
                     display.error('No documentation found for %s.' % module_name)
             else:

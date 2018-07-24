@@ -41,8 +41,10 @@ options:
     aliases: [ tenant_name ]
   tag:
     description:
-    - The value of the route tag (range 0-4294967295).
+    - The value of the route tag.
+    - Accepted values range between C(0) and C(4294967295).
     - The APIC defaults to C(4294967295) when unset during creation.
+    type: int
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.

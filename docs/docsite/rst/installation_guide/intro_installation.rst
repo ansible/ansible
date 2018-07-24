@@ -43,11 +43,11 @@ Control Machine Requirements
 
 Currently Ansible can be run from any machine with Python 2 (versions 2.6 or 2.7) or Python 3 (versions 3.5 and higher) installed (Windows isn't supported for the control machine).
 
-This includes Red Hat, Debian, CentOS, OS X, any of the BSDs, and so on.
+This includes Red Hat, Debian, CentOS, macOS, any of the BSDs, and so on.
 
 .. note::
 
-    Mac OS X by default is configured for a small number of file handles, so if you want to use 15 or more forks you'll need to raise the ulimit with ``sudo launchctl limit maxfiles unlimited``. This command can also fix any "Too many open files" error.
+    macOS by default is configured for a small number of file handles, so if you want to use 15 or more forks you'll need to raise the ulimit with ``sudo launchctl limit maxfiles unlimited``. This command can also fix any "Too many open files" error.
 
 
 .. warning::
@@ -90,7 +90,7 @@ later).
 
      .. code-block:: shell
 
-        ansible myhost --sudo -m raw -a "yum install -y python2"
+        $ ansible myhost --sudo -m raw -a "yum install -y python2"
 
 .. _installing_the_control_machine:
 
@@ -159,7 +159,7 @@ Debian/Ubuntu packages can also be built from the source checkout, run:
 
     $ make deb
 
-You may also wish to run from source to get the latest, which is covered above.
+You may also wish to run from source to get the latest, which is covered below.
 
 Latest Releases Via Apt (Debian)
 ++++++++++++++++++++++++++++++++
@@ -217,11 +217,11 @@ You may also wish to install from ports, run:
 .. _on_macos:
 
 Latest Releases on Mac OSX
-++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++
 
-The preferred way to install ansible on a Mac is via pip.
+The preferred way to install Ansible on a Mac is via pip.
 
-The instructions can be found in `Latest Releases Via Pip`_ section.
+The instructions can be found in `Latest Releases Via Pip`_ section. If you are running macOS version 10.12 or older, then you ought to upgrade to the latest pip (9.0.3 or newer) to connect to the Python Package Index securely.
 
 .. _from_pkgutil:
 
@@ -264,13 +264,19 @@ Then install Ansible with [1]_::
 
 Or if you are looking for the latest development version::
 
-    pip install git+https://github.com/ansible/ansible.git@devel
+   $ pip install git+https://github.com/ansible/ansible.git@devel
 
-If you are installing on OS X Mavericks, you may encounter some noise from your compiler.  A workaround is to do the following::
+If you are installing on macOS Mavericks, you may encounter some noise from your compiler.  A workaround is to do the following::
 
    $ sudo CFLAGS=-Qunused-arguments CPPFLAGS=-Qunused-arguments pip install ansible
 
-Readers that use virtualenv can also install Ansible under virtualenv, though we'd recommend to not worry about it and just install Ansible globally.  Do not use easy_install to install ansible directly.
+Readers that use virtualenv can also install Ansible under virtualenv, though we'd recommend to not worry about it and just install Ansible globally. Do not use easy_install to install Ansible directly.
+
+.. note::
+
+    Older versions of pip defaults to http://pypi.python.org/simple, which no longer works.
+    Please make sure you have an updated pip (version 10 or greater) installed before installing Ansible.
+    Refer `here <https://pip.pypa.io/en/stable/installing/#installation>`_ about installing latest pip.
 
 .. _tagged_releases:
 
@@ -341,7 +347,7 @@ To update ansible checkouts, use pull-with-rebase so any local changes are repla
 
     $ git pull --rebase
 
-Note: when updating ansible checkouts that are v2.2 and older, be sure to not
+Note: when updating Ansible checkouts that are v2.2 and older, be sure to not
 only update the source tree, but also the "submodules" in git which point at
 Ansible's own modules.
 
@@ -389,6 +395,8 @@ bugs and feature ideas.
        Examples of basic commands
    :ref:`working_with_playbooks`
        Learning ansible's configuration management language
+   :ref:`installation_faqs`
+       Ansible Installation related to FAQs
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_

@@ -59,9 +59,18 @@ options:
     url:
         required: False
         description:
-            - "A string containing the base URL of the server.
+            - "A string containing the API URL of the server.
                For example: I(https://server.example.com/ovirt-engine/api).
                Default value is set by I(OVIRT_URL) environment variable."
+            - "Either C(url) or C(hostname) is required."
+    hostname:
+        required: False
+        description:
+            - "A string containing the hostname of the server.
+               For example: I(server.example.com).
+               Default value is set by I(OVIRT_HOSTNAME) environment variable."
+            - "Either C(url) or C(hostname) is required."
+        version_added: "2.6"
     insecure:
         required: False
         description:
@@ -217,6 +226,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             url=dict(default=None),
+            hostname=dict(default=None),
             username=dict(default=None),
             password=dict(default=None, no_log=True),
             ca_file=dict(default=None, type='path'),
@@ -249,9 +259,16 @@ def main():
 
         return var
 
-    url = get_required_parameter('url', 'OVIRT_URL', required=True)
-    username = get_required_parameter('username', 'OVIRT_USERNAME', required=True)
-    password = get_required_parameter('password', 'OVIRT_PASSWORD', required=True)
+    url = get_required_parameter('url', 'OVIRT_URL', required=False)
+    hostname = get_required_parameter('hostname', 'OVIRT_HOSTNAME', required=False)
+    if url is None and hostname is None:
+        module.fail_json(msg="You must specify either 'url' or 'hostname'.")
+
+    if url is None and hostname is not None:
+        url = 'https://{0}/ovirt-engine/api'.format(hostname)
+
+    username = get_required_parameter('username', 'OVIRT_USERNAME')
+    password = get_required_parameter('password', 'OVIRT_PASSWORD')
     token = get_required_parameter('token', 'OVIRT_TOKEN')
     ca_file = get_required_parameter('ca_file', 'OVIRT_CAFILE')
     insecure = params.get('insecure') if params.get('insecure') is not None else not bool(ca_file)

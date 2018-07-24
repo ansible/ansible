@@ -67,21 +67,13 @@ class AnsiblePlugin(with_metaclass(ABCMeta, object)):
         Sets the _options attribute with the configuration/keyword information for this plugin
 
         :arg task_keys: Dict with playbook keywords that affect this option
-        :arg var_options: Dict with either 'conneciton variables'
+        :arg var_options: Dict with either 'connection variables'
         :arg direct: Dict with 'direct assignment'
         '''
-
-        if not self._options:
-            # load config options if we have not done so already, if vars provided we should be mostly done
-            self._options = C.config.get_plugin_options(get_plugin_class(self), self._load_name, keys=task_keys, variables=var_options)
-
-        # they can be direct options overriding config
-        if direct:
-            for k in self._options:
-                if k in direct:
-                    self.set_option(k, direct[k])
+        self._options = C.config.get_plugin_options(get_plugin_class(self), self._load_name, keys=task_keys, variables=var_options, direct=direct)
 
         # allow extras/wildcards from vars that are not directly consumed in configuration
+        # this is needed to support things like winrm that can have extended protocol options we don't direclty handle
         if self.allow_extras and var_options and '_extras' in var_options:
             self.set_option('_extras', var_options['_extras'])
 

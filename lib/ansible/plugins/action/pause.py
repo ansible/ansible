@@ -39,9 +39,14 @@ except ImportError:
 
 try:
     import curses
-    curses.setupterm()
-    HAS_CURSES = True
-except (ImportError, curses.error):
+
+    # Nest the try except since curses.error is not available if curses did not import
+    try:
+        curses.setupterm()
+        HAS_CURSES = True
+    except curses.error:
+        HAS_CURSES = False
+except ImportError:
     HAS_CURSES = False
 
 if HAS_CURSES:
@@ -143,7 +148,7 @@ class ActionModule(ActionBase):
         result['start'] = to_text(datetime.datetime.now())
         result['user_input'] = b''
 
-        fd = None
+        stdin_fd = None
         old_settings = None
         try:
             if seconds is not None:
@@ -167,7 +172,8 @@ class ActionModule(ActionBase):
 
             # save the attributes on the existing (duped) stdin so
             # that we can restore them later after we set raw mode
-            fd = None
+            stdin_fd = None
+            stdout_fd = None
             try:
                 if PY3:
                     stdin = self._connection._new_stdin.buffer
@@ -175,52 +181,59 @@ class ActionModule(ActionBase):
                 else:
                     stdin = self._connection._new_stdin
                     stdout = sys.stdout
-                fd = stdin.fileno()
+                stdin_fd = stdin.fileno()
+                stdout_fd = stdout.fileno()
             except (ValueError, AttributeError):
                 # ValueError: someone is using a closed file descriptor as stdin
                 # AttributeError: someone is using a null file descriptor as stdin on windoez
                 stdin = None
 
-            if fd is not None:
-                if isatty(fd):
-
+            if stdin_fd is not None:
+                if isatty(stdin_fd):
                     # grab actual Ctrl+C sequence
                     try:
-                        intr = termios.tcgetattr(fd)[6][termios.VINTR]
+                        intr = termios.tcgetattr(stdin_fd)[6][termios.VINTR]
                     except Exception:
                         # unsupported/not present, use default
                         intr = b'\x03'  # value for Ctrl+C
 
                     # get backspace sequences
                     try:
-                        backspace = termios.tcgetattr(fd)[6][termios.VERASE]
+                        backspace = termios.tcgetattr(stdin_fd)[6][termios.VERASE]
                     except Exception:
                         backspace = [b'\x7f', b'\x08']
 
-                    old_settings = termios.tcgetattr(fd)
-                    tty.setraw(fd)
-                    tty.setraw(stdout.fileno())
+                    old_settings = termios.tcgetattr(stdin_fd)
+                    tty.setraw(stdin_fd)
+
+                    # Only set stdout to raw mode if it is a TTY. This is needed when redirecting
+                    # stdout to a file since a file cannot be set to raw mode.
+                    if isatty(stdout_fd):
+                        tty.setraw(stdout_fd)
 
                     # Only echo input if no timeout is specified
                     if not seconds and echo:
-                        new_settings = termios.tcgetattr(fd)
+                        new_settings = termios.tcgetattr(stdin_fd)
                         new_settings[3] = new_settings[3] | termios.ECHO
-                        termios.tcsetattr(fd, termios.TCSANOW, new_settings)
+                        termios.tcsetattr(stdin_fd, termios.TCSANOW, new_settings)
 
                     # flush the buffer to make sure no previous key presses
                     # are read in below
                     termios.tcflush(stdin, termios.TCIFLUSH)
 
             while True:
+
                 try:
-                    if fd is not None:
+                    if stdin_fd is not None:
+
                         key_pressed = stdin.read(1)
+
                         if key_pressed == intr:  # value for Ctrl+C
                             clear_line(stdout)
                             raise KeyboardInterrupt
 
                     if not seconds:
-                        if fd is None or not isatty(fd):
+                        if stdin_fd is None or not isatty(stdin_fd):
                             display.warning("Not waiting for response to prompt as stdin is not interactive")
                             break
 
@@ -255,9 +268,9 @@ class ActionModule(ActionBase):
             pass
         finally:
             # cleanup and save some information
-            # restore the old settings for the duped stdin fd
-            if not(None in (fd, old_settings)) and isatty(fd):
-                termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+            # restore the old settings for the duped stdin stdin_fd
+            if not(None in (stdin_fd, old_settings)) and isatty(stdin_fd):
+                termios.tcsetattr(stdin_fd, termios.TCSADRAIN, old_settings)
 
             duration = time.time() - start
             result['stop'] = to_text(datetime.datetime.now())

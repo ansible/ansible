@@ -178,7 +178,7 @@ def main():
     if conditionals:
         failed_conditions = [item.raw for item in conditionals]
         msg = 'One or more conditional statements have not been satisfied'
-        module.fail_json(msg=msg, falied_conditions=failed_conditions)
+        module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
     result = {
         'changed': False,

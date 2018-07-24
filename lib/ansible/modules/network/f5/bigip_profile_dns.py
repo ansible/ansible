@@ -214,6 +214,7 @@ class Parameters(AnsibleF5Parameters):
         'enableDnssec',
         'processXfr',
         'enableDnsExpress',
+        'defaultsFrom'
     ]
 
     returnables = [

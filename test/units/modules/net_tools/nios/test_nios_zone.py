@@ -59,13 +59,13 @@ class TestNiosZoneModule(TestNiosModule):
         self.load_config.return_value = dict(diff=None, session='session')
 
     def test_nios_zone_create(self):
-        self.module.params = {'provider': None, 'state': 'present', 'name': 'ansible.com',
+        self.module.params = {'provider': None, 'state': 'present', 'fqdn': 'ansible.com',
                               'comment': None, 'extattrs': None}
 
         test_object = None
 
         test_spec = {
-            "name": {"ib_req": True},
+            "fqdn": {"ib_req": True},
             "comment": {},
             "extattrs": {}
         }
@@ -75,10 +75,10 @@ class TestNiosZoneModule(TestNiosModule):
         res = wapi.run('testobject', test_spec)
 
         self.assertTrue(res['changed'])
-        wapi.create_object.assert_called_once_with('testobject', {'name': 'ansible.com'})
+        wapi.create_object.assert_called_once_with('testobject', {'fqdn': 'ansible.com'})
 
     def test_nios_zone_remove(self):
-        self.module.params = {'provider': None, 'state': 'absent', 'name': 'ansible.com',
+        self.module.params = {'provider': None, 'state': 'absent', 'fqdn': 'ansible.com',
                               'comment': None, 'extattrs': None}
 
         ref = "zone/ZG5zLm5ldHdvcmtfdmlldyQw:ansible/false"
@@ -86,12 +86,12 @@ class TestNiosZoneModule(TestNiosModule):
         test_object = [{
             "comment": "test comment",
             "_ref": ref,
-            "name": "ansible.com",
+            "fqdn": "ansible.com",
             "extattrs": {'Site': {'value': 'test'}}
         }]
 
         test_spec = {
-            "name": {"ib_req": True},
+            "fqdn": {"ib_req": True},
             "comment": {},
             "extattrs": {}
         }
@@ -102,20 +102,20 @@ class TestNiosZoneModule(TestNiosModule):
         wapi.delete_object.assert_called_once_with(ref)
 
     def test_nios_zone_update_comment(self):
-        self.module.params = {'provider': None, 'state': 'present', 'name': 'ansible.com',
+        self.module.params = {'provider': None, 'state': 'present', 'fqdn': 'ansible.com',
                               'comment': 'updated comment', 'extattrs': None}
 
         test_object = [
             {
                 "comment": "test comment",
                 "_ref": "zone/ZG5zLm5ldHdvcmtfdmlldyQw:default/true",
-                "name": "ansible.com",
+                "fqdn": "ansible.com",
                 "extattrs": {'Site': {'value': 'test'}}
             }
         ]
 
         test_spec = {
-            "name": {"ib_req": True},
+            "fqdn": {"ib_req": True},
             "comment": {},
             "extattrs": {}
         }

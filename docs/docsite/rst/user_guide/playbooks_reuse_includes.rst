@@ -13,7 +13,7 @@ As noted in :doc:`playbooks_reuse`, include and import statements are very simil
 
 Please refer to  :doc:`playbooks_reuse` for documentation concerning the trade-offs one may encounter when using each type.
 
-Also be aware that this behaviour changed in 2.4; prior to that Ansible version only ``include`` was available, and it behaved differently depending on context.
+Also be aware that this behaviour changed in 2.4. Prior to Ansible 2.4, only ``include`` was available and it behaved differently depending on context.
 
 .. versionadded:: 2.4
 
@@ -22,7 +22,6 @@ Importing Playbooks
 
 It is possible to include playbooks inside a master playbook. For example::
 
-    ---
     - import_playbook: webservers.yml
     - import_playbook: databases.yml
 
@@ -36,16 +35,15 @@ Prior to 2.4 only ``include`` was available and worked for both playbooks and ta
 Including and Importing Task Files
 ``````````````````````````````````
 
-Use of included task lists is a great way to define a role that system is going to fulfill. A task include file simply contains a flat list of tasks::
+Breaking tasks up into different files is an excellent way to organize complex sets of tasks or reuse them. A task file simply contains a flat list of tasks::
 
     # common_tasks.yml
-    ---
     - name: placeholder foo
       command: /bin/foo
     - name: placeholder bar
       command: /bin/bar
 
-You can then use ``import_tasks`` or ``include_tasks`` to include this file in your main task list::
+You can then use ``import_tasks`` or ``include_tasks`` to execute the tasks in a file in the main task list::
 
     tasks:
     - import_tasks: common_tasks.yml
@@ -65,27 +63,17 @@ You can also pass variables into imports and includes::
       vars:
         wp_user: bob
 
-Variables can also be passed to include files using an alternative syntax, which also supports structured variables like dictionaries and lists::
+See :ref:`ansible_variable_precedence` for more details on variable inheritance and precedence.
 
-    tasks:
-    - include_tasks: wordpress.yml
-      vars:
-        wp_user: timmy
-        ssh_keys:
-        - "{{ lookup('file', 'keys/one.pub') }}"
-        - "{{ lookup('file', 'keys/two.pub') }}"
-
-Using either syntax, variables passed in can then be used in the included files. These variables will only be available to tasks within the included file. See :ref:`ansible_variable_precedence` for more details on variable inheritance and precedence.
-
-Task include statements can be used at arbitrary depth.
+Task include and import statements can be used at arbitrary depth.
 
 .. note::
-    Static and dynamic can be mixed, however this is not recommended as it may lead to difficult-to-diagnose bugs in your playbooks.
+    - Static and dynamic can be mixed, however this is not recommended as it may lead to difficult-to-diagnose bugs in your playbooks.
+    - The ``key=value`` syntax for passing variables to import and include is deprecated. Use YAML ``vars:`` instead.
 
-Includes and imports can also be used in the ``handlers:`` section; for instance, if you want to define how to restart apache, you only have to do that once for all of your playbooks.  You might make a handlers.yml that looks like::
+Includes and imports can also be used in the ``handlers:`` section. For instance, if you want to define how to restart Apache, you only have to do that once for all of your playbooks. You might make a ``handlers.yml`` that looks like::
 
    # more_handlers.yml
-   ---
    - name: restart apache
      service: name=apache state=restarted
 

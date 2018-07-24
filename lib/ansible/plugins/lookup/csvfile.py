@@ -30,7 +30,7 @@ DOCUMENTATION = """
         default: utf-8
         version_added: "2.1"
     notes:
-      - The default is for TSV files (tab delimeted) not CSV (comma delimted) ... yes the name is misleading.
+      - The default is for TSV files (tab delimited) not CSV (comma delimited) ... yes the name is misleading.
 """
 
 EXAMPLES = """

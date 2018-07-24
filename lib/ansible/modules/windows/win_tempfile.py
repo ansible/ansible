@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # coding: utf-8 -*-
 
-# Copyright: (c) 2017 Dag Wieers <dag@wieers.com>
+# Copyright: (c) 2017, Dag Wieers <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -28,6 +28,7 @@ options:
     description:
       - Location where temporary file or directory should be created.
       - If path is not specified default system temporary directory (%TEMP%) will be used.
+    type: path
     default: '%TEMP%'
   prefix:
     description:

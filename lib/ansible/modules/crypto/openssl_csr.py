@@ -208,6 +208,16 @@ EXAMPLES = '''
     privatekey_path: /etc/ssl/private/ansible.com.pem
     subject_alt_name: 'DNS:www.ansible.com,DNS:m.ansible.com'
 
+# Generate an OpenSSL CSR with subjectAltName extension with dynamic list
+- openssl_csr:
+    path: /etc/ssl/csr/www.ansible.com.csr
+    privatekey_path: /etc/ssl/private/ansible.com.pem
+    subject_alt_name: "{{ item.value | map('regex_replace', '^', 'DNS:') | list }}"
+  with_dict:
+    dns_server:
+    - www.ansible.com
+    - m.ansible.com
+
 # Force re-generate an OpenSSL Certificate Signing Request
 - openssl_csr:
     path: /etc/ssl/csr/www.ansible.com.csr

@@ -22,7 +22,7 @@ __metaclass__ = type
 import os
 import sys
 
-from collections import defaultdict, MutableMapping
+from collections import defaultdict, MutableMapping, Sequence
 
 try:
     from hashlib import sha1
@@ -43,7 +43,7 @@ from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.vars import combine_vars
 from ansible.utils.unsafe_proxy import wrap_var
-from ansible.vars.clean import namespace_facts
+from ansible.vars.clean import namespace_facts, clean_facts
 
 try:
     from __main__ import display
@@ -90,6 +90,7 @@ class VariableManager:
         self._hostvars = None
         self._omit_token = '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest()
         self._options_vars = defaultdict(dict)
+        self.safe_basedir = False
 
         # bad cache plugin is not fatal error
         try:
@@ -110,6 +111,7 @@ class VariableManager:
             omit_token=self._omit_token,
             options_vars=self._options_vars,
             inventory=self._inventory,
+            safe_basedir=self.safe_basedir,
         )
         return data
 
@@ -123,6 +125,7 @@ class VariableManager:
         self._omit_token = data.get('omit_token', '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest())
         self._inventory = data.get('inventory', None)
         self._options_vars = data.get('options_vars', dict())
+        self.safe_basedir = data.get('safe_basedir', False)
 
     @property
     def extra_vars(self):
@@ -183,7 +186,9 @@ class VariableManager:
         )
 
         # default for all cases
-        basedirs = [self._loader.get_basedir()]
+        basedirs = []
+        if self.safe_basedir:  # avoid adhoc/console loading cwd
+            basedirs = [self._loader.get_basedir()]
 
         if play:
             # first we compile any vars specified in defaults/main.yml
@@ -303,12 +308,12 @@ class VariableManager:
 
             # finally, the facts caches for this host, if it exists
             try:
-                facts = self._fact_cache.get(host.name, {})
+                facts = wrap_var(self._fact_cache.get(host.name, {}))
                 all_vars.update(namespace_facts(facts))
 
                 # push facts to main namespace
                 if C.INJECT_FACTS_AS_VARS:
-                    all_vars = combine_vars(all_vars, wrap_var(facts))
+                    all_vars = combine_vars(all_vars, wrap_var(clean_facts(facts)))
                 else:
                     # always 'promote' ansible_local
                     all_vars = combine_vars(all_vars, wrap_var({'ansible_local': facts.get('ansible_local', {})}))
@@ -340,6 +345,12 @@ class VariableManager:
                     try:
                         for vars_file in vars_file_list:
                             vars_file = templar.template(vars_file)
+                            if not (isinstance(vars_file, Sequence)):
+                                raise AnsibleError(
+                                    "Invalid vars_files entry found: %r\n"
+                                    "vars_files entries should be either a string type or "
+                                    "a list of string types after template expansion" % vars_file
+                                )
                             try:
                                 data = preprocess_vars(self._loader.load_from_file(vars_file, unsafe=True))
                                 if data is not None:
@@ -492,10 +503,19 @@ class VariableManager:
                     # This task will be skipped later due to this, so we just setup
                     # a dummy array for the later code so it doesn't fail
                     items = [None]
+                # Update task.loop with templated items, this ensures that delegate_to+loop
+                # doesn't produce different restuls than TaskExecutor which may reprocess the loop
+                # Set loop_with to None, so we don't do extra unexpected processing on the cached items later
+                # in TaskExecutor
+                task.loop_with = None
+                task.loop = items
             else:
                 raise AnsibleError("Failed to find the lookup named '%s' in the available lookup plugins" % task.loop_with)
         elif task.loop is not None:
             items = templar.template(task.loop)
+            # Update task.loop with templated items, this ensures that delegate_to+loop
+            # doesn't produce different restuls than TaskExecutor which may reprocess the loop
+            task.loop = items
         else:
             items = [None]
 

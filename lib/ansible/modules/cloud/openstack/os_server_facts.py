@@ -24,8 +24,8 @@ notes:
     - This module creates a new top-level C(openstack_servers) fact, which
       contains a list of servers.
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 options:
    server:
      description:
@@ -67,7 +67,7 @@ def main():
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    shade, cloud = openstack_cloud_from_module(module)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         openstack_servers = cloud.list_servers(
             detailed=module.params['detailed'])
@@ -75,13 +75,13 @@ def main():
         if module.params['server']:
             # filter servers by name
             pattern = module.params['server']
-            # TODO(mordred) This is handled by shade now
+            # TODO(mordred) This is handled by sdk now
             openstack_servers = [server for server in openstack_servers
                                  if fnmatch.fnmatch(server['name'], pattern) or fnmatch.fnmatch(server['id'], pattern)]
         module.exit_json(changed=False, ansible_facts=dict(
             openstack_servers=openstack_servers))
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

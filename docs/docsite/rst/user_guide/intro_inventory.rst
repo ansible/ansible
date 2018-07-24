@@ -290,7 +290,7 @@ Ansible will read all the files in these directories in lexicographical order. A
 All hosts that are in the 'raleigh' group will have the variables defined in these files
 available to them. This can be very useful to keep your variables organized when a single
 file starts to be too big, or when you want to use :doc:`Ansible Vault<playbooks_vault>` on a part of a group's
-variables. 
+variables.
 
 Tip: The ``group_vars/`` and ``host_vars/`` directories can exist in
 the playbook directory OR the inventory directory. If both paths exist, variables in the playbook
@@ -322,7 +322,7 @@ Starting in Ansible version 2.4, users can use the group variable ``ansible_grou
     a_group:
         testvar: a
         ansible_group_priority: 10
-    b_group
+    b_group：
         testvar: b
 
 In this example, if both groups have the same priority, the result would normally have been ``testvar == b``, but since we are giving the ``a_group`` a higher priority the result will be ``testvar == a``.
@@ -335,6 +335,8 @@ List of Behavioral Inventory Parameters
 As described above, setting the following variables control how Ansible interacts with remote hosts.
 
 Host connection:
+
+.. include:: shared_snippets/SSH_password_prompt.txt
 
 ansible_connection
     Connection type to the host. This can be the name of any of ansible's connection plugins. SSH protocol types are ``smart``, ``ssh`` or ``paramiko``.  The default is smart. Non-SSH based types are described in the next section.

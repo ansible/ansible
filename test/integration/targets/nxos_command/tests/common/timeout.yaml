@@ -7,6 +7,7 @@
       - show version
     wait_for:
       - "result[0] contains bad_value_string"
+    provider: "{{ connection }}"
   register: result
   ignore_errors: yes
 

@@ -1,3 +1,0 @@
----
-bugfixes:
-- The yaml callback plugin now allows non-ascii characters to be displayed.

@@ -7,11 +7,13 @@
   nxos_config:
     lines:
       - no interface Loopback1
+    provider: "{{ connection }}"
   ignore_errors: yes # Fails if the interface is already absent
 
 - name: set state=present
   nxos_interface:
     interface: Loopback1
+    provider: "{{ connection }}"
     state: present
     description: 'Configured by Ansible - Layer3'
   register: result
@@ -23,6 +25,7 @@
 - name: verify state=present
   nxos_interface:
     interface: Loopback1
+    provider: "{{ connection }}"
     state: present
     description: 'Configured by Ansible - Layer3'
   register: result

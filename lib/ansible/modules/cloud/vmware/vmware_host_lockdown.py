@@ -189,7 +189,7 @@ def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(
         cluster_name=dict(type='str', required=False),
-        esxi_hostname=dict(type='str', required=False),
+        esxi_hostname=dict(type='list', required=False),
         state=dict(str='str', default='present', choices=['present', 'absent'], required=False),
     )
 

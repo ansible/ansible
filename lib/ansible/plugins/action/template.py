@@ -89,7 +89,7 @@ class ActionModule(ActionBase):
 
             for b_type in ('force', 'follow', 'trim_blocks'):
                 value = locals()[b_type]
-                value = ensure_type(value, 'string')
+                value = ensure_type(value, 'boolean')
                 if value is not None and not isinstance(value, bool):
                     raise AnsibleActionFail("%s is expected to be a boolean, but got %s instead" % (b_type, type(value)))
                 locals()[b_type] = value
@@ -120,7 +120,10 @@ class ActionModule(ActionBase):
             # template the source data locally & get ready to transfer
             try:
                 with open(b_tmp_source, 'rb') as f:
-                    template_data = to_text(f.read(), errors='surrogate_or_strict')
+                    try:
+                        template_data = to_text(f.read(), errors='surrogate_or_strict')
+                    except UnicodeError:
+                        raise AnsibleActionFail("Template source files must be utf-8 encoded")
 
                 # set jinja2 internal search path for includes
                 searchpath = task_vars.get('ansible_search_path', [])

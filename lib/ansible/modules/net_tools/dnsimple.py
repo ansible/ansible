@@ -1,102 +1,99 @@
 #!/usr/bin/python
+#
 # Copyright: Ansible Project
+#
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 
 DOCUMENTATION = '''
 ---
 module: dnsimple
 version_added: "1.6"
-short_description: Interface with dnsimple.com (a DNS hosting service).
+short_description: Interface with dnsimple.com (a DNS hosting service)
 description:
-   - "Manages domains and records via the DNSimple API, see the docs: U(http://developer.dnsimple.com/)"
+   - "Manages domains and records via the DNSimple API, see the docs: U(http://developer.dnsimple.com/)."
+notes:
+  - DNSimple API v1 is deprecated. Please install dnsimple-python>=1.0.0 which uses v2 API.
 options:
   account_email:
     description:
-      - >
-        Account email. If omitted, the env variables DNSIMPLE_EMAIL and DNSIMPLE_API_TOKEN will be looked for.
-        If those aren't found, a C(.dnsimple) file will be looked for, see: U(https://github.com/mikemaccana/dnsimple-python#getting-started)
-
+      - Account email. If omitted, the environment variables C(DNSIMPLE_EMAIL) and C(DNSIMPLE_API_TOKEN) will be looked for.
+      - "If those aren't found, a C(.dnsimple) file will be looked for, see: U(https://github.com/mikemaccana/dnsimple-python#getting-started)."
   account_api_token:
     description:
-      - Account API token. See I(account_email) for info.
-
+      - Account API token. See I(account_email) for more information.
   domain:
     description:
-      - Domain to work with. Can be the domain name (e.g. "mydomain.com") or the numeric ID of the domain in DNSimple. If omitted, a list of domains
-        will be returned.
+      - Domain to work with. Can be the domain name (e.g. "mydomain.com") or the numeric ID of the domain in DNSimple.
+      - If omitted, a list of domains will be returned.
       - If domain is present but the domain doesn't exist, it will be created.
-
   record:
     description:
-      - Record to add, if blank a record for the domain will be created, supports the wildcard (*)
-
+      - Record to add, if blank a record for the domain will be created, supports the wildcard (*).
   record_ids:
     description:
-      - List of records to ensure they either exist or don't exist
-
+      - List of records to ensure they either exist or do not exist.
   type:
     description:
-      - The type of DNS record to create
+      - The type of DNS record to create.
     choices: [ 'A', 'ALIAS', 'CNAME', 'MX', 'SPF', 'URL', 'TXT', 'NS', 'SRV', 'NAPTR', 'PTR', 'AAAA', 'SSHFP', 'HINFO', 'POOL' ]
-
   ttl:
     description:
-      - The TTL to give the new record
-    default: 3600 (one hour)
-
+      - The TTL to give the new record in seconds.
+    default: 3600
   value:
     description:
-      - Record value
-      - "Must be specified when trying to ensure a record exists"
-
+      - Record value.
+      - Must be specified when trying to ensure a record exists.
   priority:
     description:
-      - Record priority
-
+      - Record priority.
   state:
     description:
-      - whether the record should exist or not
+      - whether the record should exist or not.
     choices: [ 'present', 'absent' ]
-
   solo:
     description:
-      - Whether the record should be the only one for that record type and record name. Only use with state=present on a record
-
-requirements: [ dnsimple ]
+      - Whether the record should be the only one for that record type and record name.
+      - Only use with C(state) is set to C(present) on a record.
+    type: 'bool'
+requirements:
+  - "dnsimple >= 1.0.0"
 author: "Alex Coomans (@drcapulet)"
 '''
 
 EXAMPLES = '''
-# authenticate using email and API token and fetch all domains
-- dnsimple:
+- name: Authenticate using email and API token and fetch all domains
+  dnsimple:
     account_email: test@example.com
     account_api_token: dummyapitoken
   delegate_to: localhost
 
-# fetch my.com domain records
-- dnsimple:
+- name: Fetch my.com domain records
+  dnsimple:
     domain: my.com
     state: present
   delegate_to: localhost
   register: records
 
-# delete a domain
-- dnsimple:
+- name: Delete a domain
+  dnsimple:
     domain: my.com
     state: absent
   delegate_to: localhost
 
-# create a test.my.com A record to point to 127.0.0.01
-- dnsimple:
+- name: Create a test.my.com A record to point to 127.0.0.1
+  dnsimple:
     domain: my.com
     record: test
     type: A
@@ -104,14 +101,15 @@ EXAMPLES = '''
   delegate_to: localhost
   register: record
 
-# and then delete it
-- dnsimple:
+- name: Delete record using record_ids
+  dnsimple:
     domain: my.com
     record_ids: '{{ record["id"] }}'
+    state: absent
   delegate_to: localhost
 
-# create a my.com CNAME record to example.com
-- dnsimple:
+- name: Create a my.com CNAME record to example.com
+  dnsimple:
     domain: my.com
     record: ''
     type: CNAME
@@ -119,8 +117,8 @@ EXAMPLES = '''
     state: present
   delegate_to: localhost
 
-# change it's ttl
-- dnsimple:
+- name: change TTL value for a record
+  dnsimple:
     domain: my.com
     record: ''
     type: CNAME
@@ -129,8 +127,8 @@ EXAMPLES = '''
     state: present
   delegate_to: localhost
 
-# and delete the record
-- dnsimple:
+- name: Delete the record
+  dnsimple:
     domain: my.com
     record: ''
     type: CNAME
@@ -139,10 +137,14 @@ EXAMPLES = '''
   delegate_to: localhost
 '''
 
+RETURN = r"""# """
+
 import os
+from distutils.version import LooseVersion
 
 try:
     from dnsimple import DNSimple
+    from dnsimple.dnsimple import __version__ as dnsimple_version
     from dnsimple.dnsimple import DNSimpleException
     HAS_DNSIMPLE = True
 except ImportError:
@@ -175,6 +177,10 @@ def main():
 
     if not HAS_DNSIMPLE:
         module.fail_json(msg="dnsimple required for this module")
+
+    if LooseVersion(dnsimple_version) < LooseVersion('1.0.0'):
+        module.fail_json(msg="Current version of dnsimple Python module [%s] uses 'v1' API which is deprecated."
+                             " Please upgrade to version 1.0.0 and above to use dnsimple 'v2' API." % dnsimple_version)
 
     account_email = module.params.get('account_email')
     account_api_token = module.params.get('account_api_token')

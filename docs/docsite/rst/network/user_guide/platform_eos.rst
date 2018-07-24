@@ -4,7 +4,7 @@
 EOS Platform Options
 ***************************************
 
-Arista EOS supports multiple connections. This page offers details on how each connection works in Ansible 2.5 and how to use it. 
+Arista EOS supports multiple connections. This page offers details on how each connection works in Ansible 2.6 and how to use it. 
 
 .. contents:: Topics
 
@@ -41,7 +41,7 @@ Connections Available
 
 For legacy playbooks, EOS still supports ``ansible_connection: local``. We recommend modernizing to use ``ansible_connection: network_cli`` or ``ansible_connection: httpapi`` as soon as possible.
 
-Using CLI in Ansible 2.5
+Using CLI in Ansible 2.6
 ================================================================================
 
 Example CLI ``group_vars/eos.yml``
@@ -76,7 +76,7 @@ Example CLI Task
 
 
 
-Using eAPI in Ansible 2.5
+Using eAPI in Ansible 2.6
 ================================================================================
 
 Enabling eAPI

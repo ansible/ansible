@@ -170,6 +170,7 @@ def diff_config(commands, config):
 
     updates = list()
     visited = set()
+    delete_commands = [line for line in commands if line.startswith('delete')]
 
     for line in commands:
         item = to_native(line).replace("'", '')
@@ -177,8 +178,18 @@ def diff_config(commands, config):
         if not item.startswith('set') and not item.startswith('delete'):
             raise ValueError('line must start with either `set` or `delete`')
 
-        elif item.startswith('set') and item not in config:
-            updates.append(line)
+        elif item.startswith('set'):
+
+            if item not in config:
+                updates.append(line)
+
+            # If there is a corresponding delete command in the desired config, make sure to append
+            # the set command even though it already exists in the running config
+            else:
+                ditem = re.sub('set', 'delete', item)
+                for line in delete_commands:
+                    if ditem.startswith(line):
+                        updates.append(item)
 
         elif item.startswith('delete'):
             if not config:

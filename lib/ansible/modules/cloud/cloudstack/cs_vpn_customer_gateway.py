@@ -289,7 +289,7 @@ class AnsibleCloudStackVpnCustomerGateway(AnsibleCloudStack):
             if 'cidrlist' in vpn_customer_gateway:
                 self.result['cidrs'] = vpn_customer_gateway['cidrlist'].split(',') or [vpn_customer_gateway['cidrlist']]
             # Ensure we return a bool
-            self.result['force_encap'] = True if vpn_customer_gateway['forceencap'] else False
+            self.result['force_encap'] = True if vpn_customer_gateway.get('forceencap') else False
         return self.result
 
 

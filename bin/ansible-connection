@@ -119,7 +119,7 @@ class ConnectionProcess(object):
                     if not data:
                         break
 
-                    signal.alarm(self.connection._play_context.timeout)
+                    signal.alarm(self.connection.get_option('persistent_command_timeout'))
                     resp = self.srv.handle_request(data)
                     signal.alarm(0)
 
@@ -146,7 +146,7 @@ class ConnectionProcess(object):
         self.shutdown()
 
     def command_timeout(self, signum, frame):
-        display.display('command timeout triggered, timeout value is %s secs' % self.play_context.timeout, log_only=True)
+        display.display('command timeout triggered, timeout value is %s secs' % self.connection.get_option('persistent_command_timeout'), log_only=True)
         self.shutdown()
 
     def handler(self, signum, frame):
@@ -273,6 +273,7 @@ def main():
             else:
                 messages.append('found existing local domain socket, using it!')
                 conn = Connection(socket_path)
+                conn.set_options(var_options=variables)
                 pc_data = to_text(init_data)
                 try:
                     messages.extend(conn.update_play_context(pc_data))

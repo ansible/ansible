@@ -28,3 +28,6 @@ pyfmg
 
 # requirement for aci_rest module
 xmljson
+
+# requirement for winrm connection plugin tests
+pexpect
