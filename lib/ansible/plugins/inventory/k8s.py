@@ -7,7 +7,7 @@ __metaclass__ = type
 DOCUMENTATION = '''
     name: k8s
     plugin_type: inventory
-    authors:
+    author:
       - Chris Houseknecht <@chouseknecht>
       - Fabian von Feilitzsch <@fabianvf>
 
