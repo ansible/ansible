@@ -57,11 +57,9 @@ EXAMPLES = '''
 - name: create a topic
   gcp_pubsub_topic:
       name: test-topic1
-      project: "testProject"
+      project: "test_project"
       auth_kind: "service_account"
       service_account_file: "/tmp/auth.pem"
-      scopes:
-        - https://www.googleapis.com/auth/pubsub
       state: present
 '''
 

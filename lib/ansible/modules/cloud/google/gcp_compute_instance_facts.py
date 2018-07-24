@@ -59,12 +59,10 @@ EXAMPLES = '''
   gcp_compute_instance_facts:
       zone: us-central1-a
       filters:
-      - name = testObject
-      project: testProject
+      - name = test_object
+      project: test_project
       auth_kind: service_account
       service_account_file: "/tmp/auth.pem"
-      scopes:
-        - https://www.googleapis.com/auth/compute
 '''
 
 RETURN = '''

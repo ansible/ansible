@@ -249,8 +249,6 @@ EXAMPLES = '''
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: instancegroup
 - name: create a http health check
@@ -263,23 +261,19 @@ EXAMPLES = '''
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: healthcheck
 - name: create a backend service
   gcp_compute_backend_service:
-      name: "testObject"
+      name: "test_object"
       backends:
       - group: "{{ instancegroup }}"
       health_checks:
       - "{{ healthcheck.selfLink }}"
       enable_cdn: true
-      project: "testProject"
+      project: "test_project"
       auth_kind: "service_account"
       service_account_file: "/tmp/auth.pem"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
 '''
 

@@ -19,8 +19,6 @@
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/pubsub
       state: present
   register: topic
 - name: delete a subscription
@@ -33,8 +31,6 @@
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/pubsub
       state: absent
 #----------------------------------------------------------
 - name: create a subscription
@@ -47,8 +43,6 @@
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/pubsub
       state: present
   register: result
 - name: assert changed is true
@@ -74,8 +68,6 @@
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/pubsub
       state: present
   register: result
 - name: assert changed is false
@@ -93,8 +85,6 @@
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/pubsub
       state: absent
   register: result
 - name: assert changed is true
@@ -122,8 +112,6 @@
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/pubsub
       state: absent
   register: result
 - name: assert changed is false
@@ -138,7 +126,5 @@
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/pubsub
       state: absent
   register: topic

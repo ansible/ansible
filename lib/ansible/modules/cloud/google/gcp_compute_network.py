@@ -97,13 +97,11 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a network
   gcp_compute_network:
-      name: "testObject"
+      name: "test_object"
       auto_create_subnetworks: true
-      project: "testProject"
+      project: "test_project"
       auth_kind: "service_account"
       service_account_file: "/tmp/auth.pem"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
 '''
 

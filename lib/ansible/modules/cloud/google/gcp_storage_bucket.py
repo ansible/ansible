@@ -356,11 +356,9 @@ EXAMPLES = '''
 - name: create a bucket
   gcp_storage_bucket:
       name: ansible-storage-module
-      project: "testProject"
+      project: "test_project"
       auth_kind: "service_account"
       service_account_file: "/tmp/auth.pem"
-      scopes:
-        - https://www.googleapis.com/auth/devstorage.full_control
       state: present
 '''
 

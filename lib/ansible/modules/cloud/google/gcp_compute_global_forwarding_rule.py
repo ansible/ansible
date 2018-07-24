@@ -166,8 +166,6 @@ EXAMPLES = '''
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: globaladdress
 - name: create a instance group
@@ -177,8 +175,6 @@ EXAMPLES = '''
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: instancegroup
 - name: create a http health check
@@ -191,8 +187,6 @@ EXAMPLES = '''
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: healthcheck
 - name: create a backend service
@@ -206,8 +200,6 @@ EXAMPLES = '''
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: backendservice
 - name: create a url map
@@ -217,8 +209,6 @@ EXAMPLES = '''
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: urlmap
 - name: create a target http proxy
@@ -228,22 +218,18 @@ EXAMPLES = '''
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: httpproxy
 - name: create a global forwarding rule
   gcp_compute_global_forwarding_rule:
-      name: "testObject"
+      name: "test_object"
       ip_address: "{{ globaladdress.address }}"
       ip_protocol: TCP
       port_range: 80-80
       target: "{{ httpproxy.selfLink }}"
-      project: "testProject"
+      project: "test_project"
       auth_kind: "service_account"
       service_account_file: "/tmp/auth.pem"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
 '''
 

@@ -86,21 +86,17 @@ EXAMPLES = '''
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/devstorage.full_control
       state: present
   register: bucket
 - name: create a backend bucket
   gcp_compute_backend_bucket:
-      name: "testObject"
+      name: "test_object"
       bucket_name: "{{ bucket.name }}"
       description: A BackendBucket to connect LNB w/ Storage Bucket
       enable_cdn: true
-      project: "testProject"
+      project: "test_project"
       auth_kind: "service_account"
       service_account_file: "/tmp/auth.pem"
-      scopes:
-        - https://www.googleapis.com/auth/cloud-platform
       state: present
 '''
 

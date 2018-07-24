@@ -89,17 +89,15 @@ notes:
 EXAMPLES = '''
 - name: create a ssl policy
   gcp_compute_ssl_policy:
-      name: "testObject"
+      name: "test_object"
       profile: CUSTOM
       min_tls_version: TLS_1_2
       custom_features:
       - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
       - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-      project: "testProject"
+      project: "test_project"
       auth_kind: "service_account"
       service_account_file: "/tmp/auth.pem"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
 '''
 

@@ -129,7 +129,7 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a firewall
   gcp_compute_firewall:
-      name: "testObject"
+      name: "test_object"
       allowed:
       - ip_protocol: tcp
         ports:
@@ -139,11 +139,9 @@ EXAMPLES = '''
       - staging-ssh-server
       source_tags:
       - test-ssh-clients
-      project: "testProject"
+      project: "test_project"
       auth_kind: "service_account"
       service_account_file: "/tmp/auth.pem"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
 '''
 

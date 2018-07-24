@@ -76,7 +76,7 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a ssl certificate
   gcp_compute_ssl_certificate:
-      name: "testObject"
+      name: "test_object"
       description: A certificate for testing. Do not use this certificate in production
       certificate: |
         --BEGIN CERTIFICATE--
@@ -102,11 +102,9 @@ EXAMPLES = '''
         AwEHoUQDQgAEHGzpcRJ4XzfBJCCPMQeXQpTXwlblimODQCuQ4mzkzTv0dXyB750f
         OGN02HtkpBOZzzvUARTR10JQoSe2/5PIwQ==
         --END EC PRIVATE KEY--
-      project: "testProject"
+      project: "test_project"
       auth_kind: "service_account"
       service_account_file: "/tmp/auth.pem"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
 '''
 

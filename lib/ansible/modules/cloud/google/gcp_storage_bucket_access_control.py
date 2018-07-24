@@ -102,8 +102,6 @@ EXAMPLES = '''
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/devstorage.full_control
       state: present
   register: bucket
 - name: create a bucket access control
@@ -111,11 +109,9 @@ EXAMPLES = '''
       bucket: "{{ bucket }}"
       entity: user-alexstephen@google.com
       role: WRITER
-      project: "testProject"
+      project: "test_project"
       auth_kind: "service_account"
       service_account_file: "/tmp/auth.pem"
-      scopes:
-        - https://www.googleapis.com/auth/devstorage.full_control
       state: present
 '''
 

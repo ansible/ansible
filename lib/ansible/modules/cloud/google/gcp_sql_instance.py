@@ -252,7 +252,7 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a instance
   gcp_sql_instance:
-      name: "testObject"
+      name: "test_object"
       settings:
         ip_configuration:
           authorized_networks:
@@ -260,11 +260,9 @@ EXAMPLES = '''
             value: 8.8.8.8/32
         tier: db-n1-standard-1
       region: us-central1
-      project: "testProject"
+      project: "test_project"
       auth_kind: "service_account"
       service_account_file: "/tmp/auth.pem"
-      scopes:
-        - https://www.googleapis.com/auth/sqlservice.admin
       state: present
 '''
 

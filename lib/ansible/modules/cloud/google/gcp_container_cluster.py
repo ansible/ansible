@@ -258,7 +258,7 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a cluster
   gcp_container_cluster:
-      name: "testObject"
+      name: "test_object"
       initial_node_count: 2
       master_auth:
         username: cluster_admin
@@ -267,11 +267,9 @@ EXAMPLES = '''
         machine_type: n1-standard-4
         disk_size_gb: 500
       zone: us-central1-a
-      project: "testProject"
+      project: "test_project"
       auth_kind: "service_account"
       service_account_file: "/tmp/auth.pem"
-      scopes:
-        - https://www.googleapis.com/auth/cloud-platform
       state: present
 '''
 

@@ -21,8 +21,6 @@
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/cloud-platform
       state: present
   register: cluster
 - name: delete a node pool
@@ -34,8 +32,6 @@
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/cloud-platform
       state: absent
 #----------------------------------------------------------
 - name: create a node pool
@@ -47,8 +43,6 @@
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/cloud-platform
       state: present
   register: result
 - name: assert changed is true
@@ -65,8 +59,6 @@
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/cloud-platform
       state: present
   register: result
 - name: assert changed is false
@@ -83,8 +75,6 @@
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/cloud-platform
       state: absent
   register: result
 - name: assert changed is true
@@ -101,8 +91,6 @@
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/cloud-platform
       state: absent
   register: result
 - name: assert changed is false
@@ -119,7 +107,5 @@
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/cloud-platform
       state: absent
   register: cluster

@@ -228,7 +228,7 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a health check
   gcp_compute_health_check:
-      name: "testObject"
+      name: "test_object"
       type: TCP
       tcp_health_check:
         port_name: service-health
@@ -237,11 +237,9 @@ EXAMPLES = '''
       healthy_threshold: 10
       timeout_sec: 2
       unhealthy_threshold: 5
-      project: "testProject"
+      project: "test_project"
       auth_kind: "service_account"
       service_account_file: "/tmp/auth.pem"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
 '''
 

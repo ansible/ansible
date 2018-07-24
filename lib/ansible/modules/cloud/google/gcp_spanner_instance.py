@@ -92,17 +92,15 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a instance
   gcp_spanner_instance:
-      name: "testObject"
+      name: "test_object"
       display_name: My Spanner Instance
       node_count: 2
       labels:
         cost_center: ti-1700004
       config: regional-us-central1
-      project: "testProject"
+      project: "test_project"
       auth_kind: "service_account"
       service_account_file: "/tmp/auth.pem"
-      scopes:
-        - https://www.googleapis.com/auth/spanner.admin
       state: present
 '''
 

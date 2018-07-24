@@ -113,8 +113,6 @@ EXAMPLES = '''
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: network
 - name: create a subnetwork
@@ -123,11 +121,9 @@ EXAMPLES = '''
       region: us-west1
       network: "{{ network }}"
       ip_cidr_range: 172.16.0.0/16
-      project: "testProject"
+      project: "test_project"
       auth_kind: "service_account"
       service_account_file: "/tmp/auth.pem"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
 '''
 

@@ -377,8 +377,6 @@ EXAMPLES = '''
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: network
 - name: create a address
@@ -388,13 +386,11 @@ EXAMPLES = '''
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: address
 - name: create a instance template
   gcp_compute_instance_template:
-      name: "testObject"
+      name: "test_object"
       properties:
         disks:
         - auto_delete: true
@@ -408,11 +404,9 @@ EXAMPLES = '''
           - name: test-config
             type: ONE_TO_ONE_NAT
             nat_ip: "{{ address }}"
-      project: "testProject"
+      project: "test_project"
       auth_kind: "service_account"
       service_account_file: "/tmp/auth.pem"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
 '''
 
