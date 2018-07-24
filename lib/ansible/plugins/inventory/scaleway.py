@@ -8,8 +8,8 @@ __metaclass__ = type
 DOCUMENTATION = '''
     name: scaleway
     plugin_type: inventory
-    authors:
-      - Remy Leone <rleone@online.net>
+    author:
+      - Remy Leone (@sieben)
     short_description: Scaleway inventory source
     description:
         - Get inventory hosts from Scaleway
