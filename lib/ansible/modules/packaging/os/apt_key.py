@@ -50,6 +50,10 @@ options:
         description:
             - The keyserver to retrieve key from.
         version_added: "1.6"
+    http_proxy:
+        description:
+            - Proxy server used to reach the keyserver.
+        version_added: "2.7"
     state:
         description:
             - Ensures that the key is present (added) or absent (revoked).
@@ -211,11 +215,11 @@ def download_key(module, url):
         module.fail_json(msg="error getting key id from url: %s" % url, traceback=format_exc())
 
 
-def import_key(module, keyring, keyserver, key_id):
+def import_key(module, keyring, keyserver, key_id, http_proxy):
     if keyring:
-        cmd = "%s --keyring %s adv --keyserver %s --recv %s" % (apt_key_bin, keyring, keyserver, key_id)
+        cmd = "%s --keyring %s adv --keyserver-options http-proxy=%s --keyserver %s --recv %s" % (apt_key_bin, keyring, http_proxy, keyserver, key_id)
     else:
-        cmd = "%s adv --keyserver %s --recv %s" % (apt_key_bin, keyserver, key_id)
+        cmd = "%s adv --keyserver-options http-proxy=%s --keyserver %s --recv %s" % (apt_key_bin, http_proxy, keyserver, key_id)
     for retry in range(5):
         lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
         (rc, out, err) = module.run_command(cmd, environ_update=lang_env)
@@ -269,6 +273,7 @@ def main():
             keyring=dict(type='path'),
             validate_certs=dict(type='bool', default=True),
             keyserver=dict(type='str'),
+            http_proxy=dict(type='str', default=''),
             state=dict(type='str', default='present', choices=['absent', 'present']),
         ),
         supports_check_mode=True,
@@ -280,6 +285,7 @@ def main():
     data = module.params['data']
     filename = module.params['file']
     keyring = module.params['keyring']
+    http_proxy = module.params['http_proxy']
     state = module.params['state']
     keyserver = module.params['keyserver']
     changed = False
@@ -315,7 +321,7 @@ def main():
             if filename:
                 add_key(module, filename, keyring)
             elif keyserver:
-                import_key(module, keyring, keyserver, key_id)
+                import_key(module, keyring, keyserver, key_id, http_proxy)
             else:
                 add_key(module, "-", keyring, data)
 
