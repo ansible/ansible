@@ -299,3 +299,13 @@ class Vultr:
             resource='app',
             use_cache=True
         )
+
+    def get_region(self, region=None, key='name'):
+        value = region or self.module.params.get('region')
+
+        return self.query_resource_by_key(
+            key=key,
+            value=value,
+            resource='regions',
+            use_cache=True
+        )
