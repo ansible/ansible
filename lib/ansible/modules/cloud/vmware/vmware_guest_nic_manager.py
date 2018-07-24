@@ -56,6 +56,10 @@ options:
     - This is required if C(name) is not supplied.
     - If virtual machine does not exists, then this parameter is ignored.
     - Please note that a supplied UUID will be ignored on virtual machine creation, as VMware creates the UUID internally.
+  nic_number:
+    description:
+    - Network adapter number.
+    - example Network Adapter 2 . here nic_number is 2.
   
 '''
 EXAMPLES = '''
@@ -141,14 +145,14 @@ def update_virtual_nic_state(si, vm_obj, nic_number, new_nic_state):
 
 def get_args():
     argument_spec = vmware_argument_spec()
-    argument_spec.update(dict(hostname=dict(type='str' , required=True), 
-                              username=dict(type='str' , required=True), 
-                              password=dict(type='str' , required=True), 
-                              port=dict(type='int' , default='443'), 
-                              name=dict(type='str' , required=True), 
-                              uuid=dict(type='str' , required=True), 
-                              nic_state=dict(type='str' , default='connect', choices=['connect', 'disconnect' , 'delete']),
-                              nic_number=dict(type='str')))
+    argument_spec.update(dict(hostname=dict(type='str' , required=True),
+        username=dict(type='str', required=True),
+        password=dict(type='str', required=True),
+        port=dict(type='int', default='443'),
+        name=dict(type='str', required=True),
+        uuid=dict(type='str', required=True),
+        nic_state=dict(type='str', default='connect', choices=['connect', 'disconnect' , 'delete']),
+        nic_number=dict(type='str')))
     module = AnsibleModule(argument_spec=argument_spec)
     return module
 
