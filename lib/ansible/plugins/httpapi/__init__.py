@@ -36,8 +36,13 @@ class HttpApiBase(AnsiblePlugin):
 
         The response should be a dictionary that can be plugged into the
         headers of a request. The default implementation uses cookie data.
+        If no authentication data is found, return None
         """
-        return {'Cookie': response.info().get('Set-Cookie')}
+        cookie = response.info().get('Set-Cookie')
+        if cookie:
+            return {'Cookie': cookie}
+
+        return None
 
     @abstractmethod
     def send_request(self, data, **message_kwargs):
