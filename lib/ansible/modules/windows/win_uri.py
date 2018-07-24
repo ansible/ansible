@@ -196,7 +196,7 @@ status_code:
   type: int
   sample: 200
 status_description:
-  description: A summery of the status.
+  description: A summary of the status.
   returned: success
   type: string
   sample: OK
