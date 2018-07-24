@@ -29,7 +29,7 @@ Engine Improvements
 
 - Make ``become`` plugin based. `pr #38861 <https://github.com/ansible/ansible/pull/38861>`_ 
 - Introduce a ``live`` keyword to provide modules the ability to push intermediate (live) updates `pr #13620 <https://github.com/ansible/ansible/pull/13620>`_
-- Create a configuration object for a top level content installation path for modules, plugins, roles, etc. 
+- Create a configuration object for a top level content installation path for modules, plugins, roles, etc. `pr 42867 <https://github.com/ansible/ansible/pull/42867>`_
 - Investigate what it will take to utilise the work performed by Mitogen maintainers.
 - Provide sane connection defaults by platform `ansible_platform` `proposal #77 <https://github.com/ansible/proposals/issues/77>`_
 - Refactor connection/shell/action/terminal/become plugins to allow looser coupling and more mix-and-match behaviour.
