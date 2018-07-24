@@ -35,7 +35,7 @@ from ansible.utils.path import unfrackpath, makedirs_safe
 from ansible.utils.display import Display
 from ansible.utils.jsonrpc import JsonRpcServer
 
-import q
+
 @contextmanager
 def file_lock(lock_path):
     """
@@ -130,7 +130,6 @@ class ConnectionProcess(object):
 
         except Exception as e:
             # socket.accept() will raise EINTR if the socket.close() is called
-            q("--execption raised--")
             if hasattr(e, 'errno'):
                 if e.errno != errno.EINTR:
                     self.exception = traceback.format_exc()
