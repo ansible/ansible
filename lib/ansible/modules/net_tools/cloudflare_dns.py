@@ -354,11 +354,11 @@ class CloudflareAPI(object):
         if content:
             try:
                 result = json.loads(to_text(content, errors='surrogate_or_strict'))
-            except (json.JSONDecodeError, UnicodeError) as e:
+            except (getattr(json, 'JSONDecodeError', ValueError)) as e:
                 error_msg += "; Failed to parse API response with error {0}: {1}".format(to_native(e), content)
 
-        # received an error status but no data with details on what failed
-        if (info['status'] not in [200, 304]) and (result is None):
+        # Without a valid/parsed JSON response no more error processing can be done
+        if result is None:
             self.module.fail_json(msg=error_msg)
 
         if not result['success']:
