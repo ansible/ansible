@@ -84,4 +84,3 @@ class TestCnosEthernetModule(TestCnosModule):
         result = self.execute_module(changed=True)
         expected_result = 'Interface Configuration is Accomplished'
         self.assertEqual(result['msg'], expected_result)
-
