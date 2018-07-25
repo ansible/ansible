@@ -6,3 +6,14 @@ image:
   publisher: OpenLogic
   sku: '7.1'
   version: latest
+image_paid:
+  publisher: f5-networks
+  offer: f5-big-ip-best
+  sku: f5-bigip-virtual-edition-200m-best-hourly
+  version: latest
+plan_paid:
+  name: f5-bigip-virtual-edition-200m-best-hourly
+  product: f5-big-ip-best
+  publisher: f5-networks
+target_os_disk_size: 123
+target_os_disk_size_increased: 321

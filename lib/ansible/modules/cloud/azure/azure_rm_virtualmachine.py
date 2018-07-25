@@ -160,6 +160,10 @@ options:
             - Windows
             - Linux
         default: Linux
+    os_disk_size:
+        description:
+            - Size in GB of the OS disk
+        version_added: "2.7"
     data_disks:
         description:
             - Describes list of data disks.
@@ -280,6 +284,11 @@ options:
             promotion_code:
                 description:
                     - optional promotion code
+      accept_terms:
+          description:
+              - Accept terms for marketplace images that require it. Boolean
+          version_added: "2.7"
+          default: false
 
 extends_documentation_fragment:
     - azure
@@ -407,6 +416,35 @@ EXAMPLES = '''
     image:
       name: customimage001
       resource_group: Testing
+
+- name: Create VM with spcified OS disk size
+  azure_rm_virtualmachine:
+    resource_group: Testing
+    name: testvm10
+    admin_username: chouseknecht
+    admin_password: <your password here>
+    image:
+      offer: CentOS
+      publisher: OpenLogic
+      sku: '7.1'
+      version: latest
+    os_disk_size: 512
+
+- name: Create VM with OS and Plan, accepting the terms
+  azure_rm_virtualmachine:
+    resource_group: Testing
+    name: testvm10
+    admin_username: chouseknecht
+    admin_password: <your password here>
+    image:
+      publisher: f5-networks
+      offer: f5-big-ip-best
+      sku: f5-bigip-virtual-edition-200m-best-hourly
+      version: latest
+    plan:
+      name: f5-bigip-virtual-edition-200m-best-hourly
+      product: f5-big-ip-best
+      publisher: f5-networks
 
 - name: Power Off
   azure_rm_virtualmachine:
@@ -674,7 +712,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             restarted=dict(type='bool', default=False),
             started=dict(type='bool', default=True),
             data_disks=dict(type='list'),
-            plan=dict(type='dict')
+            plan=dict(type='dict'),
+            accept_terms=dict(type='bool', default=False)
         )
 
         self.resource_group = None
@@ -712,6 +751,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.differences = None
         self.data_disks = None
         self.plan = None
+        self.accept_terms = None
 
         self.results = dict(
             changed=False,
@@ -961,9 +1001,11 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
                     plan = None
                     if self.plan:
-                        plan = self.compute_models.Plan(name=self.plan.get('name'), product=self.plan.get('product'),
-                                                        publisher=self.plan.get('publisher'),
-                                                        promotion_code=self.plan.get('promotion_code'))
+                        plan = self.compute_models.Plan(
+                            name=self.plan.get('name'),
+                            product=self.plan.get('product'),
+                            publisher=self.plan.get('publisher'),
+                            promotion_code=self.plan.get('promotion_code'))
 
                     vm_resource = self.compute_models.VirtualMachine(
                         self.location,
@@ -1067,6 +1109,23 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                             ))
 
                         vm_resource.storage_profile.data_disks = data_disks
+
+                    # Before creating VM accept terms of plan if `accept_terms` is True
+                    if self.accept_terms == True:
+                        if not self.plan:
+                            self.fail("parameter error: plan must be specified and include name, product, and publisher")
+                        try:
+                            plan_name             = self.plan.get('name')
+                            plan_product          = self.plan.get('product')
+                            plan_publisher        = self.plan.get('publisher')
+                            
+                            term                  = self.marketplace_client.marketplace_agreements.get(
+                                                      plan_publisher, plan_product, plan_name)
+                            term.accepted         = True 
+                            agreement             = self.marketplace_client.marketplace_agreements.create(
+                                                      plan_publisher, plan_product, plan_name, term)
+                        except Exception as exc:
+                            self.fail("Error accepting terms for virtual machine {0} - {1}".format(self.name, str(exc)))
 
                     self.log("Create virtual machine with parameters:")
                     self.create_or_update_vm(vm_resource)
