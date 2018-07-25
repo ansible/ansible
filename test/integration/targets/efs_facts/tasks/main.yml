@@ -66,6 +66,7 @@
         targets:
             - subnet_id: "{{testing_subnet_a.subnet.id}}"
             - subnet_id: "{{testing_subnet_b.subnet.id}}"
+        throughput_mode: 'bursting'
       register: created_efs
 
     # ============================================================
@@ -99,8 +100,41 @@
           - efs_result.ansible_facts.efs[0].encrypted == false
           - efs_result.ansible_facts.efs[0].life_cycle_state == "available"
           - efs_result.ansible_facts.efs[0].performance_mode == "generalPurpose"
+          - efs_result.ansible_facts.efs[0].throughput_mode  == "bursting"
           - efs_result.ansible_facts.efs[0].mount_targets[0].security_groups[0] == vpc_default_sg_id
           - efs_result.ansible_facts.efs[0].mount_targets[1].security_groups[0] == vpc_default_sg_id
+
+    - assert:
+        that: "{{efs_result_assertions}}"
+
+    # ============================================================
+    - name: Update Efs to use provisioned throughput_mode
+      efs:
+        <<: *aws_connection_info
+        state: present
+        name: "{{ resource_prefix }}-test-efs"
+        tags:
+            Name: "{{ resource_prefix }}-test-tag"
+            Purpose: file-storage
+        targets:
+            - subnet_id: "{{testing_subnet_a.subnet.id}}"
+            - subnet_id: "{{testing_subnet_b.subnet.id}}"
+        throughput_mode: 'provisioned'
+        throughput_provisioned: 5.0
+
+    - pause: seconds=3
+    # ============================================================
+    - name: Check new facts with provisioned mode 
+      efs_facts:
+        name: "{{ resource_prefix }}-test-efs"
+        <<: *aws_connection_info
+      register: efs_result
+
+    - set_fact:
+        efs_result_assertions:
+          - efs_result is not changed
+          - efs_result.ansible_facts.efs[0].throughput_mode  == "bursting"
+          - efs_result.ansible_facts.efs[0].throughput_provisioned == "5.0"
 
     - assert:
         that: "{{efs_result_assertions}}"
