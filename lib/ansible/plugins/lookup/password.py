@@ -298,7 +298,7 @@ class LookupModule(LookupBase):
                             timeout += 1
                             if timeout > 20:
                                 raise AnsibleError("Password lookup cannot get the lock in 2 seconds, abort..."
-                                                   "This may caused by un-removed lockfile, you can manually remove it at %s and try again" % lockfile)
+                                                   "This may caused by un-removed lockfile, you can manually remove it from controller machine at %s and try again" % lockfile)
                     else:
                         raise
             if not writer_process:
