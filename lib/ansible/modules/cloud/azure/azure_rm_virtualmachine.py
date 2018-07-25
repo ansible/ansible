@@ -1111,17 +1111,16 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         vm_resource.storage_profile.data_disks = data_disks
 
                     # Before creating VM accept terms of plan if `accept_terms` is True
-                    if self.accept_terms == True:
+                    if self.accept_terms:
                         if not self.plan:
                             self.fail("parameter error: plan must be specified and include name, product, and publisher")
                         try:
                             plan_name             = self.plan.get('name')
                             plan_product          = self.plan.get('product')
                             plan_publisher        = self.plan.get('publisher')
-                            
                             term                  = self.marketplace_client.marketplace_agreements.get(
                                                       plan_publisher, plan_product, plan_name)
-                            term.accepted         = True 
+                            term.accepted         = True
                             agreement             = self.marketplace_client.marketplace_agreements.create(
                                                       plan_publisher, plan_product, plan_name, term)
                         except Exception as exc:
