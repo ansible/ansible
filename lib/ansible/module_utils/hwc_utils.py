@@ -14,7 +14,7 @@ except ImportError:
     HAS_REQUESTS = False
 
 try:
-    from keystoneauth1.adapter  import Adapter
+    from keystoneauth1.adapter import Adapter
     from keystoneauth1.identity import v3
     from keystoneauth1 import session
     HAS_THIRD_LIBRARIES = True
@@ -68,24 +68,6 @@ def replace_resource_dict(item, value):
         return item.get(value)
 
 
-class _LegacyJsonAdapter(Adapter):
-    """Make something that looks like an old HTTPClient.
-
-    This class references adapter.LegacyJsonAdapter
-    """
-
-    def request(self, *args, **kwargs):
-        headers = kwargs.setdefault('headers', {})
-        headers.setdefault('Accept', 'application/json')
-
-        try:
-            kwargs['json'] = kwargs.pop('body')
-        except KeyError:
-            pass
-
-        return super(_LegacyJsonAdapter, self).request(*args, **kwargs)
-
-
 # Handles all authentation and HTTP sessions for HWC API calls.
 class HwcSession(object):
     def __init__(self, module, product):
@@ -93,7 +75,7 @@ class HwcSession(object):
         self.product = product
         self._validate()
         self._session = self._credentials()
-        self._adapter = _LegacyJsonAdapter(self._session)
+        self._adapter = Adapter(self._session)
         self._endpoints = {}
         self._project_id = ""
 
@@ -185,7 +167,8 @@ class HwcSession(object):
 
     def _headers(self):
         return {
-            'User-Agent': "Huawei-Ansible-MM-%s" % self.product
+            'User-Agent': "Huawei-Ansible-MM-%s" % self.product,
+            'Accept': 'application/json',
         }
 
 
