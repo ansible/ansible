@@ -301,7 +301,7 @@ class ConfigManager(object):
                 if 'deprecated' in entry:
                     self.DEPRECATED.append((entry['name'], entry['deprecated']))
 
-        if PY2 and force_text:
+        if value is not None and PY2 and force_text:
             value = to_text(value, errors='surrogate_or_strict')
         return value, origin
 
