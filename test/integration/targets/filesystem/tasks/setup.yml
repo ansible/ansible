@@ -20,6 +20,10 @@
   - set_fact:
       btrfsprogs_installed: "{{ install_btrfs_progs is successful }}"
 
+  - set_fact:
+      btrfsprogs_installed: False
+    when: ansible_system == 'FreeBSD'
+
   - name: install btrfs progs (Ubuntu <= 16.04)
     package:
       name: btrfs-tools
