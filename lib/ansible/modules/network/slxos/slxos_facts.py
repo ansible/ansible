@@ -208,7 +208,7 @@ class Hardware(FactsBase):
             self.facts['memfree_mb'] = int(round(int(self.parse_memfree(data)) / 1024, 0))
 
     def parse_memtotal(self, data):
-        match = re.search(r'TotalMemory: (\d+)\s', data, re.M)
+        match = re.search(r'Total\s*Memory: (\d+)\s', data, re.M)
         if match:
             return match.group(1)
 
