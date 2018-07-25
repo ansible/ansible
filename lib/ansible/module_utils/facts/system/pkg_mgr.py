@@ -74,11 +74,11 @@ class PkgMgrFactCollector(BaseFactCollector):
         if collected_facts['ansible_distribution'] == 'Fedora':
             try:
                 if int(collected_facts['ansible_distribution_major_version']) < 23:
-                    for yum in [pkg_mgr for pkg_mgr in PKG_MGRS if pkg_mgr['name'] == 'yum']
+                    for yum in [pkg_mgr for pkg_mgr in PKG_MGRS if pkg_mgr['name'] == 'yum']:
                         if os.path.exists(yum['path']):
                             pkg_mgr_name = 'yum'
                 else:
-                    for dnf in [pkg_mgr for pkg_mgr in PKG_MGRS if pkg_mgr['name'] == 'dnf']
+                    for dnf in [pkg_mgr for pkg_mgr in PKG_MGRS if pkg_mgr['name'] == 'dnf']:
                         if os.path.exists(yum['path']):
                             pkg_mgr_name = 'dnf'
             except ValueError:
@@ -95,7 +95,6 @@ class PkgMgrFactCollector(BaseFactCollector):
         for pkg in PKG_MGRS:
             if os.path.exists(pkg['path']):
                 pkg_mgr_name = pkg['name']
-
 
         # Handle distro family defaults when more than one package manager is
         # installed, the ansible_fact entry should be the default package
