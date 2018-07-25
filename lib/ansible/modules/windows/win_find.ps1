@@ -174,7 +174,7 @@ Function Assert-Contains($info) {
     $valid_match = $false
 
     if ($contains -ne $null) {
-        $file_contents = [System.IO.File]::ReadAllText((Resolve-Path $info.filename))
+        $file_contents = [System.IO.File]::ReadAllText($info.path)
         foreach ($pattern in $contains) {
             if ($use_regex -eq $true) {
                 # Use -match for regex matching
@@ -234,10 +234,13 @@ Function Assert-FileStat($info) {
     $hidden_match = Assert-Hidden -info $info
     $pattern_match = Assert-Pattern -info $info
     $size_match = Assert-Size -info $info
-    $contains_match = Assert-Contains -info $info
+    
 
-    if ($age_match -and $file_type_match -and $hidden_match -and $pattern_match -and $size_match -and  $contains_match) {
-        $info
+    if ($age_match -and $file_type_match -and $hidden_match -and $pattern_match -and $size_match) {
+        # Nest Assert-Contains inside other conditions because it reads the whole file, and there is no sense in reading files which have otherwise failed assert.
+        if ((Assert-Contains -info $info)) {
+            $info
+        }
     } else {
         $false
     }
@@ -355,7 +358,7 @@ foreach ($path in $paths_to_check) {
         $file = Get-Item -Force -Path $path
         $info = Get-FileStat -file $file
     } catch {
-        Add-Warning -obj $result -message "win_find failed to check some files, these files were ignored and will not be part of the result output"
+        Add-Warning -obj $result -message "win_find failed to check some files, these files were ignored and will not be part of the result output: $_"
         break
     }
 
