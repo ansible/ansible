@@ -430,13 +430,14 @@ def main():
         running = get_running_config(module, contents)
         if replace_src:
             commands = candidate.split('\n')
-            result['commands'] =  result['updates'] = commands
+            result['commands'] = result['updates'] = commands
             if commit:
                 load_config(module, commands, replace=replace_src)
 
             result['changed'] = True
         else:
-            response = connection.get_diff(candidate=candidate, running=running, diff_match=match, diff_ignore_lines=diff_ignore_lines, path=path, diff_replace=replace)
+            response = connection.get_diff(candidate=candidate, running=running, diff_match=match, diff_ignore_lines=diff_ignore_lines, path=path,
+                                           diff_replace=replace)
             config_diff = response['config_diff']
             if config_diff:
                 commands = config_diff.split('\n')

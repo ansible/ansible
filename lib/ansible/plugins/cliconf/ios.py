@@ -139,7 +139,7 @@ class Cliconf(CliconfBase):
                     line = {'command': line}
 
                 cmd = line['command']
-                if cmd != 'end' and cmd[0] != '!' :
+                if cmd != 'end' and cmd[0] != '!':
                     results.append(self.send_command(**line))
                     requests.append(cmd)
 

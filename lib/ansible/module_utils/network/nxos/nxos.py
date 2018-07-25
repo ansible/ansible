@@ -188,7 +188,8 @@ class Cli:
 
     def get_diff(self, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
         conn = self._get_connection()
-        return conn.get_diff(candidate=candidate, running=running, diff_match=diff_match, diff_ignore_lines=diff_ignore_lines, path=path, diff_replace=diff_replace)
+        return conn.get_diff(candidate=candidate, running=running, diff_match=diff_match, diff_ignore_lines=diff_ignore_lines, path=path,
+                             diff_replace=diff_replace)
 
     def get_capabilities(self):
         """Returns platform info of the remove device
