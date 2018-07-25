@@ -1,0 +1,5 @@
+---
+minor_changes:
+  - Added the from_yaml_all filter to parse multi-document yaml strings.
+    Refer to the appropriate entry which as been added to user_guide
+    playbooks_filters.rst document.
