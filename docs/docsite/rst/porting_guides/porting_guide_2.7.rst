@@ -108,6 +108,19 @@ Noteworthy module changes
   escape any double quotes in the value. This is no longer required and the escaping may cause further
   issues.
 
+* The ``win_uri`` module has removed the deprecated option ``use_basic_parsing``, since Ansible 2.5 this option did
+  nothing
+
+* The ``win_scheduled_task`` module has removed the following deprecated options:
+
+  * ``executable``, use ``path`` in an actions entry instead
+  * ``argument``, use ``arguments`` in an actions entry instead
+  * ``store_password``, set ``logon_type: password`` instead
+  * ``days_of_week``, use ``monthlydow`` in a triggers entry instead
+  * ``frequency``, use ``type``, in a triggers entry instead
+  * ``time``, use ``start_boundary`` in a triggers entry instead
+
+
 Plugins
 =======
 

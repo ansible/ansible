@@ -32,7 +32,6 @@ $maximum_redirection = Get-AnsibleParam -obj $params -name "maximum_redirection"
 $return_content = Get-AnsibleParam -obj $params -name "return_content" -type "bool" -default $false
 $status_code = Get-AnsibleParam -obj $params -name "status_code" -type "list" -default @(200)
 $timeout = Get-AnsibleParam -obj $params -name "timeout" -type "int" -default 30
-$use_basic_parsing = Get-AnsibleParam -obj $params -name "use_basic_parsing" -type "bool"
 $validate_certs = Get-AnsibleParam -obj $params -name "validate_certs" -type "bool" -default $true
 $client_cert = Get-AnsibleParam -obj $params -name "client_cert" -type "path"
 $client_cert_password = Get-AnsibleParam -obj $params -name "client_cert_password" -type "str"
@@ -50,10 +49,6 @@ if ($creates -and (Test-AnsiblePath -Path $creates)) {
 if ($removes -and -not (Test-AnsiblePath -Path $removes)) {
     $result.skipped = $true
     Exit-Json -obj $result -message "The 'removes' file or directory ($removes) does not exist."
-}
-
-if ($use_basic_parsing) {
-    Add-DeprecationWarning -obj $result -message "Since Ansible 2.5, use_basic_parsing does not change any behaviour, this option will be removed" -version 2.7
 }
 
 if ($status_code) {
