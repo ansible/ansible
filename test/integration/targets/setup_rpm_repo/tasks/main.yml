@@ -33,7 +33,7 @@
       - createrepo  # used by el6 version of rpmfluff
     when:
       - ansible_distribution not in ['Fedora']
-      - ansible_python["version"]["major"] == 2
+      - ansible_python["version"]["major"] == 3
 
   - name: Install rpmfluff and deps
     package:
