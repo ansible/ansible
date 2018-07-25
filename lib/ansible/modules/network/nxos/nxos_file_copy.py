@@ -91,8 +91,6 @@ options:
         and written to this directory on the NXOS device. If the directory does not exist, it
         will be created under the file_system. This is an optional parameter.
       - When (file_pull is False), this not used.
-    type: bool
-    default: False
     version_added: "2.7"
   file_pull_timeout:
     description:
