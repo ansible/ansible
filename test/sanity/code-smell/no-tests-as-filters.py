@@ -44,6 +44,8 @@ TEST_MAP = {
     'skip': 'skipped',
 }
 
+IGNORED_TESTS = ('list')
+
 
 FILTER_RE = re.compile(r'((.+?)\s*(?P<left>[\w \.\'"]+)(\s*)\|(\s*)(?P<filter>\w+))')
 
@@ -63,6 +65,9 @@ def main():
             test_name = TEST_MAP.get(filter_name, filter_name)
 
             if test_name not in TESTS:
+                continue
+
+            if test_name in IGNORED_TESTS:
                 continue
 
             left = match.group('left').strip()

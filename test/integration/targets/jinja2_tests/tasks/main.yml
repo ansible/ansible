@@ -1,0 +1,470 @@
+# Copyright: (c) 2018, Dag Wieers (@dagwieers) <dag@wieers.com>
+
+# Validate Jinja2 tests and behaviour
+
+- tasks: Verify Jinja2 value comparison
+  assert:
+    that:
+    - 0 == 0
+    - 0 == 0.0
+    - 0 != 1
+    - 0 != 1.0
+    - 0 == false  # This behaviour is potentially dangerous
+    - 0 == False  # This behaviour is potentially dangerous
+    - 0 != true
+    - 0 != True
+    - 0 != none
+    - 0 != None
+    - 0 is defined
+    - 0 is not undefined
+    - 0 is not none
+    - 0 is not false
+    - 0 is not true
+    - 0 is not boolean
+    - 0 is number
+    - 0 is integer
+    - 0 is not float
+    - 0 is not string
+    - 0 is not iterable
+    - 0 is not sequence
+    - 0 is not list
+    - 0 is not mapping
+    - 0 is not sameas none
+    - 0 is not sameas false
+    - 0 is not sameas true
+
+    - 0.0 == 0
+    - 0.0 == 0.0
+    - 0.0 != 1
+    - 0.0 != 1.0
+    - 0.0 == false  # This behaviour is potentially dangerous
+    - 0.0 == False  # This behaviour is potentially dangerous
+    - 0.0 != true
+    - 0.0 != True
+    - 0.0 != none
+    - 0.0 != None
+    - 0.0 is defined
+    - 0.0 is not undefined
+    - 0.0 is not none
+    - 0.0 is not false
+    - 0.0 is not true
+    - 0.0 is not boolean
+    - 0.0 is number
+    - 0.0 is not integer
+    - 0.0 is float
+    - 0.0 is not string
+    - 0.0 is not iterable
+    - 0.0 is not sequence
+    - 0.0 is not list
+    - 0.0 is not mapping
+    - 0.0 is not sameas none
+    - 0.0 is not sameas false
+    - 0.0 is not sameas true
+
+    - 1 != 0
+    - 1 != 0.0
+    - 1 == 1
+    - 1 == 1.0
+    - 1 != false
+    - 1 != False
+    - 1 == true  # This behaviour is potentially dangerous
+    - 1 == True  # This behaviour is potentially dangerous
+    - 1 != none
+    - 1 != None
+    - 1 is defined
+    - 1 is not undefined
+    - 1 is not none
+    - 1 is not false
+    - 1 is not true
+    - 1 is not boolean
+    - 1 is number
+    - 1 is integer
+    - 1 is not float
+    - 1 is not string
+    - 1 is not iterable
+    - 1 is not sequence
+    - 1 is not list
+    - 1 is not mapping
+    - 1 is not sameas none
+    - 1 is not sameas false
+    - 1 is not sameas true
+
+    - 1.0 != 0
+    - 1.0 != 0.0
+    - 1.0 == 1
+    - 1.0 == 1.0
+    - 1.0 != false
+    - 1.0 != False
+    - 1.0 == true  # This behaviour is potentially dangerous
+    - 1.0 == True  # This behaviour is potentially dangerous
+    - 1.0 != none
+    - 1.0 != None
+    - 1.0 is defined
+    - 1.0 is not undefined
+    - 1.0 is not none
+    - 1.0 is not false
+    - 1.0 is not true
+    - 1.0 is not boolean
+    - 1.0 is number
+    - 1.0 is not integer
+    - 1.0 is float
+    - 1.0 is not string
+    - 1.0 is not iterable
+    - 1.0 is not sequence
+    - 1.0 is not list
+    - 1.0 is not mapping
+    - 1.0 is not sameas none
+    - 1.0 is not sameas false
+    - 1.0 is not sameas true
+
+    - true != 0
+    - true != 0.0
+    - true == 1  # This behaviour is potentially dangerous
+    - true == 1.0  # This behaviour is potentially dangerous
+    - true != false
+    - true != False
+    - true == true
+    - true == True
+    - true != none
+    - true != None
+    - true is defined
+    - true is not undefined
+    - true is not none
+    - true is not false
+    - true is true
+    - true is boolean
+    - true is number  # This behaviour is potentially dangerous
+    - true is not integer
+    - true is not float
+    - true is not string
+    - true is not iterable
+    - true is not sequence
+    - true is not list
+    - true is not mapping
+    - true is not sameas none
+    - true is not sameas false
+    - true is sameas true
+
+    - True != 0
+    - True != 0.0
+    - True == 1  # This behaviour is potentially dangerous
+    - True == 1.0  # This behaviour is potentially dangerous
+    - True != false
+    - True != False
+    - True == true
+    - True == True
+    - True != none
+    - True != None
+    - True is defined
+    - True is not undefined
+    - True is not none
+    - True is not false
+    - True is true
+    - True is boolean
+    - True is number  # This behaviour is potentially dangerous
+    - True is not integer
+    - True is not float
+    - True is not string
+    - True is not iterable
+    - True is not sequence
+    - True is not list
+    - True is not mapping
+    - True is not sameas none
+    - True is not sameas false
+    - True is sameas true
+
+    - false == 0  # This behaviour is potentially dangerous
+    - false == 0.0  # This behaviour is potentially dangerous
+    - false != 1
+    - false != 1.0
+    - false == false
+    - false == False
+    - false != true
+    - false != True
+    - false != none
+    - false != None
+    - false is defined
+    - false is not undefined
+    - false is not none
+    - false is false
+    - false is not true
+    - false is boolean
+    - false is number  # This behaviour is potentially dangerous
+    - false is not integer
+    - false is not float
+    - false is not string
+    - false is not iterable
+    - false is not sequence
+    - false is not list
+    - false is not mapping
+    - false is not sameas none
+    - false is sameas false
+    - false is not sameas true
+
+    - False == 0  # This behaviour is potentially dangerous
+    - False == 0.0  # This behaviour is potentially dangerous
+    - False != 1
+    - False != 1.0
+    - False == false
+    - False == False
+    - False != true
+    - False != True
+    - False != none
+    - False != None
+    - False is defined
+    - False is not undefined
+    - False is not none
+    - False is false
+    - False is not true
+    - False is boolean
+    - False is number  # This behaviour is potentially dangerous
+    - False is not integer
+    - False is not float
+    - False is not string
+    - False is not iterable
+    - False is not sequence
+    - False is not list
+    - False is not mapping
+    - False is not sameas none
+    - False is sameas false
+    - False is not sameas true
+
+    - none != 0
+    - none != 0.0
+    - none != 1
+    - none != 1.0
+    - none != false
+    - none != False
+    - none != true
+    - none != True
+    - none == none
+    - none == None
+    - none is defined
+    - none is not undefined
+    - none is none
+    - none is not false
+    - none is not true
+    - none is not boolean
+    - none is not number
+    - none is not integer
+    - none is not float
+    - none is not string
+    - none is not iterable
+    - none is not sequence
+    - none is not list
+    - none is not mapping
+    - none is sameas none
+    - none is not sameas false
+    - none is not sameas true
+
+    - None != 0
+    - None != 0.0
+    - None != 1
+    - None != 1.0
+    - None != false
+    - None != False
+    - None != true
+    - None != True
+    - None == none
+    - None == None
+    - None is none
+    - None is not false
+    - None is not true
+    - None is not boolean
+    - None is not number
+    - None is not integer
+    - None is not float
+    - None is not string
+    - None is not iterable
+    - None is not sequence
+    - None is not list
+    - None is not mapping
+    - None is sameas none
+    - None is not sameas false
+    - None is not sameas true
+
+    - "'yes' != 0"
+    - "'yes' != 0.0"
+    - "'yes' != 1"
+    - "'yes' != 1.0"
+    - "'yes' != false"
+    - "'yes' != False"
+    - "'yes' != true"
+    - "'yes' != True"
+    - "'yes' != none"
+    - "'yes' != None"
+    - "'yes' is defined"
+    - "'yes' is not undefined"
+    - "'yes' is not none"
+    - "'yes' is not false"
+    - "'yes' is not true"
+    - "'yes' is not boolean"
+    - "'yes' is not number"
+    - "'yes' is not integer"
+    - "'yes' is not float"
+    - "'yes' is string"
+    - "'yes' is iterable"
+    - "'yes' is sequence"  # This behaviour is potentially dangerous
+    - "'yes' is not list"
+    - "'yes' is not mapping"
+    - "'yes' is not sameas none"
+    - "'yes' is not sameas false"
+    - "'yes' is not sameas true"
+
+    - "'no' != 0"
+    - "'no' != 0.0"
+    - "'no' != 1"
+    - "'no' != 1.0"
+    - "'no' != false"
+    - "'no' != False"
+    - "'no' != true"
+    - "'no' != True"
+    - "'no' != none"
+    - "'no' != None"
+    - "'no' is defined"
+    - "'no' is not undefined"
+    - "'no' is not none"
+    - "'no' is not false"
+    - "'no' is not true"
+    - "'no' is not boolean"
+    - "'no' is not number"
+    - "'no' is not integer"
+    - "'no' is not float"
+    - "'no' is string"
+    - "'no' is iterable"
+    - "'no' is sequence"  # This behaviour is potentially dangerous
+    - "'no' is not list"
+    - "'no' is not mapping"
+    - "'no' is not sameas none"
+    - "'no' is not sameas false"
+    - "'no' is not sameas true"
+
+    - '[] != 0'
+    - '[] != 0.0'
+    - '[] != 1'
+    - '[] != 1.0'
+    - '[] != false'
+    - '[] != False'
+    - '[] != true'
+    - '[] != True'
+    - '[] != none'
+    - '[] != None'
+    - '[] is defined'
+    - '[] is not undefined'
+    - '[] is not none'
+    - '[] is not false'
+    - '[] is not true'
+    - '[] is not boolean'
+    - '[] is not number'
+    - '[] is not integer'
+    - '[] is not float'
+    - '[] is not string'
+    - '[] is iterable'
+    - '[] is sequence'
+    - '[] is list'
+    - '[] is not mapping'
+    - '[] is not sameas none'
+    - '[] is not sameas false'
+    - '[] is not sameas true'
+
+    - '[1, 2] != 0'
+    - '[1, 2] != 0.0'
+    - '[1, 2] != 1'
+    - '[1, 2] != 1.0'
+    - '[1, 2] != false'
+    - '[1, 2] != False'
+    - '[1, 2] != true'
+    - '[1, 2] != True'
+    - '[1, 2] != none'
+    - '[1, 2] != None'
+    - '[1, 2] is defined'
+    - '[1, 2] is not undefined'
+    - '[1, 2] is not none'
+    - '[1, 2] is not false'
+    - '[1, 2] is not true'
+    - '[1, 2] is not boolean'
+    - '[1, 2] is not number'
+    - '[1, 2] is not integer'
+    - '[1, 2] is not float'
+    - '[1, 2] is not string'
+    - '[1, 2] is iterable'
+    - '[1, 2] is sequence'
+    - '[1, 2] is list'
+    - '[1, 2] is not mapping'
+    - '[1, 2] is not sameas none'
+    - '[1, 2] is not sameas false'
+    - '[1, 2] is not sameas true'
+
+    - '{} != 0'
+    - '{} != 0.0'
+    - '{} != 1'
+    - '{} != 1.0'
+    - '{} != false'
+    - '{} != False'
+    - '{} != true'
+    - '{} != True'
+    - '{} != none'
+    - '{} != None'
+    - '{} is defined'
+    - '{} is not undefined'
+    - '{} is not none'
+    - '{} is not false'
+    - '{} is not true'
+    - '{} is not boolean'
+    - '{} is not number'
+    - '{} is not integer'
+    - '{} is not float'
+    - '{} is not string'
+    - '{} is iterable'
+    - '{} is sequence'  # This behaviour is potentially dangerous
+    - '{} is not list'
+    - '{} is mapping'
+    - '{} is not sameas none'
+    - '{} is not sameas false'
+    - '{} is not sameas true'
+
+    - "{'foo': 'bar'} != 0"
+    - "{'foo': 'bar'} != 0.0"
+    - "{'foo': 'bar'} != 1"
+    - "{'foo': 'bar'} != 1.0"
+    - "{'foo': 'bar'} != false"
+    - "{'foo': 'bar'} != False"
+    - "{'foo': 'bar'} != true"
+    - "{'foo': 'bar'} != True"
+    - "{'foo': 'bar'} != none"
+    - "{'foo': 'bar'} != None"
+    - "{'foo': 'bar'} is defined"
+    - "{'foo': 'bar'} is not undefined"
+    - "{'foo': 'bar'} is not none"
+    - "{'foo': 'bar'} is not false"
+    - "{'foo': 'bar'} is not true"
+    - "{'foo': 'bar'} is not boolean"
+    - "{'foo': 'bar'} is not number"
+    - "{'foo': 'bar'} is not integer"
+    - "{'foo': 'bar'} is not float"
+    - "{'foo': 'bar'} is not string"
+    - "{'foo': 'bar'} is iterable"
+    - "{'foo': 'bar'} is sequence"  # This behaviour is potentially dangerous
+    - "{'foo': 'bar'} is not list"
+    - "{'foo': 'bar'} is mapping"
+    - "{'foo': 'bar'} is not sameas none"
+    - "{'foo': 'bar'} is not sameas false"
+    - "{'foo': 'bar'} is not sameas true"
+
+    - null is not defined
+    - null is undefined
+    - null is not none
+    - null is not false
+    - null is not true
+    - null is not boolean
+    - null is not number
+    - null is not integer
+    - null is not float
+    - null is not string
+    #- null is not iterable  # This fails as null is undefined !
+    - null is not sequence
+    - null is not list
+    - null is not mapping
+    - null is not sameas none
+    - null is not sameas false
+    - null is not sameas true

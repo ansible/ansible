@@ -21,7 +21,8 @@ __metaclass__ = type
 
 import re
 import operator as py_operator
-from collections import MutableMapping, MutableSequence
+from ansible.module_utils.six import integer_types, string_types
+from collections import Mapping, MutableMapping, MutableSequence, Sequence
 from distutils.version import LooseVersion, StrictVersion
 
 from ansible import errors
@@ -78,12 +79,50 @@ def finished(result):
         raise errors.AnsibleFilterError("The 'finished' test expects a dictionary")
     if 'finished' in result:
         # For async tasks return status
-        # NOTE: The value of finished it 0 or 1, not False or True :-/
+        # NOTE: The value of finished is 0 or 1, not False or True :-/
         return result.get('finished', 0) == 1
     else:
         # For non-async tasks warn user, but return as finished
         display.warning("The 'finished' test expects an async task, but a non-async task was tested")
         return True
+
+
+def test_boolean(value):
+    ''' Return true if the object is a boolean value '''
+    return value is True or value is False
+
+
+def test_false(value):
+    ''' Return true if the object is False '''
+    return value is False
+
+
+def test_true(value):
+    ''' Return true if the object is True '''
+    return value is True
+
+
+# NOTE: The existing Jinja2 'number' test also matches booleans and floats
+def test_integer(value):
+    ''' Return true if the object is an integer '''
+    return isinstance(value, integer_types) and value is not True and value is not False
+
+
+# NOTE: The existing Jinja2 'number' test also matches booleans and integers
+def test_float(value):
+    ''' Return true if the object is a float '''
+    return isinstance(value, float)
+
+
+# NOTE: The existing Jinja2 'sequence' test also matches strings and dictionaries
+def test_list(value):
+    ''' Return true if the object is a list or tuple '''
+    return isinstance(value, Sequence) and not isinstance(value, string_types)
+
+
+def test_mapping(value):
+    ''' Return true if the object is a mapping (dict etc.).'''
+    return isinstance(value, Mapping)
 
 
 def regex(value='', pattern='', ignorecase=False, multiline=False, match_type='search'):
@@ -161,6 +200,15 @@ class TestModule(object):
 
             # async testing
             'finished': finished,
+
+            # type testing
+            'boolean': test_boolean,
+            'false': test_false,
+            'true': test_true,
+            'integer': test_integer,
+            'float': test_float,
+            'list': test_list,
+            'mapping': test_mapping,  # Required for Jinja2 < 2.6
 
             # regex
             'match': match,
