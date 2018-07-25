@@ -186,8 +186,36 @@ EXAMPLES = '''
 # Install (Bottle) while ensuring the umask is 0022 (to ensure other users can use it)
 - pip:
     name: bottle
-    umask: 0022
+    umask: "0022"
   become: True
+'''
+
+RETURN = '''
+cmd:
+  description: pip command used by the module
+  returned: success
+  type: string
+  sample: pip2 install ansible six
+name:
+  description: list of python modules targetted by pip
+  returned: success
+  type: list
+  sample: ['ansible', 'six']
+requirements:
+  description: Path to the requirements file
+  returned: success, if a requirements file was provided
+  type: string
+  sample: "/srv/git/project/requirements.txt"
+version:
+  description: Version of the package specified in 'name'
+  returned: success, if a name and version were provided
+  type: string
+  sample: "2.5.1"
+virtualenv:
+  description: Path to the virtualenv
+  returned: success, if a virtualenv path was provided
+  type: string
+  sample: "/tmp/virtualenv"
 '''
 
 import os
@@ -219,7 +247,7 @@ def _get_cmd_options(module, cmd):
 
 
 def _get_full_name(name, version=None):
-    if version is None:
+    if version is None or version == "":
         resp = name
     else:
         resp = name + '==' + version
@@ -342,6 +370,53 @@ def _get_package_info(module, package, env=None):
     return formatted_dep
 
 
+def setup_virtualenv(module, env, chdir, out, err):
+    if module.check_mode:
+        module.exit_json(changed=True)
+
+    cmd = module.params['virtualenv_command']
+    if os.path.basename(cmd) == cmd:
+        cmd = module.get_bin_path(cmd, True)
+
+    if module.params['virtualenv_site_packages']:
+        cmd += ' --system-site-packages'
+    else:
+        cmd_opts = _get_cmd_options(module, cmd)
+        if '--no-site-packages' in cmd_opts:
+            cmd += ' --no-site-packages'
+
+    virtualenv_python = module.params['virtualenv_python']
+    # -p is a virtualenv option, not compatible with pyenv or venv
+    # this if validates if the command being used is not any of them
+    if not any(ex in module.params['virtualenv_command'] for ex in ('pyvenv', '-m venv')):
+        if virtualenv_python:
+            cmd += ' -p%s' % virtualenv_python
+        elif PY3:
+            # Ubuntu currently has a patch making virtualenv always
+            # try to use python2.  Since Ubuntu16 works without
+            # python2 installed, this is a problem.  This code mimics
+            # the upstream behaviour of using the python which invoked
+            # virtualenv to determine which python is used inside of
+            # the virtualenv (when none are specified).
+            cmd += ' -p%s' % sys.executable
+
+    # if venv or pyvenv are used and virtualenv_python is defined, then
+    # virtualenv_python is ignored, this has to be acknowledged
+    elif module.params['virtualenv_python']:
+        module.fail_json(
+            msg='virtualenv_python should not be used when'
+                ' using the venv module or pyvenv as virtualenv_command'
+        )
+
+    cmd = "%s %s" % (cmd, env)
+    rc, out_venv, err_venv = module.run_command(cmd, cwd=chdir)
+    out += out_venv
+    err += err_venv
+    if rc != 0:
+        _fail(module, cmd, out, err)
+    return out, err
+
+
 def main():
     state_map = dict(
         present='install',
@@ -377,7 +452,6 @@ def main():
     version = module.params['version']
     requirements = module.params['requirements']
     extra_args = module.params['extra_args']
-    virtualenv_python = module.params['virtualenv_python']
     chdir = module.params['chdir']
     umask = module.params['umask']
     env = module.params['virtualenv']
@@ -410,48 +484,7 @@ def main():
         if env:
             if not os.path.exists(os.path.join(env, 'bin', 'activate')):
                 venv_created = True
-                if module.check_mode:
-                    module.exit_json(changed=True)
-
-                cmd = module.params['virtualenv_command']
-                if os.path.basename(cmd) == cmd:
-                    cmd = module.get_bin_path(cmd, True)
-
-                if module.params['virtualenv_site_packages']:
-                    cmd += ' --system-site-packages'
-                else:
-                    cmd_opts = _get_cmd_options(module, cmd)
-                    if '--no-site-packages' in cmd_opts:
-                        cmd += ' --no-site-packages'
-
-                # -p is a virtualenv option, not compatible with pyenv or venv
-                # this if validates if the command being used is not any of them
-                if not any(ex in module.params['virtualenv_command'] for ex in ('pyvenv', '-m venv')):
-                    if virtualenv_python:
-                        cmd += ' -p%s' % virtualenv_python
-                    elif PY3:
-                        # Ubuntu currently has a patch making virtualenv always
-                        # try to use python2.  Since Ubuntu16 works without
-                        # python2 installed, this is a problem.  This code mimics
-                        # the upstream behaviour of using the python which invoked
-                        # virtualenv to determine which python is used inside of
-                        # the virtualenv (when none are specified).
-                        cmd += ' -p%s' % sys.executable
-
-                # if venv or pyvenv are used and virtualenv_python is defined, then
-                # virtualenv_python is ignored, this has to be acknowledged
-                elif module.params['virtualenv_python']:
-                    module.fail_json(
-                        msg='virtualenv_python should not be used when'
-                            ' using the venv module or pyvenv as virtualenv_command'
-                    )
-
-                cmd = "%s %s" % (cmd, env)
-                rc, out_venv, err_venv = module.run_command(cmd, cwd=chdir)
-                out += out_venv
-                err += err_venv
-                if rc != 0:
-                    _fail(module, cmd, out, err)
+                out, err = setup_virtualenv(module, env, chdir, out, err)
 
         pip = _get_pip(module, env, module.params['executable'])
 
@@ -491,9 +524,13 @@ def main():
         if name:
             for pkg in name:
                 cmd += ' %s' % _get_full_name(pkg, version)
+        elif requirements:
+            cmd += ' -r %s' % requirements
         else:
-            if requirements:
-                cmd += ' -r %s' % requirements
+            module.exit_json(
+                changed=False,
+                warnings=["No valid name or requirements file found."],
+            )
 
         if module.check_mode:
             if extra_args or requirements or state == 'latest' or not name:

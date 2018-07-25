@@ -12,6 +12,12 @@ test="$1"
 docker images ansible/ansible
 docker ps
 
+for container in $(docker ps --format '{{.Image}} {{.ID}}' | grep -v '^drydock/' | sed 's/^.* //'); do
+    docker rm -f "${container}"
+done
+
+docker ps
+
 if [ -d /home/shippable/cache/ ]; then
     ls -la /home/shippable/cache/
 fi
@@ -51,6 +57,14 @@ elif [[ "${COMMIT_MESSAGE}" =~ ci_complete ]]; then
 else
     # enable change detection (default behavior)
     export CHANGED="--changed"
+fi
+
+if [ "${IS_PULL_REQUEST:-}" == "true" ]; then
+    # run unstable tests which are targeted by focused changes on PRs
+    export UNSTABLE="--allow-unstable-changed"
+else
+    # do not run unstable tests outside PRs
+    export UNSTABLE=""
 fi
 
 # remove empty core/extras module directories from PRs created prior to the repo-merge

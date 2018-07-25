@@ -41,14 +41,14 @@ options:
   infinite:
     description:
     - Set True if the volume is an Infinite Volume.
-    choices: ['True', 'False']
-    default: 'False'
+    type: bool
+    default: 'no'
 
   online:
     description:
     - Whether the specified volume is online, or not.
-    choices: ['True', 'False']
-    default: 'True'
+    type: bool
+    default: 'yes'
 
   aggregate_name:
     description:
@@ -68,7 +68,26 @@ options:
     description:
     - Name of the vserver to use.
     required: true
-    default: None
+
+  junction_path:
+    description:
+    - Junction path where to mount the volume
+    required: false
+    version_added: '2.6'
+
+  export_policy:
+    description:
+    - Export policy to set for the specified junction path.
+    required: false
+    default: default
+    version_added: '2.6'
+
+  snapshot_policy:
+    description:
+    - Snapshot policy to set for the specified volume.
+    required: false
+    default: default
+    version_added: '2.6'
 
 '''
 
@@ -86,6 +105,9 @@ EXAMPLES = """
         hostname: "{{ netapp_hostname }}"
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"
+        junction_path: /ansibleVolume
+        export_policy: all_nfs_networks
+        snapshot_policy: daily
 
     - name: Make FlexVol offline
       na_cdot_volume:
@@ -143,6 +165,9 @@ class NetAppCDOTVolume(object):
                                     'pb', 'eb', 'zb', 'yb'], type='str'),
             aggregate_name=dict(type='str'),
             vserver=dict(required=True, type='str', default=None),
+            junction_path=dict(required=False, type='str', default=None),
+            export_policy=dict(required=False, type='str', default='default'),
+            snapshot_policy=dict(required=False, type='str', default='default'),
         ))
 
         self.module = AnsibleModule(
@@ -162,6 +187,9 @@ class NetAppCDOTVolume(object):
         self.is_online = p['is_online']
         self.size_unit = p['size_unit']
         self.vserver = p['vserver']
+        self.junction_path = p['junction_path']
+        self.export_policy = p['export_policy']
+        self.snapshot_policy = p['snapshot_policy']
 
         if p['size'] is not None:
             self.size = p['size'] * self._size_unit_map[self.size_unit]
@@ -227,10 +255,19 @@ class NetAppCDOTVolume(object):
         return return_value
 
     def create_volume(self):
+        create_parameters = {'volume': self.name,
+                             'containing-aggr-name': self.aggregate_name,
+                             'size': str(self.size),
+                             }
+        if self.junction_path:
+            create_parameters['junction-path'] = str(self.junction_path)
+        if self.export_policy != 'default':
+            create_parameters['export-policy'] = str(self.export_policy)
+        if self.snapshot_policy != 'default':
+            create_parameters['snapshot-policy'] = str(self.snapshot_policy)
+
         volume_create = netapp_utils.zapi.NaElement.create_node_with_children(
-            'volume-create', **{'volume': self.name,
-                                'containing-aggr-name': self.aggregate_name,
-                                'size': str(self.size)})
+            'volume-create', **create_parameters)
 
         try:
             self.server.invoke_successfully(volume_create,

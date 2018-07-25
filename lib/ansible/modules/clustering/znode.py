@@ -30,28 +30,21 @@ options:
     value:
         description:
             - The value assigned to the znode.
-        default: None
-        required: false
     op:
         description:
             - An operation to perform. Mutually exclusive with state.
-        default: None
-        required: false
     state:
         description:
             - The state to enforce. Mutually exclusive with op.
-        default: None
-        required: false
     timeout:
         description:
             - The amount of time to wait for a node to appear.
         default: 300
-        required: false
     recursive:
         description:
             - Recursively delete node and all its children.
-        default: False
-        required: false
+        type: bool
+        default: 'no'
         version_added: "2.1"
 requirements:
     - kazoo >= 2.1
@@ -111,6 +104,7 @@ except ImportError:
     KAZOO_INSTALLED = False
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_bytes
 
 
 def main():
@@ -232,13 +226,13 @@ class KazooCommandProxy():
         if self.exists(path):
             (current_value, zstat) = self.zk.get(path)
             if value != current_value:
-                self.zk.set(path, value)
+                self.zk.set(path, to_bytes(value))
                 return True, {'changed': True, 'msg': 'Updated the znode value.', 'znode': path,
                               'value': value}
             else:
                 return True, {'changed': False, 'msg': 'No changes were necessary.', 'znode': path, 'value': value}
         else:
-            self.zk.create(path, value, makepath=True)
+            self.zk.create(path, to_bytes(value), makepath=True)
             return True, {'changed': True, 'msg': 'Created a new znode.', 'znode': path, 'value': value}
 
     def _wait(self, path, timeout, interval=5):

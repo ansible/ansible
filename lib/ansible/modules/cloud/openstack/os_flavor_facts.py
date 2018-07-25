@@ -11,7 +11,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: os_flavor_facts
@@ -30,14 +29,12 @@ notes:
     - This module creates a new top-level C(openstack_flavors) fact, which
       contains a list of unsorted flavors.
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 options:
    name:
      description:
        - A flavor name. Cannot be used with I(ram) or I(vcpus) or I(ephemeral).
-     required: false
-     default: None
    ram:
      description:
        - "A string used for filtering flavors based on the amount of RAM
@@ -52,31 +49,28 @@ options:
          prefix the amount of RAM with one of these acceptable range values:
          '<', '>', '<=', '>='. These values represent less than, greater than,
          less than or equal to, and greater than or equal to, respectively."
-     required: false
-     default: false
+     type: bool
+     default: 'no'
    vcpus:
      description:
        - A string used for filtering flavors based on the number of virtual
          CPUs desired. Format is the same as the I(ram) parameter.
-     required: false
-     default: false
+     type: bool
+     default: 'no'
    limit:
      description:
        - Limits the number of flavors returned. All matching flavors are
          returned by default.
-     required: false
-     default: None
    ephemeral:
      description:
        - A string used for filtering flavors based on the amount of ephemeral
          storage. Format is the same as the I(ram) parameter
-     required: false
-     default: false
+     type: bool
+     default: 'no'
      version_added: "2.3"
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 extends_documentation_fragment: openstack
 '''
 
@@ -171,16 +165,9 @@ openstack_flavors:
             sample: true
 '''
 
-from distutils.version import StrictVersion
-
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def main():
@@ -200,33 +187,28 @@ def main():
     )
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
     name = module.params['name']
     vcpus = module.params['vcpus']
     ram = module.params['ram']
     ephemeral = module.params['ephemeral']
     limit = module.params['limit']
 
+    filters = {}
+    if vcpus:
+        filters['vcpus'] = vcpus
+    if ram:
+        filters['ram'] = ram
+    if ephemeral:
+        filters['ephemeral'] = ephemeral
+
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.openstack_cloud(**module.params)
         if name:
             flavors = cloud.search_flavors(filters={'name': name})
 
         else:
             flavors = cloud.list_flavors()
-            filters = {}
-            if vcpus:
-                filters['vcpus'] = vcpus
-            if ram:
-                filters['ram'] = ram
-            if ephemeral:
-                filters['ephemeral'] = ephemeral
             if filters:
-                # Range search added in 1.5.0
-                if StrictVersion(shade.__version__) < StrictVersion('1.5.0'):
-                    module.fail_json(msg="Shade >= 1.5.0 needed for this functionality")
                 flavors = cloud.range_search(flavors, filters)
 
         if limit is not None:
@@ -235,7 +217,7 @@ def main():
         module.exit_json(changed=False,
                          ansible_facts=dict(openstack_flavors=flavors))
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

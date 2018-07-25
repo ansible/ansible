@@ -9,13 +9,11 @@
     parents:
       - interface Loopback999
     match: none
-    authorize: yes
 
 - name: configure device with defaults included
   ios_config:
     src: defaults/config.j2
     defaults: yes
-    authorize: yes
   register: result
 
 - debug: var=result
@@ -30,7 +28,6 @@
   ios_config:
     src: defaults/config.j2
     defaults: yes
-    authorize: yes
   register: result
 
 - debug: var=result
@@ -44,14 +41,12 @@
   ios_config:
     lines:
         - mac-address-table notification mac-move
-    authorize: yes
   ignore_errors: yes
 
 - name: show interfaces brief to ensure deivce goes to valid prompt
   ios_command:
     commands:
       - show interfaces
-    authorize: yes
   register: result
 
 - assert:

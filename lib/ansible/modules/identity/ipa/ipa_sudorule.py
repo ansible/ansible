@@ -34,6 +34,9 @@ options:
     - List of commands assigned to the rule.
     - If an empty list is passed all commands will be removed from the rule.
     - If option is omitted commands will not be checked or changed.
+  description:
+    description:
+    - Description of the sudo rule.
   host:
     description:
     - List of hosts assigned to the rule.
@@ -52,6 +55,19 @@ options:
     - If an empty list is passed all host groups will be removed from the rule.
     - If option is omitted host groups will not be checked or changed.
     - Option C(hostcategory) must be omitted to assign host groups.
+  runasusercategory:
+    description:
+    - RunAs User category the rule applies to.
+    choices: ['all']
+    version_added: "2.5"
+  runasgroupcategory:
+    description:
+      - RunAs Group category the rule applies to.
+    choices: ['all']
+    version_added: "2.5"
+  sudoopt:
+    description:
+      - List of options to add to the sudo rule.
   user:
     description:
     - List of users assigned to the rule.
@@ -190,7 +206,8 @@ class SudoRuleIPAClient(IPAClient):
         return self.sudorule_remove_user(name=name, item={'group': item})
 
 
-def get_sudorule_dict(cmdcategory=None, description=None, hostcategory=None, ipaenabledflag=None, usercategory=None):
+def get_sudorule_dict(cmdcategory=None, description=None, hostcategory=None, ipaenabledflag=None, usercategory=None,
+                      runasgroupcategory=None, runasusercategory=None):
     data = {}
     if cmdcategory is not None:
         data['cmdcategory'] = cmdcategory
@@ -202,6 +219,10 @@ def get_sudorule_dict(cmdcategory=None, description=None, hostcategory=None, ipa
         data['ipaenabledflag'] = ipaenabledflag
     if usercategory is not None:
         data['usercategory'] = usercategory
+    if runasusercategory is not None:
+        data['ipasudorunasusercategory'] = runasusercategory
+    if runasgroupcategory is not None:
+        data['ipasudorunasgroupcategory'] = runasgroupcategory
     return data
 
 
@@ -222,6 +243,8 @@ def ensure(module, client):
     host = module.params['host']
     hostcategory = module.params['hostcategory']
     hostgroup = module.params['hostgroup']
+    runasusercategory = module.params['runasusercategory']
+    runasgroupcategory = module.params['runasgroupcategory']
 
     if state in ['present', 'enabled']:
         ipaenabledflag = 'TRUE'
@@ -237,7 +260,9 @@ def ensure(module, client):
                                         description=module.params['description'],
                                         hostcategory=hostcategory,
                                         ipaenabledflag=ipaenabledflag,
-                                        usercategory=usercategory)
+                                        usercategory=usercategory,
+                                        runasusercategory=runasusercategory,
+                                        runasgroupcategory=runasgroupcategory)
     ipa_sudorule = client.sudorule_find(name=name)
 
     changed = False
@@ -264,6 +289,12 @@ def ensure(module, client):
             changed = category_changed(module, client, 'cmdcategory', ipa_sudorule) or changed
             if not module.check_mode:
                 client.sudorule_add_allow_command(name=name, item=cmd)
+
+        if runasusercategory is not None:
+            changed = category_changed(module, client, 'iparunasusercategory', ipa_sudorule) or changed
+
+        if runasgroupcategory is not None:
+            changed = category_changed(module, client, 'iparunasgroupcategory', ipa_sudorule) or changed
 
         if host is not None:
             changed = category_changed(module, client, 'hostcategory', ipa_sudorule) or changed
@@ -314,18 +345,20 @@ def ensure(module, client):
 
 def main():
     argument_spec = ipa_argument_spec()
-    argument_spec.update(cmd=dict(type='list', required=False),
-                         cmdcategory=dict(type='str', required=False, choices=['all']),
+    argument_spec.update(cmd=dict(type='list'),
+                         cmdcategory=dict(type='str', choices=['all']),
                          cn=dict(type='str', required=True, aliases=['name']),
-                         description=dict(type='str', required=False),
-                         host=dict(type='list', required=False),
-                         hostcategory=dict(type='str', required=False, choices=['all']),
-                         hostgroup=dict(type='list', required=False),
-                         sudoopt=dict(type='list', required=False),
-                         state=dict(type='str', required=False, default='present', choices=['present', 'absent', 'enabled', 'disabled']),
-                         user=dict(type='list', required=False),
-                         usercategory=dict(type='str', required=False, choices=['all']),
-                         usergroup=dict(type='list', required=False))
+                         description=dict(type='str'),
+                         host=dict(type='list'),
+                         hostcategory=dict(type='str', choices=['all']),
+                         hostgroup=dict(type='list'),
+                         runasusercategory=dict(type='str', choices=['all']),
+                         runasgroupcategory=dict(type='str', choices=['all']),
+                         sudoopt=dict(type='list'),
+                         state=dict(type='str', default='present', choices=['present', 'absent', 'enabled', 'disabled']),
+                         user=dict(type='list'),
+                         usercategory=dict(type='str', choices=['all']),
+                         usergroup=dict(type='list'))
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=[['cmdcategory', 'cmd'],

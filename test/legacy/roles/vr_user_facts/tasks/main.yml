@@ -1,0 +1,31 @@
+# Copyright (c) 2018, Yanis Guenane <yanis+ansible@guenane.org>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: Create the user
+  vr_user:
+    name: '{{ user_name }}'
+    email: '{{ user_email }}'
+    password: '{{ user_password }}'
+    acls: '{{ user_acls }}'
+
+- name: test gather vultr user facts in check mode
+  vr_user_facts:
+  check_mode: yes
+
+- name: verify test gather vultr user facts in check mode
+  assert:
+    that:
+    - ansible_facts.vultr_user_facts|selectattr('name','equalto','{{ user_name }}') | list | count == 1
+
+- name: test gather vultr user facts
+  vr_user_facts:
+
+- name: verify test gather vultr user facts
+  assert:
+    that:
+    - ansible_facts.vultr_user_facts|selectattr('name','equalto','{{ user_name }}') | list | count == 1
+
+- name: Delete the user
+  vr_user:
+    name: '{{ user_name }}'
+    state: absent

@@ -32,11 +32,11 @@ class TestNsoConfig(nso_module.TestNsoModule):
 
     @patch('ansible.module_utils.network.nso.nso.open_url')
     def test_nso_config_invalid_version_short(self, open_url_mock):
-        self._test_invalid_version(open_url_mock, '4.4')
+        self._test_invalid_version(open_url_mock, '3.3')
 
     @patch('ansible.module_utils.network.nso.nso.open_url')
     def test_nso_config_invalid_version_long(self, open_url_mock):
-        self._test_invalid_version(open_url_mock, '4.4.2')
+        self._test_invalid_version(open_url_mock, '3.3.2')
 
     def _test_invalid_version(self, open_url_mock, version):
         calls = [

@@ -1,12 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # Copyright: (c) 2015, Joseph Callen <jcallen () csc.com>
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -23,12 +23,22 @@ description:
 version_added: '2.0'
 author:
 - Joseph Callen (@jcpowermac)
-- Abhijeet Kasurde (@akasurde)
+- Abhijeet Kasurde (@Akasurde)
 notes:
 - Tested on vSphere 5.5 and vSphere 6.5
 requirements:
 - python >= 2.6
 - PyVmomi
+options:
+    vm_type:
+      description:
+      - If set to C(vm), then facts are gathered for virtual machines only.
+      - If set to C(template), then facts are gathered for virtual machine templates only.
+      - If set to C(all), then facts are gathered for all virtual machines and virtual machine templates.
+      required: False
+      default: 'all'
+      choices: [ all, vm, template ]
+      version_added: 2.5
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -43,6 +53,30 @@ EXAMPLES = r'''
 
 - debug:
     var: vmfacts.virtual_machines
+
+- name: Gather only registered virtual machine templates
+  vmware_vm_facts:
+    hostname: esxi_or_vcenter_ip_or_hostname
+    username: username
+    password: password
+    vm_type: template
+  delegate_to: localhost
+  register: template_facts
+
+- debug:
+    var: template_facts.virtual_machines
+
+- name: Gather only registered virtual machines
+  vmware_vm_facts:
+    hostname: esxi_or_vcenter_ip_or_hostname
+    username: username
+    password: password
+    vm_type: vm
+  delegate_to: localhost
+  register: vm_facts
+
+- debug:
+    var: vm_facts.virtual_machines
 '''
 
 RETURN = r'''
@@ -116,13 +150,24 @@ class VmwareVmFacts(PyVmomi):
                 }
             }
 
-            _virtual_machines.update(virtual_machine)
+            vm_type = self.module.params.get('vm_type')
+            is_template = _get_vm_prop(vm, ('config', 'template'))
+            if vm_type == 'vm' and not is_template:
+                _virtual_machines.update(virtual_machine)
+            elif vm_type == 'template' and is_template:
+                _virtual_machines.update(virtual_machine)
+            elif vm_type == 'all':
+                _virtual_machines.update(virtual_machine)
         return _virtual_machines
 
 
 def main():
     argument_spec = vmware_argument_spec()
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
+    argument_spec.update(
+        vm_type=dict(type='str', choices=['vm', 'all', 'template'], default='all'),
+    )
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=False)
 
     vmware_vm_facts = VmwareVmFacts(module)
     _virtual_machines = vmware_vm_facts.get_all_virtual_machines()

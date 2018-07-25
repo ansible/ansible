@@ -21,7 +21,7 @@ version_added: "2.4"
 author: "Marc Sensenich"
 notes:
   - This module is not idempotent, therefore if the same task is run twice
-  - there will be two Connector Cards created
+    there will be two Connector Cards created
 options:
   webhook:
     description:

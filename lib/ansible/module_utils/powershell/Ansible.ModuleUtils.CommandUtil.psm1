@@ -2,6 +2,7 @@
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
 $process_util = @"
+using Microsoft.Win32.SafeHandles;
 using System;
 using System.Collections;
 using System.IO;
@@ -42,9 +43,9 @@ namespace Ansible
         public Int16 wShowWindow;
         public Int16 cbReserved2;
         public IntPtr lpReserved2;
-        public IntPtr hStdInput;
-        public IntPtr hStdOutput;
-        public IntPtr hStdError;
+        public SafeFileHandle hStdInput;
+        public SafeFileHandle hStdOutput;
+        public SafeFileHandle hStdError;
         public STARTUPINFO()
         {
             cb = Marshal.SizeOf(this);
@@ -88,7 +89,7 @@ namespace Ansible
     {
         public NativeWaitHandle(IntPtr handle)
         {
-            this.Handle = handle;
+            this.SafeWaitHandle = new SafeWaitHandle(handle, false);
         }
     }
 
@@ -110,7 +111,6 @@ namespace Ansible
     public class CommandUtil
     {
         private static UInt32 CREATE_UNICODE_ENVIRONMENT = 0x000000400;
-        private static UInt32 CREATE_NEW_CONSOLE = 0x00000010;
         private static UInt32 EXTENDED_STARTUPINFO_PRESENT = 0x00080000;
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode, BestFitMapping = false)]
@@ -130,42 +130,21 @@ namespace Ansible
 
         [DllImport("kernel32.dll")]
         public static extern bool CreatePipe(
-            out IntPtr hReadPipe,
-            out IntPtr hWritePipe,
+            out SafeFileHandle hReadPipe,
+            out SafeFileHandle hWritePipe,
             SECURITY_ATTRIBUTES lpPipeAttributes,
             uint nSize);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool SetHandleInformation(
-            IntPtr hObject,
+            SafeFileHandle hObject,
             HandleFlags dwMask,
             int dwFlags);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern bool InitializeProcThreadAttributeList(
-            IntPtr lpAttributeList,
-            int dwAttributeCount,
-            int dwFlags,
-            ref int lpSize);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern bool UpdateProcThreadAttribute(
-             IntPtr lpAttributeList,
-             uint dwFlags,
-             IntPtr Attribute,
-             IntPtr lpValue,
-             IntPtr cbSize,
-             IntPtr lpPreviousValue,
-             IntPtr lpReturnSize);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool GetExitCodeProcess(
             IntPtr hProcess,
             out uint lpExitCode);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern bool CloseHandle(
-            IntPtr hObject);
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         public static extern uint SearchPath(
@@ -220,7 +199,7 @@ namespace Ansible
 
         public static CommandResult RunCommand(string lpApplicationName, string lpCommandLine, string lpCurrentDirectory, string stdinInput, IDictionary environment)
         {
-            UInt32 startup_flags = CREATE_UNICODE_ENVIRONMENT | CREATE_NEW_CONSOLE | EXTENDED_STARTUPINFO_PRESENT;
+            UInt32 startup_flags = CREATE_UNICODE_ENVIRONMENT | EXTENDED_STARTUPINFO_PRESENT;
             STARTUPINFOEX si = new STARTUPINFOEX();
             si.startupInfo.dwFlags = (int)StartupInfoFlags.USESTDHANDLES;
 
@@ -228,7 +207,7 @@ namespace Ansible
             pipesec.bInheritHandle = true;
 
             // Create the stdout, stderr and stdin pipes used in the process and add to the startupInfo
-            IntPtr stdout_read, stdout_write, stderr_read, stderr_write, stdin_read, stdin_write = IntPtr.Zero;
+            SafeFileHandle stdout_read, stdout_write, stderr_read, stderr_write, stdin_read, stdin_write;
             if (!CreatePipe(out stdout_read, out stdout_write, pipesec, 0))
                 throw new Win32Exception("STDOUT pipe setup failed");
             if (!SetHandleInformation(stdout_read, HandleFlags.INHERIT, 0))
@@ -248,37 +227,9 @@ namespace Ansible
             si.startupInfo.hStdError = stderr_write;
             si.startupInfo.hStdInput = stdin_read;
 
-            // Handle the inheritance for the pipes so the process can access them
-            Int32 buf_sz = 0;
-            if (!InitializeProcThreadAttributeList(IntPtr.Zero, 1, 0, ref buf_sz))
-            {
-                int last_err = Marshal.GetLastWin32Error();
-                if (last_err != 122) // ERROR_INSUFFICIENT_BUFFER
-                    throw new Win32Exception(last_err, "Attribute list size query failed");
-            }
-            si.lpAttributeList = Marshal.AllocHGlobal(buf_sz);
-            if (!InitializeProcThreadAttributeList(si.lpAttributeList, 1, 0, ref buf_sz))
-                throw new Win32Exception("Attribute list init failed");
-
-
-            IntPtr[] handles_to_inherit = new IntPtr[3];
-            handles_to_inherit[0] = stdin_read;
-            handles_to_inherit[1] = stdout_write;
-            handles_to_inherit[2] = stderr_write;
-            GCHandle pinned_handles = GCHandle.Alloc(handles_to_inherit, GCHandleType.Pinned);
-
-            if (!UpdateProcThreadAttribute(si.lpAttributeList, 0,
-                (IntPtr)0x20002, // PROC_THREAD_ATTRIBUTE_HANDLE_LIST
-                pinned_handles.AddrOfPinnedObject(),
-                (IntPtr)(Marshal.SizeOf(typeof(IntPtr)) * handles_to_inherit.Length),
-                IntPtr.Zero, IntPtr.Zero))
-            {
-                throw new Win32Exception("Attribute list update failed");
-            }
-
             // Setup the stdin buffer
             UTF8Encoding utf8_encoding = new UTF8Encoding(false);
-            FileStream stdin_fs = new FileStream(stdin_write, FileAccess.Write, true, 32768);
+            FileStream stdin_fs = new FileStream(stdin_write, FileAccess.Write, 32768);
             StreamWriter stdin = new StreamWriter(stdin_fs, utf8_encoding, 32768);
 
             // If lpCurrentDirectory is set to null in PS it will be an empty
@@ -288,7 +239,7 @@ namespace Ansible
 
             StringBuilder environmentString = null;
 
-            if(environment != null && environment.Count > 0)
+            if (environment != null && environment.Count > 0)
             {
                 environmentString = new StringBuilder();
                 foreach (DictionaryEntry kv in environment)
@@ -320,12 +271,12 @@ namespace Ansible
             }
 
             // Setup the output buffers and get stdout/stderr
-            FileStream stdout_fs = new FileStream(stdout_read, FileAccess.Read, true, 4096);
+            FileStream stdout_fs = new FileStream(stdout_read, FileAccess.Read, 4096);
             StreamReader stdout = new StreamReader(stdout_fs, utf8_encoding, true, 4096);
-            FileStream stderr_fs = new FileStream(stderr_read, FileAccess.Read, true, 4096);
+            stdout_write.Close();
+            FileStream stderr_fs = new FileStream(stderr_read, FileAccess.Read, 4096);
             StreamReader stderr = new StreamReader(stderr_fs, utf8_encoding, true, 4096);
-            CloseHandle(stdout_write);
-            CloseHandle(stderr_write);
+            stderr_write.Close();
 
             stdin.WriteLine(stdinInput);
             stdin.Close();
@@ -384,7 +335,25 @@ Function Load-CommandUtils {
     #   [Ansible.CommandUtil]::RunCommand(string lpApplicationName, string lpCommandLine, string lpCurrentDirectory, string stdinInput, string environmentBlock)
     #
     # there are also numerous P/Invoke methods that can be called if you are feeling adventurous
-    Add-Type -TypeDefinition $process_util -IgnoreWarnings -Debug:$false
+
+    # FUTURE: find a better way to get the _ansible_remote_tmp variable
+    $original_tmp = $env:TMP
+    $original_temp = $env:TEMP
+
+    $remote_tmp = $original_tmp
+    $module_params = Get-Variable -Name complex_args -ErrorAction SilentlyContinue
+    if ($module_params) {
+        if ($module_params.Value.ContainsKey("_ansible_remote_tmp") ) {
+            $remote_tmp = $module_params.Value["_ansible_remote_tmp"]
+            $remote_tmp = [System.Environment]::ExpandEnvironmentVariables($remote_tmp)
+        }
+    }
+
+    $env:TMP = $remote_tmp
+    $env:TEMP = $remote_tmp
+    Add-Type -TypeDefinition $process_util
+    $env:TMP = $original_tmp
+    $env:TEMP = $original_temp
 }
 
 Function Get-ExecutablePath($executable, $directory) {

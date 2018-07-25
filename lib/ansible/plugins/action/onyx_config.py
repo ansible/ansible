@@ -42,6 +42,7 @@ class ActionModule(_ActionModule):
                 return dict(failed=True, msg=exc.message)
 
         result = super(ActionModule, self).run(tmp, task_vars)
+        del tmp  # tmp no longer has any effect
 
         if self._task.args.get('backup') and result.get('__backup__'):
             # User requested backup and no error occurred in module.
@@ -53,7 +54,7 @@ class ActionModule(_ActionModule):
 
         # strip out any keys that have two leading and two trailing
         # underscore characters
-        for key in result.keys():
+        for key in list(result.keys()):
             if PRIVATE_KEYS_RE.match(key):
                 del result[key]
 

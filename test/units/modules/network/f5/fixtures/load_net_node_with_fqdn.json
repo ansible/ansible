@@ -1,0 +1,25 @@
+{
+    "kind": "tm:ltm:node:nodestate",
+    "name": "foo.bar.com",
+    "partition": "Common",
+    "fullPath": "/Common/foo.bar.com",
+    "generation": 157,
+    "selfLink": "https://localhost/mgmt/tm/ltm/node/~Common~foo.bar.com?ver=12.0.0",
+    "address": "any6",
+    "connectionLimit": 0,
+    "dynamicRatio": 1,
+    "ephemeral": "false",
+    "fqdn": {
+        "addressFamily": "ipv4",
+        "autopopulate": "enabled",
+        "downInterval": 5,
+        "interval": "3600",
+        "tmName": "foo.bar.com"
+    },
+    "logging": "disabled",
+    "monitor": "default",
+    "rateLimit": "disabled",
+    "ratio": 1,
+    "session": "user-enabled",
+    "state": "fqdn-up-no-addr"
+}

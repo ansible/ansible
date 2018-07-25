@@ -32,20 +32,15 @@ options:
    description:
      description:
         - Description for the project
-     required: false
-     default: None
    domain_id:
      description:
         - Domain id to create the project in if the cloud supports domains.
-          The domain_id parameter requires shade >= 1.8.0
-     required: false
-     default: None
      aliases: ['domain']
    enabled:
      description:
         - Is the project enabled
-     required: false
-     default: True
+     type: bool
+     default: 'yes'
    state:
      description:
        - Should the resource be present or absent.
@@ -54,16 +49,16 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
 # Create a project
 - os_project:
     cloud: mycloud
+    endpoint_type: admin
     state: present
     name: demoproject
     description: demodescription
@@ -73,6 +68,7 @@ EXAMPLES = '''
 # Delete a project
 - os_project:
     cloud: mycloud
+    endpoint_type: admin
     state: absent
     name: demoproject
 '''
@@ -102,16 +98,8 @@ project:
             sample: True
 '''
 
-from distutils.version import StrictVersion
-
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _needs_update(module, project):
@@ -159,36 +147,28 @@ def main():
         **module_kwargs
     )
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
     name = module.params['name']
     description = module.params['description']
-    domain = module.params.pop('domain_id')
+    domain = module.params.get('domain_id')
     enabled = module.params['enabled']
     state = module.params['state']
 
-    if domain and StrictVersion(shade.__version__) < StrictVersion('1.8.0'):
-        module.fail_json(msg="The domain argument requires shade >=1.8.0")
-
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         if domain:
-            opcloud = shade.operator_cloud(**module.params)
             try:
                 # We assume admin is passing domain id
-                dom = opcloud.get_domain(domain)['id']
+                dom = cloud.get_domain(domain)['id']
                 domain = dom
             except:
                 # If we fail, maybe admin is passing a domain name.
                 # Note that domains have unique names, just like id.
                 try:
-                    dom = opcloud.search_domains(filters={'name': domain})[0]['id']
+                    dom = cloud.search_domains(filters={'name': domain})[0]['id']
                     domain = dom
                 except:
                     # Ok, let's hope the user is non-admin and passing a sane id
                     pass
-
-        cloud = shade.openstack_cloud(**module.params)
 
         if domain:
             project = cloud.get_project(name, domain_id=domain)
@@ -223,7 +203,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=e.message, extra_data=e.extra_data)
 
 

@@ -1,9 +1,0 @@
-lib/ansible/modules/cloud/azure/azure_rm_dnsrecordset.py
-lib/ansible/modules/cloud/dimensiondata/dimensiondata_network.py
-lib/ansible/modules/cloud/webfaction/webfaction_app.py
-lib/ansible/modules/cloud/webfaction/webfaction_db.py
-lib/ansible/modules/cloud/webfaction/webfaction_domain.py
-lib/ansible/modules/cloud/webfaction/webfaction_mailbox.py
-lib/ansible/modules/cloud/webfaction/webfaction_site.py
-lib/ansible/modules/packaging/os/yum_repository.py
-lib/ansible/modules/system/hostname.py

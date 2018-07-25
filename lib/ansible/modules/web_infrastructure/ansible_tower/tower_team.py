@@ -27,18 +27,15 @@ options:
       description:
         - Name to use for the team.
       required: True
-      default: null
     organization:
       description:
         - Organization the team should be made a member of.
       required: True
-      default: null
     state:
       description:
         - Desired state of the resource.
-      required: False
-      default: "present"
       choices: ["present", "absent"]
+      default: "present"
 extends_documentation_fragment: tower
 '''
 

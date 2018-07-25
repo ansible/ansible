@@ -55,6 +55,7 @@ options:
             - Force placement on all service engines in the service engine group (container clouds only).
             - Field introduced in 17.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     name:
         description:
             - Name for the vsvip object.

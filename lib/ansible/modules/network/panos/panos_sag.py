@@ -28,25 +28,10 @@ description:
 author: "Vinay Venkataraghavan @vinayvenkat"
 version_added: "2.4"
 requirements:
-    - pan-python can be obtained from PyPi U(https://pypi.python.org/pypi/pan-python)
-    - pandevice can be obtained from PyPi U(https://pypi.python.org/pypi/pandevice)
-    - xmltodict can be obtained from PyPi U(https://pypi.python.org/pypi/xmltodict)
+    - pan-python can be obtained from PyPi U(https://pypi.org/project/pan-python/)
+    - pandevice can be obtained from PyPi U(https://pypi.org/project/pandevice/)
+    - xmltodict can be obtained from PyPi U(https://pypi.org/project/xmltodict/)
 options:
-    ip_address:
-        description:
-            - IP address (or hostname) of PAN-OS device
-        required: true
-        default: null
-    password:
-        description:
-            - password for authentication
-        required: true
-        default: null
-    username:
-        description:
-            - username for authentication
-        required: false
-        default: "admin"
     api_key:
         description:
             - API key that can be used instead of I(username)/I(password) credentials.
@@ -54,38 +39,30 @@ options:
         description:
             - name of the dynamic address group
         required: true
-        default: null
     static_match_filter:
         description:
             - Static filter user by the address group
         required: true
-        default: null
     devicegroup:
         description: >
             - The name of the Panorama device group. The group must exist on Panorama. If device group is not defined
             it is assumed that we are contacting a firewall.
-        required: false
-        default: None
     description:
         description:
             - The purpose / objective of the static Address Group
-        required: false
-        default: null
     tags:
         description:
             - Tags to be associated with the address group
-        required: false
-        default: null
     commit:
         description:
             - commit if changed
-        required: false
-        default: true
+        type: bool
+        default: 'yes'
     operation:
         description:
             - The operation to perform Supported values are I(add)/I(list)/I(delete).
         required: true
-        default: null
+extends_documentation_fragment: panos
 '''
 
 EXAMPLES = '''
@@ -107,7 +84,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-from ansible.module_utils.basic import AnsibleModule, get_exception
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 try:
     from pandevice import base
@@ -183,8 +161,7 @@ def add_address_group(device, dev_group, ag_object):
     exc = None
     try:
         ag_object.create()
-    except Exception:
-        exc = get_exception()
+    except Exception as exc:
         return False, exc
 
     return True, exc
@@ -204,8 +181,7 @@ def delete_address_group(device, dev_group, obj_name):
     if static_obj:
         try:
             static_obj.delete()
-        except Exception:
-            exc = get_exception()
+        except Exception as exc:
             return False, exc
         return True, None
     else:
@@ -263,9 +239,8 @@ def main():
         if result and commit:
             try:
                 device.commit(sync=True)
-            except Exception:
-                exc = get_exception()
-                module.fail_json(msg=exc.message)
+            except Exception as exc:
+                module.fail_json(msg=to_native(exc))
 
     elif operation == 'delete':
         obj_name = module.params.get('sag_name', None)

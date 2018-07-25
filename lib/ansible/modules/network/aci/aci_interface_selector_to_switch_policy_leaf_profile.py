@@ -14,18 +14,16 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_interface_selector_to_switch_policy_leaf_profile
-short_description: Associates an Interface Selector Profile to a Switch Policy Leaf Profile (infra:RsAccPortP)
+short_description: Bind interface selector profiles to switch policy leaf profiles (infra:RsAccPortP)
 description:
-- Associates an Interface Profile (Selector) to a Switch Policy Leaf Profile on Cisco ACI fabrics.
-- More information from the internal APIC class I(infra:RsAccPortP) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- Bind interface selector profiles to switch policy leaf profiles on Cisco ACI fabrics.
+notes:
+- This module requires an existing leaf profile, the module M(aci_switch_policy_leaf_profile) can be used for this.
+- More information about the internal APIC class B(infra:RsAccPortP) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
-notes:
-- This module can be used with M(aci_switch_policy_leaf_profile).
-  One first creates a leaf profile (infra:NodeP),
-  Finally, associates an interface profile using the provided interface selector profile (infra:RsAccPortP)
 options:
   leaf_profile:
     description:
@@ -48,8 +46,8 @@ EXAMPLES = r'''
 - name: Associating an interface selector profile to a switch policy leaf profile
   aci_interface_selector_to_switch_policy_leaf_profile:
     host: apic
-    username: someusername
-    password: somepassword
+    username: admin
+    password: SomeSecretPassword
     leaf_profile: sw_name
     interface_selector: interface_profile_name
     state: present
@@ -57,8 +55,8 @@ EXAMPLES = r'''
 - name: Remove an interface selector profile associated with a switch policy leaf profile
   aci_interface_selector_to_switch_policy_leaf_profile:
     host: apic
-    username: someusername
-    password: somepassword
+    username: admin
+    password: SomeSecretPassword
     leaf_profile: sw_name
     interface_selector: interface_profile_name
     state: absent
@@ -66,14 +64,117 @@ EXAMPLES = r'''
 - name: Query an interface selector profile associated with a switch policy leaf profile
   aci_interface_selector_to_switch_policy_leaf_profile:
     host: apic
-    username: someusername
-    password: somepassword
+    username: admin
+    password: SomeSecretPassword
     leaf_profile: sw_name
     interface_selector: interface_profile_name
     state: query
 '''
 
-RETURN = ''' # '''
+RETURN = r'''
+current:
+  description: The existing configuration from the APIC after the module has finished
+  returned: success
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production environment",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+error:
+  description: The error information as returned from the APIC
+  returned: failure
+  type: dict
+  sample:
+    {
+        "code": "122",
+        "text": "unknown managed object class foo"
+    }
+raw:
+  description: The raw output returned by the APIC REST API (xml or json)
+  returned: parse error
+  type: string
+  sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
+sent:
+  description: The actual/minimal configuration pushed to the APIC
+  returned: info
+  type: list
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment"
+            }
+        }
+    }
+previous:
+  description: The original configuration from the APIC before the module has started
+  returned: info
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+proposed:
+  description: The assembled configuration from the user-provided parameters
+  returned: info
+  type: dict
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment",
+                "name": "production"
+            }
+        }
+    }
+filter_string:
+  description: The filter string used for the request
+  returned: failure or debug
+  type: string
+  sample: ?rsp-prop-include=config-only
+method:
+  description: The HTTP method used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: POST
+response:
+  description: The HTTP response from the APIC
+  returned: failure or debug
+  type: string
+  sample: OK (30 bytes)
+status:
+  description: The HTTP status from the APIC
+  returned: failure or debug
+  type: int
+  sample: 200
+url:
+  description: The HTTP url used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: https://10.11.12.13/api/mo/uni/tn-production.json
+'''
 
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
@@ -82,8 +183,8 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        leaf_profile=dict(type='str', aliases=['leaf_profile_name']),
-        interface_selector=dict(type='str', aliases=['name', 'interface_selector_name', 'interface_profile_name']),
+        leaf_profile=dict(type='str', aliases=['leaf_profile_name']),  # Not required for querying all objects
+        interface_selector=dict(type='str', aliases=['interface_profile_name', 'interface_selector_name', 'name']),  # Not required for querying all objects
         state=dict(type='str', default='present', choices=['absent', 'present', 'query'])
     )
 
@@ -123,22 +224,19 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module params with null values
         aci.payload(
             aci_class='infraRsAccPortP',
-            class_config=dict(tDn=interface_selector_tDn)
+            class_config=dict(tDn=interface_selector_tDn),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='infraRsAccPortP')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':
         aci.delete_config()
 
-    module.exit_json(**aci.result)
+    aci.exit_json()
 
 
 if __name__ == "__main__":

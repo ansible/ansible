@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2015, Matt Davis <mdavis_ansible@rolpdog.com>
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2015, Matt Davis <mdavis_ansible@rolpdog.com>
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
@@ -19,7 +19,7 @@ module: win_updates
 version_added: "2.0"
 short_description: Download and install Windows updates
 description:
-    - Searches, downloads, and installs Windows updates synchronously by automating the Windows Update client
+    - Searches, downloads, and installs Windows updates synchronously by automating the Windows Update client.
 options:
     blacklist:
         description:
@@ -29,13 +29,13 @@ options:
           skipped and not installed.
         - Each entry can either be the KB article or Update title as a regex
           according to the PowerShell regex rules.
-        required: false
+        type: list
         version_added: '2.5'
     category_names:
         description:
         - A scalar or list of categories to install updates from
-        required: false
-        default: ["CriticalUpdates","SecurityUpdates","UpdateRollups"]
+        type: list
+        default: [ CriticalUpdates, SecurityUpdates, UpdateRollups ]
         choices:
         - Application
         - Connectors
@@ -70,15 +70,12 @@ options:
         description:
         - Controls whether found updates are returned as a list or actually installed.
         - This module also supports Ansible check mode, which has the same effect as setting state=searched
-        required: false
+        choices: [ installed, searched ]
         default: installed
-        choices:
-        - installed
-        - searched
     log_path:
         description:
         - If set, C(win_updates) will append update progress to the specified file. The directory must already exist.
-        required: false
+        type: path
     whitelist:
         description:
         - A list of update titles or KB numbers that can be used to specify
@@ -90,9 +87,22 @@ options:
         - The whitelist is only validated on updates that were found based on
           I(category_names). It will not force the module to install an update
           if it was not in the category specified.
-        required: false
+        type: list
         version_added: '2.5'
-author: "Matt Davis (@nitzmahone)"
+    use_scheduled_task:
+        description:
+        - Will not auto elevate the remote process with I(become) and use a
+          scheduled task instead.
+        - Set this to C(yes) when using this module with async on Server 2008,
+          2008 R2, or Windows 7, or on Server 2008 that is not authenticated
+          with basic or credssp.
+        - Can also be set to C(yes) on newer hosts where become does not work
+          due to further privilege restrictions from the OS defaults.
+        type: bool
+        default: 'no'
+        version_added: '2.6'
+author:
+- Matt Davis (@nitzmahone)
 notes:
 - C(win_updates) must be run by a user with membership in the local Administrators group.
 - C(win_updates) will use the default update service configured for the machine (Windows Update, Microsoft Update, WSUS, etc).
@@ -106,22 +116,23 @@ notes:
 '''
 
 EXAMPLES = r'''
-- name: Install all security, critical, and rollup updates
+- name: Install all security, critical, and rollup updates without a scheduled task
   win_updates:
     category_names:
       - SecurityUpdates
       - CriticalUpdates
       - UpdateRollups
 
-- name: Install only security updates
+- name: Install only security updates as a scheduled task for Server 2008
   win_updates:
     category_names: SecurityUpdates
+    use_scheduled_task: yes
 
-- name: Search-only, return list of found updates (if any), log to c:\ansible_wu.txt
+- name: Search-only, return list of found updates (if any), log to C:\ansible_wu.txt
   win_updates:
     category_names: SecurityUpdates
     state: searched
-    log_path: c:\ansible_wu.txt
+    log_path: C:\ansible_wu.txt
 
 - name: Install all security updates with automatic reboots
   win_updates:
@@ -145,37 +156,6 @@ EXAMPLES = r'''
     blacklist:
     - Windows Malicious Software Removal Tool for Windows
     - \d{4}-\d{2} Cumulative Update for Windows Server 2016
-
-# Note async works on Windows Server 2012 or newer - become must be explicitly set on the task for this to work
-- name: Search for Windows updates asynchronously
-  win_updates:
-    category_names:
-    - SecurityUpdates
-    state: searched
-  async: 180
-  poll: 10
-  register: updates_to_install
-  become: yes
-  become_method: runas
-  become_user: SYSTEM
-
-# Async can also be run in the background in a fire and forget fashion
-- name: Search for Windows updates asynchronously (poll and forget)
-  win_updates:
-    category_names:
-    - SecurityUpdates
-    state: searched
-  async: 180
-  poll: 0
-  register: updates_to_install_async
-
-- name: get status of Windows Update async job
-  async_status:
-    jid: '{{ updates_to_install_async.ansible_job_id }}'
-  register: updates_to_install_result
-  become: yes
-  become_method: runas
-  become_user: SYSTEM
 '''
 
 RETURN = r'''

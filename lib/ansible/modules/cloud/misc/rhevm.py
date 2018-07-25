@@ -28,117 +28,95 @@ options:
         description:
             - The user to authenticate with.
         default: "admin@internal"
-        required: false
     server:
         description:
             - The name/ip of your RHEV-m/oVirt instance.
         default: "127.0.0.1"
-        required: false
     port:
         description:
             - The port on which the API is reacheable.
         default: "443"
-        required: false
     insecure_api:
         description:
             - A boolean switch to make a secure or insecure connection to the server.
-        default: false
-        required: false
+        type: bool
+        default: 'no'
     name:
         description:
             - The name of the VM.
     cluster:
         description:
             - The rhev/ovirt cluster in which you want you VM to start.
-        required: false
     datacenter:
         description:
             - The rhev/ovirt datacenter in which you want you VM to start.
-        required: false
         default: "Default"
     state:
         description:
             - This serves to create/remove/update or powermanage your VM.
         default: "present"
-        required: false
         choices: ['ping', 'present', 'absent', 'up', 'down', 'restarted', 'cd', 'info']
     image:
         description:
             - The template to use for the VM.
-        default: null
-        required: false
     type:
         description:
             - To define if the VM is a server or desktop.
         default: server
-        required: false
         choices: [ 'server', 'desktop', 'host' ]
     vmhost:
         description:
             - The host you wish your VM to run on.
-        required: false
     vmcpu:
         description:
             - The number of CPUs you want in your VM.
         default: "2"
-        required: false
     cpu_share:
         description:
             - This parameter is used to configure the cpu share.
         default: "0"
-        required: false
     vmmem:
         description:
             - The amount of memory you want your VM to use (in GB).
         default: "1"
-        required: false
     osver:
         description:
             - The operationsystem option in RHEV/oVirt.
         default: "rhel_6x64"
-        required: false
     mempol:
         description:
             - The minimum amount of memory you wish to reserve for this system.
         default: "1"
-        required: false
     vm_ha:
         description:
             - To make your VM High Available.
-        default: true
-        required: false
+        type: bool
+        default: 'yes'
     disks:
         description:
             - This option uses complex arguments and is a list of disks with the options name, size and domain.
-        required: false
     ifaces:
         description:
             - This option uses complex arguments and is a list of interfaces with the options name and vlan.
         aliases: ['nics', 'interfaces']
-        required: false
     boot_order:
         description:
             - This option uses complex arguments and is a list of items that specify the bootorder.
         default: ["network","hd"]
-        required: false
     del_prot:
         description:
             - This option sets the delete protection checkbox.
-        default: true
-        required: false
+        type: bool
+        default: yes
     cd_drive:
         description:
             - The CD you wish to have mounted on the VM when I(state = 'CD').
-        default: null
-        required: false
     timeout:
         description:
             - The timeout you wish to define for power actions.
             - When I(state = 'up')
             - When I(state = 'down')
             - When I(state = 'restarted')
-        default: null
-        required: false
 '''
 
 RETURN = '''

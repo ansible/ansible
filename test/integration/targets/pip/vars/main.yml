@@ -1,0 +1,7 @@
+pip_test_package: sampleproject
+pip_test_packages:
+  - sampleproject
+  - decorator
+pip_test_modules:
+  - sample
+  - decorator

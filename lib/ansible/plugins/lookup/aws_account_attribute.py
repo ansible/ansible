@@ -11,6 +11,8 @@ version_added: "2.5"
 requirements:
   - boto3
   - botocore
+extends_documentation_fragment:
+  - aws_credentials
 short_description: Look up AWS account attributes.
 description:
   - Describes attributes of your AWS account. You can specify one of the listed
@@ -18,7 +20,6 @@ description:
 options:
   attribute:
     description: The attribute for which to get the value(s).
-    default: null
     choices:
       - supported-platforms
       - default-vpc
@@ -27,39 +28,6 @@ options:
       - max-elastic-ips
       - vpc-max-elastic-ips
       - has-ec2-classic
-  boto_profile:
-    description: The boto profile to use to create the connection.
-    default: null
-    env:
-      - name: AWS_PROFILE
-      - name: AWS_DEFAULT_PROFILE
-  aws_access_key:
-    description: The AWS access key to use.
-    default: null
-    env:
-      - name: AWS_ACCESS_KEY_ID
-      - name: AWS_ACCESS_KEY
-      - name: EC2_ACCESS_KEY
-  aws_secret_key:
-    description: The AWS secret key that corresponds to the access key.
-    default: null
-    env:
-      - name: AWS_SECRET_ACCESS_KEY
-      - name: AWS_SECRET_KEY
-      - name: EC2_SECRET_KEY
-  aws_security_token:
-    description: The AWS security token if using temporary access and secret keys.
-    default: null
-    env:
-      - name: AWS_SECURITY_TOKEN
-      - name: AWS_SESSION_TOKEN
-      - name: EC2_SECURITY_TOKEN
-  region:
-    description: The region for which to create the connection.
-    default: null
-    env:
-      - name: AWS_REGION
-      - name: EC2_REGION
 """
 
 EXAMPLES = """
@@ -100,10 +68,7 @@ import os
 
 
 def _boto3_conn(region, credentials):
-    if 'boto_profile' in credentials:
-        boto_profile = credentials.pop('boto_profile')
-    else:
-        boto_profile = None
+    boto_profile = credentials.pop('aws_profile', None)
 
     try:
         connection = boto3.session.Session(profile_name=boto_profile).client('ec2', region, **credentials)
@@ -120,9 +85,9 @@ def _boto3_conn(region, credentials):
 
 def _get_credentials(options):
     credentials = {}
-    credentials['boto_profile'] = options['boto_profile']
-    credentials['aws_secret_access_key'] = options['aws_access_key']
-    credentials['aws_access_key_id'] = options['aws_secret_key']
+    credentials['aws_profile'] = options['aws_profile']
+    credentials['aws_secret_access_key'] = options['aws_secret_key']
+    credentials['aws_access_key_id'] = options['aws_access_key']
     credentials['aws_session_token'] = options['aws_security_token']
 
     return credentials

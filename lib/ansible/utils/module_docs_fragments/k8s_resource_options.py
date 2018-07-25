@@ -25,14 +25,14 @@ class ModuleDocFragment(object):
 options:
   resource_definition:
     description:
-    - "Provide a valid YAML definition for an object when creating or updating. NOTE: I(kind), I(api_version), I(name),
+    - "Provide a valid YAML definition (either as a string, list, or dict) for an object when creating or updating. NOTE: I(kind), I(api_version), I(name),
       and I(namespace) will be overwritten by corresponding values found in the provided I(resource_definition)."
     aliases:
     - definition
     - inline
   src:
     description:
-    - "Provide a path to a file containing a valid YAML definition of an object to be created or updated. Mutually
+    - "Provide a path to a file containing a valid YAML definition of an object or objects to be created or updated. Mutually
       exclusive with I(resource_definition). NOTE: I(kind), I(api_version), I(name), and I(namespace) will be
       overwritten by corresponding values found in the configuration read in from the I(src) file."
     - Reads from the local file system. To read from the Ansible controller's file system, use the file lookup

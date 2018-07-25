@@ -15,6 +15,7 @@ from lib.sanity import (
 from lib.util import (
     SubprocessError,
     run_command,
+    display,
 )
 
 from lib.config import (
@@ -28,10 +29,14 @@ class YamllintTest(SanitySingleVersion):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
-        :rtype: SanityResult
+        :rtype: TestResult
         """
         paths = [
             [i.path for i in targets.include if os.path.splitext(i.path)[1] in ('.yml', '.yaml')],
+
+            [i.path for i in targets.include if os.path.splitext(i.path)[1] == '.py' and
+             os.path.basename(i.path) != '__init__.py' and
+             i.path.startswith('lib/ansible/plugins/')],
 
             [i.path for i in targets.include if os.path.splitext(i.path)[1] == '.py' and
              os.path.basename(i.path) != '__init__.py' and
@@ -64,12 +69,16 @@ class YamllintTest(SanitySingleVersion):
         :rtype: list[SanityMessage]
         """
         cmd = [
-            'python%s' % args.python_version,
+            args.python_executable,
             'test/sanity/yamllint/yamllinter.py',
-        ] + paths
+        ]
+
+        data = '\n'.join(paths)
+
+        display.info(data, verbosity=4)
 
         try:
-            stdout, stderr = run_command(args, cmd, capture=True)
+            stdout, stderr = run_command(args, cmd, data=data, capture=True)
             status = 0
         except SubprocessError as ex:
             stdout = ex.stdout

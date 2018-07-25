@@ -44,7 +44,7 @@ options:
     description:
       - Wait for the AMI to be in state 'available' before returning.
     default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
   wait_timeout:
     description:
       - How long before wait gives up, in seconds.
@@ -62,7 +62,7 @@ options:
       - Flag indicating that the bundling process should not attempt to shutdown the instance before bundling. If this flag is True, the
         responsibility of maintaining file system integrity is left to the owner of the instance.
     default: no
-    choices: [ "yes", "no" ]
+    type: bool
   image_id:
     description:
       - Image ID to be deregistered.
@@ -77,7 +77,7 @@ options:
     description:
       - Delete snapshots when deregistering the AMI.
     default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
   tags:
     description:
       - A dictionary of tags to add to the new image; '{"key":"value"}' and '{"key":"value","key":"value"}'
@@ -406,15 +406,6 @@ def create_image(module, connection):
             'Description': description
         }
 
-        images = connection.describe_images(
-            Filters=[
-                {
-                    'Name': 'name',
-                    'Values': [name]
-                }
-            ]
-        ).get('Images')
-
         block_device_mapping = None
 
         if device_mapping:
@@ -429,8 +420,8 @@ def create_image(module, connection):
                 device = rename_item_if_exists(device, 'volume_type', 'VolumeType', 'Ebs')
                 device = rename_item_if_exists(device, 'snapshot_id', 'SnapshotId', 'Ebs')
                 device = rename_item_if_exists(device, 'delete_on_termination', 'DeleteOnTermination', 'Ebs')
-                device = rename_item_if_exists(device, 'size', 'VolumeSize', 'Ebs')
-                device = rename_item_if_exists(device, 'volume_size', 'VolumeSize', 'Ebs')
+                device = rename_item_if_exists(device, 'size', 'VolumeSize', 'Ebs', attribute_type=int)
+                device = rename_item_if_exists(device, 'volume_size', 'VolumeSize', 'Ebs', attribute_type=int)
                 device = rename_item_if_exists(device, 'iops', 'Iops', 'Ebs')
                 device = rename_item_if_exists(device, 'encrypted', 'Encrypted', 'Ebs')
                 block_device_mapping.append(device)
@@ -505,7 +496,7 @@ def deregister_image(module, connection):
     snapshots = []
     if 'BlockDeviceMappings' in image:
         for mapping in image.get('BlockDeviceMappings'):
-            snapshot_id = mapping.get('SnapshotId')
+            snapshot_id = mapping.get('Ebs', {}).get('SnapshotId')
             if snapshot_id is not None:
                 snapshots.append(snapshot_id)
 
@@ -572,7 +563,7 @@ def update_image(module, connection, image_id):
                                                   LaunchPermission=dict(Add=to_add, Remove=to_remove))
                 changed = True
             except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
-                module.fail_json_aws(e, msg="Error updating launch permissions")
+                module.fail_json_aws(e, msg="Error updating launch permissions of image %s" % image_id)
 
     desired_tags = module.params.get('tags')
     if desired_tags is not None:
@@ -626,22 +617,24 @@ def get_image_by_id(module, connection, image_id):
                 result['ProductCodes'] = connection.describe_image_attribute(Attribute='productCodes', ImageId=image_id)['ProductCodes']
             except botocore.exceptions.ClientError as e:
                 if e.response['Error']['Code'] != 'InvalidAMIID.Unavailable':
-                    module.fail_json_aws(e, msg="Error retrieving image attributes" % image_id)
+                    module.fail_json_aws(e, msg="Error retrieving image attributes for image %s" % image_id)
             except botocore.exceptions.BotoCoreError as e:
-                module.fail_json_aws(e, msg="Error retrieving image attributes" % image_id)
+                module.fail_json_aws(e, msg="Error retrieving image attributes for image %s" % image_id)
             return result
         module.fail_json(msg="Invalid number of instances (%s) found for image_id: %s." % (str(len(images)), image_id))
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
         module.fail_json_aws(e, msg="Error retrieving image by image_id")
 
 
-def rename_item_if_exists(dict_object, attribute, new_attribute, child_node=None):
+def rename_item_if_exists(dict_object, attribute, new_attribute, child_node=None, attribute_type=None):
     new_item = dict_object.get(attribute)
     if new_item is not None:
+        if attribute_type is not None:
+            new_item = attribute_type(new_item)
         if child_node is None:
-            dict_object[new_attribute] = dict_object.get(attribute)
+            dict_object[new_attribute] = new_item
         else:
-            dict_object[child_node][new_attribute] = dict_object.get(attribute)
+            dict_object[child_node][new_attribute] = new_item
         dict_object.pop(attribute)
     return dict_object
 
@@ -677,9 +670,13 @@ def main():
         argument_spec=argument_spec,
         required_if=[
             ['state', 'absent', ['image_id']],
-            ['state', 'present', ['name']],
         ]
     )
+
+    # Using a required_one_of=[['name', 'image_id']] overrides the message that should be provided by
+    # the required_if for state=absent, so check manually instead
+    if not any([module.params['image_id'], module.params['name']]):
+        module.fail_json(msg="one of the following is required: name, image_id")
 
     try:
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)

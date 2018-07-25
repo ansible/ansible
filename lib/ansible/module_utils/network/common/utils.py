@@ -284,7 +284,11 @@ def dict_merge(base, other):
             if key in other:
                 item = other.get(key)
                 if item is not None:
-                    combined[key] = list(set(chain(value, item)))
+                    try:
+                        combined[key] = list(set(chain(value, item)))
+                    except TypeError:
+                        value.extend([i for i in item if i not in value])
+                        combined[key] = value
                 else:
                     combined[key] = item
             else:
@@ -353,6 +357,14 @@ def validate_ip_address(address):
     except socket.error:
         return False
     return address.count('.') == 3
+
+
+def validate_ip_v6_address(address):
+    try:
+        socket.inet_pton(socket.AF_INET6, address)
+    except socket.error:
+        return False
+    return True
 
 
 def validate_prefix(prefix):

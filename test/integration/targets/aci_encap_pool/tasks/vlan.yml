@@ -7,15 +7,16 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
     state: absent
     pool: anstest
     pool_type: vlan
-    allocation_mode: static
+    pool_allocation_mode: static
 
 - name: ensure vlan pool does not exist for tests to kick off
   aci_encap_pool: &aci_pool_absent_dynamic
     <<: *aci_pool_absent_static
-    allocation_mode: dynamic
+    pool_allocation_mode: dynamic
 
 - name: create static vlan pool - check mode works
   aci_encap_pool: &aci_pool_present_static
@@ -29,7 +30,7 @@
   assert:
     that:
       - create_check_mode.changed == true
-      - 'create_check_mode.config == {"fvnsVlanInstP": {"attributes": {"allocMode": "static", "descr": "Ansible Test", "name": "anstest"}}}'
+      - 'create_check_mode.sent == {"fvnsVlanInstP": {"attributes": {"allocMode": "static", "descr": "Ansible Test", "name": "anstest"}}}'
 
 - name: create static vlan pool - creation works
   aci_encap_pool:
@@ -40,8 +41,8 @@
   assert:
     that:
       - create_static.changed == true
-      - create_static.existing == []
-      - create_static.config == create_check_mode.config
+      - create_static.previous == []
+      - create_static.sent == create_check_mode.sent
 
 - name: create dynamic vlan pool - creation works
   aci_encap_pool: &aci_pool_present_dynamic
@@ -54,8 +55,8 @@
   assert:
     that:
       - create_dynamic.changed == true
-      - create_dynamic.existing == []
-      - 'create_dynamic.config == {"fvnsVlanInstP": {"attributes": {"allocMode": "dynamic", "descr": "Ansible Test", "name": "anstest"}}}'
+      - create_dynamic.previous == []
+      - 'create_dynamic.sent == {"fvnsVlanInstP": {"attributes": {"allocMode": "dynamic", "descr": "Ansible Test", "name": "anstest"}}}'
 
 - name: create static vlan pool again - idempotency works
   aci_encap_pool:
@@ -66,8 +67,8 @@
   assert:
     that:
       - idempotent_static.changed == false
-      - 'idempotent_static.existing == [{"fvnsVlanInstP": {"attributes": {"allocMode": "static", "descr": "Ansible Test", "dn": "uni/infra/vlanns-[anstest]-static", "name": "anstest", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
-      - idempotent_static.config == {}
+      - 'idempotent_static.previous == [{"fvnsVlanInstP": {"attributes": {"allocMode": "static", "descr": "Ansible Test", "dn": "uni/infra/vlanns-[anstest]-static", "name": "anstest", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
+      - idempotent_static.sent == {}
 
 - name: create dynamic vlan pool again - idempotency works
   aci_encap_pool:
@@ -78,8 +79,8 @@
   assert:
     that:
       - idempotent_dynamic.changed == false
-      - 'idempotent_dynamic.existing == [{"fvnsVlanInstP": {"attributes": {"allocMode": "dynamic", "descr": "Ansible Test", "dn": "uni/infra/vlanns-[anstest]-dynamic", "name": "anstest", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
-      - idempotent_dynamic.config == {}
+      - 'idempotent_dynamic.previous == [{"fvnsVlanInstP": {"attributes": {"allocMode": "dynamic", "descr": "Ansible Test", "dn": "uni/infra/vlanns-[anstest]-dynamic", "name": "anstest", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
+      - idempotent_dynamic.sent == {}
  
 - name: update static vlan pool - update works
   aci_encap_pool:
@@ -91,7 +92,7 @@
   assert:
     that:
       - update_static.changed == true
-      - 'update_static.config == {"fvnsVlanInstP": {"attributes": {"descr": "Ansible Test Change"}}}'
+      - 'update_static.sent == {"fvnsVlanInstP": {"attributes": {"descr": "Ansible Test Change"}}}'
 
 - name: update dynamic vlan pool - update works
   aci_encap_pool:
@@ -103,12 +104,12 @@
   assert:
     that:
       - update_dynamic.changed == true
-      - 'update_dynamic.config == {"fvnsVlanInstP": {"attributes": {"descr": "Ansible Test Change"}}}'
+      - 'update_dynamic.sent == {"fvnsVlanInstP": {"attributes": {"descr": "Ansible Test Change"}}}'
 
 - name: missing param - failure message works
   aci_encap_pool:
     <<: *aci_pool_present_dynamic
-    allocation_mode: "{{ fake_var | default(omit) }}"
+    pool_allocation_mode: "{{ fake_var | default(omit) }}"
   ignore_errors: yes
   register: vlan_alloc_fail
 
@@ -116,7 +117,7 @@
   assert:
     that:
       - vlan_alloc_fail.failed == true
-      - 'vlan_alloc_fail.msg == "ACI requires the \"allocation_mode\" for \"pool_type\" of \"vlan\" and \"vsan\" when the \"pool\" is provided"'
+      - "vlan_alloc_fail.msg == 'ACI requires parameter \\'pool_allocation_mode\\' for \\'pool_type\\' of \\'vlan\\' and \\'vsan\\' when parameter \\'pool\\' is provided'"
 
 - name: missing param - failure message works
   aci_encap_pool:
@@ -149,7 +150,7 @@
     <<: *aci_pool_absent_static
     state: query
     pool: "{{ fake_var | default(omit) }}"
-    allocation_mode: "{{ fake_var | default(omit) }}"
+    pool_allocation_mode: "{{ fake_var | default(omit) }}"
   register: get_all_pools
 
 - name: assertion test - query
@@ -157,7 +158,7 @@
     that:
       - get_all_pools.changed == false
       - get_all_pools.method == "GET"
-      - get_all_pools.existing | length > 1
+      - get_all_pools.current | length > 1
 
 - name: get created static vlan pool - get mo works
   aci_encap_pool:
@@ -170,9 +171,9 @@
     that:
       - get_static_pool.changed == false
       - get_static_pool.method == "GET"
-      - get_static_pool.existing | length == 1
-      - get_static_pool.existing.0.fvnsVlanInstP.attributes.allocMode == "static"
-      - get_static_pool.existing.0.fvnsVlanInstP.attributes.name == "anstest"
+      - get_static_pool.current | length == 1
+      - get_static_pool.current.0.fvnsVlanInstP.attributes.allocMode == "static"
+      - get_static_pool.current.0.fvnsVlanInstP.attributes.name == "anstest"
 
 - name: get created dynamic vlan pool - get mo works
   aci_encap_pool:
@@ -185,9 +186,9 @@
     that:
       - get_dynamic_pool.changed == false
       - get_dynamic_pool.method == "GET"
-      - get_dynamic_pool.existing | length == 1
-      - get_dynamic_pool.existing.0.fvnsVlanInstP.attributes.allocMode == "dynamic"
-      - get_dynamic_pool.existing.0.fvnsVlanInstP.attributes.name == "anstest"
+      - get_dynamic_pool.current | length == 1
+      - get_dynamic_pool.current.0.fvnsVlanInstP.attributes.allocMode == "dynamic"
+      - get_dynamic_pool.current.0.fvnsVlanInstP.attributes.name == "anstest"
 
 - name: get created dynamic vlan pool - get mo works
   aci_encap_pool:
@@ -213,8 +214,8 @@
     that:
       - delete_static.changed == true
       - delete_static.method == "DELETE"
-      - delete_static.existing.0.fvnsVlanInstP.attributes.allocMode == "static"
-      - delete_static.existing.0.fvnsVlanInstP.attributes.name == "anstest"
+      - delete_static.previous.0.fvnsVlanInstP.attributes.allocMode == "static"
+      - delete_static.previous.0.fvnsVlanInstP.attributes.name == "anstest"
 
 - name: delete dynamic vlan pool - check mode works
   aci_encap_pool:
@@ -237,8 +238,8 @@
     that:
       - delete_dynamic.changed == true
       - delete_dynamic.method == "DELETE"
-      - delete_dynamic.existing.0.fvnsVlanInstP.attributes.allocMode == "dynamic"
-      - delete_dynamic.existing.0.fvnsVlanInstP.attributes.name == "anstest"
+      - delete_dynamic.previous.0.fvnsVlanInstP.attributes.allocMode == "dynamic"
+      - delete_dynamic.previous.0.fvnsVlanInstP.attributes.name == "anstest"
 
 - name: delete static vlan pool again - idempotency works
   aci_encap_pool:
@@ -249,7 +250,7 @@
   assert:
     that:
       - idempotent_delete_static.changed == false
-      - idempotent_delete_static.existing == []
+      - idempotent_delete_static.previous == []
 
 - name: delete dynamic vlan pool again - idempotency works
   aci_encap_pool:
@@ -260,4 +261,4 @@
   assert:
     that:
       - idempotent_delete_dynamic.changed == false
-      - idempotent_delete_dynamic.existing == []
+      - idempotent_delete_dynamic.previous == []

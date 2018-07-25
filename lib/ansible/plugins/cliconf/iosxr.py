@@ -24,7 +24,7 @@ import json
 
 from itertools import chain
 
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_text
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase
 
@@ -35,7 +35,7 @@ class Cliconf(CliconfBase):
         device_info = {}
 
         device_info['network_os'] = 'iosxr'
-        reply = self.get(b'show version brief')
+        reply = self.get('show version | utility head -n 20')
         data = to_text(reply, errors='surrogate_or_strict').strip()
 
         match = re.search(r'Version (\S+)$', data, re.M)
@@ -56,33 +56,52 @@ class Cliconf(CliconfBase):
 
         return device_info
 
-    def get_config(self, source='running', filter=None):
+    def get_config(self, source='running', format='text', filter=None):
         lookup = {'running': 'running-config'}
         if source not in lookup:
             return self.invalid_params("fetching configuration from %s is not supported" % source)
         if filter:
-            cmd = to_bytes('show {0} {1}'.format(lookup[source], filter), errors='surrogate_or_strict')
+            cmd = 'show {0} {1}'.format(lookup[source], filter)
         else:
-            cmd = to_bytes('show {0}'.format(lookup[source]), errors='surrogate_or_strict')
+            cmd = 'show {0}'.format(lookup[source])
 
         return self.send_command(cmd)
 
-    def edit_config(self, command):
-        for cmd in chain(to_list(command)):
-            self.send_command(cmd)
+    def edit_config(self, commands=None):
+        for cmd in chain(to_list(commands)):
+            try:
+                if isinstance(cmd, str):
+                    cmd = json.loads(cmd)
+                command = cmd.get('command', None)
+                prompt = cmd.get('prompt', None)
+                answer = cmd.get('answer', None)
+                sendonly = cmd.get('sendonly', False)
+                newline = cmd.get('newline', True)
+            except:
+                command = cmd
+                prompt = None
+                answer = None
+                sendonly = None
+                newline = None
 
-    def get(self, command, prompt=None, answer=None, sendonly=False):
-        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
+            self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline)
 
-    def commit(self, comment=None):
-        if comment:
+    def get(self, command=None, prompt=None, answer=None, sendonly=False, newline=True):
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline)
+
+    def commit(self, comment=None, label=None):
+        if comment and label:
+            command = 'commit label {0} comment {1}'.format(label, comment)
+        elif comment:
             command = 'commit comment {0}'.format(comment)
+        elif label:
+            command = 'commit label {0}'.format(label)
         else:
             command = 'commit'
-        self.send_command(to_bytes(command))
+        self.send_command(command)
 
     def discard_changes(self):
-        self.send_command(b'abort')
+        self.send_command('abort')
 
     def get_capabilities(self):
         result = {}

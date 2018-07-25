@@ -13,7 +13,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# along with Ansible.  If not, see <https://www.gnu.org/licenses/>.
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
@@ -24,9 +24,9 @@ import os
 import re
 import string
 
-from collections import MutableMapping
+from collections import Mapping
 
-from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
+from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.plugins import AnsiblePlugin
 from ansible.plugins.cache import InventoryFileCacheModule
 from ansible.module_utils._text import to_bytes, to_native
@@ -69,7 +69,7 @@ def expand_hostname_range(line=None):
     appearance. They are replaced in this function with '|' to ease
     string splitting.
 
-    References: http://ansible.github.com/patterns.html#hosts-and-groups
+    References: https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html#hosts-and-groups
     '''
     all_hosts = []
     if line:
@@ -146,20 +146,36 @@ class BaseInventoryPlugin(AnsiblePlugin):
         self.cache = None
 
     def parse(self, inventory, loader, path, cache=True):
-        ''' Populates self.groups from the given data. Raises an error on any parse failure.  '''
+        ''' Populates inventory from the given data. Raises an error on any parse failure
+            :arg inventory: a copy of the previously accumulated inventory data,
+                 to be updated with any new data this plugin provides.
+                 The inventory can be empty if no other source/plugin ran successfully.
+            :arg loader: a reference to the DataLoader, which can read in YAML and JSON files,
+                 it also has Vault support to automatically decrypt files.
+            :arg path: the string that represents the 'inventory source',
+                 normally a path to a configuration file for this inventory,
+                 but it can also be a raw string for this plugin to consume
+            :arg cache: a boolean that indicates if the plugin should use the cache or not
+                 you can ignore if this plugin does not implement caching.
+        '''
 
         self.loader = loader
         self.inventory = inventory
         self.templar = Templar(loader=loader)
 
     def verify_file(self, path):
-        ''' Verify if file is usable by this plugin, base does minimal accessability check '''
+        ''' Verify if file is usable by this plugin, base does minimal accessability check
+            :arg path: a string that was passed as an inventory source,
+                 it normally is a path to a config file, but this is not a requirement,
+                 it can also be parsed itself as the inventory data to process.
+                 So only call this base class if you expect it to be a file.
+        '''
 
         b_path = to_bytes(path, errors='surrogate_or_strict')
         return (os.path.exists(b_path) and os.access(b_path, os.R_OK))
 
     def _populate_host_vars(self, hosts, variables, group=None, port=None):
-        if not isinstance(variables, MutableMapping):
+        if not isinstance(variables, Mapping):
             raise AnsibleParserError("Invalid data from file, expected dictionary and got:\n\n%s" % to_native(variables))
 
         for host in hosts:
@@ -168,11 +184,15 @@ class BaseInventoryPlugin(AnsiblePlugin):
                 self.inventory.set_variable(host, k, variables[k])
 
     def _read_config_data(self, path):
-        ''' validate config and set options as appropriate '''
+        ''' validate config and set options as appropriate
+            :arg path: path to common yaml format config file for this plugin
+        '''
 
         config = {}
         try:
-            config = self.loader.load_from_file(path)
+            # avoid loader cache so meta: refresh_inventory can pick up config changes
+            # if we read more than once, fs cache should be good enough
+            config = self.loader.load_from_file(path, cache=False)
         except Exception as e:
             raise AnsibleParserError(to_native(e))
 
@@ -182,7 +202,7 @@ class BaseInventoryPlugin(AnsiblePlugin):
         elif config.get('plugin') != self.NAME:
             # this is not my config file
             raise AnsibleParserError("Incorrect plugin name in file: %s" % config.get('plugin', 'none found'))
-        elif not isinstance(config, MutableMapping):
+        elif not isinstance(config, Mapping):
             # configs are dictionaries
             raise AnsibleParserError('inventory source has invalid structure, it should be a dictionary, got: %s' % type(config))
 
@@ -198,7 +218,10 @@ class BaseInventoryPlugin(AnsiblePlugin):
                                               cache_dir=options.get('cache_connection'))
 
     def _consume_options(self, data):
-        ''' update existing options from file data'''
+        ''' update existing options from alternate configuration sources not normally used by Ansible.
+            Many API libraries already have existing configuration sources, this allows plugin author to leverage them.
+            :arg data: key/value pairs that correspond to configuration options for this plugin
+        '''
 
         for k in self._options:
             if k in data:
@@ -253,7 +276,7 @@ class Constructable(object):
         ''' helper method for pluigns to compose variables for Ansible based on jinja2 expression and inventory vars'''
         t = self.templar
         t.set_available_variables(variables)
-        return t.do_template('%s%s%s' % (t.environment.variable_start_string, template, t.environment.variable_end_string), disable_lookups=True)
+        return t.template('%s%s%s' % (t.environment.variable_start_string, template, t.environment.variable_end_string), disable_lookups=True)
 
     def _set_composite_vars(self, compose, variables, host, strict=False):
         ''' loops over compose entries to create vars for hosts '''
@@ -263,7 +286,7 @@ class Constructable(object):
                     composite = self._compose(compose[varname], variables)
                 except Exception as e:
                     if strict:
-                        raise AnsibleOptionsError("Could set %s: %s" % (varname, to_native(e)))
+                        raise AnsibleError("Could not set %s: %s" % (varname, to_native(e)))
                     continue
                 self.inventory.set_variable(host, varname, composite)
 
@@ -278,8 +301,9 @@ class Constructable(object):
                     result = boolean(self.templar.template(conditional))
                 except Exception as e:
                     if strict:
-                        raise AnsibleOptionsError("Could not add to group %s: %s" % (group_name, to_native(e)))
+                        raise AnsibleParserError("Could not add host %s to group %s: %s" % (host, group_name, to_native(e)))
                     continue
+
                 if result:
                     # ensure group exists
                     self.inventory.add_group(group_name)
@@ -289,27 +313,40 @@ class Constructable(object):
     def _add_host_to_keyed_groups(self, keys, variables, host, strict=False):
         ''' helper to create groups for plugins based on variable values and add the corresponding hosts to it'''
         if keys and isinstance(keys, list):
+            groups = []
             for keyed in keys:
                 if keyed and isinstance(keyed, dict):
-                    prefix = keyed.get('prefix', '')
-                    key = keyed.get('key')
-                    if key is not None:
-                        try:
-                            groups = to_safe_group_name('%s_%s' % (prefix, self._compose(key, variables)))
-                        except Exception as e:
-                            if strict:
-                                raise AnsibleOptionsError("Could not generate group on %s: %s" % (key, to_native(e)))
-                            continue
-                        if isinstance(groups, string_types):
-                            groups = [groups]
-                        if isinstance(groups, list):
-                            for group_name in groups:
-                                if group_name not in self.inventory.groups:
-                                    self.inventory.add_group(group_name)
-                                self.inventory.add_child(group_name, host)
+
+                    try:
+                        key = self._compose(keyed.get('key'), variables)
+                    except Exception as e:
+                        if strict:
+                            raise AnsibleParserError("Could not generate group from %s entry: %s" % (keyed.get('key'), to_native(e)))
+                        continue
+
+                    if key:
+                        prefix = keyed.get('prefix', '')
+                        sep = keyed.get('separator', '_')
+
+                        if isinstance(key, string_types):
+                            groups.append('%s%s%s' % (prefix, sep, key))
+                        elif isinstance(key, list):
+                            for name in key:
+                                groups.append('%s%s%s' % (prefix, sep, name))
+                        elif isinstance(key, Mapping):
+                            for (gname, gval) in key.items():
+                                name = '%s%s%s' % (gname, sep, gval)
+                                groups.append('%s%s%s' % (prefix, sep, name))
                         else:
-                            raise AnsibleOptionsError("Invalid group name format, expected string or list of strings, got: %s" % type(groups))
+                            raise AnsibleParserError("Invalid group name format, expected a string or a list of them or dictionary, got: %s" % type(key))
                     else:
-                        raise AnsibleOptionsError("No key supplied, invalid entry")
+                        if strict:
+                            raise AnsibleParserError("No key or key resulted empty, invalid entry")
                 else:
-                    raise AnsibleOptionsError("Invalid keyed group entry, it must be a dictionary: %s " % keyed)
+                    raise AnsibleParserError("Invalid keyed group entry, it must be a dictionary: %s " % keyed)
+
+            # now actually add any groups
+            for group_name in groups:
+                gname = to_safe_group_name(group_name)
+                self.inventory.add_group(gname)
+                self.inventory.add_child(gname, host)

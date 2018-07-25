@@ -27,16 +27,13 @@ options:
       description:
         - Name to use for the label.
       required: True
-      default: null
     organization:
       description:
         - Organization the label should be applied to.
       required: True
-      default: null
     state:
       description:
         - Desired state of the resource.
-      required: False
       default: "present"
       choices: ["present", "absent"]
 extends_documentation_fragment: tower

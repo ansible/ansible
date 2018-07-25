@@ -80,7 +80,6 @@ options:
   tags:
     description:
       - A dict of key:value pair(s) to add to the pipeline.
-    default: null
 '''
 
 EXAMPLES = '''

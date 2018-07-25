@@ -22,6 +22,34 @@ class ModuleDocFragment(object):
     # Standard Pure Storage documentation fragment
     DOCUMENTATION = '''
 options:
+  - See seperate platform section for more details
+requirements:
+  - See seperate platform section for more details
+notes:
+  - Ansible modules are available for the following Pure Storage products: FlashArray, FlashBlade
+'''
+
+    # Documentation fragment for FlashBlade
+    FB = '''
+options:
+  fb_url:
+    description:
+      - FlashBlade management IP address or Hostname.
+  api_token:
+    description:
+      - FlashBlade API token for admin privilaed user.
+notes:
+  - This module requires the ```purity_fb``` python library
+  - You must set PUREFB_URL and PUREFB_API environment variables
+    if fb_url and api_token arguments are not passed to the module directly
+requirements:
+  - "python >= 2.7"
+  - "purity_fb >= 1.1"
+'''
+
+    # Documentation fragment for FlashArray
+    FA = '''
+options:
   fa_url:
     description:
       - FlashArray management IPv4 address or Hostname.

@@ -8,6 +8,11 @@
     path: "{{ output_dir }}"
     state: directory
 
+- name: SETUP | install git
+  package:
+    name: git
+  when: ansible_distribution != "MacOSX"
+
 - name: SETUP | verify that git is installed so this test can continue
   shell: which git
 

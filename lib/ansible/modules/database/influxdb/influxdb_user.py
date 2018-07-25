@@ -36,7 +36,7 @@ options:
     description:
       - Whether the user should be in the admin role or not.
     default: no
-    choices: [ yes, no]
+    type: bool
   state:
     description:
       - State of the user.
@@ -81,7 +81,7 @@ RETURN = '''
 
 import ansible.module_utils.urls
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.influxdb import InfluxDb
+import ansible.module_utils.influxdb as influx
 
 
 def find_user(module, client, user_name):
@@ -98,6 +98,31 @@ def find_user(module, client, user_name):
     return name
 
 
+def check_user_password(module, client, user_name, user_password):
+    try:
+        client.switch_user(user_name, user_password)
+        client.get_list_users()
+    except influx.exceptions.InfluxDBClientError as e:
+        if e.code == 401:
+            return False
+    except ansible.module_utils.urls.ConnectionError as e:
+        module.fail_json(msg=str(e))
+    finally:
+        # restore previous user
+        client.switch_user(module.params['username'], module.params['password'])
+    return True
+
+
+def set_user_password(module, client, user_name, user_password):
+    if not module.check_mode:
+        try:
+            client.set_user_password(user_name, user_password)
+        except ansible.module_utils.urls.ConnectionError as e:
+            module.fail_json(msg=str(e))
+
+    module.exit_json(changed=True)
+
+
 def create_user(module, client, user_name, user_password, admin):
     if not module.check_mode:
         try:
@@ -112,20 +137,19 @@ def drop_user(module, client, user_name):
     if not module.check_mode:
         try:
             client.drop_user(user_name)
-        except client.InfluxDBClientError as e:
+        except influx.exceptions.InfluxDBClientError as e:
             module.fail_json(msg=e.content)
 
     module.exit_json(changed=True)
 
 
 def main():
-    argument_spec = InfluxDb.influxdb_argument_spec()
+    argument_spec = influx.InfluxDb.influxdb_argument_spec()
     argument_spec.update(
         state=dict(default='present', type='str', choices=['present', 'absent']),
         user_name=dict(required=True, type='str'),
         user_password=dict(required=False, type='str', no_log=True),
         admin=dict(default='False', type='bool')
-
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -136,13 +160,16 @@ def main():
     user_name = module.params['user_name']
     user_password = module.params['user_password']
     admin = module.params['admin']
-    influxdb = InfluxDb(module)
+    influxdb = influx.InfluxDb(module)
     client = influxdb.connect_to_influxdb()
     user = find_user(module, client, user_name)
 
     if state == 'present':
         if user:
-            module.exit_json(changed=False)
+            if check_user_password(module, client, user_name, user_password):
+                module.exit_json(changed=False)
+            else:
+                set_user_password(module, client, user_name, user_password)
         else:
             create_user(module, client, user_name, user_password, admin)
 

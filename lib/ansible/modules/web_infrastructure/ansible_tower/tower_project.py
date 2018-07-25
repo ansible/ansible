@@ -27,62 +27,47 @@ options:
       description:
         - Name to use for the project.
       required: True
-      default: null
     description:
       description:
         - Description to use for the project.
-      required: False
-      default: null
     scm_type:
       description:
-        - Type of scm resource.
-      required: False
-      default: "manual"
+        - Type of SCM resource.
       choices: ["manual", "git", "hg", "svn"]
+      default: "manual"
     scm_url:
       description:
-        - URL of scm resource.
-      required: False
-      default: null
+        - URL of SCM resource.
     local_path:
       description:
         - The server playbook directory for manual projects.
-      required: False
-      default: null
     scm_branch:
       description:
-        - The branch to use for the scm resource.
-      required: False
-      default: null
+        - The branch to use for the SCM resource.
     scm_credential:
       description:
-        - Name of the credential to use with this scm resource.
-      required: False
-      default: null
+        - Name of the credential to use with this SCM resource.
     scm_clean:
       description:
         - Remove local modifications before updating.
-      required: False
-      default: False
+      type: bool
+      default: 'no'
     scm_delete_on_update:
       description:
         - Remove the repository completely before updating.
-      required: False
-      default: False
+      type: bool
+      default: 'no'
     scm_update_on_launch:
       description:
         - Before an update to the local repository before launching a job with this project.
-      required: False
-      default: False
+      type: bool
+      default: 'no'
     organization:
       description:
         - Primary key of organization for project.
-      required: False
-      default: null
     state:
       description:
         - Desired state of the resource.
-      required: False
       default: "present"
       choices: ["present", "absent"]
 extends_documentation_fragment: tower
@@ -161,16 +146,19 @@ def main():
                     org = org_res.get(name=organization)
                 except (exc.NotFound) as excinfo:
                     module.fail_json(msg='Failed to update project, organization not found: {0}'.format(organization), changed=False)
-                try:
-                    cred_res = tower_cli.get_resource('credential')
-                    cred = cred_res.get(name=scm_credential)
-                except (exc.NotFound) as excinfo:
-                    module.fail_json(msg='Failed to update project, credential not found: {0}'.format(scm_credential), changed=False)
 
+                if scm_type:
+                    try:
+                        cred_res = tower_cli.get_resource('credential')
+                        cred = cred_res.get(name=scm_credential)
+                    except (exc.NotFound) as excinfo:
+                        module.fail_json(msg='Failed to update project, credential not found: {0}'.format(scm_credential), changed=False)
+
+                credential = cred['id'] if scm_type else None
                 result = project.modify(name=name, description=description,
                                         organization=org['id'],
                                         scm_type=scm_type, scm_url=scm_url, local_path=local_path,
-                                        scm_branch=scm_branch, scm_clean=scm_clean, credential=cred['id'],
+                                        scm_branch=scm_branch, scm_clean=scm_clean, credential=credential,
                                         scm_delete_on_update=scm_delete_on_update,
                                         scm_update_on_launch=scm_update_on_launch,
                                         create_on_missing=True)

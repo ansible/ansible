@@ -30,8 +30,6 @@ options:
     description:
       description:
         - The description to use for the host.
-      required: False
-      default: null
     inventory:
       description:
         - Inventory the host should be made a member of.
@@ -39,17 +37,16 @@ options:
     enabled:
       description:
         - If the host should be enabled.
-      required: False
-      default: True
+      type: bool
+      default: 'yes'
     variables:
       description:
-        - Variables to use for the host. Use '@' for a file.
+        - Variables to use for the host. Use C(@) for a file.
     state:
       description:
         - Desired state of the resource.
-      required: False
-      default: "present"
       choices: ["present", "absent"]
+      default: "present"
 extends_documentation_fragment: tower
 '''
 
@@ -103,7 +100,8 @@ def main():
     if variables:
         if variables.startswith('@'):
             filename = os.path.expanduser(variables[1:])
-            variables = module.contents_from_file(filename)
+            with open(filename, 'r') as f:
+                variables = f.read()
 
     json_output = {'host': name, 'state': state}
 

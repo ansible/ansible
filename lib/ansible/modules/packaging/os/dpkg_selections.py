@@ -41,6 +41,8 @@ EXAMPLES = '''
     selection: hold
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+
 
 def main():
     module = AnsibleModule(
@@ -71,8 +73,6 @@ def main():
     module.run_command([dpkg, '--set-selections'], data="%s %s" % (name, selection), check_rc=True)
     module.exit_json(changed=changed, before=current, after=selection)
 
-
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

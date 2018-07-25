@@ -28,7 +28,6 @@ requirements:
     - Python >= 2.6
 options:
     state:
-        required: false
         default: "present"
         choices: [ present, absent ]
         description:
@@ -39,263 +38,191 @@ options:
             - User name
         aliases: ['name']
     firstname:
-        required: false
         description:
             - First name. Required if C(state=present).
     lastname:
-        required: false
         description:
             - Last name. Required if C(state=present).
     password:
-        required: false
-        default: None
         description:
             - Password. Required if C(state=present).
     birthday:
-        required: false
-        default: None
         description:
             - Birthday
     city:
-        required: false
-        default: None
         description:
             - City of users business address.
     country:
-        required: false
-        default: None
         description:
             - Country of users business address.
     department_number:
-        required: false
-        default: None
         description:
             - Department number of users business address.
         aliases: [ departmentNumber ]
     description:
-        required: false
-        default: None
         description:
             - Description (not gecos)
     display_name:
-        required: false
-        default: None
         description:
             - Display name (not gecos)
         aliases: [ displayName ]
     email:
-        required: false
-        default: ['']
+        default: []
         description:
             - A list of e-mail addresses.
     employee_number:
-        required: false
-        default: None
         description:
             - Employee number
         aliases: [ employeeNumber ]
     employee_type:
-        required: false
-        default: None
         description:
             - Employee type
         aliases: [ employeeType ]
     gecos:
-        required: false
-        default: None
         description:
             - GECOS
     groups:
-        required: false
         default: []
         description:
             - "POSIX groups, the LDAP DNs of the groups will be found with the
                LDAP filter for each group as $GROUP:
                C((&(objectClass=posixGroup)(cn=$GROUP)))."
     home_share:
-        required: false
-        default: None
         description:
             - "Home NFS share. Must be a LDAP DN, e.g.
                C(cn=home,cn=shares,ou=school,dc=example,dc=com)."
         aliases: [ homeShare ]
     home_share_path:
-        required: false
-        default: None
         description:
             - Path to home NFS share, inside the homeShare.
         aliases: [ homeSharePath ]
     home_telephone_number:
-        required: false
         default: []
         description:
             - List of private telephone numbers.
         aliases: [ homeTelephoneNumber ]
     homedrive:
-        required: false
-        default: None
         description:
             - Windows home drive, e.g. C("H:").
     mail_alternative_address:
-        required: false
         default: []
         description:
             - List of alternative e-mail addresses.
         aliases: [ mailAlternativeAddress ]
     mail_home_server:
-        required: false
-        default: None
         description:
             - FQDN of mail server
         aliases: [ mailHomeServer ]
     mail_primary_address:
-        required: false
-        default: None
         description:
             - Primary e-mail address
         aliases: [ mailPrimaryAddress ]
     mobile_telephone_number:
-        required: false
         default: []
         description:
             - Mobile phone number
         aliases: [ mobileTelephoneNumber ]
     organisation:
-        required: false
-        default: None
         description:
             - Organisation
     override_pw_history:
-        required: false
-        default: False
+        type: bool
+        default: 'no'
         description:
             - Override password history
         aliases: [ overridePWHistory ]
     override_pw_length:
-        required: false
-        default: False
+        type: bool
+        default: 'no'
         description:
             - Override password check
         aliases: [ overridePWLength ]
     pager_telephonenumber:
-        required: false
         default: []
         description:
             - List of pager telephone numbers.
         aliases: [ pagerTelephonenumber ]
     phone:
-        required: false
-        default: []
         description:
             - List of telephone numbers.
     postcode:
-        required: false
-        default: None
         description:
             - Postal code of users business address.
     primary_group:
-        required: false
         default: cn=Domain Users,cn=groups,$LDAP_BASE_DN
         description:
             - Primary group. This must be the group LDAP DN.
         aliases: [ primaryGroup ]
     profilepath:
-        required: false
-        default: None
         description:
             - Windows profile directory
     pwd_change_next_login:
-        required: false
-        default: None
         choices: [ '0', '1' ]
         description:
             - Change password on next login.
         aliases: [ pwdChangeNextLogin ]
     room_number:
-        required: false
-        default: None
         description:
             - Room number of users business address.
         aliases: [ roomNumber ]
     samba_privileges:
-        required: false
-        default: []
         description:
             - "Samba privilege, like allow printer administration, do domain
                join."
         aliases: [ sambaPrivileges ]
     samba_user_workstations:
-        required: false
-        default: []
         description:
             - Allow the authentication only on this Microsoft Windows host.
         aliases: [ sambaUserWorkstations ]
     sambahome:
-        required: false
-        default: None
         description:
             - Windows home path, e.g. C('\\\\$FQDN\\$USERNAME').
     scriptpath:
-        required: false
-        default: None
         description:
             - Windows logon script.
     secretary:
-        required: false
         default: []
         description:
             - A list of superiors as LDAP DNs.
     serviceprovider:
-        required: false
-        default: ['']
+        default: []
         description:
             - Enable user for the following service providers.
     shell:
-        required: false
         default: '/bin/bash'
         description:
             - Login shell
     street:
-        required: false
-        default: None
         description:
             - Street of users business address.
     title:
-        required: false
-        default: None
         description:
             - Title, e.g. C(Prof.).
     unixhome:
-        required: false
         default: '/home/$USERNAME'
         description:
             - Unix home directory
     userexpiry:
-        required: false
         default: Today + 1 year
         description:
             - Account expiry date, e.g. C(1999-12-31).
     position:
-        required: false
         default: ''
         description:
             - "Define the whole position of users object inside the LDAP tree,
                e.g. C(cn=employee,cn=users,ou=school,dc=example,dc=com)."
     update_password:
-        required: false
         default: always
         description:
             - "C(always) will update passwords if they differ.
                C(on_create) will only set the password for newly created users."
         version_added: "2.3"
     ou:
-        required: false
         default: ''
         description:
             - "Organizational Unit inside the LDAP Base DN, e.g. C(school) for
                LDAP OU C(ou=school,dc=example,dc=com)."
     subpath:
-        required: false
         default: 'cn=users'
         description:
             - "LDAP subpath inside the organizational unit, e.g.

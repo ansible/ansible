@@ -22,7 +22,7 @@
 - name: async poll immediate success
   async_test:
     sleep_delay_sec: 0
-  async: 10
+  async: 20
   poll: 1
   register: asyncresult
 
@@ -59,7 +59,7 @@
 - name: async poll retry
   async_test:
     sleep_delay_sec: 5
-  async: 10
+  async: 20
   poll: 1
   register: asyncresult
 
@@ -94,8 +94,8 @@
 
 - name: async poll timeout
   async_test:
-    sleep_delay_sec: 5
-  async: 3
+    sleep_delay_sec: 25
+  async: 20
   poll: 1
   register: asyncresult
   ignore_errors: true
@@ -144,6 +144,32 @@
 # TODO: re-enable after catastrophic failure behavior is cleaned up
 #    - asyncresult.msg is search('failing via exception')
 
+- name: echo some non ascii characters
+  win_command: cmd.exe /c echo über den Fußgängerübergang gehen
+  async: 20
+  poll: 1
+  register: nonascii_output
+
+- name: assert echo some non ascii characters
+  assert:
+    that:
+    - nonascii_output is changed
+    - nonascii_output.rc == 0
+    - nonascii_output.stdout_lines|count == 1
+    - nonascii_output.stdout_lines[0] == 'über den Fußgängerübergang gehen'
+    - nonascii_output.stderr == ''
+
+- name: test async with custom remote_tmp
+  win_shell: echo hi
+  register: async_custom_tmp
+  async: 5
+  vars:
+    ansible_remote_tmp: '{{win_output_dir}}'
+
+- name: assert results file is in the remote tmp specified
+  assert:
+    that:
+    - async_custom_tmp.results_file == win_output_dir + '\\.ansible_async\\' + async_custom_tmp.ansible_job_id
 
 # FUTURE: figure out why the last iteration of this test often fails on shippable
 #- name: loop async success

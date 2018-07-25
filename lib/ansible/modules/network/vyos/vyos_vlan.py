@@ -38,6 +38,12 @@ options:
     description:
       - List of interfaces that should be associated to the VLAN.
     required: true
+  associated_interfaces:
+    description:
+      - This is a intent option and checks the operational state of the for given vlan C(name)
+        for associated interfaces. If the value in the C(associated_interfaces) does not match with
+        the operational state of vlan on device it will result in failure.
+    version_added: "2.5"
   delay:
     description:
       - Delay the play should wait to check for declarative intent params values.
@@ -76,6 +82,20 @@ EXAMPLES = """
     vlan_id: 100
     interfaces: eth1
     address: 172.26.100.37/24
+
+- name: vlan interface config + intent
+  vyos_vlan:
+    vlan_id: 100
+    interfaces: eth0
+    associated_interfaces:
+    - eth0
+
+- name: vlan intent check
+  vyos_vlan:
+    vlan_id: 100
+    associated_interfaces:
+    - eth3
+    - eth4
 
 - name: Delete vlan
   vyos_vlan:
@@ -165,7 +185,12 @@ def map_params_to_obj(module):
                     item[key] = module.params[key]
 
             d = item.copy()
+
+            if not d['vlan_id']:
+                module.fail_json(msg='vlan_id is required')
+
             d['vlan_id'] = str(d['vlan_id'])
+            module._check_required_one_of(module.required_one_of, item)
 
             obj.append(d)
     else:
@@ -174,7 +199,8 @@ def map_params_to_obj(module):
             'name': module.params['name'],
             'address': module.params['address'],
             'state': module.params['state'],
-            'interfaces': module.params['interfaces']
+            'interfaces': module.params['interfaces'],
+            'associated_interfaces': module.params['associated_interfaces']
         })
 
     return obj
@@ -213,36 +239,45 @@ def map_config_to_obj(module):
     return objs
 
 
-def check_declarative_intent_params(want, module):
-    if module.params['interfaces']:
-        time.sleep(module.params['delay'])
-        have = map_config_to_obj(module)
+def check_declarative_intent_params(want, module, result):
 
-        want_interface = list()
-        obj_interface = list()
+    have = None
+    obj_interface = list()
+    is_delay = False
 
-        for w in want:
-            for i in w['interfaces']:
-                want_interface.append(i)
-            obj_in_have = search_obj_in_list(w['vlan_id'], have)
-            if obj_in_have:
-                for obj in obj_in_have:
-                    obj_interface.extend(obj['interfaces'])
+    for w in want:
+        if w.get('associated_interfaces') is None:
+            continue
 
-        for w in want:
-            for i in w['interfaces']:
-                if (set(obj_interface) - set(want_interface)) != set([]):
-                    module.fail_json(msg='Interface {0} not configured on vlan {1}'.format(i, w['vlan_id']))
+        if result['changed'] and not is_delay:
+            time.sleep(module.params['delay'])
+            is_delay = True
+
+        if have is None:
+            have = map_config_to_obj(module)
+
+        obj_in_have = search_obj_in_list(w['vlan_id'], have)
+        if obj_in_have:
+            for obj in obj_in_have:
+                obj_interface.extend(obj['interfaces'])
+
+    for w in want:
+        if w.get('associated_interfaces') is None:
+            continue
+        for i in w['associated_interfaces']:
+            if (set(obj_interface) - set(w['associated_interfaces'])) != set([]):
+                module.fail_json(msg='Interface {0} not configured on vlan {1}'.format(i, w['vlan_id']))
 
 
 def main():
     """ main entry point for module execution
     """
     element_spec = dict(
-        vlan_id=dict(type='int', required=True),
+        vlan_id=dict(type='int'),
         name=dict(),
         address=dict(),
-        interfaces=dict(type='list', required=True),
+        interfaces=dict(type='list'),
+        associated_interfaces=dict(type='list'),
         delay=dict(default=10, type='int'),
         state=dict(default='present',
                    choices=['present', 'absent'])
@@ -261,7 +296,9 @@ def main():
     argument_spec.update(element_spec)
     argument_spec.update(vyos_argument_spec)
 
-    required_one_of = [['vlan_id', 'aggregate']]
+    required_one_of = [['vlan_id', 'aggregate'],
+                       ['aggregate', 'interfaces', 'associated_interfaces']]
+
     mutually_exclusive = [['vlan_id', 'aggregate']]
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True,
@@ -285,10 +322,10 @@ def main():
         load_config(module, commands, commit=commit)
         result['changed'] = True
 
-    if result['changed']:
-        check_declarative_intent_params(want, module)
+    check_declarative_intent_params(want, module, result)
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

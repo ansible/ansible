@@ -51,6 +51,7 @@ class TestCallback(unittest.TestCase):
 
 
 class TestCallbackResults(unittest.TestCase):
+
     def test_get_item(self):
         cb = CallbackBase()
         results = {'item': 'some_item'}
@@ -67,6 +68,22 @@ class TestCallbackResults(unittest.TestCase):
         res = cb._get_item(results)
         self.assertEquals(res, "some_item")
 
+    def test_get_item_label(self):
+        cb = CallbackBase()
+        results = {'item': 'some_item'}
+        res = cb._get_item_label(results)
+        self.assertEquals(res, 'some_item')
+
+    def test_get_item_label_no_log(self):
+        cb = CallbackBase()
+        results = {'item': 'some_item', '_ansible_no_log': True}
+        res = cb._get_item_label(results)
+        self.assertEquals(res, "(censored due to no_log)")
+
+        results = {'item': 'some_item', '_ansible_no_log': False}
+        res = cb._get_item_label(results)
+        self.assertEquals(res, "some_item")
+
     def test_clean_results_debug_task(self):
         cb = CallbackBase()
         result = {'item': 'some_item',
@@ -81,7 +98,7 @@ class TestCallbackResults(unittest.TestCase):
         self.assertTrue('a' in result)
         self.assertTrue('b' in result)
         self.assertFalse('invocation' in result)
-        self.assertTrue('changed' in result)
+        self.assertFalse('changed' in result)
 
     def test_clean_results_debug_task_no_invocation(self):
         cb = CallbackBase()
@@ -93,7 +110,7 @@ class TestCallbackResults(unittest.TestCase):
         cb._clean_results(result, 'debug')
         self.assertTrue('a' in result)
         self.assertTrue('b' in result)
-        self.assertTrue('changed' in result)
+        self.assertFalse('changed' in result)
         self.assertFalse('invocation' in result)
 
     def test_clean_results_debug_task_empty_results(self):

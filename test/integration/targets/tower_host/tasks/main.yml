@@ -1,0 +1,33 @@
+- name: create a tempdir for hostvars
+  local_action: shell mktemp -d
+  register: tempdir
+
+- name: write a file w/ hostvars
+  local_action:
+    module: lineinfile
+    dest: "{{ tempdir.stdout }}/vars"
+    line: '{"foo": "bar"}'
+    create: true
+
+- name: Create a Host
+  tower_host:
+    name: "some-host"
+    inventory: "Demo Inventory"
+    state: present
+    variables: "@{{ tempdir.stdout }}/vars"
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Delete a Host
+  tower_host:
+    name: "some-host"
+    inventory: "Demo Inventory"
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - "result is changed"

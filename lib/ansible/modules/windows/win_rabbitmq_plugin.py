@@ -1,11 +1,12 @@
 #!/usr/bin/python
-# Copyright (c) 2017 Ansible Project
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = r'''
 ---
@@ -20,8 +21,8 @@ options:
   names:
     description:
       - Comma-separated list of plugin names.
-    required: true
-    aliases: [name]
+    required: yes
+    aliases: [ name ]
   new_only:
     description:
       - Only enable missing plugins.
@@ -31,8 +32,8 @@ options:
   state:
     description:
       - Specify if plugins are to be enabled or disabled.
+    choices: [ disabled, enabled ]
     default: enabled
-    choices: [enabled, disabled]
   prefix:
     description:
       - Specify a custom install prefix to a Rabbit.

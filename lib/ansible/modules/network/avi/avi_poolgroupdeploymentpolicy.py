@@ -45,6 +45,7 @@ options:
         description:
             - It will automatically disable old production pools once there is a new production candidate.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        type: bool
     cloud_ref:
         description:
             - It is a reference to an object of type cloud.

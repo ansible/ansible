@@ -36,7 +36,7 @@ options:
     mode:
         description:
             - The octal mode for newly created files in sources.list.d
-        default: 0644
+        default: '0644'
         version_added: "1.6"
     update_cache:
         description:
@@ -103,6 +103,7 @@ EXAMPLES = '''
 '''
 
 import glob
+import json
 import os
 import re
 import sys
@@ -118,12 +119,17 @@ except ImportError:
     distro = None
     HAVE_PYTHON_APT = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+from ansible.module_utils.urls import fetch_url
+
+
 if sys.version_info[0] < 3:
     PYTHON_APT = 'python-apt'
 else:
     PYTHON_APT = 'python3-apt'
 
-DEFAULT_SOURCES_PERM = int('0644', 8)
+DEFAULT_SOURCES_PERM = 0o0644
 
 VALID_SOURCE_TYPES = ('deb', 'deb-src')
 
@@ -292,9 +298,8 @@ class SourcesList(object):
 
                     try:
                         f.write(line)
-                    except IOError:
-                        err = get_exception()
-                        self.module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, unicode(err)))
+                    except IOError as err:
+                        self.module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, to_native(err)))
                 self.module.atomic_move(tmp_path, filename)
 
                 # allow the user to override the default mode
@@ -498,6 +503,9 @@ def main():
         else:
             module.fail_json(msg='%s is not installed, and install_python_apt is False' % PYTHON_APT)
 
+    if not repo:
+        module.fail_json(msg='Please set argument \'repo\' to a non-empty value')
+
     if isinstance(distro, aptsources_distro.Distribution):
         sourceslist = UbuntuSourcesList(module, add_ppa_signing_keys_callback=get_add_ppa_signing_key_callback(module))
     else:
@@ -510,9 +518,8 @@ def main():
             sourceslist.add_source(repo)
         elif state == 'absent':
             sourceslist.remove_source(repo)
-    except InvalidSource:
-        err = get_exception()
-        module.fail_json(msg='Invalid repository string: %s' % unicode(err))
+    except InvalidSource as err:
+        module.fail_json(msg='Invalid repository string: %s' % to_native(err))
 
     sources_after = sourceslist.dump()
     changed = sources_before != sources_after
@@ -533,15 +540,11 @@ def main():
             if update_cache:
                 cache = apt.Cache()
                 cache.update()
-        except OSError:
-            err = get_exception()
-            module.fail_json(msg=unicode(err))
+        except OSError as err:
+            module.fail_json(msg=to_native(err))
 
     module.exit_json(changed=changed, repo=repo, state=state, diff=diff)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
 if __name__ == '__main__':
     main()

@@ -31,11 +31,13 @@ options:
           points to implicitly trigger handler runs (after pre/post tasks, the final role execution, and the main tasks section of your plays).
         - >
           C(refresh_inventory) (added in 2.0) forces the reload of the inventory, which in the case of dynamic inventory scripts means they will be
-          re-executed. This is mainly useful when additional hosts are created and users wish to use them instead of using the `add_host` module."
+          re-executed. If the dynamic inventory script is using a cache, Ansible cannot know this and has no way of refreshing it (you can disable the cache
+          or, if available for your specific inventory datasource (for es.: aws), you can use the an inventory plugin instead of an inventory script).
+          This is mainly useful when additional hosts are created and users wish to use them instead of using the `add_host` module."
         - "C(noop) (added in 2.0) This literally does 'nothing'. It is mainly used internally and not recommended for general use."
         - "C(clear_facts) (added in 2.1) causes the gathered facts for the hosts specified in the play's list of hosts to be cleared, including the fact cache."
         - "C(clear_host_errors) (added in 2.1) clears the failed state (if any) from hosts specified in the play's list of hosts."
-        - "C(end_play) (added in 2.2) causes the play to end without failing the host."
+        - "C(end_play) (added in 2.2) causes the play to end without failing the host(s). Note that this affects all hosts."
         - "C(reset_connection) (added in 2.3) interrupts a persistent connection (i.e. ssh + control persist)"
     choices: ['noop', 'flush_handlers', 'refresh_inventory', 'clear_facts', 'clear_host_errors', 'end_play', 'reset_connection']
     required: true

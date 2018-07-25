@@ -28,7 +28,6 @@ options:
           then I(ram), I(vcpus), and I(disk) are all required. There are no
           default values for those parameters.
      choices: ['present', 'absent']
-     required: false
      default: present
    name:
      description:
@@ -37,55 +36,42 @@ options:
    ram:
      description:
         - Amount of memory, in MB.
-     required: false
-     default: null
    vcpus:
      description:
         - Number of virtual CPUs.
-     required: false
-     default: null
    disk:
      description:
         - Size of local disk, in GB.
-     required: false
-     default: null
    ephemeral:
      description:
         - Ephemeral space size, in GB.
-     required: false
      default: 0
    swap:
      description:
         - Swap space size, in MB.
-     required: false
      default: 0
    rxtx_factor:
      description:
         - RX/TX factor.
-     required: false
      default: 1.0
    is_public:
      description:
         - Make flavor accessible to the public.
-     required: false
-     default: true
+     type: bool
+     default: 'yes'
    flavorid:
      description:
         - ID for the flavor. This is optional as a unique UUID will be
           assigned if a value is not specified.
-     required: false
      default: "auto"
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
    extra_specs:
      description:
         - Metadata dictionary
-     required: false
-     default: None
      version_added: "2.3"
-requirements: ["shade"]
+requirements: ["openstacksdk"]
 '''
 
 EXAMPLES = '''
@@ -173,14 +159,8 @@ flavor:
                 "aggregate_instance_extra_specs:pinned": false
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _system_state_change(module, flavor):
@@ -220,15 +200,12 @@ def main():
         ],
         **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
     state = module.params['state']
     name = module.params['name']
     extra_specs = module.params['extra_specs'] or {}
 
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.operator_cloud(**module.params)
         flavor = cloud.get_flavor(name)
 
         if module.check_mode:
@@ -273,7 +250,7 @@ def main():
                 module.exit_json(changed=True)
             module.exit_json(changed=False)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

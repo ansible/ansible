@@ -31,7 +31,7 @@ from ansible.module_utils.basic import bytes_to_human
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
 from ansible.module_utils.facts.utils import get_file_content, get_file_lines, get_mount_size
 
-# import this as a module to ensure we get the same module isntance
+# import this as a module to ensure we get the same module instance
 from ansible.module_utils.facts import timeout
 
 
@@ -78,6 +78,7 @@ class LinuxHardware(Hardware):
 
     def populate(self, collected_facts=None):
         hardware_facts = {}
+        self.module.run_command_environ_update = {'LANG': 'C', 'LC_ALL': 'C', 'LC_NUMERIC': 'C'}
 
         cpu_facts = self.get_cpu_facts(collected_facts=collected_facts)
         memory_facts = self.get_memory_facts()
@@ -372,6 +373,31 @@ class LinuxHardware(Hardware):
 
         return uuids
 
+    def _udevadm_uuid(self, device):
+        # fallback for versions of lsblk <= 2.23 that don't have --paths, see _run_lsblk() above
+        uuid = 'N/A'
+
+        udevadm_path = self.module.get_bin_path('udevadm')
+        if not udevadm_path:
+            return uuid
+
+        cmd = [udevadm_path, 'info', '--query', 'property', '--name', device]
+        rc, out, err = self.module.run_command(cmd)
+        if rc != 0:
+            return uuid
+
+        # a snippet of the output of the udevadm command below will be:
+        # ...
+        # ID_FS_TYPE=ext4
+        # ID_FS_USAGE=filesystem
+        # ID_FS_UUID=57b1a3e7-9019-4747-9809-7ec52bba9179
+        # ...
+        m = re.search('ID_FS_UUID=(.*)\n', out)
+        if m:
+            uuid = m.group(1)
+
+        return uuid
+
     def _run_findmnt(self, findmnt_path):
         args = ['--list', '--noheadings', '--notruncate']
         cmd = [findmnt_path] + args
@@ -442,11 +468,16 @@ class LinuxHardware(Hardware):
                 if not self.MTAB_BIND_MOUNT_RE.match(options):
                     options += ",bind"
 
+            # _udevadm_uuid is a fallback for versions of lsblk <= 2.23 that don't have --paths
+            # see _run_lsblk() above
+            # https://github.com/ansible/ansible/issues/36077
+            uuid = uuids.get(device, self._udevadm_uuid(device))
+
             mount_info = {'mount': mount,
                           'device': device,
                           'fstype': fstype,
                           'options': options,
-                          'uuid': uuids.get(device, 'N/A')}
+                          'uuid': uuid}
 
             mount_info.update(mount_statvfs_info)
 
@@ -572,9 +603,6 @@ class LinuxHardware(Hardware):
                     if serial:
                         d['serial'] = serial.group(1)
 
-            for key in ['vendor', 'model']:
-                d[key] = get_file_content(sysdir + "/device/" + key)
-
             for key, test in [('removable', '/removable'),
                               ('support_discard', '/queue/discard_granularity'),
                               ]:
@@ -585,7 +613,7 @@ class LinuxHardware(Hardware):
 
             d['partitions'] = {}
             for folder in os.listdir(sysdir):
-                m = re.search("(" + diskname + r"\d+)", folder)
+                m = re.search("(" + diskname + r"[p]?\d+)", folder)
                 if m:
                     part = {}
                     partname = m.group(1)

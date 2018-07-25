@@ -37,7 +37,7 @@
         num_cpus: 1
         memory_mb: 512
     disk:
-        - size: 0gb
+        - size: 1gb
           type: thin
           autoselect_datastore: True
     networks:

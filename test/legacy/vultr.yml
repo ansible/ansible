@@ -6,11 +6,19 @@
   connection: local
   roles:
     - { role: vr_account_facts, tags: test_vr_account_facts }
-    - { role: vr_user, tags: test_vr_user }
-    - { role: vr_ssh_key, tags: test_vr_ssh_key }
-    - { role: vr_firewall_group, tags: test_vr_firewall_group }
-    - { role: vr_firewall_rule, tags: test_vr_firewall_rule }
-    - { role: vr_startup_script, tags: test_vr_startup_script }
     - { role: vr_dns_domain, tags: test_vr_dns_domain }
+    - { role: vr_dns_domain_facts, tags: test_vr_dns_domain_facts }
     - { role: vr_dns_record, tags: test_vr_dns_record }
+    - { role: vr_firewall_group, tags: test_vr_firewall_group }
+    - { role: vr_firewall_group_facts, tags: test_vr_firewall_group_facts }
+    - { role: vr_firewall_rule, tags: test_vr_firewall_rule }
+    - { role: vr_os_facts, tags: test_vr_os_facts }
+    - { role: vr_plan_facts, tags: test_vr_plan_facts }
+    - { role: vr_region_facts, tags: test_vr_region_facts }
     - { role: vr_server, tags: test_vr_server }
+    - { role: vr_ssh_key, tags: test_vr_ssh_key }
+    - { role: vr_ssh_key_facts, tags: test_vr_ssh_key_facts }
+    - { role: vr_startup_script, tags: test_vr_startup_script }
+    - { role: vr_startup_script_facts, tags: test_vr_startup_script_facts }
+    - { role: vr_user, tags: test_vr_user }
+    - { role: vr_user_facts, tags: test_vr_user_facts }

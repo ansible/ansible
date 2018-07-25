@@ -75,6 +75,7 @@ options:
         description:
             - Inline estimation of capacity of servers.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     capacity_estimation_ttfb_thresh:
         description:
             - The maximum time-to-first-byte of a server.
@@ -116,11 +117,13 @@ options:
     east_west:
         description:
             - Inherited config from virtualservice.
+        type: bool
     enabled:
         description:
             - Enable or disable the pool.
             - Disabling will terminate all open connections and pause health monitors.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        type: bool
     external_autoscale_groups:
         description:
             - Names of external auto-scale groups for pool servers.
@@ -149,6 +152,7 @@ options:
             - Indicates if the pool is a site-persistence pool.
             - Field introduced in 17.2.1.
         version_added: "2.5"
+        type: bool
     health_monitor_refs:
         description:
             - Verify server health by applying one or more health monitors.
@@ -161,11 +165,13 @@ options:
             - Enable common name check for server certificate.
             - If enabled and no explicit domain name is specified, avi will use the incoming host header to do the match.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     inline_health_monitor:
         description:
             - The passive monitor will monitor client to server connections and requests and adjust traffic load to servers based on successful responses.
             - This may alter the expected behavior of the lb method, such as round robin.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        type: bool
     ipaddrgroup_ref:
         description:
             - Use list of servers from ip address group.
@@ -199,6 +205,7 @@ options:
             - Field introduced in 17.1.11,17.2.4.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         version_added: "2.5"
+        type: bool
     max_concurrent_connections_per_server:
         description:
             - The maximum number of concurrent connections allowed to each server within the pool.
@@ -241,20 +248,24 @@ options:
         description:
             - Enable request queue when pool is full.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     rewrite_host_header_to_server_name:
         description:
             - Rewrite incoming host header to server name of the server to which the request is proxied.
             - Enabling this feature rewrites host header for requests to all servers in the pool.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     rewrite_host_header_to_sni:
         description:
             - If sni server name is specified, rewrite incoming host header to the sni server name.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     server_auto_scale:
         description:
             - Server autoscale.
             - Not used anymore.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     server_count:
         description:
             - Number of server_count.
@@ -275,6 +286,7 @@ options:
             - Enable tls sni for server connections.
             - If disabled, avi will not send the sni extension as part of the handshake.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        type: bool
     ssl_key_and_certificate_ref:
         description:
             - Service engines will present a client ssl certificate to the server.
@@ -295,6 +307,7 @@ options:
             - Do not translate the client's destination port when sending the connection to the server.
             - The pool or servers specified service port will still be used for health monitoring.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     uuid:
         description:
             - Uuid of the pool.

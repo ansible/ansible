@@ -34,29 +34,20 @@ options:
   policy:
     description:
       - Supplemental policy to use in addition to assumed role's policies.
-    required: false
-    default: null
   duration_seconds:
     description:
-      - The duration, in seconds, of the role session. The value can range from 900 seconds (15 minutes) to 3600 seconds (1 hour).
-        By default, the value is set to 3600 seconds.
-    required: false
-    default: null
+      - The duration, in seconds, of the role session. The value can range from 900 seconds (15 minutes) to 43200 seconds (12 hours).
+        The max dependis on the IAM role's sessions duration setting.
+        By default, the value is set to 3600 seconds.s
   external_id:
     description:
       - A unique identifier that is used by third parties to assume a role in their customers' accounts.
-    required: false
-    default: null
   mfa_serial_number:
     description:
       - The identification number of the MFA device that is associated with the user who is making the AssumeRole call.
-    required: false
-    default: null
   mfa_token:
     description:
       - The value provided by the MFA device, if the trust policy of the role being assumed requires MFA.
-    required: false
-    default: null
 notes:
   - In order to use the assumed role in a following playbook task you must pass the access_key, access_secret and access_token
 extends_documentation_fragment:

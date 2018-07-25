@@ -30,7 +30,7 @@ options:
   state:
     description: State to ensure
     default: present
-    choices: ['present', 'absent']
+    choices: ['present', 'absent', 'enabled', 'disabled']
   sudocmd:
     description:
     - List of sudo commands to assign to the group.
@@ -51,7 +51,7 @@ EXAMPLES = '''
     ipa_user: admin
     ipa_pass: topsecret
 
-- name: Ensure sudo command group does not exists
+- name: Ensure sudo command group does not exist
   ipa_sudocmdgroup:
     name: group01
     state: absent

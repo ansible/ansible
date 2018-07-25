@@ -26,20 +26,18 @@ options:
     status:
       description:
         - Only list jobs with this status.
-      default: null
       choices: ['pending', 'waiting', 'running', 'error', 'failed', 'canceled', 'successful']
     page:
       description:
         - Page number of the results to fetch.
-      default: null
     all_pages:
       description:
         - Fetch all the pages and return a single result.
-      default: False
+      type: bool
+      default: 'no'
     query:
       description:
-        - Query used to further filter the list of jobs. {"foo":"bar"} will be passed at ?foo=bar
-      default: null
+        - Query used to further filter the list of jobs. C({"foo":"bar"}) will be passed at C(?foo=bar)
 extends_documentation_fragment: tower
 '''
 

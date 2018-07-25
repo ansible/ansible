@@ -7,7 +7,7 @@ __metaclass__ = type
 DOCUMENTATION = '''
     name: auto
     plugin_type: inventory
-    authors:
+    author:
       - Matt Davis <@nitzmahone>
     short_description: Loads and executes an inventory plugin specified in a YAML config
     description:
@@ -38,7 +38,7 @@ class InventoryModule(BaseInventoryPlugin):
         return super(InventoryModule, self).verify_file(path)
 
     def parse(self, inventory, loader, path, cache=True):
-        config_data = loader.load_from_file(path)
+        config_data = loader.load_from_file(path, cache=False)
 
         plugin_name = config_data.get('plugin')
 
