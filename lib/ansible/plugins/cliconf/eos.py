@@ -59,12 +59,6 @@ class Cliconf(CliconfBase):
     def __init__(self, *args, **kwargs):
         super(Cliconf, self).__init__(*args, **kwargs)
         self._session_support = None
-        if isinstance(self._connection, NetworkCli):
-            self.network_api = 'network_cli'
-        elif isinstance(self._connection, HttpApi):
-            self.network_api = 'eapi'
-        else:
-            raise ValueError("Invalid connection type")
 
     def send_command(self, command, **kwargs):
         """Executes a cli command and returns the results
@@ -72,10 +66,12 @@ class Cliconf(CliconfBase):
         the results to the caller.  The command output will be returned as a
         string
         """
-        if self.network_api == 'network_cli':
+        if isinstance(self._connection, NetworkCli):
             resp = super(Cliconf, self).send_command(command, **kwargs)
-        else:
+        elif isinstance(self._connection, HttpApi):
             resp = self._connection.send_request(command, **kwargs)
+        else:
+            raise ValueError("Invalid connection type")
         return resp
 
     @enable_mode
@@ -117,6 +113,7 @@ class Cliconf(CliconfBase):
             self.send_command('configure')
 
         results = []
+        requests = []
         multiline = False
         for line in to_list(candidate):
             if not isinstance(line, collections.Mapping):
@@ -136,10 +133,12 @@ class Cliconf(CliconfBase):
             if cmd != 'end' and cmd[0] != '!':
                 try:
                     results.append(self.send_command(**line))
+                    requests.append(cmd)
                 except AnsibleConnectionFailure as e:
                     self.discard_changes(session)
                     raise AnsibleConnectionFailure(e.message)
 
+        resp['request'] = requests
         resp['response'] = results
         if self.supports_sessions:
             out = self.send_command('show session-config diffs')
@@ -200,7 +199,7 @@ class Cliconf(CliconfBase):
                 responses.append(out)
         return responses
 
-    def get_diff(self, candidate=None, running=None, match='line', diff_ignore_lines=None, path=None, replace='line'):
+    def get_diff(self, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
         diff = {}
         device_operations = self.get_device_operations()
         option_values = self.get_option_values()
@@ -208,20 +207,20 @@ class Cliconf(CliconfBase):
         if candidate is None and device_operations['supports_generate_diff']:
             raise ValueError("candidate configuration is required to generate diff")
 
-        if match not in option_values['diff_match']:
-            raise ValueError("'match' value %s in invalid, valid values are %s" % (match, ', '.join(option_values['diff_match'])))
+        if diff_match not in option_values['diff_match']:
+            raise ValueError("'match' value %s in invalid, valid values are %s" % (diff_match, ', '.join(option_values['diff_match'])))
 
-        if replace not in option_values['diff_replace']:
-            raise ValueError("'replace' value %s in invalid, valid values are %s" % (replace, ', '.join(option_values['diff_replace'])))
+        if diff_replace not in option_values['diff_replace']:
+            raise ValueError("'replace' value %s in invalid, valid values are %s" % (diff_replace, ', '.join(option_values['diff_replace'])))
 
         # prepare candidate configuration
         candidate_obj = NetworkConfig(indent=3)
         candidate_obj.load(candidate)
 
-        if running and match != 'none' and replace != 'config':
+        if running and diff_match != 'none' and diff_replace != 'config':
             # running configuration
             running_obj = NetworkConfig(indent=3, contents=running, ignore_lines=diff_ignore_lines)
-            configdiffobjs = candidate_obj.difference(running_obj, path=path, match=match, replace=replace)
+            configdiffobjs = candidate_obj.difference(running_obj, path=path, match=diff_match, replace=diff_replace)
 
         else:
             configdiffobjs = candidate_obj.items
@@ -292,10 +291,16 @@ class Cliconf(CliconfBase):
         result = {}
         result['rpc'] = self.get_base_rpc()
         result['device_info'] = self.get_device_info()
-        result['network_api'] = self.network_api
         result['device_info'] = self.get_device_info()
         result['device_operations'] = self.get_device_operations()
         result.update(self.get_option_values())
+
+        if isinstance(self._connection, NetworkCli):
+            result['network_api'] = 'cliconf'
+        elif isinstance(self._connection, HttpApi):
+            result['network_api'] = 'eapi'
+        else:
+            raise ValueError("Invalid connection type")
         return json.dumps(result)
 
     def _get_command_with_output(self, command, output):

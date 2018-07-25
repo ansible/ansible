@@ -162,9 +162,9 @@ class Cli:
 
         return response
 
-    def get_diff(self, candidate=None, running=None, match='line', diff_ignore_lines=None, path=None, replace='line'):
+    def get_diff(self, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
         conn = self._get_connection()
-        return conn.get_diff(candidate=candidate, running=running, match=match, diff_ignore_lines=diff_ignore_lines, path=path, replace=replace)
+        return conn.get_diff(candidate=candidate, running=running, diff_match=diff_match, diff_ignore_lines=diff_ignore_lines, path=path, diff_replace=diff_replace)
 
 
 class Eapi:
@@ -361,17 +361,17 @@ class Eapi:
         return result
 
     # get_diff added here to support connection=local and transport=eapi scenario
-    def get_diff(self, candidate, running=None, match='line', diff_ignore_lines=None, path=None, replace='line'):
+    def get_diff(self, candidate, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
         diff = {}
 
         # prepare candidate configuration
         candidate_obj = NetworkConfig(indent=3)
         candidate_obj.load(candidate)
 
-        if running and match != 'none' and replace != 'config':
+        if running and diff_match != 'none' and diff_replace != 'config':
             # running configuration
             running_obj = NetworkConfig(indent=3, contents=running, ignore_lines=diff_ignore_lines)
-            configdiffobjs = candidate_obj.difference(running_obj, path=path, match=match, replace=replace)
+            configdiffobjs = candidate_obj.difference(running_obj, path=path, match=diff_match, replace=diff_replace)
 
         else:
             configdiffobjs = candidate_obj.items
@@ -424,6 +424,6 @@ def load_config(module, config, commit=False, replace=False):
     return conn.load_config(config, commit, replace)
 
 
-def get_diff(self, candidate=None, running=None, match='line', diff_ignore_lines=None, path=None, replace='line'):
+def get_diff(self, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
     conn = self.get_connection()
-    return conn.get_diff(candidate=candidate, running=running, match=match, diff_ignore_lines=diff_ignore_lines, path=path, replace=replace)
+    return conn.get_diff(candidate=candidate, running=running, diff_match=diff_match, diff_ignore_lines=diff_ignore_lines, path=path, diff_replace=diff_replace)

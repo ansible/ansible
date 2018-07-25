@@ -186,9 +186,9 @@ class Cli:
         responses.extend(resp)
         return responses
 
-    def get_diff(self, candidate=None, running=None, match='line', diff_ignore_lines=None, path=None, replace='line'):
+    def get_diff(self, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
         conn = self._get_connection()
-        return conn.get_diff(candidate=candidate, running=running, match=match, diff_ignore_lines=diff_ignore_lines, path=path, replace=replace)
+        return conn.get_diff(candidate=candidate, running=running, diff_match=diff_match, diff_ignore_lines=diff_ignore_lines, path=path, diff_replace=diff_replace)
 
     def get_capabilities(self):
         """Returns platform info of the remove device
@@ -391,17 +391,17 @@ class Nxapi:
         else:
             return []
 
-    def get_diff(self, candidate=None, running=None, match='line', diff_ignore_lines=None, path=None, replace='line'):
+    def get_diff(self, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
         diff = {}
 
         # prepare candidate configuration
         candidate_obj = NetworkConfig(indent=2)
         candidate_obj.load(candidate)
 
-        if running and match != 'none' and replace != 'config':
+        if running and diff_match != 'none' and diff_replace != 'config':
             # running configuration
             running_obj = NetworkConfig(indent=2, contents=running, ignore_lines=diff_ignore_lines)
-            configdiffobjs = candidate_obj.difference(running_obj, path=path, match=match, replace=replace)
+            configdiffobjs = candidate_obj.difference(running_obj, path=path, match=diff_match, replace=diff_replace)
 
         else:
             configdiffobjs = candidate_obj.items
@@ -487,9 +487,9 @@ def run_commands(module, commands, check_rc=True):
     return conn.run_commands(to_command(module, commands), check_rc)
 
 
-def load_config(module, config, return_error=False, opts=None):
+def load_config(module, config, return_error=False, opts=None, replace=None):
     conn = get_connection(module)
-    return conn.load_config(config, return_error, opts)
+    return conn.load_config(config, return_error, opts, replace=replace)
 
 
 def get_capabilities(module):
@@ -497,9 +497,9 @@ def get_capabilities(module):
     return conn.get_capabilities()
 
 
-def get_diff(self, candidate=None, running=None, match='line', diff_ignore_lines=None, path=None, replace='line'):
+def get_diff(self, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
     conn = self.get_connection()
-    return conn.get_diff(candidate=candidate, running=running, match=match, diff_ignore_lines=diff_ignore_lines, path=path, replace=replace)
+    return conn.get_diff(candidate=candidate, running=running, diff_match=diff_match, diff_ignore_lines=diff_ignore_lines, path=path, diff_replace=diff_replace)
 
 
 def normalize_interface(name):

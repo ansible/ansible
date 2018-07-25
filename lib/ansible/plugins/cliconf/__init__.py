@@ -343,7 +343,7 @@ class CliconfBase(AnsiblePlugin):
             with ssh.open_sftp() as sftp:
                 sftp.get(source, destination)
 
-    def get_diff(self, candidate=None, running=None, match=None, diff_ignore_lines=None, path=None, replace=None):
+    def get_diff(self, candidate=None, running=None, diff_match=None, diff_ignore_lines=None, path=None, diff_replace=None):
         """
         Generate diff between candidate and running configuration. If the
         remote host supports onbox diff capabilities ie. supports_onbox_diff in that case
@@ -352,7 +352,7 @@ class CliconfBase(AnsiblePlugin):
         and running argument is optional.
         :param candidate: The configuration which is expected to be present on remote host.
         :param running: The base configuration which is used to generate diff.
-        :param match: Instructs how to match the candidate configuration with current device configuration
+        :param diff_match: Instructs how to match the candidate configuration with current device configuration
                       Valid values are 'line', 'strict', 'exact', 'none'.
                       'line' - commands are matched line by line
                       'strict' - command lines are matched with respect to position
@@ -366,7 +366,7 @@ class CliconfBase(AnsiblePlugin):
                      the commands should be checked against.  If the parents argument
                      is omitted, the commands are checked against the set of top
                     level or global commands.
-        :param replace: Instructs on the way to perform the configuration on the device.
+        :param diff_replace: Instructs on the way to perform the configuration on the device.
                         If the replace argument is set to I(line) then the modified lines are
                         pushed to the device in configuration mode.  If the replace argument is
                         set to I(block) then the entire command block is pushed to the device in
