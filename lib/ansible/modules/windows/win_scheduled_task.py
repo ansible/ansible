@@ -66,20 +66,6 @@ options:
         description:
         - The working directory to run the executable from.
     version_added: '2.5'
-  arguments:
-    description:
-    - Arguments to provide for a scheduled task action.
-    - DEPRECATED since 2.5, use the C(actions) option instead to specify a list
-      of actions to run.
-    - Will be removed in 2.7.
-    aliases: [ argument ]
-  executable:
-    description:
-    - The path to the executable to run for a scheduled task action.
-    - DEPRECATED since 2.5, use the C(actions) option instead to specify a list
-      of actions to run.
-    - Will be removed in 2.7.
-    type: path
 
   # Trigger options
   triggers:
@@ -204,28 +190,6 @@ options:
         - C(interval) is the amount of time between earch restart of the task and is written in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
         - C(stop_at_duration_end) is a boolean value that indicates if a running instance of the task is stopped at the end of the repetition pattern.
     version_added: '2.5'
-  days_of_week:
-    description:
-    - Days of the week to run a weekly task.
-    - Specify a list or comma separate days in the full version, e.g. monday
-      instead of mon.
-    - DEPRECATED since 2.5, use the C(triggers) option list with the type of
-      C(monthlydow) or C(weekly).
-    - Will be removed in 2.7.
-    type: list
-  frequency:
-    description:
-    - The frequency of the task to run.
-    - DEPRECATED since 2.5, use the C(triggers) option list and specify the
-      type based on the frequency required.
-    - Will be removed in 2.7.
-    choices: [ daily, once, weekly ]
-  time:
-    description:
-    - The start time to execute the scheduled task.
-    - DEPRECATED since 2.5, use the C(triggers) option list and use the
-      C(start_boundary) option to set the start time.
-    - Will be removed in 2.7.
 
   # Principal options
   display_name:
@@ -282,16 +246,6 @@ options:
     type: bool
     default: 'yes'
     version_added: '2.5'
-  store_password:
-    description:
-    - Whether to store the password for the user running the task.
-    - If C(no), the task will only have access to local resources.
-    - DEPRECATED since 2.5, use C(logon_type=password) to set whether to store
-      the password for the task.
-    - Will be removed in 2.7.
-    type: bool
-    default: 'yes'
-    version_added: '2.4'
 
   # RegistrationInfo options
   author:
