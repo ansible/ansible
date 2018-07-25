@@ -1,6 +1,7 @@
 # 2018.05.11 - changed the implementation for classes of GcpSession and
 #              GcpModule
 #            - changed the name of some variables
+#            - changed remove_nones_from_dict
 #
 # Copyright (c), Google Inc, 2017
 # Simplified BSD License (see licenses/simplified_bsd.txt or
@@ -13,7 +14,7 @@ except ImportError:
     HAS_REQUESTS = False
 
 try:
-    from keystoneauth1 import adapter
+    from keystoneauth1.adapter  import Adapter
     from keystoneauth1.identity import v3
     from keystoneauth1 import session
     HAS_THIRD_LIBRARIES = True
@@ -43,13 +44,15 @@ class HwcRequestException(Exception):
     pass
 
 
+def remove_empty_from_dict(obj):
+    return _DictClean(
+        obj,
+        lambda v: v is not None and v != {} and v != []
+    )()
+
+
 def remove_nones_from_dict(obj):
-    new_obj = {}
-    for key in obj:
-        value = obj[key]
-        if value is not None and value != {} and value != []:
-            new_obj[key] = value
-    return new_obj
+    return _DictClean(obj, lambda v: v is not None)()
 
 
 # Handles the replacement of dicts with values -> the needed value for HWC API
@@ -65,7 +68,7 @@ def replace_resource_dict(item, value):
         return item.get(value)
 
 
-class _LegacyJsonAdapter(adapter.Adapter):
+class _LegacyJsonAdapter(Adapter):
     """Make something that looks like an old HTTPClient.
 
     This class references adapter.LegacyJsonAdapter
@@ -263,8 +266,41 @@ class DictComparison(object):
                 return self._compare_dicts(value1, value2)
             # Always use to_text values to avoid unicode issues.
             else:
-               return to_text(value1) == to_text(value2)
+                return to_text(value1) == to_text(value2)
         # to_text may throw UnicodeErrors.
         # These errors shouldn't crash Ansible and return False as default.
         except UnicodeError:
             return False
+
+
+class _DictClean(object):
+    def __init__(self, obj, func):
+        self.obj = obj
+        self.keep_it = func
+
+    def __call__(self):
+        return self._clean_dict(self.obj)
+
+    def _clean_dict(self, obj):
+        r = {}
+        for k, v in obj.items():
+            v1 = v
+            if isinstance(v, dict):
+                v1 = self._clean_dict(v)
+            elif isinstance(v, list):
+                v1 = self._clean_list(v)
+            if self.keep_it(v1):
+                r[k] = v1
+        return r
+
+    def _clean_list(self, obj):
+        r = []
+        for v in obj:
+            v1 = v
+            if isinstance(v, dict):
+                v1 = self._clean_dict(v)
+            elif isinstance(v, list):
+                v1 = self._clean_list(v)
+            if self.keep_it(v1):
+                r.append(v1)
+        return r
