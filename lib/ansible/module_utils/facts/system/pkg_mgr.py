@@ -74,13 +74,13 @@ class PkgMgrFactCollector(BaseFactCollector):
         if collected_facts['ansible_distribution'] == 'Fedora':
             try:
                 if int(collected_facts['ansible_distribution_major_version']) < 23:
-                    yum = [pkg_mgr for pkg_mgr in PKG_MGRS if pkg_mgr['name'] == 'yum'][0]
-                    if os.path.exists(yum['path']):
-                        pkg_mgr_name = 'yum'
+                    for yum in [pkg_mgr for pkg_mgr in PKG_MGRS if pkg_mgr['name'] == 'yum']
+                        if os.path.exists(yum['path']):
+                            pkg_mgr_name = 'yum'
                 else:
-                    dnf = [pkg_mgr for pkg_mgr in PKG_MGRS if pkg_mgr['name'] == 'dnf'][0]
-                    if os.path.exists(yum['path']):
-                        pkg_mgr_name = 'dnf'
+                    for dnf in [pkg_mgr for pkg_mgr in PKG_MGRS if pkg_mgr['name'] == 'dnf']
+                        if os.path.exists(yum['path']):
+                            pkg_mgr_name = 'dnf'
             except ValueError:
                 # If there's some new magical Fedora version in the future,
                 # just default to dnf
