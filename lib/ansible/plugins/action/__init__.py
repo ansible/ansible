@@ -321,8 +321,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         self._connection._shell.tmpdir = rc
 
-        if not become_unprivileged:
-            self._connection._shell.env.update({'ANSIBLE_REMOTE_TMP': self._connection._shell.tmpdir})
         return rc
 
     def _should_remove_tmp_path(self, tmp_path):
