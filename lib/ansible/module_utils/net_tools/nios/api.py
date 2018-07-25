@@ -238,6 +238,12 @@ class WapiModule(WapiBase):
                     self.create_object(ib_obj_type, proposed_object)
                 result['changed'] = True
             elif modified:
+                # Send POST request if record input name and retrieved ref name is same
+                if 'name' in (obj_filter and ib_obj_ref[0]):
+                    obj_host_name = obj_filter['name']
+                    ref_host_name = ib_obj_ref[0]['name']
+                    if obj_host_name == ref_host_name:
+                        self.create_object(ib_obj_type, proposed_object)
                 if (ib_obj_type in (NIOS_HOST_RECORD, NIOS_NETWORK_VIEW, NIOS_DNS_VIEW)):
                     proposed_object = self.on_update(proposed_object, ib_spec)
                     res = self.update_object(ref, proposed_object)
