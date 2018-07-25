@@ -12,67 +12,67 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-RETURN = '''
----
-host_groups:
-  description: List of Zabbix groups.
-  returned: success
-  type: dict
-  sample: [ { "flags": "0", "groupid": "33", "internal": "0", "name": "Hostgruup A" } ]
-'''
-
 DOCUMENTATION = '''
 ---
-module: zabbix_group_facts
-short_description: Gather facts about Zabbix hostgroup
+module: zabbix_import
+short_description: Import zabbix configuration from xml or json
 description:
-   - This module allows you to search for Zabbix hostgroup entries.
+   - This module allows you to import zabbix configuration from xml or json file
 version_added: "2.6"
 author:
-    - "(@redwhitemiko)"
+    - "(@kuczko)"
 requirements:
     - "python >= 2.6"
     - zabbix-api
 options:
-    hostgroup_name:
+    import_file:
         description:
-            - Name of the hostgroup in Zabbix.
-            - hostgroup is the unique identifier used and cannot be updated using this module.
+            - Path to file with zabbix import
         required: true
+    import_format:
+        description:
+            - Format of zabbix import file
+        choices:
+            - xml
+            - json
 extends_documentation_fragment:
     - zabbix
 '''
 
 EXAMPLES = '''
-- name: Get hostgroup info
+- name: Import zabbix hosts
   local_action:
-    module: zabbix_group_facts
+    module: zabbix_import
     server_url: http://monitor.example.com
     login_user: username
     login_password: password
-    hostgroup_name:
-      - ExampleHostgroup
+    import_file: /tmp/myfile.xml
+    import_format: xml
+    rules:
+      hosts:
+        createMissing: True
     timeout: 10
 '''
 
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from zabbix_api import ZabbixAPI, ZabbixAPISubClass
+    from zabbix_api import ZabbixAPI
 
     HAS_ZABBIX_API = True
 except ImportError:
     HAS_ZABBIX_API = False
+
 
 class Configuration(object):
     def __init__(self, module, zbx):
         self._module = module
         self._zapi = zbx
 
-    def import_template(self, filename,rules):
+    def import_template(self, filename,rules, import_format):
         f = open(filename,'r') 
         import_string = f.read()
-        import_result = self._zapi.configuration.import_({'format': 'xml', 'source' : import_string , 'rules' : rules })
+        import_result = self._zapi.configuration.import_({'format': import_format, 'source' : import_string , 'rules' : rules })
         return import_result
 
 def main():
@@ -86,6 +86,7 @@ def main():
             validate_certs=dict(type='bool', required=False, default=True),
             import_file=dict(type='str', required=True),
             rules=dict(type='dict', required=True),
+            import_format=dict(type='str', required=False, default='xml'),
             timeout=dict(type='int', default=10)
         ),
         supports_check_mode=True
@@ -101,6 +102,7 @@ def main():
     http_login_password = module.params['http_login_password']
     validate_certs = module.params['validate_certs']
     import_file = module.params['import_file']
+    import_format = module.params['import_format']
     timeout = module.params['timeout']
     rules = module.params['rules']
 
@@ -113,16 +115,12 @@ def main():
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 
-    # Validate parameters
-    if 'application' not in rules:
-         rules['applications']={}
-    if 'createMissing' not in rules['applications']:
-        rules['applications']['createMissing'] = True
-    if 'deleteMissing' not in rules['applications']:
-        rules['applications']['deleteMissing'] = True
-        
+    if import_format not in ['xml','json']:
+        self._module.fail_json(msg="import_format value incorrect: %s" % import_format)
+
+
     conf = Configuration(module, zbx)
-    import_task = conf.import_template(import_file,rules)
+    import_task = conf.import_template(import_file,rules,import_format)
 
     module.exit_json(import_task=import_task)
 
