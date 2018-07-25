@@ -272,7 +272,6 @@ def _write_password_file(b_path, content):
 class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
         ret = []
-
         for term in terms:
             relpath, params = _parse_parameters(term)
             path = self._loader.path_dwim(relpath)
@@ -280,44 +279,44 @@ class LookupModule(LookupBase):
             chars = _gen_candidate_chars(params['chars'])
 
             content = None
-            changed = False
             writer_process = False
-            if not os.path.exists(b_path) and b_path != to_bytes('/dev/null'):
+            b_pathdir = os.path.dirname(b_path)
+            # get a unique lock file name for each password file
+            lockfile_name = "%s.ansible_lockfile" % hashlib.md5(b_path).hexdigest()
+            lockfile = os.path.join(b_pathdir, lockfile_name)
+            if not os.path.exists(lockfile) and not os.path.exists(b_path):
                 try:
-                    b_pathdir = os.path.dirname(b_path)
                     makedirs_safe(b_pathdir, mode=0o700)
-                    # get a unique lock file name for each password file
-                    lockfile_name = "%s.ansible_lockfile" % hashlib.md5(b_path).hexdigest()
-                    lockfile = os.path.join(b_pathdir, lockfile_name)
                     fd = os.open(lockfile, os.O_CREAT | os.O_EXCL)
-                    writer_process = True
                     os.close(fd)
+                    writer_process = True
                 except OSError as e:
-                    if e.strerror == 'File exists':
-                        timeout = 0
-                        while os.path.exists(lockfile):
-                            time.sleep(0.1)
-                            timeout += 1
-                            if timeout > 20:
-                                raise AnsibleError("Password lookup cannot get the lock in 2 seconds, abort..."
-                                                   "This may caused by un-removed lockfile, you can manually remove it from controller machine at %s and try again" % lockfile)
-                    else:
+                    if not e.strerror == 'File exists':
                         raise
+
+            timeout = 0
+            while os.path.exists(lockfile) and not writer_process:
+                timeout += 1
+                time.sleep(0.1)
+                if timeout > 20:
+                    raise AnsibleError("Password lookup cannot get the lock in 2 seconds, abort..."
+                                       "This may caused by un-removed lockfile"
+                                       "you can manually remove it from controller machine at %s and try again" % lockfile)
+
             if not writer_process:
                 content = _read_password_file(b_path)
 
-            if writer_process or b_path == to_bytes('/dev/null'):
+            if content is None or b_path == to_bytes('/dev/null'):
                 plaintext_password = random_password(params['length'], chars)
                 salt = None
-                changed = True
             else:
                 plaintext_password, salt = _parse_content(content)
 
             if params['encrypt'] and not salt:
-                changed = True
+                writer_process = True
                 salt = _random_salt()
 
-            if changed and writer_process and b_path != to_bytes('/dev/null'):
+            if writer_process and b_path != to_bytes('/dev/null'):
                 content = _format_content(plaintext_password, salt, encrypt=params['encrypt'])
                 _write_password_file(b_path, content)
                 os.remove(lockfile)
