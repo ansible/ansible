@@ -42,16 +42,16 @@ options:
             - "It can be resource id of existing app service plan. eg.,
               /subscriptions/<subs_id>/resourceGroups/<resource_group>/providers/Microsoft.Web/serverFarms/<plan_name>"
             - It can be a dict which contains C(name), C(resource_group), C(sku), C(is_linux) and C(number_of_workers).
-              name. Name of app service plan.
-              resource_group. Resource group name of app service plan.
-              sku. SKU of app service plan. For allowed sku, please refer to https://azure.microsoft.com/en-us/pricing/details/app-service/linux/.
-              is_linux. Indicate is linux app service plan. type bool. default False.
-              number_of_workers. Number of workers.
+            - C(name). Name of app service plan.
+            - C(resource_group). Resource group name of app service plan.
+            - C(sku). SKU of app service plan. For allowed sku, please refer to U(https://azure.microsoft.com/en-us/pricing/details/app-service/linux/).
+            - C(is_linux). Indicate is linux app service plan. type bool. default False.
+            - C(number_of_workers). Number of workers.
 
     frameworks:
         description:
             - Set of run time framework settings. Each setting is a dictionary.
-            - See https://docs.microsoft.com/en-us/azure/app-service/app-service-web-overview for more info.
+            - See U(https://docs.microsoft.com/en-us/azure/app-service/app-service-web-overview) for more info.
         suboptions:
             name:
                 description:
@@ -70,7 +70,7 @@ options:
                     - node
             version:
                 description:
-                    - Version of the framework. For linux web app supported value, see https://aka.ms/linux-stacks for more info.
+                    - Version of the framework. For linux web app supported value, see U(https://aka.ms/linux-stacks) for more info.
                     - net_framework supported value sample, 'v4.0' for .NET 4.6 and 'v3.0' for .NET 3.5.
                     - php supported value sample, 5.5, 5.6, 7.0.
                     - python supported value sample, e.g., 5.5, 5.6, 7.0.
@@ -332,7 +332,7 @@ container_settings_spec = dict(
     name=dict(type='str', required=True),
     registry_server_url=dict(type='str'),
     registry_server_user=dict(type='str'),
-    registry_server_password=dict(type='str')
+    registry_server_password=dict(type='str', no_log=True)
 )
 
 deployment_source_spec = dict(
@@ -340,6 +340,13 @@ deployment_source_spec = dict(
     branch=dict(type='str')
 )
 
+framework_spec=dict(
+    name=dict(
+            type='str', 
+            required=True,
+            choices=['net_framework', 'java', 'php', 'node', 'python', 'dotnetcore', 'ruby']),
+    version=dict(type='str', required=True)
+)
 
 def _normalize_sku(sku):
     if sku is None:
@@ -395,7 +402,9 @@ class AzureRMWebApps(AzureRMModuleBase):
                 type='raw'
             ),
             frameworks=dict(
-                type='list'
+                type='list',
+                elements='dict',
+                options=framework_spec
             ),
             container_settings=dict(
                 type='dict',
@@ -477,7 +486,7 @@ class AzureRMWebApps(AzureRMModuleBase):
 
         self.results = dict(
             changed=False,
-            ansible_facts=dict(azure_webapp=None)
+            id=None,
         )
         self.state = None
         self.to_do = Actions.NoAction
@@ -529,7 +538,7 @@ class AzureRMWebApps(AzureRMModuleBase):
         old_response = self.get_webapp()
 
         if old_response:
-            self.results['ansible_facts']['azure_webapp'] = old_response
+            self.results['id']['azure_webapp'] = old_response['id']
 
         if self.state == 'present':
             if not self.plan and not old_response:
@@ -677,7 +686,7 @@ class AzureRMWebApps(AzureRMModuleBase):
                 # check if app settings changed
                 if self.purge_app_settings or self.is_app_settings_changed():
                     to_be_updated = True
-                    self.to_do = Actions.UpdateAppSettings
+                    self.to_do = Actions.CreateOrUpdate
 
                     if self.app_settings:
                         for key in self.app_settings.keys():
@@ -707,11 +716,7 @@ class AzureRMWebApps(AzureRMModuleBase):
 
             if self.to_do == Actions.CreateOrUpdate:
                 response = self.create_update_webapp()
-                self.results['ansible_facts']['azure_webapp'] = response
-
-            if self.to_do == Actions.UpdateAppSettings:
-                response = self.update_app_settings()
-                self.results['ansible_facts']['azure_webapp']['app_settings'] = response
+                self.results['id'] = response['id']
 
         return self.results
 
