@@ -93,6 +93,7 @@ import os
 import string
 import time
 import shutil
+import hashlib
 
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -104,7 +105,6 @@ from ansible.utils.path import makedirs_safe
 
 DEFAULT_LENGTH = 20
 VALID_PARAMS = frozenset(('length', 'encrypt', 'chars'))
-LOCKFILE_NAME = to_bytes("ansible_lookup_password.lockfile")
 
 
 def _parse_parameters(term):
@@ -286,7 +286,9 @@ class LookupModule(LookupBase):
                 try:
                     b_pathdir = os.path.dirname(b_path)
                     makedirs_safe(b_pathdir, mode=0o700)
-                    lockfile = os.path.join(b_pathdir, LOCKFILE_NAME)
+                    # get a unique lock file name for each password file
+                    lockfile_name = "%s.ansible_lockfile" % hashlib.md5(b_path).hexdigest()
+                    lockfile = os.path.join(b_pathdir, lockfile_name)
                     fd = os.open(lockfile, os.O_CREAT | os.O_EXCL)
                     writer_process = True
                     os.close(fd)
