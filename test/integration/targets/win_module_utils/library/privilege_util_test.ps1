@@ -114,15 +114,6 @@ Set-AnsiblePrivilege -Name SeUndockPrivilege -Value $false
 $actual = Get-AnsiblePrivilege -Name SeUndockPrivilege
 Assert-Equals -actual $actual -expected $false
 
-# test Remove-AnsiblePrivilege
-Remove-AnsiblePrivilege -Name SeUndockPrivilege -WhatIf
-$actual = Get-AnsiblePrivilege -Name SeUndockPrivilege
-Assert-Equals -actual $actual -expected $false
-
-Remove-AnsiblePrivilege -Name SeUndockPrivilege
-$actual = Get-AnsiblePrivilege -Name SeUndockPrivilege
-Assert-Equals -actual $actual -expected $null
-
 ### Test C# code ###
 # test CheckPrivilegeName
 Assert-Equals -actual ([Ansible.PrivilegeUtil.Privileges]::CheckPrivilegeName($total_privileges[0])) -expected $true

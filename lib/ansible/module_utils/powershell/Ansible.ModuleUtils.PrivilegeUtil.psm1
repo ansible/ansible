@@ -7,6 +7,7 @@ $ansible_privilege_util_namespaces = @(
     "Microsoft.Win32.SafeHandles",
     "System",
     "System.Collections.Generic",
+    "System.Linq",
     "System.Runtime.InteropServices",
     "System.Security.Principal",
     "System.Text"
@@ -155,15 +156,16 @@ namespace Ansible.PrivilegeUtil
             {
                 UInt32 tokenLength = 0;
                 NativeMethods.GetTokenInformation(hToken, TOKEN_PRIVILEGES, IntPtr.Zero, 0, out tokenLength);
+
+                NativeHelpers.LUID_AND_ATTRIBUTES[] privileges;
                 IntPtr privilegesPtr = Marshal.AllocHGlobal((int)tokenLength);
-
-                if (!NativeMethods.GetTokenInformation(hToken, TOKEN_PRIVILEGES, privilegesPtr, tokenLength, out tokenLength))
-                    throw new Win32Exception("GetTokenInformation() for TOKEN_PRIVILEGES failed");
-
-                NativeHelpers.TOKEN_PRIVILEGES privilegeInfo = (NativeHelpers.TOKEN_PRIVILEGES)Marshal.PtrToStructure(privilegesPtr, typeof(NativeHelpers.TOKEN_PRIVILEGES));
-                NativeHelpers.LUID_AND_ATTRIBUTES[] privileges = new NativeHelpers.LUID_AND_ATTRIBUTES[privilegeInfo.PrivilegeCount];
                 try
                 {
+                    if (!NativeMethods.GetTokenInformation(hToken, TOKEN_PRIVILEGES, privilegesPtr, tokenLength, out tokenLength))
+                        throw new Win32Exception("GetTokenInformation() for TOKEN_PRIVILEGES failed");
+
+                    NativeHelpers.TOKEN_PRIVILEGES privilegeInfo = (NativeHelpers.TOKEN_PRIVILEGES)Marshal.PtrToStructure(privilegesPtr, typeof(NativeHelpers.TOKEN_PRIVILEGES));
+                    privileges = new NativeHelpers.LUID_AND_ATTRIBUTES[privilegeInfo.PrivilegeCount];
                     PtrToStructureArray(privileges, privilegesPtr.ToInt64() + Marshal.SizeOf(privilegeInfo.PrivilegeCount));
                 }
                 finally
@@ -171,11 +173,7 @@ namespace Ansible.PrivilegeUtil
                     Marshal.FreeHGlobal(privilegesPtr);
                 }
 
-                foreach (NativeHelpers.LUID_AND_ATTRIBUTES privilege in privileges)
-                {
-                    string name = GetPrivilegeName(privilege.Luid);
-                    info.Add(name, privilege.Attributes);
-                }
+                info = privileges.ToDictionary(p => GetPrivilegeName(p.Luid), p => p.Attributes);
             }
             finally
             {
@@ -230,8 +228,6 @@ namespace Ansible.PrivilegeUtil
 
         private static Dictionary<string, bool?> AdjustTokenPrivileges(SafeHandle token, NativeHelpers.LUID_AND_ATTRIBUTES[] newState)
         {
-            Dictionary<string, bool?> previousState = new Dictionary<string, bool?>();
-
             bool disableAllPrivileges;
             IntPtr newStatePtr;
             NativeHelpers.TOKEN_PRIVILEGES oldState;
@@ -309,13 +305,7 @@ namespace Ansible.PrivilegeUtil
                 NativeMethods.CloseHandle(hToken);
             }
 
-            foreach (NativeHelpers.LUID_AND_ATTRIBUTES privilege in oldStatePrivileges)
-            {
-                string name = GetPrivilegeName(privilege.Luid);
-                previousState.Add(name, privilege.Attributes.HasFlag(PrivilegeAttributes.Enabled));
-            }
-
-            return previousState;
+            return oldStatePrivileges.ToDictionary(p => GetPrivilegeName(p.Luid), p => (bool?)p.Attributes.HasFlag(PrivilegeAttributes.Enabled));
         }
 
         private static string GetPrivilegeName(NativeHelpers.LUID luid)
@@ -339,7 +329,7 @@ namespace Ansible.PrivilegeUtil
 
         private static int StructureToBytes<T>(T structure, byte[] array, int offset)
         {
-            int size = Marshal.SizeOf(typeof(T));
+            int size = Marshal.SizeOf(structure);
             IntPtr structPtr = Marshal.AllocHGlobal(size);
             try
             {
@@ -365,7 +355,6 @@ Function Import-PrivilegeUtil {
     cmdlets can be used;
 
         Get-AnsiblePrivilege
-        Remove-AnsiblePrivilege
         Set-AnsiblePrivilege
 
     The above cmdlets give the ability to manage permissions on the current
@@ -422,7 +411,7 @@ Function Get-AnsiblePrivilege {
     <#
     .SYNOPSIS
     Get the status of a privilege for the current process. This returns
-        $true - the privilege is eanbled
+        $true - the privilege is enabled
         $false - the privilege is disabled
         $null - the privilege is removed from the token
 
@@ -448,34 +437,6 @@ Function Get-AnsiblePrivilege {
         return $status.HasFlag([Ansible.PrivilegeUtil.PrivilegeAttributes]::Enabled)
     } else {
         return $null
-    }
-}
-
-Function Remove-AnsiblePrivilege {
-    <#
-    .SYNOPSIS
-    Remove a privilege from the current process' token. Once removed, the
-    privilege cannot be re-added.
-
-    If Name is not a valid privilege name, this will throw an
-    ArgumentException.
-
-    .EXAMPLE
-    Remove-AnsiblePrivilege -Name SeBackupPrivilege
-    #>
-    [CmdletBinding(SupportsShouldProcess)]
-    param(
-        [Parameter(Mandatory=$true)][String]$Name
-    )
-
-    $current_state = Get-AnsiblePrivilege -Name $Name
-    if ($null -eq $current_state) {
-        return  # no change need to occur
-    }
-
-    $process_token = [Ansible.PrivilegeUtil.Privileges]::GetCurrentProcess()
-    if ($PSCmdlet.ShouldProcess($Name, "Remove the privilege $Name")) {
-        [Ansible.PrivilegeUtil.Privileges]::RemovePrivilege($process_token, $Name)
     }
 }
 
@@ -520,5 +481,5 @@ Function Set-AnsiblePrivilege {
     }
 }
 
-Export-ModuleMember -Function Import-PrivilegeUtil, Get-AnsiblePrivilege, Remove-AnsiblePrivilege, Set-AnsiblePrivilege `
+Export-ModuleMember -Function Import-PrivilegeUtil, Get-AnsiblePrivilege, Set-AnsiblePrivilege `
     -Variable ansible_privilege_util_namespaces, ansible_privilege_util_code
