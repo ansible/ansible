@@ -39,7 +39,7 @@ def command_coverage_combine(args):
     """
     coverage = initialize_coverage(args)
 
-    modules = dict((t.module, t.path) for t in list(walk_module_targets()))
+    modules = dict((t.module, t.path) for t in list(walk_module_targets()) if t.path.endswith('.py'))
 
     coverage_files = [os.path.join(COVERAGE_DIR, f) for f in os.listdir(COVERAGE_DIR) if '=coverage.' in f]
 
