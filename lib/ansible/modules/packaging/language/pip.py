@@ -528,10 +528,10 @@ class Package:
 
 def main():
     state_map = dict(
-        present='install',
-        absent='uninstall -y',
-        latest='install -U',
-        forcereinstall='install -U --force-reinstall',
+        present=['install'],
+        absent=['uninstall', '-y'],
+        latest=['install', '-U'],
+        forcereinstall=['install', '-U', '--force-reinstall'],
     )
 
     module = AnsibleModule(
@@ -600,7 +600,7 @@ def main():
 
         pip = _get_pip(module, env, module.params['executable'])
 
-        cmd = '%s %s' % (pip, state_map[state])
+        cmd = [pip] + state_map[state]
 
         # If there's a virtualenv we want things we install to be able to use other
         # installations that exist as binaries within this virtualenv. Example: we
@@ -655,13 +655,14 @@ def main():
                 extra_args = ' '.join(args_list)
 
         if extra_args:
-            cmd += ' %s' % extra_args
+            cmd.append(extra_args)
 
-        cmd += ' '
         if name:
-            cmd += ' '.join('"%s"' % d for d in packages)
+            for p in packages:
+                cmd.append('%s' % p)
         elif requirements:
-            cmd += '-r "%s"' % requirements
+            cmd.append('-r')
+            cmd.append('%s' % requirements)
         else:
             module.exit_json(
                 changed=False,
