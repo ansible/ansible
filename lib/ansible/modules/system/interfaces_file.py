@@ -45,6 +45,14 @@ options:
         the original file back if you somehow clobbered it incorrectly.
     type: bool
     default: 'no'
+  backupdir:
+    description:
+      - Create the backup file within specified directory. If the backupdir path does not exist, it
+        will be created with the exact same permissions and group+owner than the original file directory
+        source. If not specified, None will be set as the default value and the backup file is stored
+        under same path than the original file.
+    type: path
+    version_added: "2.7"
   state:
     description:
       - If set to C(absent) the option or section will be removed if present instead of created.
@@ -346,6 +354,7 @@ def main():
             option=dict(required=False),
             value=dict(required=False),
             backup=dict(default='no', type='bool'),
+            backupdir=dict(required=False, type='path'),
             state=dict(default='present', choices=['present', 'absent']),
         ),
         add_file_common_args=True,
@@ -357,6 +366,7 @@ def main():
     option = module.params['option']
     value = module.params['value']
     backup = module.params['backup']
+    backupdir = module.params['backupdir']
     state = module.params['state']
 
     if option is not None and iface is None:
@@ -377,7 +387,13 @@ def main():
 
     if changed and not module.check_mode:
         if backup:
-            module.backup_local(dest)
+            backup_dest = module.backup_local(dest)
+            if backupdir:
+                backupdir_infos = os.stat(os.path.dirname(backup_dest))
+                if not os.path.exists(backupdir):
+                    os.makedirs(backupdir, backupdir_infos.st_mode)
+                    os.chown(backupdir, backupdir_infos.st_uid, backupdir_infos.st_gid)
+                module.atomic_move(backup_dest, os.path.join(backupdir, os.path.basename(backup_dest)))
         write_changes(module, [d['line'] for d in lines if 'line' in d], dest)
 
     module.exit_json(dest=dest, changed=changed, ifaces=ifaces)
