@@ -88,8 +88,8 @@ import json
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_native
 
 
 def send_deploy_event(module, key, revision_id, deployed_by='Ansible', deployed_to=None, repository=None):

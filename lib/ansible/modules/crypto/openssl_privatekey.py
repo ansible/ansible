@@ -125,19 +125,21 @@ fingerprint:
 '''
 
 import os
+import sys
 import traceback
-
-try:
-    from OpenSSL import crypto
-except ImportError:
-    pyopenssl_found = False
-else:
-    pyopenssl_found = True
 
 from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils._text import to_native, to_bytes
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import string_types
+from ansible.module_utils.six import PY2, string_types
+
+try:
+    from OpenSSL import crypto
+    pyopenssl_found = True
+except ImportError:
+    pyopenssl_found = False
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 class PrivateKeyError(crypto_utils.OpenSSLObjectError):

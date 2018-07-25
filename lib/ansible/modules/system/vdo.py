@@ -294,14 +294,19 @@ EXAMPLES = '''
 
 RETURN = '''#  '''
 
-from ansible.module_utils.basic import AnsibleModule
 import re
+import sys
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
 
 try:
     import yaml
     HAS_YAML = True
 except ImportError:
     HAS_YAML = False
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 # Generate a list of VDO volumes, whether they are running or stopped.

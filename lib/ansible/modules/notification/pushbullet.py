@@ -84,15 +84,19 @@ EXAMPLES = '''
     body: Error rate on signup service is over 90% for more than 2 minutes
 '''
 
+import sys
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
+
 try:
     from pushbullet import PushBullet
     from pushbullet.errors import InvalidKeyError, PushError
+    pushbullet_found = True
 except ImportError:
     pushbullet_found = False
-else:
-    pushbullet_found = True
-
-from ansible.module_utils.basic import AnsibleModule
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 # ===========================================

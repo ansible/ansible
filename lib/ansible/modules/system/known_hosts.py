@@ -74,14 +74,16 @@ EXAMPLES = '''
 #    hash_host = yes|no (default: no) hash the hostname in the known_hosts file
 #    state = absent|present (default: present)
 
+import errno
 import os
 import os.path
-import tempfile
-import errno
 import re
+import sys
+import tempfile
 
-from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
+from ansible.module_utils._text import to_native
 
 
 def enforce_state(module, params):
@@ -136,6 +138,8 @@ def enforce_state(module, params):
                 inf = None
             else:
                 module.fail_json(msg="Failed to read %s: %s" % (path, str(e)))
+            if PY2:
+                sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
         try:
             outf = tempfile.NamedTemporaryFile(mode='w+', dir=os.path.dirname(path))
             if inf is not None:
@@ -196,7 +200,8 @@ def sanity_check(module, host, key, sshkeygen):
     try:
         outf.close()
     except:
-        pass
+        if PY2:
+            sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
     if stdout == '':  # host not found
         module.fail_json(msg="Host parameter does not match hashed host field in supplied key")

@@ -104,19 +104,22 @@ EXAMPLES = '''
 import os
 import pipes
 import subprocess
+import sys
 import traceback
-
-try:
-    import MySQLdb
-except ImportError:
-    mysqldb_found = False
-else:
-    mysqldb_found = True
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import mysql_quote_identifier
 from ansible.module_utils.mysql import mysql_connect, mysqldb_found
+from ansible.module_utils.six import PY2
 from ansible.module_utils._text import to_native
+
+try:
+    import MySQLdb
+    mysqldb_found = True
+except ImportError:
+    mysqldb_found = False
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 # ===========================================

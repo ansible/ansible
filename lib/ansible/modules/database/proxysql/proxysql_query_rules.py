@@ -218,19 +218,21 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
+import sys
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.mysql import mysql_connect
-from ansible.module_utils.six import iteritems
+from ansible.module_utils.six import PY2, iteritems
 from ansible.module_utils._text import to_native
 
 try:
     import MySQLdb
     import MySQLdb.cursors
+    MYSQLDB_FOUND = True
 except ImportError:
     MYSQLDB_FOUND = False
-else:
-    MYSQLDB_FOUND = True
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 # ===========================================
 # proxysql module specific support methods.

@@ -265,8 +265,9 @@ import sys
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils.six import PY2
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_bytes, to_native
 
 # APT related constants
 APT_ENV_VARS = dict(
@@ -301,6 +302,8 @@ try:
     import apt_pkg
 except ImportError:
     HAS_PYTHON_APT = False
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 if sys.version_info[0] < 3:
     PYTHON_APT = 'python-apt'
@@ -448,12 +451,16 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
                         pkg_name_cache = _non_multiarch
                     except NameError:
                         pkg_name_cache = _non_multiarch = [pkg.name for pkg in cache if ':' not in pkg.name]  # noqa: F841
+                        if PY2:
+                            sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
                 else:
                     # Create a cache of pkg_names including multiarch only once
                     try:
                         pkg_name_cache = _all_pkg_names
                     except NameError:
                         pkg_name_cache = _all_pkg_names = [pkg.name for pkg in cache]  # noqa: F841
+                        if PY2:
+                            sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
                 matches = fnmatch.filter(pkg_name_cache, pkgname_pattern)
 
@@ -635,7 +642,8 @@ def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated
                     continue
             except Exception:
                 # Must not be installed, continue with installation
-                pass
+                if PY2:
+                    sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
             # Check if package is installable
             if not pkg.check() and not force:
                 m.fail_json(msg=pkg._failure_string)
@@ -1008,6 +1016,8 @@ def main():
                 apt_pkg.config['APT::Default-Release'] = p['default_release']
             except AttributeError:
                 apt_pkg.Config['APT::Default-Release'] = p['default_release']
+                if PY2:
+                    sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
             # reopen cache w/ modified config
             cache.open(progress=None)
 

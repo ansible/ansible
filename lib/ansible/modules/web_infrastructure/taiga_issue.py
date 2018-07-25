@@ -105,16 +105,24 @@ EXAMPLES = '''
 '''
 
 RETURN = '''# '''
+
+import sys
+
 from os import getenv
 from os.path import isfile
+
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
 from ansible.module_utils._text import to_native
+
 try:
     from taiga import TaigaAPI
     from taiga.exceptions import TaigaException
     TAIGA_MODULE_IMPORTED = True
 except ImportError:
     TAIGA_MODULE_IMPORTED = False
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 def manage_issue(module, taiga_host, project_name, issue_subject, issue_priority,

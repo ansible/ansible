@@ -95,14 +95,18 @@ EXAMPLES = '''
 RETURN = '''
 '''
 
+import sys
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
+from ansible.module_utils.urls import fetch_url
 
 try:
     import json
 except ImportError:
     import simplejson as json
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 def query(module, url, check, subscription):

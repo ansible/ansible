@@ -70,15 +70,20 @@ old_value:
     type: str
 '''
 
+import sys
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
 from ansible.module_utils._text import to_native
+
 try:
     import etcd3
     etcd_found = True
 except ImportError:
     etcd_found = False
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 def run_module():

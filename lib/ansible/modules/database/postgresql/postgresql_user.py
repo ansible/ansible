@@ -203,21 +203,23 @@ EXAMPLES = '''
 
 import itertools
 import re
+import sys
 import traceback
 from hashlib import md5
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.database import pg_quote_identifier, SQLParseError
+from ansible.module_utils.six import PY2, iteritems
+from ansible.module_utils._text import to_bytes, to_native
 
 try:
     import psycopg2
     import psycopg2.extras
+    postgresqldb_found = True
 except ImportError:
     postgresqldb_found = False
-else:
-    postgresqldb_found = True
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.database import pg_quote_identifier, SQLParseError
-from ansible.module_utils._text import to_bytes, to_native
-from ansible.module_utils.six import iteritems
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 FLAGS = ('SUPERUSER', 'CREATEROLE', 'CREATEDB', 'INHERIT', 'LOGIN', 'REPLICATION')
@@ -337,6 +339,8 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
         except psycopg2.ProgrammingError:
             current_role_attrs = None
             db_connection.rollback()
+            if PY2:
+                sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
         pwchanging = user_should_we_change_password(current_role_attrs, user, password, encrypted)
 

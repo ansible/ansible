@@ -93,26 +93,30 @@ after:
 '''
 
 import os
+import sys
 import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
+from ansible.module_utils.six.moves import configparser
+from ansible.module_utils._text import to_native
 
 try:
     from pymongo.errors import ConnectionFailure
     from pymongo.errors import OperationFailure
     from pymongo import version as PyMongoVersion
     from pymongo import MongoClient
+    pymongo_found = True
 except ImportError:
     try:  # for older PyMongo 2.2
         from pymongo import Connection as MongoClient
+        pymongo_found = True
     except ImportError:
         pymongo_found = False
-    else:
-        pymongo_found = True
-else:
-    pymongo_found = True
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six.moves import configparser
-from ansible.module_utils._text import to_native
+        if PY2:
+            sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 # =========================================

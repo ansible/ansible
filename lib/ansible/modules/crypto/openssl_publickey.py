@@ -125,19 +125,22 @@ fingerprint:
 
 import hashlib
 import os
+import sys
+
+from ansible.module_utils import crypto as crypto_utils
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
+from ansible.module_utils._text import to_native
 
 try:
     from OpenSSL import crypto
     from cryptography.hazmat.backends import default_backend
     from cryptography.hazmat.primitives import serialization as crypto_serialization
+    pyopenssl_found = True
 except ImportError:
     pyopenssl_found = False
-else:
-    pyopenssl_found = True
-
-from ansible.module_utils import crypto as crypto_utils
-from ansible.module_utils._text import to_native
-from ansible.module_utils.basic import AnsibleModule
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 class PublicKeyError(crypto_utils.OpenSSLObjectError):

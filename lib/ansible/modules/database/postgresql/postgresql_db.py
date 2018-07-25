@@ -108,21 +108,23 @@ EXAMPLES = '''
 import os
 import pipes
 import subprocess
+import sys
 import traceback
-
-try:
-    import psycopg2
-    import psycopg2.extras
-except ImportError:
-    HAS_PSYCOPG2 = False
-else:
-    HAS_PSYCOPG2 = True
 
 import ansible.module_utils.postgres as pgutils
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError, pg_quote_identifier
-from ansible.module_utils.six import iteritems
+from ansible.module_utils.six import PY2, iteritems
 from ansible.module_utils._text import to_native
+
+try:
+    import psycopg2
+    import psycopg2.extras
+    HAS_PSYCOPG2 = True
+except ImportError:
+    HAS_PSYCOPG2 = False
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 class NotSupportedError(Exception):

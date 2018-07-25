@@ -142,9 +142,10 @@ system:
 import copy
 import datetime
 import ssl
+import sys
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import iteritems
+from ansible.module_utils.six import PY2, iteritems
 from ansible.module_utils.six.moves import xmlrpc_client
 from ansible.module_utils._text import to_text
 
@@ -228,6 +229,8 @@ def main():
             ssl_context = ssl.create_unverified_context()
         except AttributeError:  # Legacy Python that doesn't verify HTTPS certificates by default
             ssl._create_default_context = ssl._create_unverified_context
+            if PY2:
+                sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
         else:  # Python 2.7.8 and older
             ssl._create_default_https_context = ssl._create_unverified_https_context
 

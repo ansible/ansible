@@ -90,16 +90,20 @@ EXAMPLES = r'''
 
 import datetime
 import os
+import sys
 import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
+from ansible.module_utils._text import to_native, to_text
 
 try:
     import pexpect
     HAS_PEXPECT = True
 except ImportError:
     HAS_PEXPECT = False
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native, to_text
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 def response_closure(module, question, responses):
@@ -193,6 +197,8 @@ def main():
             # Use pexpect.runu in pexpect>=3.3,<4
             out, rc = pexpect.runu(args, timeout=timeout, withexitstatus=True,
                                    events=events, cwd=chdir, echo=echo)
+            if PY2:
+                sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
     except (TypeError, AttributeError) as e:
         # This should catch all insufficient versions of pexpect
         # We deem them insufficient for their lack of ability to specify

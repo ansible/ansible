@@ -162,27 +162,36 @@ operation:
     sample: update
 """
 
+import sys
+
+from collections import defaultdict
+
+from ansible.module_utils.basic import to_text, AnsibleModule
+from ansible.module_utils.six import PY2
 
 try:
     import consul
     python_consul_installed = True
 except ImportError:
     python_consul_installed = False
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 try:
     import hcl
     pyhcl_installed = True
 except ImportError:
     pyhcl_installed = False
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 try:
     from requests.exceptions import ConnectionError
     has_requests = True
 except ImportError:
     has_requests = False
-
-from collections import defaultdict
-from ansible.module_utils.basic import to_text, AnsibleModule
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 RULE_SCOPES = ["agent", "event", "key", "keyring", "node", "operator", "query", "service", "session"]

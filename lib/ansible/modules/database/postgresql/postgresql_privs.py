@@ -228,19 +228,21 @@ EXAMPLES = """
     type: database
     role: librarian
 """
-
+import sys
 import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.database import pg_quote_identifier
+from ansible.module_utils.six import PY2
+from ansible.module_utils._text import to_native, to_text
 
 try:
     import psycopg2
     import psycopg2.extensions
 except ImportError:
     psycopg2 = None
-
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.database import pg_quote_identifier
-from ansible.module_utils._text import to_native, to_text
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 VALID_PRIVS = frozenset(('SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE',

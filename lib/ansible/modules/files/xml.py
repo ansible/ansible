@@ -264,21 +264,24 @@ import copy
 import json
 import os
 import re
+import sys
 import traceback
 
 from collections import MutableMapping
 from distutils.version import LooseVersion
 from io import BytesIO
 
+from ansible.module_utils.basic import AnsibleModule, json_dict_bytes_to_unicode
+from ansible.module_utils.six import PY2, iteritems, string_types
+from ansible.module_utils._text import to_bytes, to_native
+
 try:
     from lxml import etree, objectify
     HAS_LXML = True
 except ImportError:
     HAS_LXML = False
-
-from ansible.module_utils.basic import AnsibleModule, json_dict_bytes_to_unicode
-from ansible.module_utils.six import iteritems, string_types
-from ansible.module_utils._text import to_bytes, to_native
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 _IDENT = r"[a-zA-Z-][a-zA-Z0-9_\-\.]*"
 _NSIDENT = _IDENT + "|" + _IDENT + ":" + _IDENT

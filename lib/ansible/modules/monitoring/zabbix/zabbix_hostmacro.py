@@ -71,6 +71,11 @@ EXAMPLES = '''
     state: present
 '''
 
+import sys
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
+
 try:
     from zabbix_api import ZabbixAPI, ZabbixAPISubClass
 
@@ -83,8 +88,8 @@ try:
     HAS_ZABBIX_API = True
 except ImportError:
     HAS_ZABBIX_API = False
-
-from ansible.module_utils.basic import AnsibleModule
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 class HostMacro(object):

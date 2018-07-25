@@ -305,7 +305,10 @@ rc:
   sample: 0
 '''
 
+import sys
+
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
 from ansible.module_utils._text import to_bytes, to_text
 
 PYPSEXEC_IMP_ERR = None
@@ -320,6 +323,8 @@ try:
 except ImportError as exc:
     PYPSEXEC_IMP_ERR = exc
     HAS_PYPSEXEC = False
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 KERBEROS_IMP_ERR = None
 try:
@@ -330,6 +335,8 @@ try:
 except ImportError as exc:
     KERBEROS_IMP_ERR = exc
     HAS_KERBEROS = False
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 def remove_artifacts(module, client):

@@ -109,8 +109,9 @@ EXAMPLES = '''
 from traceback import format_exc
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
+from ansible.module_utils.six import PY2
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_native
 
 
 apt_key_bin = None
@@ -208,7 +209,7 @@ def download_key(module, url):
 
         return rsp.read()
     except Exception:
-        module.fail_json(msg="error getting key id from url: %s" % url, traceback=format_exc())
+        module.fail_json(msg="error getting key id from url: %s" % url, exception=format_exc())
 
 
 def import_key(module, keyring, keyserver, key_id):

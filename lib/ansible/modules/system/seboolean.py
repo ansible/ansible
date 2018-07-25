@@ -50,22 +50,27 @@ EXAMPLES = '''
 '''
 
 import os
+import sys
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2, binary_type
+from ansible.module_utils._text import to_bytes
 
 try:
     import selinux
     HAVE_SELINUX = True
 except ImportError:
     HAVE_SELINUX = False
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 try:
     import semanage
     HAVE_SEMANAGE = True
 except ImportError:
     HAVE_SEMANAGE = False
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import binary_type
-from ansible.module_utils._text import to_bytes
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 def has_boolean_value(module, name):

@@ -106,12 +106,13 @@ RETURN = """
 # Default return values
 """
 
+import sys
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_native
 from ansible.module_utils.ldap import LdapGeneric, gen_specs
+from ansible.module_utils.six import PY2, string_types
+from ansible.module_utils._text import to_native
 
 try:
     import ldap.modlist
@@ -119,6 +120,8 @@ try:
     HAS_LDAP = True
 except ImportError:
     HAS_LDAP = False
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 class LdapEntry(LdapGeneric):

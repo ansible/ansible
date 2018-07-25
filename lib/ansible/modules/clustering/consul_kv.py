@@ -131,6 +131,10 @@ EXAMPLES = '''
     state: acquire
 '''
 
+import sys
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
 from ansible.module_utils._text import to_text
 
 try:
@@ -139,8 +143,8 @@ try:
     python_consul_installed = True
 except ImportError:
     python_consul_installed = False
-
-from ansible.module_utils.basic import AnsibleModule
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 # Note: although the python-consul documentation implies that using a key with a value of `None` with `put` has a
 # special meaning (https://python-consul.readthedocs.io/en/latest/#consul-kv), if not set in the subsequently API call,

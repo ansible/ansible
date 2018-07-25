@@ -245,8 +245,11 @@ end_state:
     }
 '''
 
-from ansible.module_utils.keycloak import KeycloakAPI, camel, keycloak_argument_spec
+import sys
+
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.keycloak import KeycloakAPI, camel, keycloak_argument_spec
+from ansible.module_utils.six import PY2
 
 
 def main():
@@ -323,7 +326,8 @@ def main():
             try:
                 new_param_value = sorted(new_param_value)
             except TypeError:
-                pass
+                if PY2:
+                    sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
         changeset[camel(clientt_param)] = new_param_value
 
     # Whether creating or updating a client, take the before-state and merge the changeset into it

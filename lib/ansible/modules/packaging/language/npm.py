@@ -120,8 +120,10 @@ EXAMPLES = '''
 
 import os
 import re
+import sys
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
 
 try:
     import json
@@ -129,8 +131,10 @@ except ImportError:
     try:
         import simplejson as json
     except ImportError:
-        # Let snippet from module_utils/basic.py return a proper error in this case
-        pass
+        if PY2:
+            sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 class Npm(object):

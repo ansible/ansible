@@ -196,6 +196,11 @@ EXAMPLES = '''
     http: http://localhost:80/morestatus
 '''
 
+import sys
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
+
 try:
     import consul
     from requests.exceptions import ConnectionError
@@ -212,8 +217,8 @@ try:
     python_consul_installed = True
 except ImportError:
     python_consul_installed = False
-
-from ansible.module_utils.basic import AnsibleModule
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 def register_with_consul(module):

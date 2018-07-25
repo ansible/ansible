@@ -111,15 +111,19 @@ EXAMPLES = '''
 '''
 
 import json
+import sys
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
+from ansible.module_utils.six.moves.urllib import parse as urllib_parse
 
 try:
     import requests
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six.moves.urllib import parse as urllib_parse
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 def main():

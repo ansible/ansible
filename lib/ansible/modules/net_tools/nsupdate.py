@@ -152,6 +152,11 @@ dns_rc_str:
 
 from binascii import Error as binascii_error
 from socket import error as socket_error
+import sys
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
+from ansible.module_utils._text import to_native
 
 try:
     import dns.update
@@ -163,9 +168,8 @@ try:
     HAVE_DNSPYTHON = True
 except ImportError:
     HAVE_DNSPYTHON = False
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json()
 
 
 class RecordManager(object):

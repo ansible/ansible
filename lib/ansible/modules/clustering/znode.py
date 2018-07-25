@@ -94,7 +94,12 @@ EXAMPLES = """
   delegate_to: 127.0.0.1
 """
 
+import sys
 import time
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
+from ansible.module_utils._text import to_bytes
 
 try:
     from kazoo.client import KazooClient
@@ -102,9 +107,8 @@ try:
     KAZOO_INSTALLED = True
 except ImportError:
     KAZOO_INSTALLED = False
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_bytes
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 def main():

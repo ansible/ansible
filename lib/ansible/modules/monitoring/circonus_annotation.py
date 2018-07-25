@@ -140,17 +140,20 @@ annotation:
 import json
 import time
 import traceback
+import sys
 from distutils.version import LooseVersion
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2, PY3
+from ansible.module_utils._text import to_native
 
 try:
     import requests
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import PY3
-from ansible.module_utils._text import to_native
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 def check_requests_dep(module):

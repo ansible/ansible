@@ -115,17 +115,20 @@ EXAMPLES = '''
     value: 100
 '''
 
+import sys
 import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
+from ansible.module_utils._text import to_native
 
 try:
     import redis
+    redis_found = True
 except ImportError:
     redis_found = False
-else:
-    redis_found = True
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 # Redis module specific support methods.

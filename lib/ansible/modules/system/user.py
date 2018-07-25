@@ -346,16 +346,20 @@ import platform
 import pwd
 import shutil
 import socket
+import sys
 import time
 
-from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import load_platform_subclass, AnsibleModule
+from ansible.module_utils.six import PY2
+from ansible.module_utils._text import to_native
 
 try:
     import spwd
     HAVE_SPWD = True
 except ImportError:
     HAVE_SPWD = False
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 class User(object):

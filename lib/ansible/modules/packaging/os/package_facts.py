@@ -143,6 +143,7 @@ ansible_facts:
 import sys
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
 from ansible.module_utils._text import to_text
 
 
@@ -206,7 +207,8 @@ def main():
                 manager = manager_lib
                 break
             except ImportError:
-                pass
+                if PY2:
+                    sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
         # FIXME: add more detection methods
     try:

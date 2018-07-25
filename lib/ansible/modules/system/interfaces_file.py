@@ -138,9 +138,11 @@ EXAMPLES = '''
 
 import os
 import re
+import sys
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
 from ansible.module_utils._text import to_bytes
 
 
@@ -208,10 +210,14 @@ def read_interfaces_lines(module, line_strings):
                 currif['address_family'] = words[2]
             except IndexError:
                 currif['address_family'] = None
+                if PY2:
+                    sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
             try:
                 currif['method'] = words[3]
             except IndexError:
                 currif['method'] = None
+                if PY2:
+                    sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
             ifaces[iface_name] = currif
             lines.append({'line': line, 'iface': iface_name, 'line_type': 'iface', 'params': currif})

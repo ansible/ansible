@@ -528,7 +528,6 @@ def main():
             failed=True,
             msg="error %s : %s " % (type(e), e)
         )
-        return
 
     module.exit_json(
         failed=False,

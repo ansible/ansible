@@ -290,9 +290,11 @@ ocsp_must_staple:
 '''
 
 import os
+import sys
 
 from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
 from ansible.module_utils._text import to_native, to_bytes
 
 try:
@@ -300,6 +302,8 @@ try:
     from OpenSSL import crypto
 except ImportError:
     pyopenssl_found = False
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 else:
     pyopenssl_found = True
     if OpenSSL.SSL.OPENSSL_VERSION_NUMBER >= 0x10100000:

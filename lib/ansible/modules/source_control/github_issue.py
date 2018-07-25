@@ -66,14 +66,18 @@ EXAMPLES = '''
   when: r.issue_status == 'open'
 '''
 
+import sys
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
 
 try:
     import github3
     HAS_GITHUB_PACKAGE = True
 except ImportError:
     HAS_GITHUB_PACKAGE = False
-
-from ansible.module_utils.basic import AnsibleModule
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 def main():

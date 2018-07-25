@@ -103,16 +103,20 @@ RETURN = '''
 # Default return values
 '''
 
+import sys
 import time
 import warnings
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
 
 try:
     import hpilo
     HAS_HPILO = True
 except ImportError:
     HAS_HPILO = False
-
-from ansible.module_utils.basic import AnsibleModule
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 # Suppress warnings from hpilo
@@ -159,6 +163,8 @@ def main():
         except hpilo.IloError:
             time.sleep(60)
             ilo.set_one_time_boot(media)
+            if PY2:
+                sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
         # TODO: Verify if image URL exists/works
         if image:

@@ -72,17 +72,20 @@ EXAMPLES = """
 - name: creating a new vertica role with other role assigned
   vertica_role: name=role_name assigned_role=other_role_name state=present
 """
+import sys
 import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
+from ansible.module_utils._text import to_native
 
 try:
     import pyodbc
+    pyodbc_found = True
 except ImportError:
     pyodbc_found = False
-else:
-    pyodbc_found = True
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 class NotSupportedError(Exception):

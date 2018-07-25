@@ -120,15 +120,19 @@ hw_uuid:
 '''
 
 import re
+import sys
 import warnings
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
 
 try:
     import hpilo
     HAS_HPILO = True
 except ImportError:
     HAS_HPILO = False
-
-from ansible.module_utils.basic import AnsibleModule
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 # Suppress warnings from hpilo

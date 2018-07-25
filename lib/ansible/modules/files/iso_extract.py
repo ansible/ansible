@@ -86,14 +86,18 @@ RETURN = r'''
 
 import os.path
 import shutil
+import sys
 import tempfile
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
 
 try:  # python 3.3+
     from shlex import quote
 except ImportError:  # older python
     from pipes import quote
-
-from ansible.module_utils.basic import AnsibleModule
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 def main():

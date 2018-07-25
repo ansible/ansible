@@ -53,10 +53,11 @@ status:
     sample: canceled
 '''
 
-
-from ansible.module_utils.basic import AnsibleModule
+import sys
 
 from ansible.module_utils.ansible_tower import tower_auth_config, tower_check_mode, tower_argument_spec, HAS_TOWER_CLI
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
 
 try:
     import tower_cli
@@ -64,7 +65,8 @@ try:
 
     from tower_cli.conf import settings
 except ImportError:
-    pass
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 def main():

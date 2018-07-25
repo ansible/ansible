@@ -92,15 +92,18 @@ RETURN = '''
 '''
 
 import re
+import sys
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.influxdb import InfluxDb
+from ansible.module_utils.six import PY2
 
 try:
     import requests.exceptions
     from influxdb import exceptions
 except ImportError:
-    pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.influxdb import InfluxDb
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 def find_retention_policy(module, client):

@@ -287,19 +287,29 @@ EXAMPLES = '''
 
 import os
 import re
+import sys
 import tempfile
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
+from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_native
 
 try:
     import rpm
     HAS_RPM_PYTHON = True
 except ImportError:
     HAS_RPM_PYTHON = False
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 try:
     import yum
     HAS_YUM_PYTHON = True
 except ImportError:
     HAS_YUM_PYTHON = False
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 try:
     from yum.misc import find_unfinished_transactions, find_ts_remaining
@@ -307,12 +317,10 @@ try:
     transaction_helpers = True
 except ImportError:
     transaction_helpers = False
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 from contextlib import contextmanager
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
-from ansible.module_utils.urls import fetch_url
 
 # 64k.  Number of bytes to read at a time when manually downloading pkgs via a url
 BUFSIZE = 65536
@@ -1526,7 +1534,8 @@ def main():
         try:
             yum_plugins = my.plugins._plugins
         except AttributeError:
-            pass
+            if PY2:
+                sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
         else:
             if 'rhnplugin' in yum_plugins:
                 repoquerybin = ensure_yum_utils(module)

@@ -139,13 +139,14 @@ import io
 import os
 import re
 import shutil
+import sys
 import tarfile
 import zipfile
 from traceback import format_exc
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2, PY3
 from ansible.module_utils._text import to_native
-from ansible.module_utils.six import PY3
 
 if PY3:
     try:
@@ -159,6 +160,8 @@ else:
         HAS_LZMA = True
     except ImportError:
         HAS_LZMA = False
+        if PY2:
+            sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 def main():

@@ -114,10 +114,12 @@ EXAMPLES = '''
 
 import os
 import re
+import sys
 import tempfile
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
 
 
 def match_opt(option, line):
@@ -154,6 +156,9 @@ def do_ini(module, filename, section=None, option=None, value=None,
         ini_file = open(filename, 'r')
         try:
             ini_lines = ini_file.readlines()
+        except:
+            if PY2:
+                sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
         finally:
             ini_file.close()
 
@@ -266,13 +271,13 @@ def do_ini(module, filename, section=None, option=None, value=None,
             f.writelines(ini_lines)
             f.close()
         except IOError:
-            module.fail_json(msg="Unable to create temporary file %s", traceback=traceback.format_exc())
+            module.fail_json(msg="Unable to create temporary file %s", exception=traceback.format_exc())
 
         try:
             module.atomic_move(tmpfile, filename)
         except IOError:
             module.ansible.fail_json(msg='Unable to move temporary \
-                                   file %s to %s, IOError' % (tmpfile, filename), traceback=traceback.format_exc())
+                                   file %s to %s, IOError' % (tmpfile, filename), exception=traceback.format_exc())
 
     return (changed, backup_file, diff, msg)
 

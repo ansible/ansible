@@ -182,6 +182,7 @@ import sys
 import time
 
 from ansible.module_utils.basic import AnsibleModule, load_platform_subclass
+from ansible.module_utils.six import PY2
 from ansible.module_utils._text import to_native
 
 
@@ -191,7 +192,8 @@ try:
     HAS_PSUTIL = True
     # just because we can import it on Linux doesn't mean we will use it
 except ImportError:
-    pass
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 class TCPConnectionInfo(object):
@@ -489,6 +491,8 @@ def main():
                     if not os.access(path, os.F_OK):
                         break
                 except IOError:
+                    if PY2:
+                        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
                     break
             elif port:
                 try:
@@ -496,6 +500,8 @@ def main():
                     s.shutdown(socket.SHUT_RDWR)
                     s.close()
                 except:
+                    if PY2:
+                        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
                     break
             # Conditions not yet met, wait and try again
             time.sleep(module.params['sleep'])
@@ -519,6 +525,8 @@ def main():
                         elapsed = datetime.datetime.utcnow() - start
                         module.fail_json(msg=msg or "Failed to stat %s, %s" % (path, e.strerror), elapsed=elapsed.seconds)
                     # file doesn't exist yet, so continue
+                    if PY2:
+                        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
                 else:
                     # File exists.  Are there additional things to check?
                     if not compiled_search_re:
@@ -530,17 +538,22 @@ def main():
                             if re.search(compiled_search_re, f.read()):
                                 # String found, success!
                                 break
+                        except:
+                            if PY2:
+                                sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
                         finally:
                             f.close()
                     except IOError:
-                        pass
+                        if PY2:
+                            sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
             elif port:
                 alt_connect_timeout = math.ceil(_timedelta_total_seconds(end - datetime.datetime.utcnow()))
                 try:
                     s = _create_connection(host, port, min(connect_timeout, alt_connect_timeout))
                 except:
                     # Failed to connect by connect_timeout. wait and try again
-                    pass
+                    if PY2:
+                        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
                 else:
                     # Connected -- are there additional conditions?
                     if compiled_search_re:
@@ -568,6 +581,8 @@ def main():
                         except socket.error as e:
                             if e.errno != errno.ENOTCONN:
                                 raise
+                            if PY2:
+                                sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
                         # else, the server broke the connection on its end, assume it's not ready
                         else:
                             s.close()
@@ -581,6 +596,8 @@ def main():
                         except socket.error as e:
                             if e.errno != errno.ENOTCONN:
                                 raise
+                            if PY2:
+                                sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
                         # else, the server broke the connection on its end, assume it's not ready
                         else:
                             s.close()

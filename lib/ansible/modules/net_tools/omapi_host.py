@@ -129,7 +129,12 @@ lease:
 import binascii
 import socket
 import struct
+import sys
 import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
+from ansible.module_utils._text import to_bytes, to_native
 
 try:
     from pypureomapi import Omapi, OmapiMessage, OmapiError, OmapiErrorNotFound
@@ -138,9 +143,8 @@ try:
     pureomapi_found = True
 except ImportError:
     pureomapi_found = False
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_bytes, to_native
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 class OmapiHostManager:

@@ -109,17 +109,21 @@ EXAMPLES = '''
 #
 
 import os
+import sys
 import traceback
 
-HAS_PAHOMQTT = True
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
+from ansible.module_utils._text import to_native
+
 try:
     import socket
     import paho.mqtt.publish as mqtt
+    HAS_PAHOMQTT = True
 except ImportError:
     HAS_PAHOMQTT = False
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 # ===========================================

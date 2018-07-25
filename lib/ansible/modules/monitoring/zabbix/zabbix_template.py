@@ -202,19 +202,24 @@ template_json:
     }
 '''
 
-from distutils.version import LooseVersion
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
 import json
+import sys
 import traceback
+
+from distutils.version import LooseVersion
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
+from ansible.module_utils._text import to_native
 
 
 try:
     from zabbix_api import ZabbixAPI, ZabbixAPIException
-
     HAS_ZABBIX_API = True
 except ImportError:
     HAS_ZABBIX_API = False
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 class Template(object):

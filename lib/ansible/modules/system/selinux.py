@@ -88,16 +88,20 @@ reboot_required:
 
 import os
 import re
+import sys
 import tempfile
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.facts.utils import get_file_lines
+from ansible.module_utils.six import PY2
 
 try:
     import selinux
     HAS_SELINUX = True
 except ImportError:
     HAS_SELINUX = False
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.facts.utils import get_file_lines
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 # getter subroutines

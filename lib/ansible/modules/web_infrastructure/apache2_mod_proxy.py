@@ -190,13 +190,19 @@ members:
 '''
 
 import re
+import sys
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
+from ansible.module_utils.urls import fetch_url
 
 try:
     from BeautifulSoup import BeautifulSoup
+    HAS_BEAUTIFULSOUP = True
 except ImportError:
     HAS_BEAUTIFULSOUP = False
-else:
-    HAS_BEAUTIFULSOUP = True
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 # balancer member attributes extraction regexp:
 EXPRESSION = r"(b=([\w\.\-]+)&w=(https?|ajp|wss?|ftp|[sf]cgi)://([\w\.\-]+):?(\d*)([/\w\.\-]*)&?[\w\-\=]*)"
@@ -431,7 +437,5 @@ def main():
         else:
             module.fail_json(msg=str(module.params['member_host']) + ' is not a member of the balancer ' + str(module.params['balancer_vhost']) + '!')
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url
 if __name__ == '__main__':
     main()

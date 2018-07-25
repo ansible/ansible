@@ -79,17 +79,21 @@ EXAMPLES = '''
     msg: Ansible task finished
 '''
 
+import sys
 import time
 import traceback
 
-HAS_XMPP = True
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
+from ansible.module_utils._text import to_native
+
 try:
     import xmpp
+    HAS_XMPP = True
 except ImportError:
     HAS_XMPP = False
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 def main():
@@ -119,6 +123,9 @@ def main():
         to, nick = module.params['to'].split('/', 1)
     except ValueError:
         to, nick = module.params['to'], None
+    finally:
+        if PY2:
+            sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
     if module.params['host']:
         host = module.params['host']

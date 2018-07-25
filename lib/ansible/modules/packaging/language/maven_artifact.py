@@ -155,29 +155,34 @@ EXAMPLES = '''
     repository_url: "file://{{ lookup('env','HOME') }}/.m2/repository"
 '''
 
+import io
 import hashlib
 import os
 import posixpath
-import sys
 import shutil
-import io
+import sys
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
+from ansible.module_utils.six.moves.urllib.parse import urlparse
+from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_bytes, to_native, to_text
 
 try:
     from lxml import etree
     HAS_LXML_ETREE = True
 except ImportError:
     HAS_LXML_ETREE = False
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 try:
     import boto3
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six.moves.urllib.parse import urlparse
-from ansible.module_utils.urls import fetch_url
-from ansible.module_utils._text import to_bytes, to_native, to_text
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 def split_pre_existing_dir(dirname):

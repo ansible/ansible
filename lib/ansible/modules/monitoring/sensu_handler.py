@@ -151,8 +151,10 @@ name:
 
 import json
 import os
+import sys
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
 
 
 def main():
@@ -223,7 +225,8 @@ def main():
         current_config = json.load(open(path, 'r'))
     except (IOError, ValueError):
         # File either doesn't exist or it's invalid JSON
-        pass
+        if PY2:
+            sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
     if current_config is not None and current_config == config:
         # Config is the same, let's not change anything

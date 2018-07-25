@@ -121,13 +121,21 @@ import select
 import shlex
 import string
 import subprocess
+import sys
 import tempfile
 import time
+
+from ansible.module_utils.basic import AnsibleModule, load_platform_subclass
+from ansible.module_utils.service import fail_if_missing
+from ansible.module_utils.six import PY2, b
+from ansible.module_utils._text import to_bytes, to_text
 
 try:
     import json
 except ImportError:
     import simplejson as json
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 # The distutils module is not shipped with SUNWPython on Solaris.
 # It's in the SUNWPython-devel package which also contains development files
@@ -135,11 +143,6 @@ except ImportError:
 # depend on LooseVersion, do not import it on Solaris.
 if platform.system() != 'SunOS':
     from distutils.version import LooseVersion
-
-from ansible.module_utils.basic import AnsibleModule, load_platform_subclass
-from ansible.module_utils.service import fail_if_missing
-from ansible.module_utils.six import PY2, b
-from ansible.module_utils._text import to_bytes, to_text
 
 
 class Service(object):

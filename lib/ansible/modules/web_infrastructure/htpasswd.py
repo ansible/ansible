@@ -94,18 +94,24 @@ EXAMPLES = """
 
 
 import os
+import sys
 import tempfile
+
 from distutils.version import LooseVersion
+
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
 from ansible.module_utils._text import to_native
+
 try:
     from passlib.apache import HtpasswdFile, htpasswd_context
     from passlib.context import CryptContext
     import passlib
+    passlib_installed = True
 except ImportError:
     passlib_installed = False
-else:
-    passlib_installed = True
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 apache_hashes = ["apr_md5_crypt", "des_crypt", "ldap_sha1", "plaintext"]
 

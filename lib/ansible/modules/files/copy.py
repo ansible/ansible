@@ -229,15 +229,17 @@ state:
     sample: file
 '''
 
+import errno
 import os
 import os.path
 import shutil
 import stat
-import errno
+import sys
 import tempfile
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
 from ansible.module_utils._text import to_bytes, to_native
 
 
@@ -336,6 +338,8 @@ def main():
         md5sum_src = module.md5(src)
     except ValueError:
         md5sum_src = None
+        if PY2:
+            sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
     changed = False
 
@@ -436,9 +440,11 @@ def main():
                             module.warn("Unable to copy stats {0}".format(to_native(b_src)))
                         else:
                             raise
+                        if PY2:
+                            sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
                 module.atomic_move(b_mysrc, dest, unsafe_writes=module.params['unsafe_writes'])
             except (IOError, OSError):
-                module.fail_json(msg="failed to copy: %s to %s" % (src, dest), traceback=traceback.format_exc())
+                module.fail_json(msg="failed to copy: %s to %s" % (src, dest), exception=traceback.format_exc())
         changed = True
     else:
         changed = False

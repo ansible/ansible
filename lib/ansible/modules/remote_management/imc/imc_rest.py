@@ -262,21 +262,27 @@ import atexit
 import datetime
 import itertools
 import os
+import sys
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
+from ansible.module_utils.urls import fetch_url
 
 try:
     import lxml.etree
     HAS_LXML_ETREE = True
 except ImportError:
     HAS_LXML_ETREE = False
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 try:
     from xmljson import cobra
     HAS_XMLJSON_COBRA = True
 except ImportError:
     HAS_XMLJSON_COBRA = False
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 def imc_response(module, rawoutput, rawinput=''):

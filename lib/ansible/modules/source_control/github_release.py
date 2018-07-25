@@ -121,15 +121,19 @@ latest_release:
     sample: 1.1.0
 '''
 
+import sys
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
+from ansible.module_utils._text import to_native
+
 try:
     import github3
-
     HAS_GITHUB_API = True
 except ImportError:
     HAS_GITHUB_API = False
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 def main():

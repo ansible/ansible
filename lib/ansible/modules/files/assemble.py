@@ -100,10 +100,11 @@ EXAMPLES = '''
 import codecs
 import os
 import re
+import sys
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import b
+from ansible.module_utils.six import PY2, b
 from ansible.module_utils._text import to_native
 
 
@@ -213,6 +214,8 @@ def main():
         pathmd5 = module.md5(path)
     except ValueError:
         pathmd5 = None
+        if PY2:
+            sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
     result['md5sum'] = pathmd5
 
     if os.path.exists(dest):

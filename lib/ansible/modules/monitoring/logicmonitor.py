@@ -504,6 +504,7 @@ import sys
 import types
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import open_url
 
@@ -524,10 +525,12 @@ try:
 except ImportError:
     try:
         import simplejson as json
-    except ImportError:
+    except (ImportError, SyntaxError):
         HAS_LIB_JSON = False
-    except SyntaxError:
-        HAS_LIB_JSON = False
+        if PY2:
+            sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 class LogicMonitor(object):

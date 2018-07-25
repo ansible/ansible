@@ -139,11 +139,13 @@ import platform
 import pwd
 import re
 import stat
+import sys
 import time
 import traceback
 from zipfile import ZipFile, BadZipfile
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_bytes, to_native, to_text
 
@@ -151,6 +153,8 @@ try:  # python 3.3+
     from shlex import quote
 except ImportError:  # older python
     from pipes import quote
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 # String from tar that shows the tar contents are different from the
 # filesystem

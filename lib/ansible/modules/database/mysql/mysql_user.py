@@ -194,20 +194,22 @@ EXAMPLES = """
 
 import re
 import string
+import sys
 import traceback
-
-try:
-    import MySQLdb
-except ImportError:
-    mysqldb_found = False
-else:
-    mysqldb_found = True
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError
 from ansible.module_utils.mysql import mysql_connect, mysqldb_found
-from ansible.module_utils.six import iteritems
+from ansible.module_utils.six import PY2, iteritems
 from ansible.module_utils._text import to_native
+
+try:
+    import MySQLdb
+    mysqldb_found = True
+except ImportError:
+    mysqldb_found = False
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 VALID_PRIVS = frozenset(('CREATE', 'DROP', 'GRANT', 'GRANT OPTION',
@@ -588,7 +590,8 @@ def main():
                 cursor = mysql_connect(module, 'root', '', config_file, ssl_cert, ssl_key, ssl_ca, db,
                                        connect_timeout=connect_timeout)
             except:
-                pass
+                if PY2:
+                    sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
         if not cursor:
             cursor = mysql_connect(module, login_user, login_password, config_file, ssl_cert, ssl_key, ssl_ca, db,

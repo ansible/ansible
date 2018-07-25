@@ -116,18 +116,21 @@ EXAMPLES = '''
 '''
 
 import os
+import sys
 import warnings
-
-try:
-    import MySQLdb
-except ImportError:
-    mysqldb_found = False
-else:
-    mysqldb_found = True
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.mysql import mysql_connect
+from ansible.module_utils.six import PY2
 from ansible.module_utils._text import to_native
+
+try:
+    import MySQLdb
+    mysqldb_found = True
+except ImportError:
+    mysqldb_found = False
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 def get_master_status(cursor):
@@ -327,6 +330,8 @@ def main():
             changemaster(cursor, chm, chm_params)
         except MySQLdb.Warning as e:
             result['warning'] = to_native(e)
+            if PY2:
+                sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
         except Exception as e:
             module.fail_json(msg='%s. Query == CHANGE MASTER TO %s' % (to_native(e), chm))
         result['changed'] = True

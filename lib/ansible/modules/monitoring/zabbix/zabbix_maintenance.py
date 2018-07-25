@@ -122,15 +122,19 @@ EXAMPLES = '''
 '''
 
 import datetime
+import sys
 import time
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
 
 try:
     from zabbix_api import ZabbixAPI
     HAS_ZABBIX_API = True
 except ImportError:
     HAS_ZABBIX_API = False
-
-from ansible.module_utils.basic import AnsibleModule
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 def create_maintenance(zbx, group_ids, host_ids, start_time, maintenance_type, period, name, desc):

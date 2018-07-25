@@ -146,8 +146,10 @@ attached_file:
 '''
 
 import os
+import sys
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
 from ansible.module_utils._text import to_bytes, to_native
 
 # Pull in pysnow
@@ -155,9 +157,9 @@ HAS_PYSNOW = False
 try:
     import pysnow
     HAS_PYSNOW = True
-
 except ImportError:
-    pass
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 def run_module():

@@ -166,9 +166,11 @@ EXAMPLES = '''
 '''
 
 import json
+import sys
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
 from ansible.module_utils._text import to_native
 
 
@@ -189,6 +191,8 @@ def sensu_check(module, path, name, state='present', backup=False):
                 config = {}
             else:
                 module.fail_json(msg=to_native(e), exception=traceback.format_exc())
+            if PY2:
+                sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
         except ValueError:
             msg = '{path} contains invalid JSON'.format(path=path)
             module.fail_json(msg=msg)

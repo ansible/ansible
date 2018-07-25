@@ -255,11 +255,13 @@ record:
 '''
 
 import json
+import sys
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
 from ansible.module_utils.six.moves.urllib.parse import urlencode
-from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_native, to_text
 
 
 class CloudflareAPI(object):
@@ -350,12 +352,16 @@ class CloudflareAPI(object):
                 content = info['body']
             else:
                 error_msg += "; The API response was empty"
+            if PY2:
+                sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
         if content:
             try:
                 result = json.loads(to_text(content, errors='surrogate_or_strict'))
             except (getattr(json, 'JSONDecodeError', ValueError)) as e:
                 error_msg += "; Failed to parse API response with error {0}: {1}".format(to_native(e), content)
+                if PY2:
+                    sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
         # Without a valid/parsed JSON response no more error processing can be done
         if result is None:

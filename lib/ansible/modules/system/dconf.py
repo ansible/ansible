@@ -117,16 +117,19 @@ EXAMPLES = """
     state: present
 """
 
-
 import os
+import sys
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
 
 try:
     import psutil
     psutil_found = True
 except ImportError:
     psutil_found = False
-
-from ansible.module_utils.basic import AnsibleModule
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 class DBusWrapper(object):

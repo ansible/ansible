@@ -140,7 +140,11 @@ EXAMPLES = '''
 RETURN = r"""# """
 
 import os
+import sys
 from distutils.version import LooseVersion
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
 
 try:
     from dnsimple import DNSimple
@@ -149,8 +153,8 @@ try:
     HAS_DNSIMPLE = True
 except ImportError:
     HAS_DNSIMPLE = False
-
-from ansible.module_utils.basic import AnsibleModule
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 def main():

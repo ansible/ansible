@@ -84,22 +84,28 @@ EXAMPLES = '''
     state: present
 '''
 
+import sys
 import traceback
+
+from ansible.module_utils.basic import AnsibleModule, HAVE_SELINUX
+from ansible.module_utils.six import PY2
+from ansible.module_utils._text import to_native
 
 try:
     import selinux
     HAVE_SELINUX = True
 except ImportError:
     HAVE_SELINUX = False
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 try:
     import seobject
     HAVE_SEOBJECT = True
 except ImportError:
     HAVE_SEOBJECT = False
-
-from ansible.module_utils.basic import AnsibleModule, HAVE_SELINUX
-from ansible.module_utils._text import to_native
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 def semanage_port_get_ports(seport, setype, proto):

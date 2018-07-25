@@ -148,8 +148,11 @@ EXAMPLES = '''
     - ipv6
 '''
 
+import sys
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.firewalld import FirewallTransaction, fw_offline
+from ansible.module_utils.six import PY2
 
 try:
     from firewall.client import Rich_Rule
@@ -157,7 +160,8 @@ try:
 except ImportError:
     # The import errors are handled via FirewallTransaction, don't need to
     # duplicate that here
-    pass
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 class ServiceTransaction(FirewallTransaction):

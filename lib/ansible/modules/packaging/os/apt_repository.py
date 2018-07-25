@@ -109,6 +109,11 @@ import re
 import sys
 import tempfile
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
+from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_native
+
 try:
     import apt
     import apt_pkg
@@ -118,10 +123,8 @@ try:
 except ImportError:
     distro = None
     HAVE_PYTHON_APT = False
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
-from ansible.module_utils.urls import fetch_url
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 if sys.version_info[0] < 3:

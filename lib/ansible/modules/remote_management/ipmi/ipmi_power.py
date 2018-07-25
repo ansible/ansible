@@ -74,12 +74,17 @@ EXAMPLES = '''
     state: on
 '''
 
+import sys
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
+
 try:
     from pyghmi.ipmi import command
 except ImportError:
     command = None
-
-from ansible.module_utils.basic import AnsibleModule
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 def main():

@@ -123,6 +123,11 @@ RETURN = '''
 import os
 import sys
 
+from ansible.module_utils import redhat
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
+from ansible.module_utils.six.moves import urllib, xmlrpc_client
+
 # Attempt to import rhn client tools
 sys.path.insert(0, '/usr/share/rhn')
 try:
@@ -131,11 +136,8 @@ try:
     HAS_UP2DATE_CLIENT = True
 except ImportError:
     HAS_UP2DATE_CLIENT = False
-
-# INSERT REDHAT SNIPPETS
-from ansible.module_utils import redhat
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six.moves import urllib, xmlrpc_client
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 class Rhn(redhat.RegistrationBase):

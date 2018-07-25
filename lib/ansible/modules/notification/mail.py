@@ -185,6 +185,7 @@ EXAMPLES = r'''
 import os
 import smtplib
 import ssl
+import sys
 import traceback
 from email import encoders
 from email.utils import parseaddr, formataddr
@@ -194,6 +195,7 @@ from email.mime.text import MIMEText
 from email.header import Header
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
 from ansible.module_utils._text import to_native
 
 
@@ -255,6 +257,8 @@ def main():
                 if secure == 'always':
                     module.fail_json(rc=1, msg='Unable to start an encrypted session to %s:%s: %s' %
                                                (host, port, to_native(e)), exception=traceback.format_exc())
+                if PY2:
+                    sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
         if not secure_state:
             smtp = smtplib.SMTP(timeout=timeout)
@@ -313,6 +317,8 @@ def main():
                 msg.add_header(h_key, h_val)
             except Exception:
                 module.warn("Skipping header '%s', unable to parse" % hdr)
+                if PY2:
+                    sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
     if 'X-Mailer' not in msg:
         msg.add_header('X-Mailer', 'Ansible mail module')

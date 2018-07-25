@@ -90,7 +90,12 @@ EXAMPLES = '''
 '''
 
 import platform
+import sys
 import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
+from ansible.module_utils._text import to_native
 
 # Import Datadog
 try:
@@ -98,9 +103,8 @@ try:
     HAS_DATADOG = True
 except:
     HAS_DATADOG = False
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 
 def main():
