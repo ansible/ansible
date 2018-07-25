@@ -158,18 +158,18 @@ EXAMPLES = r"""
     line: '192.168.1.99 foo.lab.net foo'
     create: yes
 
-# Fully quoted because of the ': ' on the line. See the Gotchas in the YAML docs.
+# Double quoted because of the ': ' on the line. See the Gotchas in the YAML docs.
 - lineinfile:
     path: /etc/sudoers
     state: present
     regexp: '^%wheel\s'
-    line: '%wheel ALL=(ALL) NOPASSWD: ALL'
+    line: "%wheel ALL=(ALL) NOPASSWD: ALL"
 
 # Yaml requires escaping backslashes in double quotes but not in single quotes
 - lineinfile:
     path: /opt/jboss-as/bin/standalone.conf
     regexp: '^(.*)Xms(\\d+)m(.*)$'
-    line: '\1Xms${xms}m\3'
+    line: "\1Xms${xms}m\3"
     backrefs: yes
 
 # Validate the sudoers file before saving
@@ -177,7 +177,7 @@ EXAMPLES = r"""
     path: /etc/sudoers
     state: present
     regexp: '^%ADMIN ALL='
-    line: '%ADMIN ALL=(ALL) NOPASSWD: ALL'
+    line: "%ADMIN ALL=(ALL) NOPASSWD: ALL"
     validate: '/usr/sbin/visudo -cf %s'
 """
 
