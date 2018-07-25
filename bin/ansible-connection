@@ -35,6 +35,8 @@ from ansible.utils.path import unfrackpath, makedirs_safe
 from ansible.utils.display import Display
 from ansible.utils.jsonrpc import JsonRpcServer
 
+TIMEOUT_TROUBLESHOOT_URL = "https://docs.ansible.com/ansible/latest/network/user_guide/network_debug_troubleshooting.html#timeout-issues"
+
 
 @contextmanager
 def file_lock(lock_path):
@@ -144,17 +146,19 @@ class ConnectionProcess(object):
             self.shutdown()
 
     def connect_timeout(self, signum, frame):
-        msg = 'persistent connection idle timeout triggered, timeout value is %s secs' % self.connection.get_option('persistent_connect_timeout')
+        msg = 'persistent connection idle timeout triggered, timeout value is %s secs.\nFor more details refer %s' %\
+              (self.connection.get_option('persistent_connect_timeout'), TIMEOUT_TROUBLESHOOT_URL)
         display.display(msg, log_only=True)
         raise Exception(msg)
 
     def command_timeout(self, signum, frame):
-        msg = 'command timeout triggered, timeout value is %s secs' % self.connection.get_option('persistent_command_timeout')
+        msg = 'command timeout triggered, timeout value is %s secs.\nFor more details refer %s' %\
+              (self.connection.get_option('persistent_command_timeout'), TIMEOUT_TROUBLESHOOT_URL)
         display.display(msg, log_only=True)
         raise Exception(msg)
 
     def handler(self, signum, frame):
-        msg = 'signal handler called with signal %s' % signum
+        msg = 'signal handler called with signal %s.\nFor more details refer %s' % (signum, TIMEOUT_TROUBLESHOOT_URL)
         display.display(msg, log_only=True)
         raise Exception(msg)
 
