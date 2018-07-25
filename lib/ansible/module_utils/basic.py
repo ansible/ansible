@@ -2385,10 +2385,14 @@ class AnsibleModule(object):
         kwargs['failed'] = True
 
         # Add traceback if debug or high verbosity and it is missing
-        # NOTE: Only do this for Python 3, as prior versions would add last (stack frame) exception
-        # NOTE: Badly named as exception, it has really always been 'traceback'
-        if 'exception' not in kwargs and PY3 and sys.exc_info()[2] and (self._debug or self._verbosity >= 3):
-            kwargs['exception'] = ''.join(traceback.format_tb(sys.exc_info()[2]))
+        # NOTE: Badly named as exception, it really always has been a traceback
+        if 'exception' not in kwargs and sys.exc_info()[2] and (self._debug or self._verbosity >= 3):
+            if PY2:
+                # On Python 2 this is the last (stack frame) exception and as such may be unrelated to the failure
+                kwargs['exception'] = 'WARNING: The below traceback may *not* be related to the actual failure.\n' +\
+                                      ''.join(traceback.format_tb(sys.exc_info()[2]))
+            else:
+                kwargs['exception'] = ''.join(traceback.format_tb(sys.exc_info()[2]))
 
         self.do_cleanup_files()
         self._return_formatted(kwargs)
