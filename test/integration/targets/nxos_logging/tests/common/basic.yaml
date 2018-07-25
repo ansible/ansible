@@ -24,6 +24,42 @@
     that:
       - 'result.changed == false'
 
+- name: Set Baud Rate to less than 38400
+  nxos_config:
+    lines:
+      - speed 9600
+    parents: line console
+    provider: "{{ connection }}"
+
+- name: Enable console logging with level 3 (will fail)
+  nxos_logging: &con3
+    dest: console
+    dest_level: 3
+  register: result
+  provider: "{{ connection }}"
+  ignore_errors: yes
+
+- assert:
+    that:
+      - 'result.failed == true'
+      - '"Baud rate of console should be 38400 to increase severity level." in result.msg'
+
+- name: Set Baud Rate to 38400
+  nxos_config:
+    lines:
+      - speed 38400
+    parents: line console
+    provider: "{{ connection }}"
+
+- name: Enable console logging with level 3 (will pass)
+  nxos_logging: *con3
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging console 3" in result.commands'
+
 - name: Logfile logging with level
   nxos_logging: &llog
     dest: logfile
@@ -122,7 +158,7 @@
 - name: remove logging as collection tearDown
   nxos_logging: &agg
     aggregate:
-      - { dest: console, dest_level: 0 }
+      - { dest: console, dest_level: 3 }
       - { dest: module, dest_level: 2 }
       - { dest: monitor, dest_level: 3 }
       - { dest: logfile, dest_level: 1, name: test }
