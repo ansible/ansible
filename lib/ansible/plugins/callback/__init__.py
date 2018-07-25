@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import difflib
-import json
+import json as _myjson
 import os
 import sys
 import warnings
@@ -120,7 +120,7 @@ class CallbackBase(AnsiblePlugin):
         if 'exception' in abridged_result:
             del abridged_result['exception']
 
-        return json.dumps(abridged_result, cls=AnsibleJSONEncoder, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
+        return _myjson.dumps(abridged_result, cls=AnsibleJSONEncoder, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
 
     def _handle_warnings(self, res):
         ''' display warnings, if enabled and any exist in the result '''
@@ -170,7 +170,7 @@ class CallbackBase(AnsiblePlugin):
                         # format complex structures into 'files'
                         for x in ['before', 'after']:
                             if isinstance(diff[x], MutableMapping):
-                                diff[x] = json.dumps(diff[x], sort_keys=True, indent=4, separators=(',', ': ')) + '\n'
+                                diff[x] = _myjson.dumps(diff[x], sort_keys=True, indent=4, separators=(',', ': ')) + '\n'
                         if 'before_header' in diff:
                             before_header = "before: %s" % diff['before_header']
                         else:
