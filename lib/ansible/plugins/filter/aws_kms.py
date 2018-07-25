@@ -1,7 +1,42 @@
 """
-(c) 2018, Archie Gunasekara <contact@achinthagunasekara.com>
-Module to handle encrypting and decrypting of items with KMS
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+(c) 2018, Achintha Gunasekara <contact@achinthagunasekara.com>.
+Module to handle encrypting and decrypting of items with KMS.
+GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt).
+
+# Help
+
+## Arguments
+
+You can call `aws_kms_encrypt` and `aws_kms_encrypt` from this plugin with following variables.
+
+Mandatory - ciphertext (str): Encrypted item to decrypt.
+Mandatory - key_arn (str): AWS ARN to the KMS key.
+Optional - region_name (str): AWS region to use.
+Optional - profile_name (str): AWS credential profile to use.
+Optional - role_to_assume (str): AWS IAM role to use to get credentials.
+Optional - aws_access_key_id (str): AWS access key to use.
+Optional - aws_secret_access_key (str): AWS secret key to use.
+
+Getting AWS Credentias will use following order.
+
+profile_name > role_to_assume > aws_access_key_id and aws_secret_access_key > instance IAM profile
+
+## Example
+
+In the inventory or role defaults.
+----------------------------------
+
+encrypted_value: >-
+    {{ abcd123abcd13 abcd123abcd13abcd12abcd13
+    abcd123abcd13abcd123abcd13abcd123ab1d1312
+    abcd123abcd13abcd123abcd13abcd123ssdsas12
+    sadsdsasd | aws_kms_decrypt(KEY_ARN) }}
+
+In the role.
+------------
+
+- debug:
+    msg: "Decrypted value is {{ encrypted_value }}"
 """
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -18,6 +53,19 @@ try:
     HAS_DEPENDENCIES = True
 except ImportError:
     HAS_DEPENDENCIES = False
+
+
+def check_dependencies():
+    """
+    Ensure all required dependencies are present.
+    Args:
+        None.
+    Return:
+        None.
+    """
+    if not HAS_DEPENDENCIES:
+        raise AnsibleFilterError('You need to install "boto3" and "aws_encryption_sdk"'
+                                 'before using aws_kms filter')
 
 
 def role_arn_to_session(role_arn, role_session_name):
@@ -40,34 +88,32 @@ def role_arn_to_session(role_arn, role_session_name):
         aws_session_token=response['Credentials']['SessionToken'])
 
 
-def get_boto_session(**kwargs):
+def get_boto_session(profile_name=None,
+                     role_to_assume=None,
+                     aws_access_key_id=None,
+                     aws_secret_access_key=None):
     """
     Get boto3 session object.
+    Args:
+        profile_name (str): AWS credential profile to use.
+        role_to_assume (str): AWS IAM role to use to get credentials.
+        aws_access_key_id (str): AWS access key to use.
+        aws_secret_access_key (str): AWS secret key to use.
     Returns:
         boto3.Session: Returns a boto3.Session object.
     """
-    valid_keys = [
-        'profile_name',
-        'role_to_assume',
-        'aws_access_key_id',
-        'aws_secret_access_key'
-    ]
-    for key in kwargs:
-        if key not in valid_keys:
-            raise AnsibleFilterError("Invalid argument '{0}' was passed "
-                                     "into aws_kms_plugin".format(key))
     try:
-        if 'profile_name' in kwargs:
-            return boto3.session.Session(profile_name=kwargs['profile_name'])
-        elif 'role_to_assume' in kwargs:
+        if profile_name:
+            return boto3.session.Session(profile_name=profile_name)
+        elif role_to_assume:
             return role_arn_to_session(
-                role_arn=kwargs['role_to_assume'],
-                role_session_name=basename(kwargs['role_to_assume'])
+                role_arn=role_to_assume,
+                role_session_name=basename(role_to_assume)
             )
-        elif 'aws_access_key_id' in kwargs and 'aws_secret_access_key' in kwargs:
+        elif aws_access_key_id and aws_secret_access_key:
             return boto3.Session(
-                aws_access_key_id=kwargs['aws_access_key_id'],
-                aws_secret_access_key=kwargs['aws_secret_access_key'],
+                aws_access_key_id=aws_access_key_id,
+                aws_secret_access_key=aws_secret_access_key,
             )
         return boto3.session.Session()
     except Exception as ex:
@@ -75,25 +121,28 @@ def get_boto_session(**kwargs):
                                  "boto3 session in aws_kms_plugin - {0}".format(ex))
 
 
-def get_key_provider(key_arn, **kwargs):
+def get_key_provider(key_arn,  # pylint: disable=too-many-arguments
+                     region_name,
+                     profile_name=None,
+                     role_to_assume=None,
+                     aws_access_key_id=None,
+                     aws_secret_access_key=None):
     """
     Get KMS key provider object.
     Args:
-      key_arn (str): AWS ARN to the KMS key.
+        key_arn (str): AWS ARN to the KMS key.
+        region_name (str): AWS region to use.
+        profile_name (str): AWS credential profile to use.
+        role_to_assume (str): AWS IAM role to use to get credentials.
+        aws_access_key_id (str): AWS access key to use.
+        aws_secret_access_key (str): AWS secret key to use.
     Returns:
-      KMSMasterKeyProvider: KMS Master Key Provider object.
+        KMSMasterKeyProvider: KMS Master Key Provider object.
     """
-
-    if not HAS_DEPENDENCIES:
-        raise AnsibleFilterError('You need to install "boto3" and "aws_encryption_sdk"'
-                                 'before using aws_kms filter')
-
-    if 'region_name' in kwargs:
-        region_name = kwargs['region']
-    else:
-        region_name = 'us-east-1'
-
-    boto_session = get_boto_session(**kwargs)
+    boto_session = get_boto_session(profile_name=profile_name,
+                                    role_to_assume=role_to_assume,
+                                    aws_access_key_id=aws_access_key_id,
+                                    aws_secret_access_key=aws_secret_access_key)
     client = boto_session.client('kms', region_name=region_name)
     key_provider = KMSMasterKeyProvider()
     regional_master_key = KMSMasterKey(client=client, key_id=key_arn)
@@ -101,38 +150,74 @@ def get_key_provider(key_arn, **kwargs):
     return key_provider
 
 
-def aws_kms_encrypt(plaintext, key_arn, **kwargs):
+def aws_kms_encrypt(plaintext,  # pylint: disable=too-many-arguments
+                    key_arn,
+                    region_name='us-east-1',
+                    profile_name=None,
+                    role_to_assume=None,
+                    aws_access_key_id=None,
+                    aws_secret_access_key=None):
     """
     Encrypt with KMS.
     Args:
         plaintext (str): Plain text item to encrypt.
         key_arn (str): AWS ARN to the KMS key.
+        region_name (str): AWS region to use.
+        profile_name (str): AWS credential profile to use.
+        role_to_assume (str): AWS IAM role to use to get credentials.
+        aws_access_key_id (str): AWS access key to use.
+        aws_secret_access_key (str): AWS secret key to use.
     Returns:
         str: Encrypted item with KMS.
     """
+    check_dependencies()
     try:
+        key_provider = get_key_provider(key_arn=key_arn,
+                                        region_name=region_name,
+                                        profile_name=profile_name,
+                                        role_to_assume=role_to_assume,
+                                        aws_access_key_id=aws_access_key_id,
+                                        aws_secret_access_key=aws_secret_access_key)
         ciphertext, dummy = encrypt(
             source=plaintext,
-            key_provider=get_key_provider(key_arn=key_arn, **kwargs)
+            key_provider=key_provider
         )
         return base64.b64encode(ciphertext)
     except AWSEncryptionSDKClientError as kms_ex:
         raise AnsibleFilterError("Unable to encrypt value using KMS - {0}".format(kms_ex))
 
 
-def aws_kms_decrypt(ciphertext, key_arn, **kwargs):
+def aws_kms_decrypt(ciphertext,  # pylint: disable=too-many-arguments
+                    key_arn,
+                    region_name='us-east-1',
+                    profile_name=None,
+                    role_to_assume=None,
+                    aws_access_key_id=None,
+                    aws_secret_access_key=None):
     """
     Decrypt with KMS.
     Args:
         ciphertext (str): Encrypted item to decrypt.
         key_arn (str): AWS ARN to the KMS key.
+        region_name (str): AWS region to use.
+        profile_name (str): AWS credential profile to use.
+        role_to_assume (str): AWS IAM role to use to get credentials.
+        aws_access_key_id (str): AWS access key to use.
+        aws_secret_access_key (str): AWS secret key to use.
     Returns:
         str: Decrypted plain text item.
     """
+    check_dependencies()
     try:
+        key_provider = get_key_provider(key_arn=key_arn,
+                                        region_name=region_name,
+                                        profile_name=profile_name,
+                                        role_to_assume=role_to_assume,
+                                        aws_access_key_id=aws_access_key_id,
+                                        aws_secret_access_key=aws_secret_access_key)
         cycled_plaintext, dummy = decrypt(
             source=base64.b64decode(ciphertext),
-            key_provider=get_key_provider(key_arn=key_arn, **kwargs)
+            key_provider=key_provider
         )
         return cycled_plaintext.rstrip()
     except AWSEncryptionSDKClientError as kms_ex:
@@ -146,6 +231,8 @@ class FilterModule(object):  # pylint: disable=too-few-public-methods
     def filters(self):  # pylint: disable=no-self-use
         """
         Filter module to provide functions.
+        Args:
+            None.
         Returns:
             dictionary: Dictionary with valid methods that can be called to use this plugin.
         """
