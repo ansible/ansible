@@ -340,13 +340,14 @@ deployment_source_spec = dict(
     branch=dict(type='str')
 )
 
-framework_spec=dict(
+framework_spec = dict(
     name=dict(
-            type='str', 
-            required=True,
-            choices=['net_framework', 'java', 'php', 'node', 'python', 'dotnetcore', 'ruby']),
+        type='str',
+        required=True,
+        choices=['net_framework', 'java', 'php', 'node', 'python', 'dotnetcore', 'ruby']),
     version=dict(type='str', required=True)
 )
+
 
 def _normalize_sku(sku):
     if sku is None:
