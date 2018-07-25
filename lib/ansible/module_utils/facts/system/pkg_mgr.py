@@ -70,13 +70,19 @@ class PkgMgrFactCollector(BaseFactCollector):
     _platform = 'Generic'
     required_facts = set(['distribution'])
 
-    def _check_rh_versions(self, collected_facts):
+    def _check_rh_versions(self, pkg_mgr_name, collected_facts):
         if collected_facts['ansible_distribution'] == 'Fedora':
             try:
-                if int(collected_facts['ansible_distribution_major_version']) < 15:
-                    pkg_mgr_name = 'yum'
+                if int(collected_facts['ansible_distribution_major_version']) < 23:
+                    for yum in [pkg_mgr for pkg_mgr in PKG_MGRS if pkg_mgr['name'] == 'yum']:
+                        if os.path.exists(yum['path']):
+                            pkg_mgr_name = 'yum'
+                            break
                 else:
-                    pkg_mgr_name = 'dnf'
+                    for dnf in [pkg_mgr for pkg_mgr in PKG_MGRS if pkg_mgr['name'] == 'dnf']:
+                        if os.path.exists(dnf['path']):
+                            pkg_mgr_name = 'dnf'
+                            break
             except ValueError:
                 # If there's some new magical Fedora version in the future,
                 # just default to dnf
@@ -92,14 +98,14 @@ class PkgMgrFactCollector(BaseFactCollector):
             if os.path.exists(pkg['path']):
                 pkg_mgr_name = pkg['name']
 
-        # apt is easily installable and supported by distros other than those
-        # that are debian based, this handles some of those scenarios as they
-        # are reported/requested
-        if pkg_mgr_name == 'apt' and collected_facts['ansible_os_family'] in ["RedHat", "Altlinux"]:
-            if collected_facts['ansible_os_family'] == 'RedHat':
-                pkg_mgr_name = self._check_rh_versions(collected_facts)
-
-            elif collected_facts['ansible_os_family'] == 'Altlinux':
+        # Handle distro family defaults when more than one package manager is
+        # installed, the ansible_fact entry should be the default package
+        # manager provided by the distro.
+        if collected_facts['ansible_os_family'] == "RedHat":
+            if pkg_mgr_name not in ('yum', 'dnf'):
+                pkg_mgr_name = self._check_rh_versions(pkg_mgr_name, collected_facts)
+        elif collected_facts['ansible_os_family'] == 'Altlinux':
+            if pkg_mgr_name == 'apt':
                 pkg_mgr_name = 'apt_rpm'
 
         # pacman has become available by distros other than those that are Arch
