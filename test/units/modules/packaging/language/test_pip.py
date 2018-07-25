@@ -23,13 +23,13 @@ def test_failure_when_pip_absent(mocker, capfd):
     assert results['failed']
     assert 'pip needs to be installed' in results['msg']
 
-@pytest.mark.parametrize('test_input,expected',[
-    pytest.param(['django>1.11.1', '<1.11.2', 'ipaddress', 'simpleproject<2.0.0', '>1.1.0'],
-     ['django>1.11.1,<1.11.2', 'ipaddress', 'simpleproject<2.0.0,>1.1.0']),
-    pytest.param(['django>1.11.1,<1.11.2,ipaddress', 'simpleproject<2.0.0,>1.1.0'],
-     ['django>1.11.1,<1.11.2', 'ipaddress', 'simpleproject<2.0.0,>1.1.0']),
-    pytest.param(['django>1.11.1', '<1.11.2', 'git+https://github.com/some_repo', 'simpleproject<2.0.0', '>1.1.0'],
-     ['django>1.11.1,<1.11.2', 'git+https://github.com/some_repo', 'simpleproject<2.0.0,>1.1.0'])
-    ])
-def test_recover_distribution_name(test_input, expected):
-    assert pip._recover_distribution_name(test_input) == expected
+
+@pytest.mark.parametrize('patch_ansible_module, test_input, expected', [
+    [None, ['django>1.11.1', '<1.11.2', 'ipaddress', 'simpleproject<2.0.0', '>1.1.0'],
+        ['django>1.11.1,<1.11.2', 'ipaddress', 'simpleproject<2.0.0,>1.1.0']],
+    [None, ['django>1.11.1,<1.11.2,ipaddress', 'simpleproject<2.0.0,>1.1.0'],
+        ['django>1.11.1,<1.11.2', 'ipaddress', 'simpleproject<2.0.0,>1.1.0']],
+    [None, ['django>1.11.1', '<1.11.2', 'ipaddress,simpleproject<2.0.0,>1.1.0'],
+        ['django>1.11.1,<1.11.2', 'ipaddress', 'simpleproject<2.0.0,>1.1.0']]])
+def test_recover_package_name(test_input, expected):
+    assert pip._recover_package_name(test_input) == expected
