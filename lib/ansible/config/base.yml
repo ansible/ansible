@@ -510,6 +510,14 @@ DEFAULT_CONNECTION_PLUGIN_PATH:
   - {key: connection_plugins, section: defaults}
   type: pathspec
   yaml: {key: plugins.connection.path}
+DEFAULT_CONTENT_PATH:
+  name: Ansible Galaxy Content Path
+  description: Colon separated paths in which Ansible will search for Roles, Modules and Plugins installed as Galaxy Content.
+  default: ~/.ansible/content
+  env: [{name: ANSIBLE_CONTENT_PATH}]
+  ini:
+  - {key: content_path, section: defaults}
+  type: pathspec
 DEFAULT_DEBUG:
   name: Debug mode
   default: False
