@@ -32,9 +32,45 @@ options:
     import_format:
         description:
             - Format of zabbix import file
-        choices:
-            - xml
-            - json
+        choices: ['xml','json']
+    rules:
+        description:
+            - Rules for importing items
+        default: 
+            applications:
+                createMissing: true
+                deleteMissing:true
+            discoveryRules:
+                createMissing:true
+                updateExisting:true
+                deleteMissing:true
+            graphs:
+                createMissing:true
+                updateExisting:true
+                deleteMissing:true
+            groups:
+                createMissing:true
+            hosts:
+                createMissing:true
+                updateExisting:true
+            images:
+                createMissing:true
+                updateExisting:true
+            items:
+                createMissing:true
+                updateExisting:true
+                deleteMissing:true
+            maps:
+                createMissing:true
+                updateExisting:true
+            screens:
+                createMissing:true
+                updateExisting:true
+            templateLinkage:
+                createMissing:true
+            templates:
+                createMissing:true
+                updateExisting:true
 extends_documentation_fragment:
     - zabbix
 '''
@@ -134,6 +170,7 @@ class Configuration(object):
     def import_template(self, filename,rules, import_format):
         f = open(filename,'r') 
         import_string = f.read()
+        f.close()
         import_result = self._zapi.configuration.import_({'format': import_format, 'source' : import_string , 'rules' : rules })
         return import_result
 
