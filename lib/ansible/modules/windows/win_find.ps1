@@ -14,6 +14,7 @@ $paths = Get-AnsibleParam -obj $params -name 'paths' -failifempty $true
 
 $age = Get-AnsibleParam -obj $params -name 'age'
 $age_stamp = Get-AnsibleParam -obj $params -name 'age_stamp' -default 'mtime' -ValidateSet 'mtime','ctime','atime'
+$contains = Get-AnsibleParam -obj $params -name 'contains'
 $file_type = Get-AnsibleParam -obj $params -name 'file_type' -default 'file' -ValidateSet 'file','directory'
 $follow = Get-AnsibleParam -obj $params -name 'follow' -type "bool" -default $false
 $hidden = Get-AnsibleParam -obj $params -name 'hidden' -type "bool" -default $false
@@ -169,6 +170,31 @@ Function Assert-Pattern($info) {
     $valid_match
 }
 
+Function Assert-Contains($info) {
+    $valid_match = $false
+
+    if ($contains -ne $null) {
+        $file_contents = [System.IO.File]::ReadAllText((Resolve-Path $info.filename))
+        foreach ($pattern in $contains) {
+            if ($use_regex -eq $true) {
+                # Use -match for regex matching
+                if ($file_contents -match $pattern) {
+                    $valid_match = $true
+                }
+            } else {
+                # Use -like for wildcard matching
+                if ($file_contents -like $pattern) {
+                    $valid_match = $true
+                }
+            }
+        }
+    } else {
+        $valid_match = $true
+    }
+
+    $valid_match
+}
+
 Function Assert-Size($info) {
     $valid_match = $true
 
@@ -208,8 +234,9 @@ Function Assert-FileStat($info) {
     $hidden_match = Assert-Hidden -info $info
     $pattern_match = Assert-Pattern -info $info
     $size_match = Assert-Size -info $info
+    $contains_match = Assert-Contains -info $info
 
-    if ($age_match -and $file_type_match -and $hidden_match -and $pattern_match -and $size_match) {
+    if ($age_match -and $file_type_match -and $hidden_match -and $pattern_match -and $size_match -and  $contains_match) {
         $info
     } else {
         $false
