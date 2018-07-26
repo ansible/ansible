@@ -122,7 +122,7 @@ from ansible.module_utils.basic import AnsibleModule
 DEST_GROUP = ['console', 'logfile', 'module', 'monitor', 'server']
 
 
-def map_obj_to_commands(updates, module):
+def map_obj_to_commands(updates):
     commands = list()
     want, have = updates
 
@@ -285,8 +285,8 @@ def map_config_to_obj(module):
                         'dest_level': parse_dest_level(line, dest, parse_name(line, dest)),
                         'facility_level': parse_facility_level(line, facility)})
 
-    cmd = [{'command': 'show logging | section enabled | section console', 'output':'text'},
-             {'command': 'show logging | section enabled | section monitor', 'output':'text'}]
+    cmd = [{'command': 'show logging | section enabled | section console', 'output': 'text'},
+           {'command': 'show logging | section enabled | section monitor', 'output': 'text'}]
 
     default_data = run_commands(module, cmd)
 
