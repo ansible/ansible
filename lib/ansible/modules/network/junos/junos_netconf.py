@@ -24,7 +24,9 @@ description:
     the netconf system service running on Junos devices.  This module
     can be used to easily enable the Netconf API. Netconf provides
     a programmatic interface for working with configuration and state
-    resources as defined in RFC 6242.
+    resources as defined in RFC 6242. If the C(netconf_port) is not
+    mentioned in the task by default netconf will be enabled on port 830
+    only.
 extends_documentation_fragment: junos
 options:
   netconf_port:
@@ -50,6 +52,9 @@ notes:
   - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
   - Recommended connection is C(network_cli). See L(the Junos OS Platform Options,../network/user_guide/platform_junos.html).
   - This module also works with C(local) connections for legacy playbooks.
+  - If C(netconf_port) value is not mentioned in task by default it will be enabled on port 830 only.
+    Although C(netconf_port) value can be from 1 through 65535, avoid configuring access on a port
+    that is normally assigned for another service. This practice avoids potential resource conflicts.
 """
 
 EXAMPLES = """
