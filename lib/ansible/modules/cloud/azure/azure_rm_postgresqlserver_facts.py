@@ -15,11 +15,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_sqlserver_facts
+module: azure_rm_postgresqlserver_facts
 version_added: "2.7"
-short_description: Get SQL Server facts.
+short_description: Get MySQL Server facts.
 description:
-    - Get facts of SQL Server.
+    - Get facts of MySQL Server.
 
 options:
     resource_group:
@@ -29,16 +29,6 @@ options:
     server_name:
         description:
             - The name of the server.
-    format:
-        description:
-            - Format of the data returned.
-            - If C(raw) is selected information will be returned in raw format from Azure Python SDK.
-            - If C(curated) is selected the structure will be identical to input parameters of azure_rm_virtualmachine_scaleset module.
-            - In Ansible 2.5 and lower facts are always returned in raw format.
-        default: 'raw'
-        choices:
-            - 'curated'
-            - 'raw'
 
 extends_documentation_fragment:
     - azure
@@ -49,71 +39,90 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get instance of SQL Server
-    azure_rm_sqlserver_facts:
+  - name: Get instance of MySQL Server
+    azure_rm_postgresqlserver_facts:
       resource_group: resource_group_name
       server_name: server_name
 
-  - name: List instances of SQL Server
-    azure_rm_sqlserver_facts:
+  - name: List instances of MySQL Server
+    azure_rm_postgresqlserver_facts:
       resource_group: resource_group_name
 '''
 
 RETURN = '''
 servers:
-    description: A list of dict results where the key is the name of the SQL Server and the values are the facts for that SQL Server.
+    description: A list of dict results where the key is the name of the MySQL Server and the values are the facts for that MySQL Server.
     returned: always
     type: complex
     contains:
-        sqlserver_name:
+        mysqlserver_name:
             description: The key is the name of the server that the values relate to.
             type: complex
             contains:
                 id:
                     description:
-                        - Resource ID.
+                        - Resource ID
                     returned: always
                     type: str
-                    sample: /subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/sqlcrudtest-7398/providers/Microsoft.Sql/servers/sqlcrudtest-4645
+                    sample: /subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforPostgreSQL/servers/testserver
                 name:
                     description:
                         - Resource name.
                     returned: always
                     type: str
-                    sample: sqlcrudtest-4645
+                    sample: testserver
                 type:
                     description:
                         - Resource type.
                     returned: always
                     type: str
-                    sample: Microsoft.Sql/servers
+                    sample: Microsoft.DBforPostgreSQL/servers
                 location:
                     description:
-                        - Resource location.
+                        - The location the resource resides in.
                     returned: always
                     type: str
-                    sample: japaneast
-                kind:
+                    sample: onebox
+                sku:
                     description:
-                        - Kind of sql server. This is metadata used for the Azure portal experience.
+                        - The SKU (pricing tier) of the server.
                     returned: always
-                    type: str
-                    sample: v12.0
+                    type: complex
+                    sample: sku
+                    contains:
+                        name:
+                            description:
+                                - The name of the sku, typically, a letter + Number code, e.g. P3.
+                            returned: always
+                            type: str
+                            sample: PGSQLB100
+                        tier:
+                            description:
+                                - "The tier of the particular SKU, e.g. Basic. Possible values include: 'Basic', 'Standard'"
+                            returned: always
+                            type: str
+                            sample: Basic
+                        capacity:
+                            description:
+                                - "The scale up/out capacity, representing server's compute units."
+                            returned: always
+                            type: int
+                            sample: 100
                 version:
                     description:
-                        - The version of the server.
+                        - "Server version. Possible values include: '9.5', '9.6'"
                     returned: always
                     type: str
-                    sample: 12.0
-                state:
+                    sample: version
+                user_visible_state:
                     description:
-                        - The state of the server.
+                        - "A state of a server that is visible to user. Possible values include: 'Ready', 'Dropping', 'Disabled'"
                     returned: always
                     type: str
-                    sample: Ready
+                    sample: user_visible_state
                 fully_qualified_domain_name:
                     description:
-                        - The fully qualified domain name of the server.
+                        - The fully qualified domain name of a server.
                     returned: always
                     type: str
                     sample: fully_qualified_domain_name
@@ -124,7 +133,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 try:
     from msrestazure.azure_exceptions import CloudError
     from msrestazure.azure_operation import AzureOperationPoller
-    from azure.mgmt.sql import SqlManagementClient
+    from azure.mgmt.rdbms.postgresql import PostgreSQLManagementClient
     from msrest.serialization import Model
 except ImportError:
     # This is handled in azure_rm_common
@@ -141,12 +150,6 @@ class AzureRMServersFacts(AzureRMModuleBase):
             ),
             server_name=dict(
                 type='str'
-            ),
-            format=dict(
-                type='str',
-                choices=['curated',
-                         'raw'],
-                default='raw'
             )
         )
         # store the results of the module operation
@@ -157,13 +160,12 @@ class AzureRMServersFacts(AzureRMModuleBase):
         self.mgmt_client = None
         self.resource_group = None
         self.server_name = None
-        self.format = None
         super(AzureRMServersFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
-        self.mgmt_client = self.get_mgmt_svc_client(SqlManagementClient,
+        self.mgmt_client = self.get_mgmt_svc_client(PostgreSQLManagementClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
         if (self.resource_group is not None and
@@ -205,15 +207,18 @@ class AzureRMServersFacts(AzureRMModuleBase):
 
     def format_item(self, item):
         d = item.as_dict()
-        if self.format == 'curated':
-            d = {
-                'resource_group': self.resource_group,
-                'name': d['name'],
-                'location': d['location'],
-                'admin_username': d['administrator_login'],
-                'version': d['version'],
-                'state': 'present'
+        d = {
+            'resource_group': self.resource_group,
+            'name': d['name'],
+            'sku': d['sku'],
+            'location': d['location'],
+            'storage_mb': d['storage_profile']['storage_mb'],
+            'version': d['version'],
+            'enforce_ssl': (d['ssl_enforcement'] == 'Enabled'),
+            'admin_username': d['administrator_login'],
+            'state': 'present'
             }
+
         return d
 
 

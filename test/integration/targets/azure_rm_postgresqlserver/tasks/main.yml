@@ -60,6 +60,55 @@
       - output.changed == false
       - output.state == 'Ready'
 
+- name: Gather facts MySQL Server
+  azure_rm_postgresqlserver_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.servers.postgresqlsrv{{ rpfx }}.id != None
+      - output.servers.postgresqlsrv{{ rpfx }}.name != None
+      - output.servers.postgresqlsrv{{ rpfx }}.type != None
+      - output.servers.postgresqlsrv{{ rpfx }}.location != None
+      - output.servers.postgresqlsrv{{ rpfx }}.sku.name != None
+      - output.servers.postgresqlsrv{{ rpfx }}.sku.tier != None
+      - output.servers.postgresqlsrv{{ rpfx }}.sku.capacity != None
+      - output.servers.postgresqlsrv{{ rpfx }}.version != None
+      - output.servers.postgresqlsrv{{ rpfx }}.user_visible_state != None
+      - output.servers.postgresqlsrv{{ rpfx }}.fully_qualified_domain_name != None
+
+- name: Gather facts MySQL Server
+  azure_rm_postgresqlserver_facts:
+    resource_group: "{{ resource_group }}"
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.servers.postgresqlsrv{{ rpfx }}.id != None
+      - output.servers.postgresqlsrv{{ rpfx }}.name != None
+      - output.servers.postgresqlsrv{{ rpfx }}.type != None
+      - output.servers.postgresqlsrv{{ rpfx }}.location != None
+      - output.servers.postgresqlsrv{{ rpfx }}.sku.name != None
+      - output.servers.postgresqlsrv{{ rpfx }}.sku.tier != None
+      - output.servers.postgresqlsrv{{ rpfx }}.sku.capacity != None
+      - output.servers.postgresqlsrv{{ rpfx }}.version != None
+      - output.servers.postgresqlsrv{{ rpfx }}.user_visible_state != None
+      - output.servers.postgresqlsrv{{ rpfx }}.fully_qualified_domain_name != None
+      - output.servers.postgresqlsrv{{ rpfx }}second.id != None
+      - output.servers.postgresqlsrv{{ rpfx }}second.name != None
+      - output.servers.postgresqlsrv{{ rpfx }}second.type != None
+      - output.servers.postgresqlsrv{{ rpfx }}second.location != None
+      - output.servers.postgresqlsrv{{ rpfx }}second.sku.name != None
+      - output.servers.postgresqlsrv{{ rpfx }}second.sku.tier != None
+      - output.servers.postgresqlsrv{{ rpfx }}second.sku.capacity != None
+      - output.servers.postgresqlsrv{{ rpfx }}second.version != None
+      - output.servers.postgresqlsrv{{ rpfx }}second.user_visible_state != None
+      - output.servers.postgresqlsrv{{ rpfx }}second.fully_qualified_domain_name != None
+
 - name: Delete instance of PostgreSQL Server -- check mode
   azure_rm_postgresqlserver:
     resource_group: "{{ resource_group }}"
