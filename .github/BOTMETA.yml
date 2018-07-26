@@ -714,6 +714,12 @@ files:
     maintainers: $team_windows
     ignored: angstwad georgefrank h0nIg
   $modules/windows/win_security_policy.py: rndmh3ro defionscode
+  bin/ansible-connection:
+    keywords:
+    - persistent connection
+    labels:
+    - networking
+    maintainers: $team_networking
   contrib/inventory:
     keywords:
     - dynamic inventory script
