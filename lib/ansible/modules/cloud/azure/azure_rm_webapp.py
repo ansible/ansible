@@ -81,13 +81,12 @@ options:
                 description:
                     - List of settings of the framework.
                 suboptions:
-                    name:
-                        description: Name of the setting.
-                        choices:
-                            - java_container
-                            - java_container_version
-                    value:
-                        description: Value of the settings.
+                    java_container:
+                        description: Name of java contaner. This is supported by specific framework C(java) only. eg. Tomcat, Jetty.
+                    java_container_version:
+                        description: 
+                            - Versoin of java container. This is supported by specific framework C(java) only.
+                            - For Tomcat, eg. 8.0, 8.5, 9.0. For Jetty, eg. 9.1, 9.3.
 
     container_settings:
         description: Web app container settings.
@@ -104,7 +103,8 @@ options:
 
     scm_type:
         description:
-            - Repository type of deployment source. Eg. LocalGit, GitHub.
+            - Repository type of deployment source. Eg. LocalGit, GitHub. 
+            - Please see U(https://docs.microsoft.com/en-us/rest/api/appservice/webapps/createorupdate#scmtype) for more info.
 
     deployment_source:
         description:
@@ -264,52 +264,11 @@ EXAMPLES = '''
 
 RETURN = '''
 azure_webapp:
-    description: Facts about the current state of the web app.
+    description: Id of current web app.
     returned: always
     type: dict
     sample: {
-        "availability_state": "Normal",
-        "client_affinity_enabled": true,
-        "client_cert_enabled": false,
-        "container_size": 0,
-        "daily_memory_time_quota": 0,
-        "default_host_name": "ansiblewindowsaaa.azurewebsites.net",
-        "enabled": true,
-        "enabled_host_names": [
-            "ansiblewindowsaaa.azurewebsites.net",
-            "ansiblewindowsaaa.scm.azurewebsites.net"
-        ],
-        "host_name_ssl_states": [
-            {
-                "host_type": "Standard",
-                "name": "ansiblewindowsaaa.azurewebsites.net",
-                "ssl_state": "Disabled"
-            },
-            {
-                "host_type": "Repository",
-                "name": "ansiblewindowsaaa.scm.azurewebsites.net",
-                "ssl_state": "Disabled"
-            }
-        ],
-        "host_names": [
-            "ansiblewindowsaaa.azurewebsites.net"
-        ],
-        "host_names_disabled": false,
-        "id": "/subscriptions/<subscription_id>/resourceGroups/ansiblewebapp1/providers/Microsoft.Web/sites/ansiblewindowsaaa",
-        "kind": "app",
-        "last_modified_time_utc": "2018-05-14T04:50:54.473333Z",
-        "location": "East US",
-        "name": "ansiblewindowsaaa",
-        "outbound_ip_addresses": "52.170.7.25,52.168.75.147,52.179.5.98,52.179.1.81,52.179.4.232",
-        "repository_site_name": "ansiblewindowsaaa",
-        "reserved": false,
-        "resource_group": "ansiblewebapp1",
-        "scm_site_also_stopped": false,
-        "server_farm_id": "/subscriptions/<subscription_id>/resourceGroups/test/providers/Microsoft.Web/serverfarms/plan1",
-        "state": "Running",
-        "tags": {},
-        "type": "Microsoft.Web/sites",
-        "usage_state": "Normal"
+        "id": "/subscriptions/<subscription_id>/resourceGroups/ansiblewebapp1/providers/Microsoft.Web/sites/ansiblewindowsaaa"
     }
 '''
 
