@@ -18,7 +18,7 @@ module: zabbix_import
 short_description: Import zabbix configuration from xml or json
 description:
    - This module allows you to import zabbix configuration from xml or json file
-version_added: "2.6"
+version_added: "2.7"
 author:
     - "(@kuczko)"
 requirements:
@@ -173,7 +173,7 @@ class Configuration(object):
         f = open(filename, 'r')
         import_string = f.read()
         f.close()
-        import_result = self._zapi.configuration.import_({'format': import_format, 'source': import_string , 'rules': rules})
+        import_result = self._zapi.configuration.import_({'format': import_format, 'source': import_string, 'rules': rules})
         return import_result
 
 
@@ -187,8 +187,8 @@ def main():
             http_login_password=dict(type='str', required=False, default=None, no_log=True),
             validate_certs=dict(type='bool', required=False, default=True),
             import_file=dict(type='str', required=True),
-            rules=dict(type='dict', required=False),
-            import_format=dict(type='str', required=False, default='xml'),
+            rules=dict(type='dict', required=False, default=default_rules),
+            import_format=dict(choices=['xml','json'], required=False, default='xml'),
             timeout=dict(type='int', default=10)
         ),
         supports_check_mode=True
@@ -212,7 +212,7 @@ def main():
     # login to zabbix
     try:
         zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
-            validate_certs=validate_certs)
+                        validate_certs=validate_certs)
         zbx.login(login_user, login_password)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
