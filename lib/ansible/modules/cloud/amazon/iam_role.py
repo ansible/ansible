@@ -403,7 +403,6 @@ def destroy_role(connection, module):
             except (ClientError, BotoCoreError) as e:
                 module.fail_json_aws(e, msg="Could not delete role permission boundary on role {0}: {1}".format(params['RoleName'], e))
 
-
         # Now remove the role from the instance profile(s)
         for profile in instance_profiles:
             try:
