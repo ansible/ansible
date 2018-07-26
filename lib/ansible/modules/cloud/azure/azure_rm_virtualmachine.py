@@ -287,6 +287,7 @@ options:
     accept_terms:
         description:
             - Accept terms for marketplace images that require it.
+        type: bool
         version_added: "2.7"
         default: false
 
@@ -313,23 +314,29 @@ EXAMPLES = '''
       sku: '7.1'
       version: latest
 
+- name: Create an availability set for managed disk vm
+  azure_rm_availabilityset:
+    name: avs-managed-disk
+    resource_group: Testing
+    platform_update_domain_count: 5
+    platform_fault_domain_count: 2
+    sku: Aligned
+
 - name: Create a VM with managed disk
   azure_rm_virtualmachine:
     resource_group: Testing
-    name: testvm001
-    vm_size: Standard_D4
-    managed_disk_type: Standard_LRS
+    name: vm-managed-disk
     admin_username: adminUser
-    ssh_public_keys:
-      - path: /home/adminUser/.ssh/authorized_keys
-        key_data: < insert yor ssh public key here... >
+    availability_set: avs-managed-disk
+    managed_disk_type: Standard_LRS
     image:
       offer: CoreOS
       publisher: CoreOS
       sku: Stable
       version: latest
+    vm_size: Standard_D4
 
-- name: Create a VM with existing storage account and NIC
+- name: Create a VM from existing storage account and NIC
   azure_rm_virtualmachine:
     resource_group: Testing
     name: testvm002
@@ -420,20 +427,20 @@ EXAMPLES = '''
 - name: Create VM with spcified OS disk size
   azure_rm_virtualmachine:
     resource_group: Testing
-    name: testvm10
+    name: big-os-disk
     admin_username: chouseknecht
     admin_password: <your password here>
+    os_disk_size: 512
     image:
       offer: CentOS
       publisher: OpenLogic
       sku: '7.1'
       version: latest
-    os_disk_size: 512
 
 - name: Create VM with OS and Plan, accepting the terms
   azure_rm_virtualmachine:
     resource_group: Testing
-    name: testvm10
+    name: f5-nva
     admin_username: chouseknecht
     admin_password: <your password here>
     image:
@@ -1115,14 +1122,14 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         if not self.plan:
                             self.fail("parameter error: plan must be specified and include name, product, and publisher")
                         try:
-                            plan_name             = self.plan.get('name')
-                            plan_product          = self.plan.get('product')
-                            plan_publisher        = self.plan.get('publisher')
-                            term                  = self.marketplace_client.marketplace_agreements.get(
-                                                      plan_publisher, plan_product, plan_name)
-                            term.accepted         = True
-                            agreement             = self.marketplace_client.marketplace_agreements.create(
-                                                      plan_publisher, plan_product, plan_name, term)
+                            plan_name = self.plan.get('name')
+                            plan_product = self.plan.get('product')
+                            plan_publisher = self.plan.get('publisher')
+                            term = self.marketplace_client.marketplace_agreements.get(
+                                plan_publisher, plan_product, plan_name)
+                            term.accepted = True
+                            agreement = self.marketplace_client.marketplace_agreements.create(
+                                plan_publisher, plan_product, plan_name, term)
                         except Exception as exc:
                             self.fail("Error accepting terms for virtual machine {0} - {1}".format(self.name, str(exc)))
 
