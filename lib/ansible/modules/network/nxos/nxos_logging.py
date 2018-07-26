@@ -285,11 +285,10 @@ def map_config_to_obj(module):
                         'dest_level': parse_dest_level(line, dest, parse_name(line, dest)),
                         'facility_level': parse_facility_level(line, facility)})
 
-    cmd_1 = [{'command': 'show logging | section enabled | section console', 'output': 'text'}]
-    cmd_2 = [{'command': 'show logging | section enabled | section monitor', 'output': 'text'}]
+    cmd = [{'command': 'show logging | section enabled | section console', 'output':'text'},
+             {'command': 'show logging | section enabled | section monitor', 'output':'text'}]
 
-    default_data = run_commands(module, cmd_1)
-    default_data.append(run_commands(module, cmd_2))
+    default_data = run_commands(module, cmd)
 
     for line in default_data:
         flag = False
