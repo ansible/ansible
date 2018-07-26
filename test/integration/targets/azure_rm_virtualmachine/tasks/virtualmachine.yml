@@ -103,7 +103,7 @@
 
 - add_host:
       name: new_azure_vm
-      ansible_host: '{{ output.vms.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties.publicIPAddress.properties.ipAddress }}'
+      ansible_host: '{{  output.ansible_facts.azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties.publicIPAddress.properties.ipAddress }}'
       ansible_connection: paramiko  # not guaranteed to have sshpass...
       ansible_user: adminuser
       ansible_password: Password123!
