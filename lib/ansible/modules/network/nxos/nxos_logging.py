@@ -114,8 +114,7 @@ commands:
 
 import re
 
-
-from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
@@ -285,6 +284,30 @@ def map_config_to_obj(module):
                         'facility': facility,
                         'dest_level': parse_dest_level(line, dest, parse_name(line, dest)),
                         'facility_level': parse_facility_level(line, facility)})
+
+    cmd_1 = [{'command': 'show logging | section enabled | section console', 'output': 'text'}]
+    cmd_2 = [{'command': 'show logging | section enabled | section monitor', 'output': 'text'}]
+
+    default_data = run_commands(module, cmd_1)
+    default_data.append(run_commands(module, cmd_2))
+
+    for line in default_data:
+        flag = False
+        match = re.search('Logging (\w+):(?:\s+) (?:\w+) (?:\W)Severity: (\w+)', str(line), re.M)
+        if match:
+            if match.group(1) == 'console' and match.group(2) == 'critical':
+                dest_level = '2'
+                flag = True
+            elif match.group(1) == 'monitor' and match.group(2) == 'notifications':
+                dest_level = '5'
+                flag = True
+        if flag:
+            obj.append({'dest': match.group(1),
+                        'remote_server': None,
+                        'name': None,
+                        'facility': None,
+                        'dest_level': dest_level,
+                        'facility_level': None})
 
     return obj
 
