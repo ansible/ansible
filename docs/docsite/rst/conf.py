@@ -26,7 +26,6 @@ import os
 # sys.path.append(os.path.abspath('some/directory'))
 #
 sys.path.insert(0, os.path.join('ansible', 'lib'))
-sys.path.append(os.path.abspath('_themes'))
 sys.path.append(os.path.abspath(os.path.join('..', '_extensions')))
 
 VERSION = '2.6'
