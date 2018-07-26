@@ -284,11 +284,11 @@ options:
             promotion_code:
                 description:
                     - optional promotion code
-      accept_terms:
-          description:
-              - Accept terms for marketplace images that require it. Boolean
-          version_added: "2.7"
-          default: false
+    accept_terms:
+        description:
+            - Accept terms for marketplace images that require it.
+        version_added: "2.7"
+        default: false
 
 extends_documentation_fragment:
     - azure
