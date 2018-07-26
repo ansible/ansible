@@ -65,11 +65,41 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-azure_virtualmachines:
-    description: List of resource group's virtual machines dicts.
+vms:
+    description: List of virtual machines.
     returned: always
     type: list
-    example: [{}]
+    example: [
+        {
+            "admin_username": "azureuser",
+            "data_disks": [
+                {
+                    "caching": "ReadOnly",
+                    "disk_size_gb": 64,
+                    "lun": 0,
+                    "managed_disk_type": "Premium_LRS"
+                }
+            ],
+            "id": "/subscriptions/075da289-5dfd-466b-800e-a8c3a9ed3b05/resourceGroups/myclusterrg/providers/Microsoft.Compute/virtualMachines/mycluster-node-2",
+            "image": {
+                "offer": "RHEL",
+                "publisher": "RedHat",
+                "sku": "7-RAW",
+                "version": "7.5.2018050901"
+            },
+            "location": "eastus",
+            "name": "mycluster-node-2",
+            "network_interface_names": [
+                "mycluster-node-2-nic"
+            ],
+            "os_disk_caching": "ReadOnly",
+            "os_type": "Linux",
+            "resource_group": "myclusterrg",
+            "state": "present",
+            "tags": null,
+            "vm_size": "Standard_D2s_v3"
+        }
+    ]
 '''
 
 try:
@@ -101,7 +131,7 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
 
         self.results = dict(
             changed=False,
-            ansible_facts=dict(azure_virtualmachines=[])
+            vms=[]
         )
 
         self.resource_group = None
@@ -120,9 +150,9 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         if self.name and not self.resource_group:
             self.fail("Parameter error: resource group required when filtering by name.")
         if self.name:
-            self.results['ansible_facts']['azure_virtualmachines'] = self.get_item()
+            self.results['vms'] = self.get_item()
         else:
-            self.results['ansible_facts']['azure_virtualmachines'] = self.list_items()
+            self.results['vms'] = self.list_items()
 
         return self.results
 
