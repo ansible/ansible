@@ -293,7 +293,7 @@ def map_config_to_obj(module):
 
     for line in default_data:
         flag = False
-        match = re.search('Logging (\w+):(?:\s+) (?:\w+) (?:\W)Severity: (\w+)', str(line), re.M)
+        match = re.search(r'Logging (\w+):(?:\s+) (?:\w+) (?:\W)Severity: (\w+)', str(line), re.M)
         if match:
             if match.group(1) == 'console' and match.group(2) == 'critical':
                 dest_level = '2'
