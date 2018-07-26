@@ -1,2 +1,2 @@
-- bugfixes:
-    - ios_vlan - fix unable to identify correct vlan issue (https://github.com/ansible/ansible/pull/42247)
+bugfixes:
+- ios_vlan - fix unable to identify correct vlan issue (https://github.com/ansible/ansible/pull/42247)
