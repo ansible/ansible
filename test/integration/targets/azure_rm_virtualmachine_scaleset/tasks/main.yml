@@ -172,11 +172,12 @@
       publisher: CoreOS
       sku: Stable
       version: latest
+    data_disks: 
+      - lun: 0 
+        disk_size_gb: 64 
+        caching: ReadWrite 
+        managed_disk_type: Standard_LRS
   register: results
-
-- name: Assert that VMSS ran
-  assert:
-    that: results.changed
 
 - name: Assert that VMSS ran
   assert:
