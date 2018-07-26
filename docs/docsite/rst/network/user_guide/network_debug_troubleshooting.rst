@@ -438,7 +438,8 @@ timeout value that can be set on a per task basis.
 The timeout value controls the amount of time in seconds before the
 task will fail if the command has not returned.
 
-* Applicable for local connection type:
+For local connection type:
+
 For example:
 
 .. FIXME: Detail error here
@@ -453,7 +454,8 @@ Suggestions to resolve:
         provider: "{{ cli }}"
         timeout: 30
 
-* Applicable for network_cli, netconf connection type (from 2.7 onwards):
+For network_cli, netconf connection type (applicable from 2.7 onwards):
+
 For example:
 
 .. FIXME: Detail error here
