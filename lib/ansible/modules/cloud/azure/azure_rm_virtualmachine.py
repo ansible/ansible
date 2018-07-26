@@ -1121,7 +1121,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 create_option=vm_dict['properties']['storageProfile']['osDisk']['createOption'],
                                 os_type=vm_dict['properties']['storageProfile']['osDisk']['osType'],
                                 caching=vm_dict['properties']['storageProfile']['osDisk']['caching'],
-                                disk_size_gb=dict['properties']['storageProfile']['osDisk']['diskSizeGB']
+                                disk_size_gb=vm_dict['properties']['storageProfile']['osDisk']['diskSizeGB']
                             ),
                             image_reference=self.compute_models.ImageReference(
                                 publisher=vm_dict['properties']['storageProfile']['imageReference']['publisher'],
