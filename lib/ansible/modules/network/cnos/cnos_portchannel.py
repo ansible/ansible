@@ -237,17 +237,6 @@ Tasks : The following are examples of using the module cnos_portchannel. These a
   interfaceArg3: 2
   interfaceArg4: 33
 
-#- name: Test Port Channel - mac
-#  cnos_portchannel:
-#  host: "{{ inventory_hostname }}"
-#  username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-#  password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
-#  deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-#  outputfile: "./results/test_portchannel_{{ inventory_hostname }}_output.txt"
-#  interfaceRange: 33,
-#  interfaceArg1: "mac"
-#  interfaceArg2: "copp-system-acl-vlag-hc"
-
 - name: Test Port Channel - microburst-detection
   cnos_portchannel:
   host: "{{ inventory_hostname }}"
@@ -377,35 +366,6 @@ Tasks : The following are examples of using the module cnos_portchannel. These a
   interfaceArg1: "ip"
   interfaceArg2: "port"
   interfaceArg3: "anil"
-
-#- name: Test Port Channel - bfd
-#  cnos_portchannel:
-#  host: "{{ inventory_hostname }}"
-#  username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-#  password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
-#  deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-#  outputfile: "./results/test_portchannel_{{ inventory_hostname }}_output.txt"
-#  interfaceRange: 33
-#  interfaceArg1: "bfd"
-#  interfaceArg2: "interval"
-#  interfaceArg3: 55
-#  interfaceArg4: 55
-#  interfaceArg5: 33
-
-#- name: Test Port Channel - bfd
-#  cnos_portchannel:
-#  host: "{{ inventory_hostname }}"
-#  username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-#  password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
-#  deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-#  outputfile: "./results/test_portchannel_{{ inventory_hostname }}_output.txt"
-#  interfaceRange: 33
-#  interfaceArg1: "bfd"
-#  interfaceArg2: "ipv4"
-#  interfaceArg3: "authentication"
-#  interfaceArg4: "meticulous-keyed-md5"
-#  interfaceArg5: "key-chain"
-#  interfaceArg6: "mychain"
 
 '''
 RETURN = '''
