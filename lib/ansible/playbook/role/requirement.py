@@ -28,7 +28,7 @@ from subprocess import Popen, PIPE
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native
-from ansible.module_utils.common.execute import get_bin_path
+from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.six import string_types
 from ansible.playbook.role.definition import RoleDefinition
 
