@@ -383,7 +383,9 @@ def destroy_role(connection, module):
     params = dict()
     params['RoleName'] = module.params.get('name')
 
-    if get_role(connection, module, params['RoleName']):
+    role = get_role(connection, module, params['RoleName'])
+
+    if role:
 
         # We need to remove any instance profiles from the role before we delete it
         try:
@@ -394,6 +396,13 @@ def destroy_role(connection, module):
         except BotoCoreError as e:
             module.fail_json(msg="Unable to list instance profiles for role {0}: {1}".format(params['RoleName'], to_native(e)),
                              exception=traceback.format_exc())
+
+        if role.get('PermissionsBoundary') is not None:
+            try:
+                connection.delete_role_permissions_boundary(RoleName=params['RoleName'])
+            except (ClientError, BotoCoreError) as e:
+                module.fail_json_aws(e, msg="Could not delete role permission boundary on role {0}: {1}".format(params['RoleName'], e))
+
 
         # Now remove the role from the instance profile(s)
         for profile in instance_profiles:
