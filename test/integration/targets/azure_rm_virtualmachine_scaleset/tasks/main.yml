@@ -172,7 +172,7 @@
       publisher: CoreOS
       sku: Stable
       version: latest
-    data_disks: 
+    data_disks:
       - lun: 0
         disk_size_gb: 64
         caching: ReadWrite
