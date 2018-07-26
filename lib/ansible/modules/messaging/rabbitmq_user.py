@@ -146,7 +146,7 @@ class RabbitMqUser(object):
             if self.node is not None:
                 cmd.extend(['-n', self.node])
             rc, out, err = self.module.run_command(cmd + args, check_rc=True)
-            return out.splitlines()
+            return out.strip().splitlines()
         return list()
 
     def get(self):
