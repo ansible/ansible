@@ -58,6 +58,9 @@ options:
     vlan_tag:
         description:
             - "Specify VLAN tag."
+    external_provider:
+        description:
+            - "Type name of external network provider."
     vm_network:
         description:
             - "If I(True) network will be marked as network for VM."
@@ -151,6 +154,9 @@ class NetworksModule(BaseModule):
             vlan=otypes.Vlan(
                 self._module.params['vlan_tag'],
             ) if self._module.params['vlan_tag'] else None,
+            external_provider=otypes.OpenStackNetworkProvider(
+                external_plugin_type=self._module.params['external_provider'],
+            ) if self._module.params['external_provider'] else None,
             usages=[
                 otypes.NetworkUsage.VM if self._module.params['vm_network'] else None
             ] if self._module.params['vm_network'] is not None else None,
@@ -180,6 +186,7 @@ class NetworksModule(BaseModule):
         return (
             equal(self._module.params.get('comment'), entity.comment) and
             equal(self._module.params.get('name'), entity.name) and
+            equal(self._module.params.get('external_provider'), entity.external_provider) and
             equal(self._module.params.get('description'), entity.description) and
             equal(self._module.params.get('vlan_tag'), getattr(entity.vlan, 'id', None)) and
             equal(self._module.params.get('vm_network'), True if entity.usages else False) and
@@ -242,6 +249,7 @@ def main():
         name=dict(required=True),
         description=dict(default=None),
         comment=dict(default=None),
+        external_provider=dict(default=None),
         vlan_tag=dict(default=None, type='int'),
         vm_network=dict(default=None, type='bool'),
         mtu=dict(default=None, type='int'),
