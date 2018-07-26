@@ -37,9 +37,9 @@ options:
     rules:
         description:
             - Rules for importing items
-        default: 
+        default:
             applications:
-                createMissing: true
+                createMissing:true
                 deleteMissing:true
             discoveryRules:
                 createMissing:true
@@ -101,79 +101,81 @@ except ImportError:
     HAS_ZABBIX_API = False
 
 
-default_rules=({
-    'applications':{
-        'createMissing':True,
-        'deleteMissing':True
+default_rules = ({
+    'applications': {
+        'createMissing': True,
+        'deleteMissing': True
     },
-    'discoveryRules':{
-        'createMissing':True,
-        'updateExisting':True,
-        'deleteMissing':True
+    'discoveryRules': {
+        'createMissing': True,
+        'updateExisting': True,
+        'deleteMissing': True
     },
-    'graphs':{
-        'createMissing':True,
-        'updateExisting':True,
-        'deleteMissing':True
+    'graphs': {
+        'createMissing': True,
+        'updateExisting': True,
+        'deleteMissing': True
     },
-    'groups':{
-        'createMissing':True
+    'groups': {
+        'createMissing': True
     },
-    'hosts':{
-        'createMissing':True,
-        'updateExisting':True
+    'hosts': {
+        'createMissing': True,
+        'updateExisting': True
     },
-    'images':{
-        'createMissing':True,
-        'updateExisting':True
+    'images': {
+        'createMissing': True,
+        'updateExisting': True
     },
-    'items':{
-        'createMissing':True,
-        'updateExisting':True,
-        'deleteMissing':True
+    'items': {
+        'createMissing': True,
+        'updateExisting': True,
+        'deleteMissing': True
     },
-    'maps':{
-        'createMissing':True,
-        'updateExisting':True
+    'maps': {
+        'createMissing': True,
+        'updateExisting': True
     },
-    'screens':{
-        'createMissing':True,
-        'updateExisting':True
+    'screens': {
+        'createMissing': True,
+        'updateExisting': True
     },
-    'templateLinkage':{
-        'createMissing':True
+    'templateLinkage': {
+        'createMissing': True
     },
-    'templates':{
-        'createMissing':True,
-        'updateExisting':True
+    'templates': {
+        'createMissing': True,
+        'updateExisting': True
     },
-    'templateScreens':{
-        'createMissing':True,
-        'updateExisting':True,
-        'deleteMissing':True
+    'templateScreens': {
+        'createMissing': True,
+        'updateExisting': True,
+        'deleteMissing': True
     },
-    'triggers':{
-        'createMissing':True,
-        'updateExisting':True,
-        'deleteMissing':True
+    'triggers': {
+        'createMissing': True,
+        'updateExisting': True,
+        'deleteMissing': True
     },
-    'valueMaps':{
-        'createMissing':True,
-        'updateExisting':True
+    'valueMaps': {
+        'createMissing': True,
+        'updateExisting': True
     }
 })
+
 
 class Configuration(object):
     def __init__(self, module, zbx):
         self._module = module
         self._zapi = zbx
 
-    def import_template(self, filename,rules, import_format):
-        f = open(filename,'r') 
+    def import_template(self, filename, rules, import_format):
+        f = open(filename, 'r')
         import_string = f.read()
         f.close()
-        import_result = self._zapi.configuration.import_({'format': import_format, 'source' : import_string , 'rules' : rules })
+        import_result = self._zapi.configuration.import_({'format': import_format, 'source': import_string , 'rules': rules})
         return import_result
+
 
 def main():
     module = AnsibleModule(
@@ -210,33 +212,33 @@ def main():
     # login to zabbix
     try:
         zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
-                               validate_certs=validate_certs)
+            validate_certs=validate_certs)
         zbx.login(login_user, login_password)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 
-    # Validate format 
-    if import_format.lower() not in ['xml','json']:
-        self._module.fail_json(msg="import_format value incorrect: %s" % import_format)
+    # Validate format
+    if import_format.lower() not in ['xml', 'json']:
+        module.fail_json(msg="import_format value incorrect: %s" % import_format)
 
     if rules is None:
-       rules={}
+        rules = {}
 
     # Set default values for all empty rules
     for rule_group in default_rules:
         try:
             rules[rule_group]
         except KeyError:
-            rules[rule_group]={}
+            rules[rule_group] = {}
         for rule in default_rules[rule_group]:
             try:
                 rules[rule_group][rule]
             except KeyError:
-                rules[rule_group][rule]=default_rules[rule_group][rule]
+                rules[rule_group][rule] = default_rules[rule_group][rule]
 
     # Execute import
     conf = Configuration(module, zbx)
-    import_task = conf.import_template(import_file,rules,import_format)
+    import_task = conf.import_template(import_file, rules, import_format)
 
     module.exit_json(import_task=import_task)
 
