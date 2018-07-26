@@ -197,23 +197,20 @@ def check_args(module, warnings, capabilities):
     return warnings
 
 
-def map_obj_to_commands(want, have, module, capabilities):
+def map_obj_to_commands(want, have, module, warnings, capabilities):
     send_commands = list()
     commands = dict()
+    os_platform = None
+    os_version = None
 
     device_info = capabilities.get('device_info')
-    if device_info is None:
-        raise TypeError
-
-    os_version = device_info.get('network_os_version')
-    if os_version is None:
-        raise TypeError
-    os_version = os_version[:3]
-
-    os_platform = device_info.get('network_os_platform')
-    if os_platform is None:
-        raise TypeError
-    os_platform = os_platform[:3]
+    if device_info is not None:
+        os_version = device_info.get('network_os_version')
+        if os_version is not None:
+            os_version = os_version[:3]
+        os_platform = device_info.get('network_os_platform')
+        if os_platform is not None:
+            os_platform = os_platform[:3]
 
     def needs_update(x):
         return want.get(x) is not None and (want.get(x) != have.get(x))
@@ -241,23 +238,28 @@ def map_obj_to_commands(want, have, module, capabilities):
         if not want['sandbox']:
             commands['sandbox'] = 'no %s' % commands['sandbox']
 
-    if (os_platform == 'N9K' or os_platform == 'N3K') and LooseVersion(os_version) >= "9.2":
-        if needs_update('ssl_strong_ciphers'):
-            commands['ssl_strong_ciphers'] = 'nxapi ssl ciphers weak'
-            if want['ssl_strong_ciphers'] is True:
-                commands['ssl_strong_ciphers'] = 'no nxapi ssl ciphers weak'
+    if os_platform is not None and os_version is not None:
+        if (os_platform == 'N9K' or os_platform == 'N3K') and LooseVersion(os_version) >= "9.2":
+            if needs_update('ssl_strong_ciphers'):
+                commands['ssl_strong_ciphers'] = 'nxapi ssl ciphers weak'
+                if want['ssl_strong_ciphers'] is True:
+                    commands['ssl_strong_ciphers'] = 'no nxapi ssl ciphers weak'
 
-        have_ssl_protocols = ''
-        want_ssl_protocols = ''
-        for key, value in {'tlsv1_2': 'TLSv1.2', 'tlsv1_1': 'TLSv1.1', 'tlsv1_0': 'TLSv1'}.items():
-            if needs_update(key):
-                if want.get(key) is True:
-                    want_ssl_protocols = " ".join([want_ssl_protocols, value])
-            elif have.get(key) is True:
-                have_ssl_protocols = " ".join([have_ssl_protocols, value])
+            have_ssl_protocols = ''
+            want_ssl_protocols = ''
+            for key, value in {'tlsv1_2': 'TLSv1.2', 'tlsv1_1': 'TLSv1.1', 'tlsv1_0': 'TLSv1'}.items():
+                if needs_update(key):
+                    if want.get(key) is True:
+                        want_ssl_protocols = " ".join([want_ssl_protocols, value])
+                elif have.get(key) is True:
+                    have_ssl_protocols = " ".join([have_ssl_protocols, value])
 
-        if len(want_ssl_protocols) > 0:
-            commands['ssl_protocols'] = 'nxapi ssl protocols%s' % (" ".join([want_ssl_protocols, have_ssl_protocols]))
+            if len(want_ssl_protocols) > 0:
+                commands['ssl_protocols'] = 'nxapi ssl protocols%s' % (" ".join([want_ssl_protocols, have_ssl_protocols]))
+    else:
+        warnings.append('os_version and/or os_platform keys from '
+                        'platform capabilities are not available.  '
+                        'Any NXAPI SSL optional arguments will be ignored')
 
     send_commands.extend(commands.values())
 
@@ -388,13 +390,12 @@ def main():
 
     check_args(module, warnings, capabilities)
 
-    result = {'changed': False, 'warnings': warnings}
-
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
 
-    commands = map_obj_to_commands(want, have, module, capabilities)
-    result['commands'] = commands
+    commands = map_obj_to_commands(want, have, module, warnings, capabilities)
+
+    result = {'changed': False, 'warnings': warnings, 'commands': commands}
 
     if commands:
         if not module.check_mode:
