@@ -100,7 +100,7 @@ vars:
 
 - asa_command:
     commands:
-      - ping 8.8.8.8 repeat 101 size 350 
+      - ping 8.8.8.8 repeat 101 size 350
     authorize: yes
     auth_pass: "{{ ansible_become_pass }}"
     wait_for:
