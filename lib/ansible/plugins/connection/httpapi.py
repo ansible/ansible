@@ -258,7 +258,7 @@ class Connection(NetworkConnectionBase):
                 return self.send(path, data, **kwargs)
             raise AnsibleConnectionFailure('Could not connect to {0}: {1}'.format(self._url, exc.reason))
 
-        if self._auth == None:
+        if self._auth is None:
             # Try to assign a new auth token if one is given
             self._auth = self.update_auth(response)
 
