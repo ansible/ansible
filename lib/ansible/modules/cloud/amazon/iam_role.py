@@ -349,7 +349,9 @@ def create_or_update_role(connection, module):
                              exception=traceback.format_exc())
 
     # Check if permission boundary needs update
-    if not role.get('MadeInCheckMode') and (role.get('PermissionsBoundary') or {}).get('PermissionsBoundaryArn'):
+    if not role.get('MadeInCheckMode') and (
+            (role.get('PermissionsBoundary') or {}).get('PermissionsBoundaryArn') or
+            params.get('PermissionsBoundary') is not None):
         # the existing role has a boundary
         if module.params.get('boundary') is None:
             pass
