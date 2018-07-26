@@ -194,8 +194,7 @@ namespace Ansible.PrivilegeUtil
 
         public static Dictionary<string, bool?> SetTokenPrivileges(SafeHandle token, Dictionary<string, bool?> state)
         {
-            NativeHelpers.LUID_AND_ATTRIBUTES[] privilegeAttr = new NativeHelpers.LUID_AND_ATTRIBUTES[state.Count];
-            int i = 0;
+            List<NativeHelpers.LUID_AND_ATTRIBUTES> privilegeAttr = new List<NativeHelpers.LUID_AND_ATTRIBUTES>();
 
             foreach (KeyValuePair<string, bool?> entry in state)
             {
@@ -217,16 +216,17 @@ namespace Ansible.PrivilegeUtil
                         break;
                 }
 
-                privilegeAttr[i].Luid = luid;
-                privilegeAttr[i].Attributes = attributes;
-
-                i++;
+                privilegeAttr.Add(new NativeHelpers.LUID_AND_ATTRIBUTES()
+                {
+                    Luid = luid,
+                    Attributes = attributes,
+                });
             }
 
             return AdjustTokenPrivileges(token, privilegeAttr);
         }
 
-        private static Dictionary<string, bool?> AdjustTokenPrivileges(SafeHandle token, NativeHelpers.LUID_AND_ATTRIBUTES[] newState)
+        private static Dictionary<string, bool?> AdjustTokenPrivileges(SafeHandle token, List<NativeHelpers.LUID_AND_ATTRIBUTES> newState)
         {
             bool disableAllPrivileges;
             IntPtr newStatePtr;
@@ -245,7 +245,7 @@ namespace Ansible.PrivilegeUtil
 
                 // Need to manually marshal the bytes requires for newState as the constant size
                 // of LUID_AND_ATTRIBUTES is set to 1 and can't be overridden at runtime
-                int luidAttrSize = Marshal.SizeOf(typeof(NativeHelpers.LUID_AND_ATTRIBUTES)) * newState.Length;
+                int luidAttrSize = Marshal.SizeOf(typeof(NativeHelpers.LUID_AND_ATTRIBUTES)) * newState.Count;
                 int totalSize = luidAttrSize + sizeof(UInt32);
 
                 byte[] newStateBytes = new byte[totalSize];
@@ -253,13 +253,15 @@ namespace Ansible.PrivilegeUtil
                 // get the first entry that includes the struct details
                 NativeHelpers.TOKEN_PRIVILEGES tokenPrivileges = new NativeHelpers.TOKEN_PRIVILEGES()
                 {
-                    PrivilegeCount = (UInt32)newState.Length,
-                    Privileges = newState,
+                    PrivilegeCount = (UInt32)newState.Count,
+                    Privileges = new NativeHelpers.LUID_AND_ATTRIBUTES[1],
                 };
+                if (newState.Count > 0)
+                    tokenPrivileges.Privileges[0] = newState[0];
                 int offset = StructureToBytes(tokenPrivileges, newStateBytes, 0);
 
                 // copy the remaining LUID_AND_ATTRIBUTES (if any)
-                for (int i = 1; i < newState.Length; i++)
+                for (int i = 1; i < newState.Count; i++)
                     offset += StructureToBytes(newState[i], newStateBytes, offset);
 
                 // finally create the pointer to the byte array we just created
