@@ -56,10 +56,10 @@ options:
     description:
       - List of file extensions to read when using C(dir).
     default: [yaml, yml, json]
-  ignore_unkown_extensions:
+  ignore_unknown_extensions:
     version_added: "2.7"
     description:
-      - Ignore unkown file extensions within the directory. This allows users to specify a directory containing vars files
+      - Ignore unknown file extensions within the directory. This allows users to specify a directory containing vars files
         that are intermingled with non vars files extension types (For example, a directory with a README in it and vars files)
     default: False
   free-form:
