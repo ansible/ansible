@@ -36,42 +36,54 @@ options:
         default: xml
     rules:
         description:
-            - Rules for importing items
-        default:
-            applications:
-                createMissing:true
-                deleteMissing:true
-            discoveryRules:
-                createMissing:true
-                updateExisting:true
-                deleteMissing:true
-            graphs:
-                createMissing:true
-                updateExisting:true
-                deleteMissing:true
-            groups:
-                createMissing:true
-            hosts:
-                createMissing:true
-                updateExisting:true
-            images:
-                createMissing:true
-                updateExisting:true
-            items:
-                createMissing:true
-                updateExisting:true
-                deleteMissing:true
-            maps:
-                createMissing:true
-                updateExisting:true
-            screens:
-                createMissing:true
-                updateExisting:true
-            templateLinkage:
-                createMissing:true
-            templates:
-                createMissing:true
-                updateExisting:true
+            - "Rules for importing items. By default it will switch all rules to true (overwritting/removing all). It means:"
+            - "applications:"
+            - "  createMissing: true"
+            - "  deleteMissing true"
+            - "discoveryRules:"
+            - "  createMissing: true"
+            - "  updateExisting: true"
+            - "  deleteMissing: true"
+            - "graphs:"
+            - "  createMissing: true"
+            - "  updateExisting: true"
+            - "  deleteMissing: true"
+            - "groups:"
+            - "  createMissing: true"
+            - "hosts:"
+            - "  createMissing: true"
+            - "  updateExisting: true"
+            - "images:"
+            - "  createMissing: true"
+            - "  updateExisting: true"
+            - "items:"
+            - "  createMissing: true"
+            - "  updateExisting: true"
+            - "  deleteMissing: true"
+            - "maps:"
+            - "  createMissing: true"
+            - "  updateExisting: true"
+            - "screens:"
+            - "  createMissing: true"
+            - "  updateExisting': true"
+            - "templateLinkage:"
+            - "  createMissing: true"
+            - "templates:"
+            - "  createMissing: true"
+            - "  updateExisting: true"
+            - "templateScreens:"
+            - "  createMissing: true"
+            - "  updateExisting: true"
+            - "  deleteMissing: true"
+            - "triggers:"
+            - "  createMissing: true"
+            - "  updateExisting: true"
+            - "  deleteMissing: true"
+            - "valueMaps:"
+            - "  createMissing: true"
+            - "  updateExisting: true"
+
+
 extends_documentation_fragment:
     - zabbix
 '''
@@ -189,7 +201,7 @@ def main():
             http_login_password=dict(type='str', required=False, default=None, no_log=True),
             validate_certs=dict(type='bool', required=False, default=True),
             import_file=dict(type='str', required=True),
-            rules=dict(type='dict', required=False, default=DEFAULT_RULES),
+            rules=dict(type='dict', required=False),
             import_format=dict(choices=['xml', 'json'], required=False, default='xml'),
             timeout=dict(type='int', default=10)
         ),
