@@ -261,12 +261,13 @@ import datetime
 import json
 import os
 import shutil
+import sys
 import tempfile
 import traceback
 
 from collections import Mapping, Sequence
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils.six import PY2, iteritems, string_types
 from ansible.module_utils.six.moves.urllib.parse import urlencode, urlsplit
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import fetch_url, url_argument_spec
@@ -564,10 +565,8 @@ def main():
         ukey = key.replace("-", "_").lower()
         uresp[ukey] = value
 
-    try:
+    if 'location' in uresp:
         uresp['location'] = absolute_location(url, uresp['location'])
-    except KeyError:
-        pass
 
     # Default content_encoding to try
     content_encoding = 'utf-8'
@@ -581,7 +580,8 @@ def main():
                 js = json.loads(u_content)
                 uresp['json'] = js
             except:
-                pass
+                if PY2:
+                    sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
     else:
         u_content = to_text(content, encoding=content_encoding)
 
