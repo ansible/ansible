@@ -94,12 +94,12 @@ If you use more than one CloudStack region, you can define as many sections as y
     key = api key
     secret = api secret
 
-    [exmaple_cloud_one]
+    [example_cloud_one]
     endpoint = https://cloud-one.example.com/client/api
     key = api key
     secret = api secret
 
-    [exmaple_cloud_two]
+    [example_cloud_two]
     endpoint = https://cloud-two.example.com/client/api
     key = api key
     secret = api secret
@@ -127,8 +127,8 @@ Or by looping over a regions list if you want to do the task in every region:
         api_region: "{{ item }}"
         loop:
           - exoscale
-          - exmaple_cloud_one
-          - exmaple_cloud_two
+          - example_cloud_one
+          - example_cloud_two
 
 Environment Variables
 `````````````````````
