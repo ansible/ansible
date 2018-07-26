@@ -532,11 +532,11 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     changed = True
 
                 if self.upgrade_policy and \
-                   self.upgrade_policy != vmss_dict['properties']['upgradePolicy']:
+                   self.upgrade_policy != vmss_dict['properties']['upgradePolicy']['mode']:
                     self.log('CHANGED: virtual machine scale set {0} - Upgrade Policy'.format(self.name))
                     differences.append('Upgrade Policy')
                     changed = True
-                    vmss_dict['properties']['upgradePolicy'] = self.upgrade_policy
+                    vmss_dict['properties']['upgradePolicy']['mode'] = self.upgrade_policy
 
                 update_tags, vmss_dict['tags'] = self.update_tags(vmss_dict.get('tags', dict()))
                 if update_tags:
