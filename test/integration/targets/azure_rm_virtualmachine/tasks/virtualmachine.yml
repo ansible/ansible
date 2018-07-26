@@ -103,7 +103,7 @@
 
 - add_host:
       name: new_azure_vm
-      ansible_host: '{{ output.ansible_facts.azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties.publicIPAddress.properties.ipAddress }}'
+      ansible_host: '{{ output.vms.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties.publicIPAddress.properties.ipAddress }}'
       ansible_connection: paramiko  # not guaranteed to have sshpass...
       ansible_user: adminuser
       ansible_password: Password123!
@@ -309,10 +309,10 @@
 - name: Assert that facts module returned the second vm
   assert:
     that: 
-      - results.ansible_facts.azure_virtualmachines | length == 1
-      - results.ansible_facts.azure_virtualmachines[0].name == 'testvm003'
-      - results.ansible_facts.azure_virtualmachines[0].location == 'eastus'
-      - results.ansible_facts.azure_virtualmachines[0].admin_username == 'adminuser'
+      - results.vms | length == 1
+      - results.vms[0].name == 'testvm003'
+      - results.vms[0].location == 'eastus'
+      - results.vms[0].admin_username == 'adminuser'
 
 - name: Should be idempotent with a dual NICs
   vars:
