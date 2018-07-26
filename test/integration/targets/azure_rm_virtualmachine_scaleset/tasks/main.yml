@@ -173,9 +173,9 @@
       sku: Stable
       version: latest
     data_disks: 
-      - lun: 0 
-        disk_size_gb: 64 
-        caching: ReadWrite 
+      - lun: 0
+        disk_size_gb: 64
+        caching: ReadWrite
         managed_disk_type: Standard_LRS
   register: results
 
