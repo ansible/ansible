@@ -33,6 +33,7 @@ options:
         description:
             - Format of zabbix import file
         choices: ['xml','json']
+        default: xml
     rules:
         description:
             - Rules for importing items
@@ -232,6 +233,8 @@ def main():
                 rules[rule_group][rule]
             except KeyError:
                 rules[rule_group][rule]=default_rules[rule_group][rule]
+
+    # Execute import
     conf = Configuration(module, zbx)
     import_task = conf.import_template(import_file,rules,import_format)
 
