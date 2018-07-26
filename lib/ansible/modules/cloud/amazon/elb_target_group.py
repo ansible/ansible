@@ -426,7 +426,7 @@ def create_or_update_target_group(connection, module):
             params['UnhealthyThresholdCount'] = module.params.get("unhealthy_threshold_count")
 
         # Only need to check response code and path for http(s) health checks
-        if module.params.get("health_check_protocol").upper() != 'TCP':
+        if module.params.get("health_check_protocol") is not None and module.params.get("health_check_protocol").upper() != 'TCP':
 
             if module.params.get("health_check_path") is not None:
                 params['HealthCheckPath'] = module.params.get("health_check_path")
