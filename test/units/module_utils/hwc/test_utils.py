@@ -61,7 +61,6 @@ class HwcUtilsTestCase(unittest.TestCase):
 
         self.assertEqual(remove_empty_from_dict(value), expect)
 
-
     def test_remove_nones_from_dict(self):
         value = {
             'foo': {
