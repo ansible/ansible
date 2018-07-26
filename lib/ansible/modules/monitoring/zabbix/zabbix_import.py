@@ -8,7 +8,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -91,6 +91,8 @@ EXAMPLES = '''
     timeout: 10
 '''
 
+RETURN = ''' # '''
+
 from ansible.module_utils.basic import AnsibleModule
 
 try:
@@ -101,7 +103,7 @@ except ImportError:
     HAS_ZABBIX_API = False
 
 
-default_rules = ({
+DEFAULT_RULES = ({
     'applications': {
         'createMissing': True,
         'deleteMissing': True
@@ -187,8 +189,8 @@ def main():
             http_login_password=dict(type='str', required=False, default=None, no_log=True),
             validate_certs=dict(type='bool', required=False, default=True),
             import_file=dict(type='str', required=True),
-            rules=dict(type='dict', required=False, default=default_rules),
-            import_format=dict(choices=['xml','json'], required=False, default='xml'),
+            rules=dict(type='dict', required=False, default=DEFAULT_RULES),
+            import_format=dict(choices=['xml', 'json'], required=False, default='xml'),
             timeout=dict(type='int', default=10)
         ),
         supports_check_mode=True
@@ -225,16 +227,16 @@ def main():
         rules = {}
 
     # Set default values for all empty rules
-    for rule_group in default_rules:
+    for rule_group in DEFAULT_RULES:
         try:
             rules[rule_group]
         except KeyError:
             rules[rule_group] = {}
-        for rule in default_rules[rule_group]:
+        for rule in DEFAULT_RULES[rule_group]:
             try:
                 rules[rule_group][rule]
             except KeyError:
-                rules[rule_group][rule] = default_rules[rule_group][rule]
+                rules[rule_group][rule] = DEFAULT_RULES[rule_group][rule]
 
     # Execute import
     conf = Configuration(module, zbx)
