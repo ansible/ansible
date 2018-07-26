@@ -206,8 +206,8 @@ class RoleRequirement(RoleDefinition):
 
         try:
             scm_path = get_bin_path(scm)
-        except Exception:
-            raise AnsibleError("%s not found, it is required to continue with installing %s" % (scm, src))
+        except (ValueError, OSError, IOError):
+            raise AnsibleError("could not find/use %s, it is required to continue with installing %s" % (scm, src))
 
         tempdir = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)
         clone_cmd = [scm_path, 'clone', src, name]
