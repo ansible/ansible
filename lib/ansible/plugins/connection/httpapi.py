@@ -206,12 +206,12 @@ class Connection(NetworkConnectionBase):
 
             httpapi = httpapi_loader.get(self._network_os, self)
             if httpapi:
+                display.vvvv('loaded API plugin for network_os %s' % self._network_os, host=self._play_context.remote_addr)
+                self._implementation_plugins.append(httpapi)
                 httpapi.set_become(self._play_context)
                 httpapi.login(self.get_option('remote_user'), self.get_option('password'))
-                display.vvvv('loaded API plugin for network_os %s' % self._network_os, host=self._play_context.remote_addr)
             else:
                 raise AnsibleConnectionFailure('unable to load API plugin for network_os %s' % self._network_os)
-            self._implementation_plugins.append(httpapi)
 
             cliconf = cliconf_loader.get(self._network_os, self)
             if cliconf:
@@ -258,7 +258,9 @@ class Connection(NetworkConnectionBase):
                 return self.send(path, data, **kwargs)
             raise AnsibleConnectionFailure('Could not connect to {0}: {1}'.format(self._url, exc.reason))
 
-        # Try to assign a new auth token if one is given
-        self._auth = self.update_auth(response) or self._auth
+        response_text = response.read()
 
-        return response
+        # Try to assign a new auth token if one is given
+        self._auth = self.update_auth(response, response_text) or self._auth
+
+        return response, response_text

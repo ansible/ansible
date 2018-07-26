@@ -30,14 +30,13 @@ class HttpApi(HttpApiBase):
         request = request_builder(data, output)
         headers = {'Content-Type': 'application/json-rpc'}
 
-        response = self.connection.send('/command-api', request, headers=headers, method='POST')
-        response_text = to_text(response.read())
+        response, response_text = self.connection.send('/command-api', request, headers=headers, method='POST')
         try:
-            response = json.loads(response_text)
+            response_text = json.loads(response_text)
         except ValueError:
             raise ConnectionError('Response was not valid JSON, got {0}'.format(response_text))
 
-        results = handle_response(response)
+        results = handle_response(response_text)
 
         if self._become:
             results = results[1:]
@@ -50,8 +49,7 @@ class HttpApi(HttpApiBase):
         # Fake a prompt for @enable_mode
         if self._become:
             return '#'
-        else:
-            return '>'
+        return '>'
 
     # Imported from module_utils
     def edit_config(self, config, commit=False, replace=False):
@@ -113,7 +111,13 @@ class HttpApi(HttpApiBase):
         responses = list()
 
         def run_queue(queue, output):
-            response = to_list(self.send_request(queue, output=output))
+            try:
+                response = to_list(self.send_request(queue, output=output))
+            except Exception as exc:
+                if check_rc:
+                    raise
+                return to_text(exc)
+
             if output == 'json':
                 response = [json.loads(item) for item in response]
             return response
