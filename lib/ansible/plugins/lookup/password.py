@@ -282,7 +282,7 @@ class LookupModule(LookupBase):
             writer_process = False
             b_pathdir = os.path.dirname(b_path)
             # get a unique lock file name for each password file
-            lockfile_name = "%s.ansible_lockfile" % hashlib.md5(b_path).hexdigest()
+            lockfile_name = to_bytes("%s.ansible_lockfile" % hashlib.md5(b_path).hexdigest())
             lockfile = os.path.join(b_pathdir, lockfile_name)
             if not os.path.exists(lockfile) and not os.path.exists(b_path):
                 try:
