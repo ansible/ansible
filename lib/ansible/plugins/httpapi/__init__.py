@@ -36,7 +36,7 @@ class HttpApiBase(AnsiblePlugin):
         """
         pass
 
-    def update_auth(self, response):
+    def update_auth(self, response, response_text):
         """Return per-request auth token.
 
         The response should be a dictionary that can be plugged into the
