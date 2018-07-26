@@ -255,7 +255,7 @@ _SPECIAL_PACKAGE_CHECKERS = {'setuptools': 'import setuptools; print(setuptools.
 _VCS_RE = re.compile(r'(svn|git|hg|bzr)\+')
 
 op_dict = {">=": operator.ge, "<=": operator.le, ">": operator.gt,
-           "<": operator.lt, "==": operator.eq, "!=": operator.ne}
+           "<": operator.lt, "==": operator.eq, "!=": operator.ne, "~=": operator.ge}
 
 
 def _is_vcs_url(name):
@@ -615,7 +615,6 @@ def main():
         # Automatically apply -e option to extra_args when source is a VCS url. VCS
         # includes those beginning with svn+, git+, hg+ or bzr+
         has_vcs = False
-
         if name:
             for pkg in name:
                 if bool(pkg and _is_vcs_url(pkg)):
@@ -659,10 +658,9 @@ def main():
 
         if name:
             for p in packages:
-                cmd.append('%s' % p)
+                cmd.append(str(p))
         elif requirements:
-            cmd.append('-r')
-            cmd.append('%s' % requirements)
+            cmd.extend(['-r', requirements])
         else:
             module.exit_json(
                 changed=False,
