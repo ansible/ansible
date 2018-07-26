@@ -356,12 +356,13 @@ def create_or_update_role(connection, module):
         if module.params.get('boundary') is None:
             pass
         elif module.params.get('boundary') == '':
-            try:
-                if not module.check_mode:
-                    connection.delete_role_permissions_boundary(RoleName=params['RoleName'])
-                changed = True
-            except (BotoCoreError, ClientError) as e:
-                module.fail_json_aws(e, msg="Unable to update permission boundary for role {0}: {1}".format(params['RoleName'], to_native(e)))
+            if (role.get('PermissionsBoundary') or {}).get('PermissionsBoundaryArn'):
+                try:
+                    if not module.check_mode:
+                        connection.delete_role_permissions_boundary(RoleName=params['RoleName'])
+                    changed = True
+                except (BotoCoreError, ClientError) as e:
+                    module.fail_json_aws(e, msg="Unable to remove permission boundary for role {0}: {1}".format(params['RoleName'], to_native(e)))
         elif (role.get('PermissionsBoundary') or {}).get('PermissionsBoundaryArn') != params['PermissionsBoundary']:
             try:
                 if not module.check_mode:
