@@ -62,6 +62,7 @@ def test_upload_api(monkeypatch):
         "state": "present",
         "swagger_text": "the-swagger-text-is-fake",
         "region": 'mars-north-1',
+        "_ansible_tmpdir": "/tmp/ansibl-abcdef",
     })
     with pytest.raises(SystemExit):
         agw.main()

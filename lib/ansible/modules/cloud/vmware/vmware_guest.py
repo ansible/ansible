@@ -144,6 +144,8 @@ options:
           Please check VMware documentation for correct virtual machine hardware version.
           Incorrect hardware version may lead to failure in deployment. If hardware version is already equal to the given
           version then no action is taken. version_added: 2.6'
+    - ' - C(boot_firmware) (string): Choose which firmware should be used to boot the virtual machine.
+          Allowed values are "bios" and "efi". version_added: 2.7'
 
   guest_id:
     description:
@@ -387,6 +389,7 @@ EXAMPLES = r'''
       hotremove_cpu: True
       hotadd_memory: False
       version: 12 # Hardware version of virtual machine
+      boot_firmware: "efi"
     cdrom:
       type: iso
       iso_path: "[datastore1] livecd.iso"
@@ -707,11 +710,11 @@ class PyVmomiCache(object):
         """ Wrapper around find_obj to set datacenter context """
         result = find_obj(content, types, name)
         if result and confine_to_datacenter:
-            if self.get_parent_datacenter(result).name != self.dc_name:
+            if to_text(self.get_parent_datacenter(result).name) != to_text(self.dc_name):
                 result = None
                 objects = self.get_all_objs(content, types, confine_to_datacenter=True)
                 for obj in objects:
-                    if name is None or obj.name == name:
+                    if name is None or to_text(obj.name) == to_text(name):
                         return obj
         return result
 
@@ -944,6 +947,15 @@ class PyVmomiHelper(PyVmomi):
             if 'memory_reservation_lock' in self.params['hardware']:
                 self.configspec.memoryReservationLockedToMax = bool(self.params['hardware']['memory_reservation_lock'])
                 if vm_obj is None or self.configspec.memoryReservationLockedToMax != vm_obj.config.memoryReservationLockedToMax:
+                    self.change_detected = True
+
+            if 'boot_firmware' in self.params['hardware']:
+                boot_firmware = self.params['hardware']['boot_firmware'].lower()
+                if boot_firmware not in ('bios', 'efi'):
+                    self.module.fail_json(msg="hardware.boot_firmware value is invalid [%s]."
+                                              " Need one of ['bios', 'efi']." % boot_firmware)
+                self.configspec.firmware = boot_firmware
+                if vm_obj is None or self.configspec.firmware != vm_obj.config.firmware:
                     self.change_detected = True
 
     def configure_cdrom(self, vm_obj):
@@ -2186,27 +2198,44 @@ class PyVmomiHelper(PyVmomi):
 
         # Mark Template as VM
         elif not self.params['is_template'] and self.current_vm_obj.config.template:
-            if self.params['resource_pool']:
-                resource_pool = self.select_resource_pool_by_name(self.params['resource_pool'])
+            resource_pool = self.get_resource_pool()
+            kwargs = dict(pool=resource_pool)
 
-                if resource_pool is None:
-                    self.module.fail_json(msg='Unable to find resource pool "%(resource_pool)s"' % self.params)
+            if self.params.get('esxi_hostname', None):
+                host_system_obj = self.select_host()
+                kwargs.update(host=host_system_obj)
 
-                self.current_vm_obj.MarkAsVirtualMachine(pool=resource_pool)
+            try:
+                self.current_vm_obj.MarkAsVirtualMachine(**kwargs)
+            except vim.fault.InvalidState as invalid_state:
+                self.module.fail_json(msg="Virtual machine is not marked"
+                                          " as template : %s" % to_native(invalid_state.msg))
+            except vim.fault.InvalidDatastore as invalid_ds:
+                self.module.fail_json(msg="Converting template to virtual machine"
+                                          " operation cannot be performed on the"
+                                          " target datastores: %s" % to_native(invalid_ds.msg))
+            except vim.fault.CannotAccessVmComponent as cannot_access:
+                self.module.fail_json(msg="Failed to convert template to virtual machine"
+                                          " as operation unable access virtual machine"
+                                          " component: %s" % to_native(cannot_access.msg))
+            except vmodl.fault.InvalidArgument as invalid_argument:
+                self.module.fail_json(msg="Failed to convert template to virtual machine"
+                                          " due to : %s" % to_native(invalid_argument.msg))
+            except Exception as generic_exc:
+                self.module.fail_json(msg="Failed to convert template to virtual machine"
+                                          " due to generic error : %s" % to_native(generic_exc))
 
-                # Automatically update VMWare UUID when converting template to VM.
-                # This avoids an interactive prompt during VM startup.
-                uuid_action = [x for x in self.current_vm_obj.config.extraConfig if x.key == "uuid.action"]
-                if not uuid_action:
-                    uuid_action_opt = vim.option.OptionValue()
-                    uuid_action_opt.key = "uuid.action"
-                    uuid_action_opt.value = "create"
-                    self.configspec.extraConfig.append(uuid_action_opt)
-                    self.change_detected = True
+            # Automatically update VMWare UUID when converting template to VM.
+            # This avoids an interactive prompt during VM startup.
+            uuid_action = [x for x in self.current_vm_obj.config.extraConfig if x.key == "uuid.action"]
+            if not uuid_action:
+                uuid_action_opt = vim.option.OptionValue()
+                uuid_action_opt.key = "uuid.action"
+                uuid_action_opt.value = "create"
+                self.configspec.extraConfig.append(uuid_action_opt)
+                self.change_detected = True
 
-                change_applied = True
-            else:
-                self.module.fail_json(msg="Resource pool must be specified when converting template to VM!")
+            change_applied = True
 
         vm_facts = self.gather_facts(self.current_vm_obj)
         return {'changed': change_applied, 'failed': False, 'instance': vm_facts}

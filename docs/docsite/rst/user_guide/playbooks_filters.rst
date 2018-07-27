@@ -47,6 +47,22 @@ for example::
     - set_fact:
         myvar: "{{ result.stdout | from_json }}"
 
+
+.. versionadded:: 2.7
+
+To parse multi-document yaml strings, the ``from_yaml_all`` filter is provided.
+The ``from_yaml_all`` filter will return a generator of parsed yaml documents.
+
+for example::
+
+  tasks:
+    - shell: cat /some/path/to/multidoc-file.yaml
+      register: result
+   - debug:
+       msg: '{{ item }}'
+    loop: '{{ result.stdout | from_yaml_all | list }}'
+
+
 .. _forcing_variables_to_be_defined:
 
 Forcing Variables To Be Defined

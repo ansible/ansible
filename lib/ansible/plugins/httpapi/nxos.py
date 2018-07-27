@@ -27,14 +27,13 @@ class HttpApi(HttpApiBase):
         request = request_builder(queue, output)
         headers = {'Content-Type': 'application/json'}
 
-        response = self.connection.send('/ins', request, headers=headers, method='POST')
-        response_text = to_text(response.read())
+        response, response_text = self.connection.send('/ins', request, headers=headers, method='POST')
         try:
-            response = json.loads(response_text)
+            response_text = json.loads(response_text)
         except ValueError:
             raise ConnectionError('Response was not valid JSON, got {0}'.format(response_text))
 
-        results = handle_response(response)
+        results = handle_response(response_text)
 
         if self._become:
             results = results[1:]
@@ -73,17 +72,22 @@ class HttpApi(HttpApiBase):
             return responses[0]
         return responses
 
-    # Migrated from module_utils
-    def edit_config(self, command):
+    def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
         resp = list()
-        responses = self.send_request(command, output='config')
+
+        operations = self.connection.get_device_operations()
+        self.connection.check_edit_config_capabiltiy(operations, candidate, commit, replace, comment)
+        if replace:
+            candidate = 'config replace {0}'.format(replace)
+
+        responses = self.send_request(candidate, output='config')
         for response in to_list(responses):
             if response != '{}':
                 resp.append(response)
         if not resp:
             resp = ['']
 
-        return json.dumps(resp)
+        return resp
 
     def run_commands(self, commands, check_rc=True):
         """Runs list of commands on remote device and returns results

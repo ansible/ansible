@@ -1,0 +1,144 @@
+# Test code for the vmware_guest_custom_attributes module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# TODO: Current pinned version of vcsim does not support custom fields
+# commenting testcase below
+
+- name: store the vcenter container ip
+  set_fact:
+    vcsim: "{{ lookup('env', 'vcenter_host') }}"
+
+- debug: var=vcsim
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
+
+- name: start vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
+  register: vcsim_instance
+
+- name: Wait for vcsim server to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: get a list of Datacenter from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=DC
+  register: datacenters
+
+- set_fact: dc1="{{ datacenters['json'][0] }}"
+
+- name: get a list of virtual machines from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=VM
+  register: vms
+
+- set_fact: vm1="{{ vms['json'][0] }}"
+
+- name: Add custom attribute to the given virtual machine
+  vmware_guest_custom_attributes:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    datacenter: "{{ dc1 | basename }}"
+    name: "{{ vm1 | basename }}"
+    folder: "{{ vm1 | dirname }}"
+    state: present
+    attributes:
+      - name: 'sample_1'
+        value: 'sample_1_value'
+      - name: 'sample_2'
+        value: 'sample_2_value'
+      - name: 'sample_3'
+        value: 'sample_3_value'
+  register: guest_facts_0001
+
+- debug: msg="{{ guest_facts_0001 }}"
+
+- assert:
+    that:
+      - "guest_facts_0001.changed"
+
+- name: Add custom attribute to the given virtual machine again
+  vmware_guest_custom_attributes:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    datacenter: "{{ dc1 | basename }}"
+    name: "{{ vm1 | basename }}"
+    folder: "{{ vm1 | dirname }}"
+    state: present
+    attributes:
+      - name: 'sample_1'
+        value: 'sample_1_value'
+      - name: 'sample_2'
+        value: 'sample_2_value'
+      - name: 'sample_3'
+        value: 'sample_3_value'
+  register: guest_facts_0002
+
+- debug: msg="{{ guest_facts_0002 }}"
+
+- assert:
+    that:
+      - "not guest_facts_0002.changed"
+
+- name: Remove custom attribute to the given virtual machine
+  vmware_guest_custom_attributes:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    datacenter: "{{ dc1 | basename }}"
+    name: "{{ vm1 | basename }}"
+    folder: "{{ vm1 | dirname }}"
+    state: absent
+    attributes:
+      - name: 'sample_1'
+      - name: 'sample_2'
+      - name: 'sample_3'
+  register: guest_facts_0004
+
+- debug: msg="{{ guest_facts_0004 }}"
+
+- assert:
+    that:
+      - "guest_facts_0004.changed"
+
+# TODO: vcsim returns duplicate values so removing custom attributes
+# results in change. vCenter show correct behavior. Commenting this
+# till this is supported by vcsim.
+#- name: Remove custom attribute to the given virtual machine again
+#  vmware_guest_custom_attributes:
+#    validate_certs: False
+#    hostname: "{{ vcsim }}"
+#    username: "{{ vcsim_instance['json']['username'] }}"
+#    password: "{{ vcsim_instance['json']['password'] }}"
+#    datacenter: "{{ dc1 | basename }}"
+#    name: "{{ vm1 | basename }}"
+#    folder: "{{ vm1 | dirname }}"
+#    state: absent
+#    attributes:
+#      - name: 'sample_1'
+#      - name: 'sample_2'
+#      - name: 'sample_3'
+#  register: guest_facts_0005
+
+#- debug: msg="{{ guest_facts_0005 }}"
+
+#- assert:
+#    that:
+#      - "not guest_facts_0005.changed"

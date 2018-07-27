@@ -38,6 +38,26 @@ There is an important difference in the way that ``include_role`` (dynamic) will
 Deprecated
 ==========
 
+Expedited Deprecation: Use of ``__file__`` in ``AnsibleModule``
+---------------------------------------------------------------
+
+.. note:: The use of the ``__file__`` variable is deprecated in Ansible 2.7 and **will be eliminated in Ansible 2.8**. This is much quicker than our usual 4-release deprecation cycle.
+
+We are deprecating the use of the ``__file__`` variable to refer to the file containing the currently-running code. This common Python technique for finding a filesystem path does not always work (even in vanilla Python). Sometimes a Python module can be imported from a virtual location (like inside of a zip file). When this happens, the ``__file__`` variable will reference a virtual location pointing to inside of the zip file. This can cause problems if, for instance, the code was trying to use ``__file__`` to find the directory containing the python module to write some temporary information.
+
+Before the introduction of AnsiBallZ in Ansible 2.1, using ``__file__`` worked in ``AnsibleModule`` sometimes, but any module that used it would fail when pipelining was turned on (because the module would be piped into the python interpreter's standard input, so ``__file__`` wouldn't contain a file path). AnsiBallZ unintentionally made using ``__file__`` always work, by always creating a temporary file for ``AnsibleModule`` to reside in.
+
+Ansible 2.8 will no longer create a temporary file for ``AnsibleModule``; instead it will read the file out of a zip file. This change should speed up module execution, but it does mean that starting with Ansible 2.8, referencing ``__file__`` will always fail in ``AnsibleModule``.
+
+If you are the author of a third-party module which uses ``__file__`` with ``AnsibleModule``, please update your module(s) now, while the use of ``__file__`` is deprecated but still available. The most common use of ``__file__`` is to find a directory to write a temporary file. In Ansible 2.5 and above, you can use the ``tmpdir`` attribute on an ``AnsibleModule`` instance instead, as shown in this code from the :ref:`apt module <apt_module>`:
+
+.. code-block:: diff
+
+    -    tempdir = os.path.dirname(__file__)
+    -    package = os.path.join(tempdir, to_native(deb.rsplit('/', 1)[1]))
+    +    package = os.path.join(module.tmpdir, to_native(deb.rsplit('/', 1)[1]))
+
+
 Using a loop on a package module via squash_actions
 ---------------------------------------------------
 
