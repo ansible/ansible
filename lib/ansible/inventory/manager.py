@@ -286,8 +286,6 @@ class InventoryManager(object):
                         display.warning(u'\n* Failed to parse %s with %s plugin: %s' % (to_text(fail['src']), fail['plugin'], to_text(fail['exc'])))
                         if hasattr(fail['exc'], 'tb'):
                             display.vvv(to_text(fail['exc'].tb))
-                    if C.INVENTORY_ANY_UNPARSED_IS_FAILED:
-                        raise AnsibleError(u'Completely failed to parse inventory source %s' % (source))
         if not parsed:
             display.warning("Unable to parse %s as an inventory source" % source)
 
