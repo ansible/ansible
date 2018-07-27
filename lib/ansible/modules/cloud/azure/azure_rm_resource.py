@@ -217,25 +217,27 @@ class AzureRMResource(AzureRMModuleBase):
                 rargs['namespace'] = "Microsoft." + self.provider
             else:
                 rargs['namespace'] = self.provider
-            rargs['type'] = self.resource_type
-            rargs['name'] = self.resource_name
 
-            for i in range(len(self.subresource)):
-                rargs['child_namespace_' + str(i + 1)] = self.subresource[i].get('namespace', None)
-                rargs['child_type_' + str(i + 1)] = self.subresource[i].get('type', None)
-                rargs['child_name_' + str(i + 1)] = self.subresource[i].get('name', None)
+            if self.resource_type is not None and self.resource_name is not None:
+                rargs['type'] = self.resource_type
+                rargs['name'] = self.resource_name
+                for i in range(len(self.subresource)):
+                    resource_ns = self.subresource[i].get('namespace', None)
+                    resource_type = self.subresource[i].get('type', None)
+                    resource_name = self.subresource[i].get('name', None)
+                    if resource_type is not None and resource_name is not None:
+                        rargs['child_namespace_' + str(i + 1)] = resource_ns
+                        rargs['child_type_' + str(i + 1)] = resource_type
+                        rargs['child_name_' + str(i + 1)] = resource_name
+                    else:
+                        orphan = resource_type
+            else:
+                orphan = self.resource_type
 
             self.url = resource_id(**rargs)
 
-            # resource_id doesn't append last element, when it doesn't have name
-            # if it happens it should be appended manually
-            if len(self.subresource) > 0:
-                last = self.subresource[-1]
-                if last.get('name', None) is None and last.get('type', None) is not None:
-                    self.url = self.url + "/" + last['type']
-            elif self.resource_type is not None and self.resource_name is None:
-                self.url += '/' + self.resource_type
-
+            if orphan is not None:
+                self.url += '/' + orphan
         query_parameters = {}
         query_parameters['api-version'] = self.api_version
 
