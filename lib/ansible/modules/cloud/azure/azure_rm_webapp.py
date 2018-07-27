@@ -256,10 +256,8 @@ EXAMPLES = '''
           - name: "java"
             version: "1.8"
             settings:
-            - name: "java_container"
-              value: "Tomcat"
-            - name: "java_container_version"
-              value: "8.0"
+              java_container: "Tomcat"
+              java_container_version: "8.0"
 '''
 
 RETURN = '''
@@ -299,14 +297,21 @@ deployment_source_spec = dict(
     branch=dict(type='str')
 )
 
+
+framework_settings_spec = dict(
+    java_container=dict(type='str'),
+    java_container_version=dict(type='str')
+)
+
+
 framework_spec = dict(
     name=dict(
         type='str',
         required=True,
         choices=['net_framework', 'java', 'php', 'node', 'python', 'dotnetcore', 'ruby']),
-    version=dict(type='str', required=True)
+    version=dict(type='str', required=True),
+    settings=dict(type='dict', options=framework_settings_spec)
 )
-
 
 def _normalize_sku(sku):
     if sku is None:
@@ -498,7 +503,7 @@ class AzureRMWebApps(AzureRMModuleBase):
         old_response = self.get_webapp()
 
         if old_response:
-            self.results['id']['azure_webapp'] = old_response['id']
+            self.results['id'] = old_response['id']
 
         if self.state == 'present':
             if not self.plan and not old_response:
@@ -538,9 +543,9 @@ class AzureRMWebApps(AzureRMModuleBase):
                             self.site_config[fx.get('name') + '_version'] = fx.get('version')
 
                 for fx in self.frameworks:
-                    if 'settings' in fx:
-                        for setting in fx['settings']:
-                            self.site_config[setting['name']] = setting['value']
+                    if 'settings' in fx and fx['settings'] is not None:
+                        for key, value in fx['settings'].items():
+                            self.site_config[key] = value
 
             if not self.app_settings:
                 self.app_settings = dict()
