@@ -212,10 +212,10 @@ def main():
                     break
                 conditionals.remove(item)
 
-            if not conditionals:
-                break
+        if not conditionals:
+            break
 
-            time.sleep(interval)
+        time.sleep(interval)
 
     if conditionals:
         failed_conditions = [item.raw for item in conditionals]
