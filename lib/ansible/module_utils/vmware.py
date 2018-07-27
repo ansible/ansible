@@ -90,7 +90,7 @@ def find_obj(content, vimtype, name, first=True):
     # Select the first match
     if first is True:
         for obj in obj_list:
-            if obj.name == name:
+            if to_text(obj.name) == to_text(name):
                 return obj
 
         # If no object found, return None
