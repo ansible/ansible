@@ -440,8 +440,6 @@ task will fail if the command has not returned.
 
 For local connection type:
 
-For example:
-
 .. FIXME: Detail error here
 
 Suggestions to resolve:
@@ -455,8 +453,6 @@ Suggestions to resolve:
         timeout: 30
 
 For network_cli, netconf connection type (applicable from 2.7 onwards):
-
-For example:
 
 .. FIXME: Detail error here
 
