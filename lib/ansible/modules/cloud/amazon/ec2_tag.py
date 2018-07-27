@@ -223,7 +223,7 @@ def main():
         newdict = dict(tagdict)
         for key, value in dictadd.iteritems():
             newdict[key] = value
-        for key in dictremove.iterkeys():
+        for key in dictremove.keys():
             newdict.pop(key, None)
         result['diff'] = {
             'before': "\n".join(["%s: %s" % (key, value) for key, value in tagdict.iteritems()]) + "\n",
