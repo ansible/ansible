@@ -39,12 +39,12 @@ options:
     sku:
         description:
             - The pricing tiers, e.g., F1, D1, B1, B2, B3, S1, P1, P1V2 etc.
-            - Please see https://azure.microsoft.com/en-us/pricing/details/app-service/plans/ for more detail.
-            - For linux app service plan, please see https://azure.microsoft.com/en-us/pricing/details/app-service/linux/ for more detail.
+            - Please see U(https://azure.microsoft.com/en-us/pricing/details/app-service/plans/) for more detail.
+            - For linux app service plan, please see U(https://azure.microsoft.com/en-us/pricing/details/app-service/linux/) for more detail.
 
     is_linux:
         description:
-            - Descirbe whether to host webapp on Linux worker.
+            - Describe whether to host webapp on Linux worker.
         type: bool
         default: false
 
@@ -73,25 +73,25 @@ author:
 EXAMPLES = '''
     - name: Create a windows app service plan
       azure_rm_appserviceplan:
-        name: "{{ win_plan_name }}1"
-        resource_group: "{{ plan_resource_group }}"
-        location: "{{ location }}"
+        name: "windowsplan1"
+        resource_group: "appserviceplan_rg"
+        location: "eastus"
         sku: S1
 
     - name: Create a linux app service plan
       azure_rm_appserviceplan:
-        resource_group: "{{ linux_plan_resource_group }}"
-        name: "{{ linux_plan_name }}1"
-        location: "{{ location }}"
+        resource_group: "appserviceplan_rg"
+        name: "linuxplan1"
+        location: "eastus"
         sku: S1
         is_linux: true
         number_of_workers: 1
 
     - name: update sku of existing windows app service plan
       azure_rm_appserviceplan:
-        name: "{{ win_plan_name }}1"
-        resource_group: "{{ plan_resource_group }}"
-        location: "{{ location }}"
+        name: "windowsplan2"
+        resource_group: "appserviceplan_rg"
+        location: "eastus"
         sku: S2
 '''
 
@@ -101,31 +101,7 @@ azure_appserviceplan:
     returned: always
     type: dict
     sample: {
-            "app_service_plan_name": "win_appplan11",
-            "geo_region": "East US",
-            "id": "/subscriptions/<subs_id>/resourceGroups/ansiblewebapp1_plan/providers/Microsoft.Web/serverfarms/win_appplan11",
-            "kind": "app",
-            "location": "East US",
-            "maximum_number_of_workers": 10,
-            "name": "win_appplan11",
-            "number_of_sites": 0,
-            "per_site_scaling": false,
-            "provisioning_state": "Succeeded",
-            "reserved": false,
-            "resource_group": "ansiblewebapp1_plan",
-            "sku": {
-                "capacity": 1,
-                "family": "S",
-                "name": "S1",
-                "size": "S1",
-                "tier": "Standard"
-            },
-            "status": "Ready",
-            "subscription": "xxxxxxxx-xxxx-xxxx-xxxxxxxxxxxxxxxxx",
-            "tags": {},
-            "target_worker_count": 0,
-            "target_worker_size_id": 0,
-            "type": "Microsoft.Web/serverfarms"
+            "id": "/subscriptions/<subs_id>/resourceGroups/ansiblewebapp1_plan/providers/Microsoft.Web/serverfarms/win_appplan11"
     }
 '''
 
@@ -276,10 +252,10 @@ class AzureRMAppServicePlans(AzureRMModuleBase):
                     to_be_updated = True
 
                 if self.is_linux and self.is_linux != old_response['reserved']:
-                    self.fail("Operation not allowed: cannot update is_linux of app service plan.")
+                    self.fail("Operation not allowed: cannot update reserved of app service plan.")
 
         if old_response:
-            self.results['ansible_facts']['azure_appserviceplan'] = old_response
+            self.results['id'] = old_response['id']
 
         if to_be_updated:
             self.log('Need to Create/Update app service plan')
@@ -289,7 +265,7 @@ class AzureRMAppServicePlans(AzureRMModuleBase):
                 return self.results
 
             response = self.create_or_update_plan()
-            self.results['ansible_facts']['azure_appserviceplan'] = response
+            self.results['id'] = response['id']
 
         if self.state == 'absent' and old_response:
             self.log("Delete app service plan")
