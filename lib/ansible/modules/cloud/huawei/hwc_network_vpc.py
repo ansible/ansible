@@ -31,11 +31,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: hw_network_vpc
+module: hwc_network_vpc
 description:
     - Represents an vpc resource.
 short_description: Creates a Huawei Cloud VPC
-version_added: 2.6.2
+version_added: 2.7
 author: Huawei Inc. (@huaweicloud)
 requirements:
     - python >= 2.6
@@ -60,7 +60,7 @@ extends_documentation_fragment: hwc
 
 EXAMPLES = '''
 - name: create a vpc
-  hw_network_vpc:
+  hwc_network_vpc:
       identity_endpoint: "{{ identity_endpoint }}"
       user_name: "{{ user_name }}"
       password: "{{ password }}"
