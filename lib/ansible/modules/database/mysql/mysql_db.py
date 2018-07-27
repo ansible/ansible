@@ -316,6 +316,7 @@ def main():
     else:
         if db == 'all':
             module.fail_json(msg="name is not allowed to equal 'all' unless state equals import, or dump.")
+        all_databases = False
     try:
         cursor = mysql_connect(module, login_user, login_password, config_file, ssl_cert, ssl_key, ssl_ca,
                                connect_timeout=connect_timeout)
@@ -373,7 +374,7 @@ def main():
             module.exit_json(changed=False, db=db)
 
     else:
-        if state == "present":
+        if state == "present" and target is None:
             if module.check_mode:
                 changed = True
             else:
@@ -384,7 +385,7 @@ def main():
                                      exception=traceback.format_exc())
             module.exit_json(changed=changed, db=db)
 
-        elif state == "import":
+        elif state == "import" or (state == "present" and target is not None):
             if module.check_mode:
                 module.exit_json(changed=True, db=db)
             else:
