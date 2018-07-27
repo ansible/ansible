@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Ansible module to manage PaloAltoNetworks Firewall
-# (c) 2016, techbizdev <techbizdev@paloaltonetworks.com>
+# (c) 2018, Jasper Mackenzie <jasper.mackenzie@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -34,7 +34,7 @@ description:
       - returns "<request cmd="set" obj="/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system" cookie=XXXX><timezone>Australia/Melbourne</timezone></request>
       - The `xpath` is  "/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system"
       - The `element` is "<timezone>Australia/Melbourne</timezone>"
-author: "Jasper Aorangi (@spmp)"
+author: "Jasper Mackenzie"
 version_added: "2.7"
 requirements:
     - pan-python
