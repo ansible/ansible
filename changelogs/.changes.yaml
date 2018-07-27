@@ -345,3 +345,49 @@ releases:
     - win_group_membership-sid-bugfix.yml
     - wrcwd_ansible.cfg.yml
     release_date: '2018-07-05'
+  2.6.2:
+    codename: Heartbreaker
+    fragments:
+    - 40839-docker_container_init.yml
+    - 42042-inventory_with_no_region.yaml
+    - 42647-win_updates.yaml
+    - clarify_error_message.yml
+    - doc_fix.yml
+    - docfix.yml
+    - docker-default-ssl.yml
+    - empty_gh_error.yaml
+    - ensure_text_source.yaml
+    - eos_l2_interface_fix.yaml
+    - fix_fact_clean.yaml
+    - fix_ios_vlan.yaml
+    - fix_pagination_cloudfront_facts.yml
+    - fix_sysvinit_typo.yml
+    - fix_tls_mail.yaml
+    - inventory_dir_ext_compare_fix.yaml
+    - ios_l2_interface-fix.yml
+    - junos_facts_fix.yaml
+    - lineinfile-empty-regexp.yml
+    - nxos_CI_failures_fix.yaml
+    - nxos_cliconf.yaml
+    - nxos_facts.yaml
+    - nxos_module_utils_nxapi_get_capabilities.yaml
+    - nxos_nxapi_default_http_behavior_fix.yaml
+    - nxos_vxlan_vtep_vni_fix.yaml
+    - openvswitch_db_make_key_optional.yaml
+    - pause-stdout-redirection.yaml
+    - pause-try-except-curses.yaml
+    - preserve_delegate_nolog.yml
+    - remote_tmp_de-escalated_user.yaml
+    - sysvinit_bugxif.yml
+    - user-freebsd-createhome-name-fix.yaml
+    - user_freebsd_always_changed_bugfix.yaml
+    - v2.6.2_summary.yaml
+    - vmware_remove_vm_sceanrio.yaml
+    - vultr-parameters-parsing.yaml
+    - vyos_command_retry.yml
+    - win_chocoalatey_install_tls12.yml
+    - win_reboot-fixes.yml
+    - win_security_policy-empty-value.yaml
+    - win_unzip_share-discard-cmdlet-output.yaml
+    - win_user-validate-fixes.yaml
+    release_date: '2018-07-27'

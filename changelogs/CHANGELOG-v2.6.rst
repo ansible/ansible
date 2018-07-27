@@ -2,6 +2,71 @@
 Ansible 2.6 "Heartbreaker" Release Notes
 ========================================
 
+v2.6.2
+======
+
+Release Summary
+---------------
+
+| Release Date: 2018-07-27
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`_
+
+
+Minor Changes
+-------------
+
+- Sceanrio guide for removing an existing virtual machine is added.
+- lineinfile - add warning when using an empty regexp (https://github.com/ansible/ansible/issues/29443)
+
+Bugfixes
+--------
+
+- Add text output along with structured output in nxos_facts (https://github.com/ansible/ansible/pull/42886).
+- Allow more than one page of results by using the right pagination indicator ('NextMarker' instead of 'NextToken').
+- Fix an atomic_move error that is 'true', but  misleading. Now we show all 3 files involved and clarify what happened.
+- Fix eos_l2_interface eapi (https://github.com/ansible/ansible/pull/42270).
+- Fix fetching old style facts in junos_facts module (https://github.com/ansible/ansible/pull/42351)
+- Fix get_device_info nxos zero or more whitespace regex (https://github.com/ansible/ansible/pull/43178).
+- Fix nxos CI failures (https://github.com/ansible/ansible/pull/42240).
+- Fix nxos_nxapi default http behavior (https://github.com/ansible/ansible/pull/41817).
+- Fix nxos_vxlan_vtep_vni (https://github.com/ansible/ansible/pull/42240).
+- Fix regex network_os_platform nxos (https://github.com/ansible/ansible/pull/42288).
+- Refactor nxos cliconf get_device_info for non structured output supported devices (https://github.com/ansible/ansible/pull/42089).
+- To fix the NoneType error raised in ios_l2_interface when Access Mode VLAN is unassigned (https://github.com/ansible/ansible/pull/42312)
+- emtpy host/group name is an error https://github.com/ansible/ansible/issues/42044
+- fix default SSL version for docker modules https://github.com/ansible/ansible/issues/42897
+- fix mail module when using starttls https://github.com/ansible/ansible/issues/42338
+- fix nmap config example https://github.com/ansible/ansible/pull/42925
+- fix ps detection of service https://github.com/ansible/ansible/pull/43014
+- fix the remote tmp folder permissions issue when becoming a non admin user - https://github.com/ansible/ansible/issues/41340, https://github.com/ansible/ansible/issues/42117
+- fix typoe in sysvinit that breaks update.rc-d detection https://github.com/ansible/ansible/issues/42734
+- fixes docker_container compatibilty with docker-py < 2.2
+- get_capabilities in nxapi module_utils should not return empty dictionary (https://github.com/ansible/ansible/pull/42688).
+- inventory - When using an inventory directory, ensure extension comparison uses text types (https://github.com/ansible/ansible/pull/42475)
+- ios_vlan - fix unable to identify correct vlans issue (https://github.com/ansible/ansible/pull/42247)
+- nxos_facts warning message improved (https://github.com/ansible/ansible/pull/42969).
+- openvswitch_db - make 'key' argument optional https://github.com/ansible/ansible/issues/42108
+- pause - do not set stdout to raw mode when redirecting to a file (https://github.com/ansible/ansible/issues/41717)
+- pause - nest try except when importing curses to gracefully fail if curses is not present (https://github.com/ansible/ansible/issues/42004)
+- plugins/inventory/openstack.py - Do not create group with empty name if region is not set
+- preseve delegation info on nolog https://github.com/ansible/ansible/issues/42344
+- remove ambiguity when it comes to 'the source'
+- remove dupes from var precedence
+- restores filtering out conflicting facts https://github.com/ansible/ansible/issues/41684
+- user - fix bug that resulted in module always reporting a change when specifiying the home directory on FreeBSD (https://github.com/ansible/ansible/issues/42484)
+- user - use correct attribute name in FreeBSD for creat_home (https://github.com/ansible/ansible/pull/42711)
+- vultr - Do not fail trying to load configuration from ini files if required variables have been set as environment variables.
+- vyos_command correcting conditionals looping (https://github.com/ansible/ansible/pull/43331).
+- win_chocolatey - enable TLSv1.2 support when downloading the Chocolatey installer https://github.com/ansible/ansible/issues/41906
+- win_reboot - fix for handling an already scheduled reboot and other minor log formatting issues
+- win_reboot - fix issue when overridding connection timeout hung the post reboot uptime check - https://github.com/ansible/ansible/issues/42185 https://github.com/ansible/ansible/issues/42294
+- win_reboot - handle post reboots when running test_command - https://github.com/ansible/ansible/issues/41713
+- win_security_policy - allows an empty string to reset a policy value https://github.com/ansible/ansible/issues/40869
+- win_share - discard any cmdlet output we don't use to ensure only the return json is received by Ansible
+- win_unzip - discard any cmdlet output we don't use to ensure only the return json is received by Ansible
+- win_updates - fixed module return value is lost in error in some cases (https://github.com/ansible/ansible/pull/42647)
+- win_user - Use LogonUser to validate the password as it does not rely on SMB/RPC to be available https://github.com/ansible/ansible/issues/24884
+
 v2.6.1
 ======
 
