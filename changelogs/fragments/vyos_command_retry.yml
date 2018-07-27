@@ -1,0 +1,2 @@
+bugfixes:
+- vyos_command correcting conditionals looping (https://github.com/ansible/ansible/pull/43331).
