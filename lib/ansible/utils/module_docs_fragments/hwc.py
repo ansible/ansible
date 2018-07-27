@@ -38,12 +38,15 @@ options:
             create:
                 description:
                     - The timeouts for create operation.
+                default: '10m'
             update:
                 description:
                     - The timeouts for update operation.
+                default: '10m'
             delete:
                 description:
                     - The timeouts for delete operation.
+                default: '10m'
     id:
         description:
             - The id of resource to be managed.

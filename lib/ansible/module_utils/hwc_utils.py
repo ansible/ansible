@@ -180,7 +180,7 @@ class HwcModule(AnsibleModule):
             dict(
                 identity_endpoint=dict(required=True, type='str'),
                 user_name=dict(required=True, type='str'),
-                password=dict(required=True, type='str'),
+                password=dict(required=True, type='str', no_log=True),
                 domain_name=dict(required=True, type='str'),
                 project_name=dict(required=True, type='str'),
                 region=dict(required=True, type='str'),
