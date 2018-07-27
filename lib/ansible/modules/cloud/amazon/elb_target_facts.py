@@ -12,7 +12,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import HAS_BOTO3
+from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict
 
 
 ANSIBLE_METADATA = {"metadata_version": "1.1",
@@ -192,10 +192,14 @@ ec2_tgs:
 
 class Target:
     """Models a target in a target group"""
-    def __init__(self, target_id, port, az):
+    def __init__(self, target_id, port, az, raw_target_health):
         self.target_port = port
         self.target_id = target_id
         self.target_az = az
+        self.target_health = self.convert_target_health(raw_target_health)
+
+    def convert_target_health(self, raw_target_health):
+        return camel_dict_to_snake_dict(raw_target_health)
 
 
 class TargetGroup:
@@ -208,12 +212,15 @@ class TargetGroup:
         self.tg_type = kwargs["tg_type"]
         if self.tg_type != self.ip and self.tg_type != self.instance:
             raise Exception("Unsupported target group type %s" % self.tg_type)
-        self.arn = kwargs["arn"]
+        self.target_group_arn = kwargs["target_group_arn"]
         # the relevant targets associated with this group
         self.targets = []
 
-    def add_target(self, target_id, target_port, target_az):
-        self.targets.append(Target(target_id, target_port, target_az))
+    def add_target(self, target_id, target_port, target_az, raw_target_health):
+        self.targets.append(Target(target_id,
+                                   target_port,
+                                   target_az,
+                                   raw_target_health))
 
     def to_dict(self):
         object_dict = self.__dict__
@@ -274,6 +281,7 @@ class TargetFactsGatherer:
 
         return list(ips)
 
+    # TODO refactor for simplicity
     def _get_target_groups(self):
         # do this first since we need the IPs later on in this function
         self.instance_ips = self._get_instance_ips()
@@ -299,15 +307,15 @@ class TargetFactsGatherer:
         target_groups = []
         while True:
             for each_tg in tg_response["TargetGroups"]:
-                if not self.get_unused_target_groups:
+                if not self.get_unused_target_groups and \
+                        len(each_tg["LoadBalancerArns"]) < 1:
                     # only collect target groups that actually are connected
                     # to LBs
-                    if len(each_tg["LoadBalancerArns"]) == 0:
-                        next
+                    continue
 
                 target_groups.append(
-                    TargetGroup(arn=each_tg["TargetGroupArn"],
-                                tg_type=each_tg["TargetType"]
+                    TargetGroup(target_group_arn=each_tg["TargetGroupArn"],
+                                tg_type=each_tg["TargetType"],
                                 )
                 )
             if "NextMarker" in tg_response:
@@ -330,13 +338,14 @@ class TargetFactsGatherer:
         for tg in target_groups:
             try:
                 # get the list of targets for that target group
-                # TODO retry descriptor
-                response = elbv2.describe_target_health(TargetGroupArn=tg.arn)
+                response = elbv2.describe_target_health(
+                              TargetGroupArn=tg.target_group_arn
+                            )
             except (BotoCoreError, ClientError) as e:
                 self.module.fail_json_aws(e,
                                           msg="Could not describe target " +
                                               "health for target group %s" %
-                                              tg.arn
+                                              tg.target_group_arn
                                           )
 
             for t in response["TargetHealthDescriptions"]:
@@ -355,9 +364,11 @@ class TargetFactsGatherer:
                         if "AvailabilityZone" in t["Target"] \
                         else None
 
+                    # TODO add health info
                     tg.add_target(t["Target"]["Id"],
                                   t["Target"]["Port"],
-                                  az)
+                                  az,
+                                  t["TargetHealth"])
                     # since tgs is a set, each target group will be added only
                     # once, even though we call add on each successful match
                     tgs.add(tg)
@@ -366,9 +377,9 @@ class TargetFactsGatherer:
 
 def main():
     argument_spec = dict(
-        instance_id={"required": True, type: "str"},
+        instance_id={"required": True, "type": "str"},
         get_unused_target_groups={"required": False,
-                                  "default": True, type: "str"}
+                                  "default": True, "type": "bool"}
     )
 
     module = AnsibleAWSModule(
