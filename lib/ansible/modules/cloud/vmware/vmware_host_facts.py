@@ -1,7 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # Copyright: (c) 2017, Wei Gao <gaowei3@qq.com>
 # Copyright: (c) 2018, Ansible Project
+#
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -21,6 +23,7 @@ description:
     - This module can be used to gathers facts like CPU, memory, datastore, network and system etc. about ESXi host system.
     - Please specify hostname or IP address of ESXi host system as C(hostname).
     - If hostname or IP address of vCenter is provided as C(hostname), then information about first ESXi hostsystem is returned.
+    - VSAN facts added in 2.7 version.
 version_added: 2.5
 author:
     - Wei Gao (@woshihaoren)
@@ -38,6 +41,16 @@ EXAMPLES = '''
     password: password
   register: host_facts
   delegate_to: localhost
+
+- name: Get VSAN Cluster UUID from host facts
+  vmware_host_facts:
+    hostname: esxi_ip_or_hostname
+    username: username
+    password: password
+  register: host_facts
+
+- set_fact:
+    cluster_uuid: "{{ host_facts['ansible_facts']['vsan_cluster_uuid'] }}"
 '''
 
 RETURN = '''
@@ -84,7 +97,10 @@ ansible_facts:
             },
             "macaddress": "52:54:00:56:7d:59",
             "mtu": 1500
-        }
+        },
+        "vsan_cluster_uuid": null,
+        "vsan_node_uuid": null,
+        "vsan_health": "unknown",
     }
 '''
 
@@ -111,7 +127,24 @@ class VMwareHostFactManager(PyVmomi):
         ansible_facts.update(self.get_datastore_facts())
         ansible_facts.update(self.get_network_facts())
         ansible_facts.update(self.get_system_facts())
+        ansible_facts.update(self.get_vsan_facts())
         self.module.exit_json(changed=False, ansible_facts=ansible_facts)
+
+    def get_vsan_facts(self):
+        config_mgr = self.host.configManager.vsanSystem
+        if config_mgr is None:
+            return {
+                'vsan_cluster_uuid': None,
+                'vsan_node_uuid': None,
+                'vsan_health': "unknown",
+            }
+
+        status = config_mgr.QueryHostStatus()
+        return {
+            'vsan_cluster_uuid': status.uuid,
+            'vsan_node_uuid': status.nodeUuid,
+            'vsan_health': status.health,
+        }
 
     def get_cpu_facts(self):
         return {
