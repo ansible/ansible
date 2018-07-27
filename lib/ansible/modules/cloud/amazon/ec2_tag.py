@@ -124,13 +124,14 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import connect_to_aws, ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3, ansible_dict_to_boto3_filter_list
 from ansible.module_utils._text import to_native
 
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         resource=dict(required=True),
         tags=dict(type='dict'),
         state=dict(default='present', choices=['present', 'absent', 'list']),
-        max_attempts=dict(type='int',required=False, default=5),
+        max_attempts=dict(type='int', required=False, default=5),
     )
     )
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
@@ -144,16 +145,16 @@ def main():
     max_attempts = module.params.get('max_attempts')
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    
+
     if aws_connect_params.get('config'):
-      config = aws_connect_params.get('config')
-      config.retries = {'max_attempts': max_attempts}
+        config = aws_connect_params.get('config')
+        config.retries = {'max_attempts': max_attempts}
     else:
-      config = botocore.config.Config(
-        retries={'max_attempts': max_attempts},
-      )
-      aws_connect_params['config'] = config
-    
+        config = botocore.config.Config(
+            retries={'max_attempts': max_attempts},
+        )
+        aws_connect_params['config'] = config
+
     if region:
         try:
             ec2 = boto3_conn(
@@ -180,7 +181,7 @@ def main():
     baddict = {}
     tagdict = {}
     result = {}
-    
+
     for tag in gettags:
         tagdict[tag["Key"]] = tag["Value"]
 
@@ -194,7 +195,7 @@ def main():
                 if (key, value) not in set(tagdict.items()):
                     dictadd[key] = value
         if not module.check_mode:
-            ec2.create_tags(Resources=[resource], Tags=[{"Key": k, "Value": v} for k,v in dictadd.iteritems()])
+            ec2.create_tags(Resources=[resource], Tags=[{"Key": k, "Value": v} for k, v in dictadd.iteritems()])
         result["changed"] = True
         result["msg"] = "Tags %s created for resource %s." % (dictadd, resource)
 
@@ -210,25 +211,26 @@ def main():
             if (key, value) in set(tagdict.items()):
                 dictremove[key] = value
         if not module.check_mode:
-            ec2.delete_tags(Resources=[resource], Tags=[{"Key": k, "Value": v} for k,v in dictremove.iteritems()])
+            ec2.delete_tags(Resources=[resource], Tags=[{"Key": k, "Value": v} for k, v in dictremove.iteritems()])
         result["changed"] = True
         result["msg"] = "Tags %s removed for resource %s." % (dictremove, resource)
 
     elif state == 'list':
         result["changed"] = False
         result["tags"] = tagdict
-    
+
     if module._diff:
-      newdict = dict(tagdict)
-      for key, value in dictadd.iteritems():
-        newdict[key] = value
-      for key in dictremove.iterkeys():
-        newdict.pop(key, None)
-      result['diff'] = {
-        'before': "\n".join(["%s: %s" % (key, value) for key, value in tagdict.iteritems()]) + "\n",
-        'after':  "\n".join(["%s: %s" % (key, value) for key, value in newdict.iteritems()]) + "\n"
-      }
+        newdict = dict(tagdict)
+        for key, value in dictadd.iteritems():
+            newdict[key] = value
+        for key in dictremove.iterkeys():
+            newdict.pop(key, None)
+        result['diff'] = {
+            'before': "\n".join(["%s: %s" % (key, value) for key, value in tagdict.iteritems()]) + "\n",
+            'after': "\n".join(["%s: %s" % (key, value) for key, value in newdict.iteritems()]) + "\n"
+        }
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
