@@ -194,7 +194,8 @@ namespace Ansible.PrivilegeUtil
 
         public static Dictionary<string, bool?> SetTokenPrivileges(SafeHandle token, Dictionary<string, bool?> state)
         {
-            List<NativeHelpers.LUID_AND_ATTRIBUTES> privilegeAttr = new List<NativeHelpers.LUID_AND_ATTRIBUTES>();
+            NativeHelpers.LUID_AND_ATTRIBUTES[] privilegeAttr = new NativeHelpers.LUID_AND_ATTRIBUTES[state.Count];
+            int i = 0;
 
             foreach (KeyValuePair<string, bool?> entry in state)
             {
@@ -216,21 +217,18 @@ namespace Ansible.PrivilegeUtil
                         break;
                 }
 
-                privilegeAttr.Add(new NativeHelpers.LUID_AND_ATTRIBUTES()
-                {
-                    Luid = luid,
-                    Attributes = attributes,
-                });
+                privilegeAttr[i].Luid = luid;
+                privilegeAttr[i].Attributes = attributes;
+                i++;
             }
 
             return AdjustTokenPrivileges(token, privilegeAttr);
         }
 
-        private static Dictionary<string, bool?> AdjustTokenPrivileges(SafeHandle token, List<NativeHelpers.LUID_AND_ATTRIBUTES> newState)
+        private static Dictionary<string, bool?> AdjustTokenPrivileges(SafeHandle token, NativeHelpers.LUID_AND_ATTRIBUTES[] newState)
         {
             bool disableAllPrivileges;
             IntPtr newStatePtr;
-            NativeHelpers.TOKEN_PRIVILEGES oldState;
             NativeHelpers.LUID_AND_ATTRIBUTES[] oldStatePrivileges;
             UInt32 returnLength;
 
@@ -244,24 +242,28 @@ namespace Ansible.PrivilegeUtil
                 disableAllPrivileges = false;
 
                 // Need to manually marshal the bytes requires for newState as the constant size
-                // of LUID_AND_ATTRIBUTES is set to 1 and can't be overridden at runtime
-                int luidAttrSize = Marshal.SizeOf(typeof(NativeHelpers.LUID_AND_ATTRIBUTES)) * newState.Count;
-                int totalSize = luidAttrSize + sizeof(UInt32);
-
+                // of LUID_AND_ATTRIBUTES is set to 1 and can't be overridden at runtime, TOKEN_PRIVILEGES
+                // always contains at least 1 entry so we need to calculate the extra size if there are
+                // nore than 1 LUID_AND_ATTRIBUTES entry
+                int tokenPrivilegesSize = Marshal.SizeOf(typeof(NativeHelpers.TOKEN_PRIVILEGES));
+                int luidAttrSize = 0;
+                if (newState.Length > 1)
+                    luidAttrSize = Marshal.SizeOf(typeof(NativeHelpers.LUID_AND_ATTRIBUTES)) * (newState.Length - 1);
+                int totalSize = tokenPrivilegesSize + luidAttrSize;
                 byte[] newStateBytes = new byte[totalSize];
 
                 // get the first entry that includes the struct details
                 NativeHelpers.TOKEN_PRIVILEGES tokenPrivileges = new NativeHelpers.TOKEN_PRIVILEGES()
                 {
-                    PrivilegeCount = (UInt32)newState.Count,
+                    PrivilegeCount = (UInt32)newState.Length,
                     Privileges = new NativeHelpers.LUID_AND_ATTRIBUTES[1],
                 };
-                if (newState.Count > 0)
+                if (newState.Length > 0)
                     tokenPrivileges.Privileges[0] = newState[0];
                 int offset = StructureToBytes(tokenPrivileges, newStateBytes, 0);
 
                 // copy the remaining LUID_AND_ATTRIBUTES (if any)
-                for (int i = 1; i < newState.Count; i++)
+                for (int i = 1; i < newState.Length; i++)
                     offset += StructureToBytes(newState[i], newStateBytes, offset);
 
                 // finally create the pointer to the byte array we just created
@@ -269,42 +271,52 @@ namespace Ansible.PrivilegeUtil
                 Marshal.Copy(newStateBytes, 0, newStatePtr, newStateBytes.Length);
             }
 
-            IntPtr hToken = IntPtr.Zero;
-            if (!NativeMethods.OpenProcessToken(token, TokenAccessLevels.Query | TokenAccessLevels.AdjustPrivileges, out hToken))
-                throw new Win32Exception("OpenProcessToken() failed with Query and AdjustPrivileges");
             try
             {
-                IntPtr oldStatePtr = Marshal.AllocHGlobal(0);
-                if (!NativeMethods.AdjustTokenPrivileges(hToken, disableAllPrivileges, newStatePtr, 0, oldStatePtr, out returnLength))
-                {
-                    int errCode = Marshal.GetLastWin32Error();
-                    if (errCode != 122) // ERROR_INSUFFICIENT_BUFFER
-                        throw new Win32Exception(errCode, "AdjustTokenPrivileges() failed to get old state size");
-                }
-
-                // resize the oldStatePtr based on the length returned from Windows
-                Marshal.FreeHGlobal(oldStatePtr);
-                oldStatePtr = Marshal.AllocHGlobal((int)returnLength);
+                IntPtr hToken = IntPtr.Zero;
+                if (!NativeMethods.OpenProcessToken(token, TokenAccessLevels.Query | TokenAccessLevels.AdjustPrivileges, out hToken))
+                    throw new Win32Exception("OpenProcessToken() failed with Query and AdjustPrivileges");
                 try
                 {
-                    if (!NativeMethods.AdjustTokenPrivileges(hToken, disableAllPrivileges, newStatePtr, returnLength, oldStatePtr, out returnLength))
-                        throw new Win32Exception("AdjustTokenPrivileges() failed");
+                    IntPtr oldStatePtr = Marshal.AllocHGlobal(0);
+                    if (!NativeMethods.AdjustTokenPrivileges(hToken, disableAllPrivileges, newStatePtr, 0, oldStatePtr, out returnLength))
+                    {
+                        int errCode = Marshal.GetLastWin32Error();
+                        if (errCode != 122) // ERROR_INSUFFICIENT_BUFFER
+                            throw new Win32Exception(errCode, "AdjustTokenPrivileges() failed to get old state size");
+                    }
 
-                    // Marshal the oldStatePtr to the struct
-                    oldState = (NativeHelpers.TOKEN_PRIVILEGES)Marshal.PtrToStructure(oldStatePtr, typeof(NativeHelpers.TOKEN_PRIVILEGES));
-                    oldStatePrivileges = new NativeHelpers.LUID_AND_ATTRIBUTES[oldState.PrivilegeCount];
-                    PtrToStructureArray(oldStatePrivileges, oldStatePtr.ToInt64() + Marshal.SizeOf(oldState.PrivilegeCount));
+                    // resize the oldStatePtr based on the length returned from Windows
+                    Marshal.FreeHGlobal(oldStatePtr);
+                    oldStatePtr = Marshal.AllocHGlobal((int)returnLength);
+                    try
+                    {
+                        bool res = NativeMethods.AdjustTokenPrivileges(hToken, disableAllPrivileges, newStatePtr, returnLength, oldStatePtr, out returnLength);
+                        int errCode = Marshal.GetLastWin32Error();
+
+                        // even when res == true, ERROR_NOT_ALL_ASSIGNED may be set as the last error code
+                        if (!res || errCode != 0)
+                            throw new Win32Exception(errCode, "AdjustTokenPrivileges() failed");
+
+                        // Marshal the oldStatePtr to the struct
+                        NativeHelpers.TOKEN_PRIVILEGES oldState = (NativeHelpers.TOKEN_PRIVILEGES)Marshal.PtrToStructure(oldStatePtr, typeof(NativeHelpers.TOKEN_PRIVILEGES));
+                        oldStatePrivileges = new NativeHelpers.LUID_AND_ATTRIBUTES[oldState.PrivilegeCount];
+                        PtrToStructureArray(oldStatePrivileges, oldStatePtr.ToInt64() + Marshal.SizeOf(oldState.PrivilegeCount));
+                    }
+                    finally
+                    {
+                        Marshal.FreeHGlobal(oldStatePtr);
+                    }
                 }
                 finally
                 {
-                    Marshal.FreeHGlobal(oldStatePtr);
+                    NativeMethods.CloseHandle(hToken);
                 }
             }
             finally
             {
                 if (newStatePtr != IntPtr.Zero)
                     Marshal.FreeHGlobal(newStatePtr);
-                NativeMethods.CloseHandle(hToken);
             }
 
             return oldStatePrivileges.ToDictionary(p => GetPrivilegeName(p.Luid), p => (bool?)p.Attributes.HasFlag(PrivilegeAttributes.Enabled));
@@ -365,14 +377,14 @@ Function Import-PrivilegeUtil {
 
     [Ansible.PrivilegeUtil.Privileges]::CheckPrivilegeName($name)
     [Ansible.PrivilegeUtil.Privileges]::DisablePrivilege($process, $name)
-    [Ansible.PrivilegeUtil.Privielges]::DisableAllPrivileges($process)
+    [Ansible.PrivilegeUtil.Privileges]::DisableAllPrivileges($process)
     [Ansible.PrivilegeUtil.Privileges]::EnablePrivilege($process, $name)
     [Ansible.PrivilegeUtil.Privileges]::GetAllPrivilegeInfo($process)
     [Ansible.PrivilegeUtil.Privileges]::RemovePrivilege($process, $name)
     [Ansible.PrivilegeUtil.Privileges]::SetTokenPrivileges($process, $new_state)
 
     Here is a brief explanation of each type of arg
-    $process = The process handle to manipulate, use '[Ansible.PrivilegeUtils.Privileges]::GetCurrentProcess() to get the current process handle
+    $process = The process handle to manipulate, use '[Ansible.PrivilegeUtils.Privileges]::GetCurrentProcess()' to get the current process handle
     $name = The name of the privilege, this is the constant value from https://docs.microsoft.com/en-us/windows/desktop/SecAuthZ/privilege-constants, e.g. SeAuditPrivilege
     $new_state = 'System.Collections.Generic.Dictionary`2[[System.String], [System.Nullable`1[System.Boolean]]]'
         The key is the constant name as a string, the value is a ternary boolean where
