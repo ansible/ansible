@@ -125,7 +125,7 @@ EXAMPLES = '''
     server_url: http://127.0.0.1
     template_name: Test Template
     template_json:
-        zabbix_export:
+      zabbix_export:
         version: '3.2'
         templates:
           - name: Template for Testing
