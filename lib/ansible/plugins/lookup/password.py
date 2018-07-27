@@ -246,7 +246,7 @@ def _format_content(password, salt, encrypt=None):
     .. warning:: Passwords are saved in clear.  This is because the playbooks
         expect to get cleartext passwords from this lookup.
     """
-    if encrypt is None and not salt:
+    if not encrypt and not salt:
         return password
 
     # At this point, the calling code should have assured us that there is a salt value.
@@ -286,7 +286,7 @@ class LookupModule(LookupBase):
             else:
                 plaintext_password, salt = _parse_content(content)
 
-            if params['encrypt'] is not None and not salt:
+            if params['encrypt'] and not salt:
                 changed = True
                 salt = _random_salt()
 
@@ -294,7 +294,7 @@ class LookupModule(LookupBase):
                 content = _format_content(plaintext_password, salt, encrypt=params['encrypt'])
                 _write_password_file(b_path, content)
 
-            if params['encrypt'] is not None:
+            if params['encrypt']:
                 password = do_encrypt(plaintext_password, params['encrypt'], salt=salt)
                 ret.append(password)
             else:
