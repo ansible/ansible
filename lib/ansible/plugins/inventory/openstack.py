@@ -258,7 +258,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         groups.append(cloud)
 
         # Create a group on region
-        groups.append(region)
+        if region:
+            groups.append(region)
 
         # And one by cloud_region
         groups.append("%s_%s" % (cloud, region))
