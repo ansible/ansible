@@ -72,17 +72,22 @@ class HttpApi(HttpApiBase):
             return responses[0]
         return responses
 
-    # Migrated from module_utils
-    def edit_config(self, command):
+    def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
         resp = list()
-        responses = self.send_request(command, output='config')
+
+        operations = self.connection.get_device_operations()
+        self.connection.check_edit_config_capabiltiy(operations, candidate, commit, replace, comment)
+        if replace:
+            candidate = 'config replace {0}'.format(replace)
+
+        responses = self.send_request(candidate, output='config')
         for response in to_list(responses):
             if response != '{}':
                 resp.append(response)
         if not resp:
             resp = ['']
 
-        return json.dumps(resp)
+        return resp
 
     def run_commands(self, commands, check_rc=True):
         """Runs list of commands on remote device and returns results
