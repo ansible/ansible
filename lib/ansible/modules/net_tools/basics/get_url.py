@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
+# Copyright: (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -213,12 +213,12 @@ backup_file:
     sample: /path/to/file.txt.2015-02-12@22:09~
 checksum_dest:
     description: sha1 checksum of the file after copy
-    returned: always
+    returned: success
     type: string
     sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
 checksum_src:
     description: sha1 checksum of the file
-    returned: always
+    returned: success
     type: string
     sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
 dest:
@@ -332,17 +332,19 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
     else:
         method = 'GET'
 
+    start = datetime.datetime.utcnow()
     rsp, info = fetch_url(module, url, use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout, headers=headers, method=method)
+    elapsed = (datetime.datetime.utcnow() - start).seconds
 
     if info['status'] == 304:
-        module.exit_json(url=url, dest=dest, changed=False, msg=info.get('msg', ''))
+        module.exit_json(url=url, dest=dest, changed=False, msg=info.get('msg', ''), elapsed=elapsed)
 
     # Exceptions in fetch_url may result in a status -1, the ensures a proper error to the user in all cases
     if info['status'] == -1:
-        module.fail_json(msg=info['msg'], url=url, dest=dest)
+        module.fail_json(msg=info['msg'], url=url, dest=dest, elapsed=elapsed)
 
     if info['status'] != 200 and not url.startswith('file:/') and not (url.startswith('ftp:/') and info.get('msg', '').startswith('OK')):
-        module.fail_json(msg="Request failed", status_code=info['status'], response=info['msg'], url=url, dest=dest)
+        module.fail_json(msg="Request failed", status_code=info['status'], response=info['msg'], url=url, dest=dest, elapsed=elapsed)
 
     # create a temporary file and copy content to do checksum-based replacement
     if tmp_dest:
@@ -350,9 +352,9 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
         tmp_dest_is_dir = os.path.isdir(tmp_dest)
         if not tmp_dest_is_dir:
             if os.path.exists(tmp_dest):
-                module.fail_json(msg="%s is a file but should be a directory." % tmp_dest)
+                module.fail_json(msg="%s is a file but should be a directory." % tmp_dest, elapsed=elapsed)
             else:
-                module.fail_json(msg="%s directory does not exist." % tmp_dest)
+                module.fail_json(msg="%s directory does not exist." % tmp_dest, elapsed=elapsed)
     else:
         tmp_dest = module.tmpdir
 
@@ -363,7 +365,7 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
         shutil.copyfileobj(rsp, f)
     except Exception as e:
         os.remove(tempname)
-        module.fail_json(msg="failed to create temporary content file: %s" % to_native(e), exception=traceback.format_exc())
+        module.fail_json(msg="failed to create temporary content file: %s" % to_native(e), elapsed=elapsed, exception=traceback.format_exc())
     f.close()
     rsp.close()
     return tempname, info
@@ -440,7 +442,7 @@ def main():
             headers = dict(item.split(':', 1) for item in module.params['headers'].split(','))
             module.deprecate('Supplying `headers` as a string is deprecated. Please use dict/hash format for `headers`', version='2.10')
         except Exception:
-            module.fail_json(msg="The string representation for the `headers` parameter requires a key:value,key:value syntax to be properly parsed.")
+            module.fail_json(msg="The string representation for the `headers` parameter requires a key:value,key:value syntax to be properly parsed.", **result)
     else:
         headers = None
 
@@ -486,10 +488,10 @@ def main():
                 module.params['path'] = dest
                 file_args = module.load_file_common_arguments(module.params)
                 file_args['path'] = dest
-                changed = module.set_fs_attributes_if_different(file_args, False)
-                if changed:
-                    module.exit_json(msg="file already exists but file attributes changed", **resul)
-                module.exit_json(msg="file already exists", dest=dest, url=url, changed=changed)
+                result['changed'] = module.set_fs_attributes_if_different(file_args, False)
+                if result['changed']:
+                    module.exit_json(msg="file already exists but file attributes changed", **result)
+                module.exit_json(msg="file already exists", **result)
 
             checksum_mismatch = True
 
@@ -566,9 +568,9 @@ def main():
                 os.remove(tmpsrc)
             module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(e)),
                              exception=traceback.format_exc(), **result)
-        changed = True
+        result['changed'] = True
     else:
-        changed = False
+        result['changed'] = False
         if os.path.exists(tmpsrc):
             os.remove(tmpsrc)
 
@@ -583,7 +585,7 @@ def main():
     module.params['path'] = dest
     file_args = module.load_file_common_arguments(module.params)
     file_args['path'] = dest
-    result['changed'] = module.set_fs_attributes_if_different(file_args, changed)
+    result['changed'] = module.set_fs_attributes_if_different(file_args, result['changed'])
 
     # Backwards compat only.  We'll return None on FIPS enabled systems
     try:

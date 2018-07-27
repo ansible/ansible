@@ -280,7 +280,7 @@ from ansible.module_utils.urls import fetch_url, url_argument_spec
 JSON_CANDIDATES = ('text', 'json', 'javascript')
 
 
-def write_file(module, url, dest, content):
+def write_file(module, url, dest, content, resp):
     # create a tempfile with some test content
     fd, tmpsrc = tempfile.mkstemp(dir=module.tmpdir)
     f = open(tmpsrc, 'wb')
@@ -289,7 +289,7 @@ def write_file(module, url, dest, content):
     except Exception as e:
         os.remove(tmpsrc)
         module.fail_json(msg="failed to create temporary content file: %s" % to_native(e),
-                         exception=traceback.format_exc())
+                         exception=traceback.format_exc(), **resp)
     f.close()
 
     checksum_src = None
@@ -298,10 +298,10 @@ def write_file(module, url, dest, content):
     # raise an error if there is no tmpsrc file
     if not os.path.exists(tmpsrc):
         os.remove(tmpsrc)
-        module.fail_json(msg="Source '%s' does not exist" % tmpsrc)
+        module.fail_json(msg="Source '%s' does not exist" % tmpsrc, **resp)
     if not os.access(tmpsrc, os.R_OK):
         os.remove(tmpsrc)
-        module.fail_json(msg="Source '%s' not readable" % tmpsrc)
+        module.fail_json(msg="Source '%s' not readable" % tmpsrc, **resp)
     checksum_src = module.sha1(tmpsrc)
 
     # check if there is no dest file
@@ -309,15 +309,15 @@ def write_file(module, url, dest, content):
         # raise an error if copy has no permission on dest
         if not os.access(dest, os.W_OK):
             os.remove(tmpsrc)
-            module.fail_json(msg="Destination '%s' not writable" % dest)
+            module.fail_json(msg="Destination '%s' not writable" % dest, **resp)
         if not os.access(dest, os.R_OK):
             os.remove(tmpsrc)
-            module.fail_json(msg="Destination '%s' not readable" % dest)
+            module.fail_json(msg="Destination '%s' not readable" % dest, **resp)
         checksum_dest = module.sha1(dest)
     else:
         if not os.access(os.path.dirname(dest), os.W_OK):
             os.remove(tmpsrc)
-            module.fail_json(msg="Destination dir '%s' not writable" % os.path.dirname(dest))
+            module.fail_json(msg="Destination dir '%s' not writable" % os.path.dirname(dest), **resp)
 
     if checksum_src != checksum_dest:
         try:
@@ -325,7 +325,7 @@ def write_file(module, url, dest, content):
         except Exception as e:
             os.remove(tmpsrc)
             module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(e)),
-                             exception=traceback.format_exc())
+                             exception=traceback.format_exc(), **resp)
 
     os.remove(tmpsrc)
 
@@ -406,7 +406,7 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout):
             })
             data = open(src, 'rb')
         except OSError:
-            module.fail_json(msg='Unable to open source file %s' % src, exception=traceback.format_exc())
+            module.fail_json(msg='Unable to open source file %s' % src, exception=traceback.format_exc(), elapsed=0)
     else:
         data = body
 
@@ -511,7 +511,7 @@ def main():
             try:
                 body = form_urlencoded(body)
             except ValueError as e:
-                module.fail_json(msg='failed to parse body as form_urlencoded: %s' % to_native(e))
+                module.fail_json(msg='failed to parse body as form_urlencoded: %s' % to_native(e), elapsed=0)
         if 'content-type' not in [header.lower() for header in dict_headers]:
             dict_headers['Content-Type'] = 'application/x-www-form-urlencoded'
 
@@ -552,7 +552,7 @@ def main():
         if resp['status'] == 304:
             resp['changed'] = False
         else:
-            write_file(module, url, dest, content)
+            write_file(module, url, dest, content, resp)
             # allow file attribute changes
             resp['changed'] = True
             module.params['path'] = dest
