@@ -39,6 +39,7 @@ options:
       - Retry attempts on network issues and reaching API limits
     default: 5
     required: false
+    version_added: 2.7
 
 author: "Lester Wade (@lwade)"
 extends_documentation_fragment:
