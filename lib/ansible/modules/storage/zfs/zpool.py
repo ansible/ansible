@@ -26,6 +26,7 @@ options:
   add:
     description:
       -  Add devices (spare or mirror to an existing zpool)
+    type: bool
     choices: [ true, false ]
   raid_level:
     description:
@@ -157,11 +158,13 @@ class Zpool(object):
         else:
             self.module.fail_json(msg=err)
 
+
 def is_even(x):
     if x % 2 == 0:
         return True
     else:
         return False
+
 
 def main():
 
