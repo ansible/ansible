@@ -164,7 +164,6 @@ def main():
                 resource='ec2',
                 region=region,
                 endpoint=ec2_url,
-                # max_attempts=10,
                 **aws_connect_params
             )
         except (botocore.exceptions.ProfileNotFound, Exception) as e:
