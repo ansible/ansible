@@ -1457,17 +1457,21 @@ class AnsibleModule(object):
 
                 for user in users:
                     mode_to_apply = cls._get_octal_mode_from_symbolic_perms(path_stat, user, perms, use_umask)
-                    new_mode = cls._apply_operation_to_mode(user, opers[idx], mode_to_apply, new_mode)
+                    new_mode = cls._apply_operation_to_mode(user, opers[idx], mode_to_apply, new_mode, stat.S_ISDIR(path_stat.st_mode))
 
         return new_mode
 
     @staticmethod
-    def _apply_operation_to_mode(user, operator, mode_to_apply, current_mode):
+    def _apply_operation_to_mode(user, operator, mode_to_apply, current_mode, is_directory):
         if operator == '=':
             if user == 'u':
-                mask = stat.S_IRWXU | stat.S_ISUID
+                mask = stat.S_IRWXU
+                if not is_directory or mode_to_apply & stat.ST_ISUID:
+                    mask |= stat.ST_ISUID
             elif user == 'g':
-                mask = stat.S_IRWXG | stat.S_ISGID
+                mask = stat.S_IRWXG
+                if not is_directory or mode_to_apply & stat.ST_ISGID:
+                    mask |= stat.ST_ISGID
             elif user == 'o':
                 mask = stat.S_IRWXO | stat.S_ISVTX
 
