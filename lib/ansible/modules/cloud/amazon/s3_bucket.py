@@ -445,7 +445,14 @@ def destroy_bucket(s3_client, module):
             for key_version_pairs in paginated_versions_list(s3_client, Bucket=name):
                 formatted_keys = [{'Key': key, 'VersionId': version} for key, version in key_version_pairs]
                 if formatted_keys:
-                    s3_client.delete_objects(Bucket=name, Delete={'Objects': formatted_keys})
+                    resp = s3_client.delete_objects(Bucket=name, Delete={'Objects': formatted_keys})
+                    if resp.get('Errors'):
+                        module.fail_json(
+                            msg='Could not empty bucket before deleting. Could not delete objects: {0}'.format(
+                                ', '.join([k['Key'] for k in resp['Errors']])
+                            ),
+                            errors=resp['Errors'], response=resp
+                        )
         except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Failed while deleting bucket")
 
