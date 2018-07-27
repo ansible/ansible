@@ -169,8 +169,13 @@ class AzureRMResourceFacts(AzureRMModuleBase):
 
             self.url = resource_id(**rargs)
 
-            # this is to fix a problem with resource_id implementation, when resource_name is not specified
-            if self.resource_type is not None and self.resource_name is None:
+            # resource_id doesn't append last element, when it doesn't have name
+            # if it happens it should be appended manually
+            if len(self.subresource) > 0:
+                last = self.subresource[-1]
+                if last.get('name', None) is None and last.get('type', None) is not None:
+                    self.url = self.url + "/" + last['type']
+            elif self.resource_type is not None and self.resource_name is None:
                 self.url += '/' + self.resource_type
 
         self.results['url'] = self.url
