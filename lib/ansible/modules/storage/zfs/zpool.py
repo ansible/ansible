@@ -27,7 +27,7 @@ options:
     description:
       -  Add devices (spare or mirror to an existing zpool)
     type: bool
-    choices: [ true, false ]
+    default: false
   raid_level:
     description:
       - type of pool
