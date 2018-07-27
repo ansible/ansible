@@ -32,6 +32,7 @@ DOCUMENTATION = """
            - If not provided, the password will be returned in plain text.
            - Note that the password is always stored as plain text, only the returning password is encrypted.
            - Encrypt also forces saving the salt value for idempotence.
+           - Note that before 2.6 this option was incorrectly labeled as a boolean for a long time.
         default: None
       chars:
         version_added: "1.4"
