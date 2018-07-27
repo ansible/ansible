@@ -84,7 +84,7 @@ options:
                     java_container:
                         description: Name of java contaner. This is supported by specific framework C(java) only. eg. Tomcat, Jetty.
                     java_container_version:
-                        description: 
+                        description:
                             - Versoin of java container. This is supported by specific framework C(java) only.
                             - For Tomcat, eg. 8.0, 8.5, 9.0. For Jetty, eg. 9.1, 9.3.
 
@@ -103,7 +103,7 @@ options:
 
     scm_type:
         description:
-            - Repository type of deployment source. Eg. LocalGit, GitHub. 
+            - Repository type of deployment source. Eg. LocalGit, GitHub.
             - Please see U(https://docs.microsoft.com/en-us/rest/api/appservice/webapps/createorupdate#scmtype) for more info.
 
     deployment_source:
@@ -312,6 +312,7 @@ framework_spec = dict(
     version=dict(type='str', required=True),
     settings=dict(type='dict', options=framework_settings_spec)
 )
+
 
 def _normalize_sku(sku):
     if sku is None:
