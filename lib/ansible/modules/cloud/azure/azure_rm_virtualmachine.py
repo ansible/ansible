@@ -284,8 +284,8 @@ options:
         description:
             - Accept terms for marketplace images that require it.
         type: bool
-        version_added: "2.7"
         default: false
+        version_added: "2.7"
 
 extends_documentation_fragment:
     - azure
