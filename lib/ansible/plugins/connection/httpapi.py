@@ -142,7 +142,7 @@ options:
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes
-from ansible.module_utils.six import PY3
+from ansible.module_utils.six import PY3, BytesIO
 from ansible.module_utils.six.moves import cPickle
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.urls import open_url
@@ -258,9 +258,10 @@ class Connection(NetworkConnectionBase):
                 return self.send(path, data, **kwargs)
             raise AnsibleConnectionFailure('Could not connect to {0}: {1}'.format(self._url, exc.reason))
 
-        response_text = response.read()
+        response_buffer = BytesIO()
+        response_buffer.write(response.read())
 
         # Try to assign a new auth token if one is given
-        self._auth = self.update_auth(response, response_text) or self._auth
+        self._auth = self.update_auth(response, response_buffer) or self._auth
 
-        return response, response_text
+        return response, response_buffer
