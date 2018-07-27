@@ -1064,5 +1064,5 @@ class AzureRMModuleBase(object):
         self.log('Getting marketplace agreement client')
         if not self._marketplace_client:
             self._marketplace_client = self.get_mgmt_svc_client(MarketplaceOrderingAgreements,
-                                                        base_url=self._cloud_environment.endpoints.resource_manager)
+                base_url=self._cloud_environment.endpoints.resource_manager)
         return self._marketplace_client
