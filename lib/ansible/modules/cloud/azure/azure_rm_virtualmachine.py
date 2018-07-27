@@ -163,6 +163,7 @@ options:
     os_disk_size:
         description:
             - Size in GB of the OS disk
+        type: int
         version_added: "2.7"
     data_disks:
         description:
