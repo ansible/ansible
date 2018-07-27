@@ -18,6 +18,7 @@ short_description: Gather facts about ec2 volumes in AWS
 description:
     - Gather facts about ec2 volumes in AWS
 version_added: "2.1"
+requirements: [ boto3 ]
 author: "Rob White (@wimnat)"
 options:
   filters:
@@ -59,57 +60,63 @@ RETURN = '''# '''
 import traceback
 
 try:
-    import boto.ec2
-    from boto.exception import BotoServerError
-    HAS_BOTO = True
+    from botocore.exceptions import ClientError
 except ImportError:
-    HAS_BOTO = False
+    pass  # caught by imported HAS_BOTO3
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import connect_to_aws, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import connect_to_aws, ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3, boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_filter_list, camel_dict_to_snake_dict
 from ansible.module_utils._text import to_native
 
 
-def get_volume_info(volume):
+def get_volume_info(volume, region):
 
-    attachment = volume.attach_data
+    attachment = volume["attachments"]
+    tags = {}
+    for tag in volume["tags"]:
+        tags[tag["key"]] = tag["value"]
 
     volume_info = {
-        'create_time': volume.create_time,
-        'id': volume.id,
-        'encrypted': volume.encrypted,
-        'iops': volume.iops,
-        'size': volume.size,
-        'snapshot_id': volume.snapshot_id,
-        'status': volume.status,
-        'type': volume.type,
-        'zone': volume.zone,
-        'region': volume.region.name,
+        'create_time': volume["create_time"],
+        'id': volume["volume_id"],
+        'encrypted': volume["encrypted"],
+        'iops': volume["iops"] if "iops" in volume else None,
+        'size': volume["size"],
+        'snapshot_id': volume["snapshot_id"],
+        'status': volume["state"],
+        'type': volume["volume_type"],
+        'zone': volume["availability_zone"],
+        'region': region,
         'attachment_set': {
-            'attach_time': attachment.attach_time,
-            'device': attachment.device,
-            'instance_id': attachment.instance_id,
-            'status': attachment.status
+            'attach_time': attachment[0]["attach_time"] if len(attachment) > 0 else None,
+            'device': attachment[0]["device"] if len(attachment) > 0 else None,
+            'instance_id': attachment[0]["instance_id"] if len(attachment) > 0 else None,
+            'status': attachment[0]["state"] if len(attachment) > 0 else None,
+            'delete_on_termination': attachment[0]["delete_on_termination"] if len(attachment) > 0 else None
         },
-        'tags': volume.tags
+        'tags': tags
     }
 
     return volume_info
 
 
-def list_ec2_volumes(connection, module):
+def list_ec2_volumes(connection, module, region):
 
-    filters = module.params.get("filters")
+    # Replace filter key underscores with dashes, for compatibility, except if we're dealing with tags
+    sanitized_filters = module.params.get("filters")
+    for key in sanitized_filters:
+        if not key.startswith("tag:"):
+            sanitized_filters[key.replace("_", "-")] = sanitized_filters.pop(key)
     volume_dict_array = []
 
     try:
-        all_volumes = connection.get_all_volumes(filters=filters)
-    except BotoServerError as e:
-        module.fail_json(msg=e.message)
+        all_volumes = connection.describe_volumes(Filters=ansible_dict_to_boto3_filter_list(sanitized_filters))
+    except ClientError as e:
+        module.fail_json(msg=e.message, exception=traceback.format_exc())
 
-    for volume in all_volumes:
-        volume_dict_array.append(get_volume_info(volume))
-
+    for volume in all_volumes["Volumes"]:
+        volume = camel_dict_to_snake_dict(volume)
+        volume_dict_array.append(get_volume_info(volume, region))
     module.exit_json(volumes=volume_dict_array)
 
 
@@ -123,20 +130,27 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec)
 
-    if not HAS_BOTO:
-        module.fail_json(msg='boto required for this module')
+    if not HAS_BOTO3:
+        module.fail_json(msg='boto3 required for this module')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module)
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
 
     if region:
         try:
-            connection = connect_to_aws(boto.ec2, region, **aws_connect_params)
-        except (boto.exception.NoAuthHandlerFound, Exception) as e:
+            connection = boto3_conn(
+                module,
+                conn_type='client',
+                resource='ec2',
+                region=region,
+                endpoint=ec2_url,
+                **aws_connect_params
+            )
+        except (botocore.exceptions.ProfileNotFound, Exception) as e:
             module.fail_json(msg=to_native(e), exception=traceback.format_exc())
     else:
         module.fail_json(msg="region must be specified")
 
-    list_ec2_volumes(connection, module)
+    list_ec2_volumes(connection, module, region)
 
 
 if __name__ == '__main__':
