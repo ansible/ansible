@@ -1,0 +1,8 @@
+---
+
+- name: Ansible Test Base Playbook
+  connection: local
+  hosts: localhost
+  sudo: yes
+  roles:
+    - "{{ role }}"
