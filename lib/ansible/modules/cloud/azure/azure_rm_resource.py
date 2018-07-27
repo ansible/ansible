@@ -210,6 +210,7 @@ class AzureRMResource(AzureRMModuleBase):
             self.status_code.append(204)
 
         if self.url is None:
+            orphan = None
             rargs = dict()
             rargs['subscription'] = self.subscription_id
             rargs['resource_group'] = self.resource_group
