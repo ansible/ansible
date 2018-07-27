@@ -15,7 +15,7 @@
   assert:
     that: 
       - output.changed
-      - azure_appserviceplan.id
+      - output.id
 
 - name: create a linux plan
   azure_rm_appserviceplan:
@@ -30,7 +30,7 @@
   assert:
     that: 
       - output.changed
-      - output.ansible_facts.azure_appserviceplan.id
+      - output.id
 
 - name: create linux app service plan idempotent
   azure_rm_appserviceplan:
@@ -56,7 +56,6 @@
   assert:
     that:
       - output.changed
-      - output.ansible_facts.azure_appserviceplan.sku.name == "B2"
 
 - name: update a linux plan number of workers
   azure_rm_appserviceplan:
@@ -71,4 +70,3 @@
   assert:
     that:
       - output.changed
-      - output.ansible_facts.azure_appserviceplan.sku.capacity == 2
