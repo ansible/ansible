@@ -204,12 +204,12 @@ def map_obj_to_commands(want, have, module, warnings, capabilities):
     os_version = None
 
     device_info = capabilities.get('device_info')
-    if device_info is not None:
+    if device_info:
         os_version = device_info.get('network_os_version')
-        if os_version is not None:
+        if os_version:
             os_version = os_version[:3]
         os_platform = device_info.get('network_os_platform')
-        if os_platform is not None:
+        if os_platform:
             os_platform = os_platform[:3]
 
     def needs_update(x):
@@ -238,7 +238,7 @@ def map_obj_to_commands(want, have, module, warnings, capabilities):
         if not want['sandbox']:
             commands['sandbox'] = 'no %s' % commands['sandbox']
 
-    if os_platform is not None and os_version is not None:
+    if os_platform and os_version:
         if (os_platform == 'N9K' or os_platform == 'N3K') and LooseVersion(os_version) >= "9.2":
             if needs_update('ssl_strong_ciphers'):
                 commands['ssl_strong_ciphers'] = 'nxapi ssl ciphers weak'
