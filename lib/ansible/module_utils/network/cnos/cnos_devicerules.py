@@ -1356,7 +1356,7 @@ g8272_cnos = {'vlan_id': 'INTEGER_VALUE:1-3999',
               'portchannel_ipv6_address': 'IPV6Address:',
               'portchannel_ipv6_options': 'TEXT_OPTIONS:address,dhcp,\
               link-local,nd,neighbor',
-              'interface_speed': 'TEXT_OPTIONS:1000,10000,40000,auto',
+              'interface_speed': 'TEXT_OPTIONS:1000,10000,40000',
               'stormcontrol_options': 'TEXT_OPTIONS:broadcast,multicast,\
               unicast',
               'stormcontrol_level': 'FLOAT:',
