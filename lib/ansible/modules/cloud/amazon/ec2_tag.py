@@ -195,7 +195,7 @@ def main():
                 if (key, value) not in set(tagdict.items()):
                     dictadd[key] = value
         if not module.check_mode:
-            ec2.create_tags(Resources=[resource], Tags=[{"Key": k, "Value": v} for k, v in dictadd.iteritems()])
+            ec2.create_tags(Resources=[resource], Tags=[{"Key": k, "Value": v} for k, v in dictadd.items()])
         result["changed"] = True
         result["msg"] = "Tags %s created for resource %s." % (dictadd, resource)
 
