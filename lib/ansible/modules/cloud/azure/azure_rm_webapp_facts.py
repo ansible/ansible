@@ -215,12 +215,6 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
             name=dict(type='str'),
             resource_group=dict(type='str'),
             tags=dict(type='list'),
-            format=dict(
-                type='str',
-                choices=['curated',
-                         'raw'],
-                default='raw'
-            ),
             info_level=dict(
                 type='list',
                 elements='dict',
