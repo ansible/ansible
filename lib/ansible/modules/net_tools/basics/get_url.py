@@ -449,6 +449,7 @@ def main():
         # checksum match to skip the download.
         if not force and checksum != '':
             destination_checksum = module.digest_from_file(dest, algorithm)
+
             if checksum == destination_checksum:
                 # Not forcing redownload, unless checksum does not match
                 # allow file attribute changes
@@ -460,11 +461,7 @@ def main():
                     module.exit_json(msg="file already exists but file attributes changed", dest=dest, url=url, changed=changed)
                 module.exit_json(msg="file already exists", dest=dest, url=url, changed=changed)
 
-                module.exit_json(msg="file already exists", dest=dest, url=url, changed=False)
-
             checksum_mismatch = True
-
-
 
         # If the file already exists, prepare the last modified time for the
         # request.
