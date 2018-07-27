@@ -19,6 +19,7 @@ description:
     - Creates, removes and lists tags from any EC2 resource.  The resource is referenced by its resource id (e.g. an instance being i-XXXXXXX).
       It is designed to be used with complex args (tags), see the examples.  This module has a dependency on python-boto.
 version_added: "1.3"
+requirements: [ boto3 ]
 options:
   resource:
     description:
@@ -33,6 +34,11 @@ options:
     description:
       - a hash/dictionary of tags to add to the resource; '{"key":"value"}' and '{"key":"value","key":"value"}'
     required: true
+  max_attempts:
+    description:
+      - Retry attempts on network issues and reaching API limits
+    default: 5
+    required: false
 
 author: "Lester Wade (@lwade)"
 extends_documentation_fragment:
@@ -105,16 +111,18 @@ EXAMPLES = '''
     msg: '{{ ec2_tags.tags.Name }} {{ ec2_tags.tags.env }}'
 '''
 
+import traceback
 
 try:
-    import boto.ec2
-    HAS_BOTO = True
+    from botocore.exceptions import ClientError
+    import botocore
 except ImportError:
-    HAS_BOTO = False
+    pass  # caught by imported HAS_BOTO3
+
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import HAS_BOTO, ec2_argument_spec, ec2_connect
-
+from ansible.module_utils.ec2 import connect_to_aws, ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3, ansible_dict_to_boto3_filter_list
+from ansible.module_utils._text import to_native
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -122,30 +130,59 @@ def main():
         resource=dict(required=True),
         tags=dict(type='dict'),
         state=dict(default='present', choices=['present', 'absent', 'list']),
+        max_attempts=dict(type='int',required=False, default=5),
     )
     )
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
-    if not HAS_BOTO:
-        module.fail_json(msg='boto required for this module')
+    if not HAS_BOTO3:
+        module.fail_json(msg='boto3 required for this module')
 
     resource = module.params.get('resource')
     tags = module.params.get('tags')
     state = module.params.get('state')
+    max_attempts = module.params.get('max_attempts')
 
-    ec2 = ec2_connect(module)
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
+    
+    if aws_connect_params.get('config'):
+      config = aws_connect_params.get('config')
+      config.retries = {'max_attempts': max_attempts}
+    else:
+      config = botocore.config.Config(
+        retries={'max_attempts': max_attempts},
+      )
+      aws_connect_params['config'] = config
+    
+    if region:
+        try:
+            ec2 = boto3_conn(
+                module,
+                conn_type='client',
+                resource='ec2',
+                region=region,
+                endpoint=ec2_url,
+                # max_attempts=10,
+                **aws_connect_params
+            )
+        except (botocore.exceptions.ProfileNotFound, Exception) as e:
+            module.fail_json(msg=to_native(e), exception=traceback.format_exc())
+    else:
+        module.fail_json(msg="region must be specified")
 
     # We need a comparison here so that we can accurately report back changed status.
     # Need to expand the gettags return format and compare with "tags" and then tag or detag as appropriate.
     filters = {'resource-id': resource}
-    gettags = ec2.get_all_tags(filters=filters)
+    gettags = ec2.describe_tags(Filters=ansible_dict_to_boto3_filter_list(filters))["Tags"]
 
     dictadd = {}
     dictremove = {}
     baddict = {}
     tagdict = {}
+    result = {}
+    
     for tag in gettags:
-        tagdict[tag.name] = tag.value
+        tagdict[tag["Key"]] = tag["Value"]
 
     if state == 'present':
         if not tags:
@@ -157,10 +194,11 @@ def main():
                 if (key, value) not in set(tagdict.items()):
                     dictadd[key] = value
         if not module.check_mode:
-            ec2.create_tags(resource, dictadd)
-        module.exit_json(msg="Tags %s created for resource %s." % (dictadd, resource), changed=True)
+            ec2.create_tags(Resources=[resource], Tags=[{"Key": k, "Value": v} for k,v in dictadd.iteritems()])
+        result["changed"] = True
+        result["msg"] = "Tags %s created for resource %s." % (dictadd, resource)
 
-    if state == 'absent':
+    elif state == 'absent':
         if not tags:
             module.fail_json(msg="tags argument is required when state is absent")
         for (key, value) in set(tags.items()):
@@ -172,12 +210,25 @@ def main():
             if (key, value) in set(tagdict.items()):
                 dictremove[key] = value
         if not module.check_mode:
-            ec2.delete_tags(resource, dictremove)
-        module.exit_json(msg="Tags %s removed for resource %s." % (dictremove, resource), changed=True)
+            ec2.delete_tags(Resources=[resource], Tags=[{"Key": k, "Value": v} for k,v in dictremove.iteritems()])
+        result["changed"] = True
+        result["msg"] = "Tags %s removed for resource %s." % (dictremove, resource)
 
-    if state == 'list':
-        module.exit_json(changed=False, tags=tagdict)
-
+    elif state == 'list':
+        result["changed"] = False
+        result["tags"] = tagdict
+    
+    if module._diff:
+      newdict = dict(tagdict)
+      for key, value in dictadd.iteritems():
+        newdict[key] = value
+      for key in dictremove.iterkeys():
+        newdict.pop(key, None)
+      result['diff'] = {
+        'before': "\n".join(["%s: %s" % (key, value) for key, value in tagdict.iteritems()]) + "\n",
+        'after':  "\n".join(["%s: %s" % (key, value) for key, value in newdict.iteritems()]) + "\n"
+      }
+    module.exit_json(**result)
 
 if __name__ == '__main__':
     main()
