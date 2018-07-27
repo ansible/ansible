@@ -342,6 +342,7 @@ def discard_config(module):
     except ConnectionError as exc:
         module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
+
 def commit_config(module, comment=None, confirmed=False, confirm_timeout=None,
                   persist=False, check=False, label=None):
     conn = get_connection(module)

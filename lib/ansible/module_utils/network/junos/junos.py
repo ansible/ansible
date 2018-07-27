@@ -138,6 +138,7 @@ def load_configuration(module, candidate=None, action='merge', rollback=None, fo
     except ConnectionError as exc:
         module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
+
 def get_configuration(module, compare=False, format='xml', rollback='0', filter=None):
     if format not in CONFIG_FORMATS:
         module.fail_json(msg='invalid config format specified')

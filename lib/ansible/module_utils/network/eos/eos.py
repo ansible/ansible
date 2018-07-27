@@ -174,7 +174,7 @@ class Cli:
         conn = self._get_connection()
         try:
             diff = conn.get_diff(candidate=candidate, running=running, diff_match=diff_match, diff_ignore_lines=diff_ignore_lines, path=path,
-                             diff_replace=diff_replace)
+                                 diff_replace=diff_replace)
         except ConnectionError as exc:
             self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
         return diff
