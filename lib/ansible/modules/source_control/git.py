@@ -452,12 +452,10 @@ def has_local_mods(module, git_path, dest, bare):
     if bare:
         return False
 
-    cmd = "%s status --porcelain" % (git_path)
+    cmd = "%s status --porcelain --untracked-files=no" % (git_path)
     rc, stdout, stderr = module.run_command(cmd, cwd=dest)
-    lines = stdout.splitlines()
-    lines = list(filter(lambda c: not re.search('^\\?\\?.*$', c), lines))
 
-    return len(lines) > 0
+    return len(stdout) > 0
 
 
 def reset(git_path, module, dest):
