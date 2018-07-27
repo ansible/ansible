@@ -557,6 +557,8 @@ class CloudflareAPI(object):
                 do_update = True
             if (params['priority'] is not None) and ('priority' in cur_record) and (cur_record['priority'] != params['priority']):
                 do_update = True
+            if ('proxied' in new_record) and ('proxied' in cur_record) and (cur_record['proxied'] != params['proxied']):
+                do_update = True
             if ('data' in new_record) and ('data' in cur_record):
                 if (cur_record['data'] != new_record['data']):
                     do_update = True
