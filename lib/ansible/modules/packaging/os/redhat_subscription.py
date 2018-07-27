@@ -50,7 +50,7 @@ options:
     rhsm_baseurl:
         description:
             - Specify CDN baseurl
-    rhsm_repo_ca:
+    rhsm_repo_ca_cert:
         description:
             - Specify an alternative location for a CA certificate for CDN
     server_proxy_hostname:
