@@ -252,6 +252,53 @@
       - output.state.ip_configurations[0].public_ip_address == None
       - output.state.network_security_group == None
 
+- name: NIC with Accelerated networking enabled
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}an"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      enable_accelerated_networking: True
+  register: output
+
+- assert:
+    that:
+      - output.state.enable_accelerated_networking
+      - output.changed
+
+- name: NIC with Accelerated networking enabled (check idempotent)
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}an"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      enable_accelerated_networking: True
+  register: output
+
+- assert:
+    that:
+      - output.state.enable_accelerated_networking
+      - not output.changed
+
+- name: Disable (previously enabled) Accelerated networking
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}an"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      enable_accelerated_networking: False
+  register: output
+
+- assert:
+    that:
+      - not output.state.enable_accelerated_networking
+
+- name: Delete AN NIC
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}an"
+      state: absent
+
 - name: Delete the NIC (check mode)
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"

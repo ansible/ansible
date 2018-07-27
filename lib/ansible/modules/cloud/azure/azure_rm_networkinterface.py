@@ -158,6 +158,12 @@ options:
                 type: bool
                 default: 'no'
         version_added: 2.5
+    enable_accelerated_networking:
+        description:
+            - Specifies whether the network interface should be created with the accelerated networking feature or not
+        type: bool
+        version_added: 2.7
+        default: False
     create_with_security_group:
         description:
             - Specifies whether a default security group should be be created with the NIC. Only applies when creating a new NIC.
@@ -256,6 +262,14 @@ EXAMPLES = '''
               - "{{ loadbalancer001.state.backend_address_pools[0].id }}"
               - name: backendaddrpool1
                 load_balancer: loadbalancer001
+
+    - name: Create a network interface in accelerated networking mode
+      azure_rm_networkinterface:
+        name: nic005
+        resource_group: Testing
+        virtual_network_name: vnet001
+        subnet_name: subnet001
+        enable_accelerated_networking: True
 
     - name: Delete network interface
       azure_rm_networkinterface:
@@ -364,6 +378,7 @@ def nic_to_dict(nic):
         enable_ip_forwarding=nic.enable_ip_forwarding,
         provisioning_state=nic.provisioning_state,
         etag=nic.etag,
+        enable_accelerated_networking=nic.enable_accelerated_networking,
     )
 
 
@@ -386,6 +401,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             resource_group=dict(type='str', required=True),
             name=dict(type='str', required=True),
             location=dict(type='str'),
+            enable_accelerated_networking=dict(type='bool', default=False),
             create_with_security_group=dict(type='bool', default=True),
             security_group=dict(type='raw', aliases=['security_group_name']),
             state=dict(default='present', choices=['present', 'absent']),
@@ -409,6 +425,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         self.name = None
         self.location = None
         self.create_with_security_group = None
+        self.enable_accelerated_networking = None
         self.security_group = None
         self.private_ip_address = None
         self.private_ip_allocation_method = None
@@ -489,6 +506,12 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                     self.log("CHANGED: add or remove network interface {0} network security group".format(self.name))
                     changed = True
 
+                if self.enable_accelerated_networking != bool(results.get('enable_accelerated_networking')):
+                    self.log("CHANGED: Accelerated Networking set to {0} (previously {1})".format(
+                        self.enable_accelerated_networking,
+                        results.get('enable_accelerated_networking')))
+                    changed = True
+
                 if not changed:
                     nsg = self.get_security_group(self.security_group['resource_group'], self.security_group['name'])
                     if nsg and results.get('network_security_group') and results['network_security_group'].get('id') != nsg.id:
@@ -567,6 +590,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                     location=self.location,
                     tags=self.tags,
                     ip_configurations=nic_ip_configurations,
+                    enable_accelerated_networking=self.enable_accelerated_networking,
                     network_security_group=nsg
                 )
                 self.results['state'] = self.create_or_update_nic(nic)
