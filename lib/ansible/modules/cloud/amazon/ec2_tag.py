@@ -211,7 +211,7 @@ def main():
             if (key, value) in set(tagdict.items()):
                 dictremove[key] = value
         if not module.check_mode:
-            ec2.delete_tags(Resources=[resource], Tags=[{"Key": k, "Value": v} for k, v in dictremove.iteritems()])
+            ec2.delete_tags(Resources=[resource], Tags=[{"Key": k, "Value": v} for k, v in dictremove.items()])
         result["changed"] = True
         result["msg"] = "Tags %s removed for resource %s." % (dictremove, resource)
 
@@ -221,13 +221,13 @@ def main():
 
     if module._diff:
         newdict = dict(tagdict)
-        for key, value in dictadd.iteritems():
+        for key, value in dictadd.items():
             newdict[key] = value
         for key in dictremove.keys():
             newdict.pop(key, None)
         result['diff'] = {
-            'before': "\n".join(["%s: %s" % (key, value) for key, value in tagdict.iteritems()]) + "\n",
-            'after': "\n".join(["%s: %s" % (key, value) for key, value in newdict.iteritems()]) + "\n"
+            'before': "\n".join(["%s: %s" % (key, value) for key, value in tagdict.items()]) + "\n",
+            'after': "\n".join(["%s: %s" % (key, value) for key, value in newdict.items()]) + "\n"
         }
     module.exit_json(**result)
 
