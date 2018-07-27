@@ -113,5 +113,5 @@ class TestVyosConfigModule(TestVyosModule):
                  'set system interfaces ethernet eth0 description test string']
         set_module_args(dict(lines=lines, match='none'))
         candidate = '\n'.join(lines)
-        self.conn.get_diff = MagicMock(return_value=self.cliconf_obj.get_diff(candidate, None, match='none'))
+        self.conn.get_diff = MagicMock(return_value=self.cliconf_obj.get_diff(candidate, None, diff_match='none'))
         self.execute_module(changed=True, commands=lines, sort=False)

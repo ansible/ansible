@@ -208,7 +208,7 @@ def run(module, result):
 
     # create loadable config that includes only the configuration updates
     connection = get_connection(module)
-    response = connection.get_diff(candidate=candidate, running=config, match=module.params['match'])
+    response = connection.get_diff(candidate=candidate, running=config, diff_match=module.params['match'])
     commands = response.get('config_diff')
     sanitize_config(commands, result)
 

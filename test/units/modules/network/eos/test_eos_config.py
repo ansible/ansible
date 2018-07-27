@@ -21,7 +21,7 @@ __metaclass__ = type
 
 from ansible.compat.tests.mock import patch, MagicMock
 from ansible.modules.network.eos import eos_config
-from ansible.plugins.cliconf.ios import Cliconf
+from ansible.plugins.cliconf.eos import Cliconf
 from units.modules.utils import set_module_args
 from .eos_module import TestEosModule, load_fixture
 
@@ -43,6 +43,10 @@ class TestEosConfigModule(TestEosModule):
         self.mock_run_commands = patch('ansible.modules.network.eos.eos_config.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
+        self.mock_supports_sessions = patch('ansible.plugins.cliconf.eos.Cliconf.supports_sessions')
+        self.supports_sessions = self.mock_supports_sessions.start()
+        self.mock_supports_sessions.return_value = True
+
         self.conn = self.get_connection()
         self.conn.edit_config = MagicMock()
 
@@ -54,6 +58,7 @@ class TestEosConfigModule(TestEosModule):
         self.mock_get_config.stop()
         self.mock_load_config.stop()
         self.mock_get_connection.stop()
+        self.mock_supports_sessions.stop()
 
     def load_fixtures(self, commands=None, transport='cli'):
         self.get_config.return_value = load_fixture('eos_config_config.cfg')

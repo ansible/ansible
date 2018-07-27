@@ -420,7 +420,8 @@ def main():
         candidate = get_candidate_config(module)
         running = get_running_config(module, contents, flags=flags)
 
-        response = connection.get_diff(candidate=candidate, running=running, match=match, diff_ignore_lines=diff_ignore_lines, path=path, replace=replace)
+        response = connection.get_diff(candidate=candidate, running=running, diff_match=match, diff_ignore_lines=diff_ignore_lines, path=path,
+                                       diff_replace=replace)
         config_diff = response['config_diff']
         banner_diff = response['banner_diff']
 
