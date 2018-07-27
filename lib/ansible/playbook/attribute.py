@@ -66,7 +66,7 @@ class Attribute:
             passed to the __init__ method of that class during post validation and
             the field will be an instance of that class.
         :kwarg always_post_validate: Controls whether a field should be post
-            validated or not (default: True).
+            validated or not (default: False).
         :kwarg inherit: A boolean value, which controls whether the object
             containing this field should attempt to inherit the value from its
             parent object if the local value is None.
