@@ -468,7 +468,7 @@ Suggestions to resolve:
 
 Some operations take longer than the default 10 seconds to complete.  One good
 example is saving the current running config on IOS devices to startup config.
-In this case, changing the timeout value form the default 10 seconds to 30
+In this case, changing the timeout value from the default 10 seconds to 30
 seconds will prevent the task from failing before the command completes
 successfully.
 
