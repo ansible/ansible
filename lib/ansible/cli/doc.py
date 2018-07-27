@@ -33,7 +33,7 @@ from ansible.module_utils.six import string_types
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.plugins.loader import module_loader, action_loader, lookup_loader, callback_loader, cache_loader, \
     vars_loader, connection_loader, strategy_loader, inventory_loader, shell_loader, fragment_loader
-from ansible.utils.plugin_docs import BLACKLIST, get_docstring
+from ansible.utils.plugin_docs import BLACKLIST, get_docstring, get_docstub
 
 try:
     from __main__ import display
@@ -130,7 +130,7 @@ class DocCLI(CLI):
             for path in paths:
                 self.plugin_list.update(self.find_plugins(path, plugin_type))
 
-            self.pager(self.get_plugin_list_text(loader))
+            self.pager(self.get_plugin_list_text(loader, doc_getter=get_docstub))
             return 0
 
         # process all plugins of type
@@ -304,7 +304,7 @@ class DocCLI(CLI):
 
         return plugin_list
 
-    def get_plugin_list_text(self, loader):
+    def get_plugin_list_text(self, loader, doc_getter=get_docstring):
         columns = display.columns
         displace = max(len(x) for x in self.plugin_list)
         linelimit = columns - displace - 5
@@ -325,7 +325,7 @@ class DocCLI(CLI):
 
                 doc = None
                 try:
-                    doc, plainexamples, returndocs, metadata = get_docstring(filename, fragment_loader)
+                    doc, plainexamples, returndocs, metadata = doc_getter(filename, fragment_loader)
                 except Exception:
                     display.warning("%s has a documentation formatting error" % plugin)
 

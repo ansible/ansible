@@ -25,7 +25,7 @@ from collections import MutableMapping, MutableSet, MutableSequence
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
-from ansible.parsing.plugin_docs import read_docstring
+from ansible.parsing.plugin_docs import read_docstring, read_docstub
 from ansible.parsing.yaml.loader import AnsibleLoader
 
 try:
@@ -116,6 +116,19 @@ def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False)
     data = read_docstring(filename, verbose=verbose, ignore_errors=ignore_errors)
 
     # add fragments to documentation
+    if data.get('doc', False):
+        add_fragments(data['doc'], filename, fragment_loader=fragment_loader)
+
+    return data['doc'], data['plainexamples'], data['returndocs'], data['metadata']
+
+
+def get_docstub(filename, fragment_loader, verbose=False, ignore_errors=False):
+    """
+    When only short_description is needed, load a stub of the full DOCUMENTATION string to speed up operation.
+    """
+
+    data = read_docstub(filename, verbose=verbose, ignore_errors=ignore_errors)
+
     if data.get('doc', False):
         add_fragments(data['doc'], filename, fragment_loader=fragment_loader)
 
