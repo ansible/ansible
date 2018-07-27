@@ -34,15 +34,6 @@ options:
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
-    format:
-        description:
-            - Format of the data returned.
-            - If C(raw) is selected information will be returned in raw format from Azure Python SDK.
-            - If C(curated) is selected the structure will be identical to input parameters of azure_rm_webapp module. Not implemented yet.
-        default: 'raw'
-        choices:
-            - 'curated'
-            - 'raw'
     info_level:
         description:
             - A list to describe what information of the web app to return.
