@@ -159,13 +159,6 @@ class Zpool(object):
             self.module.fail_json(msg=err)
 
 
-def is_even(x):
-    if x % 2 == 0:
-        return True
-    else:
-        return False
-
-
 def main():
 
     module = AnsibleModule(
