@@ -71,13 +71,14 @@ def get_capabilities(module):
     return module._routeros_capabilities
 
 
-def check_args(module, warnings):
-    pass
-
-
 def get_defaults_flag(module):
     connection = get_connection(module)
-    out = connection.get('/system default-configuration print')
+
+    try:
+        out = connection.get('/system default-configuration print')
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+
     out = to_text(out, errors='surrogate_then_replace')
 
     commands = set()
@@ -98,7 +99,12 @@ def get_config(module, flags=None):
         return _DEVICE_CONFIGS[flag_str]
     except KeyError:
         connection = get_connection(module)
-        out = connection.get_config(flags=flags)
+
+        try:
+            out = connection.get_config(flags=flags)
+        except ConnectionError as exc:
+            module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+
         cfg = to_text(out, errors='surrogate_then_replace').strip()
         _DEVICE_CONFIGS[flag_str] = cfg
         return cfg
@@ -128,11 +134,13 @@ def run_commands(module, commands, check_rc=True):
             prompt = None
             answer = None
 
-        out = connection.get(command, prompt, answer)
+        try:
+            out = connection.get(command, prompt, answer)
+        except ConnectionError as exc:
+            module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
         try:
             out = to_text(out, errors='surrogate_or_strict')
-            print("run_commands: %s" % str(out))
         except UnicodeError:
             module.fail_json(
                 msg=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))

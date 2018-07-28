@@ -20,7 +20,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'network'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = """
@@ -52,7 +52,6 @@ options:
         See examples.
     required: false
     default: null
-    aliases: ['waitfor']
   match:
     description:
       - The I(match) argument is used in conjunction with the
@@ -131,7 +130,7 @@ import re
 import time
 
 from ansible.module_utils.network.routeros.routeros import run_commands
-from ansible.module_utils.network.routeros.routeros import routeros_argument_spec, check_args
+from ansible.module_utils.network.routeros.routeros import routeros_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.network.common.parsing import Conditional
@@ -151,7 +150,7 @@ def main():
     argument_spec = dict(
         commands=dict(type='list', required=True),
 
-        wait_for=dict(type='list', aliases=['waitfor']),
+        wait_for=dict(type='list'),
         match=dict(default='all', choices=['all', 'any']),
 
         retries=dict(default=10, type='int'),
@@ -164,10 +163,6 @@ def main():
                            supports_check_mode=True)
 
     result = {'changed': False}
-
-    warnings = list()
-    check_args(module, warnings)
-    result['warnings'] = warnings
 
     wait_for = module.params['wait_for'] or list()
     conditionals = [Conditional(c) for c in wait_for]
