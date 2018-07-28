@@ -50,4 +50,18 @@ options:
     id:
         description:
             - The id of resource to be managed.
+notes:
+  - For authentication, you can set identity_endpoint using the
+    C(IDENTITY_ENDPOINT) env variable.
+  - For authentication, you can set user_name using the
+    C(USER_NAME) env variable.
+  - For authentication, you can set password using the C(PASSWORD) env
+    variable.
+  - For authentication, you can set domain_name using the C(DOMAIN_NAME) env
+    variable.
+  - For authentication, you can set project_name using the C(PROJECT_NAME) env
+    variable.
+  - For authentication, you can set region using the C(REGION) env variable.
+  - Environment variables values will only be used if the playbook values are
+    not set.
 '''

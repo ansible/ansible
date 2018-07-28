@@ -21,7 +21,7 @@ try:
 except ImportError:
     HAS_THIRD_LIBRARIES = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, env_fallback
 from ansible.module_utils._text import to_text
 
 
@@ -178,12 +178,30 @@ class HwcModule(AnsibleModule):
 
         arg_spec.update(
             dict(
-                identity_endpoint=dict(required=True, type='str'),
-                user_name=dict(required=True, type='str'),
-                password=dict(required=True, type='str', no_log=True),
-                domain_name=dict(required=True, type='str'),
-                project_name=dict(required=True, type='str'),
-                region=dict(required=True, type='str'),
+                identity_endpoint=dict(
+                    required=True, type='str',
+                    fallback=(env_fallback, ['IDENTITY_ENDPOINT']),
+                ),
+                user_name=dict(
+                    required=True, type='str',
+                    fallback=(env_fallback, ['USER_NAME']),
+                ),
+                password=dict(
+                    required=True, type='str', no_log=True,
+                    fallback=(env_fallback, ['PASSWORD']),
+                ),
+                domain_name=dict(
+                    required=True, type='str',
+                    fallback=(env_fallback, ['DOMAIN_NAME']),
+                ),
+                project_name=dict(
+                    required=True, type='str',
+                    fallback=(env_fallback, ['PROJECT_NAME']),
+                ),
+                region=dict(
+                    required=True, type='str',
+                    fallback=(env_fallback, ['REGION']),
+                ),
                 timeouts=dict(type='dict', options=dict(
                     create=dict(default='10m', type='str'),
                     update=dict(default='10m', type='str'),
