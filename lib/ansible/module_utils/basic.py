@@ -1466,11 +1466,11 @@ class AnsibleModule(object):
         if operator == '=':
             if user == 'u':
                 mask = stat.S_IRWXU
-                if not is_directory or mode_to_apply & stat.ST_ISUID:
+                if not is_directory or (mode_to_apply & stat.ST_ISUID):
                     mask |= stat.ST_ISUID
             elif user == 'g':
                 mask = stat.S_IRWXG
-                if not is_directory or mode_to_apply & stat.ST_ISGID:
+                if not is_directory or (mode_to_apply & stat.ST_ISGID):
                     mask |= stat.ST_ISGID
             elif user == 'o':
                 mask = stat.S_IRWXO | stat.S_ISVTX
