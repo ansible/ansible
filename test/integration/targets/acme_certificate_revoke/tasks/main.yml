@@ -1,7 +1,4 @@
 ---
-- name: store the ACME test container IP
-  set_fact:
-    acme_host: "{{ lookup('env', 'acme_host') }}"
 - name: register openssl version
   shell: "openssl version | cut -d' ' -f2"
   register: openssl_version

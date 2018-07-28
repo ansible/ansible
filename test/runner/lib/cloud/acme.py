@@ -155,4 +155,5 @@ class ACMEEnvironment(CloudEnvironment):
         """
 
         # Send the container IP down to the integration test(s)
-        env['acme_host'] = self._get_cloud_config('acme_host')
+        cmd.append('-e')
+        cmd.append('acme_host=%s' % self._get_cloud_config('acme_host'))
