@@ -1,9 +1,4 @@
 ---
-- name: register openssl version
-  shell: "openssl version | cut -d' ' -f2"
-  register: openssl_version
-- debug: msg="ACME test container IP is {{ acme_host }}; OpenSSL version is {{ openssl_version.stdout }}"
-
 - block:
   ## SET UP ACCOUNT KEYS ########################################################################
   - name: Create ECC256 account key

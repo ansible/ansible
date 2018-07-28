@@ -1,9 +1,4 @@
 ---
-- name: register openssl version
-  shell: "openssl version | cut -d' ' -f2"
-  register: openssl_version
-- debug: msg="ACME test container IP is {{ acme_host }}; OpenSSL version is {{ openssl_version.stdout }}"
-
 - block:
   - name: Generate account key
     command: openssl ecparam -name prime256v1 -genkey -out {{ output_dir }}/accountkey.pem
