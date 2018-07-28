@@ -61,7 +61,7 @@ class ACMEProvider(CloudProvider):
         client = HttpClient(self.args, always=True, insecure=True)
         endpoint = '%s://%s:%d/%s' % (protocol, acme_host, port, local_part)
 
-        for _ in range(1, 30):
+        for dummy in range(1, 30):
             display.info('Waiting for %s: %s' % (name, endpoint), verbosity=1)
 
             try:
