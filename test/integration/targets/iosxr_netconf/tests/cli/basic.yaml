@@ -28,7 +28,7 @@
       that:
         - 'result.changed == false'
 
-  - name: Change Netconf port 
+  - name: Change Netconf port
     iosxr_netconf:
       netconf_port: 9000
       state: present
@@ -41,7 +41,7 @@
       netconf_port: 9000
       state: present
     register: result
-      
+
   - assert: *false
 
   - name: Add Netconf vrf
@@ -59,7 +59,7 @@
       netconf_vrf: 'new_default'
       state: present
     register: result
-      
+
   - assert: *false
 
   always:

@@ -61,7 +61,7 @@ Use "can" to describe actions or conditions that are possible. Use "may" only to
 
 CD or cd
 +++++++++++++++
-When referring to a compact disk, use CD, such as "Insert the CD into the CD-ROM drive." When referring to the change directory command, use cd. 
+When referring to a compact disk, use CD, such as "Insert the CD into the CD-ROM drive." When referring to the change directory command, use cd.
 
 CD-ROM
 +++++++++++++
@@ -70,7 +70,7 @@ Correct. Do not use "cdrom," "CD-Rom," "CDROM," "cd-rom" or any other variation.
 
 Command line
 +++++++++++++++++++
-Correct. Do not use "command-line" or "commandline." 
+Correct. Do not use "command-line" or "commandline."
 
 Use to describes where to place options for a command, but not where to type the command. Use "shell prompt" instead to describe where to type commands. The line on the display screen where a command is expected. Generally, the command line is the line that contains the most recently displayed command prompt.
 
@@ -242,7 +242,7 @@ Then/than
 .. image:: images/thenvsthan.jpg
 
 Third-party
-++++++++++++++ 
+++++++++++++++
 Correct. Do not use "third party".
 
 Troubleshoot
@@ -292,7 +292,7 @@ Correct. Do not use "web page" or "Web page."
 Web server
 ++++++++++++++
 Correct. Do not use "webserver". For example, "The Apache HTTP Server is the default Web server..."
- 
+
 Website
 ++++++++++++++
 Correct. Do not use "web site" or "Web site." For example, "The Ansible website contains ..."

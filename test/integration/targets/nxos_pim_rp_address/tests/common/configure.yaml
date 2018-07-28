@@ -20,7 +20,7 @@
       provider: "{{ connection }}"
       state: enabled
 
-  - name: Configure rp_address + group_list 
+  - name: Configure rp_address + group_list
     nxos_pim_rp_address: &configgl
       rp_address: "10.1.1.20"
       group_list: "224.0.0.0/8"
@@ -62,7 +62,7 @@
   - assert: *false
     when: platform is not match("N3L")
 
-  - name: Configure rp_address + bidir 
+  - name: Configure rp_address + bidir
     nxos_pim_rp_address: &configbi
       rp_address: "10.1.1.20"
       bidir: "{{ bidir }}"
@@ -78,7 +78,7 @@
 
   - assert: *false
 
-  - name: Configure rp_address remove bidir 
+  - name: Configure rp_address remove bidir
     nxos_pim_rp_address: &confignbi
       rp_address: "10.1.1.20"
       bidir: False
@@ -98,7 +98,7 @@
   - assert: *false
     when: platform is not match("N3L")
 
-  - name: Remove rp_address + group_list 
+  - name: Remove rp_address + group_list
     nxos_pim_rp_address: &configglr
       rp_address: "10.1.1.20"
       group_list: "224.0.0.0/8"
@@ -167,7 +167,7 @@
   - assert: *false
     when: platform is not match("N3L")
 
-  - name: Remove rp_address + prefix_list 
+  - name: Remove rp_address + prefix_list
     nxos_pim_rp_address: &configplr
       rp_address: "10.1.1.20"
       prefix_list: "pim_prefix_list"
@@ -201,7 +201,7 @@
 
   - assert: *false
 
-  - name: Configure rp_address + route_map 
+  - name: Configure rp_address + route_map
     nxos_pim_rp_address: &configrmnbi
       rp_address: "10.1.1.20"
       route_map: "pim_routemap"
@@ -222,7 +222,7 @@
   - assert: *false
     when: platform is not match("N3L")
 
-  - name: Remove rp_address + route_map 
+  - name: Remove rp_address + route_map
     nxos_pim_rp_address: &configrmr
       rp_address: "10.1.1.20"
       route_map: "pim_routemap"

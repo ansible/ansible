@@ -37,7 +37,7 @@
 
 - name: Assert that facts module returned result for single Record Set
   assert:
-    that: 
+    that:
       - not results.changed
       - results.ansible_facts.azure_dnsrecordset[0].name == 'www'
 
@@ -49,7 +49,7 @@
 
 - name: Assert that facts module returned result for all Record Sets
   assert:
-    that: 
+    that:
       - not results.changed
       - results.ansible_facts.azure_dnsrecordset[0].name == '@'
       - results.ansible_facts.azure_dnsrecordset[1].name == '@'

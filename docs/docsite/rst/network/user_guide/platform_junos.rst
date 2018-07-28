@@ -4,7 +4,7 @@
 Junos OS Platform Options
 ***************************************
 
-Juniper Junos OS supports multiple connections. This page offers details on how each connection works in Ansible 2.6 and how to use it. 
+Juniper Junos OS supports multiple connections. This page offers details on how each connection works in Ansible 2.6 and how to use it.
 
 .. contents:: Topics
 
@@ -96,7 +96,7 @@ Example NETCONF inventory ``[junos:vars]``
    ansible_connection=netconf
    ansible_network_os=junos
    ansible_user=myuser
-   ansible_ssh_pass=!vault | 
+   ansible_ssh_pass=!vault |
    ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q bastion01"'
 
 

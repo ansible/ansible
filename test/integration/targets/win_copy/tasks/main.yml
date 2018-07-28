@@ -23,7 +23,7 @@
 - block:
   - name: run tests for local to remote
     include_tasks: tests.yml
-  
+
   - name: run tests for remote to remote
     include_tasks: remote_tests.yml
 

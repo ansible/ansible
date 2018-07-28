@@ -246,7 +246,7 @@ if ($return_content -or $dest) {
 
                 $sp = New-Object -TypeName System.Security.Cryptography.SHA1CryptoServiceProvider
                 $content_checksum = [System.BitConverter]::ToString($sp.ComputeHash($memory_st)).Replace("-", "").ToLower()
-    
+
                 if ($actual_checksum -eq $content_checksum) {
                     $changed = $false
                 }

@@ -3,9 +3,9 @@ digraph G {
         subgraph cluster_0 {
             "command line variables" -> "--extra-args"
         }
-	
+
         subgraph cluster_1 {
-	    "role variables" -> "roles/rolename/vars.yml" -> "parameters passed to role" -> "parameters from dependent roles" 
+	    "role variables" -> "roles/rolename/vars.yml" -> "parameters passed to role" -> "parameters from dependent roles"
 	}
 
         subgraph cluster_2 {
@@ -33,6 +33,6 @@ digraph G {
 
         "command line variables" -> "role variables" -> "top-level playbook variables" -> "inventory variables" -> "role defaults" -> "facts"
 
-     
+
 
 }

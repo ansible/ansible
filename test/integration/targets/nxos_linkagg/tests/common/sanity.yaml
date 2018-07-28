@@ -176,7 +176,7 @@
 - assert:
     that:
       - 'result.changed == false'
- 
+
 - name: teardown - remove config used in test(part1)
   nxos_config:
     lines:

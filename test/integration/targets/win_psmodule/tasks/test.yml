@@ -46,7 +46,7 @@
       - "ok_allow_clobber is changed"
 
 - name: check wrong module install attempt
-  win_psmodule: 
+  win_psmodule:
     name: "{{ wrong_module }}"
     state: present
   ignore_errors: yes
@@ -153,7 +153,7 @@
 
     if($missingProvider){
       Install-PackageProvider -Name $psg.n -RequiredVersion $psg.v -Confirm:$false -Force | Out-Null;
-      
+
       # Unload previous version
       Remove-Module -Name $psg.n -Force -EA SilentlyContinue;
       Import-PackageProvider -Name $psg.n -RequiredVersion $psg.v -Force | Out-Null;
@@ -172,10 +172,10 @@
     }
 
     Register-PSRepository -Name $repoName -SourceLocation $repoPath -InstallationPolicy Trusted | Out-Null;
-    
+
     Publish-Module -Path "$temp\\$modName" -Repository $repoName -Force -Confirm:$false | Out-Null;
     Get-ChildItem "$repoPath\\*" | ? Name -match "$modName.*.nupkg" | % Name;
-    
+
   register: saved_package
 
 - name: Validate sample module in custom repo

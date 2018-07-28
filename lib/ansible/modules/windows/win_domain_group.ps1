@@ -69,7 +69,7 @@ if ($state -eq "absent") {
         } catch {
             Fail-Json $result "failed to remove group $($name): $($_.Exception.Message)"
         }
-        
+
         $result.changed = $true
         if ($diff_mode) {
             $result.diff.prepared = "-[$name]"
@@ -112,7 +112,7 @@ if ($state -eq "absent") {
                         $group | Set-ADObject -ProtectedFromAccidentalDeletion $true -WhatIf:$check_mode -PassThru @extra_args | Out-Null
                     }
                 }
-                
+
                 $result.changed = $true
                 $diff_text += "-DistinguishedName = CN=$group_cn,$existing_path`n+DistinguishedName = CN=$group_cn,$organizational_unit`n"
 
@@ -203,7 +203,7 @@ if ($state -eq "absent") {
                     if ($existing_value -cne $attribute_value) {
                         $replace_attributes.$attribute_name = $attribute_value
                         $diff_text += "-$attribute_name = $existing_value`n+$attribute_name = $attribute_value`n"
-                    }                
+                    }
                 } else {
                     $add_attributes.$attribute_name = $attribute_value
                     $diff_text += "+$attribute_name = $attribute_value`n"

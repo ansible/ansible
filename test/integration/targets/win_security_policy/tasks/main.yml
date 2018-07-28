@@ -23,7 +23,7 @@
       section: System Access
       key: NewGuestName
       value: Guest
-  
+
   - name: run tests
     include_tasks: tests.yml
 

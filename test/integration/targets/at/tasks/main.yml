@@ -28,7 +28,7 @@
 ## at
 ##
 
-- name: define distros to attempt installing at on 
+- name: define distros to attempt installing at on
   set_fact:
     package_distros:
         - RedHat

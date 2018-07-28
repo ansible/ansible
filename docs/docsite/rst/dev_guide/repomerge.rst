@@ -13,7 +13,7 @@ For those who've been using Ansible long enough, you know that originally we sta
 
 1. Many modules in the core repo were also essentially "grand-fathered" in, despite not having a good set of tests or dedicated maintainers from the community.
 2. The time in queue for modules to be merged into extras was not really any different from the time to merge modules into core.
-3. The split introduced a few other problems for contributors such as having to submit multiple related PRs for modules with tests, or for those which rely on action plugins. 
+3. The split introduced a few other problems for contributors such as having to submit multiple related PRs for modules with tests, or for those which rely on action plugins.
 4. git submodules are notoriously complicated, even for contributors with decent git experience. The constant need to update git submodule pointers for devel and each stable branch can lead to testing surprises and really buys us nothing in terms of flexibility.
 5. Users can already be confused about where to open issues, especially when the problem appears to be with a module but is actually an action plugin (ie. template) or something more fundamental like includes. Having everything back in one repo makes it easier to link issues, and you're always sure to open a bug report in the right place.
 

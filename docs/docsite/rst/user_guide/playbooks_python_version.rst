@@ -23,7 +23,7 @@ In Python2, the :meth:`dict.keys`, :meth:`dict.values`, and :meth:`dict.items`
 methods returns a list.  Jinja2 returns that to Ansible via a string
 representation that Ansible can turn back into a list.  In Python3, those
 methods return a :ref:`dictionary view <python3:dict-views>` object.  The
-string representation that Jinja2 returns for dictionary views cannot be parsed back 
+string representation that Jinja2 returns for dictionary views cannot be parsed back
 into a list by Ansible.  It is, however, easy to make this portable by
 using the :func:`list <jinja2:list>` filter whenever using :meth:`dict.keys`,
 :meth:`dict.values`, or :meth:`dict.items`::

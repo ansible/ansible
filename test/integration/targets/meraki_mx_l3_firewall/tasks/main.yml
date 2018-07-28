@@ -8,7 +8,7 @@
   #   fail:
   #     msg: Please define an API key
   #   when: auth_key is not defined
-    
+
   # - name: Use an invalid domain
   #   meraki_organization:
   #     auth_key: '{{ auth_key }}'
@@ -19,7 +19,7 @@
   #   delegate_to: localhost
   #   register: invalid_domain
   #   ignore_errors: yes
-    
+
   # - name: Disable HTTP
   #   meraki_organization:
   #     auth_key: '{{ auth_key }}'
@@ -123,7 +123,7 @@
           dest_port: 80,443
           dest_cidr: 192.0.1.1/32
           protocol: tcp
-          policy: deny        
+          policy: deny
       syslog_default_rule: yes
     delegate_to: localhost
     register: default_syslog
@@ -161,7 +161,7 @@
           dest_port: 80,443
           dest_cidr: 192.0.1.1/32
           protocol: tcp
-          policy: deny        
+          policy: deny
       syslog_default_rule: no
     delegate_to: localhost
     register: disable_syslog

@@ -81,7 +81,7 @@
       - "vapp_vm.failed == false"
       - "vapp_vm.changed == true"
 
-- name:  Edit one vApp property and removing another 
+- name:  Edit one vApp property and removing another
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcsim }}"

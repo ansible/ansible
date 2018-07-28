@@ -100,7 +100,7 @@ namespace Ansible {
                 uint res = MsiOpenPackageW(msi, out MsiHandle);
                 if (res != 0)
                     return null;
-                
+
                 int length = 256;
                 var buffer = new StringBuilder(length);
                 res = MsiGetPropertyW(MsiHandle, property, buffer, ref length);
@@ -191,7 +191,7 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
                 # Someone is using an auth that supports credential delegation, at least it will fail otherwise
                 $test_path = $path
             }
-            
+
             $valid_path = Test-Path -Path $test_path -PathType Leaf
             if ($valid_path -ne $true) {
                 $metadata.path_error = "the file at the UNC path $path cannot be reached, ensure the user_name account has access to this path or use an auth transport with credential delegation"
@@ -251,7 +251,7 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
     if ($creates_path -ne $null) {
         $path_exists = Test-Path -Path $creates_path
         $metadata.installed = $path_exists
-        
+
         if ($creates_version -ne $null -and $path_exists -eq $true) {
             if (Test-Path -Path $creates_path -PathType Leaf) {
                 $existing_version = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($creates_path).FileVersion
@@ -299,7 +299,7 @@ Function Convert-Encoding($string) {
 
 $program_metadata = Get-ProgramMetadata -state $state -path $path -product_id $product_id -credential $credential -creates_path $creates_path -creates_version $creates_version -creates_service $creates_service
 if ($state -eq "absent") {
-    if ($program_metadata.installed -eq $true) {      
+    if ($program_metadata.installed -eq $true) {
         # artifacts we create that must be cleaned up
         $cleanup_artifacts = @()
         try {
@@ -348,7 +348,7 @@ if ($state -eq "absent") {
                 if ($arguments -ne $null) {
                     $uninstall_command += " $arguments"
                 }
-                
+
                 try {
                     $process_result = Run-Command -command $uninstall_command
                 } catch {
@@ -378,7 +378,7 @@ if ($state -eq "absent") {
                     $result.reboot_required = $true
                     $result.restart_required = $true
                 }
-            }            
+            }
         } finally {
             # make sure we cleanup any remaining artifacts
             foreach ($cleanup_artifact in $cleanup_artifacts) {
@@ -400,7 +400,7 @@ if ($state -eq "absent") {
             if ($program_metadata.location_type -eq [LocationType]::Unc -and $credential -ne $null) {
                 $file_name = Split-Path -Path $path -Leaf
                 $local_path = [System.IO.Path]::GetRandomFileName()
-                Copy-Item -Path "win_package:\$file_name" -Destination $local_path -WhatIf:$check_mode                                                
+                Copy-Item -Path "win_package:\$file_name" -Destination $local_path -WhatIf:$check_mode
                 $cleanup_artifacts += $local_path
             } elseif ($program_metadata.location_type -eq [LocationType]::Http -and $program_metadata.msi -ne $true) {
                 $local_path = [System.IO.Path]::GetRandomFileName()
@@ -418,11 +418,11 @@ if ($state -eq "absent") {
                 $temp_path = [System.IO.Path]::GetTempPath()
                 $log_file = [System.IO.Path]::GetRandomFileName()
                 $log_path = Join-Path -Path $temp_path -ChildPath $log_file
-                
+
                 $cleanup_artifacts += $log_path
                 $install_arguments = @("$env:windir\system32\msiexec.exe", "/i", $local_path, "/L*V", $log_path, "/qn", "/norestart")
             } else {
-                $log_path = $null                
+                $log_path = $null
                 $install_arguments = @($local_path)
             }
 
@@ -431,13 +431,13 @@ if ($state -eq "absent") {
                 if ($arguments -ne $null) {
                     $install_command += " $arguments"
                 }
-                
+
                 try {
                     $process_result = Run-Command -command $install_command
                 } catch {
                     Fail-Json -obj $result -message "failed to run install process ($install_command): $($_.Exception.Message)"
                 }
-                
+
                 if (($log_path -ne $null) -and (Test-Path -Path $log_path)) {
                     $log_content = Get-Content -Path $log_path | Out-String
                 } else {
@@ -461,7 +461,7 @@ if ($state -eq "absent") {
                     $result.reboot_required = $true
                     $result.restart_required = $true
                 }
-            }            
+            }
         } finally {
             # make sure we cleanup any remaining artifacts
             foreach ($cleanup_artifact in $cleanup_artifacts) {

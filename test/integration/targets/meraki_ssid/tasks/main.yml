@@ -7,7 +7,7 @@
   fail:
     msg: Please define an API key
   when: auth_key is not defined
-  
+
 - name: Use an invalid domain
   meraki_organization:
     auth_key: '{{ auth_key }}'
@@ -18,7 +18,7 @@
   delegate_to: localhost
   register: invalid_domain
   ignore_errors: yes
-  
+
 - name: Disable HTTP
   meraki_organization:
     auth_key: '{{ auth_key }}'
@@ -44,7 +44,7 @@
     type: wireless
   register: test_net
 
-- debug: 
+- debug:
     msg: '{{test_net}}'
 
 - name: Query all SSIDs
@@ -143,7 +143,7 @@
   delegate_to: localhost
   register: enable_ssid_number
 
-- debug:  
+- debug:
     msg: '{{ enable_ssid_number.data.enabled }}'
 
 - assert:
@@ -278,5 +278,5 @@
     net_name: TestNetSSID
   register: delete_net
 
-- debug: 
+- debug:
     msg: '{{delete_net}}'

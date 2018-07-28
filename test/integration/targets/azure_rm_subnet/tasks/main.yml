@@ -96,7 +96,7 @@
   register: output
 
 - assert:
-    that: 
+    that:
     - output.changed
     - output.state.network_security_group.id == nsg.state.id
 

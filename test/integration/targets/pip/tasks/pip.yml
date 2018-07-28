@@ -139,7 +139,7 @@
       - "not (req_installed is changed)"
 
 - name: install the same module from url
-  pip: 
+  pip:
     name: "git+https://github.com/dvarrazzo/pyiso8601#egg=pyiso8601"
     virtualenv: "{{ output_dir }}/pipenv"
     editable: True

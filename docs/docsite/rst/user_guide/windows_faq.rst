@@ -22,7 +22,7 @@ supported operating system versions are:
 * Windows 8.1
 * Windows 10
 
-Ansible also has minimum PowerShell version requirements - please see 
+Ansible also has minimum PowerShell version requirements - please see
 :doc:`windows_setup` for the latest information.
 
 Can I Manage Windows Nano Server?
@@ -37,7 +37,7 @@ No, Ansible cannot run on a Windows host and can only manage Windows hosts, but
 Ansible can be run under the Windows Subsystem for Linux (WSL).
 
 .. note:: The Windows Subsystem for Linux is not supported by Microsoft or
-    Ansible and should not be used for production systems. 
+    Ansible and should not be used for production systems.
 
 To install Ansible on WSL, the following commands
 can be run in the bash terminal:
@@ -67,7 +67,7 @@ authentication options. The closet option to SSH keys is to use the certificate
 authentication option which maps an X509 certificate to a local user.
 
 The way that these certificates are generated and mapped to a user is different
-from the SSH implementation; consult the :doc:`windows_winrm` documentation for 
+from the SSH implementation; consult the :doc:`windows_winrm` documentation for
 more information.
 
 .. _windows_faq_winrm:
@@ -82,7 +82,7 @@ running a command locally in these ways:
   delegate the user's credentials to a network resource, causing ``Access is
   Denied`` errors.
 
-* All processes run under WinRM are in a non-interactive session. Applications 
+* All processes run under WinRM are in a non-interactive session. Applications
   that require an interactive session will not work.
 
 * When running through WinRM, Windows restricts access to internal Windows
@@ -93,7 +93,7 @@ Some ways to bypass these restrictions are to:
 
 * Use ``become``, which runs a command as it would when run locally. This will
   bypass most WinRM restrictions, as Windows is unaware the process is running
-  under WinRM when ``become`` is used. See the :doc:`become` documentation for more 
+  under WinRM when ``become`` is used. See the :doc:`become` documentation for more
   information.
 
 * Use a scheduled task, which can be created with ``win_scheduled_task``. Like

@@ -32,7 +32,7 @@ Vars plugins are used automatically after they are enabled.
 Plugin Lists
 ++++++++++++
 
-You can use ``ansible-doc -t vars -l`` to see the list of available plugins. 
+You can use ``ansible-doc -t vars -l`` to see the list of available plugins.
 Use ``ansible-doc -t vars <plugin name>`` to see specific plugin-specific documentation and examples.
 
 

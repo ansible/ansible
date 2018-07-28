@@ -174,7 +174,7 @@
 
 - name: assert actual == expected
   assert:
-    that: 
+    that:
     - actual_pattern == expected
     - actual_regex == expected
 
@@ -429,7 +429,7 @@
 
 - name: assert actual == expected
   assert:
-    that: 
+    that:
     - actual_without_byte == expected
     - actual_with_byte == expected
 
@@ -472,7 +472,7 @@
 
 - name: assert actual == expected
   assert:
-    that: 
+    that:
     - actual_without_byte == expected
     - actual_with_byte == expected
 
@@ -528,7 +528,7 @@
   assert:
     that:
     - actual_md5_checksum.files[0].checksum == 'd1713d0f1d2e8fae230328d8fd59de01'
-  
+
 - name: get list of files with sha1 checksum
   win_find:
     paths: "{{win_find_dir}}\\single"

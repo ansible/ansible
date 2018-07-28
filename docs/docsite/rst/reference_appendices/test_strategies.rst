@@ -68,7 +68,7 @@ Certain playbook modules are particularly good for testing.  Below is an example
          host: "{{ inventory_hostname }}"
          port: 22
        delegate_to: localhost
-      
+
 Here's an example of using the URI module to make sure a web service returns::
 
    tasks:
@@ -145,7 +145,7 @@ Integrating Testing With Rolling Updates
 ````````````````````````````````````````
 
 If you have read into :ref:`playbooks_delegation` it may quickly become apparent that the rolling update pattern can be extended, and you
-can use the success or failure of the playbook run to decide whether to add a machine into a load balancer or not. 
+can use the success or failure of the playbook run to decide whether to add a machine into a load balancer or not.
 
 This is the great culmination of embedded tests::
 
@@ -167,7 +167,7 @@ This is the great culmination of embedded tests::
          - apply_testing_checks
 
       post_tasks:
-  
+
         - name: add back to load balancer pool
           command: /usr/bin/add_back_to_pool {{ inventory_hostname }}
           delegate_to: 127.0.0.1
@@ -213,7 +213,7 @@ This above approach can also be modified to run a step from a testing machine re
 In the above example, a script is run from the testing server against a remote node prior to bringing it back into
 the pool.
 
-In the event of a problem, fix the few servers that fail using Ansible's automatically generated 
+In the event of a problem, fix the few servers that fail using Ansible's automatically generated
 retry file to repeat the deploy on just those servers.
 
 Achieving Continuous Deployment
@@ -229,7 +229,7 @@ The workflow may look like this::
     - If the deploy job succeeds, it runs the same deploy playbook against production inventory
 
 Some Ansible users use the above approach to deploy a half-dozen or dozen times an hour without taking all of their infrastructure
-offline.  A culture of automated QA is vital if you wish to get to this level.  
+offline.  A culture of automated QA is vital if you wish to get to this level.
 
 If you are still doing a large amount of manual QA, you should still make the decision on whether to deploy manually as well, but
 it can still help to work in the rolling update patterns of the previous section and incorporate some basic health checks using

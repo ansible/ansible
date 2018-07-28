@@ -20,12 +20,12 @@ Ansible Style Guide
   voice_style
   trademarks
   grammar_punctuation
-  spelling_word_choice 
-  
+  spelling_word_choice
 
-.. Indices and tables 
-.. ================== 
 
-.. * :ref:`genindex` 
-.. * :ref:`modindex` 
+.. Indices and tables
+.. ==================
+
+.. * :ref:`genindex`
+.. * :ref:`modindex`
 .. * :ref:`search`

@@ -99,7 +99,7 @@ Example NX-API ``group_vars/nxos.yml``
    ansible_connection: httpapi
    ansible_network_os: nxos
    ansible_user: myuser
-   ansible_ssh_pass: !vault... 
+   ansible_ssh_pass: !vault...
    proxy_env:
      http_proxy: http://proxy.example.com:8080
 

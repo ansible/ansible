@@ -155,7 +155,7 @@
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
       name: "tn{{ rpfx }}"
-      security_group: 
+      security_group:
         name: "tn{{ rpfx }}2"
         resource_group: "{{ resource_group_secondary }}"
       virtual_network: "{{ vn.state.id }}"

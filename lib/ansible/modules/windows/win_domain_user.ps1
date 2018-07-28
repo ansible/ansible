@@ -182,7 +182,7 @@ If ($state -eq 'present') {
                     $existing_value = $user_obj.$attribute_name
                     if ($existing_value -cne $attribute_value) {
                         $replace_attributes.$attribute_name = $attribute_value
-                    }                
+                    }
                 } else {
                     $add_attributes.$attribute_name = $attribute_value
                 }

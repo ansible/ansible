@@ -23,7 +23,7 @@
 
 - name: Assert that facts module returned result
   assert:
-    that: 
+    that:
       - not results.changed
       - results.ansible_facts.azure_dnszones[0].tags.tag1 == 'tag1'
 

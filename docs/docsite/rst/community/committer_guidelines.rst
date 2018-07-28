@@ -7,7 +7,7 @@ These are the guidelines for people with commit access to Ansible. Committers ar
 
 These guidelines apply to everyone. At the same time, this ISN'T a process document. So just use good judgement. You've been given commit access because we trust your judgement.
 
-That said, use the trust wisely. 
+That said, use the trust wisely.
 
 If you abuse the trust and break components and builds, etc., the trust level falls and you may be asked not to commit or you may lose access to do so.
 
@@ -41,7 +41,7 @@ Roles on Core
 
 General Rules
 =============
-Individuals with direct commit access to ansible/ansible are entrusted with powers that allow them to do a broad variety of things--probably more than we can write down. Rather than rules, treat these as general *guidelines*, individuals with this power are expected to use their best judgement. 
+Individuals with direct commit access to ansible/ansible are entrusted with powers that allow them to do a broad variety of things--probably more than we can write down. Rather than rules, treat these as general *guidelines*, individuals with this power are expected to use their best judgement.
 
 * Don't
 
@@ -64,7 +64,7 @@ Individuals with direct commit access to ansible/ansible are entrusted with powe
   - Consider scope, sometimes a fix can be generalized
   - Keep it simple, then things are maintainable, debuggable and intelligible.
 
-Committers are expected to continue to follow the same community and contribution guidelines followed by the rest of the Ansible community. 
+Committers are expected to continue to follow the same community and contribution guidelines followed by the rest of the Ansible community.
 
 
 People

@@ -12,7 +12,7 @@ $params = Parse-Args $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name '_ansible_check_mode' -type 'bool' -default $false
 
 $dependencies = Get-AnsibleParam -obj $params -name 'dependencies' -type 'list' -default $null
-$dependency_action = Get-AnsibleParam -obj $params -name 'dependency_action' -type 'str' -default 'set' -validateset 'add','remove','set' 
+$dependency_action = Get-AnsibleParam -obj $params -name 'dependency_action' -type 'str' -default 'set' -validateset 'add','remove','set'
 $description = Get-AnsibleParam -obj $params -name 'description' -type 'str'
 $desktop_interact = Get-AnsibleParam -obj $params -name 'desktop_interact' -type 'bool' -default $false
 $display_name = Get-AnsibleParam -obj $params -name 'display_name' -type 'str'
@@ -66,7 +66,7 @@ Function Get-ServiceInfo($name) {
 
     # Delayed start_mode is in reality Automatic (Delayed), need to check reg key for type
     $delayed = Get-DelayedStatus -name $svc.Name
-    $actual_start_mode = $wmi_svc.StartMode.ToString().ToLower() 
+    $actual_start_mode = $wmi_svc.StartMode.ToString().ToLower()
     if ($delayed -and $actual_start_mode -eq 'auto') {
         $actual_start_mode = 'delayed'
     }
@@ -165,7 +165,7 @@ Function Set-ServiceStartMode($svc, $start_mode) {
         } catch {
             Fail-Json $result $_.Exception.Message
         }
-        
+
         $result.changed = $true
     }
 }
@@ -195,7 +195,7 @@ Function Set-ServiceAccount($wmi_svc, $username_sid, $username, $password) {
                 $error_msg = Get-WmiErrorMessage -return_value $result.ReturnValue
                 Fail-Json -obj $result -message "Failed to set service account to $($username): $($return.ReturnValue) - $error_msg"
             }
-        }        
+        }
 
         $result.changed = $true
     }
@@ -222,7 +222,7 @@ Function Set-ServiceDisplayName($svc, $display_name) {
         } catch {
             Fail-Json $result $_.Exception.Message
         }
-        
+
         $result.changed = $true
     }
 }
@@ -234,7 +234,7 @@ Function Set-ServiceDescription($svc, $description) {
         } catch {
             Fail-Json $result $_.Exception.Message
         }
-        
+
         $result.changed = $true
     }
 }
@@ -246,7 +246,7 @@ Function Set-ServicePath($name, $path) {
         } catch {
             Fail-Json $result $_.Exception.Message
         }
-        
+
         $result.changed = $true
     }
 }
@@ -295,7 +295,7 @@ Function Set-ServiceDependencies($wmi_svc, $dependency_action, $dependencies) {
                 Fail-Json -obj $result -message "Failed to set service dependencies $($dep_string): $($return.ReturnValue) - $error_msg"
             }
         }
-        
+
         $result.changed = $true
     }
 }
@@ -315,7 +315,7 @@ Function Set-ServiceState($svc, $wmi_svc, $state) {
                 Fail-Json $result $_.Exception.Message
             }
         }
-        
+
         $result.changed = $true
     }
 
@@ -325,7 +325,7 @@ Function Set-ServiceState($svc, $wmi_svc, $state) {
         } catch {
             Fail-Json $result $_.Exception.Message
         }
-        
+
         $result.changed = $true
     }
 
@@ -335,7 +335,7 @@ Function Set-ServiceState($svc, $wmi_svc, $state) {
         } catch {
             Fail-Json $result $_.Exception.Message
         }
-        
+
         $result.changed = $true
     }
 
@@ -366,7 +366,7 @@ Function Set-ServiceState($svc, $wmi_svc, $state) {
                 Fail-Json -obj $result -message "Failed to delete service $($svc.Name): $($return.ReturnValue) - $error_msg"
             }
         }
-        
+
         $result.changed = $true
     }
 }

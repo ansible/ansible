@@ -44,7 +44,7 @@ Function CheckModified-File($url, $dest, $headers, $credentials, $timeout, $use_
     $webLastMod = $null
 
     $webRequest = [System.Net.WebRequest]::Create($url)
-    
+
     foreach ($header in $headers.GetEnumerator()) {
         $webRequest.Headers.Add($header.Name, $header.Value)
     }
@@ -73,7 +73,7 @@ Function CheckModified-File($url, $dest, $headers, $credentials, $timeout, $use_
     } else {
         $webRequest.Method = [System.Net.WebRequestMethods+Http]::Head
     }
-    
+
     Try {
         $webResponse = $webRequest.GetResponse()
 
@@ -191,9 +191,9 @@ if ($url_username) {
     if ($force_basic_auth) {
         $credentials = [convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($url_username+":"+$url_password))
     } else {
-        $credentials = New-Object System.Net.NetworkCredential($url_username, $url_password) 
+        $credentials = New-Object System.Net.NetworkCredential($url_username, $url_password)
     }
-    
+
 }
 
 # If skip_certificate_validation was specified, use validate_certs

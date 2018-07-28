@@ -10,7 +10,7 @@
     that:
     - msg_result is not failed
     - msg_result.time_taken > 10
-  when: 
+  when:
     - can_toast == True
     - in_check_mode == False
     - user_count.stdout|int > 0
@@ -21,7 +21,7 @@
     - msg_result is not failed
     - msg_result.time_taken > 0.1
     - msg_result.toast_sent == False
-  when: 
+  when:
     - can_toast == True
     - in_check_mode == False
     - user_count.stdout|int == 0
@@ -31,7 +31,7 @@
     that:
     - msg_result is not failed
     - msg_result.time_taken > 0.1
-  when: 
+  when:
     - can_toast == True
     - in_check_mode == True
 
@@ -41,7 +41,7 @@
     - msg_result is not failed
     - msg_result.time_taken > 0.1
     - msg_result.toast_sent == False
-  when: 
+  when:
     - can_toast == True
     - in_check_mode == True
     - user_count.stdout|int == 0
@@ -64,7 +64,7 @@
     that:
     - msg_result2 is not failed
     - msg_result2.time_taken > 10
-  when: 
+  when:
     - can_toast == True
     - in_check_mode == False
     - user_count.stdout|int > 0
@@ -74,7 +74,7 @@
     that:
     - msg_result2 is not failed
     - msg_result2.time_taken > 0.1
-  when: 
+  when:
     - can_toast == True
     - in_check_mode == False
     - user_count.stdout|int == 0
@@ -84,7 +84,7 @@
     that:
     - msg_result2 is not failed
     - msg_result2.time_taken > 0.1
-  when: 
+  when:
     - can_toast == True
     - in_check_mode == False
     - user_count.stdout|int > 0
@@ -94,7 +94,7 @@
     that:
     - msg_result2 is not failed
     - msg_result2.time_taken > 0.1
-  when: 
+  when:
     - can_toast == True
     - in_check_mode == False
     - user_count.stdout|int == 0

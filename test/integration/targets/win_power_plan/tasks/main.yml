@@ -35,7 +35,7 @@
     win_shell: (Get-CimInstance -Name root\cimv2\power -Class win32_PowerPlan -Filter "ElementName = '{{ name }}'").IsActive
     register: set_plan_check_result
     changed_when: False
-    
+
   # verify that the powershell check is showing the plan as still inactive on the system
   - name: assert setting plan (check mode)
     assert:

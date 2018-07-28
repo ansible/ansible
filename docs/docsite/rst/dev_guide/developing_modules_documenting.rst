@@ -42,7 +42,7 @@ code.
 .. code-block:: python
 
     #!/usr/bin/python
-    
+
     # Copyright: (c) 2018, Terry Jones <terry.jones@example.org>
     # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -62,7 +62,7 @@ add the newer line above the older one, like so:
 .. code-block:: python
 
     #!/usr/bin/python
-    
+
     # Copyright: (c) 2017, [New Contributor(s)]
     # Copyright: (c) 2015, [Original Contributor(s)]
     # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)

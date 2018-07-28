@@ -5,12 +5,12 @@
 
 - name: Setup - Remove snmp_location if configured
   nxos_snmp_location: &remove
-    location: Test 
+    location: Test
     provider: "{{ connection }}"
     state: absent
 
 - block:
-  - name: Configure snmp location 
+  - name: Configure snmp location
     nxos_snmp_location: &config
       location: Testing
       provider: "{{ connection }}"
@@ -29,7 +29,7 @@
       that:
         - "result.changed == false"
 
-  - name: Change snmp location 
+  - name: Change snmp location
     nxos_snmp_location: &config1
       location: Test
       provider: "{{ connection }}"

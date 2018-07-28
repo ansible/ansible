@@ -378,7 +378,7 @@
         processModel.password: '{{ansible_password}}'
     register: iis_attributes_new_check
     check_mode: yes
-  
+
   - name: assert change attributes for newer IIS version check
     assert:
       that:
@@ -395,7 +395,7 @@
         processModel.userName: '{{ansible_user}}'
         processModel.password: '{{ansible_password}}'
     register: iis_attributes_new
-  
+
   - name: assert change attributes for newer IIS version
     assert:
       that:
@@ -414,7 +414,7 @@
         processModel.userName: '{{ansible_user}}'
         processModel.password: '{{ansible_password}}'
     register: iis_attributes_new_again
-  
+
   - name: assert change attributes for newer IIS version again
     assert:
       that:

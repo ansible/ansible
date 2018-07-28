@@ -83,7 +83,7 @@ PluginLoader
     hardcoded powershell module_utils file.  If we add generic module_utils
     for powershell, we'll need to decide how to organize the code.
 
-Static Loop Keyword 
+Static Loop Keyword
 -------------------
 - **Pushed to 2.5**
 - Deprecate (not on standard deprecation cycle) ``with_`` in favor of ``loop:``
@@ -190,7 +190,7 @@ Network Roadmap
 - Removal of ``*_template`` modules **(done)**
 - Distributed Continuous Integration Infrastructure **(done)**
 - RPC Connection Plugin **(done)**
-- Module Work 
+- Module Work
 
   - Declarative intent modules **(done)**
   - OpenVSwitch **(done)**

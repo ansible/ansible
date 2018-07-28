@@ -4,7 +4,7 @@
 
   - name: Configure NXAPI HTTPs w/weak ciphers
     nxos_nxapi: &configure_https_weak_ciphers
-      enable_https: yes 
+      enable_https: yes
       enable_sandbox: "{{nxapi_sandbox_option|default(omit)}}"
       ssl_strong_ciphers: no
     register: result
@@ -30,7 +30,7 @@
 
   - name: Configure NXAPI HTTPs w/strong ciphers
     nxos_nxapi: &configure_https_strong_ciphers
-      enable_https: yes 
+      enable_https: yes
       enable_sandbox: "{{nxapi_sandbox_option|default(omit)}}"
       ssl_strong_ciphers: yes
     register: result
@@ -107,7 +107,7 @@
       tlsv1_2: yes
       tlsv1_0: no
     register: result
-  
+
   - nxos_command:
       commands:
         - show run all | inc nxapi | inc protocols

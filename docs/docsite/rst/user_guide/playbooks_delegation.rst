@@ -95,7 +95,7 @@ In the above example, if more than 3 of the 10 servers in the group were to fail
 
 .. note::
 
-     The percentage set must be exceeded, not equaled. For example, if serial were set to 4 and you wanted the task to abort 
+     The percentage set must be exceeded, not equaled. For example, if serial were set to 4 and you wanted the task to abort
      when 2 of the systems failed, the percentage should be set at 49 rather than 50.
 
 .. _delegation:
@@ -123,7 +123,7 @@ Using this with the 'serial' keyword to control the number of hosts executing at
         delegate_to: 127.0.0.1
 
       - name: actual steps would go here
-        yum: 
+        yum:
           name: acme-web-stack
           state: latest
 
@@ -263,8 +263,8 @@ use the default remote connection type::
       connection: local
 
 .. note::
-    If you set the connection to local and there is no ansible_python_interpreter set, modules will run under /usr/bin/python and not  
-    under {{ ansible_playbook_python }}. Be sure to set ansible_python_interpreter: "{{ ansible_playbook_python }}" in           
+    If you set the connection to local and there is no ansible_python_interpreter set, modules will run under /usr/bin/python and not
+    under {{ ansible_playbook_python }}. Be sure to set ansible_python_interpreter: "{{ ansible_playbook_python }}" in
     host_vars/localhost.yml, for example. You can avoid this issue by using ``local_action`` or ``delegate_to: localhost`` instead.
 
 
@@ -295,14 +295,14 @@ For datacenter "A", the playbook can be written this way::
       tasks:
       - name: 'shutting down datacenter [ A ]'
         command: /usr/bin/disable-dc
-    
+
     - hosts: frontends_dc_a
       tasks:
       - name: 'stopping service'
         command: /usr/bin/stop-software
       - name: 'updating software'
         command: /usr/bin/upgrade-software
-    
+
     - hosts: load_balancers_dc_a
       tasks:
       - name: 'Starting datacenter [ A ]'

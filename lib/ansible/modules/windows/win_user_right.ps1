@@ -68,7 +68,7 @@ namespace Ansible
                 } catch
                 {
                     throw new ArgumentException(String.Format("SID string {0} could not be converted to SecurityIdentifier", sidString));
-                }                    
+                }
 
                 Byte[] buffer = new Byte[sid.BinaryLength];
                 sid.GetBinaryForm(buffer, 0);
@@ -274,7 +274,7 @@ Add-Type -TypeDefinition $sec_helper_util
 $env:TMP = $original_tmp
 $env:TEMP = $original_temp
 
-Function Compare-UserList($existing_users, $new_users) {  
+Function Compare-UserList($existing_users, $new_users) {
     $added_users = [String[]]@()
     $removed_users = [String[]]@()
     if ($action -eq "add") {
@@ -335,7 +335,7 @@ if (($change_result.added.Length -gt 0) -or ($change_result.removed.Length -gt 0
         $diff_text += "+$user_name`n"
         $new_user_list.Add($user)
     }
-    
+
     if ($diff_mode) {
         if ($new_user_list.Count -eq 0) {
             $diff_text = "-$diff_text"

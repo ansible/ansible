@@ -58,7 +58,7 @@
 
 - name: Assert that new record was appended
   assert:
-    that: 
+    that:
       - results.changed
 
 - name: re-update "A" record set with additional record
@@ -107,7 +107,7 @@
 
 - name: Assert that check_mode returns new state
   assert:
-    that: 
+    that:
       - results.changed
 
 # FUTURE: add facts module calls to ensure that we really didn't touch anything
@@ -155,7 +155,7 @@
 
 - name: Assert that SRV record set was created
   assert:
-    that: 
+    that:
       - results.changed
 
 - name: create TXT records in a new record set

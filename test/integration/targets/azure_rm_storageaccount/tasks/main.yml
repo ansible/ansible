@@ -4,24 +4,24 @@
 
  - name: Test invalid account name
    azure_rm_storageaccount:
-       resource_group: "{{ resource_group }}" 
+       resource_group: "{{ resource_group }}"
        name: "invalid_char$"
        state: present
-   register: invalid_name     
-   ignore_errors: yes  
+   register: invalid_name
+   ignore_errors: yes
 
  - name: Assert task failed
    assert: { that: "invalid_name['failed'] == True" }
 
  - name: Delete storage account
    azure_rm_storageaccount:
-       resource_group: "{{ resource_group }}" 
+       resource_group: "{{ resource_group }}"
        name: "{{ storage_account }}"
        state: absent
 
  - name: Create new storage account
    azure_rm_storageaccount:
-       resource_group: "{{ resource_group }}" 
+       resource_group: "{{ resource_group }}"
        name: "{{ storage_account }}"
        account_type: Standard_LRS
        tags:
@@ -29,7 +29,7 @@
            galaxy: galaxy
    register: output
 
- - name: Assert status succeeded and results include an Id value 
+ - name: Assert status succeeded and results include an Id value
    assert:
      that:
        - output.changed
@@ -45,15 +45,15 @@
  - assert:
        that: azure_storageaccounts | length >= 1
 
- - name: Change account type 
+ - name: Change account type
    azure_rm_storageaccount:
-       resource_group: "{{ resource_group }}" 
+       resource_group: "{{ resource_group }}"
        name: "{{ storage_account }}"
        account_type: Premium_LRS
    register: change_account
-   ignore_errors: yes 
+   ignore_errors: yes
 
- - name: Assert account type change failed 
+ - name: Assert account type change failed
    assert: { that: "change_account['failed'] == True" }
 
  - name: Change account type and add custom domain
@@ -117,6 +117,6 @@
 
  - name: Delete acccount
    azure_rm_storageaccount:
-       resource_group: "{{ resource_group }}" 
+       resource_group: "{{ resource_group }}"
        name: "{{ storage_account }}"
        state: absent

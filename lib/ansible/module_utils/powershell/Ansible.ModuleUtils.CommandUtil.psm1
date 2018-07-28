@@ -375,7 +375,7 @@ Function Get-ExecutablePath($executable, $directory) {
     if ($file -ne $null) {
         $executable_path = $file.FullName
     } else {
-        $executable_path = [Ansible.CommandUtil]::SearchPath($executable)    
+        $executable_path = [Ansible.CommandUtil]::SearchPath($executable)
     }
     return $executable_path
 }
@@ -387,7 +387,7 @@ Function Run-Command {
         [string]$stdin = $null, # a string to send to the stdin pipe when executing the command
         [hashtable]$environment = @{} # a hashtable of environment values to run the command under, this will replace all the other environment variables with these
     )
-    
+
     # load the C# code we call in this function
     Load-CommandUtils
 

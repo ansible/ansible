@@ -1,5 +1,5 @@
 ---
-- debug: 
+- debug:
     msg: "START netconf/set_name_servers.yaml on connection={{ ansible_connection }}"
 
 - name: setup

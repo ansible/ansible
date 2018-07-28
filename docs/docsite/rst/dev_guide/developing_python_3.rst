@@ -33,7 +33,7 @@ Minimum Version of Python-3.x and Python-2.x
 In both controller side and module code, we support Python-3.5 or greater and Python-2.6 or
 greater.  Python-3.5 was chosen as a minimum because it is the earliest Python-3 version
 adopted as the default Python by a Long Term Support (LTS) Linux distribution (in this case, Ubuntu-16.04).
-Previous LTS Linux distributions shipped with a Python-2 version which users can rely upon instead of the 
+Previous LTS Linux distributions shipped with a Python-2 version which users can rely upon instead of the
 Python-3 version.
 
 For Python-2, the default is for modules to run on at least Python-2.6.  This allows
@@ -208,7 +208,7 @@ subprocess library and byte strings should be expected back from it.
 One of the main places in Ansible's controller code that we interact with
 other programs is the connection plugins' ``exec_command`` methods.  These
 methods transform any text strings they receive in the command (and arguments
-to the command) to execute into bytes and return stdout and stderr as byte strings 
+to the command) to execute into bytes and return stdout and stderr as byte strings
 Higher level functions (like action plugins' ``_low_level_execute_command``)
 transform the output into text strings.
 

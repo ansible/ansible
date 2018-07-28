@@ -572,7 +572,7 @@
       assert:
         that:
           - ecs_fargate_task_definition_bridged_with_host_port is failed
-          - 'ecs_fargate_task_definition_bridged_with_host_port.msg == "To use FARGATE launch type, network_mode must be awsvpc"' 
+          - 'ecs_fargate_task_definition_bridged_with_host_port.msg == "To use FARGATE launch type, network_mode must be awsvpc"'
 
     - name: create Fargate VPC-networked task definition without CPU or Memory (expected to Fail)
       ecs_taskdefinition:
@@ -589,7 +589,7 @@
       assert:
         that:
           - ecs_fargate_task_definition_vpc_no_mem is failed
-          - 'ecs_fargate_task_definition_vpc_no_mem.msg == "launch_type is FARGATE but all of the following are missing: cpu, memory"' 
+          - 'ecs_fargate_task_definition_vpc_no_mem.msg == "launch_type is FARGATE but all of the following are missing: cpu, memory"'
 
     - name: create Fargate VPC-networked task definition with CPU or Memory and execution role
       ecs_taskdefinition:
@@ -623,13 +623,13 @@
         <<: *aws_connection_info
       register: ecs_fargate_service_network_without_awsvpc
       ignore_errors: yes
-     
+
     - name: assert that using Fargate ECS service fails
       assert:
         that:
           - ecs_fargate_service_network_without_awsvpc is failed
 
-    - name: create fargate ECS service with network config 
+    - name: create fargate ECS service with network config
       ecs_service:
         state: present
         name: "{{ ecs_service_name }}4"
@@ -758,7 +758,7 @@
         <<: *aws_connection_info
       ignore_errors: yes
 
-    - name: remove fargate ECS service 
+    - name: remove fargate ECS service
       ecs_service:
         state: absent
         name: "{{ ecs_service_name }}4"
@@ -766,7 +766,7 @@
         <<: *aws_connection_info
       ignore_errors: yes
       register: ecs_fargate_service_network_with_awsvpc
- 
+
     - name: remove ecs task definition
       ecs_taskdefinition:
         containers: "{{ ecs_task_containers }}"

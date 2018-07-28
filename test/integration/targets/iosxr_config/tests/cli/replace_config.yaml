@@ -5,8 +5,8 @@
   iosxr_config:
     commands:
       - no interface GigabitEthernet0/0/0/3
-  
-- name: replace config (add preconfigured interface) 
+
+- name: replace config (add preconfigured interface)
   iosxr_config: &addreplace
     src: "{{ role_path }}/fixtures/config_add_interface.txt"
     replace: config
@@ -25,7 +25,7 @@
     that:
       - 'result.changed == false'
 
-- name: replace config (del preconfigured interface) 
+- name: replace config (del preconfigured interface)
   iosxr_config: &delreplace
     src: "{{ role_path }}/fixtures/config_del_interface.txt"
     replace: config

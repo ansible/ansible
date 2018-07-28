@@ -10,7 +10,7 @@ Ansible ships with a number of handy plugins, and you can easily write your own.
 
 This section covers the various types of plugins that are included with Ansible:
 
-.. toctree:: 
+.. toctree::
    :maxdepth: 1
 
    action

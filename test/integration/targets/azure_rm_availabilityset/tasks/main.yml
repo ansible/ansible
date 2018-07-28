@@ -32,7 +32,7 @@
   ignore_errors: yes
 
 - assert:
-    that: 
+    that:
     - not results.changed
     - results.msg == 'You tried to change platform_update_domain_count but is was unsuccessful. An Availability Set is immutable, except tags'
 
@@ -49,7 +49,7 @@
   ignore_errors: yes
 
 - assert:
-    that: 
+    that:
     - not results.changed
     - results.msg == 'You tried to change platform_update_domain_count but is was unsuccessful. An Availability Set is immutable, except tags'
 
@@ -95,7 +95,7 @@
   register: results
 
 - assert:
-    that: 
+    that:
       - not results.changed
       - results.state.tags.checktest1 == 'modified1'
 

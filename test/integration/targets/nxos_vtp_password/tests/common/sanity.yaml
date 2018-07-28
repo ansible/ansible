@@ -25,7 +25,7 @@
   - assert: &true
       that:
         - "result.changed == true"
-  
+
   - name: "Conf Idempotence"
     nxos_vtp_password: *configure
     register: result

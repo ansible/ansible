@@ -35,7 +35,7 @@
       timezone: America/Chicago
     delegate_to: localhost
     register: create_net_switch
-    
+
   - name: Create network with type switch by org ID
     meraki_network:
       auth_key: '{{ auth_key }}'
@@ -45,8 +45,8 @@
       type: switch
       timezone: America/Chicago
     delegate_to: localhost
-    register: create_net_switch_org_id  
-    
+    register: create_net_switch_org_id
+
   - name: Create network with type appliance and no timezone
     meraki_network:
       auth_key: '{{ auth_key }}'
@@ -56,7 +56,7 @@
       type: appliance
     delegate_to: localhost
     register: create_net_appliance_no_tz
-    
+
   - name: Create network with type wireless
     meraki_network:
       auth_key: '{{ auth_key }}'
@@ -100,7 +100,7 @@
       disable_my_meraki: no
     delegate_to: localhost
     register: enable_meraki_com
-    
+
   - name: Create network with one tag
     meraki_network:
       auth_key: '{{ auth_key }}'
@@ -115,7 +115,7 @@
 
   - debug:
       msg: '{{create_net_tag}}'
-    
+
   - name: Create network with two tags
     meraki_network:
       auth_key: '{{ auth_key }}'
@@ -182,7 +182,7 @@
       org_name: '{{test_org_name}}'
     delegate_to: localhost
     register: net_query_all
-      
+
   - name: Query a configuration template
     meraki_network:
       auth_key: '{{auth_key}}'
@@ -206,7 +206,7 @@
       that:
         - 'net_query_one.data.name == "IntTestNetworkSwitch"'
         - 'query_config_template.data.name == "DevConfigTemplate"'
-        
+
 
 #############################################################################
 # Tear down starts here
@@ -220,7 +220,7 @@
     delegate_to: localhost
     register: delete_all_no_org
     ignore_errors: yes
-      
+
   - name: Delete network by org ID
     meraki_network:
       auth_key: '{{ auth_key }}'

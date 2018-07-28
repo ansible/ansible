@@ -180,7 +180,7 @@
     state: removed
 
 - name: clean zypper RPM cache
-  file: 
+  file:
     name: /var/cache/zypper/RPMS
     state: absent
 
@@ -259,8 +259,8 @@
     state: absent
 
 - name: install and remove in the same run, with +- prefix
-  zypper: 
-    name: 
+  zypper:
+    name:
       - -hello
       - +metamail
     state: present
@@ -322,13 +322,13 @@
 
 - name: try rm patch
   zypper:
-    name: openSUSE-2016-128 
+    name: openSUSE-2016-128
     type: patch
     state: absent
   ignore_errors: yes
   register: zypper_patch
 - assert:
-    that: 
+    that:
       - zypper_patch is failed
       - zypper_patch.msg.startswith('Can not remove patches.')
 
@@ -339,7 +339,7 @@
   ignore_errors: yes
   register: zypper_rm
 - assert:
-    that: 
+    that:
       - zypper_rm is failed
       - zypper_rm.msg.startswith('Can not remove via URL.')
 
@@ -355,7 +355,7 @@
     type: pattern
     state: present
   register: zypper_install_pattern1
-  
+
 - name: install pattern update_test again
   zypper:
     name: update_test
@@ -384,7 +384,7 @@
     name: hello
     state: present
   register: zypperin2
-  
+
 - assert:
     that:
       - zypperin1 is succeeded

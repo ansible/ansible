@@ -453,7 +453,7 @@
   register: win_stat_missing
 
 - name: check win_stat missing result
-  assert: 
+  assert:
     that:
       - not win_stat_missing.stat.exists
       - win_stat_missing is not failed

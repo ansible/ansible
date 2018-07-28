@@ -30,7 +30,7 @@
       bestpath_med_confed: true
       bestpath_med_missing_as_worst: true
       bestpath_med_non_deterministic: true
-# grace_restart is failing with error code -32603 only on CLI transport, nxapi ok 
+# grace_restart is failing with error code -32603 only on CLI transport, nxapi ok
 #      graceful_restart: false
       graceful_restart_helper: true
       log_neighbor_changes: true

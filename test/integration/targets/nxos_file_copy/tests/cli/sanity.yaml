@@ -10,7 +10,7 @@
   ignore_errors: yes
 
 - name: "Setup - Turn on feature scp-server"
-  nxos_feature: 
+  nxos_feature:
     feature: scp-server
     state: enabled
 

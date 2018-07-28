@@ -5,7 +5,7 @@
     path: '{{test_win_package_path}}\bad.msi'
     state: present
   register: fail_bad_rc
-  failed_when: "'unexpected rc from install' not in fail_bad_rc.msg and fail_bad_rc.exit_code != 1603" 
+  failed_when: "'unexpected rc from install' not in fail_bad_rc.msg and fail_bad_rc.exit_code != 1603"
 
 - name: fail when not using an int for a return code
   win_package:

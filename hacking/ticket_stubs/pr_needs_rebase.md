@@ -3,7 +3,7 @@ Rebase Request
 
 Hi!
 
-Thanks very much for your submission to Ansible.  It sincerely means a lot to us. 
+Thanks very much for your submission to Ansible.  It sincerely means a lot to us.
 
 It looks like the code underneath has changed since this was submitted.  Can you take care of rebasing this for us?
 
@@ -12,7 +12,7 @@ It looks like the code underneath has changed since this was submitted.  Can you
    * Push to the same branch and github should update the pull request automatically.
 
 Just as a quick reminder of things, this is a really busy project.  We have over 800 contributors and to manage the queue effectively
-we assign things a priority between P1 (highest) and P5.  We'd like to thank you very much for your time!  
+we assign things a priority between P1 (highest) and P5.  We'd like to thank you very much for your time!
 We'll work things in priority order, so just wanted you to be aware of the queue and know we haven't forgotten about you!
 
 We will definitely see your comments on this issue when reading this ticket, but may not be able to reply promptly.  You may also wish to join one of our two mailing lists

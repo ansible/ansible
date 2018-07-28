@@ -71,7 +71,7 @@ If(-not $forest) {
         if ($domain_netbios_name) {
             $install_forest_args.DomainNetBiosName = $domain_netbios_name
         }
-        
+
         $iaf = Install-ADDSForest @install_forest_args
 
         $result.reboot_required = $iaf.RebootRequired

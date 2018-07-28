@@ -43,7 +43,7 @@ To match strings against a substring or a regex, use the "match" or "search" fil
       url: "http://example.com/users/foo/resources/bar"
 
     tasks:
-        - debug: 
+        - debug:
             msg: "matched pattern 1"
           when: url is match("http://example.com/users/.*/resources/.*")
 
@@ -161,7 +161,7 @@ The following tests can provide information about a path on the controller::
     - debug:
         msg: "path is {{ (mypath is abs)|ternary('absolute','relative')}}"
 
-    - debug: 
+    - debug:
         msg: "path is the same file as path2"
       when: mypath is same_file(path2)
 

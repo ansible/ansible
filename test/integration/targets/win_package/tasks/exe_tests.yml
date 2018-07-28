@@ -295,7 +295,7 @@
   assert:
     that:
     - install_exe_create_service_mismatch is changed
- 
+
 - name: uninstall exe post tests
   win_package:
     arguments: /S

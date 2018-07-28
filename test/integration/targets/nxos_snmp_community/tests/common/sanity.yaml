@@ -8,7 +8,7 @@
     community: TESTING7
     group: network-operator
     provider: "{{ connection }}"
-    state: absent 
+    state: absent
   ignore_errors: yes
 
 - block:

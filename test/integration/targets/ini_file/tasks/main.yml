@@ -167,7 +167,7 @@
   set_fact:
     content7: "{{ lookup('file', output_file) }}"
     expected7: |-
-      
+
       [mysqld]
       skip-name
       skip-name-resolve
@@ -190,7 +190,7 @@
   set_fact:
     content8: "{{ lookup('file', output_file) }}"
     expected8: |-
-      
+
       [mysqld]
       skip-name = myvalue
       skip-name-resolve
@@ -215,7 +215,7 @@
   set_fact:
     content9: "{{ lookup('file', output_file) }}"
     expected9: |-
-      
+
       [mysqld]
       skip-name
       skip-name-resolve
@@ -240,7 +240,7 @@
   set_fact:
     content10: "{{ lookup('file', output_file) }}"
     expected10: |-
-      
+
       [mysqld]
       skip-name
       max_connections = 500

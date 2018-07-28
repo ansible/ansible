@@ -15,7 +15,7 @@
 - name: Test BGP  - address-family - network
   cnos_bgp:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['username']}}  password={{ hostvars[inventory_hostname]['password']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_bgp_{{ inventory_hostname }}_output.txt asNum='{{item.asNum}}' bgpArg1='{{item.bgpArg1}}' bgpArg2='{{item.bgpArg2}}' bgpArg3='{{item.bgpArg3}}' bgpArg4='{{item.bgpArg4}}' bgpArg5='{{item.bgpArg5}}'
   with_items: "{{test_bgp_data18}}"
-  
+
 - name: Test BGP - bestpath - always-compare-med
   cnos_bgp:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['username']}}  password={{ hostvars[inventory_hostname]['password']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_bgp_{{ inventory_hostname }}_output.txt asNum='{{item.asNum}}' bgpArg1='{{item.bgpArg1}}' bgpArg2='{{item.bgpArg2}}'
   with_items: "{{test_bgp_data2}}"

@@ -9,7 +9,7 @@
     when: platform is match('N7K')
 
   - name: "Enable feature nv overlay"
-    nxos_config: 
+    nxos_config:
       commands:
         - feature nv overlay
       match: none
@@ -110,7 +110,7 @@
         vni: 8000
         provider: "{{ connection }}"
       register: result
-  
+
     - assert: *true
 
     - name: configure vxlan_vtep_vni ingress static
@@ -120,7 +120,7 @@
         ingress_replication: static
         provider: "{{ connection }}"
       register: result
-  
+
     - assert: *true
 
     - name: check configure vxlan_vtep_vni ingress static idempotence check
@@ -154,7 +154,7 @@
         ingress_replication: bgp
         provider: "{{ connection }}"
       register: result
-  
+
     - assert: *true
 
     - name: "Conf 7 Idempotence"
@@ -170,7 +170,7 @@
         ingress_replication: default
         provider: "{{ connection }}"
       register: result
-  
+
     - assert: *true
 
     - name: "Conf 8 Idempotence"
@@ -195,7 +195,7 @@
       nxos_vxlan_vtep_vni: &conf9
         interface: nve1
         vni: 8000
-        peer_list: 
+        peer_list:
           - 192.0.2.1
           - 192.0.2.2
           - 192.0.2.3
@@ -203,13 +203,13 @@
         ingress_replication: static
         provider: "{{ connection }}"
       register: result
-  
+
     - assert: *true
 
     - name: "Conf 9 Idempotence"
       nxos_vxlan_vtep_vni: *conf9
       register: result
-  
+
     - assert: *false
 
     - name: configure vxlan_vtep_vni default peer-list
@@ -220,19 +220,19 @@
         ingress_replication: static
         provider: "{{ connection }}"
       register: result
-  
+
     - assert: *true
 
     - name: "Conf 10 Idempotence"
       nxos_vxlan_vtep_vni: *conf10
       register: result
-  
+
     - assert: *false
 
     - name: "Conf 9 again"
       nxos_vxlan_vtep_vni: *conf9
       register: result
-  
+
     - assert: *true
 
     - name: remove vxlan_vtep_vni
@@ -265,7 +265,7 @@
     ignore_errors: yes
 
   - name: "Disable feature nv overlay"
-    nxos_feature: 
+    nxos_feature:
       feature: nve
       provider: "{{ connection }}"
       state: disabled

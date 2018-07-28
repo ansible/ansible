@@ -7,7 +7,7 @@
   nxos_snmp_contact: &remove
     contact: Test
     provider: "{{ connection }}"
-    state: absent 
+    state: absent
 
 - block:
 
@@ -58,7 +58,7 @@
   - assert: *false
 
   always:
-  - name: Cleanup 
+  - name: Cleanup
     nxos_snmp_contact: *remove
 
   - debug: msg="END connection={{ ansible_connection }} nxos_snmp_community sanity test"

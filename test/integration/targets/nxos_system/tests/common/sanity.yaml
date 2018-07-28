@@ -133,4 +133,4 @@
   - name: Re-configure hostname
     nxos_system: *hostname
 
-  - debug: msg="END connection={{ ansible_connection }}/sanity.yaml" 
+  - debug: msg="END connection={{ ansible_connection }}/sanity.yaml"

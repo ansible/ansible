@@ -12,7 +12,7 @@ Function Convert-RegistryPath {
     )
 
     $output = $Path -replace "HKLM:", "HKLM"
-    $output = $output -replace "HKCU:", "HKCU" 
+    $output = $output -replace "HKCU:", "HKCU"
 
     Return $output
 }
@@ -43,7 +43,7 @@ If ( $do_comparison -eq $True ) {
   $guid = [guid]::NewGuid()
   $exported_path = $env:TEMP + "\" + $guid.ToString() + 'ansible_win_regmerge.reg'
 
-  $expanded_compare_key = Convert-RegistryPath ($compare_to_key) 
+  $expanded_compare_key = Convert-RegistryPath ($compare_to_key)
 
   # export from the reg key location to a file
   $reg_args = @("EXPORT", "$expanded_compare_key", $exported_path)

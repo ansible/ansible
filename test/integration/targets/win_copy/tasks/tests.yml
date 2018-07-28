@@ -435,7 +435,7 @@
     that:
     - copy_file_with_colon is changed
     - copy_file_with_colon_result.stat.exists == True
-    - copy_file_with_colon_result.stat.checksum == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3" 
+    - copy_file_with_colon_result.stat.checksum == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"
 
 - name: remove file with colon in the name
   file:

@@ -47,7 +47,7 @@ For complex variables such as hashes or arrays, ``!unsafe`` should be used on th
     my_unsafe_hash:
         unsafe_key: !unsafe 'unsafe value'
 
- 
+
 
 .. seealso::
 

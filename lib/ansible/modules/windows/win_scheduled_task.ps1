@@ -357,11 +357,11 @@ Function Compare-PropertyList {
                 $com_name = Convert-SnakeToPascalCase -snake $property_arg
                 $property_value = $new_property.$property_arg
                 $existing_value = $existing_property.$com_name
-                
+
                 if ($property_value -is [Hashtable]) {
                     foreach ($sub_property_arg in $property_value.Keys) {
                         $sub_property_value = $property_value.$sub_property_arg
-                        
+
                         if ($sub_property_value -ne $null) {
                             $sub_com_name = Convert-SnakeToPascalCase -snake $sub_property_arg
                             $sub_existing_value = $existing_property.$com_name.$sub_com_name
@@ -390,7 +390,7 @@ Function Compare-PropertyList {
             if ($new_value -is [Hashtable]) {
                 $com_name = Convert-SnakeToPascalCase -snake $property_arg
                 $new_object_property = $new_object.$com_name
-    
+
                 foreach ($key in $new_value.Keys) {
                     $value = $new_value.$key
                     if ($value -ne $null) {
@@ -495,7 +495,7 @@ Function Compare-Principal($task_definition, $task_definition_xml) {
     if ($principal_group_sid -ne $null -and $principal_group_sid -notmatch "^S-\d-\d+(-\d+){1,14}(-\d+){0,1}$") {
         $principal_group_sid = Convert-ToSID -account_name $principal_group_sid
     }
-    
+
     if ($username_sid -ne $null) {
         $new_user_name = Convert-FromSid -sid $username_sid
         if ($principal_group_sid -ne $null) {
@@ -528,7 +528,7 @@ Function Compare-Principal($task_definition, $task_definition_xml) {
             $task_principal.GroupId = $new_group_name
         }
     }
-    
+
     return ,$changes
 }
 
@@ -659,7 +659,7 @@ Function Test-TaskExists($task_folder, $name) {
     $task = $null
     if ($task_folder) {
         $raw_tasks = $task_folder.GetTasks(1) # 1 = TASK_ENUM_HIDDEN
-        
+
         for ($i = 1; $i -le $raw_tasks.Count; $i++) {
             if ($raw_tasks.Item($i).Name -eq $name) {
                 $task = $raw_tasks.Item($i)
@@ -809,7 +809,7 @@ for ($i = 0; $i -lt $triggers.Count; $i++) {
         } elseif ($days -isnot [Array]) {
             $days = @($days)
         }
-        
+
         $day_value = 0
         foreach ($day in $days) {
             # https://msdn.microsoft.com/en-us/library/windows/desktop/aa382057(v=vs.85).aspx
@@ -1041,7 +1041,7 @@ if ($state -eq "absent") {
             try {
                 if (-not $check_mode) {
                     $task_folder = $task_folder.CreateFolder($path)
-                }                
+                }
             } catch {
                 Fail-Json -obj $result -message "failed to create new folder at path '$path': $($_.Exception.Message)"
             }
@@ -1072,7 +1072,7 @@ if ($state -eq "absent") {
         $trigger_changes = Compare-Triggers -task_definition $task_definition
 
         # compile the diffs into one list with headers
-        $task_diff = [System.Collections.ArrayList]@()        
+        $task_diff = [System.Collections.ArrayList]@()
         if ($action_changes.Count -gt 0) {
             [void]$task_diff.Add("[Actions]")
             foreach ($action_change in $action_changes) {
@@ -1120,7 +1120,7 @@ if ($state -eq "absent") {
             $register_password = $null
             $register_logon_type = $null
         }
-        
+
         if ($task_diff.Count -gt 0 -or $register_password -ne $null) {
             if ($check_mode) {
                 # Only validate the task in check mode
@@ -1134,7 +1134,7 @@ if ($state -eq "absent") {
             } catch {
                 Fail-Json -obj $result -message "failed to modify scheduled task: $($_.Exception.Message)"
             }
-            
+
             $result.changed = $true
 
             if ($diff_mode) {

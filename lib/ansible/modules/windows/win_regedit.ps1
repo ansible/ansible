@@ -415,14 +415,14 @@ try {
                 }
             }
             $result.changed = $true
-    
+
             if ($diff_mode) {
                 $result.diff.prepared += @"
-+[$path]            
++[$path]
 "@
             }
         }
-    
+
         if (Test-RegistryProperty -path $path -name $name) {
             # property exists, need to compare the values and type
             $existing_key = Get-Item -Path $path
@@ -430,7 +430,7 @@ try {
             $existing_data = $existing_key.GetValue($name, $false, [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
             $existing_key.Close()
             $change_value = $false
-            
+
             if ($type -ne $existing_type) {
                 $change_value = $true
                 $result.data_type_changed = $true
@@ -445,7 +445,7 @@ try {
                     $result.data_changed = $true
                 }
             }
-    
+
             if ($change_value) {
                 if (-not $check_mode) {
                     $reg_key = Get-Item -Path $path
@@ -463,14 +463,14 @@ try {
                     }
                 }
                 $result.changed = $true
-    
+
                 if ($diff_mode) {
                     if ($result.diff.prepared) {
                         $key_prefix = "+"
                     } else {
                         $key_prefix = ""
                     }
-                    
+
                     $result.diff.prepared = @"
 $key_prefix[$path]
 -"$name" = "$(Get-DiffValueString -type $existing_type -value $existing_data)"
@@ -502,7 +502,7 @@ $key_prefix[$path]
                 } else {
                     $key_prefix = ""
                 }
-                
+
                 $result.diff.prepared = @"
 $key_prefix[$path]
 +"$name" = "$(Get-DiffValueString -type $type -value $data)"
@@ -519,7 +519,7 @@ $key_prefix[$path]
                     Fail-Json $result "failed to delete registry key at $($path): $($_.Exception.Message)"
                 }
                 $result.changed = $true
-    
+
                 if ($diff_mode) {
                     $result.diff.prepared += @"
 -[$path]
@@ -532,7 +532,7 @@ $key_prefix[$path]
                     $existing_type = $existing_key.GetValueKind($name)
                     $existing_data = $existing_key.GetValue($name, $false, [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
                     $existing_key.Close()
-    
+
                     # cannot use Remove-ItemProperty as it fails when deleting the (Default) key ($name = $null)
                     if (-not $check_mode) {
                         $reg_key = Get-Item -Path $path
@@ -550,7 +550,7 @@ $key_prefix[$path]
                         }
                     }
                     $result.changed = $true
-    
+
                     if ($diff_mode) {
                         $result.diff.prepared += @"
 [$path]

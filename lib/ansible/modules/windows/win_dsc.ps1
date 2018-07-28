@@ -46,7 +46,7 @@ Function Cast-ToCimInstance($name, $value, $className)
 
     try
     {
-        $cim = New-CimInstance -ClassName $className -Property $value -ClientOnly        
+        $cim = New-CimInstance -ClassName $className -Property $value -ClientOnly
     }
     catch
     {
@@ -84,7 +84,7 @@ Function Cast-Value($value, $type, $typeString, $name)
         }
         Else
         {
-            $newValue = $value -as $type   
+            $newValue = $value -as $type
             if ($newValue -eq $null)
             {
                 Add-Warning -obj $result -message "failed to cast property $name from '$value' of type $($originalType.FullName) to type $($type.FullName), the DSC engine may ignore this property with an invalid cast"
@@ -169,7 +169,7 @@ if ($module_version -eq "latest")
 {
     $Resource = Get-DscResource -Name $resourcename -ErrorAction SilentlyContinue | sort Version | select -Last 1
 }
-else 
+else
 {
     $Resource = Get-DscResource -Name $resourcename -ErrorAction SilentlyContinue | where {$_.Version -eq $module_version}
 }
@@ -180,16 +180,16 @@ if (!$Resource)
     {
         Fail-Json -obj $result -message "Resource $resourcename not found"
     }
-    else 
+    else
     {
         Fail-Json -obj $result -message "Resource $resourcename with version $module_version not found"
     }
-    
+
 }
 
 #Get the Module that provides the resource. Will be used as
 #mandatory argument for Invoke-DscResource
-$Module =  @{ 
+$Module =  @{
     ModuleName = $Resource.ModuleName
     ModuleVersion = $Resource.Version
 }
@@ -247,7 +247,7 @@ foreach ($attribute in $Attributes.GetEnumerator())
         {
             $keyValue = Parse-DscProperty -name $key -value $value -resourceProp $prop
         }
-        
+
         $config.Property.Add($key, $keyValue)
     }
 }

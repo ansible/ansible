@@ -53,7 +53,7 @@
     - { id: '{{test_win_package_good_id}}' }
     - { id: '{{test_win_package_reboot_id}}' }
     # - { id: '{{test_win_package_exe_id}}', args: '/S' }
-  
+
   - name: cleanup test artifacts
     win_file:
       path: '{{item}}'

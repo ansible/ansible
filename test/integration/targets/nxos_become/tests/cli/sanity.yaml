@@ -19,7 +19,7 @@
       commands: 'show privilege'
     become: yes
     register: result
-  
+
   - assert:
       that:
         - "'Current privilege level: 15' in result['stdout'][0]"
@@ -33,4 +33,4 @@
         - no enable secret
     ignore_errors: yes
 
-- debug: msg="END connection={{ ansible_connection }}/sanity.yaml" 
+- debug: msg="END connection={{ ansible_connection }}/sanity.yaml"

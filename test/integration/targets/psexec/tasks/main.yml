@@ -39,7 +39,7 @@
 - name: run tests
   block:
   - include_tasks: tests.yml
-  
+
   always:
   - name: remove test rule that allows SMB traffic inbound
     win_firewall_rule:

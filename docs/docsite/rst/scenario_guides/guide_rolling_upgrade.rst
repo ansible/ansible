@@ -6,7 +6,7 @@ Continuous Delivery and Rolling Upgrades
 Introduction
 ````````````
 
-Continuous Delivery is the concept of frequently delivering updates to your software application. 
+Continuous Delivery is the concept of frequently delivering updates to your software application.
 
 The idea is that by updating more often, you do not have to wait for a specific timed period, and your organization
 gets better at the process of responding to change.
@@ -14,19 +14,19 @@ gets better at the process of responding to change.
 Some Ansible users are deploying updates to their end users on an hourly or even more frequent basis -- sometimes every time
 there is an approved code change.  To achieve this, you need tools to be able to quickly apply those updates in a zero-downtime way.
 
-This document describes in detail how to achieve this goal, using one of Ansible's most complete example 
-playbooks as a template: lamp_haproxy. This example uses a lot of Ansible features: roles, templates, 
-and group variables, and it also comes with an orchestration playbook that can do zero-downtime 
+This document describes in detail how to achieve this goal, using one of Ansible's most complete example
+playbooks as a template: lamp_haproxy. This example uses a lot of Ansible features: roles, templates,
+and group variables, and it also comes with an orchestration playbook that can do zero-downtime
 rolling upgrades of the web application stack.
 
 .. note::
 
-   `Click here for the latest playbooks for this example 
+   `Click here for the latest playbooks for this example
    <https://github.com/ansible/ansible-examples/tree/master/lamp_haproxy>`_.
 
 The playbooks deploy Apache, PHP, MySQL, Nagios, and HAProxy to a CentOS-based set of servers.
 
-We're not going to cover how to run these playbooks here. Read the included README in the github project along with the 
+We're not going to cover how to run these playbooks here. Read the included README in the github project along with the
 example for that information. Instead, we're going to take a close look at every part of the playbook and describe what it does.
 
 .. _lamp_deployment:
@@ -34,11 +34,11 @@ example for that information. Instead, we're going to take a close look at every
 Site Deployment
 ```````````````
 
-Let's start with ``site.yml``. This is our site-wide deployment playbook. It can be used to initially deploy the site, as well 
+Let's start with ``site.yml``. This is our site-wide deployment playbook. It can be used to initially deploy the site, as well
 as push updates to all of the servers::
 
     ---
-    # This playbook deploys the whole application stack in this site.  
+    # This playbook deploys the whole application stack in this site.
 
     # Apply common configuration to all hosts
     - hosts: all
@@ -48,29 +48,29 @@ as push updates to all of the servers::
 
     # Configure and deploy database servers.
     - hosts: dbservers
-      
+
       roles:
       - db
 
     # Configure and deploy the web servers. Note that we include two roles
     # here, the 'base-apache' role which simply sets up Apache, and 'web'
     # which includes our example web application.
-      
+
     - hosts: webservers
-      
+
       roles:
       - base-apache
       - web
 
     # Configure and deploy the load balancer(s).
     - hosts: lbservers
-        
+
       roles:
       - haproxy
 
     # Configure and deploy the Nagios monitoring node(s).
     - hosts: monitoring
-    
+
       roles:
       - base-apache
       - nagios
@@ -79,12 +79,12 @@ as push updates to all of the servers::
 
    If you're not familiar with terms like playbooks and plays, you should review :ref:`working_with_playbooks`.
 
-In this playbook we have 5 plays. The first one targets ``all`` hosts and applies the ``common`` role to all of the hosts. 
+In this playbook we have 5 plays. The first one targets ``all`` hosts and applies the ``common`` role to all of the hosts.
 This is for site-wide things like yum repository configuration, firewall configuration, and anything else that needs to apply to all of the servers.
 
-The next four plays run against specific host groups and apply specific roles to those servers. 
-Along with the roles for Nagios monitoring, the database, and the web application, we've implemented a 
-``base-apache`` role that installs and configures a basic Apache setup. This is used by both the 
+The next four plays run against specific host groups and apply specific roles to those servers.
+Along with the roles for Nagios monitoring, the database, and the web application, we've implemented a
+``base-apache`` role that installs and configures a basic Apache setup. This is used by both the
 sample web application and the Nagios hosts.
 
 .. _lamp_roles:
@@ -92,14 +92,14 @@ sample web application and the Nagios hosts.
 Reusable Content: Roles
 ```````````````````````
 
-By now you should have a bit of understanding about roles and how they work in Ansible. Roles are a way to organize 
+By now you should have a bit of understanding about roles and how they work in Ansible. Roles are a way to organize
 content: tasks, handlers, templates, and files, into reusable components.
 
-This example has six roles: ``common``, ``base-apache``, ``db``, ``haproxy``, ``nagios``, and ``web``. How you organize 
-your roles is up to you and your application, but most sites will have one or more common roles that are applied to 
+This example has six roles: ``common``, ``base-apache``, ``db``, ``haproxy``, ``nagios``, and ``web``. How you organize
+your roles is up to you and your application, but most sites will have one or more common roles that are applied to
 all systems, and then a series of application-specific roles that install and configure particular parts of the site.
 
-Roles can have variables and dependencies, and you can pass in parameters to roles to modify their behavior. 
+Roles can have variables and dependencies, and you can pass in parameters to roles to modify their behavior.
 You can read more about roles in the :ref:`playbooks_reuse_roles` section.
 
 .. _lamp_group_variables:
@@ -107,17 +107,17 @@ You can read more about roles in the :ref:`playbooks_reuse_roles` section.
 Configuration: Group Variables
 ``````````````````````````````
 
-Group variables are variables that are applied to groups of servers. They can be used in templates and in 
-playbooks to customize behavior and to provide easily-changed settings and parameters. They are stored in 
-a directory called ``group_vars`` in the same location as your inventory. 
+Group variables are variables that are applied to groups of servers. They can be used in templates and in
+playbooks to customize behavior and to provide easily-changed settings and parameters. They are stored in
+a directory called ``group_vars`` in the same location as your inventory.
 Here is lamp_haproxy's ``group_vars/all`` file. As you might expect, these variables are applied to all of the machines in your inventory::
 
    ---
    httpd_port: 80
    ntpserver: 192.0.2.23
 
-This is a YAML file, and you can create lists and dictionaries for more complex variable structures. 
-In this case, we are just setting two variables, one for the port for the web server, and one for the 
+This is a YAML file, and you can create lists and dictionaries for more complex variable structures.
+In this case, we are just setting two variables, one for the port for the web server, and one for the
 NTP server that our machines should use for time synchronization.
 
 Here's another group variables file. This is ``group_vars/dbservers`` which applies to the hosts in the ``dbservers`` group::
@@ -159,9 +159,9 @@ You can also use these variables in templates, like this, in ``roles/common/temp
 
    keys /etc/ntp/keys
 
-You can see that the variable substitution syntax of {{ and }} is the same for both templates and variables. The syntax 
-inside the curly braces is Jinja2, and you can do all sorts of operations and apply different filters to the 
-data inside. In templates, you can also use for loops and if statements to handle more complex situations, 
+You can see that the variable substitution syntax of {{ and }} is the same for both templates and variables. The syntax
+inside the curly braces is Jinja2, and you can do all sorts of operations and apply different filters to the
+data inside. In templates, you can also use for loops and if statements to handle more complex situations,
 like this, in ``roles/common/templates/iptables.j2``:
 
 .. code-block:: jinja
@@ -170,7 +170,7 @@ like this, in ``roles/common/templates/iptables.j2``:
    -A INPUT -p tcp  --dport 3306 -j  ACCEPT
    {% endif %}
 
-This is testing to see if the inventory name of the machine we're currently operating on (``inventory_hostname``) 
+This is testing to see if the inventory name of the machine we're currently operating on (``inventory_hostname``)
 exists in the inventory group ``dbservers``. If so, that machine will get an iptables ACCEPT line for port 3306.
 
 Here's another example, from the same template:
@@ -181,10 +181,10 @@ Here's another example, from the same template:
    -A INPUT -p tcp -s {{ hostvars[host].ansible_default_ipv4.address }} --dport 5666 -j ACCEPT
    {% endfor %}
 
-This loops over all of the hosts in the group called ``monitoring``, and adds an ACCEPT line for 
+This loops over all of the hosts in the group called ``monitoring``, and adds an ACCEPT line for
 each monitoring hosts' default IPv4 address to the current machine's iptables configuration, so that Nagios can monitor those hosts.
 
-You can learn a lot more about Jinja2 and its capabilities `here <http://jinja.pocoo.org/docs/>`_, and you 
+You can learn a lot more about Jinja2 and its capabilities `here <http://jinja.pocoo.org/docs/>`_, and you
 can read more about Ansible variables in general in the :ref:`playbooks_variables` section.
 
 .. _lamp_rolling_upgrade:
@@ -192,7 +192,7 @@ can read more about Ansible variables in general in the :ref:`playbooks_variable
 The Rolling Upgrade
 ```````````````````
 
-Now you have a fully-deployed site with web servers, a load balancer, and monitoring. How do you update it? This is where Ansible's 
+Now you have a fully-deployed site with web servers, a load balancer, and monitoring. How do you update it? This is where Ansible's
 orchestration features come into play. While some applications use the term 'orchestration' to mean basic ordering or command-blasting, Ansible
 refers to orchestration as 'conducting machines like an orchestra', and has a pretty sophisticated engine for it.
 
@@ -217,8 +217,8 @@ Here is the next part of the update play::
 
   pre_tasks:
   - name: disable nagios alerts for this host webserver service
-    nagios: 
-      action: disable_alerts 
+    nagios:
+      action: disable_alerts
       host: "{{ inventory_hostname }}"
       services: webserver
     delegate_to: "{{ item }}"

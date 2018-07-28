@@ -152,7 +152,7 @@ Function Convert-ToPropertyValue($pool, $attribute_key, $attribute_value) {
                         }
                     }
                 }
-            }            
+            }
         }
         # Try and cast the variable using the chosen type, revert to the default if it fails
         Set-Variable -Name casted_value -Value ($value -as ([type] $attribute_meta.TypeName))
@@ -169,7 +169,7 @@ Function Convert-ToPropertyValue($pool, $attribute_key, $attribute_value) {
 # Ensure WebAdministration module is loaded
 if ((Get-Module -Name "WebAdministration" -ErrorAction SilentlyContinue) -eq $null) {
     Import-Module WebAdministration
-    $web_admin_dll_path = Join-Path $env:SystemRoot system32\inetsrv\Microsoft.Web.Administration.dll 
+    $web_admin_dll_path = Join-Path $env:SystemRoot system32\inetsrv\Microsoft.Web.Administration.dll
     Add-Type -Path $web_admin_dll_path
 }
 

@@ -22,7 +22,7 @@
   register: results
 
 - assert:
-    that: 
+    that:
       - results.changed
       - results.state.tags.test == 'modified'
 
@@ -37,7 +37,7 @@
   register: results
 
 - assert:
-    that: 
+    that:
       - results.changed
       - results.state.tags.test == 'new_modified'
       - results.check_mode == true

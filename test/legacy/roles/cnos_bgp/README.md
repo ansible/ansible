@@ -78,7 +78,7 @@ Open the */etc/ansible/hosts* file with root privileges. Most of the file is com
 10.241.107.39   username=<username> password=<password> deviceType=g8272_cnos
 10.241.107.40   username=<username> password=<password> deviceType=g8272_cnos
 ```
-  
+
 **Note:** You need to change the IP addresses to fit your specific topology. You also need to change the `<username>` and `<password>` to the appropriate values used to log into the specific Lenovo network devices.
 
 
@@ -102,8 +102,8 @@ ansible-playbook cnos_bgp_sample.yml -vvv
    roles:
     - cnos_bgp_sample
 ```
-	
-	
+
+
 ## License
 ---
 <add license information below>

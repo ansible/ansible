@@ -95,7 +95,7 @@
   assert:
     that:
        - 'result.failed'
-       
+
 ## tagging tests ##
 # # ============================================================
 - name: "test tags added (state==present)"
@@ -115,7 +115,7 @@
        - 'result.changed'
        - 'result.tags|length == 2'
        - 'result.tags == ["foo", "bar"]'
-       
+
 # # ============================================================
 - name: "add existing tags, no change (state==present)"
   gce_tag:

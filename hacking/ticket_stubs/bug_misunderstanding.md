@@ -20,7 +20,7 @@ We would suggest:
    * THING THREE
 
 In the future, this might be a topic more well suited for the user list, which you can also post here if you'd like some more help with the above.
-   
+
    * https://groups.google.com/forum/#!forum/ansible-project
 
 Thank you once again for this and your interest in Ansible!

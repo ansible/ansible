@@ -4,7 +4,7 @@
 IOS Platform Options
 ***************************************
 
-IOS supports Enable Mode (Privilege Escalation). This page offers details on how to use Enable Mode on IOS in Ansible 2.6. 
+IOS supports Enable Mode (Privilege Escalation). This page offers details on how to use Enable Mode on IOS in Ansible 2.6.
 
 .. contents:: Topics
 

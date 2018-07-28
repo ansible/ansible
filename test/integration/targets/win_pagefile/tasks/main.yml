@@ -20,16 +20,16 @@
   assert:
     that:
     - c_pagefile.changed == true
-  
+
 - name: Query all pagefiles
   win_pagefile:
     state: query
   register: pagefiles_query
 
 - name: Set fact for pagefile expected result
-  set_fact: 
+  set_fact:
     expected:
-      pagefiles: 
+      pagefiles:
       - caption: "C:\\ 'pagefile.sys'"
         description: "'pagefile.sys' @ C:\\"
         initial_size: 1024
