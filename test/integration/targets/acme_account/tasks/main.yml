@@ -5,25 +5,6 @@
 - debug: msg="ACME test container IP is {{ acme_host }}; OpenSSL version is {{ openssl_version.stdout }}"
 
 - block:
-  - name: Wait until ACME test container controller is up and running
-    uri:
-      url: http://{{ acme_host }}:5000
-      validate_certs: no
-    register: check_controller_started
-    until: check_controller_started is success
-    retries: 5
-    delay: 1
-    ignore_errors: yes
-  - name: Wait until Pebble is up and running
-    uri:
-      url: https://{{ acme_host }}:14000/dir
-      validate_certs: no
-    register: check_pebble_started
-    until: check_pebble_started is success
-    retries: 5
-    delay: 1
-    ignore_errors: yes
-
   - name: Generate account key
     command: openssl ecparam -name prime256v1 -genkey -out {{ output_dir }}/accountkey.pem
 

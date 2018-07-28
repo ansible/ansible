@@ -2,6 +2,7 @@
 from __future__ import absolute_import, print_function
 
 import os
+import time
 
 from lib.cloud import (
     CloudProvider,
@@ -11,6 +12,12 @@ from lib.cloud import (
 from lib.util import (
     find_executable,
     display,
+    ApplicationError,
+    SubprocessError,
+)
+
+from lib.http import (
+    HttpClient,
 )
 
 from lib.docker_util import (
@@ -45,6 +52,27 @@ class ACMEProvider(CloudProvider):
         else:
             self.image = 'quay.io/ansible/acme-test-container:1.1.0'
         self.container_name = ''
+
+    def _wait_for_service(self, protocol, acme_host, port, local_part, name):
+        """Wait for an endpoint to accept connections."""
+        if self.args.explain:
+            return
+
+        client = HttpClient(self.args, always=True, insecure=True)
+        endpoint = '%s://%s:%d/%s' % (protocol, acme_host, port, local_part)
+
+        for _ in range(1, 30):
+            display.info('Waiting for %s: %s' % (name, endpoint), verbosity=1)
+
+            try:
+                client.get(endpoint)
+                return
+            except SubprocessError:
+                pass
+
+            time.sleep(1)
+
+        raise ApplicationError('Timeout waiting for %s.' % name)
 
     def filter(self, targets, exclude):
         """Filter out the cloud tests when the necessary config and resources are not available.
@@ -129,13 +157,19 @@ class ACMEProvider(CloudProvider):
 
         if self.args.docker:
             acme_host = self.DOCKER_SIMULATOR_NAME
+            acme_host_ip = self._get_simulator_address()
         elif container_id:
             acme_host = self._get_simulator_address()
+            acme_host_ip = acme_host
             display.info('Found ACME test container address: %s' % acme_host, verbosity=1)
         else:
             acme_host = 'localhost'
+            acme_host_ip = acme_host
 
         self._set_cloud_config('acme_host', acme_host)
+
+        self._wait_for_service('http', acme_host_ip, 5000, '', 'ACME controller')
+        self._wait_for_service('https', acme_host_ip, 14000, 'dir', 'ACME CA endpoint')
 
     def _get_simulator_address(self):
         results = docker_inspect(self.args, self.container_name)
