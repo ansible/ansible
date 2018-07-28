@@ -77,6 +77,12 @@ EXAMPLES = '''
     name: bobdata
     state: present
 
+- name: If it doesn't exist, import database my_db from /tmp/dump.sql.bz2
+  mysql_db:
+    name: my_db
+    state: present
+    target: /tmp/dump.sql.bz2
+
 # Copy database dump file to remote host and restore it to database 'my_db'
 - name: Copy database dump file
   copy:
