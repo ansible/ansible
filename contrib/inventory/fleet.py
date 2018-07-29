@@ -27,7 +27,6 @@ returns it under the host group 'coreos'
 import sys
 import subprocess
 import re
-import string
 from optparse import OptionParser
 try:
     import json

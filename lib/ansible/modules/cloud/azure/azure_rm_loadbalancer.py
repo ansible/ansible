@@ -339,7 +339,6 @@ changed:
     type: bool
 '''
 
-import random
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
 
 try:

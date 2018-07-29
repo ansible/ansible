@@ -26,7 +26,6 @@ package exists on pypi to backport the functionality as far as python-2.6.
 # The following makes it easier for us to script updates of the bundled code
 _BUNDLED_METADATA = {"pypi_name": "selectors2", "version": "1.1.0"}
 
-import os.path
 import sys
 
 try:

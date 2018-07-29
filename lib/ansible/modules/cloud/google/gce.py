@@ -288,7 +288,6 @@ EXAMPLES = '''
 '''
 
 import socket
-import logging
 
 try:
     from ast import literal_eval

@@ -340,8 +340,6 @@ azure_vmss:
     }
 '''  # NOQA
 
-import random
-import re
 
 try:
     from msrestazure.azure_exceptions import CloudError

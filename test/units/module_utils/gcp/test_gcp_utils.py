@@ -15,8 +15,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-import os
-import sys
 
 from ansible.compat.tests import mock, unittest
 from ansible.module_utils.gcp_utils import GcpRequest

@@ -67,25 +67,20 @@ msg:
   sample: "Switch Running Config is Saved to Startup Config"
 '''
 
-import sys
 try:
     import paramiko
     HAS_PARAMIKO = True
 except ImportError:
     HAS_PARAMIKO = False
 import time
-import socket
 import array
-import json
 import time
-import re
 try:
     from ansible.module_utils.network.cnos import cnos
     HAS_LIB = True
 except:
     HAS_LIB = False
 from ansible.module_utils.basic import AnsibleModule
-from collections import defaultdict
 
 
 def main():

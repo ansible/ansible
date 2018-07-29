@@ -158,7 +158,6 @@ server_capabilities:
 import traceback
 import xml.dom.minidom
 
-from xml.etree.ElementTree import fromstring, tostring
 
 try:
     import ncclient.manager

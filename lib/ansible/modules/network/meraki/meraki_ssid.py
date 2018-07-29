@@ -195,7 +195,6 @@ data:
       }
 '''
 
-import os
 from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native

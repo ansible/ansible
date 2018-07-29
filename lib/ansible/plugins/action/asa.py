@@ -21,7 +21,6 @@ __metaclass__ = type
 
 import sys
 import copy
-import json
 
 from ansible import constants as C
 from ansible.plugins.action.normal import ActionModule as _ActionModule

@@ -137,7 +137,6 @@ delta:
   type: str
   sample: "0:00:10.469466"
 """
-import re
 
 from copy import deepcopy
 from functools import partial

@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import sys
-import time
 
 proc = sys.argv[1]
 value = sys.argv[2]

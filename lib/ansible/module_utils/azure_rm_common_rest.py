@@ -6,7 +6,6 @@ try:
     from msrestazure.azure_exceptions import CloudError
     from msrestazure.azure_configuration import AzureConfiguration
     from msrest.service_client import ServiceClient
-    import json
 except ImportError:
     # This is handled in azure_rm_common
     AzureConfiguration = object

@@ -184,7 +184,6 @@ id:
     sample: id
 '''
 
-import collections
 import time
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 

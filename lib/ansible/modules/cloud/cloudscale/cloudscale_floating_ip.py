@@ -150,7 +150,6 @@ state:
   sample: present
 '''
 
-import os
 
 try:
     from ipaddress import ip_network

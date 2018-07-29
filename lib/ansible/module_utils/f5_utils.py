@@ -158,7 +158,6 @@ def run_commands(module, commands, check_rc=True):
 
 # New style
 
-from abc import ABCMeta, abstractproperty
 from collections import defaultdict
 
 try:

@@ -21,8 +21,6 @@ __metaclass__ = type
 
 import os
 import re
-import time
-import glob
 
 from ansible.plugins.action.normal import ActionModule as _ActionModule
 from ansible.module_utils._text import to_text

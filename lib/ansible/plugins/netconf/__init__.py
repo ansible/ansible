@@ -35,7 +35,7 @@ except ImportError:
 try:
     from lxml.etree import Element, SubElement, tostring, fromstring
 except ImportError:
-    from xml.etree.ElementTree import Element, SubElement, tostring, fromstring
+    from xml.etree.ElementTree import fromstring
 
 
 def ensure_connected(func):

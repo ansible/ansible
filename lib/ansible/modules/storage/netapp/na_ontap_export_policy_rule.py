@@ -124,7 +124,6 @@ RETURN = """
 """
 import traceback
 
-import json
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 import ansible.module_utils.netapp as netapp_utils

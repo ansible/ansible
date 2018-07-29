@@ -63,8 +63,6 @@ commands:
 '''
 
 
-import collections
-import re
 import time
 
 from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands

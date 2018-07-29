@@ -19,10 +19,8 @@ __metaclass__ = type
 
 import copy
 import os
-import time
 import uuid
 import hashlib
-import sys
 
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.connection import Connection

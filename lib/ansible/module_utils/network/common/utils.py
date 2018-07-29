@@ -32,7 +32,7 @@ import socket
 
 from itertools import chain
 from struct import pack
-from socket import inet_aton, inet_ntoa
+from socket import inet_ntoa
 
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils.six.moves import zip

@@ -19,9 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
 import re
-import time
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.plugins.terminal import TerminalBase

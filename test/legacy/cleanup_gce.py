@@ -5,7 +5,6 @@ Please use caution, you can easily delete your *ENTIRE* GCE infrastructure.
 '''
 
 import optparse
-import os
 import re
 import sys
 import yaml

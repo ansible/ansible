@@ -30,7 +30,6 @@ This script also assumes there is a libcloud.ini file alongside it
 
 '''
 
-import sys
 import os
 import argparse
 import re

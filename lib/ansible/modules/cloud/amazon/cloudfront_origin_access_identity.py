@@ -121,9 +121,6 @@ from ansible.module_utils.aws.cloudfront_facts import CloudFrontFactsServiceMana
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils.aws.core import AnsibleAWSModule
 import datetime
-from functools import partial
-import json
-import traceback
 
 try:
     import botocore

@@ -19,7 +19,6 @@ __metaclass__ = type
 
 import copy
 import os
-import time
 import re
 import uuid
 import hashlib

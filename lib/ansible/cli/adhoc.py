@@ -20,7 +20,6 @@ __metaclass__ = type
 
 ########################################################
 
-import os
 
 from ansible import constants as C
 from ansible.cli import CLI

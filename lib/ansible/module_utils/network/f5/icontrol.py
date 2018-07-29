@@ -8,8 +8,6 @@ __metaclass__ = type
 
 
 import os
-import socket
-import sys
 
 from ansible.module_utils.urls import open_url, fetch_url
 from ansible.module_utils.parsing.convert_bool import BOOLEANS

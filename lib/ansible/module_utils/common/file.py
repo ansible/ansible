@@ -7,13 +7,8 @@ __metaclass__ = type
 import errno
 import os
 import stat
-import re
-import pwd
-import grp
 import time
-import shutil
 import tempfile
-import traceback
 import fcntl
 import sys
 

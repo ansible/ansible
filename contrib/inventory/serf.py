@@ -32,7 +32,6 @@
 
 import argparse
 import collections
-import os
 import sys
 
 # https://pypi.org/project/serfclient/

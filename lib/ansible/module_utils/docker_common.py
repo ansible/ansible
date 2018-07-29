@@ -18,9 +18,6 @@
 
 import os
 import re
-import json
-import sys
-import copy
 from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule

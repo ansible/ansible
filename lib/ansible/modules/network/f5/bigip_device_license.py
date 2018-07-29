@@ -85,7 +85,6 @@ from ansible.module_utils.urls import open_url
 from ansible.module_utils.six import iteritems
 
 import re
-import sys
 import time
 import xml.etree.ElementTree
 

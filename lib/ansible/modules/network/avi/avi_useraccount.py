@@ -71,10 +71,7 @@ obj:
     type: dict
 '''
 
-import json
-import time
 from ansible.module_utils.basic import AnsibleModule
-from copy import deepcopy
 
 try:
     from ansible.module_utils.network.avi.avi import (

@@ -58,8 +58,6 @@ from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 from base64 import b64encode
 from netrc import netrc
-from os import environ
-from time import time
 from ansible.module_utils.six.moves.urllib.parse import quote_plus
 import yaml
 

@@ -1,6 +1,5 @@
 """OpenNebula plugin for integration tests."""
 
-import os
 
 from lib.cloud import (
     CloudProvider,

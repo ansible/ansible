@@ -149,7 +149,7 @@ import sys
 try:
     from lxml.etree import Element, SubElement, tostring, fromstring, XMLSyntaxError
 except ImportError:
-    from xml.etree.ElementTree import Element, SubElement, tostring, fromstring
+    from xml.etree.ElementTree import fromstring, tostring
     if sys.version_info < (2, 7):
         from xml.parsers.expat import ExpatError as XMLSyntaxError
     else:

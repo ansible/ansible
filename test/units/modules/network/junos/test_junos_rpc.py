@@ -22,7 +22,7 @@ __metaclass__ = type
 try:
     from lxml.etree import tostring, fromstring
 except ImportError:
-    from xml.etree.ElementTree import tostring, fromstring
+    from xml.etree.ElementTree import fromstring
 
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.junos import junos_rpc

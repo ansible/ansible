@@ -64,7 +64,6 @@ from ansible.plugins.lookup import LookupBase
 from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import string_types
-import os
 
 
 def _boto3_conn(region, credentials):

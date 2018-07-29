@@ -40,9 +40,7 @@ try:
 except ImportError:
     HAS_PURITY_FB = False
 
-from functools import wraps
 from os import environ
-from os import path
 import platform
 
 VERSION = 1.1

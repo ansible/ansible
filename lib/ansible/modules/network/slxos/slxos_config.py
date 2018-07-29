@@ -244,8 +244,6 @@ backup_path:
   type: string
   sample: /playbooks/ansible/backup/slxos_config.2018-02-12@18:26:34
 """
-import re
-import time
 
 from ansible.module_utils.network.slxos.slxos import run_commands, get_config, load_config
 from ansible.module_utils.basic import AnsibleModule

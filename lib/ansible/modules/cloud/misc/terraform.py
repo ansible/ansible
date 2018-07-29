@@ -129,7 +129,6 @@ command:
 import os
 import json
 import tempfile
-import traceback
 
 from ansible.module_utils.basic import AnsibleModule
 

@@ -171,7 +171,6 @@ RETURN = '''
 '''
 
 import inspect
-import sys
 
 from ansible.module_utils.basic import _load_params
 from ansible.module_utils.six import iteritems

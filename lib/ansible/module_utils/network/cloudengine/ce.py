@@ -31,7 +31,6 @@
 import re
 import socket
 import sys
-import traceback
 
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.network.common.utils import to_list, ComplexList
