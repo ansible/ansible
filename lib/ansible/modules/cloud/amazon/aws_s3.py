@@ -114,7 +114,7 @@ options:
         Boolean or one of [always, never, different], true is equal to 'always' and false is equal to 'never', new in 2.0.
         When this is set to 'different', the md5 sum of the local file is compared with the 'ETag' of the object/key in S3.
         The ETag may or may not be an MD5 digest of the object data. See the ETag response header here
-        U(http://docs.aws.amazon.com/AmazonS3/latest/API/RESTCommonResponseHeaders.html)
+        U(https://docs.aws.amazon.com/AmazonS3/latest/API/RESTCommonResponseHeaders.html)
     default: 'always'
     aliases: ['force']
     version_added: "1.2"
