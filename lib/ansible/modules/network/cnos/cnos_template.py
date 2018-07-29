@@ -96,7 +96,6 @@ try:
 except ImportError:
     HAS_PARAMIKO = False
 import time
-import array
 import time
 try:
     from ansible.module_utils.network.cnos import cnos

@@ -469,7 +469,6 @@ try:
     HAS_PARAMIKO = True
 except ImportError:
     HAS_PARAMIKO = False
-import array
 try:
     from ansible.module_utils.network.cnos import cnos
     HAS_LIB = True

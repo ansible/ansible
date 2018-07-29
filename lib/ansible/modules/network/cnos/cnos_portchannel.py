@@ -376,7 +376,6 @@ msg:
   sample: "Port Channel configurations accomplished"
 '''
 
-import array
 try:
     from ansible.module_utils.network.cnos import cnos
     HAS_LIB = True

@@ -128,8 +128,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.web.models import Site, SiteConfig, NameValuePair, SiteSourceControl
-    from azure.mgmt.resource.resources import ResourceManagementClient
+    from azure.mgmt.web.models import NameValuePair, Site, SiteConfig
 except ImportError:
     # This is handled in azure_rm_common
     pass

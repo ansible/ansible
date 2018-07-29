@@ -27,7 +27,6 @@ import time
 from ansible.module_utils.six.moves.urllib.parse import urlsplit
 from ansible.module_utils._text import to_text
 from ansible.plugins.action.sros import ActionModule as _ActionModule
-from ansible.utils.vars import merge_hash
 
 PRIVATE_KEYS_RE = re.compile('__.+__')
 

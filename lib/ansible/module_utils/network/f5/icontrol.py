@@ -9,9 +9,7 @@ __metaclass__ = type
 
 import os
 
-from ansible.module_utils.urls import open_url, fetch_url
-from ansible.module_utils.parsing.convert_bool import BOOLEANS
-from ansible.module_utils.six import string_types
+from ansible.module_utils.urls import open_url
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.urls import urllib_error
 from ansible.module_utils._text import to_native

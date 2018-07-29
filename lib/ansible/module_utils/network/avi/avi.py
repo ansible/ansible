@@ -42,7 +42,6 @@ try:
     if ((sdk_version is None) or (sdk_version and (LooseVersion(sdk_version) < LooseVersion('17.2.4')))):
         # It allows the __version__ to be '' as that value is used in development builds
         raise ImportError
-    from avi.sdk.utils.ansible_utils import avi_ansible_api
 except ImportError:
     HAS_AVI = False
 

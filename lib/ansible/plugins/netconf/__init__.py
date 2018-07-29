@@ -24,7 +24,6 @@ from functools import wraps
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import with_metaclass
-from ansible.module_utils._text import to_bytes
 
 try:
     from ncclient.operations import RPCError
@@ -33,7 +32,7 @@ except ImportError:
     raise AnsibleError("ncclient is not installed")
 
 try:
-    from lxml.etree import Element, SubElement, tostring, fromstring
+    from lxml.etree import fromstring
 except ImportError:
     from xml.etree.ElementTree import fromstring
 

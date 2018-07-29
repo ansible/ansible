@@ -8,7 +8,6 @@ __metaclass__ = type
 
 import os
 import json
-import pytest
 import sys
 
 from nose.plugins.skip import SkipTest
@@ -17,11 +16,9 @@ if sys.version_info < (2, 7):
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import Mock
-from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.modules.bigiq_regkey_license_assignment import ApiParameters
     from library.modules.bigiq_regkey_license_assignment import ModuleParameters
     from library.modules.bigiq_regkey_license_assignment import ModuleManager
     from library.modules.bigiq_regkey_license_assignment import ArgumentSpec
@@ -30,7 +27,6 @@ try:
     from test.unit.modules.utils import set_module_args
 except ImportError:
     try:
-        from ansible.modules.network.f5.bigiq_regkey_license_assignment import ApiParameters
         from ansible.modules.network.f5.bigiq_regkey_license_assignment import ModuleParameters
         from ansible.modules.network.f5.bigiq_regkey_license_assignment import ModuleManager
         from ansible.modules.network.f5.bigiq_regkey_license_assignment import ArgumentSpec

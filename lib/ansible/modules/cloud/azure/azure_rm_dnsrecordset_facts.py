@@ -97,7 +97,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.common import AzureMissingResourceHttpError, AzureHttpError
+    from azure.common import AzureHttpError
 except:
     # This is handled in azure_rm_common
     pass

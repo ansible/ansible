@@ -22,7 +22,6 @@ from ansible.module_utils.basic import AnsibleModule
 
 try:
     from library.modules.bigip_asm_policy import V1Parameters
-    from library.modules.bigip_asm_policy import V2Parameters
     from library.modules.bigip_asm_policy import ModuleManager
     from library.modules.bigip_asm_policy import V1Manager
     from library.modules.bigip_asm_policy import V2Manager
@@ -33,7 +32,6 @@ try:
 except ImportError:
     try:
         from ansible.modules.network.f5.bigip_asm_policy import V1Parameters
-        from ansible.modules.network.f5.bigip_asm_policy import V2Parameters
         from ansible.modules.network.f5.bigip_asm_policy import ModuleManager
         from ansible.modules.network.f5.bigip_asm_policy import V1Manager
         from ansible.modules.network.f5.bigip_asm_policy import V2Manager

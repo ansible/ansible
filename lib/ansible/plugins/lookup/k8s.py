@@ -200,7 +200,6 @@ from ansible.errors import AnsibleError
 
 
 try:
-    from openshift.dynamic import DynamicClient
     from openshift.dynamic.exceptions import NotFoundError
     HAS_K8S_MODULE_HELPER = True
 except ImportError as exc:

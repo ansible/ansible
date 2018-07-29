@@ -1432,8 +1432,6 @@ Function Run($payload) {
 
 '''  # end async_watchdog
 
-from ansible.plugins import AnsiblePlugin
-
 
 class ShellModule(ShellBase):
 

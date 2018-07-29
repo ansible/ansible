@@ -117,7 +117,7 @@ results:
 '''
 
 try:
-    from pyvmomi import vim, vmodl
+    from pyvmomi import vim
 except ImportError:
     pass
 

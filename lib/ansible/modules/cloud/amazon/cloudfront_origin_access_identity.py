@@ -123,8 +123,6 @@ from ansible.module_utils.aws.core import AnsibleAWSModule
 import datetime
 
 try:
-    import botocore
-    from botocore.signers import CloudFrontSigner
     from botocore.exceptions import ClientError, BotoCoreError
 except ImportError:
     pass  # caught by imported AnsibleAWSModule

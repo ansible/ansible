@@ -155,7 +155,7 @@ failed_conditions:
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.enos.enos import run_commands, check_args
+from ansible.module_utils.network.enos.enos import run_commands
 from ansible.module_utils.network.enos.enos import enos_argument_spec
 from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.six import string_types

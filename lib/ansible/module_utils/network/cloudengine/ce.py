@@ -36,7 +36,6 @@ from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.network.common.utils import to_list, ComplexList
 from ansible.module_utils.connection import exec_command
 from ansible.module_utils.six import iteritems
-from ansible.module_utils._text import to_native
 from ansible.module_utils.network.common.netconf import NetconfConnection
 
 

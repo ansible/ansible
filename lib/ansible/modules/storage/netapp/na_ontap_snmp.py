@@ -61,7 +61,6 @@ EXAMPLES = """
 RETURN = """
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
 import ansible.module_utils.netapp as netapp_utils
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()

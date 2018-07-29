@@ -16,12 +16,10 @@ if sys.version_info < (2, 7):
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import Mock
-from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
     from library.modules.bigip_node import Parameters
-    from library.modules.bigip_node import ModuleParameters
     from library.modules.bigip_node import ApiParameters
     from library.modules.bigip_node import ModuleManager
     from library.modules.bigip_node import ArgumentSpec
@@ -31,7 +29,6 @@ try:
 except ImportError:
     try:
         from ansible.modules.network.f5.bigip_node import Parameters
-        from ansible.modules.network.f5.bigip_node import ModuleParameters
         from ansible.modules.network.f5.bigip_node import ApiParameters
         from ansible.modules.network.f5.bigip_node import ModuleManager
         from ansible.modules.network.f5.bigip_node import ArgumentSpec

@@ -22,7 +22,6 @@ __metaclass__ = type
 import sys
 import copy
 
-from ansible import constants as C
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.plugins.action.normal import ActionModule as _ActionModule

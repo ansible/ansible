@@ -7,7 +7,6 @@ Please use caution, you can easily delete your *ENTIRE* GCE infrastructure.
 import optparse
 import re
 import sys
-import yaml
 
 try:
     from libcloud.common.google import (
@@ -17,7 +16,6 @@ try:
         ResourceInUseError,
         ResourceNotFoundError,
     )
-    from libcloud.compute.providers import get_driver
     from libcloud.compute.types import Provider
     _ = Provider.GCE
 except ImportError:

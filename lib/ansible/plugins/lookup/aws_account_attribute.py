@@ -59,11 +59,8 @@ try:
 except ImportError:
     raise AnsibleError("The lookup aws_account_attribute requires boto3 and botocore.")
 
-from ansible.plugins import AnsiblePlugin
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info
 from ansible.module_utils._text import to_native
-from ansible.module_utils.six import string_types
 
 
 def _boto3_conn(region, credentials):

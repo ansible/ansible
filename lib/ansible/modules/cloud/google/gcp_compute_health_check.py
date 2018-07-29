@@ -459,7 +459,7 @@ RETURN = '''
 # Imports
 ################################################################################
 
-from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, remove_nones_from_dict, replace_resource_dict
+from ansible.module_utils.gcp_utils import GcpModule, GcpRequest, GcpSession, navigate_hash, remove_nones_from_dict
 import json
 import time
 

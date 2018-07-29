@@ -17,7 +17,6 @@ except ImportError:
     HAS_GOOGLE_LIBRARIES = False
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
-from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
 
 

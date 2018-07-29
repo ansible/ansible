@@ -23,7 +23,7 @@ from abc import abstractmethod
 from functools import wraps
 
 from ansible.plugins import AnsiblePlugin
-from ansible.errors import AnsibleError, AnsibleConnectionFailure
+from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
 
 

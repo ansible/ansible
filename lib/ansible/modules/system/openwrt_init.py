@@ -73,7 +73,6 @@ RETURN = '''
 
 import os
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_bytes, to_native
 
 module = None
 init_script = None

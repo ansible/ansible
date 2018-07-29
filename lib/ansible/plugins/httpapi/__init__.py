@@ -26,7 +26,6 @@ class HttpApiBase(AnsiblePlugin):
         can turn HTTP basic auth into a token which can be reused for the rest
         of the calls for the session.
         """
-        pass
 
     def logout(self):
         """ Call to implement session logout.
@@ -34,7 +33,6 @@ class HttpApiBase(AnsiblePlugin):
         Method to clear session gracefully e.g. tokens granted in login
         need to be revoked.
         """
-        pass
 
     def update_auth(self, response, response_text):
         """Return per-request auth token.

@@ -23,14 +23,13 @@ import collections
 import json
 import re
 
-from itertools import chain
 
 from ansible.errors import AnsibleConnectionFailure
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.common.utils import to_list
-from ansible.plugins.cliconf import CliconfBase, enable_mode
+from ansible.plugins.cliconf import CliconfBase
 from ansible.plugins.connection.network_cli import Connection as NetworkCli
 from ansible.plugins.connection.httpapi import Connection as HttpApi
 

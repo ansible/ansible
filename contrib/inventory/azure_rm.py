@@ -212,11 +212,8 @@ CLIError = None
 
 try:
     from msrestazure.azure_active_directory import AADTokenCredentials
-    from msrestazure.azure_exceptions import CloudError
     from msrestazure.azure_active_directory import MSIAuthentication
     from msrestazure import azure_cloud
-    from azure.mgmt.compute import __version__ as azure_compute_version
-    from azure.common import AzureMissingResourceHttpError, AzureHttpError
     from azure.common.credentials import ServicePrincipalCredentials, UserPassCredentials
     from azure.mgmt.network import NetworkManagementClient
     from azure.mgmt.resource.resources import ResourceManagementClient
@@ -229,7 +226,7 @@ except ImportError as exc:
 
 try:
     from azure.cli.core.util import CLIError
-    from azure.common.credentials import get_azure_cli_credentials, get_cli_profile
+    from azure.common.credentials import get_azure_cli_credentials
     from azure.common.cloud import get_cli_active_cloud
 except ImportError:
     HAS_AZURE_CLI_CORE = False

@@ -144,7 +144,7 @@ from functools import partial
 from ansible.module_utils.network.nxos.nxos import run_commands, load_config
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import string_types, iteritems
+from ansible.module_utils.six import iteritems
 from ansible.module_utils.network.common.utils import remove_default_spec, to_list
 
 VALID_ROLES = ['network-admin', 'network-operator', 'vdc-admin', 'vdc-operator',

@@ -137,7 +137,7 @@ except ImportError:
     HAS_PYTHON26 = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.gcp import check_params, get_google_api_client, GCPUtils
+from ansible.module_utils.gcp import get_google_api_client
 
 
 UA_PRODUCT = 'ansible-gce_labels'

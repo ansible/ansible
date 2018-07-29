@@ -6,7 +6,6 @@ import cProfile
 import sys
 import traceback
 
-import ansible.constants as C
 from ansible.module_utils._text import to_text
 
 #__requires__ = ['ansible']

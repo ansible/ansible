@@ -44,9 +44,8 @@ DOCUMENTATION = '''
 '''
 
 import os
-from ansible import constants as C
 from ansible.errors import AnsibleParserError
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.plugins.vars import BaseVarsPlugin
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group

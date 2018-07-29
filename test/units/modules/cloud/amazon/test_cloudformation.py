@@ -16,7 +16,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-from mock import patch
 
 from units.utils.amazon_placebo_fixtures import placeboify, maybe_sleep
 from ansible.modules.cloud.amazon import cloudformation as cfn_module

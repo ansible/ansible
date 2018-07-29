@@ -23,7 +23,7 @@ import re
 import uuid
 import hashlib
 
-from ansible.module_utils._text import to_text, to_bytes
+from ansible.module_utils._text import to_bytes
 from ansible.module_utils.connection import Connection
 from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase

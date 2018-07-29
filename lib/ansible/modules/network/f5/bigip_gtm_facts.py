@@ -181,7 +181,6 @@ try:
     from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
     try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
         from f5.utils.responses.handlers import Stats
     except ImportError:
         HAS_F5SDK = False
@@ -193,7 +192,6 @@ except ImportError:
     from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
     try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
         from f5.utils.responses.handlers import Stats
     except ImportError:
         HAS_F5SDK = False

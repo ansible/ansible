@@ -6,7 +6,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import ast
-import yaml
 
 from ansible.module_utils._text import to_text
 from ansible.parsing.metadata import extract_metadata

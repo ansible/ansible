@@ -123,8 +123,6 @@ RETURN = '''
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    import pan.xapi
-    from pan.xapi import PanXapiError
     import pandevice
     from pandevice import base
     from pandevice import firewall

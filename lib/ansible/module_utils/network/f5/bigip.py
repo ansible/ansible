@@ -11,7 +11,6 @@ import time
 
 try:
     from f5.bigip import ManagementRoot
-    from icontrol.exceptions import iControlUnexpectedHTTPError
     HAS_F5SDK = True
 except ImportError:
     HAS_F5SDK = False

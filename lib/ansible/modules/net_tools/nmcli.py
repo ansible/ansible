@@ -466,6 +466,7 @@ try:
     gi.require_version('NetworkManager', '1.0')
 
     from gi.repository import NetworkManager, NMClient
+
     HAVE_NM_CLIENT = True
 except (ImportError, ValueError):
     HAVE_NM_CLIENT = False

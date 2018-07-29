@@ -162,7 +162,6 @@ from collections import defaultdict
 
 try:
     from f5.bigip import ManagementRoot as BigIpMgmt
-    from f5.bigip.contexts import TransactionContextManager as BigIpTxContext
 
     from f5.bigiq import ManagementRoot as BigIqMgmt
 
@@ -174,7 +173,7 @@ except ImportError:
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import iteritems, with_metaclass
+from ansible.module_utils.six import iteritems
 from ansible.module_utils.network.common.utils import to_list, ComplexList
 from ansible.module_utils.connection import exec_command
 from ansible.module_utils._text import to_text

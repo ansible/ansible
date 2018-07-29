@@ -57,7 +57,7 @@ logging.getLogger('suds').addHandler(NullHandler())
 
 from psphere.client import Client
 from psphere.errors import ObjectNotFoundError
-from psphere.managedobjects import HostSystem, VirtualMachine, ManagedObject, Network, ClusterComputeResource
+from psphere.managedobjects import ClusterComputeResource, HostSystem, ManagedObject, VirtualMachine
 from suds.sudsobject import Object as SudsObject
 
 

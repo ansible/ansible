@@ -19,8 +19,6 @@ DOCUMENTATION = """
 
 import os
 
-from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.six.moves import cPickle
 
 HAVE_SALTSTACK = False
 try:

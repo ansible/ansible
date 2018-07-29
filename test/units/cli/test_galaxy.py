@@ -30,7 +30,6 @@ from ansible.cli.galaxy import GalaxyCLI
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import call, patch
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.module_utils.six import PY3
 
 
 class TestGalaxy(unittest.TestCase):

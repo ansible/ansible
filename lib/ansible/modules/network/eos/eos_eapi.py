@@ -174,7 +174,7 @@ import time
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.eos.eos import run_commands, load_config
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.network.eos.eos import eos_argument_spec, check_args
+from ansible.module_utils.network.eos.eos import eos_argument_spec
 
 
 def check_transport(module):

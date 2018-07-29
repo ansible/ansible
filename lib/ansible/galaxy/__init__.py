@@ -25,8 +25,6 @@ __metaclass__ = type
 
 import os
 
-from ansible.errors import AnsibleError
-from ansible.module_utils.six import string_types
 
 #      default_readme_template
 #      default_meta_template

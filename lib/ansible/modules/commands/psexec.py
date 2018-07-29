@@ -325,7 +325,6 @@ KERBEROS_IMP_ERR = None
 try:
     import gssapi
     # GSSAPI extension required for Kerberos Auth in SMB
-    from gssapi.raw import inquire_sec_context_by_oid
     HAS_KERBEROS = True
 except ImportError as exc:
     KERBEROS_IMP_ERR = exc

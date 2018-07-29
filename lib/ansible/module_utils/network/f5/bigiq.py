@@ -11,7 +11,6 @@ import time
 
 try:
     from f5.bigiq import ManagementRoot
-    from icontrol.exceptions import iControlUnexpectedHTTPError
     HAS_F5SDK = True
 except ImportError:
     HAS_F5SDK = False
@@ -19,12 +18,10 @@ except ImportError:
 try:
     from library.module_utils.network.f5.common import F5BaseClient
     from library.module_utils.network.f5.common import F5ModuleError
-    from library.module_utils.network.f5.common import is_ansible_debug
     from library.module_utils.network.f5.icontrol import iControlRestSession
 except ImportError:
     from ansible.module_utils.network.f5.common import F5BaseClient
     from ansible.module_utils.network.f5.common import F5ModuleError
-    from ansible.module_utils.network.f5.common import is_ansible_debug
     from ansible.module_utils.network.f5.icontrol import iControlRestSession
 
 

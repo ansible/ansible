@@ -22,7 +22,7 @@ import os
 
 from ansible.errors import AnsibleActionFail
 from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock, Mock
+from ansible.compat.tests.mock import MagicMock, Mock
 from ansible.plugins.action.raw import ActionModule
 from ansible.playbook.task import Task
 from ansible.plugins.loader import connection_loader

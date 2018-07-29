@@ -31,7 +31,6 @@ from ansible.module_utils.six import text_type
 from ansible.module_utils.six.moves import builtins
 from ansible.plugins.loader import PluginLoader
 from ansible.plugins.lookup import password
-from ansible.utils import encrypt
 
 
 DEFAULT_CHARS = sorted([u'ascii_letters', u'digits', u".,:-_"])

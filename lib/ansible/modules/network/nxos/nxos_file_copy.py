@@ -154,7 +154,7 @@ import traceback
 from ansible.module_utils.network.nxos.nxos import run_commands
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils._text import to_native
 
 try:
     import paramiko

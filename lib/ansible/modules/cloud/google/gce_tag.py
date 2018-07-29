@@ -89,7 +89,6 @@ import traceback
 
 try:
     from libcloud.compute.types import Provider
-    from libcloud.compute.providers import get_driver
     from libcloud.common.google import GoogleBaseError, QuotaExceededError, \
         ResourceExistsError, ResourceNotFoundError, InvalidRequestError
 

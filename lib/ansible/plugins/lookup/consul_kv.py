@@ -66,10 +66,6 @@ from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.plugins.lookup import LookupBase
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
 
 try:
     import consul

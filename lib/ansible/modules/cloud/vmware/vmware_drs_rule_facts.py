@@ -84,7 +84,7 @@ drs_rule_facts:
 '''
 
 try:
-    from pyVmomi import vim, vmodl
+    from pyVmomi import vim
 except ImportError:
     pass
 

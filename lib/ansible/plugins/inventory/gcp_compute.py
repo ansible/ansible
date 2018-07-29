@@ -68,10 +68,8 @@ auth_kind: serviceaccount
 '''
 
 from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.six import string_types
 from ansible.module_utils.gcp_utils import GcpSession, navigate_hash, GcpRequestException
-from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable, to_safe_group_name
+from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable, Constructable
 import json
 
 

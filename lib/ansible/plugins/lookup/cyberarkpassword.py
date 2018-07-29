@@ -71,7 +71,6 @@ from subprocess import Popen
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
-from ansible.parsing.splitter import parse_kv
 from ansible.module_utils._text import to_text
 
 try:

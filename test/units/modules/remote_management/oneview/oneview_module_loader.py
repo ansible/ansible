@@ -2,7 +2,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 import sys
-from ansible.compat.tests.mock import patch, Mock
+from ansible.compat.tests.mock import Mock
 
 sys.modules['hpOneView'] = Mock()
 sys.modules['hpOneView.oneview_client'] = Mock()

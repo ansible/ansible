@@ -24,10 +24,9 @@ import os
 from collections import defaultdict
 
 from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import MagicMock, mock_open, patch
+from ansible.compat.tests.mock import MagicMock, patch
 from ansible.inventory.manager import InventoryManager
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.six.moves import builtins
 from ansible.playbook.play import Play
 
 

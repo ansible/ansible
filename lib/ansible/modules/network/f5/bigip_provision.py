@@ -117,7 +117,6 @@ try:
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
         from f5.bigip.contexts import TransactionContextManager
-        from f5.sdk_exception import LazyAttributesRequired
     except ImportError:
         HAS_F5SDK = False
 except ImportError:
@@ -130,7 +129,6 @@ except ImportError:
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
         from f5.bigip.contexts import TransactionContextManager
-        from f5.sdk_exception import LazyAttributesRequired
     except ImportError:
         HAS_F5SDK = False
 
