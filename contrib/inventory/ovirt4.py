@@ -176,7 +176,7 @@ def get_dict_of_struct(connection, vm):
         'affinity_labels': [label.name for label in labels],
         'affinity_groups': [
             group.name for group in groups
-            if vm.name in [vm.name for vm in connection.follow_link(group.vms)]
+            if vm.name in [virtualmachine.name for virtualmachine in connection.follow_link(group.vms)]
         ],
         'statistics': dict(
             (stat.name, stat.values[0].datum) for stat in stats

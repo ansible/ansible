@@ -213,7 +213,7 @@ def get_snmp_host(host, udp, module):
                     vrf_filt = each.get('TABLE_filter_vrf')
                     if vrf_filt:
                         vrf_filter = vrf_filt['ROW_filter_vrf']['filter_vrf_name'].split(',')
-                        filters = [vrf.strip() for vrf in vrf_filter]
+                        filters = [f.strip() for f in vrf_filter]
                         host_resource['vrf_filter'] = filters
 
                     resource[key] = host_resource

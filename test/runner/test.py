@@ -348,13 +348,13 @@ def parse_args():
     sanity.add_argument('--test',
                         metavar='TEST',
                         action='append',
-                        choices=[test.name for test in sanity_get_tests()],
+                        choices=[sanity_test.name for sanity_test in sanity_get_tests()],
                         help='tests to run').completer = complete_sanity_test
 
     sanity.add_argument('--skip-test',
                         metavar='TEST',
                         action='append',
-                        choices=[test.name for test in sanity_get_tests()],
+                        choices=[sanity_test.name for sanity_test in sanity_get_tests()],
                         help='tests to skip').completer = complete_sanity_test
 
     sanity.add_argument('--allow-disabled',

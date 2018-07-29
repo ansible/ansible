@@ -353,7 +353,7 @@ def command_network_integration(args):
         while any(instance.is_alive() for instance in instances):
             time.sleep(1)
 
-        remotes = [instance.wait_for_result() for instance in instances]
+        remotes = [thread_instance.wait_for_result() for thread_instance in instances]
         inventory = network_inventory(remotes)
 
         display.info('>>> Inventory: %s\n%s' % (filename, inventory.strip()), verbosity=3)
@@ -408,7 +408,7 @@ def network_init(args, internal_targets):
     while any(instance.is_alive() for instance in instances):
         time.sleep(1)
 
-    args.metadata.instance_config = [instance.wait_for_result() for instance in instances]
+    args.metadata.instance_config = [thread_instance.wait_for_result() for thread_instance in instances]
 
 
 def network_start(args, platform, version):
@@ -514,7 +514,7 @@ def command_windows_integration(args):
         while any(instance.is_alive() for instance in instances):
             time.sleep(1)
 
-        remotes = [instance.wait_for_result() for instance in instances]
+        remotes = [thread_instance.wait_for_result() for thread_instance in instances]
         inventory = windows_inventory(remotes)
 
         display.info('>>> Inventory: %s\n%s' % (filename, inventory.strip()), verbosity=3)
@@ -556,7 +556,7 @@ def windows_init(args, internal_targets):  # pylint: disable=locally-disabled, u
     while any(instance.is_alive() for instance in instances):
         time.sleep(1)
 
-    args.metadata.instance_config = [instance.wait_for_result() for instance in instances]
+    args.metadata.instance_config = [thread_instance.wait_for_result() for thread_instance in instances]
 
 
 def windows_start(args, version):
