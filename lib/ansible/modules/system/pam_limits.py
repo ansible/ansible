@@ -120,7 +120,7 @@ EXAMPLES = '''
     limit_item: memlock
     value: unlimited
     comment: unlimited memory lock for james
- 
+
  # Add or modify hard nofile limits for wildcard domain
  - pam_limits:
     domain: '*'
