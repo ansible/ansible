@@ -424,5 +424,6 @@ def main():
     """Main execution"""
     AzureRMContainerRegistry()
 
+
 if __name__ == '__main__':
     main()

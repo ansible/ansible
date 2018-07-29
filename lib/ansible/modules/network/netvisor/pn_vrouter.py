@@ -149,6 +149,9 @@ changed:
 
 import shlex
 
+# AnsibleModule boilerplate
+from ansible.module_utils.basic import AnsibleModule
+
 VROUTER_EXISTS = None
 VROUTER_NAME_EXISTS = None
 
@@ -410,8 +413,6 @@ def main():
 
     run_cli(module, cli)
 
-# AnsibleModule boilerplate
-from ansible.module_utils.basic import AnsibleModule
 
 if __name__ == '__main__':
     main()

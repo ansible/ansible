@@ -473,5 +473,6 @@ class FirewallAllowedArray(object):
             u'ports': item.get(u'ports')
         })
 
+
 if __name__ == '__main__':
     main()

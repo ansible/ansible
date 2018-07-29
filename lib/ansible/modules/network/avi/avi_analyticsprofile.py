@@ -564,5 +564,6 @@ def main():
     return avi_ansible_api(module, 'analyticsprofile',
                            set([]))
 
+
 if __name__ == '__main__':
     main()

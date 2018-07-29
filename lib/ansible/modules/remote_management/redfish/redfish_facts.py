@@ -262,5 +262,6 @@ def main():
     # Return data back
     module.exit_json(ansible_facts=dict(redfish_facts=result))
 
+
 if __name__ == '__main__':
     main()

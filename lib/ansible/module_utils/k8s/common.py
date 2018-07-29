@@ -61,6 +61,7 @@ def list_dict_str(value):
         return value
     raise TypeError
 
+
 ARG_ATTRIBUTES_BLACKLIST = ('property_path',)
 
 COMMON_ARG_SPEC = {

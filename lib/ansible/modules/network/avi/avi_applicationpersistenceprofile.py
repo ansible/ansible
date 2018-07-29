@@ -163,5 +163,6 @@ def main():
     return avi_ansible_api(module, 'applicationpersistenceprofile',
                            set([]))
 
+
 if __name__ == '__main__':
     main()

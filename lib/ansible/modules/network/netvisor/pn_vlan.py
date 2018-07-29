@@ -115,6 +115,9 @@ changed:
 
 import shlex
 
+# AnsibleModule boilerplate
+from ansible.module_utils.basic import AnsibleModule
+
 VLAN_EXISTS = None
 MAX_VLAN_ID = 4092
 MIN_VLAN_ID = 2
@@ -305,8 +308,6 @@ def main():
 
     run_cli(module, cli)
 
-# AnsibleModule boilerplate
-from ansible.module_utils.basic import AnsibleModule
 
 if __name__ == '__main__':
     main()

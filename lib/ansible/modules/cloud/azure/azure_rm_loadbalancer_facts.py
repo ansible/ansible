@@ -170,5 +170,6 @@ def main():
 
     AzureRMLoadBalancerFacts()
 
+
 if __name__ == '__main__':
     main()

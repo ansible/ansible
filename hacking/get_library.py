@@ -26,5 +26,6 @@ def main():
     print(C.DEFAULT_MODULE_PATH)
     return 0
 
+
 if __name__ == '__main__':
     sys.exit(main())
