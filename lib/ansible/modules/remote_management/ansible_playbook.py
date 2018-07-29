@@ -59,29 +59,9 @@ options:
     required: false
   connection_method:
     description:
-      - Connection type to use
-    choices:
-      - 'smart'
-      - 'buildah'
-      - 'chroot'
-      - 'docker'
-      - 'funcd'
-      - 'iocage'
-      - 'jail'
-      - 'kubectl'
-      - 'libvirt_lxc'
-      - 'local'
-      - 'lxc'
-      - 'lxd'
-      - 'netconf'
-      - 'network_cli'
-      - 'oc'
-      - 'paramiko_ssh'
-      - 'persistent'
-      - 'saltstack'
-      - 'ssh'
-      - 'winrm'
-      - 'zone'
+      - Connection type to use.
+      - List of connection plugins is available using 'ansible-doc -t connection -l'.
+      - Ansible connection plugins documentation is also available at https://docs.ansible.com/ansible/2.5/plugins/connection.html
     required: false
     default: 'smart'
   connection_user:
@@ -254,32 +234,7 @@ def run_module():
             extra_vars_files=dict(type='list'),
             tags=dict(type='list'),
             skip_tags=dict(type='list'),
-            connection_method=dict(
-                type='str',
-                choices=[
-                    'smart',
-                    'buildah',
-                    'chroot',
-                    'docker',
-                    'funcd',
-                    'iocage',
-                    'jail',
-                    'kubectl',
-                    'libvirt_lxc',
-                    'local',
-                    'lxc',
-                    'lxd',
-                    'netconf',
-                    'network_cli',
-                    'oc',
-                    'paramiko_ssh',
-                    'persistent',
-                    'saltstack',
-                    'ssh',
-                    'winrm',
-                    'zone'
-                ],
-                default='smart'),
+            connection_method=dict(type='str', default='smart'),
             connection_user=dict(type='str'),
             connection_timeout=dict(type='int', default=10),
             become=dict(type='bool', default=False),
