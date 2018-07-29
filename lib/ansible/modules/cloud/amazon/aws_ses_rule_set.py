@@ -207,7 +207,7 @@ def remove_rule_set(client, module):
                 }
             )
         if not check_mode:
-            if module.params.get('force'):
+            if active and module.params.get('force'):
                 deactivate_rule_set(client, module)
             try:
                 client.delete_receipt_rule_set(RuleSetName=name, aws_retry=True)

@@ -1,5 +1,6 @@
 ---
 default_rule_set: "{{ resource_prefix }}-default-rule-set"
+second_rule_set: "{{ resource_prefix }}-second-rule-set"
 
 # See comment in obtain-lock.yaml for definitions of these variables
 max_obtain_lock_attempts: 10
