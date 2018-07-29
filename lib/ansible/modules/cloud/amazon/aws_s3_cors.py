@@ -187,5 +187,6 @@ def main():
     elif state == 'absent':
         destroy_bucket_cors(client, module)
 
+
 if __name__ == '__main__':
     main()

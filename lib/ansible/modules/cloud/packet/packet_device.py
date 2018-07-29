@@ -636,5 +636,6 @@ def main():
         module.fail_json(msg='failed to set device state %s, error: %s' %
                          (state, to_native(e)), exception=traceback.format_exc())
 
+
 if __name__ == '__main__':
     main()

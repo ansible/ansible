@@ -388,5 +388,6 @@ def gethash(self):
 def main():
     AzureRMRecordSet()
 
+
 if __name__ == '__main__':
     main()

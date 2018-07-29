@@ -197,5 +197,6 @@ class AzureRMRecordSetFacts(AzureRMModuleBase):
 def main():
     AzureRMRecordSetFacts()
 
+
 if __name__ == '__main__':
     main()

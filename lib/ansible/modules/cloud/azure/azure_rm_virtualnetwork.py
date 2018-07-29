@@ -344,5 +344,6 @@ class AzureRMVirtualNetwork(AzureRMModuleBase):
 def main():
     AzureRMVirtualNetwork()
 
+
 if __name__ == '__main__':
     main()

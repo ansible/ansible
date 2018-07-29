@@ -30,6 +30,7 @@ class SetEncoder(json.JSONEncoder):
             return list(obj)
         return json.JSONEncoder.default(self, obj)
 
+
 VBOX = "VBoxManage"
 
 

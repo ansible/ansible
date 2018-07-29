@@ -166,5 +166,6 @@ def main():
 
     AzureRMManagedDiskFacts()
 
+
 if __name__ == '__main__':
     main()

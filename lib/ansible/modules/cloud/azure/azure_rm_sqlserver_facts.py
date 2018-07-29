@@ -200,5 +200,7 @@ class AzureRMServersFacts(AzureRMModuleBase):
 
 def main():
     AzureRMServersFacts()
+
+
 if __name__ == '__main__':
     main()

@@ -43,6 +43,7 @@ def import_mock(name, *args):
         return mock_ncclient
     return builtin_import(name, *args)
 
+
 if PY3:
     with patch('builtins.__import__', side_effect=import_mock):
         from ansible.plugins.connection import netconf

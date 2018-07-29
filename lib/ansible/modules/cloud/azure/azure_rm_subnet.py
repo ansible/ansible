@@ -311,5 +311,6 @@ class AzureRMSubnet(AzureRMModuleBase):
 def main():
     AzureRMSubnet()
 
+
 if __name__ == '__main__':
     main()

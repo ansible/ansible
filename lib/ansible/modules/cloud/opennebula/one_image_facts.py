@@ -158,6 +158,7 @@ def get_all_images(client):
 
     return pool
 
+
 IMAGE_STATES = ['INIT', 'READY', 'USED', 'DISABLED', 'LOCKED', 'ERROR', 'CLONE', 'DELETE', 'USED_PERS', 'LOCKED_USED', 'LOCKED_USED_PERS']
 
 

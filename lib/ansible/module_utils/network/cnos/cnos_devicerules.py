@@ -81,6 +81,7 @@ def getRuleString(deviceType, variableId):
     return retVal
 # EOM
 
+
 default_cnos = {
     'vlan_id': 'INTEGER_VALUE:1-3999',
     'vlan_id_range': 'INTEGER_VALUE_RANGE:1-3999',

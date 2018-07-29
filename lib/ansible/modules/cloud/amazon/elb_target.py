@@ -312,5 +312,6 @@ def main():
     else:
         deregister_target(connection, module)
 
+
 if __name__ == '__main__':
     main()

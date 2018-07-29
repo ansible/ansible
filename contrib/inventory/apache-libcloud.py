@@ -344,5 +344,6 @@ class LibcloudInventory(object):
 def main():
     LibcloudInventory()
 
+
 if __name__ == '__main__':
     main()

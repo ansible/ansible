@@ -511,6 +511,7 @@ class Interfaces(FactsBase):
                     parsed.append(line)
         return parsed
 
+
 FACT_SUBSETS = dict(
     default=Default,
     hardware=Hardware,

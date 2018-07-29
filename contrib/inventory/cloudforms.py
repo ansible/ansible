@@ -482,4 +482,5 @@ class CloudFormsInventory(object):
         else:
             return json.dumps(data)
 
+
 CloudFormsInventory()

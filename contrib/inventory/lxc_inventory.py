@@ -65,5 +65,6 @@ def main(argv):
     else:
         print("Need an argument, either --list or --host <host>", file=sys.stderr)
 
+
 if __name__ == '__main__':
     main(sys.argv)

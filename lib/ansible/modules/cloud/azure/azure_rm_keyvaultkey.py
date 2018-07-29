@@ -291,5 +291,6 @@ class AzureRMKeyVaultKey(AzureRMModuleBase):
 def main():
     AzureRMKeyVaultKey()
 
+
 if __name__ == '__main__':
     main()

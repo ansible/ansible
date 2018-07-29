@@ -107,5 +107,6 @@ def main():
     vmware_local_user_facts = VMwareUserFactsManager(module)
     vmware_local_user_facts.gather_user_facts()
 
+
 if __name__ == '__main__':
     main()

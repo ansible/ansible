@@ -528,4 +528,5 @@ class ConsulConfig(dict):
                 token = 'anonymous'
         return consul.Consul(host=host, port=port, token=token, scheme=scheme)
 
+
 ConsulInventory()

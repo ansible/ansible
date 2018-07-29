@@ -384,5 +384,6 @@ def main():
     """Main execution"""
     AzureRMManagedDisk()
 
+
 if __name__ == '__main__':
     main()

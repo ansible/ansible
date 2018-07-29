@@ -158,5 +158,6 @@ def main():
     return avi_ansible_api(module, 'poolgroup',
                            set([]))
 
+
 if __name__ == '__main__':
     main()

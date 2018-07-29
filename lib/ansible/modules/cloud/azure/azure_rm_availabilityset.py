@@ -309,5 +309,6 @@ def main():
     """Main execution"""
     AzureRMAvailabilitySet()
 
+
 if __name__ == '__main__':
     main()

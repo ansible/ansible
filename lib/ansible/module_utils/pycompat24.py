@@ -43,6 +43,7 @@ def get_exception():
     """
     return sys.exc_info()[1]
 
+
 try:
     # Python 2.6+
     from ast import literal_eval
