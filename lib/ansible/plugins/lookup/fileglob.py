@@ -55,6 +55,6 @@ class LookupModule(LookupBase):
 
         ret = []
         for term in terms:
-            globbed = glob.glob(to_bytes(term), errors='surrogate_or_strict'))
+            globbed = glob.glob(to_bytes(term, errors='surrogate_or_strict'))
             ret.extend(to_text(g, errors='surrogate_or_strict') for g in globbed if os.path.isfile(g))
         return ret
