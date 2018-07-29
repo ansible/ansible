@@ -142,6 +142,7 @@ def extract_zone(server_info):
     except (KeyError, TypeError):
         return None
 
+
 extractors = {
     "public_ipv4": extract_public_ipv4,
     "private_ipv4": extract_private_ipv4,

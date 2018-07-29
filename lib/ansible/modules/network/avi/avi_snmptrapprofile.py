@@ -109,5 +109,6 @@ def main():
     return avi_ansible_api(module, 'snmptrapprofile',
                            set([]))
 
+
 if __name__ == '__main__':
     main()

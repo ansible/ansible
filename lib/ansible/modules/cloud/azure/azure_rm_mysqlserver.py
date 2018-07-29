@@ -373,5 +373,6 @@ def main():
     """Main execution"""
     AzureRMServers()
 
+
 if __name__ == '__main__':
     main()

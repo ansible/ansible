@@ -236,5 +236,6 @@ def main():
             module.fail_json(name=name, msg="ERROR (no such process)")
         take_action_on_processes(processes, lambda s: s in ('RUNNING', 'STARTING'), 'stop', 'stopped')
 
+
 if __name__ == '__main__':
     main()

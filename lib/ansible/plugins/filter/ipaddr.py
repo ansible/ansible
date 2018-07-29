@@ -176,6 +176,7 @@ def _ip_netmask_query(v):
         if v.ip != v.network:
             return str(v.ip) + ' ' + str(v.netmask)
 
+
 '''
 def _ip_wildcard_query(v):
     if v.size == 2:

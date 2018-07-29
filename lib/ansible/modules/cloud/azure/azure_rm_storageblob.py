@@ -545,5 +545,6 @@ class AzureRMStorageBlob(AzureRMModuleBase):
 def main():
     AzureRMStorageBlob()
 
+
 if __name__ == '__main__':
     main()

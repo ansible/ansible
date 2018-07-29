@@ -277,5 +277,6 @@ def main():
 
     AzureRMVirtualMachineScaleSetFacts()
 
+
 if __name__ == '__main__':
     main()

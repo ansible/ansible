@@ -851,5 +851,6 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
 def main():
     AzureRMVirtualMachineScaleSet()
 
+
 if __name__ == '__main__':
     main()

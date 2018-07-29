@@ -359,5 +359,6 @@ class BuckAcceContProjTeam(object):
             u'team': self.request.get(u'team')
         })
 
+
 if __name__ == '__main__':
     main()
