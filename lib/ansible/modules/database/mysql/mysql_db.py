@@ -62,6 +62,13 @@ options:
     required: false
     default: []
     version_added: "2.7"
+  compact:
+    description:
+      - When I(state) is C(dump), generate compact dump. Equivalent to C(--compact) flag in C(mysqldump).
+    type: bool
+    required: false
+    default: 'yes'
+    version_added: "2.7"
 author: "Ansible Core Team"
 requirements:
    - mysql (command line binary)
@@ -136,7 +143,7 @@ def db_delete(cursor, db):
 
 
 def db_dump(module, host, user, password, db_name, target, all_databases, port, config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None,
-            single_transaction=None, quick=None, ignore_tables=None):
+            single_transaction=None, quick=None, ignore_tables=None, compact=True):
     cmd = module.get_bin_path('mysqldump', True)
     # If defined, mysqldump demands --defaults-extra-file be the first option
     if config_file:
@@ -155,6 +162,8 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port, 
         cmd += " --socket=%s" % pipes.quote(socket)
     else:
         cmd += " --host=%s --port=%i" % (pipes.quote(host), port)
+    if compact:
+        cmd += " --compact"
     if all_databases:
         cmd += " --all-databases"
     else:
@@ -180,8 +189,20 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port, 
     else:
         cmd += " > %s" % pipes.quote(target)
 
+    if os.path.isfile(target):
+        overwriting = True
+        original_checksum = module.sha1(target)
+    else:
+        overwriting = False
+
     rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
-    return rc, stdout, stderr
+
+    if overwriting:
+        new_checksum = module.sha1(target)
+
+    changed = not overwriting or new_checksum != original_checksum
+
+    return rc, stdout, stderr, changed
 
 
 def db_import(module, host, user, password, db_name, target, all_databases, port, config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None):
@@ -273,7 +294,8 @@ def main():
             config_file=dict(default="~/.my.cnf", type='path'),
             single_transaction=dict(default=False, type='bool'),
             quick=dict(default=True, type='bool'),
-            ignore_tables=dict(default=[], type='list')
+            ignore_tables=dict(default=[], type='list'),
+            compact=dict(default=True, type='bool')
         ),
         supports_check_mode=True
     )
@@ -304,6 +326,7 @@ def main():
             module.fail_json(msg="Name of ignored table cannot be empty")
     single_transaction = module.params["single_transaction"]
     quick = module.params["quick"]
+    compact = module.params["compact"]
 
     if state in ['dump', 'import']:
         if target is None:
@@ -344,14 +367,15 @@ def main():
             if module.check_mode:
                 module.exit_json(changed=True, db=db)
             else:
-                rc, stdout, stderr = db_dump(module, login_host, login_user,
-                                             login_password, db, target, all_databases,
-                                             login_port, config_file, socket, ssl_cert, ssl_key,
-                                             ssl_ca, single_transaction, quick, ignore_tables)
+                rc, stdout, stderr, changed = db_dump(module, login_host, login_user,
+                                                      login_password, db, target, all_databases,
+                                                      login_port, config_file, socket, ssl_cert, ssl_key,
+                                                      ssl_ca, single_transaction, quick, ignore_tables,
+                                                      compact)
                 if rc != 0:
                     module.fail_json(msg="%s" % stderr)
                 else:
-                    module.exit_json(changed=True, db=db, msg=stdout)
+                    module.exit_json(changed=changed, db=db, msg=stdout)
 
         elif state == "import":
             if module.check_mode:
