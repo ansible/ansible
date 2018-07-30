@@ -267,12 +267,9 @@ namespace Ansible
 "@
 
 $original_tmp = $env:TMP
-$original_temp = $env:TEMP
 $env:TMP = $_remote_tmp
-$env:TEMP = $_remote_tmp
 Add-Type -TypeDefinition $sec_helper_util
 $env:TMP = $original_tmp
-$env:TEMP = $original_temp
 
 Function Compare-UserList($existing_users, $new_users) {  
     $added_users = [String[]]@()

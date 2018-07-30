@@ -70,12 +70,9 @@ public enum TASK_TRIGGER_TYPE2
 "@
 
 $original_tmp = $env:TMP
-$original_temp = $env:TEMP
 $env:TMP = $_remote_tmp
-$env:TEMP = $_remote_tmp
 Add-Type -TypeDefinition $task_enums
 $env:TMP = $original_tmp
-$env:TEMP = $original_temp
 
 Function Get-PropertyValue($task_property, $com, $property) {
     $raw_value = $com.$property
