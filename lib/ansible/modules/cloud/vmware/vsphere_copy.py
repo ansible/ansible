@@ -74,7 +74,7 @@ EXAMPLES = '''
     datacenter: DC1 Someplace
     datastore: datastore1
     path: some/remote/file
-  transport: local
+  delegate_to: localhost
 
 - vsphere_copy:
     host: vhost

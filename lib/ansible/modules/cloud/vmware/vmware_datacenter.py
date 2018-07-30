@@ -43,15 +43,14 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-# Example vmware_datacenter command from Ansible Playbooks
 - name: Create Datacenter
-  local_action:
-    module: vmware_datacenter
+  vmware_datacenter:
     hostname: "{{ ansible_ssh_host }}"
     username: root
     password: vmware
     datacenter_name: "datacenter"
     state: present
+  delegate_to: localhost
 
 - name: Delete Datacenter
   vmware_datacenter:
@@ -60,6 +59,7 @@ EXAMPLES = '''
     password: pass
     datacenter_name: DC2
     state: absent
+  delegate_to: localhost
   register: datacenter_delete_result
 '''
 

@@ -92,6 +92,7 @@ EXAMPLES = r'''
       - cdrom
       - ethernet
       - disk
+  delegate_to: localhost
   register: vm_boot_order
 '''
 

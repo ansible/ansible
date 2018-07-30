@@ -39,6 +39,7 @@ EXAMPLES = r'''
     hostname: esxi_hostname
     username: root
     password: vmware
+  delegate_to: localhost
   register: all_user_facts
 '''
 

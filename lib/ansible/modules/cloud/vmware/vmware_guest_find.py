@@ -51,6 +51,7 @@ EXAMPLES = r'''
     password: vmware
     validate_certs: no
     name: testvm
+  delegate_to: localhost
   register: vm_folder
 
 - name: Find Guest's Folder using UUID
@@ -60,6 +61,7 @@ EXAMPLES = r'''
     password: vmware
     validate_certs: no
     uuid: 38c4c89c-b3d7-4ae6-ae4e-43c5118eae49
+  delegate_to: localhost
   register: vm_folder
 '''
 

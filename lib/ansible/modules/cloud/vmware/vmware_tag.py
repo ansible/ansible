@@ -73,6 +73,7 @@ EXAMPLES = r'''
     tag_name: Sample_Tag_0002
     tag_description: Sample Description
     state: present
+  delegate_to: localhost
 
 - name: Update tag description
   vmware_tag:
@@ -83,6 +84,7 @@ EXAMPLES = r'''
     tag_name: Sample_Tag_0002
     tag_description: Some fancy description
     state: present
+  delegate_to: localhost
 
 - name: Delete tag
   vmware_tag:
@@ -92,6 +94,7 @@ EXAMPLES = r'''
     validate_certs: False
     tag_name: Sample_Tag_0002
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = r'''
