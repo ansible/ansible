@@ -69,14 +69,14 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 - name: grant user-style access to production secrets
-  kms:
+  aws_kms:
   args:
     mode: grant
     key_alias: "alias/my_production_secrets"
     role_name: "prod-appServerRole-1R5AQG2BSEL6L"
     grant_types: "role,role grant"
 - name: remove access to production secrets from role
-  kms:
+  aws_kms:
   args:
     mode: deny
     key_alias: "alias/my_production_secrets"
