@@ -1065,7 +1065,6 @@ Function Run($payload) {
     # NB: action popping handled inside subprocess wrapper
 
     $original_tmp = $env:TMP
-    $original_temp = $env:TEMP
     $remote_tmp = $payload["module_args"]["_ansible_remote_tmp"]
     $remote_tmp = [System.Environment]::ExpandEnvironmentVariables($remote_tmp)
     if ($null -eq $remote_tmp) {
@@ -1075,10 +1074,8 @@ Function Run($payload) {
     # become process is run under a different console to the WinRM one so we
     # need to set the UTF-8 codepage again
     $env:TMP = $remote_tmp
-    $env:TEMP = $remote_tmp
     Add-Type -TypeDefinition $helper_def -Debug:$false
     $env:TMP = $original_tmp
-    $env:TEMP = $original_tmp
 
     $username = $payload.become_user
     $password = $payload.become_password

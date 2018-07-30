@@ -30,12 +30,9 @@ $webclient_util = @"
     }
 "@
 $original_tmp = $env:TMP
-$original_temp = $env:TEMP
 $env:TMP = $_remote_tmp
-$env:TEMP = $_remote_tmp
 Add-Type -TypeDefinition $webclient_util
 $env:TMP = $original_tmp
-$env:TEMP = $original_temp
 
 
 Function CheckModified-File($url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy) {

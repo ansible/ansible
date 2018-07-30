@@ -6,6 +6,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.PrivilegeUtil
 
 $ErrorActionPreference = "Stop"
 
@@ -39,23 +40,8 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace Ansible
+namespace Ansible.RegEdit
 {
-    [StructLayout(LayoutKind.Sequential)]
-    public struct LUID
-    {
-        public UInt32 LowPart;
-        public Int32 HighPart;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct TOKEN_PRIVILEGES
-    {
-        public UInt32 PrivilegeCount;
-        public LUID Luid;
-        public UInt32 Attributes;
-    }
-
     public enum HKEY : uint
     {
         LOCAL_MACHINE = 0x80000002,
@@ -74,41 +60,8 @@ namespace Ansible
         public static explicit operator Win32Exception(string message) { return new Win32Exception(message); }
     }
 
-    public class RegistryUtil
+    public class Hive
     {
-
-        public const int TOKEN_ADJUST_PRIVILEGES = 0x00000020;
-        public const int TOKEN_QUERY = 0x00000008;
-        public const int SE_PRIVILEGE_ENABLED = 0x00000002;
-
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
-        private static extern IntPtr GetCurrentProcess();
-
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
-        private static extern bool CloseHandle(
-            IntPtr hObject);
-
-        [DllImport("advapi32.dll", CharSet = CharSet.Auto)]
-        private static extern bool OpenProcessToken(
-            IntPtr ProcessHandle,
-            UInt32 DesiredAccess,
-            out IntPtr TokenHandle);
-
-        [DllImport("advapi32.dll", CharSet = CharSet.Auto)]
-        private static extern bool LookupPrivilegeValue(
-            string lpSystemName,
-            string lpName,
-            [MarshalAs(UnmanagedType.Struct)] out LUID lpLuid);
-
-        [DllImport("advapi32.dll", CharSet = CharSet.Auto)]
-        private static extern bool AdjustTokenPrivileges(
-            IntPtr TokenHandle,
-            [MarshalAs(UnmanagedType.Bool)] bool DisableAllPrivileges,
-            ref TOKEN_PRIVILEGES NewState,
-            UInt32 BufferLength,
-            IntPtr PreviousState,
-            IntPtr ReturnLength);
-
         [DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         private static extern int RegLoadKey(
             HKEY hKey,
@@ -119,41 +72,6 @@ namespace Ansible
         private static extern int RegUnLoadKey(
             HKEY hKey,
             string lpSubKey);
-
-        public static void EnablePrivileges()
-        {
-            List<String> privileges = new List<String>()
-            {
-                "SeRestorePrivilege",
-                "SeBackupPrivilege"
-            };
-            foreach (string privilege in privileges)
-            {
-                IntPtr hToken;
-                LUID luid;
-                TOKEN_PRIVILEGES tkpPrivileges;
-
-                if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, out hToken))
-                    throw new Win32Exception("OpenProcessToken() failed");
-
-                try
-                {
-                    if (!LookupPrivilegeValue(null, privilege, out luid))
-                        throw new Win32Exception("LookupPrivilegeValue() failed");
-
-                    tkpPrivileges.PrivilegeCount = 1;
-                    tkpPrivileges.Luid = luid;
-                    tkpPrivileges.Attributes = SE_PRIVILEGE_ENABLED;
-
-                    if (!AdjustTokenPrivileges(hToken, false, ref tkpPrivileges, 0, IntPtr.Zero, IntPtr.Zero))
-                        throw new Win32Exception(String.Format("AdjustTokenPrivileges() failed to adjust privilege {0}", privilege));
-                }
-                finally
-                {
-                    CloseHandle(hToken);
-                }
-            }
-        }
 
         public static void LoadHive(string lpSubKey, string lpFile)
         {
@@ -373,29 +291,29 @@ if ($hive) {
     }
 
     $original_tmp = $env:TMP
-    $original_temp = $env:TEMP
     $env:TMP = $_remote_tmp
-    $env:TEMP = $_remote_tmp
     Add-Type -TypeDefinition $registry_util
     $env:TMP = $original_tmp
-    $env:TEMP = $original_temp
+
+    Import-PrivilegeUtil
     try {
-        [Ansible.RegistryUtil]::EnablePrivileges()
+        Set-AnsiblePrivilege -Name SeBackupPrivilege -Value $true
+        Set-AnsiblePrivilege -Name SeRestorePrivilege -Value $true
     } catch [System.ComponentModel.Win32Exception] {
-        Fail-Json -obj $result -message "failed to enable SeRestorePrivilege and SeRestorePrivilege for the current process: $($_.Exception.Message)"
+        Fail-Json -obj $result -message "failed to enable SeBackupPrivilege and SeRestorePrivilege for the current process: $($_.Exception.Message)"
     }
 
     if (Test-Path -Path HKLM:\ANSIBLE) {
         Add-Warning -obj $result -message "hive already loaded at HKLM:\ANSIBLE, had to unload hive for win_regedit to continue"
         try {
-            [Ansible.RegistryUtil]::UnloadHive("ANSIBLE")
+            [Ansible.RegEdit.Hive]::UnloadHive("ANSIBLE")
         } catch [System.ComponentModel.Win32Exception] {
             Fail-Json -obj $result -message "failed to unload registry hive HKLM:\ANSIBLE from $($hive): $($_.Exception.Message)"
         }
     }
 
     try {
-        [Ansible.RegistryUtil]::LoadHive("ANSIBLE", $hive)
+        [Ansible.RegEdit.Hive]::LoadHive("ANSIBLE", $hive)
     } catch [System.ComponentModel.Win32Exception] {
         Fail-Json -obj $result -message "failed to load registry hive from '$hive' to HKLM:\ANSIBLE: $($_.Exception.Message)"
     }
@@ -566,7 +484,7 @@ $key_prefix[$path]
         [GC]::Collect()
         [GC]::WaitForPendingFinalizers()
         try {
-            [Ansible.RegistryUtil]::UnloadHive("ANSIBLE")
+            [Ansible.RegEdit.Hive]::UnloadHive("ANSIBLE")
         } catch [System.ComponentModel.Win32Exception] {
             Fail-Json -obj $result -message "failed to unload registry hive HKLM:\ANSIBLE from $($hive): $($_.Exception.Message)"
         }
