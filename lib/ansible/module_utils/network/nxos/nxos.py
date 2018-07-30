@@ -139,7 +139,11 @@ class Cli:
             return self._device_configs[cmd]
         except KeyError:
             connection = self._get_connection()
-            out = connection.get_config(filter=flags)
+            try:
+                out = connection.get_config(filter=flags)
+            except ConnectionError as exc:
+                self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+
             cfg = to_text(out, errors='surrogate_then_replace').strip()
             self._device_configs[cmd] = cfg
             return cfg
@@ -188,8 +192,12 @@ class Cli:
 
     def get_diff(self, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
         conn = self._get_connection()
-        return conn.get_diff(candidate=candidate, running=running, diff_match=diff_match, diff_ignore_lines=diff_ignore_lines, path=path,
-                             diff_replace=diff_replace)
+        try:
+            response = conn.get_diff(candidate=candidate, running=running, diff_match=diff_match, diff_ignore_lines=diff_ignore_lines, path=path,
+                                     diff_replace=diff_replace)
+        except ConnectionError as exc:
+            self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+        return response
 
     def get_capabilities(self):
         """Returns platform info of the remove device
@@ -198,7 +206,10 @@ class Cli:
             return self._module._capabilities
 
         connection = self._get_connection()
-        capabilities = connection.get_capabilities()
+        try:
+            capabilities = connection.get_capabilities()
+        except ConnectionError as exc:
+            self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
         self._module._capabilities = json.loads(capabilities)
         return self._module._capabilities
 

@@ -30,12 +30,11 @@ import json
 import re
 from difflib import Differ
 from copy import deepcopy
-from time import sleep
 
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.network.common.utils import to_list
-from ansible.module_utils.connection import Connection
+from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.network.common.netconf import NetconfConnection
 
 try:
@@ -126,8 +125,10 @@ def get_connection(module):
 def get_device_capabilities(module):
     if hasattr(module, 'capabilities'):
         return module.capabilities
-
-    capabilities = Connection(module._socket_path).get_capabilities()
+    try:
+        capabilities = Connection(module._socket_path).get_capabilities()
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
     module.capabilities = json.loads(capabilities)
 
     return module.capabilities
@@ -317,7 +318,11 @@ def get_config_diff(module, running=None, candidate=None):
     conn = get_connection(module)
 
     if is_cliconf(module):
-        return conn.get('show commit changes diff')
+        try:
+            response = conn.get('show commit changes diff')
+        except ConnectionError as exc:
+            module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+        return response
     elif is_netconf(module):
         if running and candidate:
             running_data = running.split("\n", 1)[1].rsplit("\n", 1)[0]
@@ -332,21 +337,26 @@ def get_config_diff(module, running=None, candidate=None):
 
 def discard_config(module):
     conn = get_connection(module)
-    conn.discard_changes()
+    try:
+        conn.discard_changes()
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
 
 def commit_config(module, comment=None, confirmed=False, confirm_timeout=None,
                   persist=False, check=False, label=None):
     conn = get_connection(module)
     reply = None
-
-    if check:
-        reply = conn.validate()
-    else:
-        if is_netconf(module):
-            reply = conn.commit(confirmed=confirmed, timeout=confirm_timeout, persist=persist)
-        elif is_cliconf(module):
-            reply = conn.commit(comment=comment, label=label)
+    try:
+        if check:
+            reply = conn.validate()
+        else:
+            if is_netconf(module):
+                reply = conn.commit(confirmed=confirmed, timeout=confirm_timeout, persist=persist)
+            elif is_cliconf(module):
+                reply = conn.commit(comment=comment, label=label)
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
     return reply
 
@@ -355,7 +365,10 @@ def get_oper(module, filter=None):
     conn = get_connection(module)
 
     if filter is not None:
-        response = conn.get(filter)
+        try:
+            response = conn.get(filter)
+        except ConnectionError as exc:
+            module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
     else:
         return None
 
@@ -366,12 +379,14 @@ def get_config(module, config_filter=None, source='running'):
     conn = get_connection(module)
 
     # Note: Does not cache config in favour of latest config on every get operation.
-    out = conn.get_config(source=source, filter=config_filter)
-    if is_netconf(module):
-        out = to_xml(conn.get_config(source=source, filter=config_filter))
+    try:
+        out = conn.get_config(source=source, filter=config_filter)
+        if is_netconf(module):
+            out = to_xml(conn.get_config(source=source, filter=config_filter))
 
-    cfg = out.strip()
-
+        cfg = out.strip()
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
     return cfg
 
 
@@ -408,7 +423,7 @@ def load_config(module, command_filter, commit=False, replace=False,
             else:
                 discard_config(module)
         except ConnectionError as exc:
-            module.fail_json(msg=to_text(exc))
+            module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
         finally:
             # conn.unlock(target = 'candidate')
             pass
@@ -418,40 +433,39 @@ def load_config(module, command_filter, commit=False, replace=False,
         cmd_filter = deepcopy(command_filter)
         # If label is present check if label already exist before entering
         # config mode
-        if label:
-            old_label = check_existing_commit_labels(conn, label)
-            if old_label:
-                module.fail_json(
-                    msg='commit label {%s} is already used for'
-                    ' an earlier commit, please choose a different label'
-                    ' and rerun task' % label
-                )
-        cmd_filter.insert(0, 'configure terminal')
-        if admin:
-            cmd_filter.insert(0, 'admin')
-
         try:
-            conn.edit_config(cmd_filter)
-        except ConnectionError as exc:
-            module.fail_json(msg=to_text(exc))
-
-        if module._diff:
-            diff = get_config_diff(module)
-
-        if replace:
-            cmd = list()
-            cmd.append({'command': 'commit replace',
-                        'prompt': 'This commit will replace or remove the entire running configuration',
-                        'answer': 'yes'})
-            cmd.append('end')
-            conn.edit_config(cmd)
-        elif commit:
-            commit_config(module, comment=comment, label=label)
-            conn.edit_config('end')
+            if label:
+                old_label = check_existing_commit_labels(conn, label)
+                if old_label:
+                    module.fail_json(
+                        msg='commit label {%s} is already used for'
+                        ' an earlier commit, please choose a different label'
+                        ' and rerun task' % label
+                    )
+            cmd_filter.insert(0, 'configure terminal')
             if admin:
-                conn.edit_config('exit')
-        else:
-            conn.discard_changes()
+                cmd_filter.insert(0, 'admin')
+
+            conn.edit_config(cmd_filter)
+            if module._diff:
+                diff = get_config_diff(module)
+
+            if replace:
+                cmd = list()
+                cmd.append({'command': 'commit replace',
+                            'prompt': 'This commit will replace or remove the entire running configuration',
+                            'answer': 'yes'})
+                cmd.append('end')
+                conn.edit_config(cmd)
+            elif commit:
+                commit_config(module, comment=comment, label=label)
+                conn.edit_config('end')
+                if admin:
+                    conn.edit_config('exit')
+            else:
+                conn.discard_changes()
+        except ConnectionError as exc:
+            module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
     return diff
 
@@ -493,9 +507,15 @@ def run_command(module, commands):
 
 def copy_file(module, src, dst, proto='scp'):
     conn = get_connection(module)
-    conn.copy_file(source=src, destination=dst, proto=proto)
+    try:
+        conn.copy_file(source=src, destination=dst, proto=proto)
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
 
 def get_file(module, src, dst, proto='scp'):
     conn = get_connection(module)
-    conn.get_file(source=src, destination=dst, proto=proto)
+    try:
+        conn.get_file(source=src, destination=dst, proto=proto)
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
