@@ -122,7 +122,7 @@
       - output.route_tables[0].routes[0].address_prefix == '10.1.0.0/24'
 
 - set_fact:
-    parameter: "{{ parameter | combine({item.key: item.value}) }}"
+    parameter: "{{ parameter | default({}) | combine({item.key: item.value}) }}"
   when: "{{ item.key not in ['id', 'routes'] and item.value != None }}"
   with_dict: "{{ output.route_tables[0] }}"
 
