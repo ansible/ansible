@@ -1,0 +1,64 @@
+---
+- name: Check that certificate 1 is valid
+  assert:
+    that:
+      - cert_1_valid is not failed
+- name: Check that certificate 1 contains correct SANs
+  assert:
+    that:
+      - "'DNS:example.com' in cert_1_text.stdout"
+
+- name: Check that certificate 2 is valid
+  assert:
+    that:
+      - cert_2_valid is not failed
+- name: Check that certificate 2 contains correct SANs
+  assert:
+    that:
+      - "'DNS:*.example.com' in cert_2_text.stdout"
+      - "'DNS:example.com' in cert_2_text.stdout"
+
+- name: Check that certificate 3 is valid
+  assert:
+    that:
+      - cert_3_valid is not failed
+- name: Check that certificate 3 contains correct SANs
+  assert:
+    that:
+      - "'DNS:*.example.com' in cert_3_text.stdout"
+      - "'DNS:example.org' in cert_3_text.stdout"
+      - "'DNS:t1.example.com' in cert_3_text.stdout"
+
+- name: Check that certificate 4 is valid
+  assert:
+    that:
+      - cert_4_valid is not failed
+- name: Check that certificate 4 contains correct SANs
+  assert:
+    that:
+      - "'DNS:example.com' in cert_4_text.stdout"
+      - "'DNS:t1.example.com' in cert_4_text.stdout"
+      - "'DNS:test.t2.example.com' in cert_4_text.stdout"
+      - "'DNS:example.org' in cert_4_text.stdout"
+      - "'DNS:test.example.org' in cert_4_text.stdout"
+
+- name: Check that certificate 5 is valid
+  assert:
+    that:
+      - cert_5_valid is not failed
+- name: Check that certificate 5 contains correct SANs
+  assert:
+    that:
+      - "'DNS:t2.example.com' in cert_5_text.stdout"
+- name: Check that certificate 5 was not recreated on the first try
+  assert:
+    that:
+      - cert_5_recreate_1 == False
+- name: Check that certificate 5 was recreated on the second try
+  assert:
+    that:
+      - cert_5_recreate_2 == True
+- name: Check that certificate 5 was recreated on the third try
+  assert:
+    that:
+      - cert_5_recreate_3 == True
