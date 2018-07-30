@@ -1,0 +1,153 @@
+---
+## PRIVATE KEY ################################################################################
+- name: ({{ certgen_title }}) Create cert private key (RSA)
+  command: "openssl genrsa -out {{ output_dir }}/{{ certificate_name }}.key {{ rsa_bits if key_type == 'rsa' else 2048 }}"
+  when: "key_type == 'rsa'"
+- name: ({{ certgen_title }}) Create cert private key (ECC 256)
+  command: openssl ecparam -name prime256v1 -genkey -out {{ output_dir }}/{{ certificate_name }}.key
+  when: "key_type == 'ec256'"
+- name: ({{ certgen_title }}) Create cert private key (ECC 384)
+  command: openssl ecparam -name secp384r1 -genkey -out {{ output_dir }}/{{ certificate_name }}.key
+  when: "key_type == 'ec384'"
+- name: ({{ certgen_title }}) Create cert private key (ECC 512)
+  command: openssl ecparam -name secp521r1 -genkey -out {{ output_dir }}/{{ certificate_name }}.key
+  when: "key_type == 'ec521'"
+## CSR ########################################################################################
+- name: ({{ certgen_title }}) Create cert CSR
+  openssl_csr:
+    path: "{{ output_dir }}/{{ certificate_name }}.csr"
+    privatekey_path: "{{ output_dir }}/{{ certificate_name }}.key"
+    subject_alt_name: "{{ subject_alt_name }}"
+    subject_alt_name_critical: "{{ subject_alt_name_critical }}"
+## ACME STEP 1 ################################################################################
+- name: ({{ certgen_title }}) Obtain cert, step 1
+  acme_certificate:
+    acme_version: 2
+    acme_directory: https://{{ acme_host }}:14000/dir
+    validate_certs: no
+    account_key: "{{ output_dir }}/{{ account_key }}.pem"
+    modify_account: "{{ modify_account }}"
+    csr: "{{ output_dir }}/{{ certificate_name }}.csr"
+    dest: "{{ output_dir }}/{{ certificate_name }}.pem"
+    fullchain_dest: "{{ output_dir }}/{{ certificate_name }}-fullchain.pem"
+    chain_dest: "{{ output_dir }}/{{ certificate_name }}-chain.pem"
+    challenge: "{{ challenge }}"
+    deactivate_authzs: "{{ deactivate_authzs }}"
+    force: "{{ force }}"
+    remaining_days: "{{ remaining_days }}"
+    terms_agreed: "{{ terms_agreed }}"
+    account_email: "{{ account_email }}"
+  register: challenge_data
+  when: account_key_content is not defined
+- name: ({{ certgen_title }}) Obtain cert, step 1 (using account key data)
+  acme_certificate:
+    acme_version: 2
+    acme_directory: https://{{ acme_host }}:14000/dir
+    validate_certs: no
+    account_key_content: "{{ account_key_content }}"
+    modify_account: "{{ modify_account }}"
+    csr: "{{ output_dir }}/{{ certificate_name }}.csr"
+    dest: "{{ output_dir }}/{{ certificate_name }}.pem"
+    fullchain_dest: "{{ output_dir }}/{{ certificate_name }}-fullchain.pem"
+    chain_dest: "{{ output_dir }}/{{ certificate_name }}-chain.pem"
+    challenge: "{{ challenge }}"
+    deactivate_authzs: "{{ deactivate_authzs }}"
+    force: "{{ force }}"
+    remaining_days: "{{ remaining_days }}"
+    terms_agreed: "{{ terms_agreed }}"
+    account_email: "{{ account_email }}"
+  register: challenge_data_content
+  when: account_key_content is defined
+- name: ({{ certgen_title }}) Copy challenge data (when using account key data)
+  set_fact:
+    challenge_data: "{{ challenge_data_content }}"
+  when: account_key_content is defined
+- name: ({{ certgen_title }}) Print challenge data
+  debug:
+    var: challenge_data
+- name: ({{ certgen_title }}) Create HTTP challenges
+  uri:
+    url: "http://{{ acme_host }}:5000/http/{{ item.key }}/{{ item.value['http-01'].resource[('.well-known/acme-challenge/'|length):] }}"
+    method: PUT
+    body_format: raw
+    body: "{{ item.value['http-01'].resource_value }}"
+    headers:
+      content-type: "application/octet-stream"
+  with_dict: "{{ challenge_data.challenge_data }}"
+  when: "challenge_data is changed and challenge == 'http-01'"
+- name: ({{ certgen_title }}) Create DNS challenges
+  uri:
+    url: "http://{{ acme_host }}:5000/dns/{{ item.key }}"
+    method: PUT
+    body_format: json
+    body: "{{ item.value }}"
+  with_dict: "{{ challenge_data.challenge_data_dns }}"
+  when: "challenge_data is changed and challenge == 'dns-01'"
+- name: ({{ certgen_title }}) Create TLS ALPN challenges
+  uri:
+    url: "http://{{ acme_host }}:5000/tls-alpn/{{ item.value['tls-alpn-01'].resource }}"
+    method: PUT
+    body_format: raw
+    body: "{{ item.value['tls-alpn-01'].resource_value | b64encode }}"
+    headers:
+      content-type: "application/octet-stream"
+  with_dict: "{{ challenge_data.challenge_data }}"
+  when: "challenge_data is changed and challenge == 'tls-alpn-01'"
+## ACME STEP 2 ################################################################################
+- name: ({{ certgen_title }}) Obtain cert, step 2
+  acme_certificate:
+    acme_version: 2
+    acme_directory: https://{{ acme_host }}:14000/dir
+    validate_certs: no
+    account_key: "{{ output_dir }}/{{ account_key }}.pem"
+    modify_account: "{{ modify_account }}"
+    csr: "{{ output_dir }}/{{ certificate_name }}.csr"
+    dest: "{{ output_dir }}/{{ certificate_name }}.pem"
+    fullchain_dest: "{{ output_dir }}/{{ certificate_name }}-fullchain.pem"
+    chain_dest: "{{ output_dir }}/{{ certificate_name }}-chain.pem"
+    challenge: "{{ challenge }}"
+    deactivate_authzs: "{{ deactivate_authzs }}"
+    force: "{{ force }}"
+    remaining_days: "{{ remaining_days }}"
+    terms_agreed: "{{ terms_agreed }}"
+    account_email: "{{ account_email }}"
+    data: "{{ challenge_data }}"
+  when: challenge_data is changed and account_key_content is not defined
+- name: ({{ certgen_title }}) Obtain cert, step 2 (using account key data)
+  acme_certificate:
+    acme_version: 2
+    acme_directory: https://{{ acme_host }}:14000/dir
+    validate_certs: no
+    account_key_content: "{{ account_key_content }}"
+    modify_account: "{{ modify_account }}"
+    csr: "{{ output_dir }}/{{ certificate_name }}.csr"
+    dest: "{{ output_dir }}/{{ certificate_name }}.pem"
+    fullchain_dest: "{{ output_dir }}/{{ certificate_name }}-fullchain.pem"
+    chain_dest: "{{ output_dir }}/{{ certificate_name }}-chain.pem"
+    challenge: "{{ challenge }}"
+    deactivate_authzs: "{{ deactivate_authzs }}"
+    force: "{{ force }}"
+    remaining_days: "{{ remaining_days }}"
+    terms_agreed: "{{ terms_agreed }}"
+    account_email: "{{ account_email }}"
+    data: "{{ challenge_data }}"
+  when: challenge_data is changed and account_key_content is defined
+- name: ({{ certgen_title }}) Deleting HTTP challenges
+  uri:
+    url: "http://{{ acme_host }}:5000/http/{{ item.key }}/{{ item.value['http-01'].resource[('.well-known/acme-challenge/'|length):] }}"
+    method: DELETE
+  with_dict: "{{ challenge_data.challenge_data }}"
+  when: "challenge_data is changed and challenge == 'http-01'"
+- name: ({{ certgen_title }}) Deleting DNS challenges
+  uri:
+    url: "http://{{ acme_host }}:5000/dns/{{ item.key }}"
+    method: DELETE
+  with_dict: "{{ challenge_data.challenge_data_dns }}"
+  when: "challenge_data is changed and challenge == 'dns-01'"
+- name: ({{ certgen_title }}) Deleting TLS ALPN challenges
+  uri:
+    url: "http://{{ acme_host }}:5000/tls-alpn/{{ item.value['tls-alpn-01'].resource }}"
+    method: DELETE
+  with_dict: "{{ challenge_data.challenge_data }}"
+  when: "challenge_data is changed and challenge == 'tls-alpn-01'"
+###############################################################################################

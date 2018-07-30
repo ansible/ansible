@@ -1,1 +1,1 @@
-../../acme_certificate/tasks/obtain-cert.yml
+../../setup_acme/tasks/obtain-cert.yml
