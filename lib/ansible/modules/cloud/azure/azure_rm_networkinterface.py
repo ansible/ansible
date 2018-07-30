@@ -185,6 +185,19 @@ options:
             - When a default security group is created for a Linux host a rule will be added allowing inbound TCP
               connections to the default SSH port 22, and for a Windows host rules will be added allowing inbound
               access to RDP ports 3389 and 5986. Override the default ports by providing a list of open ports.
+    enable_accelerated_networking:
+        description:
+            - This enables accelerated networking on the network interface
+        type: bool
+        default: 'no'
+        version_added: 2.7
+    enable_ip_forwarding:
+        description:
+            - This disable's Azure's check on the source and destination IPs for a network interface,
+              allowing VMs attached to this network interface to route traffic to interfaces other than its own
+        type: bool
+        default: 'no'
+        version_added: 2.7
 extends_documentation_fragment:
     - azure
     - azure_tags
@@ -290,6 +303,7 @@ state:
             "internal_dns_name_label": null,
             "internal_fqdn": null
         },
+        "enable_accelerated_networking": false,
         "enable_ip_forwarding": false,
         "etag": 'W/"be115a43-2148-4545-a324-f33ad444c926"',
         "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkInterfaces/nic003",
@@ -415,6 +429,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             ip_configurations=dict(type='list', default=None, elements='dict', options=ip_configuration_spec),
             os_type=dict(type='str', choices=['Windows', 'Linux'], default='Linux'),
             open_ports=dict(type='list'),
+            enable_ip_forwarding=dict(type='bool', default=False),
         )
 
         required_if = [
@@ -439,6 +454,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         self.os_type = None
         self.open_ports = None
         self.ip_configurations = None
+        self.enable_ip_forwarding = None
 
         self.results = dict(
             changed=False,
@@ -540,6 +556,14 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                     self.log("CHANGED: network interface {0} ip configurations".format(self.name))
                     changed = True
 
+                if self.enable_accelerated_networking != results['enable_accelerated_networking']:
+                    self.log("CHANGED: network interface {0} accelerated networking".format(self.name))
+                    changed = True
+
+                if self.enable_ip_forwarding != results['enable_ip_forwarding']:
+                    self.log("CHANGED: network interface {0} ip forwarding".format(self.name))
+                    changed = True
+
             elif self.state == 'absent':
                 self.log("CHANGED: network interface {0} exists but requested state is 'absent'".format(self.name))
                 changed = True
@@ -591,7 +615,8 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                     tags=self.tags,
                     ip_configurations=nic_ip_configurations,
                     enable_accelerated_networking=self.enable_accelerated_networking,
-                    network_security_group=nsg
+                    network_security_group=nsg,
+                    enable_ip_forwarding=self.enable_ip_forwarding
                 )
                 self.results['state'] = self.create_or_update_nic(nic)
             elif self.state == 'absent':
