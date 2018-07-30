@@ -46,6 +46,7 @@ options:
     location:
         description:
             - Region of the resource.
+            - Derived from C(resource_group) if not specified
 
 extends_documentation_fragment:
     - azure
@@ -72,25 +73,24 @@ EXAMPLES = '''
         state: absent
 '''
 RETURN = '''
-state:
-    description: Current state of the route table.
+changed:
+    description: Whether the resource is changed.
     returned: always
-    type: dict
-    sample: {
-      "changed": false,
-      "disable_bgp_route_propagation": false,
-      "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/routeTables/foobar",
-      "name": "foobar",
-      "routes": [
+    type: bool
+id:
+    description: resource id.
+    returned: success
+    type: str
+routes:
+    description: Current routes of the route table.
+    returned: success
+    type: list
+    sample: [
         {
           "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/routeTables/foobar/routes/route",
           "name": "route"
         }
-      ],
-      "tags": {
-        "purpose": "testing"
-      }
-    }
+    ]
 '''
 
 try:
@@ -147,8 +147,6 @@ class AzureRMRouteTable(AzureRMModuleBase):
             # Set default location
             self.location = resource_group.location
         self.location = normalize_location_name(self.location)
-
-        self.results['check_mode'] = self.check_mode
 
         result = dict()
         changed = False

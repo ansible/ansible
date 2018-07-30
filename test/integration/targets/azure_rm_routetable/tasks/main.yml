@@ -16,6 +16,7 @@
 - assert:
     that:
       - not output.id
+      - output.changed
 
 - name: Create a route table
   azure_rm_routetable:
@@ -29,7 +30,6 @@
     that:
       - output.changed
       - output.id
-      - "output.routes | length == 0"
 
 - name: Create a route table (idemponent)
   azure_rm_routetable:
@@ -42,6 +42,17 @@
 - assert:
     that:
       - not output.changed
+
+- name: Get facts of the table
+  azure_rm_routetable_facts:
+    name: "{{ name }}"
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+    that:
+      - "output.route_tables | length == 1"
+      - "output.route_tables[0].routes | length == 0"
 
 - name: Create route (check mode)
   azure_rm_route:
@@ -71,8 +82,6 @@
     that:
       - output.changed
       - output.id
-      - output.address_prefix == '10.1.0.0/16'
-
 
 - name: Create route (idemponent)
   azure_rm_route:
@@ -87,6 +96,18 @@
     that:
       - not output.changed
 
+- name: Get facts of the table
+  azure_rm_routetable_facts:
+    name: "{{ name }}"
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+    that:
+      - "output.route_tables | length == 1"
+      - "output.route_tables[0].routes | length == 1"
+      - output.route_tables[0].routes[0].address_prefix == '10.1.0.0/16'
+
 - name: update route
   azure_rm_route:
     name: "{{ route_name }}"
@@ -99,20 +120,6 @@
 - assert:
     that:
       - output.changed
-      - output.address_prefix == '10.1.0.0/24'
-
-- name: check route table
-  azure_rm_routetable:
-    name: "{{ name }}"
-    resource_group: "{{ resource_group }}"
-    tags:
-      purpose: testing    
-  register: output
-
-- assert:
-    that:
-      - not output.changed
-      - "output.routes | length == 1"
 
 - name: Delete route (check mode)
   azure_rm_route:

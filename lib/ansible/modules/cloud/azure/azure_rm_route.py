@@ -108,16 +108,6 @@ except ImportError:
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 
-def route_to_dict(route):
-    return dict(
-        id=route.id,
-        name=route.name,
-        address_prefix=route.address_prefix,
-        next_hop_type=route.next_hop_type,
-        next_hop_ip_address=route.next_hop_ip_address
-    )
-
-
 class AzureRMRoute(AzureRMModuleBase):
 
     def __init__(self):
@@ -146,7 +136,8 @@ class AzureRMRoute(AzureRMModuleBase):
         self.route_table = None
 
         self.results = dict(
-            changed=False
+            changed=False,
+            id=None
         )
 
         super(AzureRMRoute, self).__init__(self.module_arg_spec,
@@ -189,7 +180,7 @@ class AzureRMRoute(AzureRMModuleBase):
                 if not self.check_mode:
                     result = self.create_or_update_route(result)
 
-        self.results = route_to_dict(result) if result else dict()
+        self.results['id'] = result.id if result else None
         self.results['changed'] = changed
         return self.results
 
