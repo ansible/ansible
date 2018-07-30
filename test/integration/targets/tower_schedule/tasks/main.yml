@@ -1,0 +1,61 @@
+# Use ansible/ansible-tower-samples instead of dmsimard/ansible-tower-samples
+# when https://github.com/ansible/ansible-tower-samples/pull/7 merges.
+- name: Create a project
+  tower_project:
+    state: present
+    name: scheduled-project
+    organization: Default
+    scm_type: git
+    scm_url: https://github.com/dmsimard/ansible-tower-samples
+    scm_branch: inventory
+
+- name: Create a schedule to update the project every 30 minutes
+  tower_schedule:
+    state: present
+    name: project-update-schedule
+    project: scheduled-project
+    frequency: 30
+    frequency_unit: minute
+
+- name: Create an inventory
+  tower_inventory:
+    state: present
+    name: test-inventory
+    organization: Default
+
+# Retry this in case Tower might not have pulled in the project yet
+- name: Create an inventory source
+  tower_inventory_source:
+    state: present
+    name: scheduled-inventory-source
+    inventory: test-inventory
+    source: scm
+    source_project: scheduled-project
+    source_path: hosts
+  retries: 3
+  delay: 5
+
+- name: Create a schedule to update the inventory every hour
+  tower_schedule:
+    state: present
+    name: inventory-source-schedule
+    inventory_source: scheduled-inventory-source
+    frequency: 1
+    frequency_unit: hour
+
+- name: Create a job template
+  tower_job_template:
+    name: hello-world
+    project: scheduled-project
+    inventory: test-inventory
+    playbook: hello_world.yml
+    credential: Demo Credential
+    job_type: run
+    state: present
+
+- name: Create a schedule to run the job template every day
+  tower_schedule:
+    state: present
+    name: job-template-schedule
+    frequency: 1
+    frequency_unit: day
