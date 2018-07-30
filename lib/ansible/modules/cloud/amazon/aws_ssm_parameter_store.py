@@ -153,7 +153,7 @@ def create_update_parameter(client, module):
         Type=module.params.get('string_type')
     )
 
-    if (module.params.get('overwrite_value') == "always" or "changed"):
+    if (module.params.get('overwrite_value') in ("always", "changed")):
         args.update(Overwrite=True)
     else:
         args.update(Overwrite=False)
