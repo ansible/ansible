@@ -99,24 +99,6 @@ class ConfigCLI(CLI):
         '''
         raise AnsibleError("Option not implemented yet")
 
-        # pylint: disable=unreachable
-        if self.options.setting is None:
-            raise AnsibleOptionsError("update option requries a setting to update")
-
-        (entry, value) = self.options.setting.split('=')
-        if '.' in entry:
-            (section, option) = entry.split('.')
-        else:
-            section = 'defaults'
-            option = entry
-        subprocess.call([
-            'ansible',
-            '-m', 'ini_file',
-            'localhost',
-            '-c', 'local',
-            '-a', '"dest=%s section=%s option=%s value=%s backup=yes"' % (self.config_file, section, option, value)
-        ])
-
     def execute_view(self):
         '''
         Displays the current config file
@@ -132,14 +114,6 @@ class ConfigCLI(CLI):
         Opens ansible.cfg in the default EDITOR
         '''
         raise AnsibleError("Option not implemented yet")
-
-        # pylint: disable=unreachable
-        try:
-            editor = shlex.split(os.environ.get('EDITOR', 'vi'))
-            editor.append(self.config_file)
-            subprocess.call(editor)
-        except Exception as e:
-            raise AnsibleError("Failed to open editor: %s" % to_native(e))
 
     def execute_list(self):
         '''
