@@ -77,7 +77,7 @@ def route_to_dict(route):
     return dict(
         id=route.id,
         name=route.name,
-        resource_group=azure_id_to_dict(route.id).get('resourceGroup'),
+        resource_group=azure_id_to_dict(route.id).get('resourceGroups'),
         address_prefix=route.address_prefix,
         next_hop_type=_camel_to_snake(route.next_hop_type),
         next_hop_ip_address=route.next_hop_ip_address
@@ -88,7 +88,7 @@ def instance_to_dict(table):
     return dict(
         id=table.id,
         name=table.name,
-        resource_group=azure_id_to_dict(table.id).get('resourceGroup'),
+        resource_group=azure_id_to_dict(table.id).get('resourceGroups'),
         location=table.location,
         routes=[route_to_dict(i) for i in table.routes] if table.routes else [],
         disable_bgp_route_propagation=table.disable_bgp_route_propagation,
