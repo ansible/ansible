@@ -81,7 +81,7 @@ class TestNiosSRVRecordModule(TestNiosModule):
 
         self.assertTrue(res['changed'])
         wapi.create_object.assert_called_once_with('testobject', {'name': self.module._check_type_dict().__getitem__(),
-                                                                  'port': 5080, 'target':'service1.ansible.com', 'priority': 10, 'weight': 10})
+                                                                  'port': 5080, 'target': 'service1.ansible.com', 'priority': 10, 'weight': 10})
 
     def test_nios_srv_record_update_comment(self):
         self.module.params = {'provider': None, 'state': 'present', 'name': '_sip._tcp.service.ansible.com',
