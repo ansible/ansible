@@ -302,7 +302,7 @@ def transform_name(partition='', name='', sub_path=''):
         partition = '~' + partition
     else:
         if sub_path:
-            F5ModuleError(
+            raise F5ModuleError(
                 'When giving the subPath component include partition as well.'
             )
 
