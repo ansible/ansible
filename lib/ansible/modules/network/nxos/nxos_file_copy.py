@@ -86,6 +86,7 @@ remote_file:
     sample: '/path/to/remote/file'
 '''
 
+import hashlib
 import os
 import re
 import time
@@ -93,6 +94,7 @@ import time
 from ansible.module_utils.network.nxos.nxos import run_commands
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native, to_text, to_bytes
 
 try:
     import paramiko
@@ -107,12 +109,34 @@ except ImportError:
     HAS_SCP = False
 
 
+def md5sum_check(module, dst, file_system):
+    command = 'show file {0}{1} md5sum'.format(file_system, dst)
+    remote_filehash = run_commands(module, {'command': command, 'output': 'text'})[0]
+    remote_filehash = to_bytes(remote_filehash, errors='surrogate_or_strict')
+
+    local_file = module.params['local_file']
+    try:
+        with open(local_file, 'r') as f:
+            filecontent = f.read()
+    except (OSError, IOError) as exc:
+        module.fail_json(msg="Error reading the file: %s" % to_text(exc))
+
+    filecontent = to_bytes(filecontent, errors='surrogate_or_strict')
+    local_filehash = hashlib.md5(filecontent).hexdigest()
+
+    if local_filehash == remote_filehash:
+        return True
+    else:
+        return False
+
+
 def remote_file_exists(module, dst, file_system='bootflash:'):
     command = 'dir {0}/{1}'.format(file_system, dst)
     body = run_commands(module, {'command': command, 'output': 'text'})[0]
     if 'No such file' in body:
         return False
-    return True
+    else:
+        return md5sum_check(module, dst, file_system)
 
 
 def verify_remote_file_exists(module, dst, file_system='bootflash:'):
