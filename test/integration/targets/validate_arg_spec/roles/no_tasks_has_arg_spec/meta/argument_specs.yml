@@ -1,0 +1,40 @@
+default:
+  name: "test1_arg_spec"
+  description: "survey3 descriptions"
+  argument_spec:
+    test1_choices:
+      required: false
+      choices:
+        - "this paddle game"
+        - "the astray"
+        - "this remote control"
+        - "the chair"
+      type: "str"
+      default: "this paddle game"
+      # question_name: "survey3_question1"
+      # question_description: "The things I need from survey2 are..."
+    tidy_expected:
+      required: false
+      default: none
+      type: "list"
+      # question_name: "survey3_tidy_expected"
+      # question_description: "What files should be in tidy_path"
+    test1_var1:
+      # required: true
+      default: "THIS IS THE DEFAULT SURVEY ANSWER FOR test1_survey_test1_var1"
+      type: "str"
+      # question_name: "test1_survey_test1_var1"
+      # question_description: "What is the value of test1_var1 (maybe a fake band name)?"
+    test1_var2:
+      required: false
+      default: "This IS THE DEFAULT fake band name / test1_var2 answer from survey_spec.yml"
+      type: "str"
+
+
+simple_preset:
+  name: "test1_simple_preset_arg_spec"
+  description: "A simpler set of required args"
+  argument_spec:
+    test1_var1:
+      default: "This the default value for the simple_preset set of arg specs for  test1 test1_var1"
+      type: "str"

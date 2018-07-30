@@ -1,0 +1,32 @@
+---
+- name: "Running include_role test1 }}"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: debug vars
+      debug:
+        var: vars.hostvars.localhost
+      when: false
+
+    - name: include_role test1 since it has a arg_spec.yml
+      include_role:
+        name: test1
+      vars:
+        tidy_expected:
+          - foo
+        blip: dfgdfg
+        # bust_some_stuff: 31
+          # test1_choices: "the chair"
+          # test1_choices: "my dog"
+      register: results_include_role_test1
+
+    - name: show results_include_role_test1
+      debug:
+        var: results_include_role_test1
+
+        #    - name: creating import_role args
+        #      set_fact:
+        #        import_role_args: "{{ role_provided_arguments|combine({'name': role_name }) }}"
+
+        #    - debug:
+        #        var: import_role_args

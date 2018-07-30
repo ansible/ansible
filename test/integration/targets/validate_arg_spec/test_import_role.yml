@@ -1,0 +1,25 @@
+---
+- name: "Running import_role test1 }}"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: debug vars
+      debug:
+        var: vars.hostvars.localhost
+      when: false
+
+    - name: import_role test1 since it has a arg_spec.yml
+      import_role:
+        name: test1
+      register: results_import_role_test1
+
+    - name: show results_import_role_test1
+      debug:
+        var: results_import_role_test1
+
+        #    - name: creating import_role args
+        #      set_fact:
+        #        import_role_args: "{{ role_provided_arguments|combine({'name': role_name }) }}"
+
+        #    - debug:
+        #        var: import_role_args

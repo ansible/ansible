@@ -1,0 +1,12 @@
+---
+- name: "Running include_role test1 }}"
+  hosts: localhost
+  gather_facts: false
+  roles:
+    - {role: test1,
+       test1_var1: 'test1_var1 from the play level role'}
+  tasks:
+    - name: debug vars
+      debug:
+        var: vars.hostvars.localhost
+      when: false

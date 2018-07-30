@@ -1,0 +1,11 @@
+galaxy_info:
+  author: Adrian Likins
+  description: A test role for ansible-role
+  company: Red Hat
+
+  license: GPLv3
+  min_ansible_version: 2.4
+  galaxy_tags: []
+
+allow_duplicates: true
+dependencies: []

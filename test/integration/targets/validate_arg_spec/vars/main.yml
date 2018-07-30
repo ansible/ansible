@@ -1,0 +1,27 @@
+---
+survey_spec1:
+  name: "survey1"
+  description: "survey1 description"
+  spec:
+    - type: "integer"
+      question_name: "survey1_question"
+      question_description: "survey1_description"
+      variable: "survey1_int_answer"
+      required: true
+      default: 5
+    - type: "text"
+      question_name: "survey1_question2"
+      question_description: "survey1_question2_description"
+      variable: "survey1_question2_text_answer"
+      required: true
+      default: "foo"
+survey_spec2:
+  name: "survey2"
+  description: "survey2 description"
+  spec:
+    - type: "text"
+      question_name: "survey2_question"
+      question_description: "survey2_description"
+      variable: "survey2_text_answer"
+      required: true
+      default: "foo"
