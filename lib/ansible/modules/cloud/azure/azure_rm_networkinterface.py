@@ -530,19 +530,19 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
 
                 if not changed:
                     nsg = self.get_security_group(self.security_group['resource_group'], self.security_group['name'])
-                    if nsg and results.get('network_security_group') and results['network_security_group'].get('id').lower() != nsg.id.lower():
+                    if nsg and results.get('network_security_group') and results['network_security_group'].get('id') != nsg.id:
                         self.log("CHANGED: network interface {0} network security group".format(self.name))
                         changed = True
 
-                if results['ip_configurations'][0]['subnet']['virtual_network_name'].lower() != self.virtual_network['name'].lower():
+                if results['ip_configurations'][0]['subnet']['virtual_network_name'] != self.virtual_network['name']:
                     self.log("CHANGED: network interface {0} virtual network name".format(self.name))
                     changed = True
 
-                if results['ip_configurations'][0]['subnet']['resource_group'].lower() != self.virtual_network['resource_group'].lower():
+                if results['ip_configurations'][0]['subnet']['resource_group'] != self.virtual_network['resource_group']:
                     self.log("CHANGED: network interface {0} virtual network resource group".format(self.name))
                     changed = True
 
-                if results['ip_configurations'][0]['subnet']['name'].lower() != self.subnet_name.lower():
+                if results['ip_configurations'][0]['subnet']['name'] != self.subnet_name:
                     self.log("CHANGED: network interface {0} subnet name".format(self.name))
                     changed = True
 
