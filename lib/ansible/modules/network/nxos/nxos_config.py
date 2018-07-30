@@ -276,8 +276,7 @@ backup_path:
   type: string
   sample: /playbooks/ansible/backup/nxos_config.2016-07-16@22:28:34
 """
-
-
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
@@ -436,8 +435,12 @@ def main():
 
             result['changed'] = True
         else:
-            response = connection.get_diff(candidate=candidate, running=running, diff_match=match, diff_ignore_lines=diff_ignore_lines, path=path,
-                                           diff_replace=replace)
+            try:
+                response = connection.get_diff(candidate=candidate, running=running, diff_match=match, diff_ignore_lines=diff_ignore_lines, path=path,
+                                               diff_replace=replace)
+            except ConnectionError as exc:
+                module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+
             config_diff = response['config_diff']
             if config_diff:
                 commands = config_diff.split('\n')
