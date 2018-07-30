@@ -44,12 +44,12 @@ options:
         description:
             - The type of Azure hop the packet should be sent to.
         choices:
-            - 'VirtualNetworkGateway'
-            - 'VnetLocal'
-            - 'Internet'
-            - 'VirtualAppliance'
-            - 'None'
-        default: 'None'
+            - virtual_network_gateway
+            - vnet_local
+            - internet
+            - virtual_appliance
+            - none
+        default: 'none'
     next_hop_ip_address:
         description:
             - The IP address packets should be forwarded to.
@@ -74,8 +74,8 @@ EXAMPLES = '''
       azure_rm_virtualnetwork:
         name: foobar
         resource_group: Testing
-        address_prefix: "10.1.0.0/16"
-        next_hop_type: "VirtualNetworkGateway"
+        address_prefix: 10.1.0.0/16
+        next_hop_type: virtual_network_gateway
         route_table: table
 
     - name: Delete a route
@@ -86,17 +86,10 @@ EXAMPLES = '''
         state: absent
 '''
 RETURN = '''
-state:
+id:
     description: Current state of the route.
-    returned: always
-    type: dict
-    sample:  {
-        "address_prefix": "10.1.0.0/16",
-        "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/routeTables/table/routes/foobar",
-        "name": "foobar",
-        "next_hop_ip_address": null,
-        "next_hop_type": "VirtualNetworkGateway"
-    }
+    returned: success
+    type: str
 '''
 
 try:
@@ -106,6 +99,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.common.dict_transformations import _snake_to_camel
 
 
 class AzureRMRoute(AzureRMModuleBase):
@@ -117,7 +111,13 @@ class AzureRMRoute(AzureRMModuleBase):
             name=dict(type='str', required=True),
             state=dict(type='str', default='present', choices=['present', 'absent']),
             address_prefix=dict(type='str'),
-            next_hop_type=dict(type='str', choices=['VirtualNetworkGateway', 'VnetLocal', 'Internet', 'VirtualAppliance', 'None'], default='None'),
+            next_hop_type=dict(type='str',
+                               choices=['virtual_network_gateway',
+                                        'vnet_local',
+                                        'internet',
+                                        'virtual_appliance',
+                                        'none'],
+                               default='none'),
             next_hop_ip_address=dict(type='str'),
             route_table=dict(type='str', required=True)
         )
@@ -149,10 +149,10 @@ class AzureRMRoute(AzureRMModuleBase):
         for key in list(self.module_arg_spec.keys()):
             setattr(self, key, kwargs[key])
 
-        self.results['check_mode'] = self.check_mode
-
         result = dict()
         changed = False
+
+        self.next_hop_type = _snake_to_camel(self.next_hop_type, capitalize_first=True)
 
         result = self.get_route()
         if self.state == 'absent' and result:

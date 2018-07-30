@@ -70,6 +70,7 @@ except:
     pass
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict
+from ansible.module_utils.common.dict_transformations import _camel_to_snake
 
 
 def route_to_dict(route):
@@ -78,7 +79,7 @@ def route_to_dict(route):
         name=route.name,
         resource_group=azure_id_to_dict(route.id).get('resourceGroup'),
         address_prefix=route.address_prefix,
-        next_hop_type=route.next_hop_type,
+        next_hop_type=_camel_to_snake(route.next_hop_type),
         next_hop_ip_address=route.next_hop_ip_address
     )
 

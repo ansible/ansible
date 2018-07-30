@@ -96,18 +96,6 @@
     that:
       - not output.changed
 
-- name: Get facts of the table
-  azure_rm_routetable_facts:
-    name: "{{ name }}"
-    resource_group: "{{ resource_group }}"
-  register: output
-
-- assert:
-    that:
-      - "output.route_tables | length == 1"
-      - "output.route_tables[0].routes | length == 1"
-      - output.route_tables[0].routes[0].address_prefix == '10.1.0.0/16'
-
 - name: update route
   azure_rm_route:
     name: "{{ route_name }}"
@@ -120,6 +108,31 @@
 - assert:
     that:
       - output.changed
+
+- name: Get facts of the table
+  azure_rm_routetable_facts:
+    name: "{{ name }}"
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+    that:
+      - "output.route_tables | length == 1"
+      - "output.route_tables[0].routes | length == 1"
+      - output.route_tables[0].routes[0].address_prefix == '10.1.0.0/24'
+
+- set_fact:
+    parameter: "{{ parameter | combine({item.key: item.value}) }}"
+  when: "{{ item.key not in ['id', 'routes'] and item.value != None }}"
+  with_dict: "{{ facts.route_tables[0] }}"
+
+- name: use facts to send param to resource module
+  azure_rm_routetable: "{{ parameter }}"
+  register: output
+
+- assert:
+    that:
+      - not output.changed
 
 - name: Delete route (check mode)
   azure_rm_route:

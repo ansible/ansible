@@ -102,16 +102,6 @@ except ImportError:
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, normalize_location_name
 
 
-def route_table_to_dict(table):
-    return dict(
-        id=table.id,
-        name=table.name,
-        routes=[dict(id=i.id, name=i.name) for i in table.routes] if table.routes else [],
-        disable_bgp_route_propagation=table.disable_bgp_route_propagation,
-        tags=table.tags
-    )
-
-
 class AzureRMRouteTable(AzureRMModuleBase):
 
     def __init__(self):
@@ -173,7 +163,8 @@ class AzureRMRouteTable(AzureRMModuleBase):
                 if not self.check_mode:
                     result = self.create_or_update_table(result)
 
-        self.results = route_table_to_dict(result) if result else dict()
+        self.results['id'] = result.id if result else None
+        self.results['routes'] = [dict(id=i.id, name=i.name) for i in result.routes] if result and result.routes else []
         self.results['changed'] = changed
         return self.results
 
