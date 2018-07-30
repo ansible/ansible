@@ -124,7 +124,7 @@
 - set_fact:
     parameter: "{{ parameter | combine({item.key: item.value}) }}"
   when: "{{ item.key not in ['id', 'routes'] and item.value != None }}"
-  with_dict: "{{ facts.route_tables[0] }}"
+  with_dict: "{{ output.route_tables[0] }}"
 
 - name: use facts to send param to resource module
   azure_rm_routetable: "{{ parameter }}"
