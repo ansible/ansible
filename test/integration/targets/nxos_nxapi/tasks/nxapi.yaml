@@ -1,4 +1,18 @@
 ---
+- name: collect nxapi transport test cases
+  find:
+    paths: "{{ role_path }}/tests/nxapi_transports"
+    patterns: "{{ testcase }}.yaml"
+  connection: local
+  register: nxapi_transports_cases
+
+- set_fact:
+    transport_test_cases:
+      files: "{{ nxapi_transports_cases.files }}"
+
+- name: set transport_test_items
+  set_fact: transport_test_items="{{ transport_test_cases.files | map(attribute='path') | list }}"
+
 - name: collect common test cases
   find:
     paths: "{{ role_path }}/tests/common"
@@ -31,3 +45,28 @@
   with_items: "{{ test_items }}"
   loop_control:
     loop_var: test_case_to_run
+
+- meta: end_play
+
+- name: run test cases (connection=local) and nxapi_ssl
+  include: "{{ test_case_to_run }} ansible_connection=local connection={{ nxapi_ssl }}"
+  with_items: "{{ test_items }}"
+  loop_control:
+    loop_var: test_case_to_run
+
+- name: run test cases (connection=httpapi) and with no ansible ssl
+  ansible_httpapi_use_ssl: no
+  ansible_httpapi_validate_certs: no
+  include: "{{ test_case_to_run }} connection={{ nxapi }}"
+  with_items: "{{ transport_test_items }}"
+  loop_control:
+    loop_var: test_case_to_run
+
+- name: run test cases (connection=httpapi) and with ansible ssl
+  ansible_httpapi_use_ssl: yes
+  ansible_httpapi_validate_certs: no
+  include: "{{ test_case_to_run }} connection={{ nxapi }}"
+  with_items: "{{ transport_test_items }}"
+  loop_control:
+    loop_var: test_case_to_run
+

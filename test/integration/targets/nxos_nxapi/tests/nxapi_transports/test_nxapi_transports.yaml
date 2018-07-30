@@ -1,0 +1,154 @@
+---
+- block:
+  - debug: msg="START nxapi/test_nxapi_transports.yaml"
+
+  - name: Configure NXAPI tlsv1_2/strong
+    nxos_nxapi:
+      enable_https: yes
+      https_port: 443
+      tlsv1_2: yes
+      tlsv1_1: no
+      tlsv1_0: no
+      ssl_strong_ciphers: yes
+    connection: network_cli
+    register: result
+
+  - name: Assert nxapi cli tlsv1_2/strong was successful
+    assert: &assert_false
+       that:
+          - "result.failed == false"
+
+  - nxos_command:
+      commands:
+        - show hostname
+    connection: httpapi
+    register: result
+
+  - name: Assert command over connection transport was successful
+    assert: *assert_false
+
+  - meta: end_play
+
+  - name: Configure NXAPI tlsv1_1/strong
+    nxos_nxapi:
+      enable_https: yes
+      https_port: 443
+      tlsv1_2: no
+      tlsv1_1: yes
+      tlsv1_0: no
+      ssl_strong_ciphers: yes
+    connection: network_cli
+    register: result
+    ignore_errors: yes
+
+  - name: Assert nxapi cli tlsv1_1/strong was successful
+    assert: *assert_false
+
+  - nxos_command:
+      commands:
+        - show hostname
+    connection: httpapi
+    register: result
+
+  - name: Assert command over connection transport was successful
+    assert: *assert_false
+
+  - name: Configure NXAPI tlsv1_0/strong
+    nxos_nxapi:
+      enable_https: yes
+      https_port: 443
+      tlsv1_2: no
+      tlsv1_1: no
+      tlsv1_0: yes
+      ssl_strong_ciphers: yes
+    connection: network_cli
+    register: result
+    ignore_errors: yes
+
+  - name: Assert nxapi cli tlsv1_0/strong was successful
+    assert: *assert_false
+
+  - nxos_command:
+      commands:
+        - show hostname
+    connection: httpapi
+    register: result
+
+  - name: Assert command over connection transport was successful
+    assert: *assert_false
+
+  - name: Configure NXAPI tlsv1_2/weak
+    nxos_nxapi:
+      enable_https: yes
+      https_port: 443
+      tlsv1_2: yes
+      tlsv1_1: no
+      tlsv1_0: no
+      ssl_strong_ciphers: no
+    connection: network_cli
+    register: result
+    ignore_errors: yes
+
+  - name: Assert nxapi cli tlsv1_2/weak was successful
+    assert: *assert_false
+
+  - nxos_command:
+      commands:
+        - show hostname
+    connection: httpapi
+    register: result
+
+  - name: Assert command over connection transport was successful
+    assert: *assert_false
+
+  - name: Configure NXAPI tlsv1_1/weak
+    nxos_nxapi:
+      enable_https: yes
+      https_port: 443
+      tlsv1_2: no
+      tlsv1_1: yes
+      tlsv1_0: no
+      ssl_strong_ciphers: no
+    connection: network_cli
+    register: result
+    ignore_errors: yes
+
+  - name: Assert nxapi cli tlsv1_1/weak was successful
+    assert: *assert_false
+
+  - nxos_command:
+      commands:
+        - show hostname
+    connection: httpapi
+    register: result
+
+  - name: Assert command over connection transport was successful
+    assert: *assert_false
+
+  - name: Configure NXAPI tlsv1_0/weak
+    nxos_nxapi:
+      enable_https: yes
+      https_port: 443
+      tlsv1_2: no
+      tlsv1_1: no
+      tlsv1_0: yes
+      ssl_strong_ciphers: no
+    connection: network_cli
+    register: result
+    ignore_errors: yes
+
+  - name: Assert nxapi cli tlsv1_0/weak was successful
+    assert: *assert_false
+
+  - nxos_command:
+      commands:
+        - show hostname
+    connection: httpapi
+    register: result
+
+  - name: Assert command over connection transport was successful
+    assert: *assert_false
+
+  - debug: msg="END nxapi/test_nxapi_transports.yaml"
+
+  when: (platform is match("N9K") or platform is match("N3K") or platform is match("N9K-F") or platform is match("N35") or platform is match("N3L")) and major_version is version('9.2', '>=')
