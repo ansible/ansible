@@ -17,3 +17,7 @@ export ANSIBLE_CACHE_PLUGIN=jsonfile ANSIBLE_CACHE_PLUGIN_CONNECTION="${MYTMPDIR
 ansible-playbook -i ../../inventory "$@" set_fact_cached_1.yml
 ansible-playbook -i ../../inventory "$@" set_fact_cached_2.yml
 ansible-playbook -i ../../inventory --flush-cache "$@" set_fact_no_cache.yml
+
+# Test boolean conversions in set_fact
+ansible-playbook -v set_fact_bool_conv.yml
+ANSIBLE_JINJA2_NATIVE=1 ansible-playbook -v set_fact_bool_conv_jinja2_native.yml
