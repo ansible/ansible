@@ -38,7 +38,7 @@ import collections
 import os
 import sys
 
-from landscape_api.base import API, HTTPError
+from landscape_api.base import API
 
 try:
     import json

@@ -202,7 +202,6 @@ anti_affinity_with:
   sample: []
 '''
 
-import os
 from datetime import datetime, timedelta
 from time import sleep
 from copy import deepcopy

@@ -142,7 +142,7 @@ from ansible.module_utils.ec2 import ec2_argument_spec
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ansible_dict_to_boto3_tag_list
 
 try:
-    from botocore.exceptions import ClientError, NoCredentialsError, WaiterError, BotoCoreError
+    from botocore.exceptions import BotoCoreError, ClientError, WaiterError
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False

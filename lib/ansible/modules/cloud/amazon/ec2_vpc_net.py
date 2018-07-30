@@ -168,7 +168,6 @@ from time import sleep, time
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (AWSRetry, camel_dict_to_snake_dict, compare_aws_tags,
                                       ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict)
-from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
 from ansible.module_utils.network.common.utils import to_subnet
 

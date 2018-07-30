@@ -2,7 +2,6 @@
 
 import optparse
 import os
-import pprint
 import sys
 
 from jinja2 import Environment, FileSystemLoader

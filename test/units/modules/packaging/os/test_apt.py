@@ -1,5 +1,4 @@
 import collections
-import os
 import sys
 
 from ansible.compat.tests import mock

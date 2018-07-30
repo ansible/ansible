@@ -107,7 +107,7 @@ change_string:
 """
 
 from ansible.module_utils.network.fortios.fortios import fortios_argument_spec, fortios_required_if
-from ansible.module_utils.network.fortios.fortios import backup, AnsibleFortios
+from ansible.module_utils.network.fortios.fortios import AnsibleFortios
 
 from ansible.module_utils.basic import AnsibleModule
 

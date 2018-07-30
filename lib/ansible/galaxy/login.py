@@ -25,9 +25,8 @@ __metaclass__ = type
 import getpass
 import json
 
-from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.errors import AnsibleError
 from ansible.module_utils.six.moves import input
-from ansible.module_utils.six.moves.urllib.parse import quote as urlquote, urlparse
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.urls import open_url
 from ansible.utils.color import stringc

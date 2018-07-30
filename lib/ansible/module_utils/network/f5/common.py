@@ -19,12 +19,6 @@ from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE
 from collections import defaultdict
 
-try:
-    from icontrol.exceptions import iControlUnexpectedHTTPError
-    HAS_F5SDK = True
-except ImportError:
-    HAS_F5SDK = False
-
 
 f5_provider_spec = {
     'server': dict(
@@ -417,7 +411,6 @@ class Noop(object):
     to the API. `None` is technically a valid value in some cases (it indicates
     that the attribute should be removed from the resource).
     """
-    pass
 
 
 class F5BaseClient(object):

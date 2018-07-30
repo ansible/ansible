@@ -25,7 +25,6 @@ import json
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
 from ansible.module_utils import basic
-from ansible.module_utils._text import to_bytes
 
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')

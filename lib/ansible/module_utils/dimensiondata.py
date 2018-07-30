@@ -25,14 +25,12 @@
 import os
 import re
 
-from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves import configparser
 from os.path import expanduser
 from uuid import UUID
 
 try:
-    from libcloud.common.dimensiondata import API_ENDPOINTS, DimensionDataAPIException, DimensionDataStatus
-    from libcloud.compute.base import Node, NodeLocation
+    from libcloud.common.dimensiondata import API_ENDPOINTS
     from libcloud.compute.providers import get_driver
     from libcloud.compute.types import Provider
 

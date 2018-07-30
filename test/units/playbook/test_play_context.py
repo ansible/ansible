@@ -7,18 +7,14 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
 
 import pytest
 
 from ansible import constants as C
 from ansible.cli import CLI
-from ansible.compat.tests import unittest
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleError
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.playbook.play_context import PlayContext
-
-from units.mock.loader import DictDataLoader
 
 
 @pytest.fixture

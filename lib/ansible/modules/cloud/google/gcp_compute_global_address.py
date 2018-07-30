@@ -131,7 +131,7 @@ RETURN = '''
 # Imports
 ################################################################################
 
-from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, replace_resource_dict
+from ansible.module_utils.gcp_utils import GcpModule, GcpRequest, GcpSession, navigate_hash
 import json
 import re
 import time

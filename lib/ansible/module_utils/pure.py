@@ -36,13 +36,11 @@ except ImportError:
 
 HAS_PURITY_FB = True
 try:
-    from purity_fb import PurityFb, FileSystem, FileSystemSnapshot, SnapshotSuffix, rest
+    from purity_fb import PurityFb, rest
 except ImportError:
     HAS_PURITY_FB = False
 
-from functools import wraps
 from os import environ
-from os import path
 import platform
 
 VERSION = 1.1

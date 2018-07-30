@@ -109,13 +109,6 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.vmware import PyVmomi, gather_vm_facts, vmware_argument_spec
 
 
-try:
-    import pyVmomi
-    from pyVmomi import vim
-except ImportError:
-    pass
-
-
 class PyVmomiHelper(PyVmomi):
     def __init__(self, module):
         super(PyVmomiHelper, self).__init__(module)

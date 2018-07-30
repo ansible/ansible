@@ -77,7 +77,6 @@ except ImportError:
 
 try:
     import ovirtsdk4 as sdk
-    import ovirtsdk4.types as otypes
 except ImportError:
     print('oVirt inventory script requires ovirt-engine-sdk-python >= 4.0.0')
     sys.exit(1)

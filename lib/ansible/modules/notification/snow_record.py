@@ -148,7 +148,7 @@ attached_file:
 import os
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_bytes
 
 # Pull in pysnow
 HAS_PYSNOW = False

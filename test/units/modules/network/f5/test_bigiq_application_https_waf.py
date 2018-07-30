@@ -8,7 +8,6 @@ __metaclass__ = type
 
 import os
 import json
-import pytest
 import sys
 
 from nose.plugins.skip import SkipTest
@@ -21,7 +20,6 @@ from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.modules.bigiq_application_https_waf import ApiParameters
     from library.modules.bigiq_application_https_waf import ModuleParameters
     from library.modules.bigiq_application_https_waf import ModuleManager
     from library.modules.bigiq_application_https_waf import ArgumentSpec
@@ -30,7 +28,6 @@ try:
     from test.unit.modules.utils import set_module_args
 except ImportError:
     try:
-        from ansible.modules.network.f5.bigiq_application_https_waf import ApiParameters
         from ansible.modules.network.f5.bigiq_application_https_waf import ModuleParameters
         from ansible.modules.network.f5.bigiq_application_https_waf import ModuleManager
         from ansible.modules.network.f5.bigiq_application_https_waf import ArgumentSpec

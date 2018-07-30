@@ -82,18 +82,15 @@ USER_AGENT_VERSION = 'v1'
 USER_AGENT_PRODUCT = 'Ansible-gce_eip'
 
 try:
-    from ast import literal_eval
     HAS_PYTHON26 = True
 except ImportError:
     HAS_PYTHON26 = False
 
 try:
-    import libcloud
     from libcloud.compute.types import Provider
     from libcloud.compute.providers import get_driver
     from libcloud.common.google import GoogleBaseError, QuotaExceededError, \
         ResourceExistsError, ResourceInUseError, ResourceNotFoundError
-    from libcloud.compute.drivers.gce import GCEAddress
     _ = Provider.GCE
     HAS_LIBCLOUD = True
 except ImportError:

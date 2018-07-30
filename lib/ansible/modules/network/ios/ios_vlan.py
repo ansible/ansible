@@ -104,7 +104,7 @@ from copy import deepcopy
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
 from ansible.module_utils.network.ios.ios import load_config, run_commands
-from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.ios.ios import ios_argument_spec
 
 
 def search_obj_in_list(vlan_id, lst):

@@ -40,7 +40,7 @@ from time import time
 
 import six
 from jinja2 import Environment
-from six import integer_types, string_types
+from six import integer_types
 from six.moves import configparser
 
 try:

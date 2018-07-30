@@ -104,9 +104,7 @@ from ansible.module_utils.basic import AnsibleModule, get_exception
 
 try:
     from pandevice import base
-    from pandevice import firewall
     from pandevice import panorama
-    from pandevice import objects
 
     from pan.xapi import PanXapiError
 

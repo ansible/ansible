@@ -1,4 +1,3 @@
-from ansible.compat.tests.mock import patch
 from ansible.module_utils.six.moves import xmlrpc_client
 
 import pytest

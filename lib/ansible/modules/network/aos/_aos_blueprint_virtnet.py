@@ -86,11 +86,10 @@ EXAMPLES = '''
     state: present
 '''
 
-import json
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
-from ansible.module_utils.network.aos.aos import get_aos_session, find_collection_item, do_load_resource, check_aos_version, content_to_dict
+from ansible.module_utils.network.aos.aos import check_aos_version, content_to_dict, find_collection_item, get_aos_session
 
 
 def ensure_present(module, aos, blueprint, virtnet):

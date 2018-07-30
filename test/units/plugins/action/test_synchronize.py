@@ -12,13 +12,10 @@
 
 import json
 import os
-import sys
 import unittest
 import yaml
 
-from pprint import pprint
 
-import ansible.plugins
 from ansible.compat.tests.mock import patch, MagicMock
 from ansible.plugins.action.synchronize import ActionModule
 

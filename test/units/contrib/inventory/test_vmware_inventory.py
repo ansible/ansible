@@ -1,6 +1,5 @@
 import json
 import os
-import pickle
 import unittest
 import sys
 from nose.plugins.skip import SkipTest

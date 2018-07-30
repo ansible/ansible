@@ -16,14 +16,12 @@ if sys.version_info < (2, 7):
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import Mock
-from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
     from library.modules.bigip_policy import Parameters
     from library.modules.bigip_policy import ModuleManager
     from library.modules.bigip_policy import SimpleManager
-    from library.modules.bigip_policy import ComplexManager
     from library.modules.bigip_policy import ArgumentSpec
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
@@ -33,7 +31,6 @@ except ImportError:
         from ansible.modules.network.f5.bigip_policy import Parameters
         from ansible.modules.network.f5.bigip_policy import ModuleManager
         from ansible.modules.network.f5.bigip_policy import SimpleManager
-        from ansible.modules.network.f5.bigip_policy import ComplexManager
         from ansible.modules.network.f5.bigip_policy import ArgumentSpec
         from ansible.module_utils.network.f5.common import F5ModuleError
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError

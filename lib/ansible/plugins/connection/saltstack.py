@@ -17,13 +17,8 @@ DOCUMENTATION = """
     version_added: "2.2"
 """
 
-import re
 import os
-import pty
-import subprocess
 
-from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.six.moves import cPickle
 
 HAVE_SALTSTACK = False
 try:

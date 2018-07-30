@@ -86,7 +86,6 @@ commands:
     type: list
     sample: ["ip route 192.168.20.0/24 192.0.2.3 name testing 100"]
 '''
-import re
 from copy import deepcopy
 
 from ansible.module_utils.network.nxos.nxos import get_config, load_config

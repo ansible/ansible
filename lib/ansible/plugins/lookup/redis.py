@@ -66,7 +66,6 @@ _raw:
   description: value(s) stored in Redis
 """
 
-import os
 
 HAVE_REDIS = False
 try:

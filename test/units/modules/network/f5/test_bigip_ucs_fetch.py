@@ -23,7 +23,6 @@ try:
     from library.modules.bigip_ucs_fetch import Parameters
     from library.modules.bigip_ucs_fetch import ModuleManager
     from library.modules.bigip_ucs_fetch import V1Manager
-    from library.modules.bigip_ucs_fetch import V2Manager
     from library.modules.bigip_ucs_fetch import ArgumentSpec
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
@@ -33,7 +32,6 @@ except ImportError:
         from ansible.modules.network.f5.bigip_ucs_fetch import Parameters
         from ansible.modules.network.f5.bigip_ucs_fetch import ModuleManager
         from ansible.modules.network.f5.bigip_ucs_fetch import V1Manager
-        from ansible.modules.network.f5.bigip_ucs_fetch import V2Manager
         from ansible.modules.network.f5.bigip_ucs_fetch import ArgumentSpec
         from ansible.module_utils.network.f5.common import F5ModuleError
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError

@@ -95,7 +95,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec
 
 try:
-    import pyVmomi
     from pyVmomi import vim
 except ImportError:
     pass

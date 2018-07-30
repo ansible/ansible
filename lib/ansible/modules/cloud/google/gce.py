@@ -288,7 +288,6 @@ EXAMPLES = '''
 '''
 
 import socket
-import logging
 
 try:
     from ast import literal_eval
@@ -300,7 +299,6 @@ except ImportError:
 try:
     import libcloud
     from libcloud.compute.types import Provider
-    from libcloud.compute.providers import get_driver
     from libcloud.common.google import GoogleBaseError, QuotaExceededError, \
         ResourceExistsError, ResourceInUseError, ResourceNotFoundError
     from libcloud.compute.drivers.gce import GCEAddress

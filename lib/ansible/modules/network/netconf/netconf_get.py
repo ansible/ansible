@@ -147,16 +147,16 @@ output:
 import sys
 
 try:
-    from lxml.etree import Element, SubElement, tostring, fromstring, XMLSyntaxError
+    from lxml.etree import XMLSyntaxError, fromstring, tostring
 except ImportError:
-    from xml.etree.ElementTree import Element, SubElement, tostring, fromstring
+    from xml.etree.ElementTree import fromstring, tostring
     if sys.version_info < (2, 7):
         from xml.parsers.expat import ExpatError as XMLSyntaxError
     else:
         from xml.etree.ElementTree import ParseError as XMLSyntaxError
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.netconf.netconf import get_capabilities, locked_config, get_config, get
+from ansible.module_utils.network.netconf.netconf import get, get_capabilities, get_config
 from ansible.module_utils.network.common.netconf import remove_namespaces
 
 try:

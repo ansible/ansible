@@ -38,7 +38,6 @@ RETURN = """
 _raw:
   description: values stored in Redis
 """
-import os
 import re
 
 HAVE_REDIS = False

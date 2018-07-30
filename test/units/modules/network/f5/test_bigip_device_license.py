@@ -20,7 +20,6 @@ from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.modules.bigip_device_license import ApiParameters
     from library.modules.bigip_device_license import ModuleParameters
     from library.modules.bigip_device_license import ModuleManager
     from library.modules.bigip_device_license import ArgumentSpec
@@ -29,7 +28,6 @@ try:
     from test.unit.modules.utils import set_module_args
 except ImportError:
     try:
-        from ansible.modules.network.f5.bigip_device_license import ApiParameters
         from ansible.modules.network.f5.bigip_device_license import ModuleParameters
         from ansible.modules.network.f5.bigip_device_license import ModuleManager
         from ansible.modules.network.f5.bigip_device_license import ArgumentSpec

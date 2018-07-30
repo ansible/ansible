@@ -175,7 +175,6 @@ servers:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import env_fallback
 
 try:
     from library.module_utils.network.f5.bigiq import F5RestClient

@@ -120,7 +120,6 @@ commands:
     - vlan 20
     - name test-vlan
 """
-import re
 import time
 
 from copy import deepcopy

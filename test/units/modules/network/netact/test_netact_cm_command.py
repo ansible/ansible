@@ -28,15 +28,13 @@ from __future__ import (absolute_import, division, print_function)
 
 __metaclass__ = type
 
-import json
 
 from ansible.compat.tests import unittest
 from ansible.module_utils import basic
-from ansible.module_utils._text import to_bytes
 from ansible.modules.network.netact import netact_cm_command
 from ansible.compat.tests.mock import patch
 
-from units.modules.utils import set_module_args, AnsibleExitJson, AnsibleFailJson, ModuleTestCase
+from units.modules.utils import AnsibleExitJson, AnsibleFailJson, set_module_args
 
 
 class AnsibleExitJson(Exception):

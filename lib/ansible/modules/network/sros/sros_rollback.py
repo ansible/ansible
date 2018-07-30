@@ -91,7 +91,7 @@ updates:
 """
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
-from ansible.module_utils.network.sros.sros import load_config, get_config, sros_argument_spec, check_args
+from ansible.module_utils.network.sros.sros import get_config, load_config, sros_argument_spec
 
 
 def invoke(name, *args, **kwargs):

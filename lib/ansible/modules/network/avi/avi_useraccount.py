@@ -71,16 +71,12 @@ obj:
     type: dict
 '''
 
-import json
-import time
 from ansible.module_utils.basic import AnsibleModule
-from copy import deepcopy
 
 try:
     from ansible.module_utils.network.avi.avi import (
         avi_common_argument_spec, ansible_return, AviCredentials, HAS_AVI)
     from avi.sdk.avi_api import ApiSession
-    from avi.sdk.utils.ansible_utils import avi_obj_cmp, cleanup_absent_fields
 
 except ImportError:
     HAS_AVI = False

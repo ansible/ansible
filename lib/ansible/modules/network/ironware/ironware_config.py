@@ -158,8 +158,7 @@ backup_path:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.ironware.ironware import ironware_argument_spec, check_args
 from ansible.module_utils.network.ironware.ironware import get_config, load_config, run_commands
-from ansible.module_utils.network.common.config import NetworkConfig, dumps, ConfigLine
-from ansible.module_utils._text import to_native
+from ansible.module_utils.network.common.config import NetworkConfig, dumps
 
 
 def get_candidate(module):

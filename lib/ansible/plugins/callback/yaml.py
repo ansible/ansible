@@ -23,11 +23,9 @@ import yaml
 import json
 import re
 import string
-import sys
-from ansible.plugins.callback import CallbackBase, strip_internal_keys
+from ansible.plugins.callback import strip_internal_keys
 from ansible.plugins.callback.default import CallbackModule as Default
-from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_text
 from ansible.parsing.yaml.dumper import AnsibleDumper
 
 

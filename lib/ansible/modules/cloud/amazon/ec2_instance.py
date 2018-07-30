@@ -626,14 +626,13 @@ import time
 from collections import namedtuple
 
 try:
-    import boto3
     import botocore.exceptions
 except ImportError:
     pass
 
-from ansible.module_utils.six import text_type, string_types
+from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves.urllib import parse as urlparse
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_native
 import ansible.module_utils.ec2 as ec2_utils
 from ansible.module_utils.ec2 import (boto3_conn,
                                       ec2_argument_spec,

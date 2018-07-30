@@ -27,11 +27,9 @@ from collections import namedtuple
 from functools import partial
 from io import BytesIO, StringIO
 
-import ansible.errors
 
 from ansible.executor.module_common import recursive_finder
 from ansible.module_utils.six import PY2
-from ansible.module_utils.six.moves import builtins
 
 
 original_find_module = imp.find_module

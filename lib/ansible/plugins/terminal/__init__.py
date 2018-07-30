@@ -21,9 +21,8 @@ __metaclass__ = type
 
 import re
 
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
 
-from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils.six import with_metaclass
 
 

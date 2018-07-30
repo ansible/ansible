@@ -27,7 +27,6 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import json
-import os
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback

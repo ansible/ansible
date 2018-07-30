@@ -23,16 +23,14 @@ import json
 import re
 
 from ansible import constants as C
-from ansible.module_utils._text import to_text, to_bytes
+from ansible.module_utils._text import to_text
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.plugins.netconf import NetconfBase
-from ansible.plugins.netconf import ensure_connected
 
 try:
     from ncclient import manager
-    from ncclient.operations import RPCError
     from ncclient.transport.errors import SSHUnknownHostError
-    from ncclient.xml_ import to_ele, to_xml, new_ele
+    from ncclient.xml_ import to_ele
 except ImportError:
     raise AnsibleError("ncclient is not installed")
 

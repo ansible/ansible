@@ -180,20 +180,12 @@ msg:
   sample: "VLAN configuration is accomplished"
 '''
 
-import sys
-import time
-import socket
-import array
-import json
-import time
-import re
 try:
     from ansible.module_utils.network.cnos import cnos
     HAS_LIB = True
 except:
     HAS_LIB = False
 from ansible.module_utils.basic import AnsibleModule
-from collections import defaultdict
 
 
 def main():

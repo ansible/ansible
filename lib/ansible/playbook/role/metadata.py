@@ -22,11 +22,10 @@ __metaclass__ = type
 import os
 
 from ansible.errors import AnsibleParserError, AnsibleError
-from ansible.module_utils.six import iteritems, string_types
-from ansible.playbook.attribute import Attribute, FieldAttribute
+from ansible.module_utils.six import string_types
+from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.helpers import load_list_of_roles
-from ansible.playbook.role.include import RoleInclude
 from ansible.playbook.role.requirement import RoleRequirement
 
 __all__ = ['RoleMetadata']

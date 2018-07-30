@@ -35,7 +35,7 @@ try:
     from ncclient import manager
     from ncclient.operations import RPCError
     from ncclient.transport.errors import SSHUnknownHostError
-    from ncclient.xml_ import to_ele, to_xml, new_ele
+    from ncclient.xml_ import to_xml
 except ImportError:
     raise AnsibleError("ncclient is not installed")
 

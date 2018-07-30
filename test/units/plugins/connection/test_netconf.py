@@ -21,14 +21,11 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import sys
-import re
-import json
 
 from io import StringIO
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock, PropertyMock
-from ansible.errors import AnsibleConnectionFailure
 from ansible.playbook.play_context import PlayContext
 
 PY3 = sys.version_info[0] == 3

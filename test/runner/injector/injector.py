@@ -25,7 +25,6 @@ NOTE: Running ansible-test with the --tox option or inside a virtual environment
 
 from __future__ import absolute_import, print_function
 
-import errno
 import json
 import os
 import sys

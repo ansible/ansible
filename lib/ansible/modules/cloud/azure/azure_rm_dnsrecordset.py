@@ -171,7 +171,6 @@ RETURN = '''
 '''
 
 import inspect
-import sys
 
 from ansible.module_utils.basic import _load_params
 from ansible.module_utils.six import iteritems
@@ -179,7 +178,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase, HAS_AZURE
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.dns.models import Zone, RecordSet, ARecord, AaaaRecord, MxRecord, NsRecord, PtrRecord, SrvRecord, TxtRecord, CnameRecord, SoaRecord
+    from azure.mgmt.dns.models import ARecord, AaaaRecord, CnameRecord, MxRecord, NsRecord, PtrRecord, RecordSet, SrvRecord, TxtRecord
 except ImportError:
     # This is handled in azure_rm_common
     pass

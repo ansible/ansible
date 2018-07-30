@@ -3,7 +3,6 @@
 
 import pytest
 
-from oneview_module_loader import OneViewModuleBase
 from ansible.modules.remote_management.oneview.oneview_datacenter_facts import DatacenterFactsModule
 from hpe_test_utils import FactsParamsTest
 

@@ -30,13 +30,12 @@ except ImportError:
     import configparser as ConfigParser
 import json
 import argparse
-import copy
 import os
 import re
 import sys
 from time import time
 from collections import defaultdict
-from distutils.version import LooseVersion, StrictVersion
+from distutils.version import LooseVersion
 
 # 3rd party imports
 import requests

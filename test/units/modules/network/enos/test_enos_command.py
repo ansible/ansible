@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
 
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.enos import enos_command

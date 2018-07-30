@@ -34,7 +34,6 @@ try:
     import botocore
 except ImportError:
     pass
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
 
 class DirectConnectError(Exception):

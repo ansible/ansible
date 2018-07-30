@@ -33,16 +33,14 @@
 
 import time
 import socket
-import re
 try:
     from ansible.module_utils.network.cnos import cnos_errorcodes
     from ansible.module_utils.network.cnos import cnos_devicerules
     HAS_LIB = True
 except:
     HAS_LIB = False
-from distutils.cmd import Command
 from ansible.module_utils._text import to_text
-from ansible.module_utils.basic import env_fallback, return_values
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.network.common.utils import to_list, EntityCollection
 from ansible.module_utils.connection import Connection, exec_command
 from ansible.module_utils.connection import ConnectionError

@@ -27,7 +27,6 @@ try:
     from library.modules.bigip_ucs import V1Manager
     from library.modules.bigip_ucs import V2Manager
     from library.module_utils.network.f5.common import F5ModuleError
-    from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
 except ImportError:
     try:

@@ -22,7 +22,6 @@ from .netscaler_module import TestModule
 import copy
 import tempfile
 import json
-import sys
 import codecs
 
 from ansible.modules.network.netscaler import netscaler_nitro_request

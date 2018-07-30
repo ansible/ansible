@@ -24,9 +24,6 @@ DOCUMENTATION = '''
     author: Kishin Yagami
 '''
 
-import cmd
-import pprint
-import sys
 
 from ansible.plugins.strategy.linear import StrategyModule as LinearStrategyModule
 

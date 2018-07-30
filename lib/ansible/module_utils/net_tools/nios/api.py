@@ -151,12 +151,10 @@ class WapiBase(object):
 
 class WapiLookup(WapiBase):
     ''' Implements WapiBase for lookup plugins '''
-    pass
 
 
 class WapiInventory(WapiBase):
     ''' Implements WapiBase for dynamic inventory script '''
-    pass
 
 
 class WapiModule(WapiBase):

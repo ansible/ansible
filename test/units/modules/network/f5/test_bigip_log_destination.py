@@ -8,7 +8,6 @@ __metaclass__ = type
 
 import os
 import json
-import pytest
 import sys
 
 from nose.plugins.skip import SkipTest
@@ -17,17 +16,13 @@ if sys.version_info < (2, 7):
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import Mock
-from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
     from library.modules.bigip_log_destination import V1ApiParameters
-    from library.modules.bigip_log_destination import V2ApiParameters
     from library.modules.bigip_log_destination import V1ModuleParameters
-    from library.modules.bigip_log_destination import V2ModuleParameters
     from library.modules.bigip_log_destination import ModuleManager
     from library.modules.bigip_log_destination import V1Manager
-    from library.modules.bigip_log_destination import V2Manager
     from library.modules.bigip_log_destination import ArgumentSpec
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
@@ -35,12 +30,9 @@ try:
 except ImportError:
     try:
         from ansible.modules.network.f5.bigip_log_destination import V1ApiParameters
-        from ansible.modules.network.f5.bigip_log_destination import V2ApiParameters
         from ansible.modules.network.f5.bigip_log_destination import V1ModuleParameters
-        from ansible.modules.network.f5.bigip_log_destination import V2ModuleParameters
         from ansible.modules.network.f5.bigip_log_destination import ModuleManager
         from ansible.modules.network.f5.bigip_log_destination import V1Manager
-        from ansible.modules.network.f5.bigip_log_destination import V2Manager
         from ansible.modules.network.f5.bigip_log_destination import ArgumentSpec
         from ansible.module_utils.network.f5.common import F5ModuleError
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError

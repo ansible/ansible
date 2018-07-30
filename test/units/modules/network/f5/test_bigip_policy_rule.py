@@ -16,11 +16,9 @@ if sys.version_info < (2, 7):
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import Mock
-from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.modules.bigip_policy_rule import Parameters
     from library.modules.bigip_policy_rule import ModuleParameters
     from library.modules.bigip_policy_rule import ApiParameters
     from library.modules.bigip_policy_rule import ModuleManager
@@ -30,7 +28,6 @@ try:
     from test.unit.modules.utils import set_module_args
 except ImportError:
     try:
-        from ansible.modules.network.f5.bigip_policy_rule import Parameters
         from ansible.modules.network.f5.bigip_policy_rule import ModuleParameters
         from ansible.modules.network.f5.bigip_policy_rule import ApiParameters
         from ansible.modules.network.f5.bigip_policy_rule import ModuleManager

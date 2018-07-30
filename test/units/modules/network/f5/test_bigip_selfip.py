@@ -17,7 +17,6 @@ if sys.version_info < (2, 7):
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import Mock
-from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
@@ -26,7 +25,6 @@ try:
     from library.modules.bigip_selfip import ModuleManager
     from library.modules.bigip_selfip import ArgumentSpec
     from library.module_utils.network.f5.common import F5ModuleError
-    from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
 except ImportError:
     try:

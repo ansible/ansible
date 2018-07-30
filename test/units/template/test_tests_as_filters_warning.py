@@ -1,6 +1,5 @@
 from ansible.template import Templar, display
 from units.mock.loader import DictDataLoader
-from jinja2.filters import FILTERS
 from os.path import isabs
 
 

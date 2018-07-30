@@ -5,7 +5,6 @@ from __future__ import absolute_import, print_function
 import atexit
 import contextlib
 import errno
-import filecmp
 import fcntl
 import inspect
 import json

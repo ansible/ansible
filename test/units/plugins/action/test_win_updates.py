@@ -8,7 +8,7 @@ __metaclass__ = type
 
 import pytest
 
-from ansible.compat.tests.mock import patch, MagicMock, mock_open
+from ansible.compat.tests.mock import MagicMock, patch
 from ansible.plugins.action.win_updates import ActionModule
 from ansible.playbook.task import Task
 

@@ -20,11 +20,9 @@ __metaclass__ = type
 import os
 import sys
 
-import pytest
 
 from ansible.compat.tests import unittest
 from ansible.plugins.filter.network import parse_xml, type5_pw, hash_salt, comp_type5
-from ansible.errors import AnsibleFilterError
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures', 'network')
 

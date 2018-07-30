@@ -75,7 +75,6 @@ msg:
 '''
 import json
 
-from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netapp import request, eseries_host_argument_spec
 from ansible.module_utils._text import to_native

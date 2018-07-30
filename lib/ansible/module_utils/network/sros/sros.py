@@ -28,10 +28,9 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-import re
 
 from ansible.module_utils._text import to_text
-from ansible.module_utils.basic import env_fallback, return_values
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.network.common.utils import to_list, ComplexList
 from ansible.module_utils.connection import exec_command
 

@@ -114,7 +114,6 @@ EXAMPLES = '''
 RETURN = ''' # '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import iteritems
 from ansible.module_utils.net_tools.nios.api import WapiModule
 
 

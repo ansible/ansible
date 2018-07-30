@@ -140,7 +140,6 @@ elbs:
         vpc_id: vpc-c248fda4
 '''
 
-import traceback
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (

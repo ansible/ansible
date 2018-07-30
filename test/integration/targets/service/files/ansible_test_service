@@ -5,7 +5,6 @@
 
 import os
 import resource
-import sys
 import time
 
 UMASK = 0

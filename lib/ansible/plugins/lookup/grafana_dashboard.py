@@ -62,7 +62,7 @@ EXAMPLES = """
 import base64
 import json
 import os
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 from ansible.module_utils.urls import open_url
 from ansible.module_utils._text import to_bytes

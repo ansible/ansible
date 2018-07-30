@@ -94,7 +94,6 @@ EXAMPLES = '''
 try:
     import libcloud
     from libcloud.compute.types import Provider
-    from libcloud.compute.providers import get_driver
     from libcloud.common.google import GoogleBaseError
     from libcloud.common.google import ResourceExistsError
     from libcloud.common.google import ResourceNotFoundError

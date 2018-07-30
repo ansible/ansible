@@ -29,10 +29,9 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
-from ansible.module_utils.basic import AnsibleModule, json, env_fallback
+from ansible.module_utils.basic import env_fallback, json
 from ansible.module_utils.urls import fetch_url
-from ansible.module_utils._text import to_native, to_bytes, to_text
+from ansible.module_utils._text import to_native
 
 
 def meraki_argument_spec():

@@ -30,7 +30,6 @@
 
 import json
 import re
-import sys
 
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.six import binary_type, text_type

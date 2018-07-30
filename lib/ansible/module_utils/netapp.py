@@ -39,7 +39,6 @@ from ansible.module_utils.api import basic_auth_argument_spec
 HAS_NETAPP_LIB = False
 try:
     from netapp_lib.api.zapi import zapi
-    from netapp_lib.api.zapi import errors as zapi_errors
     HAS_NETAPP_LIB = True
 except:
     HAS_NETAPP_LIB = False
@@ -62,8 +61,6 @@ SF_BYTE_MAP = dict(
 
 try:
     from solidfire.factory import ElementFactory
-    from solidfire.custom.models import TimeIntervalFrequency
-    from solidfire.models import Schedule, ScheduleInfo
 
     HAS_SF_SDK = True
 except:

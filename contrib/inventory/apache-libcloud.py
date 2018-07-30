@@ -30,7 +30,6 @@ This script also assumes there is a libcloud.ini file alongside it
 
 '''
 
-import sys
 import os
 import argparse
 import re
@@ -40,7 +39,6 @@ import ConfigParser
 from six import iteritems, string_types
 from libcloud.compute.types import Provider
 from libcloud.compute.providers import get_driver
-import libcloud.security as sec
 
 try:
     import json

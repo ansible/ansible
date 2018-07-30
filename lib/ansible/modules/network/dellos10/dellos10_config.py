@@ -174,7 +174,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.dellos10.dellos10 import get_config, get_sublevel_config
 from ansible.module_utils.network.dellos10.dellos10 import dellos10_argument_spec, check_args
 from ansible.module_utils.network.dellos10.dellos10 import load_config, run_commands
-from ansible.module_utils.network.dellos10.dellos10 import WARNING_PROMPTS_RE
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 
 

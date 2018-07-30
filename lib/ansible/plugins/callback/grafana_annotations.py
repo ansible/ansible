@@ -17,11 +17,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
 import json
 import socket
 import getpass
-from base64 import b64encode
 from datetime import datetime
 
 from ansible.module_utils.urls import open_url

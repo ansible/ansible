@@ -341,13 +341,11 @@ state:
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.network import NetworkManagementClient
 except ImportError:
     # This is handled in azure_rm_common
     pass
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
-from ansible.module_utils.six import integer_types
 
 
 def validate_rule(self, rule, rule_type=None):

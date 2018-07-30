@@ -251,7 +251,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
 try:
-    import pan.xapi
     from pan.xapi import PanXapiError
     import pandevice
     import pandevice.firewall

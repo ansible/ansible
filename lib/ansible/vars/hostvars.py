@@ -23,7 +23,6 @@ import collections
 
 from jinja2.runtime import Undefined
 
-from ansible.module_utils._text import to_bytes
 from ansible.template import Templar
 
 STATIC_VARS = [
@@ -41,11 +40,6 @@ STATIC_VARS = [
     'role_names',
     'ungrouped',
 ]
-
-try:
-    from hashlib import sha1
-except ImportError:
-    from sha import sha as sha1
 
 __all__ = ['HostVars', 'HostVarsVars']
 

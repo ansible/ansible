@@ -29,7 +29,7 @@ Common cloudfront facts shared between modules
 """
 
 from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn
-from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict
 
 try:
     import botocore

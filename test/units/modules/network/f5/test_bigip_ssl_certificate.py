@@ -24,7 +24,6 @@ try:
     from library.modules.bigip_ssl_certificate import ApiParameters
     from library.modules.bigip_ssl_certificate import ModuleParameters
     from library.modules.bigip_ssl_certificate import ModuleManager
-    from library.modules.bigip_ssl_certificate import HAS_F5SDK
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
@@ -34,7 +33,6 @@ except ImportError:
         from ansible.modules.network.f5.bigip_ssl_certificate import ApiParameters
         from ansible.modules.network.f5.bigip_ssl_certificate import ModuleParameters
         from ansible.modules.network.f5.bigip_ssl_certificate import ModuleManager
-        from ansible.modules.network.f5.bigip_ssl_certificate import HAS_F5SDK
         from ansible.module_utils.network.f5.common import F5ModuleError
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
         from units.modules.utils import set_module_args

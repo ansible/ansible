@@ -44,7 +44,6 @@ EXAMPLES = '''
     voice: Zarvox
   delegate_to: localhost
 '''
-import os
 
 from ansible.module_utils.basic import AnsibleModule, get_platform
 

@@ -55,17 +55,14 @@ class AnsibleBaseYAMLObject(object):
 
 class AnsibleMapping(AnsibleBaseYAMLObject, dict):
     ''' sub class for dictionaries '''
-    pass
 
 
 class AnsibleUnicode(AnsibleBaseYAMLObject, text_type):
     ''' sub class for unicode objects '''
-    pass
 
 
 class AnsibleSequence(AnsibleBaseYAMLObject, list):
     ''' sub class for lists '''
-    pass
 
 
 # Unicode like object that is not evaluated (decrypted) until it needs to be

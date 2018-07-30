@@ -33,11 +33,11 @@ import json
 import re
 
 from ansible.module_utils._text import to_text
-from ansible.module_utils.basic import env_fallback, return_values
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.network.common.utils import to_list, ComplexList
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
-from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils.six import iteritems
 from ansible.module_utils.urls import fetch_url
 
 _DEVICE_CONNECTION = None
