@@ -136,6 +136,7 @@ def run_module():
                 if not sg.has_alu(alu):
                     try:
                         result['hluid'] = sg.attach_alu(alu)
+                        result['changed'] = True
                     except VNXAluAlreadyAttachedError:
                         result['hluid'] = sg.get_hlu(alu)
                     except (VNXAttachAluError, VNXStorageGroupError) as e:
@@ -147,6 +148,7 @@ def run_module():
             if module.params['state'] == 'absent' and sg.has_alu(alu):
                 try:
                     sg.detach_alu(alu)
+                    result['changed'] = True
                 except VNXDetachAluNotFoundError:
                     # being not attached when using absent is OK
                     pass
