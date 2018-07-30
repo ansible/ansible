@@ -51,6 +51,7 @@ EXAMPLES = r'''
     leaf_profile: sw_name
     interface_selector: interface_profile_name
     state: present
+  delegate_to: localhost
 
 - name: Remove an interface selector profile associated with a switch policy leaf profile
   aci_interface_selector_to_switch_policy_leaf_profile:
@@ -60,6 +61,7 @@ EXAMPLES = r'''
     leaf_profile: sw_name
     interface_selector: interface_profile_name
     state: absent
+  delegate_to: localhost
 
 - name: Query an interface selector profile associated with a switch policy leaf profile
   aci_interface_selector_to_switch_policy_leaf_profile:
@@ -69,6 +71,8 @@ EXAMPLES = r'''
     leaf_profile: sw_name
     interface_selector: interface_profile_name
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''

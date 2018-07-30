@@ -64,6 +64,7 @@ EXAMPLES = r'''
     tenant: production
     tag: '{{ tag }}'
     description: '{{ description }}'
+  delegate_to: localhost
 '''
 
 RETURN = r'''

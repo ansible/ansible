@@ -92,6 +92,7 @@ EXAMPLES = r'''
     priority: level1
     dscp: unspecified
     state: present
+  register: query_result
 
 - name: Remove a contract subject
   aci_contract_subject:
@@ -102,6 +103,7 @@ EXAMPLES = r'''
     contract: web_to_db
     subject: default
     state: absent
+  delegate_to: localhost
 
 - name: Query a contract subject
   aci_contract_subject:
@@ -112,6 +114,8 @@ EXAMPLES = r'''
     contract: web_to_db
     subject: default
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all contract subjects
   aci_contract_subject:
@@ -119,6 +123,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''

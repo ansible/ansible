@@ -55,6 +55,7 @@ EXAMPLES = r'''
     port_mode: '{{ port_mode }}'
     description: '{{ description }}'
     state: present
+  delegate_to: localhost
 '''
 
 RETURN = r'''

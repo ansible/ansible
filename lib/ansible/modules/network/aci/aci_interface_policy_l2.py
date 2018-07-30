@@ -64,6 +64,7 @@ EXAMPLES = r'''
     l2_policy: '{{ l2_policy }}'
     vlan_scope: '{{ vlan_policy }}'
     description: '{{ description }}'
+  delegate_to: localhost
 '''
 
 RETURN = r'''

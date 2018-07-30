@@ -59,6 +59,7 @@ EXAMPLES = r'''
     description: Filter for web protocols
     tenant: production
     state: present
+  delegate_to: localhost
 
 - name: Remove a filter for a tenant
   aci_filter:
@@ -68,6 +69,7 @@ EXAMPLES = r'''
     filter: web_filter
     tenant: production
     state: absent
+  delegate_to: localhost
 
 - name: Query a filter of a tenant
   aci_filter:
@@ -77,6 +79,8 @@ EXAMPLES = r'''
     filter: web_filter
     tenant: production
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all filters for a tenant
   aci_filter:
@@ -85,6 +89,8 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     tenant: production
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''

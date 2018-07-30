@@ -77,6 +77,7 @@ EXAMPLES = r'''
     contract: anstest_http
     contract_type: provider
     state: present
+  delegate_to: localhost
 
 - name: Remove an existing contract to EPG binding
   aci_epg_to_contract:
@@ -89,6 +90,7 @@ EXAMPLES = r'''
     contract: anstest_http
     contract_type: provider
     state: absent
+  delegate_to: localhost
 
 - name: Query a specific contract to EPG binding
   aci_epg_to_contract:
@@ -101,6 +103,8 @@ EXAMPLES = r'''
     contract: anstest_http
     contract_type: provider
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all provider contract to EPG bindings
   aci_epg_to_contract:
@@ -109,6 +113,8 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     contract_type: provider
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''

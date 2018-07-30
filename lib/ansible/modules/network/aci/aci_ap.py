@@ -59,6 +59,7 @@ EXAMPLES = r'''
     ap: default
     description: default ap
     state: present
+  delegate_to: localhost
 
 - name: Remove an AP
   aci_ap:
@@ -68,6 +69,7 @@ EXAMPLES = r'''
     tenant: production
     ap: default
     state: absent
+  delegate_to: localhost
 
 - name: Query an AP
   aci_ap:
@@ -77,6 +79,8 @@ EXAMPLES = r'''
     tenant: production
     ap: default
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all APs
   aci_ap:
@@ -84,6 +88,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
