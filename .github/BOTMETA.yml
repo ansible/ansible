@@ -1158,10 +1158,12 @@ files:
     - validate-modules
   docs/:
     labels: docs
+    maintainers:
+      - acozine
   docs/docsite/rst/network/:
     labels: networking
     maintainers:
-      - acozine
+      - samccann
       - gundalow
   docs/docsite/rst/scenario_guides/guide_aci.rst:
     maintainers: $team_aci
