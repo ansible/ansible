@@ -500,6 +500,7 @@ files:
   $modules/network/panos/: ivanbojer jtschichold
   $modules/network/panos/panos_address.py: itdependsnetworks ivanbojer jtschichold
   $modules/network/protocol/: $team_networking
+  $modules/network/routeros/: heuels
   $modules/network/routing/: $team_networking
   $modules/network/slxos/: $team_extreme
   $modules/network/sros/: privateip
@@ -895,6 +896,9 @@ files:
   $module_utils/network/onyx:
     maintainers: $team_onyx
     labels: networking
+  $module_utils/network/routeros:
+    maintainers: heuels
+    labels: networking
   $module_utils/network/slxos:
     maintainers: $team_extreme
     labels: networking
@@ -1021,6 +1025,9 @@ files:
   lib/ansible/plugins/cliconf/onyx.py:
     maintainers: $team_onyx
     labels: networking
+  lib/ansible/plugins/cliconf/routeros.py:
+    maintainers: heuels
+    labels: networking
   lib/ansible/plugins/cliconf/slxos.py:
     maintainers: $team_extreme
     labels: networking
@@ -1127,6 +1134,9 @@ files:
     - nxos
   lib/ansible/plugins/terminal/onyx.py:
     maintainers: $team_onyx
+    labels: networking
+  lib/ansible/plugins/terminal/routeros.py:
+    maintainers: heuels
     labels: networking
   lib/ansible/plugins/terminal/slxos.py:
     maintainers: $team_extreme
