@@ -68,7 +68,11 @@ Blocks also introduce the ability to handle errors in a way similar to exception
           msg: "This always executes"
 
 The tasks in the ``block`` would execute normally, if there is any error the ``rescue`` section would get executed
-with whatever you need to do to recover from the previous error. The ``always`` section runs no matter what previous
+with whatever you need to do to recover from the previous error. There are two additional variables defined
+inside the ``rescue`` section, ``ansible_failed_task`` contains information about the task that has failed and
+``ansible_failed_result`` with the result of the failed task.
+
+The ``always`` section runs no matter what previous
 error did or did not occur in the ``block`` and ``rescue`` sections. It should be noted that the play continues if a
 ``rescue`` section completes successfully as it 'erases' the error status (but not the reporting), this means it won't trigger ``max_fail_percentage`` nor ``any_errors_fatal`` configurations but will appear in the playbook statistics.
 
