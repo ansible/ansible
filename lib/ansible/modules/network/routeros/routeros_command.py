@@ -127,6 +127,7 @@ failed_conditions:
 """
 
 import re
+import json
 import time
 
 from ansible.module_utils.network.routeros.routeros import run_commands
@@ -135,6 +136,12 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.six import string_types
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 
 def to_lines(stdout):
@@ -149,6 +156,7 @@ def main():
     """
     argument_spec = dict(
         commands=dict(type='list', required=True),
+        transport=dict(default='cli', choices=['api', 'cli']),
 
         wait_for=dict(type='list'),
         match=dict(default='all', choices=['all', 'any']),

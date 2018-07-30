@@ -127,7 +127,4 @@ class ActionModule(_ActionModule):
         if provider.get('password') is None:
             provider['password'] = play_context.password
 
-        if provider.get('authorize') is None:
-            provider['authorize'] = False
-
         return provider
