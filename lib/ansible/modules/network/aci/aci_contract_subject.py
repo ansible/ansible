@@ -286,20 +286,20 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='vzBrCP',
             aci_rn='brc-{0}'.format(contract),
-            filter_target='eq(vzBrCP.name, "{0}")'.format(contract),
             module_object=contract,
+            target_filter={'name': contract},
         ),
         subclass_2=dict(
             aci_class='vzSubj',
             aci_rn='subj-{0}'.format(subject),
-            filter_target='eq(vzSubj.name, "{0}")'.format(subject),
             module_object=subject,
+            target_filter={'name': subject},
         ),
     )
 

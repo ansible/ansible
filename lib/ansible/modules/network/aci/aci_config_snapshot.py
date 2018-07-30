@@ -252,8 +252,8 @@ def main():
             root_class=dict(
                 aci_class='configExportP',
                 aci_rn='fabric/configexp-{0}'.format(export_policy),
-                filter_target='eq(configExportP.name, "{0}")'.format(export_policy),
                 module_object=export_policy,
+                target_filter={'name': export_policy},
             ),
         )
 
@@ -286,14 +286,14 @@ def main():
             root_class=dict(
                 aci_class='configSnapshotCont',
                 aci_rn='backupst/snapshots-[{0}]'.format(export_policy),
-                filter_target='(configSnapshotCont.name, "{0}")'.format(export_policy),
                 module_object=export_policy,
+                target_filter={'name': export_policy},
             ),
             subclass_1=dict(
                 aci_class='configSnapshot',
                 aci_rn='snapshot-{0}'.format(snapshot),
-                filter_target='eq(configSnapshot.name, "{0}")'.format(snapshot),
                 module_object=snapshot,
+                target_filter={'name': snapshot},
             ),
         )
 

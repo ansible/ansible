@@ -229,8 +229,8 @@ def main():
         root_class=dict(
             aci_class='infraAttEntityP',
             aci_rn='infra/attentp-{0}'.format(aep),
-            filter_target='eq(infraAttEntityP.name, "{0}")'.format(aep),
             module_object=aep,
+            target_filter={'name': aep},
         ),
     )
     aci.get_existing()
