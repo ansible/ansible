@@ -27,12 +27,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: avi_useraccount
 author: Chaitanya Deshpande (chaitanya.deshpande@avinetworks.com)
-
 short_description: Avi UserAccount Module
 description:
     - This module can be used for updating the password of a user.
@@ -49,7 +47,6 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-
   - name: Update user password
     avi_useraccount:
       controller: ""

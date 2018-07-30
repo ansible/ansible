@@ -84,11 +84,32 @@ options:
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
         version_added: "2.5"
         type: bool
-    cluster_ip_gratuitous_arp_period:
+    cleanup_expired_authtoken_timeout_period:
         description:
-            - Number of cluster_ip_gratuitous_arp_period.
+            - Period for auth token cleanup job.
+            - Field introduced in 18.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as 60.
             - Units(MIN).
+        version_added: "2.7"
+    cleanup_sessions_timeout_period:
+        description:
+            - Period for sessions cleanup job.
+            - Field introduced in 18.1.1.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 60.
+            - Units(MIN).
+        version_added: "2.7"
+    cluster_ip_gratuitous_arp_period:
+        description:
+            - Period for cluster ip gratuitous arp job.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 60.
+            - Units(MIN).
+    consistency_check_timeout_period:
+        description:
+            - Period for consistency check job.
+            - Field introduced in 18.1.1.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 60.
+            - Units(MIN).
+        version_added: "2.7"
     crashed_se_reboot:
         description:
             - Number of crashed_se_reboot.
@@ -101,7 +122,7 @@ options:
             - Units(SEC).
     dns_refresh_period:
         description:
-            - Number of dns_refresh_period.
+            - Period for refresh pool and gslb dns job.
             - Default value when not specified in API or module is interpreted by Avi Controller as 60.
             - Units(MIN).
     dummy:
@@ -139,6 +160,7 @@ options:
             - Default value when not specified in API or module is interpreted by Avi Controller as 3.
     persistence_key_rotate_period:
         description:
+            - Period for rotate app persistence keys job.
             - Allowed values are 1-1051200.
             - Special values are 0 - 'disabled'.
             - Default value when not specified in API or module is interpreted by Avi Controller as 60.
@@ -148,6 +170,20 @@ options:
             - Token used for uploading tech-support to portal.
             - Field introduced in 16.4.6,17.1.2.
         version_added: "2.4"
+    process_locked_useraccounts_timeout_period:
+        description:
+            - Period for process locked user accounts job.
+            - Field introduced in 18.1.1.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 1.
+            - Units(MIN).
+        version_added: "2.7"
+    process_pki_profile_timeout_period:
+        description:
+            - Period for process pki profile job.
+            - Field introduced in 18.1.1.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 1440.
+            - Units(MIN).
+        version_added: "2.7"
     query_host_fail:
         description:
             - Number of query_host_fail.
@@ -180,7 +216,7 @@ options:
             - Units(SEC).
     secure_channel_cleanup_timeout:
         description:
-            - Number of secure_channel_cleanup_timeout.
+            - Period for secure channel cleanup job.
             - Default value when not specified in API or module is interpreted by Avi Controller as 60.
             - Units(MIN).
     secure_channel_controller_token_timeout:
@@ -246,6 +282,7 @@ options:
             - Units(SEC).
     vs_key_rotate_period:
         description:
+            - Period for rotate vs keys job.
             - Allowed values are 1-1051200.
             - Special values are 0 - 'disabled'.
             - Default value when not specified in API or module is interpreted by Avi Controller as 60.
@@ -331,7 +368,10 @@ def main():
         attach_ip_retry_interval=dict(type='int',),
         attach_ip_retry_limit=dict(type='int',),
         bm_use_ansible=dict(type='bool',),
+        cleanup_expired_authtoken_timeout_period=dict(type='int',),
+        cleanup_sessions_timeout_period=dict(type='int',),
         cluster_ip_gratuitous_arp_period=dict(type='int',),
+        consistency_check_timeout_period=dict(type='int',),
         crashed_se_reboot=dict(type='int',),
         dead_se_detection_timer=dict(type='int',),
         dns_refresh_period=dict(type='int',),
@@ -344,6 +384,8 @@ def main():
         max_seq_vnic_failures=dict(type='int',),
         persistence_key_rotate_period=dict(type='int',),
         portal_token=dict(type='str', no_log=True,),
+        process_locked_useraccounts_timeout_period=dict(type='int',),
+        process_pki_profile_timeout_period=dict(type='int',),
         query_host_fail=dict(type='int',),
         safenet_hsm_version=dict(type='str',),
         se_create_timeout=dict(type='int',),

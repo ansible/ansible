@@ -66,11 +66,16 @@ options:
         type: bool
     preserve_client_port:
         description:
-            - Specifies if we need to preserve client port while preseving client ip for backend connections.
+            - Specifies if we need to preserve client port while preserving client ip for backend connections.
             - Field introduced in 17.2.7.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         version_added: "2.6"
         type: bool
+    sip_service_profile:
+        description:
+            - Specifies various sip service related controls for virtual service.
+            - Field introduced in 17.2.8.
+        version_added: "2.7"
     tcp_app_profile:
         description:
             - Specifies the tcp application proxy profile parameters.
@@ -81,7 +86,7 @@ options:
         description:
             - Specifies which application layer proxy is enabled for the virtual service.
             - Enum options - APPLICATION_PROFILE_TYPE_L4, APPLICATION_PROFILE_TYPE_HTTP, APPLICATION_PROFILE_TYPE_SYSLOG, APPLICATION_PROFILE_TYPE_DNS,
-            - APPLICATION_PROFILE_TYPE_SSL.
+            - APPLICATION_PROFILE_TYPE_SSL, APPLICATION_PROFILE_TYPE_SIP.
         required: true
     url:
         description:
@@ -184,6 +189,7 @@ def main():
         name=dict(type='str', required=True),
         preserve_client_ip=dict(type='bool',),
         preserve_client_port=dict(type='bool',),
+        sip_service_profile=dict(type='dict',),
         tcp_app_profile=dict(type='dict',),
         tenant_ref=dict(type='str',),
         type=dict(type='str', required=True),

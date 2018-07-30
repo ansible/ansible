@@ -167,7 +167,8 @@ def main():
     gparams = deepcopy(params) if params else {}
     gparams.update({'include_refs': '', 'include_name': ''})
 
-    if method == 'post':
+    if method == 'post' and not path.startswith('fileservice'):
+        # TODO: Above condition should be updated after AV-38981 is fixed
         # need to check if object already exists. In that case
         # change the method to be put
         try:

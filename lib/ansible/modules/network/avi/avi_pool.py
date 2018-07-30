@@ -45,13 +45,16 @@ options:
     a_pool:
         description:
             - Name of container cloud application that constitutes a pool in a a-b pool configuration, if different from vs app.
+            - Field deprecated in 18.1.2.
     ab_pool:
         description:
             - A/b pool configuration.
+            - Field deprecated in 18.1.2.
     ab_priority:
         description:
             - Priority of this pool in a a-b pool pair.
             - Internally used.
+            - Field deprecated in 18.1.2.
     apic_epg_name:
         description:
             - Synchronize cisco apic epg members with pool servers.
@@ -197,7 +200,8 @@ options:
         description:
             - Criteria used as a key for determining the hash between the client and  server.
             - Enum options - LB_ALGORITHM_CONSISTENT_HASH_SOURCE_IP_ADDRESS, LB_ALGORITHM_CONSISTENT_HASH_SOURCE_IP_ADDRESS_AND_PORT,
-            - LB_ALGORITHM_CONSISTENT_HASH_URI, LB_ALGORITHM_CONSISTENT_HASH_CUSTOM_HEADER, LB_ALGORITHM_CONSISTENT_HASH_CUSTOM_STRING.
+            - LB_ALGORITHM_CONSISTENT_HASH_URI, LB_ALGORITHM_CONSISTENT_HASH_CUSTOM_HEADER, LB_ALGORITHM_CONSISTENT_HASH_CUSTOM_STRING,
+            - LB_ALGORITHM_CONSISTENT_HASH_CALLID.
             - Default value when not specified in API or module is interpreted by Avi Controller as LB_ALGORITHM_CONSISTENT_HASH_SOURCE_IP_ADDRESS.
     lookup_server_by_name:
         description:
@@ -240,6 +244,7 @@ options:
     prst_hdr_name:
         description:
             - Header name for custom header persistence.
+            - Field deprecated in 18.1.2.
     request_queue_depth:
         description:
             - Minimum number of requests to be queued when pool is full.
@@ -264,12 +269,11 @@ options:
         description:
             - Server autoscale.
             - Not used anymore.
-            - Default value when not specified in API or module is interpreted by Avi Controller as False.
+            - Field deprecated in 18.1.2.
         type: bool
     server_count:
         description:
-            - Number of server_count.
-            - Default value when not specified in API or module is interpreted by Avi Controller as 0.
+            - Field deprecated in 18.1.2.
     server_name:
         description:
             - Fully qualified dns hostname which will be used in the tls sni extension in server connections if sni is enabled.

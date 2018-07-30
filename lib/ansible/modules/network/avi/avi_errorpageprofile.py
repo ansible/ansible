@@ -44,11 +44,13 @@ options:
     app_name:
         description:
             - Name of the virtual service which generated the error page.
+            - Field deprecated in 18.1.1.
             - Field introduced in 17.2.4.
             - Default value when not specified in API or module is interpreted by Avi Controller as VS Name.
     company_name:
         description:
             - Name of the company to show in error page.
+            - Field deprecated in 18.1.1.
             - Field introduced in 17.2.4.
             - Default value when not specified in API or module is interpreted by Avi Controller as Avi Networks.
     error_pages:
@@ -58,6 +60,7 @@ options:
     host_name:
         description:
             - Fully qualified domain name for which the error page is generated.
+            - Field deprecated in 18.1.1.
             - Field introduced in 17.2.4.
             - Default value when not specified in API or module is interpreted by Avi Controller as Host Header.
     name:

@@ -167,6 +167,14 @@ options:
     description:
         description:
             - User defined description for the object.
+    disable_ondemand_metrics:
+        description:
+            - Virtual service (vs) metrics are processed only when there is live data traffic on the vs.
+            - In case, vs is idle for a period of time as specified by ondemand_metrics_idle_timeout then metrics processing is suspended for that vs.
+            - Field introduced in 18.1.1.
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        version_added: "2.7"
+        type: bool
     disable_se_analytics:
         description:
             - Disable node (service engine) level analytics forvs metrics.
@@ -175,7 +183,8 @@ options:
     disable_server_analytics:
         description:
             - Disable analytics on backend servers.
-            - This may be desired in container environment when there are large number of  ephemeral servers.
+            - This may be desired in container environment when there are large number of ephemeral servers.
+            - Additionally, no healthscore of servers is computed when server analytics is disabled.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         type: bool
     exclude_client_close_before_request_as_error:
@@ -381,6 +390,14 @@ options:
         description:
             - The name of the analytics profile.
         required: true
+    ondemand_metrics_idle_timeout:
+        description:
+            - This flag sets the time duration of no live data traffic after which virtual service metrics processing is suspended.
+            - It is applicable only when disable_ondemand_metrics is set to false.
+            - Field introduced in 18.1.1.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 1800.
+            - Units(SECONDS).
+        version_added: "2.7"
     ranges:
         description:
             - List of http status code ranges to be excluded from being classified as an error.
@@ -388,6 +405,11 @@ options:
         description:
             - Block of http response codes to be excluded from being classified as an error.
             - Enum options - AP_HTTP_RSP_4XX, AP_HTTP_RSP_5XX.
+    sensitive_log_profile:
+        description:
+            - Rules applied to the http application log for filtering sensitive information.
+            - Field introduced in 17.2.10, 18.1.2.
+        version_added: "2.7"
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
@@ -505,6 +527,7 @@ def main():
         conn_server_lossy_total_rexmt_threshold=dict(type='int',),
         conn_server_lossy_zero_win_size_event_threshold=dict(type='int',),
         description=dict(type='str',),
+        disable_ondemand_metrics=dict(type='bool',),
         disable_se_analytics=dict(type='bool',),
         disable_server_analytics=dict(type='bool',),
         exclude_client_close_before_request_as_error=dict(type='bool',),
@@ -548,8 +571,10 @@ def main():
         hs_security_tls12_score=dict(type='float',),
         hs_security_weak_signature_algo_penalty=dict(type='float',),
         name=dict(type='str', required=True),
+        ondemand_metrics_idle_timeout=dict(type='int',),
         ranges=dict(type='list',),
         resp_code_block=dict(type='list',),
+        sensitive_log_profile=dict(type='dict',),
         tenant_ref=dict(type='str',),
         url=dict(type='str',),
         uuid=dict(type='str',),

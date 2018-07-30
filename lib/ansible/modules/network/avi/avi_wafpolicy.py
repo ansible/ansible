@@ -53,6 +53,19 @@ options:
     description:
         description:
             - Field introduced in 17.2.1.
+    failure_mode:
+        description:
+            - Waf policy failure mode.
+            - This can be 'open' or 'closed'.
+            - Enum options - WAF_FAILURE_MODE_OPEN, WAF_FAILURE_MODE_CLOSED.
+            - Field introduced in 18.1.2.
+            - Default value when not specified in API or module is interpreted by Avi Controller as WAF_FAILURE_MODE_OPEN.
+        version_added: "2.7"
+    learning:
+        description:
+            - Configure parameters for waf learning.
+            - Field introduced in 18.1.2.
+        version_added: "2.7"
     mode:
         description:
             - Waf policy mode.
@@ -92,6 +105,12 @@ options:
     uuid:
         description:
             - Field introduced in 17.2.1.
+    waf_crs_ref:
+        description:
+            - Waf core ruleset used for the crs part of this policy.
+            - It is a reference to an object of type wafcrs.
+            - Field introduced in 18.1.1.
+        version_added: "2.7"
     waf_profile_ref:
         description:
             - Waf profile for waf policy.
@@ -137,6 +156,8 @@ def main():
         created_by=dict(type='str',),
         crs_groups=dict(type='list',),
         description=dict(type='str',),
+        failure_mode=dict(type='str',),
+        learning=dict(type='dict',),
         mode=dict(type='str', required=True),
         name=dict(type='str', required=True),
         paranoia_level=dict(type='str',),
@@ -145,6 +166,7 @@ def main():
         tenant_ref=dict(type='str',),
         url=dict(type='str',),
         uuid=dict(type='str',),
+        waf_crs_ref=dict(type='str',),
         waf_profile_ref=dict(type='str', required=True),
     )
     argument_specs.update(avi_common_argument_spec())
