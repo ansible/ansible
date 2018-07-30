@@ -107,13 +107,22 @@ certificates:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import AWSRetry, camel_dict_to_snake_dict
 
 # Non-ansible imports
 try:
     import botocore
 except ImportError:
     pass  # caught by AnsibleAWSModule
+
+
+@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+def list_iam_server_certificates_with_backoff(connection, path):
+    paginator = connection.get_paginator('list_server_certificates')
+    if path:
+        return paginator.paginate(PathPrefix=path).build_full_result()
+    else:
+        return paginator.paginate().build_full_result()
 
 
 def _get_server_certs(connection, module, name, path):
@@ -130,28 +139,27 @@ def _get_server_certs(connection, module, name, path):
     response = dict()
     response['certificates'] = []
 
-    try:
-        if name:
-            response['certificates'].append(connection.get_server_certificate(ServerCertificateName=name))[
-                'ServerCertificate']
-        elif path:
-            server_certs = connection.list_server_certificates(PathPrefix=path)['ServerCertificateMetadataList']
-        else:
-            server_certs = connection.list_server_certificates()['ServerCertificateMetadataList']
-
-        if not name:
-            for server_cert in server_certs:
-                response['certificates'].append(
-                    connection.get_server_certificate(ServerCertificateName=server_cert['ServerCertificateName'])[
-                        'ServerCertificate'])
-
-    except botocore.exceptions.ClientError as e:
-        if e.response['Error']['Code'] == 'NoSuchEntity':
-            return response['certificates']
-        else:
+    if name:
+        try:
+            response['certificates'].append(connection.get_server_certificate(ServerCertificateName=name)['ServerCertificate'])
+        except botocore.exceptions.ClientError as e:
+            if e.response['Error']['Code'] == 'NoSuchEntity':
+                return response['certificates']
+            else:
+                module.fail_json_aws(e, msg="The specified server certificates could not be found ")
+        except botocore.exceptions.BotoCoreError as e:
             module.fail_json_aws(e, msg="The specified server certificates could not be found ")
-    except botocore.exceptions.BotoCoreError as e:
-        module.fail_json_aws(e, msg="The specified server certificates could not be found ")
+    else:
+        server_certs = list_iam_server_certificates_with_backoff(connection, path)['ServerCertificateMetadataList']
+
+    if not name:
+        for server_cert in server_certs:
+            try:
+                response['certificates'].append(
+                    connection.get_server_certificate(ServerCertificateName=server_cert['ServerCertificateName'])['ServerCertificate'])
+            except botocore.exceptions.ClientError as e:
+                if e.response['Error']['Code'] == 'NoSuchEntity':
+                    continue
 
     return response['certificates']
 
