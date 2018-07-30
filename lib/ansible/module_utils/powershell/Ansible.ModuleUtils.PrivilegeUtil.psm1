@@ -166,7 +166,7 @@ namespace Ansible.PrivilegeUtil
 
                     NativeHelpers.TOKEN_PRIVILEGES privilegeInfo = (NativeHelpers.TOKEN_PRIVILEGES)Marshal.PtrToStructure(privilegesPtr, typeof(NativeHelpers.TOKEN_PRIVILEGES));
                     privileges = new NativeHelpers.LUID_AND_ATTRIBUTES[privilegeInfo.PrivilegeCount];
-                    PtrToStructureArray(privileges, privilegesPtr.ToInt64() + Marshal.SizeOf(privilegeInfo.PrivilegeCount));
+                    PtrToStructureArray(privileges, IntPtr.Add(privilegesPtr, Marshal.SizeOf(privilegeInfo.PrivilegeCount)));
                 }
                 finally
                 {
@@ -301,7 +301,7 @@ namespace Ansible.PrivilegeUtil
                         // Marshal the oldStatePtr to the struct
                         NativeHelpers.TOKEN_PRIVILEGES oldState = (NativeHelpers.TOKEN_PRIVILEGES)Marshal.PtrToStructure(oldStatePtr, typeof(NativeHelpers.TOKEN_PRIVILEGES));
                         oldStatePrivileges = new NativeHelpers.LUID_AND_ATTRIBUTES[oldState.PrivilegeCount];
-                        PtrToStructureArray(oldStatePrivileges, oldStatePtr.ToInt64() + Marshal.SizeOf(oldState.PrivilegeCount));
+                        PtrToStructureArray(oldStatePrivileges, IntPtr.Add(oldStatePtr, Marshal.SizeOf(oldState.PrivilegeCount)));
                     }
                     finally
                     {
@@ -334,11 +334,11 @@ namespace Ansible.PrivilegeUtil
             return name.ToString();
         }
 
-        private static void PtrToStructureArray<T>(T[] array, Int64 pointerAddress)
+        private static void PtrToStructureArray<T>(T[] array, IntPtr ptr)
         {
-            Int64 pointerOffset = pointerAddress;
-            for (int i = 0; i < array.Length; i++, pointerOffset += Marshal.SizeOf(typeof(T)))
-                array[i] = (T)Marshal.PtrToStructure(new IntPtr(pointerOffset), typeof(T));
+            IntPtr ptrOffset = ptr;
+            for (int i = 0; i < array.Length; i++, ptrOffset = IntPtr.Add(ptrOffset, Marshal.SizeOf(typeof(T))))
+                array[i] = (T)Marshal.PtrToStructure(ptrOffset, typeof(T));
         }
 
         private static int StructureToBytes<T>(T structure, byte[] array, int offset)
