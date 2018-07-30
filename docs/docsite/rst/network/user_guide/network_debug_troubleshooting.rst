@@ -418,9 +418,8 @@ For example:
 
 Suggestions to resolve:
 
-Options 1:
+Options 1 (Global command timeout setting):
 Increase value of command timeout in configuration file or by setting environment variable.
-Note: This value should be less than persistent connection idle timeout ie. connect_timeout
 
 .. code-block:: yaml
 
@@ -433,13 +432,13 @@ To make this a permanent change, add the following to your ``ansible.cfg`` file:
    [persistent_connection]
    command_timeout = 30
 
-Option 2:
+Option 2 (Per task command timeout setting):
 Increase command timeout per task basis. All network modules support a
 timeout value that can be set on a per task basis.
 The timeout value controls the amount of time in seconds before the
 task will fail if the command has not returned.
 
-For example:
+For local connection type:
 
 .. FIXME: Detail error here
 
@@ -453,12 +452,25 @@ Suggestions to resolve:
         provider: "{{ cli }}"
         timeout: 30
 
+For network_cli, netconf connection type (applicable from 2.7 onwards):
+
+.. FIXME: Detail error here
+
+Suggestions to resolve:
+
+.. code-block:: yaml
+
+    - name: save running-config
+      ios_command:
+        commands: copy running-config startup-config
+      vars:
+        ansible_command_timeout: 30
+
 Some operations take longer than the default 10 seconds to complete.  One good
 example is saving the current running config on IOS devices to startup config.
-In this case, changing the timeout value form the default 10 seconds to 30
+In this case, changing the timeout value from the default 10 seconds to 30
 seconds will prevent the task from failing before the command completes
 successfully.
-Note: This value should be less than persistent connection idle timeout ie. connect_timeout
 
 Persistent socket connect timeout:
 For example:
