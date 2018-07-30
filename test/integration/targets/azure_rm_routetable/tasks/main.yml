@@ -58,7 +58,7 @@
   azure_rm_route:
     name: "{{ route_name }}"
     resource_group: "{{ resource_group }}"
-    next_hop_type: VirtualNetworkGateway
+    next_hop_type: virtual_network_gateway
     address_prefix: "10.1.0.0/16"
     route_table: "{{ name }}"
   check_mode: yes
@@ -73,7 +73,7 @@
   azure_rm_route:
     name: "{{ route_name }}"
     resource_group: "{{ resource_group }}"
-    next_hop_type: VirtualNetworkGateway
+    next_hop_type: virtual_network_gateway
     address_prefix: "10.1.0.0/16"
     route_table: "{{ name }}"
   register: output
@@ -87,7 +87,7 @@
   azure_rm_route:
     name: "{{ route_name }}"
     resource_group: "{{ resource_group }}"
-    next_hop_type: VirtualNetworkGateway
+    next_hop_type: virtual_network_gateway
     address_prefix: "10.1.0.0/16"
     route_table: "{{ name }}"
   register: output
@@ -100,7 +100,7 @@
   azure_rm_route:
     name: "{{ route_name }}"
     resource_group: "{{ resource_group }}"
-    next_hop_type: VirtualNetworkGateway
+    next_hop_type: virtual_network_gateway
     address_prefix: "10.1.0.0/24"
     route_table: "{{ name }}"
   register: output
