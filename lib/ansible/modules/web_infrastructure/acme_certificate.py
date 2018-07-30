@@ -491,7 +491,7 @@ class ACMEClient(object):
             elif type == 'tls-alpn-01':
                 # https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-01#section-3
                 resource = domain
-                value = to_bytes(hashlib.sha256(to_bytes(keyauthorization)).digest())
+                value = hashlib.sha256(to_bytes(keyauthorization)).digest()
                 data[type] = {'resource': resource, 'resource_value': value}
             else:
                 continue
