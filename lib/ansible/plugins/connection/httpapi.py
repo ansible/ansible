@@ -256,7 +256,8 @@ class Connection(NetworkConnectionBase):
                 self._auth = None
                 self.login(self.get_option('remote_user'), self.get_option('password'))
                 return self.send(path, data, **kwargs)
-            raise AnsibleConnectionFailure('Could not connect to {0}: {1}'.format(self._url, exc.reason))
+            # Other codes are handled by httpapi plugin, if they care to
+            raise
 
         response_buffer = BytesIO()
         response_buffer.write(response.read())

@@ -9,6 +9,7 @@ import json
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.utils import to_list
+from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.plugins.httpapi import HttpApiBase
 
 try:
@@ -27,7 +28,13 @@ class HttpApi(HttpApiBase):
         request = request_builder(queue, output)
         headers = {'Content-Type': 'application/json'}
 
-        response, response_data = self.connection.send('/ins', request, headers=headers, method='POST')
+        try:
+            response, response_data = self.connection.send('/ins', request, headers=headers, method='POST')
+        except HTTPError:
+            raise AnsibleConnectionFailure('Could not connect to {0}: {1}'.format(
+                self.connection._url + '/ins', exc.reason
+            ))
+
         try:
             response_data = json.loads(response_data.getvalue())
         except ValueError:
