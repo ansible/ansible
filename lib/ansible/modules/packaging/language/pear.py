@@ -201,10 +201,9 @@ def check_packages(module, packages, state):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(aliases=['pkg']),
+            name=dict(aliases=['pkg'], required=True),
             state=dict(default='present', choices=['present', 'installed', "latest", 'absent', 'removed']),
             executable=dict(default=None, required=False, type='path')),
-        required_one_of=[['name']],
         supports_check_mode=True)
 
     p = module.params
