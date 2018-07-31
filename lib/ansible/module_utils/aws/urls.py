@@ -7,14 +7,15 @@ import hmac
 import operator
 
 from ansible.module_utils.urls import open_url
-from ansible.module_utils.ec2 import get_aws_connection_info
+from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, HAS_BOTO3
 from ansible.module_utils.six.moves.urllib.parse import urlencode
-
+from boto3 import session
 
 def hexdigest(s):
     """
     Returns the sha256 hexdigest of a string after encoding.
     """
+
     return hashlib.sha256(s.encode('utf-8')).hexdigest()
 
 
@@ -38,6 +39,7 @@ def sign(key, msg):
     '''
     Return digest for key applied to msg
     '''
+
     return hmac.new(key, msg.encode('utf-8'), hashlib.sha256).digest()
 
 
@@ -45,6 +47,7 @@ def get_signature_key(key, dateStamp, regionName, serviceName):
     '''
     Returns signature key for AWS resource
     '''
+
     kDate = sign(('AWS4' + key).encode('utf-8'), dateStamp)
     kRegion = sign(kDate, regionName)
     kService = sign(kRegion, serviceName)
@@ -52,8 +55,30 @@ def get_signature_key(key, dateStamp, regionName, serviceName):
     return kSigning
 
 
+def get_aws_key_pair(module):
+    '''
+    Returns aws_access_key_id, aws_secret_access_key for a module.
+
+    Prefers the credentials from a profile over inline'd keys
+    '''
+
+    if not HAS_BOTO3:
+        module.fail_json("get_aws_key_pair requires boto3")
+
+    region, dummy, boto_params = get_aws_connection_info(module, boto3=True)
+
+    profile = boto_params.get('profile_name')
+
+    if profile:
+        s = session.Session(profile_name=profile)
+        credentials = s.get_credentials()
+        return credentials.access_key, credentials.secret_key
+    else:
+        return boto_params.get('aws_access_key_id'), boto_params.get('aws_secret_access_key')
+
+
 # Reference: https://docs.aws.amazon.com/general/latest/gr/sigv4-signed-request-examples.html
-def signed_request(method="GET", service=None, host=None, uri=None, query=None, body="", module=None, boto3=True, headers=None):
+def signed_request(method="GET", service=None, host=None, uri=None, query=None, body="", module=None, headers=None):
     """Generate a SigV4 request to an AWS resource for a module
 
     This is used if you wish to authenticate with AWS credentials to a secure endpoint like an elastisearch domain.
@@ -78,6 +103,9 @@ def signed_request(method="GET", service=None, host=None, uri=None, query=None, 
     :returns: HTTPResponse
     """
 
+    if not HAS_BOTO3:
+        module.fail_json("A sigv4 signed_request requires boto3")
+
     # "Constants"
 
     t = datetime.datetime.utcnow()
@@ -87,10 +115,8 @@ def signed_request(method="GET", service=None, host=None, uri=None, query=None, 
 
     # AWS stuff
 
-    region, dummy, boto_params = get_aws_connection_info(module, boto3)
-
-    access_key = boto_params["aws_access_key_id"]
-    secret_key = boto_params["aws_secret_access_key"]
+    region, dummy, dummy = get_aws_connection_info(module, boto3=True)
+    access_key, secret_key = get_aws_key_pair(module)
 
     if not access_key:
         module.fail_json(msg="aws_access_key_id is missing")
