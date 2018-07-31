@@ -37,7 +37,7 @@ class HttpApi(HttpApiBase):
             ))
 
         try:
-            response_data = json.loads(response_data.getvalue())
+            response_data = json.loads(to_text(response_data.getvalue()))
         except ValueError:
             raise ConnectionError('Response was not valid JSON, got {0}'.format(response_data.getvalue()))
 
