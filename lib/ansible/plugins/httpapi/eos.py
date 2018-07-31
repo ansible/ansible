@@ -7,11 +7,9 @@ __metaclass__ = type
 import json
 import time
 
-from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.utils import to_list
-from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.plugins.httpapi import HttpApiBase
 
 try:
@@ -32,12 +30,7 @@ class HttpApi(HttpApiBase):
         request = request_builder(data, output)
         headers = {'Content-Type': 'application/json-rpc'}
 
-        try:
-            response, response_data = self.connection.send('/command-api', request, headers=headers, method='POST')
-        except HTTPError as exc:
-            raise AnsibleConnectionFailure('Could not connect to {0}: {1}'.format(
-                self.connection._url + '/command_api', exc.reason
-            ))
+        response, response_data = self.connection.send('/command-api', request, headers=headers, method='POST')
 
         try:
             response_data = json.loads(to_text(response_data.getvalue()))

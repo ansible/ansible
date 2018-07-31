@@ -254,13 +254,13 @@ class Connection(NetworkConnectionBase):
         try:
             response = open_url(self._url + path, data=data, **url_kwargs)
         except HTTPError as exc:
-            if exc.code == 401 and self._auth:
-                # Stored auth appears to be invalid, clear and retry
-                self._auth = None
-                self.login(self.get_option('remote_user'), self.get_option('password'))
+            is_handled = self.handle_httperror(exc)
+            if is_handled is True:
                 return self.send(path, data, **kwargs)
-            # Other codes are handled by httpapi plugin, if they care to
-            raise
+            elif is_handled is False:
+                raise AnsibleConnectionFailure('Could not connect to {0}: {1}'.format(self._url + path, exc.reason))
+            else:
+                raise
         except URLError as exc:
             raise AnsibleConnectionFailure('Could not connect to {0}: {1}'.format(self._url + path, exc.reason))
 
