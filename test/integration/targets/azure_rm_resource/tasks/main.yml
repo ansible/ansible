@@ -74,8 +74,8 @@
   azure_rm_resource:
     resource_group: "{{ resource_group }}"
     provider: storage
-    resource_type: "{{ storageaccountname }}"
-    resource_name: "{{ registry_storage_account }}"
+    resource_type: storageAccounts
+    resource_name: "{{ storageaccountname }}"
     subresource:
       - type: listkeys
     api_version: '2018-03-01-preview'
