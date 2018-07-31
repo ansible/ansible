@@ -180,6 +180,7 @@ def init_plugins(bin_path, project_path):
     if rc != 0:
         module.fail_json(msg="Failed to initialize Terraform modules:\r\n{0}".format(err))
 
+
 def get_workspace_context(bin_path, project_path):
     workspace_ctx = {"current": "default", "all": []}
     command = [bin_path, 'workspace', 'list']
@@ -196,21 +197,26 @@ def get_workspace_context(bin_path, project_path):
             workspace_ctx["all"].append(stripped_item)
     return workspace_ctx
 
-def _workspace_cmd(bin_path, project_path, action,  workspace):
+
+def _workspace_cmd(bin_path, project_path, action, workspace):
     command = [bin_path, 'workspace', action, workspace]
     rc, out, err = module.run_command(command, cwd=project_path)
     if rc != 0:
         module.fail_json(msg="Failed to {0} workspace:\r\n{1}".format(action, err))
     return rc, out, err
 
+
 def create_workspace(bin_path, project_path, workspace):
     _workspace_cmd(bin_path, project_path, 'new', workspace)
+
 
 def select_workspace(bin_path, project_path, workspace):
     _workspace_cmd(bin_path, project_path, 'select', workspace)
 
+
 def remove_workspace(bin_path, project_path, workspace):
     _workspace_cmd(bin_path, project_path, 'delete', workspace)
+
 
 def build_plan(bin_path, project_path, variables_args, state_file, targets, plan_path=None):
     if plan_path is None:
