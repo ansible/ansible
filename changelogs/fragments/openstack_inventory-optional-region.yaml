@@ -1,0 +1,8 @@
+---
+bugfixes:
+  - openstack_inventory.py dynamic inventory file
+    fixed the plugin to the script so that it will work with current
+    ansible-inventory.
+    Also redirect stdout before dumping the ouptput, because not doing
+    so will cause JSON parse errors in some cases.
+    (https://github.com/ansible/ansible/pull/43432)
