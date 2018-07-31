@@ -65,7 +65,7 @@ def get_aws_key_pair(module):
     if not HAS_BOTO3:
         module.fail_json("get_aws_key_pair requires boto3")
 
-    region, dummy, boto_params = get_aws_connection_info(module, boto3=True)
+    dummy, dummy, boto_params = get_aws_connection_info(module, boto3=True)
 
     profile = boto_params.get('profile_name')
 
