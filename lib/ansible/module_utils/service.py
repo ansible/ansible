@@ -204,7 +204,7 @@ def daemonize(module, cmd):
         fds = [p.stdout, p.stderr]
 
         # loop reading output till its done
-        output = {p.stdout: b(""), p.sterr: b("")}
+        output = {p.stdout: b(""), p.stderr: b("")}
         while fds:
             rfd, wfd, efd = select.select(fds, [], fds, 1)
             if (rfd + wfd + efd) or p.poll():
