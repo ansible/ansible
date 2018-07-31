@@ -117,6 +117,7 @@ Errors
   328       Choices value from the documentation is not compatible with type defined in the argument_spec
   329       Default value from the argument_spec is not compatible with type defined in the argument_spec
   330       Choices value from the argument_spec is not compatible with type defined in the argument_spec
+  332       ``AnsibleModule`` schema validation error
   ..
 ---------   -------------------
   **4xx**   **Syntax**
