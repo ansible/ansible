@@ -27,6 +27,7 @@ import subprocess
 import sys
 import tempfile
 import warnings
+import yaml
 from binascii import hexlify
 from binascii import unhexlify
 from binascii import Error as BinasciiError
@@ -79,6 +80,7 @@ from ansible.module_utils.six import PY3, binary_type
 from ansible.module_utils.six.moves import zip
 from ansible.module_utils._text import to_bytes, to_text, to_native
 from ansible.utils.path import makedirs_safe
+from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 
 try:
     from __main__ import display
@@ -922,6 +924,31 @@ class VaultEditor:
         except AnsibleError as e:
             raise AnsibleError("%s for %s" % (to_bytes(e), to_bytes(filename)))
         self.write_data(plaintext, output_file or filename, shred=False)
+
+    def convert_to_inline(self, filename, secret, indent=2, output_file=None):
+        # follow the symlink
+        filename = self._real_path(filename)
+        ciphertext = self.read_data(filename)
+        try:
+            plaintext = self.vault.decrypt(ciphertext, filename=filename)
+        except AnsibleError as e:
+            raise AnsibleError("%s for %s" % (to_bytes(e), to_bytes(filename)))
+        data = yaml.load(plaintext)
+        stuff = self.encrypt_leaves(data, secret)
+        from ansible.parsing.yaml.dumper import AnsibleDumper
+        output = yaml.dump(stuff, Dumper=AnsibleDumper, default_flow_style=False)
+        self.write_data(output, output_file or filename, shred=False)
+
+    def encrypt_leaves(self, tree, secret):
+        if isinstance(tree, dict):
+            result = dict()
+            for (k, v) in list(tree.items()):
+                result[k] = self.encrypt_leaves(v, secret)
+        elif isinstance(tree, list):
+            result = [self.encrypt_leaves(item, secret) for item in tree]
+        else:
+            result = AnsibleVaultEncryptedUnicode.from_plaintext(tree, self.vault, secret)
+        return result
 
     def create_file(self, filename, secret, vault_id=None):
         """ create a new encrypted file """

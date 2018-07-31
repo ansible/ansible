@@ -49,7 +49,7 @@ class VaultCLI(CLI):
     The password used with vault currently must be the same for all files you wish to use together at the same time.
     '''
 
-    VALID_ACTIONS = ("create", "decrypt", "edit", "encrypt", "encrypt_string", "rekey", "view")
+    VALID_ACTIONS = ("create", "decrypt", "edit", "encrypt", "encrypt_string", "rekey", "view", "convert_to_inline")
 
     FROM_STDIN = "stdin"
     FROM_ARGS = "the command line args"
@@ -66,7 +66,7 @@ class VaultCLI(CLI):
         self.new_encrypt_secret = None
         self.new_encrypt_vault_id = None
 
-        self.can_output = ['encrypt', 'decrypt', 'encrypt_string']
+        self.can_output = ['encrypt', 'decrypt', 'encrypt_string', 'convert_to_inline']
 
         super(VaultCLI, self).__init__(args)
 
@@ -87,6 +87,8 @@ class VaultCLI(CLI):
             self.parser.set_usage("usage: %prog decrypt [options] file_name")
         elif self.action == "edit":
             self.parser.set_usage("usage: %prog edit [options] file_name")
+        elif self.action == "convert_to_inline":
+            self.parser.set_usage("usage: %prog convert_to_inline [options] file_name")
         elif self.action == "view":
             self.parser.set_usage("usage: %prog view [options] file_name")
         elif self.action == "encrypt":
@@ -173,7 +175,7 @@ class VaultCLI(CLI):
 
         # TODO: instead of prompting for these before, we could let VaultEditor
         #       call a callback when it needs it.
-        if self.action in ['decrypt', 'view', 'rekey', 'edit']:
+        if self.action in ['decrypt', 'view', 'rekey', 'edit', 'convert_to_inline']:
             vault_secrets = self.setup_vault_secrets(loader,
                                                      vault_ids=vault_ids,
                                                      vault_password_files=self.options.vault_password_files,
@@ -430,6 +432,18 @@ class VaultCLI(CLI):
 
         if sys.stdout.isatty():
             display.display("Decryption successful", stderr=True)
+
+    def execute_convert_to_inline(self):
+        ''' convert the supplied file to inline vault form using the provided vault secret '''
+
+        if len(self.args) == 0 and sys.stdin.isatty():
+            display.display("Reading ciphertext input from stdin", stderr=True)
+
+        for f in self.args or ['-']:
+            self.editor.convert_to_inline(f, self.encrypt_secret, output_file=self.options.output_file)
+
+        if sys.stdout.isatty():
+            display.display("Conversion successful", stderr=True)
 
     def execute_create(self):
         ''' create and open a file in an editor that will be encryped with the provided vault secret when closed'''
