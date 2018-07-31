@@ -24,30 +24,55 @@ DOCUMENTATION = '''
 module: panos_set
 short_description: Execute arbitrary commands on a PAN-OS device using XPath and element
 description:
-    - Run an arbitrary `xapi` command taking an XPath (i.e get) or XPath and element (i.e set).
-    - Runs a `set` command by default
-    - This should support _all_ commands that your PAN-OS device accepts vi it's cli
-    - `cli` commands are found as:
-    - - Once logged in issue: `debug cli on`
-      - Enter configuration mode by issuing: `configure`
-      - Enter your set (or other) command, for example: `set deviceconfig system timezone Australia/Melbourne`
-      - >
-        returns "<request cmd="set"
-        obj="/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system"
-        cookie=XXXX><timezone>Australia/Melbourne</timezone></request>
-      - The `xpath` is  "/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system"
-      - The `element` is "<timezone>Australia/Melbourne</timezone>"
+  - Run an arbitrary 'xapi' command taking an XPath (i.e get) or XPath and element (i.e set).
+  - See https://github.com/kevinsteves/pan-python/blob/master/doc/pan.xapi.rst for details
+  - Runs a 'set' command by default
+  - This should support _all_ commands that your PAN-OS device accepts vi it's cli
+  - cli commands are found as:
+  - - Once logged in issue: 'debug cli on'
+    - Enter configuration mode by issuing: 'configure'
+    - Enter your set (or other) command, for example: 'set deviceconfig system timezone Australia/Melbourne'
+    - >
+      returns "<request cmd="set"
+      obj="/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system"
+      cookie=XXXX><timezone>Australia/Melbourne</timezone></request>
+    - The 'xpath' is  "/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system"
+    - The 'element' is "<timezone>Australia/Melbourne</timezone>"
 author: "Jasper Mackenzie"
 version_added: "2.7"
 requirements:
-    - pan-python
+  - pan-python
 options:
-    command:
-      xapi method name which supports `xpath` or `xpath` and `element`
-    xpath:
-      XPath of the configurable
-    element (optional):
-      Element of the configurable if required
+  ip_address:
+    description:
+      - IP address or host FQDN of the target PAN-OS NVA
+    required: true
+  username:
+    description:
+      - User name for a user with admin rights on the PAN-OS NVA
+    default: admin
+  password:
+    description:
+      - Password for the given 'username'
+    required: true
+  command:
+    description:
+      - Xapi method name which supports 'xpath' or 'xpath' and 'element'
+    choices:
+      - set
+      - edit
+      - delete
+      - get
+      - show
+      - override
+    default: set
+  xpath:
+    description:
+      - The 'xpath' for the commands configurable
+    required: true
+  element:
+    description:
+      - The 'element' for the 'xpath' if required
 extends_documentation_fragment: panos
 '''
 
@@ -72,7 +97,7 @@ RETURN = '''
 # Default return values
 '''
 
-ANSIBLE_METADATA = {'metadata_version': '0.1',
+ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -90,7 +115,7 @@ def main():
         ip_address=dict(required=True),
         password=dict(required=True, no_log=True),
         username=dict(default='admin'),
-        command=dict(default="set"),
+        command=dict(default='set', choices=['set', 'edit', 'delete', 'get', 'show', 'override']),
         xpath=dict(required=True),
         element=dict(default=None)
     )
@@ -130,6 +155,7 @@ def main():
     module.exit_json(
         status="success"
     )
+
 
 if __name__ == '__main__':
     main()
