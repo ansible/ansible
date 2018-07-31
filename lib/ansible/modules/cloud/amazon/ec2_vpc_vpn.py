@@ -300,7 +300,7 @@ def find_connection(connection, module_params, vpn_connection_id=None):
     if not isinstance(vpn_connection_id, list) and vpn_connection_id:
         vpn_connection_id = [to_text(vpn_connection_id)]
     elif isinstance(vpn_connection_id, list):
-        vpn_connection_id = [to_text(connection) for connection in vpn_connection_id]
+        vpn_connection_id = [to_text(vpn_connection) for vpn_connection in vpn_connection_id]
 
     formatted_filter = []
     # if vpn_connection_id is provided it will take precedence over any filters since it is a unique identifier

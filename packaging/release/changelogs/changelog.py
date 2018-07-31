@@ -447,7 +447,7 @@ class ChangelogGenerator(object):
         for version, release in release_entries.items():
             builder.add_section('v%s' % version)
 
-            combined_fragments = ChangelogFragment.combine([self.fragments[fragment] for fragment in release['fragments']])
+            combined_fragments = ChangelogFragment.combine([self.fragments[release_fragment] for release_fragment in release['fragments']])
 
             for section_name in self.config.sections:
                 self._add_section(builder, combined_fragments, section_name)
