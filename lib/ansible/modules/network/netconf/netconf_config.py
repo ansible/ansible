@@ -62,7 +62,7 @@ options:
     description:
      - Specifies the path to ssh key to be used to connect to host
     required: false
-    version_added: "2.6"
+    version_added: "2.7"
   datastore:
     description:
      - auto, uses candidate and fallback to running
