@@ -111,7 +111,7 @@ def get_config(module, flags=None):
     except KeyError:
         connection = get_connection(module)
         try:
-            out = connection.get_config(filter=flags)
+            out = connection.get_config(flags=flags)
         except ConnectionError as exc:
             module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
         cfg = to_text(out, errors='surrogate_then_replace').strip()

@@ -37,21 +37,21 @@ from ansible.plugins.cliconf import CliconfBase, enable_mode
 class Cliconf(CliconfBase):
 
     @enable_mode
-    def get_config(self, source='running', filter=None, format=None):
+    def get_config(self, source='running', flag=None, format=None):
         if source not in ('running', 'startup'):
             return self.invalid_params("fetching configuration from %s is not supported" % source)
 
         if format:
             raise ValueError("'format' value %s is not supported for get_config" % format)
 
-        if not filter:
-            filter = []
+        if not flag:
+            flag = []
         if source == 'running':
             cmd = 'show running-config '
         else:
             cmd = 'show startup-config '
 
-        cmd += ' '.join(to_list(filter))
+        cmd += ' '.join(to_list(flag))
         cmd = cmd.strip()
 
         return self.send_command(cmd)

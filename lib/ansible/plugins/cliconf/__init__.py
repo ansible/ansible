@@ -165,7 +165,7 @@ class CliconfBase(AnsiblePlugin):
         self.response_logging = False
 
     @abstractmethod
-    def get_config(self, source='running', filter=None, format=None):
+    def get_config(self, source='running', flag=None, format=None):
         """Retrieves the specified configuration from the device
 
         This method will retrieve the configuration specified by source and
@@ -175,7 +175,7 @@ class CliconfBase(AnsiblePlugin):
         :param source: The configuration source to return from the device.
             This argument accepts either `running` or `startup` as valid values.
 
-        :param filter: For devices that support configuration filtering, this
+        :param flag: For devices that support configuration filtering, this
             keyword argument is used to filter the returned configuration.
             The use of this keyword argument is device dependent adn will be
             silently ignored on devices that do not support it.
