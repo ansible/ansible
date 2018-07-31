@@ -35,33 +35,39 @@ options:
     aliases: [ epr_name, name ]
   bounce_age:
     description:
-    - Bounce Entry Aging Interval (range 150secs - 65535secs)
-    - 0 is used for infinite.
-    default: 630
+    - Bounce entry aging interval in seconds.
+    - Accepted values range between C(150) and C(65535); 0 is used for infinite.
+    - The APIC defaults to C(630) when unset during creation.
+    type: int
   bounce_trigger:
     description:
     - Determines if the bounce entries are installed by RARP Flood or COOP Protocol.
-    - The APIC defaults new End Point Retention Policies to C(coop).
-    default: coop
+    - The APIC defaults to C(coop) when unset during creation.
+    choices: [ coop, flood ]
   hold_interval:
     description:
-    - Hold Interval (range 5secs - 65535secs).
-    default: 300
+    - Hold interval in seconds.
+    - Accepted values range between C(5) and C(65535).
+    - The APIC defaults to C(300) when unset during creation.
+    type: int
   local_ep_interval:
     description:
-    - Local end point Aging Interval (range 120secs - 65535secs).
-    - 0 is used for infinite.
-    default: 900
+    - Local end point aging interval in seconds.
+    - Accepted values range between C(120) and C(65535); 0 is used for infinite.
+    - The APIC defaults to C(900) when unset during creation.
+    type: int
   remote_ep_interval:
     description:
-    - Remote end point Aging Interval (range 120secs - 65535secs).
-    - O is used for infinite.
-    default: 300
+    - Remote end point aging interval in seconds.
+    - Accepted values range between C(120) and C(65535); 0 is used for infinite.
+    - The APIC defaults to C(300) when unset during creation.
+    type: int
   move_frequency:
     description:
-    - Move frequency per second (range 0secs - 65535secs).
-    - 0 is used for none.
-    default: 256
+    - Move frequency per second.
+    - Accepted values range between C(0) and C(65535); 0 is used for none.
+    - The APIC defaults to C(256) when unset during creation.
+    type: int
   description:
     description:
     - Description for the End point rentention policy.
@@ -241,8 +247,6 @@ def main():
         description=dict(type='str', aliases=['descr']),
         move_frequency=dict(type='int'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(

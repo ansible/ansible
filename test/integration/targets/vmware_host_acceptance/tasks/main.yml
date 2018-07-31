@@ -3,66 +3,61 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # TODO: vcsim does not support Acceptance Level related to operations
-#- name: make sure pyvmomi is installed
-#  pip:
-#    name: pyvmomi
-#    state: latest
-#  when: "{{ ansible_user_id == 'root' }}"
 
-#- name: store the vcenter container ip
-#  set_fact:
-#    vcsim: "{{ lookup('env', 'vcenter_host') }}"
+- name: store the vcenter container ip
+  set_fact:
+    vcsim: "{{ lookup('env', 'vcenter_host') }}"
 
-#- debug: var=vcsim
+- debug: var=vcsim
 
-#- name: Wait for Flask controller to come up online
-#  wait_for:
-#    host: "{{ vcsim }}"
-#    port: 5000
-#    state: started
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
 
-#- name: kill vcsim
-#  uri:
-#    url: http://{{ vcsim }}:5000/killall
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
 
-#- name: start vcsim
-#  uri:
-#    url: http://{{ vcsim }}:5000/spawn?cluster=2
-#  register: vcsim_instance
+- name: start vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?cluster=2
+  register: vcsim_instance
 
-#- debug:
-#    var: vcsim_instance
+- debug:
+    var: vcsim_instance
 
-#- name: Wait for vcsim server to come up online
-#  wait_for:
-#    host: "{{ vcsim }}"
-#    port: 443
-#    state: started
+- name: Wait for vcsim server to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
 
-#- name: get a list of hosts from vcsim
-#  uri:
-#    url: http://{{ vcsim }}:5000/govc_find?filter=H
-#  register: hosts
+- name: get a list of hosts from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=H
+  register: hosts
 
-#- name: get a host
-#  set_fact:
-#    host1: "{{ hosts.json[0] | basename }}"
+- name: get a host
+  set_fact:
+    host1: "{{ hosts.json[0] | basename }}"
 
-#- debug: var=host1
+- debug: var=host1
 
-#- name: Change acceptance level of given hosts
-#  vmware_host_acceptance:
-#    hostname: "{{ vcsim }}"
-#    username: "{{ user }}"
-#    password: "{{ passwd }}"
-#    esxi_hostname: "{{ host1 }}"
-#    validate_certs: no
-#    acceptance_level: vmware_certified
-#    state: present
-#  register: host_acceptance_facts
+- name: Change acceptance level of given hosts
+  vmware_host_acceptance:
+    hostname: "{{ vcsim }}"
+    username: "{{ user }}"
+    password: "{{ passwd }}"
+    esxi_hostname: "{{ host1 }}"
+    validate_certs: no
+    acceptance_level: vmware_certified
+    state: present
+  register: host_acceptance_facts
 
-#- debug: var=host_acceptance_facts
+- debug: var=host_acceptance_facts
 
-#- assert:
-#    that:
-#      - host_acceptance_facts.facts is defined
+- assert:
+    that:
+      - host_acceptance_facts.facts is defined

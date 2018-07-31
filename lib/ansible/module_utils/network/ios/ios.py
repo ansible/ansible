@@ -26,10 +26,11 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 import json
+
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network.common.utils import to_list, ComplexList
-from ansible.module_utils.connection import Connection
+from ansible.module_utils.connection import Connection, ConnectionError
 
 _DEVICE_CONFIGS = {}
 
@@ -81,8 +82,10 @@ def get_connection(module):
 def get_capabilities(module):
     if hasattr(module, '_ios_capabilities'):
         return module._ios_capabilities
-
-    capabilities = Connection(module._socket_path).get_capabilities()
+    try:
+        capabilities = Connection(module._socket_path).get_capabilities()
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
     module._ios_capabilities = json.loads(capabilities)
     return module._ios_capabilities
 
@@ -93,18 +96,11 @@ def check_args(module, warnings):
 
 def get_defaults_flag(module):
     connection = get_connection(module)
-    out = connection.get('show running-config ?')
-    out = to_text(out, errors='surrogate_then_replace')
-
-    commands = set()
-    for line in out.splitlines():
-        if line.strip():
-            commands.add(line.strip().split()[0])
-
-    if 'all' in commands:
-        return ['all']
-    else:
-        return ['full']
+    try:
+        out = connection.get_defaults_flag()
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+    return to_text(out, errors='surrogate_then_replace').strip()
 
 
 def get_config(module, flags=None):
@@ -114,7 +110,10 @@ def get_config(module, flags=None):
         return _DEVICE_CONFIGS[flag_str]
     except KeyError:
         connection = get_connection(module)
-        out = connection.get_config(flags=flags)
+        try:
+            out = connection.get_config(filter=flags)
+        except ConnectionError as exc:
+            module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
         cfg = to_text(out, errors='surrogate_then_replace').strip()
         _DEVICE_CONFIGS[flag_str] = cfg
         return cfg
@@ -131,32 +130,19 @@ def to_commands(module, commands):
 
 
 def run_commands(module, commands, check_rc=True):
-    responses = list()
     connection = get_connection(module)
-
-    for cmd in to_list(commands):
-        if isinstance(cmd, dict):
-            command = cmd['command']
-            prompt = cmd['prompt']
-            answer = cmd['answer']
-        else:
-            command = cmd
-            prompt = None
-            answer = None
-
-        out = connection.get(command, prompt, answer)
-
-        try:
-            out = to_text(out, errors='surrogate_or_strict')
-        except UnicodeError:
-            module.fail_json(msg=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))
-
-        responses.append(out)
-
-    return responses
+    try:
+        out = connection.run_commands(commands=commands, check_rc=check_rc)
+        return out
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc))
 
 
 def load_config(module, commands):
     connection = get_connection(module)
 
-    out = connection.edit_config(commands)
+    try:
+        resp = connection.edit_config(commands)
+        return resp.get('response')
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc))

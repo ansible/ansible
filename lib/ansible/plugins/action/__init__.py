@@ -226,28 +226,58 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         return True
 
+    def _get_admin_users(self):
+        '''
+        Returns a list of admin users that are configured for the current shell
+        plugin
+        '''
+        try:
+            admin_users = self._connection._shell.get_option('admin_users')
+        except AnsibleError:
+            # fallback for old custom plugins w/o get_option
+            admin_users = ['root']
+        return admin_users
+
+    def _is_become_unprivileged(self):
+        '''
+        The user is not the same as the connection user and is not part of the
+        shell configured admin users
+        '''
+        # if we don't use become then we know we aren't switching to a
+        # different unprivileged user
+        if not self._play_context.become:
+            return False
+
+        # if we use become and the user is not an admin (or same user) then
+        # we need to return become_unprivileged as True
+        admin_users = self._get_admin_users()
+        try:
+            remote_user = self._connection.get_option('remote_user')
+        except AnsibleError:
+            remote_user = self._play_context.remote_user
+        return bool(self._play_context.become_user not in admin_users + [remote_user])
+
     def _make_tmp_path(self, remote_user=None):
         '''
         Create and return a temporary path on a remote box.
         '''
 
-        if remote_user is None:
-            remote_user = self._play_context.remote_user
-
-        try:
-            admin_users = self._connection._shell.get_option('admin_users') + [remote_user]
-        except AnsibleError:
-            admin_users = ['root', remote_user]  # plugin does not support admin_users
+        become_unprivileged = self._is_become_unprivileged()
         try:
             remote_tmp = self._connection._shell.get_option('remote_tmp')
         except AnsibleError:
-            remote_tmp = '~/ansible'
+            remote_tmp = '~/.ansible/tmp'
 
         # deal with tmpdir creation
         basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
-        use_system_tmp = bool(self._play_context.become and self._play_context.become_user not in admin_users)
-        tmpdir = self._remote_expand_user(remote_tmp, sudoable=False)
-        cmd = self._connection._shell.mkdtemp(basefile=basefile, system=use_system_tmp, tmpdir=tmpdir)
+        # Network connection plugins (network_cli, netconf, etc.) execute on the controller, rather than the remote host.
+        # As such, we want to avoid using remote_user for paths  as remote_user may not line up with the local user
+        # This is a hack and should be solved by more intelligent handling of remote_tmp in 2.7
+        if getattr(self._connection, '_remote_is_local', False):
+            tmpdir = C.DEFAULT_LOCAL_TMP
+        else:
+            tmpdir = self._remote_expand_user(remote_tmp, sudoable=False)
+        cmd = self._connection._shell.mkdtemp(basefile=basefile, system=become_unprivileged, tmpdir=tmpdir)
         result = self._low_level_execute_command(cmd, sudoable=False)
 
         # error handling on this seems a little aggressive?
@@ -291,8 +321,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         self._connection._shell.tmpdir = rc
 
-        if not use_system_tmp:
-            self._connection._shell.env.update({'ANSIBLE_REMOTE_TMP': self._connection._shell.tmpdir})
         return rc
 
     def _should_remove_tmp_path(self, tmp_path):
@@ -403,12 +431,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # we have a need for it, at which point we'll have to do something different.
             return remote_paths
 
-        try:
-            admin_users = self._connection._shell.get_option('admin_users')
-        except AnsibleError:
-            admin_users = ['root']  # plugin does not support admin users
-
-        if self._play_context.become and self._play_context.become_user and self._play_context.become_user not in admin_users + [remote_user]:
+        if self._is_become_unprivileged():
             # Unprivileged user that's different than the ssh user.  Let's get
             # to work!
 
@@ -435,8 +458,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                         raise AnsibleError('Failed to set file mode on remote temporary files (rc: {0}, err: {1})'.format(res['rc'], to_native(res['stderr'])))
 
                 res = self._remote_chown(remote_paths, self._play_context.become_user)
-                if res['rc'] != 0 and remote_user in admin_users:
-                    # chown failed even if remove_user is root
+                if res['rc'] != 0 and remote_user in self._get_admin_users():
+                    # chown failed even if remote_user is administrator/root
                     raise AnsibleError('Failed to change ownership of the temporary files Ansible needs to create despite connecting as a privileged user. '
                                        'Unprivileged become user would be unable to read the file.')
                 elif res['rc'] != 0:
@@ -567,11 +590,17 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         split_path = path.split(os.path.sep, 1)
         expand_path = split_path[0]
 
-        if sudoable and expand_path == '~' and self._play_context.become and self._play_context.become_user:
-            expand_path = '~%s' % self._play_context.become_user
-        else:
-            # use remote user instead, if none set default to current user
-            expand_path = '~%s' % self._play_context.remote_user or self._connection.default_user or ''
+        if expand_path == '~':
+            # Network connection plugins (network_cli, netconf, etc.) execute on the controller, rather than the remote host.
+            # As such, we want to avoid using remote_user for paths  as remote_user may not line up with the local user
+            # This is a hack and should be solved by more intelligent handling of remote_tmp in 2.7
+            if getattr(self._connection, '_remote_is_local', False):
+                pass
+            elif sudoable and self._play_context.become and self._play_context.become_user:
+                expand_path = '~%s' % self._play_context.become_user
+            else:
+                # use remote user instead, if none set default to current user
+                expand_path = '~%s' % (self._play_context.remote_user or self._connection.default_user or '')
 
         # use shell to construct appropriate command and execute
         cmd = self._connection._shell.expand_user(expand_path)
@@ -649,8 +678,21 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # make sure all commands use the designated shell executable
         module_args['_ansible_shell_executable'] = self._play_context.executable
 
-        # make sure all commands use the designated temporary directory
-        module_args['_ansible_tmpdir'] = self._connection._shell.tmpdir
+        # make sure modules are aware if they need to keep the remote files
+        module_args['_ansible_keep_remote_files'] = C.DEFAULT_KEEP_REMOTE_FILES
+
+        # make sure all commands use the designated temporary directory if created
+        if self._is_become_unprivileged():  # force fallback on remote_tmp as user cannot normally write to dir
+            module_args['_ansible_tmpdir'] = None
+        else:
+            module_args['_ansible_tmpdir'] = self._connection._shell.tmpdir
+
+        # make sure the remote_tmp value is sent through in case modules needs to create their own
+        try:
+            module_args['_ansible_remote_tmp'] = self._connection._shell.get_option('remote_tmp')
+        except KeyError:
+            # here for 3rd party shell plugin compatibility in case they do not define the remote_tmp option
+            module_args['_ansible_remote_tmp'] = '~/.ansible/tmp'
 
     def _update_connection_options(self, options, variables=None):
         ''' ensures connections have the appropriate information '''
@@ -682,6 +724,18 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                             ' if they are responsible for removing it.')
         del delete_remote_tmp  # No longer used
 
+        tmpdir = self._connection._shell.tmpdir
+
+        # We set the module_style to new here so the remote_tmp is created
+        # before the module args are built if remote_tmp is needed (async).
+        # If the module_style turns out to not be new and we didn't create the
+        # remote tmp here, it will still be created. This must be done before
+        # calling self._update_module_args() so the module wrapper has the
+        # correct remote_tmp value set
+        if not self._is_pipelining_enabled("new", wrap_async) and tmpdir is None:
+            self._make_tmp_path()
+            tmpdir = self._connection._shell.tmpdir
+
         if task_vars is None:
             task_vars = dict()
 
@@ -699,7 +753,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if not shebang and module_style != 'binary':
             raise AnsibleError("module (%s) is missing interpreter line" % module_name)
 
-        tmpdir = self._connection._shell.tmpdir
         remote_module_path = None
 
         if not self._is_pipelining_enabled(module_style, wrap_async):
@@ -709,7 +762,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 tmpdir = self._connection._shell.tmpdir
 
             remote_module_filename = self._connection._shell.get_remote_filename(module_path)
-            remote_module_path = self._connection._shell.join_path(tmpdir, remote_module_filename)
+            remote_module_path = self._connection._shell.join_path(tmpdir, 'AnsiballZ_%s' % remote_module_filename)
 
         args_file_path = None
         if module_style in ('old', 'non_native_want_json', 'binary'):
@@ -930,13 +983,13 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         out = self._strip_success_message(out)
 
         display.debug(u"_low_level_execute_command() done: rc=%d, stdout=%s, stderr=%s" % (rc, out, err))
-        return dict(rc=rc, stdout=out, stdout_lines=out.splitlines(), stderr=err)
+        return dict(rc=rc, stdout=out, stdout_lines=out.splitlines(), stderr=err, stderr_lines=err.splitlines())
 
     def _get_diff_data(self, destination, source, task_vars, source_file=True):
 
         diff = {}
         display.debug("Going to peek to see if file has changed permissions")
-        peek_result = self._execute_module(module_name='file', module_args=dict(path=destination, diff_peek=True), task_vars=task_vars, persist_files=True)
+        peek_result = self._execute_module(module_name='file', module_args=dict(path=destination, _diff_peek=True), task_vars=task_vars, persist_files=True)
 
         if not peek_result.get('failed', False) or peek_result.get('rc', 0) == 0:
 

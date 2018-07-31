@@ -19,7 +19,7 @@ module: os_server_action
 short_description: Perform actions on Compute Instances from OpenStack
 extends_documentation_fragment: openstack
 version_added: "2.0"
-author: "Jesse Keating (@j2sol)"
+author: "Jesse Keating (@omgjlk)"
 description:
    - Perform server actions on an existing compute instance from OpenStack.
      This module does not return any data other than changed true/false.
@@ -54,8 +54,8 @@ options:
      description:
        - Ignored. Present for backwards compatibility
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -87,10 +87,14 @@ _action_map = {'stop': 'SHUTOFF',
 _admin_actions = ['pause', 'unpause', 'suspend', 'resume', 'lock', 'unlock']
 
 
-def _wait(timeout, cloud, server, action, module, shade):
+def _action_url(server_id):
+    return '/servers/{server_id}/action'.format(server_id=server_id)
+
+
+def _wait(timeout, cloud, server, action, module, sdk):
     """Wait for the server to reach the desired state for the given action."""
 
-    for count in shade._utils._iterate_timeout(
+    for count in sdk.utils._iterate_timeout(
             timeout,
             "Timeout waiting for server to complete %s" % action):
         try:
@@ -134,10 +138,7 @@ def main():
     timeout = module.params['timeout']
     image = module.params['image']
 
-    if action in _admin_actions:
-        shade, cloud = openstack_cloud_from_module(module)
-    else:
-        shade, cloud = openstack_cloud_from_module(module)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         server = cloud.get_server(module.params['server'])
         if not server:
@@ -151,64 +152,80 @@ def main():
             if not _system_state_change(action, status):
                 module.exit_json(changed=False)
 
-            cloud.nova_client.servers.stop(server=server.id)
+            cloud.compute.post(
+                _action_url(server.id),
+                json={'os-stop': None})
             if wait:
-                _wait(timeout, cloud, server, action, module, shade)
+                _wait(timeout, cloud, server, action, module, sdk)
                 module.exit_json(changed=True)
 
         if action == 'start':
             if not _system_state_change(action, status):
                 module.exit_json(changed=False)
 
-            cloud.nova_client.servers.start(server=server.id)
+                cloud.compute.post(
+                    _action_url(server.id),
+                    json={'os-start': None})
             if wait:
-                _wait(timeout, cloud, server, action, module, shade)
+                _wait(timeout, cloud, server, action, module, sdk)
                 module.exit_json(changed=True)
 
         if action == 'pause':
             if not _system_state_change(action, status):
                 module.exit_json(changed=False)
 
-            cloud.nova_client.servers.pause(server=server.id)
+                cloud.compute.post(
+                    _action_url(server.id),
+                    json={'pause': None})
             if wait:
-                _wait(timeout, cloud, server, action, module, shade)
+                _wait(timeout, cloud, server, action, module, sdk)
                 module.exit_json(changed=True)
 
         elif action == 'unpause':
             if not _system_state_change(action, status):
                 module.exit_json(changed=False)
 
-            cloud.nova_client.servers.unpause(server=server.id)
+                cloud.compute.post(
+                    _action_url(server.id),
+                    json={'unpause': None})
             if wait:
-                _wait(timeout, cloud, server, action, module, shade)
+                _wait(timeout, cloud, server, action, module, sdk)
             module.exit_json(changed=True)
 
         elif action == 'lock':
             # lock doesn't set a state, just do it
-            cloud.nova_client.servers.lock(server=server.id)
+            cloud.compute.post(
+                _action_url(server.id),
+                json={'lock': None})
             module.exit_json(changed=True)
 
         elif action == 'unlock':
             # unlock doesn't set a state, just do it
-            cloud.nova_client.servers.unlock(server=server.id)
+            cloud.compute.post(
+                _action_url(server.id),
+                json={'unlock': None})
             module.exit_json(changed=True)
 
         elif action == 'suspend':
             if not _system_state_change(action, status):
                 module.exit_json(changed=False)
 
-            cloud.nova_client.servers.suspend(server=server.id)
+                cloud.compute.post(
+                    _action_url(server.id),
+                    json={'suspend': None})
             if wait:
-                _wait(timeout, cloud, server, action, module, shade)
+                _wait(timeout, cloud, server, action, module, sdk)
             module.exit_json(changed=True)
 
         elif action == 'resume':
             if not _system_state_change(action, status):
                 module.exit_json(changed=False)
 
-            cloud.nova_client.servers.resume(server=server.id)
+                cloud.compute.post(
+                    _action_url(server.id),
+                    json={'resume': None})
             if wait:
-                _wait(timeout, cloud, server, action, module, shade)
+                _wait(timeout, cloud, server, action, module, sdk)
             module.exit_json(changed=True)
 
         elif action == 'rebuild':
@@ -218,12 +235,14 @@ def main():
                 module.fail_json(msg="Image does not exist")
 
             # rebuild doesn't set a state, just do it
-            cloud.nova_client.servers.rebuild(server=server.id, image=image.id)
+                cloud.compute.post(
+                    _action_url(server.id),
+                    json={'rebuild': None})
             if wait:
-                _wait(timeout, cloud, server, action, module, shade)
+                _wait(timeout, cloud, server, action, module, sdk)
             module.exit_json(changed=True)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
 

@@ -59,7 +59,12 @@ Ansible releases a new major release of Ansible approximately every two months. 
    scenario_guides/guide_rax
    scenario_guides/guide_rolling_upgrade
    scenario_guides/guide_vagrant
-   scenario_guides/guide_vmware
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Ansible for VMWare
+
+   vmware/index
 
 .. toctree::
    :maxdepth: 2

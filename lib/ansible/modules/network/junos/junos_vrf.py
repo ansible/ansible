@@ -94,7 +94,7 @@ EXAMPLES = """
     interfaces:
       - ge-0/0/3
       - ge-0/0/2
-    rd: 1.1.1.1:10
+    rd: 192.0.2.1:10
     target: target:65514:113
     state: present
 
@@ -105,7 +105,7 @@ EXAMPLES = """
     interfaces:
       - ge-0/0/3
       - ge-0/0/2
-    rd: 1.1.1.1:10
+    rd: 192.0.2.1:10
     target: target:65514:113
     state: absent
 
@@ -116,7 +116,7 @@ EXAMPLES = """
     interfaces:
       - ge-0/0/3
       - ge-0/0/2
-    rd: 1.1.1.1:10
+    rd: 192.0.2.1:10
     target: target:65514:113
     active: False
 
@@ -127,7 +127,7 @@ EXAMPLES = """
     interfaces:
       - ge-0/0/3
       - ge-0/0/2
-    rd: 1.1.1.1:10
+    rd: 192.0.2.1:10
     target: target:65514:113
     active: True
 
@@ -139,14 +139,14 @@ EXAMPLES = """
       interfaces:
         - ge-0/0/3
          - ge-0/0/2
-      rd: 1.1.1.1:10
+      rd: 192.0.2.1:10
       target: target:65514:113
     - name: test-2
       description: test-vrf-2
       interfaces:
         - ge-0/0/4
         - ge-0/0/5
-      rd: 2.2.2.2:10
+      rd: 192.0.2.2:10
       target: target:65515:114
   state: present
 """
@@ -163,7 +163,7 @@ diff.prepared:
         +       instance-type vrf;
         +       interface ge-0/0/2.0;
         +       interface ge-0/0/3.0;
-        +       route-distinguisher 1.1.1.1:10;
+        +       route-distinguisher 192.0.2.1:10;
         +       vrf-target target:65514:113;
         +   }
 """
@@ -173,14 +173,9 @@ from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
-from ansible.module_utils.network.junos.junos import junos_argument_spec
+from ansible.module_utils.network.junos.junos import junos_argument_spec, tostring
 from ansible.module_utils.network.junos.junos import load_config, map_params_to_obj, map_obj_to_ele, to_param_list
 from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes, locked_config
-
-try:
-    from lxml.etree import tostring
-except ImportError:
-    from xml.etree.ElementTree import tostring
 
 USE_PERSISTENT_CONNECTION = True
 

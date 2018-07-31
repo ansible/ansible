@@ -6,12 +6,28 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    author: Ansible Core Team
-    connection: persistent
-    short_description: Use a persistent unix socket for connection
+author: Ansible Core Team
+connection: persistent
+short_description: Use a persistent unix socket for connection
+description:
+  - This is a helper plugin to allow making other connections persistent.
+version_added: "2.3"
+options:
+  persistent_command_timeout:
+    type: int
     description:
-        - This is a helper plugin to allow making other connections persistent.
-    version_added: "2.3"
+      - Configures, in seconds, the amount of time to wait for a command to
+        return from the remote device.  If this timer is exceeded before the
+        command returns, the connection plugin will raise an exception and
+        close
+    default: 10
+    ini:
+      - section: persistent_connection
+        key: command_timeout
+    env:
+      - name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT
+    vars:
+      - name: ansible_command_timeout
 """
 import os
 import pty
@@ -103,8 +119,12 @@ class Connection(ConnectionBase):
         # that means only protocol=0 will work.
         src = cPickle.dumps(self._play_context.serialize(), protocol=0)
         stdin.write(src)
-
         stdin.write(b'\n#END_INIT#\n')
+
+        src = cPickle.dumps({'ansible_command_timeout': self.get_option('persistent_command_timeout')}, protocol=0)
+        stdin.write(src)
+        stdin.write(b'\n#END_VARS#\n')
+
         stdin.flush()
 
         (stdout, stderr) = p.communicate()

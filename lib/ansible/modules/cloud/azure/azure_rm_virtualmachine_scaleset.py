@@ -47,6 +47,9 @@ options:
     location:
         description:
             - Valid Azure location. Defaults to location of the resource group.
+    short_hostname:
+        description:
+            - Short host name
     vm_size:
         description:
             - A valid Azure VM size value. For example, 'Standard_D4'. The list of choices varies depending on the
@@ -56,6 +59,7 @@ options:
         description:
             - Capacity of VMSS.
         required: true
+        default: 1
     tier:
         description:
             - SKU Tier.
@@ -79,6 +83,7 @@ options:
         description:
             - When the os_type is Linux, setting ssh_password_enabled to false will disable SSH password authentication
               and require use of SSH keys.
+        type: bool
         default: true
     ssh_public_keys:
         description:
@@ -117,8 +122,7 @@ options:
         choices:
             - Windows
             - Linux
-        default:
-            - Linux
+        default: Linux
     managed_disk_type:
         description:
             - Managed disk type.
@@ -522,7 +526,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     vmss_dict['sku']['capacity'] = self.capacity
 
                 if self.data_disks and \
-                   len(self.data_disks) != len(vmss_dict['properties']['virtualMachineProfile']['storageProfile']['dataDisks']):
+                   len(self.data_disks) != len(vmss_dict['properties']['virtualMachineProfile']['storageProfile'].get('dataDisks', [])):
                     self.log('CHANGED: virtual machine scale set {0} - Data Disks'.format(self.name))
                     differences.append('Data Disks')
                     changed = True

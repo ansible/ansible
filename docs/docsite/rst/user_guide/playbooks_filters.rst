@@ -47,6 +47,22 @@ for example::
     - set_fact:
         myvar: "{{ result.stdout | from_json }}"
 
+
+.. versionadded:: 2.7
+
+To parse multi-document yaml strings, the ``from_yaml_all`` filter is provided.
+The ``from_yaml_all`` filter will return a generator of parsed yaml documents.
+
+for example::
+
+  tasks:
+    - shell: cat /some/path/to/multidoc-file.yaml
+      register: result
+   - debug:
+       msg: '{{ item }}'
+    loop: '{{ result.stdout | from_yaml_all | list }}'
+
+
 .. _forcing_variables_to_be_defined:
 
 Forcing Variables To Be Defined
@@ -127,10 +143,8 @@ Flatten a list (same thing the `flatten` lookup does)::
 
 Flatten only the first level of a list (akin to the `items` lookup)::
 
-    {{ [3, [4, [2]] ]|flatten(level=1) }}
+    {{ [3, [4, [2]] ]|flatten(levels=1) }}
 
-
-To get the minimum value from list of numbers::
 
 .. _set_theory_filters:
 
@@ -185,6 +199,152 @@ into::
       value: payment
     - key: Environment
       value: dev
+
+items2dict filter
+`````````````````
+
+.. versionadded:: 2.7
+
+This filter turns a list of dicts with 2 keys, into a dict, mapping the values of those keys into ``key: value`` pairs::
+
+    {{ tags | items2dict }}
+
+Which turns::
+
+    tags:
+      - key: Application
+        value: payment
+      - key: Environment
+        value: dev
+
+into::
+
+    Application: payment
+    Environment: dev
+
+This is the reverse of the ``dict2items`` filter.
+
+``items2dict`` accepts 2 keyword arguments, ``key_name`` and ``value_name`` that allow configuration of the names of the keys to use for the transformation::
+
+    {{ tags | items2dict(key_name='key', value_name='value') }}
+
+
+.. _zip_filter:
+
+zip and zip_longest filters
+```````````````````````````
+
+.. versionadded:: 2.3
+
+To get a list combining the elements of other lists use ``zip``::
+
+    - name: give me list combo of two lists
+      debug:
+       msg: "{{ [1,2,3,4,5]|zip(['a','b','c','d','e','f'])|list }}"
+
+    - name: give me shortest combo of two lists
+      debug:
+        msg: "{{ [1,2,3]|zip(['a','b','c','d','e','f'])|list }}"
+
+To always exhaust all list use ``zip_longest``::
+
+    - name: give me longest combo of three lists , fill with X
+      debug:
+        msg: "{{ [1,2,3]|zip_longest(['a','b','c','d','e','f'], [21, 22, 23], fillvalue='X')|list }}"
+
+
+Similarly to the output of the ``items2dict`` filter mentioned above, these filters can be used to contruct a ``dict``::
+
+    {{ dict(keys_list | zip(values_list)) }}
+
+Which turns::
+
+    list_one:
+      - one
+      - two
+    list_two:
+      - apple
+      - orange
+
+into::
+
+    one: apple
+    two: orange
+
+subelements Filter
+``````````````````
+
+.. versionadded:: 2.7
+
+Produces a product of an object, and subelement values of that object, similar to the ``subelements`` lookup::
+
+    {{ users|subelements('groups', skip_missing=True) }}
+
+Which turns::
+
+    users:
+      - name: alice
+        authorized:
+          - /tmp/alice/onekey.pub
+          - /tmp/alice/twokey.pub
+        groups:
+          - wheel
+          - docker
+      - name: bob
+        authorized:
+          - /tmp/bob/id_rsa.pub
+        groups:
+          - docker
+
+Into::
+
+    -
+      - name: alice
+        groups:
+          - wheel
+          - docker
+        authorized:
+          - /tmp/alice/onekey.pub
+      - wheel
+    -
+      - name: alice
+        groups:
+          - wheel
+          - docker
+        authorized:
+          - /tmp/alice/onekey.pub
+      - docker
+    -
+      - name: bob
+        authorized:
+          - /tmp/bob/id_rsa.pub
+        groups:
+          - docker
+      - docker
+
+An example of using this filter with ``loop``::
+
+    - name: Set authorized ssh key, extracting just that data from 'users'
+      authorized_key:
+        user: "{{ item.0.name }}"
+        key: "{{ lookup('file', item.1) }}"
+      loop: "{{ users|subelements('authorized') }}"
+
+.. _random_mac_filter:
+
+Random Mac Address Filter
+`````````````````````````
+
+.. versionadded:: 2.6
+
+This filter can be used to generate a random MAC address from a string prefix.
+
+To get a random MAC address from a string prefix starting with '52:54:00'::
+
+    "{{ '52:54:00'|random_mac }}"
+    # => '52:54:00:ef:1c:03'
+
+Note that if anything is wrong with the prefix string, the filter will issue an error.
 
 .. _random_filter:
 
@@ -313,40 +473,51 @@ Now, let's take the following data structure::
 To extract all clusters from this structure, you can use the following query::
 
     - name: "Display all cluster names"
-      debug: var=item
-      loop: "{{domain_definition|json_query('domain.cluster[*].name')}}"
+      debug:
+        var: item
+      loop: "{{ domain_definition | json_query('domain.cluster[*].name') }}"
 
 Same thing for all server names::
 
     - name: "Display all server names"
-      debug: var=item
-      loop: "{{domain_definition|json_query('domain.server[*].name')}}"
+      debug:
+        var: item
+      loop: "{{ domain_definition | json_query('domain.server[*].name') }}"
 
 This example shows ports from cluster1::
 
-    - name: "Display all server names from cluster1"
-      debug: var=item
-      loop: "{{domain_definition|json_query(server_name_cluster1_query)}}"
+    - name: "Display all ports from cluster1"
+      debug:
+        var: item
+      loop: "{{ domain_definition | json_query(server_name_cluster1_query) }}"
       vars:
         server_name_cluster1_query: "domain.server[?cluster=='cluster1'].port"
 
 .. note:: You can use a variable to make the query more readable.
 
-Or, alternatively::
+Or, alternatively print out the ports in a comma separated string::
 
-    - name: "Display all server names from cluster1"
+    - name: "Display all ports from cluster1 as a string"
       debug:
-        var: item
-      loop: "{{domain_definition|json_query('domain.server[?cluster=`cluster1`].port')}}"
+        msg: "{{ domain_definition | json_query('domain.server[?cluster==`cluster1`].port') | join(', ') }}"
 
 .. note:: Here, quoting literals using backticks avoids escaping quotes and maintains readability.
+
+Or, using YAML `single quote escaping <http://yaml.org/spec/current.html#id2534365>`_::
+
+    - name: "Display all ports from cluster1"
+      debug:
+        var: item
+      loop: "{{ domain_definition | json_query('domain.server[?cluster==''cluster1''].port') }}"
+
+.. note:: Escaping single quotes within single quotes in YAML is done by doubling the single quote.
 
 In this example, we get a hash map with all ports and names of a cluster::
 
     - name: "Display all server ports and names from cluster1"
       debug:
         var: item
-      loop: "{{domain_definition|json_query(server_name_cluster1_query)}}"
+      loop: "{{ domain_definition | json_query(server_name_cluster1_query) }}"
       vars:
         server_name_cluster1_query: "domain.server[?cluster=='cluster2'].{name: name, port: port}"
 
@@ -384,9 +555,7 @@ Network CLI filters
 To convert the output of a network device CLI command into structured JSON
 output, use the ``parse_cli`` filter::
 
-.. code-block:: yaml
-
-  {{ output | parse_cli('path/to/spec') }}
+    {{ output | parse_cli('path/to/spec') }}
 
 
 The ``parse_cli`` filter will load the spec file and pass the command output
@@ -472,7 +641,7 @@ The network filters also support parsing the output of a CLI command using the
 TextFSM library.  To parse the CLI output with TextFSM use the following
 filter::
 
-  {{ output | parse_cli_textfsm('path/to/fsm') }}
+  {{ output.stdout[0] | parse_cli_textfsm('path/to/fsm') }}
 
 Use of the TextFSM filter requires the TextFSM library to be installed.
 
@@ -831,12 +1000,15 @@ To search a string with a regex, use the "regex_search" filter::
 
     # will return empty if it cannot find a match
     {{ 'ansible' | regex_search('(foobar)') }}
+    
+    # case insensitive search in multiline mode
+    {{ 'foo\nBAR' | regex_search("^bar", multiline=True, ignorecase=True) }}
 
 
 To search for all occurrences of regex matches, use the "regex_findall" filter::
 
     # Return a list of all IPv4 addresses in the string
-    {{ 'Some DNS servers are 8.8.8.8 and 8.8.4.4' | regex_findall('\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b') }}
+    {{ 'Some DNS servers are 8.8.8.8 and 8.8.4.4' | regex_findall('\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b') }}
 
 
 To replace text in a string with regex, use the "regex_replace" filter::
@@ -852,6 +1024,9 @@ To replace text in a string with regex, use the "regex_replace" filter::
 
     # convert "localhost:80" to "localhost"
     {{ 'localhost:80' | regex_replace(':80') }}
+    
+    # add "https://" prefix to each item in a list
+    {{ hosts | map('regex_replace', '^(.*)$', 'https://\\1') | list }}
 
 .. note:: Prior to ansible 2.0, if "regex_replace" filter was used with variables inside YAML arguments (as opposed to simpler 'key=value' arguments),
    then you needed to escape backreferences (e.g. ``\\1``) with 4 backslashes (``\\\\``) instead of 2 (``\\``).
@@ -937,6 +1112,13 @@ To work with Base64 encoded strings::
     {{ encoded | b64decode }}
     {{ decoded | b64encode }}
 
+As of version 2.6, you can define the type of encoding to use, the default is ``utf-8``::
+
+    {{ encoded | b64decode(encoding='utf-16-le') }}
+    {{ decoded | b64encode(encoding='utf-16-le') }}
+
+.. versionadded:: 2.6
+
 To create a UUID from a string (new in version 1.9)::
 
     {{ hostname | to_uuid }}
@@ -990,22 +1172,7 @@ Combinations always require a set size::
         msg: "{{ [1,2,3,4,5]|combinations(2)|list }}"
 
 
-To get a list combining the elements of other lists use ``zip``::
-
-    - name: give me list combo of two lists
-      debug:
-       msg: "{{ [1,2,3,4,5]|zip(['a','b','c','d','e','f'])|list }}"
-
-    - name: give me shortest combo of two lists
-      debug:
-        msg: "{{ [1,2,3]|zip(['a','b','c','d','e','f'])|list }}"
-
-To always exhaust all list use ``zip_longest``::
-
-    - name: give me longest combo of three lists , fill with X
-      debug:
-        msg: "{{ [1,2,3]|zip_longest(['a','b','c','d','e','f'], [21, 22, 23], fillvalue='X')|list }}"
-
+Also see the :ref:`zip_filter`
 
 .. versionadded:: 2.4
 

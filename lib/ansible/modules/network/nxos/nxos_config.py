@@ -100,7 +100,7 @@ options:
         the modified lines are pushed to the device in configuration
         mode.  If the replace argument is set to I(block) then the entire
         command block is pushed to the device in configuration mode if any
-        line is not correct. I(replace config) is supported only on Nexus 9K device.
+        line is not correct. replace I(config) is supported only on Nexus 9K device.
     default: line
     choices: ['line', 'block', 'config']
   force:
@@ -169,9 +169,11 @@ options:
         will only be copied to the startup-config if it has changed since
         the last save to startup-config.  If the argument is set to
         I(never), the running-config will never be copied to the
-        startup-config
+        startup-config.  If the argument is set to I(changed), then the running-config
+        will only be copied to the startup-config if the task has made a change.
+        I(changed) was added in Ansible 2.6.
     default: never
-    choices: ['always', 'never', 'modified']
+    choices: ['always', 'never', 'modified', 'changed']
     version_added: "2.4"
   diff_against:
     description:
@@ -224,21 +226,21 @@ EXAMPLES = """
 
 - nxos_config:
     lines:
-      - 10 permit ip 1.1.1.1/32 any log
-      - 20 permit ip 2.2.2.2/32 any log
-      - 30 permit ip 3.3.3.3/32 any log
-      - 40 permit ip 4.4.4.4/32 any log
-      - 50 permit ip 5.5.5.5/32 any log
+      - 10 permit ip 192.0.2.1/32 any log
+      - 20 permit ip 192.0.2.2/32 any log
+      - 30 permit ip 192.0.2.3/32 any log
+      - 40 permit ip 192.0.2.4/32 any log
+      - 50 permit ip 192.0.2.5/32 any log
     parents: ip access-list test
     before: no ip access-list test
     match: exact
 
 - nxos_config:
     lines:
-      - 10 permit ip 1.1.1.1/32 any log
-      - 20 permit ip 2.2.2.2/32 any log
-      - 30 permit ip 3.3.3.3/32 any log
-      - 40 permit ip 4.4.4.4/32 any log
+      - 10 permit ip 192.0.2.1/32 any log
+      - 20 permit ip 192.0.2.2/32 any log
+      - 30 permit ip 192.0.2.3/32 any log
+      - 40 permit ip 192.0.2.4/32 any log
     parents: ip access-list test
     before: no ip access-list test
     replace: block
@@ -274,12 +276,11 @@ backup_path:
   type: string
   sample: /playbooks/ansible/backup/nxos_config.2016-07-16@22:28:34
 """
-
-
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
-from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands, get_connection
 from ansible.module_utils.network.nxos.nxos import get_capabilities
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.network.nxos.nxos import check_args as nxos_check_args
@@ -294,19 +295,21 @@ def get_running_config(module, config=None):
         else:
             flags = ['all']
             contents = get_config(module, flags=flags)
-    return NetworkConfig(indent=2, contents=contents)
+    return contents
 
 
 def get_candidate(module):
-    candidate = NetworkConfig(indent=2)
+    candidate = ''
     if module.params['src']:
         if module.params['replace'] != 'config':
-            candidate.load(module.params['src'])
+            candidate = module.params['src']
     if module.params['replace'] == 'config':
-        candidate.load('config replace {0}'.format(module.params['replace_src']))
+        candidate = 'config replace {0}'.format(module.params['replace_src'])
     elif module.params['lines']:
+        candidate_obj = NetworkConfig(indent=2)
         parents = module.params['parents'] or list()
-        candidate.add(module.params['lines'], parents=parents)
+        candidate_obj.add(module.params['lines'], parents=parents)
+        candidate = dumps(candidate_obj, 'raw')
     return candidate
 
 
@@ -319,6 +322,17 @@ def execute_show_commands(module, commands, output='text'):
         cmds.append(cmd)
     body = run_commands(module, cmds)
     return body
+
+
+def save_config(module, result):
+    result['changed'] = True
+    if not module.check_mode:
+        cmd = {'command': 'copy running-config startup-config', 'output': 'text'}
+        run_commands(module, [cmd])
+    else:
+        module.warn('Skipping command `copy running-config startup-config` '
+                    'due to check_mode.  Configuration not copied to '
+                    'non-volatile storage')
 
 
 def main():
@@ -342,16 +356,16 @@ def main():
         defaults=dict(type='bool', default=False),
         backup=dict(type='bool', default=False),
 
-        save_when=dict(choices=['always', 'never', 'modified'], default='never'),
+        save_when=dict(choices=['always', 'never', 'modified', 'changed'], default='never'),
 
         diff_against=dict(choices=['running', 'startup', 'intended']),
         diff_ignore_lines=dict(type='list'),
 
         # save is deprecated as of ans2.4, use save_when instead
-        save=dict(default=False, type='bool', removed_in_version='2.4'),
+        save=dict(default=False, type='bool', removed_in_version='2.8'),
 
         # force argument deprecated in ans2.2
-        force=dict(default=False, type='bool', removed_in_version='2.2')
+        force=dict(default=False, type='bool', removed_in_version='2.6')
     )
 
     argument_spec.update(nxos_argument_spec)
@@ -380,7 +394,7 @@ def main():
 
     try:
         info = get_capabilities(module)
-        api = info.get('network_api', 'nxapi')
+        api = info.get('network_api')
         device_info = info.get('device_info', {})
         os_platform = device_info.get('network_os_platform', '')
     except ConnectionError:
@@ -391,7 +405,12 @@ def main():
         if '9K' not in os_platform:
             module.fail_json(msg='replace: config is supported only on Nexus 9K series switches')
 
-    if module.params['replace_src']:
+    diff_ignore_lines = module.params['diff_ignore_lines']
+    path = module.params['parents']
+    connection = get_connection(module)
+    contents = None
+    replace_src = module.params['replace_src']
+    if replace_src:
         if module.params['replace'] != 'config':
             module.fail_json(msg='replace: config is required with replace_src')
 
@@ -401,69 +420,70 @@ def main():
         if module.params['backup']:
             result['__backup__'] = contents
 
-    if any((module.params['src'], module.params['lines'], module.params['replace_src'])):
+    if any((module.params['src'], module.params['lines'], replace_src)):
         match = module.params['match']
         replace = module.params['replace']
 
+        commit = not module.check_mode
         candidate = get_candidate(module)
-
-        if match != 'none' and replace != 'config':
-            config = get_running_config(module, config)
-            path = module.params['parents']
-            configobjs = candidate.difference(config, match=match, replace=replace, path=path)
-        else:
-            configobjs = candidate.items
-
-        if configobjs:
-            commands = dumps(configobjs, 'commands').split('\n')
-
-            if module.params['before']:
-                commands[:0] = module.params['before']
-
-            if module.params['after']:
-                commands.extend(module.params['after'])
-
-            result['commands'] = commands
-            result['updates'] = commands
-
-            if not module.check_mode:
-                load_config(module, commands)
+        running = get_running_config(module, contents)
+        if replace_src:
+            commands = candidate.split('\n')
+            result['commands'] = result['updates'] = commands
+            if commit:
+                load_config(module, commands, replace=replace_src)
 
             result['changed'] = True
+        else:
+            try:
+                response = connection.get_diff(candidate=candidate, running=running, diff_match=match, diff_ignore_lines=diff_ignore_lines, path=path,
+                                               diff_replace=replace)
+            except ConnectionError as exc:
+                module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
-    running_config = None
+            config_diff = response['config_diff']
+            if config_diff:
+                commands = config_diff.split('\n')
+
+                if module.params['before']:
+                    commands[:0] = module.params['before']
+
+                if module.params['after']:
+                    commands.extend(module.params['after'])
+
+                result['commands'] = commands
+                result['updates'] = commands
+
+                if commit:
+                    load_config(module, commands, replace=replace_src)
+
+                result['changed'] = True
+
+    running_config = module.params['running_config']
     startup_config = None
 
-    diff_ignore_lines = module.params['diff_ignore_lines']
-
-    if module.params['save']:
-        module.params['save_when'] = 'always'
-
-    if module.params['save_when'] != 'never':
+    if module.params['save_when'] == 'always' or module.params['save']:
+        save_config(module, result)
+    elif module.params['save_when'] == 'modified':
         output = execute_show_commands(module, ['show running-config', 'show startup-config'])
 
-        running_config = NetworkConfig(indent=1, contents=output[0], ignore_lines=diff_ignore_lines)
-        startup_config = NetworkConfig(indent=1, contents=output[1], ignore_lines=diff_ignore_lines)
+        running_config = NetworkConfig(indent=2, contents=output[0], ignore_lines=diff_ignore_lines)
+        startup_config = NetworkConfig(indent=2, contents=output[1], ignore_lines=diff_ignore_lines)
 
-        if running_config.sha1 != startup_config.sha1 or module.params['save_when'] == 'always':
-            result['changed'] = True
-            if not module.check_mode:
-                cmd = {'command': 'copy running-config startup-config', 'output': 'text'}
-                run_commands(module, [cmd])
-            else:
-                module.warn('Skipping command `copy running-config startup-config` '
-                            'due to check_mode.  Configuration not copied to '
-                            'non-volatile storage')
+        if running_config.sha1 != startup_config.sha1:
+            save_config(module, result)
+    elif module.params['save_when'] == 'changed' and result['changed']:
+        save_config(module, result)
 
     if module._diff:
         if not running_config:
             output = execute_show_commands(module, 'show running-config')
             contents = output[0]
         else:
-            contents = running_config.config_text
+            contents = running_config
 
         # recreate the object in order to process diff_ignore_lines
-        running_config = NetworkConfig(indent=1, contents=contents, ignore_lines=diff_ignore_lines)
+        running_config = NetworkConfig(indent=2, contents=contents, ignore_lines=diff_ignore_lines)
 
         if module.params['diff_against'] == 'running':
             if module.check_mode:
@@ -477,14 +497,13 @@ def main():
                 output = execute_show_commands(module, 'show startup-config')
                 contents = output[0]
             else:
-                contents = output[0]
                 contents = startup_config.config_text
 
         elif module.params['diff_against'] == 'intended':
             contents = module.params['intended_config']
 
         if contents is not None:
-            base_config = NetworkConfig(indent=1, contents=contents, ignore_lines=diff_ignore_lines)
+            base_config = NetworkConfig(indent=2, contents=contents, ignore_lines=diff_ignore_lines)
 
             if running_config.sha1 != base_config.sha1:
                 if module.params['diff_against'] == 'intended':

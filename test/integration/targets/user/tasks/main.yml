@@ -37,7 +37,13 @@
   user:
     name: ansibulluser
     state: present
-  register: user_test0
+  register: user_test0_0
+
+- name: create the user again
+  user:
+    name: ansibulluser
+    state: present
+  register: user_test0_1
 
 - debug:
     var: user_test0
@@ -54,8 +60,49 @@
 - name: validate results for testcase 0
   assert:
     that:
-      - user_test0 is changed
+      - user_test0_0 is changed
+      - user_test0_1 is not changed
       - '"ansibulluser" in user_names.stdout_lines'
+
+# https://github.com/ansible/ansible/issues/42484
+# Skipping macOS for now since there is a bug when changing home directory
+- block:
+    - name: create user specifying home
+      user:
+        name: ansibulluser
+        state: present
+        home: "{{ user_home_prefix[ansible_system] }}/ansibulluser"
+      register: user_test3_0
+
+    - name: create user again specifying home
+      user:
+        name: ansibulluser
+        state: present
+        home: "{{ user_home_prefix[ansible_system] }}/ansibulluser"
+      register: user_test3_1
+
+    - name: change user home
+      user:
+        name: ansibulluser
+        state: present
+        home: "{{ user_home_prefix[ansible_system] }}/ansibulluser-mod"
+      register: user_test3_2
+
+    - name: change user home back
+      user:
+        name: ansibulluser
+        state: present
+        home: "{{ user_home_prefix[ansible_system] }}/ansibulluser"
+      register: user_test3_3
+
+    - name: validate results for testcase 3
+      assert:
+        that:
+          - user_test3_0 is not changed
+          - user_test3_1 is not changed
+          - user_test3_2 is changed
+          - user_test3_3 is changed
+  when: ansible_system != 'Darwin'
 
 
 ## user check
@@ -65,7 +112,7 @@
     name: "{{ user_names.stdout_lines | random }}"
     state: present
     create_home: no
-  with_sequence: start=1 end=5
+  loop: "{{ range(1, 5+1) | list }}"
   register: user_test1
 
 - debug:
@@ -246,3 +293,56 @@
     - name: Restore original timezone - {{ original_timezone.diff.before.name }}
       timezone:
         name: "{{ original_timezone.diff.before.name }}"
+
+
+- name: Unexpire user
+  user:
+    name: ansibulluser
+    state: present
+    expires: -1
+  register: user_test_expires3
+
+- name: Verify un expiration date for Linux
+  block:
+    - name: LINUX | Get expiration date for ansibulluser
+      getent:
+        database: shadow
+        key: ansibulluser
+
+    - name: LINUX | Ensure proper expiration date was set
+      assert:
+        msg: "expiry is supposed to be empty or -1, not {{getent_shadow['ansibulluser'][6]}}"
+        that:
+          - not getent_shadow['ansibulluser'][6] or getent_shadow['ansibulluser'][6] < 0
+  when: ansible_os_family in ['RedHat', 'Debian', 'Suse']
+
+- name: Verify un expiration date for linux/BSD
+  block:
+    - name: Unexpire user again to check for change
+      user:
+        name: ansibulluser
+        state: present
+        expires: -1
+      register: user_test_expires4
+
+    - name: Ensure first expiration reported a change and second did not
+      assert:
+        msg: The second run of the expiration removal task reported a change when it should not
+        that:
+          - user_test_expires3 is changed
+          - user_test_expires4 is not changed
+  when: ansible_os_family in ['RedHat', 'Debian', 'Suse', 'FreeBSD']
+
+- name: Verify un expiration date for BSD
+  block:
+    - name: BSD | Get expiration date for ansibulluser
+      shell: 'grep ansibulluser /etc/master.passwd | cut -d: -f 7'
+      changed_when: no
+      register: bsd_account_expiration
+
+    - name: BSD | Ensure proper expiration date was set
+      assert:
+        msg: "expiry is supposed to be '0', not {{bsd_account_expiration.stdout}}"
+        that:
+          - bsd_account_expiration.stdout == '0'
+  when: ansible_os_family == 'FreeBSD'

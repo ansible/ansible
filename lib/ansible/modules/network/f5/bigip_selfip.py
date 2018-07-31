@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
@@ -34,8 +34,9 @@ options:
   name:
     description:
       - The self IP to create.
+      - If this parameter is not specified, then it will default to the value supplied
+        in the C(address) parameter.
     required: True
-    default: Value of C(address)
   netmask:
     description:
       - The netmask for the self IP. When creating a new Self IP, this value

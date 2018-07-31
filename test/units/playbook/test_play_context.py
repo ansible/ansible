@@ -154,8 +154,7 @@ def test_play_context_make_become_cmd(parser):
 
     play_context.become_method = 'doas'
     cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
-    assert (cmd == """%s %s echo %s && %s %s env ANSIBLE=true %s""" % (doas_exe, doas_flags, play_context.
-                                                                       success_key, doas_exe, doas_flags, default_cmd))
+    assert (cmd == """%s %s %s -c 'echo %s; %s'""" % (doas_exe, doas_flags, default_exe, play_context.success_key, default_cmd))
 
     play_context.become_method = 'ksu'
     cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")

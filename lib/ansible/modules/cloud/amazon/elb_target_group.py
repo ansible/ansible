@@ -130,6 +130,17 @@ options:
     description:
       - The identifier of the virtual private cloud (VPC). Required when I(state) is C(present).
     required: false
+  wait:
+    description:
+      - Whether or not to wait for the target group.
+    type: bool
+    default: false
+    version_added: "2.4"
+  wait_timeout:
+    description:
+      - The time to wait for the target group.
+    default: 200
+    version_added: "2.4"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -304,50 +315,44 @@ vpc_id:
 '''
 
 import time
-import traceback
 
 try:
-    import boto3
-    from botocore.exceptions import ClientError, NoCredentialsError
-    HAS_BOTO3 = True
+    import botocore
 except ImportError:
-    HAS_BOTO3 = False
+    pass  # handled by AnsibleAWSModule
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (boto3_conn, get_aws_connection_info, camel_dict_to_snake_dict,
-                                      ec2_argument_spec, boto3_tag_list_to_ansible_dict,
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import (camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict, ec2_argument_spec,
                                       compare_aws_tags, ansible_dict_to_boto3_tag_list)
+from distutils.version import LooseVersion
 
 
 def get_tg_attributes(connection, module, tg_arn):
-
     try:
         tg_attributes = boto3_tag_list_to_ansible_dict(connection.describe_target_group_attributes(TargetGroupArn=tg_arn)['Attributes'])
-    except ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Couldn't get target group attributes")
 
     # Replace '.' with '_' in attribute key names to make it more Ansibley
     return dict((k.replace('.', '_'), v) for k, v in tg_attributes.items())
 
 
 def get_target_group_tags(connection, module, target_group_arn):
-
     try:
         return connection.describe_tags(ResourceArns=[target_group_arn])['TagDescriptions'][0]['Tags']
-    except ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Couldn't get target group tags")
 
 
 def get_target_group(connection, module):
-
     try:
         target_group_paginator = connection.get_paginator('describe_target_groups')
         return (target_group_paginator.paginate(Names=[module.params.get("name")]).build_full_result())['TargetGroups'][0]
-    except ClientError as e:
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         if e.response['Error']['Code'] == 'TargetGroupNotFound':
             return None
         else:
-            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            module.fail_json_aws(e, msg="Couldn't get target group")
 
 
 def wait_for_status(connection, module, target_group_arn, targets, status):
@@ -363,11 +368,17 @@ def wait_for_status(connection, module, target_group_arn, targets, status):
                 break
             else:
                 time.sleep(polling_increment_secs)
-        except ClientError as e:
-            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Couldn't describe target health")
 
     result = response
     return status_achieved, result
+
+
+def fail_if_ip_target_type_not_supported(module):
+    if LooseVersion(botocore.__version__) < LooseVersion('1.7.2'):
+        module.fail_json(msg="target_type ip requires botocore version 1.7.2 or later. Version %s is installed" %
+                         botocore.__version__)
 
 
 def create_or_update_target_group(connection, module):
@@ -415,6 +426,8 @@ def create_or_update_target_group(connection, module):
     # Get target type
     if module.params.get("target_type") is not None:
         params['TargetType'] = module.params.get("target_type")
+        if params['TargetType'] == 'ip':
+            fail_if_ip_target_type_not_supported(module)
 
     # Get target group
     tg = get_target_group(connection, module)
@@ -471,8 +484,8 @@ def create_or_update_target_group(connection, module):
                 if health_check_params:
                     connection.modify_target_group(TargetGroupArn=tg['TargetGroupArn'], **health_check_params)
                     changed = True
-            except ClientError as e:
-                module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                module.fail_json_aws(e, msg="Couldn't update target group")
 
         # Do we need to modify targets?
         if module.params.get("modify_targets"):
@@ -484,8 +497,8 @@ def create_or_update_target_group(connection, module):
 
                 try:
                     current_targets = connection.describe_target_health(TargetGroupArn=tg['TargetGroupArn'])
-                except ClientError as e:
-                    module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                    module.fail_json_aws(e, msg="Couldn't get target group health")
 
                 current_instance_ids = []
 
@@ -507,13 +520,13 @@ def create_or_update_target_group(connection, module):
                     changed = True
                     try:
                         connection.register_targets(TargetGroupArn=tg['TargetGroupArn'], Targets=instances_to_add)
-                    except ClientError as e:
-                        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                        module.fail_json_aws(e, msg="Couldn't register targets")
 
                     if module.params.get("wait"):
                         status_achieved, registered_instances = wait_for_status(connection, module, tg['TargetGroupArn'], instances_to_add, 'healthy')
                         if not status_achieved:
-                            module.fail_json(msg='Error waiting for target registration - please check the AWS console')
+                            module.fail_json(msg='Error waiting for target registration to be healthy - please check the AWS console')
 
                 remove_instances = set(current_instance_ids) - set(new_instance_ids)
 
@@ -526,8 +539,8 @@ def create_or_update_target_group(connection, module):
                     changed = True
                     try:
                         connection.deregister_targets(TargetGroupArn=tg['TargetGroupArn'], Targets=instances_to_remove)
-                    except ClientError as e:
-                        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                        module.fail_json_aws(e, msg="Couldn't remove targets")
 
                     if module.params.get("wait"):
                         status_achieved, registered_instances = wait_for_status(connection, module, tg['TargetGroupArn'], instances_to_remove, 'unused')
@@ -536,8 +549,8 @@ def create_or_update_target_group(connection, module):
             else:
                 try:
                     current_targets = connection.describe_target_health(TargetGroupArn=tg['TargetGroupArn'])
-                except ClientError as e:
-                    module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                    module.fail_json_aws(e, msg="Couldn't get target health")
 
                 current_instances = current_targets['TargetHealthDescriptions']
 
@@ -549,8 +562,8 @@ def create_or_update_target_group(connection, module):
                     changed = True
                     try:
                         connection.deregister_targets(TargetGroupArn=tg['TargetGroupArn'], Targets=instances_to_remove)
-                    except ClientError as e:
-                        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                        module.fail_json_aws(e, msg="Couldn't remove targets")
 
                     if module.params.get("wait"):
                         status_achieved, registered_instances = wait_for_status(connection, module, tg['TargetGroupArn'], instances_to_remove, 'unused')
@@ -561,8 +574,8 @@ def create_or_update_target_group(connection, module):
             connection.create_target_group(**params)
             changed = True
             new_target_group = True
-        except ClientError as e:
-            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Couldn't create target group")
 
         tg = get_target_group(connection, module)
 
@@ -570,13 +583,13 @@ def create_or_update_target_group(connection, module):
             params['Targets'] = module.params.get("targets")
             try:
                 connection.register_targets(TargetGroupArn=tg['TargetGroupArn'], Targets=params['Targets'])
-            except ClientError as e:
-                module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                module.fail_json_aws(e, msg="Couldn't register targets")
 
             if module.params.get("wait"):
                 status_achieved, registered_instances = wait_for_status(connection, module, tg['TargetGroupArn'], params['Targets'], 'healthy')
                 if not status_achieved:
-                    module.fail_json(msg='Error waiting for target registration - please check the AWS console')
+                    module.fail_json(msg='Error waiting for target registration to be healthy - please check the AWS console')
 
     # Now set target group attributes
     update_attributes = []
@@ -601,11 +614,11 @@ def create_or_update_target_group(connection, module):
         try:
             connection.modify_target_group_attributes(TargetGroupArn=tg['TargetGroupArn'], Attributes=update_attributes)
             changed = True
-        except ClientError as e:
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             # Something went wrong setting attributes. If this target group was created during this task, delete it to leave a consistent state
             if new_target_group:
                 connection.delete_target_group(TargetGroupArn=tg['TargetGroupArn'])
-            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            module.fail_json_aws(e, msg="Couldn't delete target group")
 
     # Tags - only need to play with tags if tags parameter has been set to something
     if tags:
@@ -617,16 +630,16 @@ def create_or_update_target_group(connection, module):
         if tags_to_delete:
             try:
                 connection.remove_tags(ResourceArns=[tg['TargetGroupArn']], TagKeys=tags_to_delete)
-            except ClientError as e:
-                module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                module.fail_json_aws(e, msg="Couldn't delete tags from target group")
             changed = True
 
         # Add/update tags
         if tags_need_modify:
             try:
                 connection.add_tags(ResourceArns=[tg['TargetGroupArn']], Tags=ansible_dict_to_boto3_tag_list(tags_need_modify))
-            except ClientError as e:
-                module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                module.fail_json_aws(e, msg="Couldn't add tags to target group")
             changed = True
 
     # Get the target group again
@@ -644,7 +657,6 @@ def create_or_update_target_group(connection, module):
 
 
 def delete_target_group(connection, module):
-
     changed = False
     tg = get_target_group(connection, module)
 
@@ -652,66 +664,53 @@ def delete_target_group(connection, module):
         try:
             connection.delete_target_group(TargetGroupArn=tg['TargetGroupArn'])
             changed = True
-        except ClientError as e:
-            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Couldn't delete target group")
 
     module.exit_json(changed=changed)
 
 
 def main():
-
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
             deregistration_delay_timeout=dict(type='int'),
-            health_check_protocol=dict(choices=['http', 'https', 'tcp', 'HTTP', 'HTTPS', 'TCP'], type='str'),
+            health_check_protocol=dict(choices=['http', 'https', 'tcp', 'HTTP', 'HTTPS', 'TCP']),
             health_check_port=dict(),
-            health_check_path=dict(default=None, type='str'),
+            health_check_path=dict(),
             health_check_interval=dict(type='int'),
             health_check_timeout=dict(type='int'),
             healthy_threshold_count=dict(type='int'),
             modify_targets=dict(default=True, type='bool'),
-            name=dict(required=True, type='str'),
+            name=dict(required=True),
             port=dict(type='int'),
-            protocol=dict(choices=['http', 'https', 'tcp', 'HTTP', 'HTTPS', 'TCP'], type='str'),
+            protocol=dict(choices=['http', 'https', 'tcp', 'HTTP', 'HTTPS', 'TCP']),
             purge_tags=dict(default=True, type='bool'),
             stickiness_enabled=dict(type='bool'),
-            stickiness_type=dict(default='lb_cookie', type='str'),
+            stickiness_type=dict(default='lb_cookie'),
             stickiness_lb_cookie_duration=dict(type='int'),
-            state=dict(required=True, choices=['present', 'absent'], type='str'),
-            successful_response_codes=dict(type='str'),
+            state=dict(required=True, choices=['present', 'absent']),
+            successful_response_codes=dict(),
             tags=dict(default={}, type='dict'),
-            target_type=dict(type='str', default='instance', choices=['instance', 'ip']),
+            target_type=dict(default='instance', choices=['instance', 'ip']),
             targets=dict(type='list'),
             unhealthy_threshold_count=dict(type='int'),
-            vpc_id=dict(type='str'),
-            wait_timeout=dict(type='int'),
-            wait=dict(type='bool')
+            vpc_id=dict(),
+            wait_timeout=dict(type='int', default=200),
+            wait=dict(type='bool', default=False)
         )
     )
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                           required_if=[
-                               ('state', 'present', ['protocol', 'port', 'vpc_id'])
-                           ]
-                           )
+    module = AnsibleAWSModule(argument_spec=argument_spec,
+                              required_if=[['state', 'present', ['protocol', 'port', 'vpc_id']]])
 
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
+    connection = module.client('elbv2')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
-    if region:
-        connection = boto3_conn(module, conn_type='client', resource='elbv2', region=region, endpoint=ec2_url, **aws_connect_params)
-    else:
-        module.fail_json(msg="region must be specified")
-
-    state = module.params.get("state")
-
-    if state == 'present':
+    if module.params.get('state') == 'present':
         create_or_update_target_group(connection, module)
     else:
         delete_target_group(connection, module)
+
 
 if __name__ == '__main__':
     main()

@@ -7,7 +7,7 @@
 
 .. _@{ module }@_@{ plugin_type }@:
 {% for alias in aliases %}
-.. _@{ alias }@:
+.. _@{ alias }@_@{ plugin_type }@:
 {% endfor %}
 
 {% if short_description %}
@@ -88,106 +88,108 @@ Parameters
 .. raw:: html
 
     <table  border=0 cellpadding=0 class="documentation-table">
-        {# Header of the documentation #}
+        {# Pre-compute the nesting depth to allocate columns -#}
+        @{ to_kludge_ns('maxdepth', 1) -}@
+        {% for key, value in options|dictsort recursive -%}
+            @{ to_kludge_ns('maxdepth', [loop.depth, from_kludge_ns('maxdepth')] | max) -}@
+            {% if value.suboptions -%}
+                {% if value.suboptions.items -%}
+                    @{ loop(value.suboptions.items()) -}@
+                {% elif value.suboptions[0].items -%}
+                    @{ loop(value.suboptions[0].items()) -}@
+                {% endif -%}
+            {% endif -%}
+        {% endfor -%}
+        {# Header of the documentation -#}
         <tr>
-            <th class="head"><div class="cell-border">Parameter</div></th>
-            <th class="head"><div class="cell-border">Choices/<font color="blue">Defaults</font></div></th>
+            <th colspan="@{ from_kludge_ns('maxdepth') }@">Parameter</th>
+            <th>Choices/<font color="blue">Defaults</font></th>
             {% if plugin_type != 'module' %}
-                <th class="head"><div class="cell-border">Configuration</div></th>
+                <th>Configuration</th>
             {% endif %}
-            <th class="head" width="100%"><div class="cell-border">Comments</div></th>
+            <th width="100%">Comments</th>
         </tr>
         {% for key, value in options|dictsort recursive %}
-            <tr class="return-value-column">
+            <tr>
+                {# indentation based on nesting level #}
+                {% for i in range(1, loop.depth) %}
+                    <td class="elbow-placeholder"></td>
+                {% endfor %}
                 {# parameter name with required and/or introduced label #}
-                <td>
-                    <div class="outer-elbow-container">
-                        {% for i in range(1, loop.depth) %}
-                            <div class="elbow-placeholder">&nbsp;</div>
-                        {% endfor %}
-                        <div class="elbow-key">
-                            <b>@{ key }@</b>
-                            {% if value.get('required', False) %}<br/><div style="font-size: small; color: red">required</div>{% endif %}
-                            {% if value.version_added %}<br/><div style="font-size: small; color: darkgreen">(added in @{value.version_added}@)</div>{% endif %}
-                        </div>
-                    </div>
+                <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
+                    <b>@{ key }@</b>
+                    {% if value.get('type', None) %}<br/><div style="font-size: small; color: red">@{ value.type }@</div>{% endif %}
+                    {% if value.get('required', False) %}<br/><div style="font-size: small; color: red">required</div>{% endif %}
+                    {% if value.version_added %}<br/><div style="font-size: small; color: darkgreen">(added in @{value.version_added}@)</div>{% endif %}
                 </td>
                 {# default / choices #}
                 <td>
-                    <div class="cell-border">
-                        {# Turn boolean values in 'yes' and 'no' values #}
-                        {% if value.default is defined %}
-                            {% if value.default == true %}
-                                {% set _x = value.update({'default': 'yes'}) %}
-                            {% elif value.default == false %}
-                                {% set _x = value.update({'default': 'no'}) %}
-                            {% endif %}
-                        {% endif %}
-                        {% if value.type == 'bool' %}
-                            {% set _x = value.update({'choices': ['no', 'yes']}) %}
-                        {% endif %}
-                        {# Show possible choices and highlight details #}
-                        {% if value.choices %}
-                            <ul><b>Choices:</b>
-                                {% for choice in value.choices %}
-                                    {# Turn boolean values in 'yes' and 'no' values #}
-                                    {% if choice == true %}
-                                        {% set choice = 'yes' %}
-                                    {% elif choice == false %}
-                                        {% set choice = 'no' %}
-                                    {% endif %}
-                                    {% if (value.default is string and value.default == choice) or (value.default is iterable and value.default is not string and choice in value.default) %}
-                                        <li><div style="color: blue"><b>@{ choice | escape }@</b>&nbsp;&larr;</div></li>
-                                    {% else %}
-                                        <li>@{ choice | escape }@</li>
-                                    {% endif %}
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-                        {# Show default value, when multiple choice or no choices #}
-                        {% if value.default is defined and value.default not in value.choices %}
-                            <b>Default:</b><br/><div style="color: blue">@{ value.default | escape }@</div>
-                        {% endif %}
-                    </div>
+                    {# Turn boolean values in 'yes' and 'no' values #}
+                    {% if value.default is sameas true %}
+                        {% set _x = value.update({'default': 'yes'}) %}
+                    {% elif value.default is sameas false %}
+                        {% set _x = value.update({'default': 'no'}) %}
+                    {% endif %}
+                    {% if value.type == 'bool' %}
+                        {% set _x = value.update({'choices': ['no', 'yes']}) %}
+                    {% endif %}
+                    {# Show possible choices and highlight details #}
+                    {% if value.choices %}
+                        <ul><b>Choices:</b>
+                            {% for choice in value.choices %}
+                                {# Turn boolean values in 'yes' and 'no' values #}
+                                {% if choice is sameas true %}
+                                    {% set choice = 'yes' %}
+                                {% elif choice is sameas false %}
+                                    {% set choice = 'no' %}
+                                {% endif %}
+                                {% if (value.default is not list and value.default == choice) or (value.default is list and choice in value.default) %}
+                                    <li><div style="color: blue"><b>@{ choice | escape }@</b>&nbsp;&larr;</div></li>
+                                {% else %}
+                                    <li>@{ choice | escape }@</li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                    {# Show default value, when multiple choice or no choices #}
+                    {% if value.default is defined and value.default not in value.choices %}
+                        <b>Default:</b><br/><div style="color: blue">@{ value.default | escape }@</div>
+                    {% endif %}
                 </td>
                 {# configuration #}
                 {% if plugin_type != 'module' %}
                     <td>
-                        <div class="cell-border">
-                            {% if 'ini' in value %}
-                                <div> ini entries:
-                                    {% for ini in value.ini %}
-                                        <p>[@{ ini.section }@ ]<br>@{ ini.key }@ = @{ value.default | default('VALUE') }@</p>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                            {% if 'env' in value %}
-                                {% for env in value.env %}
-                                    <div>env:@{ env.name }@</div>
+                        {% if 'ini' in value %}
+                            <div> ini entries:
+                                {% for ini in value.ini %}
+                                    <p>[@{ ini.section }@ ]<br>@{ ini.key }@ = @{ value.default | default('VALUE') }@</p>
                                 {% endfor %}
-                            {% endif %}
-                            {% if 'vars' in value %}
-                                {% for myvar in value.vars %}
-                                    <div>var: @{ myvar.name }@</div>
-                                {% endfor %}
-                            {% endif %}
-                        </div>
+                            </div>
+                        {% endif %}
+                        {% if 'env' in value %}
+                            {% for env in value.env %}
+                                <div>env:@{ env.name }@</div>
+                            {% endfor %}
+                        {% endif %}
+                        {% if 'vars' in value %}
+                            {% for myvar in value.vars %}
+                                <div>var: @{ myvar.name }@</div>
+                            {% endfor %}
+                        {% endif %}
                     </td>
                 {% endif %}
                 {# description #}
                 <td>
-                    <div class="cell-border">
-                        {% if value.description is string %}
-                            <div>@{ value.description | replace('\n', '\n    ') | html_ify }@</div>
-                        {% else %}
-                            {% for desc in value.description %}
-                                <div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>
-                            {% endfor %}
-                        {% endif %}
-                        {% if 'aliases' in value and value.aliases %}
-                            <div style="font-size: small; color: darkgreen"><br/>aliases: @{ value.aliases|join(', ') }@</div>
-                        {% endif %}
-                    </div>
+                    {% if value.description is string %}
+                        <div>@{ value.description | replace('\n', '\n    ') | html_ify }@</div>
+                    {% else %}
+                        {% for desc in value.description %}
+                            <div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>
+                        {% endfor %}
+                    {% endif %}
+                    {% if 'aliases' in value and value.aliases %}
+                        <div style="font-size: small; color: darkgreen"><br/>aliases: @{ value.aliases|join(', ') }@</div>
+                    {% endif %}
                 </td>
             </tr>
             {% if value.suboptions %}
@@ -220,7 +222,7 @@ Notes
 Examples
 --------
 
-.. code-block:: yaml
+.. code-block:: yaml+jinja
 
 {%   for example in examples %}
 {%     if example['description'] %}@{ example['description'] | indent(4, True) }@{% endif %}
@@ -244,43 +246,50 @@ Facts returned by this module are added/updated in the ``hostvars`` host facts a
 .. raw:: html
 
     <table border=0 cellpadding=0 class="documentation-table">
+        {# Pre-compute the nesting depth to allocate columns #}
+        @{ to_kludge_ns('maxdepth', 1) -}@
+        {% for key, value in returnfacts|dictsort recursive %}
+            @{ to_kludge_ns('maxdepth', [loop.depth, from_kludge_ns('maxdepth')] | max) -}@
+            {% if value.contains -%}
+                {% if value.contains.items -%}
+                    @{ loop(value.contains.items()) -}@
+                {% elif value.contains[0].items -%}
+                    @{ loop(value.contains[0].items()) -}@
+                {% endif -%}
+            {% endif -%}
+        {% endfor -%}
         <tr>
-            <th class="head"><div class="cell-border">Fact</div></th>
-            <th class="head"><div class="cell-border">Returned</div></th>
-            <th class="head" width="100%"><div class="cell-border">Description</div></th>
+            <th colspan="@{ from_kludge_ns('maxdepth') }@">Fact</th>
+            <th>Returned</th>
+            <th width="100%">Description</th>
         </tr>
         {% for key, value in returnfacts|dictsort recursive %}
-            <tr class="return-value-column">
-                <td>
-                    <div class="outer-elbow-container">
-                        {% for i in range(1, loop.depth) %}
-                            <div class="elbow-placeholder">&nbsp;</div>
-                        {% endfor %}
-                        <div class="elbow-key">
-                            <b>@{ key }@</b>
-                            <br/><div style="font-size: small; color: red">@{ value.type }@</div>
-                        </div>
-                    </div>
+            <tr>
+                {% for i in range(1, loop.depth) %}
+                    <td class="elbow-placeholder"></td>
+                {% endfor %}
+                <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@" colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
+                    <b>@{ key }@</b>
+                    <br/><div style="font-size: small; color: red">@{ value.type }@</div>
+                    {% if value.version_added %}<br/><div style="font-size: small; color: darkgreen">(added in @{value.version_added}@)</div>{% endif %}
                 </td>
-                <td><div class="cell-border">@{ value.returned | html_ify }@</div></td>
+                <td>@{ value.returned | html_ify }@</td>
                 <td>
-                    <div class="cell-border">
-                        {% if value.description is string %}
-                            <div>@{ value.description | html_ify }@
+                    {% if value.description is string %}
+                        <div>@{ value.description | html_ify }@
+                        </div>
+                    {% else %}
+                        {% for desc in value.description %}
+                            <div>@{ desc | html_ify }@
                             </div>
-                        {% else %}
-                            {% for desc in value.description %}
-                                <div>@{ desc | html_ify }@
-                                </div>
-                            {% endfor %}
-                        {% endif %}
-                        <br/>
-                        {% if value.sample is defined and value.sample %}
-                            <div style="font-size: smaller"><b>Sample:</b></div>
-                            {# TODO: The sample should be escaped, using | escape or | htmlify, but both mess things up beyond repair with dicts #}
-                            <div style="font-size: smaller; color: blue; word-wrap: break-word; word-break: break-all;">@{ value.sample | replace('\n', '\n    ') | html_ify }@</div>
-                        {% endif %}
-                    </div>
+                        {% endfor %}
+                    {% endif %}
+                    <br/>
+                    {% if value.sample is defined and value.sample %}
+                        <div style="font-size: smaller"><b>Sample:</b></div>
+                        {# TODO: The sample should be escaped, using | escape or | htmlify, but both mess things up beyond repair with dicts #}
+                        <div style="font-size: smaller; color: blue; word-wrap: break-word; word-break: break-all;">@{ value.sample | replace('\n', '\n    ') | html_ify }@</div>
+                    {% endif %}
                 </td>
             </tr>
             {# ---------------------------------------------------------
@@ -310,41 +319,47 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
 .. raw:: html
 
     <table border=0 cellpadding=0 class="documentation-table">
+        @{ to_kludge_ns('maxdepth', 1) -}@
+        {% for key, value in returndocs|dictsort recursive -%}
+            @{ to_kludge_ns('maxdepth', [loop.depth, from_kludge_ns('maxdepth')] | max) -}@
+            {% if value.contains -%}
+                {% if value.contains.items -%}
+                    @{ loop(value.contains.items()) -}@
+                {% elif value.contains[0].items -%}
+                    @{ loop(value.contains[0].items()) -}@
+                {% endif -%}
+            {% endif -%}
+        {% endfor -%}
         <tr>
-            <th class="head"><div class="cell-border">Key</div></th>
-            <th class="head"><div class="cell-border">Returned</div></th>
-            <th class="head" width="100%"><div class="cell-border">Description</div></th>
+            <th colspan="@{ from_kludge_ns('maxdepth') }@">Key</th>
+            <th>Returned</th>
+            <th width="100%">Description</th>
         </tr>
         {% for key, value in returndocs|dictsort recursive %}
-            <tr class="return-value-column">
-                <td>
-                    <div class="outer-elbow-container">
-                        {% for i in range(1, loop.depth) %}
-                            <div class="elbow-placeholder">&nbsp;</div>
-                        {% endfor %}
-                        <div class="elbow-key">
-                            <b>@{ key }@</b>
-                            <br/><div style="font-size: small; color: red">@{ value.type }@</div>
-                        </div>
-                    </div>
+            <tr>
+                {% for i in range(1, loop.depth) %}
+                    <td class="elbow-placeholder">&nbsp;</td>
+                {% endfor %}
+                <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
+                    <b>@{ key }@</b>
+                    <br/><div style="font-size: small; color: red">@{ value.type }@</div>
+                    {% if value.version_added %}<br/><div style="font-size: small; color: darkgreen">(added in @{value.version_added}@)</div>{% endif %}
                 </td>
-                <td><div class="cell-border">@{ value.returned | html_ify }@</div></td>
+                <td>@{ value.returned | html_ify }@</td>
                 <td>
-                    <div class="cell-border">
-                        {% if value.description is string %}
-                            <div>@{ value.description | html_ify |indent(4)}@</div>
-                        {% else %}
-                            {% for desc in value.description %}
-                                <div>@{ desc | html_ify |indent(4)}@</div>
-                            {% endfor %}
-                        {% endif %}
-                        <br/>
-                        {% if value.sample is defined and value.sample %}
-                            <div style="font-size: smaller"><b>Sample:</b></div>
-                            {# TODO: The sample should be escaped, using |escape or |htmlify, but both mess things up beyond repair with dicts #}
-                            <div style="font-size: smaller; color: blue; word-wrap: break-word; word-break: break-all;">@{ value.sample | replace('\n', '\n    ') | html_ify }@</div>
-                        {% endif %}
-                    </div>
+                    {% if value.description is string %}
+                        <div>@{ value.description | html_ify |indent(4) | trim}@</div>
+                    {% else %}
+                        {% for desc in value.description %}
+                            <div>@{ desc | html_ify |indent(4) | trim}@</div>
+                        {% endfor %}
+                    {% endif %}
+                    <br/>
+                    {% if value.sample is defined and value.sample %}
+                        <div style="font-size: smaller"><b>Sample:</b></div>
+                        {# TODO: The sample should be escaped, using |escape or |htmlify, but both mess things up beyond repair with dicts #}
+                        <div style="font-size: smaller; color: blue; word-wrap: break-word; word-break: break-all;">@{ value.sample | replace('\n', '\n    ') | html_ify }@</div>
+                    {% endif %}
                 </td>
             </tr>
             {# ---------------------------------------------------------
@@ -376,7 +391,7 @@ Status
 {%     if metadata.status %}
 
 {%       for cur_state in metadata.status %}
-This module is flagged as **@{cur_state}@** which means that @{module_states[cur_state]}@.
+This @{ plugin_type }@ is flagged as **@{cur_state}@** which means that @{module_states[cur_state]}@.
 {%       endfor %}
 
 {%     endif %}
@@ -387,13 +402,13 @@ Support
 ~~~~~~~
 For more information about Red Hat's support of this @{ plugin_type }@,
 please refer to this `Knowledge Base article <https://access.redhat.com/articles/rhel-top-support-policies/>`_
-
 {%     endif %}
+
 {%   endif %}
 
 {% else %}
 
-This module is flagged as **deprecated** and will be removed in version @{ deprecated['removed_in'] | default('') | string | convert_symbols_to_format }@. For more information see `DEPRECATED`_.
+This @{ plugin_type }@ is flagged as **deprecated** and will be removed in version @{ deprecated['removed_in'] | default('') | string | convert_symbols_to_format }@. For more information see `DEPRECATED`_.
 
 {% endif %}
 

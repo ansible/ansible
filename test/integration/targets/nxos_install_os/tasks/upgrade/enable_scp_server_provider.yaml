@@ -1,0 +1,6 @@
+---
+- name: "Setup - Turn on feature scp-server using provider"
+  nxos_feature:
+    feature: scp-server
+    state: enabled
+    provider: "{{ connection }}"

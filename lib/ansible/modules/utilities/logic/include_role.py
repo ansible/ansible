@@ -26,6 +26,10 @@ description:
   - This module is also supported for Windows targets.
 version_added: "2.2"
 options:
+  apply:
+    description:
+      - Accepts a hash of task keywords (e.g. C(tags), C(become)) that will be applied to the tasks within the include.
+    version_added: '2.7'
   name:
     description:
       - The name of the role to be executed.
@@ -49,10 +53,17 @@ options:
     default: 'yes'
   private:
     description:
-      - If C(yes) the variables from C(defaults/) and C(vars/) in a role will not be made available to the rest of the
-        play.
+      - This option is a no op, and the functionality described in previous versions was not implemented. This
+        option will be removed in Ansible v2.8.
+  public:
+    description:
+      - This option dictates whether the role's C(vars) and C(defaults) are exposed to the playbook. If set to C(yes)
+        the variables will be available to tasks following the C(include_role) task. This functionality differs from
+        standard variable exposure for roles listed under the C(roles) header or C(import_role) as they are exposed at
+        playbook parsing time, and available to earlier roles and tasks as well.
     type: bool
     default: 'no'
+    version_added: '2.7'
 notes:
   - Handlers are made available to the whole play.
   - Before Ansible 2.4, as with C(include), this task could be static or dynamic, If static, it implied that it won't
@@ -89,6 +100,15 @@ EXAMPLES = """
   include_role:
     name: myrole
   when: not idontwanttorun
+
+- name: Apply tags to tasks within included file
+  include_role:
+    name: install
+    apply:
+      tags:
+        - install
+  tags:
+    - always
 """
 
 RETURN = """

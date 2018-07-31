@@ -25,8 +25,21 @@
 - set_fact:
     remote_file_expanded: '{{ echo.stdout }}'
 
-- name: prep with a basic copy
-  copy: src=foo.txt dest={{output_file}}
+# Include the tests
+- name: Run tests for state=link
+  include: state_link.yml
+
+- name: Run tests for directory as dest
+  include: directory_as_dest.yml
+
+- name: decide to include or not include selinux tests
+  include: selinux_tests.yml
+  when: selinux_installed is defined and selinux_installed.stdout != "" and selinux_enabled.stdout != "Disabled"
+
+- name: Initialize the test output dir
+  include: initialize.yml
+
+# These tests need to be organized by state parameter into separate files later
 
 - name: verify that we are checking a file and it is present
   file: path={{output_file}} state=file
@@ -69,13 +82,13 @@
       - "file4_result.changed == true"
       - "file4_result.mode == '0600'"
 
-- name: change file attribute "A"
+- name: explicitly set file attribute "A"
   file: path={{output_dir}}/baz.txt attributes=A
   register: file_attributes_result
   ignore_errors: True
 
-- name: reapply file attribute "A"
-  file: path={{output_dir}}/baz.txt attributes=A
+- name: add file attribute "A"
+  file: path={{output_dir}}/baz.txt attributes=+A
   register: file_attributes_result_2
   when: file_attributes_result is changed
 
@@ -84,6 +97,22 @@
     that:
       - "file_attributes_result_2 is not changed"
   when: file_attributes_result is changed
+
+- name: remove file attribute "A"
+  file: path={{output_dir}}/baz.txt attributes=-A
+  register: file_attributes_result_3
+  ignore_errors: True
+
+- name: explicitly remove file attributes
+  file: path={{output_dir}}/baz.txt attributes=""
+  register: file_attributes_result_4
+  when: file_attributes_result_3 is changed
+
+- name: verify that the file was not marked as changed
+  assert:
+    that:
+      - "file_attributes_result_4 is not changed"
+  when: file_attributes_result_4 is changed
 
 - name: change ownership and group
   file: path={{output_dir}}/baz.txt owner=1234 group=1234
@@ -111,35 +140,6 @@
 - name: clean up
   file: path=/tmp/worldwritable state=absent
 
-- name: create soft link to file
-  file: src={{output_file}} dest={{output_dir}}/soft.txt state=link
-  register: file5_result
-
-- name: verify that the file was marked as changed
-  assert:
-    that:
-      - "file5_result.changed == true"
-
-- name: change soft link to relative
-  file: src={{output_file|basename}} dest={{output_dir}}/soft.txt state=link
-  register: file5a_result
-
-- name: verify that the file was marked as changed
-  assert:
-    that:
-      - "file5a_result.changed == true"
-      - "file5a_result.diff.before.src == remote_file_expanded"
-      - "file5a_result.diff.after.src == remote_file_expanded|basename"
-
-- name: soft link idempotency check
-  file: src={{output_file|basename}} dest={{output_dir}}/soft.txt state=link
-  register: file5b_result
-
-- name: verify that the file was not marked as changed
-  assert:
-    that:
-      - "file5b_result.changed == false"
-
 - name: create hard link to file
   file: src={{output_file}} dest={{output_dir}}/hard.txt state=hard
   register: file6_result
@@ -150,7 +150,9 @@
       - "file6_result.changed == true"
 
 - name: touch a hard link
-  file: src={{output_file}} dest={{output_dir}}/hard.txt state=touch
+  file:
+    dest: '{{ output_dir }}/hard.txt'
+    state: 'touch'
   register: file6_touch_result
 
 - name: verify that the hard link was touched
@@ -223,10 +225,6 @@
   when: selinux_installed.stdout != ""
   ignore_errors: true
 
-- name: decide to include or not include selinux tests
-  include: selinux_tests.yml
-  when: selinux_installed is defined and selinux_installed.stdout != "" and selinux_enabled.stdout != "Disabled"
-
 - name: remote directory foobar
   file: path={{output_dir}}/foobar state=absent
 
@@ -284,25 +282,6 @@
     that:
       - "file11_result.uid == 1235"
 
-- name: fail to create soft link to non existent file
-  file: src=/noneexistent dest={{output_dir}}/soft2.txt state=link force=no
-  register: file12_result
-  ignore_errors: true
-
-- name: verify that link was not created
-  assert:
-    that:
-      - "file12_result.failed == true"
-
-- name: force creation soft link to non existent
-  file: src=/noneexistent dest={{output_dir}}/soft2.txt state=link force=yes
-  register: file13_result
-
-- name: verify that link was created
-  assert:
-    that:
-      - "file13_result.changed == true"
-
 - name: remove directory foobar
   file: path={{output_dir}}/foobar state=absent
   register: file14_result
@@ -337,80 +316,6 @@
       - 'item.changed == true'
       - 'item.state == "file"'
   with_items: "{{file16_result.results}}"
-
-- name: try to force the sub-directory to a link
-  file: src={{output_dir}}/testing dest={{output_dir}}/sub1 state=link force=yes
-  register: file17_result
-  ignore_errors: true
-
-- name: verify the directory was not replaced with a link
-  assert:
-    that:
-      - 'file17_result.failed == true'
-      - 'file17_result.state == "directory"'
-
-- name: create soft link to directory using absolute path
-  file: src=/ dest={{output_dir}}/root state=link
-  register: file18_result
-
-- name: verify that the result was marked as changed
-  assert:
-    that:
-      - "file18_result.changed == true"
-
-- name: create another test sub-directory
-  file: dest={{output_dir}}/sub2 state=directory
-  register: file19_result
-
-- name: verify that the new directory was created
-  assert:
-    that:
-      - 'file19_result.changed == true'
-      - 'file19_result.state == "directory"'
-
-- name: create soft link to relative file
-  file: src=../sub1/file1 dest={{output_dir}}/sub2/link1 state=link
-  register: file20_result
-
-- name: Get stat info for the link
-  stat:
-    path: '{{ output_dir }}/sub2/link1'
-    follow: False
-  register: file20_link_stat
-
-- name: Get stat info for the pointed to file
-  stat:
-    path: '{{ output_dir }}/sub2/link1'
-    follow: True
-  register: file20_links_dest_stat
-
-- name: Get stat info for the file we intend to point to
-  stat:
-    path: '{{ output_dir }}/sub1/file1'
-    follow: False
-  register: file20_dest_stat
-
-- debug: var=file20_dest_stat
-- name: verify that the link was created correctly
-  assert:
-    that:
-      # file command reports it created something
-      - "file20_result.changed == true"
-      # file command created a link
-      - 'file20_link_stat["stat"]["islnk"]'
-      # Link points to the right path
-      - 'file20_link_stat["stat"]["lnk_target"] == "../sub1/file1"'
-      # The link target and the file we intended to link to have the same inode
-      - 'file20_links_dest_stat["stat"]["inode"] == file20_dest_stat["stat"]["inode"]'
-
-- name: create soft link to relative directory
-  file: src=sub1 dest={{output_dir}}/sub1-link state=link
-  register: file21_result
-
-- name: verify that the result was marked as changed
-  assert:
-    that:
-      - "file21_result.changed == true"
 
 - name: test file creation with symbolic mode
   file: dest={{output_dir}}/test_symbolic state=touch mode=u=rwx,g=rwx,o=rwx
@@ -565,49 +470,6 @@
     that:
     - result.mode == '0444'
 
-# test the file module using follow=yes, so that the target of a
-# symlink is modified, rather than the link itself
-
-- name: create a test file
-  copy: dest={{output_dir}}/test_follow content="this is a test file\n" mode=0666
-
-- name: create a symlink to the test file
-  file: path={{output_dir}}/test_follow_link src="./test_follow" state=link
-
-- name: modify the permissions on the link using follow=yes
-  file: path={{output_dir}}/test_follow_link mode=0644 follow=yes
-  register: result
-
-- name: assert that the chmod worked
-  assert:
-    that:
-    - result.changed
-
-- name: stat the link target
-  stat: path={{output_dir}}/test_follow
-  register: result
-
-- name: assert that the link target was modified correctly
-  assert:
-    that:
-    - result.stat.mode == '0644'
-
-- name: attempt to modify the permissions of the link itself
-  file: path={{output_dir}}/test_follow_link src="./test_follow" state=link mode=0600 follow=no
-  register: result
-
-# Whether the link itself changed is platform dependent! (BSD vs Linux?)
-# Just check that the underlying file was not changed
-- name: stat the link target
-  stat: path={{output_dir}}/test_follow
-  register: result
-
-- name: assert that the link target was unmodified
-  assert:
-    that:
-    - result.stat.mode == '0644'
-  ignore_errors: True
-
 # Follow + recursive tests
 - name: create a toplevel directory
   file: path={{output_dir}}/test_follow_rec state=directory mode=0755
@@ -626,6 +488,9 @@
 
 - name: create a symlink to the directory
   file: path={{output_dir}}/test_follow_rec/test_link_dir state=link src="../test_follow_rec_target_dir"
+
+- name: create a symlink to a nonexistent file
+  file: path={{output_dir}}/test_follow_rec/nonexistent state=link src=does_not_exist force=True
 
 - name: try to change permissions without following symlinks
   file: path={{output_dir}}/test_follow_rec follow=False mode="a-x" recurse=True

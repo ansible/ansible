@@ -50,12 +50,15 @@ options:
     default: 'yes'
   private:
     description:
-      - If C(yes) the variables from C(defaults/) and C(vars/) in a role will not be made available to the rest of the
-        play.
+      - This option is a no op, and the functionality described in previous versions was not implemented. This
+        option will be removed in Ansible v2.8.
     type: bool
     default: 'no'
 notes:
   - Handlers are made available to the whole play.
+  - Variables defined in C(vars) and C(default) for the role are exposed at playbook parsing time. Due to this,
+    these variables will be accessible to roles and tasks executed before the the location of the C(import_role) task.
+  - Unlike C(include_role) variable exposure is not configurable, and will always be exposed.
 '''
 
 EXAMPLES = """
@@ -74,15 +77,6 @@ EXAMPLES = """
         name: myrole
       vars:
         rolevar1: value from task
-
-    - name: Apply loop to each task in role
-      import_role:
-        name: myrole
-      with_items:
-        - '{{ roleinput1 }}'
-        - '{{ roleinput2 }}'
-      loop_control:
-        loop_var: roleinputvar
 
     - name: Apply condition to each task in role
       import_role:

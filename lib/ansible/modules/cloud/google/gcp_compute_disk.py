@@ -65,6 +65,7 @@ options:
         description:
             - Labels to apply to this disk.  A list of key->value pairs.
         required: false
+        version_added: 2.7
     licenses:
         description:
             - Any applicable publicly visible licenses.
@@ -91,6 +92,7 @@ options:
             - URL of the disk type resource describing which disk type to use to create the disk.
               Provide this when creating the disk.
         required: false
+        version_added: 2.7
     source_image:
         description:
             - The source image used to create this disk. If the source image is deleted, this

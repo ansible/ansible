@@ -38,7 +38,7 @@ description:
     - The record will include the domain/subdomain name, a type (i.e. A, AAA, CAA, MX,
       CNAME, NS, etc) .
 short_description: Creates a GCP ResourceRecordSet
-version_added: 2.5
+version_added: 2.6
 author: Google Inc. (@googlecloudplatform)
 requirements:
     - python >= 2.6

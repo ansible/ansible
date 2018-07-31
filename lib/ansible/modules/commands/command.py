@@ -32,6 +32,11 @@ options:
       - The command module takes a free form command to run.  There is no parameter actually named 'free form'.
         See the examples!
     required: yes
+  argv:
+    description:
+      - Allows the user to provide the command as a list vs. a string.  Only the string or the list form can be
+        provided, not both.  One or the other must be provided.
+    version_added: "2.6"
   creates:
     description:
       - A filename or (since 2.0) glob pattern, when it already exists, this step will B(not) be run.
@@ -59,6 +64,8 @@ notes:
        use the C(command) module when possible.
     -  " C(creates), C(removes), and C(chdir) can be specified after the command.
        For instance, if you only want to run a command if a certain file does not exist, use this."
+    -  Check mode is supported when passing C(creates) or C(removes). If running in check mode and either of these are specified, the module will
+       check for the existence of the file and report the correct changed status. If these are not supplied, the task will be skipped.
     -  The C(executable) parameter is removed since version 2.4. If you have a need for this parameter, use the M(shell) module instead.
     -  For Windows targets, use the M(win_command) module instead.
 author:
@@ -72,7 +79,9 @@ EXAMPLES = '''
   register: mymotd
 
 - name: Run the command if the specified file does not exist.
-  command: /usr/bin/make_database.sh arg1 arg2 creates=/path/to/database
+  command: /usr/bin/make_database.sh arg1 arg2
+  args:
+    creates: /path/to/database
 
 # You can also use the 'args' form to provide the options.
 - name: This command will change the working directory to somedir/ and will only run when /path/to/database doesn't exist.
@@ -80,6 +89,13 @@ EXAMPLES = '''
   args:
     chdir: somedir/
     creates: /path/to/database
+
+- name: use argv to send the command as a list.  Be sure to leave command empty
+  command:
+  args:
+    argv:
+      - echo
+      - testing
 
 - name: safely use templated variable to run command. Always use the quote filter to avoid injection issues.
   command: cat {{ myfile|quote }}
@@ -128,8 +144,12 @@ def check_command(module, commandline):
                 'mount': 'mount', 'rpm': 'yum, dnf or zypper', 'yum': 'yum', 'apt-get': 'apt',
                 'tar': 'unarchive', 'unzip': 'unarchive', 'sed': 'replace, lineinfile or template',
                 'dnf': 'dnf', 'zypper': 'zypper'}
-    become = ['sudo', 'su', 'pbrun', 'pfexec', 'runas', 'pmrun']
-    command = os.path.basename(commandline.split()[0])
+    become = ['sudo', 'su', 'pbrun', 'pfexec', 'runas', 'pmrun', 'machinectl']
+    if isinstance(commandline, list):
+        command = commandline[0]
+    else:
+        command = commandline.split()[0]
+    command = os.path.basename(command)
 
     disable_suffix = "If you need to use command because {mod} is insufficient you can add" \
                      " warn=False to this command task or set command_warnings=False in" \
@@ -159,6 +179,7 @@ def main():
         argument_spec=dict(
             _raw_params=dict(),
             _uses_shell=dict(type='bool', default=False),
+            argv=dict(type='list'),
             chdir=dict(type='path'),
             executable=dict(),
             creates=dict(type='path'),
@@ -166,13 +187,14 @@ def main():
             # The default for this really comes from the action plugin
             warn=dict(type='bool', default=True),
             stdin=dict(required=False),
-        )
+        ),
+        supports_check_mode=True,
     )
-
     shell = module.params['_uses_shell']
     chdir = module.params['chdir']
     executable = module.params['executable']
     args = module.params['_raw_params']
+    argv = module.params['argv']
     creates = module.params['creates']
     removes = module.params['removes']
     warn = module.params['warn']
@@ -182,8 +204,16 @@ def main():
         module.warn("As of Ansible 2.4, the parameter 'executable' is no longer supported with the 'command' module. Not using '%s'." % executable)
         executable = None
 
-    if not args or args.strip() == '':
+    if (not args or args.strip() == '') and not argv:
         module.fail_json(rc=256, msg="no command given")
+
+    if args and argv:
+        module.fail_json(rc=256, msg="only command or argv can be given, not both")
+
+    if not shell and args:
+        args = shlex.split(args)
+
+    args = args or argv
 
     if chdir:
         chdir = os.path.abspath(chdir)
@@ -216,11 +246,15 @@ def main():
     if warn:
         check_command(module, args)
 
-    if not shell:
-        args = shlex.split(args)
     startd = datetime.datetime.now()
 
-    rc, out, err = module.run_command(args, executable=executable, use_unsafe_shell=shell, encoding=None, data=stdin)
+    if not module.check_mode:
+        rc, out, err = module.run_command(args, executable=executable, use_unsafe_shell=shell, encoding=None, data=stdin)
+    elif creates or removes:
+        rc = 0
+        out = err = b'Command would have run if not in check mode'
+    else:
+        module.exit_json(msg="skipped, running in check mode", skipped=True)
 
     endd = datetime.datetime.now()
     delta = endd - startd

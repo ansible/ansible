@@ -512,6 +512,21 @@ options:
             - "Memory balloon is a guest device, which may be used to re-distribute / reclaim the host memory
                based on VM needs in a dynamic way. In this way it's possible to create memory over commitment states."
         version_added: "2.5"
+    numa_tune_mode:
+        description:
+            - "Set how the memory allocation for NUMA nodes of this VM is applied (relevant if NUMA nodes are set for this VM)."
+            - "It can be one of the following: I(interleave), I(preferred) or I(strict)."
+            - "If no value is passed, default value is set by oVirt/RHV engine."
+        version_added: "2.6"
+    numa_nodes:
+        description:
+            - "List of vNUMA Nodes to set for this VM and pin them to assigned host's physical NUMA node."
+            - "Each vNUMA node is described by following dictionary:"
+            - "C(index) -  The index of this NUMA node (mandatory)."
+            - "C(memory) - Memory size of the NUMA node in MiB (mandatory)."
+            - "C(cores) -  list of VM CPU cores indexes to be included in this NUMA node (mandatory)."
+            - "C(numa_node_pins) - list of physical NUMA node indexes to pin this virtual NUMA node to."
+        version_added: "2.6"
     rng_device:
         description:
             - "Random number generator (RNG). You can choose of one the following devices I(urandom), I(random) or I(hwrng)."
@@ -759,6 +774,32 @@ EXAMPLES = '''
   ovirt_vms:
     name: myvm
     memory: 4GiB
+
+# Create/update a VM to run with two vNUMA nodes and pin them to physical NUMA nodes as follows:
+# vnuma index 0-> numa index 0, vnuma index 1-> numa index 1
+- name: Create a VM to run with two vNUMA nodes
+  ovirt_vms:
+    name: myvm
+    cluster: mycluster
+    numa_tune_mode: "interleave"
+    numa_nodes:
+    - index: 0
+      cores: [0]
+      memory: 20
+      numa_node_pins: [0]
+    - index: 1
+      cores: [1]
+      memory: 30
+      numa_node_pins: [1]
+
+- name: Update an existing VM to run without previously created vNUMA nodes (i.e. remove all vNUMA nodes+NUMA pinning setting)
+  ovirt_vms:
+    name: myvm
+    cluster: mycluster
+    state: "present"
+    numa_tune_mode: "interleave"
+    numa_nodes:
+    - index: -1
 
 # When change on the VM needs restart of the VM, use next_run state,
 # The VM will be updated and rebooted if there are any changes.
@@ -1050,6 +1091,9 @@ class VmsModule(BaseModule):
             io=otypes.Io(
                 threads=self.param('io_threads'),
             ) if self.param('io_threads') is not None else None,
+            numa_tune_mode=otypes.NumaTuneMode(
+                self.param('numa_tune_mode')
+            ) if self.param('numa_tune_mode') else None,
             rng_device=otypes.RngDevice(
                 source=otypes.RngSource(self.param('rng_device')),
             ) if self.param('rng_device') else None,
@@ -1111,7 +1155,7 @@ class VmsModule(BaseModule):
             equal(self.param('serial_console'), entity.console.enabled) and
             equal(self.param('usb_support'), entity.usb.enabled) and
             equal(self.param('sso'), True if entity.sso.methods else False) and
-            equal(self.param('quota_id'), getattr(entity.quota, 'id')) and
+            equal(self.param('quota_id'), getattr(entity.quota, 'id', None)) and
             equal(self.param('high_availability'), entity.high_availability.enabled) and
             equal(self.param('high_availability_priority'), entity.high_availability.priority) and
             equal(self.param('lease'), get_link_name(self._connection, getattr(entity.lease, 'storage_domain', None))) and
@@ -1127,6 +1171,7 @@ class VmsModule(BaseModule):
             equal(self.param('serial_policy'), str(getattr(entity.serial_number, 'policy', None))) and
             equal(self.param('serial_policy_value'), getattr(entity.serial_number, 'value', None)) and
             equal(self.param('placement_policy'), str(entity.placement_policy.affinity) if entity.placement_policy else None) and
+            equal(self.param('numa_tune_mode'), str(entity.numa_tune_mode)) and
             equal(self.param('rng_device'), str(entity.rng_device.source) if entity.rng_device else None)
         )
 
@@ -1141,8 +1186,10 @@ class VmsModule(BaseModule):
     def post_present(self, entity_id):
         # After creation of the VM, attach disks and NICs:
         entity = self._service.service(entity_id).get()
-        self.changed = self.__attach_disks(entity)
-        self.changed = self.__attach_nics(entity)
+        self.__attach_disks(entity)
+        self.__attach_nics(entity)
+        self._attach_cd(entity)
+        self.changed = self.__attach_numa_nodes(entity)
         self.changed = self.__attach_watchdog(entity)
         self.changed = self.__attach_graphical_console(entity)
 
@@ -1193,7 +1240,7 @@ class VmsModule(BaseModule):
         cd_iso = self.param('cd_iso')
         if cd_iso is not None:
             vm_service = self._service.service(entity.id)
-            current = vm_service.get().status == otypes.VmStatus.UP
+            current = vm_service.get().status == otypes.VmStatus.UP and self.param('state') == 'running'
             cdroms_service = vm_service.cdroms_service()
             cdrom_device = cdroms_service.list()[0]
             cdrom_service = cdroms_service.cdrom_service(cdrom_device.id)
@@ -1293,7 +1340,7 @@ class VmsModule(BaseModule):
     def __attach_graphical_console(self, entity):
         graphical_console = self.param('graphical_console')
         if not graphical_console:
-            return
+            return False
 
         vm_service = self._service.service(entity.id)
         gcs_service = vm_service.graphics_consoles_service()
@@ -1402,6 +1449,44 @@ class VmsModule(BaseModule):
                     self.param('cluster')
                 )
             )
+
+    def __attach_numa_nodes(self, entity):
+        updated = False
+        numa_nodes_service = self._service.service(entity.id).numa_nodes_service()
+
+        if len(self.param('numa_nodes')) > 0:
+            # Remove all existing virtual numa nodes before adding new ones
+            existed_numa_nodes = numa_nodes_service.list()
+            existed_numa_nodes.sort(reverse=len(existed_numa_nodes) > 1 and existed_numa_nodes[1].index > existed_numa_nodes[0].index)
+            for current_numa_node in existed_numa_nodes:
+                numa_nodes_service.node_service(current_numa_node.id).remove()
+                updated = True
+
+        for numa_node in self.param('numa_nodes'):
+            if numa_node is None or numa_node.get('index') is None or numa_node.get('cores') is None or numa_node.get('memory') is None:
+                continue
+
+            numa_nodes_service.add(
+                otypes.VirtualNumaNode(
+                    index=numa_node.get('index'),
+                    memory=numa_node.get('memory'),
+                    cpu=otypes.Cpu(
+                        cores=[
+                            otypes.Core(
+                                index=core
+                            ) for core in numa_node.get('cores')
+                        ],
+                    ),
+                    numa_node_pins=[
+                        otypes.NumaNodePin(
+                            index=pin
+                        ) for pin in numa_node.get('numa_node_pins')
+                    ] if numa_node.get('numa_node_pins') is not None else None,
+                )
+            )
+            updated = True
+
+        return updated
 
     def __attach_watchdog(self, entity):
         watchdogs_service = self._service.service(entity.id).watchdogs_service()
@@ -1813,6 +1898,8 @@ def main():
         io_threads=dict(type='int', default=None),
         ballooning_enabled=dict(type='bool', default=None),
         rng_device=dict(type='str'),
+        numa_tune_mode=dict(type='str', choices=['interleave', 'preferred', 'strict']),
+        numa_nodes=dict(type='list', default=[]),
         custom_properties=dict(type='list'),
         watchdog=dict(type='dict'),
         graphical_console=dict(type='dict'),
@@ -1850,8 +1937,11 @@ def main():
                 clone=module.params['clone'],
                 clone_permissions=module.params['clone_permissions'],
             )
-            vms_module.post_present(ret['id'])
+            # If VM is going to be created and check_mode is on, return now:
+            if module.check_mode and ret.get('id') is None:
+                module.exit_json(**ret)
 
+            vms_module.post_present(ret['id'])
             # Run the VM if it was just created, else don't run it:
             if state == 'running':
                 initialization = vms_module.get_initialization()
@@ -1916,11 +2006,9 @@ def main():
                 clone=module.params['clone'],
                 clone_permissions=module.params['clone_permissions'],
             )
-            vms_module.post_present(ret['id'])
             if module.params['force']:
                 ret = vms_module.action(
                     action='stop',
-                    post_action=vms_module._attach_cd,
                     action_condition=lambda vm: vm.status != otypes.VmStatus.DOWN,
                     wait_condition=vms_module.wait_for_down,
                 )
@@ -1928,10 +2016,10 @@ def main():
                 ret = vms_module.action(
                     action='shutdown',
                     pre_action=vms_module._pre_shutdown_action,
-                    post_action=vms_module._attach_cd,
                     action_condition=lambda vm: vm.status != otypes.VmStatus.DOWN,
                     wait_condition=vms_module.wait_for_down,
                 )
+            vms_module.post_present(ret['id'])
         elif state == 'suspended':
             vms_module.create(
                 entity=vm,

@@ -10,14 +10,12 @@
       - no ip domain-list ansible.com
       - no ip domain-list redhat.com
     match: none
-    provider: "{{ cli }}"
 
 - name: configure domain_list using platform agnostic module
   net_system:
     domain_search:
       - ansible.com
       - redhat.com
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -32,6 +30,5 @@
       - no ip domain-list ansible.com
       - no ip domain-list redhat.com
     match: none
-    provider: "{{ cli }}"
 
 - debug: msg="END nxos cli/net_system.yaml on connection={{ ansible_connection }}"

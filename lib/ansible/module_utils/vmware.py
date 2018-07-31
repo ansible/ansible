@@ -3,10 +3,14 @@
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 import atexit
 import os
 import ssl
 import time
+from random import randint
 
 try:
     # requests is required for exception handling of the ConnectionError
@@ -18,7 +22,7 @@ except ImportError:
     HAS_PYVMOMI = False
 
 from ansible.module_utils._text import to_text
-from ansible.module_utils.six import integer_types, iteritems, string_types
+from ansible.module_utils.six import integer_types, iteritems, string_types, raise_from
 from ansible.module_utils.basic import env_fallback
 
 
@@ -26,20 +30,50 @@ class TaskError(Exception):
     pass
 
 
-def wait_for_task(task):
+def wait_for_task(task, max_backoff=64, timeout=3600):
+    """Wait for given task using exponential back-off algorithm.
+
+    Args:
+        task: VMware task object
+        max_backoff: Maximum amount of sleep time in seconds
+        timeout: Timeout for the given task in seconds
+
+    Returns: Tuple with True and result for successful task
+    Raises: TaskError on failure
+    """
+    failure_counter = 0
+    start_time = time.time()
 
     while True:
+        if time.time() - start_time >= timeout:
+            raise TaskError("Timeout")
         if task.info.state == vim.TaskInfo.State.success:
             return True, task.info.result
         if task.info.state == vim.TaskInfo.State.error:
+            error_msg = task.info.error
             try:
-                raise TaskError(task.info.error)
+                error_msg = error_msg.msg
             except AttributeError:
-                raise TaskError("An unknown error has occurred")
-        if task.info.state == vim.TaskInfo.State.running:
-            time.sleep(15)
-        if task.info.state == vim.TaskInfo.State.queued:
-            time.sleep(15)
+                pass
+            finally:
+                raise_from(TaskError(error_msg), task.info.error)
+        if task.info.state in [vim.TaskInfo.State.running, vim.TaskInfo.State.queued]:
+            sleep_time = min(2 ** failure_counter + randint(1, 1000), max_backoff)
+            time.sleep(sleep_time)
+            failure_counter += 1
+
+
+def wait_for_vm_ip(content, vm, timeout=300):
+    facts = dict()
+    interval = 15
+    while timeout > 0:
+        facts = gather_vm_facts(content, vm)
+        if facts['ipv4'] or facts['ipv6']:
+            break
+        time.sleep(interval)
+        timeout -= interval
+
+    return facts
 
 
 def find_obj(content, vimtype, name, first=True):
@@ -56,7 +90,7 @@ def find_obj(content, vimtype, name, first=True):
     # Select the first match
     if first is True:
         for obj in obj_list:
-            if obj.name == name:
+            if to_text(obj.name) == to_text(name):
                 return obj
 
         # If no object found, return None
@@ -88,6 +122,18 @@ def find_cluster_by_name_datacenter(datacenter, cluster_name):
     return None
 
 
+def find_object_by_name(content, name, obj_type, folder=None, recurse=True):
+    if not isinstance(obj_type, list):
+        obj_type = [obj_type]
+
+    objects = get_all_objs(content, obj_type, folder=folder, recurse=recurse)
+    for obj in objects:
+        if obj.name == name:
+            return obj
+
+    return None
+
+
 def find_cluster_by_name(content, cluster_name, datacenter=None):
 
     if datacenter:
@@ -95,22 +141,11 @@ def find_cluster_by_name(content, cluster_name, datacenter=None):
     else:
         folder = content.rootFolder
 
-    clusters = get_all_objs(content, [vim.ClusterComputeResource], folder)
-    for cluster in clusters:
-        if cluster.name == cluster_name:
-            return cluster
-
-    return None
+    return find_object_by_name(content, cluster_name, [vim.ClusterComputeResource], folder=folder)
 
 
 def find_datacenter_by_name(content, datacenter_name):
-
-    datacenters = get_all_objs(content, [vim.Datacenter])
-    for dc in datacenters:
-        if dc.name == datacenter_name:
-            return dc
-
-    return None
+    return find_object_by_name(content, datacenter_name, [vim.Datacenter])
 
 
 def get_parent_datacenter(obj):
@@ -129,37 +164,23 @@ def get_parent_datacenter(obj):
 
 
 def find_datastore_by_name(content, datastore_name):
-
-    datastores = get_all_objs(content, [vim.Datastore])
-    for ds in datastores:
-        if ds.name == datastore_name:
-            return ds
-
-    return None
+    return find_object_by_name(content, datastore_name, [vim.Datastore])
 
 
 def find_dvs_by_name(content, switch_name):
-
-    # https://github.com/vmware/govmomi/issues/879
-    # https://github.com/ansible/ansible/pull/31798#issuecomment-336936222
-    try:
-        vmware_distributed_switches = get_all_objs(content, [vim.dvs.VmwareDistributedVirtualSwitch])
-    except IndexError:
-        vmware_distributed_switches = get_all_objs(content, [vim.DistributedVirtualSwitch])
-
-    for dvs in vmware_distributed_switches:
-        if dvs.name == switch_name:
-            return dvs
-    return None
+    return find_object_by_name(content, switch_name, [vim.DistributedVirtualSwitch])
 
 
 def find_hostsystem_by_name(content, hostname):
+    return find_object_by_name(content, hostname, [vim.HostSystem])
 
-    host_system = get_all_objs(content, [vim.HostSystem])
-    for host in host_system:
-        if host.name == hostname:
-            return host
-    return None
+
+def find_resource_pool_by_name(content, resource_pool_name):
+    return find_object_by_name(content, resource_pool_name, [vim.ResourcePool])
+
+
+def find_network_by_name(content, network_name):
+    return find_object_by_name(content, network_name, [vim.Network])
 
 
 def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster=None, folder=None, match_first=False):
@@ -199,11 +220,14 @@ def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster
 
 
 def find_vm_by_name(content, vm_name, folder=None, recurse=True):
+    return find_object_by_name(content, vm_name, [vim.VirtualMachine], folder=folder, recurse=recurse)
 
-    vms = get_all_objs(content, [vim.VirtualMachine], folder, recurse=recurse)
-    for vm in vms:
-        if vm.name == vm_name:
-            return vm
+
+def find_host_portgroup_by_name(host, portgroup_name):
+
+    for portgroup in host.config.network.portgroup:
+        if portgroup.spec.name == portgroup_name:
+            return portgroup
     return None
 
 
@@ -413,8 +437,10 @@ def list_snapshots(vm):
     result['snapshots'] = list_snapshots_recursively(vm.snapshot.rootSnapshotList)
     current_snapref = vm.snapshot.currentSnapshot
     current_snap_obj = get_current_snap_obj(vm.snapshot.rootSnapshotList, current_snapref)
-    result['current_snapshot'] = deserialize_snapshot_obj(current_snap_obj[0])
-
+    if current_snap_obj:
+        result['current_snapshot'] = deserialize_snapshot_obj(current_snap_obj[0])
+    else:
+        result['current_snapshot'] = dict()
     return result
 
 
@@ -476,7 +502,15 @@ def connect_to_api(module, disconnect_atexit=True):
 
     service_instance = None
     try:
-        service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password, sslContext=ssl_context, port=port)
+        connect_args = dict(
+            host=hostname,
+            user=username,
+            pwd=password,
+            port=port,
+        )
+        if ssl_context:
+            connect_args.update(sslContext=ssl_context)
+        service_instance = connect.SmartConnect(**connect_args)
     except vim.fault.InvalidLogin as invalid_login:
         module.fail_json(msg="Unable to log on to vCenter or ESXi API at %s:%s as %s: %s" % (hostname, port, username, invalid_login.msg))
     except vim.fault.NoPermission as no_permission:
@@ -1020,7 +1054,7 @@ class PyVmomi(object):
         if not self.is_vcenter():
             hosts = get_all_objs(self.content, [vim.HostSystem]).keys()
             if hosts:
-                host_obj_list.append(hosts[0])
+                host_obj_list.append(list(hosts)[0])
         else:
             if cluster_name:
                 cluster_obj = self.find_cluster_by_name(cluster_name=cluster_name)

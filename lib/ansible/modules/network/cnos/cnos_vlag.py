@@ -32,7 +32,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: cnos_vlag
-author: "Dave Kasberg (@dkasberg)"
+author: "Anil Kumar Muraleedharan (@amuraleedhar)"
 short_description: Manage VLAG resources and attributes on devices running Lenovo CNOS
 description:
     - This module allows you to work with virtual Link Aggregation Groups
@@ -84,8 +84,8 @@ Tasks : The following are examples of using the module cnos_vlag. These are writ
 - name: Test Vlag  - enable
   cnos_vlag:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username']}}"
-      password: "{{ hostvars[inventory_hostname]['password']}}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user']}}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass']}}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType']}}"
       outputfile: "./results/cnos_vlag_{{ inventory_hostname }}_output.txt"
       vlagArg1: "enable"
@@ -93,8 +93,8 @@ Tasks : The following are examples of using the module cnos_vlag. These are writ
 - name: Test Vlag - autorecovery
   cnos_vlag:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username']}}"
-      password: "{{ hostvars[inventory_hostname]['password']}}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user']}}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass']}}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType']}}"
       outputfile: "./results/cnos_vlag_{{ inventory_hostname }}_output.txt"
       vlagArg1: "auto-recovery"
@@ -103,8 +103,8 @@ Tasks : The following are examples of using the module cnos_vlag. These are writ
 - name: Test Vlag - config-consistency
   cnos_vlag:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username']}}"
-      password: "{{ hostvars[inventory_hostname]['password']}}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user']}}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass']}}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType']}}"
       outputfile: "./results/cnos_vlag_{{ inventory_hostname }}_output.txt"
       vlagArg1: "config-consistency"
@@ -113,8 +113,8 @@ Tasks : The following are examples of using the module cnos_vlag. These are writ
 - name: Test Vlag - isl
   cnos_vlag:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username']}}"
-      password: "{{ hostvars[inventory_hostname]['password']}}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user']}}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass']}}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType']}}"
       outputfile: "./results/cnos_vlag_{{ inventory_hostname }}_output.txt"
       vlagArg1: "isl"
@@ -123,8 +123,8 @@ Tasks : The following are examples of using the module cnos_vlag. These are writ
 - name: Test Vlag  - mac-address-table
   cnos_vlag:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username']}}"
-      password: "{{ hostvars[inventory_hostname]['password']}}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user']}}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass']}}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType']}}"
       outputfile: "./results/cnos_vlag_{{ inventory_hostname }}_output.txt"
       vlagArg1: "mac-address-table"
@@ -132,8 +132,8 @@ Tasks : The following are examples of using the module cnos_vlag. These are writ
 - name: Test Vlag - peer-gateway
   cnos_vlag:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username']}}"
-      password: "{{ hostvars[inventory_hostname]['password']}}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user']}}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass']}}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType']}}"
       outputfile: "./results/cnos_vlag_{{ inventory_hostname }}_output.txt"
       vlagArg1: "peer-gateway"
@@ -141,8 +141,8 @@ Tasks : The following are examples of using the module cnos_vlag. These are writ
 - name: Test Vlag - priority
   cnos_vlag:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username']}}"
-      password: "{{ hostvars[inventory_hostname]['password']}}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user']}}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass']}}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType']}}"
       outputfile: "./results/cnos_vlag_{{ inventory_hostname }}_output.txt"
       vlagArg1: "priority"
@@ -151,8 +151,8 @@ Tasks : The following are examples of using the module cnos_vlag. These are writ
 - name: Test Vlag - startup-delay
   cnos_vlag:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username']}}"
-      password: "{{ hostvars[inventory_hostname]['password']}}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user']}}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass']}}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType']}}"
       outputfile: "./results/cnos_vlag_{{ inventory_hostname }}_output.txt"
       vlagArg1: "startup-delay"
@@ -161,8 +161,8 @@ Tasks : The following are examples of using the module cnos_vlag. These are writ
 - name: Test Vlag  - tier-id
   cnos_vlag:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username']}}"
-      password: "{{ hostvars[inventory_hostname]['password']}}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user']}}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass']}}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType']}}"
       outputfile: "./results/cnos_vlag_{{ inventory_hostname }}_output.txt"
       vlagArg1: "tier-id"
@@ -171,8 +171,8 @@ Tasks : The following are examples of using the module cnos_vlag. These are writ
 - name: Test Vlag - vrrp
   cnos_vlag:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username']}}"
-      password: "{{ hostvars[inventory_hostname]['password']}}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user']}}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass']}}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType']}}"
       outputfile: "./results/cnos_vlag_{{ inventory_hostname }}_output.txt"
       vlagArg1: "vrrp"
@@ -180,8 +180,8 @@ Tasks : The following are examples of using the module cnos_vlag. These are writ
 - name: Test Vlag - instance
   cnos_vlag:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username']}}"
-      password: "{{ hostvars[inventory_hostname]['password']}}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user']}}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass']}}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType']}}"
       outputfile: "./results/cnos_vlag_{{ inventory_hostname }}_output.txt"
       vlagArg1: "instance"
@@ -191,8 +191,8 @@ Tasks : The following are examples of using the module cnos_vlag. These are writ
 - name: Test Vlag - instance2
   cnos_vlag:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username']}}"
-      password: "{{ hostvars[inventory_hostname]['password']}}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user']}}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass']}}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType']}}"
       outputfile: "./results/cnos_vlag_{{ inventory_hostname }}_output.txt"
       vlagArg1: "instance"
@@ -201,8 +201,8 @@ Tasks : The following are examples of using the module cnos_vlag. These are writ
 - name: Test Vlag  - keepalive-attempts
   cnos_vlag:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username']}}"
-      password: "{{ hostvars[inventory_hostname]['password']}}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user']}}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass']}}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType']}}"
       outputfile: "./results/cnos_vlag_{{ inventory_hostname }}_output.txt"
       vlagArg1: "hlthchk"
@@ -212,8 +212,8 @@ Tasks : The following are examples of using the module cnos_vlag. These are writ
 - name: Test Vlag - keepalive-interval
   cnos_vlag:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username']}}"
-      password: "{{ hostvars[inventory_hostname]['password']}}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user']}}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass']}}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType']}}"
       outputfile: "./results/cnos_vlag_{{ inventory_hostname }}_output.txt"
       vlagArg1: "hlthchk"
@@ -223,8 +223,8 @@ Tasks : The following are examples of using the module cnos_vlag. These are writ
 - name: Test Vlag - retry-interval
   cnos_vlag:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username']}}"
-      password: "{{ hostvars[inventory_hostname]['password']}}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user']}}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass']}}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType']}}"
       outputfile: "./results/cnos_vlag_{{ inventory_hostname }}_output.txt"
       vlagArg1: "hlthchk"
@@ -234,8 +234,8 @@ Tasks : The following are examples of using the module cnos_vlag. These are writ
 - name: Test Vlag - peer ip
   cnos_vlag:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username']}}"
-      password: "{{ hostvars[inventory_hostname]['password']}}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user']}}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass']}}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType']}}"
       outputfile: "./results/cnos_vlag_{{ inventory_hostname }}_output.txt"
       vlagArg1: "hlthchk"
@@ -252,11 +252,6 @@ msg:
 '''
 
 import sys
-try:
-    import paramiko
-    HAS_PARAMIKO = True
-except ImportError:
-    HAS_PARAMIKO = False
 import time
 import socket
 import array
@@ -291,54 +286,11 @@ def main():
             vlagArg4=dict(required=False),),
         supports_check_mode=False)
 
-    username = module.params['username']
-    password = module.params['password']
-    enablePassword = module.params['enablePassword']
     outputfile = module.params['outputfile']
-    hostIP = module.params['host']
-    deviceType = module.params['deviceType']
-    vlagArg1 = module.params['vlagArg1']
-    vlagArg2 = module.params['vlagArg2']
-    vlagArg3 = module.params['vlagArg3']
-    vlagArg4 = module.params['vlagArg4']
     output = ""
-    if not HAS_PARAMIKO:
-        module.fail_json(msg='paramiko is required for this module')
-
-    # Create instance of SSHClient object
-    remote_conn_pre = paramiko.SSHClient()
-
-    # Automatically add untrusted hosts (make sure okay for security policy in
-    # your environment)
-    remote_conn_pre.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-    # initiate SSH connection with the switch
-    remote_conn_pre.connect(hostIP, username=username, password=password)
-    time.sleep(2)
-
-    # Use invoke_shell to establish an 'interactive session'
-    remote_conn = remote_conn_pre.invoke_shell()
-    time.sleep(2)
-
-    # Enable and enter configure terminal then send command
-    output = output + cnos.waitForDeviceResponse("\n", ">", 2, remote_conn)
-
-    output = output + \
-        cnos.enterEnableModeForDevice(enablePassword, 3, remote_conn)
-
-    # Make terminal length = 0
-    output = output + \
-        cnos.waitForDeviceResponse("terminal length 0\n", "#", 2, remote_conn)
-
-    # Go to config mode
-    output = output + \
-        cnos.waitForDeviceResponse(
-            "configure d\n", "(config)#", 2, remote_conn)
 
     # Send the CLi command
-    output = output + cnos.vlagConfig(
-        remote_conn, deviceType, "(config)#", 2, vlagArg1, vlagArg2, vlagArg3,
-        vlagArg4)
+    output = output + str(cnos.vlagConfig(module, '(config)#', None))
 
     # Save it into the file
     file = open(outputfile, "a")
@@ -348,7 +300,7 @@ def main():
     # need to add logic to check when changes occur or not
     errorMsg = cnos.checkOutputForError(output)
     if(errorMsg is None):
-        module.exit_json(changed=True, msg="vlag configurations accomplished")
+        module.exit_json(changed=True, msg="VLAG configurations accomplished")
     else:
         module.fail_json(msg=errorMsg)
 

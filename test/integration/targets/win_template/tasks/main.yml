@@ -119,6 +119,105 @@
     that:
         - '"FC: no differences encountered" in diff_result.stdout'
 
+- name: create template dest directory
+  win_file:
+    path: '{{win_output_dir}}\directory'
+    state: directory
+
+- name: template src file to directory with backslash (check mode)
+  win_template:
+    src: foo.j2
+    dest: '{{win_output_dir}}\directory\'
+  check_mode: yes
+  register: template_to_dir_backslash_check
+
+- name: get result of template src file to directory with backslash (check_mode)
+  win_stat:
+    path: '{{win_output_dir}}\directory\foo.j2'
+  register: template_to_dir_backslash_result_check
+
+- name: assert template src file to directory with backslash (check mode)
+  assert:
+    that:
+    - template_to_dir_backslash_check is changed
+    - not template_to_dir_backslash_result_check.stat.exists
+
+- name: template src file to directory with backslash
+  win_template:
+    src: foo.j2
+    dest: '{{win_output_dir}}\directory\'
+  register: template_to_dir_backslash
+
+- name: get result of template src file to directory with backslash
+  win_stat:
+    path: '{{win_output_dir}}\directory\foo.j2'
+  register: template_to_dir_backslash_result
+
+- name: assert template src file to directory with backslash
+  assert:
+    that:
+    - template_to_dir_backslash is changed
+    - template_to_dir_backslash_result.stat.exists
+    - template_to_dir_backslash_result.stat.checksum == 'ed4f166b2937875ecad39c06648551f5af0b56d3'
+
+- name: template src file to directory with backslash (idempotent)
+  win_template:
+    src: foo.j2
+    dest: '{{win_output_dir}}\directory\'
+  register: template_to_dir_backslash_again
+
+- name: assert template src file to directory with backslash (idempotent)
+  assert:
+    that:
+    - not template_to_dir_backslash_again is changed
+
+- name: template src file to directory (check mode)
+  win_template:
+    src: another_foo.j2
+    dest: '{{win_output_dir}}\directory'
+  check_mode: yes
+  register: template_to_dir_check
+
+- name: get result of template src file to directory (check_mode)
+  win_stat:
+    path: '{{win_output_dir}}\directory\another_foo.j2'
+  register: template_to_dir_result_check
+
+- name: assert template src file to directory (check mode)
+  assert:
+    that:
+    - template_to_dir_check is changed
+    - not template_to_dir_result_check.stat.exists
+
+- name: template src file to directory
+  win_template:
+    src: another_foo.j2
+    dest: '{{win_output_dir}}\directory'
+  register: template_to_dir
+
+- name: get result of template src file to directory
+  win_stat:
+    path: '{{win_output_dir}}\directory\another_foo.j2'
+  register: template_to_dir_result
+
+- name: assert template src file to directory with
+  assert:
+    that:
+    - template_to_dir is changed
+    - template_to_dir_result.stat.exists
+    - template_to_dir_result.stat.checksum == 'b10b6f27290d554a77da2457b2ccd7d6de86b920'
+
+- name: template src file to directory (idempotent)
+  win_template:
+    src: another_foo.j2
+    dest: '{{win_output_dir}}\directory'
+  register: template_to_dir_again
+
+- name: assert template src file to directory (idempotent)
+  assert:
+    that:
+    - not template_to_dir_again is changed
+
 # VERIFY MODE
 # can't set file mode on windows so commenting this test out
 #- name: set file mode

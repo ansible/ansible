@@ -34,7 +34,7 @@ module: gcp_compute_router
 description:
     - Represents a Router resource.
 short_description: Creates a GCP Router
-version_added: 2.6
+version_added: 2.7
 author: Google Inc. (@googlecloudplatform)
 requirements:
     - python >= 2.6

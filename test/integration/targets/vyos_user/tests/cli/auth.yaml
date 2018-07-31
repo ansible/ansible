@@ -7,15 +7,15 @@
       state: present
       configured_password: pass123
 
-  - name: test login
+  - name: test login via ssh with new user
     expect:
-      command: "ssh auth_user@{{ ansible_ssh_host }} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no '/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper show version'"
+      command: "ssh auth_user@{{ ansible_ssh_host }} -p {{ ansible_port | default(22) }} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no '/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper show version'"
       responses:
         (?i)password: "pass123"
 
-  - name: test login with invalid password (should fail)
+  - name: test login via ssh with invalid password (should fail)
     expect:
-      command: "ssh auth_user@{{ ansible_ssh_host }} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no '/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper show version'"
+      command: "ssh auth_user@{{ ansible_ssh_host }} -p {{ ansible_port | default(22) }} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no '/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper show version'"
       responses:
         (?i)password: "badpass"
     ignore_errors: yes

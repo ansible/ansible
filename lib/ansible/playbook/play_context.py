@@ -436,11 +436,6 @@ class PlayContext(Base):
         if new_info.no_log is None:
             new_info.no_log = C.DEFAULT_NO_LOG
 
-        if task.always_run:
-            display.deprecated("always_run is deprecated. Use check_mode = no instead.", version="2.4", removed=False)
-            new_info.check_mode = False
-
-        # check_mode replaces always_run, overwrite always_run if both are given
         if task.check_mode is not None:
             new_info.check_mode = task.check_mode
 
@@ -544,7 +539,7 @@ class PlayContext(Base):
                     flags += ' -u %s ' % self.become_user
 
                 # FIXME: make shell independent
-                becomecmd = '%s %s echo %s && %s %s env ANSIBLE=true %s' % (exe, flags, success_key, exe, flags, cmd)
+                becomecmd = '%s %s %s -c %s' % (exe, flags, executable, success_cmd)
 
             elif self.become_method == 'dzdo':
 
@@ -561,6 +556,11 @@ class PlayContext(Base):
 
                 prompt = 'Enter UPM user password:'
                 becomecmd = '%s %s %s' % (exe, flags, shlex_quote(command))
+
+            elif self.become_method == 'machinectl':
+
+                exe = self.become_exe or 'machinectl'
+                becomecmd = '%s shell -q %s %s@ %s' % (exe, flags, self.become_user, command)
 
             else:
                 raise AnsibleError("Privilege escalation method not found: %s" % self.become_method)

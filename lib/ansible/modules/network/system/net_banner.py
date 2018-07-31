@@ -19,7 +19,7 @@ author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
 short_description: Manage multiline banners on network devices
 description:
   - This will configure both login and motd banners on network devices.
-    It allows playbooks to add or remote
+    It allows playbooks to add or remove
     banner text from the active running configuration.
 options:
   banner:

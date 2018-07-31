@@ -22,15 +22,15 @@ from contextlib import contextmanager
 from copy import deepcopy
 
 from ansible.module_utils.basic import env_fallback, return_values
-from ansible.module_utils.connection import Connection
+from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.network.common.netconf import NetconfConnection
 from ansible.module_utils._text import to_text
 
 try:
-    from lxml.etree import Element, SubElement, fromstring, tostring
+    from lxml.etree import Element, SubElement, tostring as xml_to_string
     HAS_LXML = True
 except ImportError:
-    from xml.etree.ElementTree import Element, SubElement, fromstring, tostring
+    from xml.etree.ElementTree import Element, SubElement, tostring as xml_to_string
     HAS_LXML = False
 
 ACTIONS = frozenset(['merge', 'override', 'replace', 'update', 'set'])
@@ -62,6 +62,13 @@ junos_top_spec = {
 junos_argument_spec.update(junos_top_spec)
 
 
+def tostring(element, encoding='UTF-8'):
+    if HAS_LXML:
+        return xml_to_string(element, encoding='unicode')
+    else:
+        return to_text(xml_to_string(element, encoding), encoding=encoding)
+
+
 def get_provider_argspec():
     return junos_provider_spec
 
@@ -86,7 +93,10 @@ def get_capabilities(module):
     if hasattr(module, '_junos_capabilities'):
         return module._junos_capabilities
 
-    capabilities = Connection(module._socket_path).get_capabilities()
+    try:
+        capabilities = Connection(module._socket_path).get_capabilities()
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
     module._junos_capabilities = json.loads(capabilities)
     return module._junos_capabilities
 
@@ -118,12 +128,15 @@ def load_configuration(module, candidate=None, action='merge', rollback=None, fo
         module.fail_json(msg='format must be text when action is set')
 
     conn = get_connection(module)
-    if rollback is not None:
-        _validate_rollback_id(module, rollback)
-        obj = Element('load-configuration', {'rollback': str(rollback)})
-        conn.execute_rpc(tostring(obj))
-    else:
-        return conn.load_configuration(config=candidate, action=action, format=format)
+    try:
+        if rollback is not None:
+            _validate_rollback_id(module, rollback)
+            obj = Element('load-configuration', {'rollback': str(rollback)})
+            conn.execute_rpc(tostring(obj))
+        else:
+            return conn.load_configuration(config=candidate, action=action, format=format)
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
 
 def get_configuration(module, compare=False, format='xml', rollback='0', filter=None):
@@ -131,26 +144,30 @@ def get_configuration(module, compare=False, format='xml', rollback='0', filter=
         module.fail_json(msg='invalid config format specified')
 
     conn = get_connection(module)
-    if compare:
-        xattrs = {'format': format}
-        _validate_rollback_id(module, rollback)
-        xattrs['compare'] = 'rollback'
-        xattrs['rollback'] = str(rollback)
-        reply = conn.execute_rpc(tostring(Element('get-configuration', xattrs)))
-    else:
-        reply = conn.get_configuration(format=format, filter=filter)
-
+    try:
+        if compare:
+            xattrs = {'format': format}
+            _validate_rollback_id(module, rollback)
+            xattrs['compare'] = 'rollback'
+            xattrs['rollback'] = str(rollback)
+            reply = conn.execute_rpc(tostring(Element('get-configuration', xattrs)))
+        else:
+            reply = conn.get_configuration(format=format, filter=filter)
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
     return reply
 
 
 def commit_configuration(module, confirm=False, check=False, comment=None, confirm_timeout=None, synchronize=False,
                          at_time=None, exit=False):
     conn = get_connection(module)
-    if check:
-        reply = conn.validate()
-    else:
-        reply = conn.commit(confirmed=confirm, timeout=confirm_timeout, comment=comment, synchronize=synchronize, at_time=at_time)
-
+    try:
+        if check:
+            reply = conn.validate()
+        else:
+            reply = conn.commit(confirmed=confirm, timeout=confirm_timeout, comment=comment, synchronize=synchronize, at_time=at_time)
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
     return reply
 
 
@@ -158,17 +175,29 @@ def command(module, cmd, format='text', rpc_only=False):
     conn = get_connection(module)
     if rpc_only:
         cmd += ' | display xml rpc'
-    return conn.command(command=cmd, format=format)
+    try:
+        response = conn.command(command=cmd, format=format)
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+    return response
 
 
-def lock_configuration(x):
-    conn = get_connection(x)
-    return conn.lock()
+def lock_configuration(module):
+    conn = get_connection(module)
+    try:
+        response = conn.lock()
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+    return response
 
 
-def unlock_configuration(x):
-    conn = get_connection(x)
-    return conn.unlock()
+def unlock_configuration(module):
+    conn = get_connection(module)
+    try:
+        response = conn.unlock()
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+    return response
 
 
 @contextmanager
@@ -182,7 +211,11 @@ def locked_config(module):
 
 def discard_changes(module):
     conn = get_connection(module)
-    return conn.discard_changes()
+    try:
+        response = conn.discard_changes()
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+    return response
 
 
 def get_diff(module, rollback='0'):

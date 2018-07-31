@@ -4,7 +4,7 @@
 Platform Options
 ****************
 
-Some Ansible Network platforms support multiple connection types, privilege escalation, or other options. The pages in this section offer standardized guides to understanding available options on each network platform. We welcome contributions from community-maintained platforms to this section.
+Some Ansible Network platforms support multiple connection types, privilege escalation (``enable`` mode), or other options. The pages in this section offer standardized guides to understanding available options on each network platform. We welcome contributions from community-maintained platforms to this section.
 
 .. toctree::
    :maxdepth: 2
@@ -12,5 +12,44 @@ Some Ansible Network platforms support multiple connection types, privilege esca
 
    platform_eos
    platform_ios
+   platform_ironware
    platform_junos
    platform_nxos
+   platform_routeros
+
+.. _settings_by_platform:
+
+Settings by Platform
+================================
+
++-------------------+-------------------------+----------------------+----------------------+------------------+------------------+
+|..                 |                         | ``ansible_connection:`` settings available                                        |
++-------------------+-------------------------+----------------------+----------------------+------------------+------------------+
+| Network OS        | ``ansible_network_os:`` | network_cli          | netconf              | httpapi          | local            |
++===================+=========================+======================+======================+==================+==================+
+| Arista EOS*       | ``eos``                 | in v. >=2.5          | N/A                  | in v. >=2.6      |  in v. >=2.4     |
++-------------------+-------------------------+----------------------+----------------------+------------------+------------------+
+| Cisco ASA         | ``asa``                 | in v. >=2.5          | N/A                  | N/A              |  in v. >=2.4     |
++-------------------+-------------------------+----------------------+----------------------+------------------+------------------+
+| Cisco IOS*        | ``ios``                 | in v. >=2.5          | N/A                  | N/A              |  in v. >=2.4     |
++-------------------+-------------------------+----------------------+----------------------+------------------+------------------+
+| Cisco IOS XR*     | ``iosxr``               | in v. >=2.5          | N/A                  | N/A              |  in v. >=2.4     |
++-------------------+-------------------------+----------------------+----------------------+------------------+------------------+
+| Cisco NX-OS*      | ``nxos``                | in v. >=2.5          | N/A                  | in v. >=2.6      |  in v. >=2.4     |
++-------------------+-------------------------+----------------------+----------------------+------------------+------------------+
+| Extreme IronWare  | ``ironware``            | in v. >=2.5          | N/A                  | N/A              |  in v. >=2.5     |
++-------------------+-------------------------+----------------------+----------------------+------------------+------------------+
+| F5 BIG-IP         | N/A                     | N/A                  | N/A                  | N/A              |  in v. >=2.0     |
++-------------------+-------------------------+----------------------+----------------------+------------------+------------------+
+| F5 BIG-IQ         | N/A                     | N/A                  | N/A                  | N/A              |  in v. >=2.0     |
++-------------------+-------------------------+----------------------+----------------------+------------------+------------------+
+| Junos OS*         | ``junos``               | in v. >=2.5          | in v. >=2.5          | N/A              |  in v. >=2.4     |
++-------------------+-------------------------+----------------------+----------------------+------------------+------------------+
+| MikroTik RouterOS | ``routeros``            | in v. >=2.7          | N/A                  | N/A              |  N/A             |
++-------------------+-------------------------+----------------------+----------------------+------------------+------------------+
+| Nokia SR OS       | ``sros``                | in v. >=2.5          | N/A                  | N/A              |  in v. >=2.4     |
++-------------------+-------------------------+----------------------+----------------------+------------------+------------------+
+| VyOS*             | ``vyos``                | in v. >=2.5          | N/A                  | N/A              |  in v. >=2.4     |
++-------------------+-------------------------+----------------------+----------------------+------------------+------------------+
+
+`*` Maintained by Ansible Network Team

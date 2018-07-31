@@ -1068,6 +1068,97 @@
       - "copied_stat.results[2].stat.exists"
 
 #
+# Recursive copy with relative paths (#34893)
+#
+
+- name: Create a directory to copy
+  file:
+    path: 'source_recursive'
+    state: directory
+
+- name: Create a file inside of the directory
+  copy:
+    content: "testing"
+    dest: 'source_recursive/file'
+
+- name: Create a directory to place the test output in
+  file:
+    path: 'destination'
+    state: directory
+
+- name: Copy the directory and files within (no trailing slash)
+  copy:
+    src: 'source_recursive'
+    dest: 'destination'
+
+- name: Stat the recursively copied directory
+  stat:
+    path: "destination/{{ item }}"
+  register: copied_stat
+  with_items:
+    - "source_recursive"
+    - "source_recursive/file"
+    - "file"
+
+- debug:
+    var: copied_stat
+    verbosity: 1
+
+- name: Assert with no trailing slash, directory and file is copied
+  assert:
+    that:
+      - "copied_stat.results[0].stat.exists"
+      - "copied_stat.results[1].stat.exists"
+      - "not copied_stat.results[2].stat.exists"
+
+- name: Cleanup
+  file:
+    path: 'destination'
+    state: absent
+
+# Try again with no trailing slash
+
+- name: Create a directory to place the test output in
+  file:
+    path: 'destination'
+    state: directory
+
+- name: Copy just the files inside of the directory
+  copy:
+    src: 'source_recursive/'
+    dest: 'destination'
+
+- name: Stat the recursively copied directory
+  stat:
+    path: "destination/{{ item }}"
+  register: copied_stat
+  with_items:
+    - "source_recursive"
+    - "source_recursive/file"
+    - "file"
+
+- debug:
+    var: copied_stat
+    verbosity: 1
+
+- name: Assert with trailing slash, only the file is copied
+  assert:
+    that:
+      - "not copied_stat.results[0].stat.exists"
+      - "not copied_stat.results[1].stat.exists"
+      - "copied_stat.results[2].stat.exists"
+
+- name: Cleanup
+  file:
+    path: 'destination'
+    state: absent
+
+- name: Cleanup
+  file:
+    path: 'source_recursive'
+    state: absent
+
+#
 # issue 8394
 #
 

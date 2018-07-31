@@ -1,0 +1,10 @@
+---
+minor_changes:
+- In Ansible-2.4 and above, Ansible passes the temporary directory a module
+  should use to the module.  This is done via a module parameter
+  (_ansible_tmpdir).  An earlier version of this which was also prototyped in
+  Ansible-2.4 development used an environment variable, ANSIBLE_REMOTE_TMP to
+  pass this information to the module instead.  When we switched to using
+  a module parameter, the environment variable was left in by mistake.
+  Ansible-2.7 removes that variable.  Any third party modules which relied on
+  it should use the module parameter instead.

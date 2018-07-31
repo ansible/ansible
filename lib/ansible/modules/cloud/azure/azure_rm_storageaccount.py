@@ -42,7 +42,6 @@ options:
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
-        default: resource_group location
     account_type:
         description:
             - "Type of storage account. Required when creating a storage account. NOTE: Standard_ZRS and Premium_LRS
@@ -73,11 +72,14 @@ options:
     access_tier:
         description:
             - The access tier for this storage account. Required for a storage account of kind 'BlobStorage'.
-        default: 'Storage'
         choices:
             - Hot
             - Cool
         version_added: "2.4"
+    force:
+        description:
+            - Attempt deletion if resource already exists and cannot be updated
+        type: bool
 
 extends_documentation_fragment:
     - azure
@@ -102,8 +104,8 @@ EXAMPLES = '''
         name: clh0002
         type: Standard_RAGRS
         tags:
-          - testing: testing
-          - delete: on-exit
+          testing: testing
+          delete: on-exit
 '''
 
 

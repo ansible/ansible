@@ -1,13 +1,15 @@
 #!powershell
-# This file is part of Ansible
 
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
 #Requires -Module Ansible.ModuleUtils.CamelConversion
 
 $ErrorActionPreference = "Stop"
+
+$params = Parse-Args $args -supports_check_mode $true
+$_remote_tmp = Get-AnsibleParam $params "_ansible_remote_tmp" -type "path" -default $env:TMP
 
 $session_util = @'
 using System;
@@ -780,7 +782,11 @@ namespace Ansible
 }
 '@
 
+$original_tmp = $env:TMP
+$env:TMP = $_remote_tmp
 Add-Type -TypeDefinition $session_util
+$env:TMP = $original_tmp
+
 $session_info = [Ansible.SessionUtil]::GetSessionInfo()
 
 Function Convert-Value($value) {

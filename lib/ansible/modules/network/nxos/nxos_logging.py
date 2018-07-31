@@ -36,7 +36,11 @@ options:
   dest:
     description:
       - Destination of the logs.
-    choices: ['console', 'logfile', 'module', 'monitor']
+    choices: ['console', 'logfile', 'module', 'monitor', 'server']
+  remote_server:
+    description:
+      - Hostname or IP Address for remote logging (when dest is 'server').
+    version_added: '2.7'
   name:
     description:
       - If value of C(dest) is I(logfile) it indicates file-name.
@@ -52,10 +56,6 @@ options:
       - Set logging serverity levels for facility based log messages.
   aggregate:
     description: List of logging definitions.
-  purge:
-    description:
-      - Purge logging not defined in the aggregate parameter.
-    default: no
   state:
     description:
       - State of the logging configuration.
@@ -91,6 +91,14 @@ EXAMPLES = """
     facility: daemon
     facility_level: 0
     state: absent
+
+- name: Configure logging using aggregate
+  nxos_logging:
+    aggregate:
+      - { dest: console, dest_level: 2 }
+      - { dest: logfile, dest_level: 2, name: testfile }
+      - { facility: daemon, facility_level: 0 }
+    state: present
 """
 
 RETURN = """
@@ -106,30 +114,26 @@ commands:
 
 import re
 
-from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
-DEST_GROUP = ['console', 'logfile', 'module', 'monitor']
+DEST_GROUP = ['console', 'logfile', 'module', 'monitor', 'server']
 
 
-def map_obj_to_commands(updates, module):
+def map_obj_to_commands(updates):
     commands = list()
     want, have = updates
 
     for w in want:
-        dest = w['dest']
-        name = w['name']
-        facility = w['facility']
-        dest_level = w['dest_level']
-        facility_level = w['facility_level']
         state = w['state']
         del w['state']
 
         if state == 'absent' and w in have:
             if w['facility'] is not None:
-                commands.append('no logging level {}'.format(w['facility']))
+                if not w['dest']:
+                    commands.append('no logging level {}'.format(w['facility']))
 
             if w['name'] is not None:
                 commands.append('no logging logfile')
@@ -137,18 +141,38 @@ def map_obj_to_commands(updates, module):
             if w['dest'] in ('console', 'module', 'monitor'):
                 commands.append('no logging {}'.format(w['dest']))
 
+            if w['dest'] == 'server':
+                commands.append('no logging server {}'.format(w['remote_server']))
+
         if state == 'present' and w not in have:
             if w['facility'] is None:
-                if w['dest'] is not None:
-                    if w['dest'] != 'logfile':
+                if w['dest']:
+                    if w['dest'] not in ('logfile', 'server'):
                         commands.append('logging {} {}'.format(w['dest'], w['dest_level']))
+
                     elif w['dest'] == 'logfile':
                         commands.append('logging logfile {} {}'.format(w['name'], w['dest_level']))
+
+                    elif w['dest'] == 'server':
+                        if w['dest_level']:
+                            commands.append('logging server {0} {1}'.format(
+                                w['remote_server'], w['dest_level']))
+                        else:
+                            commands.append('logging server {0}'.format(w['remote_server']))
                     else:
                         pass
 
-            if w['facility'] is not None:
-                commands.append('logging level {} {}'.format(w['facility'], w['facility_level']))
+            if w['facility']:
+                if w['dest'] == 'server':
+                    if w['dest_level']:
+                        commands.append('logging server {0} {1} facility {2}'.format(
+                            w['remote_server'], w['dest_level'], w['facility']))
+                    else:
+                        commands.append('logging server {0} facility {1}'.format(w['remote_server'],
+                                                                                 w['facility']))
+                else:
+                    commands.append('logging level {} {}'.format(w['facility'],
+                                                                 w['facility_level']))
 
     return commands
 
@@ -167,6 +191,17 @@ def parse_name(line, dest):
     return name
 
 
+def parse_remote_server(line, dest):
+    remote_server = None
+
+    if dest and dest == 'server':
+        match = re.search(r'logging server (\S+)', line, re.M)
+        if match:
+            remote_server = match.group(1)
+
+    return remote_server
+
+
 def parse_dest_level(line, dest, name):
     dest_level = None
 
@@ -182,6 +217,11 @@ def parse_dest_level(line, dest, name):
     if dest is not None:
         if dest == 'logfile':
             match = re.search(r'logging logfile {} (\S+)'.format(name), line, re.M)
+            if match:
+                dest_level = parse_match(match)
+
+        elif dest == 'server':
+            match = re.search(r'logging server (?:\S+) (\d+)', line, re.M)
             if match:
                 dest_level = parse_match(match)
         else:
@@ -203,6 +243,16 @@ def parse_facility_level(line, facility):
     return facility_level
 
 
+def parse_facility(line):
+    facility = None
+
+    match = re.search(r'logging server (?:\S+) (?:\d+) (?:\S+) (?:\S+) (?:\S+) (\S+)', line, re.M)
+    if match:
+        facility = match.group(1)
+
+    return facility
+
+
 def map_config_to_obj(module):
     obj = []
 
@@ -216,6 +266,9 @@ def map_config_to_obj(module):
                 dest = match.group(1)
                 facility = None
 
+                if dest == 'server':
+                    facility = parse_facility(line)
+
             elif match.group(1) == 'level':
                 match_facility = re.search(r'logging level (\S+)', line, re.M)
                 facility = match_facility.group(1)
@@ -226,10 +279,34 @@ def map_config_to_obj(module):
                 facility = None
 
             obj.append({'dest': dest,
+                        'remote_server': parse_remote_server(line, dest),
                         'name': parse_name(line, dest),
                         'facility': facility,
                         'dest_level': parse_dest_level(line, dest, parse_name(line, dest)),
                         'facility_level': parse_facility_level(line, facility)})
+
+    cmd = [{'command': 'show logging | section enabled | section console', 'output': 'text'},
+           {'command': 'show logging | section enabled | section monitor', 'output': 'text'}]
+
+    default_data = run_commands(module, cmd)
+
+    for line in default_data:
+        flag = False
+        match = re.search(r'Logging (\w+):(?:\s+) (?:\w+) (?:\W)Severity: (\w+)', str(line), re.M)
+        if match:
+            if match.group(1) == 'console' and match.group(2) == 'critical':
+                dest_level = '2'
+                flag = True
+            elif match.group(1) == 'monitor' and match.group(2) == 'notifications':
+                dest_level = '5'
+                flag = True
+        if flag:
+            obj.append({'dest': match.group(1),
+                        'remote_server': None,
+                        'name': None,
+                        'facility': None,
+                        'dest_level': dest_level,
+                        'facility_level': None})
 
     return obj
 
@@ -239,11 +316,11 @@ def map_params_to_obj(module):
 
     if 'aggregate' in module.params and module.params['aggregate']:
         args = {'dest': '',
+                'remote_server': '',
                 'name': '',
                 'facility': '',
                 'dest_level': '',
-                'facility_level': ''
-                }
+                'facility_level': ''}
 
         for c in module.params['aggregate']:
             d = c.copy()
@@ -275,13 +352,13 @@ def map_params_to_obj(module):
 
         obj.append({
             'dest': module.params['dest'],
+            'remote_server': module.params['remote_server'],
             'name': module.params['name'],
             'facility': module.params['facility'],
             'dest_level': dest_level,
             'facility_level': facility_level,
             'state': module.params['state']
         })
-
     return obj
 
 
@@ -292,20 +369,20 @@ def main():
         dest=dict(choices=DEST_GROUP),
         name=dict(),
         facility=dict(),
+        remote_server=dict(),
         dest_level=dict(type='int', aliases=['level']),
         facility_level=dict(type='int'),
         state=dict(default='present', choices=['present', 'absent']),
-        aggregate=dict(type='list'),
-        purge=dict(default=False, type='bool')
+        aggregate=dict(type='list')
     )
 
     argument_spec.update(nxos_argument_spec)
 
-    required_if = [('dest', 'logfile', ['name'])]
+    required_if = [('dest', 'logfile', ['name']),
+                   ('dest', 'server', ['remote_server'])]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            required_if=required_if,
-                           required_together=[['facility', 'facility_level']],
                            supports_check_mode=True)
 
     warnings = list()
@@ -327,6 +404,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

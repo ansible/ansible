@@ -42,6 +42,8 @@
                 "ec2:AssociateVpcCidrBlock",
                 "ec2:AssociateSubnetCidrBlock",
                 "ec2:AttachInternetGateway",
+                "ec2:AttachVpnGateway",
+                "ec2:CreateCustomerGateway",
                 "ec2:CreateDhcpOptions",
                 "ec2:CreateImage",
                 "ec2:CreateInternetGateway",
@@ -54,6 +56,9 @@
                 "ec2:CreateSubnet",
                 "ec2:CreateTags",
                 "ec2:CreateVpc",
+                "ec2:CreateVpnConnection",
+                "ec2:CreateVpnGateway",
+                "ec2:DeleteCustomerGateway",
                 "ec2:DeleteDhcpOptions",
                 "ec2:DeleteInternetGateway",
                 "ec2:DeleteKeyPair",
@@ -64,14 +69,18 @@
                 "ec2:DeleteSubnet",
                 "ec2:DeleteTags",
                 "ec2:DeleteVpc",
-                "ec2:DeleteTags",
+                "ec2:DeleteVpnConnection",
+                "ec2:DeleteVpnGateway",
                 "ec2:DeregisterImage",
                 "ec2:DetachInternetGateway",
+                "ec2:DetachVpnGateway",
                 "ec2:Describe*",
                 "ec2:DisassociateAddress",
                 "ec2:DisassociateRouteTable",
+                "ec2:DisassociateSubnetCidrBlock",
                 "ec2:ImportKeyPair",
                 "ec2:ModifyImageAttribute",
+                "ec2:ModifySubnetAttribute",
                 "ec2:ModifyVpcAttribute",
                 "ec2:RegisterImage",
                 "ec2:ReleaseAddress",
@@ -86,8 +95,10 @@
                 "ec2:AuthorizeSecurityGroupIngress",
                 "ec2:AuthorizeSecurityGroupEgress",
                 "ec2:CreateTags",
+                "ec2:CreateVolume",
                 "ec2:DeleteRouteTable",
                 "ec2:DeleteSecurityGroup",
+                "ec2:DeleteVolume",
                 "ec2:RevokeSecurityGroupEgress",
                 "ec2:RevokeSecurityGroupIngress",
                 "ec2:RunInstances",
@@ -100,29 +111,6 @@
                 "arn:aws:ec2:{{aws_region}}:{{aws_account}}:*"
             ]
         },
-        {
-            "Sid": "UnspecifiedCodeRepositories",
-            "Effect": "Allow",
-            "Action": [
-                "ecr:DescribeRepositories",
-                "ecr:CreateRepository"
-            ],
-            "Resource": "*"
-        },
-        {
-            "Sid": "SpecifiedCodeRepositories",
-            "Effect": "Allow",
-            "Action": [
-                "ecr:GetRepositoryPolicy",
-                "ecr:SetRepositoryPolicy",
-                "ecr:DeleteRepository",
-                "ecr:DeleteRepositoryPolicy",
-                "ecr:DeleteRepositoryPolicy"
-            ],
-            "Resource": [
-                "arn:aws:ecr:{{aws_region}}:{{aws_account}}:repository/ansible-*"
-            ]
-        },
 {# According to http://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/load-balancer-authentication-access-control.html #}
 {# Resource level access control is not possible for the new ELB API (providing Application Load Balancer functionality #}
 {# While it remains possible for the old API, there is no distinction of the Actions between old API and new API #}
@@ -130,6 +118,7 @@
             "Sid": "AllowLoadBalancerOperations",
             "Effect": "Allow",
             "Action": [
+                "elasticloadbalancing:AddTags",
                 "elasticloadbalancing:ConfigureHealthCheck",
                 "elasticloadbalancing:CreateListener",
                 "elasticloadbalancing:CreateLoadBalancer",
@@ -144,12 +133,13 @@
                 "elasticloadbalancing:DescribeLoadBalancerAttributes",
                 "elasticloadbalancing:DescribeLoadBalancerPolicies",
                 "elasticloadbalancing:DescribeLoadBalancerPolicyTypes",
-                "elasticloadbalancing:DescribeLoadBalancerTags",
                 "elasticloadbalancing:DescribeLoadBalancers",
+                "elasticloadbalancing:DescribeTags",
                 "elasticloadbalancing:DisableAvailabilityZonesForLoadBalancer",
                 "elasticloadbalancing:EnableAvailabilityZonesForLoadBalancer",
                 "elasticloadbalancing:ModifyLoadBalancerAttributes",
-                "elasticloadbalancing:RegisterInstancesWithLoadBalancer"
+                "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+                "elasticloadbalancing:RemoveTags"
             ],
             "Resource": "*"
         },
@@ -224,31 +214,10 @@
             "Resource": [
                 "arn:aws:iam::{{aws_account}}:role/ansible_lambda_role",
                 "arn:aws:iam::{{aws_account}}:role/ecsInstanceRole",
-                "arn:aws:iam::{{aws_account}}:role/ecsServiceRole"
+                "arn:aws:iam::{{aws_account}}:role/ecsServiceRole",
+                "arn:aws:iam::{{aws_account}}:role/aws_eks_cluster_role",
+                "arn:aws:iam::{{aws_account}}:role/ecsTaskExecutionRole"
             ]
-        },
-        {
-          "Sid": "AllowECSManagement",
-          "Effect": "Allow",
-          "Action": [
-            "application-autoscaling:Describe*",
-            "application-autoscaling:PutScalingPolicy",
-            "application-autoscaling:RegisterScalableTarget",
-            "cloudwatch:DescribeAlarms",
-            "cloudwatch:PutMetricAlarm",
-            "ecs:CreateCluster",
-            "ecs:CreateService",
-            "ecs:DeleteCluster",
-            "ecs:DeleteService",
-            "ecs:Describe*",
-            "ecs:DeregisterTaskDefinition",
-            "ecs:List*",
-            "ecs:RegisterTaskDefinition",
-            "ecs:UpdateService"
-          ],
-          "Resource": [
-            "*"
-          ]
         },
         {
           "Sid": "AllowSESManagement",

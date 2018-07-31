@@ -152,7 +152,7 @@ modlist:
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_bytes
 from ansible.module_utils.ldap import LdapGeneric, gen_specs
 
 try:
@@ -173,9 +173,9 @@ class LdapAttr(LdapGeneric):
 
         # Normalize values
         if isinstance(self.module.params['values'], list):
-            self.values = map(str, self.module.params['values'])
+            self.values = map(to_bytes, self.module.params['values'])
         else:
-            self.values = [str(self.module.params['values'])]
+            self.values = [to_bytes(self.module.params['values'])]
 
     def add(self):
         values_to_add = filter(self._is_value_absent, self.values)

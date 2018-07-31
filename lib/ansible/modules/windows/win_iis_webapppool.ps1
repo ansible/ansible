@@ -189,7 +189,7 @@ if ($state -eq "absent") {
     if (-not $pool) {
         if (-not $check_mode) {
             try {
-                New-WebAppPool -Name $name
+                New-WebAppPool -Name $name > $null
             } catch {
                 Fail-Json $result "Failed to create new Web App Pool $($name): $($_.Exception.Message)"
             }
@@ -220,7 +220,7 @@ if ($state -eq "absent") {
                 }
                 foreach ($value in $new_value) {
                     try {
-                        New-ItemProperty -Path IIS:\AppPools\$name -Name $attribute_key -Value @{value=$value} -WhatIf:$check_mode
+                        New-ItemProperty -Path IIS:\AppPools\$name -Name $attribute_key -Value @{value=$value} -WhatIf:$check_mode > $null
                     } catch {
                         Fail-Json -obj $result -message "Failed to add new attribute to Web App Pool $name. Attribute: $attribute_key, Value: $value, Exception: $($_.Exception.Message)"
                     }
@@ -241,7 +241,7 @@ if ($state -eq "absent") {
         if ($state -eq "started" -or $state -eq "restarted") {
             if (-not $check_mode) {
                 try {
-                    Start-WebAppPool -Name $name
+                    Start-WebAppPool -Name $name > $null
                 } catch {
                     Fail-Json $result "Failed to start Web App Pool $($name): $($_.Exception.Message)"
                 }
@@ -252,7 +252,7 @@ if ($state -eq "absent") {
         if ($state -eq "stopped") {
             if (-not $check_mode) {
                 try {
-                    Stop-WebAppPool -Name $name
+                    Stop-WebAppPool -Name $name > $null
                 } catch {
                     Fail-Json $result "Failed to stop Web App Pool $($name): $($_.Exception.Message)"
                 }
@@ -261,7 +261,7 @@ if ($state -eq "absent") {
         } elseif ($state -eq "restarted") {
             if (-not $check_mode) {
                 try {
-                    Restart-WebAppPool -Name $name
+                    Restart-WebAppPool -Name $name > $null
                 } catch {
                     Fail-Json $result "Failed to restart Web App Pool $($name): $($_.Exception.Message)"
                 }

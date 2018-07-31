@@ -74,12 +74,14 @@ options:
     version_added: "2.1"
 notes:
   - Not tested on any Debian based system.
-  - Requires the python2 bindings of firewalld, which may not be installed by default if the distribution switched to python 3
+  - Requires the python2 bindings of firewalld, which may not be installed by default.
+  - For distributions where the python2 firewalld bindings are unavailable (e.g Fedora 28 and later) you will have to set the
+    ansible_python_interpreter for these hosts to the python3 interpreter path and install the python3 bindings.
   - Zone transactions (creating, deleting) can be performed by using only the zone and state parameters "present" or "absent".
     Note that zone transactions must explicitly be permanent. This is a limitation in firewalld.
-    This also means that you will have to reload firewalld after adding a zone that you wish to perfom immediate actions on.
+    This also means that you will have to reload firewalld after adding a zone that you wish to perform immediate actions on.
     The module will not take care of this for you implicitly because that would undo any previously performed immediate actions which were not
-    permanent. Therefor, if you require immediate access to a newly created zone it is recommended you reload firewalld immediately after the zone
+    permanent. Therefore, if you require immediate access to a newly created zone it is recommended you reload firewalld immediately after the zone
     creation returns with a changed state and before you perform any other immediate, non-permanent actions on that zone.
 requirements: [ 'firewalld >= 0.2.11' ]
 author: "Adam Miller (@maxamillion)"
@@ -133,6 +135,17 @@ EXAMPLES = '''
     zone: custom
     state: present
     permanent: true
+
+- name: Redirect port 443 to 8443 with Rich Rule
+  firewalld:
+    rich_rule: rule family={{ item }} forward-port port=443 protocol=tcp to-port=8443
+    zone:      public
+    permanent: true
+    immediate: true
+    state:     enabled
+  with_items:
+    - ipv4
+    - ipv6
 '''
 
 from ansible.module_utils.basic import AnsibleModule

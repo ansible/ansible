@@ -1,3 +1,2 @@
 cloud/aws
-posix/ci/cloud/group4/aws
-unstable
+shippable/aws/group1

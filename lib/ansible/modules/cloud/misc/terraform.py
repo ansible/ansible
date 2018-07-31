@@ -42,6 +42,7 @@ options:
     description:
       - The path to an existing Terraform plan file to apply. If this is not
         specified, Ansible will build a new TF plan and execute it.
+        Note that this option is required if 'state' has the 'planned' value.
     required: false
   state_file:
     description:
@@ -165,11 +166,15 @@ def init_plugins(bin_path, project_path):
         module.fail_json(msg="Failed to initialize Terraform modules:\r\n{0}".format(err))
 
 
-def build_plan(bin_path, project_path, variables_args, state_file, plan_path=None):
+def build_plan(bin_path, project_path, variables_args, state_file, targets, plan_path=None):
     if plan_path is None:
         f, plan_path = tempfile.mkstemp(suffix='.tfplan')
 
     command = [bin_path, 'plan', '-input=false', '-no-color', '-detailed-exitcode', '-out', plan_path]
+
+    for t in (module.params.get('targets') or []):
+        command.extend(['-target', t])
+
     command.extend(_state_args(state_file))
 
     rc, out, err = module.run_command(command + variables_args, cwd=project_path)
@@ -255,7 +260,7 @@ def main():
     needs_application, changed = True, True
 
     if state == 'planned':
-        plan_file, needs_application = build_plan(command[0], project_path, variables_args, state_file)
+        plan_file, needs_application = build_plan(command[0], project_path, variables_args, state_file, module.params.get('targets'), plan_file)
     if state == 'absent':
         # deleting cannot use a statefile
         needs_application = True
@@ -266,7 +271,7 @@ def main():
     elif plan_file and not os.path.exists(plan_file):
         module.fail_json(msg='Could not find plan_file "{0}", check the path and try again.'.format(plan_file))
     else:
-        plan_file, needs_application = build_plan(command[0], project_path, variables_args, state_file)
+        plan_file, needs_application = build_plan(command[0], project_path, variables_args, state_file, module.params.get('targets'), plan_file)
         command.append(plan_file)
 
     if needs_application and not module.check_mode and not state == 'planned':

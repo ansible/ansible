@@ -68,6 +68,17 @@ options:
     admin_password:
         description:
             - The password of the administrator login.
+    create_mode:
+        description:
+            - Create mode of SQL Server
+        default: Default
+    state:
+        description:
+            - Assert the state of the PostgreSQL server. Use 'present' to create or update a server and 'absent' to delete it.
+        default: present
+        choices:
+            - present
+            - absent
 
 extends_documentation_fragment:
     - azure
@@ -83,9 +94,9 @@ EXAMPLES = '''
       resource_group: TestGroup
       name: testserver
       sku:
-        name: PGSQLS100
-        tier: Basic
-        capacity: 100
+        name: GP_Gen4_2
+        tier: GeneralPurpose
+        capacity: 2
       location: eastus
       storage_mb: 1024
       enforce_ssl: True
@@ -124,9 +135,9 @@ import time
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
-    from msrestazure.azure_exceptions import CloudError
-    from msrestazure.azure_operation import AzureOperationPoller
     from azure.mgmt.rdbms.postgresql import PostgreSQLManagementClient
+    from msrestazure.azure_exceptions import CloudError
+    from msrest.polling import LROPoller
     from msrest.serialization import Model
 except ImportError:
     # This is handled in azure_rm_common
@@ -311,7 +322,7 @@ class AzureRMServers(AzureRMModuleBase):
                 response = self.mgmt_client.servers.update(resource_group_name=self.resource_group,
                                                            server_name=self.name,
                                                            parameters=self.parameters)
-            if isinstance(response, AzureOperationPoller):
+            if isinstance(response, LROPoller):
                 response = self.get_poller_result(response)
 
         except CloudError as exc:

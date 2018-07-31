@@ -138,8 +138,8 @@ options:
         will fail
     default: 30
     ini:
-      section: persistent_connection
-      key: persistent_connect_timeout
+      - section: persistent_connection
+        key: connect_timeout
     env:
       - name: ANSIBLE_PERSISTENT_CONNECT_TIMEOUT
   persistent_command_timeout:
@@ -151,10 +151,12 @@ options:
         close
     default: 10
     ini:
-      section: persistent_connection
-      key: persistent_command_timeout
+      - section: persistent_connection
+        key: command_timeout
     env:
       - name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT
+    vars:
+      - name: ansible_command_timeout
 """
 
 import getpass
@@ -165,15 +167,13 @@ import os
 import socket
 import traceback
 
-from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils.six import BytesIO, PY3
 from ansible.module_utils.six.moves import cPickle
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.playbook.play_context import PlayContext
+from ansible.plugins.connection import NetworkConnectionBase
 from ansible.plugins.loader import cliconf_loader, terminal_loader, connection_loader
-from ansible.plugins.connection import ConnectionBase
-from ansible.utils.path import unfrackpath
 
 try:
     from __main__ import display
@@ -182,12 +182,11 @@ except ImportError:
     display = Display()
 
 
-class Connection(ConnectionBase):
+class Connection(NetworkConnectionBase):
     ''' CLI (shell) SSH connections on Paramiko '''
 
     transport = 'network_cli'
     has_pipelining = True
-    force_persistence = True
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
@@ -195,32 +194,17 @@ class Connection(ConnectionBase):
         self._ssh_shell = None
 
         self._matched_prompt = None
+        self._matched_cmd_prompt = None
         self._matched_pattern = None
         self._last_response = None
         self._history = list()
-        self._play_context = play_context
-
-        self._local = connection_loader.get('local', play_context, '/dev/null')
-        self._local.set_options()
 
         self._terminal = None
-        self._cliconf = None
-
-        self._ansible_playbook_pid = kwargs.get('ansible_playbook_pid')
+        self.cliconf = None
+        self.paramiko_conn = None
 
         if self._play_context.verbosity > 3:
             logging.getLogger('paramiko').setLevel(logging.DEBUG)
-
-        # reconstruct the socket_path and set instance values accordingly
-        self._update_connection_state()
-
-    def __getattr__(self, name):
-        try:
-            return self.__dict__[name]
-        except KeyError:
-            if name.startswith('_'):
-                raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
-            return getattr(self._cliconf, name)
 
     def _get_log_channel(self):
         name = "p=%s u=%s | " % (os.getpid(), getpass.getuser())
@@ -251,13 +235,7 @@ class Connection(ConnectionBase):
                 return self.send(command=cmd)
 
         else:
-            return self._local.exec_command(cmd, in_data, sudoable)
-
-    def put_file(self, in_path, out_path):
-        return self._local.put_file(in_path, out_path)
-
-    def fetch_file(self, in_path, out_path):
-        return self._local.fetch_file(in_path, out_path)
+            return super(Connection, self).exec_command(cmd, in_data, sudoable)
 
     def update_play_context(self, pc_data):
         """Updates the play context information for the connection"""
@@ -270,99 +248,74 @@ class Connection(ConnectionBase):
         play_context.deserialize(pc_data)
 
         messages = ['updating play_context for connection']
-        if self._play_context.become is False and play_context.become is True:
-            auth_pass = play_context.become_pass
-            self._terminal.on_become(passwd=auth_pass)
-            messages.append('authorizing connection')
-
-        elif self._play_context.become is True and not play_context.become:
-            self._terminal.on_unbecome()
-            messages.append('deauthorizing connection')
+        if self._play_context.become ^ play_context.become:
+            if play_context.become is True:
+                auth_pass = play_context.become_pass
+                self._terminal.on_become(passwd=auth_pass)
+                messages.append('authorizing connection')
+            else:
+                self._terminal.on_unbecome()
+                messages.append('deauthorizing connection')
 
         self._play_context = play_context
+
+        self.reset_history()
+        self.disable_response_logging()
         return messages
 
     def _connect(self):
         '''
         Connects to the remote device and starts the terminal
         '''
-        if self.connected:
-            return
+        if not self.connected:
+            if not self._network_os:
+                raise AnsibleConnectionFailure(
+                    'Unable to automatically determine host network os. Please '
+                    'manually configure ansible_network_os value for this host'
+                )
+            display.display('network_os is set to %s' % self._network_os, log_only=True)
 
-        self.paramiko_conn = connection_loader.get('paramiko', self._play_context, '/dev/null')
-        self.paramiko_conn._set_log_channel(self._get_log_channel())
-        self.paramiko_conn.set_options(direct={'look_for_keys': not bool(self._play_context.password and not self._play_context.private_key_file)})
-        self.paramiko_conn.force_persistence = self.force_persistence
-        ssh = self.paramiko_conn._connect()
+            self.paramiko_conn = connection_loader.get('paramiko', self._play_context, '/dev/null')
+            self.paramiko_conn._set_log_channel(self._get_log_channel())
+            self.paramiko_conn.set_options(direct={'look_for_keys': not bool(self._play_context.password and not self._play_context.private_key_file)})
+            self.paramiko_conn.force_persistence = self.force_persistence
+            ssh = self.paramiko_conn._connect()
 
-        display.vvvv('ssh connection done, setting terminal', host=self._play_context.remote_addr)
+            host = self.get_option('host')
+            display.vvvv('ssh connection done, setting terminal', host=host)
 
-        self._ssh_shell = ssh.ssh.invoke_shell()
-        self._ssh_shell.settimeout(self._play_context.timeout)
+            self._ssh_shell = ssh.ssh.invoke_shell()
+            self._ssh_shell.settimeout(self.get_option('persistent_command_timeout'))
 
-        network_os = self._play_context.network_os
-        if not network_os:
-            raise AnsibleConnectionFailure(
-                'Unable to automatically determine host network os. Please '
-                'manually configure ansible_network_os value for this host'
-            )
+            self._terminal = terminal_loader.get(self._network_os, self)
+            if not self._terminal:
+                raise AnsibleConnectionFailure('network os %s is not supported' % self._network_os)
 
-        self._terminal = terminal_loader.get(network_os, self)
-        if not self._terminal:
-            raise AnsibleConnectionFailure('network os %s is not supported' % network_os)
+            display.vvvv('loaded terminal plugin for network_os %s' % self._network_os, host=host)
 
-        display.vvvv('loaded terminal plugin for network_os %s' % network_os, host=self._play_context.remote_addr)
+            self.cliconf = cliconf_loader.get(self._network_os, self)
+            if self.cliconf:
+                display.vvvv('loaded cliconf plugin for network_os %s' % self._network_os, host=host)
+                self._implementation_plugins.append(self.cliconf)
+                self.cliconf.set_options()
+            else:
+                display.vvvv('unable to load cliconf for network_os %s' % self._network_os)
 
-        self._cliconf = cliconf_loader.get(network_os, self)
-        if self._cliconf:
-            display.vvvv('loaded cliconf plugin for network_os %s' % network_os, host=self._play_context.remote_addr)
-        else:
-            display.vvvv('unable to load cliconf for network_os %s' % network_os)
+            self.receive(prompts=self._terminal.terminal_initial_prompt, answer=self._terminal.terminal_initial_answer,
+                         newline=self._terminal.terminal_inital_prompt_newline)
 
-        self.receive(prompts=self._terminal.terminal_initial_prompt, answer=self._terminal.terminal_initial_answer,
-                     newline=self._terminal.terminal_inital_prompt_newline)
+            display.vvvv('firing event: on_open_shell()', host=host)
+            self._terminal.on_open_shell()
 
-        display.vvvv('firing event: on_open_shell()', host=self._play_context.remote_addr)
-        self._terminal.on_open_shell()
+            if self._play_context.become and self._play_context.become_method == 'enable':
+                display.vvvv('firing event: on_become', host=host)
+                auth_pass = self._play_context.become_pass
+                self._terminal.on_become(passwd=auth_pass)
 
-        if self._play_context.become and self._play_context.become_method == 'enable':
-            display.vvvv('firing event: on_become', host=self._play_context.remote_addr)
-            auth_pass = self._play_context.become_pass
-            self._terminal.on_become(passwd=auth_pass)
-
-        display.vvvv('ssh connection has completed successfully', host=self._play_context.remote_addr)
-        self._connected = True
+            display.vvvv('ssh connection has completed successfully', host=host)
+            self._connected = True
 
         return self
-
-    def _update_connection_state(self):
-        '''
-        Reconstruct the connection socket_path and check if it exists
-
-        If the socket path exists then the connection is active and set
-        both the _socket_path value to the path and the _connected value
-        to True.  If the socket path doesn't exist, leave the socket path
-        value to None and the _connected value to False
-        '''
-        ssh = connection_loader.get('ssh', class_only=True)
-        cp = ssh._create_control_path(self._play_context.remote_addr, self._play_context.port, self._play_context.remote_user, self._play_context.connection,
-                                      self._ansible_playbook_pid)
-
-        tmp_path = unfrackpath(C.PERSISTENT_CONTROL_PATH_DIR)
-        socket_path = unfrackpath(cp % dict(directory=tmp_path))
-
-        if os.path.exists(socket_path):
-            self._connected = True
-            self._socket_path = socket_path
-
-    def reset(self):
-        '''
-        Reset the connection
-        '''
-        if self._socket_path:
-            display.vvvv('resetting persistent connection for socket_path %s' % self._socket_path, host=self._play_context.remote_addr)
-            self.close()
-        display.vvvv('reset call on connection instance', host=self._play_context.remote_addr)
 
     def close(self):
         '''
@@ -381,7 +334,7 @@ class Connection(ConnectionBase):
                 self.paramiko_conn.close()
                 self.paramiko_conn = None
                 display.debug("ssh connection has been closed successfully")
-            self._connected = False
+        super(Connection, self).close()
 
     def receive(self, command=None, prompts=None, answer=None, newline=True, prompt_retry_check=False):
         '''

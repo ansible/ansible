@@ -1,0 +1,292 @@
+# TODO: This is the only way I could get the kubeconfig, I don't know why. Running the lookup outside of debug seems to return an empty string
+- debug: msg={{ lookup('env', 'K8S_AUTH_KUBECONFIG') }}
+  register: kubeconfig
+
+# Kubernetes resources
+- name: Create a namespace
+  k8s:
+    name: testing
+    kind: namespace
+  register: output
+
+- debug: msg={{ lookup("k8s", kind="Namespace", api_version="v1", resource_name='testing', kubeconfig=kubeconfig.msg) }}
+
+- name: show output
+  debug:
+    var: output
+
+- name: Create a service
+  k8s:
+    state: present
+    resource_definition: &svc
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: web
+        namespace: testing
+        labels:
+          app: galaxy
+          service: web
+      spec:
+        selector:
+          app: galaxy
+          service: web
+        ports:
+        - protocol: TCP
+          targetPort: 8000
+          name: port-8000-tcp
+          port: 8000
+  register: output
+
+- name: show output
+  debug:
+    var: output
+
+- name: Create the service again
+  k8s:
+    state: present
+    resource_definition: *svc
+  register: output
+
+- name: Service creation should be idempotent
+  assert:
+    that: not output.changed
+
+- name: Create PVC
+  k8s:
+    state: present
+    inline: &pvc
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: elastic-volume
+        namespace: testing
+      spec:
+        resources:
+          requests:
+            storage: 5Gi
+        accessModes:
+        - ReadWriteOnce
+
+- name: Show output
+  debug:
+    var: output
+
+- name: Create the PVC again
+  k8s:
+    state: present
+    inline: *pvc
+
+- name: PVC creation should be idempotent
+  assert:
+    that: not output.changed
+
+- name: Create deployment
+  k8s:
+    state: present
+    inline: &deployment
+      apiVersion: apps/v1beta1
+      kind: Deployment
+      metadata:
+        name: elastic
+        labels:
+          app: galaxy
+          service: elastic
+        namespace: testing
+      spec:
+        template:
+          metadata:
+            labels:
+              app: galaxy
+              service: elastic
+          spec:
+            containers:
+              - name: elastic
+                volumeMounts:
+                - mountPath: /usr/share/elasticsearch/data
+                  name: elastic-volume
+                command: ['elasticsearch']
+                image: 'ansible/galaxy-elasticsearch:2.4.6'
+            volumes:
+            - name: elastic-volume
+              persistentVolumeClaim:
+                claimName: elastic-volume
+        replicas: 1
+        strategy:
+          type: RollingUpdate
+  register: output
+
+- name: Show output
+  debug:
+    var: output
+
+- name: Create deployment again
+  k8s:
+    state: present
+    inline: *deployment
+  register: output
+
+- name: Deployment creation should be idempotent
+  assert:
+    that: not output.changed
+
+# OpenShift Resources
+- name: Create a project
+  k8s:
+    name: testing
+    kind: project
+    api_version: v1
+  register: output
+
+- name: show output
+  debug:
+    var: output
+
+- name: Create deployment config
+  k8s:
+    state: present
+    inline: &dc
+      apiVersion: v1
+      kind: DeploymentConfig
+      metadata:
+        name: elastic
+        labels:
+          app: galaxy
+          service: elastic
+        namespace: testing
+      spec:
+        template:
+          metadata:
+            labels:
+              app: galaxy
+              service: elastic
+          spec:
+            containers:
+              - name: elastic
+                volumeMounts:
+                - mountPath: /usr/share/elasticsearch/data
+                  name: elastic-volume
+                command: ['elasticsearch']
+                image: 'ansible/galaxy-elasticsearch:2.4.6'
+            volumes:
+            - name: elastic-volume
+              persistentVolumeClaim:
+                claimName: elastic-volume
+        replicas: 1
+        strategy:
+          type: Rolling
+  register: output
+
+- name: Show output
+  debug:
+    var: output
+
+- name: Create deployment config again
+  k8s:
+    state: present
+    inline: *dc
+  register: output
+
+- name: DC creation should be idempotent
+  assert:
+    that: not output.changed
+
+### Type tests
+- name: Create a namespace from a string
+  k8s:
+    definition: |+
+      ---
+      kind: Namespace
+      apiVersion: v1
+      metadata:
+        name: testing1
+
+- name: Namespace should exist
+  assert:
+    that: '{{ lookup("k8s", kind="Namespace", api_version="v1", resource_name="testing1", kubeconfig=kubeconfig.msg).status.phase == "Active" }}'
+
+- name: Create resources from a multidocument yaml string
+  k8s:
+    definition: |+
+      ---
+      kind: Namespace
+      apiVersion: v1
+      metadata:
+        name: testing2
+      ---
+      kind: Namespace
+      apiVersion: v1
+      metadata:
+        name: testing3
+
+- name: Resources should exist
+  assert:
+    that: lookup("k8s", kind="Namespace", api_version="v1", resource_name=item, kubeconfig=kubeconfig.msg).status.phase == "Active"
+  loop:
+    - testing2
+    - testing3
+
+- name: Delete resources from a multidocument yaml string
+  k8s:
+    state: absent
+    definition: |+
+      ---
+      kind: Namespace
+      apiVersion: v1
+      metadata:
+        name: testing2
+      ---
+      kind: Namespace
+      apiVersion: v1
+      metadata:
+        name: testing3
+
+- name: Resources should not exist
+  assert:
+    that: not ns or ns.status.phase == "Terminating"
+  loop:
+    - testing2
+    - testing3
+  vars:
+    ns: '{{ lookup("k8s", kind="Namespace", api_version="v1", resource_name=item, kubeconfig=kubeconfig.msg) }}'
+
+- name: Create resources from a list
+  k8s:
+    definition:
+      - kind: Namespace
+        apiVersion: v1
+        metadata:
+          name: testing4
+      - kind: Namespace
+        apiVersion: v1
+        metadata:
+          name: testing5
+
+- name: Resources should exist
+  assert:
+    that: lookup("k8s", kind="Namespace", api_version="v1", resource_name=item, kubeconfig=kubeconfig.msg).status.phase == "Active"
+  loop:
+    - testing4
+    - testing5
+
+- name: Delete resources from a list
+  k8s:
+    state: absent
+    definition:
+      - kind: Namespace
+        apiVersion: v1
+        metadata:
+          name: testing4
+      - kind: Namespace
+        apiVersion: v1
+        metadata:
+          name: testing5
+
+- name: Resources should not exist
+  assert:
+    that: not ns or ns.status.phase == "Terminating"
+  loop:
+    - testing4
+    - testing5
+  vars:
+    ns: '{{ lookup("k8s", kind="Namespace", api_version="v1", resource_name=item, kubeconfig=kubeconfig.msg) }}'

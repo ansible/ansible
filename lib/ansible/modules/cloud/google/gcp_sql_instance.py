@@ -36,7 +36,7 @@ description:
       Google's cloud. The Instances resource provides methods for common configuration
       and management tasks.
 short_description: Creates a GCP Instance
-version_added: 2.6
+version_added: 2.7
 author: Google Inc. (@googlecloudplatform)
 requirements:
     - python >= 2.6

@@ -21,7 +21,7 @@ description:
 - This module can be used to create, delete, move and rename folder on then given datacenter.
 version_added: '2.5'
 author:
-- Abhijeet Kasurde (@akasurde)
+- Abhijeet Kasurde (@Akasurde)
 notes:
 - Tested on vSphere 6.5
 requirements:
@@ -158,12 +158,12 @@ class VmwareFolderManager(PyVmomi):
             try:
                 if parent_folder:
                     folder = self.get_folder_by_name(folder_name=parent_folder)
-                    if folder:
+                    if folder and not self.get_folder_by_name(folder_name=folder_name, parent_folder=folder):
                         folder.CreateFolder(folder_name)
                         results['changed'] = True
                         results['result'] = "Folder '%s' of type '%s' created under %s" \
                                             " successfully." % (folder_name, folder_type, parent_folder)
-                    else:
+                    elif folder is None:
                         self.module.fail_json(msg="Failed to find the parent folder %s"
                                                   " for folder %s" % (parent_folder, folder_name))
                 else:
@@ -208,13 +208,13 @@ class VmwareFolderManager(PyVmomi):
                                               " exception %s " % to_native(e))
             self.module.exit_json(**results)
 
-    def get_folder_by_name(self, folder_name):
+    def get_folder_by_name(self, folder_name, parent_folder=None):
         """
         Function to get managed object of folder by name
         Returns: Managed object of folder by name
 
         """
-        folder_objs = get_all_objs(self.content, [vim.Folder])
+        folder_objs = get_all_objs(self.content, [vim.Folder], parent_folder)
         for folder in folder_objs:
             if folder.name == folder_name:
                 return folder

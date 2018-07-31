@@ -1,15 +1,17 @@
 #!powershell
-# This file is part of Ansible.
-#
-# Copyright: (c) 2015, Paul Durivage <paul.durivage@rackspace.com>, Tal Auslander <tal@cloudshare.com>
+
+# Copyright: (c) 2015, Paul Durivage <paul.durivage@rackspace.com>
+# Copyright: (c) 2015, Tal Auslander <tal@cloudshare.com>
 # Copyright: (c) 2017, Dag Wieers <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# WANT_JSON
-# POWERSHELL_COMMON
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 $ErrorActionPreference = 'Stop'
 
+$params = Parse-Args $args -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
+$_remote_tmp = Get-AnsibleParam $params "_ansible_remote_tmp" -type "path" -default $env:TMP
 
 $webclient_util = @"
     using System.Net;
@@ -27,7 +29,10 @@ $webclient_util = @"
         }
     }
 "@
+$original_tmp = $env:TMP
+$env:TMP = $_remote_tmp
 Add-Type -TypeDefinition $webclient_util
+$env:TMP = $original_tmp
 
 
 Function CheckModified-File($url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy) {
@@ -35,8 +40,8 @@ Function CheckModified-File($url, $dest, $headers, $credentials, $timeout, $use_
     $fileLastMod = ([System.IO.FileInfo]$dest).LastWriteTimeUtc
     $webLastMod = $null
 
-    $webRequest = [System.Net.HttpWebRequest]::Create($url)
-
+    $webRequest = [System.Net.WebRequest]::Create($url)
+    
     foreach ($header in $headers.GetEnumerator()) {
         $webRequest.Headers.Add($header.Name, $header.Value)
     }
@@ -53,14 +58,23 @@ Function CheckModified-File($url, $dest, $headers, $credentials, $timeout, $use_
     }
 
     if ($credentials) {
-        $webRequest.Credentials = $credentials
+        if ($force_basic_auth) {
+            $webRequest.Headers.Add("Authorization", "Basic $credentials")
+        } else {
+            $webRequest.Credentials = $credentials
+        }
     }
 
-    $webRequest.Method = "HEAD"
+    if ($webRequest -is [System.Net.FtpWebRequest]) {
+        $webRequest.Method = [System.Net.WebRequestMethods+Ftp]::GetDateTimestamp
+    } else {
+        $webRequest.Method = [System.Net.WebRequestMethods+Http]::Head
+    }
+    
     Try {
-        [System.Net.HttpWebResponse]$webResponse = $webRequest.GetResponse()
+        $webResponse = $webRequest.GetResponse()
 
-        $webLastMod = $webResponse.GetResponseHeader("Last-Modified")
+        $webLastMod = $webResponse.LastModified
     } Catch [System.Net.WebException] {
         $result.status_code = $_.Exception.Response.StatusCode
         Fail-Json -obj $result -message "Error requesting '$url'. $($_.Exception.Message)"
@@ -130,10 +144,6 @@ Function Download-File($result, $url, $dest, $headers, $credentials, $timeout, $
     $result.dest = $dest
 }
 
-
-$params = Parse-Args $args -supports_check_mode $true
-$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
-
 $url = Get-AnsibleParam -obj $params -name "url" -type "str" -failifempty $true
 $dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
 $timeout = Get-AnsibleParam -obj $params -name "timeout" -type "int" -default 10
@@ -174,7 +184,7 @@ if ($proxy_url) {
 }
 
 $credentials = $null
-if ($url_username -and $url_password) {
+if ($url_username) {
     if ($force_basic_auth) {
         $credentials = [convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($url_username+":"+$url_password))
     } else {
@@ -241,3 +251,4 @@ if ($force -or -not (Test-Path -LiteralPath $dest)) {
 }
 
 Exit-Json -obj $result
+

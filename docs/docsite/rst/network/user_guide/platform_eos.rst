@@ -4,36 +4,44 @@
 EOS Platform Options
 ***************************************
 
-Arista EOS supports multiple connections. This page offers details on how each connection works in Ansible 2.5 and how to use it. 
+Arista EOS supports multiple connections. This page offers details on how each connection works in Ansible 2.6 and how to use it. 
 
 .. contents:: Topics
 
 Connections Available
 ================================================================================
 
-+---------------------------+-----------------------------------------------+-----------------------------------------+
-|..                         | CLI                                           | eAPI                                    |
-+===========================+===============================================+=========================================+
-| **Protocol**              |  SSH                                          | HTTP(S)                                 |
-+---------------------------+-----------------------------------------------+-----------------------------------------+
-| | **Credentials**         | | uses SSH keys / SSH-agent if present        | | uses HTTPS certificates if present    |
-| |                         | | accepts ``-u myuser -k`` if using password  | |                                       |
-+---------------------------+-----------------------------------------------+-----------------------------------------+
-| **Indirect Access**       | via a bastion (jump host)                     | via a web proxy                         |
-+---------------------------+-----------------------------------------------+-----------------------------------------+
-| | **Connection Settings** | | ``ansible_connection: network_cli``         | | ``ansible_connection: local``         |
-| |                         | |                                             | | Requires ``transport: eapi``          |
-| |                         | |                                             | | in the ``provider`` dictionary        |
-+---------------------------+-----------------------------------------------+-----------------------------------------+
-| | **Enable Mode**         | | supported - use ``ansible_become: yes``     | | supported - use ``authorize: yes``    |
-| | (Privilege Escalation)  | | with ``ansible_become_method: enable``      | | and ``auth_pass:`` in the             |
-| |                         | | and ``ansible_become_pass:``                | | ``provider`` dictionary               |
-+---------------------------+-----------------------------------------------+-----------------------------------------+
-| **Returned Data Format**  | ``stdout[0].``                                | ``stdout[0].messages[0].``              |
-+---------------------------+-----------------------------------------------+-----------------------------------------+
++---------------------------+-----------------------------------------------+---------------------------------------------+
+|..                         | CLI                                           | eAPI                                        |
++===========================+===============================================+=============================================+
+| **Protocol**              |  SSH                                          | HTTP(S)                                     |
++---------------------------+-----------------------------------------------+---------------------------------------------+
+| | **Credentials**         | | uses SSH keys / SSH-agent if present        | | uses HTTPS certificates if present        |
+| |                         | | accepts ``-u myuser -k`` if using password  | |                                           |
++---------------------------+-----------------------------------------------+---------------------------------------------+
+| **Indirect Access**       | via a bastion (jump host)                     | via a web proxy                             |
++---------------------------+-----------------------------------------------+---------------------------------------------+
+| | **Connection Settings** | | ``ansible_connection: network_cli``         | | ``ansible_connection: httpapi``           |
+| |                         | |                                             | | OR                                        |
+| |                         | |                                             | | ``ansible_connection: local``             |
+| |                         | |                                             | | with ``transport: eapi``                  |
+| |                         | |                                             | | in the ``provider`` dictionary            |
++---------------------------+-----------------------------------------------+---------------------------------------------+
+| | **Enable Mode**         | | supported - use ``ansible_become: yes``     | | supported:                                |
+| | (Privilege Escalation)  | | with ``ansible_become_method: enable``      | | ``httpapi``                               |
+| |                         | |                                             | | uses ``ansible_become: yes``              |
+| |                         | |                                             | | with ``ansible_become_method: enable``    |
+| |                         | |                                             | | ``local``                                 |
+| |                         | |                                             | | uses ``authorize: yes``                   |
+| |                         | |                                             | | and ``auth_pass:``                        |
+| |                         | |                                             | | in the ``provider`` dictionary            |
++---------------------------+-----------------------------------------------+---------------------------------------------+
+| **Returned Data Format**  | ``stdout[0].``                                | ``stdout[0].messages[0].``                  |
++---------------------------+-----------------------------------------------+---------------------------------------------+
 
+For legacy playbooks, EOS still supports ``ansible_connection: local``. We recommend modernizing to use ``ansible_connection: network_cli`` or ``ansible_connection: httpapi`` as soon as possible.
 
-Using CLI in Ansible 2.5
+Using CLI in Ansible 2.6
 ================================================================================
 
 Example CLI ``group_vars/eos.yml``
@@ -68,7 +76,7 @@ Example CLI Task
 
 
 
-Using eAPI in Ansible 2.5
+Using eAPI in Ansible 2.6
 ================================================================================
 
 Enabling eAPI
@@ -86,12 +94,46 @@ Before you can use eAPI to connect to a switch, you must enable eAPI. To enable 
       become_method: enable
       when: ansible_network_os == 'eos'
 
-You can find more options for enabling HTTP/HTTPS and local http in the :ref:`eos_eapi <eos_eapi_module>` module documentation.
+You can find more options for enabling HTTP/HTTPS connections in the :ref:`eos_eapi <eos_eapi_module>` module documentation.
 
 Once eAPI is enabled, change your ``group_vars/eos.yml`` to use the eAPI connection.
 
 Example eAPI ``group_vars/eos.yml``
 -----------------------------------
+
+.. code-block:: yaml
+
+   ansible_connection: httpapi
+   ansible_network_os: eos
+   ansible_user: myuser
+   ansible_ssh_pass: !vault... 
+   become: yes
+   become_method: enable
+   proxy_env:
+     http_proxy: http://proxy.example.com:8080
+
+- If you are accessing your host directly (not through a web proxy) you can remove the ``proxy_env`` configuration.
+- If you are accessing your host through a web proxy using ``https``, change ``http_proxy`` to ``https_proxy``.
+
+
+Example eAPI Task
+-----------------
+
+.. code-block:: yaml
+
+   - name: Backup current switch config (eos)
+     eos_config:
+       backup: yes
+     register: backup_eos_location
+     environment: "{{ proxy_env }}"
+     when: ansible_network_os == 'eos'
+
+In this example the ``proxy_env`` variable defined in ``group_vars`` gets passed to the ``environment`` option of the module in the task.
+
+eAPI examples with ``connection: local``
+-----------------------------------------
+
+``group_vars/eos.yml``:
 
 .. code-block:: yaml
 
@@ -107,12 +149,7 @@ Example eAPI ``group_vars/eos.yml``
    proxy_env:
      http_proxy: http://proxy.example.com:8080
 
-- If you are accessing your host directly (not through a web proxy) you can remove the ``proxy_env`` configuration.
-- If you are accessing your host through a web proxy using ``https``, change ``http_proxy`` to ``https_proxy``.
-
-
-Example eAPI Task
------------------
+eAPI task:
 
 .. code-block:: yaml
 
@@ -129,5 +166,4 @@ In this example two variables defined in ``group_vars`` get passed to the module
 - the ``eapi`` variable gets passed to the ``provider`` option of the module
 - the ``proxy_env`` variable gets passed to the ``environment`` option of the module
 
-
-.. include:: shared_snippets/SSH_warning.rst
+.. include:: shared_snippets/SSH_warning.txt

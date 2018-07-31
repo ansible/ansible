@@ -78,6 +78,7 @@ from ansible.module_utils.six import PY3, binary_type
 # Note: on py2, this zip is izip not the list based zip() builtin
 from ansible.module_utils.six.moves import zip
 from ansible.module_utils._text import to_bytes, to_text, to_native
+from ansible.utils.path import makedirs_safe
 
 try:
     from __main__ import display
@@ -495,7 +496,7 @@ class ClientScriptVaultSecret(ScriptVaultSecret):
                                                       encoding=encoding,
                                                       loader=loader)
         self._vault_id = vault_id
-        display.vvvv('Executing vault password client script: %s --vault-id=%s' % (filename, vault_id))
+        display.vvvv('Executing vault password client script: %s --vault-id %s' % (filename, vault_id))
 
     def _run(self, command):
         try:
@@ -835,7 +836,7 @@ class VaultEditor:
             r = subprocess.call(['shred', tmp_path])
         except (OSError, ValueError):
             # shred is not available on this system, or some other error occurred.
-            # ValueError caught because OS X El Capitan is raising an
+            # ValueError caught because macOS El Capitan is raising an
             # exception big enough to hit a limit in python2-2.7.11 and below.
             # Symptom is ValueError: insecure pickle when shred is not
             # installed there.
@@ -924,6 +925,11 @@ class VaultEditor:
 
     def create_file(self, filename, secret, vault_id=None):
         """ create a new encrypted file """
+
+        dirname = os.path.dirname(filename)
+        if dirname and not os.path.exists(dirname):
+            display.warning("%s does not exist, creating..." % dirname)
+            makedirs_safe(dirname)
 
         # FIXME: If we can raise an error here, we can probably just make it
         # behave like edit instead.

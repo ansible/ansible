@@ -16,7 +16,7 @@ DOCUMENTATION = """
       remote_addr:
         description:
             - Container identifier
-        default: The set user as per docker's configuration
+        default: inventory_hostname
         vars:
             - name: ansible_host
             - name: ansible_lxc_host
@@ -45,7 +45,7 @@ except ImportError:
 
 from ansible import constants as C
 from ansible import errors
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.plugins.connection import ConnectionBase
 
 
@@ -116,8 +116,9 @@ class Connection(ConnectionBase):
         ''' run a command on the chroot '''
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
-        executable = to_bytes(self._play_context.executable, errors='surrogate_or_strict')
-        local_cmd = [executable, '-c', to_bytes(cmd, errors='surrogate_or_strict')]
+        # python2-lxc needs bytes. python3-lxc needs text.
+        executable = to_native(self._play_context.executable, errors='surrogate_or_strict')
+        local_cmd = [executable, '-c', to_native(cmd, errors='surrogate_or_strict')]
 
         read_stdout, write_stdout = None, None
         read_stderr, write_stderr = None, None

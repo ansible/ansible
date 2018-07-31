@@ -7,7 +7,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'core'}
 
 
 DOCUMENTATION = '''
@@ -20,14 +20,16 @@ description:
   - Adds and/or removes instances of host record objects from
     Infoblox NIOS servers.  This module manages NIOS C(record:host) objects
     using the Infoblox WAPI interface over REST.
+  - Updates instances of host record object from Infoblox NIOS servers.
 requirements:
-  - infoblox_client
+  - infoblox-client
 extends_documentation_fragment: nios
 options:
   name:
     description:
       - Specifies the fully qualified hostname to add or remove from
-        the system
+        the system. User can also update the hostname as it is possible
+        to pass a dict containing I(new_name), I(old_name). See examples.
     required: true
   view:
     description:
@@ -66,6 +68,12 @@ options:
         required: true
         aliases:
           - address
+  aliases:
+    version_added: "2.6"
+    description:
+      - Configures an optional list of additional aliases to add to the host
+        record. These are equivalent to CNAMEs but held within a host
+        record. Must be in list format.
   ttl:
     description:
       - Configures the TTL to be associated with this host record
@@ -97,13 +105,14 @@ EXAMPLES = '''
     name: host.ansible.com
     ipv4:
       - address: 192.168.10.1
+    aliases:
+      - cname.ansible.com
     state: present
     provider:
       host: "{{ inventory_hostname_short }}"
       username: admin
       password: admin
   connection: local
-
 - name: add a comment to an existing host record
   nios_host_record:
     name: host.ansible.com
@@ -116,11 +125,21 @@ EXAMPLES = '''
       username: admin
       password: admin
   connection: local
-
 - name: remove a host record from the system
   nios_host_record:
     name: host.ansible.com
     state: absent
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
+  connection: local
+- name: update an ipv4 host record
+  nios_host_record:
+    name: {new_name: host-new.ansible.com, old_name: host.ansible.com}
+    ipv4:
+      - address: 192.168.10.1
+    state: present
     provider:
       host: "{{ inventory_hostname_short }}"
       username: admin
@@ -133,19 +152,17 @@ RETURN = ''' # '''
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.net_tools.nios.api import WapiModule
+from ansible.module_utils.net_tools.nios.api import NIOS_HOST_RECORD
 
 
 def ipaddr(module, key, filtered_keys=None):
     ''' Transforms the input value into a struct supported by WAPI
-
     This function will transform the input from the playbook into a struct
     that is valid for WAPI in the form of:
-
         {
             ipv4addr: <value>,
             mac: <value>
         }
-
     This function does not validate the values are properly formatted or in
     the acceptable range, that is left to WAPI.
     '''
@@ -182,6 +199,7 @@ def main():
 
         ipv4addrs=dict(type='list', aliases=['ipv4'], elements='dict', options=ipv4addr_spec, transform=ipv4addrs),
         ipv6addrs=dict(type='list', aliases=['ipv6'], elements='dict', options=ipv6addr_spec, transform=ipv6addrs),
+        aliases=dict(type='list'),
 
         ttl=dict(type='int'),
 
@@ -201,7 +219,7 @@ def main():
                            supports_check_mode=True)
 
     wapi = WapiModule(module)
-    result = wapi.run('record:host', ib_spec)
+    result = wapi.run(NIOS_HOST_RECORD, ib_spec)
 
     module.exit_json(**result)
 

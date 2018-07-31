@@ -99,6 +99,7 @@ class VMWareInventory(object):
     host_filters = []
     skip_keys = []
     groupby_patterns = []
+    groupby_custom_field_excludes = []
 
     safe_types = [bool, str, float, None] + list(integer_types)
     iter_types = [dict, list]
@@ -230,6 +231,7 @@ class VMWareInventory(object):
             'groupby_patterns': '{{ guest.guestid }},{{ "templates" if config.template else "guests"}}',
             'lower_var_keys': True,
             'custom_field_group_prefix': 'vmware_tag_',
+            'groupby_custom_field_excludes': '',
             'groupby_custom_field': False}
         }
 
@@ -304,8 +306,12 @@ class VMWareInventory(object):
                     groupby_pattern += "}}"
                 self.groupby_patterns.append(groupby_pattern)
         self.debugl('groupby patterns are %s' % self.groupby_patterns)
+        temp_groupby_custom_field_excludes = config.get('vmware', 'groupby_custom_field_excludes')
+        self.groupby_custom_field_excludes = [x.strip('"') for x in [y.strip("'") for y in temp_groupby_custom_field_excludes.split(",")]]
+        self.debugl('groupby exclude strings are %s' % self.groupby_custom_field_excludes)
+
         # Special feature to disable the brute force serialization of the
-        # virtulmachine objects. The key name for these properties does not
+        # virtual machine objects. The key name for these properties does not
         # matter because the values are just items for a larger list.
         if config.has_section('properties'):
             self.guest_props = []
@@ -397,7 +403,7 @@ class VMWareInventory(object):
             cfm = content.customFieldsManager
             if cfm is not None and cfm.field:
                 for f in cfm.field:
-                    if f.managedObjectType == vim.VirtualMachine:
+                    if not f.managedObjectType or f.managedObjectType == vim.VirtualMachine:
                         self.custom_fields[f.key] = f.name
                 self.debugl('%d custom fields collected' % len(self.custom_fields))
         except vmodl.RuntimeFault as exc:
@@ -494,16 +500,15 @@ class VMWareInventory(object):
             for k, v in inventory['_meta']['hostvars'].items():
                 if 'customvalue' in v:
                     for tv in v['customvalue']:
-                        if not isinstance(tv['value'], string_types):
-                            continue
-
                         newkey = None
                         field_name = self.custom_fields[tv['key']] if tv['key'] in self.custom_fields else tv['key']
+                        if field_name in self.groupby_custom_field_excludes:
+                            continue
                         values = []
                         keylist = map(lambda x: x.strip(), tv['value'].split(','))
                         for kl in keylist:
                             try:
-                                newkey = self.config.get('vmware', 'custom_field_group_prefix') + str(field_name) + '_' + kl
+                                newkey = "%s%s_%s" % (self.config.get('vmware', 'custom_field_group_prefix'), str(field_name), kl)
                                 newkey = newkey.strip()
                             except Exception as e:
                                 self.debugl(e)
@@ -521,7 +526,6 @@ class VMWareInventory(object):
 
     def create_template_mapping(self, inventory, pattern, dtype='string'):
         ''' Return a hash of uuid to templated string from pattern '''
-
         mapping = {}
         for k, v in inventory['_meta']['hostvars'].items():
             t = self.env.from_string(pattern)
@@ -557,7 +561,15 @@ class VMWareInventory(object):
 
             if '.' not in prop:
                 # props without periods are direct attributes of the parent
-                rdata[key] = getattr(vm, prop)
+                vm_property = getattr(vm, prop)
+                if isinstance(vm_property, vim.CustomFieldsManager.Value.Array):
+                    temp_vm_property = []
+                    for vm_prop in vm_property:
+                        temp_vm_property.append({'key': vm_prop.key,
+                                                 'value': vm_prop.value})
+                    rdata[key] = temp_vm_property
+                else:
+                    rdata[key] = vm_property
             else:
                 # props with periods are subkeys of parent attributes
                 parts = prop.split('.')

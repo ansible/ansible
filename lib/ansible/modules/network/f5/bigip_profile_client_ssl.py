@@ -29,11 +29,11 @@ options:
       - The parent template of this monitor template. Once this value has
         been set, it cannot be changed. By default, this value is the C(clientssl)
         parent on the C(Common) partition.
-    default: "/Common/clientssl"
+    default: /Common/clientssl
   ciphers:
     description:
       - Specifies the list of ciphers that the system supports. When creating a new
-        profile, the default cipher list is C(DEFAULT).
+        profile, the default cipher list is provided by the parent profile.
   cert_key_chain:
     description:
       - One or more certificates and keys to associate with the SSL profile. This
@@ -161,11 +161,13 @@ except ImportError:
 
 class Parameters(AnsibleF5Parameters):
     api_map = {
-        'certKeyChain': 'cert_key_chain'
+        'certKeyChain': 'cert_key_chain',
+        'defaultsFrom': 'parent'
     }
 
     api_attributes = [
-        'ciphers', 'certKeyChain'
+        'ciphers', 'certKeyChain',
+        'defaultsFrom'
     ]
 
     returnables = [
@@ -400,8 +402,6 @@ class ModuleManager(object):
 
     def create(self):
         self._set_changed_options()
-        if self.want.ciphers is None:
-            self.want.update({'ciphers': 'DEFAULT'})
         if self.module.check_mode:
             return True
         self.create_on_device()
@@ -480,7 +480,7 @@ class ArgumentSpec(object):
         self.supports_check_mode = True
         argument_spec = dict(
             name=dict(required=True),
-            parent=dict(),
+            parent=dict(default='/Common/clientssl'),
             ciphers=dict(),
             cert_key_chain=dict(
                 type='list',

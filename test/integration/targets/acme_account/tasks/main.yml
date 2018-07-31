@@ -1,0 +1,150 @@
+---
+- block:
+  - name: Generate account key
+    command: openssl ecparam -name prime256v1 -genkey -out {{ output_dir }}/accountkey.pem
+
+  - name: Parse account key (to ease debugging some test failures)
+    command: openssl ec -in {{ output_dir }}/accountkey.pem -noout -text
+
+  - name: Do not try to create account
+    acme_account:
+      account_key_src: "{{ output_dir }}/accountkey.pem"
+      acme_version: 2
+      acme_directory: https://{{ acme_host }}:14000/dir
+      validate_certs: no
+      state: present
+      allow_creation: no
+    ignore_errors: yes
+    register: account_not_created
+
+  - name: Create it now
+    acme_account:
+      account_key_src: "{{ output_dir }}/accountkey.pem"
+      acme_version: 2
+      acme_directory: https://{{ acme_host }}:14000/dir
+      validate_certs: no
+      state: present
+      allow_creation: yes
+      terms_agreed: yes
+      contact:
+      - mailto:example@example.org
+    register: account_created
+
+  - name: Change email address
+    acme_account:
+      account_key_content: "{{ lookup('file', output_dir ~ '/accountkey.pem') }}"
+      acme_version: 2
+      acme_directory: https://{{ acme_host }}:14000/dir
+      validate_certs: no
+      state: present
+      # allow_creation: no
+      contact:
+      - mailto:example@example.com
+    register: account_modified
+
+  - name: Change email address (idempotent)
+    acme_account:
+      account_key_src: "{{ output_dir }}/accountkey.pem"
+      acme_version: 2
+      acme_directory: https://{{ acme_host }}:14000/dir
+      validate_certs: no
+      state: present
+      # allow_creation: no
+      contact:
+      - mailto:example@example.com
+    register: account_modified_idempotent
+
+  - name: Generate new account key
+    command: openssl ecparam -name secp384r1 -genkey -out {{ output_dir }}/accountkey2.pem
+
+  - name: Parse account key (to ease debugging some test failures)
+    command: openssl ec -in {{ output_dir }}/accountkey2.pem -noout -text
+
+# Note that pebble has no change key endpoint implemented yet!
+# When it has (and the container was updated), uncomment the
+# uncomment the following tests, and delete the ones below the
+# out-commented ones.
+
+#  - name: Change account key
+#    acme_account:
+#      account_key_src: "{{ output_dir }}/accountkey.pem"
+#      acme_version: 2
+#      acme_directory: https://{{ acme_host }}:14000/dir
+#      validate_certs: no
+#      new_account_key_src: "{{ output_dir }}/accountkey2.pem"
+#      state: changed_key
+#      contact:
+#      - mailto:example@example.com
+#    register: account_change_key
+
+#  - name: Deactivate account
+#    acme_account:
+#      account_key_src: "{{ output_dir }}/accountkey2.pem"
+#      acme_version: 2
+#      acme_directory: https://{{ acme_host }}:14000/dir
+#      validate_certs: no
+#      state: absent
+#    register: account_deactivate
+
+#  - name: Deactivate account (idempotent)
+#    acme_account:
+#      account_key_src: "{{ output_dir }}/accountkey2.pem"
+#      acme_version: 2
+#      acme_directory: https://{{ acme_host }}:14000/dir
+#      validate_certs: no
+#      state: absent
+#    register: account_deactivate_idempotent
+
+#  - name: Do not try to create account II
+#    acme_account:
+#      account_key_src: "{{ output_dir }}/accountkey2.pem"
+#      acme_version: 2
+#      acme_directory: https://{{ acme_host }}:14000/dir
+#      validate_certs: no
+#      state: present
+#      allow_creation: no
+#    ignore_errors: yes
+#    register: account_not_created_2
+
+#  - name: Do not try to create account III
+#    acme_account:
+#      account_key_src: "{{ output_dir }}/accountkey.pem"
+#      acme_version: 2
+#      acme_directory: https://{{ acme_host }}:14000/dir
+#      validate_certs: no
+#      state: present
+#      allow_creation: no
+#    ignore_errors: yes
+#    register: account_not_created_3
+
+  - name: Deactivate account
+    acme_account:
+      account_key_src: "{{ output_dir }}/accountkey.pem"
+      acme_version: 2
+      acme_directory: https://{{ acme_host }}:14000/dir
+      validate_certs: no
+      state: absent
+    register: account_deactivate
+
+  - name: Deactivate account (idempotent)
+    acme_account:
+      account_key_src: "{{ output_dir }}/accountkey.pem"
+      acme_version: 2
+      acme_directory: https://{{ acme_host }}:14000/dir
+      validate_certs: no
+      state: absent
+    register: account_deactivate_idempotent
+
+  - name: Do not try to create account II
+    acme_account:
+      account_key_src: "{{ output_dir }}/accountkey.pem"
+      acme_version: 2
+      acme_directory: https://{{ acme_host }}:14000/dir
+      validate_certs: no
+      state: present
+      allow_creation: no
+    ignore_errors: yes
+    register: account_not_created_2
+
+  # Old 0.9.8 versions have insufficient CLI support for signing with EC keys
+  when: openssl_version.stdout is version('1.0.0', '>=')

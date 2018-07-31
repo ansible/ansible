@@ -278,14 +278,19 @@ class TaskExecutor:
         label = None
         loop_pause = 0
         templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
+
+        # FIXME: move this to the object itself to allow post_validate to take care of templating (loop_control.post_validate)
         if self._task.loop_control:
-            # FIXME: move this to the object itself to allow post_validate to take care of templating
             loop_var = templar.template(self._task.loop_control.loop_var)
             index_var = templar.template(self._task.loop_control.index_var)
             loop_pause = templar.template(self._task.loop_control.pause)
-            # the these may be 'None', so we still need to default to something useful
-            # this is tempalted below after an item is assigned
-            label = (self._task.loop_control.label or ('{{' + loop_var + '}}'))
+
+            # This may be 'None',so it is tempalted below after we ensure a value and an item is assigned
+            label = self._task.loop_control.label
+
+        # ensure we always have a label
+        if label is None:
+            label = '{{' + loop_var + '}}'
 
         if loop_var in task_vars:
             display.warning(u"The loop variable '%s' is already in use. "
@@ -301,6 +306,9 @@ class TaskExecutor:
             task_vars[loop_var] = item
             if index_var:
                 task_vars[index_var] = item_index
+
+            # Update template vars to reflect current loop iteration
+            templar.set_available_variables(task_vars)
 
             # pause between loop iterations
             if loop_pause and ran_once:
@@ -336,8 +344,8 @@ class TaskExecutor:
             res['_ansible_item_result'] = True
             res['_ansible_ignore_errors'] = task_fields.get('ignore_errors')
 
-            if label is not None:
-                res['_ansible_item_label'] = templar.template(label, cache=False)
+            # gets templated here unlike rest of loop_control fields, depends on loop_var above
+            res['_ansible_item_label'] = templar.template(label, cache=False)
 
             self._rslt_q.put(
                 TaskResult(
@@ -374,9 +382,11 @@ class TaskExecutor:
                 if all(isinstance(o, string_types) for o in items):
                     final_items = []
 
+                    found = None
                     for allowed in ['name', 'pkg', 'package']:
                         name = self._task.args.pop(allowed, None)
                         if name is not None:
+                            found = allowed
                             break
 
                     # This gets the information to check whether the name field
@@ -394,6 +404,12 @@ class TaskExecutor:
                         # name/pkg or the name/pkg field doesn't have any variables
                         # and thus the items can't be squashed
                         if template_no_item != template_with_item:
+                            display.deprecated(
+                                'Invoking "%s" only once while using a loop via squash_actions is deprecated. '
+                                'Instead of using a loop to supply multiple items and specifying `%s: %s`, '
+                                'please use `%s: %r` and remove the loop' % (self._task.action, found, name, found, self._task.loop),
+                                version='2.11'
+                            )
                             for item in items:
                                 variables[loop_var] = item
                                 if self._task.evaluate_conditional(templar, variables):
@@ -713,7 +729,7 @@ class TaskExecutor:
         # that (with a sleep for "poll" seconds between each retry) until the
         # async time limit is exceeded.
 
-        async_task = Task().load(dict(action='async_status jid=%s' % async_jid))
+        async_task = Task().load(dict(action='async_status jid=%s' % async_jid, environment=self._task.environment))
 
         # FIXME: this is no longer the case, normal takes care of all, see if this can just be generalized
         # Because this is an async task, the action handler is async. However,
@@ -751,7 +767,7 @@ class TaskExecutor:
                 display.vvvv("Exception during async poll, retrying... (%s)" % to_text(e))
                 display.debug("Async poll exception was:\n%s" % to_text(traceback.format_exc()))
                 try:
-                    normal_handler._connection._reset()
+                    normal_handler._connection.reset()
                 except AttributeError:
                     pass
 
@@ -807,10 +823,12 @@ class TaskExecutor:
         self._play_context.set_options_from_plugin(connection)
 
         if any(((connection.supports_persistence and C.USE_PERSISTENT_CONNECTIONS), connection.force_persistence)):
-            self._play_context.timeout = C.PERSISTENT_COMMAND_TIMEOUT
+            self._play_context.timeout = connection.get_option('persistent_command_timeout')
             display.vvvv('attempting to start connection', host=self._play_context.remote_addr)
             display.vvvv('using connection plugin %s' % connection.transport, host=self._play_context.remote_addr)
-            socket_path = self._start_connection()
+            # We don't need to send the entire contents of variables to ansible-connection
+            filtered_vars = dict((key, value) for key, value in variables.items() if key.startswith('ansible'))
+            socket_path = self._start_connection(filtered_vars)
             display.vvvv('local domain socket path is %s' % socket_path, host=self._play_context.remote_addr)
             setattr(connection, '_socket_path', socket_path)
 
@@ -883,7 +901,7 @@ class TaskExecutor:
 
         return handler
 
-    def _start_connection(self):
+    def _start_connection(self, variables):
         '''
         Starts the persistent connection
         '''
@@ -915,8 +933,12 @@ class TaskExecutor:
         # that means only protocol=0 will work.
         src = cPickle.dumps(self._play_context.serialize(), protocol=0)
         stdin.write(src)
-
         stdin.write(b'\n#END_INIT#\n')
+
+        src = cPickle.dumps(variables, protocol=0)
+        stdin.write(src)
+        stdin.write(b'\n#END_VARS#\n')
+
         stdin.flush()
 
         (stdout, stderr) = p.communicate()

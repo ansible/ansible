@@ -72,6 +72,7 @@ commands:
 import re
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.nxos.nxos import load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
 
@@ -130,8 +131,13 @@ def validate_feature(module, mode='show'):
     how they are configured'''
 
     feature = module.params['feature']
-    info = get_capabilities(module).get('device_info', {})
-    os_version = info.get('network_os_version', '')
+
+    try:
+        info = get_capabilities(module)
+        device_info = info.get('device_info', {})
+        os_version = device_info.get('network_os_version', '')
+    except ConnectionError:
+        os_version = ''
 
     if '8.1' in os_version:
         feature_to_be_mapped = {

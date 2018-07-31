@@ -15,6 +15,10 @@ DOCUMENTATION = '''
         - Get inventory hosts from Amazon Web Services EC2.
         - Uses a <name>.aws_ec2.yaml (or <name>.aws_ec2.yml) YAML configuration file.
     options:
+        plugin:
+            description: token that ensures this is a source file for the 'aws_ec2' plugin.
+            required: True
+            choices: ['aws_ec2']
         boto_profile:
           description: The boto profile to use.
           env:
@@ -56,6 +60,14 @@ DOCUMENTATION = '''
 '''
 
 EXAMPLES = '''
+
+# Minimal example using environment vars or instance role credentials
+# Fetch all hosts in us-east-1, the hostname is the public DNS if it exists, otherwise the private IP address
+plugin: aws_ec2
+regions:
+  - us-east-1
+
+# Example using filters, ignoring permission errors, and specifying the hostname precedence
 plugin: aws_ec2
 boto_profile: aws_profile
 regions: # populate inventory with instances in these regions
@@ -71,11 +83,19 @@ filters:
   instance.group-id: sg-xxxxxxxx
 # ignores 403 errors rather than failing
 strict_permissions: False
+# note: I(hostnames) sets the inventory_hostname. To modify ansible_host without modifying
+# inventory_hostname use compose (see example below).
 hostnames:
   - tag:Name=Tag1,Name=Tag2  # return specific hosts only
   - tag:CustomDNSName
   - dns-name
+  - private-ip-address
 
+# Example using constructed features to create groups and set ansible_host
+plugin: aws_ec2
+regions:
+  - us-east-1
+  - us-west-1
 # keyed_groups may be used to create custom groups
 strict: False
 keyed_groups:
@@ -92,8 +112,16 @@ keyed_groups:
   - key: 'security_groups|json_query("[].group_id")'
     prefix: 'security_groups'
   # create a group for each value of the Application tag
-  - key: tag.Application
+  - key: tags.Application
     separator: ''
+  # create a group per region e.g. aws_region_us_east_2
+  - key: placement.region
+    prefix: aws_region
+# set individual variables with compose
+compose:
+  # use the private IP address to connect to the host
+  # (note: this does not modify inventory_hostname, which is set via I(hostnames))
+  ansible_host: private_ip_address
 '''
 
 from ansible.errors import AnsibleError, AnsibleParserError
@@ -102,6 +130,12 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable, to_safe_group_name
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 try:
     import boto3
@@ -307,6 +341,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         for connection, region in self._boto3_conn(regions):
             try:
+                # By default find non-terminated/terminating instances
+                if not any([f['Name'] == 'instance-state-name' for f in filters]):
+                    filters.append({'Name': 'instance-state-name', 'Values': ['running', 'pending', 'stopping', 'stopped']})
                 paginator = connection.get_paginator('describe_instances')
                 reservations = paginator.paginate(Filters=filters).build_full_result().get('Reservations')
                 instances = []
@@ -419,6 +456,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             host = camel_dict_to_snake_dict(host, ignore_list=['Tags'])
             host['tags'] = boto3_tag_list_to_ansible_dict(host.get('tags', []))
 
+            # Allow easier grouping by region
+            host['placement']['region'] = host['placement']['availability_zone'][:-1]
+
             if not hostname:
                 continue
             self.inventory.add_host(hostname, group=group)
@@ -427,29 +467,33 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
             # Use constructed if applicable
 
-            strict = self._options.get('strict', False)
+            strict = self.get_option('strict')
 
             # Composed variables
-            if self._options.get('compose'):
-                self._set_composite_vars(self._options.get('compose'), host, hostname, strict=strict)
+            self._set_composite_vars(self.get_option('compose'), host, hostname, strict=strict)
 
             # Complex groups based on jinaj2 conditionals, hosts that meet the conditional are added to group
-            if self._options.get('groups'):
-                self._add_host_to_composed_groups(self._options.get('groups'), host, hostname, strict=strict)
+            self._add_host_to_composed_groups(self.get_option('groups'), host, hostname, strict=strict)
 
             # Create groups based on variable values and add the corresponding hosts to it
-            if self._options.get('keyed_groups'):
-                self._add_host_to_keyed_groups(self._options.get('keyed_groups'), host, hostname, strict=strict)
+            self._add_host_to_keyed_groups(self.get_option('keyed_groups'), host, hostname, strict=strict)
 
     def _set_credentials(self):
         '''
             :param config_data: contents of the inventory config file
         '''
 
-        self.boto_profile = self._options.get('boto_profile')
-        self.aws_access_key_id = self._options.get('aws_access_key_id')
-        self.aws_secret_access_key = self._options.get('aws_secret_access_key')
-        self.aws_security_token = self._options.get('aws_security_token')
+        self.boto_profile = self.get_option('boto_profile')
+        self.aws_access_key_id = self.get_option('aws_access_key_id')
+        self.aws_secret_access_key = self.get_option('aws_secret_access_key')
+        self.aws_security_token = self.get_option('aws_security_token')
+
+        if not self.boto_profile and not (self.aws_access_key_id and self.aws_secret_access_key):
+            session = botocore.session.get_session()
+            if session.get_credentials() is not None:
+                self.aws_access_key_id = session.get_credentials().access_key
+                self.aws_secret_access_key = session.get_credentials().secret_key
+                self.aws_security_token = session.get_credentials().token
 
         if not self.boto_profile and not (self.aws_access_key_id and self.aws_secret_access_key):
             raise AnsibleError("Insufficient boto credentials found. Please provide them in your "
@@ -464,6 +508,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         if super(InventoryModule, self).verify_file(path):
             if path.endswith('.aws_ec2.yml') or path.endswith('.aws_ec2.yaml'):
                 return True
+        display.debug("aws_ec2 inventory filename must end with '*.aws_ec2.yml' or '*.aws_ec2.yaml'")
         return False
 
     def _get_query_options(self, config_data):
@@ -518,13 +563,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         # get user specifications
         regions, filters, hostnames, strict_permissions = self._get_query_options(config_data)
 
+        cache_key = self.get_cache_key(path)
         # false when refresh_cache or --flush-cache is used
         if cache:
             # get the user-specified directive
-            cache = self._options.get('cache')
-            cache_key = self.get_cache_key(path)
-        else:
-            cache_key = None
+            cache = self.get_option('cache')
 
         # Generate inventory
         formatted_inventory = {}
@@ -543,5 +586,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             self._populate(results, hostnames)
             formatted_inventory = self._format_inventory(results, hostnames)
 
-        if cache_needs_update:
+        # If the cache has expired/doesn't exist or if refresh_inventory/flush cache is used
+        # when the user is using caching, update the cached inventory
+        if cache_needs_update or (not cache and self.get_option('cache')):
             self.cache.set(cache_key, formatted_inventory)

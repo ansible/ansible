@@ -15,6 +15,7 @@
     - asyncresult.ansible_job_id is match('\d+\.\d+')
     - asyncresult.started == 1
     - asyncresult.finished == 0
+    - asyncresult is not finished
     - asyncresult.results_file is search('\.ansible_async.+\d+\.\d+')
      # ensure that async is actually async- this test will fail if # hosts > forks or if the target host is VERY slow
     - (lookup('pipe', 'date +%s') | int) - (start_timestamp | int) < 8
@@ -22,7 +23,7 @@
 - name: async poll immediate success
   async_test:
     sleep_delay_sec: 0
-  async: 10
+  async: 20
   poll: 1
   register: asyncresult
 
@@ -31,7 +32,8 @@
     that:
     - asyncresult.ansible_job_id is match('\d+\.\d+')
     - asyncresult.finished == 1
-    - asyncresult.changed == true
+    - asyncresult is finished
+    - asyncresult is changed
     - asyncresult.ansible_async_watchdog_pid is number
 #    - asyncresult.module_tempdir is search('ansible-tmp-')
     - asyncresult.module_pid is number
@@ -59,7 +61,7 @@
 - name: async poll retry
   async_test:
     sleep_delay_sec: 5
-  async: 10
+  async: 20
   poll: 1
   register: asyncresult
 
@@ -68,7 +70,8 @@
     that:
     - asyncresult.ansible_job_id is match('\d+\.\d+')
     - asyncresult.finished == 1
-    - asyncresult.changed == true
+    - asyncresult is finished
+    - asyncresult is changed
 #    - asyncresult.module_tempdir is search('ansible-tmp-')
     - asyncresult.module_pid is number
 
@@ -94,8 +97,8 @@
 
 - name: async poll timeout
   async_test:
-    sleep_delay_sec: 5
-  async: 3
+    sleep_delay_sec: 25
+  async: 20
   poll: 1
   register: asyncresult
   ignore_errors: true
@@ -105,8 +108,9 @@
     that:
     - asyncresult.ansible_job_id is match('\d+\.\d+')
     - asyncresult.finished == 1
-    - asyncresult.changed == false
-    - asyncresult is failed == true
+    - asyncresult is finished
+    - asyncresult is not changed
+    - asyncresult is failed
     - asyncresult.msg is search('timed out')
 
 - name: async poll graceful module failure
@@ -122,8 +126,9 @@
     that:
     - asyncresult.ansible_job_id is match('\d+\.\d+')
     - asyncresult.finished == 1
-    - asyncresult.changed == true
-    - asyncresult is failed == true
+    - asyncresult is finished
+    - asyncresult is changed
+    - asyncresult is failed
     - asyncresult.msg == 'failed gracefully'
 
 - name: async poll exception module failure
@@ -139,14 +144,15 @@
     that:
     - asyncresult.ansible_job_id is match('\d+\.\d+')
     - asyncresult.finished == 1
-    - asyncresult.changed == false
-    - asyncresult is failed == true
+    - asyncresult is finished
+    - asyncresult is not changed
+    - asyncresult is failed
 # TODO: re-enable after catastrophic failure behavior is cleaned up
 #    - asyncresult.msg is search('failing via exception')
 
 - name: echo some non ascii characters
   win_command: cmd.exe /c echo über den Fußgängerübergang gehen
-  async: 10
+  async: 20
   poll: 1
   register: nonascii_output
 
@@ -158,6 +164,18 @@
     - nonascii_output.stdout_lines|count == 1
     - nonascii_output.stdout_lines[0] == 'über den Fußgängerübergang gehen'
     - nonascii_output.stderr == ''
+
+- name: test async with custom remote_tmp
+  win_shell: echo hi
+  register: async_custom_tmp
+  async: 5
+  vars:
+    ansible_remote_tmp: '{{win_output_dir}}'
+
+- name: assert results file is in the remote tmp specified
+  assert:
+    that:
+    - async_custom_tmp.results_file == win_output_dir + '\\.ansible_async\\' + async_custom_tmp.ansible_job_id
 
 # FUTURE: figure out why the last iteration of this test often fails on shippable
 #- name: loop async success
@@ -172,7 +190,7 @@
 #  async_status:
 #    jid: "{{ item }}"
 #  register: asyncout
-#  until: asyncout.finished == 1
+#  until: asyncout is finished
 #  retries: 10
 #  delay: 1
 #  with_items: "{{ async_many.results | map(attribute='ansible_job_id') | list }}"
@@ -181,8 +199,9 @@
 #  assert:
 #    that:
 #    - item.finished == 1
+#    - item is finished
 #    - item.slept_sec == 3
-#    - item.changed == true
+#    - item is changed
 #    - item.ansible_job_id is match('\d+\.\d+')
 #  with_items: "{{ asyncout.results }}"
 

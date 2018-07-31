@@ -60,7 +60,7 @@ class TestSlxosConfigModule(TestSlxosModule):
     def test_slxos_config_src(self):
         src = load_fixture('slxos_config_src.cfg')
         set_module_args(dict(src=src))
-        commands = ['hostname foo', 'interface GigabitEthernet0/0',
+        commands = ['hostname foo', 'interface Ethernet 0/0',
                     'no ip address']
         self.execute_module(changed=True, commands=commands)
 
@@ -82,7 +82,7 @@ class TestSlxosConfigModule(TestSlxosModule):
     def test_slxos_config_save_changed_true(self):
         src = load_fixture('slxos_config_src.cfg')
         set_module_args(dict(src=src, save_when='changed'))
-        commands = ['hostname foo', 'interface GigabitEthernet0/0', 'no ip address']
+        commands = ['hostname foo', 'interface Ethernet 0/0', 'no ip address']
         self.execute_module(changed=True, commands=commands)
         self.assertEqual(self.run_commands.call_count, 1)
         self.assertEqual(self.get_config.call_count, 1)
@@ -103,8 +103,8 @@ class TestSlxosConfigModule(TestSlxosModule):
         self.execute_module(changed=True, commands=commands)
 
     def test_slxos_config_lines_w_parents(self):
-        set_module_args(dict(lines=['shutdown'], parents=['interface GigabitEthernet0/0']))
-        commands = ['interface GigabitEthernet0/0', 'shutdown']
+        set_module_args(dict(lines=['shutdown'], parents=['interface Ethernet 0/0']))
+        commands = ['interface Ethernet 0/0', 'shutdown']
         self.execute_module(changed=True, commands=commands)
 
     def test_slxos_config_before(self):
@@ -131,7 +131,7 @@ class TestSlxosConfigModule(TestSlxosModule):
 
     def test_slxos_config_replace_block(self):
         lines = ['description test string', 'test string']
-        parents = ['interface GigabitEthernet0/0']
+        parents = ['interface Ethernet 0/0']
         set_module_args(dict(lines=lines, replace='block', parents=parents))
         commands = parents + lines
         self.execute_module(changed=True, commands=commands)
@@ -143,7 +143,7 @@ class TestSlxosConfigModule(TestSlxosModule):
 
     def test_slxos_config_match_none(self):
         lines = ['ip address 1.2.3.4 255.255.255.0', 'description test string']
-        parents = ['interface GigabitEthernet0/0']
+        parents = ['interface Ethernet 0/0']
         set_module_args(dict(lines=lines, parents=parents, match='none'))
         commands = parents + lines
         self.execute_module(changed=True, commands=commands, sort=False)
@@ -151,7 +151,7 @@ class TestSlxosConfigModule(TestSlxosModule):
     def test_slxos_config_match_strict(self):
         lines = ['ip address 1.2.3.4 255.255.255.0', 'description test string',
                  'shutdown']
-        parents = ['interface GigabitEthernet0/0']
+        parents = ['interface Ethernet 0/0']
         set_module_args(dict(lines=lines, parents=parents, match='strict'))
         commands = parents + ['shutdown']
         self.execute_module(changed=True, commands=commands, sort=False)
@@ -159,7 +159,7 @@ class TestSlxosConfigModule(TestSlxosModule):
     def test_slxos_config_match_exact(self):
         lines = ['ip address 1.2.3.4 255.255.255.0', 'description test string',
                  'shutdown']
-        parents = ['interface GigabitEthernet0/0']
+        parents = ['interface Ethernet 0/0']
         set_module_args(dict(lines=lines, parents=parents, match='exact'))
         commands = parents + lines
         self.execute_module(changed=True, commands=commands, sort=False)

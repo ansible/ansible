@@ -12,6 +12,9 @@ DOCUMENTATION = '''
     short_description: connect via ssh client binary
     description:
         - This connection plugin allows ansible to communicate to the target machines via normal ssh command line.
+        - Ansible does not expose a channel to allow communication between the user and the ssh process to accept
+          a password manually to decrypt an ssh key when using this connection plugin (which is the default). The
+          use of ``ssh-agent`` is highly recommended.
     author: ansible (@core)
     version_added: historical
     options:
@@ -52,14 +55,24 @@ DOCUMENTATION = '''
                 key: 'ssh_args'
           env:
               - name: ANSIBLE_SSH_ARGS
+          vars:
+              - name: ansible_ssh_args
+                version_added: '2.7'
       ssh_common_args:
           description: Common extra args for all ssh CLI tools
+          ini:
+              - section: 'ssh_connection'
+                key: 'ssh_common_args'
+                version_added: '2.7'
+          env:
+              - name: ANSIBLE_SSH_COMMON_ARGS
+                version_added: '2.7'
           vars:
               - name: ansible_ssh_common_args
       ssh_executable:
           default: ssh
           description:
-            - This defines the location of the ssh binary. It defaults to `ssh` which will use the first ssh binary available in $PATH.
+            - This defines the location of the ssh binary. It defaults to ``ssh`` which will use the first ssh binary available in $PATH.
             - This option is usually not required, it might be useful when access to system ssh is restricted,
               or when using ssh wrappers to connect to remote hosts.
           env: [{name: ANSIBLE_SSH_EXECUTABLE}]
@@ -67,14 +80,20 @@ DOCUMENTATION = '''
           - {key: ssh_executable, section: ssh_connection}
           #const: ANSIBLE_SSH_EXECUTABLE
           version_added: "2.2"
+          vars:
+              - name: ansible_ssh_executable
+                version_added: '2.7'
       sftp_executable:
           default: sftp
           description:
-            - This defines the location of the sftp binary. It defaults to `sftp` which will use the first binary available in $PATH.
+            - This defines the location of the sftp binary. It defaults to ``sftp`` which will use the first binary available in $PATH.
           env: [{name: ANSIBLE_SFTP_EXECUTABLE}]
           ini:
           - {key: sftp_executable, section: ssh_connection}
           version_added: "2.6"
+          vars:
+              - name: ansible_sftp_executable
+                version_added: '2.7'
       scp_executable:
           default: scp
           description:
@@ -83,18 +102,42 @@ DOCUMENTATION = '''
           ini:
           - {key: scp_executable, section: ssh_connection}
           version_added: "2.6"
+          vars:
+              - name: ansible_scp_executable
+                version_added: '2.7'
       scp_extra_args:
-          description: Extra exclusive to the 'scp' CLI
+          description: Extra exclusive to the ``scp`` CLI
           vars:
               - name: ansible_scp_extra_args
+          env:
+            - name: ANSIBLE_SCP_EXTRA_ARGS
+              version_added: '2.7'
+          ini:
+            - key: scp_extra_args
+              section: ssh_connection
+              version_added: '2.7'
       sftp_extra_args:
-          description: Extra exclusive to the 'sftp' CLI
+          description: Extra exclusive to the ``sftp`` CLI
           vars:
               - name: ansible_sftp_extra_args
+          env:
+            - name: ANSIBLE_SFTP_EXTRA_ARGS
+              version_added: '2.7'
+          ini:
+            - key: sftp_extra_args
+              section: ssh_connection
+              version_added: '2.7'
       ssh_extra_args:
           description: Extra exclusive to the 'ssh' CLI
           vars:
               - name: ansible_ssh_extra_args
+          env:
+            - name: ANSIBLE_SSH_EXTRA_ARGS
+              version_added: '2.7'
+          ini:
+            - key: ssh_extra_args
+              section: ssh_connection
+              version_added: '2.7'
       retries:
           # constant: ANSIBLE_SSH_RETRIES
           description: Number of attempts to connect.
@@ -107,6 +150,9 @@ DOCUMENTATION = '''
               key: retries
             - section: ssh_connection
               key: retries
+          vars:
+              - name: ansible_ssh_retries
+                version_added: '2.7'
       port:
           description: Remote port to connect to.
           type: int
@@ -173,6 +219,9 @@ DOCUMENTATION = '''
         ini:
           - key: control_path
             section: ssh_connection
+        vars:
+          - name: ansible_control_path
+            version_added: '2.7'
       control_path_dir:
         default: ~/.ansible/cp
         description:
@@ -183,6 +232,9 @@ DOCUMENTATION = '''
         ini:
           - section: ssh_connection
             key: control_path_dir
+        vars:
+          - name: ansible_control_path_dir
+            version_added: '2.7'
       sftp_batch_mode:
         default: 'yes'
         description: 'TODO: write it'
@@ -190,6 +242,9 @@ DOCUMENTATION = '''
         ini:
         - {key: sftp_batch_mode, section: ssh_connection}
         type: bool
+        vars:
+          - name: ansible_sftp_batch_mode
+            version_added: '2.7'
       scp_if_ssh:
         default: smart
         description:
@@ -199,6 +254,9 @@ DOCUMENTATION = '''
         env: [{name: ANSIBLE_SCP_IF_SSH}]
         ini:
         - {key: scp_if_ssh, section: ssh_connection}
+        vars:
+          - name: ansible_scp_if_ssh
+            version_added: '2.7'
       use_tty:
         version_added: '2.5'
         default: 'yes'
@@ -207,7 +265,9 @@ DOCUMENTATION = '''
         ini:
         - {key: usetty, section: ssh_connection}
         type: bool
-        yaml: {key: connection.usetty}
+        vars:
+          - name: ansible_ssh_use_tty
+            version_added: '2.7'
 '''
 
 import errno
@@ -236,6 +296,11 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+
+b_NOT_SSH_ERRORS = (b'Traceback (most recent call last):',  # Python-2.6 when there's an exception
+                                                            # while invoking a script via -m
+                    b'PHP Parse error:',  # Php always returns error 255
+                    )
 
 SSHPASS_AVAILABLE = None
 
@@ -273,16 +338,30 @@ def _ssh_retry(func):
                     display.vvv(return_tuple, host=self.host)
                     # 0 = success
                     # 1-254 = remote command return code
-                    # 255 = failure from the ssh command itself
+                    # 255 could be a failure from the ssh command itself
                 except (AnsibleControlPersistBrokenPipeError) as e:
                     # Retry one more time because of the ControlPersist broken pipe (see #16731)
+                    cmd = args[0]
+                    if self._play_context.password and isinstance(cmd, list):
+                        # This is a retry, so the fd/pipe for sshpass is closed, and we need a new one
+                        self.sshpass_pipe = os.pipe()
+                        cmd[1] = b'-d' + to_bytes(self.sshpass_pipe[0], nonstring='simplerepr', errors='surrogate_or_strict')
                     display.vvv(u"RETRYING BECAUSE OF CONTROLPERSIST BROKEN PIPE")
                     return_tuple = func(self, *args, **kwargs)
 
-                if return_tuple[0] != 255:
-                    break
-                else:
-                    raise AnsibleConnectionFailure("Failed to connect to the host via ssh: %s" % to_native(return_tuple[2]))
+                if return_tuple[0] == 255:
+                    SSH_ERROR = True
+                    for signature in b_NOT_SSH_ERRORS:
+                        if signature in return_tuple[1]:
+                            SSH_ERROR = False
+                            break
+
+                    if SSH_ERROR:
+                        raise AnsibleConnectionFailure("Failed to connect to the host via ssh: %s"
+                                                       % to_native(return_tuple[2]))
+
+                break
+
             except (AnsibleConnectionFailure, Exception) as e:
                 if attempt == remaining_tries - 1:
                     raise
@@ -677,7 +756,7 @@ class Connection(ConnectionBase):
         # only when using ssh. Otherwise we can send initial data straightaway.
 
         state = states.index('ready_to_send')
-        if b'ssh' in cmd and sudoable:
+        if to_bytes(self.get_option('ssh_executable')) in cmd and sudoable:
             if self._play_context.prompt:
                 # We're requesting escalation with a password, so we have to
                 # wait for a password prompt.
@@ -1023,13 +1102,25 @@ class Connection(ConnectionBase):
         # If we have a persistent ssh connection (ControlPersist), we can ask it to stop listening.
         cmd = self._build_command(self._play_context.ssh_executable, '-O', 'stop', self.host)
         controlpersist, controlpath = self._persistence_controls(cmd)
-        if controlpersist:
+        cp_arg = [a for a in cmd if a.startswith(b"ControlPath=")]
+
+        # only run the reset if the ControlPath already exists or if it isn't
+        # configured and ControlPersist is set
+        run_reset = False
+        if controlpersist and len(cp_arg) > 0:
+            cp_path = cp_arg[0].split(b"=", 1)[-1]
+            if os.path.exists(cp_path):
+                run_reset = True
+        elif controlpersist:
+            run_reset = True
+
+        if run_reset:
             display.vvv(u'sending stop: %s' % cmd)
             p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdout, stderr = p.communicate()
             status_code = p.wait()
             if status_code != 0:
-                raise AnsibleError("Cannot reset connection:\n%s" % stderr)
+                display.warning("Failed to reset connection:%s" % stderr)
 
         self.close()
 

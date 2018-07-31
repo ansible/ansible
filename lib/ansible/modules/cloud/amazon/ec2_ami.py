@@ -420,8 +420,8 @@ def create_image(module, connection):
                 device = rename_item_if_exists(device, 'volume_type', 'VolumeType', 'Ebs')
                 device = rename_item_if_exists(device, 'snapshot_id', 'SnapshotId', 'Ebs')
                 device = rename_item_if_exists(device, 'delete_on_termination', 'DeleteOnTermination', 'Ebs')
-                device = rename_item_if_exists(device, 'size', 'VolumeSize', 'Ebs')
-                device = rename_item_if_exists(device, 'volume_size', 'VolumeSize', 'Ebs')
+                device = rename_item_if_exists(device, 'size', 'VolumeSize', 'Ebs', attribute_type=int)
+                device = rename_item_if_exists(device, 'volume_size', 'VolumeSize', 'Ebs', attribute_type=int)
                 device = rename_item_if_exists(device, 'iops', 'Iops', 'Ebs')
                 device = rename_item_if_exists(device, 'encrypted', 'Encrypted', 'Ebs')
                 block_device_mapping.append(device)
@@ -496,7 +496,7 @@ def deregister_image(module, connection):
     snapshots = []
     if 'BlockDeviceMappings' in image:
         for mapping in image.get('BlockDeviceMappings'):
-            snapshot_id = mapping.get('SnapshotId')
+            snapshot_id = mapping.get('Ebs', {}).get('SnapshotId')
             if snapshot_id is not None:
                 snapshots.append(snapshot_id)
 
@@ -626,13 +626,15 @@ def get_image_by_id(module, connection, image_id):
         module.fail_json_aws(e, msg="Error retrieving image by image_id")
 
 
-def rename_item_if_exists(dict_object, attribute, new_attribute, child_node=None):
+def rename_item_if_exists(dict_object, attribute, new_attribute, child_node=None, attribute_type=None):
     new_item = dict_object.get(attribute)
     if new_item is not None:
+        if attribute_type is not None:
+            new_item = attribute_type(new_item)
         if child_node is None:
-            dict_object[new_attribute] = dict_object.get(attribute)
+            dict_object[new_attribute] = new_item
         else:
-            dict_object[child_node][new_attribute] = dict_object.get(attribute)
+            dict_object[child_node][new_attribute] = new_item
         dict_object.pop(attribute)
     return dict_object
 

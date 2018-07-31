@@ -261,7 +261,7 @@ state:
     sample: "present"
 '''
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, to_bytes
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 from ansible.module_utils._text import to_native
@@ -491,7 +491,7 @@ class JenkinsPlugin(object):
                 sha1sum_old = base64.b64encode(sha1_old.digest())
 
                 # If the latest version changed, download it
-                if sha1sum_old != plugin_data['sha1']:
+                if sha1sum_old != to_bytes(plugin_data['sha1']):
                     if not self.module.check_mode:
                         r = self._download_plugin(plugin_url)
                         self._write_file(plugin_file, r)
@@ -734,8 +734,7 @@ def main():
     # Params was removed
     # https://meetbot.fedoraproject.org/ansible-meeting/2017-09-28/ansible_dev_meeting.2017-09-28-15.00.log.html
     if module.params['params']:
-        module.fail_json(msg="The params option to jenkins_plugin was removed in Ansible 2.5"
-                         "since it circumvents Ansible's option handling")
+        module.fail_json(msg="The params option to jenkins_plugin was removed in Ansible 2.5 since it circumvents Ansible's option handling")
 
     # Force basic authentication
     module.params['force_basic_auth'] = True

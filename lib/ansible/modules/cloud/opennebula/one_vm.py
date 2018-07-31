@@ -127,6 +127,15 @@ options:
       - C(count_labels) parameters should be deployed. Instances are either
       - created or terminated based on this value.
       - NOTE':' Instances with the least IDs will be terminated first.
+  mode:
+    description:
+      - Set permission mode of the instance in octet format, e.g. C(600) to give owner C(use) and C(manage) and nothing to group and others.
+  owner_id:
+    description:
+      - ID of the user which will be set as the owner of the instance
+  group_id:
+    description:
+      - ID of the group which will be set as the group of the instance
   memory:
     description:
       - The size of the memory for new instances (in MB, GB, ...)
@@ -174,6 +183,17 @@ EXAMPLES = '''
     template_name: 'app1_template'
     attributes:
       name: foo
+
+# Deploy a new VM and set its group_id and mode
+- one_vm:
+    template_id: 90
+    group_id: 16
+    mode: 660
+
+# Change VM's permissions to 640
+- one_vm:
+    instance_ids: 5
+    mode: 640
 
 # Deploy 2 new instances and set memory, vcpu, disk_size and 3 networks
 - one_vm:
@@ -356,14 +376,19 @@ instances:
             description: vm's group name
             type: string
             sample: one-users
-        user_id:
-            description: vm's user id
+        owner_id:
+            description: vm's owner id
             type: integer
             sample: 143
-        user_name:
-            description: vm's user name
+        owner_name:
+            description: vm's owner name
             type: string
             sample: app-user
+        mode:
+            description: vm's mode
+            type: string
+            returned: success
+            sample: 660
         state:
             description: state of an instance
             type: string
@@ -453,14 +478,19 @@ tagged_instances:
             description: vm's group name
             type: string
             sample: one-users
-        user_id:
+        owner_id:
             description: vm's user id
             type: integer
             sample: 143
-        user_name:
+        owner_name:
             description: vm's user name
             type: string
             sample: app-user
+        mode:
+            description: vm's mode
+            type: string
+            returned: success
+            sample: 660
         state:
             description: state of an instance
             type: string
@@ -620,6 +650,8 @@ def get_vm_info(client, vm):
     vm_uptime = time.mktime(current_time) - time.mktime(vm_start_time)
     vm_uptime /= (60 * 60)
 
+    permissions_str = parse_vm_permissions(client, vm)
+
     # LCM_STATE is VM's sub-state that is relevant only when STATE is ACTIVE
     vm_lcm_state = None
     if vm.state == VM_STATES.index('ACTIVE'):
@@ -632,8 +664,8 @@ def get_vm_info(client, vm):
         'vm_name': vm.name,
         'state': VM_STATES[vm.state],
         'lcm_state': vm_lcm_state,
-        'user_name': vm.uname,
-        'user_id': vm.uid,
+        'owner_name': vm.uname,
+        'owner_id': vm.uid,
         'networks': networks_info,
         'disk_size': disk_size,
         'memory': vm.template.memory + ' MB',
@@ -643,10 +675,91 @@ def get_vm_info(client, vm):
         'group_id': vm.gid,
         'uptime_h': int(vm_uptime),
         'attributes': vm_attributes,
+        'mode': permissions_str,
         'labels': vm_labels
     }
 
     return info
+
+
+def parse_vm_permissions(client, vm):
+
+    import xml.etree.ElementTree as ET
+    vm_XML = client.call('vm.info', vm.id)
+    root = ET.fromstring(vm_XML)
+
+    perm_dict = {}
+
+    root = root.find('PERMISSIONS')
+
+    for child in root:
+        perm_dict[child.tag] = child.text
+
+    '''
+    This is the structure of the 'PERMISSIONS' dictionary:
+
+   "PERMISSIONS": {
+                      "OWNER_U": "1",
+                      "OWNER_M": "1",
+                      "OWNER_A": "0",
+                      "GROUP_U": "0",
+                      "GROUP_M": "0",
+                      "GROUP_A": "0",
+                      "OTHER_U": "0",
+                      "OTHER_M": "0",
+                      "OTHER_A": "0"
+                    }
+    '''
+
+    owner_octal = int(perm_dict["OWNER_U"]) * 4 + int(perm_dict["OWNER_M"]) * 2 + int(perm_dict["OWNER_A"])
+    group_octal = int(perm_dict["GROUP_U"]) * 4 + int(perm_dict["GROUP_M"]) * 2 + int(perm_dict["GROUP_A"])
+    other_octal = int(perm_dict["OTHER_U"]) * 4 + int(perm_dict["OTHER_M"]) * 2 + int(perm_dict["OTHER_A"])
+
+    permissions = str(owner_octal) + str(group_octal) + str(other_octal)
+
+    return permissions
+
+
+def set_vm_permissions(module, client, vms, permissions):
+    changed = False
+
+    for vm in vms:
+        vm.info()
+        print(vm.id)
+        old_permissions = parse_vm_permissions(client, vm)
+        changed = changed or old_permissions != permissions
+
+        if not module.check_mode and old_permissions != permissions:
+            permissions_str = bin(int(permissions, base=8))[2:]  # 600 -> 110000000
+            mode_bits = [int(d) for d in permissions_str]
+            try:
+                client.call('vm.chmod', vm.id, mode_bits[0], mode_bits[1], mode_bits[2], mode_bits[3],
+                            mode_bits[4], mode_bits[5], mode_bits[6], mode_bits[7], mode_bits[8])
+            except oca.OpenNebulaException:
+                module.fail_json(msg="Permissions changing is unsuccessful, but instances are present if you deployed them.")
+
+    return changed
+
+
+def set_vm_ownership(module, client, vms, owner_id, group_id):
+    changed = False
+
+    for vm in vms:
+        vm.info()
+        if owner_id is None:
+            owner_id = vm.uid
+        if group_id is None:
+            group_id = vm.gid
+
+        changed = changed or owner_id != vm.uid or group_id != vm.gid
+
+        if not module.check_mode and (owner_id != vm.uid or group_id != vm.gid):
+            try:
+                client.call('vm.chown', vm.id, owner_id, group_id)
+            except oca.OpenNebulaException:
+                module.fail_json(msg="Ownership changing is unsuccessful, but instances are present if you deployed them.")
+
+    return changed
 
 
 def get_size_in_MB(module, size_str):
@@ -831,15 +944,13 @@ def get_all_vms_by_attributes(client, attributes_dict, labels_list):
 
 def create_count_of_vms(module, client, template_id, count, attributes_dict, labels_list, disk_size, network_attrs_list, wait, wait_timeout):
     new_vms_list = []
-    instances_ids = []
-    instances = []
 
     vm_name = ''
     if attributes_dict:
         vm_name = attributes_dict.get('NAME', '')
 
     if module.check_mode:
-        return {'changed': True}
+        return True, [], []
 
     # Create list of used indexes
     vm_filled_indexes_list = None
@@ -870,12 +981,7 @@ def create_count_of_vms(module, client, template_id, count, attributes_dict, lab
         for vm in new_vms_list:
             wait_for_running(module, vm, wait_timeout)
 
-    for vm in new_vms_list:
-        vm_info = get_vm_info(client, vm)
-        instances.append(vm_info)
-        instances_ids.append(vm.id)
-
-    return {'changed': True, 'instances_ids': instances_ids, 'instances': instances, 'tagged_instances': instances}
+    return True, new_vms_list, []
 
 
 def create_exact_count_of_vms(module, client, template_id, exact_count, attributes_dict, count_attributes_dict,
@@ -886,23 +992,19 @@ def create_exact_count_of_vms(module, client, template_id, exact_count, attribut
     vm_count_diff = exact_count - len(vm_list)
     changed = vm_count_diff != 0
 
-    result = {}
     new_vms_list = []
-    instances_ids = []
-    instances = []
-    tagged_instances = list(get_vm_info(client, vm) for vm in vm_list)
+    instances_list = []
+    tagged_instances_list = vm_list
 
     if module.check_mode:
-        return {'changed': changed, 'instances_ids': instances_ids, 'instances': instances, 'tagged_instances': tagged_instances}
+        return changed, instances_list, tagged_instances_list
 
     if vm_count_diff > 0:
         # Add more VMs
-        result = create_count_of_vms(module, client, template_id, vm_count_diff, attributes_dict,
-                                     labels_list, disk_size, network_attrs_list, wait, wait_timeout)
+        changed, instances_list, tagged_instances = create_count_of_vms(module, client, template_id, vm_count_diff, attributes_dict,
+                                                                        labels_list, disk_size, network_attrs_list, wait, wait_timeout)
 
-        result['tagged_instances'] += tagged_instances
-        return result
-
+        tagged_instances_list += instances_list
     elif vm_count_diff < 0:
         # Delete surplus VMs
         old_vms_list = []
@@ -917,13 +1019,12 @@ def create_exact_count_of_vms(module, client, template_id, exact_count, attribut
             for vm in old_vms_list:
                 wait_for_done(module, vm, wait_timeout)
 
-        for vm in old_vms_list:
-            vm_info = get_vm_info(client, vm)
-            instances.append(vm_info)
-            instances_ids.append(vm.id)
-            tagged_instances[:] = [dct for dct in tagged_instances if dct.get('vm_id') != vm.id]
+        instances_list = old_vms_list
+        # store only the remaining instances
+        old_vms_set = set(old_vms_list)
+        tagged_instances_list = [vm for vm in vm_list if vm not in old_vms_set]
 
-    return {'changed': changed, 'instances_ids': instances_ids, 'instances': instances, 'tagged_instances': tagged_instances}
+    return changed, instances_list, tagged_instances_list
 
 VM_STATES = ['INIT', 'PENDING', 'HOLD', 'ACTIVE', 'STOPPED', 'SUSPENDED', 'DONE', '', 'POWEROFF', 'UNDEPLOYED', 'CLONING', 'CLONING_FAILURE']
 LCM_STATES = ['LCM_INIT', 'PROLOG', 'BOOT', 'RUNNING', 'MIGRATE', 'SAVE_STOP',
@@ -983,28 +1084,13 @@ def terminate_vm(module, client, vm, hard=False):
     return changed
 
 
-def terminate_vms(module, client, vms, wait, wait_timeout, hard, tagged):
+def terminate_vms(module, client, vms, hard):
     changed = False
-    instances_ids = []
-    instances = []
-
-    if tagged:
-        module.fail_json(msg='Option `instance_ids` is required when state is `absent`.')
 
     for vm in vms:
         changed = terminate_vm(module, client, vm, hard) or changed
 
-    if wait and not module.check_mode:
-        for vm in vms:
-            if vm is not None:
-                wait_for_done(module, vm, wait_timeout)
-
-    for vm in vms:
-        if vm is not None:
-            instances_ids.append(vm.id)
-            instances.append(get_vm_info(client, vm))
-
-    return {'changed': changed, 'instances': instances, 'instances_ids': instances_ids, 'tagged_instances': []}
+    return changed
 
 
 def poweroff_vm(module, vm, hard):
@@ -1026,32 +1112,16 @@ def poweroff_vm(module, vm, hard):
     return changed
 
 
-def poweroff_vms(module, client, vms, wait, wait_timeout, hard, tagged):
-    instances_ids = []
-    instances = []
-    tagged_instances = []
+def poweroff_vms(module, client, vms, hard):
     changed = False
 
     for vm in vms:
         changed = poweroff_vm(module, vm, hard) or changed
 
-    if wait and not module.check_mode:
-        for vm in vms:
-            wait_for_poweroff(module, vm, wait_timeout)
-
-    for vm in vms:
-        instances_ids.append(vm.id)
-        instances.append(get_vm_info(client, vm))
-        if tagged:
-            tagged_instances.append(get_vm_info(client, vm))
-
-    return {'changed': changed, 'instances_ids': instances_ids, 'instances': instances, 'tagged_instances': tagged_instances}
+    return changed
 
 
-def reboot_vms(module, client, vms, wait, wait_timeout, hard, tagged):
-    instances_ids = []
-    instances = []
-    tagged_instances = []
+def reboot_vms(module, client, vms, wait_timeout, hard):
 
     if not module.check_mode:
         # Firstly, power-off all instances
@@ -1069,17 +1139,7 @@ def reboot_vms(module, client, vms, wait, wait_timeout, hard, tagged):
         for vm in vms:
             resume_vm(module, vm)
 
-        if wait:
-            for vm in vms:
-                wait_for_running(module, vm, wait_timeout)
-
-    for vm in vms:
-        instances_ids.append(vm.id)
-        instances.append(get_vm_info(client, vm))
-        if tagged:
-            tagged_instances.append(get_vm_info(client, vm))
-
-    return {'changed': True, 'instances_ids': instances_ids, 'instances': instances, 'tagged_instances': tagged_instances}
+    return True
 
 
 def resume_vm(module, vm):
@@ -1099,27 +1159,13 @@ def resume_vm(module, vm):
     return changed
 
 
-def resume_vms(module, client, vms, wait, wait_timeout, tagged):
-    instances_ids = []
-    instances = []
-    tagged_instances = []
-
+def resume_vms(module, client, vms):
     changed = False
 
     for vm in vms:
         changed = resume_vm(module, vm) or changed
 
-    if wait and changed and not module.check_mode:
-        for vm in vms:
-            wait_for_running(module, vm, wait_timeout)
-
-    for vm in vms:
-        instances_ids.append(vm.id)
-        instances.append(get_vm_info(client, vm))
-        if tagged:
-            tagged_instances.append(get_vm_info(client, vm))
-
-    return {'changed': changed, 'instances_ids': instances_ids, 'instances': instances, 'tagged_instances': tagged_instances}
+    return changed
 
 
 def check_name_attribute(module, attributes):
@@ -1153,7 +1199,7 @@ def disk_save_as(module, client, vm, disk_saveas, wait_timeout):
         if vm.state != VM_STATES.index('POWEROFF'):
             module.fail_json(msg="'disksaveas' option can be used only when the VM is in 'POWEROFF' state")
         client.call('vm.disksaveas', vm.id, disk_id, image_name, 'OS', -1)
-        wait_for_poweroff(module, vm, wait_timeout)
+        wait_for_poweroff(module, vm, wait_timeout)  # wait for VM to leave the hotplug_saveas_poweroff state
 
 
 def get_connection_info(module):
@@ -1193,6 +1239,9 @@ def main():
             "choices": ['present', 'absent', 'rebooted', 'poweredoff', 'running'],
             "type": "str"
         },
+        "mode": {"required": False, "type": "str"},
+        "owner_id": {"required": False, "type": "int"},
+        "group_id": {"required": False, "type": "int"},
         "wait": {"default": True, "type": "bool"},
         "wait_timeout": {"default": 300, "type": "int"},
         "hard": {"default": False, "type": "bool"},
@@ -1213,6 +1262,7 @@ def main():
     module = AnsibleModule(argument_spec=fields,
                            mutually_exclusive=[
                                ['template_id', 'template_name', 'instance_ids'],
+                               ['template_id', 'template_name', 'disk_saveas'],
                                ['instance_ids', 'count_attributes', 'count'],
                                ['instance_ids', 'count_labels', 'count'],
                                ['instance_ids', 'exact_count'],
@@ -1237,6 +1287,9 @@ def main():
     requested_template_name = params.get('template_name')
     requested_template_id = params.get('template_id')
     state = params.get('state')
+    permissions = params.get('mode')
+    owner_id = params.get('owner_id')
+    group_id = params.get('group_id')
     wait = params.get('wait')
     wait_timeout = params.get('wait_timeout')
     hard = params.get('hard')
@@ -1305,13 +1358,24 @@ def main():
     if count <= 0:
         module.fail_json(msg='`count` has to be grater than 0')
 
+    if permissions is not None:
+        import re
+        if re.match("^[0-7]{3}$", permissions) is None:
+            module.fail_json(msg="Option `mode` has to have exactly 3 digits and be in the octet format e.g. 600")
+
     if exact_count is not None:
         # Deploy an exact count of VMs
-        result = create_exact_count_of_vms(module, client, template_id, exact_count, attributes, count_attributes,
-                                           labels, count_labels, disk_size, networks, hard, wait, wait_timeout)
+        changed, instances_list, tagged_instances_list = create_exact_count_of_vms(module, client, template_id, exact_count, attributes,
+                                                                                   count_attributes, labels, count_labels, disk_size,
+                                                                                   networks, hard, wait, wait_timeout)
+        vms = tagged_instances_list
     elif template_id and state == 'present':
         # Deploy count VMs
-        result = create_count_of_vms(module, client, template_id, count, attributes, labels, disk_size, networks, wait, wait_timeout)
+        changed, instances_list, tagged_instances_list = create_count_of_vms(module, client, template_id, count,
+                                                                             attributes, labels, disk_size, networks, wait, wait_timeout)
+        # instances_list - new instances
+        # tagged_instances_list - all instances with specified `count_attributes` and `count_labels`
+        vms = instances_list
     else:
         # Fetch data of instances, or change their state
         if not (instance_ids or attributes or labels):
@@ -1323,8 +1387,9 @@ def main():
         if hard and state not in ['rebooted', 'poweredoff', 'absent', 'present']:
             module.fail_json(msg="The 'hard' option can be used only for one of these states: 'rebooted', 'poweredoff', 'absent' and 'present'")
 
-        vms = None
+        vms = []
         tagged = False
+        changed = False
 
         if instance_ids:
             vms = get_vms_by_ids(module, client, state, instance_ids)
@@ -1332,34 +1397,57 @@ def main():
             tagged = True
             vms = get_all_vms_by_attributes(client, attributes, labels)
 
-        instances = list(get_vm_info(client, vm) for vm in vms if vm is not None)
-        instances_ids = list(vm.id for vm in vms if vm is not None)
-
-        if tagged:
-            result = {'changed': False, 'instances': instances, 'instances_ids': instances_ids, 'tagged_instances': instances}
-        else:
-            result = {'changed': False, 'instances': instances, 'instances_ids': instances_ids, 'tagged_instances': []}
-
         if len(vms) == 0 and state != 'absent' and state != 'present':
             module.fail_json(msg='There are no instances with specified `instance_ids`, `attributes` and/or `labels`')
 
         if len(vms) == 0 and state == 'present' and not tagged:
             module.fail_json(msg='There are no instances with specified `instance_ids`.')
 
-        if state == 'absent':
-            result = terminate_vms(module, client, vms, wait, wait_timeout, hard, tagged)
-        elif state == 'rebooted':
-            result = reboot_vms(module, client, vms, wait, wait_timeout, hard, tagged)
-        elif state == 'poweredoff':
-            result = poweroff_vms(module, client, vms, wait, wait_timeout, hard, tagged)
-        elif state == 'running':
-            result = resume_vms(module, client, vms, wait, wait_timeout, tagged)
+        if tagged and state == 'absent':
+            module.fail_json(msg='Option `instance_ids` is required when state is `absent`.')
 
-        if disk_saveas is not None:
-            if len(vms) == 0:
-                module.fail_json(msg="There is no VM whose disk will be saved.")
-            disk_save_as(module, client, vms[0], disk_saveas, wait_timeout)
-            result['changed'] = True
+        if state == 'absent':
+            changed = terminate_vms(module, client, vms, hard)
+        elif state == 'rebooted':
+            changed = reboot_vms(module, client, vms, wait_timeout, hard)
+        elif state == 'poweredoff':
+            changed = poweroff_vms(module, client, vms, hard)
+        elif state == 'running':
+            changed = resume_vms(module, client, vms)
+
+        instances_list = vms
+        tagged_instances_list = []
+
+    if permissions is not None:
+        changed = set_vm_permissions(module, client, vms, permissions) or changed
+
+    if owner_id is not None or group_id is not None:
+        changed = set_vm_ownership(module, client, vms, owner_id, group_id) or changed
+
+    if wait and not module.check_mode and state != 'present':
+        wait_for = {
+            'absent': wait_for_done,
+            'rebooted': wait_for_running,
+            'poweredoff': wait_for_poweroff,
+            'running': wait_for_running
+        }
+        for vm in vms:
+            if vm is not None:
+                wait_for[state](module, vm, wait_timeout)
+
+    if disk_saveas is not None:
+        if len(vms) == 0:
+            module.fail_json(msg="There is no VM whose disk will be saved.")
+        disk_save_as(module, client, vms[0], disk_saveas, wait_timeout)
+        changed = True
+
+    # instances - a list of instances info whose state is changed or which are fetched with C(instance_ids) option
+    instances = list(get_vm_info(client, vm) for vm in instances_list if vm is not None)
+    instances_ids = list(vm.id for vm in instances_list if vm is not None)
+    # tagged_instances - A list of instances info based on a specific attributes and/or labels that are specified with C(count_attributes) and C(count_labels)
+    tagged_instances = list(get_vm_info(client, vm) for vm in tagged_instances_list if vm is not None)
+
+    result = {'changed': changed, 'instances': instances, 'instances_ids': instances_ids, 'tagged_instances': tagged_instances}
 
     module.exit_json(**result)
 

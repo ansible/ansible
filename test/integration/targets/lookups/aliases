@@ -1,1 +1,2 @@
-posix/ci/group2
+shippable/posix/group1
+needs/httptester

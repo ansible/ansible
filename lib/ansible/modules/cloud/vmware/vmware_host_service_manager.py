@@ -23,7 +23,7 @@ description:
 - If specific esxi_hostname is provided, then specified service will be managed on given ESXi host only.
 version_added: '2.5'
 author:
-- Abhijeet Kasurde (@akasurde)
+- Abhijeet Kasurde (@Akasurde)
 notes:
 - Tested on vSphere 6.5
 requirements:

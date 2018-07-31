@@ -27,7 +27,7 @@ description:
   - Creates or terminates ecs services.
 notes:
   - the service role specified must be assumable (i.e. have a trust relationship for the ecs service, ecs.amazonaws.com)
-  - for details of the parameters and returns see U(http://boto3.readthedocs.org/en/latest/reference/services/ecs.html)
+  - for details of the parameters and returns see U(https://boto3.readthedocs.io/en/latest/reference/services/ecs.html)
   - An IAM role must have been previously created
 version_added: "2.1"
 author:
@@ -100,9 +100,27 @@ options:
     network_configuration:
         description:
           - network configuration of the service. Only applicable for task definitions created with C(awsvpc) I(network_mode).
-          - I(network_configuration) has two keys, I(subnets), a list of subnet IDs to which the task is attached and I(security_groups),
-            a list of group names or group IDs for the task
-        version_added: 2.6
+          - assign_public_ip requires botocore >= 1.8.4
+        suboptions:
+          subnets:
+            description:
+              - A list of subnet IDs to associate with the task
+            version_added: 2.6
+          security_groups:
+            description:
+              - A list of security group names or group IDs to associate with the task
+            version_added: 2.6
+          assign_public_ip:
+            description:
+              - Whether the task's elastic network interface receives a public IP address. This option requires botocore >= 1.8.4.
+            type: bool
+            version_added: 2.7
+    launch_type:
+        description:
+          - The launch type on which to run your service
+        required: false
+        version_added: 2.7
+        choices: ["EC2", "FARGATE"]
 extends_documentation_fragment:
     - aws
     - ec2
@@ -305,11 +323,11 @@ class EcsServiceManager:
 
     def format_network_configuration(self, network_config):
         result = dict()
-        if 'subnets' in network_config:
+        if network_config['subnets'] is not None:
             result['subnets'] = network_config['subnets']
         else:
             self.module.fail_json(msg="Network configuration must include subnets")
-        if 'security_groups' in network_config:
+        if network_config['security_groups'] is not None:
             groups = network_config['security_groups']
             if any(not sg.startswith('sg-') for sg in groups):
                 try:
@@ -318,6 +336,14 @@ class EcsServiceManager:
                 except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                     self.module.fail_json_aws(e, msg="Couldn't look up security groups")
             result['securityGroups'] = groups
+        if network_config['assign_public_ip'] is not None:
+            if self.module.botocore_at_least('1.8.4'):
+                if network_config['assign_public_ip'] is True:
+                    result['assignPublicIp'] = "ENABLED"
+                else:
+                    result['assignPublicIp'] = "DISABLED"
+            else:
+                self.module.fail_json(msg='botocore needs to be version 1.8.4 or higher to use assign_public_ip in network_configuration')
         return dict(awsvpcConfiguration=result)
 
     def find_in_array(self, array_of_services, service_name, field_name='serviceArn'):
@@ -357,7 +383,8 @@ class EcsServiceManager:
 
     def create_service(self, service_name, cluster_name, task_definition, load_balancers,
                        desired_count, client_token, role, deployment_configuration,
-                       placement_constraints, placement_strategy, network_configuration):
+                       placement_constraints, placement_strategy, network_configuration,
+                       launch_type):
         params = dict(
             cluster=cluster_name,
             serviceName=service_name,
@@ -368,9 +395,12 @@ class EcsServiceManager:
             role=role,
             deploymentConfiguration=deployment_configuration,
             placementConstraints=placement_constraints,
-            placementStrategy=placement_strategy)
+            placementStrategy=placement_strategy
+        )
         if network_configuration:
             params['networkConfiguration'] = network_configuration
+        if launch_type:
+            params['launchType'] = launch_type
         response = self.ecs.create_service(**params)
         return self.jsonize(response['service'])
 
@@ -431,12 +461,18 @@ def main():
         deployment_configuration=dict(required=False, default={}, type='dict'),
         placement_constraints=dict(required=False, default=[], type='list'),
         placement_strategy=dict(required=False, default=[], type='list'),
-        network_configuration=dict(required=False, type='dict')
+        network_configuration=dict(required=False, type='dict', options=dict(
+            subnets=dict(type='list'),
+            security_groups=dict(type='list'),
+            assign_public_ip=dict(type='bool'),
+        )),
+        launch_type=dict(required=False, choices=['EC2', 'FARGATE'])
     ))
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               supports_check_mode=True,
-                              required_if=[('state', 'present', ['task_definition', 'desired_count'])],
+                              required_if=[('state', 'present', ['task_definition', 'desired_count']),
+                                           ('launch_type', 'FARGATE', ['network_configuration'])],
                               required_together=[['load_balancers', 'role']])
 
     service_mgr = EcsServiceManager(module)
@@ -458,10 +494,16 @@ def main():
         module.fail_json(msg="Exception describing service '" + module.params['name'] + "' in cluster '" + module.params['cluster'] + "': " + str(e))
 
     results = dict(changed=False)
+
+    if module.params['launch_type']:
+        if not module.botocore_at_least('1.8.4'):
+            module.fail_json(msg='botocore needs to be version 1.8.4 or higher to use launch_type')
+
     if module.params['state'] == 'present':
 
         matching = False
         update = False
+
         if existing and 'status' in existing and existing['status'] == "ACTIVE":
             if service_mgr.is_matching_service(module.params, existing):
                 matching = True
@@ -491,17 +533,21 @@ def main():
                         if 'containerPort' in loadBalancer:
                             loadBalancer['containerPort'] = int(loadBalancer['containerPort'])
                     # doesn't exist. create it.
-                    response = service_mgr.create_service(module.params['name'],
-                                                          module.params['cluster'],
-                                                          module.params['task_definition'],
-                                                          loadBalancers,
-                                                          module.params['desired_count'],
-                                                          clientToken,
-                                                          role,
-                                                          deploymentConfiguration,
-                                                          module.params['placement_constraints'],
-                                                          module.params['placement_strategy'],
-                                                          network_configuration)
+                    try:
+                        response = service_mgr.create_service(module.params['name'],
+                                                              module.params['cluster'],
+                                                              module.params['task_definition'],
+                                                              loadBalancers,
+                                                              module.params['desired_count'],
+                                                              clientToken,
+                                                              role,
+                                                              deploymentConfiguration,
+                                                              module.params['placement_constraints'],
+                                                              module.params['placement_strategy'],
+                                                              network_configuration,
+                                                              module.params['launch_type'])
+                    except botocore.exceptions.ClientError as e:
+                        module.fail_json_aws(e, msg="Couldn't create service")
 
                 results['service'] = response
 
@@ -526,7 +572,7 @@ def main():
                             module.params['cluster']
                         )
                     except botocore.exceptions.ClientError as e:
-                        module.fail_json(msg=e.message)
+                        module.fail_json_aws(e, msg="Couldn't delete service")
                 results['changed'] = True
 
     elif module.params['state'] == 'deleting':

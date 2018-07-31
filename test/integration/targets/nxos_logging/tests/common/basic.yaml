@@ -4,11 +4,11 @@
   when: ansible_connection == "local"
 
 - name: Set up console logging
-  nxos_logging:
+  nxos_logging: &clog
     dest: console
     dest_level: 0
-    state: present
     provider: "{{ connection }}"
+    state: present
   register: result
 
 - assert:
@@ -17,47 +17,165 @@
       - '"logging console 0" in result.commands'
 
 - name: Set up console logging again (idempotent)
-  nxos_logging:
-    dest: console
-    dest_level: 0
-    state: present
-    provider: "{{ connection }}"
+  nxos_logging: *clog
   register: result
 
-- assert:
+- assert: &false
     that:
       - 'result.changed == false'
 
-- name: Delete/disable console logging
-  nxos_logging:
+- name: Set up console logging with level 2 (edge case)
+  nxos_logging: &clog2
     dest: console
-    dest_level: 0
-    state: absent
+    dest_level: 2
     provider: "{{ connection }}"
+    state: present
   register: result
 
 - assert:
     that:
       - 'result.changed == true'
-      - '"no logging console" in result.commands'
+      - '"logging console 2" in result.commands'
 
-- name: Delete/disable console logging (idempotent)
-  nxos_logging:
-    dest: console
-    dest_level: 0
-    state: absent
+- name: Set up console logging with level 2 (edge case) (idempotent)
+  nxos_logging: *clog2
+  register: result
+
+- assert: *false
+
+- name: Set Baud Rate to less than 38400
+  nxos_config:
+    lines:
+      - speed 9600
+    parents: line console
     provider: "{{ connection }}"
+
+- name: Enable console logging with level 3 (will fail)
+  nxos_logging: &con3
+    dest: console
+    dest_level: 3
+  register: result
+  provider: "{{ connection }}"
+  ignore_errors: yes
+
+- assert:
+    that:
+      - 'result.failed == true'
+
+- name: Set Baud Rate to 38400
+  nxos_config:
+    lines:
+      - speed 38400
+    parents: line console
+    provider: "{{ connection }}"
+
+- name: Enable console logging with level 3 (will pass)
+  nxos_logging: *con3
   register: result
 
 - assert:
     that:
-      - 'result.changed == false'
+      - 'result.changed == true'
+      - '"logging console 3" in result.commands'
 
 - name: Logfile logging with level
-  nxos_logging:
+  nxos_logging: &llog
     dest: logfile
     name: test
-    dest_level: 0
+    dest_level: 1
+    provider: "{{ connection }}"
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging logfile test 1" in result.commands'
+
+- name: Logfile logging with level (idempotent)
+  nxos_logging: *llog
+  register: result
+
+- assert: *false
+
+- name: Configure module with level
+  nxos_logging: &molog
+    dest: module
+    dest_level: 2
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging module 2" in result.commands'
+
+- name: Configure module with level (idempotent)
+  nxos_logging: *molog
+  register: result
+
+- assert: *false
+
+- name: Configure monitor with level
+  nxos_logging: &mlog
+    dest: monitor
+    dest_level: 3
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging monitor 3" in result.commands'
+
+- name: Configure monitor with level (idempotent)
+  nxos_logging: *mlog
+  register: result
+
+- assert: *false
+
+- name: Configure monitor with level 5 (edge case)
+  nxos_logging: &mlog5
+    dest: monitor
+    dest_level: 5
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging monitor 5" in result.commands'
+
+- name: Configure monitor with level 5 (edge case) (idempotent)
+  nxos_logging: *mlog5
+  register: result
+
+- assert: *false
+
+- name: Configure facility with level
+  nxos_logging: &flog
+    facility: daemon
+    facility_level: 4
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging level daemon 4" in result.commands'
+
+- name: Configure facility with level (idempotent)
+  nxos_logging: *flog
+  register: result
+
+- assert: *false
+
+- name: Configure Remote Logging
+  nxos_logging: &rlog
+    dest: server
+    remote_server: test-syslogserver.com
+    facility: auth
+    dest_level: 1
     state: present
     provider: "{{ connection }}"
   register: result
@@ -65,26 +183,25 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"logging logfile test 0" in result.commands'
+      - '"logging server test-syslogserver.com 1 facility auth" in result.commands'
 
-- name: Configure facility with level
-  nxos_logging:
-    facility: daemon
-    facility_level: 0
-    provider: "{{ connection }}"
+- name: Configure Remote Logging (idempotent)
+  nxos_logging: *rlog
   register: result
 
-- assert:
-    that:
-      - 'result.changed == true'
-      - '"logging level daemon 0" in result.commands'
+- assert: *false
 
 - name: remove logging as collection tearDown
-  nxos_logging:
+  nxos_logging: &agg
     aggregate:
-      - { dest: logfile, name: test, dest_level: 0, state: absent }
-      - { facility: daemon, facility_level: 0, state: absent }
+      - { dest: console, dest_level: 3 }
+      - { dest: module, dest_level: 2 }
+      - { dest: monitor, dest_level: 5 }
+      - { dest: logfile, dest_level: 1, name: test }
+      - { facility: daemon, facility_level: 4 }
+      - { dest: server, remote_server: test-syslogserver.com, facility: auth, dest_level: 1 }
     provider: "{{ connection }}"
+    state: absent
   register: result
 
 - assert:
@@ -92,5 +209,14 @@
       - 'result.changed == true'
       - '"no logging logfile" in result.commands'
       - '"no logging level daemon" in result.commands'
+      - '"no logging monitor" in result.commands'
+      - '"no logging module" in result.commands'
+      - '"no logging server test-syslogserver.com" in result.commands'
+
+- name: remove aggregate logging (idempotent)
+  nxos_logging: *agg
+  register: result
+
+- assert: *false
 
 - debug: msg="END connection={{ ansible_connection }} nxos_logging basic test"

@@ -50,7 +50,7 @@ Blocks also introduce the ability to handle errors in a way similar to exception
 
 
   tasks:
-  - name: Attempt and gracefull roll back demo
+  - name: Attempt and graceful roll back demo
     block:
       - debug:
           msg: 'I execute normally'
@@ -65,7 +65,7 @@ Blocks also introduce the ability to handle errors in a way similar to exception
           msg: 'I also never execute :-('
     always:
       - debug:
-          msg: "this always executes"
+          msg: "This always executes"
 
 The tasks in the ``block`` would execute normally, if there is any error the ``rescue`` section would get executed
 with whatever you need to do to recover from the previous error. The ``always`` section runs no matter what previous
@@ -81,7 +81,7 @@ Another example is how to run handlers after an error occurred :
 
 
   tasks:
-    - name: Attempt and gracefull roll back demo
+    - name: Attempt and graceful roll back demo
       block:
         - debug:
             msg: 'I execute normally'
@@ -93,7 +93,18 @@ Another example is how to run handlers after an error occurred :
   handlers:
      - name: run me even after an error
        debug:
-         msg: 'this handler runs even on error'
+         msg: 'This handler runs even on error'
+
+
+.. versionadded:: 2.1
+
+Ansible also provides a couple of variables for tasks in the ``rescue`` portion of a block:
+
+ansible_failed_task
+    The task that returned 'failed' and triggered the rescue. For example, to get the name use ``ansible_failed_task.name``.
+
+ansible_failed_result
+    The captured return result of the failed task that triggered the rescue. This would equate to having used this var in the ``register`` keyword.
 
 .. seealso::
 

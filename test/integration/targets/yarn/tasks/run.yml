@@ -5,14 +5,14 @@
 
 - name: 'Download Nodejs'
   unarchive:
-    src: 'https://nodejs.org/dist/v{{ nodejs_version }}/{{ nodejs_path }}.tar.gz'
+    src: 'https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/yarn/{{ nodejs_path }}.tar.gz'
     dest: '{{ output_dir }}'
     remote_src: yes
     creates: '{{ output_dir }}/{{ nodejs_path }}.tar.gz'
 
 - name: 'Download Yarn'
   unarchive:
-    src: 'https://yarnpkg.com/downloads/{{yarn_version}}/yarn-v{{yarn_version}}.tar.gz'
+    src: 'https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/yarn/yarn-v{{yarn_version}}.tar.gz'
     dest: '{{ output_dir }}'
     remote_src: yes
     creates: '{{ output_dir }}/yarn-v{{yarn_version}}_pkg.tar.gz'

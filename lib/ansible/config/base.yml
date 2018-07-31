@@ -151,7 +151,7 @@ ANY_ERRORS_FATAL:
   yaml: {key: errors.any_task_errors_fatal}
   version_added: "2.4"
 BECOME_ALLOW_SAME_USER:
-  name: Allow becomming the same user
+  name: Allow becoming the same user
   default: False
   description: This setting controls if become is skipped when remote user and become user are the same. I.E root sudo to root.
   env: [{name: ANSIBLE_BECOME_ALLOW_SAME_USER}]
@@ -211,6 +211,14 @@ COLOR_CHANGED:
   ini:
   - {key: changed, section: colors}
   yaml: {key: display.colors.changed}
+COLOR_CONSOLE_PROMPT:
+  name: "Color for ansible-console's prompt task status"
+  default: white
+  description: Defines the default color to use for ansible-console
+  env: [{name: ANSIBLE_COLOR_CONSOLE_PROMPT}]
+  ini:
+  - {key: console_prompt, section: colors}
+  version_added: "2.7"
 COLOR_DEBUG:
   name: Color for debug statements
   default: dark gray
@@ -303,7 +311,7 @@ ACTION_WARNINGS:
   name: Toggle action warnings
   default: True
   description:
-    - By default Ansible will issue a warning when recieved from a task action (module or action plugin)
+    - By default Ansible will issue a warning when received from a task action (module or action plugin)
     - These warnings can be silenced by adjusting this setting to False.
   env: [{name: ANSIBLE_ACTION_WARNINGS}]
   ini:
@@ -327,7 +335,7 @@ LOCALHOST_WARNING:
   description:
     - By default Ansible will issue a warning when there are no hosts in the
       inventory.
-    - These warnings can be silenced by adjusting this setting to False. 
+    - These warnings can be silenced by adjusting this setting to False.
   env: [{name: ANSIBLE_LOCALHOST_WARNING}]
   ini:
   - {key: localhost_warning, section: defaults}
@@ -412,7 +420,7 @@ DEFAULT_BECOME:
   - {key: become, section: privilege_escalation}
   type: boolean
 DEFAULT_BECOME_ASK_PASS:
-  name: Ask for the privelege escalation (become) password
+  name: Ask for the privilege escalation (become) password
   default: False
   description: Toggle to prompt for privilege escalation password.
   env: [{name: ANSIBLE_BECOME_ASK_PASS}]
@@ -508,7 +516,7 @@ DEFAULT_DEBUG:
   description:
     - "Toggles debug output in Ansible. This is *very* verbose and can hinder
       multiprocessing.  Debug output can also include secret information
-      despite no_log settings being enabled, which means debug mode should not be used in 
+      despite no_log settings being enabled, which means debug mode should not be used in
       production."
   env: [{name: ANSIBLE_DEBUG}]
   ini:
@@ -635,7 +643,7 @@ DEFAULT_HASH_BEHAVIOUR:
 DEFAULT_HOST_LIST:
   name: Inventory Source
   default: /etc/ansible/hosts
-  description: Colon separated list of Ansible inventory sources
+  description: Comma separated list of Ansible inventory sources
   env:
     - name: ANSIBLE_HOSTS
       deprecated:
@@ -655,6 +663,14 @@ DEFAULT_HOST_LIST:
       section: defaults
   type: pathlist
   yaml: {key: defaults.inventory}
+DEFAULT_HTTPAPI_PLUGIN_PATH:
+  name: HttpApi Plugins Path
+  default: ~/.ansible/plugins/httpapi:/usr/share/ansible/plugins/httpapi
+  description: Colon separated paths in which Ansible will search for HttpApi Plugins.
+  env: [{name: ANSIBLE_HTTPAPI_PLUGINS}]
+  ini:
+  - {key: httpapi_plugins, section: defaults}
+  type: pathspec
 DEFAULT_INTERNAL_POLL_INTERVAL:
   name: Internal poll interval
   default: 0.001
@@ -686,6 +702,16 @@ DEFAULT_JINJA2_EXTENSIONS:
   env: [{name: ANSIBLE_JINJA2_EXTENSIONS}]
   ini:
   - {key: jinja2_extensions, section: defaults}
+DEFAULT_JINJA2_NATIVE:
+  name: Use Jinja2's NativeEnvironment for templating
+  default: False
+  description: This option preserves variable types during template operations. This requires Jinja2 >= 2.10.
+  env: [{name: ANSIBLE_JINJA2_NATIVE}]
+  ini:
+  - {key: jinja2_native, section: defaults}
+  type: boolean
+  yaml: {key: jinja2_native}
+  version_added: 2.7
 DEFAULT_KEEP_REMOTE_FILES:
   name: Keep remote files
   default: False
@@ -728,7 +754,7 @@ DEFAULT_LOCAL_TMP:
   type: tmppath
 DEFAULT_LOG_PATH:
   name: Ansible log file path
-  default: ''
+  default: ~
   description: File to which Ansible will log on the controller. When empty logging is disabled.
   env: [{name: ANSIBLE_LOG_PATH}]
   ini:
@@ -770,7 +796,7 @@ DEFAULT_MODULE_ARGS:
 DEFAULT_MODULE_COMPRESSION:
   name: Python module compression
   default: ZIP_DEFLATED
-  description: Compression scheme to use when transfering Python modules to the target.
+  description: Compression scheme to use when transferring Python modules to the target.
   env: []
   ini:
   - {key: module_compression, section: defaults}
@@ -923,9 +949,9 @@ DEFAULT_SCP_IF_SSH:
   # TODO: move to ssh plugin
   default: smart
   description:
-    - "Prefered method to use when transfering files over ssh"
-    - When set to smart, Ansible will try them until one succeeds or they all fail
-    - If set to True, it will force 'scp', if False it will use 'sftp'
+    - "Preferred method to use when transferring files over ssh."
+    - When set to smart, Ansible will try them until one succeeds or they all fail.
+    - If set to True, it will force 'scp', if False it will use 'sftp'.
   env: [{name: ANSIBLE_SCP_IF_SSH}]
   ini:
   - {key: scp_if_ssh, section: ssh_connection}
@@ -951,22 +977,26 @@ DEFAULT_SFTP_BATCH_MODE:
   yaml: {key: ssh_connection.sftp_batch_mode}
 DEFAULT_SQUASH_ACTIONS:
   name: Squashable actions
-  default: apk, apt, dnf, homebrew, openbsd_pkg, pacman, pkgng, yum, zypper
+  default: apk, apt, dnf, homebrew, openbsd_pkg, pacman, pip, pkgng, yum, zypper
   description:
     - Ansible can optimise actions that call modules that support list parameters when using ``with_`` looping.
       Instead of calling the module once for each item, the module is called once with the full list.
-    - The default value for this setting is only for certain package managers, but it can be used for any module
+    - The default value for this setting is only for certain package managers, but it can be used for any module.
     - Currently, this is only supported for modules that have a name or pkg parameter, and only when the item is the only thing being passed to the parameter.
   env: [{name: ANSIBLE_SQUASH_ACTIONS}]
   ini:
   - {key: squash_actions, section: defaults}
   type: list
   version_added: "2.0"
+  deprecated:
+    why: Loop squashing is deprecated and this configuration will no longer be used
+    version: "2.11"
+    alternatives: a list directly with the module argument
 DEFAULT_SSH_TRANSFER_METHOD:
   # TODO: move to ssh plugin
   default:
   description: 'unused?'
-  #  - "Prefered method to use when transfering files over ssh"
+  #  - "Preferred method to use when transferring files over ssh"
   #  - Setting to smart will try them until one succeeds or they all fail
   #choices: ['sftp', 'scp', 'dd', 'smart']
   env: [{name: ANSIBLE_SSH_TRANSFER_METHOD}]
@@ -993,6 +1023,18 @@ ENABLE_TASK_DEBUGGER:
   ini:
     - {key: enable_task_debugger, section: defaults}
   version_added: "2.5"
+TASK_DEBUGGER_IGNORE_ERRORS:
+  name: Whether a failed task with ignore_errors=True will still invoke the debugger
+  default: True
+  description:
+    - This option defines whether the task debugger will be invoked on a failed task when ignore_errors=True
+      is specified.
+    - True specifies that the debugger will honor ignore_errors, False will not honor ignore_errors.
+  type: boolean
+  env: [{name: ANSIBLE_TASK_DEBUGGER_IGNORE_ERRORS}]
+  ini:
+    - {key: task_debugger_ignore_errors, section: defaults}
+  version_added: "2.7"
 DEFAULT_STRATEGY:
   name: Implied strategy
   default: 'linear'
@@ -1261,7 +1303,7 @@ DISPLAY_ARGS_TO_STDOUT:
       you do not want those to be printed."
     - "If you set this to True you should be sure that you have secured your environment's stdout
       (no one can shoulder surf your screen and you aren't saving stdout to an insecure file) or
-      made sure that all of your playbooks explicitly added the ``no_log: True`` parameter to tasks which have sensistive values
+      made sure that all of your playbooks explicitly added the ``no_log: True`` parameter to tasks which have sensitive values
       See How do I keep secret data in my playbook? for more information."
   env: [{name: ANSIBLE_DISPLAY_ARGS_TO_STDOUT}]
   ini:
@@ -1341,6 +1383,29 @@ HOST_KEY_CHECKING:
   ini:
   - {key: host_key_checking, section: defaults}
   type: boolean
+INVALID_TASK_ATTRIBUTE_FAILED:
+  name: Controls whether invalid attributes for a task result in errors instead of warnings
+  default: false
+  description: If 'true', invalid attributes for a task will result in errors instead of warnings
+  type: boolean
+  env:
+    - name: ANSIBLE_INVALID_TASK_ATTRIBUTE_FAILED
+  ini:
+    - key: invalid_task_attribute_failed
+      section: defaults
+  version_added: "2.7"
+INVENTORY_ANY_UNPARSED_IS_FAILED:
+  name: Controls whether any unparseable inventory source is a fatal error
+  default: False
+  description: >
+    If 'true', it is a fatal error when any given inventory source
+    cannot be successfully parsed by any available inventory plugin;
+    otherwise, this situation only attracts a warning.
+  type: boolean
+  env: [{name: ANSIBLE_INVENTORY_ANY_UNPARSED_IS_FAILED}]
+  ini:
+    - {key: any_unparsed_is_failed, section: inventory}
+  version_added: "2.7"
 INVENTORY_ENABLED:
   name: Active Inventory plugins
   default: ['host_list', 'script', 'yaml', 'ini', 'auto']
@@ -1378,13 +1443,16 @@ INVENTORY_IGNORE_PATTERNS:
 INVENTORY_UNPARSED_IS_FAILED:
   name: Unparsed Inventory failure
   default: False
-  description: If 'true' unparsed inventory sources become fatal errors, they are warnings otherwise.
+  description: >
+    If 'true' it is a fatal error if every single potential inventory
+    source fails to parse, otherwise this situation will only attract a
+    warning.
   env: [{name: ANSIBLE_INVENTORY_UNPARSED_FAILED}]
   ini:
   - {key: unparsed_is_failed, section: inventory}
   type: bool
 MAX_FILE_SIZE_FOR_DIFF:
-  name: Diff maxiumum file size
+  name: Diff maximum file size
   default: 104448
   description: Maximum size of files to be considered for diff display
   env: [{name: ANSIBLE_MAX_DIFF_SIZE}]
@@ -1457,7 +1525,7 @@ PERSISTENT_CONNECT_TIMEOUT:
 PERSISTENT_CONNECT_RETRY_TIMEOUT:
   name: Persistence connection retry timeout
   default: 15
-  description: This contorls the retry timeout for presistent connection to connect to the local domain socket.
+  description: This controls the retry timeout for presistent connection to connect to the local domain socket.
   env: [{name: ANSIBLE_PERSISTENT_CONNECT_RETRY_TIMEOUT}]
   ini:
   - {key: connect_retry_timeout, section: persistent_connection}
@@ -1583,4 +1651,13 @@ YAML_FILENAME_EXTENSIONS:
     - section: defaults
       key: yaml_valid_extensions
   type: list
+NETCONF_SSH_CONFIG:
+  description: This variable is used to enable bastion/jump host with netconf connection. If set to True the bastion/jump
+               host ssh settings should be present in ~/.ssh/config file, alternatively it can be set
+               to custom ssh configuration file path to read the bastion/jump host settings.
+  env: [{name: ANSIBLE_NETCONF_SSH_CONFIG}]
+  ini:
+  - {key: ssh_config, section: netconf_connection}
+  yaml: {key: netconf_connection.ssh_config}
+  default: null
 ...

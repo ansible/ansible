@@ -14,7 +14,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# along with Ansible.  If not, see <https://www.gnu.org/licenses/>.
 
 - name: set role facts
   set_fact:
@@ -130,7 +130,7 @@
 
 - name: test redirect without follow_redirects
   uri:
-    url: 'http://{{ httpbin_host }}/redirect/2'
+    url: 'https://{{ httpbin_host }}/redirect/2'
     follow_redirects: 'none'
     status_code: 302
   register: result
@@ -138,7 +138,7 @@
 - name: Assert location header
   assert:
     that:
-      - 'result.location|default("") == "http://{{ httpbin_host }}/relative-redirect/1"'
+      - 'result.location|default("") == "https://{{ httpbin_host }}/relative-redirect/1"'
 
 - name: Check SSL with redirect
   uri:
@@ -164,20 +164,20 @@
 
 - name: test basic auth
   uri:
-    url: 'http://{{ httpbin_host }}/basic-auth/user/passwd'
+    url: 'https://{{ httpbin_host }}/basic-auth/user/passwd'
     user: user
     password: passwd
 
 - name: test basic forced auth
   uri:
-    url: 'http://{{ httpbin_host }}/hidden-basic-auth/user/passwd'
+    url: 'https://{{ httpbin_host }}/hidden-basic-auth/user/passwd'
     force_basic_auth: true
     user: user
     password: passwd
 
 - name: test digest auth
   uri:
-    url: 'http://{{ httpbin_host }}/digest-auth/auth/user/passwd'
+    url: 'https://{{ httpbin_host }}/digest-auth/auth/user/passwd'
     user: user
     password: passwd
     headers:
@@ -185,13 +185,13 @@
 
 - name: test PUT
   uri:
-    url: 'http://{{ httpbin_host }}/put'
+    url: 'https://{{ httpbin_host }}/put'
     method: PUT
     body: 'foo=bar'
 
 - name: test OPTIONS
   uri:
-    url: 'http://{{ httpbin_host }}/'
+    url: 'https://{{ httpbin_host }}/'
     method: OPTIONS
   register: result
 
@@ -334,6 +334,62 @@
   register: result
   failed_when: result.json.headers['Content-Type'] != 'text/json'
 
+- name: Validate body_format form-urlencoded using dicts works
+  uri:
+    url: https://{{ httpbin_host }}/post
+    method: POST
+    body:
+      user: foo
+      password: bar!#@ |&82$M
+      submit: Sign in
+    body_format: form-urlencoded
+    return_content: yes
+  register: result
+
+- name: Assert form-urlencoded dict input
+  assert:
+    that:
+    - result is successful
+    - result.json.headers['Content-Type'] == 'application/x-www-form-urlencoded'
+    - result.json.form.password == 'bar!#@ |&82$M'
+
+- name: Validate body_format form-urlencoded using lists works
+  uri:
+    url: https://{{ httpbin_host }}/post
+    method: POST
+    body:
+      - [ user, foo ]
+      - [ password, bar!#@ |&82$M ]
+      - [ submit, Sign in ]
+    body_format: form-urlencoded
+    return_content: yes
+  register: result
+
+- name: Assert form-urlencoded list input
+  assert:
+    that:
+    - result is successful
+    - result.json.headers['Content-Type'] == 'application/x-www-form-urlencoded'
+    - result.json.form.password == 'bar!#@ |&82$M'
+
+- name: Validate body_format form-urlencoded of invalid input fails
+  uri:
+    url: https://{{ httpbin_host }}/post
+    method: POST
+    body:
+    - foo
+    - bar: baz
+    body_format: form-urlencoded
+    return_content: yes
+  register: result
+  ignore_errors: yes
+
+- name: Assert invalid input fails
+  assert:
+    that:
+    - result is failure
+    - "'failed to parse body as form_urlencoded: too many values to unpack' in result.msg"
+
 - name: Test client cert auth, no certs
   uri:
     url: "https://ansible.http.tests/ssl_client_verify"
@@ -399,6 +455,35 @@
     url: "https://{{ httpbin_host }}:443/basic-auth/user/passwd"
   environment:
     NETRC: "{{ output_dir|expanduser }}/netrc"
+
+- name: Test JSON POST with src
+  uri:
+    url: "https://{{ httpbin_host}}/post"
+    src: pass0.json
+    method: POST
+    return_content: true
+    body_format: json
+  register: result
+
+- name: Validate POST with src works
+  assert:
+    that:
+      - result.json.json[0] == 'JSON Test Pattern pass1'
+
+- name: Test JSON POST with src and remote_src=True
+  uri:
+    url: "https://{{ httpbin_host}}/post"
+    src: "{{ role_path }}/files/pass0.json"
+    remote_src: true
+    method: POST
+    return_content: true
+    body_format: json
+  register: result
+
+- name: Validate POST with src  and remote_src=True works
+  assert:
+    that:
+      - result.json.json[0] == 'JSON Test Pattern pass1'
 
 - name: Test follow_redirects=none
   include_tasks: redirect-none.yml

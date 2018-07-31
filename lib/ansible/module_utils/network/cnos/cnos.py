@@ -35,136 +35,275 @@ import time
 import socket
 import re
 try:
-    import cnos_errorcodes
-    import cnos_devicerules
+    from ansible.module_utils.network.cnos import cnos_errorcodes
+    from ansible.module_utils.network.cnos import cnos_devicerules
     HAS_LIB = True
 except:
     HAS_LIB = False
 from distutils.cmd import Command
+from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import env_fallback, return_values
+from ansible.module_utils.network.common.utils import to_list, EntityCollection
+from ansible.module_utils.connection import Connection, exec_command
+from ansible.module_utils.connection import ConnectionError
+
+_DEVICE_CONFIGS = {}
+_CONNECTION = None
+
+cnos_provider_spec = {
+    'host': dict(),
+    'port': dict(type='int'),
+    'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
+    'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']),
+                     no_log=True),
+    'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']),
+                        type='path'),
+    'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']),
+                      type='bool'),
+    'auth_pass': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS']),
+                      no_log=True),
+    'timeout': dict(type='int'),
+    'context': dict(),
+    'passwords': dict()
+}
+
+cnos_argument_spec = {
+    'provider': dict(type='dict', options=cnos_provider_spec),
+}
+
+command_spec = {
+    'command': dict(key=True),
+    'prompt': dict(),
+    'answer': dict()
+}
 
 
-def interfaceConfig(
-    obj, deviceType, prompt, timeout, interfaceArg1,
-        interfaceArg2, interfaceArg3, interfaceArg4, interfaceArg5,
-        interfaceArg6, interfaceArg7, interfaceArg8, interfaceArg9):
+def get_provider_argspec():
+    return cnos_provider_spec
+
+
+def check_args(module, warnings):
+    pass
+
+
+def get_connection(module):
+    global _CONNECTION
+    if _CONNECTION:
+        return _CONNECTION
+    _CONNECTION = Connection(module._socket_path)
+
+    context = None
+    try:
+        context = module.params['context']
+    except KeyError:
+        context = None
+
+    if context:
+        if context == 'system':
+            command = 'changeto system'
+        else:
+            command = 'changeto context %s' % context
+        _CONNECTION.get(command)
+
+    return _CONNECTION
+
+
+def get_config(module, flags=None):
+    flags = [] if flags is None else flags
+
+    passwords = None
+    try:
+        passwords = module.params['passwords']
+    except KeyError:
+        passwords = None
+    if passwords:
+        cmd = 'more system:running-config'
+    else:
+        cmd = 'display running-config '
+        cmd += ' '.join(flags)
+        cmd = cmd.strip()
+
+    try:
+        return _DEVICE_CONFIGS[cmd]
+    except KeyError:
+        conn = get_connection(module)
+        out = conn.get(cmd)
+        cfg = to_text(out, errors='surrogate_then_replace').strip()
+        _DEVICE_CONFIGS[cmd] = cfg
+        return cfg
+
+
+def to_commands(module, commands):
+    if not isinstance(commands, list):
+        raise AssertionError('argument must be of type <list>')
+
+    transform = EntityCollection(module, command_spec)
+    commands = transform(commands)
+
+    for index, item in enumerate(commands):
+        if module.check_mode and not item['command'].startswith('show'):
+            module.warn('only show commands are supported when using check '
+                        'mode, not executing `%s`' % item['command'])
+
+    return commands
+
+
+def run_commands(module, commands, check_rc=True):
+    connection = get_connection(module)
+    connection.get('enable')
+    commands = to_commands(module, to_list(commands))
+
+    responses = list()
+
+    for cmd in commands:
+        out = connection.get(**cmd)
+        responses.append(to_text(out, errors='surrogate_then_replace'))
+
+    return responses
+
+
+def run_cnos_commands(module, commands, check_rc=True):
+    retVal = ''
+    enter_config = {'command': 'configure terminal', 'prompt': None,
+                    'answer': None}
+    exit_config = {'command': 'end', 'prompt': None, 'answer': None}
+    commands.insert(0, enter_config)
+    commands.append(exit_config)
+    for cmd in commands:
+        retVal = retVal + '>> ' + cmd['command'] + '\n'
+    try:
+        responses = run_commands(module, commands, check_rc)
+        for response in responses:
+            retVal = retVal + '<< ' + response + '\n'
+    except Exception as e:
+        errMsg = ''
+        if hasattr(e, 'message'):
+            errMsg = e.message
+        else:
+            errMsg = str(e)
+        # Exception in Exceptions
+        if 'VLAN_ACCESS_MAP' in errMsg:
+            return retVal + '<<' + errMsg + '\n'
+        # Add more here if required
+        retVal = retVal + '<< ' + 'Error-101 ' + errMsg + '\n'
+    return str(retVal)
+
+
+def load_config(module, config):
+    try:
+        conn = get_connection(module)
+        conn.get('enable')
+        conn.edit_config(config)
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc))
+
+
+def get_defaults_flag(module):
+    rc, out, err = exec_command(module, 'display running-config ?')
+    out = to_text(out, errors='surrogate_then_replace')
+
+    commands = set()
+    for line in out.splitlines():
+        if line:
+            commands.add(line.strip().split()[0])
+
+    if 'all' in commands:
+        return 'all'
+    else:
+        return 'full'
+
+
+def interfaceConfig(module, prompt, functionality, answer):
     retVal = ""
     command = "interface "
     newPrompt = prompt
-    if(interfaceArg1 == "port-aggregation"):
-        command = command + " " + interfaceArg1 + " " + interfaceArg2 + "\n"
+    interfaceArg1 = functionality
+    interfaceArg2 = module.params['interfaceRange']
+    interfaceArg3 = module.params['interfaceArg1']
+    interfaceArg4 = module.params['interfaceArg2']
+    interfaceArg5 = module.params['interfaceArg3']
+    interfaceArg6 = module.params['interfaceArg4']
+    interfaceArg7 = module.params['interfaceArg5']
+    interfaceArg8 = module.params['interfaceArg6']
+    interfaceArg9 = module.params['interfaceArg7']
+    deviceType = module.params['deviceType']
+
+    if(interfaceArg1 == "port-channel"):
+        command = command + " " + interfaceArg1 + " " + interfaceArg2
         # debugOutput(command)
         value = checkSanityofVariable(
             deviceType, "portchannel_interface_value", interfaceArg2)
         if(value == "ok"):
-            newPrompt = "(config-if)#"
-            retVal = retVal + \
-                waitForDeviceResponse(command, newPrompt, timeout, obj)
+            cmd = [{'command': command, 'prompt': None, 'answer': None}]
         else:
             value = checkSanityofVariable(
                 deviceType, "portchannel_interface_range", interfaceArg2)
             if(value == "ok"):
-                newPrompt = "(config-if-range)#"
-                retVal = retVal + \
-                    waitForDeviceResponse(command, newPrompt, timeout, obj)
+                cmd = [{'command': command, 'prompt': None, 'answer': None}]
             else:
                 value = checkSanityofVariable(
                     deviceType, "portchannel_interface_string", interfaceArg2)
                 if(value == "ok"):
-                    newPrompt = "(config-if-range)#"
-                    if '/' in interfaceArg2:
-                        newPrompt = "(config-if)#"
-                    retVal = retVal + \
-                        waitForDeviceResponse(command, newPrompt, timeout, obj)
+                    cmd = [{'command': command, 'prompt': None,
+                            'answer': None}]
                 else:
                     retVal = "Error-102"
                     return retVal
-
-        retVal = retVal + interfaceLevel2Config(
-            obj, deviceType, newPrompt, timeout, interfaceArg3, interfaceArg4,
-            interfaceArg5, interfaceArg6, interfaceArg7, interfaceArg8,
-            interfaceArg9)
+        retVal = retVal + interfaceLevel2Config(module, cmd, prompt, answer)
     elif(interfaceArg1 == "ethernet"):
-        # command = command + interfaceArg1 + " 1/"
         value = checkSanityofVariable(
             deviceType, "ethernet_interface_value", interfaceArg2)
         if(value == "ok"):
-            newPrompt = "(config-if)#"
-            command = command + interfaceArg1 + " 1/" + interfaceArg2 + " \n"
-            retVal = retVal + \
-                waitForDeviceResponse(command, newPrompt, timeout, obj)
+            command = command + interfaceArg1 + " 1/" + interfaceArg2
+            cmd = [{'command': command, 'prompt': None, 'answer': None}]
         else:
             value = checkSanityofVariable(
                 deviceType, "ethernet_interface_range", interfaceArg2)
             if(value == "ok"):
-                command = command + \
-                    interfaceArg1 + " 1/" + interfaceArg2 + " \n"
-                newPrompt = "(config-if-range)#"
-                retVal = retVal + \
-                    waitForDeviceResponse(command, newPrompt, timeout, obj)
+                command = command + interfaceArg1 + " 1/" + interfaceArg2
+                cmd = [{'command': command, 'prompt': None, 'answer': None}]
             else:
                 value = checkSanityofVariable(
                     deviceType, "ethernet_interface_string", interfaceArg2)
                 if(value == "ok"):
-                    command = command + \
-                        interfaceArg1 + " " + interfaceArg2 + "\n"
-                    newPrompt = "(config-if-range)#"
-                    if '/' in interfaceArg2:
-                        newPrompt = "(config-if)#"
-                    retVal = retVal + \
-                        waitForDeviceResponse(command, newPrompt, timeout, obj)
+                    command = command + interfaceArg1 + " " + interfaceArg2
+                    cmd = [{'command': command, 'prompt': None,
+                            'answer': None}]
                 else:
                     retVal = "Error-102"
                     return retVal
 
-        retVal = retVal + interfaceLevel2Config(
-            obj, deviceType, newPrompt, timeout, interfaceArg3, interfaceArg4,
-            interfaceArg5, interfaceArg6, interfaceArg7, interfaceArg8,
-            interfaceArg9)
+        retVal = retVal + interfaceLevel2Config(module, cmd, prompt, answer)
     elif(interfaceArg1 == "loopback"):
         value = checkSanityofVariable(
             deviceType, "loopback_interface_value", interfaceArg2)
         if(value == "ok"):
-            newPrompt = "(config-if)#"
-            command = command + interfaceArg1 + " " + interfaceArg2 + "\n"
-            retVal = retVal + \
-                waitForDeviceResponse(command, newPrompt, timeout, obj)
+            command = command + interfaceArg1 + " " + interfaceArg2
+            cmd = [{'command': command, 'prompt': None, 'answer': None}]
         else:
             retVal = "Error-102"
             return retVal
-        retVal = retVal + interfaceLevel2Config(
-            obj, deviceType, newPrompt, timeout, interfaceArg3, interfaceArg4,
-            interfaceArg5, interfaceArg6, interfaceArg7, interfaceArg8,
-            interfaceArg9)
+        retVal = retVal + interfaceLevel2Config(module, cmd, prompt, answer)
     elif(interfaceArg1 == "mgmt"):
         value = checkSanityofVariable(
             deviceType, "mgmt_interface_value", interfaceArg2)
         if(value == "ok"):
-            newPrompt = "(config-if)#"
-            command = command + interfaceArg1 + " " + interfaceArg2 + "\n"
-            retVal = retVal + \
-                waitForDeviceResponse(command, newPrompt, timeout, obj)
+            command = command + interfaceArg1 + " " + interfaceArg2
+            cmd = [{'command': command, 'prompt': None, 'answer': None}]
         else:
             retVal = "Error-102"
             return retVal
-        retVal = retVal + interfaceLevel2Config(
-            obj, deviceType, newPrompt, timeout, interfaceArg3, interfaceArg4,
-            interfaceArg5, interfaceArg6, interfaceArg7, interfaceArg8,
-            interfaceArg9)
+        retVal = retVal + interfaceLevel2Config(module, cmd, prompt, answer)
     elif(interfaceArg1 == "vlan"):
         value = checkSanityofVariable(
             deviceType, "vlan_interface_value", interfaceArg2)
         if(value == "ok"):
-            newPrompt = "(config-if)#"
-            command = command + interfaceArg1 + " " + interfaceArg2 + "\n"
-            retVal = retVal + \
-                waitForDeviceResponse(command, newPrompt, timeout, obj)
+            command = command + interfaceArg1 + " " + interfaceArg2
+            cmd = [{'command': command, 'prompt': None, 'answer': None}]
         else:
             retVal = "Error-102"
             return retVal
-        retVal = retVal + interfaceLevel2Config(
-            obj, deviceType, newPrompt, timeout, interfaceArg3, interfaceArg4,
-            interfaceArg5, interfaceArg6, interfaceArg7, interfaceArg8,
-            interfaceArg9)
+        retVal = retVal + interfaceLevel2Config(module, cmd, prompt, answer)
     else:
         retVal = "Error-102"
 
@@ -172,14 +311,20 @@ def interfaceConfig(
 # EOM
 
 
-def interfaceLevel2Config(
-    obj, deviceType, prompt, timeout, interfaceL2Arg1, interfaceL2Arg2,
-    interfaceL2Arg3, interfaceL2Arg4, interfaceL2Arg5, interfaceL2Arg6,
-        interfaceL2Arg7):
+def interfaceLevel2Config(module, cmd, prompt, answer):
     retVal = ""
     command = ""
-    if(interfaceL2Arg1 == "aggregation-group"):
-        # debugOutput("aggregation-group")
+    interfaceL2Arg1 = module.params['interfaceArg1']
+    interfaceL2Arg2 = module.params['interfaceArg2']
+    interfaceL2Arg3 = module.params['interfaceArg3']
+    interfaceL2Arg4 = module.params['interfaceArg4']
+    interfaceL2Arg5 = module.params['interfaceArg5']
+    interfaceL2Arg6 = module.params['interfaceArg6']
+    interfaceL2Arg7 = module.params['interfaceArg7']
+    deviceType = module.params['deviceType']
+
+    if(interfaceL2Arg1 == "channel-group"):
+        # debugOutput("channel-group")
         command = interfaceL2Arg1 + " "
         value = checkSanityofVariable(
             deviceType, "aggregation_group_no", interfaceL2Arg2)
@@ -414,8 +559,8 @@ def interfaceLevel2Config(
             retVal = "Error-205"
             return retVal
 
-    elif (interfaceL2Arg1 == "bridge-port"):
-        # debugOutput("bridge-port")
+    elif (interfaceL2Arg1 == "switchport"):
+        # debugOutput("switchport")
         command = interfaceL2Arg1 + " "
         if(interfaceL2Arg2 is None):
             command = command.strip()
@@ -1166,26 +1311,27 @@ def interfaceLevel2Config(
         retVal = "Error-233"
         return retVal
 
-    command = command + "\n"
     # debugOutput(command)
-    retVal = retVal + waitForDeviceResponse(command, prompt, timeout, obj)
+    inner_cmd = [{'command': command, 'prompt': None, 'answer': None}]
+    cmd.extend(inner_cmd)
+    retVal = retVal + str(run_cnos_commands(module, cmd))
     # Come back to config mode
     if((prompt == "(config-if)#") or (prompt == "(config-if-range)#")):
-        command = "exit \n"
+        command = "exit"
         # debugOutput(command)
-        retVal = retVal + \
-            waitForDeviceResponse(command, "(config)#", timeout, obj)
-
+        cmd = [{'command': command, 'prompt': None, 'answer': None}]
+        # retVal = retVal + str(run_cnos_commands(module, cmd))
     return retVal
 # EOM
 
 
-def portChannelConfig(
-        obj, deviceType, prompt, timeout, portChArg1, portChArg2, portChArg3,
-        portChArg4, portChArg5, portChArg6, portChArg7):
-    retVal = ""
-    command = ""
-    if(portChArg1 == "port-aggregation" and prompt == "(config)#"):
+def portChannelConfig(module, prompt, answer):
+    retVal = ''
+    command = ''
+    portChArg1 = module.params['interfaceArg1']
+    portChArg2 = module.params['interfaceArg2']
+    portChArg3 = module.params['interfaceArg3']
+    if(portChArg1 == "port-channel" and prompt == "(config)#"):
         command = command + portChArg1 + " load-balance ethernet "
         if(portChArg2 == "destination-ip" or
            portChArg2 == "destination-mac" or
@@ -1204,13 +1350,14 @@ def portChannelConfig(
                 command = command + ""
             elif(portChArg3 == "source-interface"):
                 command = command + portChArg3
+                cmd = [{'command': command, 'prompt': None, 'answer': None}]
+                retVal = retVal + str(run_cnos_commands(module, cmd))
             else:
                 retVal = "Error-231"
                 return retVal
         else:
             retVal = "Error-232"
             return retVal
-
 # EOM
 
 
@@ -2044,29 +2191,29 @@ def bgpConfig(
 # EOM
 
 
-def vlanConfig(
-    obj, deviceType, prompt, timeout, vlanArg1, vlanArg2, vlanArg3,
-        vlanArg4, vlanArg5):
+def vlanConfig(module, prompt, answer):
 
-    retVal = ""
+    retVal = ''
     # Wait time to get response from server
-    timeout = timeout
+    vlanArg1 = module.params['vlanArg1']
+    vlanArg2 = module.params['vlanArg2']
+    vlanArg3 = module.params['vlanArg3']
+    vlanArg4 = module.params['vlanArg4']
+    vlanArg5 = module.params['vlanArg5']
+    deviceType = module.params['deviceType']
     # vlan config command happens here.
-    command = "vlan "
+    command = 'vlan '
 
     if(vlanArg1 == "access-map"):
         # debugOutput("access-map ")
-        command = command + vlanArg1 + " "
+        command = command + vlanArg1 + ' '
         value = checkSanityofVariable(
             deviceType, "vlan_access_map_name", vlanArg2)
         if(value == "ok"):
-            command = command + vlanArg2 + " \n"
+            command = command + vlanArg2
             # debugOutput(command)
-            retVal = waitForDeviceResponse(
-                command, "(config-access-map)#", timeout, obj)
-            retVal = retVal + vlanAccessMapConfig(
-                obj, deviceType, "(config-access-map)#", timeout, vlanArg3,
-                vlanArg4, vlanArg5)
+            cmd = [{'command': command, 'prompt': None, 'answer': None}]
+            retVal = retVal + vlanAccessMapConfig(module, cmd)
             return retVal
         else:
             retVal = "Error-130"
@@ -2101,7 +2248,7 @@ def vlanConfig(
                     if(value == "ok"):
                         command = command + vlanArg3
                     else:
-                        retVal = "ERROR-133"
+                        retVal = "Error-133"
                     return retVal
             else:
                 retVal = "Error-132"
@@ -2110,37 +2257,34 @@ def vlanConfig(
     else:
         value = checkSanityofVariable(deviceType, "vlan_id", vlanArg1)
         if(value == "ok"):
-            retVal = createVlan(obj, deviceType, "(config-vlan)#",
-                                timeout, vlanArg1, vlanArg2, vlanArg3,
-                                vlanArg4, vlanArg5)
+            retVal = createVlan(module, '(config-vlan)#', None)
             return retVal
         else:
             value = checkSanityofVariable(
                 deviceType, "vlan_id_range", vlanArg1)
             if(value == "ok"):
-                retVal = createVlan(obj, deviceType, "(config-vlan)#",
-                                    timeout, vlanArg1, vlanArg2, vlanArg3,
-                                    vlanArg4, vlanArg5)
+                retVal = createVlan(module, '(config-vlan)#', None)
                 return retVal
             retVal = "Error-133"
             return retVal
 
     # debugOutput(command)
-    command = command + "\n"
-    # debugOutput(command)
-    retVal = retVal + waitForDeviceResponse(command, prompt, timeout, obj)
+    cmd = [{'command': command, 'prompt': None, 'answer': None}]
+    retVal = retVal + str(run_cnos_commands(module, cmd))
     return retVal
 # EOM
 
 
-def vlanAccessMapConfig(
-        obj, deviceType, prompt, timeout, vlanArg3, vlanArg4, vlanArg5):
-    retVal = ""
+def vlanAccessMapConfig(module, cmd):
+    retVal = ''
     # Wait time to get response from server
-    timeout = timeout
-    command = ""
+    command = ''
+    vlanArg3 = module.params['vlanArg3']
+    vlanArg4 = module.params['vlanArg4']
+    vlanArg5 = module.params['vlanArg5']
+    deviceType = module.params['deviceType']
     if(vlanArg3 == "action"):
-        command = command + vlanArg3 + " "
+        command = command + vlanArg3 + ' '
         value = checkSanityofVariable(
             deviceType, "vlan_accessmap_action", vlanArg4)
         if(value == "ok"):
@@ -2149,9 +2293,9 @@ def vlanAccessMapConfig(
             retVal = "Error-135"
             return retVal
     elif(vlanArg3 == "match"):
-        command = command + vlanArg3 + " "
+        command = command + vlanArg3 + ' '
         if(vlanArg4 == "ip" or vlanArg4 == "mac"):
-            command = command + vlanArg4 + " address "
+            command = command + vlanArg4 + ' address '
             value = checkSanityofVariable(
                 deviceType, "vlan_access_map_name", vlanArg5)
             if(value == "ok"):
@@ -2168,18 +2312,24 @@ def vlanAccessMapConfig(
         retVal = "Error-138"
         return retVal
 
-    command = command + "\n"
+    inner_cmd = [{'command': command, 'prompt': None, 'answer': None}]
+    cmd.extend(inner_cmd)
+    retVal = retVal + str(run_cnos_commands(module, cmd))
     # debugOutput(command)
-    retVal = retVal + waitForDeviceResponse(command, prompt, timeout, obj)
     return retVal
 # EOM
 
 
-def checkVlanNameNotAssigned(
-        obj, deviceType, prompt, timeout, vlanId, vlanName):
+def checkVlanNameNotAssigned(module, prompt, answer):
     retVal = "ok"
-    command = "display vlan id " + vlanId + " \n"
-    retVal = waitForDeviceResponse(command, prompt, timeout, obj)
+    vlanId = module.params['vlanArg1']
+    vlanName = module.params['vlanArg3']
+    command = "show vlan id " + vlanId
+    cmd = [{'command': command, 'prompt': None, 'answer': None}]
+    retVal = str(run_cnos_commands(module, cmd))
+    if(retVal.find('Error') != -1):
+        command = "display vlan id " + vlanId
+        retVal = str(run_cnos_commands(module, cmd))
     if(retVal.find(vlanName) != -1):
         return "Nok"
     else:
@@ -2188,25 +2338,30 @@ def checkVlanNameNotAssigned(
 
 
 # Utility Method to create vlan
-def createVlan(
-        obj, deviceType, prompt, timeout, vlanArg1, vlanArg2, vlanArg3,
-        vlanArg4, vlanArg5):
+def createVlan(module, prompt, answer):
 
     # vlan config command happens here. It creates if not present
-    command = "vlan " + vlanArg1 + "\n"
+    vlanArg1 = module.params['vlanArg1']
+    vlanArg2 = module.params['vlanArg2']
+    vlanArg3 = module.params['vlanArg3']
+    vlanArg4 = module.params['vlanArg4']
+    vlanArg5 = module.params['vlanArg5']
+    deviceType = module.params['deviceType']
+    retVal = ''
+    command = 'vlan ' + vlanArg1
     # debugOutput(command)
-    retVal = waitForDeviceResponse(command, prompt, timeout, obj)
+    cmd = [{'command': command, 'prompt': None, 'answer': None}]
     command = ""
     if(vlanArg2 == "name"):
         # debugOutput("name")
         command = vlanArg2 + " "
         value = checkSanityofVariable(deviceType, "vlan_name", vlanArg3)
         if(value == "ok"):
-            value = checkVlanNameNotAssigned(obj, deviceType, prompt, timeout,
-                                             vlanArg1, vlanArg3)
+            value = checkVlanNameNotAssigned(module, prompt, answer)
             if(value == "ok"):
                 command = command + vlanArg3
             else:
+                retVal = retVal + 'VLAN Name is already assigned \n'
                 command = "\n"
         else:
             retVal = "Error-139"
@@ -2327,13 +2482,6 @@ def createVlan(
                 retVal = "Error-149"
                 return retVal
         elif (vlanArg3 == "static-group"):
-            # debugOutput("static-group")
-            # command = command + vlanArg3 + " "
-            # value = checkSanityofVariable(deviceType, variableId, vlanArg4)
-            # if(value == "ok"):
-            #    command = command + vlanArg4
-
-            # else :
             retVal = "Error-102"
             return retVal
         elif (vlanArg3 == "version"):
@@ -2376,28 +2524,25 @@ def createVlan(
     else:
         retVal = "Error-154"
         return retVal
-    command = command + "\n"
+    inner_cmd = [{'command': command, 'prompt': None, 'answer': None}]
+    cmd.extend(inner_cmd)
+    retVal = retVal + str(run_cnos_commands(module, cmd))
     # debugOutput(command)
-    retVal = retVal + "\n" + \
-        waitForDeviceResponse(command, prompt, timeout, obj)
-    # Come back to config mode
-    command = "exit \n"
-    # debugOutput(command)
-    retVal = retVal + waitForDeviceResponse(command, "(config)#", timeout, obj)
-
     return retVal
 # EOM
 
 
-def vlagConfig(
-        obj, deviceType, prompt, timeout, vlagArg1, vlagArg2, vlagArg3,
-        vlagArg4):
+def vlagConfig(module, prompt, answer):
 
-    retVal = ""
-    # Wait time to get response from server
-    timeout = timeout
+    retVal = ''
     # vlag config command happens here.
-    command = "vlag "
+    command = 'vlag '
+
+    vlagArg1 = module.params['vlagArg1']
+    vlagArg2 = module.params['vlagArg2']
+    vlagArg3 = module.params['vlagArg3']
+    vlagArg4 = module.params['vlagArg4']
+    deviceType = module.params['deviceType']
 
     if(vlagArg1 == "enable"):
         # debugOutput("enable")
@@ -2427,7 +2572,7 @@ def vlagConfig(
 
     elif(vlagArg1 == "isl"):
         # debugOutput("isl")
-        command = command + vlagArg1 + " port-aggregation "
+        command = command + vlagArg1 + " port-channel "
         value = checkSanityofVariable(
             deviceType, "vlag_port_aggregation", vlagArg2)
         if(value == "ok"):
@@ -2486,7 +2631,7 @@ def vlagConfig(
         if(value == "ok"):
             command = command + vlagArg2
             if(vlagArg3 is not None):
-                command = command + " port-aggregation "
+                command = command + " port-channel "
                 value = checkSanityofVariable(
                     deviceType, "vlag_port_aggregation", vlagArg3)
                 if(value == "ok"):
@@ -2553,10 +2698,8 @@ def vlagConfig(
         return retVal
 
     # debugOutput(command)
-    command = command + "\n"
-    # debugOutput(command)
-    retVal = retVal + waitForDeviceResponse(command, "(config)#", timeout, obj)
-
+    cmd = [{'command': command, 'prompt': None, 'answer': None}]
+    retVal = retVal + str(run_cnos_commands(module, cmd))
     return retVal
 # EOM
 
@@ -2628,7 +2771,7 @@ def doSecureStartupConfigBackUp(
         username + "@" + server + "/" + confPath + " vrf management\n"
     # debugOutput(command)
     response = waitForDeviceResponse(command, "(yes/no)", 3, obj)
-    if(response.lower().find("error-101")):
+    if(response.lower().find('error-101')):
         command = password + "\n"
         retVal = retVal + waitForDeviceResponse(command, "#", timeout, obj)
         return retVal
@@ -2731,7 +2874,7 @@ def doSecureStartUpConfigRollback(
 
     # debugOutput(command)
     response = waitForDeviceResponse(command, "(yes/no)", 3, obj)
-    if(response.lower().find("error-101")):
+    if(response.lower().find('error-101')):
         command = password + "\n"
         retVal = retVal + waitForDeviceResponse(command, "[n]", timeout, obj)
         command = "y\n"
@@ -2829,7 +2972,7 @@ def doSecureRunningConfigBackUp(
         username + "@" + server + "/" + confPath + " vrf management\n"
     # debugOutput(command)
     response = waitForDeviceResponse(command, "(yes/no)", 3, obj)
-    if(response.lower().find("error-101")):
+    if(response.lower().find('error-101')):
         command = password + "\n"
         retVal = retVal + waitForDeviceResponse(command, "#", timeout, obj)
         return retVal
@@ -2928,7 +3071,7 @@ def doSecureRunningConfigRollback(
 
     # debugOutput(command)
     response = waitForDeviceResponse(command, "(yes/no)", 3, obj)
-    if(response.lower().find("error-101")):
+    if(response.lower().find('error-101')):
         command = password + "\n"
         retVal = retVal + waitForDeviceResponse(command, "#", timeout, obj)
         return retVal
@@ -2992,7 +3135,7 @@ def doImageTransfer(
         return "Error-110"
     # debugOutput(command)
     response = waitForDeviceResponse(command, "[n]", 3, obj)
-    if(response.lower().find("error-101")):
+    if(response.lower().find('error-101')):
         retVal = retVal
     else:
         retVal = retVal + response
@@ -3042,7 +3185,7 @@ def doSecureImageTransfer(
         server + "/" + imgPath + " system-image " + type + " vrf management \n"
     # debugOutput(command)
     response = waitForDeviceResponse(command, "[n]", 3, obj)
-    if(response.lower().find("error-101")):
+    if(response.lower().find('error-101')):
         retVal = retVal
     else:
         retVal = retVal + response
@@ -3051,7 +3194,7 @@ def doSecureImageTransfer(
         command = "y\n"
         # debugOutput(command)
         response = waitForDeviceResponse(command, "(yes/no)?", 3, obj)
-        if(response.lower().find("error-101")):
+        if(response.lower().find('error-101')):
             retVal = retVal
         else:
             retVal = retVal + response
@@ -3065,7 +3208,7 @@ def doSecureImageTransfer(
         command = "y\n"
         # debugOutput(command)
         response = waitForDeviceResponse(command, "(yes/no)?", 3, obj)
-        if(response.lower().find("error-101")):
+        if(response.lower().find('error-101')):
             retVal = retVal
         else:
             retVal = retVal + response
@@ -3177,19 +3320,19 @@ def waitForDeviceResponse(command, prompt, timeout, obj):
 
 def checkOutputForError(output):
     retVal = ""
-    index = output.lower().find("error")
+    index = output.lower().find('error')
     startIndex = index + 6
     if(index == -1):
-        index = output.lower().find("invalid")
+        index = output.lower().find('invalid')
         startIndex = index + 8
         if(index == -1):
-            index = output.lower().find("cannot be enabled in l2 interface")
+            index = output.lower().find('cannot be enabled in l2 interface')
             startIndex = index + 34
             if(index == -1):
-                index = output.lower().find("incorrect")
+                index = output.lower().find('incorrect')
                 startIndex = index + 10
                 if(index == -1):
-                    index = output.lower().find("failure")
+                    index = output.lower().find('failure')
                     startIndex = index + 8
                     if(index == -1):
                         return None

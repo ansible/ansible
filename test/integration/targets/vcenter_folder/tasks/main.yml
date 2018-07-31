@@ -2,12 +2,6 @@
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: make sure pyvmomi is installed
-  pip:
-    name: pyvmomi
-    state: latest
-  when: "{{ ansible_user_id == 'root' }}"
-
 - name: store the vcenter container ip
   set_fact:
     vcsim: "{{ lookup('env', 'vcenter_host') }}"
@@ -87,6 +81,23 @@
     - host
     - datastore
     - network
+    
+- name: Recreate all types of sub folder
+  vcenter_folder:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    validate_certs: no
+    datacenter: "{{ dc1 }}"
+    folder_name: "sub_{{ item }}_folder"
+    parent_folder: 'vm_folder'
+    state: present
+  register: recreate_folders
+  with_items:
+    - vm
+    - host
+    - datastore
+    - network
 
 - debug: msg="{{ all_folder_results }}"
 
@@ -94,6 +105,7 @@
   assert:
     that:
         - all_folder_results.changed
+        - not recreate_folders.changed
 
 #- name: Delete all types of folder
 #  vcenter_folder:

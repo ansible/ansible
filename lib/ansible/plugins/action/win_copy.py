@@ -274,7 +274,7 @@ class ActionModule(ActionBase):
             dict(
                 dest=dest,
                 src=tmp_src,
-                original_basename=source_rel,
+                _original_basename=source_rel,
                 _copy_mode="single"
             )
         )

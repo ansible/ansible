@@ -72,10 +72,12 @@ class ActionModule(_ActionModule):
             pc.remote_user = provider['username'] or self._play_context.connection_user
             pc.password = provider['password'] or self._play_context.password
             pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
-            pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
 
             display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
             connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
+
+            command_timeout = int(provider['timeout']) if provider['timeout'] else connection.get_option('persistent_command_timeout')
+            connection.set_options(direct={'persistent_command_timeout': command_timeout})
 
             socket_path = connection.run()
             display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
@@ -88,7 +90,11 @@ class ActionModule(_ActionModule):
         elif self._play_context.connection in ('netconf', 'network_cli'):
             provider = self._task.args.get('provider', {})
             if any(provider.values()):
-                display.warning('provider is unnecessary when using connection=%s and will be ignored' % self._play_context.connection)
+                # for legacy reasons provider value is required for junos_facts(optional) and junos_package
+                # modules as it uses junos_eznc library to connect to remote host
+                if not (self._task.action == 'junos_facts' or self._task.action == 'junos_package'):
+                    display.warning('provider is unnecessary when using %s and will be ignored' % self._play_context.connection)
+                    del self._task.args['provider']
 
             if (self._play_context.connection == 'network_cli' and self._task.action not in CLI_SUPPORTED_MODULES) or \
                     (self._play_context.connection == 'netconf' and self._task.action == 'junos_netconf'):

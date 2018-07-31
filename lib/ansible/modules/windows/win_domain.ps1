@@ -1,21 +1,8 @@
 #!powershell
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# WANT_JSON
-# POWERSHELL_COMMON
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 Set-StrictMode -Version 2
 $ErrorActionPreference = "Stop"
@@ -35,13 +22,13 @@ Function Ensure-Prereqs {
     }
 }
 
-$parsed_args = Parse-Args $args -supports_check_mode $true
-$check_mode = Get-AnsibleParam $parsed_args "_ansible_check_mode" -default $false
-$dns_domain_name = Get-AnsibleParam $parsed_args "dns_domain_name" -failifempty $true
-$domain_netbios_name = Get-AnsibleParam $parsed_args "domain_netbios_name"
-$safe_mode_admin_password = Get-AnsibleParam $parsed_args "safe_mode_password" -failifempty $true
-$database_path = Get-AnsibleParam $parsed_args "database_path" -type "path"
-$sysvol_path = Get-AnsibleParam $parsed_args "sysvol_path" -type "path"
+$params = Parse-Args $args -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
+$dns_domain_name = Get-AnsibleParam -obj $params -name "dns_domain_name" -failifempty $true
+$domain_netbios_name = Get-AnsibleParam -obj $params -name "domain_netbios_name"
+$safe_mode_admin_password = Get-AnsibleParam -obj $params -name "safe_mode_password" -failifempty $true
+$database_path = Get-AnsibleParam -obj $params -name "database_path" -type "path"
+$sysvol_path = Get-AnsibleParam -obj $params -name "sysvol_path" -type "path"
 
 $forest = $null
 
@@ -72,7 +59,7 @@ If(-not $forest) {
             SafeModeAdministratorPassword=$sm_cred;
             Confirm=$false;
             SkipPreChecks=$true;
-            InstallDNS=$true;
+            InstallDns=$true;
             NoRebootOnCompletion=$true;
         }
         if ($database_path) {

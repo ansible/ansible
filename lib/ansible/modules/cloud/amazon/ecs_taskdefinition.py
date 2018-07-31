@@ -69,10 +69,33 @@ options:
               the permissions that are specified in this role.
         required: false
         version_added: 2.3
+    execution_role_arn:
+        description:
+            - The Amazon Resource Name (ARN) of the task execution role that the Amazon ECS container agent and the Docker daemon can assume.
+        required: false
+        version_added: 2.7
     volumes:
         description:
             - A list of names of volumes to be attached
         required: False
+    launch_type:
+        description:
+            - The launch type on which to run your task
+        required: false
+        version_added: 2.7
+        choices: ["EC2", "FARGATE"]
+    cpu:
+        description:
+            - The number of cpu units used by the task. If using the EC2 launch type, this field is optional and any value can be used.
+              If using the Fargate launch type, this field is required and you must use one of [256, 512, 1024, 2048, 4096]
+        required: false
+        version_added: 2.7
+    memory:
+        description:
+            - The amount (in MiB) of memory used by the task. If using the EC2 launch type, this field is optional and any value can be used.
+              If using the Fargate launch type, this field is required and is limited by the cpu
+        required: false
+        version_added: 2.7
 extends_documentation_fragment:
     - aws
     - ec2
@@ -118,6 +141,36 @@ EXAMPLES = '''
     family: test-cluster-taskdef
     state: present
   register: task_output
+
+- name: Create task definition
+  ecs_taskdefinition:
+    family: nginx
+    containers:
+    - name: nginx
+      essential: true
+      image: "nginx"
+      portMappings:
+      - containerPort: 8080
+        hostPort:      8080
+      cpu: 512
+      memory: 1GB
+    state: present
+
+- name: Create task definition
+  ecs_taskdefinition:
+    family: nginx
+    containers:
+    - name: nginx
+      essential: true
+      image: "nginx"
+      portMappings:
+      - containerPort: 8080
+        hostPort:      8080
+    launch_type: FARGATE
+    cpu: 512
+    memory: 1GB
+    state: present
+    network_mode: awsvpc
 '''
 RETURN = '''
 taskdefinition:
@@ -132,7 +185,7 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info
 from ansible.module_utils._text import to_text
 
@@ -153,7 +206,7 @@ class EcsTaskManager:
         except botocore.exceptions.ClientError:
             return None
 
-    def register_task(self, family, task_role_arn, network_mode, container_definitions, volumes):
+    def register_task(self, family, task_role_arn, execution_role_arn, network_mode, container_definitions, volumes, launch_type, cpu, memory):
         validated_containers = []
 
         # Ensures the number parameters are int as required by boto
@@ -174,12 +227,24 @@ class EcsTaskManager:
 
             validated_containers.append(container)
 
+        params = dict(
+            family=family,
+            taskRoleArn=task_role_arn,
+            networkMode=network_mode,
+            containerDefinitions=container_definitions,
+            volumes=volumes
+        )
+        if cpu:
+            params['cpu'] = cpu
+        if memory:
+            params['memory'] = memory
+        if launch_type:
+            params['requiresCompatibilities'] = [launch_type]
+        if execution_role_arn:
+            params['executionRoleArn'] = execution_role_arn
+
         try:
-            response = self.ecs.register_task_definition(family=family,
-                                                         taskRoleArn=task_role_arn,
-                                                         networkMode=network_mode,
-                                                         containerDefinitions=container_definitions,
-                                                         volumes=volumes)
+            response = self.ecs.register_task_definition(**params)
         except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
@@ -223,7 +288,6 @@ class EcsTaskManager:
 
 
 def main():
-
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         state=dict(required=True, choices=['present', 'absent']),
@@ -234,9 +298,17 @@ def main():
         containers=dict(required=False, type='list'),
         network_mode=dict(required=False, default='bridge', choices=['bridge', 'host', 'none', 'awsvpc'], type='str'),
         task_role_arn=dict(required=False, default='', type='str'),
-        volumes=dict(required=False, type='list')))
+        execution_role_arn=dict(required=False, default='', type='str'),
+        volumes=dict(required=False, type='list'),
+        launch_type=dict(required=False, choices=['EC2', 'FARGATE']),
+        cpu=dict(),
+        memory=dict(required=False, type='str')
+    ))
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    module = AnsibleAWSModule(argument_spec=argument_spec,
+                              supports_check_mode=True,
+                              required_if=[('launch_type', 'FARGATE', ['cpu', 'memory'])]
+                              )
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
@@ -245,9 +317,18 @@ def main():
     task_mgr = EcsTaskManager(module)
     results = dict(changed=False)
 
-    for container in module.params.get('containers', []):
-        for environment in container.get('environment', []):
-            environment['value'] = to_text(environment['value'])
+    if module.params['launch_type']:
+        if not module.botocore_at_least('1.8.4'):
+            module.fail_json(msg='botocore needs to be version 1.8.4 or higher to use launch_type')
+
+    if module.params['execution_role_arn']:
+        if not module.botocore_at_least('1.10.44'):
+            module.fail_json(msg='botocore needs to be version 1.10.44 or higher to use execution_role_arn')
+
+    if module.params['containers']:
+        for container in module.params['containers']:
+            for environment in container.get('environment', []):
+                environment['value'] = to_text(environment['value'])
 
     if module.params['state'] == 'present':
         if 'containers' not in module.params or not module.params['containers']:
@@ -255,6 +336,11 @@ def main():
 
         if 'family' not in module.params or not module.params['family']:
             module.fail_json(msg="To use task definitions, a family must be specified")
+
+        network_mode = module.params['network_mode']
+        launch_type = module.params['launch_type']
+        if launch_type == 'FARGATE' and network_mode != 'awsvpc':
+            module.fail_json(msg="To use FARGATE launch type, network_mode must be awsvpc")
 
         family = module.params['family']
         existing_definitions_in_family = task_mgr.describe_task_definitions(module.params['family'])
@@ -363,9 +449,13 @@ def main():
                 volumes = module.params.get('volumes', []) or []
                 results['taskdefinition'] = task_mgr.register_task(module.params['family'],
                                                                    module.params['task_role_arn'],
+                                                                   module.params['execution_role_arn'],
                                                                    module.params['network_mode'],
                                                                    module.params['containers'],
-                                                                   volumes)
+                                                                   volumes,
+                                                                   module.params['launch_type'],
+                                                                   module.params['cpu'],
+                                                                   module.params['memory'])
             results['changed'] = True
 
     elif module.params['state'] == 'absent':

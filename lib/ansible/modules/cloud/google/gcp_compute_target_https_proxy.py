@@ -68,6 +68,7 @@ options:
               user overrides, which is equivalent to DISABLE. Not specifying this field is equivalent
               to specifying NONE.
         required: false
+        version_added: 2.7
         choices: ['NONE', 'ENABLE', 'DISABLE']
     ssl_certificates:
         description:

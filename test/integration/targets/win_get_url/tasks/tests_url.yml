@@ -1,0 +1,124 @@
+- name: download single file (check)
+  win_get_url:
+    url: https://{{test_win_get_url_host}}
+    dest: '{{test_win_get_url_path}}\web.html'
+  check_mode: yes
+  register: http_download_check
+
+- name: get result of download single file (check)
+  win_stat:
+    path: '{{test_win_get_url_path}}\web.html'
+  register: http_download_result_check
+
+- name: assert download single file (check)
+  assert:
+    that:
+    - http_download_check is not failed
+    - http_download_check is changed
+    - http_download_check.url
+    - http_download_check.dest
+    - not http_download_result_check.stat.exists
+
+- name: download single file
+  win_get_url:
+    url: https://{{test_win_get_url_host}}
+    dest: '{{test_win_get_url_path}}\web.html'
+  register: http_download
+
+- name: get result of download single file
+  win_stat:
+    path: '{{test_win_get_url_path}}\web.html'
+  register: http_download_result
+
+- name: assert download single file
+  assert:
+    that:
+    - http_download is not failed
+    - http_download is changed
+    - http_download.url
+    - http_download.dest
+    - http_download_result.stat.exists
+
+# TODO: add check for idempotent run once it is added with force: yes
+
+- name: download single file with force no
+  win_get_url:
+    url: https://{{test_win_get_url_host}}
+    dest: '{{test_win_get_url_path}}\web.html'
+    force: no
+  register: http_download_no_force
+
+- name: assert download single file with force no
+  assert:
+    that:
+    - http_download_no_force is not changed
+
+- name: manually change last modified time on FTP source to older datetime
+  win_shell: (Get-Item -Path '{{test_win_get_url_path}}\web.html').LastWriteTime = (Get-Date -Date "01/01/1970")
+
+- name: download newer file with force no
+  win_get_url:
+    url: https://{{test_win_get_url_host}}
+    dest: '{{test_win_get_url_path}}\web.html'
+    force: no
+  register: http_download_newer_no_force
+
+- name: assert download newer file with force no
+  assert:
+    that:
+    - http_download_newer_no_force is changed
+
+- name: download file to directory
+  win_get_url:
+    url: https://{{test_win_get_url_host}}
+    dest: '{{test_win_get_url_path}}'
+  register: http_download_to_directory
+
+- name: get result of download to directory
+  win_stat:
+    path: '{{test_win_get_url_path}}\{{test_win_get_url_host}}'
+  register: http_download_to_directory_result
+
+- name: assert download file to directory
+  assert:
+    that:
+    - http_download_to_directory is changed
+    - http_download_to_directory_result.stat.exists
+
+- name: download to path with env var
+  win_get_url:
+    url: https://{{test_win_get_url_host}}
+    dest: '%{{test_win_get_url_env_var}}%\http-env.html'
+  register: http_download_with_env
+
+- name: get result of download to path with env var
+  win_stat:
+    path: '{{test_win_get_url_path}}\http-env.html'
+  register: http_download_with_env_result
+
+- name: assert download to path with env var
+  assert:
+    that:
+    - http_download_with_env is changed
+    - http_download_with_env_result.stat.exists
+
+- name: fail when link returns 404
+  win_get_url:
+    url: https://{{test_win_get_url_host}}/skynet_module.html
+    dest: '{{test_win_get_url_path}}\skynet_module.html'
+  ignore_errors: yes
+  register: fail_download_404
+
+- name: assert fail when link returns 404
+  assert:
+    that:
+    - fail_download_404 is not changed
+    - fail_download_404 is failed
+    - fail_download_404.status_code == 404
+
+- name: fail when dest is an invalid path
+  win_get_url:
+    url: https://{{test_win_get_url_host}}
+    dest: Q:\Filez\Cyberdyne.html
+  register: fail_invalid_path
+  failed_when: '"The path ''Q:\Filez'' does not exist for destination ''Q:\Filez\Cyberdyne.html''" not in fail_invalid_path.msg'

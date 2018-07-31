@@ -108,7 +108,7 @@ options:
   volumes:
     description:
     - A list of block device mappings, by default this will always use the AMI root device so the volumes option is primarily for adding more storage.
-    - A mapping contains the (optional) keys device_name, virtual_name, ebs.device_type, ebs.device_size, ebs.kms_key_id,
+    - A mapping contains the (optional) keys device_name, virtual_name, ebs.volume_type, ebs.volume_size, ebs.kms_key_id,
       ebs.iops, and ebs.delete_on_termination.
     - For more information about each parameter, see U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_BlockDeviceMapping.html)
   launch_template:
@@ -622,6 +622,7 @@ import re
 import uuid
 import string
 import textwrap
+import time
 from collections import namedtuple
 
 try:
@@ -868,7 +869,6 @@ def build_network_spec(params, ec2=None):
 
         if interface_params.get('ipv6_addresses'):
             spec['Ipv6Addresses'] = [{'Ipv6Address': a} for a in interface_params.get('ipv6_addresses', [])]
-            spec['Ipv6AddressCount'] = len(spec['Ipv6Addresses'])
 
         if interface_params.get('private_ip_address'):
             spec['PrivateIpAddress'] = interface_params.get('private_ip_address')
@@ -1378,7 +1378,7 @@ def ensure_present(existing_matches, changed, ec2, state):
             )
     try:
         instance_spec = build_run_instance_spec(module.params)
-        instance_response = AWSRetry.jittered_backoff()(ec2.run_instances)(**instance_spec)
+        instance_response = run_instances(ec2, **instance_spec)
         instances = instance_response['Instances']
         instance_ids = [i['InstanceId'] for i in instances]
 
@@ -1403,6 +1403,20 @@ def ensure_present(existing_matches, changed, ec2, state):
         )
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
         module.fail_json_aws(e, msg="Failed to create new EC2 instance")
+
+
+@AWSRetry.jittered_backoff()
+def run_instances(ec2, **instance_spec):
+    try:
+        return ec2.run_instances(**instance_spec)
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == 'InvalidParameterValue' and "Invalid IAM Instance Profile ARN" in e.response['Error']['Message']:
+            # If the instance profile has just been created, it takes some time to be visible by ec2
+            # So we wait 10 second and retry the run_instances
+            time.sleep(10)
+            return ec2.run_instances(**instance_spec)
+        else:
+            raise e
 
 
 def main():

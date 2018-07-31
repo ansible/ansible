@@ -7,8 +7,8 @@
   - name: enable feature vtp
     nxos_feature:
       feature: vtp
-      state: enabled
       provider: "{{ connection }}"
+      state: enabled
 
   - name: configure vtp domain
     nxos_vtp_domain:
@@ -18,8 +18,8 @@
   - name: configure vtp password
     nxos_vtp_password: &configure
       vtp_password: ntc
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: &true
@@ -37,8 +37,8 @@
   - name: remove vtp password
     nxos_vtp_password: &remove
       vtp_password: ntc
-      state: absent
       provider: "{{ connection }}"
+      state: absent
     register: result
 
   - assert: *true
@@ -53,7 +53,7 @@
   - name: disable feature vtp
     nxos_feature:
       feature: vtp
-      state: disabled
       provider: "{{ connection }}"
+      state: disabled
 
 - debug: msg="END connection={{ ansible_connection }} nxos_vtp_password sanity test"

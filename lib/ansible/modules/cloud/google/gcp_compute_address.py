@@ -67,6 +67,7 @@ options:
             - If unspecified, defaults to EXTERNAL.
         required: false
         default: EXTERNAL
+        version_added: 2.7
         choices: ['INTERNAL', 'EXTERNAL']
     description:
         description:
@@ -86,6 +87,7 @@ options:
               it must be within the subnetwork's IP range.
             - This field can only be used with INTERNAL type with GCE_ENDPOINT/DNS_RESOLVER purposes.
         required: false
+        version_added: 2.7
     region:
         description:
             - URL of the region where the regional address resides.

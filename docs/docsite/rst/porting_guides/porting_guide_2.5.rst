@@ -8,7 +8,7 @@ This section discusses the behavioral changes between Ansible 2.4 and Ansible 2.
 
 It is intended to assist in updating your playbooks, plugins and other parts of your Ansible infrastructure so they will work with this version of Ansible.
 
-We suggest you read this page along with `Ansible Changelog <https://github.com/ansible/ansible/blob/devel/CHANGELOG.md#2.5>`_ to understand what updates you may need to make.
+We suggest you read this page along with `Ansible Changelog for 2.5 <https://github.com/ansible/ansible/blob/stable-2.5/changelogs/CHANGELOG-v2.5.rst>`_ to understand what updates you may need to make.
 
 This document is part of a collection on porting. The complete list of porting guides can be found at :ref:`porting guides <porting_guides>`.
 
@@ -74,6 +74,28 @@ Included file:
         - distro_include
 
 The relevant change in those examples is, that in Ansible 2.5, the included file defines the tag ``distro_include`` again. The tag is not inherited automatically.
+
+Fixed handling of keywords and inline variables
+-----------------------------------------------
+
+We made several fixes to how we handle keywords and 'inline variables', to avoid conflating the two. Unfortunately these changes mean you must specify whether `name` is a keyword or a variable when calling roles. If you have playbooks that look like this::
+
+    roles:
+        - { role: myrole, name: Justin, othervar: othervalue, become: True}
+
+You will run into errors because Ansible reads name in this context as a keyword. Beginning in 2.5, if you want to use a variable name that is also a keyword, you must explicitly declare it as a variable for the role::
+
+    roles:
+        - { role: myrole, vars: {name: Justin, othervar: othervalue}, become: True}
+
+
+For a full list of keywords see ::ref::`Playbook Keywords`.
+
+Migrating from with_X to loop
+-----------------------------
+
+.. include:: ../user_guide/shared_snippets/with2loop.txt
+
 
 Deprecated
 ==========
@@ -167,6 +189,25 @@ and ``checksum_algorithm: md5`` can still be used if an MD5 checksum is
 desired.
 
 * ``osx_say`` module was renamed into :ref:`say <say_module>`.
+* Several modules which could deal with symlinks had the default value of their ``follow`` option
+  changed as part of a feature to `standardize the behavior of follow
+  <https://github.com/ansible/proposals/issues/69>`_:
+
+  * The :ref:`file module <file_module>` changed from ``follow=False`` to ``follow=True`` because
+    its purpose is to modify the attributes of a file and most systems do not allow attributes to be
+    applied to symlinks, only to real files.
+  * The :ref:`replace module <replace_module>` had its ``follow`` parameter removed because it
+    inherently modifies the content of an existing file so it makes no sense to operate on the link
+    itself.
+  * The :ref:`blockinfile module <blockinfile_module>` had its ``follow`` parameter removed because
+    it inherently modifies the content of an existing file so it makes no sense to operate on the
+    link itself.
+  * In Ansible-2.5.3, the :ref:`template module <template_module>` became more strict about its
+    ``src`` file being proper utf-8.  Previously, non-utf8 contents in a template module src file
+    would result in a mangled output file (the non-utf8 characters would be replaced with a unicode
+    replacement character).  Now, on Python2, the module will error out with the message, "Template
+    source files must be utf-8 encoded".  On Python3, the module will first attempt to pass the
+    non-utf8 characters through verbatim and fail if that does not succeed.
 
 Plugins
 =======
@@ -180,7 +221,7 @@ Inventory plugins have been fine tuned, and we have started to add some common f
 
 * The ability to use a cache plugin to avoid costly API/DB queries is disabled by default.
   If using inventory scripts, some may already support a cache, but it is outside of Ansible's knowledge and control.
-  Moving to the interal cache will allow you to use Ansible's existing cache refresh/invalidation mechanisms.
+  Moving to the internal cache will allow you to use Ansible's existing cache refresh/invalidation mechanisms.
 
 * A new 'auto' plugin, enabled by default, that can automatically detect the correct plugin to use IF that plugin is using our 'common YAML configuration format'.
   The previous host_list, script, yaml and ini plugins still work as they did, the auto plugin is now the last one we attempt to use.
@@ -205,6 +246,12 @@ Filter
 
 The lookup plugin API now throws an error if a non-iterable value is returned from a plugin. Previously, numbers or
 other non-iterable types returned by a plugin were accepted without error or warning. This change was made because plugins should always return a list. Please note that plugins that return strings and other non-list iterable values will not throw an error, but may cause unpredictable behavior. If you have a custom lookup plugin that does not return a list, you should modify it to wrap the return values in a list.
+
+Lookup
+-------
+
+A new option was added to lookup plugins globally named ``error`` which allows you to control how errors produced by the lookup are handled, before this option they were always fatal. Valid values for this option are ``warn``, ``ignore`` and ``strict``. See the :doc:`lookup <../plugins/lookup>` page for more details.
+
 
 Porting custom scripts
 ======================

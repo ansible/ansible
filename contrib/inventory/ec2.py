@@ -32,6 +32,13 @@ the AWS_PROFILE variable:
 
 For more details, see: http://docs.pythonboto.org/en/latest/boto_config_tut.html
 
+You can filter for specific EC2 instances by creating an environment variable
+named EC2_INSTANCE_FILTERS, which has the same format as the instance_filters
+entry documented in ec2.ini.  For example, to find all hosts whose name begins
+with 'webserver', one might use:
+
+    export EC2_INSTANCE_FILTERS='tag:Name=webserver*'
+
 When run against a specific host, this script returns the following variables:
  - ec2_ami_launch_index
  - ec2_architecture
@@ -494,8 +501,8 @@ class Ec2Inventory(object):
         # Instance filters (see boto and EC2 API docs). Ignore invalid filters.
         self.ec2_instance_filters = []
 
-        if config.has_option('ec2', 'instance_filters'):
-            filters = config.get('ec2', 'instance_filters')
+        if config.has_option('ec2', 'instance_filters') or 'EC2_INSTANCE_FILTERS' in os.environ:
+            filters = os.getenv('EC2_INSTANCE_FILTERS', config.get('ec2', 'instance_filters') if config.has_option('ec2', 'instance_filters') else '')
 
             if self.stack_filters and '&' in filters:
                 self.fail_with_error("AND filters along with stack_filter enabled is not supported.\n")
@@ -775,13 +782,26 @@ class Ec2Inventory(object):
         # ElastiCache boto module doesn't provide a get_all_instances method,
         # that's why we need to call describe directly (it would be called by
         # the shorthand method anyway...)
+        clusters = []
         try:
             conn = self.connect_to_aws(elasticache, region)
             if conn:
                 # show_cache_node_info = True
                 # because we also want nodes' information
-                response = conn.describe_cache_clusters(None, None, None, True)
-
+                _marker = 1
+                while _marker:
+                    if _marker == 1:
+                        _marker = None
+                    response = conn.describe_cache_clusters(None, None, _marker, True)
+                    _marker = response['DescribeCacheClustersResponse']['DescribeCacheClustersResult']['Marker']
+                    try:
+                        # Boto also doesn't provide wrapper classes to CacheClusters or
+                        # CacheNodes. Because of that we can't make use of the get_list
+                        # method in the AWSQueryConnection. Let's do the work manually
+                        clusters = clusters + response['DescribeCacheClustersResponse']['DescribeCacheClustersResult']['CacheClusters']
+                    except KeyError as e:
+                        error = "ElastiCache query to AWS failed (unexpected format)."
+                        self.fail_with_error(error, 'getting ElastiCache clusters')
         except boto.exception.BotoServerError as e:
             error = e.reason
 
@@ -793,16 +813,6 @@ class Ec2Inventory(object):
                     "or set 'elasticache = False' in ec2.ini"
             elif not e.reason == "Forbidden":
                 error = "Looks like AWS ElastiCache is down:\n%s" % e.message
-            self.fail_with_error(error, 'getting ElastiCache clusters')
-
-        try:
-            # Boto also doesn't provide wrapper classes to CacheClusters or
-            # CacheNodes. Because of that we can't make use of the get_list
-            # method in the AWSQueryConnection. Let's do the work manually
-            clusters = response['DescribeCacheClustersResponse']['DescribeCacheClustersResult']['CacheClusters']
-
-        except KeyError as e:
-            error = "ElastiCache query to AWS failed (unexpected format)."
             self.fail_with_error(error, 'getting ElastiCache clusters')
 
         for cluster in clusters:

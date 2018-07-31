@@ -42,7 +42,6 @@ options:
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
-        default: resource_group location
     name:
         description:
             - name of the virtual network.
@@ -52,6 +51,8 @@ options:
             - Use with state present to remove any existing address_prefixes.
         type: bool
         default: 'no'
+        aliases:
+          - purge
     purge_dns_servers:
         description:
             - Use with state present to remove existing DNS servers, reverting to default Azure servers. Mutually
@@ -256,7 +257,7 @@ class AzureRMVirtualNetwork(AzureRMModuleBase):
                     changed = True
 
                 if self.dns_servers:
-                    existing_dns_set = set(vnet.dhcp_options.dns_servers)
+                    existing_dns_set = set(vnet.dhcp_options.dns_servers) if vnet.dhcp_options else set([])
                     requested_dns_set = set(self.dns_servers)
                     if existing_dns_set != requested_dns_set:
                         self.log('CHANGED: replacing DNS servers')

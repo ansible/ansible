@@ -6,9 +6,9 @@
 
 - name: test invalid subset (foobar)
   nxos_facts:
-    provider: "{{ connection }}"
     gather_subset:
       - "foobar"
+    provider: "{{ connection }}"
   register: result
   ignore_errors: true
 
@@ -28,10 +28,10 @@
 
 - name: test subset specified multiple times
   nxos_facts:
-    provider: "{{ connection }}"
     gather_subset:
       - "!hardware"
       - "hardware"
+    provider: "{{ connection }}"
   register: result
   ignore_errors: true
 

@@ -1,22 +1,106 @@
-************************
+########################
 Other Tools And Programs
-************************
+########################
 
-The Ansible community provides several useful tools for working with the Ansible project. This is a list
-of some of the most popular of these tools.
+.. contents:: Topics
 
-- `PR by File <https://ansible.sivel.net/pr/byfile.html>`_ shows a current list of all open pull requests by individual file. An essential tool for Ansible module maintainers.
+The Ansible community uses a range of tools for working with the Ansible project. This is a list of some of the most popular of these tools.
 
-- `Ansible Lint <https://github.com/willthames/ansible-lint>`_ is a widely used, highly configurable best-practices linter for Ansible playbooks.
+If you know of any other tools that should be added, this list can be updated by clicking "Edit on GitHub" on the top right of this page.
 
-- `Ansible Review <http://willthames.github.io/2016/06/28/announcing-ansible-review.html>`_ is an extension of Ansible Lint designed for code review.
+***************
+Popular Editors
+***************
 
-- `jctanner's Ansible Tools <https://github.com/jctanner/ansible-tools>`_ is a miscellaneous collection of useful helper scripts for Ansible development.
+Atom
+====
 
-- `Ansigenome <https://github.com/nickjj/ansigenome>`_ is a command line tool designed to help you manage your Ansible roles.
+An open-source, free GUI text editor created and maintained by GitHub. You can keep track of git project
+changes, commit from the GUI, and see what branch you are on. You can customize the themes for different colors and install syntax highlighting packages for different languages. You can install Atom on Linux, macOS and Windows. Useful Atom plugins include:
 
-- `Awesome Ansible <https://github.com/jdauphant/awesome-ansible>`_ is a collaboratively curated list of awesome Ansible resources.
+* `language-yaml <https://github.com/atom/language-yaml>`_ - YAML highlighting for Atom.
 
-- `Ansible Inventory Grapher <http://github.com/willthames/ansible-inventory-grapher>`_ can be used to visually display inventory inheritance hierarchies and at what level a variable is defined in inventory.
 
-- `Molecule <http://github.com/metacloud/molecule>`_ A testing framework for Ansible plays and roles.
+Emacs
+=====
+
+A free, open-source text editor and IDE that supports auto-indentation, syntax highlighting and built in terminal shell(among other things).
+
+* `yaml-mode <https://github.com/yoshiki/yaml-mode>`_ - YAML highlighting and syntax checking.
+* `inja2-mode <https://github.com/paradoxxxzero/jinja2-mode>`_ - Jinja2 highlighting and syntax checking.
+* `magit-mode <https://github.com/magit/magit>`_ -  Git porcelain within Emacs.
+
+
+PyCharm
+=======
+
+A full IDE (integrated development environment) for Python software development. It ships with everything you need to write python scripts and complete software, including support for YAML syntax highlighting. It's a little overkill for writing roles/playbooks, but it can be a very useful tool if you write modules and submit code for Ansible. Can be used to debug the Ansible engine.
+
+
+Sublime
+=======
+
+A closed-source, subscription GUI text editor. You can customize the GUI with themes and install packages for language highlighting and other refinements. You can install Sublime on Linux, macOS and Windows. Useful Sublime plugins include:
+
+* `GitGutter <https://packagecontrol.io/packages/GitGutter>`_ - shows information about files in a git repository.
+* `SideBarEnhancements <https://packagecontrol.io/packages/SideBarEnhancements>`_ - provides enhancements to the operations on Sidebar of Files and Folders.
+* `Sublime Linter <https://packagecontrol.io/packages/SublimeLinter>`_ - a code-linting framework for Sublime Text 3.
+* `Pretty YAML <https://packagecontrol.io/packages/Pretty%20YAML>`_ - prettifies YAML for Sublime Text 2 and 3.
+* `Yamllint <https://packagecontrol.io/packages/SublimeLinter-contrib-yamllint>`_ - a Sublime wrapper around yamllint.
+
+
+Visual Studio Code
+==================
+
+An open-source, free GUI text editor created and maintained by Microsoft. Useful Visual Studio Code plugins include:
+
+
+* `YAML Support by Red Hat <https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml>`_ - provides YAML support via yaml-language-server with built-in Kubernetes and Kedge syntax support.
+* `Ansible Syntax Highlighting Extension <https://marketplace.visualstudio.com/items?itemName=haaaad.ansible>`_ - YAML & Jinja2 support.
+* `Visual Studio Code extension for Ansible <https://marketplace.visualstudio.com/items?itemName=vscoss.vscode-ansible>`_ - provides autocompletion, syntax highlighting.
+
+vim
+===
+
+An open-source, free command-line text editor. Useful vim plugins include:
+
+* `Ansible vim <https://github.com/pearofducks/ansible-vim>`_  - vim syntax plugin for Ansible 2.x, it supports YAML playbooks, Jinja2 templates, and Ansible's hosts files.
+
+
+*****************
+Development Tools
+*****************
+
+Finding related issues and PRs
+==============================
+
+There are various ways to find existing issues and pull requests (PRs)
+
+- `PR by File <https://ansible.sivel.net/pr/byfile.html>`_ - shows a current list of all open pull requests by individual file. An essential tool for Ansible module maintainers.
+- `jctanner's Ansible Tools <https://github.com/jctanner/ansible-tools>`_ - miscellaneous collection of useful helper scripts for Ansible development.
+
+
+******************************
+Tools for Validating Playbooks
+******************************
+
+- `Ansible Lint <https://github.com/willthames/ansible-lint>`_ - widely used, highly configurable best-practices linter for Ansible playbooks.
+- `Ansible Review <https://github.com/willthames/ansible-review>`_ - an extension of Ansible Lint designed for code review.
+- `Molecule <http://github.com/metacloud/molecule>`_ is a testing framework for Ansible plays and roles.
+
+
+***********
+Other Tools
+***********
+
+- `Ansible cmdb <https://github.com/fboender/ansible-cmdb>`_ - takes the output of Ansible's fact gathering and converts it into a static HTML overview page containing system configuration information.
+- `Ansible Inventory Grapher <http://github.com/willthames/ansible-inventory-grapher>`_ - visually displays inventory inheritance hierarchies and at what level a variable is defined in inventory.
+- `Ansible Shell <https://github.com/dominis/ansible-shell>`_ - an interactive shell for Ansible with built-in tab completion for all the modules.
+- `Ansible Silo <https://github.com/groupon/ansible-silo>`_ - a self-contained Ansible environment via Docker.
+- `Ansigenome <https://github.com/nickjj/ansigenome>`_ - a command line tool designed to help you manage your Ansible roles.
+- `ARA <http://github.com/openstack/ara>`_ - records Ansible playbook runs and makes the recorded data available and intuitive for users and systems by integrating with Ansible as a callback plugin.
+- `Awesome Ansible <https://github.com/jdauphant/awesome-ansible>`_ - a collaboratively curated list of awesome Ansible resources.
+- `AWX <https://github.com/ansible/awx>`_ - provides a web-based user interface, REST API, and task engine built on top of Ansible. AWX is the upstream project for Tower, a commercial derivative of AWX.
+- `Mitogen for Ansible <https://mitogen.readthedocs.io/en/latest/ansible.html>`_ - uses the `Mitogen <https://github.com/dw/mitogen/>`_ library to execute Ansible playbooks in a more efficient way (decreases the execution time).
+- `OpsTools-ansible <https://github.com/centos-opstools/opstools-ansible>`_ - uses Ansible to configure an environment that provides the support of `OpsTools <https://wiki.centos.org/SpecialInterestGroup/OpsTools>`_, namely centralized logging and analysis, availability monitoring, and performance monitoring.
+- `TD4A <https://github.com/cidrblock/td4a>`_ - a template designer for automation. TD4A is a visual design aid for building and testing jinja2 templates. It will combine data in yaml format with a jinja2 template and render the output.

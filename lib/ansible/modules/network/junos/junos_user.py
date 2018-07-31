@@ -138,17 +138,19 @@ from functools import partial
 
 from copy import deepcopy
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.utils import remove_default_spec
-from ansible.module_utils.network.junos.junos import junos_argument_spec, get_connection
+from ansible.module_utils.network.junos.junos import junos_argument_spec, get_connection, tostring
 from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes
 from ansible.module_utils.network.junos.junos import load_config, locked_config
 from ansible.module_utils.six import iteritems
 
 try:
-    from lxml.etree import Element, SubElement, tostring
+    from lxml.etree import Element, SubElement
 except ImportError:
-    from xml.etree.ElementTree import Element, SubElement, tostring
+    from xml.etree.ElementTree import Element, SubElement
 
 ROLES = ['operator', 'read-only', 'super-user', 'unauthorized']
 USE_PERSISTENT_CONNECTION = True
@@ -160,7 +162,11 @@ def handle_purge(module, want):
     login = SubElement(element, 'login')
 
     conn = get_connection(module)
-    reply = conn.execute_rpc(tostring(Element('get-configuration')), ignore_warning=False)
+    try:
+        reply = conn.execute_rpc(tostring(Element('get-configuration')), ignore_warning=False)
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+
     users = reply.xpath('configuration/system/login/user/name')
     if users:
         for item in users:

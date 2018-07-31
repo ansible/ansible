@@ -37,7 +37,7 @@ DOCUMENTATION = """
       port:
         description:
             - port for winrm to connect on remote target
-            - The default is the https (5896) port, if using http it should be 5895
+            - The default is the https (5986) port, if using http it should be 5985
         vars:
           - name: ansible_port
           - name: ansible_winrm_port
@@ -100,7 +100,6 @@ import base64
 import inspect
 import os
 import re
-import shlex
 import traceback
 import json
 import tempfile
@@ -182,14 +181,13 @@ class Connection(ConnectionBase):
 
         super(Connection, self).__init__(*args, **kwargs)
 
-    def set_options(self, task_keys=None, var_options=None, direct=None):
-        if not HAS_WINRM:
-            return
-
-        super(Connection, self).set_options(task_keys=None, var_options=var_options, direct=direct)
-
-        self._winrm_host = self._play_context.remote_addr
-        self._winrm_user = self._play_context.remote_user
+    def _build_winrm_kwargs(self):
+        # this used to be in set_options, as win_reboot needs to be able to
+        # override the conn timeout, we need to be able to build the args
+        # after setting individual options. This is called by _connect before
+        # starting the WinRM connection
+        self._winrm_host = self.get_option('remote_addr')
+        self._winrm_user = self.get_option('remote_user')
         self._winrm_pass = self._play_context.password
 
         self._become_method = self._play_context.become_method
@@ -235,7 +233,7 @@ class Connection(ConnectionBase):
         kinit_mode = self.get_option('kerberos_mode')
         if kinit_mode is None:
             # HACK: ideally, remove multi-transport stuff
-            self._kerb_managed = "kerberos" in self._winrm_transport and self._winrm_pass
+            self._kerb_managed = "kerberos" in self._winrm_transport and (self._winrm_pass is not None and self._winrm_pass != "")
         elif kinit_mode == "managed":
             self._kerb_managed = True
         elif kinit_mode == "manual":
@@ -286,33 +284,65 @@ class Connection(ConnectionBase):
         # doing so. Unfortunately it is not available on the built in Python
         # so we can only use it if someone has installed it
         if HAS_PEXPECT:
-            kinit_cmdline = " ".join(kinit_cmdline)
+            proc_mechanism = "pexpect"
+            command = kinit_cmdline.pop(0)
             password = to_text(password, encoding='utf-8',
                                errors='surrogate_or_strict')
 
             display.vvvv("calling kinit with pexpect for principal %s"
                          % principal)
-            events = {
-                ".*:": password + "\n"
-            }
-            # technically this is the stdout but to match subprocess we will
-            # call it stderr
-            stderr, rc = pexpect.run(kinit_cmdline, withexitstatus=True, events=events, env=krb5env, timeout=60)
+            try:
+                child = pexpect.spawn(command, kinit_cmdline, timeout=60,
+                                      env=krb5env, echo=False)
+            except pexpect.ExceptionPexpect as err:
+                err_msg = "Kerberos auth failure when calling kinit cmd " \
+                          "'%s': %s" % (command, to_native(err))
+                raise AnsibleConnectionFailure(err_msg)
+
+            try:
+                child.expect(".*:")
+                child.sendline(password)
+            except OSError as err:
+                # child exited before the pass was sent, Ansible will raise
+                # error based on the rc below, just display the error here
+                display.vvvv("kinit with pexpect raised OSError: %s"
+                             % to_native(err))
+
+            # technically this is the stdout + stderr but to match the
+            # subprocess error checking behaviour, we will call it stderr
+            stderr = child.read()
+            child.wait()
+            rc = child.exitstatus
         else:
+            proc_mechanism = "subprocess"
             password = to_bytes(password, encoding='utf-8',
                                 errors='surrogate_or_strict')
 
             display.vvvv("calling kinit with subprocess for principal %s"
                          % principal)
-            p = subprocess.Popen(kinit_cmdline, stdin=subprocess.PIPE,
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE,
-                                 env=krb5env)
+            try:
+                p = subprocess.Popen(kinit_cmdline, stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE,
+                                     env=krb5env)
+
+            except OSError as err:
+                err_msg = "Kerberos auth failure when calling kinit cmd " \
+                          "'%s': %s" % (self._kinit_cmd, to_native(err))
+                raise AnsibleConnectionFailure(err_msg)
+
             stdout, stderr = p.communicate(password + b'\n')
             rc = p.returncode != 0
 
         if rc != 0:
-            raise AnsibleConnectionFailure("Kerberos auth failure: %s" % to_native(stderr.strip()))
+            # one last attempt at making sure the password does not exist
+            # in the output
+            exp_msg = to_native(stderr.strip())
+            exp_msg = exp_msg.replace(to_native(password), "<redacted>")
+
+            err_msg = "Kerberos auth failure for principal %s with %s: %s" \
+                      % (principal, proc_mechanism, exp_msg)
+            raise AnsibleConnectionFailure(err_msg)
 
         display.vvvvv("kinit succeeded for principal %s" % principal)
 
@@ -448,11 +478,12 @@ class Connection(ConnectionBase):
 
         super(Connection, self)._connect()
         if not self.protocol:
+            self._build_winrm_kwargs()  # build the kwargs from the options set
             self.protocol = self._winrm_connect()
             self._connected = True
         return self
 
-    def _reset(self):  # used by win_reboot (and any other action that might need to bounce the state)
+    def reset(self):
         self.protocol = None
         self.shell_id = None
         self._connect()
@@ -492,47 +523,6 @@ class Connection(ConnectionBase):
 
         result = self._winrm_exec(cmd_parts[0], cmd_parts[1:], from_exec=True, stdin_iterator=stdin_iterator)
 
-        result.std_out = to_bytes(result.std_out)
-        result.std_err = to_bytes(result.std_err)
-
-        # parse just stderr from CLIXML output
-        if self.is_clixml(result.std_err):
-            try:
-                result.std_err = self.parse_clixml_stream(result.std_err)
-            except Exception:
-                # unsure if we're guaranteed a valid xml doc- use raw output in case of error
-                pass
-
-        return (result.status_code, result.std_out, result.std_err)
-
-    def exec_command_old(self, cmd, in_data=None, sudoable=True):
-        super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
-        cmd_parts = shlex.split(to_bytes(cmd), posix=False)
-        cmd_parts = map(to_text, cmd_parts)
-        script = None
-        cmd_ext = cmd_parts and self._shell._unquote(cmd_parts[0]).lower()[-4:] or ''
-        # Support running .ps1 files (via script/raw).
-        if cmd_ext == '.ps1':
-            script = '& %s' % cmd
-        # Support running .bat/.cmd files; change back to the default system encoding instead of UTF-8.
-        elif cmd_ext in ('.bat', '.cmd'):
-            script = '[System.Console]::OutputEncoding = [System.Text.Encoding]::Default; & %s' % cmd
-        # Encode the command if not already encoded; supports running simple PowerShell commands via raw.
-        elif '-EncodedCommand' not in cmd_parts:
-            script = cmd
-        if script:
-            cmd_parts = self._shell._encode_script(script, as_list=True, strict_mode=False)
-        if '-EncodedCommand' in cmd_parts:
-            encoded_cmd = cmd_parts[cmd_parts.index('-EncodedCommand') + 1]
-            decoded_cmd = to_text(base64.b64decode(encoded_cmd).decode('utf-16-le'))
-            display.vvv("EXEC %s" % decoded_cmd, host=self._winrm_host)
-        else:
-            display.vvv("EXEC %s" % cmd, host=self._winrm_host)
-        try:
-            result = self._winrm_exec(cmd_parts[0], cmd_parts[1:], from_exec=True)
-        except Exception:
-            traceback.print_exc()
-            raise AnsibleConnectionFailure("failed to exec cmd %s" % to_native(cmd))
         result.std_out = to_bytes(result.std_out)
         result.std_err = to_bytes(result.std_err)
 

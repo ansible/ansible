@@ -1,0 +1,2 @@
+minor_changes:
+- Added PrivilegeUtil PowerShell module util to easily control Windows Privileges in a process

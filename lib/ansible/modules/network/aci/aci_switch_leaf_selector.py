@@ -28,7 +28,7 @@ version_added: '2.5'
 options:
   description:
     description:
-    - The description to assign to the C(leaf)
+    - The description to assign to the C(leaf).
   leaf_profile:
     description:
     - Name of the Leaf Profile to which we add a Selector.
@@ -39,22 +39,24 @@ options:
     aliases: [ name, leaf_name, leaf_profile_leaf_name, leaf_selector_name ]
   leaf_node_blk:
     description:
-    - Name of Node Block range to be added to Leaf Selector of given Leaf Profile
+    - Name of Node Block range to be added to Leaf Selector of given Leaf Profile.
     aliases: [ leaf_node_blk_name, node_blk_name ]
   leaf_node_blk_description:
     description:
     - The description to assign to the C(leaf_node_blk)
   from:
     description:
-    - Start of Node Block Range
+    - Start of Node Block range.
+    type: int
     aliases: [ node_blk_range_from, from_range, range_from ]
   to:
     description:
-    - Start of Node Block Range
+    - Start of Node Block range.
+    type: int
     aliases: [ node_blk_range_to, to_range, range_to ]
   policy_group:
     description:
-    - Name of the Policy Group to be added to Leaf Selector of given Leaf Profile
+    - Name of the Policy Group to be added to Leaf Selector of given Leaf Profile.
     aliases: [ name, policy_group_name ]
   state:
     description:
@@ -227,6 +229,7 @@ def main():
         'leaf': dict(type='str', aliases=['name', 'leaf_name', 'leaf_profile_leaf_name', 'leaf_selector_name']),  # Not required for querying all objects
         'leaf_node_blk': dict(type='str', aliases=['leaf_node_blk_name', 'node_blk_name']),
         'leaf_node_blk_description': dict(type='str'),
+        # NOTE: Keyword 'from' is a reserved word in python, so we need it as a string
         'from': dict(type='int', aliases=['node_blk_range_from', 'from_range', 'range_from']),
         'to': dict(type='int', aliases=['node_blk_range_to', 'to_range', 'range_to']),
         'policy_group': dict(type='str', aliases=['policy_group_name']),

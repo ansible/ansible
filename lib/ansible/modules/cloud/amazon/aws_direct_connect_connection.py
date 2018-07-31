@@ -94,56 +94,88 @@ EXAMPLES = """
 
 RETURN = """
 connection:
-  description:
-    - The attributes of the Direct Connect connection
+  description: The attributes of the direct connect connection.
   type: complex
   returned: I(state=present)
   contains:
     aws_device:
       description: The endpoint which the physical connection terminates on.
+      returned: when the requested state is no longer 'requested'
+      type: string
+      sample: EqDC2-12pmo7hemtz1z
     bandwidth:
       description: The bandwidth of the connection.
+      returned: always
+      type: string
+      sample: 1Gbps
     connection_id:
-      description: ID of the Direct Connect connection.
+      description: The ID of the connection.
+      returned: always
+      type: string
+      sample: dxcon-ffy9ywed
+    connection_name:
+      description: The name of the connection.
+      returned: always
+      type: string
+      sample: ansible-test-connection
     connection_state:
       description: The state of the connection.
+      returned: always
+      type: string
+      sample: pending
+    loa_issue_time:
+      description: The issue time of the connection's Letter of Authorization - Connecting Facility Assignment.
+      returned: when the LOA-CFA has been issued (the connection state will no longer be 'requested')
+      type: string
+      sample: '2018-03-20T17:36:26-04:00'
     location:
-      description: Where the connection is located.
+      description: The location of the connection.
+      returned: always
+      type: string
+      sample: EqDC2
     owner_account:
-      description: The owner of the connection.
+      description: The account that owns the direct connect connection.
+      returned: always
+      type: string
+      sample: '123456789012'
     region:
       description: The region in which the connection exists.
+      returned: always
+      type: string
+      sample: us-east-1
 """
 
 import traceback
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (camel_dict_to_snake_dict, ec2_argument_spec, HAS_BOTO3,
-                                      get_aws_connection_info, boto3_conn, AWSRetry)
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import (camel_dict_to_snake_dict, AWSRetry)
 from ansible.module_utils.aws.direct_connect import (DirectConnectError, delete_connection,
                                                      associate_connection_and_lag, disassociate_connection_and_lag)
 
 try:
-    import botocore
+    from botocore.exceptions import BotoCoreError, ClientError
 except:
     pass
-    # handled by imported HAS_BOTO3
+    # handled by imported AnsibleAWSModule
 
-retry_params = {"tries": 10, "delay": 5, "backoff": 1.2}
+retry_params = {"tries": 10, "delay": 5, "backoff": 1.2, "catch_extra_error_codes": ["DirectConnectClientException"]}
 
 
 def connection_status(client, connection_id):
     return connection_exists(client, connection_id=connection_id, connection_name=None, verify=False)
 
 
-@AWSRetry.backoff(**retry_params)
 def connection_exists(client, connection_id=None, connection_name=None, verify=True):
+    params = {}
+    if connection_id:
+        params['connectionId'] = connection_id
     try:
+        response = AWSRetry.backoff(**retry_params)(client.describe_connections)(**params)
+    except (BotoCoreError, ClientError) as e:
         if connection_id:
-            response = client.describe_connections(connectionId=connection_id)
+            msg = "Failed to describe DirectConnect ID {0}".format(connection_id)
         else:
-            response = client.describe_connections()
-    except botocore.exceptions.ClientError as e:
-        raise DirectConnectError(msg="Failed to describe DirectConnect ID {0}".format(connection_id),
+            msg = "Failed to describe DirectConnect connections"
+        raise DirectConnectError(msg=msg,
                                  last_traceback=traceback.format_exc(),
                                  exception=e)
 
@@ -173,21 +205,20 @@ def connection_exists(client, connection_id=None, connection_name=None, verify=T
     return {'connection': {}}
 
 
-@AWSRetry.backoff(**retry_params)
 def create_connection(client, location, bandwidth, name, lag_id):
     if not name:
         raise DirectConnectError(msg="Failed to create a Direct Connect connection: name required.")
+    params = {
+        'location': location,
+        'bandwidth': bandwidth,
+        'connectionName': name,
+    }
+    if lag_id:
+        params['lagId'] = lag_id
+
     try:
-        if lag_id:
-            connection = client.create_connection(location=location,
-                                                  bandwidth=bandwidth,
-                                                  connectionName=name,
-                                                  lagId=lag_id)
-        else:
-            connection = client.create_connection(location=location,
-                                                  bandwidth=bandwidth,
-                                                  connectionName=name)
-    except botocore.exceptions.ClientError as e:
+        connection = AWSRetry.backoff(**retry_params)(client.create_connection)(**params)
+    except (BotoCoreError, ClientError) as e:
         raise DirectConnectError(msg="Failed to create DirectConnect connection {0}".format(name),
                                  last_traceback=traceback.format_exc(),
                                  exception=e)
@@ -247,8 +278,7 @@ def ensure_absent(client, connection_id):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         state=dict(required=True, choices=['present', 'absent']),
         name=dict(),
         location=dict(),
@@ -256,31 +286,26 @@ def main():
         link_aggregation_group=dict(),
         connection_id=dict(),
         forced_update=dict(type='bool', default=False)
-    ))
+    )
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                           required_one_of=[('connection_id', 'name')],
-                           required_if=[('state', 'present', ('location', 'bandwidth'))])
+    module = AnsibleAWSModule(
+        argument_spec=argument_spec,
+        required_one_of=[('connection_id', 'name')],
+        required_if=[('state', 'present', ('location', 'bandwidth'))]
+    )
 
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
-
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-    if not region:
-        module.fail_json(msg="Either region or AWS_REGION or EC2_REGION environment variable or boto config aws_region or ec2_region must be set.")
-
-    connection = boto3_conn(module, conn_type='client',
-                            resource='directconnect', region=region,
-                            endpoint=ec2_url, **aws_connect_kwargs)
-
-    connection_id = connection_exists(connection,
-                                      connection_id=module.params.get('connection_id'),
-                                      connection_name=module.params.get('name'))
-    if not connection_id and module.params.get('connection_id'):
-        module.fail_json(msg="The Direct Connect connection {0} does not exist.".format(module.params.get('connection_id')))
+    connection = module.client('directconnect')
 
     state = module.params.get('state')
     try:
+        connection_id = connection_exists(
+            connection,
+            connection_id=module.params.get('connection_id'),
+            connection_name=module.params.get('name')
+        )
+        if not connection_id and module.params.get('connection_id'):
+            module.fail_json(msg="The Direct Connect connection {0} does not exist.".format(module.params.get('connection_id')))
+
         if state == 'present':
             changed, connection_id = ensure_present(connection,
                                                     connection_id=connection_id,

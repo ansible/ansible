@@ -22,7 +22,9 @@ import os
 
 from ansible import constants as C
 from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound, AnsibleAssertionError
+from ansible.module_utils._text import to_native
 from ansible.module_utils.six import string_types
+from ansible.parsing.mod_args import ModuleArgsParser
 
 try:
     from __main__ import display
@@ -118,7 +120,18 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
             )
             task_list.append(t)
         else:
-            if 'include' in task_ds or 'import_tasks' in task_ds or 'include_tasks' in task_ds:
+            args_parser = ModuleArgsParser(task_ds)
+            try:
+                (action, args, delegate_to) = args_parser.parse()
+            except AnsibleParserError as e:
+                # if the raises exception was created with obj=ds args, then it includes the detail
+                # so we dont need to add it so we can just re raise.
+                if e._obj:
+                    raise
+                # But if it wasn't, we can add the yaml object now to get more detail
+                raise AnsibleParserError(to_native(e), obj=task_ds, orig_exc=e)
+
+            if action in ('include', 'import_tasks', 'include_tasks'):
 
                 if use_handlers:
                     include_class = HandlerTaskInclude
@@ -140,9 +153,9 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 # check to see if this include is dynamic or static:
                 # 1. the user has set the 'static' option to false or true
                 # 2. one of the appropriate config options was set
-                if 'include_tasks' in task_ds:
+                if action == 'include_tasks':
                     is_static = False
-                elif 'import_tasks' in task_ds:
+                elif action == 'import_tasks':
                     is_static = True
                 elif t.static is not None:
                     display.deprecated("The use of 'static' has been deprecated. "
@@ -155,7 +168,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
 
                 if is_static:
                     if t.loop is not None:
-                        if 'import_tasks' in task_ds:
+                        if action == 'import_tasks':
                             raise AnsibleParserError("You cannot use loops on 'import_tasks' statements. You should use 'include_tasks' instead.", obj=task_ds)
                         else:
                             raise AnsibleParserError("You cannot use 'static' on an include with a loop", obj=task_ds)
@@ -176,7 +189,19 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         if not isinstance(parent_include, TaskInclude):
                             parent_include = parent_include._parent
                             continue
-                        parent_include_dir = os.path.dirname(templar.template(parent_include.args.get('_raw_params')))
+                        try:
+                            parent_include_dir = os.path.dirname(templar.template(parent_include.args.get('_raw_params')))
+                        except AnsibleUndefinedVariable as e:
+                            if not parent_include.statically_loaded:
+                                raise AnsibleParserError(
+                                    "Error when evaluating variable in dynamic parent include path: %s. "
+                                    "When using static imports, the parent dynamic include cannot utilize host facts "
+                                    "or variables from inventory" % parent_include.args.get('_raw_params'),
+                                    obj=task_ds,
+                                    suppress_extended_error=True,
+                                    orig_exc=e
+                                )
+                            raise
                         if cumulative_path is None:
                             cumulative_path = parent_include_dir
                         elif not os.path.isabs(cumulative_path):
@@ -199,9 +224,9 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                             include_target = templar.template(t.args['_raw_params'])
                         except AnsibleUndefinedVariable as e:
                             raise AnsibleParserError(
-                                "Error when evaluating variable in include name: %s.\n\n"
-                                "When using static includes, ensure that any variables used in their names are defined in vars/vars_files\n"
-                                "or extra-vars passed in from the command line. Static includes cannot use variables from inventory\n"
+                                "Error when evaluating variable in import path: %s.\n\n"
+                                "When using static imports, ensure that any variables used in their names are defined in vars/vars_files\n"
+                                "or extra-vars passed in from the command line. Static imports cannot use variables from facts or inventory\n"
                                 "sources like group or host vars." % t.args['_raw_params'],
                                 obj=task_ds,
                                 suppress_extended_error=True,
@@ -262,7 +287,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         tags = tags.split(',')
 
                     if len(tags) > 0:
-                        if 'include_tasks' in task_ds or 'import_tasks' in task_ds:
+                        if action in ('include_tasks', 'import_tasks'):
                             raise AnsibleParserError('You cannot specify "tags" inline to the task, it is a task keyword')
                         if len(ti_copy.tags) > 0:
                             raise AnsibleParserError(
@@ -292,7 +317,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     t.is_static = False
                     task_list.append(t)
 
-            elif 'include_role' in task_ds or 'import_role' in task_ds:
+            elif action in ('include_role', 'import_role'):
                 ir = IncludeRole.load(
                     task_ds,
                     block=block,
@@ -305,7 +330,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 #   1. the user has set the 'static' option to false or true
                 #   2. one of the appropriate config options was set
                 is_static = False
-                if 'import_role' in task_ds:
+                if action == 'import_role':
                     is_static = True
 
                 elif ir.static is not None:
@@ -315,7 +340,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
 
                 if is_static:
                     if ir.loop is not None:
-                        if 'import_role' in task_ds:
+                        if action == 'import_role':
                             raise AnsibleParserError("You cannot use loops on 'import_role' statements. You should use 'include_role' instead.", obj=task_ds)
                         else:
                             raise AnsibleParserError("You cannot use 'static' on an include_role with a loop", obj=task_ds)

@@ -18,7 +18,7 @@ module: bigip_asm_policy
 short_description: Manage BIG-IP ASM policies
 description:
    - Manage BIG-IP ASM policies.
-version_added: "2.5"
+version_added: 2.5
 options:
   active:
     description:
@@ -42,6 +42,7 @@ options:
     choices:
       - present
       - absent
+    default: present
   file:
     description:
       - Full path to a policy file to be imported into the BIG-IP ASM.
@@ -215,14 +216,11 @@ name:
 import os
 import time
 
-from distutils.version import LooseVersion
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
-
-HAS_DEVEL_IMPORTS = False
+from distutils.version import LooseVersion
 
 try:
-    # Sideband repository used for dev
     from library.module_utils.network.f5.bigip import HAS_F5SDK
     from library.module_utils.network.f5.bigip import F5Client
     from library.module_utils.network.f5.common import F5ModuleError
@@ -234,9 +232,7 @@ try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    # Upstream Ansible
     from ansible.module_utils.network.f5.bigip import HAS_F5SDK
     from ansible.module_utils.network.f5.bigip import F5Client
     from ansible.module_utils.network.f5.common import F5ModuleError

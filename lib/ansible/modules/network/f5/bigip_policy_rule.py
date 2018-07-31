@@ -30,12 +30,12 @@ options:
         a C(type) be specified.
       - These conditions can be specified in any order. Despite them being a list, the
         BIG-IP does not treat their order as anything special.
-      - Available C(type) values are C(forward).
     suboptions:
       type:
         description:
           - The action type. This value controls what below options are required.
-          - When C(type) is C(forward), will associate a given C(pool) with this rule.
+          - When C(type) is C(forward), will associate a given C(pool), or C(virtual)
+            with this rule.
           - When C(type) is C(enable), will associate a given C(asm_policy) with
             this rule.
           - When C(type) is C(ignore), will remove all existing actions from this
@@ -45,6 +45,10 @@ options:
       pool:
         description:
           - Pool that you want to forward traffic to.
+          - This parameter is only valid with the C(forward) type.
+      virtual:
+        description:
+          - Virtual Server that you want to forward traffic to.
           - This parameter is only valid with the C(forward) type.
       asm_policy:
         description:
@@ -179,7 +183,7 @@ conditions:
   type: complex
   contains:
     type:
-      description: The condition type
+      description: The condition type.
       returned: changed
       type: string
       sample: http_uri
@@ -393,11 +397,14 @@ class ModuleParameters(Parameters):
         :return:
         """
         action['type'] = 'forward'
-        if 'pool' not in item:
+        if not any(x for x in ['pool', 'virtual'] if x in item):
             raise F5ModuleError(
-                "A 'pool' must be specified when the 'forward' type is used."
+                "A 'pool' or 'virtual' must be specified when the 'forward' type is used."
             )
-        action['pool'] = fq_name(self.partition, item['pool'])
+        if item.get('pool', None):
+            action['pool'] = fq_name(self.partition, item['pool'])
+        elif item.get('virtual', None):
+            action['virtual'] = fq_name(self.partition, item['virtual'])
 
     def _handle_enable_action(self, action, item):
         """Handle the nuances of the enable type
@@ -811,10 +818,11 @@ class ArgumentSpec(object):
                         required=True
                     ),
                     pool=dict(),
-                    asm_policy=dict()
+                    asm_policy=dict(),
+                    virtual=dict()
                 ),
                 mutually_exclusive=[
-                    ['pool', 'asm_policy']
+                    ['pool', 'asm_policy', 'virtual']
                 ]
             ),
             conditions=dict(

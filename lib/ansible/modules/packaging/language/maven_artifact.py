@@ -177,7 +177,7 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.urls import fetch_url
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_native, to_text
 
 
 def split_pre_existing_dir(dirname):
@@ -304,8 +304,7 @@ class MavenDownloader:
             path = "/%s/%s" % (artifact.path(), self.metadata_file_name)
             content = self._getContent(self.base + path, "Failed to retrieve the maven metadata file: " + path)
             xml = etree.fromstring(content)
-            timestamp = xml.xpath("/metadata/versioning/snapshot/timestamp/text()")[0]
-            buildNumber = xml.xpath("/metadata/versioning/snapshot/buildNumber/text()")[0]
+
             for snapshotArtifact in xml.xpath("/metadata/versioning/snapshotVersions/snapshotVersion"):
                 classifier = snapshotArtifact.xpath("classifier/text()")
                 artifact_classifier = classifier[0] if classifier else ''
@@ -313,7 +312,11 @@ class MavenDownloader:
                 artifact_extension = extension[0] if extension else ''
                 if artifact_classifier == artifact.classifier and artifact_extension == artifact.extension:
                     return self._uri_for_artifact(artifact, snapshotArtifact.xpath("value/text()")[0])
-            return self._uri_for_artifact(artifact, artifact.version.replace("SNAPSHOT", timestamp + "-" + buildNumber))
+            timestamp_xmlpath = xml.xpath("/metadata/versioning/snapshot/timestamp/text()")
+            if timestamp_xmlpath:
+                timestamp = timestamp_xmlpath[0]
+                build_number = xml.xpath("/metadata/versioning/snapshot/buildNumber/text()")[0]
+                return self._uri_for_artifact(artifact, artifact.version.replace("SNAPSHOT", timestamp + "-" + build_number))
 
         return self._uri_for_artifact(artifact, artifact.version)
 
@@ -384,10 +387,12 @@ class MavenDownloader:
             response = self._request(url, "Failed to download artifact " + str(artifact))
             with io.open(filename, 'wb') as f:
                 self._write_chunks(response, f, report_hook=self.chunk_report)
-        if verify_download and not self.verify_md5(filename, url):
-            # if verify_change was set, the previous file would be deleted
-            os.remove(filename)
-            return "Checksum verification failed"
+        if verify_download:
+            invalid_md5 = self.is_invalid_md5(filename, url)
+            if invalid_md5:
+                # if verify_change was set, the previous file would be deleted
+                os.remove(filename)
+                return invalid_md5
         return None
 
     def chunk_report(self, bytes_so_far, chunk_size, total_size):
@@ -416,21 +421,30 @@ class MavenDownloader:
 
         return bytes_so_far
 
-    def verify_md5(self, file, remote_url):
+    def is_invalid_md5(self, file, remote_url):
         if os.path.exists(file):
             local_md5 = self._local_md5(file)
             if self.local:
                 parsed_url = urlparse(remote_url)
                 remote_md5 = self._local_md5(parsed_url.path)
             else:
-                remote_md5 = self._getContent(remote_url + '.md5', "Failed to retrieve MD5", False)
-            return local_md5 == remote_md5
-        return False
+                try:
+                    remote_md5 = to_text(self._getContent(remote_url + '.md5', "Failed to retrieve MD5", False), errors='strict')
+                except UnicodeError as e:
+                    return "Cannot retrieve a valid md5 from %s: %s" % (remote_url, to_native(e))
+                if(not remote_md5):
+                    return "Cannot find md5 from " + remote_url
+            if local_md5 == remote_md5:
+                return None
+            else:
+                return "Checksum does not match: we computed " + local_md5 + "but the repository states " + remote_md5
+
+        return "Path does not exist: " + file
 
     def _local_md5(self, file):
         md5 = hashlib.md5()
         with io.open(file, 'rb') as f:
-            for chunk in iter(lambda: f.read(8192), ''):
+            for chunk in iter(lambda: f.read(8192), b''):
                 md5.update(chunk)
         return md5.hexdigest()
 
@@ -519,7 +533,7 @@ def main():
             dest = posixpath.join(dest, "%s-%s.%s" % (artifact_id, version_part, extension))
         b_dest = to_bytes(dest, errors='surrogate_or_strict')
 
-    if os.path.lexists(b_dest) and ((not verify_change) or downloader.verify_md5(dest, downloader.find_uri_for_artifact(artifact))):
+    if os.path.lexists(b_dest) and ((not verify_change) or not downloader.is_invalid_md5(dest, downloader.find_uri_for_artifact(artifact))):
         prev_state = "present"
 
     if prev_state == "absent":

@@ -68,6 +68,17 @@ options:
     admin_password:
         description:
             - The password of the administrator login.
+    create_mode:
+        description:
+            - Create mode of SQL Server
+        default: Default
+    state:
+        description:
+            - Assert the state of the MySQL Server. Use 'present' to create or update a server and 'absent' to delete it.
+        default: present
+        choices:
+            - absent
+            - present
 
 extends_documentation_fragment:
     - azure
@@ -83,12 +94,13 @@ EXAMPLES = '''
       resource_group: TestGroup
       name: testserver
       sku:
-        name: MYSQLB50
-        tier: Basic
-        capacity: 100
+        name: GP_Gen4_2
+        tier: GeneralPurpose
+        capacity: 2
       location: eastus
       storage_mb: 1024
       enforce_ssl: True
+      version: 5.6
       admin_username: cloudsa
       admin_password: password
 '''
@@ -124,9 +136,9 @@ import time
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
-    from msrestazure.azure_exceptions import CloudError
-    from msrestazure.azure_operation import AzureOperationPoller
     from azure.mgmt.rdbms.mysql import MySQLManagementClient
+    from msrestazure.azure_exceptions import CloudError
+    from msrest.polling import LROPoller
     from msrest.serialization import Model
 except ImportError:
     # This is handled in azure_rm_common
@@ -303,10 +315,15 @@ class AzureRMServers(AzureRMModuleBase):
         self.log("Creating / Updating the MySQL Server instance {0}".format(self.name))
 
         try:
-            response = self.mgmt_client.servers.create_or_update(resource_group_name=self.resource_group,
-                                                                 server_name=self.name,
-                                                                 parameters=self.parameters)
-            if isinstance(response, AzureOperationPoller):
+            if (self.to_do == Actions.Create):
+                response = self.mgmt_client.servers.create(resource_group_name=self.resource_group,
+                                                           server_name=self.name,
+                                                           parameters=self.parameters)
+            else:
+                response = self.mgmt_client.servers.update(resource_group_name=self.resource_group,
+                                                           server_name=self.name,
+                                                           parameters=self.parameters)
+            if isinstance(response, LROPoller):
                 response = self.get_poller_result(response)
 
         except CloudError as exc:
