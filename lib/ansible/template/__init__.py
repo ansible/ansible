@@ -86,7 +86,7 @@ def generate_ansible_template_vars(path):
     b_path = to_bytes(path)
     try:
         template_uid = pwd.getpwuid(os.stat(b_path).st_uid).pw_name
-    except:
+    except (KeyError, TypeError):
         template_uid = os.stat(b_path).st_uid
 
     temp_vars = {}
