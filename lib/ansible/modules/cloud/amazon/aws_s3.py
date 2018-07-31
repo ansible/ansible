@@ -759,7 +759,7 @@ def main():
     if not s3_url and 'S3_URL' in os.environ:
         s3_url = os.environ['S3_URL']
 
-    if dualstack and s3_url:
+    if dualstack and 'amazonaws.com' not in s3_url:
         module.fail_json(msg='dualstack only applies to AWS S3')
 
     if dualstack and not module.botocore_at_least('1.4.45'):
