@@ -7,6 +7,7 @@ __metaclass__ = type
 import json
 import time
 
+from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.utils import to_list
@@ -33,7 +34,7 @@ class HttpApi(HttpApiBase):
 
         try:
             response, response_data = self.connection.send('/command-api', request, headers=headers, method='POST')
-        except HTTPError:
+        except HTTPError as exc:
             raise AnsibleConnectionFailure('Could not connect to {0}: {1}'.format(
                 self.connection._url + '/command_api', exc.reason
             ))
