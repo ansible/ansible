@@ -13,7 +13,7 @@ the change does.-->
  - Docs Pull Request
 
 ##### COMPONENT NAME
-<!--- Name of the module, plugin, module or task -->
+<!--- Name of the module, plugin, task or feature -->
 
 ##### ANSIBLE VERSION
 <!--- Paste verbatim output from "ansible --version" between quotes below -->
