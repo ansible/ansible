@@ -28,16 +28,17 @@ description:
   - See https://github.com/kevinsteves/pan-python/blob/master/doc/pan.xapi.rst for details
   - Runs a 'set' command by default
   - This should support _all_ commands that your PAN-OS device accepts vi it's cli
-  - cli commands are found as:
-  - - Once logged in issue: 'debug cli on'
-    - Enter configuration mode by issuing: 'configure'
-    - Enter your set (or other) command, for example: 'set deviceconfig system timezone Australia/Melbourne'
-    - >
-      returns "<request cmd="set"
-      obj="/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system"
-      cookie=XXXX><timezone>Australia/Melbourne</timezone></request>
-    - The 'xpath' is  "/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system"
-    - The 'element' is "<timezone>Australia/Melbourne</timezone>"
+  - cli commands are found as
+  - Once logged in issue 'debug cli on'
+  - Enter configuration mode by issuing 'configure'
+  - Enter your set (or other) command, for example 'set deviceconfig system timezone Australia/Melbourne'
+  - returns
+  - >
+    "<request cmd="set"
+    obj="/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system"
+    cookie=XXXX><timezone>Australia/Melbourne</timezone></request>
+  - The 'xpath' is  "/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system"
+  - The 'element' is "<timezone>Australia/Melbourne</timezone>"
 author: "Jasper Mackenzie"
 version_added: "2.7"
 requirements:
@@ -97,7 +98,7 @@ RETURN = '''
 # Default return values
 '''
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
