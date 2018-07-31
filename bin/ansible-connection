@@ -23,7 +23,7 @@ import json
 from contextlib import contextmanager
 
 from ansible import constants as C
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves import cPickle, StringIO
 from ansible.module_utils.connection import Connection, ConnectionError, send_data, recv_data
