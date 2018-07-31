@@ -12,7 +12,8 @@ except ImportError:
     pass
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import (HAS_BOTO3, camel_dict_to_snake_dict,
+                                      AWSRetry)
 
 
 ANSIBLE_METADATA = {"metadata_version": "1.1",
@@ -22,54 +23,26 @@ ANSIBLE_METADATA = {"metadata_version": "1.1",
 
 DOCUMENTATION = """
 ---
-module: elbv2_instance
-short_description: De-registers or registers an EC2 instance from all ELBv2
-                   target groups to which it is associated
+module: elb_target_facts
+short_description: Gathers which target groups a target is associated with
 description:
-  - This module deregisters or reregisters an AWS EC2 instance from the target
-    groups that it belongs to.
-  - Returns fact "ec2_tgs" which is a list of dicts representing target groups
-    formerly attached to the instance if C(state=absent) is passed as an
-    argument. This will also work in check mode, returning the list of target
-    groups that would have been operated on.
-  - Will be marked changed when called if registration or deregistration
-    occurs on any target group.
-  - Will ignore target groups that are not associated with any load balancers.
+  - This module will search through every target group in a region to find
+    which ones have registered a given instance ID or IP
 
 version_added: "2.7"
 author: "Yaakov Kuperman (@yaakov-github)"
 options:
-  state:
-    description:
-      - Whether the instance should or should not be in any target groups.
-    required: true
-    choices:
-        - present
-        - absent
   instance_id:
     description:
-      - Instance ID to be registered or deregistered.
+      - What instance ID to get facts for.
+    type: str
     required: true
-  ec2_tgs:
+  get_unused_target_groups:
     description:
-      - List of dicts representing ec2 target groups to be registered.
-        The ec2_tgs fact should be used if there was a previous de-register -
-        which is the intended usage for this module.
-      - Required when C(state=present)
-      - This variable is not valid when C(state=absent)
-  wait:
-    description:
-      - Wait for instance registration or deregistration to complete
-        successfully before returning. This will wait the I(wait_timeout)
-        duration for each target group, but will fail if a single target
-        fails to register or deregister.
+      - Whether or not to get target groups not used by any load balancers.
     type: bool
-    default: yes
-  wait_timeout:
-    description:
-      - Number of seconds to wait registration or deregistration to complete.
-        Ignored when C(wait=no).
-    default: 60
+    default: true
+
 requirements:
     - boto3
     - botocore
@@ -79,52 +52,86 @@ extends_documentation_fragment:
 """
 
 EXAMPLES = """
-# basic pre_task and post_task example
-pre_tasks:
-  - name: Gathering ec2 facts
-    action: ec2_facts
-  - name: Deregister instance
-    elbv2_instance:
-      instance_id: "{{ ansible_ec2_instance_id }}"
-      region: "{{ ansible_ec2_placement_region }}"
-      state: absent
-    delegate_to: localhost
-roles:
-  - myrole
-post_tasks:
-  - name: Reregister instance
-    elbv2_instance:
-      instance_id: "{{ ansible_ec2_instance_id }}"
-      region: "{{ ansible_ec2_placement_region }}"
-      ec2_tgs: "{{ ec2_tgs }}"
-      state: present
-    delegate_to: localhost
+# practical use case - dynamically deregistering and reregistering nodes
 
-# registration with custom target groups
-- name: register instance using custom tgs
-  elbv2_instance:
-    instance_id: "{{ ansible_ec2_instance_id }}"
-    region: "{{ ansible_ec2_placement_region }}"
-    ec2_tgs:
-      - arn: "some_arn"
-        targets:
-          - port: 8081
-            target_id: "{{ ansible_ec2_instance_id }}"
-        tg_type: "instance"
-      - arn: "some_arn_1"
-        targets:
-          - port: 8080
-            target_id: "{{ ansible_ec2_instance_id }}"
-        tg_type: "instance"
-      - arn: "some_arn_2"
-        targets:
-          - port: 22
-            target_id: "{{ ansible_ec2_instance_identity_document_privateip }}"
-        tg_type: "ip"
-  delegate_to: localhost
-  wait: true
-  wait_timeout: 300
-  state: present
+pre_tasks:
+  - name: Get EC2 Metadata
+    action: ec2_metadata_facts
+
+  - name: Get initial list of target groups
+    delegate_to: localhost
+    elb_target_facts:
+      instance_id: "{{ ansible_ec2_instance_id }}"
+      region: "{{ ansible_ec2_placement_region }}"
+
+  - name: save fact for later
+    set_fact:
+      original_tgs: "{{ ec2_tgs }}"
+
+  - name: Deregister instance from all target groups
+    delegate_to: localhost
+    elb_target:
+        target_group_arn: "{{ item.0.target_group_arn }}"
+        target_port: "{{ item.1.target_port }}"
+        target_az: "{{ item.1.target_az }}"
+        target_id: "{{ item.1.target_id }}"
+        state: absent
+        target_status: "draining"
+        region: "{{ ansible_ec2_placement_region }}"
+    with_subelements:
+      - "{{ original_tgs }}"
+      - "targets"
+
+    # This avoids having to wait for 'elb_target' to serially deregister each
+    # target group.  An alternative would be to run all of the 'elb_target'
+    # tasks async and wait for them to finish.
+
+    - name: wait for all targets to deregister simultaneously
+      delegate_to: localhost
+      msys_elb_target_facts:
+        get_unused_target_groups: false
+        instance_id: "{{ ansible_ec2_instance_id }}"
+        region: "{{ ansible_ec2_placement_region }}"
+      until: (ec2_tgs | length) == 0
+      retries: 60
+      delay: 10
+
+roles:
+  - somerole
+
+post_tasks:
+    - name: reregister in elbv2s
+      elb_target:
+        region: "{{ ansible_ec2_placement_region }}"
+        target_group_arn: "{{ item.0.target_group_arn }}"
+        target_port: "{{ item.1.target_port }}"
+        target_az: "{{ item.1.target_az }}"
+        target_id: "{{ item.1.target_id }}"
+        state: present
+        target_status: "initial"
+      with_subelements:
+        - "{{ original_tgs }}"
+        - "targets"
+
+    # wait until all groups associated with this instance are 'healthy' or
+    # 'unused'
+    - name: wait for registration
+      elb_target_facts:
+        get_unused_target_groups: false
+        instance_id: "{{ ansible_ec2_instance_id }}"
+        region: "{{ ansible_ec2_placement_region }}"
+      until: >
+                (ec2_tgs |
+                 map(attribute='targets') |
+                 flatten |
+                 map(attribute='target_health') |
+                 rejectattr('state', 'equalto', 'healthy') |
+                 rejectattr('state', 'equalto', 'unused') |
+                 list |
+                 length) == 0
+      retries: 61
+      delay: 10
+      delegate_to: localhost
 
 # using the ec2_tgs fact to generate AWS CLI commands to reregister the
 # instance - useful in case the playbook fails mid-run and manual
@@ -133,23 +140,23 @@ post_tasks:
   debug:
     msg: >
            aws --region {{ansible_ec2_placement_region}} elbv2
-           register-targets --target-group-arn {{item.arn}}
-           --targets{%for target in item.targets %}
+           register-targets --target-group-arn {{item.target_group_arn}}
+           --targets{%for target in item.targets%}
            Id={{target.target_id}},
-           Port={{target.port}}{%if target.az%},AvailabilityZone={{target.az}}
+           Port={{target.target_port}}{%if target.target_az%},AvailabilityZone={{target.target_az}}
            {%endif%}
            {%endfor%}
   with_items: "{{ec2_tgs}}"
+
 """
 
 RETURN = """
 ec2_tgs:
-    description: a list of target groups to which the instance was
-                 registered or deregistered
+    description: a list of target groups to which the instance is registered to
     returned: always
     type: complex
     contains:
-        arn:
+        target_group_arn:
             description: The ARN of the target group
             type: string
             returned: always
@@ -187,6 +194,27 @@ ec2_tgs:
                     returned: when an AZ is associated with this instance
                     sample:
                         - us-west-2a
+                target_health:
+                    description: the target health description
+                    returned: always
+                    type: complex
+                    contains:
+                        description:
+                            description: description of target health
+                            returned: when 'state' is not 'healthy'
+                            sample:
+                                - "Target desregistration is in progress"
+                        reason:
+                            description: reason code for target health, see U(https://boto3.readthedocs.io/en/latest/reference/services/elbv2.html#ElasticLoadBalancingv2.Client.describe_target_health) for possible values
+                            returned: when 'state' is not 'healthy'
+                            sample:
+                                - "Target.Deregistration in progress"
+                        state:
+                            description: health state, see U(https://boto3.readthedocs.io/en/latest/reference/services/elbv2.html#ElasticLoadBalancingv2.Client.describe_target_health) for possible values
+                            returned: always
+                            sample:
+                                - "healthy"
+                                - "draining"
 """
 
 
@@ -243,7 +271,10 @@ class TargetFactsGatherer:
         """Fetch all IPs associated with this instance so that we can determine
            whether or not an instance is in an IP-based target group"""
         try:
-            ec2 = self.module.client("ec2")
+            ec2 = self.module.client(
+                "ec2",
+                retry_decorator=AWSRetry.jittered_backoff(retries=10)
+                )
         except (ClientError, BotoCoreError) as e:
             self.module.fail_json_aws(e,
                                       msg="Couldn't connect to ec2 during" +
@@ -253,7 +284,8 @@ class TargetFactsGatherer:
         try:
             # get ahold of the instance in the API
             reservations = ec2.describe_instances(
-                InstanceIds=[self.instance_id]
+                InstanceIds=[self.instance_id],
+                aws_retry=True
             )["Reservations"]
         except (BotoCoreError, ClientError) as e:
             # typically this will happen if the instance doesn't exist
@@ -287,7 +319,10 @@ class TargetFactsGatherer:
         self.instance_ips = self._get_instance_ips()
 
         try:
-            elbv2 = self.module.client("elbv2")
+            elbv2 = self.module.client(
+                "elbv2",
+                retry_decorator=AWSRetry.jittered_backoff(retries=10)
+            )
         except (BotoCoreError, ClientError) as e:
             self.module.fail_json_aws(e,
                                       msg="Could not connect to elbv2 when" +
@@ -295,7 +330,7 @@ class TargetFactsGatherer:
                                       )
         # TODO paginator
         try:
-            tg_response = elbv2.describe_target_groups()
+            tg_response = elbv2.describe_target_groups(aws_retry=True)
         except (BotoCoreError, ClientError) as e:
             self.module.fail_json_aws(e,
                                       msg="Could not describe target" +
@@ -321,7 +356,8 @@ class TargetFactsGatherer:
             if "NextMarker" in tg_response:
                 try:
                     tg_response = elbv2.describe_target_groups(
-                        Marker=tg_response["NextMarker"]
+                        Marker=tg_response["NextMarker"],
+                        aws_retry=True
                     )
                 except (BotoCoreError, ClientError) as e:
                     self.module.fail_json_aws(e,
@@ -339,7 +375,8 @@ class TargetFactsGatherer:
             try:
                 # get the list of targets for that target group
                 response = elbv2.describe_target_health(
-                              TargetGroupArn=tg.target_group_arn
+                              TargetGroupArn=tg.target_group_arn,
+                              aws_retry=True
                             )
             except (BotoCoreError, ClientError) as e:
                 self.module.fail_json_aws(e,
