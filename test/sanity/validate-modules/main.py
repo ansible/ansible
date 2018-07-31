@@ -43,7 +43,7 @@ from ansible.utils.plugin_docs import BLACKLIST, add_fragments, get_docstring
 
 from module_args import AnsibleModuleImportError, get_argument_spec
 
-from schema import doc_schema, metadata_1_1_schema, return_schema
+from schema import ansible_module_kwargs_schema, doc_schema, metadata_1_1_schema, return_schema
 
 from utils import CaptureStd, NoArgsAnsibleModule, compare_unordered_lists, is_empty, parse_yaml
 from voluptuous.humanize import humanize_error
@@ -1002,19 +1002,7 @@ class ModuleValidator(Validator):
                 msg='version_added should be %s. Currently %s' % (should_be, version_added)
             )
 
-    def _validate_argument_spec(self, docs):
-        if not self.analyze_arg_spec:
-            return
-
-        if docs is None:
-            docs = {}
-
-        try:
-            add_fragments(docs, self.object_path, fragment_loader=fragment_loader)
-        except Exception:
-            # Cannot merge fragments
-            return
-
+    def _validate_ansible_module_call(self, docs):
         try:
             spec, args, kwargs = get_argument_spec(self.path)
         except AnsibleModuleImportError as e:
@@ -1027,6 +1015,23 @@ class ModuleValidator(Validator):
                 path=self.object_path,
                 tracebk=traceback.format_exc()
             )
+            return
+
+        self._validate_docs_schema(kwargs, ansible_module_kwargs_schema, 'AnsibleModule', 332)
+
+        self._validate_argument_spec(docs, spec, kwargs)
+
+    def _validate_argument_spec(self, docs, spec, kwargs):
+        if not self.analyze_arg_spec:
+            return
+
+        if docs is None:
+            docs = {}
+
+        try:
+            add_fragments(docs, self.object_path, fragment_loader=fragment_loader)
+        except Exception:
+            # Cannot merge fragments
             return
 
         # Use this to access type checkers later
@@ -1339,7 +1344,7 @@ class ModuleValidator(Validator):
                 # FIXME if +2 then file should be empty? - maybe add this only in the future
 
         if self._python_module() and not self._just_docs() and not end_of_deprecation_should_be_docs_only:
-            self._validate_argument_spec(docs)
+            self._validate_ansible_module_call(docs)
             self._check_for_sys_exit()
             self._find_blacklist_imports()
             main = self._find_main_call()

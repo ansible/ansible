@@ -167,9 +167,9 @@ def main():
             state=dict(required=False, choices=['present', 'absent']),
             solo=dict(required=False, type='bool'),
         ),
-        required_together=(
+        required_together=[
             ['record', 'value']
-        ),
+        ],
         supports_check_mode=True,
     )
 
