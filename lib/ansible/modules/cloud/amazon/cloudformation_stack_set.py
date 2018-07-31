@@ -643,9 +643,17 @@ def main():
                 stack_set_name=stack_params['StackSetName'],
                 max_wait=module.params.get('wait_timeout'),
             )
-            cfn.delete_stack_set(
-                StackSetName=module.params['name'],
-            )
+            try:
+                cfn.delete_stack_set(
+                    StackSetName=module.params['name'],
+                )
+            except is_boto3_error_code('StackSetNotEmptyException') as exc:
+                # this time, it is likely that either the delete failed or there are more stacks.
+                instances = cfn.list_stack_instances(
+                    StackSetName=module.params['name'],
+                )
+                stack_states = ', '.join('(account={Account}, region={Region}, state={Status})'.format(**i) for i in instances['Summaries'])
+                module.fail_json_aws(exc, msg='Could not purge all stacks, or not all accounts/regions were chosen for deletion: ' + stack_states)
             module.exit_json(changed=True, msg='Stack set {0} deleted'.format(module.params['name']))
 
     result.update(**describe_stack_tree(module, stack_params['StackSetName'], operation_ids=operation_ids))
