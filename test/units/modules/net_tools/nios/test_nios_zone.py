@@ -124,3 +124,164 @@ class TestNiosZoneModule(TestNiosModule):
         res = wapi.run('testobject', test_spec)
 
         self.assertTrue(res['changed'])
+
+    def test_nios_zone_create_using_grid_primary_secondaries(self):
+        self.module.params = {'provider': None, 'state': 'present', 'fqdn': 'ansible.com',
+                              'grid_primary': [{"name": "gridprimary.grid.com"}],
+                              'grid_secondaries': [{"name": "gridsecondary1.grid.com"},
+                                                   {"name": "gridsecondary2.grid.com"}],
+                              'restart_if_needed': True,
+                              'comment': None, 'extattrs': None}
+
+        test_object = None
+        grid_spec = dict(
+            name=dict(required=True),
+        )
+        test_spec = {
+            "fqdn": {"ib_req": True},
+            "grid_primary": {},#{"options":grid_spec},
+            "grid_secondaries": {},#{"options":grid_spec},
+            "restart_if_needed": {},
+            "comment": {},
+            "extattrs": {}
+        }
+
+        wapi = self._get_wapi(test_object)
+        print("WAPI: ", wapi)
+        res = wapi.run('testobject', test_spec)
+
+        self.assertTrue(res['changed'])
+        wapi.create_object.assert_called_once_with('testobject', {'fqdn': 'ansible.com',
+                                                                  "grid_primary": [{"name": "gridprimary.grid.com"}],
+                                                                  "grid_secondaries": [{"name": "gridsecondary1.grid.com"},
+                                                                                       {"name": "gridsecondary2.grid.com"}],
+                                                                  "restart_if_needed": True
+                                                                  })
+
+    def test_nios_zone_remove_using_grid_primary_secondaries(self):
+        self.module.params = {'provider': None, 'state': 'absent', 'fqdn': 'ansible.com',
+                              'grid_primary': [{"name": "gridprimary.grid.com"}],
+                              'grid_secondaries': [{"name": "gridsecondary1.grid.com"},
+                                                   {"name": "gridsecondary2.grid.com"}],
+                              'restart_if_needed': True,
+                              'comment': None, 'extattrs': None}
+
+        ref = "zone/ZG5zLm5ldHdvcmtfdmlldyQw:ansible/false"
+
+        test_object = [{
+            "comment": "test comment",
+            "_ref": ref,
+            "fqdn": "ansible.com",
+            "grid_primary": [{"name": "gridprimary.grid.com"}],
+            "grid_secondaries": [{"name": "gridsecondary1.grid.com"}, {"name": "gridsecondary2.grid.com"}],
+            "restart_if_needed": True,
+            "extattrs": {'Site': {'value': 'test'}}
+        }]
+
+        test_spec = {
+            "fqdn": {"ib_req": True},
+            "grid_primary": {},
+            "grid_secondaries": {},
+            "restart_if_needed": {},
+            "comment": {},
+            "extattrs": {}
+        }
+        wapi = self._get_wapi(test_object)
+        res = wapi.run('testobject', test_spec)
+
+        self.assertTrue(res['changed'])
+        wapi.delete_object.assert_called_once_with(ref)
+
+    def test_nios_zone_create_using_name_server_group(self):
+        self.module.params = {'provider': None, 'state': 'present', 'fqdn': 'ansible.com',
+                              'ns_group': 'examplensg', 'comment': None, 'extattrs': None}
+
+        test_object = None
+
+        test_spec = {
+            "fqdn": {"ib_req": True},
+            "ns_group": {},
+            "comment": {},
+            "extattrs": {}
+        }
+
+        wapi = self._get_wapi(test_object)
+        print("WAPI: ", wapi)
+        res = wapi.run('testobject', test_spec)
+
+        self.assertTrue(res['changed'])
+        wapi.create_object.assert_called_once_with('testobject', {'fqdn': 'ansible.com',
+                                                                  'ns_group': 'examplensg'})
+
+    def test_nios_zone_remove_using_name_server_group(self):
+        self.module.params = {'provider': None, 'state': 'absent', 'fqdn': 'ansible.com',
+                              'ns_group': 'examplensg', 'comment': None, 'extattrs': None}
+
+        ref = "zone/ZG5zLm5ldHdvcmtfdmlldyQw:ansible/false"
+
+        test_object = [{
+            "comment": "test comment",
+            "_ref": ref,
+            "fqdn": "ansible.com",
+            "ns_group": "examplensg",
+            "extattrs": {'Site': {'value': 'test'}}
+        }]
+
+        test_spec = {
+            "fqdn": {"ib_req": True},
+            "ns_group": {},
+            "comment": {},
+            "extattrs": {}
+        }
+        wapi = self._get_wapi(test_object)
+        res = wapi.run('testobject', test_spec)
+
+        self.assertTrue(res['changed'])
+        wapi.delete_object.assert_called_once_with(ref)
+
+    def test_nios_zone_create_using_zone_format(self):
+        self.module.params = {'provider': None, 'state': 'present', 'fqdn': '10.10.10.in-addr.arpa',
+                              'zone_format': 'IPV4', 'comment': None, 'extattrs': None}
+
+        test_object = None
+
+        test_spec = {
+            "fqdn": {"ib_req": True},
+            "zone_format": {},
+            "comment": {},
+            "extattrs": {}
+        }
+
+        wapi = self._get_wapi(test_object)
+        print("WAPI: ", wapi)
+        res = wapi.run('testobject', test_spec)
+
+        self.assertTrue(res['changed'])
+        wapi.create_object.assert_called_once_with('testobject', {'fqdn': '10.10.10.in-addr.arpa',
+                                                                  'zone_format': 'IPV4'})
+
+    def test_nios_zone_remove_using_using_zone_format(self):
+        self.module.params = {'provider': None, 'state': 'absent', 'fqdn': 'ansible.com',
+                              'zone_format': 'IPV4', 'comment': None, 'extattrs': None}
+
+        ref = "zone/ZG5zLm5ldHdvcmtfdmlldyQw:ansible/false"
+
+        test_object = [{
+            "comment": "test comment",
+            "_ref": ref,
+            "fqdn": "ansible.com",
+            "zone_format": "IPV4",
+            "extattrs": {'Site': {'value': 'test'}}
+        }]
+
+        test_spec = {
+            "fqdn": {"ib_req": True},
+            "zone_format": {},
+            "comment": {},
+            "extattrs": {}
+        }
+        wapi = self._get_wapi(test_object)
+        res = wapi.run('testobject', test_spec)
+
+        self.assertTrue(res['changed'])
+        wapi.delete_object.assert_called_once_with(ref)
