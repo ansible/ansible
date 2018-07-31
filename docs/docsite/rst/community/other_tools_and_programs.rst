@@ -18,7 +18,8 @@ Atom
 An open-source, free GUI text editor created and maintained by GitHub. You can keep track of git project
 changes, commit from the GUI, and see what branch you are on. You can customize the themes for different colors and install syntax highlighting packages for different languages. You can install Atom on Linux, macOS and Windows. Useful Atom plugins include:
 
-* `language-yaml <https://github.com/atom/language-yaml>`_ - YAML highlighting for Atom.
+* `language-yaml <https://atom.io/packages/language-yaml>`_ - YAML highlighting for Atom (built-in).
+* `linter-js-yaml <https://atom.io/packages/linter-js-yaml>`_ - parses your YAML files in Atom through js-yaml.
 
 
 Emacs
@@ -87,6 +88,7 @@ Tools for Validating Playbooks
 - `Ansible Lint <https://github.com/willthames/ansible-lint>`_ - widely used, highly configurable best-practices linter for Ansible playbooks.
 - `Ansible Review <https://github.com/willthames/ansible-review>`_ - an extension of Ansible Lint designed for code review.
 - `Molecule <http://github.com/metacloud/molecule>`_ is a testing framework for Ansible plays and roles.
+- `yamllint <https://yamllint.readthedocs.io/en/stable/>`__ is a command-line utility to check syntax validity including key repetition and indentation issues.
 
 
 ***********
