@@ -32,6 +32,9 @@ options:
             - ID of PagerDuty service when incidents will be triggered, acknowledged or resolved.
         required: true
         version_added: "2.7"
+    service_key:
+        description:
+            - The GUID of one of your "Generic API" services. Obsolete. Please use I(integration_key).
     integration_key:
         description:
             - The GUID of one of your "Generic API" services.
@@ -187,7 +190,8 @@ def main():
         argument_spec=dict(
             name=dict(required=False),
             service_id=dict(required=True),
-            integration_key=dict(require=True),
+            service_key=dict(require=False),
+            integration_key=dict(require=False),
             api_key=dict(required=True),
             state=dict(required=True,
                        choices=['triggered', 'acknowledged', 'resolved']),
@@ -202,12 +206,21 @@ def main():
     name = module.params['name']
     service_id = module.params['service_id']
     integration_key = module.params['integration_key']
+    service_key = module.params['service_key']
     api_key = module.params['api_key']
     state = module.params['state']
     client = module.params['client']
     client_url = module.params['client_url']
     desc = module.params['desc']
     incident_key = module.params['incident_key']
+
+    if integration_key is None:
+        if service_key is not None:
+            integration_key = service_key
+            module.warn('"service_key" is obsolete parameter and will be removed.'
+                        ' Please, use "integration_key" instead')
+        else:
+            module.fail_json(msg="'integration_key' is required parameter")
 
     state_event_dict = {
         'triggered': 'trigger',
