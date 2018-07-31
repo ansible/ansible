@@ -1,0 +1,3 @@
+---
+bugfixes:
+- fix the bug that get_url does not change mode when checksum matches
