@@ -82,6 +82,6 @@
     method: POST
   register: keys
 
-- name: Assert that something has changed
+- name: Assert that key was returned
   assert:
     that: keys['response']['keys'][0]['value'] | length > 0
