@@ -149,6 +149,13 @@ EXAMPLES = '''
             </system>
         </config>
 
+- name: Send XML Template Payload
+  netconf_config:
+    host: 10.0.0.1
+    username: admin
+    key_filename: /home/admin/.ssh/privatekeyfile
+    src: my_xml_template.j2
+
 '''
 
 RETURN = '''
