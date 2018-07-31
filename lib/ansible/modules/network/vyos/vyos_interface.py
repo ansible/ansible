@@ -393,7 +393,7 @@ def main():
     required_one_of = [['name', 'aggregate']]
     mutually_exclusive = [['name', 'aggregate']]
 
-    required_together = (['speed', 'duplex'])
+    required_together = [['speed', 'duplex']]
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,
                            mutually_exclusive=mutually_exclusive,
