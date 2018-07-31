@@ -331,6 +331,8 @@ DOCUMENTATION = '''
         env: [{name: ANSIBLE_PKCS11_PROVIDER}]
         ini:
           - {key: pkcs11_provider, section: ssh_connection}
+        vars:
+          - name: ansible_ssh_pkcs11_provider
 '''
 
 import errno
@@ -642,6 +644,8 @@ class Connection(ConnectionBase):
                           b'-d' + to_bytes(self.sshpass_pipe[0], nonstring='simplerepr', errors='surrogate_or_strict'),
                           b'-P',
                           b'Enter PIN for ']
+        elif conn_password and len(pkcs11_provider) > 0:
+            raise AnsibleError("To use pkcs11_provider you must specify a password/pin")
         elif conn_password:
             self.sshpass_pipe = os.pipe()
             b_command += [b'sshpass', b'-d' + to_bytes(self.sshpass_pipe[0], nonstring='simplerepr', errors='surrogate_or_strict')]
@@ -656,8 +660,8 @@ class Connection(ConnectionBase):
         # Next, additional arguments based on the configuration.
         #
 
-        # pkcs11 mode allows the use of Smartcards or Ubikey devices
-        if self._play_context.password and len(pkcs11_provider) >= 1:
+        # pkcs11 mode allows the use of Smartcards or Yubikey devices
+        if conn_password and len(pkcs11_provider) > 0:
             self._add_args(b_command,
                            (b"-o", b"KbdInteractiveAuthentication=no",
                             b"-o", b"PreferredAuthentications=publickey",
