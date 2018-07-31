@@ -77,7 +77,6 @@
 - name: assert output message backup the database
   assert:
     that:
-       - "result.changed == true"
        - "result.db =='{{ db_name }}'"
 
 - name: assert database was backed up successfully
