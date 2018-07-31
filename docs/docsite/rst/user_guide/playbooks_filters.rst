@@ -370,40 +370,51 @@ Now, let's take the following data structure::
 To extract all clusters from this structure, you can use the following query::
 
     - name: "Display all cluster names"
-      debug: var=item
-      loop: "{{domain_definition|json_query('domain.cluster[*].name')}}"
+      debug:
+        var: item
+      loop: "{{ domain_definition | json_query('domain.cluster[*].name') }}"
 
 Same thing for all server names::
 
     - name: "Display all server names"
-      debug: var=item
-      loop: "{{domain_definition|json_query('domain.server[*].name')}}"
+      debug:
+        var: item
+      loop: "{{ domain_definition | json_query('domain.server[*].name') }}"
 
 This example shows ports from cluster1::
 
-    - name: "Display all server names from cluster1"
-      debug: var=item
-      loop: "{{domain_definition|json_query(server_name_cluster1_query)}}"
+    - name: "Display all ports from cluster1"
+      debug:
+        var: item
+      loop: "{{ domain_definition | json_query(server_name_cluster1_query) }}"
       vars:
         server_name_cluster1_query: "domain.server[?cluster=='cluster1'].port"
 
 .. note:: You can use a variable to make the query more readable.
 
-Or, alternatively::
+Or, alternatively print out the ports in a comma separated string::
 
-    - name: "Display all server names from cluster1"
+    - name: "Display all ports from cluster1 as a string"
       debug:
-        var: item
-      loop: "{{domain_definition|json_query('domain.server[?cluster=`cluster1`].port')}}"
+        msg: "{{ domain_definition | json_query('domain.server[?cluster==`cluster1`].port') | join(', ') }}"
 
 .. note:: Here, quoting literals using backticks avoids escaping quotes and maintains readability.
+
+Or, using YAML `single quote escaping <http://yaml.org/spec/current.html#id2534365>`_::
+
+    - name: "Display all ports from cluster1"
+      debug:
+        var: item
+      loop: "{{ domain_definition | json_query('domain.server[?cluster==''cluster1''].port') }}"
+
+.. note:: Escaping single quotes within single quotes in YAML is done by doubling the single quote.
 
 In this example, we get a hash map with all ports and names of a cluster::
 
     - name: "Display all server ports and names from cluster1"
       debug:
         var: item
-      loop: "{{domain_definition|json_query(server_name_cluster1_query)}}"
+      loop: "{{ domain_definition | json_query(server_name_cluster1_query) }}"
       vars:
         server_name_cluster1_query: "domain.server[?cluster=='cluster2'].{name: name, port: port}"
 
