@@ -503,24 +503,16 @@ class VariableManager:
                     # This task will be skipped later due to this, so we just setup
                     # a dummy array for the later code so it doesn't fail
                     items = [None]
-                # Update task.loop with templated items, this ensures that delegate_to+loop
-                # doesn't produce different restuls than TaskExecutor which may reprocess the loop
-                # Set loop_with to None, so we don't do extra unexpected processing on the cached items later
-                # in TaskExecutor
-                task.loop_with = None
-                task.loop = items
             else:
                 raise AnsibleError("Failed to find the lookup named '%s' in the available lookup plugins" % task.loop_with)
         elif task.loop is not None:
             items = templar.template(task.loop)
-            # Update task.loop with templated items, this ensures that delegate_to+loop
-            # doesn't produce different restuls than TaskExecutor which may reprocess the loop
-            task.loop = items
         else:
             items = [None]
 
         delegated_host_vars = dict()
         item_var = getattr(task.loop_control, 'loop_var', 'item')
+        cache_items = False
         for item in items:
             # update the variables with the item value for templating, in case we need it
             if item is not None:
@@ -528,6 +520,8 @@ class VariableManager:
 
             templar.set_available_variables(vars_copy)
             delegated_host_name = templar.template(task.delegate_to, fail_on_undefined=False)
+            if delegated_host_name != task.delegate_to:
+                cache_items = True
             if delegated_host_name is None:
                 raise AnsibleError(message="Undefined delegate_to host for task:", obj=task._ds)
             if delegated_host_name in delegated_host_vars:
@@ -583,6 +577,16 @@ class VariableManager:
                 include_delegate_to=False,
                 include_hostvars=False,
             )
+
+        if cache_items:
+            # delegate_to templating produced a change, update task.loop with templated items,
+            # this ensures that delegate_to+loop doesn't produce different results than TaskExecutor
+            # which may reprocess the loop
+            # Set loop_with to None, so we don't do extra unexpected processing on the cached items later
+            # in TaskExecutor
+            task.loop_with = None
+            task.loop = items
+
         return delegated_host_vars
 
     def clear_facts(self, hostname):
