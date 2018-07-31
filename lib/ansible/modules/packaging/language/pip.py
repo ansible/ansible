@@ -522,7 +522,7 @@ class Package:
 
     def __str__(self):
         if self._plain_package:
-            return str(self._requirement)
+            return to_native(self._requirement)
         return self.package_name
 
 
@@ -623,10 +623,12 @@ def main():
 
             # convert raw input package names to Package instances
             try:
-                packages = [Package(package) for package in _recover_package_name(name)]
+                packages = []
+                for dist in _recover_package_name(name):
+                    packages.append(Package(dist))
             except ValueError as e:
                 # if users input some invalid package names, show them the parsing error
-                module.fail_json(msg="Can not parse package name '%s', error: '%s'" % (dist, str(e)))
+                module.fail_json(msg="Can not parse package name '%s', error: '%s'" % (dist, to_native(e)))
             # check invalid combination of arguments
             if version is not None:
                 if len(packages) > 1:
@@ -655,7 +657,7 @@ def main():
             cmd.append(extra_args)
 
         if name:
-            cmd.extend(str(p) for p in packages)
+            cmd.extend(to_native(p) for p in packages)
         elif requirements:
             cmd.extend(['-r', requirements])
         else:
