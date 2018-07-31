@@ -1,0 +1,5 @@
+---
+bugfixes:
+- On Python2, loading config values from environment variables could lead to
+  a traceback if there were nonascii characters present.  Converted them to
+  text strings so that no traceback will occur (https://github.com/ansible/ansible/pull/43468)

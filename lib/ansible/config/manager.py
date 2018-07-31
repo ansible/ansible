@@ -28,6 +28,8 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.quoting import unquote
 from ansible.utils.path import unfrackpath
 from ansible.utils.path import makedirs_safe
+from ansible.utils import py3compat
+
 
 Plugin = namedtuple('Plugin', 'name type')
 Setting = namedtuple('Setting', 'name value origin type')
@@ -315,7 +317,7 @@ class ConfigManager(object):
 
     def get_config_value_and_origin(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None, direct=None):
         ''' Given a config key figure out the actual value and report on the origin of the settings '''
-
+        1/0
         if cfile is None:
             # use default config
             cfile = self._config_file
@@ -351,7 +353,7 @@ class ConfigManager(object):
 
                 # env vars are next precedence
                 if value is None and defs[config].get('env'):
-                    value, origin = self._loop_entries(os.environ, defs[config]['env'])
+                    value, origin = self._loop_entries(py3compat.environ, defs[config]['env'])
                     origin = 'env: %s' % origin
 
                 # try config file entries next, if we have one
