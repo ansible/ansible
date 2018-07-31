@@ -140,7 +140,7 @@ class Cli:
         except KeyError:
             connection = self._get_connection()
             try:
-                out = connection.get_config(filter=flags)
+                out = connection.get_config(flags=flags)
             except ConnectionError as exc:
                 self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 

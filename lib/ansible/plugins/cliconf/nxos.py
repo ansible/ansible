@@ -131,7 +131,7 @@ class Cliconf(CliconfBase):
         diff['config_diff'] = dumps(configdiffobjs, 'commands') if configdiffobjs else ''
         return diff
 
-    def get_config(self, source='running', format='text', filter=None):
+    def get_config(self, source='running', format='text', flag=None):
         options_values = self.get_option_values()
         if format not in options_values['format']:
             raise ValueError("'format' value %s is invalid. Valid values are %s" % (format, ','.join(options_values['format'])))
@@ -144,8 +144,8 @@ class Cliconf(CliconfBase):
         if format and format is not 'text':
             cmd += '| %s ' % format
 
-        if filter:
-            cmd += ' '.join(to_list(filter))
+        if flag:
+            cmd += ' '.join(to_list(flag))
         cmd = cmd.strip()
 
         return self.send_command(cmd)
