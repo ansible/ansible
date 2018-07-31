@@ -85,6 +85,11 @@ class ConnectionProcess(object):
                                                     ansible_playbook_pid=self._ansible_playbook_pid)
             self.connection.set_options(var_options=variables)
             self.connection._connect()
+
+            # implementation plugins are updated while connection initialization
+            if hasattr(self.connection, 'set_implementation_plugin_options'):
+                self.connection.set_implementation_plugin_options(var_options=variables)
+
             self.connection._socket_path = self.socket_path
             self.srv.register(self.connection)
             messages.extend(sys.stdout.getvalue().splitlines())
