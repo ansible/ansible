@@ -314,7 +314,7 @@ class ZipArchive(object):
         fut_owner = fut_uid = None
         if self.file_args['owner']:
             try:
-                tpw = pwd.getpwname(self.file_args['owner'])
+                tpw = pwd.getpwnam(self.file_args['owner'])
             except:
                 try:
                     tpw = pwd.getpwuid(self.file_args['owner'])
