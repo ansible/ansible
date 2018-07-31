@@ -243,7 +243,10 @@ class Connection(NetworkConnectionBase):
         )
         url_kwargs.update(kwargs)
         if self._auth:
-            url_kwargs['headers'].update(self._auth)
+            # Avoid modifying passed-in headers
+            headers = dict(kwargs.get('headers', {}))
+            headers.update(self._auth)
+            url_kwargs['headers'] = headers
         else:
             url_kwargs['url_username'] = self.get_option('remote_user')
             url_kwargs['url_password'] = self.get_option('password')
