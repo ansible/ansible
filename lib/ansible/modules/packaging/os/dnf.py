@@ -287,6 +287,7 @@ def list_items(module, base, command):
         packages = dnf.subject.Subject(command).get_best_query(base.sack)
         results = [_package_dict(package) for package in packages]
 
+    base.close()
     module.exit_json(results=results)
 
 
@@ -295,6 +296,7 @@ def _mark_package_install(module, base, pkg_spec):
     try:
         base.install(pkg_spec)
     except dnf.exceptions.MarkingError:
+        base.close()
         module.fail_json(msg="No package {0} available.".format(pkg_spec))
 
 
@@ -353,6 +355,7 @@ def ensure(module, base, state, names, autoremove):
                 if environment:
                     environments.append(environment.id)
                 else:
+                    base.close()
                     module.fail_json(
                         msg="No group {0} available.".format(group_spec))
 
@@ -419,6 +422,7 @@ def ensure(module, base, state, names, autoremove):
                 base.conf.clean_requirements_on_remove = autoremove
 
             if filenames:
+                base.close()
                 module.fail_json(
                     msg="Cannot remove paths -- please specify package name.")
 
@@ -450,16 +454,20 @@ def ensure(module, base, state, names, autoremove):
 
     if not base.resolve(allow_erasing=allow_erasing):
         if failures:
+            base.close()
             module.fail_json(msg='Failed to install some of the '
                                  'specified packages',
                              failures=failures)
+        base.close()
         module.exit_json(msg="Nothing to do")
     else:
         if module.check_mode:
             if failures:
+                base.close()
                 module.fail_json(msg='Failed to install some of the '
                                      'specified packages',
                                  failures=failures)
+            base.close()
             module.exit_json(changed=True)
 
         base.download_packages(base.transaction.install_set)
@@ -471,9 +479,11 @@ def ensure(module, base, state, names, autoremove):
             response['results'].append("Removed: {0}".format(package))
 
         if failures:
+            base.close()
             module.fail_json(msg='Failed to install some of the '
                                  'specified packages',
                              failures=failures)
+        base.close()
         module.exit_json(**response)
 
 

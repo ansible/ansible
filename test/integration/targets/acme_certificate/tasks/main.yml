@@ -1,0 +1,217 @@
+---
+- block:
+  ## SET UP ACCOUNT KEYS ########################################################################
+  - name: Create ECC256 account key
+    command: openssl ecparam -name prime256v1 -genkey -out {{ output_dir }}/account-ec256.pem
+  - name: Create ECC384 account key
+    command: openssl ecparam -name secp384r1 -genkey -out {{ output_dir }}/account-ec384.pem
+  - name: Create RSA-2048 account key
+    command: openssl genrsa -out {{ output_dir }}/account-rsa2048.pem 2048
+  ## SET UP ACCOUNTS ############################################################################
+  - name: Make sure ECC256 account hasn't been created yet
+    acme_account:
+      acme_version: 2
+      acme_directory: https://{{ acme_host }}:14000/dir
+      validate_certs: no
+      account_key_src: "{{ output_dir }}/account-ec256.pem"
+      state: absent
+  - name: Create ECC384 account
+    acme_account:
+      acme_version: 2
+      acme_directory: https://{{ acme_host }}:14000/dir
+      validate_certs: no
+      account_key_content: "{{ lookup('file', output_dir ~ '/account-ec384.pem') }}"
+      state: present
+      allow_creation: yes
+      terms_agreed: yes
+      contact:
+      - mailto:example@example.org
+      - mailto:example@example.com
+  - name: Create RSA-2048 account
+    acme_account:
+      acme_version: 2
+      acme_directory: https://{{ acme_host }}:14000/dir
+      validate_certs: no
+      account_key_src: "{{ output_dir }}/account-rsa2048.pem"
+      state: present
+      allow_creation: yes
+      terms_agreed: yes
+      contact: []
+  ## OBTAIN CERTIFICATES ########################################################################
+  - name: Obtain cert 1
+    include_tasks: obtain-cert.yml
+    vars:
+      certgen_title: Certificate 1
+      certificate_name: cert-1
+      key_type: rsa
+      rsa_bits: 2048
+      subject_alt_name: "DNS:example.com"
+      subject_alt_name_critical: no
+      account_key: account-ec256
+      challenge: http-01
+      modify_account: yes
+      deactivate_authzs: no
+      force: no
+      remaining_days: 10
+      terms_agreed: yes
+      account_email: "example@example.org"
+  - name: Obtain cert 2
+    include_tasks: obtain-cert.yml
+    vars:
+      certgen_title: Certificate 2
+      certificate_name: cert-2
+      key_type: ec256
+      subject_alt_name: "DNS:*.example.com,DNS:example.com"
+      subject_alt_name_critical: yes
+      account_key: account-ec384
+      challenge: dns-01
+      modify_account: no
+      deactivate_authzs: yes
+      force: no
+      remaining_days: 10
+      terms_agreed: no
+      account_email: ""
+  - name: Obtain cert 3
+    include_tasks: obtain-cert.yml
+    vars:
+      certgen_title: Certificate 3
+      certificate_name: cert-3
+      key_type: ec384
+      subject_alt_name: "DNS:*.example.com,DNS:example.org,DNS:t1.example.com"
+      subject_alt_name_critical: no
+      account_key_content: "{{ lookup('file', output_dir ~ '/account-rsa2048.pem') }}"
+      challenge: dns-01
+      modify_account: no
+      deactivate_authzs: no
+      force: no
+      remaining_days: 10
+      terms_agreed: no
+      account_email: ""
+  - name: Obtain cert 4
+    include_tasks: obtain-cert.yml
+    vars:
+      certgen_title: Certificate 4
+      certificate_name: cert-4
+      key_type: rsa
+      rsa_bits: 2048
+      subject_alt_name: "DNS:example.com,DNS:t1.example.com,DNS:test.t2.example.com,DNS:example.org,DNS:test.example.org"
+      subject_alt_name_critical: no
+      account_key: account-rsa2048
+      challenge: http-01
+      modify_account: no
+      deactivate_authzs: yes
+      force: yes
+      remaining_days: 10
+      terms_agreed: no
+      account_email: ""
+  - name: Obtain cert 5
+    include_tasks: obtain-cert.yml
+    vars:
+      certgen_title: Certificate 5, Iteration 1/4
+      certificate_name: cert-5
+      key_type: ec521
+      subject_alt_name: "DNS:t2.example.com"
+      subject_alt_name_critical: no
+      account_key: account-ec384
+      challenge: http-01
+      modify_account: no
+      deactivate_authzs: yes
+      force: yes
+      remaining_days: 10
+      terms_agreed: no
+      account_email: ""
+  - name: Obtain cert 5 (should not, since already there and valid for more than 10 days)
+    include_tasks: obtain-cert.yml
+    vars:
+      certgen_title: Certificate 5, Iteration 2/4
+      certificate_name: cert-5
+      key_type: ec521
+      subject_alt_name: "DNS:t2.example.com"
+      subject_alt_name_critical: no
+      account_key: account-ec384
+      challenge: http-01
+      modify_account: no
+      deactivate_authzs: yes
+      force: no
+      remaining_days: 10
+      terms_agreed: no
+      account_email: ""
+  - set_fact:
+      cert_5_recreate_1: "{{ challenge_data is changed }}"
+  - name: Obtain cert 5 (should again by less days)
+    include_tasks: obtain-cert.yml
+    vars:
+      certgen_title: Certificate 5, Iteration 3/4
+      certificate_name: cert-5
+      key_type: ec521
+      subject_alt_name: "DNS:t2.example.com"
+      subject_alt_name_critical: no
+      account_key: account-ec384
+      challenge: http-01
+      modify_account: no
+      deactivate_authzs: yes
+      force: yes
+      remaining_days: 1000
+      terms_agreed: no
+      account_email: ""
+  - set_fact:
+      cert_5_recreate_2: "{{ challenge_data is changed }}"
+  - name: Obtain cert 5 (should again by force)
+    include_tasks: obtain-cert.yml
+    vars:
+      certgen_title: Certificate 5, Iteration 4/4
+      certificate_name: cert-5
+      key_type: ec521
+      subject_alt_name: "DNS:t2.example.com"
+      subject_alt_name_critical: no
+      account_key_content: "{{ lookup('file', output_dir ~ '/account-ec384.pem') }}"
+      challenge: http-01
+      modify_account: no
+      deactivate_authzs: yes
+      force: yes
+      remaining_days: 10
+      terms_agreed: no
+      account_email: ""
+  - set_fact:
+      cert_5_recreate_3: "{{ challenge_data is changed }}"
+  ## DISSECT CERTIFICATES #######################################################################
+  # Make sure certificates are valid. Root certificate for Pebble equals the chain certificate.
+  - name: Verifying cert 1
+    command: openssl verify -CAfile "{{ output_dir }}/cert-1-chain.pem" "{{ output_dir }}/cert-1.pem"
+    ignore_errors: yes
+    register: cert_1_valid
+  - name: Verifying cert 2
+    command: openssl verify -CAfile "{{ output_dir }}/cert-2-chain.pem" "{{ output_dir }}/cert-2.pem"
+    ignore_errors: yes
+    register: cert_2_valid
+  - name: Verifying cert 3
+    command: openssl verify -CAfile "{{ output_dir }}/cert-3-chain.pem" "{{ output_dir }}/cert-3.pem"
+    ignore_errors: yes
+    register: cert_3_valid
+  - name: Verifying cert 4
+    command: openssl verify -CAfile "{{ output_dir }}/cert-4-chain.pem" "{{ output_dir }}/cert-4.pem"
+    ignore_errors: yes
+    register: cert_4_valid
+  - name: Verifying cert 5
+    command: openssl verify -CAfile "{{ output_dir }}/cert-5-chain.pem" "{{ output_dir }}/cert-5.pem"
+    ignore_errors: yes
+    register: cert_5_valid
+  # Dump certificate info
+  - name: Dumping cert 1
+    command: openssl x509 -in "{{ output_dir }}/cert-1.pem" -noout -text
+    register: cert_1_text
+  - name: Dumping cert 2
+    command: openssl x509 -in "{{ output_dir }}/cert-2.pem" -noout -text
+    register: cert_2_text
+  - name: Dumping cert 3
+    command: openssl x509 -in "{{ output_dir }}/cert-3.pem" -noout -text
+    register: cert_3_text
+  - name: Dumping cert 4
+    command: openssl x509 -in "{{ output_dir }}/cert-4.pem" -noout -text
+    register: cert_4_text
+  - name: Dumping cert 5
+    command: openssl x509 -in "{{ output_dir }}/cert-5.pem" -noout -text
+    register: cert_5_text
+
+  # Old 0.9.8 versions have insufficient CLI support for signing with EC keys
+  when: openssl_version.stdout is version('1.0.0', '>=')

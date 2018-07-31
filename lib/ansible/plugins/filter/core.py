@@ -210,6 +210,12 @@ def from_yaml(data):
     return data
 
 
+def from_yaml_all(data):
+    if isinstance(data, string_types):
+        return yaml.safe_load_all(data)
+    return data
+
+
 @environmentfilter
 def rand(environment, end, start=None, step=None, seed=None):
     if seed is None:
@@ -600,6 +606,7 @@ class FilterModule(object):
             'to_yaml': to_yaml,
             'to_nice_yaml': to_nice_yaml,
             'from_yaml': from_yaml,
+            'from_yaml_all': from_yaml_all,
 
             # path
             'basename': partial(unicode_wrap, os.path.basename),

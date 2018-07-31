@@ -19,14 +19,14 @@
 
 - name: setup (remove file from localhost if present)
   file:
-      path: ios_{{ ansible_host }}.cfg
+      path: ios_{{ inventory_hostname }}.cfg
       state: absent
   delegate_to: localhost
 
 - name: get the file from device with relative destination
   net_get:
     src: ios1.cfg
-    dest: 'ios_{{ ansible_host }}.cfg'
+    dest: 'ios_{{ inventory_hostname }}.cfg'
   register: result
 
 - assert:
@@ -36,11 +36,17 @@
 - name: Idempotency check
   net_get:
     src: ios1.cfg
-    dest: 'ios_{{ ansible_host }}.cfg'
+    dest: 'ios_{{ inventory_hostname }}.cfg'
   register: result
 
 - assert:
     that:
       - result.changed == false
+
+- name: setup (remove file from localhost if present)
+  file:
+      path: ios_{{ inventory_hostname }}.cfg
+      state: absent
+  delegate_to: localhost
 
 - debug: msg="END ios cli/net_get.yaml on connection={{ ansible_connection }}"

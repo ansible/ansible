@@ -96,7 +96,6 @@ options:
     description:
       - Path to a file containing environment variables I(FOO=BAR).
       - If variable also present in C(env), then C(env) value will override.
-      - Requires docker >= 2.3.0.
   entrypoint:
     description:
       - Command that overwrites the default ENTRYPOINT of the image.
@@ -421,7 +420,13 @@ author:
 
 requirements:
     - "python >= 2.6"
-    - "docker >= 2.3.0"
+    - "docker-py >= 1.7.0"
+    - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
+       module has been superseded by L(docker,https://pypi.org/project/docker/)
+       (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
+       For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
+       install the C(docker) Python module. Note that both modules should I(not)
+       be installed at the same time."
     - "Docker API >= 1.20"
 '''
 
@@ -619,7 +624,7 @@ try:
         from docker.utils.types import Ulimit, LogConfig
     from ansible.module_utils.docker_common import docker_version
 except:
-    # missing docker handled in ansible.module_utils.docker
+    # missing docker-py handled in ansible.module_utils.docker
     pass
 
 
@@ -1734,32 +1739,36 @@ class ContainerManager(DockerBaseClass):
 
     def present(self, state):
         container = self._get_container(self.parameters.name)
-        image = self._get_image()
-        self.log(image, pretty_print=True)
-        if not container.exists:
-            # New container
-            self.log('No container found')
-            new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
-            if new_container:
-                container = new_container
-        else:
-            # Existing container
-            different, differences = container.has_different_configuration(image)
-            image_different = False
-            if not self.parameters.ignore_image:
-                image_different = self._image_is_different(image, container)
-            if image_different or different or self.parameters.recreate:
-                self.diff['differences'] = differences
-                if image_different:
-                    self.diff['image_different'] = True
-                self.log("differences")
-                self.log(differences, pretty_print=True)
-                if container.running:
-                    self.container_stop(container.Id)
-                self.container_remove(container.Id)
+
+        # If the image parameter was passed then we need to deal with the image
+        # version comparison, otherwise we should not care
+        if self.parameters.image:
+            image = self._get_image()
+            self.log(image, pretty_print=True)
+            if not container.exists:
+                # New container
+                self.log('No container found')
                 new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
                 if new_container:
                     container = new_container
+            else:
+                # Existing container
+                different, differences = container.has_different_configuration(image)
+                image_different = False
+                if not self.parameters.ignore_image:
+                    image_different = self._image_is_different(image, container)
+                if image_different or different or self.parameters.recreate:
+                    self.diff['differences'] = differences
+                    if image_different:
+                        self.diff['image_different'] = True
+                    self.log("differences")
+                    self.log(differences, pretty_print=True)
+                    if container.running:
+                        self.container_stop(container.Id)
+                    self.container_remove(container.Id)
+                    new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
+                    if new_container:
+                        container = new_container
 
         if container and container.exists:
             container = self.update_limits(container)
@@ -2016,7 +2025,8 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
 
         init_supported = init_supported and LooseVersion(docker_version) >= LooseVersion('2.2')
         if self.module.params.get("init") and not init_supported:
-            self.fail('docker-py version is %s. Minimum version required is 2.2 to set init option.' % (docker_version,))
+            self.fail("docker or docker-py version is %s. Minimum version required is 2.2 to set init option. "
+                      "If you use the 'docker-py' module, you have to switch to the docker 'Python' package." % (docker_version,))
 
         self.HAS_INIT_OPT = init_supported
         self.HAS_AUTO_REMOVE_OPT = HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3

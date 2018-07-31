@@ -62,6 +62,7 @@ PASS_BOOLS = ('no_log', 'debug', 'diff')
 # The functions available here can be used to do many common tasks,
 # to simplify development of Python modules.
 
+import __main__
 import atexit
 import locale
 import os
@@ -2384,10 +2385,15 @@ class AnsibleModule(object):
             raise AssertionError("implementation error -- msg to explain the error is required")
         kwargs['failed'] = True
 
-        # add traceback if debug or high verbosity and it is missing
-        # Note: badly named as exception, it is really always been 'traceback'
+        # Add traceback if debug or high verbosity and it is missing
+        # NOTE: Badly named as exception, it really always has been a traceback
         if 'exception' not in kwargs and sys.exc_info()[2] and (self._debug or self._verbosity >= 3):
-            kwargs['exception'] = ''.join(traceback.format_tb(sys.exc_info()[2]))
+            if PY2:
+                # On Python 2 this is the last (stack frame) exception and as such may be unrelated to the failure
+                kwargs['exception'] = 'WARNING: The below traceback may *not* be related to the actual failure.\n' +\
+                                      ''.join(traceback.format_tb(sys.exc_info()[2]))
+            else:
+                kwargs['exception'] = ''.join(traceback.format_tb(sys.exc_info()[2]))
 
         self.do_cleanup_files()
         self._return_formatted(kwargs)
@@ -2618,7 +2624,8 @@ class AnsibleModule(object):
                                 if unsafe_writes and e.errno == errno.EBUSY:
                                     self._unsafe_writes(b_tmp_dest_name, b_dest)
                                 else:
-                                    self.fail_json(msg='Unable to rename file: %s to %s: %s' % (src, dest, to_native(e)),
+                                    self.fail_json(msg='Unable to make %s into to %s, failed final rename from %s: %s' %
+                                                       (src, dest, b_tmp_dest_name, to_native(e)),
                                                    exception=traceback.format_exc())
                         except (shutil.Error, OSError, IOError) as e:
                             self.fail_json(msg='Failed to replace file: %s to %s: %s' % (src, dest, to_native(e)),

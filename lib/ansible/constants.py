@@ -22,7 +22,7 @@ def _warning(msg):
     try:
         from __main__ import display
         display.warning(msg)
-    except:
+    except Exception:
         import sys
         sys.stderr.write(' [WARNING] %s\n' % (msg))
 
@@ -32,7 +32,7 @@ def _deprecated(msg, version='2.8'):
     try:
         from __main__ import display
         display.deprecated(msg, version=version)
-    except:
+    except Exception:
         import sys
         sys.stderr.write(' [DEPRECATED] %s, to be removed in %s\n' % (msg, version))
 
@@ -53,7 +53,7 @@ def get_config(parser, section, key, env_var, default_value, value_type=None, ex
     if value is None:
         try:
             value = get_ini_config_value(parser, {'key': key, 'section': section})
-        except:
+        except Exception:
             pass
     if value is None:
         value = default_value
@@ -122,6 +122,10 @@ VAULT_VERSION_MAX = 1.0
 # host/inventory variables to fields in the PlayContext
 # object. The dictionary values are tuples, to account for aliases
 # in variable names.
+
+COMMON_CONNECTION_VARS = frozenset(set(('ansible_connection', 'ansbile_host', 'ansible_user', 'ansible_shell_executable',
+                                        'ansible_port', 'ansible_pipelining', 'ansible_password', 'ansible_timeout',
+                                        'ansible_shell_type', 'ansible_module_compression', 'ansible_private_key_file')))
 
 MAGIC_VARIABLE_MAPPING = dict(
 
@@ -193,7 +197,7 @@ for setting in config.data.get_settings():
                 value = literal_eval(value)
             except ValueError:
                 pass  # not a python data structure
-        except:
+        except Exception:
             pass  # not templatable
 
         value = ensure_type(value, setting.type)

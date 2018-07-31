@@ -21,3 +21,5 @@ azure-nspkg==2.0.0
 azure-storage==0.35.1
 msrest==0.4.29
 msrestazure==0.4.31
+azure-keyvault==1.0.0a1
+azure-graphrbac==0.40.0

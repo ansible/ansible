@@ -654,6 +654,20 @@
     # ============================================================
     # End tests for Fargate
 
+    - name: create task definition for absent with arn regression test
+      ecs_taskdefinition:
+        containers: "{{ ecs_task_containers }}"
+        family: "{{ ecs_task_name }}-absent"
+        state: present
+        <<: *aws_connection_info
+      register: ecs_task_definition_absent_with_arn
+
+    - name: absent task definition by arn
+      ecs_taskdefinition:
+        arn: "{{ ecs_task_definition_absent_with_arn.taskdefinition.taskDefinitionArn }}"
+        state: absent
+        <<: *aws_connection_info
+
   always:
     # TEAR DOWN: snapshot, ec2 instance, ec2 key pair, security group, vpc
     - name: Announce teardown start
@@ -791,6 +805,15 @@
         containers: "{{ ecs_fargate_task_containers }}"
         family: "{{ ecs_task_name }}-vpc"
         revision: "{{ ecs_fargate_task_definition.taskdefinition.revision }}"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: remove ecs task definition for absent with arn
+      ecs_taskdefinition:
+        containers: "{{ ecs_task_containers }}"
+        family: "{{ ecs_task_name }}-absent"
+        revision: "{{ ecs_task_definition_absent_with_arn.taskdefinition.revision }}"
         state: absent
         <<: *aws_connection_info
       ignore_errors: yes

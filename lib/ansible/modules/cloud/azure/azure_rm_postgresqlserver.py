@@ -94,9 +94,9 @@ EXAMPLES = '''
       resource_group: TestGroup
       name: testserver
       sku:
-        name: PGSQLS100
-        tier: Basic
-        capacity: 100
+        name: GP_Gen4_2
+        tier: GeneralPurpose
+        capacity: 2
       location: eastus
       storage_mb: 1024
       enforce_ssl: True

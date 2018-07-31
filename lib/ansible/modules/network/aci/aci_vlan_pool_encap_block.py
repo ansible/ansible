@@ -48,6 +48,7 @@ options:
   block_end:
     description:
     - The end of encap block.
+    type: int
     aliases: [ end ]
   block_name:
     description:
@@ -56,6 +57,7 @@ options:
   block_start:
     description:
     - The start of the encap block.
+    type: int
     aliases: [ start ]
   state:
     description:

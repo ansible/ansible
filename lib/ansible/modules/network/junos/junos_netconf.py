@@ -24,7 +24,9 @@ description:
     the netconf system service running on Junos devices.  This module
     can be used to easily enable the Netconf API. Netconf provides
     a programmatic interface for working with configuration and state
-    resources as defined in RFC 6242.
+    resources as defined in RFC 6242. If the C(netconf_port) is not
+    mentioned in the task by default netconf will be enabled on port 830
+    only.
 extends_documentation_fragment: junos
 options:
   netconf_port:
@@ -50,6 +52,9 @@ notes:
   - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
   - Recommended connection is C(network_cli). See L(the Junos OS Platform Options,../network/user_guide/platform_junos.html).
   - This module also works with C(local) connections for legacy playbooks.
+  - If C(netconf_port) value is not mentioned in task by default it will be enabled on port 830 only.
+    Although C(netconf_port) value can be from 1 through 65535, avoid configuring access on a port
+    that is normally assigned for another service. This practice avoids potential resource conflicts.
 """
 
 EXAMPLES = """
@@ -72,6 +77,8 @@ commands:
 """
 import re
 
+from ansible.module_utils._text import to_text
+from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.junos.junos import junos_argument_spec, get_connection
 from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes
@@ -141,9 +148,12 @@ def map_params_to_obj(module):
 
 def load_config(module, config, commit=False):
     conn = get_connection(module)
+    try:
+        conn.edit_config(to_list(config) + ['top'])
+        diff = conn.compare_configuration()
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
-    conn.edit_config(to_list(config) + ['top'])
-    diff = conn.compare_configuration()
     if diff:
         if commit:
             commit_configuration(module)
@@ -151,7 +161,7 @@ def load_config(module, config, commit=False):
         else:
             discard_changes(module)
 
-    return str(diff).strip()
+    return to_text(diff, errors='surrogate_then_replace').strip()
 
 
 def main():

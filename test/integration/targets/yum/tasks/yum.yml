@@ -214,7 +214,7 @@
 - name: check sos with rpm
   shell: rpm -q sos
 
-- name: check sos with rpm
+- name: check bc with rpm
   shell: rpm -q bc
 
 - name: uninstall sos and bc
@@ -259,6 +259,32 @@
     installroot: '/'
     state: removed
   register: yum_result
+
+# Test download_only
+- name: install sos
+  yum:
+    name: sos
+    state: latest
+    download_only: true
+  register: yum_result
+
+- name: verify download of sos (part 1 -- yum "install" succeeded)
+  assert:
+    that:
+        - "yum_result is success"
+        - "yum_result is changed"
+
+- name: uninstall sos (noop)
+  yum:
+    name: sos
+    state: removed
+  register: yum_result
+
+- name: verify download of sos (part 2 -- nothing removed during uninstall)
+  assert:
+    that:
+        - "yum_result is success"
+        - "not yum_result is changed"
 
 - name: install group
   yum:
@@ -546,3 +572,113 @@
   file:
     name: "/tmp/non_existent_pkg.rpm"
     state: absent
+
+- name: get yum version
+  yum:
+    list: yum
+  register: yum_version
+
+- name: set yum_version of installed version
+  set_fact:
+    yum_version: "{%- if item.yumstate == 'installed' -%}{{ item.version }}{%- else -%}{{ yum_version }}{%- endif -%}"
+  with_items: "{{ yum_version.results }}"
+
+- name: check whether yum supports disableexcludes (>= 3.4)
+  set_fact:
+    supports_disable_excludes: "{{ yum_version is version_compare('3.4.0', '>=') }}"
+
+- name: uninstall zip
+  yum: name=zip state=removed
+
+- name: check zip with rpm
+  shell: rpm -q zip
+  ignore_errors: True
+  register: rpm_zip_result
+
+- name: verify zip is uninstalled
+  assert:
+    that:
+      - "rpm_zip_result is failed"
+
+- name: exclude zip
+  lineinfile:
+    dest: /etc/yum.conf
+    regexp: (^exclude=)(.)*
+    line: "exclude=zip*"
+    state: present
+
+# begin test case where disable_excludes is supported
+- name: Try install zip without disable_excludes
+  yum: name=zip state=latest
+  register: yum_zip_result
+  ignore_errors: True
+  when: supports_disable_excludes
+
+- name: verify zip did not install because it is in exclude list
+  assert:
+    that:
+      - "yum_zip_result is failed"
+  when: supports_disable_excludes
+
+- name: install zip with disable_excludes
+  yum: name=zip state=latest disable_excludes=all
+  register: yum_zip_result_using_excludes
+  when: supports_disable_excludes
+
+- name: verify zip did install using disable_excludes=all
+  assert:
+    that:
+      - "yum_zip_result_using_excludes is success"
+      - "yum_zip_result_using_excludes is changed"
+      - "yum_zip_result_using_excludes is not failed"
+  when: supports_disable_excludes
+
+- name: remove exclude zip (cleanup yum.conf)
+  lineinfile:
+    dest: /etc/yum.conf
+    regexp: (^exclude=zip*)
+    line: "exclude="
+    state: present
+  when: supports_disable_excludes
+# end test case where disable_excludes is supported
+
+# begin test case where disable_excludes is not supported
+- name: Try install zip with disable_excludes
+  yum: name=zip state=latest disable_excludes=all
+  register: yum_fail_zip_result_old_yum
+  ignore_errors: True
+  when: not supports_disable_excludes
+
+- name: verify packages did not install because yum version is unsupported
+  assert:
+    that:
+      - "yum_fail_zip_result_old_yum is failed"
+  when: not supports_disable_excludes
+
+- name: verify yum module outputs
+  assert:
+    that:
+        - "'is available in yum version 3.4 and onwards.' in yum_fail_zip_result_old_yum.msg"
+  when: not supports_disable_excludes
+
+- name: remove exclude zip (cleanup yum.conf)
+  lineinfile:
+    dest: /etc/yum.conf
+    regexp: (^exclude=zip*)
+    line: "exclude="
+    state: present
+  when: not supports_disable_excludes
+
+- name: install zip (bring test env in same state as when testing started)
+  yum: name=zip state=latest
+  register: yum_zip_result_old_yum
+  when: not supports_disable_excludes
+
+- name: verify zip installed
+  assert:
+    that:
+      - "yum_zip_result_old_yum is success"
+      - "yum_zip_result_old_yum is changed"
+      - "yum_zip_result_old_yum is not failed"
+  when: not supports_disable_excludes
+# end test case where disable_excludes is not supported

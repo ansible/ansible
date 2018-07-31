@@ -1008,10 +1008,11 @@ class FreeBsdUser(User):
             cmd.append(self.comment)
 
         if self.home is not None:
-            if (info[5] != self.home and self.move_home) or (not os.path.exists(self.home) and self.createhome):
+            if (info[5] != self.home and self.move_home) or (not os.path.exists(self.home) and self.create_home):
                 cmd.append('-m')
-            cmd.append('-d')
-            cmd.append(self.home)
+            if info[5] != self.home:
+                cmd.append('-d')
+                cmd.append(self.home)
 
             if self.skeleton is not None:
                 cmd.append('-k')

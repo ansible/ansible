@@ -229,7 +229,9 @@ files:
   $modules/cloud/docker/docker_network.py: keitwb olsaki
   $modules/cloud/docker/docker_secret.py:
   $modules/cloud/docker/docker_service.py: $team_ansible
-  $modules/cloud/google/: rambleraptor erjohnso
+  $modules/cloud/google/:
+    maintainers: rambleraptor erjohnso
+    ignored: supertom
   $modules/cloud/google/gc_storage.py: supertom
   $modules/cloud/google/gcdns_record.py: walbert947
   $modules/cloud/google/gcdns_zone.py: walbert947
@@ -310,14 +312,14 @@ files:
   $modules/cloud/vmware/vmware_host.py: dagwieers
   $modules/cloud/vmware/vmware_vm_shell.py: chrrrles
   $modules/cloud/vmware/vsphere_guest.py: dagwieers
-  $modules/cloud/vultr/: resmo
+  $modules/cloud/vultr/: $team_vultr
   $modules/cloud/webfaction/: quentinsf
   $modules/clustering/consul.py: sgargan
   $modules/clustering/consul_acl.py: sgargan
   $modules/clustering/consul_kv.py: sgargan
   $modules/clustering/consul_session.py: sgargan
   $modules/clustering/etcd3.py: evrardjp
-  $modules/clustering/k8s: chouseknecht maxamillion fabianvf flaper87
+  $modules/clustering/k8s: chouseknecht maxamillion fabianvf flaper87 willthames
   $modules/clustering/kubernetes.py: erjohnso supertom
   $modules/clustering/openshift: chouseknecht maxamillion fabianvf flaper87
   $modules/clustering/pacemaker_cluster.py:
@@ -364,13 +366,13 @@ files:
   $modules/files/tempfile.py:
   $modules/files/template.py: $team_ansible
   $modules/files/unarchive.py:
-    labels: unarchive
+    labels: m:unarchive
     maintainers: pileofrogs
     ignored: dagwieers
   $modules/files/xattr.py: $team_ansible bcoca
   $modules/files/xml.py:
     ignored: magnus919
-    labels: xml
+    labels: m:xml
     maintainers: sm4rk0 cmprescott
   $modules/identity/cyberark/:
     notified: cyberark-bizdev
@@ -498,6 +500,7 @@ files:
   $modules/network/panos/: ivanbojer jtschichold
   $modules/network/panos/panos_address.py: itdependsnetworks ivanbojer jtschichold
   $modules/network/protocol/: $team_networking
+  $modules/network/routeros/: heuels
   $modules/network/routing/: $team_networking
   $modules/network/slxos/: $team_extreme
   $modules/network/sros/: privateip
@@ -581,7 +584,7 @@ files:
   $modules/packaging/os/swdepot.py: melodous
   $modules/packaging/os/swupd.py: albertomurillo
   $modules/packaging/os/urpmi.py: pmakowski
-  $modules/packaging/os/yum.py: $team_ansible berenddeschouwer verm666 mkrizek kustodian
+  $modules/packaging/os/yum.py: $team_ansible berenddeschouwer verm666 kustodian
   $modules/packaging/os/yum_repository.py: jtyr
   $modules/packaging/os/zypper.py:
     ignored: dirtyharrycallahan
@@ -712,6 +715,12 @@ files:
     maintainers: $team_windows
     ignored: angstwad georgefrank h0nIg
   $modules/windows/win_security_policy.py: rndmh3ro defionscode
+  bin/ansible-connection:
+    keywords:
+    - persistent connection
+    labels:
+    - networking
+    maintainers: $team_networking
   contrib/inventory:
     keywords:
     - dynamic inventory script
@@ -864,8 +873,8 @@ files:
   $module_utils/network/ironware:
     maintainers: paulquack
     labels: networking
-  $module_utils/k8s_common.py:
-    maintainers: chouseknecht maxamillion fabianvf flaper87
+  $module_utils/k8s:
+    maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
     labels: clustering
   $module_utils/keycloak.py:
     maintainers: eikef
@@ -886,6 +895,9 @@ files:
     labels: networking
   $module_utils/network/onyx:
     maintainers: $team_onyx
+    labels: networking
+  $module_utils/network/routeros:
+    maintainers: heuels
     labels: networking
   $module_utils/network/slxos:
     maintainers: $team_extreme
@@ -910,6 +922,11 @@ files:
   $module_utils/remote_management/ucs:
     maintainers: $team_ucs
     labels: ucs
+  $module_utils/vultr.py:
+    maintainers: $team_vultr
+    labels:
+    - vultr
+    - cloud
   $module_utils/vmware:
     maintainers: $team_vmware
     labels: vmware
@@ -1007,6 +1024,9 @@ files:
     - nxos
   lib/ansible/plugins/cliconf/onyx.py:
     maintainers: $team_onyx
+    labels: networking
+  lib/ansible/plugins/cliconf/routeros.py:
+    maintainers: heuels
     labels: networking
   lib/ansible/plugins/cliconf/slxos.py:
     maintainers: $team_extreme
@@ -1115,6 +1135,9 @@ files:
   lib/ansible/plugins/terminal/onyx.py:
     maintainers: $team_onyx
     labels: networking
+  lib/ansible/plugins/terminal/routeros.py:
+    maintainers: heuels
+    labels: networking
   lib/ansible/plugins/terminal/slxos.py:
     maintainers: $team_extreme
     labels: networking
@@ -1135,10 +1158,12 @@ files:
     - validate-modules
   docs/:
     labels: docs
+    maintainers:
+      - acozine
   docs/docsite/rst/network/:
     labels: networking
     maintainers:
-      - acozine
+      - samccann
       - gundalow
   docs/docsite/rst/scenario_guides/guide_aci.rst:
     maintainers: $team_aci
@@ -1230,5 +1255,6 @@ macros:
   team_tower: ghjm jlaska matburt wwitzel3 simfarm ryanpetrello rooftopcellist AlanCoding
   team_ucs: dsoper2 johnamcdonough vallard vvb dagwieers
   team_vmware: Akasurde dav1x warthog9
+  team_vultr: resmo Spredzy
   team_windows: dagwieers jborean93 jhawkesworth nitzmahone
   team_windows_core: nitzmahone jborean93

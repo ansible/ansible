@@ -50,6 +50,7 @@ options:
     - This is the number assocated with CIDR notation.
     - For IPv4 addresses, accepted values range between C(0) and C(32).
     - For IPv6 addresses, accepted Values range between C(0) and C(128).
+    type: int
     aliases: [ subnet_mask ]
   nd_prefix_policy:
     description:
@@ -75,6 +76,7 @@ options:
     - The shared option limits communication to hosts in either the same VRF or the shared VRF.
     - The value is a list of options, C(private) and C(public) are mutually exclusive, but both can be used with C(shared).
     - The APIC defaults to C(private) when unset during creation.
+    type: list
     choices:
       - private
       - public
@@ -356,10 +358,11 @@ def main():
     route_profile = module.params['route_profile']
     route_profile_l3_out = module.params['route_profile_l3_out']
     scope = module.params['scope']
-    if 'private' in scope and 'public' in scope:
-        module.fail_json(msg="Parameter 'scope' cannot be both 'private' and 'public', got: %s" % scope)
-    else:
-        scope = ','.join(sorted(scope))
+    if scope is not None:
+        if 'private' in scope and 'public' in scope:
+            module.fail_json(msg="Parameter 'scope' cannot be both 'private' and 'public', got: %s" % scope)
+        else:
+            scope = ','.join(sorted(scope))
     state = module.params['state']
     subnet_control = module.params['subnet_control']
     if subnet_control:

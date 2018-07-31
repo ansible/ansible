@@ -131,7 +131,9 @@ backup_path:
 """
 import re
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.vyos.vyos import load_config, get_config, run_commands
 from ansible.module_utils.network.vyos.vyos import vyos_argument_spec, get_connection
 
@@ -146,10 +148,15 @@ CONFIG_FILTERS = [
 def get_candidate(module):
     contents = module.params['src'] or module.params['lines']
 
-    if module.params['lines']:
-        contents = '\n'.join(contents)
+    if module.params['src']:
+        contents = format_commands(contents.splitlines())
 
+    contents = '\n'.join(contents)
     return contents
+
+
+def format_commands(commands):
+    return [line for line in commands if len(line.strip()) > 0]
 
 
 def diff_config(commands, config):
@@ -203,7 +210,11 @@ def run(module, result):
 
     # create loadable config that includes only the configuration updates
     connection = get_connection(module)
-    response = connection.get_diff(candidate=candidate, running=config, match=module.params['match'])
+    try:
+        response = connection.get_diff(candidate=candidate, running=config, diff_match=module.params['match'])
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+
     commands = response.get('config_diff')
     sanitize_config(commands, result)
 
@@ -223,7 +234,7 @@ def run(module, result):
         result['changed'] = True
 
     if module._diff:
-        result['diff'] = diff
+        result['diff'] = {'prepared': diff}
 
 
 def main():

@@ -151,6 +151,8 @@ class ActionModule(ActionBase):
         connection = self._shared_loader_obj.connection_loader.get('persistent',
                                                                    play_context, sys.stdin)
 
+        connection.set_options(direct={'persistent_command_timeout': play_context.timeout})
+
         socket_path = connection.run()
         display.vvvv('socket_path: %s' % socket_path, play_context.remote_addr)
         if not socket_path:

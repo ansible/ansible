@@ -1,0 +1,2 @@
+minor_changes:
+    - allow user to customize default ansible-console prompt/msg default color
