@@ -163,7 +163,7 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         required_one_of=[['name', 'uuid']],
-        required_together=['name', 'folder']
+        required_together=[['name', 'folder']],
     )
 
     # FindByInventoryPath() does not require an absolute path
