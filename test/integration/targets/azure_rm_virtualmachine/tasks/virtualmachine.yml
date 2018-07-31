@@ -268,7 +268,7 @@
       resource_group: "{{ item.resource_group }}"
       name: "{{ item.name }}"
       address_prefixes: "10.10.0.0/16"
-  loop: "{{ nicList }}"
+  loop: "{{ niclist }}"
 
 - name: Add subnet
   azure_rm_subnet:
@@ -276,7 +276,7 @@
       name: "{{ item.name }}"
       address_prefix: "10.10.0.0/24"
       virtual_network: "{{ item.name }}"
-  loop: "{{ nicList }}"
+  loop: "{{ niclist }}"
 
 - name: Create NICs for dual nic VM
   azure_rm_networkinterface:
