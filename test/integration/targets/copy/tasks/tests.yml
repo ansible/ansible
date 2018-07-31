@@ -1488,3 +1488,93 @@
     - 'new_sub_dir1/foo.txt'
   loop_control:
     loop_var: 'dest'
+
+
+#
+# Recursive copying on remote host with symlinks tests
+#
+
+## usecase1 remote_dir_dest not exists
+
+- block:
+  - name: prepare - Create a test dir to copy
+    file:
+      path: '{{ remote_dir }}/top_dir'
+      state: directory
+
+  - name: prepare - Stat the remote_dir(src)
+    stat:
+      path: '{{ remote_dir }}/top_dir'
+    register: stat_remote_dir_src
+
+  - name: prepare - Create a test dir to copy
+    file:
+      path: '{{ remote_dir }}/top_dir'
+      state: directory
+
+  - name: prepare - Create a circular subdir
+    file:
+      path: '{{ remote_dir }}/top_dir/subdir'
+      state: directory
+
+  - name: prepare - Create a file in the top dir
+    copy:
+      dest: '{{ remote_dir }}/top_dir/file1'
+      content: 'hello world 1'
+
+  - name: prepare - Create a file in the subdir
+    copy:
+      dest: '{{ remote_dir }}/top_dir/subdir/file12'
+      content: 'hello world 12'
+
+  - name: prepare - Create a link to the file12
+    file:
+      path: '{{ remote_dir }}/top_dir/link_file12'
+      src: '{{ remote_dir }}/top_dir/subdir/file12'
+      state: link
+
+- block:
+  - name: execute - Copy the directory on remote with follow
+    copy:
+      src: '{{ remote_dir }}/top_dir'
+      dest: '{{ remote_dir }}/new_dir_with_follow'
+      follow: True
+
+  - name: execute - Copy the directory on remote without follow
+    copy:
+      src: '{{ remote_dir }}/top_dir'
+      dest: '{{ remote_dir }}/new_dir_without_follow'
+      follow: False
+
+- block:
+  - name: assert - Stat the new_dir_with_follow
+    stat:
+      path: '{{ remote_dir }}/new_dir_with_follow'
+    register: stat_new_dir_with_follow
+
+  - name: assert - Stat the new_dir_without_follow
+    stat:
+      path: '{{ remote_dir }}/new_dir_without_follow'
+    register: stat_new_dir_with_follow
+
+  - name: assert - Assert that remote_dir has copied.
+    assert:
+      that:
+      - stat_new_dir_with_follow.stat.exists
+      - stat_new_dir_with_follow.stat.isdir
+#      - stat_file_in_dir_result.stat.exists
+#      - stat_file_in_dir_result.stat.isreg
+#      - stat_circular_symlink_result.stat.exists
+#      - stat_circular_symlink_result.stat.islnk
+
+## usecase2 remote_dir_dest exists, left only subdir exists
+
+### pass
+
+## usecase3 remote_dir_dest exists, left only file exists
+
+### pass
+
+## usecase4 remote_dir_dest exists, diff files in common subdirs
+
+### pass
