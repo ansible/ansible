@@ -263,8 +263,8 @@ def _is_vcs_url(name):
     return re.match(_VCS_RE, name)
 
 
-def _is_valid_package_name(name):
-    """Test whether a name is package name or version specifier."""
+def _is_package_name(name):
+    """Test whether the name is a package name or a version specifier."""
     return not name.lstrip().startswith(tuple(op_dict.keys()))
 
 
@@ -284,14 +284,14 @@ def _recover_package_name(names):
     # rebuild input name to a flat list so we can tolerate any combination of input
     tmp = []
     for one_line in names:
-        tmp = tmp + one_line.split(",")
+        tmp.extend(one_line.split(","))
     names = tmp
 
     # reconstruct the names
     name_parts = []
     package_names = []
     for name in names:
-        if _is_valid_package_name(name):
+        if _is_package_name(name):
             if name_parts:
                 package_names.append(",".join(name_parts))
             name_parts = []
@@ -557,7 +557,7 @@ def main():
     )
 
     if not HAS_SETUPTOOLS:
-        module.fail_json(msg="No setuptools found in remote host, please install that first.")
+        module.fail_json(msg="No setuptools found in remote host, please install it first.")
 
     state = module.params['state']
     name = module.params['name']
@@ -617,15 +617,13 @@ def main():
         has_vcs = False
         if name:
             for pkg in name:
-                if bool(pkg and _is_vcs_url(pkg)):
+                if pkg and _is_vcs_url(pkg):
                     has_vcs = True
                     break
 
             # convert raw input package names to Package instances
             try:
-                packages = []
-                for dist in _recover_package_name(name):
-                    packages.append(Package(dist))
+                packages = [Package(package) for package in _recover_package_name(name)]
             except ValueError as e:
                 # if users input some invalid package names, show them the parsing error
                 module.fail_json(msg="Can not parse package name '%s', error: '%s'" % (dist, str(e)))
@@ -657,8 +655,7 @@ def main():
             cmd.append(extra_args)
 
         if name:
-            for p in packages:
-                cmd.append(str(p))
+            cmd.extend(str(p) for p in packages)
         elif requirements:
             cmd.extend(['-r', requirements])
         else:

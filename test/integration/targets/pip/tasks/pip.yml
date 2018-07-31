@@ -309,7 +309,7 @@
 
 - name: assert no changes
   assert:
-    that: "version3.changed == False"
+    that: "not version3.changed"
 
 - name: test the check_mod with unsatisfied version
   pip:
