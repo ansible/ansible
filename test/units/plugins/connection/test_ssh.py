@@ -70,7 +70,22 @@ class TestConnectionBaseClass(unittest.TestCase):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = connection_loader.get('ssh', pc, new_stdin)
-        conn._build_command('ssh')
+        cmd = conn._build_command('ssh', ['sshcommand'])
+        self.assertEqual(cmd[0], b'ssh')
+        self.assertIn(b'sshcommand', cmd)
+
+    def test_plugins_connection_ssh__build_command_custom_exec(self):
+        pc = PlayContext()
+        pc.ssh_executable = 'mysshwrapper'
+        pc.ssh_extra_args = '--customarg value'
+        new_stdin = StringIO()
+        conn = connection_loader.get('ssh', pc, new_stdin)
+        cmd = conn._build_command('ssh', ['sshcommand', 'arg1', 'arg2'])
+        self.assertEqual(cmd[0], b'mysshwrapper')
+        self.assertIn(b'--customarg', cmd)
+        self.assertIn(b'sshcommand', cmd)
+        self.assertIn(b'arg1', cmd)
+        self.assertIn(b'arg2', cmd)
 
     def test_plugins_connection_ssh_exec_command(self):
         pc = PlayContext()
