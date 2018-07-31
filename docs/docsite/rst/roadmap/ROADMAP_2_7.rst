@@ -20,6 +20,10 @@ Expected
 - 2018-09-27 Release Candidate 4 (If needed)
 - 2018-10-04 General Availability
 
+Release Manager
+---------------
+Toshio Kuratomi (IRC: abadger1999; GitHub: @abadger)
+
 
 Cleaning Duty
 -------------
