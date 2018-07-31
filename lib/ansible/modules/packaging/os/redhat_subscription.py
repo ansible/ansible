@@ -53,6 +53,7 @@ options:
     rhsm_repo_ca_cert:
         description:
             - Specify an alternative location for a CA certificate for CDN
+        version_added: "2.7"
     server_proxy_hostname:
         description:
             - Specify a HTTP proxy hostname
