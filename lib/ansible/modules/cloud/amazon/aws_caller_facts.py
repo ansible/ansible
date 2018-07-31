@@ -17,7 +17,9 @@ description:
     - The primary use of this is to get the account id for templating into ARNs or similar to avoid needing to specify this information in inventory.
 version_added: "2.6"
 
-author: Ed Costello    (@orthanc)
+author: 
+    - Ed Costello (@orthanc)
+    - Stijn Dubrul (@sdubrul)
 
 requirements: [ 'botocore', 'boto3' ]
 extends_documentation_fragment:
@@ -41,7 +43,7 @@ account:
     sample: "123456789012"
 account_alias:
     description: The account alias the access credentials are associated with.
-    returned: success
+    returned: when caller has the iam:ListAccountAliases permission
     type: string
     sample: "acme-production"
 arn:
@@ -82,7 +84,6 @@ def main():
         module.fail_json_aws(e, msg='Failed to retrieve caller identity')
 
     iam_client = module.client('iam')
-    alias = ''
 
     try:
         # Although a list is returned by list_account_aliases AWS supports maximum one alias per account.
@@ -90,11 +91,13 @@ def main():
         # see https://docs.aws.amazon.com/cli/latest/reference/iam/list-account-aliases.html#output
         response = iam_client.list_account_aliases()
         if response and response['AccountAliases']:
-            alias = response['AccountAliases'][0]
+            caller_facts['account_alias'] = response['AccountAliases'][0]
+        else:
+            caller_facts['account_alias'] = ''
     except (BotoCoreError, ClientError) as e:
-        module.fail_json_aws(e, msg='Failed to retrieve account aliases')
-
-    caller_facts['account_alias'] = alias
+        # The iam:ListAccountAliases permission is required for this operation to succeed.
+        # Lacking this permission is handled gracefully by not returning the account_alias.
+        pass
 
     module.exit_json(
         changed=False,
