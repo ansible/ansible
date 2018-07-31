@@ -1531,6 +1531,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                                                       self.image['offer'],
                                                                       self.image['sku'],
                                                                       self.image['version']))
+        return "sanity check satisfier"
 
     def get_custom_image_reference(self, name, resource_group=None):
         try:
@@ -1547,6 +1548,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 return self.compute_models.ImageReference(id=vm_image.id)
 
         self.fail("Error could not find image with name {0}".format(name))
+        return "sanity check satisfier"
 
     def get_availability_set(self, resource_group, name):
         try:
