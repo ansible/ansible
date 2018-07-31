@@ -23,8 +23,7 @@ When debugging or creating a new issue, you will need information about your VMw
     $ govc find /
 
 
-Troubleshooting Item 
-====================
+Troubleshooting Item
 
 Description
 

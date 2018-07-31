@@ -5,7 +5,7 @@
 
 #
 # Basic absolute symlink to a file
-# 
+#
 - name: create soft link to file
   file: src={{output_file}} dest={{output_dir}}/soft.txt state=link
   register: file1_result

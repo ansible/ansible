@@ -102,7 +102,7 @@ if (Test-Path REGISTRY::$hive\$reg_path) {
             # Powershell adds in some metadata we need to filter out
             $real_property = Test-RegistryProperty -hive $hive -path $reg_path -property $property.Name
             if ($real_property -eq $true) {
-                $property_object = Get-PropertyObject -hive $hive -net_hive $net_hive -path $reg_path -property $property.Name 
+                $property_object = Get-PropertyObject -hive $hive -net_hive $net_hive -path $reg_path -property $property.Name
                 $property_info.Add($property.Name, $property_object)
             }
         }

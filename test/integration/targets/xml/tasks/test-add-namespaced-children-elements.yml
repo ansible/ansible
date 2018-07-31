@@ -21,7 +21,7 @@
       src: results/test-add-namespaced-children-elements.xml
       dest: /tmp/ansible-xml-namespaced-beers.xml
     check_mode: yes
-    diff: yes 
+    diff: yes
     register: comparison
 
   - name: Test expected result

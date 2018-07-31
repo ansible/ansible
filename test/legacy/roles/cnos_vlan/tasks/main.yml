@@ -23,7 +23,7 @@
 - name: Test Vlan - ip igmp snooping query interval
   cnos_vlan:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['username']}}  password={{ hostvars[inventory_hostname]['password']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_vlan_{{ inventory_hostname }}_output.txt  vlanArg1='{{item.vlanArg1}}' vlanArg2='{{item.vlanArg2}}' vlanArg3='{{item.vlanArg3}}' vlanArg4='{{item.vlanArg4}}'
   with_items: "{{cnos_vlan_data6}}"
- 
+
 - name: Test Vlan - ip igmp snooping last member query interval
   cnos_vlan:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['username']}}  password={{ hostvars[inventory_hostname]['password']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_vlan_{{ inventory_hostname }}_output.txt  vlanArg1='{{item.vlanArg1}}' vlanArg2='{{item.vlanArg2}}' vlanArg3='{{item.vlanArg3}}' vlanArg4='{{item.vlanArg4}}'
   with_items: "{{cnos_vlan_data7}}"

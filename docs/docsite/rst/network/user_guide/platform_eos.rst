@@ -4,7 +4,7 @@
 EOS Platform Options
 ***************************************
 
-Arista EOS supports multiple connections. This page offers details on how each connection works in Ansible 2.6 and how to use it. 
+Arista EOS supports multiple connections. This page offers details on how each connection works in Ansible 2.6 and how to use it.
 
 .. contents:: Topics
 
@@ -106,7 +106,7 @@ Example eAPI ``group_vars/eos.yml``
    ansible_connection: httpapi
    ansible_network_os: eos
    ansible_user: myuser
-   ansible_ssh_pass: !vault... 
+   ansible_ssh_pass: !vault...
    become: yes
    become_method: enable
    proxy_env:
@@ -140,7 +140,7 @@ eAPI examples with ``connection: local``
    ansible_connection: local
    ansible_network_os: eos
    ansible_user: myuser
-   ansible_ssh_pass: !vault... 
+   ansible_ssh_pass: !vault...
    eapi:
      host: "{{ inventory_hostname }}"
      transport: eapi
@@ -161,7 +161,7 @@ eAPI task:
      environment: "{{ proxy_env }}"
      when: ansible_network_os == 'eos'
 
-In this example two variables defined in ``group_vars`` get passed to the module of the task: 
+In this example two variables defined in ``group_vars`` get passed to the module of the task:
 
 - the ``eapi`` variable gets passed to the ``provider`` option of the module
 - the ``proxy_env`` variable gets passed to the ``environment`` option of the module

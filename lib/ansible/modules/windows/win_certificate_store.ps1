@@ -85,7 +85,7 @@ Function New-CertFile($cert, $path, $type, $password) {
     } catch {
         Fail-Json -obj $result -message "Failed to export certificate as bytes: $($_.Exception.Message)"
     }
-    
+
     # Need to manually handle a PEM file
     if ($type -eq "pem") {
         $cert_content = "-----BEGIN CERTIFICATE-----`r`n"
@@ -100,7 +100,7 @@ Function New-CertFile($cert, $path, $type, $password) {
             $result.key_exportable = $cert.PrivateKey.CspKeyContainerInfo.Exportable
         }
     }
-    
+
     if (-not $check_mode) {
         try {
             [System.IO.File]::WriteAllBytes($path, $cert_bytes)
@@ -164,7 +164,7 @@ $store_certificates = $store.Certificates
 try {
     if ($state -eq "absent") {
         $cert_thumbprints = @()
-        
+
         if ($path -ne $null) {
             $certs = Get-CertFile -path $path -password $password -key_exportable $key_exportable -key_storage $key_storage
             foreach ($cert in $certs) {
@@ -210,7 +210,7 @@ try {
                     # that will fail validation
                     $certs = @{Thumbprint = $null}
                 }
-                
+
                 if ($certs.Thumbprint -eq $thumbprint) {
                     $export = $false
                 }
@@ -222,7 +222,7 @@ try {
             if ($found_certs.Count -ne 1) {
                 Fail-Json -obj $result -message "Found $($found_certs.Count) certs when only expecting 1"
             }
-    
+
             New-CertFile -cert $found_certs -path $path -type $file_type -password $password
         }
     } else {

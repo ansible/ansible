@@ -14,13 +14,13 @@
         Foreman port: {{ foreman_stub_port }} |
         API path: {{ foreman_stub_api_path }} |
         Foreman API URL: {{ foreman_stub_api_uri }}
-  
+
   - name: Wait for Foreman API stub to come up online
     wait_for:
       host: "{{ foreman_stub_host }}"
       port: "{{ foreman_stub_port }}"
       state: started
-  
+
   # smoke test that flask app is serving
   - name: Smoke test HTTP response from Foreman stub
     uri:

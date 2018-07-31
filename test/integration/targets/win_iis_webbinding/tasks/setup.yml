@@ -82,12 +82,12 @@
   raw: '(gci Cert:\LocalMachine\my | ? {$_.subject -eq "CN=*.test.com"})[0].Thumbprint'
   register: thumbprint_wc
 
-- debug: 
+- debug:
     var: thumbprint1.stdout
     verbosity: 1
-- debug: 
+- debug:
     var: thumbprint2.stdout
     verbosity: 1
-- debug: 
+- debug:
     var: thumbprint_wc.stdout
     verbosity: 1

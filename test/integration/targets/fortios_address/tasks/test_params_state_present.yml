@@ -59,7 +59,7 @@
      state: present
      name: blabla
      type: iprange
-     end_ip: 10.10.10.10     
+     end_ip: 10.10.10.10
    register: missing_sart_ip
    ignore_errors: True
 
@@ -70,7 +70,7 @@
      state: present
      name: blabla
      type: iprange
-     start_ip: 10.10.10.10     
+     start_ip: 10.10.10.10
    register: missing_end_ip
    ignore_errors: True
 

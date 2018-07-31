@@ -166,7 +166,7 @@ You can also use keyword ``become`` on a particular task instead of the whole pl
     - hosts: webservers
       remote_user: yourname
       tasks:
-        - service: 
+        - service:
             name: nginx
             state: started
           become: yes
@@ -266,7 +266,7 @@ which is totally ok if the command is something like
 be used to make these modules also idempotent.
 
 Every task should have a ``name``, which is included in the output from
-running the playbook.   This is human readable output, and so it is 
+running the playbook.   This is human readable output, and so it is
 useful to provide good descriptions of each task step.  If the name
 is not provided though, the string fed to 'action' will be used for
 output.
@@ -379,7 +379,7 @@ The things listed in the ``notify`` section of a task are called
 handlers.
 
 Handlers are lists of tasks, not really any different from regular
-tasks, that are referenced by a globally unique name, and are notified 
+tasks, that are referenced by a globally unique name, and are notified
 by notifiers.  If nothing notifies a handler, it will not
 run.  Regardless of how many tasks notify a handler, it will run only
 once, after all of the tasks complete in a particular play.

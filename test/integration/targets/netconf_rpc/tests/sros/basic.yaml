@@ -75,7 +75,7 @@
       - "{{ result['output']['data']['netconf-state']['schemas'] is defined}}"
       - "{{ result['output']['data']['netconf-state']['schemas']['schema'] is defined}}"
 
-# The following two test-cases have been validated against a pre-release implementation. 
+# The following two test-cases have been validated against a pre-release implementation.
 # To make this playbook work with the regular Nokia SROS 16.0 release, those test-cases
 # have been commented out. As soon the <get-schema> operation is supported by SROS
 # those test-cases shall be included.

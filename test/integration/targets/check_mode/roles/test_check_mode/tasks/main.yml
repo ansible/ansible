@@ -25,8 +25,8 @@
   register: foo
 
 - name: verify that the file was marked as changed in check mode
-  assert: 
-    that: 
+  assert:
+    that:
       - "template_result is changed"
       - "not foo.stat.exists"
 
@@ -44,7 +44,7 @@
   check_mode: no
 
 - name: verify that the file was not changed
-  assert: 
-    that: 
+  assert:
+    that:
       - "checkmode_disabled is changed"
       - "template_result2 is not changed"

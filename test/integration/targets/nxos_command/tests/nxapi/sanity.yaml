@@ -39,7 +39,7 @@
 
   - name: "Run show running-config bgp - should pass"
     nxos_command:
-      commands: 
+      commands:
         - sh running-config bgp
     register: result
 

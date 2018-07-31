@@ -51,7 +51,7 @@
 - name: check win_msi install again result
   # ignore errors because test/module is unreliable
   ignore_errors: true
-  assert: 
+  assert:
     that:
       - "win_msi_install_again_result is not failed"
       - "win_msi_install_again_result is not changed"
@@ -64,7 +64,7 @@
   register: win_msi_uninstall_result
 
 - name: check win_msi uninstall result
-  assert: 
+  assert:
     that:
       - "win_msi_uninstall_result is not failed"
       - "win_msi_uninstall_result is changed"

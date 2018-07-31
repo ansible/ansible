@@ -18,7 +18,7 @@
     win_file:
       path: '{{win_updates_dir}}'
       state: absent
-  
+
   - name: ensure WUA service is running
     win_service:
       name: wuauserv

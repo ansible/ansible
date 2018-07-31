@@ -27,8 +27,8 @@ Why Use DSC?
 DSC and Ansible modules have a common goal which is to define and ensure the state of a
 resource. Because of
 this, resources like the DSC `File resource <https://docs.microsoft.com/en-us/powershell/dsc/fileresource>`_
-and Ansible ``win_file`` can be used to achieve the same result. Deciding which to use depends 
-on the scenario. 
+and Ansible ``win_file`` can be used to achieve the same result. Deciding which to use depends
+on the scenario.
 
 Reasons for using an Ansible module over a DSC resource:
 
@@ -105,9 +105,9 @@ require certain rules.
 PSCredential
 ++++++++++++
 A ``[PSCredential]`` object is used to store credentials in a secure way, but
-Ansible has no way to serialize this over JSON. To set a DSC PSCredential property, 
-the definition of that parameter should have two entries that are suffixed with 
-``_username`` and ``_password`` for the username and password respectively. 
+Ansible has no way to serialize this over JSON. To set a DSC PSCredential property,
+the definition of that parameter should have two entries that are suffixed with
+``_username`` and ``_password`` for the username and password respectively.
 For example::
 
     PsDscRunAsCredential_username: '{{ansible_user}}'
@@ -188,7 +188,7 @@ Run As Another User
 By default, DSC runs each resource as the SYSTEM account and not the account
 that Ansible use to run the module. This means that resources that are dynamically
 loaded based on a user profile, like the ``HKEY_CURRENT_USER`` registry hive,
-will be loaded under the ``SYSTEM`` profile. The parameter 
+will be loaded under the ``SYSTEM`` profile. The parameter
 `PsDscRunAsCredential`` is a parameter that can be set for every DSC resource
 force the DSC engine to run under a different account. As
 ``PsDscRunAsCredential`` has a type of ``PSCredential``, it is defined with the
@@ -215,7 +215,7 @@ modules can be installed to manage other resources that are not usually availabl
 
 Finding Custom DSC Resources
 ----------------------------
-You can use the 
+You can use the
 `PSGallery <https://www.powershellgallery.com/>`_ to find custom resources, along with documentation on how to install them  on a Windows host.
 
 The ``Find-DscResource`` cmdlet can also be used to find custom resources. For example:
@@ -311,7 +311,7 @@ Interact with Azure
       win_psmodule:
         name: xAzure
         state: present
-    
+
     - name: create virtual machine in Azure
       win_dsc:
         resource_name: xAzureVM

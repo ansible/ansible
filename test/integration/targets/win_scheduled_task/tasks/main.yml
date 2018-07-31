@@ -10,7 +10,7 @@
     include_tasks: new_tests.yml
 
   - include_tasks: clean.yml
-  
+
   - name: Test principals
     include_tasks: principals.yml
 
@@ -18,7 +18,7 @@
 
   - name: Test triggers
     include_tasks: triggers.yml
-  
+
   always:
   - name: remove test tasks after test
     include_tasks: clean.yml

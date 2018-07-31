@@ -1,4 +1,4 @@
-- include: Fedora.yml 
+- include: Fedora.yml
   when: ansible_distribution == 'Fedora'
 
 - include: OpenSuse.yml

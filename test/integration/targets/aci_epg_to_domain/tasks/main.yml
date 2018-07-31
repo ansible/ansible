@@ -68,7 +68,7 @@
 
 - name: bind phys domain to epg - idempotency works
   aci_epg_to_domain:
-    <<: *aci_epg_to_domain_present 
+    <<: *aci_epg_to_domain_present
   register: phys_idempotent
 
 - name: bind phys domain to epg - update works

@@ -68,7 +68,7 @@
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
       name: "{{ vm_name }}"
-      allocated: no 
+      allocated: no
       vm_size: Standard_A0
   register: output
 

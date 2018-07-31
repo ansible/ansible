@@ -9,7 +9,7 @@
     when: platform is match('N7K')
 
   - name: "Enable feature nv overlay"
-    nxos_config: 
+    nxos_config:
       commands:
         - feature nv overlay
       match: none
@@ -26,11 +26,11 @@
         shutdown: false
         provider: "{{ connection }}"
       register: result
-  
+
     - assert: &true
         that:
           - "result.changed == true"
-  
+
     - name: "Conf Idempotence"
       nxos_vxlan_vtep: *configure9
       register: result
@@ -49,9 +49,9 @@
         shutdown: true
         provider: "{{ connection }}"
       register: result
-  
+
     - assert: *true
-  
+
     - name: "reset Idempotence"
       nxos_vxlan_vtep: *def9
       register: result
@@ -70,11 +70,11 @@
         shutdown: false
         provider: "{{ connection }}"
       register: result
-  
+
     - assert:
         that:
           - "result.changed == true"
-  
+
     - name: "Conf Idempotence"
       nxos_vxlan_vtep: *configure7
       register: result
@@ -92,9 +92,9 @@
         shutdown: true
         provider: "{{ connection }}"
       register: result
-  
+
     - assert: *true
-  
+
     - name: "reset Idempotence"
       nxos_vxlan_vtep: *def7
       register: result
@@ -135,7 +135,7 @@
     when: platform is match('N7K')
 
   - name: "Disable feature nv overlay"
-    nxos_feature: 
+    nxos_feature:
       feature: nve
       provider: "{{ connection }}"
       state: disabled

@@ -11,5 +11,5 @@
 # Please change <username> and <password> with appropriate value for your switch.
 
 [cnos_vlan_sample]
-10.241.107.39   username=<username> password=<password> deviceType=g8272_cnos 
+10.241.107.39   username=<username> password=<password> deviceType=g8272_cnos
 

@@ -88,4 +88,4 @@
   nxos_config: *rm
   ignore_errors: yes
 
-- debug: msg="END connection={{ ansible_connection }}/agg.yaml" 
+- debug: msg="END connection={{ ansible_connection }}/agg.yaml"

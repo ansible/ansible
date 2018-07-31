@@ -44,7 +44,7 @@
   aci_ap:
     <<: *aci_tenant_present
     ap: anstest2
- 
+
 - name: create ap - idempotency works
   aci_ap:
     <<: *aci_ap_present

@@ -50,10 +50,10 @@ Function Install-Repository {
     $Repo = (Get-PSRepository).SourceLocation
 
     # If repository isn't already present, try to register it as trusted.
-    if ($Repo -notcontains $Url){ 
+    if ($Repo -notcontains $Url){
       try {
            if (!($CheckMode)) {
-               Register-PSRepository -Name $Name -SourceLocation $Url -InstallationPolicy Trusted -ErrorAction Stop       
+               Register-PSRepository -Name $Name -SourceLocation $Url -InstallationPolicy Trusted -ErrorAction Stop
            }
           $result.changed = $true
           $result.repository_changed = $true
@@ -76,7 +76,7 @@ Function Remove-Repository{
 
     # Try to remove the repository
     if ($Repo -contains $Name){
-        try {         
+        try {
             if (!($CheckMode)) {
                 Unregister-PSRepository -Name $Name -ErrorAction Stop
             }
@@ -101,7 +101,7 @@ Function Install-PsModule {
     if (Get-Module -Listavailable|?{$_.name -eq $Name}){
         $result.output = "Module $($Name) already present"
     }
-    else {      
+    else {
       try{
         # Install NuGet Provider if needed
         Install-NugetProvider -CheckMode $CheckMode;
@@ -122,9 +122,9 @@ Function Install-PsModule {
         if ("AllowClobber" -in ((Get-Command PowerShellGet\Install-Module | Select -ExpandProperty Parameters).Keys)) {
           $ht['AllowClobber'] = $AllowClobber;
         }
-        
+
         Install-Module @ht | out-null;
-        
+
         $result.output = "Module $($Name) installed"
         $result.changed = $true
       }
@@ -168,7 +168,7 @@ if ($PsVersion.Major -lt 5){
 
 if ($state -eq "present") {
     if (($repo) -and ($url)) {
-        Install-Repository -Name $repo -Url $url -CheckMode $check_mode 
+        Install-Repository -Name $repo -Url $url -CheckMode $check_mode
     }
     else {
         $ErrorMessage = "Repository Name and Url are mandatory if you want to add a new repository"
@@ -176,8 +176,8 @@ if ($state -eq "present") {
 
     Install-PsModule -Name $Name -Repository $repo -CheckMode $check_mode -AllowClobber $allow_clobber;
 }
-else {  
-    if ($repo) {   
+else {
+    if ($repo) {
         Remove-Repository -Name $repo -CheckMode $check_mode
     }
     Remove-PsModule -Name $Name -CheckMode $check_mode

@@ -170,7 +170,7 @@ policy_name:
 policy_type:
     description: The policy type.
     returned: when state present
-    type: string    
+    type: string
 min_capacity:
     description: The minimum value to scale to in response to a scale in event. Required if I(state) is C(present).
     returned: when state present
@@ -197,7 +197,7 @@ step_scaling_policy_configuration:
             type: string
             sample: "ChangeInCapacity, PercentChangeInCapacity, ExactCapacity"
         cooldown:
-            description: The amount of time, in seconds, after a scaling activity completes 
+            description: The amount of time, in seconds, after a scaling activity completes
                 where previous trigger-related scaling activities can influence future scaling events
             returned: when state present and the policy type is StepScaling
             type: int

@@ -10,7 +10,7 @@
 - block:
   - name: run non-destructive tests
     include_tasks: tests.yml
-  
+
   - name: run destructive tests if flag is set
     include_tasks: destructive.yml
     when: test_win_dsc_run_desctructive == True
@@ -20,12 +20,12 @@
     win_feature:
       name: '{{test_win_dsc_feature_name}}'
       state: absent
-  
+
   - name: remove test folder
     win_file:
       path: '{{test_win_dsc_folder}}'
       state: absent
-  
+
   - name: remove custom DSC resource folder
     win_file:
       path: C:\Program Files\WindowsPowerShell\Modules\xTestDsc

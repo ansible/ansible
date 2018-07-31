@@ -55,7 +55,7 @@
     - not dir_with_ending_slash.failed
     - dir_with_ending_slash.output.TotalCount == 2
 
-- name: Run Pester test(s) located in a folder. Folder path does not end with '\' 
+- name: Run Pester test(s) located in a folder. Folder path does not end with '\'
   win_pester:
     path: '{{test_win_pester_path}}'
   register: dir_without_ending_slash

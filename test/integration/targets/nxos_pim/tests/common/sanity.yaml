@@ -23,7 +23,7 @@
 - block:
   - name: Configure ssm_range
     nxos_pim: &configure
-      ssm_range: 
+      ssm_range:
         - "239.128.1.0/24"
         - "224.0.0.0/8"
       provider: "{{ connection }}"

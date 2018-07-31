@@ -16,7 +16,7 @@
     aws_elasticbeanstalk_app:
     register: result
     ignore_errors: true
-  
+
   - name: assert failure when called with no parameters
     assert:
       that:
@@ -51,7 +51,7 @@
         - result.changed == False
 
   # ============================================================
-  - name: make an update to an existing app 
+  - name: make an update to an existing app
     aws_elasticbeanstalk_app:
       app_name: "{{ app_name }}"
       description: "{{ alternate_description }}"

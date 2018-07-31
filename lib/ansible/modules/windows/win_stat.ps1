@@ -124,14 +124,14 @@ If ($info -ne $null) {
                 $stat.islnk = $true
                 $stat.isreg = $false
                 $stat.lnk_target = $link_info.TargetPath
-                $stat.lnk_source = $link_info.AbsolutePath                
+                $stat.lnk_source = $link_info.AbsolutePath
                 break
             }
             "JunctionPoint" {
                 $stat.isjunction = $true
                 $stat.isreg = $false
                 $stat.lnk_target = $link_info.TargetPath
-                $stat.lnk_source = $link_info.AbsolutePath                
+                $stat.lnk_source = $link_info.AbsolutePath
                 break
             }
             "HardLink" {

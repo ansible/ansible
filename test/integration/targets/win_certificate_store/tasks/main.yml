@@ -82,7 +82,7 @@
 - block:
   - name: run tests
     include_tasks: test.yml
-  
+
   always:
   - name: ensure generated keys are deleted
     file:
@@ -96,7 +96,7 @@
     - subj-cert.cer
     - chain.pem
     - chain.p7b
-  
+
   - name: ensure certificates are removed from store after test
     win_certificate_store:
       thumbprint: '{{item}}'

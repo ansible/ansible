@@ -426,7 +426,7 @@
               - hwclock_set_local_deleted_adjtime_local.changed
               - hwclock_set_local_deleted_adjtime_local.diff.after.hwclock == 'local'
               - hwclock_set_local_deleted_adjtime_local.diff.before.hwclock == 'UTC'
-     
+
 
         ##
         ## test set hwclock with conf file deleted

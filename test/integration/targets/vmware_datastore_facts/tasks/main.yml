@@ -38,7 +38,7 @@
 
 - set_fact:
     cl1: "{{ clusters['json'][0] }}"
-    
+
 - name: get a list of Datacenters from vcsim
   uri:
     url: http://{{ vcsim }}:5000/govc_find?filter=DC
@@ -54,7 +54,7 @@
 
 - set_fact:
     ds1: "{{ datastores['json'][0] }}"
-  
+
 # Testcase 0001: Get a full list of datastores in a datacenter
 - name: get list of facts about datastores
   vmware_datastore_facts:

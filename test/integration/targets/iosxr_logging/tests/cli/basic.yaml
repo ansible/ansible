@@ -84,7 +84,7 @@
 - assert: *false
 
 - name: remove console logging with level warning
-  iosxr_logging: 
+  iosxr_logging:
     dest: console
     level: warning
     state: absent

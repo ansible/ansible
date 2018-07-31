@@ -16,7 +16,7 @@
      that:
       - "add_policy.changed == true"
 
- - name: Add existing policy 
+ - name: Add existing policy
    fortios_ipv4_policy:
      file_mode: true
      config_file: "{{role_path}}/files/default_config.conf"

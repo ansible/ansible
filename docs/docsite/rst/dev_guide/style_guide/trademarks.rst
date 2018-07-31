@@ -3,17 +3,17 @@ Trademark Usage
 ``````````````````````````````````````
 Why is it important to use the TM, SM, and ® for our registered marks?
 
-Before a trademark is registered with the United States Patent and Trademark Office it is appropriate to use the TM or SM symbol depending whether the product is for goods or services. It is important to use the TM or SM as it is notification to the public that Ansible claims rights to the mark even though it has not yet been registered. 
+Before a trademark is registered with the United States Patent and Trademark Office it is appropriate to use the TM or SM symbol depending whether the product is for goods or services. It is important to use the TM or SM as it is notification to the public that Ansible claims rights to the mark even though it has not yet been registered.
 
 Once the trademark is registered, it is appropriate to use the symbol in place of the TM or SM. The symbol designation must be used in conjunction with the trademark if Ansible is to fully protect its rights. If we don't protect these marks, we run the risk of losing them in the way of Aspirin or Trampoline or Escalator.
 
-General Rules: 
+General Rules:
 +++++++++++++++
 
 Trademarks should be used on 1st references on a page or within a section.
 
 Use Ansible Tower® or Ansible®, on first reference when referring to products.
- 
+
 Use "Ansible" alone as the company name, as in "Ansible announced quarterly results," which is not marked.
 
 Also add the trademark disclaimer.
@@ -21,7 +21,7 @@ Also add the trademark disclaimer.
 
     For Registered Trademarks:
     - [Name of Trademark] is a registered trademark of Ansible, Inc. in the United States and other countries.
-    
+
     For Unregistered Trademarks (TMs/SMs):
     - [Name of Trademark] is a trademark of Ansible, Inc. in the United States and other countries.
 
@@ -30,7 +30,7 @@ Also add the trademark disclaimer.
 
 Guidelines for the proper use of trademarks:
 +++++++++++++++++++++++++++++++++++++++++++++
- 
+
  Always distinguish trademarks from surround text with at least initial capital letters or in all capital letters.
 
 Always use proper trademark form and spelling.
@@ -42,12 +42,12 @@ Never use a trademark as a noun. Always use a trademark as an adjective modifyin
 
     Incorrect:
     Ansible's performance is incredible.
-    
+
 Never use a trademark as a verb. Trademarks are products or services, never actions.
 
     Correct:
     "Orchestrate your entire network using Ansible Tower®."
-    
+
     Incorrect:
     "Ansible your entire network."
 
@@ -58,7 +58,7 @@ Never modify a trademark to a plural form. Instead, change the generic word from
 
     Incorrect:
     "Corporate demand for Ansible is surging."
-    
+
 Never modify a trademark from its possessive form, or make a trademark possessive. Always use it in the form it has been registered.
 
 Never translate a trademark into another language.

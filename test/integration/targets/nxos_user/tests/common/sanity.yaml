@@ -77,7 +77,7 @@
       update_password: on_create
       provider: "{{ connection }}"
       state: present
-      roles: 
+      roles:
         - network-admin
         - network-operator
     register: result

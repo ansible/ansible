@@ -83,7 +83,7 @@
 ##
 ## group remove
 ##
-            
+
 - name: try to delete the group
   group:
       name: ansibullgroup

@@ -7,7 +7,7 @@
 - name: download Pester module from S3 bucket
   win_get_url:
     # this was downloaded straight off the Pester GitHub release page and uploaded to the S3 bucket
-    # https://github.com/pester/Pester/releases 
+    # https://github.com/pester/Pester/releases
     url: 'https://s3.amazonaws.com/ansible-ci-files/test/integration/roles/test_win_pester/Pester-4.3.1.zip'
     dest: '{{test_win_pester_path}}\Pester-4.3.1.zip'
 
@@ -44,7 +44,7 @@
       state: absent
       elements:
       - '{{test_win_pester_path}}\Modules'
-    
+
   - name: delete test folder
     win_file:
       path: '{{test_win_pester_path}}'

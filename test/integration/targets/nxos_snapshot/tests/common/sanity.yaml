@@ -50,7 +50,7 @@
       register: result
 
     - assert: *true
-  
+
     - name: "Conf Idempotence"
       nxos_snapshot: *add
       register: result
@@ -72,7 +72,7 @@
     register: result
 
   - assert: *true
-  
+
   - name: "Conf Idempotence"
     nxos_snapshot: *crss2
     register: result
@@ -97,7 +97,7 @@
     register: result
 
   - assert: *true
-  
+
   - name: "Conf Idempotence"
     nxos_snapshot: *del
     register: result
@@ -111,7 +111,7 @@
     register: result
 
   - assert: *true
-  
+
   - name: "Conf Idempotence"
     nxos_snapshot: *delall
     register: result

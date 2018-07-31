@@ -3,7 +3,7 @@
 - debug: msg="Using provider={{ connection.transport }}"
   when: ansible_connection == "local"
 
-- name: "Apply default ntp config" 
+- name: "Apply default ntp config"
   nxos_ntp_options: &default
     provider: "{{ connection }}"
     state: absent

@@ -30,19 +30,19 @@ Good sentence structure helps convey information. Try to keep the most important
     Furthermore, large volumes of water are also required for the process of extraction.
 
     Better:
-    Extraction also requires large volumes of water. 
-    
+    Extraction also requires large volumes of water.
+
 Avoid padding
 -------------------------------
 
-When reading a piece of technical writing, the audience does not benefit from elaborate prose. They just need information on how to perform a task. Avoid using padding, or filler. Don't use phrases such as, kind of, sort of, and essentially.    
+When reading a piece of technical writing, the audience does not benefit from elaborate prose. They just need information on how to perform a task. Avoid using padding, or filler. Don't use phrases such as, kind of, sort of, and essentially.
 
 Avoid redundant prepositional phrases
 --------------------------------------------------------------------
 Prepositional phrases, the combination of a preposition with a noun phrase, are among the worst offenders in making text long and tiresome to read. Often, it is possible to replace an entire phrase with a single word.
 
     Use now instead of at this point in time.
-    Use suddenly instead of all of the sudden. 
+    Use suddenly instead of all of the sudden.
 
 Avoid verbosity
 ------------------------------------

@@ -41,7 +41,7 @@ $common_functions = {
     Function Write-DebugLog($msg) {
         $date_str = Get-Date -Format u
         $msg = "$date_str $msg"
-    
+
         Write-Debug -Message $msg
         if ($log_path -ne $null -and (-not $check_mode)) {
             Add-Content -Path $log_path -Value $msg
@@ -71,7 +71,7 @@ $update_script_block = {
             updates = @{}
             filtered_updates = @{}
         }
-        
+
         Write-DebugLog -msg "Creating Windows Update session..."
         try {
             $session = New-Object -ComObject Microsoft.Update.Session
@@ -80,7 +80,7 @@ $update_script_block = {
             $result.msg = "Failed to create Microsoft.Update.Session COM object: $($_.Exception.Message)"
             return $result
         }
-        
+
         Write-DebugLog -msg "Create Windows Update searcher..."
         try {
             $searcher = $session.CreateUpdateSearcher()
@@ -89,14 +89,14 @@ $update_script_block = {
             $result.msg = "Failed to create Windows Update search from session: $($_.Exception.Message)"
             return $result
         }
-        
+
         # OR is only allowed at the top-level, so we have to repeat base criteria inside
         # FUTURE: change this to client-side filtered?
         $criteria_base = "IsInstalled = 0"
         $criteria_list = $category_guids | ForEach-Object { "($criteria_base AND CategoryIds contains '$_') " }
         $criteria = [string]::Join(" OR", $criteria_list)
         Write-DebugLog -msg "Search criteria: $criteria"
-        
+
         Write-DebugLog -msg "Searching for updates to install in category Ids $category_guids..."
         try {
             $search_result = $searcher.Search($criteria)
@@ -106,7 +106,7 @@ $update_script_block = {
             return $result
         }
         Write-DebugLog -msg "Found $($search_result.Updates.Count) updates"
-        
+
         Write-DebugLog -msg "Creating update collection..."
         try {
             $updates_to_install = New-Object -ComObject Microsoft.Update.UpdateColl
@@ -115,7 +115,7 @@ $update_script_block = {
             $result.msg = "Failed to create update collection object: $($_.Exception.Message)"
             return $result
         }
-        
+
         foreach ($update in $search_result.Updates) {
             $update_info = @{
                 title = $update.Title
@@ -124,7 +124,7 @@ $update_script_block = {
                 id = $update.Identity.UpdateId
                 installed = $false
             }
-        
+
             # validate update again blacklist/whitelist
             $skipped = $false
             $whitelist_match = $false
@@ -167,8 +167,8 @@ $update_script_block = {
                 $result.filtered_updates[$update_info.id] = $update_info
                 continue
             }
-        
-        
+
+
             if (-not $update.EulaAccepted) {
                 Write-DebugLog -msg "Accepting EULA for $($update_info.id)"
                 try {
@@ -179,36 +179,36 @@ $update_script_block = {
                     return $result
                 }
             }
-        
+
             if ($update.IsHidden) {
                 Write-DebugLog -msg "Skipping hidden update $($update_info.title)"
                 continue
             }
-        
+
             Write-DebugLog -msg "Adding update $($update_info.id) - $($update_info.title)"
             $updates_to_install.Add($update) > $null
-        
+
             $result.updates[$update_info.id] = $update_info
         }
-        
+
         Write-DebugLog -msg "Calculating pre-install reboot requirement..."
-        
+
         # calculate this early for check mode, and to see if we should allow updates to continue
         $result.reboot_required = (New-Object -ComObject Microsoft.Update.SystemInfo).RebootRequired
         $result.found_update_count = $updates_to_install.Count
         $result.installed_update_count = 0
-        
+
         # Early exit of check mode/state=searched as it cannot do more after this
         if ($check_mode -or $state -eq "searched") {
             Write-DebugLog -msg "Check mode: exiting..."
             Write-DebugLog -msg "Return value:`r`n$(ConvertTo-Json -InputObject $result -Depth 99)"
-        
+
             if ($updates_to_install.Count -gt 0 -and ($state -ne "searched")) {
                 $result.changed = $true
             }
             return $result
         }
-        
+
         if ($updates_to_install.Count -gt 0) {
             if ($result.reboot_required) {
                 Write-DebugLog -msg "FATAL: A reboot is required before more updates can be installed"
@@ -216,12 +216,12 @@ $update_script_block = {
                 $result.msg = "A reboot is required before more updates can be installed"
                 return $result
             }
-            Write-DebugLog -msg "No reboot is pending..."    
+            Write-DebugLog -msg "No reboot is pending..."
         } else {
             # no updates to install exit here
             return $result
         }
-        
+
         Write-DebugLog -msg "Downloading updates..."
         $update_index = 1
         foreach ($update in $updates_to_install) {
@@ -231,7 +231,7 @@ $update_script_block = {
                 $update_index++
                 continue
             }
-        
+
             Write-DebugLog -msg "Creating downloader object..."
             try {
                 $dl = $session.CreateUpdateDownloader()
@@ -240,7 +240,7 @@ $update_script_block = {
                 $result.msg = "Failed to create downloader object: $($_.Exception.Message)"
                 return $result
             }
-        
+
             Write-DebugLog -msg "Creating download collection..."
             try {
                 $dl.Updates = New-Object -ComObject Microsoft.Update.UpdateColl
@@ -249,10 +249,10 @@ $update_script_block = {
                 $result.msg = "Failed to create download collection object: $($_.Exception.Message)"
                 return $result
             }
-        
+
             Write-DebugLog -msg "Adding update $update_number $($update.Identity.UpdateId)"
             $dl.Updates.Add($update) > $null
-        
+
             Write-DebugLog -msg "Downloading $update_number $($update.Identity.UpdateId)"
             try {
                 $download_result = $dl.Download()
@@ -261,7 +261,7 @@ $update_script_block = {
                 $result.msg = "Failed to download update $update_number $($update.Identity.UpdateId) - $($update.Title): $($_.Exception.Message)"
                 return $result
             }
-            
+
             Write-DebugLog -msg "Download result code for $update_number $($update.Identity.UpdateId) = $($download_result.ResultCode)"
             # FUTURE: configurable download retry
             if ($download_result.ResultCode -ne 2) { # OperationResultCode orcSucceeded
@@ -269,13 +269,13 @@ $update_script_block = {
                 $result.msg = "Failed to download update $update_number $($update.Identity.UpdateId) - $($update.Title): Download Result $($download_result.ResultCode)"
                 return $result
             }
-        
+
             $result.changed = $true
             $update_index++
         }
-        
+
         Write-DebugLog -msg "Installing updates..."
-        
+
         # install as a batch so the reboot manager will suppress intermediate reboots
         Write-DebugLog -msg "Creating installer object..."
         try {
@@ -285,7 +285,7 @@ $update_script_block = {
             $result.msg = "Failed to create Update Installer object: $($_.Exception.Message)"
             return $result
         }
-        
+
         Write-DebugLog -msg "Creating install collection..."
         try {
             $installer.Updates = New-Object -ComObject Microsoft.Update.UpdateColl
@@ -294,12 +294,12 @@ $update_script_block = {
             $result.msg = "Failed to create Update Collection object: $($_.Exception.Message)"
             return $result
         }
-        
+
         foreach ($update in $updates_to_install) {
             Write-DebugLog -msg "Adding update $($update.Identity.UpdateID)"
             $installer.Updates.Add($update) > $null
         }
-        
+
         # FUTURE: use BeginInstall w/ progress reporting so we can at least log intermediate install results
         try {
             $install_result = $installer.Install()
@@ -308,10 +308,10 @@ $update_script_block = {
             $result.msg = "Failed to install update from Update Collection: $($_.Exception.Message)"
             return $result
         }
-        
+
         $update_success_count = 0
         $update_fail_count = 0
-        
+
         # WU result API requires us to index in to get the install results
         $update_index = 0
         foreach ($update in $updates_to_install) {
@@ -325,9 +325,9 @@ $update_script_block = {
             }
             $update_resultcode = $update_result.ResultCode
             $update_hresult = $update_result.HResult
-        
+
             $update_index++
-        
+
             $update_dict = $result.updates[$update.Identity.UpdateID]
             if ($update_resultcode -eq 2) { # OperationResultCode orcSucceeded
                 $update_success_count++
@@ -341,18 +341,18 @@ $update_script_block = {
                 Write-DebugLog -msg "Update $update_number $($update.Identity.UpdateID) failed, resultcode: $update_resultcode, hresult: $update_hresult"
             }
         }
-        
+
         Write-DebugLog -msg "Performing post-install reboot requirement check..."
         $result.reboot_required = (New-Object -ComObject Microsoft.Update.SystemInfo).RebootRequired
         $result.installed_update_count = $update_success_count
         $result.failed_update_count = $update_fail_count
-        
+
         if ($update_fail_count -gt 0) {
             $result.failed = $true
             $result.msg = "Failed to install one or more updates"
             return $result
         }
-        
+
         Write-DebugLog -msg "Return value:`r`n$(ConvertTo-Json -InputObject $result -Depth 99)"
 
         return $result
@@ -434,8 +434,8 @@ Function Remove-ScheduledJob($name) {
             $task_to_stop.Stop()
         }
 
-        <# FUTURE: add a global waithandle for this to release any other waiters. Wait-Job 
-        and/or polling will block forever, since the killed job object in the parent 
+        <# FUTURE: add a global waithandle for this to release any other waiters. Wait-Job
+        and/or polling will block forever, since the killed job object in the parent
         session doesn't know it's been killed :( #>
         Unregister-ScheduledJob -Name $name
     }
@@ -499,7 +499,7 @@ Function Start-AsScheduledTask($common_functions, $script) {
         Write-DebugLog -msg "Waiting for job output to populate..."
         Start-Sleep -Milliseconds 500
     }
-    
+
     # NB: fallthru on both timeout and success
     $ret = @{
         ErrorOutput = $job.Error
@@ -514,7 +514,7 @@ Function Start-AsScheduledTask($common_functions, $script) {
         $ret.Output = $job.Output.job_output # sub-object returned, can only be accessed as a property for some reason
     }
 
-    try { # this shouldn't be fatal, but can fail with both Powershell errors and COM Exceptions, hence the dual error-handling... 
+    try { # this shouldn't be fatal, but can fail with both Powershell errors and COM Exceptions, hence the dual error-handling...
         Unregister-ScheduledJob -Name $job_name -Force -ErrorAction Continue
     } catch {
         Write-DebugLog "Error unregistering job after execution: $($_.Exception.ToString()) $($_.ScriptStackTrace)"

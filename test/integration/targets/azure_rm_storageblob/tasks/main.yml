@@ -4,7 +4,7 @@
 
 - name: Create storage account
   azure_rm_storageaccount:
-    resource_group: "{{ resource_group }}" 
+    resource_group: "{{ resource_group }}"
     name: "{{ storage_account }}"
     account_type: Standard_LRS
     state: present
@@ -17,7 +17,7 @@
 
 - name: Force upload blob
   azure_rm_storageblob:
-    resource_group: "{{ resource_group }}" 
+    resource_group: "{{ resource_group }}"
     account_name: "{{ storage_account }}"
     container_name: my-blobs
     blob: 'Ratings.png'
@@ -26,7 +26,7 @@
     tags:
         val1: foo
         val2: bar
-    force: yes 
+    force: yes
 
 - name: storage blob seems to have some timing issues
   wait_for:
@@ -34,7 +34,7 @@
 
 - name: Upload blob idempotence
   azure_rm_storageblob:
-    resource_group: "{{ resource_group }}" 
+    resource_group: "{{ resource_group }}"
     account_name: "{{ storage_account }}"
     container_name: my-blobs
     blob: 'Ratings.png'
@@ -48,30 +48,30 @@
 - assert:
       that: "not upload_facts.changed"
 
-- name: Download file idempotence 
+- name: Download file idempotence
   azure_rm_storageblob:
-    resource_group: "{{ resource_group }}" 
+    resource_group: "{{ resource_group }}"
     account_name: "{{ storage_account }}"
     container_name: my-blobs
     blob: 'Ratings.png'
     dest: './targets/azure_rm_storageblob/files/Ratings.png'
   register: download_results
 
-- assert: 
+- assert:
       that: not download_results.changed
 
 - file: path="/tmp/Ratings.png" state=absent
 
-- name: Download file 
+- name: Download file
   azure_rm_storageblob:
-    resource_group: "{{ resource_group }}" 
+    resource_group: "{{ resource_group }}"
     account_name: "{{ storage_account }}"
     container_name: my-blobs
     blob: 'Ratings.png'
     dest: '/tmp/Ratings.png'
   register: download_results
 
-- assert: 
+- assert:
       that: "download_results.changed"
 
 - find: paths='/tmp' patterns="Ratings.png"
@@ -79,11 +79,11 @@
 
 - assert: { that: "find_results['matched'] == 1" }
 
-- name: Do not delete container that has blobs 
+- name: Do not delete container that has blobs
   azure_rm_storageblob:
     resource_group: "{{ resource_group }}"
     account_name: "{{ storage_account }}"
-    container_name: my-blobs 
+    container_name: my-blobs
     state: absent
   register: output
 
@@ -92,9 +92,9 @@
 
 - name: Delete blob object
   azure_rm_storageblob:
-    resource_group: "{{ resource_group }}" 
+    resource_group: "{{ resource_group }}"
     account_name: "{{ storage_account }}"
-    container_name: my-blobs 
+    container_name: my-blobs
     blob: "Ratings.png"
     state: absent
   register: output
@@ -102,11 +102,11 @@
 - assert:
       that: "output.changed"
 
-- name: Delete container 
+- name: Delete container
   azure_rm_storageblob:
     resource_group: "{{ resource_group }}"
     account_name: "{{ storage_account }}"
-    container_name: my-blobs 
+    container_name: my-blobs
     state: absent
   register: output
 
@@ -115,6 +115,6 @@
 
 - name: Delete storage account
   azure_rm_storageaccount:
-    resource_group: "{{ resource_group }}" 
+    resource_group: "{{ resource_group }}"
     name: "{{ storage_account }}"
-    state: absent 
+    state: absent

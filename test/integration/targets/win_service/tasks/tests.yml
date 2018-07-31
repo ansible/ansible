@@ -427,7 +427,7 @@
     - win_service_local_system_desktop is changed
     - win_service_local_system_desktop.username == 'LocalSystem'
     - win_service_local_system_desktop.desktop_interact == True
-    
+
 - name: set service username to Local System with desktop interaction again
   win_service:
     name: "{{test_win_service_name}}"

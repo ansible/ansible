@@ -51,7 +51,7 @@
       - 'result.changed == true'
       - '"vrf context test1" in result.commands'
       - '"description Configured by Ansible" in result.commands'
-      - '"no shutdown" in result.commands' 
+      - '"no shutdown" in result.commands'
       - '"vrf context test2" in result.commands'
       - '"description Testing" in result.commands'
       - '"shutdown" in result.commands'

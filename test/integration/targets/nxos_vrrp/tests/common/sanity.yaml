@@ -5,19 +5,19 @@
 
 - block:
   - name: "Enable interface-vlan"
-    nxos_feature: 
+    nxos_feature:
       feature: interface-vlan
       provider: "{{ connection }}"
       state: enabled
 
   - name: "Enable vrrp"
-    nxos_feature: 
+    nxos_feature:
       feature: vrrp
       provider: "{{ connection }}"
       state: enabled
 
   - name: "create int vlan 10"
-    nxos_config: 
+    nxos_config:
       commands: "int vlan 10"
       provider: "{{ connection }}"
 
@@ -125,9 +125,9 @@
     - name: remove vrrp
       nxos_vrrp: *remove
       ignore_errors: yes
-  
+
     - name: "Disable interface-vlan"
-      nxos_config: 
+      nxos_config:
         commands:
           - no feature interface-vlan
         match: none
@@ -135,7 +135,7 @@
       ignore_errors: yes
 
     - name: "Disable vrrp"
-      nxos_feature: 
+      nxos_feature:
         feature: vrrp
         provider: "{{ connection }}"
         state: disabled

@@ -13,7 +13,7 @@
       name: '{{test_win_user_right_name}}'
       users: []
       action: set
-  
+
   - name: run tests
     include_tasks: tests.yml
 

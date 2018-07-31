@@ -74,7 +74,7 @@
 
 - name: Check if image's state is 'DISABLED'
   assert:
-    that: 
+    that:
       - disable_image is changed
       - disable_image.state == "DISABLED"
     msg: 'Disabling the enabled image was unsuccessful.'
@@ -133,7 +133,7 @@
 
     - name: Verify cloning of the image
       assert:
-        that: 
+        that:
           - new_image is changed
           - new_image.name == '{{ one_image_name }}-clone'
           - new_image.state == "READY"
@@ -160,14 +160,14 @@
         state: renamed
       register: rename_fail
       failed_when: not rename_fail is failed
-      
+
     - name: Verify a fail message
       assert:
         that:
           - rename_fail.msg == "'new_name' option has to be specified when the state is 'renamed'"
 
-    - name: Set the image's new name                                    
-      set_fact:                                                 
+    - name: Set the image's new name
+      set_fact:
         image_new_name: test-{{ ansible_date_time.iso8601_basic_short }}
 
     - name: Try to rename an image without specified id
@@ -177,7 +177,7 @@
         new_name: '{{ image_new_name }}'
       register: rename_fail
       failed_when: not rename_fail is failed
-      
+
     - name: Verify a fail message
       assert:
         that:
@@ -210,7 +210,7 @@
 
     - name: Check that name is correctly assigned
       assert:
-        that: 
+        that:
           - new_name is changed
           - new_name.name == image_new_name
           - new_name.id == new_image.id
@@ -247,7 +247,7 @@
         state: absent
       register: delete_new_image_check
       check_mode: yes
-      
+
     - name: Check if deletion in check-mode was returned as 'changed'
       assert:
         that: delete_new_image_check is changed

@@ -9,9 +9,9 @@ We're not sure this is a bug, and we don't mean for this to be confrontational. 
 
    * INSERT ITEM HERE
 
-As such, we're going to close this ticket.  However, we're open to being corrected, should you wish to discuss.  You can stop by one of our two mailing lists 
+As such, we're going to close this ticket.  However, we're open to being corrected, should you wish to discuss.  You can stop by one of our two mailing lists
 to talk about this and we might be persuaded otherwise.
-   
+
    * https://groups.google.com/forum/#!forum/ansible-project - for user questions, tips, and tricks
    * https://groups.google.com/forum/#!forum/ansible-devel - for strategy, future planning, and questions about writing code
 

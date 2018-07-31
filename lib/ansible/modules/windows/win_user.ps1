@@ -27,7 +27,7 @@ function Get-UserFlag($user, $flag) {
     }
 }
 
-function Set-UserFlag($user, $flag) { 
+function Set-UserFlag($user, $flag) {
     $user.UserFlags = ($user.UserFlags[0] -BOR $flag)
 }
 

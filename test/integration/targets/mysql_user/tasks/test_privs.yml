@@ -23,29 +23,29 @@
 
 - include: assert_user.yml user_name={{user_name_2}} priv='SELECT'
   when: current_append_privs ==  "yes"
- 
+
 - name: create user with current privileges (expect changed=true)
   mysql_user: name={{ user_name_2 }} password={{ user_password_2 }} priv=*.*:{{current_privilege}} append_privs={{current_append_privs}} state=present
   register: result
 
-- name: assert output message for current privileges 
+- name: assert output message for current privileges
   assert: { that: "result.changed == true" }
 
 - name: run command to show privileges for user (expect privileges in stdout)
   command: mysql "-e SHOW GRANTS FOR '{{user_name_2}}'@'localhost';"
   register: result
 
-- name: assert user has correct privileges 
+- name: assert user has correct privileges
   assert: { that: "'GRANT {{current_privilege | replace(',', ', ')}} ON *.*' in result.stdout" }
   when: current_append_privs ==  "no"
 
-- name: assert user has correct privileges 
+- name: assert user has correct privileges
   assert: { that: "'GRANT SELECT, {{current_privilege | replace(',', ', ')}} ON *.*' in result.stdout" }
   when: current_append_privs ==  "yes"
 
 - name: create database using user current privileges
   mysql_db: name={{ db_name }} state=present login_user={{ user_name_2 }} login_password={{ user_password_2 }}
-  ignore_errors: true 
+  ignore_errors: true
 
 - name: run command to test that database was not created
   command: mysql "-e show databases like '{{ db_name }}';"
@@ -70,7 +70,7 @@
   assert: { that: "result.changed == false" }
 
 # ============================================================
-- name: update user with all privileges 
+- name: update user with all privileges
   mysql_user: name={{ user_name_2 }} password={{ user_password_2 }} priv=*.*:ALL state=present
 
 - include: assert_user.yml user_name={{user_name_2}} priv='ALL PRIVILEGES'
@@ -79,7 +79,7 @@
   mysql_db: name={{ db_name }} state=present login_user={{ user_name_2 }} login_password={{ user_password_2 }}
 
 - name: run command to test database was created using user new privileges
-  command: mysql "-e SHOW CREATE DATABASE {{ db_name }};" 
+  command: mysql "-e SHOW CREATE DATABASE {{ db_name }};"
 
 - name: drop database using user
   mysql_db: name={{ db_name }} state=absent login_user={{ user_name_2 }} login_password={{ user_password_2 }}

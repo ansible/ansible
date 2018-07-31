@@ -117,8 +117,8 @@ Read the complete :ref:`module metadata specification <ansible_metadata_block>` 
   serializable.  A common pitfall is to try returning an object via
   exit_json().  Instead, convert the fields you need from the object into the
   fields of a dictionary and return the dictionary.
-* When fetching URLs, please use either fetch_url or open_url from ansible.module_utils.urls 
-  rather than urllib2; urllib2 does not natively verify TLS certificates and so is insecure for https. 
+* When fetching URLs, please use either fetch_url or open_url from ansible.module_utils.urls
+  rather than urllib2; urllib2 does not natively verify TLS certificates and so is insecure for https.
 * facts modules must return facts in the ansible_facts field of the :ref:`result
   dictionary<common_return_values>`.
 * modules that are purely about fact gathering need to implement check_mode.

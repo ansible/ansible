@@ -6,7 +6,7 @@ Files here provide an extension mechanism for Ansible similar to plugins. They a
 inventory
 =========
 
-Before 2.4 introduced inventory plugins, inventory scripts were the only way to provide sources that were not built into Ansible. Inventory scripts allow you to store your hosts, groups, and variables in any way you like. 
+Before 2.4 introduced inventory plugins, inventory scripts were the only way to provide sources that were not built into Ansible. Inventory scripts allow you to store your hosts, groups, and variables in any way you like.
 
 Starting with Ansible version 2.4, they are enabled via the 'script' inventory plugin.
 Examples of use include discovering inventory from EC2 or pulling it from Cobbler. These could also be used to interface with LDAP or the database.

@@ -56,7 +56,7 @@
       add_children:
       - beer: Old Rasputin
     register: xmlresponse_modification
- 
+
   - name: Compare to expected result
     copy:
       content: '{{ xmlresponse_modification.xmlstring }}'

@@ -57,9 +57,9 @@ Events (on Video and in Person)
 
 All sessions at Ansible events are recorded and include many Network-related topics (use Filter by Category to view only Network topics). You can also join us for future events in your area. See:
 
-- `Recorded AnsibleFests <https://www.ansible.com/resources/videos>`_ 
-- `Recorded AnsibleAutomates <https://www.ansible.com/resources/webinars-training>`_ 
-- `Upcoming Ansible Events <https://www.ansible.com/community/events>`_ page. 
+- `Recorded AnsibleFests <https://www.ansible.com/resources/videos>`_
+- `Recorded AnsibleAutomates <https://www.ansible.com/resources/webinars-training>`_
+- `Upcoming Ansible Events <https://www.ansible.com/community/events>`_ page.
 
 GitHub Repos
 ----------------

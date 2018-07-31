@@ -228,7 +228,7 @@ As a reminder, the various YAML files contain just keys and values::
     somethingelse: 42
 
 How does this work?  For Red Hat operating systems ('CentOS', for example), the first file Ansible tries to import
-is 'vars/RedHat.yml'. If that file does not exist, Ansible attempts to load 'vars/os_defaults.yml'. If no files in 
+is 'vars/RedHat.yml'. If that file does not exist, Ansible attempts to load 'vars/os_defaults.yml'. If no files in
 the list were found, an error is raised.
 
 On Debian, Ansible first looks for 'vars/Debian.yml' instead of 'vars/RedHat.yml', before
@@ -314,7 +314,7 @@ You may check the registered variable's string contents for emptiness::
             register: contents
 
           - name: check contents for emptiness
-            debug: 
+            debug:
               msg: "Directory is empty"
             when: contents.stdout == ""
 

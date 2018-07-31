@@ -15,7 +15,7 @@
   register: results
 
 - assert:
-    that: 
+    that:
       - not results.changed
       - not results.failed
       - results.ansible_facts.azure_availabilitysets[0].properties.platformFaultDomainCount == 2

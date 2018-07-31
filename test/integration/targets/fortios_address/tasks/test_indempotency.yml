@@ -13,7 +13,7 @@
      that:
       - "add_addr.changed == true"
 
- - name: Add the same address 
+ - name: Add the same address
    fortios_address:
      file_mode: true
      config_file: "{{role_path}}/files/default_config.conf"

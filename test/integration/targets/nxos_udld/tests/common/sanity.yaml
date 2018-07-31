@@ -11,7 +11,7 @@
 
 - block:
   - name: "Enable feature udld"
-    nxos_feature: 
+    nxos_feature:
       feature: udld
       provider: "{{ connection }}"
       state: enabled
@@ -92,7 +92,7 @@
 
   always:
   - name: "Disable udld"
-    nxos_feature: 
+    nxos_feature:
       feature: udld
       provider: "{{ connection }}"
       state: disabled

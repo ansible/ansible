@@ -81,7 +81,7 @@
       - idempotent_dynamic.changed == false
       - 'idempotent_dynamic.previous == [{"fvnsVlanInstP": {"attributes": {"allocMode": "dynamic", "descr": "Ansible Test", "dn": "uni/infra/vlanns-[anstest]-dynamic", "name": "anstest", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
       - idempotent_dynamic.sent == {}
- 
+
 - name: update static vlan pool - update works
   aci_encap_pool:
     <<: *aci_pool_present_static
@@ -131,7 +131,7 @@
     that:
       - vlan_pool_fail.failed == true
       - 'vlan_pool_fail.msg == "state is present but all of the following are missing: pool"'
- 
+
 - name: missing param - failure message works
   aci_encap_pool:
     <<: *aci_pool_present_dynamic

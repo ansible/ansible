@@ -6,7 +6,7 @@ Introduction To Ad-Hoc Commands
 .. contents:: Topics
 
 The following examples show how to use `/usr/bin/ansible` for running
-ad hoc tasks. 
+ad hoc tasks.
 
 What's an ad-hoc command?
 
@@ -168,9 +168,9 @@ Ensure a package is not installed::
 
     $ ansible webservers -m yum -a "name=acme state=absent"
 
-Ansible has modules for managing packages under many platforms.  If there isn't 
-a module for your package manager, you can install packages using the 
-command module or (better!) contribute a module for your package manager. 
+Ansible has modules for managing packages under many platforms.  If there isn't
+a module for your package manager, you can install packages using the
+command module or (better!) contribute a module for your package manager.
 Stop by the mailing list for info/details.
 
 .. _users_and_groups:
@@ -227,7 +227,7 @@ Time Limited Background Operations
 
 Long running operations can be run in the background, and it is possible to
 check their status later. For example, to execute ``long_running_operation``
-asynchronously in the background, with a timeout of 3600 seconds (``-B``), 
+asynchronously in the background, with a timeout of 3600 seconds (``-B``),
 and without polling (``-P``)::
 
     $ ansible all -B 3600 -P 0 -a "/usr/bin/long_running_operation --do-stuff"
@@ -265,7 +265,7 @@ system.  These can be used to implement conditional execution of tasks but also 
 
 It's also possible to filter this output to just export certain facts, see the "setup" module documentation for details.
 
-Read more about facts at :doc:`playbooks_variables` once you're ready to read up on :doc:`Playbooks <playbooks>`. 
+Read more about facts at :doc:`playbooks_variables` once you're ready to read up on :doc:`Playbooks <playbooks>`.
 
 .. seealso::
 

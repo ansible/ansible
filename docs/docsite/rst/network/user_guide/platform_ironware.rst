@@ -4,7 +4,7 @@
 IronWare Platform Options
 ***************************************
 
-IronWare supports Enable Mode (Privilege Escalation). This page offers details on how to use Enable Mode on IronWare in Ansible 2.7. 
+IronWare supports Enable Mode (Privilege Escalation). This page offers details on how to use Enable Mode on IronWare in Ansible 2.7.
 
 .. contents:: Topics
 

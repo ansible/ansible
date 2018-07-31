@@ -7,7 +7,7 @@
       ec2_vpc_net:
       ignore_errors: yes
       register: result
-    
+
     - name: assert failure
       assert:
         that:
@@ -218,7 +218,7 @@
         state: present
         multi_ok: no
         dhcp_opts_id: "{{ new_dhcp.dhcp_options_id }}"
-        <<: *aws_connection_info 
+        <<: *aws_connection_info
       register: result
 
     - name: assert the DHCP option set changed

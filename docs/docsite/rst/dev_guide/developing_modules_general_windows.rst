@@ -206,7 +206,7 @@ into PowerShell as well as some Ansible-specific requirements specified by
 but are most commonly near the top. They are used to make it easier to state the
 requirements of the module without writing any of the checks. Each ``requires``
 statement must be on its own line, but there can be multiple requires statements
-in one script. 
+in one script.
 
 These are the checks that can be used within Ansible modules:
 
@@ -228,7 +228,7 @@ can be imported by adding the following line to a PowerShell module:
     #Requires -Module Ansible.ModuleUtils.Legacy
 
 This will import the module_util at ``./lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1``
-and enable calling all of its functions. 
+and enable calling all of its functions.
 
 The following is a list of module_utils that are packaged with Ansible and a general description of what
 they do:
@@ -241,7 +241,7 @@ they do:
 - LinkUtil: Utility to create, remove, and get information about symbolic links, junction points and hard inks.
 - SID: Utilities used to convert a user or group to a Windows SID and vice versa.
 
-For more details on any specific module utility and their requirements, please see the `Ansible 
+For more details on any specific module utility and their requirements, please see the `Ansible
 module utilities source code <https://github.com/ansible/ansible/tree/devel/lib/ansible/module_utils/powershell>`_.
 
 PowerShell module utilities can be stored outside of the standard Ansible
@@ -360,7 +360,7 @@ Windows integration testing
 
 Integration tests for Ansible modules are typically written as Ansible roles. These test
 roles are located in ``./test/integration/targets``. You must first set up your testing
-environment, and configure a test inventory for Ansible to connect to. 
+environment, and configure a test inventory for Ansible to connect to.
 
 In this example we will set up a test inventory to connect to two hosts and run the integration
 tests for win_stat:
@@ -386,11 +386,11 @@ idempotent and does not report changes. For example:
         state: absent
       register: remove_file_check
       check_mode: yes
-    
+
     - name: get result of remove a file (check mode)
       win_command: powershell.exe "if (Test-Path -Path 'C:\temp') { 'true' } else { 'false' }"
       register: remove_file_actual_check
-    
+
     - name: assert remove a file (check mode)
       assert:
         that:
@@ -402,11 +402,11 @@ idempotent and does not report changes. For example:
         path: C:\temp
         state: absent
       register: remove_file
-    
+
     - name: get result of remove a file
       win_command: powershell.exe "if (Test-Path -Path 'C:\temp') { 'true' } else { 'false' }"
       register: remove_file_actual
-    
+
     - name: assert remove a file
       assert:
         that:
@@ -418,7 +418,7 @@ idempotent and does not report changes. For example:
         path: C:\temp
         state: absent
       register: remove_file_again
-    
+
     - name: assert remove a file (idempotent)
       assert:
         that:

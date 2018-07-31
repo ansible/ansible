@@ -13,7 +13,7 @@
     state: "present"
     tags:
       - http-server
-    metadata: 
+    metadata:
       startup-script: |
         #!/bin/bash
         yum install -y httpd curl

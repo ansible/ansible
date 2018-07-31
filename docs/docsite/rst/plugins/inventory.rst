@@ -45,7 +45,7 @@ Once an inventory plugin succeeds at parsing a source, the any remaining invento
 Plugin List
 +++++++++++
 
-You can use ``ansible-doc -t inventory -l`` to see the list of available plugins. 
+You can use ``ansible-doc -t inventory -l`` to see the list of available plugins.
 Use ``ansible-doc -t inventory <plugin name>`` to see plugin-specific documentation and examples.
 
 .. toctree:: :maxdepth: 1

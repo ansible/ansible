@@ -1,6 +1,6 @@
 - name: Install Python requirements
   pip:
-    state: present 
+    state: present
     name: "{{ item }}"
   with_items:
     - docker==2.7.0

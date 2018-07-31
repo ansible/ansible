@@ -81,7 +81,7 @@
        - 'result.record_data|length == 1'
        - 'result.record_data[0] == "5.6.7.8"'
 
-# ============================================================       
+# ============================================================
 - name: Create a CNAME record
   gcdns_record:
     service_account_email: "{{ service_account_email }}"
@@ -104,7 +104,7 @@
        - 'result.record == "www2.{{ dnszone_name }}"'
        - 'result.record_data[0] == "www.{{ dnszone_name }}"'
 
-# ============================================================    
+# ============================================================
 - name: Create an MX record with a custom TTL
   gcdns_record:
       service_account_email: "{{ service_account_email }}"
@@ -127,7 +127,7 @@
        - 'result.zone_id == "{{ dnszone_id }}"'
        - 'result.record_data[0] == "10 mail.{{ dnszone_name }}"'
 
-# ============================================================    
+# ============================================================
 - name: Create multiple A records with the same name
   gcdns_record:
     service_account_email: "{{ service_account_email }}"
@@ -153,7 +153,7 @@
        - 'result.record == "{{ dnszone_name }}"'
        - 'result.record_data|length == 4'
 
-# ============================================================      
+# ============================================================
 - name: Change the value of an existing record with multiple values
   gcdns_record:
     service_account_email: "{{ service_account_email }}"
@@ -173,13 +173,13 @@
     - multi-A
     - record
 
-- name: Assert 
+- name: Assert
   assert:
     that:
        - 'result.changed'
        - 'result.record_data|length == 4'
 
-# ============================================================    
+# ============================================================
 - name: Create an AAAA record
   gcdns_record:
     service_account_email: "{{ service_account_email }}"
@@ -203,7 +203,7 @@
        - 'result.record == "www1.{{ dnszone_name }}"'
        - 'result.record_data[0] == "fd00:db8::1"'
 
-# ============================================================    
+# ============================================================
 - name: Create a PTR record
   gcdns_record:
     service_account_email: "{{ service_account_email }}"
@@ -223,7 +223,7 @@
        - 'result.changed'
        - 'result.record_data[0] == "10.5.168.192.{{ dnszone_name }}arpa."'
 
-# ============================================================    
+# ============================================================
 - name: Create an NS record
   gcdns_record:
     service_account_email: "{{ service_account_email }}"
@@ -313,7 +313,7 @@
        - 'result.changed'
        - 'result.state == "absent"'
 
-# ============================================================    
+# ============================================================
 - name: Remove an MX record with a custom TTL.
   gcdns_record:
       service_account_email: "{{ service_account_email }}"
@@ -335,7 +335,7 @@
        - 'result.changed'
        - 'result.state == "absent"'
 
-# ============================================================        
+# ============================================================
 - name: Remove multiple A records with the same name.
   gcdns_record:
       service_account_email: "{{ service_account_email }}"
@@ -354,14 +354,14 @@
   tags:
     - multi-A
     - record
-- name: Assert 
+- name: Assert
   assert:
     that:
        - 'result.changed'
        - 'result.state == "absent"'
 
 
-# ============================================================    
+# ============================================================
 - name: Remove an AAAA record
   gcdns_record:
     service_account_email: "{{ service_account_email }}"
@@ -376,13 +376,13 @@
   tags:
     - AAAA
     - record
-- name: Assert 
+- name: Assert
   assert:
     that:
        - 'result.changed'
        - 'result.state == "absent"'
 
-# ============================================================    
+# ============================================================
 - name: Remove a PTR record
   gcdns_record:
     service_account_email: "{{ service_account_email }}"
@@ -403,7 +403,7 @@
        - 'result.changed'
        - 'result.state == "absent"'
 
-# ============================================================    
+# ============================================================
 - name: Remove an NS record
   gcdns_record:
     service_account_email: "{{ service_account_email }}"
@@ -452,7 +452,7 @@
        - 'result.state == "absent"'
        - 'result.record_data|length == 2'
 
-# ============================================================    
+# ============================================================
 - name: Remove the zone
   gcdns_zone:
     service_account_email: "{{ service_account_email }}"

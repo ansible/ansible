@@ -1000,7 +1000,7 @@ To search a string with a regex, use the "regex_search" filter::
 
     # will return empty if it cannot find a match
     {{ 'ansible' | regex_search('(foobar)') }}
-    
+
     # case insensitive search in multiline mode
     {{ 'foo\nBAR' | regex_search("^bar", multiline=True, ignorecase=True) }}
 
@@ -1024,7 +1024,7 @@ To replace text in a string with regex, use the "regex_replace" filter::
 
     # convert "localhost:80" to "localhost"
     {{ 'localhost:80' | regex_replace(':80') }}
-    
+
     # add "https://" prefix to each item in a list
     {{ hosts | map('regex_replace', '^(.*)$', 'https://\\1') | list }}
 

@@ -250,7 +250,7 @@
          publisher: Canonical
          sku: 16.04-LTS
          version: latest
- 
+
  - name: Mount the disk to virtual machine (check mode)
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
@@ -297,7 +297,7 @@
      that:
        - not mounted.changed
        - "'tr{{ rpfx }}' in mounted.state.managed_by"
- 
+
  - name: Unmount the disk to virtual machine (check mode)
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
