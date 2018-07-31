@@ -211,6 +211,11 @@ class WapiModule(WapiBase):
 
         if('name' in obj_filter):
             ib_obj_ref, update, new_name = self.get_object_ref(ib_obj_type, obj_filter, ib_spec)
+        elif (ib_obj_type == NIOS_ZONE):
+            temp_val = ib_spec['restart_if_needed']
+            del ib_spec['restart_if_needed']
+            ib_obj_ref = self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
+            ib_spec['restart_if_needed'] = temp_val
         else:
             ib_obj_ref = self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
 
