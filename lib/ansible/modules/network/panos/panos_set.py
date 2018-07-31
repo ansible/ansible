@@ -31,7 +31,10 @@ description:
     - - Once logged in issue: `debug cli on`
       - Enter configuration mode by issuing: `configure`
       - Enter your set (or other) command, for example: `set deviceconfig system timezone Australia/Melbourne`
-      - returns "<request cmd="set" obj="/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system" cookie=XXXX><timezone>Australia/Melbourne</timezone></request>
+      - >
+        returns "<request cmd="set"
+        obj="/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system"
+        cookie=XXXX><timezone>Australia/Melbourne</timezone></request>
       - The `xpath` is  "/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system"
       - The `element` is "<timezone>Australia/Melbourne</timezone>"
 author: "Jasper Mackenzie"
@@ -73,61 +76,60 @@ ANSIBLE_METADATA = {'metadata_version': '0.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-  import pan.xapi
-  HAS_LIB = True
+    import pan.xapi
+    HAS_LIB = True
 except ImportError:
-  HAS_LIB = False
+    HAS_LIB = False
+
 
 def main():
-  argument_spec = dict(
-    ip_address  = dict(required = True),
-    password    = dict(required = True, no_log=True),
-    username    = dict(default  = 'admin'),
-    command     = dict(default  = "set"),
-    xpath       = dict(required = True),
-    element     = dict(default  = None)
-  )
-  module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
-  if not HAS_LIB:
-    module.fail_json(msg='pan-python is required for this module')
+    argument_spec = dict(
+        ip_address=dict(required=True),
+        password=dict(required=True, no_log=True),
+        username=dict(default='admin'),
+        command=dict(default="set"),
+        xpath=dict(required=True),
+        element=dict(default=None)
+    )
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
+    if not HAS_LIB:
+        module.fail_json(msg='pan-python is required for this module')
 
-  ip_address    = module.params["ip_address"]
-  password      = module.params["password"]
-  username      = module.params['username']
-  xpath         = module.params['xpath']
-  element       = module.params['element']
-  xcommand      = module.params['command']
+    ip_address = module.params["ip_address"]
+    password = module.params["password"]
+    username = module.params['username']
+    xpath = module.params['xpath']
+    element = module.params['element']
+    xcommand = module.params['command']
 
-  xapi = pan.xapi.PanXapi(
-    hostname    = ip_address,
-    api_username= username,
-    api_password= password,
-    timeout     = 60
-  )
-  
-  if element == None:
-  # Issue command with no `element`
-    try:
-        getattr(xapi, xcommand)(xpath=xpath)
-    except Exception as e:
-      raise Exception("Failed to run '{}' with xpath: '{}' with the following error: {}".format(
-        xcommand, xpath, e))
-  else:
-  # Issue command with `element`
-    try:
-        getattr(xapi, xcommand)(xpath=xpath, element=element)
-    except Exception as e:
-      raise Exception("Failed to run '{}' with xpath: '{}' and element '{}' with the following error: {}".format(
-        xcommand, xpath, element, e))
+    xapi = pan.xapi.PanXapi(
+        hostname=ip_address,
+        api_username=username,
+        api_password=password,
+        timeout=60
+    )
 
-  module.exit_json(
-    status      = "success"
-  )
+    if element is None:
+        # Issue command with no `element`
+        try:
+            getattr(xapi, xcommand)(xpath=xpath)
+        except Exception as e:
+            raise Exception("Failed to run '%s' with xpath: '%s' with the following error: %s" %
+                            (xcommand, xpath, e))
+    else:
+        # Issue command with `element`
+        try:
+            getattr(xapi, xcommand)(xpath=xpath, element=element)
+        except Exception as e:
+            raise Exception("Failed to run '%s' with xpath: '%s' and element '%s' with the following error: %s" %
+                            (xcommand, xpath, element, e))
 
+    module.exit_json(
+        status="success"
+    )
 
 if __name__ == '__main__':
-  main()
+    main()
