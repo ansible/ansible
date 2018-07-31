@@ -144,7 +144,7 @@ from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.six import PY3, BytesIO
 from ansible.module_utils.six.moves import cPickle
-from ansible.module_utils.six.moves.urllib.error import HTTPError
+from ansible.module_utils.six.moves.urllib.error import HTTPError, URLError
 from ansible.module_utils.urls import open_url
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import cliconf_loader, httpapi_loader
@@ -261,6 +261,8 @@ class Connection(NetworkConnectionBase):
                 return self.send(path, data, **kwargs)
             # Other codes are handled by httpapi plugin, if they care to
             raise
+        except URLError as exc:
+            raise AnsibleConnectionFailure('Could not connect to {0}: {1}'.format(self._url + path, exc.reason))
 
         response_buffer = BytesIO()
         response_buffer.write(response.read())

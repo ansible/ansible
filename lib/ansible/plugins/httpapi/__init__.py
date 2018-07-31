@@ -11,6 +11,8 @@ from ansible.plugins import AnsiblePlugin
 
 class HttpApiBase(AnsiblePlugin):
     def __init__(self, connection):
+        super(HttpApiBase, self).__init__()
+
         self.connection = connection
         self._become = False
         self._become_pass = ''
