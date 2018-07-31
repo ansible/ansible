@@ -279,7 +279,14 @@ challenge_data:
       sample: .well-known/acme-challenge/evaGxfADs6pSRb2LAv9IZf17Dt3juxGJ-PCt92wr-oA
     resource_value:
       description:
-        - the value the resource has to produce for the validation
+        - The value the resource has to produce for the validation.
+        - For C(http-01) and C(dns-01) challenges, the value can be used as-is.
+        - "For C(tls-alpn-01) challenges, note that this return value contains a
+           Base64 encoded version of the correct binary blob which has to be put
+           into the acmeValidation x509 extension; see
+           U(https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-01#section-3)
+           for details. To do this, you might need the C(b64decode) Jinja filter
+           to extract the binary blob from this return value."
       returned: changed
       type: string
       sample: IlirfxKKXA...17Dt3juxGJ-PCt92wr-oA
@@ -491,7 +498,7 @@ class ACMEClient(object):
             elif type == 'tls-alpn-01':
                 # https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-01#section-3
                 resource = domain
-                value = hashlib.sha256(to_bytes(keyauthorization)).digest()
+                value = base64.b64encode(hashlib.sha256(to_bytes(keyauthorization)).digest())
                 data[type] = {'resource': resource, 'resource_value': value}
             else:
                 continue
