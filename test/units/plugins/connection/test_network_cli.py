@@ -32,6 +32,9 @@ from ansible.errors import AnsibleConnectionFailure
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import connection_loader
 
+import time
+import signal
+
 
 class TestConnectionClass(unittest.TestCase):
 
@@ -144,3 +147,51 @@ class TestConnectionClass(unittest.TestCase):
         with self.assertRaises(AnsibleConnectionFailure) as exc:
             conn.send(b'command', None, None, None)
         self.assertEqual(str(exc.exception), 'ERROR: error message device#')
+
+    def test_network_cli_receive_trickle(self):
+
+        def timeout(signum, frame):
+            raise AnsibleConnectionFailure('timeout')
+
+        def trickle(delay, response):
+            for x in range(len(response)):
+                b = response[x:x + 1]
+                # print("sleep %0.2f %s %s" % (delay, b, type(b)))
+                time.sleep(delay)
+                yield b
+            yield None
+
+        signal.signal(signal.SIGALRM, timeout)
+        pc = PlayContext()
+        new_stdin = StringIO()
+        conn = network_cli.Connection(pc, new_stdin)
+        pc.network_os = 'ios'
+        pc.timeout = 1
+
+        conn.ssh = MagicMock()
+        mock__terminal = MagicMock()
+        mock__terminal.terminal_stdout_re = [re.compile(b'device#')]
+        conn._terminal = mock__terminal
+
+        mock__shell = MagicMock()
+        conn._ssh_shell = mock__shell
+
+        response = b'command response\ndevice#'
+
+        # test that trickled response data with overall duration over the timeout is ok
+        # this works fine down to 1x, but 1.5x chosen as safer multiple
+        duration = 1.5 * pc.timeout
+        mock__shell.recv.side_effect = trickle(duration / len(response), response)
+
+        try:
+            output = conn.receive()
+            self.assertEqual(output, b'command response')
+        except AnsibleConnectionFailure as e:
+            self.fail('Timeout Occurred - trickle test failed ' + str(e))
+
+        # test timeout occurs when trickle response is over timeout per char
+        mock__shell.reset_mock()
+        mock__shell.recv.side_effect = trickle(duration, response)
+        with self.assertRaises(AnsibleConnectionFailure) as cm:
+            conn.receive()
+        self.assertEqual(str(cm.exception), 'timeout')

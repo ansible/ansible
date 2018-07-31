@@ -1532,7 +1532,11 @@ PERSISTENT_CONNECT_RETRY_TIMEOUT:
 PERSISTENT_COMMAND_TIMEOUT:
   name: Persistence command timeout
   default: 10
-  description: This controls the amount of time to wait for response from remote device before timing out presistent connection.
+  description:
+    - This controls the amount of time to wait for response from remote device before timing out a persistent connection.
+    - Note that this timer is reset when the device is sending output, so commands that return slowly or slow network connections
+    - should not require this to be set to excessive values.  Commands that take a long time but do not print output however will
+    - often need this increased.
   env: [{name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT}]
   ini:
   - {key: command_timeout, section: persistent_connection}
