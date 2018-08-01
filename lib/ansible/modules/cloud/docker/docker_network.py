@@ -75,7 +75,8 @@ options:
   enable_ipv6:
     description:
       - Enable IPv6 on the network.
-    version_added: "2.5"
+    version_added: "2.7"
+    type: bool
 
   state:
     description:
