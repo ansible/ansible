@@ -34,7 +34,6 @@ DOCUMENTATION = '''
 module: cnos_showrun
 author: "Anil Kumar Muraleedharan (@amuraleedhar)"
 short_description: Collect the current running configuration on devices running
- Lenovo CNOS
 description:
     - This module allows you to view the switch running configuration. It
      executes the display running-config CLI command on a switch and returns a
@@ -118,3 +117,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
