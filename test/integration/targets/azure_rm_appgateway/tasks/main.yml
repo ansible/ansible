@@ -22,7 +22,7 @@
   register: subnet_output
 
 - name: Create instance of Application Gateway -- check mode
-  azure_rm_appgw:
+  azure_rm_appgateway:
     resource_group: "{{ resource_group }}"
     name: "appgateway{{ rpfx }}"
     sku:
@@ -71,7 +71,7 @@
     var: output
 
 - name: Create instance of Application Gateway
-  azure_rm_appgw:
+  azure_rm_appgateway:
     resource_group: "{{ resource_group }}"
     name: "appgateway{{ rpfx }}"
     sku:
@@ -115,7 +115,7 @@
       - output.changed
 
 - name: Try to update instance of Application Gateway - no change
-  azure_rm_appgw:
+  azure_rm_appgateway:
     resource_group: "{{ resource_group }}"
     name: "appgateway{{ rpfx }}"
     sku:
@@ -159,7 +159,7 @@
       - not output.changed
 
 - name: Try to update instance of Application Gateway - single change
-  azure_rm_appgw:
+  azure_rm_appgateway:
     resource_group: "{{ resource_group }}"
     name: "appgateway{{ rpfx }}"
     sku:
@@ -203,7 +203,7 @@
       - output.changed
 
 - name: Delete instance of Application Gateway -- check mode
-  azure_rm_appgw:
+  azure_rm_appgateway:
     resource_group: "{{ resource_group }}"
     name: "appgateway{{ rpfx }}"
     state: absent
@@ -215,7 +215,7 @@
       - output.changed
 
 - name: Delete instance of Application Gateway
-  azure_rm_appgw:
+  azure_rm_appgateway:
     resource_group: "{{ resource_group }}"
     name: "appgateway{{ rpfx }}"
     state: absent
@@ -226,7 +226,7 @@
       - output.changed
 
 - name: Delete unexisting instance of Application Gateway
-  azure_rm_appgw:
+  azure_rm_appgateway:
     resource_group: "{{ resource_group }}"
     name: "appgateway{{ rpfx }}"
     state: absent

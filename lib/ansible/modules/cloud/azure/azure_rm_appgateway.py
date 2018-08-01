@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_appgw
+module: azure_rm_appgateway
 version_added: "2.7"
 short_description: Manage Application Gateway instance.
 description:
@@ -72,9 +72,9 @@ options:
                 description:
                     - Name of Ssl C(predefined) policy.
                 choices:
-                    - 'app_gw_ssl_policy20150501'
-                    - 'app_gw_ssl_policy20170401'
-                    - 'app_gw_ssl_policy20170401_s'
+                    - 'ssl_policy20150501'
+                    - 'ssl_policy20170401'
+                    - 'ssl_policy20170401_s'
             cipher_suites:
                 description:
                     - List of SSL cipher suites to be enabled in the specified order to application gateway.
@@ -286,7 +286,7 @@ author:
 
 EXAMPLES = '''
 - name: Create instance of Application Gateway
-  azure_rm_appgw:
+  azure_rm_appgateway:
     resource_group: myresourcegroup
     name: myappgateway
     sku:
@@ -360,7 +360,7 @@ class Actions:
 ssl_policy_spec = dict(
     disabled_ssl_protocols=dict(type='list'),
     policy_type=dict(type='str', choices=['predefined', 'custom']),
-    policy_name=dict(type='str', choices=['app_gw_ssl_policy20150501', 'app_gw_ssl_policy20170401', 'app_gw_ssl_policy20170401_s']),
+    policy_name=dict(type='str', choices=['ssl_policy20150501', 'ssl_policy20170401', 'ssl_policy20170401_s']),
     cipher_suites=dict(type='list'),
     min_protocol_version=dict(type='str', choices=['tls_v1_0', 'tls_v1_1', 'tls_v1_2'])
 )
@@ -713,52 +713,52 @@ def public_ip_id(subscription_id, resource_group_name, name):
     )
 
 
-def frontend_ip_configuration_id(subscription_id, resource_group_name, appgw_name, name):
+def frontend_ip_configuration_id(subscription_id, resource_group_name, appgateway_name, name):
     """Generate the id for a frontend ip configuration"""
     return '/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/applicationGateways/{2}/frontendIPConfigurations/{3}'.format(
         subscription_id,
         resource_group_name,
-        appgw_name,
+        appgateway_name,
         name
     )
 
 
-def frontend_port_id(subscription_id, resource_group_name, appgw_name, name):
+def frontend_port_id(subscription_id, resource_group_name, appgateway_name, name):
     """Generate the id for a frontend port"""
     return '/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/applicationGateways/{2}/frontendPorts/{3}'.format(
         subscription_id,
         resource_group_name,
-        appgw_name,
+        appgateway_name,
         name
     )
 
 
-def backend_address_pool_id(subscription_id, resource_group_name, appgw_name, name):
+def backend_address_pool_id(subscription_id, resource_group_name, appgateway_name, name):
     """Generate the id for an address pool"""
     return '/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/applicationGateways/{2}/backendAddressPools/{3}'.format(
         subscription_id,
         resource_group_name,
-        appgw_name,
+        appgateway_name,
         name
     )
 
 
-def backend_http_settings_id(subscription_id, resource_group_name, appgw_name, name):
+def backend_http_settings_id(subscription_id, resource_group_name, appgateway_name, name):
     """Generate the id for a http settings"""
     return '/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/applicationGateways/{2}/backendHttpSettingsCollection/{3}'.format(
         subscription_id,
         resource_group_name,
-        appgw_name,
+        appgateway_name,
         name
     )
 
 
-def http_listener_id(subscription_id, resource_group_name, appgw_name, name):
+def http_listener_id(subscription_id, resource_group_name, appgateway_name, name):
     """Generate the id for a http listener"""
     return '/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/applicationGateways/{2}/httpListeners/{3}'.format(
         subscription_id,
         resource_group_name,
-        appgw_name,
+        appgateway_name,
         name
     )
 
