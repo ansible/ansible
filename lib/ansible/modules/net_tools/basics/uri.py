@@ -495,6 +495,10 @@ def main():
 
     dict_headers = module.params['headers']
 
+    if dest:
+        module.deprecate('Supplying "dest" with the "uri" module is deprecated. Please use "get_url" instead',
+                         version=2.11)
+
     if body_format == 'json':
         # Encode the body unless its a string, then assume it is pre-formatted JSON
         if not isinstance(body, string_types):
