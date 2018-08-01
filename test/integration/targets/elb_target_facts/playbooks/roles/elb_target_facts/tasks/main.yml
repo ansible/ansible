@@ -115,6 +115,7 @@
         vpc_id: '{{ vpc.vpc.id }}'
         state: present
         # set this to 30 to test polling for changes, instead of having everything go out immediately
+        deregistration_delay_timeout: 30
         target_type: ip 
         tags:
           Description: "Created by {{ resource_prefix }}"
@@ -221,21 +222,12 @@
         <<: *aws_connection_info
 
     - assert:
-        that: "{{ alb_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn')) }}"
-        msg: "found alb target group arn in ec2_tgs"
-
-    - assert:
-        that: "{{ nlb_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn')) }}"
-        msg: "found nlb target group arn in ec2_tgs"
-
-    - assert:
-        that: "{{ idle_target_group.target_group_arn not in (ec2_tgs | map(attribute='target_group_arn')) }}"
-        msg: "did not find idle target group arn in ec2_tgs"
-
-    # tests that no cruft got in there
-    - assert:
-        that: (ec2_tgs | length) == 2
-        msg: "only two target groups were returned" 
+        that:
+          - "{{ alb_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn')) }}"
+          - "{{ nlb_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn')) }}"
+          - "{{ idle_target_group.target_group_arn not in (ec2_tgs | map(attribute='target_group_arn')) }}"
+          - (ec2_tgs | length) == 2
+        msg: "ec2_tgs showed the target in the right target groups"
 
 
     - name: register with unused target group
@@ -252,20 +244,12 @@
         <<: *aws_connection_info
 
     - assert:
-        that: "{{ alb_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn')) }}"
-        msg: "found alb target group arn in ec2_tgs fact"
-
-    - assert:
-        that: "{{ nlb_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn')) }}"
-        msg: "found nlb target group arn in ec2_tgs fact"
-
-    - assert:
-        that: "{{ idle_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn')) }}"
-        msg: "found idle target group arn in ec2_tgs fact"
-
-    - assert:
-        that: (ec2_tgs | length) == 3
-        msg: "only three target groups were returned" 
+        that:
+          - "{{ alb_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn')) }}"
+          - "{{ nlb_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn')) }}"
+          - "{{ idle_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn')) }}"
+          -  (ec2_tgs | length) == 3
+        msg: "ec2_tgs reflected the addition of the target to the idle group"
 
     - name: gather facts again, this time excluding the idle group
       elb_target_facts:
@@ -274,82 +258,111 @@
         <<: *aws_connection_info
 
     - assert:
-        that: "{{ alb_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn')) }}"
-        msg: "found alb target group arn in ec2_tgs fact"
-
-    - assert:
-        that: "{{ nlb_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn')) }}"
-        msg: "found nlb target group arn in ec2_tgs fact"
-
-    - assert:
-        that: "{{ idle_target_group.target_group_arn not in (ec2_tgs | map(attribute='target_group_arn')) }}"
-        msg: "did not find idle target group arn in ec2_tgs fact"
-
-    - assert:
-        that: (ec2_tgs | length) == 2
-        msg: "only two target groups were returned" 
+        that:
+          - "{{ alb_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn')) }}"
+          - "{{ nlb_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn')) }}"
+          - "{{ idle_target_group.target_group_arn not in (ec2_tgs | map(attribute='target_group_arn')) }}"
+          - (ec2_tgs | length) == 2
+        msg: "ec2_tgs did not gather unused target groups when variable was set"
         
+    - name: register twice in the same target group
+      elb_target:
+        target_group_name: "{{ tg_name }}-ip"
+        target_port: 22
+        target_id: "{{ ec2.instances[0].private_ip }}" 
+        state: present
+        target_status: "healthy"
+        target_status_timeout: 300
+        <<: *aws_connection_info
+
+    - name: gather facts
+      elb_target_facts:
+        instance_id: "{{ ec2.instance_ids[0] }}"
+        get_unused_target_groups: false
+        <<: *aws_connection_info
+
+    - assert:
+        that:
+          - alb_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn'))
+          - nlb_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn'))
+          - (ec2_tgs | length) == 2 
+          - (ec2_tgs |
+             selectattr('target_group_arn', 'equalto', nlb_target_group.target_group_arn) |
+             map(attribute='targets') |
+             flatten |
+             list |
+             length) == 2
+        msg: "registering a target twice didn't affect the overall target group count, increased target count"
+
     - set_fact:
         original_target_groups: "{{ ec2_tgs }}"
 
-    # test the usage of this module in deregistering and reregistering instances
-    - name: deregister from all target groups
+    - name: Deregister instance from all target groups
       elb_target:
-        target_group_arn: "{{ original_target_group.0.target_group_arn }}" 
-        target_port: "{{ original_target_group.1.target_port }}"
-        target_az: "{{ original_target_group.1.target_az }}"
-        target_id: "{{ original_target_group.1.target_id }}"
-        state: absent 
-        target_status: "unused"
-        target_status_timeout: 600
-        <<: *aws_connection_info
-      async: 1000
-      poll: 0
-      register: deregistration_results
-      loop_control:
-        loop_var: original_target_group
-      with_subelements:
-        - "{{ original_target_groups}}"
-        - "targets"
-
-    - name: wait for deregistration
-      async_status:
-          jid: "{{ each.ansible_job_id }}"
-      register: job_results
-      until: job_results.finished
-      loop: "{{ deregistration_results.results }}"
-      loop_control:
-        loop_var: each
-      retries: 61
-      delay: 10
-
-    - name: reregister
-      elb_target:
-        target_group_arn: "{{ original_target_group.0.target_group_arn }}" 
-        target_port: "{{ original_target_group.1.target_port }}"
-        target_az: "{{ original_target_group.1.target_az }}"
-        target_id: "{{ original_target_group.1.target_id }}"
-        state: present
-        target_status: "healthy"
-        target_status_timeout: 600
-        <<: *aws_connection_info
-      register: register_results
-      async: 1000
-      poll: 0
-      loop_control:
-        loop_var: original_target_group
+          target_group_arn: "{{ item.0.target_group_arn }}"
+          target_port: "{{ item.1.target_port }}"
+          target_az: "{{ item.1.target_az }}"
+          target_id: "{{ item.1.target_id }}"
+          state: absent
+          target_status: "draining"
+          <<: *aws_connection_info
       with_subelements:
         - "{{ original_target_groups }}"
         - "targets"
 
+    - name: wait for all targets to deregister simultaneously
+      elb_target_facts:
+        get_unused_target_groups: false
+        instance_id: "{{ ec2.instance_ids[0] }}"
+        <<: *aws_connection_info
+      until: (ec2_tgs | length) == 0
+      retries: 60
+      delay: 10
+
+    - name: reregister in elbv2s
+      elb_target:
+        target_group_arn: "{{ item.0.target_group_arn }}"
+        target_port: "{{ item.1.target_port }}"
+        target_az: "{{ item.1.target_az }}"
+        target_id: "{{ item.1.target_id }}"
+        state: present
+        target_status: "initial"
+        <<: *aws_connection_info
+      with_subelements:
+        - "{{ original_target_groups }}"
+        - "targets"
+
+    # wait until all groups associated with this instance are 'healthy' or
+    # 'unused'
     - name: wait for registration
-      async_status:
-          jid: "{{ item.ansible_job_id }}"
-      register: job_results
-      until: job_results.finished
-      loop: "{{ register_results.results }}"
+      elb_target_facts:
+        get_unused_target_groups: false
+        instance_id: "{{ ec2.instance_ids[0] }}"
+        <<: *aws_connection_info
+      until: >
+                (ec2_tgs |
+                 map(attribute='targets') |
+                 flatten |
+                 map(attribute='target_health') |
+                 rejectattr('state', 'equalto', 'healthy') |
+                 rejectattr('state', 'equalto', 'unused') |
+                 list |
+                 length) == 0
       retries: 61
       delay: 10
+
+    - assert:
+        that:
+          - alb_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn'))
+          - nlb_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn'))
+          - (ec2_tgs | length) == 2 
+          - (ec2_tgs |
+             selectattr('target_group_arn', 'equalto', nlb_target_group.target_group_arn) |
+             map(attribute='targets') |
+             flatten |
+             list |
+             length) == 2
+      msg: "reregistration completed successfully"
 
     always:
 
