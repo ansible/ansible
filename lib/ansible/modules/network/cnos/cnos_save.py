@@ -34,7 +34,7 @@ DOCUMENTATION = '''
 module: cnos_save
 author: "Anil Kumar Muraleedharan (@amuraleedhar)"
 short_description: Save the running configuration as the startup configuration
-on devices running Lenovo CNOS
+ on devices running Lenovo CNOS
 description:
     - This module allows you to copy the running configuration of a switch over
      its startup configuration. It is recommended to use this module shortly
@@ -52,7 +52,7 @@ options: {}
 '''
 EXAMPLES = '''
 Tasks : The following are examples of using the module cnos_save. These are
-written in the main.yml file of the tasks directory.
+ written in the main.yml file of the tasks directory.
 ---
 - name: Test Save
   cnos_save:
