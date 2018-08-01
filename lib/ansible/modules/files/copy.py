@@ -280,16 +280,69 @@ def adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list,
     return changed
 
 
-def chown_recursive(path, owner, group):
-    uid = pwd.getpwnam(owner).pw_uid
-    gid = grp.getgrnam(group).gr_gid
-    for dirpath, dirnames, filenames in os.walk(path):
-        os.chown(dirpath, uid, gid)
-        for dir in [os.path.join(dirpath, d) for d in dirnames]:
-            os.chown(dir, uid, gid)
-        for file in [os.path.join(dirpath, f) for f in filenames]:
-            os.chown(file, uid, gid)
+def chown_recursive(path, module):
+    changed = False
+    owner = module.params['owner']
+    group = module.params['group']
 
+    if owner is not None:
+        if not module.check_mode:
+            for dirpath, dirnames, filenames in os.walk(path):
+                owner_changed = module.set_owner_if_different(dirpath, owner, False)
+                if owner_changed is True:
+                    changed = owner_changed
+                for dir in [os.path.join(dirpath, d) for d in dirnames]:
+                    owner_changed = module.set_owner_if_different(dir, owner, False)
+                    if owner_changed is True:
+                        changed = owner_changed
+                for file in [os.path.join(dirpath, f) for f in filenames]:
+                    owner_changed = module.set_owner_if_different(file, owner, False)
+                    if owner_changed is True:
+                        changed = owner_changed
+        else:
+            uid = pwd.getpwnam(owner).pw_uid
+            for dirpath, dirnames, filenames in os.walk(path):
+                owner_changed = (os.stat(dirpath).st_uid == uid)
+                if owner_changed is True:
+                    changed = owner_changed
+                for dir in [os.path.join(dirpath, d) for d in dirnames]:
+                    owner_changed = (os.stat(dir).st_uid == uid)
+                    if owner_changed is True:
+                        changed = owner_changed
+                for file in [os.path.join(dirpath, f) for f in filenames]:
+                    owner_changed = (os.stat(file).st_uid == uid)
+                    if owner_changed is True:
+                        changed = owner_changed
+    if group is not None:
+        if not module.check_mode:
+            for dirpath, dirnames, filenames in os.walk(path):
+                group_changed = module.set_group_if_different(dirpath, group, False)
+                if group_changed is True:
+                    changed = group_changed
+                for dir in [os.path.join(dirpath, d) for d in dirnames]:
+                    group_changed = module.set_group_if_different(dir, group, False)
+                    if group_changed is True:
+                        changed = group_changed
+                for file in [os.path.join(dirpath, f) for f in filenames]:
+                    group_changed = module.set_group_if_different(file, group, False)
+                    if group_changed is True:
+                        changed = group_changed
+        else:
+            gid = grp.getgrnam(group).gr_gid
+            for dirpath, dirnames, filenames in os.walk(path):
+                group_changed = (os.stat(dirpath).st_gid == gid)
+                if group_changed is True:
+                    changed = group_changed
+                for dir in [os.path.join(dirpath, d) for d in dirnames]:
+                    group_changed = (os.stat(dir).st_gid == gid)
+                    if group_changed is True:
+                        changed = group_changed
+                for file in [os.path.join(dirpath, f) for f in filenames]:
+                    group_changed = (os.stat(file).st_gid == gid)
+                    if group_changed is True:
+                        changed = group_changed
+
+    return changed
 
 def copy_diff_files(src, dest, module):
     changed = False
@@ -342,7 +395,7 @@ def copy_left_only(src, dest, module):
                     module.set_group_if_different(dest_item_path, group, False)
             if os.path.isdir(src_item_path):
                 shutil.copytree(src_item_path, dest_item_path, symlinks=follow)
-                chown_recursive(dest_item_path, owner, group)
+                chown_recursive(dest_item_path, module)
             changed = True
     return changed
 
@@ -538,12 +591,14 @@ def main():
                 diff_files_changed = copy_diff_files(b_src, dest, module)
                 left_only_changed = copy_left_only(b_src, dest, module)
                 common_dirs_changed = copy_common_dirs(b_src, dest, module)
-                if diff_files_changed or left_only_changed or common_dirs_changed:
+                owner_group_changed = chown_recursive(dest, module)
+                if diff_files_changed or left_only_changed or common_dirs_changed or owner_group_changed:
                     changed = True
 
             if not os.path.exists(dest):
-                shutil.copytree(b_src, dest, symlinks=follow)
-                chown_recursive(dest, owner, group)
+                if not module.check_mode:
+                    shutil.copytree(b_src, dest, symlinks=follow)
+                chown_recursive(dest, module)
                 changed = True
 
     res_args = dict(
