@@ -15,6 +15,8 @@ DOCUMENTATION = '''
       - Marco Vito Moscaritolo <marco@agavee.com>
       - Jesse Keating <jesse.keating@rackspace.com>
     short_description: OpenStack inventory source
+    requirements:
+        - openstacksdk
     description:
         - Get inventory hosts from OpenStack clouds
         - Uses openstack.(yml|yaml) YAML configuration file to configure the inventory plugin

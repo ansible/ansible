@@ -8,6 +8,9 @@ DOCUMENTATION = '''
     name: aws_ec2
     plugin_type: inventory
     short_description: ec2 inventory source
+    requirements:
+        - boto3
+        - botocore
     extends_documentation_fragment:
         - inventory_cache
         - constructed
