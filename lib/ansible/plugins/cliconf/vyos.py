@@ -54,7 +54,7 @@ class Cliconf(CliconfBase):
 
         return device_info
 
-    def get_config(self, flag=None, format=None):
+    def get_config(self, flags=None, format=None):
         if format:
             option_values = self.get_option_values()
             if format not in option_values['format']:
