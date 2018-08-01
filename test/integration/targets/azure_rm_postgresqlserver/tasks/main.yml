@@ -71,7 +71,6 @@
       - output.changed == False
       - output.servers[0]['id'] != None
       - output.servers[0]['name'] != None
-      - output.servers[0]['type'] != None
       - output.servers[0]['location'] != None
       - output.servers[0]['sku']['name'] != None
       - output.servers[0]['sku']['tier'] != None
@@ -90,7 +89,6 @@
       - output.changed == False
       - output.servers[0]['id'] != None
       - output.servers[0]['name'] != None
-      - output.servers[0]['type'] != None
       - output.servers[0]['location'] != None
       - output.servers[0]['sku']['name'] != None
       - output.servers[0]['sku']['tier'] != None
@@ -100,7 +98,6 @@
       - output.servers[0]['fully_qualified_domain_name'] != None
       - output.servers[0]['second']['id'] != None
       - output.servers[0]['second']['name'] != None
-      - output.servers[0]['second']['type'] != None
       - output.servers[0]['second']['location'] != None
       - output.servers[0]['second']['sku']['name'] != None
       - output.servers[0]['second']['sku']['tier'] != None

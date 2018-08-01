@@ -67,18 +67,54 @@ servers:
             returned: always
             type: str
             sample: testserver
-        type:
-            description:
-                - Resource type.
-            returned: always
-            type: str
-            sample: Microsoft.DBforPostgreSQL/servers
         location:
             description:
                 - The location the resource resides in.
             returned: always
             type: str
             sample: onebox
+        sku:
+            description:
+                - The SKU of the server.
+            returned: always
+            type: complex
+            contains:
+                name:
+                    description:
+                        - The name of the SKU
+                    returned: always
+                    type: str
+                    sample: PGSQLB100
+                tier:
+                    description:
+                        - The tier of the particular SKU
+                    returned: always
+                    type: str
+                    sample: Basic
+                capacity:
+                    description:
+                        - The scale capacity."
+                    returned: always
+                    type: int
+                    sample: 100
+        version:
+            description:
+                - Server version.
+            returned: always
+            type: str
+            sample: version
+        user_visible_state:
+            description:
+                - A state of a server that is visible to user.
+            returned: always
+            type: str
+            sample: user_visible_state
+        fully_qualified_domain_name:
+            description:
+                - The fully qualified domain name of a server.
+            returned: always
+            type: str
+            sample: fully_qualified_domain_name
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
