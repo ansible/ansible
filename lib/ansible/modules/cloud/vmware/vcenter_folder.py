@@ -112,7 +112,6 @@ EXAMPLES = r'''
     folder_type: vm
     state: absent
   register: vm_folder_deletion_result
-
 '''
 
 RETURN = r'''

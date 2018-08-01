@@ -110,6 +110,7 @@ EXAMPLES = r'''
     switch_name: vswitch_name
     portgroup_name: portgroup_name
     vlan_id: vlan_id
+  delegate_to: localhost
 
 - name: Add Portgroup with Promiscuous Mode Enabled
   vmware_portgroup:
@@ -120,6 +121,7 @@ EXAMPLES = r'''
     portgroup_name: portgroup_name
     network_policy:
         promiscuous_mode: True
+  delegate_to: localhost
 
 - name: Add Management Network VM Portgroup to specific hosts
   vmware_portgroup:
@@ -130,6 +132,7 @@ EXAMPLES = r'''
     switch_name: vswitch_name
     portgroup_name: portgroup_name
     vlan_id: vlan_id
+  delegate_to: localhost
 
 - name: Add Management Network VM Portgroup to all hosts in a cluster
   vmware_portgroup:
@@ -140,6 +143,7 @@ EXAMPLES = r'''
     switch_name: vswitch_name
     portgroup_name: portgroup_name
     vlan_id: vlan_id
+  delegate_to: localhost
 
 - name: Remove Management Network VM Portgroup to all hosts in a cluster
   vmware_portgroup:
@@ -151,6 +155,7 @@ EXAMPLES = r'''
     portgroup_name: portgroup_name
     vlan_id: vlan_id
     state: absent
+  delegate_to: localhost
 
 - name: Add Portgroup with teaming policy
   vmware_portgroup:
@@ -162,6 +167,7 @@ EXAMPLES = r'''
     teaming_policy:
       load_balance_policy: 'failover_explicit'
       inbound_policy: True
+  delegate_to: localhost
   register: teaming_result
 '''
 

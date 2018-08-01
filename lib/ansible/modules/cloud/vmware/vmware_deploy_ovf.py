@@ -112,6 +112,7 @@ EXAMPLES = r'''
     password: passw0rd
     ovf: /path/to/ubuntu-16.04-amd64.ovf
     wait_for_ip_address: true
+  delegate_to: localhost
 '''
 
 

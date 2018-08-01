@@ -49,6 +49,7 @@ EXAMPLES = r'''
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     cluster_name: cluster_name
+  delegate_to: localhost
   register: cluster_drs_facts
 
 - name: Gather DRS facts about all Clusters in given datacenter
@@ -57,6 +58,7 @@ EXAMPLES = r'''
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     datacenter: datacenter_name
+  delegate_to: localhost
   register: datacenter_drs_facts
 '''
 

@@ -113,6 +113,7 @@ EXAMPLES = '''
       cpu_reservation: 0
       cpu_expandable_reservations: True
       state: present
+    delegate_to: localhost
 '''
 
 RETURN = """

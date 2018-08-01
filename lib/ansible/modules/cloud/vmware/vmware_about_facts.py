@@ -37,6 +37,7 @@ EXAMPLES = r'''
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
+  delegate_to: localhost
   register: vcenter_about_info
 
 - name: Provide information about a standalone ESXi server
@@ -44,6 +45,7 @@ EXAMPLES = r'''
     hostname: '{{ esxi_hostname }}'
     username: '{{ esxi_username }}'
     password: '{{ esxu_password }}'
+  delegate_to: localhost
   register: esxi_about_info
 '''
 

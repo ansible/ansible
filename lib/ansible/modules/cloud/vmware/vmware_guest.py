@@ -458,6 +458,7 @@ EXAMPLES = r'''
       dns_suffix:
         - example.com
         - example2.com
+  delegate_to: localhost
 
 - name: Rename a virtual machine (requires the virtual machine's uuid)
   vmware_guest:
@@ -496,6 +497,7 @@ EXAMPLES = r'''
         value: 10.10.10.1
       - id: old_property
         operation: remove
+  delegate_to: localhost
 
 - name: Set powerstate of a virtual machine to poweroff by using UUID
   vmware_guest:

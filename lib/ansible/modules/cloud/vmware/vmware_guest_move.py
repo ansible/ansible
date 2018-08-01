@@ -75,6 +75,7 @@ EXAMPLES = r'''
     validate_certs: False
     name: testvm-1
     dest_folder: datacenter/vm/prodvms
+  delegate_to: localhost
 
 - name: Get VM UUID
   vmware_guest_facts:
@@ -85,6 +86,7 @@ EXAMPLES = r'''
     datacenter: "{{ datacenter }}"
     folder: "/{{datacenter}}/vm"
     name: "{{ vm_name }}"
+  delegate_to: localhost
   register: vm_facts
 
 - name: Get UUID from previous task and pass it to this task
@@ -93,9 +95,9 @@ EXAMPLES = r'''
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     validate_certs: no
+    datacenter: "{{ datacenter }}"
     uuid: "{{ vm_facts.instance.hw_product_uuid }}"
     dest_folder: "/DataCenter/vm/path/to/new/folder/where/we/want"
-  datacenter: "{{ datacenter }}"
   delegate_to: localhost
   register: facts
 '''

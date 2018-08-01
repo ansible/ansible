@@ -42,6 +42,7 @@ EXAMPLES = r'''
     hostname: "{{ vcenter_server }}"
     username: "{{ vcenter_user }}"
     password: "{{ vcenter_pass }}"
+  delegate_to: localhost
   register: all_tag_category_facts
 
 - name: Gather category id from given tag category
@@ -49,6 +50,7 @@ EXAMPLES = r'''
     hostname: "{{ vcenter_server }}"
     username: "{{ vcenter_user }}"
     password: "{{ vcenter_pass }}"
+  delegate_to: localhost
   register: tag_category_results
 
 - set_fact:

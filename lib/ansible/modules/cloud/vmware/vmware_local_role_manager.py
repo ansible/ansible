@@ -63,6 +63,7 @@ EXAMPLES = '''
       password: vmware
       local_role_name: vmware_qa
       state: present
+  delegate_to: localhost
 
 - name: Add local role with privileges to ESXi
   vmware_local_role_manager:
@@ -72,6 +73,7 @@ EXAMPLES = '''
       local_role_name: vmware_qa
       local_privilege_ids: [ 'Folder.Create', 'Folder.Delete']
       state: present
+  delegate_to: localhost
 
 - name: Remove local role from ESXi
   vmware_local_role_manager:
@@ -80,6 +82,7 @@ EXAMPLES = '''
       password: vmware
       local_role_name: vmware_qa
       state: absent
+  delegate_to: localhost
 
 '''
 

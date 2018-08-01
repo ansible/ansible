@@ -46,6 +46,7 @@ EXAMPLES = r'''
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     cluster_name: cluster_name
+  delegate_to: localhost
 
 - name: Gather firewall facts about ESXi Host
   vmware_host_firewall_facts:
@@ -53,6 +54,7 @@ EXAMPLES = r'''
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     esxi_hostname: '{{ esxi_hostname }}'
+  delegate_to: localhost
 '''
 
 RETURN = r'''

@@ -55,6 +55,7 @@ EXAMPLES = r'''
     cluster_name: cluster_name
     options:
         'Config.HostAgent.log.level': 'info'
+  delegate_to: localhost
 
 - name: Manage Log level setting for an ESXi Host
   vmware_host_config_manager:
@@ -64,6 +65,7 @@ EXAMPLES = r'''
     esxi_hostname: '{{ esxi_hostname }}'
     options:
         'Config.HostAgent.log.level': 'verbose'
+  delegate_to: localhost
 
 - name: Manage multiple settings for an ESXi Host
   vmware_host_config_manager:
@@ -75,6 +77,7 @@ EXAMPLES = r'''
         'Config.HostAgent.log.level': 'verbose'
         'Annotations.WelcomeMessage': 'Hello World'
         'Config.HostAgent.plugins.solo.enableMob': false
+  delegate_to: localhost
 '''
 
 RETURN = r'''#

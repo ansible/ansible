@@ -96,7 +96,6 @@ EXAMPLES = r'''
     state: reboot-host
   delegate_to: localhost
   register: reboot_host
-
 '''
 
 RETURN = r'''

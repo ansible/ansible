@@ -78,6 +78,7 @@ EXAMPLES = '''
     evacuate: yes
     timeout: 3600
     state: present
+  delegate_to: localhost
 '''
 
 RETURN = '''

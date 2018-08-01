@@ -42,10 +42,8 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-# Example vmware_dns_config command from Ansible Playbooks
 - name: Configure ESXi hostname and DNS servers
-  local_action:
-    module: vmware_dns_config
+  vmware_dns_config:
     hostname: esxi_hostname
     username: root
     password: your_password
@@ -54,6 +52,7 @@ EXAMPLES = '''
     dns_servers:
         - 8.8.8.8
         - 8.8.4.4
+  delegate_to: localhost
 '''
 try:
     from pyVmomi import vim, vmodl

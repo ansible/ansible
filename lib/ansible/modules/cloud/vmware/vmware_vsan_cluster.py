@@ -47,6 +47,7 @@ EXAMPLES = '''
          hostname: "{{ groups['esxi'][0] }}"
          username: "{{ esxi_username }}"
          password: "{{ site_password }}"
+      delegate_to: localhost
       register: vsan_cluster
 
     - name: Configure VSAN on remaining hosts
@@ -55,8 +56,8 @@ EXAMPLES = '''
          username: "{{ esxi_username }}"
          password: "{{ site_password }}"
          cluster_uuid: "{{ vsan_cluster.cluster_uuid }}"
+      delegate_to: localhost
       with_items: "{{ groups['esxi'][1:] }}"
-
 '''
 
 try:

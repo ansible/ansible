@@ -51,29 +51,29 @@ extends_documentation_fragment: vmware.documentation
 
 EXAMPLES = '''
 - name: Get Canonical name of particular target on particular ESXi host system
-  local_action:
-    module: vmware_target_canonical_facts
+  vmware_target_canonical_facts:
     hostname: vcenter_hostname
     username: vcenter_user
     password: vcenter_pass
     target_id: 7
     esxi_hostname: esxi_hostname
+  delegate_to: localhost
 
 - name: Get Canonical name of all target on particular ESXi host system
-  local_action:
-    module: vmware_target_canonical_facts
+  vmware_target_canonical_facts:
     hostname: vcenter_hostname
     username: vcenter_user
     password: vcenter_pass
     esxi_hostname: esxi_hostname
+  delegate_to: localhost
 
 - name: Get Canonical name of all ESXi hostname on particular Cluster
-  local_action:
-    module: vmware_target_canonical_facts
+  vmware_target_canonical_facts:
     hostname: vcenter_hostname
     username: vcenter_user
     password: vcenter_pass
     cluster_name: cluster_name
+  delegate_to: localhost
 '''
 
 RETURN = r"""
