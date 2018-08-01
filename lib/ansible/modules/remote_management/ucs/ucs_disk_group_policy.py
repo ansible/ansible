@@ -186,40 +186,45 @@ def configure_disk_policy(ucs, module, dn):
     from ucsmsdk.mometa.lstorage.LstorageLocalDiskConfigRef import LstorageLocalDiskConfigRef
 
     if not module.check_mode:
-        # create if mo does not already exist
-        mo = LstorageDiskGroupConfigPolicy(
-            parent_mo_or_dn=module.params['org_dn'],
-            name=module.params['name'],
-            descr=module.params['description'],
-            raid_level=module.params['raid_level'],
-        )
-        if module.params['configuration_mode'] == 'automatic':
-            mo_1 = LstorageDiskGroupQualifier(
-                parent_mo_or_dn=mo,
-                num_drives=module.params['num_drives'],
-                drive_type=module.params['drive_type'],
-                use_jbod_disks=module.params['use_jbod_disks'],
-                use_remaining_disks=module.params['use_remaining_disks'],
-                num_ded_hot_spares=module.params['num_ded_hot_spares'],
-                num_glob_hot_spares=module.params['num_glob_hot_spares'],
-                min_drive_size=module.params['min_drive_size'],
+        try:
+            # create if mo does not already exist
+            mo = LstorageDiskGroupConfigPolicy(
+                parent_mo_or_dn=module.params['org_dn'],
+                name=module.params['name'],
+                descr=module.params['description'],
+                raid_level=module.params['raid_level'],
             )
-        else:   # configuration_mode == 'manual'
-            for disk in module.params['manual_disks']:
-                if disk['state'] == 'absent':
-                    child_dn = dn + '/slot-' + disk['slot_num']
-                    mo_1 = ucs.login_handle.query_dn(child_dn)
-                    if mo_1:
-                        ucs.login_handle.remove_mo(mo_1)
-                else:   # state == 'present'
-                    mo_1 = LstorageLocalDiskConfigRef(
-                        parent_mo_or_dn=mo,
-                        slot_num=disk['slot_num'],
-                        role=disk['role'],
-                        span_id=disk['span_id'],
-                    )
-        ucs.login_handle.add_mo(mo, True)
-        ucs.login_handle.commit()
+            if module.params['configuration_mode'] == 'automatic':
+                mo_1 = LstorageDiskGroupQualifier(
+                    parent_mo_or_dn=mo,
+                    num_drives=module.params['num_drives'],
+                    drive_type=module.params['drive_type'],
+                    use_jbod_disks=module.params['use_jbod_disks'],
+                    use_remaining_disks=module.params['use_remaining_disks'],
+                    num_ded_hot_spares=module.params['num_ded_hot_spares'],
+                    num_glob_hot_spares=module.params['num_glob_hot_spares'],
+                    min_drive_size=module.params['min_drive_size'],
+                )
+            else:   # configuration_mode == 'manual'
+                for disk in module.params['manual_disks']:
+                    if disk['state'] == 'absent':
+                        child_dn = dn + '/slot-' + disk['slot_num']
+                        mo_1 = ucs.login_handle.query_dn(child_dn)
+                        if mo_1:
+                            ucs.login_handle.remove_mo(mo_1)
+                    else:   # state == 'present'
+                        mo_1 = LstorageLocalDiskConfigRef(
+                            parent_mo_or_dn=mo,
+                            slot_num=disk['slot_num'],
+                            role=disk['role'],
+                            span_id=disk['span_id'],
+                        )
+            ucs.login_handle.add_mo(mo, True)
+            ucs.login_handle.commit()
+        except Exception as e:   # generic Exception handling because SDK can throw a variety
+            ucs.result['msg'] = "setup error: %s " % str(e)
+            module.fail_json(**ucs.result)
+
     ucs.result['changed'] = True
 
 
@@ -304,40 +309,27 @@ def main():
         supports_check_mode=True,
     )
     ucs = UCSModule(module)
-
-    err = False
-
     # UCSModule creation above verifies ucsmsdk is present and exits on failure.  Additional imports are done below or in called functions.
 
     ucs.result['changed'] = False
-    mo_exists = False
     props_match = False
     # dn is <org_dn>/disk-group-config-<name>
     dn = module.params['org_dn'] + '/disk-group-config-' + module.params['name']
-    try:
-        mo = ucs.login_handle.query_dn(dn)
-        if mo:
-            mo_exists = True
 
+    mo = ucs.login_handle.query_dn(dn)
+    if mo:
         if module.params['state'] == 'absent':
             # mo must exist but all properties do not have to match
-            if mo_exists:
-                if not module.check_mode:
-                    ucs.login_handle.remove_mo(mo)
-                    ucs.login_handle.commit()
-                ucs.result['changed'] = True
+            if not module.check_mode:
+                ucs.login_handle.remove_mo(mo)
+                ucs.login_handle.commit()
+            ucs.result['changed'] = True
         else:   # state == 'present'
-            if mo_exists:
-                props_match = check_disk_policy_props(ucs, module, mo, dn)
-            if not props_match:
-                configure_disk_policy(ucs, module, dn)
+            props_match = check_disk_policy_props(ucs, module, mo, dn)
 
-    except Exception as e:
-        err = True
-        ucs.result['msg'] = "setup error: %s " % str(e)
+    if module.params['state'] == 'present' and not props_match:
+        configure_disk_policy(ucs, module, dn)
 
-    if err:
-        module.fail_json(**ucs.result)
     module.exit_json(**ucs.result)
 
 
