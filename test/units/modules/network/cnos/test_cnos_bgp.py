@@ -97,4 +97,3 @@ class TestCnosBgpModule(TestCnosModule):
         result = self.execute_module(changed=True)
         expected_result = 'BGP configurations accomplished'
         self.assertEqual(result['msg'], expected_result)
-
