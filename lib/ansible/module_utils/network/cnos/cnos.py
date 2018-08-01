@@ -3580,7 +3580,7 @@ def validateValueAgainstRule(ruleString, variableValue):
         try:
             socket.inet_pton(socket.AF_INET, variableValue)
             result = True
-        except socket.Error:
+        except socket.error:
             result = False
         if(result is True):
             return "ok"
@@ -3598,7 +3598,7 @@ def validateValueAgainstRule(ruleString, variableValue):
                 result = True
             else:
                 result = False
-        except socket.Error:
+        except socket.error:
             result = False
         if(result is True):
             return "ok"
@@ -3609,7 +3609,7 @@ def validateValueAgainstRule(ruleString, variableValue):
         try:
             socket.inet_pton(socket.AF_INET6, variableValue)
             result = True
-        except socket.Error:
+        except socket.error:
             result = False
         if(result is True):
             return "ok"
