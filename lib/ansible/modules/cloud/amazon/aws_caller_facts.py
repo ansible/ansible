@@ -17,7 +17,7 @@ description:
     - The primary use of this is to get the account id for templating into ARNs or similar to avoid needing to specify this information in inventory.
 version_added: "2.6"
 
-author: 
+author:
     - Ed Costello (@orthanc)
     - Stijn Dubrul (@sdubrul)
 
