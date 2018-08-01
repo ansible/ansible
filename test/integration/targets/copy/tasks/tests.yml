@@ -1494,87 +1494,144 @@
 # Recursive copying on remote host with symlinks tests
 #
 
-## usecase1 remote_dir_dest not exists
-
+## prepare for test
 - block:
-  - name: prepare - Create a test dir to copy
+  - name: Create a test dir to copy
     file:
-      path: '{{ remote_dir }}/top_dir'
+      path: '{{ remote_dir }}/remote_dir_src'
       state: directory
 
-  - name: prepare - Stat the remote_dir(src)
+  - name: Stat the remote_dir_src
     stat:
-      path: '{{ remote_dir }}/top_dir'
-    register: stat_remote_dir_src
+      path: '{{ remote_dir }}/remote_dir_src'
+    register: stat_remote_dir_src_before
 
-  - name: prepare - Create a test dir to copy
+  - name: Create a subdir
     file:
-      path: '{{ remote_dir }}/top_dir'
+      path: '{{ remote_dir }}/remote_dir_src/subdir'
       state: directory
 
-  - name: prepare - Create a circular subdir
-    file:
-      path: '{{ remote_dir }}/top_dir/subdir'
-      state: directory
+  - name: Stat the remote_dir_src/subdir
+    stat:
+      path: '{{ remote_dir }}/remote_dir_src/subdir'
+    register: stat_remote_dir_src_subdir_before
 
-  - name: prepare - Create a file in the top dir
+  - name: Create a file in the top of src
     copy:
-      dest: '{{ remote_dir }}/top_dir/file1'
+      dest: '{{ remote_dir }}/remote_dir_src/file1'
       content: 'hello world 1'
 
-  - name: prepare - Create a file in the subdir
+  - name: Stat the remote_dir_src/file1
+    stat:
+      path: '{{ remote_dir }}/remote_dir_src/file1'
+    register: stat_remote_dir_src_file1_before
+
+  - name: Create a file in the subdir
     copy:
-      dest: '{{ remote_dir }}/top_dir/subdir/file12'
+      dest: '{{ remote_dir }}/remote_dir_src/subdir/file12'
       content: 'hello world 12'
 
-  - name: prepare - Create a link to the file12
+  - name: Stat the remote_dir_src/subdir/file12
+    stat:
+      path: '{{ remote_dir }}/remote_dir_src/subdir/file12'
+    register: stat_remote_dir_src_subdir_file12_before
+
+  - name: Create a link to the file12
     file:
-      path: '{{ remote_dir }}/top_dir/link_file12'
-      src: '{{ remote_dir }}/top_dir/subdir/file12'
+      path: '{{ remote_dir }}/remote_dir_src/link_file12'
+      src: '{{ remote_dir }}/remote_dir_src/subdir/file12'
       state: link
 
+  - name: Stat the remote_dir_src/link_file12
+    stat:
+      path: '{{ remote_dir }}/remote_dir_src/link_file12'
+    register: stat_remote_dir_src_link_file12_before
+
+## testcase1 remote_dir_dest not exists
+
 - block:
-  - name: execute - Copy the directory on remote with follow
+  - name: Copy the directory on remote with follow
     copy:
-      src: '{{ remote_dir }}/top_dir'
+      src: '{{ remote_dir }}/remote_dir_src/'
       dest: '{{ remote_dir }}/new_dir_with_follow'
       follow: True
 
-  - name: execute - Copy the directory on remote without follow
+  - name: Copy the directory on remote without follow
     copy:
-      src: '{{ remote_dir }}/top_dir'
+      src: '{{ remote_dir }}/remote_dir_src/'
       dest: '{{ remote_dir }}/new_dir_without_follow'
       follow: False
 
-- block:
-  - name: assert - Stat the new_dir_with_follow
+  - name: Stat the new_dir_with_follow
     stat:
       path: '{{ remote_dir }}/new_dir_with_follow'
     register: stat_new_dir_with_follow
 
-  - name: assert - Stat the new_dir_without_follow
+  - name: Stat the new_dir_without_follow
     stat:
       path: '{{ remote_dir }}/new_dir_without_follow'
-    register: stat_new_dir_with_follow
+    register: stat_new_dir_without_follow
 
-  - name: assert - Assert that remote_dir has copied.
+  - name: Assert that remote_dir_src has copied.
     assert:
       that:
       - stat_new_dir_with_follow.stat.exists
       - stat_new_dir_with_follow.stat.isdir
-#      - stat_file_in_dir_result.stat.exists
-#      - stat_file_in_dir_result.stat.isreg
-#      - stat_circular_symlink_result.stat.exists
-#      - stat_circular_symlink_result.stat.islnk
+      - stat_new_dir_without_follow.stat.exists
+      - stat_new_dir_without_follow.stat.isdir
 
-## usecase2 remote_dir_dest exists, left only subdir exists
 
-### pass
-
-## usecase3 remote_dir_dest exists, left only file exists
+## testcase2 remote_dir_dest exists, left only subdir and file exists
 
 ### pass
 
-## usecase4 remote_dir_dest exists, diff files in common subdirs
+## testcase3 remote_dir_dest exists, diff files in common subdirs
 
 ### pass
+
+## remote_dir_src not change
+- block:
+  - name: Stat the remote_dir_src
+    stat:
+      path: '{{ remote_dir }}/remote_dir_src'
+    register: stat_remote_dir_src_after
+
+  - name: Stat the remote_dir_src/subdir
+    stat:
+      path: '{{ remote_dir }}/remote_dir_src/subdir'
+    register: stat_remote_dir_src_subdir_after
+
+  - name: Stat the remote_dir_src/file1
+    stat:
+      path: '{{ remote_dir }}/remote_dir_src/file1'
+    register: stat_remote_dir_src_file1_after
+
+  - name: Stat the remote_dir_src/subdir/file12
+    stat:
+      path: '{{ remote_dir }}/remote_dir_src/subdir/file12'
+    register: stat_remote_dir_src_subdir_file12_after
+
+  - name: Stat the remote_dir_src/link_file12
+    stat:
+      path: '{{ remote_dir }}/remote_dir_src/link_file12'
+    register: stat_remote_dir_src_link_file12_after
+
+  - name: Assert that remote_dir_src not change.
+    assert:
+      that:
+      - stat_remote_dir_src_after.stat.exists
+      - stat_remote_dir_src_after.stat.isdir
+      - stat_remote_dir_src_before.stat.uid == stat_remote_dir_src_after.stat.uid
+      - stat_remote_dir_src_before.stat.gid == stat_remote_dir_src_after.stat.gid
+      - stat_remote_dir_src_before.stat.path == stat_remote_dir_src_after.stat.path
+      - stat_remote_dir_src_before.stat.mode == stat_remote_dir_src_after.stat.mode
+      - stat_remote_dir_src_before.stat.inode == stat_remote_dir_src_after.stat.inode
+      - stat_remote_dir_src_before.stat.mtime == stat_remote_dir_src_after.stat.mtime
+      - stat_remote_dir_src_subdir_after.stat.exists
+      - stat_remote_dir_src_subdir_after.stat.isdir
+      - stat_remote_dir_src_subdir_before.stat.uid == stat_remote_dir_src_subdir_after.stat.uid
+      - stat_remote_dir_src_subdir_before.stat.gid == stat_remote_dir_src_subdir_after.stat.gid
+      - stat_remote_dir_src_subdir_before.stat.path == stat_remote_dir_src_subdir_after.stat.path
+      - stat_remote_dir_src_subdir_before.stat.mode == stat_remote_dir_src_subdir_after.stat.mode
+      - stat_remote_dir_src_subdir_before.stat.inode == stat_remote_dir_src_subdir_after.stat.inode
+      - stat_remote_dir_src_subdir_before.stat.mtime == stat_remote_dir_src_subdir_after.stat.mtime
