@@ -386,7 +386,7 @@ Tasks: The following are examples of using the module cnos_bgp. These are
 RETURN = '''
 msg:
   description: Success or failure message. Upon any failure, the method returns
-  an error display string.
+   an error display string.
   returned: always
   type: string
 '''
