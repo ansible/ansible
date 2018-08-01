@@ -75,6 +75,9 @@ class CloudFormsInventory(object):
                 if 'ansible_ssh_host' in self.hosts[hostname]:
                     self.inventory['_meta']['hostvars'][hostname]['ansible_ssh_host'] = self.hosts[hostname]['ansible_ssh_host']
 
+                if 'ansible_connection' in self.hosts[hostname]:
+                    self.inventory['_meta']['hostvars'][hostname]['ansible_connection'] = self.hosts[hostname]['ansible_connection']
+                    
             data_to_print += self.json_format_dict(self.inventory, self.args.pretty)
 
         print(data_to_print)
@@ -274,7 +277,7 @@ class CloudFormsInventory(object):
 
         while not last_page:
             offset = page * limit
-            ret = self._get_json("%s/api/vms?offset=%s&limit=%s&expand=resources,tags,hosts,&attributes=ipaddresses" % (self.cloudforms_url, offset, limit))
+            ret = self._get_json("%s/api/vms?offset=%s&limit=%s&expand=resources,tags,hosts,&attributes=ipaddresses,operating_system.product_name" % (self.cloudforms_url, offset, limit))
             results += ret['resources']
             if ret['subcount'] < limit:
                 last_page = True
@@ -376,6 +379,10 @@ class CloudFormsInventory(object):
                     for currenthost in host['ipaddresses']:
                         if '.' in currenthost:
                             host['ansible_ssh_host'] = currenthost
+
+            # Set ansible_connection to winrm if os is Windows variant
+            if 'Windows' in host['operating_system']['product_name']:
+                host['ansible_connection'] = 'winrm'
 
             # Create additional groups
             for key in ('location', 'type', 'vendor'):
