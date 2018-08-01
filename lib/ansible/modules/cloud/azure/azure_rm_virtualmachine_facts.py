@@ -68,10 +68,123 @@ RETURN = '''
 vms:
     description: List of virtual machines.
     returned: always
-    type: list
+    type: complex
+    contains:
+        admin_username:
+            description:
+                - Administrator user name.
+            returned: always
+            type: str
+            sample: admin
+        data_disks:
+            description:
+                - List of attached data disks.
+            returned: always
+            type: complex
+            contains:
+                caching:
+                    description:
+                        - Type of data disk caching.
+                    type: str
+                    sample: ReadOnly
+                disk_size_gb:
+                    description:
+                        - The initial disk size in GB for blank data disks
+                    type: int
+                    sample: 64
+                lun:
+                    description:
+                        - The logical unit number for data disk
+                    type: int
+                    sample: 0
+                managed_disk_type:
+                    description:
+                        - Managed data disk type
+                    type: str
+                    sample: Standard_LRS
+        id:
+            description:
+                - Resource ID.
+            returned: always
+            type: str
+            sample: /subscriptions/075da289-5dfd-466b-800e-a8c3a9ed3b05/resourceGroups/myclusterrg/providers/Microsoft.Compute/virtualMachines/mycluster-node-2
+        image:
+            description:
+                - Image specification
+                returned: always
+                type: complex
+                contains:
+                    offer:
+                        description:
+                            - Offer.
+                        type: str
+                        sample: RHEL
+                    publisher:
+                        description:
+                            - Publisher name.
+                        type: str
+                        sample: RedHat
+                    sku:
+                        description:
+                            - SKU name.
+                        type: str
+                        sample: 7-RAW
+                    version:
+                        description:
+                            - Image version.
+                        type: str
+                        sample: 7.5.2018050901
+        location:
+            description:
+                - Resource location.
+            returned: always
+            type: str
+            sample: japaneast
+        name:
+            description:
+                - Resource name.
+            returned: always
+            type: str
+            sample: mycluster-node-2
+        network_interface_names:
+            description:
+                - List of attached network interfaces.
+            type: list
+            sample: [
+                "mycluster-node-2-nic"
+            ]
+        os_disk_caching:
+            description:
+                - Type of OS disk caching.
+            type: str
+            sample: ReadOnly
+        os_type:
+            description:
+                - Base type of operating system.
+            type: str
+            sample: Linux
+        resource_group:
+            description:
+                - Resource group.
+            type: str
+        state:
+            description:
+                - State of the resource.
+            type: str
+            sample: present
+        tags:
+            description:
+                - Tags.
+            type: dict
+        vm_size:
+            description:
+                - Virtual machine size.
+            type: str
+            sample: Standard_D4
+
+
     example: [
         {
-            "admin_username": "azureuser",
             "data_disks": [
                 {
                     "caching": "ReadOnly",
@@ -80,7 +193,6 @@ vms:
                     "managed_disk_type": "Premium_LRS"
                 }
             ],
-            "id": "/subscriptions/075da289-5dfd-466b-800e-a8c3a9ed3b05/resourceGroups/myclusterrg/providers/Microsoft.Compute/virtualMachines/mycluster-node-2",
             "image": {
                 "offer": "RHEL",
                 "publisher": "RedHat",
@@ -253,6 +365,7 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
 
 def main():
     AzureRMVirtualMachineFacts()
+
 
 if __name__ == '__main__':
     main()
