@@ -337,6 +337,7 @@ id:
 import time
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 from copy import deepcopy
+from ansible.module_utils.network.common.utils import dict_merge
 from ansible.module_utils.common.dict_transformations import (
     camel_dict_to_snake_dict, snake_dict_to_camel_dict,
     _camel_to_snake, _snake_to_camel,
@@ -767,21 +768,6 @@ def compare_arrays(old_params, new_params, param_name):
 
     newd = dict_merge(oldd, newd)
     return newd == oldd
-
-
-def dict_merge(a, b):
-    '''recursively merges dict's. not just simple a['key'] = b['key'], if
-    both a and bhave a key who's value is a dict then dict_merge is called
-    on both values and the result stored in the returned dictionary.'''
-    if not isinstance(b, dict):
-        return b
-    result = deepcopy(a)
-    for k, v in b.items():
-        if k in result and isinstance(result[k], dict):
-                result[k] = dict_merge(result[k], v)
-        else:
-            result[k] = deepcopy(v)
-    return result
 
 
 def main():
