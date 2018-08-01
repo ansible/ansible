@@ -4,12 +4,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import io
 import os
 import sys
 import stat
 import tempfile
-
-import io
+import traceback
 from collections import namedtuple
 
 from yaml import load as yaml_load
@@ -26,9 +26,9 @@ from ansible.module_utils.six.moves import configparser
 from ansible.module_utils._text import to_text, to_bytes, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.quoting import unquote
+from ansible.utils import py3compat
 from ansible.utils.path import unfrackpath
 from ansible.utils.path import makedirs_safe
-from ansible.utils import py3compat
 
 
 Plugin = namedtuple('Plugin', 'name type')
@@ -182,7 +182,6 @@ def find_ini_config_file(warnings=None):
 
 class ConfigManager(object):
 
-    UNABLE = {}
     DEPRECATED = []
     WARNINGS = set()
 
@@ -311,13 +310,14 @@ class ConfigManager(object):
         try:
             value, _drop = self.get_config_value_and_origin(config, cfile=cfile, plugin_type=plugin_type, plugin_name=plugin_name,
                                                             keys=keys, variables=variables, direct=direct)
+        except AnsibleError:
+            raise
         except Exception as e:
-            raise AnsibleError("Invalid settings supplied for %s: %s" % (config, to_native(e)))
+            raise AnsibleError("Unhandled exception when retrieving %s:\n%s" % (config, traceback.format_exc()))
         return value
 
     def get_config_value_and_origin(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None, direct=None):
         ''' Given a config key figure out the actual value and report on the origin of the settings '''
-        1/0
         if cfile is None:
             # use default config
             cfile = self._config_file
@@ -440,10 +440,17 @@ class ConfigManager(object):
             try:
                 value, origin = self.get_config_value_and_origin(config, configfile)
             except Exception as e:
-                # when building constants.py we ignore invalid configs
-                # CLI takes care of warnings once 'display' is loaded
-                self.UNABLE[config] = to_text(e)
-                continue
+                # Printing the problem here because, in the current code:
+                # (1) we can't reach the error handler for AnsibleError before we
+                #     hit a different error due to lack of working config.
+                # (2) We don't have access to display yet because display depends on config
+                #     being properly loaded.
+                #
+                # If we start getting double errors printed from this section of code, then the
+                # above problem #1 has been fixed.  Revamp this to be more like the try: except
+                # in get_config_value() at that time.
+                sys.stderr.write("Unhandled error:\n %s\n\n" % traceback.format_exc())
+                raise AnsibleError("Invalid settings supplied for %s: %s\n%s" % (config, to_native(e), traceback.format_exc()))
 
             # set the constant
             self.data.update_setting(Setting(config, value, origin, defs[config].get('type', 'string')))
