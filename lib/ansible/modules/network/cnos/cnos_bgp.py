@@ -32,21 +32,24 @@ DOCUMENTATION = '''
 ---
 module: cnos_bgp
 author: "Anil Kumar Muraleedharan (@amuraleedhar)"
-short_description: Manage BGP resources and attributes on devices running Lenovo CNOS
+short_description: Manage BGP resources and attributes on devices running CNOS
 description:
-    - This module allows you to work with Border Gateway Protocol (BGP) related configurations.
-     The operators used are overloaded to ensure control over switch BGP configurations. This
-     module is invoked using method with asNumber as one of its arguments. The first level of
-     the BGP configuration allows to set up an AS number, with the following attributes going
-     into various configuration operations under the context of BGP. After passing this level,
-     there are eight BGP arguments that will perform further configurations. They are bgpArg1,
-     bgpArg2, bgpArg3, bgpArg4, bgpArg5, bgpArg6, bgpArg7, and bgpArg8. For more details on
-     how to use these arguments, see [Overloaded Variables].
+    - This module allows you to work with Border Gateway Protocol (BGP) related
+     configurations. The operators used are overloaded to ensure control over
+     switch BGP configurations. This module is invoked using method with
+     asNumber as one of its arguments. The first level of the BGP configuration
+     allows to set up an AS number, with the following attributes going
+     into various configuration operations under the context of BGP.
+     After passing this level, there are eight BGP arguments that will perform
+     further configurations. They are bgpArg1, bgpArg2, bgpArg3, bgpArg4,
+     bgpArg5, bgpArg6, bgpArg7, and bgpArg8. For more details on how to use
+     these arguments, see [Overloaded Variables].
      This module uses SSH to manage network device configuration.
      The results of the operation will be placed in a directory named 'results'
-     that must be created by the user in their local directory to where the playbook is run.
-     For more information about this module from Lenovo and customizing it usage for your
-     use cases, please visit U(http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_bgp.html)
+     that must be created by the user in their local directory to where the
+     playbook is run. For more information about this module from Lenovo and
+     customizing it usage for your use cases, please visit
+     U(http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_bgp.html)
 version_added: "2.3"
 extends_documentation_fragment: cnos
 options:
@@ -57,62 +60,83 @@ options:
         default: Null
     bgpArg1:
         description:
-            - This is an overloaded bgp first argument. Usage of this argument can be found is the User Guide referenced above.
+            - This is an overloaded bgp first argument. Usage of this argument
+              can be found is the User Guide referenced above.
         required: Yes
         default: Null
-        choices: [address-family,bestpath,bgp,cluster-id,confederation,enforce-first-as,fast-external-failover,
-        graceful-restart,graceful-restart-helper,log-neighbor-changes,maxas-limit,neighbor,router-id,shutdown,
-        synchronization,timers,vrf]
+        choices: [address-family,bestpath,bgp,cluster-id,confederation,
+                  enforce-first-as,fast-external-failover,graceful-restart,
+                  graceful-restart-helper,log-neighbor-changes,
+                  maxas-limit,neighbor,router-id,shutdown,synchronization,
+                  timers,vrf]
     bgpArg2:
         description:
-            - This is an overloaded bgp second argument. Usage of this argument can be found is the User Guide referenced above.
+            - This is an overloaded bgp second argument. Usage of this argument
+              can be found is the User Guide referenced above.
         required: No
         default: Null
-        choices: [ipv4 or ipv6, always-compare-med,compare-confed-aspath,compare-routerid,dont-compare-originator-id,tie-break-on-age,
-        as-path,med,identifier,peers]
+        choices: [ipv4 or ipv6, always-compare-med,compare-confed-aspath,
+                  compare-routerid,dont-compare-originator-id,tie-break-on-age,
+                  as-path,med,identifier,peers]
     bgpArg3:
         description:
-            - This is an overloaded bgp third argument. Usage of this argument can be found is the User Guide referenced above.
+            - This is an overloaded bgp third argument. Usage of this argument
+             can be found is the User Guide referenced above.
         required: No
         default: Null
-        choices: [aggregate-address,client-to-client,dampening,distance,maximum-paths,network,nexthop,redistribute,save,synchronization,
-        ignore or multipath-relax, confed or missing-as-worst or non-deterministic or remove-recv-med or remove-send-med]
+        choices: [aggregate-address,client-to-client,dampening,distance,
+                  maximum-paths,network,nexthop,redistribute,save,
+                  synchronization,ignore or multipath-relax,
+                  confed or missing-as-worst or non-deterministic or
+                  remove-recv-med or remove-send-med]
     bgpArg4:
         description:
-            - This is an overloaded bgp fourth argument. Usage of this argument can be found is the User Guide referenced above.
+            - This is an overloaded bgp fourth argument. Usage of this argument
+             can be found is the User Guide referenced above.
         required: No
         default: Null
-        choices: [Aggregate prefix, Reachability Half-life time,route-map, Distance for routes external,ebgp or ibgp,
-        IP prefix <network>,IP prefix <network>/<length>, synchronization, Delay value, direct, ospf, static, memory]
+        choices: [Aggregate prefix, Reachability Half-life time,route-map,
+                  Distance for routes ext,ebgp or ibgp,IP prefix <network>,
+                  IP prefix <network>/<length>, synchronization,
+                  Delay value, direct, ospf, static, memory]
     bgpArg5:
         description:
-            - This is an overloaded bgp fifth argument. Usage of this argument can be found is the User Guide referenced above.
+            - This is an overloaded bgp fifth argument. Usage of this argument
+            can be found is the User Guide referenced above.
         required: No
         default: Null
-        choices: [as-set, summary-only, Value to start reusing a route, Distance for routes internal, Supported multipath numbers,
-        backdoor, map, route-map ]
+        choices: [as-set, summary-only, Value to start reusing a route,
+                  Distance for routes internal, Supported multipath numbers,
+                  backdoor, map, route-map ]
     bgpArg6:
         description:
-            - This is an overloaded bgp sixth argument. Usage of this argument can be found is the User Guide referenced above.
+            - This is an overloaded bgp sixth argument. Usage of this argument
+             can be found is the User Guide referenced above.
         required: No
         default: Null
-        choices: [summary-only,as-set, route-map name, Value to start suppressing a route, Distance for local routes,  Network mask,
-        Pointer to route-map entries]
+        choices: [summary-only,as-set, route-map name,
+                  Value to start suppressing a route, Distance local routes,
+                  Network mask, Pointer to route-map entries]
     bgpArg7:
         description:
-            - This is an overloaded bgp seventh argument. Usage of this argument can be found is the User Guide referenced above.
+            - This is an overloaded bgp seventh argument. Use of this argument
+            can be found is the User Guide referenced above.
         required: No
         default: Null
-        choices: [ Maximum duration to suppress a stable route(minutes), backdoor,route-map, Name of the route map ]
+        choices: [Maximum duration to suppress a stable route(minutes),
+                  backdoor,route-map, Name of the route map ]
     bgpArg8:
         description:
-            - This is an overloaded bgp eigth argument. Usage of this argument can be found is the User Guide referenced above.
+            - This is an overloaded bgp eigth argument. Usage of this argument
+            can be found is the User Guide referenced above.
         required: No
         default: Null
-        choices: [ Un-reachability Half-life time for the penalty(minutes), backdoor]
+        choices: [Un-reachability Half-life time for the penalty(minutes),
+                  backdoor]
 '''
 EXAMPLES = '''
-Tasks: The following are examples of using the module cnos_bgp. These are written in the main.yml file of the tasks directory.
+Tasks: The following are examples of using the module cnos_bgp. These are
+written in the main.yml file of the tasks directory.
 ---
 - name: Test BGP  - neighbor
   cnos_bgp:
@@ -361,17 +385,13 @@ Tasks: The following are examples of using the module cnos_bgp. These are writte
 '''
 RETURN = '''
 msg:
-  description: Success or failure message. Upon any failure, the method returns an error display string.
+  description: Success or failure message. Upon any failure, the method returns
+  an error display string.
   returned: always
   type: string
 '''
 
 import sys
-try:
-    import paramiko
-    HAS_PARAMIKO = True
-except ImportError:
-    HAS_PARAMIKO = False
 import time
 import socket
 import array
@@ -407,53 +427,10 @@ def main():
             asNum=dict(required=True),),
         supports_check_mode=False)
 
-    username = module.params['username']
-    password = module.params['password']
-    enablePassword = module.params['enablePassword']
-    bgpArg1 = module.params['bgpArg1']
-    bgpArg2 = module.params['bgpArg2']
-    bgpArg3 = module.params['bgpArg3']
-    bgpArg4 = module.params['bgpArg4']
-    bgpArg5 = module.params['bgpArg5']
-    bgpArg6 = module.params['bgpArg6']
-    bgpArg7 = module.params['bgpArg7']
-    bgpArg8 = module.params['bgpArg8']
     asNum = module.params['asNum']
     outputfile = module.params['outputfile']
-    hostIP = module.params['host']
-    deviceType = module.params['deviceType']
     output = ""
-
-    if not HAS_PARAMIKO:
-        module.fail_json(msg='paramiko is required for this module')
-    # Create instance of SSHClient object
-    remote_conn_pre = paramiko.SSHClient()
-
-    # Automatically add untrusted hosts (make sure okay for security policy in your environment)
-    remote_conn_pre.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-    # initiate SSH connection with the switch
-    remote_conn_pre.connect(hostIP, username=username, password=password)
-    time.sleep(2)
-
-    # Use invoke_shell to establish an 'interactive session'
-    remote_conn = remote_conn_pre.invoke_shell()
-    time.sleep(2)
-
-    # Enable and enter configure terminal then send command
-    output = output + cnos.waitForDeviceResponse("\n", ">", 2, remote_conn)
-
-    output = output + cnos.enterEnableModeForDevice(enablePassword, 3, remote_conn)
-
-    # Make terminal length = 0
-    output = output + cnos.waitForDeviceResponse("terminal length 0\n", "#", 2, remote_conn)
-
-    # Go to config mode
-    output = output + cnos.waitForDeviceResponse("configure device\n", "(config)#", 2, remote_conn)
-
-    # Send the CLi command
-    output = output + cnos.routerConfig(remote_conn, deviceType, "(config)#", 2, "bgp", asNum,
-                                        bgpArg1, bgpArg2, bgpArg3, bgpArg4, bgpArg5, bgpArg6, bgpArg7, bgpArg8)
+    output = output + cnos.routerConfig(module, 'bgp', '(config)#', None)
 
     # Save it into the file
     file = open(outputfile, "a")
@@ -470,3 +447,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

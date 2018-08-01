@@ -1361,46 +1361,45 @@ def portChannelConfig(module, prompt, answer):
 # EOM
 
 
-def routerConfig(
-    obj, deviceType, prompt, timeout, protocol, asNum, routerArg1,
-    routerArg2, routerArg3, routerArg4, routerArg5, routerArg6, routerArg7,
-        routerArg8):
+def routerConfig(module, protocol, prompt, answer):
     retVal = ""
-    # Wait time to get response from server
-    timeout = timeout
+    bgpArg1 = module.params['bgpArg1']
+    bgpArg2 = module.params['bgpArg2']
+    bgpArg3 = module.params['bgpArg3']
+    bgpArg4 = module.params['bgpArg4']
+    bgpArg5 = module.params['bgpArg5']
+    bgpArg6 = module.params['bgpArg6']
+    bgpArg7 = module.params['bgpArg7']
+    bgpArg8 = module.params['bgpArg8']
+    asNum = module.params['asNum']
+    deviceType = module.params['deviceType']
     if(protocol == "bgp"):
         # bgp config command happens here.
-        command = "routing-protocol bgp "
+        command = "router bgp "
         value = checkSanityofVariable(deviceType, "bgp_as_number", asNum)
         if(value == "ok"):
             # BGP command happens here. It creates if not present
-            command = command + asNum + "\n"
+            command = command + asNum
             # debugOutput(command)
-            retVal = waitForDeviceResponse(
-                command, "(config-router)#", timeout, obj)
-            retVal = retVal + bgpConfig(
-                obj, deviceType, "(config-router)#", timeout, routerArg1,
-                routerArg2, routerArg3, routerArg4, routerArg5, routerArg6,
-                routerArg7, routerArg8)
+            cmd = [{'command': command, 'prompt': None, 'answer': None}]
+            retVal = retVal + bgpConfig(module, cmd, prompt, answer)
         else:
             retVal = "Error-176"
-
     elif(protocol == "ospf"):
         retVal = "Command Value is Not supported as of now"
-
     else:
         retVal = "Error-177"
-
     return retVal
 # EOM
 
 
-def bgpNeighborAFConfig(
-    obj, deviceType, prompt, timeout, bgpNeighborAFArg1, bgpNeighborAFArg2,
-        bgpNeighborAFArg3):
-    retVal = ""
-    command = ""
-    timeout = timeout
+def bgpNeighborAFConfig(module, cmd, prompt, answer):
+    retVal = ''
+    command = ''
+    bgpNeighborAFArg1 = module.params['bgpArg6']
+    bgpNeighborAFArg2 = module.params['bgpArg7']
+    bgpNeighborAFArg3 = module.params['bgpArg8']
+    deviceType = module.params['deviceType']
     if(bgpNeighborAFArg1 == "allowas-in"):
         command = command + bgpNeighborAFArg1 + " "
         if(bgpNeighborAFArg2 is not None):
@@ -1413,6 +1412,7 @@ def bgpNeighborAFConfig(
                 return retVal
         else:
             command = command
+
     elif(bgpNeighborAFArg1 == "default-originate"):
         command = command + bgpNeighborAFArg1 + " "
         if(bgpNeighborAFArg2 is not None and bgpNeighborAFArg2 == "route-map"):
@@ -1424,6 +1424,7 @@ def bgpNeighborAFConfig(
             else:
                 retVal = "Error-324"
                 return retVal
+
     elif(bgpNeighborAFArg1 == "filter-list"):
         command = command + bgpNeighborAFArg1 + " "
         value = checkSanityofVariable(
@@ -1507,36 +1508,36 @@ def bgpNeighborAFConfig(
         retVal = "Error-317"
         return retVal
 
-    command = command + "\n"
     # debugOutput(command)
-    retVal = retVal + waitForDeviceResponse(command, prompt, timeout, obj)
+    inner_cmd = [{'command': command, 'prompt': None, 'answer': None}]
+    cmd.extend(inner_cmd)
+    retVal = retVal + str(run_cnos_commands(module, cmd))
     command = "exit \n"
-    retVal = retVal + \
-        waitForDeviceResponse(
-            command, "(config-router-neighbor)#", timeout, obj)
     return retVal
 # EOM
 
 
-def bgpNeighborConfig(
-    obj, deviceType, prompt, timeout, bgpNeighborArg1, bgpNeighborArg2,
-        bgpNeighborArg3, bgpNeighborArg4, bgpNeighborArg5):
-    retVal = ""
-    command = ""
-    timeout = timeout
+def bgpNeighborConfig(module, cmd, prompt, answer):
+    retVal = ''
+    command = ''
+    bgpNeighborArg1 = module.params['bgpArg4']
+    bgpNeighborArg2 = module.params['bgpArg5']
+    bgpNeighborArg3 = module.params['bgpArg6']
+    bgpNeighborArg4 = module.params['bgpArg7']
+    bgpNeighborArg5 = module.params['bgpArg8']
+    deviceType = module.params['deviceType']
 
     if(bgpNeighborArg1 == "address-family"):
         command = command + bgpNeighborArg1 + " "
         value = checkSanityofVariable(
             deviceType, "bgp_neighbor_address_family", bgpNeighborArg2)
         if(value == "ok"):
-            command = command + bgpNeighborArg2 + " unicast \n"
+            command = command + bgpNeighborArg2 + " unicast"
             # debugOutput(command)
-            retVal = waitForDeviceResponse(
-                command, "(config-router-neighbor-af)#", timeout, obj)
-            retVal = retVal + bgpNeighborAFConfig(
-                obj, deviceType, "(config-router-neighbor-af)#", timeout,
-                bgpNeighborArg3, bgpNeighborArg4, bgpNeighborArg5)
+            inner_cmd = [{'command': command, 'prompt': None, 'answer': None}]
+            cmd.extend(inner_cmd)
+            retVal = retVal + bgpNeighborAFConfig(module, cmd, prompt,
+                                                  answer)
             return retVal
         else:
             retVal = "Error-316"
@@ -1590,9 +1591,11 @@ def bgpNeighborConfig(
         else:
             retVal = "Error-313"
             return retVal
+
     elif(bgpNeighborArg1 == "interface"):
         command = command + bgpNeighborArg1 + " "
         # TBD
+
     elif(bgpNeighborArg1 == "local-as"):
         command = command + bgpNeighborArg1 + " "
         value = checkSanityofVariable(
@@ -1725,22 +1728,25 @@ def bgpNeighborConfig(
         retVal = "Error-301"
         return retVal
 
-    command = command + "\n"
     # debugOutput(command)
-    retVal = retVal + waitForDeviceResponse(command, prompt, timeout, obj)
+    inner_cmd = [{'command': command, 'prompt': None, 'answer': None}]
+    cmd.extend(inner_cmd)
+    retVal = retVal + str(run_cnos_commands(module, cmd))
     command = "exit \n"
-    retVal = retVal + \
-        waitForDeviceResponse(command, "(config-router)#", timeout, obj)
     return retVal
 # EOM
 
 
-def bgpAFConfig(
-    obj, deviceType, prompt, timeout, bgpAFArg1, bgpAFArg2, bgpAFArg3,
-        bgpAFArg4, bgpAFArg5, bgpAFArg6):
-    retVal = ""
-    command = ""
-    timeout = timeout
+def bgpAFConfig(module, cmd, prompt, answer):
+    retVal = ''
+    command = ''
+    bgpAFArg1 = module.params['bgpArg3']
+    bgpAFArg2 = module.params['bgpArg4']
+    bgpAFArg3 = module.params['bgpArg5']
+    bgpAFArg4 = module.params['bgpArg6']
+    bgpAFArg5 = module.params['bgpArg7']
+    bgpAFArg6 = module.params['bgpArg8']
+    deviceType = module.params['deviceType']
     if(bgpAFArg1 == "aggregate-address"):
         command = command + bgpAFArg1 + " "
         value = checkSanityofVariable(
@@ -1758,8 +1764,10 @@ def bgpAFConfig(
         else:
             retVal = "Error-296"
             return retVal
+
     elif(bgpAFArg1 == "client-to-client"):
         command = command + bgpAFArg1 + " reflection "
+
     elif(bgpAFArg1 == "dampening"):
         command = command + bgpAFArg1 + " "
         if(bgpAFArg2 == "route-map"):
@@ -1826,6 +1834,7 @@ def bgpAFConfig(
         else:
             retVal = "Error-293"
             return retVal
+
     elif(bgpAFArg1 == "maximum-paths"):
         command = command + bgpAFArg1 + " "
         value = checkSanityofVariable(deviceType, "maxpath_option", bgpAFArg2)
@@ -1922,6 +1931,7 @@ def bgpAFConfig(
         else:
             retVal = "Error-197"
             return retVal
+
     elif(bgpAFArg1 == "redistribute"):
         command = command + bgpAFArg1 + " "
         value = checkSanityofVariable(
@@ -1939,28 +1949,36 @@ def bgpAFConfig(
         else:
             retVal = "Error-195"
             return retVal
+
     elif(bgpAFArg1 == "save" or bgpAFArg1 == "synchronization"):
         command = command + bgpAFArg1
+
     else:
         retVal = "Error-194"
         return retVal
-    command = command + "\n"
     # debugOutput(command)
-    retVal = retVal + waitForDeviceResponse(command, prompt, timeout, obj)
+    inner_cmd = [{'command': command, 'prompt': None, 'answer': None}]
+    cmd.extend(inner_cmd)
+    retVal = retVal + str(run_cnos_commands(module, cmd))
     command = "exit \n"
-    retVal = retVal + \
-        waitForDeviceResponse(command, "(config-router)#", timeout, obj)
     return retVal
 # EOM
 
 
-def bgpConfig(
-    obj, deviceType, prompt, timeout, bgpArg1, bgpArg2, bgpArg3, bgpArg4,
-        bgpAgr5, bgpArg6, bgpArg7, bgpArg8):
-    retVal = ""
-    command = ""
-    # Wait time to get response from server
-    timeout = timeout
+def bgpConfig(module, cmd, prompt, answer):
+    retVal = ''
+    command = ''
+    bgpArg1 = module.params['bgpArg1']
+    bgpArg2 = module.params['bgpArg2']
+    bgpArg3 = module.params['bgpArg3']
+    bgpArg4 = module.params['bgpArg4']
+    bgpArg5 = module.params['bgpArg5']
+    bgpArg6 = module.params['bgpArg6']
+    bgpArg7 = module.params['bgpArg7']
+    bgpArg8 = module.params['bgpArg8']
+    asNum = module.params['asNum']
+    deviceType = module.params['deviceType']
+    debugOutput(bgpArg1)
     if(bgpArg1 == "address-family"):
         # debugOutput(bgpArg1)
         command = command + bgpArg1 + " "
@@ -1968,12 +1986,10 @@ def bgpConfig(
             deviceType, "bgp_address_family", bgpArg2)
         if(value == "ok"):
             command = command + bgpArg2 + " " + "unicast \n"
-            debugOutput(command)
-            retVal = waitForDeviceResponse(
-                command, "(config-router-af)#", timeout, obj)
-            retVal = retVal + bgpAFConfig(
-                obj, deviceType, "(config-router-af)#", timeout,
-                bgpArg3, bgpArg4, bgpAgr5, bgpArg6, bgpArg7, bgpArg8)
+            # debugOutput(command)
+            inner_cmd = [{'command': command, 'prompt': None, 'answer': None}]
+            cmd.extend(inner_cmd)
+            retVal = retVal + bgpAFConfig(module, cmd, prompt, answer)
             return retVal
         else:
             retVal = "Error-178"
@@ -2054,7 +2070,7 @@ def bgpConfig(
             value = checkSanityofVariable(
                 deviceType, "confederation_identifier", bgpArg3)
             if(value == "ok"):
-                command = command + " " + bgpArg2 + " " + bgpArg3
+                command = command + bgpArg2 + " " + bgpArg3
             else:
                 retVal = "Error-184"
                 return retVal
@@ -2062,7 +2078,7 @@ def bgpConfig(
             value = checkSanityofVariable(
                 deviceType, "confederation_peers_as", bgpArg3)
             if(value == "ok"):
-                command = command + " " + bgpArg2 + " " + bgpArg3
+                command = command + bgpArg2 + " " + bgpArg3
             else:
                 retVal = "Error-185"
                 return retVal
@@ -2112,8 +2128,6 @@ def bgpConfig(
         command = command + bgpArg1 + " "
         value = checkSanityofVariable(
             deviceType, "neighbor_ipaddress", bgpArg2)
-        # retVal = "Error-102"
-        # return retVal
         if(value == "ok"):
             command = command + bgpArg2
             if(bgpArg3 is not None):
@@ -2121,13 +2135,13 @@ def bgpConfig(
                 value = checkSanityofVariable(
                     deviceType, "neighbor_as", bgpArg3)
                 if(value == "ok"):
-                    command = command + bgpArg3 + "\n"
                     # debugOutput(command)
-                    retVal = waitForDeviceResponse(
-                        command, "(config-router-neighbor)#", timeout, obj)
-                    retVal = retVal + bgpNeighborConfig(
-                        obj, deviceType, "(config-router-neighbor)#",
-                        timeout, bgpArg4, bgpAgr5, bgpArg6, bgpArg7, bgpArg8)
+                    command = command + bgpArg3
+                    inner_cmd = [{'command': command, 'prompt': None,
+                                  'answer': None}]
+                    cmd.extend(inner_cmd)
+                    retVal = retVal + bgpNeighborConfig(module,
+                                                        cmd, prompt, answer)
                     return retVal
         else:
             retVal = "Error-189"
@@ -2152,7 +2166,7 @@ def bgpConfig(
         command = command + bgpArg1
 
     elif(bgpArg1 == "timers"):
-        # debugOutput(bgpArg1)
+        debugOutput(bgpArg3)
         command = command + bgpArg1 + " bgp "
         value = checkSanityofVariable(
             deviceType, "bgp_keepalive_interval", bgpArg2)
@@ -2179,14 +2193,12 @@ def bgpConfig(
         # debugOutput(bgpArg1)
         retVal = "Error-192"
         return retVal
-    command = command + "\n"
     # debugOutput(command)
-    retVal = retVal + waitForDeviceResponse(command, prompt, timeout, obj)
-    # Come back to config mode
+    inner_cmd = [{'command': command, 'prompt': None, 'answer': None}]
+    cmd.extend(inner_cmd)
+    retVal = retVal + str(run_cnos_commands(module, cmd))
     command = "exit \n"
     # debugOutput(command)
-    retVal = retVal + waitForDeviceResponse(command, "(config)#", timeout, obj)
-
     return retVal
 # EOM
 
@@ -3661,3 +3673,4 @@ def debugOutput(command):
     f.write(str(command))  # python will convert \n to os.linesep
     f.close()  # you can omit in most cases as the destructor will call it
 # EOM
+
