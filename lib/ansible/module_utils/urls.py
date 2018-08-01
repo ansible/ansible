@@ -991,7 +991,11 @@ class Request:
         cookies = self._fallback(cookies, self.cookies)
         unix_socket = self._fallback(unix_socket, self.unix_socket)
 
-        handlers = [UnixHTTPHandler(unix_socket)]
+        handlers = []
+
+        if unix_socket:
+            handlers.append(UnixHTTPHandler(unix_socket))
+
         ssl_handler = maybe_add_ssl_handler(url, validate_certs)
         if ssl_handler:
             handlers.append(ssl_handler)
