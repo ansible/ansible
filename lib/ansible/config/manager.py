@@ -21,7 +21,7 @@ except ImportError:
 
 from ansible.config.data import ConfigData
 from ansible.errors import AnsibleOptionsError, AnsibleError
-from ansible.module_utils.six import PY3, string_types
+from ansible.module_utils.six import PY2, PY3, string_types
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils._text import to_text, to_bytes, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -285,8 +285,8 @@ class ConfigManager(object):
 
         return ret
 
-    def _loop_entries(self, container, entry_list):
-        ''' repeat code for value entry assignment '''
+    def _loop_entries(self, container, entry_list, force_text=False):
+        ''' repeat code for value entry assignment, last 'not None' defined wins '''
 
         value = None
         origin = None
@@ -301,6 +301,8 @@ class ConfigManager(object):
                 if 'deprecated' in entry:
                     self.DEPRECATED.append((entry['name'], entry['deprecated']))
 
+        if value is not None and PY2 and force_text:
+            value = to_text(value, errors='surrogate_or_strict')
         return value, origin
 
     def get_config_value(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None, direct=None):
@@ -351,7 +353,7 @@ class ConfigManager(object):
 
                 # env vars are next precedence
                 if value is None and defs[config].get('env'):
-                    value, origin = self._loop_entries(os.environ, defs[config]['env'])
+                    value, origin = self._loop_entries(os.environ, defs[config]['env'], True)
                     origin = 'env: %s' % origin
 
                 # try config file entries next, if we have one
