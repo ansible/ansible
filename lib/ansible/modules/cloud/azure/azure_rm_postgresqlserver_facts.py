@@ -53,7 +53,7 @@ RETURN = '''
 servers:
     description: A list of dict results where the key is the name of the PostgreSQL Server and the values are the facts for that PostgreSQL Server.
     returned: always
-    type: list
+    type: complex
     contains:
         id:
             description:
