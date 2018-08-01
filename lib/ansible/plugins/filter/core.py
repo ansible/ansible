@@ -90,7 +90,7 @@ def to_nice_json(a, indent=4, *args, **kw):
         return json.dumps(a, indent=indent, sort_keys=True, cls=AnsibleJSONEncoder, *args, **kw)
     except Exception as e:
         # Fallback to the to_json filter
-        display.warning('Unable to convert data using to_nice_json, falling back to to_json: %s' % to_native(e))
+        display.warning(u'Unable to convert data using to_nice_json, falling back to to_json: %s' % to_text(e))
         return to_json(a, *args, **kw)
 
 
