@@ -65,10 +65,6 @@ options:
       - A list of server identifiers (id or name) to be assigned to a firewall policy.
         Used in combination with update state.
     required: false
-  remove_server_ips:
-    description:
-      - A list of server IP ids to be unassigned from a firewall policy. Used in combination with update state.
-    required: false
   add_rules:
     description:
       - A list of rules that will be added to an existing firewall policy.
@@ -149,17 +145,6 @@ EXAMPLES = '''
     wait_timeout: 500
     state: update
 
-# Remove server from a firewall policy.
-
-- oneandone_firewall_policy:
-    auth_token: oneandone_private_api_key
-    firewall_policy: ansible-firewall-policy-updated
-    remove_server_ips:
-     - B2504878540DBC5F7634EB00A07C1EBD (server's IP id)
-    wait: true
-    wait_timeout: 500
-    state: update
-
 # Add rules to a firewall policy.
 
 - oneandone_firewall_policy:
@@ -210,7 +195,8 @@ from ansible.module_utils.oneandone import (
     get_firewall_policy,
     get_server,
     OneAndOneResources,
-    wait_for_resource_creation_completion
+    wait_for_resource_creation_completion,
+    populate_firewall_rules
 )
 
 HAS_ONEANDONE_SDK = True
@@ -256,41 +242,12 @@ def _add_server_ips(module, oneandone_conn, firewall_id, server_ids):
         module.fail_json(msg=str(e))
 
 
-def _remove_firewall_server(module, oneandone_conn, firewall_id, server_ip_id):
-    """
-    Unassigns a server/IP from a firewall policy.
-    """
-    try:
-        if module.check_mode:
-            firewall_server = oneandone_conn.get_firewall_server(
-                firewall_id=firewall_id,
-                server_ip_id=server_ip_id)
-            if firewall_server:
-                return True
-            return False
-
-        firewall_policy = oneandone_conn.remove_firewall_server(
-            firewall_id=firewall_id,
-            server_ip_id=server_ip_id)
-        return firewall_policy
-    except Exception as e:
-        module.fail_json(msg=str(e))
-
-
 def _add_firewall_rules(module, oneandone_conn, firewall_id, rules):
     """
     Adds new rules to a firewall policy.
     """
     try:
-        firewall_rules = []
-
-        for rule in rules:
-            firewall_rule = oneandone.client.FirewallPolicyRule(
-                protocol=rule['protocol'],
-                port_from=rule['port_from'],
-                port_to=rule['port_to'],
-                source=rule['source'])
-            firewall_rules.append(firewall_rule)
+        firewall_rules = populate_firewall_rules(oneandone, rules)
 
         if module.check_mode:
             firewall_policy_id = get_firewall_policy(oneandone_conn, firewall_id)
@@ -344,7 +301,6 @@ def update_firewall_policy(module, oneandone_conn):
         name = module.params.get('name')
         description = module.params.get('description')
         add_server_ips = module.params.get('add_server_ips')
-        remove_server_ips = module.params.get('remove_server_ips')
         add_rules = module.params.get('add_rules')
         remove_rules = module.params.get('remove_rules')
 
@@ -370,23 +326,6 @@ def update_firewall_policy(module, oneandone_conn):
                                                     add_server_ips))
 
             firewall_policy = _add_server_ips(module, oneandone_conn, firewall_policy['id'], add_server_ips)
-            changed = True
-
-        if remove_server_ips:
-            chk_changed = False
-            for server_ip_id in remove_server_ips:
-                if module.check_mode:
-                    chk_changed |= _remove_firewall_server(module,
-                                                           oneandone_conn,
-                                                           firewall_policy['id'],
-                                                           server_ip_id)
-
-                _remove_firewall_server(module,
-                                        oneandone_conn,
-                                        firewall_policy['id'],
-                                        server_ip_id)
-            _check_mode(module, chk_changed)
-            firewall_policy = get_firewall_policy(oneandone_conn, firewall_policy['id'], True)
             changed = True
 
         if add_rules:
@@ -434,15 +373,7 @@ def create_firewall_policy(module, oneandone_conn):
         wait_timeout = module.params.get('wait_timeout')
         wait_interval = module.params.get('wait_interval')
 
-        firewall_rules = []
-
-        for rule in rules:
-            firewall_rule = oneandone.client.FirewallPolicyRule(
-                protocol=rule['protocol'],
-                port_from=rule['port_from'],
-                port_to=rule['port_to'],
-                source=rule['source'])
-            firewall_rules.append(firewall_rule)
+        firewall_rules = populate_firewall_rules(oneandone, rules)
 
         firewall_policy_obj = oneandone.client.FirewallPolicy(
             name=name,
@@ -513,7 +444,6 @@ def main():
             description=dict(type='str'),
             rules=dict(type='list', default=[]),
             add_server_ips=dict(type='list', default=[]),
-            remove_server_ips=dict(type='list', default=[]),
             add_rules=dict(type='list', default=[]),
             remove_rules=dict(type='list', default=[]),
             wait=dict(type='bool', default=True),

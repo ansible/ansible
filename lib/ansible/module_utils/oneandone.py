@@ -204,6 +204,41 @@ def get_public_ip(oneandone_conn, public_ip, full_object=False):
             return _public_ip['id']
 
 
+def populate_firewall_rules(oneandone, rules):
+    """
+    Returns a list of firewall policy rule objects
+    """
+    firewall_rules = []
+    pf = None
+    pt = None
+    port = None
+    action = None
+    description = None
+
+    for rule in rules:
+        if 'port_from' in rule:
+            pf = rule['port_from']
+        if 'port_to' in rule:
+            pt = rule['port_to']
+        if 'port' in rule:
+            port = rule['port']
+        if 'action' in rule:
+            action = rule['action']
+        if 'description' in rule:
+            description = rule['description']
+        firewall_rule = oneandone.client.FirewallPolicyRule(
+            protocol=rule['protocol'],
+            port_from=pf,
+            port_to=pt,
+            port=port,
+            action=action,
+            description=description,
+            source=rule['source'])
+        firewall_rules.append(firewall_rule)
+
+    return firewall_rules
+
+
 def wait_for_resource_creation_completion(oneandone_conn,
                                           resource_type,
                                           resource_id,
