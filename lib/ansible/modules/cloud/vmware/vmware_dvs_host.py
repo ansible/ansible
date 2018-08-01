@@ -54,8 +54,7 @@ extends_documentation_fragment: vmware.documentation
 
 EXAMPLES = '''
 - name: Add Host to dVS
-  local_action:
-    module: vmware_dvs_host
+  vmware_dvs_host:
     hostname: vcenter_ip_or_hostname
     username: vcenter_username
     password: vcenter_password
@@ -65,6 +64,7 @@ EXAMPLES = '''
         - vmnic0
         - vmnic1
     state: present
+  delegate_to: localhost
 '''
 
 try:

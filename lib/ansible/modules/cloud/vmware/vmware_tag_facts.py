@@ -43,6 +43,7 @@ EXAMPLES = r'''
     username: administrator@vsphere.local
     password: Esxi@123$
     validate_certs: False
+  delegate_to: localhost
 
 - name: Get category id from the given tag
   vmware_tag_facts:
@@ -50,6 +51,7 @@ EXAMPLES = r'''
     username: administrator@vsphere.local
     password: Esxi@123$
     validate_certs: False
+  delegate_to: localhost
   register: tag_details
 
 - debug:

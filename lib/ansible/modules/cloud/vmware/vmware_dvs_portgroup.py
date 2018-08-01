@@ -151,6 +151,7 @@ EXAMPLES = '''
         num_ports: 120
         portgroup_type: earlyBinding
         state: present
+     delegate_to: localhost
 
    - name: Create vlan trunk portgroup
      connection: local
@@ -165,6 +166,7 @@ EXAMPLES = '''
         num_ports: 120
         portgroup_type: earlyBinding
         state: present
+     delegate_to: localhost
 
    - name: Create no-vlan portgroup
      connection: local
@@ -178,6 +180,7 @@ EXAMPLES = '''
         num_ports: 120
         portgroup_type: earlyBinding
         state: present
+     delegate_to: localhost
 
    - name: Create vlan portgroup with all security and port policies
      connection: local
@@ -207,6 +210,7 @@ EXAMPLES = '''
           uplink_teaming_override: yes
           vendor_config_override: yes
           vlan_override: yes
+     delegate_to: localhost
 '''
 
 try:

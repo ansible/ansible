@@ -69,6 +69,7 @@ EXAMPLES = '''
     validate_certs: False
     vm_name: 'vm_name_as_per_vcenter'
     destination_host: 'destination_host_as_per_vcenter'
+  delegate_to: localhost
 
 - name: Perform storage vMotion of of virtual machine
   vmware_vmotion:
@@ -78,6 +79,7 @@ EXAMPLES = '''
     validate_certs: False
     vm_name: 'vm_name_as_per_vcenter'
     destination_datastore: 'destination_datastore_as_per_vcenter'
+  delegate_to: localhost
 
 - name: Perform storage vMotion and host vMotion of virtual machine
   vmware_vmotion:
@@ -88,6 +90,7 @@ EXAMPLES = '''
     vm_name: 'vm_name_as_per_vcenter'
     destination_host: 'destination_host_as_per_vcenter'
     destination_datastore: 'destination_datastore_as_per_vcenter'
+  delegate_to: localhost
 '''
 
 RETURN = '''
