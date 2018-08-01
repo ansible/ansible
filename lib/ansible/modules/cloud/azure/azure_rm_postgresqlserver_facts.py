@@ -176,7 +176,7 @@ class AzureRMServersFacts(AzureRMModuleBase):
 
     def get(self):
         response = None
-        results = {}
+        results = []
         try:
             response = self.mgmt_client.servers.get(resource_group_name=self.resource_group,
                                                     server_name=self.server_name)
@@ -185,13 +185,13 @@ class AzureRMServersFacts(AzureRMModuleBase):
             self.log('Could not get facts for Servers.')
 
         if response is not None:
-            results[response.name] = self.format_item(response)
+            results.append(self.format_item(response))
 
         return results
 
     def list_by_resource_group(self):
         response = None
-        results = {}
+        results = []
         try:
             response = self.mgmt_client.servers.list_by_resource_group(resource_group_name=self.resource_group)
             self.log("Response : {0}".format(response))
@@ -200,7 +200,7 @@ class AzureRMServersFacts(AzureRMModuleBase):
 
         if response is not None:
             for item in response:
-                results[item.name] = self.format_item(item)
+                results.append(self.format_item(item))
 
         return results
 
