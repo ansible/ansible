@@ -936,6 +936,8 @@ class TaskExecutor:
         stdin.write(b'\n#END_INIT#\n')
 
         src = cPickle.dumps(variables, protocol=0)
+        # remaining \r fail to round-trip the socket
+        src = src.replace(b'\r', br'\r')
         stdin.write(src)
         stdin.write(b'\n#END_VARS#\n')
 
