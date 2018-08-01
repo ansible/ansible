@@ -1,20 +1,7 @@
 #!/usr/bin/python
 # Copyright: (c) 2018, Yaakov Kuperman <ykuperman@gmail.com>
 # GNU General Public License v3.0+ # (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
 from __future__ import absolute_import, division, print_function
-__metaclass__ = type
-
-try:
-    from botocore.exceptions import ClientError, BotoCoreError
-except ImportError:
-    # we can handle the lack of boto3 based on the ec2 module
-    pass
-
-from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (HAS_BOTO3, camel_dict_to_snake_dict,
-                                      AWSRetry)
-
 
 ANSIBLE_METADATA = {"metadata_version": "1.1",
                     "status": ["preview"],
@@ -54,7 +41,6 @@ extends_documentation_fragment:
 EXAMPLES = """
 # practical use case - dynamically deregistering and reregistering nodes
 
-pre_tasks:
   - name: Get EC2 Metadata
     action: ec2_metadata_facts
 
@@ -86,66 +72,61 @@ pre_tasks:
     # target group.  An alternative would be to run all of the 'elb_target'
     # tasks async and wait for them to finish.
 
-    - name: wait for all targets to deregister simultaneously
-      delegate_to: localhost
-      msys_elb_target_facts:
-        get_unused_target_groups: false
-        instance_id: "{{ ansible_ec2_instance_id }}"
-        region: "{{ ansible_ec2_placement_region }}"
-      until: (ec2_tgs | length) == 0
-      retries: 60
-      delay: 10
+  - name: wait for all targets to deregister simultaneously
+    delegate_to: localhost
+    msys_elb_target_facts:
+      get_unused_target_groups: false
+      instance_id: "{{ ansible_ec2_instance_id }}"
+      region: "{{ ansible_ec2_placement_region }}"
+    until: (ec2_tgs | length) == 0
+    retries: 60
+    delay: 10
 
-roles:
-  - somerole
+  - name: reregister in elbv2s
+    elb_target:
+      region: "{{ ansible_ec2_placement_region }}"
+      target_group_arn: "{{ item.0.target_group_arn }}"
+      target_port: "{{ item.1.target_port }}"
+      target_az: "{{ item.1.target_az }}"
+      target_id: "{{ item.1.target_id }}"
+      state: present
+      target_status: "initial"
+    with_subelements:
+      - "{{ original_tgs }}"
+      - "targets"
 
-post_tasks:
-    - name: reregister in elbv2s
-      elb_target:
-        region: "{{ ansible_ec2_placement_region }}"
-        target_group_arn: "{{ item.0.target_group_arn }}"
-        target_port: "{{ item.1.target_port }}"
-        target_az: "{{ item.1.target_az }}"
-        target_id: "{{ item.1.target_id }}"
-        state: present
-        target_status: "initial"
-      with_subelements:
-        - "{{ original_tgs }}"
-        - "targets"
-
-    # wait until all groups associated with this instance are 'healthy' or
-    # 'unused'
-    - name: wait for registration
-      elb_target_facts:
-        get_unused_target_groups: false
-        instance_id: "{{ ansible_ec2_instance_id }}"
-        region: "{{ ansible_ec2_placement_region }}"
-      until: >
-                (ec2_tgs |
-                 map(attribute='targets') |
-                 flatten |
-                 map(attribute='target_health') |
-                 rejectattr('state', 'equalto', 'healthy') |
-                 rejectattr('state', 'equalto', 'unused') |
-                 list |
-                 length) == 0
-      retries: 61
-      delay: 10
+  # wait until all groups associated with this instance are 'healthy' or
+  # 'unused'
+  - name: wait for registration
+    elb_target_facts:
+      get_unused_target_groups: false
+      instance_id: "{{ ansible_ec2_instance_id }}"
+      region: "{{ ansible_ec2_placement_region }}"
+    until: (ec2_tgs |
+            map(attribute='targets') |
+            flatten |
+            map(attribute='target_health') |
+            rejectattr('state', 'equalto', 'healthy') |
+            rejectattr('state', 'equalto', 'unused') |
+            list |
+            length) == 0
+    retries: 61
+    delay: 10
 
 # using the ec2_tgs fact to generate AWS CLI commands to reregister the
 # instance - useful in case the playbook fails mid-run and manual
 #            rollback is required
-- name: "reregistration commands: ELBv2s"
-  debug:
-    msg: >
-           aws --region {{ansible_ec2_placement_region}} elbv2
-           register-targets --target-group-arn {{item.target_group_arn}}
-           --targets{%for target in item.targets%}
-           Id={{target.target_id}},
-           Port={{target.target_port}}{%if target.target_az%},AvailabilityZone={{target.target_az}}
-           {%endif%}
-           {%endfor%}
-  with_items: "{{ec2_tgs}}"
+  - name: "reregistration commands: ELBv2s"
+    debug:
+      msg: >
+             aws --region {{ansible_ec2_placement_region}} elbv2
+             register-targets --target-group-arn {{item.target_group_arn}}
+             --targets{%for target in item.targets%}
+             Id={{target.target_id}},
+             Port={{target.target_port}}{%if target.target_az%},AvailabilityZone={{target.target_az}}
+             {%endif%}
+             {%endfor%}
+    with_items: "{{ec2_tgs}}"
 
 """
 
@@ -194,7 +175,9 @@ ec2_tgs:
                     sample:
                         - us-west-2a
                 target_health:
-                    description: the target health description (see U(https://boto3.readthedocs.io/en/latest/reference/services/elbv2.html#ElasticLoadBalancingv2.Client.describe_target_health))
+                    description: the target health description
+                                 (see U(https://boto3.readthedocs.io/en/latest/
+                                  reference/services/elbv2.html#ElasticLoadBalancingv2.Client.describe_target_health))
                                  for all possible values
                     returned: always
                     type: complex
@@ -220,6 +203,18 @@ ec2_tgs:
                                 - "unused"
                                 - "unavailable"
 """
+
+__metaclass__ = type
+
+try:
+    from botocore.exceptions import ClientError, BotoCoreError
+except ImportError:
+    # we can handle the lack of boto3 based on the ec2 module
+    pass
+
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import (HAS_BOTO3, camel_dict_to_snake_dict,
+                                      AWSRetry)
 
 
 class Target:
@@ -273,7 +268,7 @@ class TargetFactsGatherer:
             ec2 = self.module.client(
                 "ec2",
                 retry_decorator=AWSRetry.jittered_backoff(retries=10)
-                )
+            )
         except (ClientError, BotoCoreError) as e:
             self.module.fail_json_aws(e,
                                       msg="Couldn't connect to ec2 during" +
@@ -317,8 +312,8 @@ class TargetFactsGatherer:
            the AWS API"""
         try:
             paginator = elbv2_connection.get_paginator(
-                            'describe_target_groups'
-                        )
+                "describe_target_groups"
+            )
             tg_response = paginator.paginate().build_full_result()
         except (BotoCoreError, ClientError) as e:
             self.module.fail_json_aws(e,
@@ -354,9 +349,9 @@ class TargetFactsGatherer:
             try:
                 # Get the list of targets for that target group
                 response = elbv2_connection.describe_target_health(
-                              TargetGroupArn=tg.target_group_arn,
-                              aws_retry=True
-                            )
+                    TargetGroupArn=tg.target_group_arn,
+                    aws_retry=True
+                )
             except (BotoCoreError, ClientError) as e:
                 self.module.fail_json_aws(e,
                                           msg="Could not describe target " +
