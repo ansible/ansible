@@ -88,17 +88,16 @@ servers:
                         - The SKU (pricing tier) of the server.
                     returned: always
                     type: complex
-                    sample: sku
                     contains:
                         name:
                             description:
-                                - The name of the sku, typically, a letter + Number code, e.g. P3.
+                                - The name of the SKU
                             returned: always
                             type: str
                             sample: PGSQLB100
                         tier:
                             description:
-                                - "The tier of the particular SKU, e.g. Basic. Possible values include: 'Basic', 'Standard'"
+                                - The tier of the particular SKU
                             returned: always
                             type: str
                             sample: Basic
@@ -110,7 +109,7 @@ servers:
                             sample: 100
                 version:
                     description:
-                        - "Server version. Possible values include: '9.5', '9.6'"
+                        - Server version.
                     returned: always
                     type: str
                     sample: version
@@ -224,5 +223,7 @@ class AzureRMServersFacts(AzureRMModuleBase):
 
 def main():
     AzureRMServersFacts()
+
+
 if __name__ == '__main__':
     main()
