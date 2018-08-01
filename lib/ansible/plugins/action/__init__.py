@@ -904,10 +904,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 data['module_stderr'] = res['stderr']
                 if res['stderr'].startswith(u'Traceback'):
                     data['exception'] = res['stderr']
-            # try to figure out if we are missing interpreter
 
-            interpreter = self._used_interpreter
-            if interpreter is not None and '%s: No such file or directory' % interpreter in data['module_stderr']:
+            # try to figure out if we are missing interpreter
+            if self._used_interpreter is not None and '%s: No such file or directory' % self._used_interpreter in data['module_stderr']:
                 data['msg'] = "The module failed to execute correctly, you probably need to set the interpreter."
             else:
                 data['msg'] = "MODULE FAILURE"
