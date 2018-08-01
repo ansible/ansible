@@ -784,5 +784,6 @@ def main():
     """Main execution"""
     AzureRMApplicationGateways()
 
+
 if __name__ == '__main__':
     main()
