@@ -24,10 +24,10 @@ ANSIBLE_METADATA = {"metadata_version": "1.1",
 DOCUMENTATION = """
 ---
 module: elb_target_facts
-short_description: Gathers which target groups a target is associated with
+short_description: Gathers which target groups a target is associated with.
 description:
   - This module will search through every target group in a region to find
-    which ones have registered a given instance ID or IP
+    which ones have registered a given instance ID or IP.
 
 version_added: "2.7"
 author: "Yaakov Kuperman (@yaakov-github)"
@@ -131,7 +131,6 @@ post_tasks:
                  length) == 0
       retries: 61
       delay: 10
-      delegate_to: localhost
 
 # using the ec2_tgs fact to generate AWS CLI commands to reregister the
 # instance - useful in case the playbook fails mid-run and manual
@@ -162,7 +161,7 @@ ec2_tgs:
             returned: always
             sample:
                 - "arn:aws:elasticloadbalancing:eu-west-1:111111111111:targetgroup/target-group/deadbeefdeadbeef"
-        tg_type:
+        target_group_type:
             description: Which target type is used for this group
             returned: always
             type: string
@@ -195,26 +194,31 @@ ec2_tgs:
                     sample:
                         - us-west-2a
                 target_health:
-                    description: the target health description
+                    description: the target health description (see U(https://boto3.readthedocs.io/en/latest/reference/services/elbv2.html#ElasticLoadBalancingv2.Client.describe_target_health))
+                                 for all possible values
                     returned: always
                     type: complex
                     contains:
                         description:
                             description: description of target health
-                            returned: when 'state' is not 'healthy'
+                            returned: if I(state!=present)
                             sample:
                                 - "Target desregistration is in progress"
                         reason:
-                            description: reason code for target health, see U(https://boto3.readthedocs.io/en/latest/reference/services/elbv2.html#ElasticLoadBalancingv2.Client.describe_target_health) for possible values
-                            returned: when 'state' is not 'healthy'
+                            description: reason code for target health
+                            returned: if I(state!=healthy)
                             sample:
                                 - "Target.Deregistration in progress"
                         state:
-                            description: health state, see U(https://boto3.readthedocs.io/en/latest/reference/services/elbv2.html#ElasticLoadBalancingv2.Client.describe_target_health) for possible values
+                            description: health state
                             returned: always
                             sample:
                                 - "healthy"
                                 - "draining"
+                                - "initial"
+                                - "unhealthy"
+                                - "unused"
+                                - "unavailable"
 """
 
 
@@ -232,14 +236,9 @@ class Target:
 
 class TargetGroup:
     """Models an elbv2 target group"""
-    # constants for target group types
-    ip = "ip"
-    instance = "instance"
 
     def __init__(self, **kwargs):
-        self.tg_type = kwargs["tg_type"]
-        if self.tg_type != self.ip and self.tg_type != self.instance:
-            raise Exception("Unsupported target group type %s" % self.tg_type)
+        self.target_group_type = kwargs["target_group_type"]
         self.target_group_arn = kwargs["target_group_arn"]
         # the relevant targets associated with this group
         self.targets = []
@@ -251,8 +250,8 @@ class TargetGroup:
                                    raw_target_health))
 
     def to_dict(self):
-        object_dict = self.__dict__
-        object_dict["targets"] = [each.__dict__ for each in self.get_targets()]
+        object_dict = vars(self)
+        object_dict["targets"] = [vars(each) for each in self.get_targets()]
         return object_dict
 
     def get_targets(self):
@@ -313,24 +312,14 @@ class TargetFactsGatherer:
 
         return list(ips)
 
-    # TODO refactor for simplicity
-    def _get_target_groups(self):
-        # do this first since we need the IPs later on in this function
-        self.instance_ips = self._get_instance_ips()
-
+    def _get_target_group_objects(self, elbv2_connection):
+        """helper function to build a list of TargetGroup objects based on
+           the AWS API"""
         try:
-            elbv2 = self.module.client(
-                "elbv2",
-                retry_decorator=AWSRetry.jittered_backoff(retries=10)
-            )
-        except (BotoCoreError, ClientError) as e:
-            self.module.fail_json_aws(e,
-                                      msg="Could not connect to elbv2 when" +
-                                          " attempting to get target groups"
-                                      )
-        # TODO paginator
-        try:
-            tg_response = elbv2.describe_target_groups(aws_retry=True)
+            paginator = elbv2_connection.get_paginator(
+                            'describe_target_groups'
+                        )
+            tg_response = paginator.paginate().build_full_result()
         except (BotoCoreError, ClientError) as e:
             self.module.fail_json_aws(e,
                                       msg="Could not describe target" +
@@ -340,41 +329,31 @@ class TargetFactsGatherer:
         # build list of TargetGroup objects representing every target group in
         # the system
         target_groups = []
-        while True:
-            for each_tg in tg_response["TargetGroups"]:
-                if not self.get_unused_target_groups and \
-                        len(each_tg["LoadBalancerArns"]) < 1:
-                    # only collect target groups that actually are connected
-                    # to LBs
-                    continue
+        for each_tg in tg_response["TargetGroups"]:
+            if not self.get_unused_target_groups and \
+                    len(each_tg["LoadBalancerArns"]) < 1:
+                # only collect target groups that actually are connected
+                # to LBs
+                continue
 
-                target_groups.append(
-                    TargetGroup(target_group_arn=each_tg["TargetGroupArn"],
-                                tg_type=each_tg["TargetType"],
-                                )
-                )
-            if "NextMarker" in tg_response:
-                try:
-                    tg_response = elbv2.describe_target_groups(
-                        Marker=tg_response["NextMarker"],
-                        aws_retry=True
-                    )
-                except (BotoCoreError, ClientError) as e:
-                    self.module.fail_json_aws(e,
-                                              msg="Could not describe target" +
-                                                  " groups"
-                                              )
-            else:
-                break
+            target_groups.append(
+                TargetGroup(target_group_arn=each_tg["TargetGroupArn"],
+                            target_group_type=each_tg["TargetType"],
+                            )
+            )
+        return target_groups
 
-        # now build a list of all the target groups pointing to this instance
+    def _get_target_descriptions(self, elbv2_connection, target_groups):
+        """Helper function to build a list of all the target descriptions
+           for this target in a target group"""
+        # Build a list of all the target groups pointing to this instance
         # based on the previous list
         tgs = set()
-        # loop through all the target groups
+        # Loop through all the target groups
         for tg in target_groups:
             try:
-                # get the list of targets for that target group
-                response = elbv2.describe_target_health(
+                # Get the list of targets for that target group
+                response = elbv2_connection.describe_target_health(
                               TargetGroupArn=tg.target_group_arn,
                               aws_retry=True
                             )
@@ -401,7 +380,6 @@ class TargetFactsGatherer:
                         if "AvailabilityZone" in t["Target"] \
                         else None
 
-                    # TODO add health info
                     tg.add_target(t["Target"]["Id"],
                                   t["Target"]["Port"],
                                   az,
@@ -410,6 +388,25 @@ class TargetFactsGatherer:
                     # once, even though we call add on each successful match
                     tgs.add(tg)
         return list(tgs)
+
+    def _get_target_groups(self):
+        # do this first since we need the IPs later on in this function
+        self.instance_ips = self._get_instance_ips()
+
+        try:
+            elbv2 = self.module.client(
+                "elbv2",
+                retry_decorator=AWSRetry.jittered_backoff(retries=10)
+            )
+        except (BotoCoreError, ClientError) as e:
+            self.module.fail_json_aws(e,
+                                      msg="Could not connect to elbv2 when" +
+                                          " attempting to get target groups"
+                                      )
+
+        # build list of target groups
+        target_groups = self._get_target_group_objects(elbv2)
+        return self._get_target_descriptions(elbv2, target_groups)
 
 
 def main():
