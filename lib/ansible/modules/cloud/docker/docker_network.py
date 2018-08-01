@@ -75,7 +75,6 @@ options:
   enable_ipv6:
     description:
       - Enable IPv6 on the network.
-    default: false
     version_added: "2.5"
 
   state:
@@ -235,7 +234,8 @@ class DockerNetworkManager(object):
         '''
         different = False
         differences = []
-        if self.parameters.enable_ipv6 != net['EnableIPv6']:
+        if self.parameters.enable_ipv6 is not None and \
+                self.parameters.enable_ipv6 != net['EnableIPv6']:
             different = True
             differences.append('enable_ipv6')
         if self.parameters.driver and self.parameters.driver != net['Driver']:
@@ -298,11 +298,14 @@ class DockerNetworkManager(object):
                                                        pool_configs=ipam_pools)
 
             if not self.check_mode:
-                resp = self.client.create_network(self.parameters.network_name,
-                                                  driver=self.parameters.driver,
-                                                  options=self.parameters.driver_options,
-                                                  enable_ipv6=self.parameters.enable_ipv6,
-                                                  ipam=ipam_config)
+                network_options = {
+                    'driver': self.parameters.driver,
+                    'options': self.parameters.driver_options,
+                    'ipam': ipam_config,
+                }
+                if self.parameters.enable_ipv6 is not None:
+                    network_options['enable_ipv6'] = self.parameters.enable_ipv6
+                resp = self.client.create_network(self.parameters.network_name, **network_options)
 
                 self.existing_network = self.client.inspect_network(resp['Id'])
             self.results['actions'].append("Created network %s with driver %s" % (self.parameters.network_name, self.parameters.driver))
