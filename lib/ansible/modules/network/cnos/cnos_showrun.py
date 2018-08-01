@@ -34,7 +34,7 @@ DOCUMENTATION = '''
 module: cnos_showrun
 author: "Anil Kumar Muraleedharan (@amuraleedhar)"
 short_description: Collect the current running configuration on devices running
-Lenovo CNOS
+ Lenovo CNOS
 description:
     - This module allows you to view the switch running configuration. It
      executes the display running-config CLI command on a switch and returns a
@@ -52,7 +52,7 @@ options: {}
 '''
 EXAMPLES = '''
 Tasks : The following are examples of using the module cnos_showrun. These are
-written in the main.yml file of the tasks directory.
+ written in the main.yml file of the tasks directory.
 ---
 - name: Run show running-config
   cnos_showrun:
