@@ -181,37 +181,6 @@ vms:
                 - Virtual machine size.
             type: str
             sample: Standard_D4
-
-
-    example: [
-        {
-            "data_disks": [
-                {
-                    "caching": "ReadOnly",
-                    "disk_size_gb": 64,
-                    "lun": 0,
-                    "managed_disk_type": "Premium_LRS"
-                }
-            ],
-            "image": {
-                "offer": "RHEL",
-                "publisher": "RedHat",
-                "sku": "7-RAW",
-                "version": "7.5.2018050901"
-            },
-            "location": "eastus",
-            "name": "mycluster-node-2",
-            "network_interface_names": [
-                "mycluster-node-2-nic"
-            ],
-            "os_disk_caching": "ReadOnly",
-            "os_type": "Linux",
-            "resource_group": "myclusterrg",
-            "state": "present",
-            "tags": null,
-            "vm_size": "Standard_D2s_v3"
-        }
-    ]
 '''
 
 try:
