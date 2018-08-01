@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_postgresqlserver_facts
 version_added: "2.7"
-short_description: Get MySQL Server facts.
+short_description: Get PostgreSQL Server facts.
 description:
-    - Get facts of MySQL Server.
+    - Get facts of PostgreSQL Server.
 
 options:
     resource_group:
@@ -39,19 +39,19 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get instance of MySQL Server
+  - name: Get instance of PostgreSQL Server
     azure_rm_postgresqlserver_facts:
       resource_group: resource_group_name
       server_name: server_name
 
-  - name: List instances of MySQL Server
+  - name: List instances of PostgreSQL Server
     azure_rm_postgresqlserver_facts:
       resource_group: resource_group_name
 '''
 
 RETURN = '''
 servers:
-    description: A list of dict results where the key is the name of the MySQL Server and the values are the facts for that MySQL Server.
+    description: A list of dict results where the key is the name of the PostgreSQL Server and the values are the facts for that PostgreSQL Server.
     returned: always
     type: list
     contains:
