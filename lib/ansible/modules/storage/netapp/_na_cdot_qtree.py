@@ -22,7 +22,7 @@ extends_documentation_fragment:
 version_added: '2.3'
 author: Sumit Kumar (sumit4@netapp.com)
 
-depreciated:
+deprecated:
   removed_in: 2.7
   why: Updated modules released with increased functionality
   alternative: Use M(na_ontap_qtree) instead.
