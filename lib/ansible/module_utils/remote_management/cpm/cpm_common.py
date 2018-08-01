@@ -31,7 +31,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # Contains utility methods
-# CPM Networking
+# CPM remote_management
 #
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
