@@ -63,7 +63,7 @@ options:
       - If you want to import a json dashboard exported directly from the interface (not from the api),
         you have to specify the slug parameter because there is no meta section in the exported json.
   uid:
-    version_added: 2.7
+    version_added: 2.6
     description:
       - uid of the dasboard to export when C(state) is C(export) or C(absent).
   path:
@@ -88,18 +88,18 @@ options:
     description:
       - PEM formatted certificate chain file to be used for SSL client authentication.
       - This file can also include the key as well, and if the key is included, client_key is not required
-    version_added: 2.7
+    version_added: 2.6
   client_key:
     description:
       - PEM formatted file that contains your private key to be used for SSL client
       - authentication. If client_cert contains both the certificate and key, this option is not required
-    version_added: 2.7
+    version_added: 2.6
   use_proxy:
     description:
       - Boolean of whether or not to use proxy.
     default: 'yes'
     type: bool
-    version_added: 2.7
+    version_added: 2.6
 '''
 
 EXAMPLES = '''
