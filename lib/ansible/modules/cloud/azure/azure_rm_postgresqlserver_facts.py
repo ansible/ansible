@@ -178,7 +178,7 @@ class AzureRMServersFacts(AzureRMModuleBase):
                                                     server_name=self.server_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for Servers.')
+            self.log('Could not get facts for PostgreSQL Server.')
 
         if response is not None:
             results.append(self.format_item(response))
@@ -192,7 +192,7 @@ class AzureRMServersFacts(AzureRMModuleBase):
             response = self.mgmt_client.servers.list_by_resource_group(resource_group_name=self.resource_group)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for Servers.')
+            self.log('Could not get facts for PostgreSQL Servers.')
 
         if response is not None:
             for item in response:
