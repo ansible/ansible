@@ -259,31 +259,30 @@
 - set_fact:
       niclist:
          - name: testvm011
-           resource_group: "{{ resource_group }}"
+           resource_group: "{{ resource_group_secondary }}"
          - name: testvm012
            resource_group: "{{ resource_group_secondary  }}"
 
 - name: Create virtual network
   azure_rm_virtualnetwork:
-      resource_group: "{{ item.resource_group }}"
-      name: "{{ item.name }}"
+      resource_group: "{{ resource_group_secondary }}"
+      name: testvm001
       address_prefixes: "10.10.0.0/16"
-  loop: "{{ niclist }}"
+  register: vn
 
 - name: Add subnet
   azure_rm_subnet:
-      resource_group: "{{ item.resource_group }}"
-      name: "{{ item.name }}"
+      resource_group: "{{ resource_group_secondary }}"
+      name: testvm001
       address_prefix: "10.10.0.0/24"
-      virtual_network: "{{ item.name }}"
-  loop: "{{ niclist }}"
+      virtual_network: testvm001
 
 - name: Create NICs for dual nic VM
   azure_rm_networkinterface:
       resource_group: "{{ item.resource_group }}"
       name: "{{ item.name }}"
-      virtual_network: "{{ item.name }}"
-      subnet: "{{ item.name }}"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: testvm001
       security_group: testvm001
   loop: "{{ niclist }}"
 
