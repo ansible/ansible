@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright: (c) 2018, Remy Mudingay <remy.mudingay@esss.se>
+# Copyright: (c) 2018, Stephane Armanet <stephane.armanet@esss.se>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -65,6 +66,8 @@ EXAMPLES = """
       - /dev/sdb
       - /dev/sdc
       - /dev/sdd
+      - /dev/sde
+      - /dev/sdf
     raid_level: none
     state: present
 
@@ -94,6 +97,7 @@ EXAMPLES = """
     add: true
     devices:
     - /dev/sdf
+    - /dev/sdg
     raid_level: mirror
     state: present
 
@@ -175,11 +179,12 @@ def main():
         argument_spec=dict(
             name=dict(type='str', required=True),
             state=dict(type='str', required=True, choices=['absent', 'present']),
-            raid_level=dict(type='str', required=False, choices=[, 'none''mirror', 'raidz', 'raidz1', 'raidz2']),
+            raid_level=dict(type='str', required=False, choices=['none', 'mirror', 'raidz', 'raidz1', 'raidz2']),
             devices=dict(type='list', default=None),
             spare=dict(type='list', default=None),
             add=dict(type='bool', default=False),
         ),
+        supports_check_mode=True
     )
 
     name = module.params.get('name')
@@ -189,7 +194,7 @@ def main():
     devices = module.params.get('devices')
     spare = module.params.get('spare')
 
-    if raid_level is False or 'none' raid_level:
+    if raid_level is False or 'none' in raid_level:
         raid_level = ''
 
     if devices is False or not devices:
