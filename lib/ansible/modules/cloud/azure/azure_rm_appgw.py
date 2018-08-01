@@ -357,6 +357,15 @@ class Actions:
     NoAction, Create, Update, Delete = range(4)
 
 
+ssl_policy_spec = dict(
+    disabled_ssl_protocols=dict(type='list'),
+    policy_type=dict(type='str', choices=['predefined', 'custom']),
+    policy_name=dict(type='str', choices=['app_gw_ssl_policy20150501', 'app_gw_ssl_policy20170401', 'app_gw_ssl_policy20170401_s']),
+    cipher_suites=dict(type='list'),
+    min_protocol_version=dict(type='str', choices=['tls_v1_0', 'tls_v1_1', 'tls_v1_2'])
+)
+
+
 class AzureRMApplicationGateways(AzureRMModuleBase):
     """Configuration class for an Azure RM Application Gateway resource"""
 
@@ -377,7 +386,8 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                 type='dict'
             ),
             ssl_policy=dict(
-                type='dict'
+                type='dict',
+                options=ssl_policy_spec
             ),
             gateway_ip_configurations=dict(
                 type='list'
