@@ -344,6 +344,7 @@ def chown_recursive(path, module):
 
     return changed
 
+
 def copy_diff_files(src, dest, module):
     changed = False
     owner = module.params['owner']
