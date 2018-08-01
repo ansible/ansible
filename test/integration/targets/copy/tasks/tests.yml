@@ -1575,10 +1575,10 @@
   - name: Assert that remote_dir_src has copied.
     assert:
       that:
-      - stat_new_dir_with_follow.stat.exists
-      - stat_new_dir_with_follow.stat.isdir
-      - stat_new_dir_without_follow.stat.exists
-      - stat_new_dir_without_follow.stat.isdir
+      - "stat_new_dir_with_follow.stat.exists"
+      - "stat_new_dir_with_follow.stat.isdir"
+      - "stat_new_dir_without_follow.stat.exists"
+      - "stat_new_dir_without_follow.stat.isdir"
 
 
 ## testcase2 remote_dir_dest exists, left only subdir and file exists
@@ -1589,7 +1589,7 @@
 
 ### pass
 
-## remote_dir_src not change
+## make sure remote_dir_src not change
 - block:
   - name: Stat the remote_dir_src
     stat:
@@ -1619,19 +1619,19 @@
   - name: Assert that remote_dir_src not change.
     assert:
       that:
-      - stat_remote_dir_src_after.stat.exists
-      - stat_remote_dir_src_after.stat.isdir
-      - stat_remote_dir_src_before.stat.uid == stat_remote_dir_src_after.stat.uid
-      - stat_remote_dir_src_before.stat.gid == stat_remote_dir_src_after.stat.gid
-      - stat_remote_dir_src_before.stat.path == stat_remote_dir_src_after.stat.path
-      - stat_remote_dir_src_before.stat.mode == stat_remote_dir_src_after.stat.mode
-      - stat_remote_dir_src_before.stat.inode == stat_remote_dir_src_after.stat.inode
-      - stat_remote_dir_src_before.stat.mtime == stat_remote_dir_src_after.stat.mtime
-      - stat_remote_dir_src_subdir_after.stat.exists
-      - stat_remote_dir_src_subdir_after.stat.isdir
-      - stat_remote_dir_src_subdir_before.stat.uid == stat_remote_dir_src_subdir_after.stat.uid
-      - stat_remote_dir_src_subdir_before.stat.gid == stat_remote_dir_src_subdir_after.stat.gid
-      - stat_remote_dir_src_subdir_before.stat.path == stat_remote_dir_src_subdir_after.stat.path
-      - stat_remote_dir_src_subdir_before.stat.mode == stat_remote_dir_src_subdir_after.stat.mode
-      - stat_remote_dir_src_subdir_before.stat.inode == stat_remote_dir_src_subdir_after.stat.inode
-      - stat_remote_dir_src_subdir_before.stat.mtime == stat_remote_dir_src_subdir_after.stat.mtime
+      - "stat_remote_dir_src_after.stat.exists"
+      - "stat_remote_dir_src_after.stat.isdir"
+      - "stat_remote_dir_src_before.stat.uid == stat_remote_dir_src_after.stat.uid"
+      - "stat_remote_dir_src_before.stat.gid == stat_remote_dir_src_after.stat.gid"
+      - "stat_remote_dir_src_before.stat.pw_name == stat_remote_dir_src_after.stat.pw_name"
+      - "stat_remote_dir_src_before.stat.gr_name == stat_remote_dir_src_after.stat.gr_name"
+      - "stat_remote_dir_src_before.stat.path == stat_remote_dir_src_after.stat.path"
+      - "stat_remote_dir_src_before.stat.mode == stat_remote_dir_src_after.stat.mode"
+      - "stat_remote_dir_src_subdir_after.stat.exists"
+      - "stat_remote_dir_src_subdir_after.stat.isdir"
+      - "stat_remote_dir_src_subdir_before.stat.uid == stat_remote_dir_src_subdir_after.stat.uid"
+      - "stat_remote_dir_src_subdir_before.stat.gid == stat_remote_dir_src_subdir_after.stat.gid"
+      - "stat_remote_dir_src_subdir_before.stat.pw_name == stat_remote_dir_src_subdir__after.stat.pw_name"
+      - "stat_remote_dir_src_bsubdir_efore.stat.gr_name == stat_remote_dir_src_subdir__after.stat.gr_name"
+      - "stat_remote_dir_src_subdir_before.stat.path == stat_remote_dir_src_subdir_after.stat.path"
+      - "stat_remote_dir_src_subdir_before.stat.mode == stat_remote_dir_src_subdir_after.stat.mode"
