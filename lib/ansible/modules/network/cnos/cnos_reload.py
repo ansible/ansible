@@ -50,7 +50,7 @@ options: {}
 '''
 EXAMPLES = '''
 Tasks : The following are examples of using the module cnos_reload. These are
-written in the main.yml file of the tasks directory.
+ written in the main.yml file of the tasks directory.
 ---
 - name: Test Reload
   cnos_reload:
