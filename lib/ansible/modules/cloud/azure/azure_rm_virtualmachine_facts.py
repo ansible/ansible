@@ -111,29 +111,29 @@ vms:
         image:
             description:
                 - Image specification
-                returned: always
-                type: complex
-                contains:
-                    offer:
-                        description:
-                            - Offer.
-                        type: str
-                        sample: RHEL
-                    publisher:
-                        description:
-                            - Publisher name.
-                        type: str
-                        sample: RedHat
-                    sku:
-                        description:
-                            - SKU name.
-                        type: str
-                        sample: 7-RAW
-                    version:
-                        description:
-                            - Image version.
-                        type: str
-                        sample: 7.5.2018050901
+            returned: always
+            type: complex
+            contains:
+                offer:
+                    description:
+                        - Offer.
+                    type: str
+                    sample: RHEL
+                publisher:
+                    description:
+                        - Publisher name.
+                    type: str
+                    sample: RedHat
+                sku:
+                    description:
+                        - SKU name.
+                    type: str
+                    sample: 7-RAW
+                version:
+                    description:
+                        - Image version.
+                    type: str
+                    sample: 7.5.2018050901
         location:
             description:
                 - Resource location.
