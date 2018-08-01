@@ -31,7 +31,7 @@ class NiosProvider(CloudProvider):
 
     DOCKER_SIMULATOR_NAME = 'nios-simulator'
 
-    DOCKER_IMAGE = 'quay.io/ansible/nios-test-container:1.1.0'
+    DOCKER_IMAGE = 'quay.io/ansible/nios-test-container:1.2.0'
     """Default image to run the nios simulator.
 
     The simulator must be pinned to a specific version
