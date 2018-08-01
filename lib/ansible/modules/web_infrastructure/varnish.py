@@ -22,7 +22,7 @@ description:
    - Allows to ban and mark obsolete all objects where all the conditions match.
    - Set health status on the backends.
    - Clear the last panic and varnishstat counter(s).
-   - Set parameter value.
+   - Set/Edit parameters values.
    - Load and compile VCL file.
    - Switch to or Unload any loaded VCL.
    - This module also return facts that content bans, backends, panic, params, storages and loaded VCL.
