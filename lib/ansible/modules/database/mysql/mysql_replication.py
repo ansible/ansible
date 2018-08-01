@@ -88,6 +88,10 @@ options:
         description:
             - does the host uses GTID based replication or not
         version_added: "2.0"
+    master_use_gtid:
+        description:
+            - does the host uses GTID based replication or not
+        version_added: "2.6"
 
 extends_documentation_fragment: mysql
 '''
@@ -214,6 +218,7 @@ def main():
             ssl_cert=dict(default=None),
             ssl_key=dict(default=None),
             ssl_ca=dict(default=None),
+            master_use_gtid=dict(default=False),
         )
     )
     mode = module.params["mode"]
@@ -238,6 +243,7 @@ def main():
     ssl_ca = module.params["ssl_ca"]
     connect_timeout = module.params['connect_timeout']
     config_file = module.params['config_file']
+    master_use_gtid = module.params['master_use_gtid']
 
     if not mysqldb_found:
         module.fail_json(msg="The MySQL-python module is required.")
@@ -323,6 +329,9 @@ def main():
             chm_params['master_ssl_cipher'] = master_ssl_cipher
         if master_auto_position:
             chm.append("MASTER_AUTO_POSITION = 1")
+        if master_use_gtid:
+            chm.append("MASTER_USE_GTID=current_pos")
+
         try:
             changemaster(cursor, chm, chm_params)
         except MySQLdb.Warning as e:
