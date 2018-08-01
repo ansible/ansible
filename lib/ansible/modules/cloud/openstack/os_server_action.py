@@ -94,7 +94,7 @@ def _action_url(server_id):
 def _wait(timeout, cloud, server, action, module, sdk):
     """Wait for the server to reach the desired state for the given action."""
 
-    for count in sdk.utils._iterate_timeout(
+    for count in sdk.utils.iterate_timeout(
             timeout,
             "Timeout waiting for server to complete %s" % action):
         try:
