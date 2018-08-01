@@ -141,7 +141,6 @@ def main():
     limits_conf = '/etc/security/limits.conf'
 
     module = AnsibleModule(
-        # not checking because of daisy chain to file module
         argument_spec=dict(
             domain=dict(required=True, type='str'),
             limit_type=dict(required=True, type='str', choices=pam_types),
@@ -152,7 +151,8 @@ def main():
             backup=dict(default=False, type='bool'),
             dest=dict(default=limits_conf, type='str'),
             comment=dict(required=False, default='', type='str')
-        )
+        ),
+        supports_check_mode=True,
     )
 
     domain = module.params['domain']
@@ -287,8 +287,9 @@ def main():
     f.close()
     nf.flush()
 
-    # Copy tempfile to newfile
-    module.atomic_move(nf.name, f.name)
+    if not module.check_mode:
+        # Copy tempfile to newfile
+        module.atomic_move(nf.name, f.name)
 
     try:
         nf.close()
