@@ -69,7 +69,7 @@ except ImportError:
 urllib_request.HTTPRedirectHandler.http_error_308 = urllib_request.HTTPRedirectHandler.http_error_307
 
 try:
-    from ansible.module_utils.six.moves.urllib.parse import urlparse, urlunparse
+    from ansible.module_utils.six.moves.urllib.parse import urlparse, urlunparse, urlsplit
     HAS_URLPARSE = True
 except Exception:
     HAS_URLPARSE = False
@@ -380,6 +380,34 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
             except AttributeError:
                 pass
             return httplib.HTTPSConnection(host, **kwargs)
+
+
+class UnixHTTPConnection(httplib.HTTPConnection):
+    '''Handles http requests to a unix socket file'''
+
+    def __init__(self, socket_path):
+        self._socket_path = socket_path
+
+    def connect(self):
+        self.sock = sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        sock.connect(self._socket_path)
+        if self.timeout is not socket._GLOBAL_DEFAULT_TIMEOUT:
+            sock.settimeout(self.timeout)
+
+    def __call__(self, *args, **kwargs):
+        httplib.HTTPConnection.__init__(self, *args, **kwargs)
+        return self
+
+
+class UnixHTTPHandler(urllib_request.HTTPHandler):
+    '''Handler for Unix urls'''
+
+    def __init__(self, socket_path, **kwargs):
+        urllib_request.HTTPHandler.__init__(self, **kwargs)
+        self._socket_path = socket_path
+
+    def http_open(self, req):
+        return self.do_open(UnixHTTPConnection(self._socket_path), req)
 
 
 class ParseResultDottedDict(dict):
@@ -854,7 +882,7 @@ def rfc2822_date_string(timetuple, zone='-0000'):
 class Request:
     def __init__(self, headers=None, use_proxy=True, force=False, timeout=10, validate_certs=True,
                  url_username=None, url_password=None, http_agent=None, force_basic_auth=False,
-                 follow_redirects='urllib2', client_cert=None, client_key=None, cookies=None):
+                 follow_redirects='urllib2', client_cert=None, client_key=None, cookies=None, unix_socket=None):
         """This class works somewhat similarly to the ``Session`` class of from requests
         by defining a cookiejar that an be used across requests as well as cascaded defaults that
         can apply to repeated requests
@@ -875,7 +903,7 @@ class Request:
 
         self.headers = headers or {}
         if not isinstance(self.headers, dict):
-            raise ValueError("headers must be a dict")
+            raise ValueError("headers must be a dict: %r" % self.headers)
         self.use_proxy = use_proxy
         self.force = force
         self.timeout = timeout
@@ -887,6 +915,7 @@ class Request:
         self.follow_redirects = follow_redirects
         self.client_cert = client_cert
         self.client_key = client_key
+        self.unix_socket = unix_socket
         if isinstance(cookies, cookiejar.CookieJar):
             self.cookies = cookies
         else:
@@ -901,7 +930,8 @@ class Request:
              force=None, last_mod_time=None, timeout=None, validate_certs=None,
              url_username=None, url_password=None, http_agent=None,
              force_basic_auth=None, follow_redirects=None,
-             client_cert=None, client_key=None, cookies=None, use_gssapi=False):
+             client_cert=None, client_key=None, cookies=None, use_gssapi=False,
+             unix_socket=None):
         """
         Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
@@ -959,8 +989,9 @@ class Request:
         client_cert = self._fallback(client_cert, self.client_cert)
         client_key = self._fallback(client_key, self.client_key)
         cookies = self._fallback(cookies, self.cookies)
+        unix_socket = self._fallback(unix_socket, self.unix_socket)
 
-        handlers = []
+        handlers = [UnixHTTPHandler(unix_socket)]
         ssl_handler = maybe_add_ssl_handler(url, validate_certs)
         if ssl_handler:
             handlers.append(ssl_handler)
@@ -1164,7 +1195,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
              url_username=None, url_password=None, http_agent=None,
              force_basic_auth=False, follow_redirects='urllib2',
              client_cert=None, client_key=None, cookies=None,
-             use_gssapi=False):
+             use_gssapi=False, unix_socket=None):
     '''
     Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
@@ -1176,7 +1207,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
                           url_username=url_username, url_password=url_password, http_agent=http_agent,
                           force_basic_auth=force_basic_auth, follow_redirects=follow_redirects,
                           client_cert=client_cert, client_key=client_key, cookies=cookies,
-                          use_gssapi=use_gssapi)
+                          use_gssapi=use_gssapi, unix_socket=unix_socket)
 
 
 #
@@ -1212,7 +1243,7 @@ def url_argument_spec():
 
 def fetch_url(module, url, data=None, headers=None, method=None,
               use_proxy=True, force=False, last_mod_time=None, timeout=10,
-              use_gssapi=False):
+              use_gssapi=False, unix_socket=None):
     """Sends a request via HTTP(S) or FTP (needs the module as parameter)
 
     :arg module: The AnsibleModule (used to get username, password etc. (s.b.).
@@ -1275,7 +1306,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
                      validate_certs=validate_certs, url_username=username,
                      url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth,
                      follow_redirects=follow_redirects, client_cert=client_cert,
-                     client_key=client_key, cookies=cookies, use_gssapi=use_gssapi)
+                     client_key=client_key, cookies=cookies, use_gssapi=use_gssapi,
+                     unix_socket=unix_socket)
         # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
         info.update(dict((k.lower(), v) for k, v in r.info().items()))
 
