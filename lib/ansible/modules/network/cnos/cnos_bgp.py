@@ -102,7 +102,7 @@ options:
     bgpArg5:
         description:
             - This is an overloaded bgp fifth argument. Usage of this argument
-            can be found is the User Guide referenced above.
+             can be found is the User Guide referenced above.
         required: No
         default: Null
         choices: [as-set, summary-only, Value to start reusing a route,
@@ -120,7 +120,7 @@ options:
     bgpArg7:
         description:
             - This is an overloaded bgp seventh argument. Use of this argument
-            can be found is the User Guide referenced above.
+             can be found is the User Guide referenced above.
         required: No
         default: Null
         choices: [Maximum duration to suppress a stable route(minutes),
@@ -128,7 +128,7 @@ options:
     bgpArg8:
         description:
             - This is an overloaded bgp eigth argument. Usage of this argument
-            can be found is the User Guide referenced above.
+             can be found is the User Guide referenced above.
         required: No
         default: Null
         choices: [Un-reachability Half-life time for the penalty(minutes),
@@ -136,7 +136,7 @@ options:
 '''
 EXAMPLES = '''
 Tasks: The following are examples of using the module cnos_bgp. These are
-written in the main.yml file of the tasks directory.
+ written in the main.yml file of the tasks directory.
 ---
 - name: Test BGP  - neighbor
   cnos_bgp:
