@@ -31,7 +31,7 @@ options:
   raid_level:
     description:
       - type of pool
-    choices: [ mirror, raidz, raidz1, raidz2 ]
+    choices: [ none, mirror, raidz, raidz1, raidz2 ]
   devices:
     description:
       - full path to list of block devices such as hdd, nvme or nvme
@@ -56,6 +56,16 @@ EXAMPLES = """
       - /dev/sdd
       - /dev/sde
     raid_level: raidz
+    state: present
+
+- name: Create a new raid 0 stripe zpool
+  zpool:
+    name: rpool
+    devices:
+      - /dev/sdb
+      - /dev/sdc
+      - /dev/sdd
+    raid_level: none
     state: present
 
 - name: Create a new mirror zpool
@@ -165,7 +175,7 @@ def main():
         argument_spec=dict(
             name=dict(type='str', required=True),
             state=dict(type='str', required=True, choices=['absent', 'present']),
-            raid_level=dict(type='str', required=False, choices=['mirror', 'raidz', 'raidz1', 'raidz2']),
+            raid_level=dict(type='str', required=False, choices=[, 'none''mirror', 'raidz', 'raidz1', 'raidz2']),
             devices=dict(type='list', default=None),
             spare=dict(type='list', default=None),
             add=dict(type='bool', default=False),
@@ -179,7 +189,7 @@ def main():
     devices = module.params.get('devices')
     spare = module.params.get('spare')
 
-    if raid_level is False:
+    if raid_level is False or 'none' raid_level:
         raid_level = ''
 
     if devices is False or not devices:
