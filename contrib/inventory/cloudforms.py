@@ -77,7 +77,7 @@ class CloudFormsInventory(object):
 
                 if 'ansible_connection' in self.hosts[hostname]:
                     self.inventory['_meta']['hostvars'][hostname]['ansible_connection'] = self.hosts[hostname]['ansible_connection']
-                    
+
             data_to_print += self.json_format_dict(self.inventory, self.args.pretty)
 
         print(data_to_print)
