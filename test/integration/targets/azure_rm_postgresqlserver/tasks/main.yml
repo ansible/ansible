@@ -69,16 +69,16 @@
   assert:
     that:
       - output.changed == False
-      - output.servers[0].id != None
-      - output.servers[0].name != None
-      - output.servers[0].type != None
-      - output.servers[0].location != None
-      - output.servers[0].sku.name != None
-      - output.servers[0].sku.tier != None
-      - output.servers[0].sku.capacity != None
-      - output.servers[0].version != None
-      - output.servers[0].user_visible_state != None
-      - output.servers[0].fully_qualified_domain_name != None
+      - output.servers[0]['id'] != None
+      - output.servers[0]['name'] != None
+      - output.servers[0]['type'] != None
+      - output.servers[0]['location'] != None
+      - output.servers[0]['sku']['name'] != None
+      - output.servers[0]['sku']['tier'] != None
+      - output.servers[0]['sku']['capacity'] != None
+      - output.servers[0]['version'] != None
+      - output.servers[0]['user_visible_state'] != None
+      - output.servers[0]['fully_qualified_domain_name'] != None
 
 - name: Gather facts MySQL Server
   azure_rm_postgresqlserver_facts:
@@ -88,26 +88,26 @@
   assert:
     that:
       - output.changed == False
-      - output.servers[0].id != None
-      - output.servers[0].name != None
-      - output.servers[0].type != None
-      - output.servers[0].location != None
-      - output.servers[0].sku.name != None
-      - output.servers[0].sku.tier != None
-      - output.servers[0].sku.capacity != None
-      - output.servers[0].version != None
-      - output.servers[0].user_visible_state != None
-      - output.servers[0].fully_qualified_domain_name != None
-      - output.servers[0]second.id != None
-      - output.servers[0]second.name != None
-      - output.servers[0]second.type != None
-      - output.servers[0]second.location != None
-      - output.servers[0]second.sku.name != None
-      - output.servers[0]second.sku.tier != None
-      - output.servers[0]second.sku.capacity != None
-      - output.servers[0]second.version != None
-      - output.servers[0]second.user_visible_state != None
-      - output.servers[0]second.fully_qualified_domain_name != None
+      - output.servers[0]['id'] != None
+      - output.servers[0]['name'] != None
+      - output.servers[0]['type'] != None
+      - output.servers[0]['location'] != None
+      - output.servers[0]['sku']['name'] != None
+      - output.servers[0]['sku']['tier'] != None
+      - output.servers[0]['sku']['capacity'] != None
+      - output.servers[0]['version'] != None
+      - output.servers[0]['user_visible_state'] != None
+      - output.servers[0]['fully_qualified_domain_name'] != None
+      - output.servers[0]['second']['id'] != None
+      - output.servers[0]['second']['name'] != None
+      - output.servers[0]['second']['type'] != None
+      - output.servers[0]['second']['location'] != None
+      - output.servers[0]['second']['sku']['name'] != None
+      - output.servers[0]['second']['sku']['tier'] != None
+      - output.servers[0]['second']['sku']['capacity'] != None
+      - output.servers[0]['second']['version'] != None
+      - output.servers[0]['second']['user_visible_state'] != None
+      - output.servers[0]['second']['fully_qualified_domain_name'] != None
 
 - name: Delete instance of PostgreSQL Server -- check mode
   azure_rm_postgresqlserver:
