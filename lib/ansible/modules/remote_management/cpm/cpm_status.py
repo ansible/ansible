@@ -147,16 +147,16 @@ def run_module():
 
     if (module.params['cpm_action'] == 'temperature'):
         result['data'] = request(module, protocol + module.params['cpm_url'] + "/api/v2/status/temperature", module.params['cpm_username'],
-                                 module.params['cpm_password'],  8)
+                                 module.params['cpm_password'], 8)
     elif (module.params['cpm_action'] == 'firmware'):
         result['data'] = request(module, protocol + module.params['cpm_url'] + "/api/v2/status/firmware", module.params['cpm_username'],
-                                 module.params['cpm_password'],  8)
+                                 module.params['cpm_password'], 8)
     elif (module.params['cpm_action'] == 'status'):
         result['data'] = request(module, protocol + module.params['cpm_url'] + "/api/v2/status/status", module.params['cpm_username'],
-                                 module.params['cpm_password'],  8)
+                                 module.params['cpm_password'], 8)
     elif (module.params['cpm_action'] == 'alarms'):
         result['data'] = request(module, protocol + module.params['cpm_url'] + "/api/v2/status/alarms", module.params['cpm_username'],
-                                 module.params['cpm_password'],  8)
+                                 module.params['cpm_password'], 8)
     else:
         module.fail_json(msg='Status command not recognized.', **result)
 
