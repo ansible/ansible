@@ -314,8 +314,10 @@ class LinuxTCPConnectionInfo(TCPConnectionInfo):
     def get_active_connections_count(self):
         active_connections = 0
         for family in self.source_file.keys():
-            f = open(self.source_file[family])
-            for tcp_connection in f.readlines():
+            socket = self.source_file[family]
+            if os.path.exists(socket):
+              f = open(socket)
+              for tcp_connection in f.readlines():
                 tcp_connection = tcp_connection.strip().split()
                 if tcp_connection[self.local_address_field] == 'local_address':
                     continue
@@ -335,7 +337,7 @@ class LinuxTCPConnectionInfo(TCPConnectionInfo):
                         (family, self.ipv4_mapped_ipv6_address['match_all']) in self.ips,
                 )):
                     active_connections += 1
-            f.close()
+              f.close()
         return active_connections
 
 
