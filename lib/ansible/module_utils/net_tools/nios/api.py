@@ -47,6 +47,13 @@ NIOS_IPV4_NETWORK = 'network'
 NIOS_IPV6_NETWORK = 'ipv6network'
 NIOS_ZONE = 'zone_auth'
 NIOS_PTR_RECORD = 'record:ptr'
+NIOS_A_RECORD = 'record:a'
+NIOS_AAAA_RECORD = 'record:aaaa'
+NIOS_CNAME_RECORD = 'record:cname'
+NIOS_MX_RECORD = 'record:mx'
+NIOS_SRV_RECORD = 'record:srv'
+NIOS_NAPTR_RECORD = 'record:naptr'
+NIOS_TXT_RECORD = 'record:txt'
 
 
 NIOS_PROVIDER_SPEC = {
