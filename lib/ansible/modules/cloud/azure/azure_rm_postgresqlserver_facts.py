@@ -205,7 +205,8 @@ class AzureRMServersFacts(AzureRMModuleBase):
             'storage_mb': d['storage_profile']['storage_mb'],
             'version': d['version'],
             'enforce_ssl': (d['ssl_enforcement'] == 'Enabled'),
-            'admin_username': d['administrator_login']
+            'admin_username': d['administrator_login'],
+            'user_visible_state': d['user_visible_state']
         }
 
         return d
