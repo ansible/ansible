@@ -401,12 +401,16 @@ def create_server(module, oneandone_conn):
             module.fail_json(
                 msg='load balancer %s not found.' % load_balancer)
 
+    hostnames = []
+    descriptions = []
     if auto_increment:
         hostnames = _auto_increment_hostname(count, hostname)
-        descriptions = _auto_increment_description(count, description)
+        if description:
+            descriptions = _auto_increment_description(count, description)
     else:
         hostnames = [hostname] * count
-        descriptions = [description] * count
+        if description:
+            descriptions = [description] * count
 
     hdd_objs = []
     if hdds:
@@ -418,11 +422,16 @@ def create_server(module, oneandone_conn):
 
     servers = []
     for index, name in enumerate(hostnames):
+        desc = None
+
+        if descriptions:
+            desc = descriptions[index]
+
         server = _create_server(
             module=module,
             oneandone_conn=oneandone_conn,
             hostname=name,
-            description=descriptions[index],
+            description=desc,
             fixed_instance_size_id=fixed_instance_size_id,
             vcore=vcore,
             cores_per_processor=cores_per_processor,
