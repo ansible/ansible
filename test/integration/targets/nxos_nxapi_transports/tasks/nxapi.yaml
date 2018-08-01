@@ -1,11 +1,4 @@
 ---
-- name: collect common test cases
-  find:
-    paths: "{{ role_path }}/tests/common"
-    patterns: "{{ testcase }}.yaml"
-  connection: local
-  register: test_cases
-
 - name: collect nxapi test cases
   find:
     paths: "{{ role_path }}/tests/nxapi"
@@ -15,7 +8,7 @@
 
 - set_fact:
     test_cases:
-      files: "{{ test_cases.files }} + {{ nxapi_cases.files }}"
+      files: "{{ nxapi_cases.files }}"
 
 - name: set test_items
   set_fact: test_items="{{ test_cases.files | map(attribute='path') | list }}"
@@ -23,28 +16,17 @@
 - name: run test cases (connection=httpapi)
   include: "{{ test_case_to_run }}"
   vars:
-    ansible_connection: httpapi
-    ansible_httpapi_use_ssl: no
-    ansible_httpapi_port: 80
+    ansible_httpapi_use_ssl: yes
+    ansible_httpapi_port: 443
     ansible_httpapi_validate_certs: no
-    connection: "{{ nxapi }}"
+    connection: httpapi
   with_items: "{{ test_items }}"
   loop_control:
     loop_var: test_case_to_run
 
-- name: run test cases (connection=local)
+- name: run test cases (connection=nxapi_ssl)
   include: "{{ test_case_to_run }}"
   vars:
-    ansible_connection: local
-    connection: "{{ nxapi }}"
-  with_items: "{{ test_items }}"
-  loop_control:
-    loop_var: test_case_to_run
-
-- name: run test cases (connection=local) and nxapi_ssl
-  include: "{{ test_case_to_run }}"
-  vars:
-    ansible_connection: local
     connection: "{{ nxapi_ssl }}"
   with_items: "{{ test_items }}"
   loop_control:
