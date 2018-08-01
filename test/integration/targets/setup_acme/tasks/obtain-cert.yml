@@ -22,6 +22,7 @@
 ## ACME STEP 1 ################################################################################
 - name: ({{ certgen_title }}) Obtain cert, step 1
   acme_certificate:
+    select_crypto_backend: "{{ select_crypto_backend }}"
     acme_version: 2
     acme_directory: https://{{ acme_host }}:14000/dir
     validate_certs: no
@@ -41,6 +42,7 @@
   when: account_key_content is not defined
 - name: ({{ certgen_title }}) Obtain cert, step 1 (using account key data)
   acme_certificate:
+    select_crypto_backend: "{{ select_crypto_backend }}"
     acme_version: 2
     acme_directory: https://{{ acme_host }}:14000/dir
     validate_certs: no
@@ -96,6 +98,7 @@
 ## ACME STEP 2 ################################################################################
 - name: ({{ certgen_title }}) Obtain cert, step 2
   acme_certificate:
+    select_crypto_backend: "{{ select_crypto_backend }}"
     acme_version: 2
     acme_directory: https://{{ acme_host }}:14000/dir
     validate_certs: no
@@ -115,6 +118,7 @@
   when: challenge_data is changed and account_key_content is not defined
 - name: ({{ certgen_title }}) Obtain cert, step 2 (using account key data)
   acme_certificate:
+    select_crypto_backend: "{{ select_crypto_backend }}"
     acme_version: 2
     acme_directory: https://{{ acme_host }}:14000/dir
     validate_certs: no

@@ -1,0 +1,89 @@
+---
+## SET UP ACCOUNT KEYS ########################################################################
+- name: Create ECC256 account key
+  command: openssl ecparam -name prime256v1 -genkey -out {{ output_dir }}/account-ec256.pem
+- name: Create ECC384 account key
+  command: openssl ecparam -name secp384r1 -genkey -out {{ output_dir }}/account-ec384.pem
+- name: Create RSA-2048 account key
+  command: openssl genrsa -out {{ output_dir }}/account-rsa2048.pem 2048
+## CREATE ACCOUNTS AND OBTAIN CERTIFICATES ####################################################
+- name: Obtain cert 1
+  include_tasks: obtain-cert.yml
+  vars:
+    certgen_title: Certificate 1 for revocation
+    certificate_name: cert-1
+    key_type: rsa
+    rsa_bits: 2048
+    subject_alt_name: "DNS:example.com"
+    subject_alt_name_critical: no
+    account_key_content: "{{ lookup('file', output_dir ~ '/account-ec256.pem') }}"
+    challenge: http-01
+    modify_account: yes
+    deactivate_authzs: no
+    force: no
+    remaining_days: 10
+    terms_agreed: yes
+    account_email: "example@example.org"
+- name: Obtain cert 2
+  include_tasks: obtain-cert.yml
+  vars:
+    certgen_title: Certificate 2 for revocation
+    certificate_name: cert-2
+    key_type: ec256
+    subject_alt_name: "DNS:*.example.com"
+    subject_alt_name_critical: yes
+    account_key: account-ec384
+    challenge: dns-01
+    modify_account: yes
+    deactivate_authzs: yes
+    force: no
+    remaining_days: 10
+    terms_agreed: yes
+    account_email: "example@example.org"
+- name: Obtain cert 3
+  include_tasks: obtain-cert.yml
+  vars:
+    certgen_title: Certificate 3 for revocation
+    certificate_name: cert-3
+    key_type: ec384
+    subject_alt_name: "DNS:t1.example.com"
+    subject_alt_name_critical: no
+    account_key: account-rsa2048
+    challenge: dns-01
+    modify_account: yes
+    deactivate_authzs: no
+    force: no
+    remaining_days: 10
+    terms_agreed: yes
+    account_email: "example@example.org"
+## REVOKE CERTIFICATES ########################################################################
+- name: Revoke certificate 1 via account key
+  acme_certificate_revoke:
+    select_crypto_backend: "{{ select_crypto_backend }}"
+    account_key_src: "{{ output_dir }}/account-ec256.pem"
+    certificate: "{{ output_dir }}/cert-1.pem"
+    acme_version: 2
+    acme_directory: https://{{ acme_host }}:14000/dir
+    validate_certs: no
+  ignore_errors: yes
+  register: cert_1_revoke
+- name: Revoke certificate 2 via certificate private key
+  acme_certificate_revoke:
+    select_crypto_backend: "{{ select_crypto_backend }}"
+    private_key_src: "{{ output_dir }}/cert-2.key"
+    certificate: "{{ output_dir }}/cert-2.pem"
+    acme_version: 2
+    acme_directory: https://{{ acme_host }}:14000/dir
+    validate_certs: no
+  ignore_errors: yes
+  register: cert_2_revoke
+- name: Revoke certificate 3 via account key (fullchain)
+  acme_certificate_revoke:
+    select_crypto_backend: "{{ select_crypto_backend }}"
+    account_key_content: "{{ lookup('file', output_dir ~ '/account-rsa2048.pem') }}"
+    certificate: "{{ output_dir }}/cert-3-fullchain.pem"
+    acme_version: 2
+    acme_directory: https://{{ acme_host }}:14000/dir
+    validate_certs: no
+  ignore_errors: yes
+  register: cert_3_revoke
