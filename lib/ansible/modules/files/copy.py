@@ -302,15 +302,15 @@ def chown_recursive(path, module):
         else:
             uid = pwd.getpwnam(owner).pw_uid
             for dirpath, dirnames, filenames in os.walk(path):
-                owner_changed = (os.stat(dirpath).st_uid == uid)
+                owner_changed = (os.stat(dirpath).st_uid != uid)
                 if owner_changed is True:
                     changed = owner_changed
                 for dir in [os.path.join(dirpath, d) for d in dirnames]:
-                    owner_changed = (os.stat(dir).st_uid == uid)
+                    owner_changed = (os.stat(dir).st_uid != uid)
                     if owner_changed is True:
                         changed = owner_changed
                 for file in [os.path.join(dirpath, f) for f in filenames]:
-                    owner_changed = (os.stat(file).st_uid == uid)
+                    owner_changed = (os.stat(file).st_uid != uid)
                     if owner_changed is True:
                         changed = owner_changed
     if group is not None:
@@ -330,15 +330,15 @@ def chown_recursive(path, module):
         else:
             gid = grp.getgrnam(group).gr_gid
             for dirpath, dirnames, filenames in os.walk(path):
-                group_changed = (os.stat(dirpath).st_gid == gid)
+                group_changed = (os.stat(dirpath).st_gid != gid)
                 if group_changed is True:
                     changed = group_changed
                 for dir in [os.path.join(dirpath, d) for d in dirnames]:
-                    group_changed = (os.stat(dir).st_gid == gid)
+                    group_changed = (os.stat(dir).st_gid != gid)
                     if group_changed is True:
                         changed = group_changed
                 for file in [os.path.join(dirpath, f) for f in filenames]:
-                    group_changed = (os.stat(file).st_gid == gid)
+                    group_changed = (os.stat(file).st_gid != gid)
                     if group_changed is True:
                         changed = group_changed
 
