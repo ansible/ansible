@@ -53,78 +53,74 @@ RETURN = '''
 servers:
     description: A list of dict results where the key is the name of the MySQL Server and the values are the facts for that MySQL Server.
     returned: always
-    type: complex
+    type: list
     contains:
-        mysqlserver_name:
-            description: The key is the name of the server that the values relate to.
+        id:
+            description:
+                - Resource ID
+            returned: always
+            type: str
+            sample: /subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforPostgreSQL/servers/testserver
+        name:
+            description:
+                - Resource name.
+            returned: always
+            type: str
+            sample: testserver
+        type:
+            description:
+                - Resource type.
+            returned: always
+            type: str
+            sample: Microsoft.DBforPostgreSQL/servers
+        location:
+            description:
+                - The location the resource resides in.
+            returned: always
+            type: str
+            sample: onebox
+        sku:
+            description:
+                - The SKU (pricing tier) of the server.
+            returned: always
             type: complex
             contains:
-                id:
-                    description:
-                        - Resource ID
-                    returned: always
-                    type: str
-                    sample: /subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforPostgreSQL/servers/testserver
                 name:
                     description:
-                        - Resource name.
+                        - The name of the SKU
                     returned: always
                     type: str
-                    sample: testserver
-                type:
+                    sample: PGSQLB100
+                tier:
                     description:
-                        - Resource type.
+                        - The tier of the particular SKU
                     returned: always
                     type: str
-                    sample: Microsoft.DBforPostgreSQL/servers
-                location:
+                    sample: Basic
+                capacity:
                     description:
-                        - The location the resource resides in.
+                        - "The scale up/out capacity, representing server's compute units."
                     returned: always
-                    type: str
-                    sample: onebox
-                sku:
-                    description:
-                        - The SKU (pricing tier) of the server.
-                    returned: always
-                    type: complex
-                    contains:
-                        name:
-                            description:
-                                - The name of the SKU
-                            returned: always
-                            type: str
-                            sample: PGSQLB100
-                        tier:
-                            description:
-                                - The tier of the particular SKU
-                            returned: always
-                            type: str
-                            sample: Basic
-                        capacity:
-                            description:
-                                - "The scale up/out capacity, representing server's compute units."
-                            returned: always
-                            type: int
-                            sample: 100
-                version:
-                    description:
-                        - Server version.
-                    returned: always
-                    type: str
-                    sample: version
-                user_visible_state:
-                    description:
-                        - "A state of a server that is visible to user. Possible values include: 'Ready', 'Dropping', 'Disabled'"
-                    returned: always
-                    type: str
-                    sample: user_visible_state
-                fully_qualified_domain_name:
-                    description:
-                        - The fully qualified domain name of a server.
-                    returned: always
-                    type: str
-                    sample: fully_qualified_domain_name
+                    type: int
+                    sample: 100
+        version:
+            description:
+                - Server version.
+            returned: always
+            type: str
+            sample: version
+        user_visible_state:
+            description:
+                - "A state of a server that is visible to user. Possible values include: 'Ready', 'Dropping', 'Disabled'"
+            returned: always
+            type: str
+            sample: user_visible_state
+        fully_qualified_domain_name:
+            description:
+                - The fully qualified domain name of a server.
+            returned: always
+            type: str
+            sample: fully_qualified_domain_name
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -207,6 +203,7 @@ class AzureRMServersFacts(AzureRMModuleBase):
     def format_item(self, item):
         d = item.as_dict()
         d = {
+            'id': d['id'],
             'resource_group': self.resource_group,
             'name': d['name'],
             'sku': d['sku'],
@@ -214,8 +211,7 @@ class AzureRMServersFacts(AzureRMModuleBase):
             'storage_mb': d['storage_profile']['storage_mb'],
             'version': d['version'],
             'enforce_ssl': (d['ssl_enforcement'] == 'Enabled'),
-            'admin_username': d['administrator_login'],
-            'state': 'present'
+            'admin_username': d['administrator_login']
         }
 
         return d
