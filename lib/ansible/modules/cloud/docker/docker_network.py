@@ -393,7 +393,7 @@ def main():
         appends=dict(type='bool', default=False, aliases=['incremental']),
         ipam_driver=dict(type='str', default=None),
         ipam_options=dict(type='dict', default={}),
-        enable_ipv6=dict(type='bool', default=False),
+        enable_ipv6=dict(type='bool'),
         debug=dict(type='bool', default=False)
     )
 
