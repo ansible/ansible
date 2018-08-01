@@ -1,0 +1,2 @@
+bugfixes:
+- get_url - fix the bug that get_url does not change mode when checksum matches (https://github.com/ansible/ansible/issues/29614)
