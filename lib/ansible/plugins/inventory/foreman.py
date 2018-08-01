@@ -10,6 +10,8 @@ DOCUMENTATION = '''
     plugin_type: inventory
     short_description: foreman inventory source
     version_added: "2.6"
+    requirements:
+        - requests >= 1.1
     description:
         - Get inventory hosts from the foreman service.
         - "Uses a configuration file as an inventory source, it must end in foreman.yml or foreman.yaml and has a ``plugin: foreman`` entry."
