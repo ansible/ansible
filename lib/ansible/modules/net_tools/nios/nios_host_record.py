@@ -39,6 +39,16 @@ options:
     default: default
     aliases:
       - dns_view
+  configure_for_dns:
+    version_added: "2.7"
+    description:
+      - Sets the DNS to particular parent. If user needs to bypass DNS
+        user can make the value to false.
+    type: bool
+    required: false
+    default: true
+    aliases:
+      - dns
   ipv4addrs:
     description:
       - Configures the IPv4 addresses for this host record.  This argument
@@ -52,9 +62,20 @@ options:
         required: true
         aliases:
           - address
+      configure_for_dhcp:
+        description:
+          - Configure the host_record over DHCP instead of DNS, if user
+            changes it to true, user need to mention MAC address to configure
+        required: false
+        aliases:
+          - dhcp
       mac:
         description:
-          - Configures the hardware MAC address for the host record
+          - Configures the hardware MAC address for the host record. If user makes
+            DHCP to true, user need to mention MAC address.
+        required: false
+        aliases:
+          - mac
   ipv6addrs:
     description:
       - Configures the IPv6 addresses for the host record.  This argument
@@ -68,6 +89,13 @@ options:
         required: true
         aliases:
           - address
+      configure_for_dhcp:
+        description:
+          - Configure the host_record over DHCP instead of DNS, if user
+            changes it to true, user need to mention MAC address to configure
+        required: false
+        aliases:
+          - dhcp
   aliases:
     version_added: "2.6"
     description:
@@ -145,6 +173,31 @@ EXAMPLES = '''
       username: admin
       password: admin
   connection: local
+- name: create an ipv4 host record bypassing DNS
+  nios_host_record:
+    name: new_host
+    ipv4:
+      - address: 192.168.10.1
+    dns: false
+    state: present
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
+  connection: local
+- name: create an ipv4 host record over DHCP
+  nios_host_record:
+    name: host.ansible.com
+    ipv4:
+      - address: 192.168.10.1
+        dhcp: true
+        mac: 00-80-C8-E3-4C-BD
+    state: present
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
+  connection: local
 '''
 
 RETURN = ''' # '''
@@ -174,11 +227,11 @@ def ipaddr(module, key, filtered_keys=None):
 
 
 def ipv4addrs(module):
-    return ipaddr(module, 'ipv4addrs', filtered_keys=['address'])
+    return ipaddr(module, 'ipv4addrs', filtered_keys=['address', 'dhcp'])
 
 
 def ipv6addrs(module):
-    return ipaddr(module, 'ipv6addrs', filtered_keys=['address'])
+    return ipaddr(module, 'ipv6addrs', filtered_keys=['address', 'dhcp'])
 
 
 def main():
@@ -186,11 +239,14 @@ def main():
     '''
     ipv4addr_spec = dict(
         ipv4addr=dict(required=True, aliases=['address'], ib_req=True),
-        mac=dict()
+        configure_for_dhcp=dict(type='bool', required=False, aliases=['dhcp'], ib_req=True),
+        mac=dict(required=False, aliases=['mac'], ib_req=True)
     )
 
     ipv6addr_spec = dict(
-        ipv6addr=dict(required=True, aliases=['address'], ib_req=True)
+        ipv6addr=dict(required=True, aliases=['address'], ib_req=True),
+        configure_for_dhcp=dict(type='bool', required=False, aliases=['configure_for_dhcp'], ib_req=True),
+        mac=dict(required=False, aliases=['mac'], ib_req=True)
     )
 
     ib_spec = dict(
@@ -199,6 +255,7 @@ def main():
 
         ipv4addrs=dict(type='list', aliases=['ipv4'], elements='dict', options=ipv4addr_spec, transform=ipv4addrs),
         ipv6addrs=dict(type='list', aliases=['ipv6'], elements='dict', options=ipv6addr_spec, transform=ipv6addrs),
+        configure_for_dns=dict(type='bool', default=True, required=False, aliases=['dns'], ib_req=True),
         aliases=dict(type='list'),
 
         ttl=dict(type='int'),
