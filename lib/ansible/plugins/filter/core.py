@@ -58,6 +58,12 @@ from ansible.utils.hashing import md5s, checksum_s
 from ansible.utils.unicode import unicode_wrap
 from ansible.utils.vars import merge_hash
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
 
 
@@ -80,25 +86,11 @@ def to_json(a, *args, **kw):
 
 def to_nice_json(a, indent=4, *args, **kw):
     '''Make verbose, human readable JSON'''
-    # python-2.6's json encoder is buggy (can't encode hostvars)
-    if sys.version_info < (2, 7):
-        try:
-            import simplejson
-        except ImportError:
-            pass
-        else:
-            try:
-                major = int(simplejson.__version__.split('.')[0])
-            except Exception:
-                pass
-            else:
-                if major >= 2:
-                    return simplejson.dumps(a, default=AnsibleJSONEncoder.default, indent=indent, sort_keys=True, *args, **kw)
-
     try:
         return json.dumps(a, indent=indent, sort_keys=True, cls=AnsibleJSONEncoder, *args, **kw)
-    except Exception:
+    except Exception as e:
         # Fallback to the to_json filter
+        display.warning('Unable to convert data using to_nice_json, falling back to to_json: %s' % to_native(e))
         return to_json(a, *args, **kw)
 
 
