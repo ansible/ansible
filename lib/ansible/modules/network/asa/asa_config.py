@@ -168,7 +168,7 @@ vars:
       - access-group cloud-acl_access_in in interface cloud13
     provider: "{{ cli }}"
 
-- name: configure ASA (9.2>) defult BGP
+- name: configure ASA (>=9.2) default BGP
   asa_config:
     lines:
       - bgp log-neighbor-changes
@@ -177,9 +177,9 @@ vars:
     parents:
       - router bgp 65002
   register: bgp
-  when: bgp_defult_config is defined
+  when: bgp_default_config is defined
 
-- name: configure ASA (9.2>) BGP neighbor in defult/singel context mode
+- name: configure ASA (>=9.2) BGP neighbor in default/singel context mode
   asa_config:
     lines:
       - "bgp router-id {{ bgp_router_id }}"
