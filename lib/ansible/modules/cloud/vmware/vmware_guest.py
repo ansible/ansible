@@ -576,6 +576,22 @@ class PyVmomiDeviceHelper(object):
             isinstance(device, vim.vm.device.VirtualLsiLogicSASController)
 
     @staticmethod
+    def create_nvme_controller():
+        nvme_ctl = vim.vm.device.VirtualDeviceSpec()
+        nvme_ctl.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
+        nvme_ctl.device = vim.vm.device.VirtualNVMEController()
+        nvme_ctl.device.deviceInfo = vim.Description()
+        nvme_ctl.device.controllerKey = 100
+        nvme_ctl.device.key = 31000
+        nvme_ctl.device.busNumber = 0
+
+        return nvme_ctl
+
+    @staticmethod
+    def is_nvme_controller(device):
+        return isinstance(device, vim.vm.device.VirtualNVMEController)
+
+    @staticmethod
     def create_ide_controller():
         ide_ctl = vim.vm.device.VirtualDeviceSpec()
         ide_ctl.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
@@ -621,13 +637,13 @@ class PyVmomiDeviceHelper(object):
                     cdrom_device.connectable.startConnected and
                     (vm_obj.runtime.powerState != vim.VirtualMachinePowerState.poweredOn or cdrom_device.connectable.connected))
 
-    def create_scsi_disk(self, scsi_ctl, disk_index=None):
+    def create_scsi_disk(self, disk_ctl_key, disk_index=None):
         diskspec = vim.vm.device.VirtualDeviceSpec()
         diskspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
         diskspec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
         diskspec.device = vim.vm.device.VirtualDisk()
         diskspec.device.backing = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
-        diskspec.device.controllerKey = scsi_ctl.device.key
+        diskspec.device.controllerKey = disk_ctl_key
 
         if self.next_disk_unit_number == 7:
             raise AssertionError()
@@ -645,6 +661,28 @@ class PyVmomiDeviceHelper(object):
 
         # unit number 7 is reserved to SCSI controller, increase next index
         if self.next_disk_unit_number == 7:
+            self.next_disk_unit_number += 1
+
+        return diskspec
+
+    def create_nvme_disk(self, disk_ctl_key, disk_index=None):
+        diskspec = vim.vm.device.VirtualDeviceSpec()
+        diskspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
+        diskspec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
+        diskspec.device = vim.vm.device.VirtualDisk()
+        diskspec.device.backing = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
+        diskspec.device.controllerKey = disk_ctl_key
+        # one nvme controller attach 0 - 14 disks
+        if self.next_disk_unit_number > 14:
+            raise AssertionError("unitNumber for nvme disk >14, valid 0-14.")
+        if disk_index is not None:
+            if disk_index > 14:
+                raise AssertionError("unitNumber for nvme disk >14, valid 0-14.")
+            else:
+                diskspec.device.unitNumber = disk_index
+                self.next_disk_unit_number = disk_index + 1
+        else:
+            diskspec.device.unitNumber = self.next_disk_unit_number
             self.next_disk_unit_number += 1
 
         return diskspec
@@ -1558,6 +1596,18 @@ class PyVmomiHelper(PyVmomi):
 
         return None
 
+    def get_vm_nvme_controller(self, vm_obj):
+        if vm_obj is None:
+            return None
+
+        for device in vm_obj.config.hardware.device:
+            if self.device_helper.is_nvme_controller(device):
+                nvme_ctl = vim.vm.device.VirtualDeviceSpec()
+                nvme_ctl.device = device
+                return nvme_ctl
+
+        return None
+
     def get_configured_disk_size(self, expected_disk_spec):
         # what size is it?
         if [x for x in expected_disk_spec.keys() if x.startswith('size_') or x == 'size']:
@@ -1609,14 +1659,32 @@ class PyVmomiHelper(PyVmomi):
         # Ignore empty disk list, this permits to keep disks when deploying a template/cloning a VM
         if len(self.params['disk']) == 0:
             return
+        # Not support multiple disks attach to multiple disk controllers yet
+        if 'scsi' in self.params['hardware'] and 'nvme' in self.params['hardware']:
+            return
 
-        scsi_ctl = self.get_vm_scsi_controller(vm_obj)
+        elif 'scsi' in self.params['hardware'] and self.params['hardware']['scsi'] != '':
+            disk_ctl = self.get_vm_scsi_controller(vm_obj)
 
-        # Create scsi controller only if we are deploying a new VM, not a template or reconfiguring
-        if vm_obj is None or scsi_ctl is None:
-            scsi_ctl = self.device_helper.create_scsi_controller(self.get_scsi_type())
-            self.change_detected = True
-            self.configspec.deviceChange.append(scsi_ctl)
+            # Create scsi controller only if we are deploying a new VM, not a template or reconfiguring
+            if vm_obj is None or disk_ctl is None:
+                disk_ctl = self.device_helper.create_scsi_controller(self.get_scsi_type())
+                self.change_detected = True
+                self.configspec.deviceChange.append(disk_ctl)
+
+        elif 'nvme' in self.params['hardware'] and self.params['hardware']['nvme'] == 'nvme':
+            disk_ctl = self.get_vm_nvme_controller(vm_obj)
+
+            if vm_obj is None or disk_ctl is None:
+                if 'version' in self.params['hardware'] and int(self.params['hardware']['version']) >= 13:
+                    disk_ctl = self.device_helper.create_nvme_controller()
+                    self.change_detected = True
+                    self.configspec.deviceChange.append(disk_ctl)
+                else:
+                    self.module.fail_json(msg="hardware version < 13 not support NVMe controller [hwv=%s]."
+                                              % (self.params['hardware']['version']))
+        else:
+            return
 
         disks = [x for x in vm_obj.config.hardware.device if isinstance(x, vim.vm.device.VirtualDisk)] \
             if vm_obj is not None else None
@@ -1635,7 +1703,10 @@ class PyVmomiHelper(PyVmomi):
                 diskspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
                 diskspec.device = disks[disk_index]
             else:
-                diskspec = self.device_helper.create_scsi_disk(scsi_ctl, disk_index)
+                if 'scsi' in self.params['hardware']:
+                    diskspec = self.device_helper.create_scsi_disk(disk_ctl.device.key, disk_index)
+                elif 'nvme' in self.params['hardware']:
+                    diskspec = self.device_helper.create_nvme_disk(disk_ctl.device.key, disk_index)
                 disk_modified = True
 
             if 'disk_mode' in expected_disk_spec:
@@ -1669,8 +1740,9 @@ class PyVmomiHelper(PyVmomi):
             # increment index for next disk search
             disk_index += 1
             # index 7 is reserved to SCSI controller
-            if disk_index == 7:
-                disk_index += 1
+            if 'scsi' in self.params['hardware']:
+                if disk_index == 7:
+                    disk_index += 1
 
             kb = self.get_configured_disk_size(expected_disk_spec)
             # VMWare doesn't allow to reduce disk sizes
