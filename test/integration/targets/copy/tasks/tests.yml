@@ -1656,7 +1656,7 @@
       - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_remote_dir_src_subdir_file12_after.stat.checksum"
 
       - "stat_remote_dir_src_link_file12_after.stat.exists"
-      - "stat_remote_dir_src_link_file12_after.stat.islink"
+      - "stat_remote_dir_src_link_file12_after.stat.islnk"
       - "stat_remote_dir_src_link_file12_before.stat.uid == stat_remote_dir_src_link_file12_after.stat.uid"
       - "stat_remote_dir_src_link_file12_before.stat.gid == stat_remote_dir_src_link_file12_after.stat.gid"
       - "stat_remote_dir_src_link_file12_before.stat.pw_name == stat_remote_dir_src_link_file12_after.stat.pw_name"
