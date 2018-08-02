@@ -23,3 +23,16 @@
     include: targets/nxos_nxapi_transports/tests/nxapi/assert_transports.yaml
 
   - debug: msg="END nxapi/setup_test.yaml"
+
+  always:
+  - name: Cleanup - Disable NXAPI
+    nxos_nxapi:
+      state: absent
+    connection: network_cli
+    register: result
+
+  - name: Cleanup - Re-enable NXAPI
+    nxos_nxapi:
+      state: present
+    connection: network_cli
+    register: result
