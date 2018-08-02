@@ -18,8 +18,8 @@
 import json
 import q
 
-from ansible.module_utils.connection import Connection
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.connection import Connection, ConnectionError
+from ansible.module_utils._text import to_bytes, to_text
 
 DEFAULT_PAGE_SIZE = 10
 
@@ -30,17 +30,17 @@ class RestApi(object):
         # in client
         self.idempotency_support = idempotency_support
 
-    def _iterate_resource_by_id(self, resource_list, content=None, pk_id=None):
-        q(resource_list)
+    def _iterate_resource_by_id(self, resource_list, content=None, primary_keys=None):
+        if primary_keys is not None:
+           want_config = dict()
+           for keys in primary_keys:
+               want_config.update({keys: content.get(keys, {})})
+        else:
+            want_config = dict(content)
+
         for resource in resource_list:
-            for k, v in resource.get('items', {}):
-                if pk_id is not None:
-                    if pk_id == k and v == content[pk_id]:
-                       return resource
-                else:
-                    for k_new, v_new in content:
-                        if k_new == k and v_new == v:
-                            return resource
+            if compare_json_resources(resource, want_config):
+                return resource
                     
         return None
 
@@ -52,31 +52,27 @@ class RestApi(object):
                 url_path=url_path,
                 http_method='GET',
                 query_params=query_filters)
-            response = to_bytes(response, errors='surrogate_or_strict')
         except ConnectionError as e:
             raise e
-        return response
+        return response.get('items', {})
 
 
-    def addResource(self, url_path, content=None, primary_key=None):
+    def addResource(self, url_path, content=None, primary_keys=None):
         conn = Connection(self.socket_path)
         
         # To support idempotent we will have to check if we already
         # have object with same primary key or content in case of no pk
         if self.idempotency_support is False:
             try:
-                old_obj_list = conn.send_request(
-                    url_path=url_path,
-                    http_method='GET')
+                old_obj_list = self.getResourceList(url_path)
             except ConnectionError as e:
                 raise e
-            if primary_key is None:
+            if primary_keys is None:
                 if self._iterate_resource_by_id(old_obj_list, content) is not None:
-                    return False
-            else:
-                if self._iterate_resource_by_id(old_obj_list, content,
-                                          pk_id=primary_key) is not None:
                     return (False, None)
+            elif self._iterate_resource_by_id(old_obj_list, content,
+                                             primary_keys=primary_keys) is not None:
+                return (False, None)
         # Could not find existing object with same primary key or content
         try:
             response =  conn.send_request(
@@ -88,3 +84,31 @@ class RestApi(object):
             raise e
 
         return (True, response)
+
+# Function to compare if 'want' dict is subset/copy of 'have'
+# It supports comparing dicts with mutable objects
+def compare_json_resources(have, want):
+    if set(have.keys()) & set(want.keys()) != set(want.keys()):
+        return False
+    for k in want:
+        if k in have:
+            if isinstance(have[k], (list, tuple, set)):
+                if not isinstance(want[k], (list, tuple, set)):
+                    return False
+                else:
+                    q(want[k], have[k])
+                    if len(set(have[k]) - set(want[k])) != 0:
+                        return False
+            elif isinstance(have[k], dict):
+                if not isinstance(want[k], dict):
+                    return False
+                else:
+                    if not compare_json_resources(have[k], want[k]): 
+                        return False 
+            elif have[k] != want[k]:
+                return False
+            
+        else:
+            return False
+        
+    return True
