@@ -40,6 +40,7 @@ elif [ "${platform}" = "rhel" ]; then
     done
 
     pip --version 2>/dev/null || curl --silent --show-error https://bootstrap.pypa.io/get-pip.py | python
+    pip install passlib
 fi
 
 if [ "${platform}" = "freebsd" ] || [ "${platform}" = "osx" ]; then
