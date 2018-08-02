@@ -5,7 +5,7 @@ Developing Plugins
 
 .. contents:: Topics
 
-Plugins are pieces of code that augment Ansible's core functionality. Ansible ships with a number of handy plugins, and you can easily write your own. This section describes the various types of Ansible  plugins and how to implement them.
+Plugins are pieces of code that augment Ansible's core functionality. Ansible ships with a number of handy plugins, and you can easily write your own. This section describes the various types of Ansible plugins and how to implement them.
 
 .. _plugin_guidelines:
 
@@ -164,6 +164,15 @@ Ansible version 2.1 introduced the 'smart' connection plugin. The 'smart' connec
 For examples on how to implement a connection plug in, see the source code here:
 `lib/ansible/plugins/connection <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/connection>`_.
 
+.. _developing_filter_plugins:
+
+Filter Plugins
+--------------
+
+Filter plugins are used for manipulating data. They are a feature of Jinja2 and are also available in Jinja2 templates used by the ``template`` module. As with all plugins, they can be easily extended, but instead of having a file for each one you can have several per file. Most of the filter plugins shipped with Ansible reside in a ``core.py``.
+
+See `lib/ansible/plugins/filter <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/filter>`_ for details.
+
 .. _developing_inventory_plugins:
 
 Inventory Plugins
@@ -265,6 +274,15 @@ For more example lookup plugins, check out the source code for the lookup plugin
 
 For more usage examples of lookup plugins, see :ref:`Using Lookups<playbooks_lookups>`.
 
+.. _developing_test_plugins:
+
+Test Plugins
+------------
+
+Test plugins are for verifying data. They are a feature of Jinja2 and are also available in Jinja2 templates used by the ``template`` module. As with all plugins, they can be easily extended, but instead of having a file for each one you can have several per file. Most of the test plugins shipped with Ansible reside in a ``core.py``. These are specially useful in conjunction with some filter plugins like ``map`` and ``select``; they are also available for conditional directives like ``when:``.
+
+See `lib/ansible/plugins/test <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/test>`_ for details.
+
 .. _developing_vars_plugins:
 
 Vars Plugins
@@ -303,29 +321,11 @@ Since Ansible version 2.4, vars plugins only execute as needed when preparing to
 For implementation examples of vars plugins, check out the source code for the vars plugins that are included with Ansible:
 `lib/ansible/plugins/vars <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/vars>`_  .
 
-
-.. _developing_filter_plugins:
-
-Filter Plugins
---------------
-
-Filter plugins are used for manipulating data. They are a feature of Jinja2 and are also available in Jinja2 templates used by the ``template`` module. As with all plugins, they can be easily extended, but instead of having a file for each one you can have several per file. Most of the filter plugins shipped with Ansible reside in a ``core.py``.
-
-See `lib/ansible/plugins/filter <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/filter>`_ for details.
-
-.. _developing_test_plugins:
-
-Test Plugins
-------------
-
-Test plugins are for verifying data. They are a feature of Jinja2 and are also available in Jinja2 templates used by the ``template`` module. As with all plugins, they can be easily extended, but instead of having a file for each one you can have several per file. Most of the test plugins shipped with Ansible reside in a ``core.py``. These are specially useful in conjunction with some filter plugins like ``map`` and ``select``; they are also available for conditional directives like ``when:``.
-
-See `lib/ansible/plugins/test <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/test>`_ for details.
-
 .. _distributing_plugins:
 
+====================
 Distributing Plugins
---------------------
+====================
 
 Plugins are loaded from the library installed path and the configured plugins directory (check your `ansible.cfg`).
 The location can vary depending on how you installed Ansible (pip, rpm, deb, etc) or by the OS/Distribution/Packager.
