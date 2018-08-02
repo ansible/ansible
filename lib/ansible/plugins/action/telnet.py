@@ -69,7 +69,6 @@ class ActionModule(ActionBase):
                     tn.read_until(to_bytes(login_prompt))
                     tn.write(to_bytes(user + "\n"))
 
-
                     if password:
                         tn.read_until(to_bytes(password_prompt))
                         tn.write(to_bytes(password + "\n"))
