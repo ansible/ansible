@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: yum4
+module: yum
 version_added: 2.7
 short_description: Manages packages with the I(yum) and I(dnf) package managers,
                    this is a merger of the old I(yum) and I(dnf) Ansible Modules
