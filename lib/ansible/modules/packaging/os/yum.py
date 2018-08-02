@@ -364,76 +364,6 @@ class YumModule(YumDnf):
         # This populates instance vars for all argument spec params
         super(YumModule, self).__init__(module)
 
-    def run(self):
-        """
-        actually execute the module code backend
-        """
-
-        error_msgs = []
-        if not HAS_RPM_PYTHON:
-            error_msgs.append('The Python 2 bindings for rpm are needed for this module. If you require Python 3 support use the `dnf` Ansible module instead.')
-        if not HAS_YUM_PYTHON:
-            error_msgs.append('The Python 2 yum module is needed for this module. If you require Python 3 support use the `dnf` Ansible module instead.')
-
-        if self.disable_excludes and yum.__version_info__ < (3, 4):
-            self.module.fail_json(msg="'disable_includes' is available in yum version 3.4 and onwards.")
-
-        if error_msgs:
-            self.module.fail_json(msg='. '.join(error_msgs))
-
-        # fedora will redirect yum to dnf, which has incompatibilities
-        # with how this module expects yum to operate. If yum-deprecated
-        # is available, use that instead to emulate the old behaviors.
-        if self.module.get_bin_path('yum-deprecated'):
-            yumbin = self.module.get_bin_path('yum-deprecated')
-        else:
-            yumbin = self.module.get_bin_path('yum')
-
-        # need debug level 2 to get 'Nothing to do' for groupinstall.
-        self.yum_basecmd = [yumbin, '-d', '2', '-y']
-
-        repoquerybin = self.module.get_bin_path('repoquery', required=False)
-
-        if self.install_repoquery and not repoquerybin and not self.module.check_mode:
-            yum_path = self.module.get_bin_path('yum')
-            if yum_path:
-                self.module.run_command('%s -y install yum-utils' % yum_path)
-            repoquerybin = self.module.get_bin_path('repoquery', required=False)
-
-        if self.list:
-            if not repoquerybin:
-                self.module.fail_json(msg="repoquery is required to use list= with this module. Please install the yum-utils package.")
-            results = {'results': self.list_stuff(repoquerybin, self.list)}
-        else:
-            # If rhn-plugin is installed and no rhn-certificate is available on
-            # the system then users will see an error message using the yum API.
-            # Use repoquery in those cases.
-
-            my = self.yum_base()
-            # A sideeffect of accessing conf is that the configuration is
-            # loaded and plugins are discovered
-            my.conf
-            repoquery = None
-            try:
-                yum_plugins = my.plugins._plugins
-            except AttributeError:
-                pass
-            else:
-                if 'rhnplugin' in yum_plugins:
-                    if repoquerybin:
-                        repoquery = [repoquerybin, '--show-duplicates', '--plugins', '--quiet']
-                        if self.installroot != '/':
-                            repoquery.extend(['--installroot', self.installroot])
-
-            results = self.ensure(repoquery)
-            if repoquery:
-                results['msg'] = '%s %s' % (
-                    results.get('msg', ''),
-                    'Warning: Due to potential bad behaviour with rhnplugin and certificates, used slower repoquery calls instead of Yum API.'
-                )
-
-        self.module.exit_json(**results)
-
     def yum_base(self):
         my = yum.YumBase()
         my.preconf.debuglevel = 0
@@ -1437,6 +1367,77 @@ class YumModule(YumDnf):
     @staticmethod
     def has_yum():
         return HAS_YUM_PYTHON
+
+    def run(self):
+        """
+        actually execute the module code backend
+        """
+
+        error_msgs = []
+        if not HAS_RPM_PYTHON:
+            error_msgs.append('The Python 2 bindings for rpm are needed for this module. If you require Python 3 support use the `dnf` Ansible module instead.')
+        if not HAS_YUM_PYTHON:
+            error_msgs.append('The Python 2 yum module is needed for this module. If you require Python 3 support use the `dnf` Ansible module instead.')
+
+        if self.disable_excludes and yum.__version_info__ < (3, 4):
+            self.module.fail_json(msg="'disable_includes' is available in yum version 3.4 and onwards.")
+
+        if error_msgs:
+            self.module.fail_json(msg='. '.join(error_msgs))
+
+        # fedora will redirect yum to dnf, which has incompatibilities
+        # with how this module expects yum to operate. If yum-deprecated
+        # is available, use that instead to emulate the old behaviors.
+        if self.module.get_bin_path('yum-deprecated'):
+            yumbin = self.module.get_bin_path('yum-deprecated')
+        else:
+            yumbin = self.module.get_bin_path('yum')
+
+        # need debug level 2 to get 'Nothing to do' for groupinstall.
+        self.yum_basecmd = [yumbin, '-d', '2', '-y']
+
+        repoquerybin = self.module.get_bin_path('repoquery', required=False)
+
+        if self.install_repoquery and not repoquerybin and not self.module.check_mode:
+            yum_path = self.module.get_bin_path('yum')
+            if yum_path:
+                self.module.run_command('%s -y install yum-utils' % yum_path)
+            repoquerybin = self.module.get_bin_path('repoquery', required=False)
+
+        if self.list:
+            if not repoquerybin:
+                self.module.fail_json(msg="repoquery is required to use list= with this module. Please install the yum-utils package.")
+            results = {'results': self.list_stuff(repoquerybin, self.list)}
+        else:
+            # If rhn-plugin is installed and no rhn-certificate is available on
+            # the system then users will see an error message using the yum API.
+            # Use repoquery in those cases.
+
+            my = self.yum_base()
+            # A sideeffect of accessing conf is that the configuration is
+            # loaded and plugins are discovered
+            my.conf
+            repoquery = None
+            try:
+                yum_plugins = my.plugins._plugins
+            except AttributeError:
+                pass
+            else:
+                if 'rhnplugin' in yum_plugins:
+                    if repoquerybin:
+                        repoquery = [repoquerybin, '--show-duplicates', '--plugins', '--quiet']
+                        if self.installroot != '/':
+                            repoquery.extend(['--installroot', self.installroot])
+
+            results = self.ensure(repoquery)
+            if repoquery:
+                results['msg'] = '%s %s' % (
+                    results.get('msg', ''),
+                    'Warning: Due to potential bad behaviour with rhnplugin and certificates, used slower repoquery calls instead of Yum API.'
+                )
+
+        self.module.exit_json(**results)
+
 
 
 def main():

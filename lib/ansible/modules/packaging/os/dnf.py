@@ -386,40 +386,6 @@ class DnfModule(YumDnf):
 
         return result
 
-    def run(self):
-        """The main function."""
-
-        # Check if autoremove is called correctly
-        if self.autoremove:
-            if LooseVersion(dnf.__version__) < LooseVersion('2.0.1'):
-                self.module.fail_json(msg="Autoremove requires dnf>=2.0.1. Current dnf version is %s" % dnf.__version__)
-            if self.state not in ["absent", None]:
-                self.module.fail_json(msg="Autoremove should be used alone or with state=absent")
-
-        # Set state as installed by default
-        # This is not set in AnsibleModule() because the following shouldn't happend
-        # - dnf: autoremove=yes state=installed
-        if self.state is None:
-            self.state = 'installed'
-
-        if self.list:
-            self.base = self._base(
-                self.conf_file, self.disable_gpg_check, self.disablerepo,
-                self.enablerepo, self.installroot
-            )
-            self.list_items(self.module, self.list)
-        else:
-            # Note: base takes a long time to run so we want to check for failure
-            # before running it.
-            if not dnf.util.am_i_root():
-                self.module.fail_json(msg="This command has to be run under the root user.")
-            self.base = self._base(
-                self.conf_file, self.disable_gpg_check, self.disablerepo,
-                self.enablerepo, self.installroot
-            )
-
-            self.ensure()
-
     def list_items(self, command):
         """List package info based on the command."""
         # Rename updates to upgrades
@@ -661,6 +627,41 @@ class DnfModule(YumDnf):
     @staticmethod
     def has_dnf():
         return HAS_DNF
+
+    def run(self):
+        """The main function."""
+
+        # Check if autoremove is called correctly
+        if self.autoremove:
+            if LooseVersion(dnf.__version__) < LooseVersion('2.0.1'):
+                self.module.fail_json(msg="Autoremove requires dnf>=2.0.1. Current dnf version is %s" % dnf.__version__)
+            if self.state not in ["absent", None]:
+                self.module.fail_json(msg="Autoremove should be used alone or with state=absent")
+
+        # Set state as installed by default
+        # This is not set in AnsibleModule() because the following shouldn't happend
+        # - dnf: autoremove=yes state=installed
+        if self.state is None:
+            self.state = 'installed'
+
+        if self.list:
+            self.base = self._base(
+                self.conf_file, self.disable_gpg_check, self.disablerepo,
+                self.enablerepo, self.installroot
+            )
+            self.list_items(self.module, self.list)
+        else:
+            # Note: base takes a long time to run so we want to check for failure
+            # before running it.
+            if not dnf.util.am_i_root():
+                self.module.fail_json(msg="This command has to be run under the root user.")
+            self.base = self._base(
+                self.conf_file, self.disable_gpg_check, self.disablerepo,
+                self.enablerepo, self.installroot
+            )
+
+            self.ensure()
+
 
 
 def main():
