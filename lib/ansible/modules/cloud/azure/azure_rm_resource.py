@@ -27,6 +27,7 @@ options:
   url:
     description:
       - Azure RM Resource URL.
+      - Use * instead of subscription id and it will be replaced with default subscription.
   api_version:
     description:
       - Specific API version to be used.
@@ -239,6 +240,10 @@ class AzureRMResource(AzureRMModuleBase):
 
             if orphan is not None:
                 self.url += '/' + orphan
+        else:
+            # this is for user convenience, * can be replaced with subscription id so no need to do the lookup
+            self.url = self.url.replace('/subscriptions/*/', '/subscriptions/' + self.subscription_id + '/')
+
         query_parameters = {}
         query_parameters['api-version'] = self.api_version
 
