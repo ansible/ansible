@@ -119,6 +119,41 @@ The output above shows the host record for ``leaf01`` that was retrieved by the 
 Dynamic inventory script
 ========================
 
+You can use the Infoblox dynamic inventory script to import your network node inventory with Infoblox NIOS. To gather the inventory from Infoblox, you need two files:
+
+- `infoblox.yaml <https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/infoblox.yaml>`_ - A file that specifies the NIOS provider arguments and optional filters.
+  - `infoblox.py <https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/infoblox.py>`_ - The python script that retrieves the NIOS inventory.
+
+To use the Infoblox dynamic inventory script:
+
+1. Download the files and save them in the ``/etc/ansible`` directory.
+2. Modify the ``infoblox.yaml`` file with your NIOS credentials.
+3. Change the permissions on the python file to make it executable:
+
+.. code-block:: bash
+
+    $ sudo chmod +x /etc/ansible/infoblox.py
+
+3. Optionally, test the script:
+
+.. code-block:: bash
+
+   $ python infoblox.py
+   {
+       " ": {
+           "hosts": [
+               "leaf01",
+               "leaf02",
+               "leaf03",
+               "leaf04",
+               "spine01",
+               "spine02"
+           ]
+       },
+   <...output omitted...>
+
+See `Working with Dynamic Inventory <https://docs.ansible.com/ansible/devel/user_guide/intro_dynamic_inventory.html>`_ for more details.
+
 Use Cases
 =========
 
