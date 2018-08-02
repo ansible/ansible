@@ -40,6 +40,7 @@ options:
   type:
     description:
       - Type of database object to set privileges on.
+      - The `default_prives` choice is available starting at version 2.7.
     default: table
     choices: [table, sequence, function, database,
               schema, language, tablespace, group,
@@ -227,6 +228,7 @@ EXAMPLES = """
     type: database
     role: librarian
 
+# Available since version 2.7
 # ALTER DEFAULT PRIVILEGES ON DATABASE library TO librarian
 # Objs must be set, ALL_DEFAULT to TABLES/SEQUENCES/TYPES/FUNCTIONS
 # ALL_DEFAULT works only with privs=ALL
@@ -239,6 +241,7 @@ EXAMPLES = """
     role: librarian
     grant_option: yes
 
+# Available since version 2.7
 # ALTER DEFAULT PRIVILEGES ON DATABASE library TO reader
 # Objs must be set, ALL_DEFAULT to TABLES/SEQUENCES/TYPES/FUNCTIONS
 # ALL_DEFAULT works only with privs=ALL
@@ -507,7 +510,7 @@ class Connection(object):
             for obj in objs:
                 try:
                     f, args = obj.split('(', 1)
-                except:
+                except Exception:
                     raise Error('Illegal function signature: "%s".' % obj)
                 obj_ids.append('"%s"."%s"(%s' % (schema_qualifier, f, args))
         elif obj_type in ['table', 'sequence']:
