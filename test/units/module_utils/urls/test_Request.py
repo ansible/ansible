@@ -8,7 +8,8 @@ __metaclass__ = type
 import datetime
 import os
 
-from ansible.module_utils.urls import Request, open_url, urllib_request, HAS_SSLCONTEXT, cookiejar, ConnectionError, RequestWithMethod
+from ansible.module_utils.urls import (Request, open_url, urllib_request, HAS_SSLCONTEXT, cookiejar, ConnectionError, RequestWithMethod,
+                                       UnixHTTPHandler)
 from ansible.module_utils.urls import SSLValidationHandler, HTTPSClientAuthHandler, RedirectHandlerFactory
 
 import pytest
@@ -45,6 +46,7 @@ def test_Request_fallback(urlopen_mock, install_opener_mock, mocker):
         client_cert='/tmp/client.pem',
         client_key='/tmp/client.key',
         cookies=cookies,
+        unix_socket='/foo/bar/baz.sock',
     )
     fallback_mock = mocker.spy(request, '_fallback')
 
@@ -63,10 +65,11 @@ def test_Request_fallback(urlopen_mock, install_opener_mock, mocker):
         call(None, '/tmp/client.pem'),  # client_cert
         call(None, '/tmp/client.key'),  # client_key
         call(None, cookies),  # cookies
+        call(None, '/foo/bar/baz.sock'),  # unix_socket
     ]
     fallback_mock.assert_has_calls(calls)
 
-    assert fallback_mock.call_count == 12  # All but headers use fallback
+    assert fallback_mock.call_count == 13  # All but headers use fallback
 
     args = urlopen_mock.call_args[0]
     assert args[1] is None  # data, this is handled in the Request not urlopen
@@ -123,6 +126,21 @@ def test_Request_open_http(urlopen_mock, install_opener_mock):
             found_handlers.append(handler)
 
     assert len(found_handlers) == 0
+
+
+def test_Request_open_unix_socket(urlopen_mock, install_opener_mock):
+    r = Request().open('GET', 'http://ansible.com/', unix_socket='/foo/bar/baz.sock')
+    args = urlopen_mock.call_args[0]
+
+    opener = install_opener_mock.call_args[0][0]
+    handlers = opener.handlers
+
+    found_handlers = []
+    for handler in handlers:
+        if isinstance(handler, UnixHTTPHandler:
+            found_handlers.append(handler)
+
+    assert len(found_handlers) == 1
 
 
 def test_Request_open_ftp(urlopen_mock, install_opener_mock, mocker):
