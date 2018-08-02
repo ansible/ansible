@@ -1,9 +1,52 @@
-***************************************************************
-Extending Ansible: Creating Modules and Plugins for Local Use
-***************************************************************
+************************************************************************
+Extending Ansible: Creating or Copying Modules and Plugins for Local Use
+************************************************************************
 
-The easiest, quickest, and most popular way to extend Ansible is to write a module or a plugin for local use. You can write and store modules and plugins on your Ansible control node for use within your team or organization. If you want to share a local plugin or module, you can embed it in a role and publish it on Ansible Galaxy. When extending Ansible locally, you can choose any programming language you like, you don't have to clone the main Ansible repo, and you don't have to open a pull request. We do recommend you add tests to your module, but you can ignore that advice with local modules and plugins.
+The easiest, quickest, and most popular way to extend Ansible is to copy or write a module or a plugin for local use. You can store modules and plugins on your Ansible control node for use within your team or organization. If you want to share a local plugin or module more widely, you can embed it in a role and publish it on Ansible Galaxy. 
 
-Local Plugins
+Extending Ansible locally offers lots of shortcuts:
 
-Local Modules
+* you can choose any programming language you like
+* you don't have to clone the main Ansible repo
+* you don't have to open a pull request
+* you don't have to add tests (though we highly recommend that you do!)
+
+If you've already copied or written a local module or plugin, you can drop it in one of the "magic" directories and start using it right away.
+
+Loading Local Modules
+---------------------
+Ansible automatically loads all executable files found in certain directories as modules, so you can create or add a local module in any of these locations:
+
+* any directory added to the ``ANSIBLE_LIBRARY`` environment variable (``$ANSIBLE_LIBRARY`` takes a colon-separated list like ``$PATH``)
+* ``~/.ansible/plugins/modules/``
+* ``/usr/share/ansible/plugins/modules/``
+
+Once your module file is in one of these locations, Ansible will load it and you can use it in a any local task, playbook, or role. Use the name of the file as the module name: for example, if the module file is `~/.ansible/plugins/modules/local_users.py`, use `local_users` as the module name.
+
+If you want to use your local module only in certain playbooks: 
+
+* store it in a sub-directory called ``library`` in the directory that contains the playbook(s)
+
+If you want to use your local module only in a single role:
+
+* store it in a sub-directory called ``library`` within that role
+
+Loading Local Plugins
+---------------------
+Ansible loads plugins automatically too, loading each type of plugin separately. You'll need to know the ``plugin_type`` you're copying or creating (for example, cache, callback, filter, inventory, strategy, etc.). Once you know the type of plugin, you can create or add a local plugin in any of these locations:
+
+* any directory added to the relevant ``ANSIBLE_plugin_type_PLUGINS`` environment variable (these variables, like ``$ANSIBLE_FILTER_PLUGINS`` and ``$ANSIBLE_VARS_PLUGINS`` take colon-separated lists like ``$PATH``)
+* the directory named for the correct ``plugin_type`` within ``~/.ansible/plugins/`` - for example, ``~/.ansible/plugins/callback_plugins``
+* the directory named for the correct ``plugin_type`` within ``/usr/share/ansible/plugins/`` - for example, ``/usr/share/ansible/plugins/plugin_type/action_plugins``
+
+Once your plugin file is in one of these locations, Ansible will load it and you can use it in a any local task, playbook, or role. 
+
+If you want to use your local plugin only in certain playbooks: 
+
+* store it in a sub-directory for the correct ``plugin_type`` (for example, ``filter_plugins`` or ``inventory_plugins``) in the directory that contains the playbook(s)
+
+If you want to use your local plugin only in a single role:
+
+* store it in a sub-directory for the correct ``plugin_type`` (for example, ``cache_plugins`` or ``strategy_plugins``) within that role
+
+If you haven't written your local module or plugin yet, start with the pages on :ref:`developing_modules` and :ref:`developing_plugins`.
