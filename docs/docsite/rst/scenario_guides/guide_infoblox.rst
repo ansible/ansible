@@ -32,6 +32,16 @@ Common parameters and settings
 
 Module list
 ============
+Ansible supports the following modules for ``nios``:
+
+- `nios_host_record <http://docs.ansible.com/ansible/latest/modules/nios_host_record_module.html>`_ - configure host records
+- `nios_network <http://docs.ansible.com/ansible/latest/modules/nios_network_module.html>`_ - configure networking objects
+- `nios_network_view <http://docs.ansible.com/ansible/latest/modules/nios_network_view_module.html>`_ - configure networking views
+- `nios_dns_view <http://docs.ansible.com/ansible/latest/modules/nios_dns_view_module.html>`_ - configure DNS views
+- `nios_zone <http://docs.ansible.com/ansible/latest/modules/nios_zone_module.html>`_ - configure DNS zones
+
+Each module includes simple documented example tasks for how to use them.
+
 
 NIOS lookup plugin
 ==================
