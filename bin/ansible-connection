@@ -16,6 +16,7 @@ import os
 import signal
 import socket
 import sys
+import time
 import traceback
 import errno
 import json
@@ -141,22 +142,28 @@ class ConnectionProcess(object):
                 self.exception = traceback.format_exc()
 
         finally:
-            # when done, close the connection properly and cleanup
-            # the socket file so it can be recreated
+            # allow time for any exception msg send over socket to receive at other end before shutting down
+            time.sleep(0.1)
+
+            # when done, close the connection properly and cleanup the socket file so it can be recreated
             self.shutdown()
 
     def connect_timeout(self, signum, frame):
-        display.display('persistent connection idle timeout triggered, timeout value is %s secs'
-                        % self.connection.get_option('persistent_connect_timeout'), log_only=True)
-        self.shutdown()
+        msg = 'persistent connection idle timeout triggered, timeout value is %s secs.\nSee the timeout setting options in the Network Debug and ' \
+              'Troubleshooting Guide.' % self.connection.get_option('persistent_connect_timeout')
+        display.display(msg, log_only=True)
+        raise Exception(msg)
 
     def command_timeout(self, signum, frame):
-        display.display('command timeout triggered, timeout value is %s secs' % self.connection.get_option('persistent_command_timeout'), log_only=True)
-        self.shutdown()
+        msg = 'command timeout triggered, timeout value is %s secs.\nSee the timeout setting options in the Network Debug and Troubleshooting Guide.'\
+              % self.connection.get_option('persistent_command_timeout')
+        display.display(msg, log_only=True)
+        raise Exception(msg)
 
     def handler(self, signum, frame):
-        display.display('signal handler called with signal %s' % signum, log_only=True)
-        self.shutdown()
+        msg = 'signal handler called with signal %s.' % signum
+        display.display(msg, log_only=True)
+        raise Exception(msg)
 
     def shutdown(self):
         """ Shuts down the local domain socket
