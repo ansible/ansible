@@ -30,6 +30,8 @@ options:
     description:
       - A path of where to download the file to (if desired). If I(dest) is a
         directory, the basename of the file on the remote server will be used.
+        This argument is deprecated and will be removed in version 2.11. Please
+        use the M(get_url) module instead.
   user:
     description:
       - A username for the module to use for Digest, Basic or WSSE authentication.
