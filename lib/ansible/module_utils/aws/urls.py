@@ -21,7 +21,7 @@ def hexdigest(s):
     Returns the sha256 hexdigest of a string after encoding.
     """
 
-    return hashlib.sha256(s.encode('utf-8')).hexdigest()
+    return hashlib.sha256(s.encode("utf-8")).hexdigest()
 
 
 def format_querystring(params=None):
@@ -45,7 +45,7 @@ def sign(key, msg):
     Return digest for key applied to msg
     '''
 
-    return hmac.new(key, msg.encode('utf-8'), hashlib.sha256).digest()
+    return hmac.new(key, msg.encode("utf-8"), hashlib.sha256).digest()
 
 
 def get_signature_key(key, dateStamp, regionName, serviceName):
@@ -53,10 +53,10 @@ def get_signature_key(key, dateStamp, regionName, serviceName):
     Returns signature key for AWS resource
     '''
 
-    kDate = sign(('AWS4' + key).encode('utf-8'), dateStamp)
+    kDate = sign(("AWS4" + key).encode("utf-8"), dateStamp)
     kRegion = sign(kDate, regionName)
     kService = sign(kRegion, serviceName)
-    kSigning = sign(kService, 'aws4_request')
+    kSigning = sign(kService, "aws4_request")
     return kSigning
 
 
@@ -110,9 +110,9 @@ def signed_request(method="GET", service=None, host=None, uri=None, query=None, 
     # "Constants"
 
     t = datetime.datetime.utcnow()
-    amz_date = t.strftime('%Y%m%dT%H%M%SZ')
-    datestamp = t.strftime('%Y%m%d')  # Date w/o time, used in credential scope
-    algorithm = 'AWS4-HMAC-SHA256'
+    amz_date = t.strftime("%Y%m%dT%H%M%SZ")
+    datestamp = t.strftime("%Y%m%d")  # Date w/o time, used in credential scope
+    algorithm = "AWS4-HMAC-SHA256"
 
     # AWS stuff
 
@@ -127,7 +127,7 @@ def signed_request(method="GET", service=None, host=None, uri=None, query=None, 
     if not secret_key:
         module.fail_json(msg="aws_secret_access_key is missing")
 
-    credential_scope = '/'.join([datestamp, region, service, 'aws4_request'])
+    credential_scope = "/".join([datestamp, region, service, "aws4_request"])
 
     # Argument Defaults
 
@@ -139,7 +139,7 @@ def signed_request(method="GET", service=None, host=None, uri=None, query=None, 
 
     headers.update({
         "host": host,
-        'x-amz-date': amz_date,
+        "x-amz-date": amz_date,
     })
 
     # Handle adding of session_token if present
@@ -163,7 +163,7 @@ def signed_request(method="GET", service=None, host=None, uri=None, query=None, 
 
     cannonical_headers = "\n".join([
         key.lower().strip() + ":" + value for key, value in headers.items()
-    ]) + '\n'  # Note additional trailing newline
+    ]) + "\n"  # Note additional trailing newline
 
     cannonical_request = "\n".join([
         method,
@@ -174,12 +174,12 @@ def signed_request(method="GET", service=None, host=None, uri=None, query=None, 
         body_hash,
     ])
 
-    string_to_sign = '\n'.join([algorithm, amz_date, credential_scope, hexdigest(cannonical_request)])
+    string_to_sign = "\n".join([algorithm, amz_date, credential_scope, hexdigest(cannonical_request)])
 
     # Sign the Cannonical request
 
     signing_key = get_signature_key(secret_key, datestamp, region, service)
-    signature = hmac.new(signing_key, string_to_sign.encode('utf-8'), hashlib.sha256).hexdigest()
+    signature = hmac.new(signing_key, string_to_sign.encode("utf-8"), hashlib.sha256).hexdigest()
 
     # Make auth header with that info
 
@@ -195,8 +195,8 @@ def signed_request(method="GET", service=None, host=None, uri=None, query=None, 
         url = url + "?" + query_string
 
     final_headers = {
-        'x-amz-date': amz_date,
-        'Authorization': authorization_header,
+        "x-amz-date": amz_date,
+        "Authorization": authorization_header,
     }
 
     final_headers.update(headers)
