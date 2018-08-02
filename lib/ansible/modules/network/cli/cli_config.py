@@ -185,9 +185,9 @@ def run(module, connection, candidate, running):
 
     kwargs = {'candidate': candidate, 'running': running}
     if diff_match:
-        kwargs.update({'match': diff_match})
+        kwargs.update({'diff_match': diff_match})
     if diff_replace:
-        kwargs.update({'replace': diff_replace})
+        kwargs.update({'diff_replace': diff_replace})
     if diff_ignore_lines:
         kwargs.update({'diff_ignore_lines': diff_ignore_lines})
 
