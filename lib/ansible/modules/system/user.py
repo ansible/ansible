@@ -448,7 +448,7 @@ class User(object):
                 if len(fields) >= 3:
                     # contains character outside crypt constrain
                     if bool(_HASH_RE.search(fields[-1])):
-                      maybe_invalid = True
+                        maybe_invalid = True
                     # md5
                     if fields[1] == '1' and len(fields[-1]) != 22:
                         maybe_invalid = True
@@ -462,7 +462,7 @@ class User(object):
                     maybe_invalid = True
             if maybe_invalid:
                 self.module.warn("The iunput password seems not been hashed, "
-                            "please note that 'password' argument requires an encrypted value or the password will not work properly.")
+                                 "please note that 'password' argument requires an encrypted value or the password will not work properly.")
 
     def execute_command(self, cmd, use_unsafe_shell=False, data=None, obey_checkmode=True):
         if self.module.check_mode and obey_checkmode:
