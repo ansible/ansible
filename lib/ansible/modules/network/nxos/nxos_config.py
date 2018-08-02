@@ -281,7 +281,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands, get_connection
-from ansible.module_utils.network.nxos.nxos import get_capabilities
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.network.nxos.nxos import check_args as nxos_check_args
 from ansible.module_utils.network.common.utils import to_list
@@ -391,19 +390,6 @@ def main():
     result = {'changed': False, 'warnings': warnings}
 
     config = None
-
-    try:
-        info = get_capabilities(module)
-        api = info.get('network_api')
-        device_info = info.get('device_info', {})
-        os_platform = device_info.get('network_os_platform', '')
-    except ConnectionError:
-        api = ''
-        os_platform = ''
-
-    if api == 'cliconf' and module.params['replace'] == 'config':
-        if '9K' not in os_platform:
-            module.fail_json(msg='replace: config is supported only on Nexus 9K series switches')
 
     diff_ignore_lines = module.params['diff_ignore_lines']
     path = module.params['parents']
