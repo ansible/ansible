@@ -68,8 +68,8 @@ options:
       - The private SSH key or certificate file used to to authenticate to the
         remote device when first establishing the SSH connection.
     ini:
-     section: defaults
-     key: private_key_file
+      - section: defaults
+        key: private_key_file
     env:
       - name: ANSIBLE_PRIVATE_KEY_FILE
     vars:
@@ -94,8 +94,8 @@ options:
       - Can be configured form the CLI via the C(--become) or C(-b) options
     default: False
     ini:
-      section: privilege_escalation
-      key: become
+      - section: privilege_escalation
+        key: become
     env:
       - name: ANSIBLE_BECOME
     vars:
@@ -107,8 +107,8 @@ options:
         C(enable) but could be defined as other values.
     default: sudo
     ini:
-      section: privilege_escalation
-      key: become_method
+      - section: privilege_escalation
+        key: become_method
     env:
       - name: ANSIBLE_BECOME_METHOD
     vars:
@@ -125,8 +125,8 @@ options:
         option on production systems as it could create a security vulnerability.
     default: False
     ini:
-      section: paramiko_connection
-      key: host_key_auto_add
+      - section: paramiko_connection
+        key: host_key_auto_add
     env:
       - name: ANSIBLE_HOST_KEY_AUTO_ADD
   persistent_connect_timeout:

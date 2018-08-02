@@ -72,8 +72,8 @@ options:
       - The private SSH key or certificate file used to to authenticate to the
         remote device when first establishing the SSH connection.
     ini:
-     section: defaults
-     key: private_key_file
+      - section: defaults
+        key: private_key_file
     env:
       - name: ANSIBLE_PRIVATE_KEY_FILE
     vars:
@@ -96,8 +96,8 @@ options:
         option on production systems as it could create a security vulnerability.
     default: 'no'
     ini:
-      section: paramiko_connection
-      key: host_key_auto_add
+      - section: paramiko_connection
+        key: host_key_auto_add
     env:
       - name: ANSIBLE_HOST_KEY_AUTO_ADD
   look_for_keys:
