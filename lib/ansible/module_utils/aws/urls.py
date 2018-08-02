@@ -80,7 +80,7 @@ def signed_request(
         method="GET", service=None, host=None, uri=None,
         query=None, body="", headers=None,
         session_in_header=True, session_in_query=False
-    ):
+):
     """Generate a SigV4 request to an AWS resource for a module
 
     This is used if you wish to authenticate with AWS credentials to a secure endpoint like an elastisearch domain.
