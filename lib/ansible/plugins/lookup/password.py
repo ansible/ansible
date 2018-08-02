@@ -271,30 +271,30 @@ def _write_password_file(b_path, content):
 
 def _get_lock(b_path):
     """Get the lock for writing password file."""
-    writer_process = False
+    first_process = False
     b_pathdir = os.path.dirname(b_path)
     lockfile_name = to_bytes("%s.ansible_lockfile" % hashlib.md5(b_path).hexdigest())
     lockfile = os.path.join(b_pathdir, lockfile_name)
-    if not os.path.exists(lockfile) and not os.path.exists(b_path):
+    if not os.path.exists(lockfile):
         try:
             makedirs_safe(b_pathdir, mode=0o700)
             fd = os.open(lockfile, os.O_CREAT | os.O_EXCL)
             os.close(fd)
-            writer_process = True
+            first_process = True
         except OSError as e:
             if e.strerror != 'File exists':
                 raise
 
     timeout = 0
     # if the lock is got by other process, wait until it's released
-    while os.path.exists(lockfile) and not writer_process:
+    while os.path.exists(lockfile) and not first_process:
         timeout += 1
         time.sleep(0.1)
         if timeout > 20:
             raise AnsibleError("Password lookup cannot get the lock in 2 seconds, abort..."
                                "This may caused by un-removed lockfile"
                                "you can manually remove it from controller machine at %s and try again" % lockfile)
-    return writer_process, lockfile
+    return first_process, lockfile
 
 
 def _release_lock(lockfile):
@@ -306,33 +306,36 @@ def _release_lock(lockfile):
 class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
         ret = []
+
         for term in terms:
             relpath, params = _parse_parameters(term)
             path = self._loader.path_dwim(relpath)
             b_path = to_bytes(path, errors='surrogate_or_strict')
             chars = _gen_candidate_chars(params['chars'])
 
-            content = None
-            # get the lock for writing password file
-            writer_process, lockfile = _get_lock(b_path)
+            changed = None
+            # make sure only one process finishes all the job first
+            first_process, lockfile = _get_lock(b_path)
 
-            if not writer_process:
-                content = _read_password_file(b_path)
+            content = _read_password_file(b_path)
 
             if content is None or b_path == to_bytes('/dev/null'):
                 plaintext_password = random_password(params['length'], chars)
                 salt = None
+                changed = True
             else:
                 plaintext_password, salt = _parse_content(content)
 
             if params['encrypt'] and not salt:
-                writer_process = True
+                changed = True
                 salt = _random_salt()
 
-            if writer_process and b_path != to_bytes('/dev/null'):
+            if changed and b_path != to_bytes('/dev/null'):
                 content = _format_content(plaintext_password, salt, encrypt=params['encrypt'])
                 _write_password_file(b_path, content)
-                # writing complete, release the lock
+
+            if first_process:
+                # let other processes continue
                 _release_lock(lockfile)
 
             if params['encrypt']:
