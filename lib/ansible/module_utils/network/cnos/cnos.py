@@ -184,6 +184,8 @@ def run_cnos_commands(module, commands, check_rc=True):
         # Exception in Exceptions
         if 'VLAN_ACCESS_MAP' in errMsg:
             return retVal + '<<' + errMsg + '\n'
+        if 'confederation identifier' in errMsg:
+            return retVal + '<<' + errMsg + '\n'
         # Add more here if required
         retVal = retVal + '<< ' + 'Error-101 ' + errMsg + '\n'
     return str(retVal)
@@ -2827,7 +2829,7 @@ def checkLong(s):
 
 
 def debugOutput(command):
-    f = open('debugOuput.txt', 'a')
+    f = open('debugOutput.txt', 'a')
     f.write(str(command))  # python will convert \n to os.linesep
     f.close()  # you can omit in most cases as the destructor will call it
 # EOM
