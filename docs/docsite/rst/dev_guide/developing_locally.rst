@@ -13,6 +13,8 @@ Extending Ansible locally offers lots of shortcuts:
 
 If you've already copied or written a local module or plugin, you can drop it in one of the "magic" directories and start using it right away.
 
+.. _distributing_modules:
+
 Loading Local Modules
 ---------------------
 Ansible automatically loads all executable files found in certain directories as modules, so you can create or add a local module in any of these locations:
@@ -31,6 +33,28 @@ If you want to use your local module only in a single role:
 
 * store it in a sub-directory called ``library`` within that role
 
+.. _distributing_plugins:
+
+Distributing Plugins
+---------------------
+
+Plugins are loaded from the library installed path and the configured plugins directory (check your `ansible.cfg`).
+The location can vary depending on how you installed Ansible (pip, rpm, deb, etc) or by the OS/Distribution/Packager.
+Plugins are automatically loaded when you have one of the following subfolders adjacent to your playbook or inside a role:
+
+    * action_plugins
+    * cache_plugins
+    * callback_plugins
+    * connection_plugins
+    * filter_plugins
+    * inventory_plugins
+    * lookup_plugins
+    * shell_plugins
+    * strategy_plugins
+    * test_plugins
+    * vars_plugins
+
+
 Loading Local Plugins
 ---------------------
 Ansible loads plugins automatically too, loading each type of plugin separately. You'll need to know the ``plugin_type`` you're copying or creating (for example, cache, callback, filter, inventory, strategy, etc.). Once you know the type of plugin, you can create or add a local plugin in any of these locations:
@@ -48,5 +72,7 @@ If you want to use your local plugin only in certain playbooks:
 If you want to use your local plugin only in a single role:
 
 * store it in a sub-directory for the correct ``plugin_type`` (for example, ``cache_plugins`` or ``strategy_plugins``) within that role
+
+When shipped as part of a role, the plugin will be available as soon as the role is called in the play.
 
 If you haven't written your local module or plugin yet, start with the pages on :ref:`developing_modules` and :ref:`developing_plugins`.

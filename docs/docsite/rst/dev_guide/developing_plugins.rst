@@ -321,31 +321,6 @@ Since Ansible version 2.4, vars plugins only execute as needed when preparing to
 For implementation examples of vars plugins, check out the source code for the vars plugins that are included with Ansible:
 `lib/ansible/plugins/vars <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/vars>`_  .
 
-.. _distributing_plugins:
-
-====================
-Distributing Plugins
-====================
-
-Plugins are loaded from the library installed path and the configured plugins directory (check your `ansible.cfg`).
-The location can vary depending on how you installed Ansible (pip, rpm, deb, etc) or by the OS/Distribution/Packager.
-Plugins are automatically loaded when you have one of the following subfolders adjacent to your playbook or inside a role:
-
-    * action_plugins
-    * lookup_plugins
-    * callback_plugins
-    * connection_plugins
-    * inventory_plugins
-    * filter_plugins
-    * strategy_plugins
-    * cache_plugins
-    * test_plugins
-    * shell_plugins
-    * vars_plugins
-
-
-When shipped as part of a role, the plugin will be available as soon as the role is called in the play.
-
 .. seealso::
 
    :ref:`all_modules`
