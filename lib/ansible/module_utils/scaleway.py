@@ -1,3 +1,5 @@
+# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
+
 import json
 import sys
 
@@ -92,4 +94,33 @@ SCALEWAY_LOCATION = {
 
     'ams1': {'name': 'Amsterdam 1', 'country': 'NL', "api_endpoint": 'https://cp-ams1.scaleway.com'},
     'EMEA-NL-EVS': {'name': 'Amsterdam 1', 'country': 'NL', "api_endpoint": 'https://cp-ams1.scaleway.com'}
+}
+
+SCALEWAY_COMMERCIAL_TYPES_ARCH_MAPPING = {
+
+    # Virtual ARM64 compute instance
+    'ARM64-2GB': "arm",
+    'ARM64-4GB': "arm",
+    'ARM64-8GB': "arm",
+    'ARM64-16GB': "arm",
+    'ARM64-32GB': "arm",
+    'ARM64-64GB': "arm",
+    'ARM64-128GB': "arm",
+
+    # Baremetal
+    'C1': "arm",  # ARM64 (4 cores) - 2GB
+    'C2S': "x86_64",  # X86-64 (4 cores) - 8GB
+    'C2M': "x86_64",  # X86-64 (8 cores) - 16GB
+    'C2L': "x86_64",  # x86-64 (8 cores) - 32 GB
+
+    # Virtual X86-64 compute instance
+    'START1-XS': "x86_64",  # Starter X86-64 (1 core) - 1GB - 25 GB NVMe
+    'START1-S': "x86_64",  # Starter X86-64 (2 cores) - 2GB - 50 GB NVMe
+    'START1-M': "x86_64",  # Starter X86-64 (4 cores) - 4GB - 100 GB NVMe
+    'START1-L': "x86_64",  # Starter X86-64 (8 cores) - 8GB - 200 GB NVMe
+    'X64-15GB': "x86_64",
+    'X64-30GB': "x86_64",
+    'X64-60GB': "x86_64",
+    'X64-120GB': "x86_64",
+
 }
