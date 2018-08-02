@@ -1589,7 +1589,7 @@
 
 ### pass
 
-## make sure remote_dir_src not change
+## testcase4 make sure remote_dir_src not change
 - block:
   - name: Stat the remote_dir_src
     stat:
@@ -1632,6 +1632,6 @@
       - "stat_remote_dir_src_subdir_before.stat.uid == stat_remote_dir_src_subdir_after.stat.uid"
       - "stat_remote_dir_src_subdir_before.stat.gid == stat_remote_dir_src_subdir_after.stat.gid"
       - "stat_remote_dir_src_subdir_before.stat.pw_name == stat_remote_dir_src_subdir_after.stat.pw_name"
-      - "stat_remote_dir_src_bsubdir_efore.stat.gr_name == stat_remote_dir_src_subdir_after.stat.gr_name"
+      - "stat_remote_dir_src_subdir_before.stat.gr_name == stat_remote_dir_src_subdir_after.stat.gr_name"
       - "stat_remote_dir_src_subdir_before.stat.path == stat_remote_dir_src_subdir_after.stat.path"
       - "stat_remote_dir_src_subdir_before.stat.mode == stat_remote_dir_src_subdir_after.stat.mode"
