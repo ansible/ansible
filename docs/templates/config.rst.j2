@@ -42,20 +42,20 @@ Ansible will process the above list and use the first file found, all others are
 
 .. _cfg_in_world_writable_dir:
 
-Configuration file when the current directory is world writable
----------------------------------------------------------------
+Avoiding security risks with ``ansible.cfg`` in the current directory
+-----------------------------------------------------------------
 
-If you rely on finding :file:`ansible.cfg` in the current working directory,
-please be sure that the directory is not world writable.  Ansible will not
-automatically load a config file from the current working directory if the
-directory is writable because it is a security risk.  Another user could have
-placed the configuration file in the directory with settings which cause
-Ansible to run malicious code both locally and remotely, possibly with elevated
-privileges.
+If you load :file:`ansible.cfg` from the current working directory, and that 
+directory is world-writable, you face a serious security risk. Another user could 
+replace your configuration file with a malicious one, designed to make 
+Ansible run malicious code both locally and remotely, possibly with elevated 
+privileges. For this reason, Ansible will not automatically load a config file from the current 
+working directory if the directory is world-writable. The easiest way to avoid this risk 
+is to restrict access to your Ansible directories to particular user(s) and/or group(s).
 
-Some users run across this when they run Ansible from a filesystem which has to
+You may also run across this if you run Ansible from a filesystem which has to
 emulate Unix permissions.  In most of those cases, the correct fix is to modify
-the mount options of the filesystem so that the files and directories are
+the mount options of the filesystem so the files and directories are
 readable and writable by the users and groups running Ansible but closed to
 others.
 
@@ -67,13 +67,13 @@ others.
     * `Microsoft WSL docs
       <https://docs.microsoft.com/en-us/windows/wsl/wsl-config#set-wsl-launch-settings>`_
       on how to set mount options.
-    * `Microsoft blog port
+    * `Microsoft blog post
       <https://blogs.msdn.microsoft.com/commandline/2018/01/12/chmod-chown-wsl-improvements/>`_
       which explains the mount options in greater detail.
 
-If you absolutely depend on having the config live in a world writable current
-working directory you can explicitly specify the config file via the
-:envvar:`ANSIBLE_CONFIG` environment variable to do so but please take
+If you absolutely depend on having the config live in a world-writable current
+working directory, you can explicitly specify the config file via the
+:envvar:`ANSIBLE_CONFIG` environment variable. Please take
 appropriate steps to mitigate the security concerns above before doing so.
 
 
