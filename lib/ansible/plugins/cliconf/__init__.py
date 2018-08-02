@@ -165,7 +165,7 @@ class CliconfBase(AnsiblePlugin):
         self.response_logging = False
 
     @abstractmethod
-    def get_config(self, source='running', flag=None, format=None):
+    def get_config(self, source='running', flags=None, format=None):
         """Retrieves the specified configuration from the device
 
         This method will retrieve the configuration specified by source and
