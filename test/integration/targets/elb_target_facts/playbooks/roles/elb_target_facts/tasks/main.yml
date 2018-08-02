@@ -248,7 +248,7 @@
           - "{{ alb_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn')) }}"
           - "{{ nlb_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn')) }}"
           - "{{ idle_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn')) }}"
-          -  (ec2_tgs | length) == 3
+          - (ec2_tgs | length) == 3
         msg: "ec2_tgs reflected the addition of the target to the idle group"
 
     - name: gather facts again, this time excluding the idle group
