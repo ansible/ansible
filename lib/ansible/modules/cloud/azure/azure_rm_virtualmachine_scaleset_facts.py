@@ -144,12 +144,10 @@ azure_vmss:
                 - Load balancer name.
             returned: always
             type: str
-            returned: always
             sample: testlb
         location:
             description:
                 - Resource location.
-            returned: always
             type: str
             returned: always
             sample: japaneast
