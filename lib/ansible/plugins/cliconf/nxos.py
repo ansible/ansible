@@ -244,8 +244,9 @@ class Cliconf(CliconfBase):
 
     def get_capabilities(self):
         result = {}
-        result['rpc'] = self.get_base_rpc()
+        result['rpc'] = self.get_base_rpc() + ['get_diff', 'run_commands']
         result['device_info'] = self.get_device_info()
+        result['device_operations'] = self.get_device_operations()
         result.update(self.get_option_values())
 
         if isinstance(self._connection, NetworkCli):
