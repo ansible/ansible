@@ -127,6 +127,7 @@ options:
       - If set to C(yes), and C(state=latest) then only installs updates that have been marked bugfix related.
     required: false
     default: "no"
+    type: bool
     version_added: "2.7"
   enable_plugin:
     description:
@@ -159,9 +160,23 @@ options:
   allow_downgrade:
     description:
       - This is effectively a no-op in DNF as it is the default behavior of dnf, but is an accepted parameter for feature
-        parity/compatibility with the YUM module.
+        parity/compatibility with the I(yum) module.
     type: bool
-    default: "yes"
+    default: False
+    version_added: "2.7"
+  install_repoquery:
+    description:
+      - This is effectively a no-op in DNF as it is not needed with DNF, but is an accepted parameter for feature
+        parity/compatibility with the I(yum) module.
+    type: bool
+    default: True
+    version_added: "2.7"
+  download_only:
+    description:
+      - Only download the packages, do not install them.
+    required: false
+    default: "no"
+    type: bool
     version_added: "2.7"
 notes:
   - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
@@ -237,7 +252,7 @@ try:
 except ImportError:
     HAS_DNF = False
 
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.six import PY2
 from distutils.version import LooseVersion
 
@@ -264,8 +279,10 @@ class DnfModule(YumDnf):
                 package = 'python3-dnf'
 
             if self.module.check_mode:
-                self.module.fail_json(msg="`{0}` is not installed, but it is required"
-                                "for the Ansible dnf module.".format(package))
+                self.module.fail_json(
+                    msg="`{0}` is not installed, but it is required"
+                    "for the Ansible dnf module.".format(package)
+                )
 
             self.module.run_command(['dnf', 'install', '-y', package], check_rc=True)
             global dnf
@@ -277,9 +294,10 @@ class DnfModule(YumDnf):
                 import dnf.subject
                 import dnf.util
             except ImportError:
-                self.module.fail_json(msg="Could not import the dnf python module. "
-                                    "Please install `{0}` package.".format(package))
-
+                self.module.fail_json(
+                    msg="Could not import the dnf python module. "
+                    "Please install `{0}` package.".format(package)
+                )
 
     def _configure_base(self, base, conf_file, disable_gpg_check, installroot='/'):
         """Configure the dnf Base object."""
@@ -336,7 +354,6 @@ class DnfModule(YumDnf):
         # Read the configuration file
         conf.read()
 
-
     def _specify_repositories(self, base, disablerepo, enablerepo):
         """Enable and disable repositories matching the provided patterns."""
         base.read_all_repos()
@@ -351,7 +368,6 @@ class DnfModule(YumDnf):
         for repo_pattern in enablerepo:
             for repo in repos.get_matching(repo_pattern):
                 repo.enable()
-
 
     def _base(self, conf_file, disable_gpg_check, disablerepo, enablerepo, installroot):
         """Return a fully configured dnf Base object."""
@@ -368,7 +384,6 @@ class DnfModule(YumDnf):
         if self.update_cache:
             base.update_cache()
         return base
-
 
     def _package_dict(self, package):
         """Return a dictionary of information for the package."""
@@ -395,7 +410,7 @@ class DnfModule(YumDnf):
         # Return the corresponding packages
         if command in ['installed', 'upgrades', 'available']:
             results = [
-                _package_dict(package)
+                self._package_dict(package)
                 for package in getattr(self.base.sack.query(), command)()]
         # Return the enabled repository ids
         elif command in ['repos', 'repositories']:
@@ -405,10 +420,9 @@ class DnfModule(YumDnf):
         # Return any matching packages
         else:
             packages = dnf.subject.Subject(command).get_best_query(self.base.sack)
-            results = [_package_dict(package) for package in packages]
+            results = [self._package_dict(package) for package in packages]
 
         self.module.exit_json(results=results)
-
 
     def _mark_package_install(self, pkg_spec):
         """Mark the package for install."""
@@ -416,7 +430,6 @@ class DnfModule(YumDnf):
             self.base.install(pkg_spec)
         except dnf.exceptions.MarkingError:
             self.module.fail_json(msg="No package {0} available.".format(pkg_spec))
-
 
     def _parse_spec_group_file(self):
         pkg_specs, grp_specs, filenames = [], [], []
@@ -431,13 +444,11 @@ class DnfModule(YumDnf):
                 pkg_specs.append(name)
         return pkg_specs, grp_specs, filenames
 
-
     def _update_only(self, pkgs):
         installed = self.base.sack.query().installed()
         for pkg in pkgs:
             if installed.filter(name=pkg):
                 self.base.package_upgrade(pkg)
-
 
     def _install_remote_rpms(self, filenames):
         if int(dnf.__version__.split(".")[0]) >= 2:
@@ -452,7 +463,6 @@ class DnfModule(YumDnf):
             for pkg in pkgs:
                 self.base.package_install(pkg)
 
-
     def ensure(self):
         # Accumulate failures.  Package management modules install what they can
         # and fail with a message about what they can't.
@@ -462,7 +472,7 @@ class DnfModule(YumDnf):
         # Autoremove is called alone
         # Jump to remove path where base.autoremove() is run
         if not self.names and self.autoremove:
-            names = []
+            self.names = []
             self.state = 'absent'
 
         if self.names == ['*'] and self.state == 'latest':
@@ -586,25 +596,26 @@ class DnfModule(YumDnf):
                 if self.autoremove:
                     self.base.autoremove()
 
-
         if not self.base.resolve(allow_erasing=allow_erasing):
             if failures:
-                self.module.fail_json(msg='Failed to install some of the '
-                                    'specified packages',
-                                failures=failures)
+                self.module.fail_json(
+                    msg='Failed to install some of the specified packages',
+                    failures=failures
+                )
             self.module.exit_json(msg="Nothing to do")
         else:
             if self.module.check_mode:
                 if failures:
-                    self.module.fail_json(msg='Failed to install some of the '
-                                        'specified packages',
-                                    failures=failures)
+                    self.module.fail_json(
+                        msg='Failed to install some of the specified packages',
+                        failures=failures
+                    )
                 self.module.exit_json(changed=True)
 
             try:
                 self.base.download_packages(self.base.transaction.install_set)
             except dnf.exceptions.DownloadError as e:
-                self.module.fail_json(msg="Failed to download packages: {}".format(to_text(e)))
+                self.module.fail_json(msg="Failed to download packages: {0}".format(to_text(e)))
 
             response = {'changed': True, 'results': []}
             if self.download_only:
@@ -619,9 +630,10 @@ class DnfModule(YumDnf):
                     response['results'].append("Removed: {0}".format(package))
 
             if failures:
-                self.module.fail_json(msg='Failed to install some of the '
-                                    'specified packages',
-                                failures=failures)
+                self.module.fail_json(
+                    msg='Failed to install some of the specified packages',
+                    failures=failures
+                )
             self.module.exit_json(**response)
 
     @staticmethod
@@ -663,7 +675,6 @@ class DnfModule(YumDnf):
             self.ensure()
 
 
-
 def main():
     # state=installed name=pkgspec
     # state=removed name=pkgspec
@@ -684,9 +695,8 @@ def main():
     try:
         module_implementation.run()
     except dnf.exceptions.RepoError as de:
-        module.exit_json(msg="Failed to synchronize repodata: {}".format(de))
+        module.exit_json(msg="Failed to synchronize repodata: {0}".format(de))
 
 
 if __name__ == '__main__':
     main()
-

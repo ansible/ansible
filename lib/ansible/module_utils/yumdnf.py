@@ -39,7 +39,7 @@ yumdnf_argument_spec = dict(
         security=dict(type='bool', default=False),
         skip_broken=dict(type='bool', default=False),
         # removed==absent, installed==present, these are accepted as aliases
-        state=dict(type='str', default='installed', choices=['absent', 'installed', 'latest', 'present', 'removed']),
+        state=dict(type='str', default='present', choices=['absent', 'installed', 'latest', 'present', 'removed']),
         update_cache=dict(type='bool', default=False, aliases=['expire-cache']),
         update_only=dict(required=False, default="no", type='bool'),
         validate_certs=dict(type='bool', default=True),
@@ -98,14 +98,13 @@ class YumDnf(with_metaclass(ABCMeta, object)):
         if self.exclude and len(self.exclude) == 1 and ',' in self.exclude:
             self.exclude = self.module.params['exclude'].split(',')
 
-
     @abstractmethod
     def run(self):
         raise NotImplementedError
 
     def fetch_rpm_from_url(self, spec):
         # download package so that we can query it
-        package_name, _ = os.path.splitext(str(spec.rsplit('/', 1)[1]))
+        package_name, dummy = os.path.splitext(str(spec.rsplit('/', 1)[1]))
         package_file = tempfile.NamedTemporaryFile(dir=self.module.tmpdir, prefix=package_name, suffix='.rpm', delete=False)
         self.module.add_cleanup_file(package_file.name)
         try:
@@ -121,5 +120,3 @@ class YumDnf(with_metaclass(ABCMeta, object)):
             self.module.fail_json(msg="Failure downloading %s, %s" % (spec, to_native(e)))
 
         return package_file.name
-
-

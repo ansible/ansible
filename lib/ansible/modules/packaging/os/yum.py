@@ -17,11 +17,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: yum
-version_added: 2.7
-short_description: Manages packages with the I(yum) and I(dnf) package managers,
-                   this is a merger of the old I(yum) and I(dnf) Ansible Modules
-                   in order to properly support yum 3.x, yum 4.x (dnf backend),
-                   and dnf natively.
+version_added: historical
+short_description: Manages packages with the I(yum) package manager
 description:
      - Installs, upgrade, downgrades, removes, and lists packages and groups with the I(yum) package manager.
      - This module only works on Python 2. If you require Python 3 support see the M(dnf) module.
@@ -165,7 +162,7 @@ options:
       - If C(yes), removes all "leaf" packages from the system that were originally
         installed as dependencies of user-installed packages but which are no longer
         required by any such package. Should be used alone or when state is I(absent)
-      - NOTE: This feature requires yum >= 3.4.3 (RHEL/CentOS 7+)
+      - "NOTE: This feature requires yum >= 3.4.3 (RHEL/CentOS 7+)"
     type: bool
     default: false
     version_added: "2.7"
@@ -310,7 +307,8 @@ EXAMPLES = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.yumdnf import yumdnf_argument_spec
+from ansible.module_utils._text import to_native
+from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 
 import os
 import re
@@ -335,9 +333,6 @@ except ImportError:
     transaction_helpers = False
 
 from contextlib import contextmanager
-
-from ansible.module_utils._text import to_native
-from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 
 def_qf = "%{epoch}:%{name}-%{version}-%{release}.%{arch}"
 rpmbin = None
@@ -670,11 +665,13 @@ class YumModule(YumDnf):
         finally:
             os.close(fd)
 
-        return '%s:%s-%s-%s.%s' % (header[rpm.RPMTAG_EPOCH] or '0',
-                                header[rpm.RPMTAG_NAME],
-                                header[rpm.RPMTAG_VERSION],
-                                header[rpm.RPMTAG_RELEASE],
-                                header[rpm.RPMTAG_ARCH])
+        return '%s:%s-%s-%s.%s' % (
+            header[rpm.RPMTAG_EPOCH] or '0',
+            header[rpm.RPMTAG_NAME],
+            header[rpm.RPMTAG_VERSION],
+            header[rpm.RPMTAG_RELEASE],
+            header[rpm.RPMTAG_ARCH]
+        )
 
     @contextmanager
     def set_env_proxy(self):
@@ -691,8 +688,10 @@ class YumModule(YumDnf):
                         namepass = namepass + ":" + my.conf.proxy_password
                 namepass = namepass + '@'
                 for item in scheme:
-                    os.environ[item + "_proxy"] = re.sub(r"(http://)",
-                                                        r"\1" + namepass, my.conf.proxy)
+                    os.environ[item + "_proxy"] = re.sub(
+                        r"(http://)",
+                        r"\1" + namepass, my.conf.proxy
+                    )
             yield
         except yum.Errors.YumBaseError:
             raise
@@ -764,8 +763,11 @@ class YumModule(YumDnf):
         if stuff == 'repos':
             return [dict(repoid=name, state='enabled') for name in sorted(self.repolist(repoq)) if name.strip()]
 
-        return [self.pkg_to_dict(p) for p in sorted(self.is_installed(repoq, stuff, qf=is_installed_qf) +
-                                            self.is_available(repoq, stuff, qf=qf)) if p.strip()]
+        return [
+            self.pkg_to_dict(p) for p in
+            sorted(self.is_installed(repoq, stuff, qf=is_installed_qf) + self.is_available(repoq, stuff, qf=qf))
+            if p.strip()
+        ]
 
     def exec_install(self, items, action, pkgs, res):
         cmd = self.yum_basecmd + [action] + pkgs
@@ -1051,8 +1053,7 @@ class YumModule(YumDnf):
         # ceph.x86_64                               1:11.2.0-0.el7                    ceph
 
         # preprocess string and filter out empty lines so the regex below works
-        out = re.sub(r'\n[^\w]\W+(.*)', r' \1',
-                    check_update_output)
+        out = re.sub(r'\n[^\w]\W+(.*)', r' \1', check_update_output)
 
         available_updates = out.split('\n')
 
@@ -1211,10 +1212,17 @@ class YumModule(YumDnf):
                     to_update.append((w, None))
                 elif w not in updates:
                     other_pkg = will_update_from_other_package[w]
-                    to_update.append((w, 'because of (at least) %s-%s.%s from %s' % (other_pkg,
-                                                                                    updates[other_pkg]['version'],
-                                                                                    updates[other_pkg]['dist'],
-                                                                                    updates[other_pkg]['repo'])))
+                    to_update.append(
+                        (
+                            w,
+                            'because of (at least) %s-%s.%s from %s' % (
+                                other_pkg,
+                                updates[other_pkg]['version'],
+                                updates[other_pkg]['dist'],
+                                updates[other_pkg]['repo']
+                            )
+                        )
+                    )
                 else:
                     to_update.append((w, '%s.%s from %s' % (updates[w]['version'], updates[w]['dist'], updates[w]['repo'])))
 
@@ -1360,8 +1368,12 @@ class YumModule(YumDnf):
             res = self.latest(pkgs, repoq)
         else:
             # should be caught by AnsibleModule argument_spec
-            self.module.fail_json(msg="we should never get here unless this all failed",
-                            changed=False, results='', errors='unexpected state')
+            self.module.fail_json(
+                msg="we should never get here unless this all failed",
+                changed=False,
+                results='',
+                errors='unexpected state'
+            )
         return res
 
     @staticmethod
@@ -1437,7 +1449,6 @@ class YumModule(YumDnf):
                 )
 
         self.module.exit_json(**results)
-
 
 
 def main():
