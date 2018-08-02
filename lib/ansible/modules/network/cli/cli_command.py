@@ -123,6 +123,7 @@ failed_conditions:
 import time
 
 from ansible.module_utils._text import to_text
+from ansible.module_utils.six import string_types
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.network.common.parsing import Conditional
