@@ -755,7 +755,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if not shebang and module_style != 'binary':
             raise AnsibleError("module (%s) is missing interpreter line" % module_name)
 
-        self._used_interpreter = shebang.lstrip('!#')
+        self._used_interpreter = shebang
         remote_module_path = None
 
         if not self._is_pipelining_enabled(module_style, wrap_async):
@@ -906,7 +906,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     data['exception'] = res['stderr']
 
             # try to figure out if we are missing interpreter
-            if self._used_interpreter is not None and '%s: No such file or directory' % self._used_interpreter in data['module_stderr']:
+            if self._used_interpreter is not None and '%s: No such file or directory' % self._used_interpreter.lstrip('!#')in data['module_stderr']:
                 data['msg'] = "The module failed to execute correctly, you probably need to set the interpreter."
             else:
                 data['msg'] = "MODULE FAILURE"
