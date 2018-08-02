@@ -80,7 +80,7 @@ class HttpApi(HttpApiBase):
 
         if replace:
             device_info = self.connection.get_device_info()
-            if '9K' not in device_info.get('network_os_platform'):
+            if '9K' not in device_info.get('network_os_platform', ''):
                 raise ConnectionError(msg=u'replace is supported only on Nexus 9K devices')
             candidate = 'config replace {0}'.format(replace)
 
