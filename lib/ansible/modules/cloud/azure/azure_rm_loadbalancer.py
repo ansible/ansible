@@ -332,7 +332,6 @@ EXAMPLES = '''
         frontend_port: 80
         backend_port: 80
         probe: prob0
-  register: output
 '''
 
 RETURN = '''
