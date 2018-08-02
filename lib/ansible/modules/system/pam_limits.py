@@ -20,8 +20,9 @@ author:
     - "Sebastien Rohaut (@usawa)"
 short_description: Modify Linux PAM limits
 description:
-     - The C(pam_limits) module modify PAM limits, default in /etc/security/limits.conf.
-       For the full documentation, see man limits.conf(5).
+     - The C(pam_limits) module modifies PAM limits. The default file is
+       C(/etc/security/limits.conf). For the full documentation, see C(man 5
+       limits.conf).
 options:
   domain:
     description:
@@ -29,7 +30,7 @@ options:
     required: true
   limit_type:
     description:
-      - Limit type, see C(man limits) for an explanation
+      - Limit type, see C(man 5 limits.conf) for an explanation
     required: true
     choices: [ "hard", "soft", "-" ]
   limit_item:
@@ -94,7 +95,7 @@ options:
     required: false
     default: ''
 notes:
-  - If dest file doesn't exists, it is created.
+  - If C(dest) file doesn't exist, it is created.
 '''
 
 EXAMPLES = '''
