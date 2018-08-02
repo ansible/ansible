@@ -1,7 +1,0 @@
----
-
-- include: targets/nxos_nxapi_transports/tests/default/assert_transport_httpapi.yaml
-  when: connection == 'httpapi'
-
-- include: targets/nxos_nxapi_transports/tests/default/assert_transport_nxapi.yaml
-  when: connection != 'httpapi'
