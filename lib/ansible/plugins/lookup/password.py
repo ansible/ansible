@@ -285,15 +285,15 @@ def _get_lock(b_path):
             if e.strerror != 'File exists':
                 raise
 
-    timeout = 0
+    counter = 0
     # if the lock is got by other process, wait until it's released
     while os.path.exists(lockfile) and not first_process:
-        timeout += 1
-        time.sleep(0.1)
-        if timeout > 20:
-            raise AnsibleError("Password lookup cannot get the lock in 2 seconds, abort..."
+        time.sleep(2 ** counter)
+        if counter >= 2:
+            raise AnsibleError("Password lookup cannot get the lock in 7 seconds, abort..."
                                "This may caused by un-removed lockfile"
                                "you can manually remove it from controller machine at %s and try again" % lockfile)
+        counter += 1
     return first_process, lockfile
 
 
