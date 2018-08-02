@@ -68,3 +68,5 @@ Limitations and known issues
       Ansible blog post about Infoblox.
   `Ansible NIOS modules <https://docs.ansible.com/ansible/latest/modules/list_of_net_tools_modules.html>`_
       The list of supported NIOS modules, with examples.
+  `Infoblox Ansible Examples <https://github.com/network-automation/infoblox_ansible>`_
+      Infoblox example playbooks.
