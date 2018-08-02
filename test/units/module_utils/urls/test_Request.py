@@ -137,7 +137,7 @@ def test_Request_open_unix_socket(urlopen_mock, install_opener_mock):
 
     found_handlers = []
     for handler in handlers:
-        if isinstance(handler, UnixHTTPHandler:
+        if isinstance(handler, UnixHTTPHandler):
             found_handlers.append(handler)
 
     assert len(found_handlers) == 1

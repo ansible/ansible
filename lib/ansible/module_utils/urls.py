@@ -362,10 +362,11 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
         in place of HTTPSHandler
         '''
 
-        def __init__(self, client_cert=None, client_key=None, **kwargs):
+        def __init__(self, client_cert=None, client_key=None, unix_socket=None, **kwargs):
             urllib_request.HTTPSHandler.__init__(self, **kwargs)
             self.client_cert = client_cert
             self.client_key = client_key
+            self._unix_socket = unix_socket
 
         def https_open(self, req):
             return self.do_open(self._build_https_connection, req)
@@ -379,18 +380,43 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
                 kwargs['context'] = self._context
             except AttributeError:
                 pass
+            if self._unix_socket:
+                return UnixHTTPSConnection(self._unix_socket)(host, **kwargs)
             return httplib.HTTPSConnection(host, **kwargs)
+
+
+class UnixHTTPSConnection(httplib.HTTPSConnection):
+    def __init__(self, unix_socket):
+        self._unix_socket = unix_socket
+
+    def connect(self):
+        self.sock = sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        sock.connect(self._unix_socket)
+        if self.timeout is not socket._GLOBAL_DEFAULT_TIMEOUT:
+            sock.settimeout(self.timeout)
+
+        # We have already built our self.sock, but just need the functionality of
+        # httplib.HTTPSConnection.connect to wrap the socket correctly. Prevent
+        # httplib.HTTPConnection.connect from doing anything temporarily
+        _connect = httplib.HTTPConnection.connect
+        httplib.HTTPConnection.connect = lambda self: None
+        super(UnixHTTPSConnection, self).connect()
+        httplib.HTTPConnection.connect = _connect
+
+    def __call__(self, *args, **kwargs):
+        super(UnixHTTPSConnection, self).__init__(*args, **kwargs)
+        return self
 
 
 class UnixHTTPConnection(httplib.HTTPConnection):
     '''Handles http requests to a unix socket file'''
 
-    def __init__(self, socket_path):
-        self._socket_path = socket_path
+    def __init__(self, unix_socket):
+        self._unix_socket = unix_socket
 
     def connect(self):
         self.sock = sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        sock.connect(self._socket_path)
+        sock.connect(self._unix_socket)
         if self.timeout is not socket._GLOBAL_DEFAULT_TIMEOUT:
             sock.settimeout(self.timeout)
 
@@ -402,12 +428,12 @@ class UnixHTTPConnection(httplib.HTTPConnection):
 class UnixHTTPHandler(urllib_request.HTTPHandler):
     '''Handler for Unix urls'''
 
-    def __init__(self, socket_path, **kwargs):
+    def __init__(self, unix_socket, **kwargs):
         urllib_request.HTTPHandler.__init__(self, **kwargs)
-        self._socket_path = socket_path
+        self._unix_socket = unix_socket
 
     def http_open(self, req):
-        return self.do_open(UnixHTTPConnection(self._socket_path), req)
+        return self.do_open(UnixHTTPConnection(self._unix_socket), req)
 
 
 class ParseResultDottedDict(dict):
@@ -1068,7 +1094,8 @@ class Request:
             context.check_hostname = False
             handlers.append(HTTPSClientAuthHandler(client_cert=client_cert,
                                                    client_key=client_key,
-                                                   context=context))
+                                                   context=context,
+                                                   unix_socket=unix_socket))
         elif client_cert:
             handlers.append(HTTPSClientAuthHandler(client_cert=client_cert,
                                                    client_key=client_key))
