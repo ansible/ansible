@@ -269,6 +269,40 @@ def _write_password_file(b_path, content):
         f.write(b_content)
 
 
+def _get_lock(b_path):
+    """Get the lock for writing password file."""
+    writer_process = False
+    b_pathdir = os.path.dirname(b_path)
+    lockfile_name = to_bytes("%s.ansible_lockfile" % hashlib.md5(b_path).hexdigest())
+    lockfile = os.path.join(b_pathdir, lockfile_name)
+    if not os.path.exists(lockfile) and not os.path.exists(b_path):
+        try:
+            makedirs_safe(b_pathdir, mode=0o700)
+            fd = os.open(lockfile, os.O_CREAT | os.O_EXCL)
+            os.close(fd)
+            writer_process = True
+        except OSError as e:
+            if e.strerror != 'File exists':
+                raise
+
+    timeout = 0
+    # if the lock is got by other process, wait until it's released
+    while os.path.exists(lockfile) and not writer_process:
+        timeout += 1
+        time.sleep(0.1)
+        if timeout > 20:
+            raise AnsibleError("Password lookup cannot get the lock in 2 seconds, abort..."
+                               "This may caused by un-removed lockfile"
+                               "you can manually remove it from controller machine at %s and try again" % lockfile)
+    return writer_process, lockfile
+
+
+def _release_lock(lockfile):
+    """Release the lock so other processes can read the password file."""
+    if os.path.exists(lockfile):
+        os.remove(lockfile)
+
+
 class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
         ret = []
@@ -279,29 +313,8 @@ class LookupModule(LookupBase):
             chars = _gen_candidate_chars(params['chars'])
 
             content = None
-            writer_process = False
-            b_pathdir = os.path.dirname(b_path)
-            # get a unique lock file name for each password file
-            lockfile_name = to_bytes("%s.ansible_lockfile" % hashlib.md5(b_path).hexdigest())
-            lockfile = os.path.join(b_pathdir, lockfile_name)
-            if not os.path.exists(lockfile) and not os.path.exists(b_path):
-                try:
-                    makedirs_safe(b_pathdir, mode=0o700)
-                    fd = os.open(lockfile, os.O_CREAT | os.O_EXCL)
-                    os.close(fd)
-                    writer_process = True
-                except OSError as e:
-                    if not e.strerror == 'File exists':
-                        raise
-
-            timeout = 0
-            while os.path.exists(lockfile) and not writer_process:
-                timeout += 1
-                time.sleep(0.1)
-                if timeout > 20:
-                    raise AnsibleError("Password lookup cannot get the lock in 2 seconds, abort..."
-                                       "This may caused by un-removed lockfile"
-                                       "you can manually remove it from controller machine at %s and try again" % lockfile)
+            # get the lock for writing password file
+            writer_process, lockfile = _get_lock(b_path)
 
             if not writer_process:
                 content = _read_password_file(b_path)
@@ -319,7 +332,8 @@ class LookupModule(LookupBase):
             if writer_process and b_path != to_bytes('/dev/null'):
                 content = _format_content(plaintext_password, salt, encrypt=params['encrypt'])
                 _write_password_file(b_path, content)
-                os.remove(lockfile)
+                # writing complete, release the lock
+                _release_lock(lockfile)
 
             if params['encrypt']:
                 password = do_encrypt(plaintext_password, params['encrypt'], salt=salt)
