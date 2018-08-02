@@ -24,4 +24,3 @@
     loop: "{{ tls | product(ssl) | list }}"
 
   when: (platform is match("N9K") or platform is match("N3K") or platform is match("N9K-F") or platform is match("N35") or platform is match("N3L")) and major_version is version('9.2', '>=')
-
