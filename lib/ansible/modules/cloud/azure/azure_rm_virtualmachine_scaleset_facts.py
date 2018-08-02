@@ -217,8 +217,6 @@ azure_vmss:
             type: str
             returned: always
             sample: Standard_D4
-
-    ]
 '''  # NOQA
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
