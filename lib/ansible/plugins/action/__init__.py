@@ -906,7 +906,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     data['exception'] = res['stderr']
 
             # try to figure out if we are missing interpreter
-            if self._used_interpreter is not None and '%s: No such file or directory' % self._used_interpreter.lstrip('!#')in data['module_stderr']:
+            if self._used_interpreter is not None and '%s: No such file or directory' % self._used_interpreter.lstrip('!#') in data['module_stderr']:
                 data['msg'] = "The module failed to execute correctly, you probably need to set the interpreter."
             else:
                 data['msg'] = "MODULE FAILURE"
@@ -993,7 +993,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # be sure to remove the BECOME-SUCCESS message now
         out = self._strip_success_message(out)
 
-        display.debug(u"_low_level_Execute_command() done: rc=%d, stdout=%s, stderr=%s" % (rc, out, err))
+        display.debug(u"_low_level_execute_command() done: rc=%d, stdout=%s, stderr=%s" % (rc, out, err))
         return dict(rc=rc, stdout=out, stdout_lines=out.splitlines(), stderr=err, stderr_lines=err.splitlines())
 
     def _get_diff_data(self, destination, source, task_vars, source_file=True):
