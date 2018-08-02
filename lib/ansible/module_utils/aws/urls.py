@@ -60,30 +60,22 @@ def get_signature_key(key, dateStamp, regionName, serviceName):
     return kSigning
 
 
-def get_aws_key_pair(module):
+def get_aws_credentials_object(module):
     '''
-    Returns aws_access_key_id, aws_secret_access_key for a module.
-
-    Prefers the credentials from a profile over inline'd keys
+    Returns aws_access_key_id, aws_secret_access_key, session_token for a module.
     '''
 
     if not HAS_BOTO3:
-        module.fail_json("get_aws_key_pair requires boto3")
+        module.fail_json("get_aws_credentials_object requires boto3")
 
     dummy, dummy, boto_params = get_aws_connection_info(module, boto3=True)
+    s = session.Session(**boto_params)
 
-    profile = boto_params.get('profile_name')
-
-    if profile:
-        s = session.Session(profile_name=profile)
-        credentials = s.get_credentials()
-        return credentials.access_key, credentials.secret_key
-    else:
-        return boto_params.get('aws_access_key_id'), boto_params.get('aws_secret_access_key')
+    return s.get_credentials()
 
 
 # Reference: https://docs.aws.amazon.com/general/latest/gr/sigv4-signed-request-examples.html
-def signed_request(method="GET", service=None, host=None, uri=None, query=None, body="", module=None, headers=None):
+def signed_request(method="GET", service=None, host=None, uri=None, query=None, body="", module=None, headers=None, session_in_header=True, session_in_query=False):
     """Generate a SigV4 request to an AWS resource for a module
 
     This is used if you wish to authenticate with AWS credentials to a secure endpoint like an elastisearch domain.
@@ -105,6 +97,10 @@ def signed_request(method="GET", service=None, host=None, uri=None, query=None, 
     :kwarg method: (optional) HTTP verb to use
     :kwarg query: (optional) dict of query params to handle
     :kwarg uri: (optional) Resource path without query parameters
+
+    :kwarg session_in_header: (optional) Add the session token to the headers
+    :kwarg session_in_query: (optional) Add the session token to the query parameters
+
     :returns: HTTPResponse
     """
 
@@ -121,7 +117,10 @@ def signed_request(method="GET", service=None, host=None, uri=None, query=None, 
     # AWS stuff
 
     region, dummy, dummy = get_aws_connection_info(module, boto3=True)
-    access_key, secret_key = get_aws_key_pair(module)
+    credentials = get_aws_credentials_object(module)
+    access_key = credentials.access_key
+    secret_key = credentials.secret_key
+    session_token = credentials.token
 
     if not access_key:
         module.fail_json(msg="aws_access_key_id is missing")
@@ -142,6 +141,13 @@ def signed_request(method="GET", service=None, host=None, uri=None, query=None, 
         "host": host,
         'x-amz-date': amz_date,
     })
+
+    # Handle adding of session_token if present
+    if session_token:
+        if session_in_header:
+            headers["X-Amz-Security-Token"] = session_token
+        if session_in_query:
+            query["X-Amz-Security-Token"] = session_token
 
     if method is "GET":
         body = ""
