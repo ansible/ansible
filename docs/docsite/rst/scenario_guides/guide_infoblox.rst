@@ -13,8 +13,8 @@ Introduction
 With Ansible integration, you can automate Infoblox Core Network Services for IP address management (IPAM), DNS and DHCP configuration.
 
 Prerequisites
-------------
-Before using Ansible nios modules with Infoblox, you must install the infoblox-client on your Ansible control node:
+-------------
+Before using Ansible nios modules with Infoblox, you must install the ``infoblox-client`` on your Ansible control node:
 
 .. code-block:: bash
 
@@ -32,7 +32,7 @@ Common parameters and settings
 
 Module list
 ============
-Ansible supports the following modules for ``nios``:
+Ansible supports the following modules for NIOS:
 
 - `nios_host_record <http://docs.ansible.com/ansible/latest/modules/nios_host_record_module.html>`_ - configure host records
 - `nios_network <http://docs.ansible.com/ansible/latest/modules/nios_network_module.html>`_ - configure networking objects
@@ -46,6 +46,75 @@ Each module includes simple documented example tasks for how to use them.
 NIOS lookup plugin
 ==================
 
+The `nios <https://docs.ansible.com/ansible/devel/plugins/lookup/nios.html>`_ lookup plugin uses the Infoblox WAPI API to fetch NIOS specified objects, for example network views, DNS views, and host records.
+
+.. note:: You must run this lookup locally by specifying ``connection: local``.
+
+Retrieving a host record
+------------------------
+
+This example task uses the ``nios`` lookup to retrieve the host record for a host called ``leaf01``:
+
+.. code-block:: yaml
+
+    - name: fetch host leaf01
+          set_fact:
+            host: "{{ lookup('nios', 'record:host', filter={'name': 'leaf01'}, provider=nios_provider) }}"
+
+This task is part of an example `get_host_record.yml <https://github.com/network-automation/infoblox_ansible/blob/master/lookup_playbooks/get_host_record.yml>`_ lookup playbook.
+
+If you run this example ``get_host_record.yml`` playbook, you should see results similar to the following:
+
+.. code-block:: bash
+
+    $ ansible-playbook get_host_record.yml
+
+    PLAY [localhost] ***************************************************************************************
+
+    TASK [fetch host leaf01] ******************************************************************************
+    ok: [localhost]
+
+    TASK [check the leaf01 return variable] *************************************************************
+    ok: [localhost] => {
+    <SNIPPET, REST OF OUTPUT REMOVED FOR BREVITY>
+        "host": {
+            "ipv4addrs": [
+                {
+                    "configure_for_dhcp": false,
+                    "host": "leaf01",
+                    "ipv4addr": "192.168.1.11"
+                }
+            ],
+        }
+    }
+
+    TASK [debug specific variable (ipv4 address)] ******************************************************
+    ok: [localhost] => {
+        "host.ipv4addrs[0].ipv4addr": "192.168.1.11"
+    }
+
+    TASK [fetch host leaf02] ******************************************************************************
+    ok: [localhost]
+
+    TASK [check the leaf02 return variable] *************************************************************
+    ok: [localhost] => {
+    <SNIPPET, REST OF OUTPUT REMOVED FOR BREVITY>
+
+        "host": {
+            "ipv4addrs": [
+                {
+                    "configure_for_dhcp": false,
+                    "host": "leaf02",
+                    "ipv4addr": "192.168.1.12"
+                }
+            ],
+        }
+    }
+
+    PLAY RECAP ******************************************************************************************
+    localhost                  : ok=5    changed=0    unreachable=0    failed=0
+
+The output above shows the host record for ``leaf01`` that was retrieved by the ``nios`` lookup plugin. This playbook saves the information in variables that you can use in other playbooks. This allows you to use Infoblox as a single source of truth to gather and use information that may be changing dynamically. See `Ansible variables <http://docs.ansible.com/ansible/latest/playbooks_variables.html>`_ for more information on using Ansible variables.
 
 Dynamic inventory script
 ========================
