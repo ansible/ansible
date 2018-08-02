@@ -101,14 +101,6 @@ options:
         ignored during the diff. This is used for lines in the configuration
         that are automatically updated by the system. This argument takes
         a list of regular expressions or exact line matches.
-  severity:
-    description:
-      - The C(severity) argument decides what action to take if an input fails.
-        If C(severity) is set to I(error) the module will fail, If C(severity)
-        is set to I(warning), the module gives a warning and ignores the unsupported
-        input silently.
-    default: 'error'
-    choices: ['error', 'warning']
 """
 
 EXAMPLES = """
@@ -148,18 +140,8 @@ commands:
 """
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.connection import Connection, ConnectionError
-from ansible.module_utils.six import string_types
+from ansible.module_utils.connection import Connection
 from ansible.module_utils._text import to_text
-
-
-def _handle_severity(module, msg):
-    """Severity of error
-    """
-    if module.params['severity'] == 'error':
-        module.fail_json(msg=msg)
-    else:
-        module.warn('Skipping as ' + msg)
 
 
 def validate_args(module, capabilities):
@@ -167,35 +149,35 @@ def validate_args(module, capabilities):
     """
     if (module.params['replace'] and
             not capabilities['device_operations']['supports_replace']):
-        _handle_severity(module, msg='replace is not supported on this platform')
+        module.fail_json(msg='replace is not supported on this platform')
 
     if (module.params['rollback'] and
             not capabilities['device_operations']['supports_rollback']):
-        _handle_severity(module, msg='rollback is not supported on this platform')
+        module.fail_json(msg='rollback is not supported on this platform')
 
     if (module.params['commit_comment'] and
             not capabilities['device_operations']['supports_commit_comment']):
-        _handle_severity(module, msg='commit_comment is not supported on this platform')
+        module.fail_json(msg='commit_comment is not supported on this platform')
 
     if (module.params['defaults'] and
             not capabilities['device_operations']['supports_defaults']):
-        _handle_severity(module, msg='defaults is not supported on this platform')
+        module.fail_json(msg='defaults is not supported on this platform')
 
     if (module.params['multiline_delimiter'] and
             not capabilities['device_operations']['supports_multiline_delimiter']):
-        _handle_severity(module, msg='multiline_delimiter is not supported on this platform')
+        module.fail_json(msg='multiline_delimiter is not supported on this platform')
 
     if (module.params['diff_replace'] and
             not capabilities['device_operations']['supports_diff_replace']):
-        _handle_severity(module, msg='diff_replace is not supported on this platform')
+        module.fail_json(msg='diff_replace is not supported on this platform')
 
     if (module.params['diff_match'] and
             not capabilities['device_operations']['supports_diff_match']):
-        _handle_severity(module, msg='diff_match is not supported on this platform')
+        module.fail_json(msg='diff_match is not supported on this platform')
 
     if (module.params['diff_ignore_lines'] and
             not capabilities['device_operations']['supports_diff_ignore_lines']):
-        _handle_severity(module, msg='diff_ignore_lines is not supported on this platform')
+        module.fail_json(msg='diff_ignore_lines is not supported on this platform')
 
 
 def run(module, connection, candidate, running):
@@ -237,19 +219,12 @@ def run(module, connection, candidate, running):
 
         kwargs = {'candidate': candidate, 'commit': commit, 'replace': replace,
                   'comment': commit_comment}
-        try:
-            resp = connection.edit_config(**kwargs)
-            if 'diff' in resp:
-                if resp['diff']:
-                    result['commands'] = resp['diff']
-            else:
-                result['commands'] = candidate
-        except ConnectionError as exc:
-            msg = to_text(exc)
-            if 'check mode is not supported' in msg:
-                _handle_severity(module, msg=msg)
-            else:
-                module.fail_json(msg=msg)
+        resp = connection.edit_config(**kwargs)
+        if 'diff' in resp:
+            if resp['diff']:
+                result['commands'] = resp['diff']
+        else:
+            result['commands'] = candidate
 
     if banner_diff:
         candidate = banner_diff
@@ -279,8 +254,7 @@ def main():
         multiline_delimiter=dict(type='str'),
         diff_replace=dict(choices=['line', 'block', 'config']),
         diff_match=dict(choices=['line', 'strict', 'exact', 'none']),
-        diff_ignore_lines=dict(type='list'),
-        severity=dict(default='error', choices=['error', 'warning'])
+        diff_ignore_lines=dict(type='list')
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
