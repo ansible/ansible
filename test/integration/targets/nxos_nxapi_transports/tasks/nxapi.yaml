@@ -1,4 +1,7 @@
 ---
+
+- meta: end_play
+
 - name: collect nxapi test cases
   find:
     paths: "{{ role_path }}/tests/nxapi"
