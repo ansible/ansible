@@ -558,10 +558,14 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                         results.get('enable_ip_forwarding')))
                     changed = True
 
-                if self.dns_servers != bool(results.get('dns_servers')):
+                # We need to ensure that dns_servers are list like
+                dns_servers_res = results.get('dns_settings').get('dns_servers')
+                _dns_servers_set = sorted(self.dns_servers) if type(self.dns_servers) is list else list()
+                _dns_servers_res = sorted(dns_servers_res) if type(dns_servers_res) is list else list()
+                if _dns_servers_set != _dns_servers_res:
                     self.log("CHANGED: DNS servers set to {0} (previously {1})".format(
-                        ", ".join(self.dns_servers),
-                        ", ".join(results.get('dns_servers'))))
+                        ", ".join(_dns_servers_set),
+                        ", ".join(_dns_servers_res)))
                     changed = True
 
                 if not changed:
