@@ -1579,7 +1579,7 @@
       path: '{{ remote_dir }}/new_dir_with_follow/link_file12'
     register: stat_new_dir_with_follow_link_file12
 
-  - name: assert - remote_dir_src has copied.
+  - name: assert - remote_dir_src has copied with follow.
     assert:
       that:
       - testcase1_with_follow is changed
@@ -1589,7 +1589,6 @@
       - "stat_remote_dir_src_before.stat.gid == stat_new_dir_with_follow.stat.gid"
       - "stat_remote_dir_src_before.stat.pw_name == stat_new_dir_with_follow.stat.pw_name"
       - "stat_remote_dir_src_before.stat.gr_name == stat_new_dir_with_follow.stat.gr_name"
-      - "stat_remote_dir_src_before.stat.path == stat_new_dir_with_follow.stat.path"
       - "stat_remote_dir_src_before.stat.mode == stat_new_dir_with_follow.stat.mode"
 
       - "stat_new_dir_with_follow_subdir.stat.exists"
@@ -1598,7 +1597,6 @@
       - "stat_remote_dir_src_subdir_before.stat.gid == stat_new_dir_with_follow_subdir.stat.gid"
       - "stat_remote_dir_src_subdir_before.stat.pw_name == stat_new_dir_with_follow_subdir.stat.pw_name"
       - "stat_remote_dir_src_subdir_before.stat.gr_name == stat_new_dir_with_follow_subdir.stat.gr_name"
-      - "stat_remote_dir_src_subdir_before.stat.path == stat_new_dir_with_follow_subdir.stat.path"
       - "stat_remote_dir_src_subdir_before.stat.mode == stat_new_dir_with_follow_subdir.stat.mode"
 
       - "stat_new_dir_with_follow_file1.stat.exists"
@@ -1606,7 +1604,6 @@
       - "stat_remote_dir_src_file1_before.stat.gid == stat_new_dir_with_follow_file1.stat.gid"
       - "stat_remote_dir_src_file1_before.stat.pw_name == stat_new_dir_with_follow_file1.stat.pw_name"
       - "stat_remote_dir_src_file1_before.stat.gr_name == stat_new_dir_with_follow_file1.stat.gr_name"
-      - "stat_remote_dir_src_file1_before.stat.path == stat_new_dir_with_follow_file1.stat.path"
       - "stat_remote_dir_src_file1_before.stat.mode == stat_new_dir_with_follow_file1.stat.mode"
       - "stat_remote_dir_src_file1_before.stat.checksum == stat_new_dir_with_follow_file1.stat.checksum"
 
@@ -1615,7 +1612,6 @@
       - "stat_remote_dir_src_subdir_file12_before.stat.gid == stat_new_dir_with_follow_subdir_file12.stat.gid"
       - "stat_remote_dir_src_subdir_file12_before.stat.pw_name == stat_new_dir_with_follow_subdir_file12.stat.pw_name"
       - "stat_remote_dir_src_subdir_file12_before.stat.gr_name == stat_new_dir_with_follow_subdir_file12.stat.gr_name"
-      - "stat_remote_dir_src_subdir_file12_before.stat.path == stat_new_dir_with_follow_subdir_file12.stat.path"
       - "stat_remote_dir_src_subdir_file12_before.stat.mode == stat_new_dir_with_follow_subdir_file12.stat.mode"
       - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_new_dir_with_follow_subdir_file12.stat.checksum"
 
@@ -1625,7 +1621,6 @@
       - "stat_remote_dir_src_link_file12_before.stat.gid == stat_new_dir_with_follow_link_file12.stat.gid"
       - "stat_remote_dir_src_link_file12_before.stat.pw_name == stat_new_dir_with_follow_link_file12.stat.pw_name"
       - "stat_remote_dir_src_link_file12_before.stat.gr_name == stat_new_dir_with_follow_link_file12.stat.gr_name"
-      - "stat_remote_dir_src_link_file12_before.stat.path == stat_new_dir_with_follow_link_file12.stat.path"
       - "stat_remote_dir_src_link_file12_before.stat.mode == stat_new_dir_with_follow_link_file12.stat.mode"
 
 ### without follow, without (owner,group)
@@ -1657,7 +1652,7 @@
       path: '{{ remote_dir }}/new_dir_without_follow/link_file12'
     register: stat_new_dir_without_follow_link_file12
 
-  - name: assert - remote_dir_src has copied.
+  - name: assert - remote_dir_src has copied without follow.
     assert:
       that:
       - testcase1_without_follow is changed
@@ -1667,7 +1662,6 @@
       - "stat_remote_dir_src_before.stat.gid == stat_new_dir_without_follow.stat.gid"
       - "stat_remote_dir_src_before.stat.pw_name == stat_new_dir_without_follow.stat.pw_name"
       - "stat_remote_dir_src_before.stat.gr_name == stat_new_dir_without_follow.stat.gr_name"
-      - "stat_remote_dir_src_before.stat.path == stat_new_dir_without_follow.stat.path"
       - "stat_remote_dir_src_before.stat.mode == stat_new_dir_without_follow.stat.mode"
 
       - "stat_new_dir_without_follow_subdir.stat.exists"
@@ -1676,7 +1670,6 @@
       - "stat_remote_dir_src_subdir_before.stat.gid == stat_new_dir_without_follow_subdir.stat.gid"
       - "stat_remote_dir_src_subdir_before.stat.pw_name == stat_new_dir_without_follow_subdir.stat.pw_name"
       - "stat_remote_dir_src_subdir_before.stat.gr_name == stat_new_dir_without_follow_subdir.stat.gr_name"
-      - "stat_remote_dir_src_subdir_before.stat.path == stat_new_dir_without_follow_subdir.stat.path"
       - "stat_remote_dir_src_subdir_before.stat.mode == stat_new_dir_without_follow_subdir.stat.mode"
 
       - "stat_new_dir_without_follow_file1.stat.exists"
@@ -1684,7 +1677,6 @@
       - "stat_remote_dir_src_file1_before.stat.gid == stat_new_dir_without_follow_file1.stat.gid"
       - "stat_remote_dir_src_file1_before.stat.pw_name == stat_new_dir_without_follow_file1.stat.pw_name"
       - "stat_remote_dir_src_file1_before.stat.gr_name == stat_new_dir_without_follow_file1.stat.gr_name"
-      - "stat_remote_dir_src_file1_before.stat.path == stat_new_dir_without_follow_file1.stat.path"
       - "stat_remote_dir_src_file1_before.stat.mode == stat_new_dir_without_follow_file1.stat.mode"
       - "stat_remote_dir_src_file1_before.stat.checksum == stat_new_dir_without_follow_file1.stat.checksum"
 
@@ -1693,7 +1685,6 @@
       - "stat_remote_dir_src_subdir_file12_before.stat.gid == stat_new_dir_without_follow_subdir_file12.stat.gid"
       - "stat_remote_dir_src_subdir_file12_before.stat.pw_name == stat_new_dir_without_follow_subdir_file12.stat.pw_name"
       - "stat_remote_dir_src_subdir_file12_before.stat.gr_name == stat_new_dir_without_follow_subdir_file12.stat.gr_name"
-      - "stat_remote_dir_src_subdir_file12_before.stat.path == stat_new_dir_without_follow_subdir_file12.stat.path"
       - "stat_remote_dir_src_subdir_file12_before.stat.mode == stat_new_dir_without_follow_subdir_file12.stat.mode"
       - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_new_dir_without_follow_subdir_file12.stat.checksum"
 
@@ -1702,7 +1693,6 @@
       - "stat_remote_dir_src_link_file12_before.stat.gid == stat_new_dir_without_follow_link_file12.stat.gid"
       - "stat_remote_dir_src_link_file12_before.stat.pw_name == stat_new_dir_without_follow_link_file12.stat.pw_name"
       - "stat_remote_dir_src_link_file12_before.stat.gr_name == stat_new_dir_without_follow_link_file12.stat.gr_name"
-      - "stat_remote_dir_src_link_file12_before.stat.path == stat_new_dir_without_follow_link_file12.stat.path"
       - "stat_remote_dir_src_link_file12_before.stat.mode == stat_new_dir_without_follow_link_file12.stat.mode"
       - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_new_dir_without_follow_link_file12.stat.checksum"
 
