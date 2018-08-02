@@ -1496,53 +1496,53 @@
 
 ## prepare for test
 - block:
-  - name: Create a test dir to copy
+  - name: execute - Create a test dir to copy
     file:
       path: '{{ remote_dir }}/remote_dir_src'
       state: directory
 
-  - name: Stat the remote_dir_src
+  - name: gather - Stat the remote_dir_src
     stat:
       path: '{{ remote_dir }}/remote_dir_src'
     register: stat_remote_dir_src_before
 
-  - name: Create a subdir
+  - name: execute - Create a subdir
     file:
       path: '{{ remote_dir }}/remote_dir_src/subdir'
       state: directory
 
-  - name: Stat the remote_dir_src/subdir
+  - name: gather - Stat the remote_dir_src/subdir
     stat:
       path: '{{ remote_dir }}/remote_dir_src/subdir'
     register: stat_remote_dir_src_subdir_before
 
-  - name: Create a file in the top of src
+  - name: execute - Create a file in the top of src
     copy:
       dest: '{{ remote_dir }}/remote_dir_src/file1'
       content: 'hello world 1'
 
-  - name: Stat the remote_dir_src/file1
+  - name: gather - Stat the remote_dir_src/file1
     stat:
       path: '{{ remote_dir }}/remote_dir_src/file1'
     register: stat_remote_dir_src_file1_before
 
-  - name: Create a file in the subdir
+  - name: execute - Create a file in the subdir
     copy:
       dest: '{{ remote_dir }}/remote_dir_src/subdir/file12'
       content: 'hello world 12'
 
-  - name: Stat the remote_dir_src/subdir/file12
+  - name: gather - Stat the remote_dir_src/subdir/file12
     stat:
       path: '{{ remote_dir }}/remote_dir_src/subdir/file12'
     register: stat_remote_dir_src_subdir_file12_before
 
-  - name: Create a link to the file12
+  - name: execute -  Create a link to the file12
     file:
       path: '{{ remote_dir }}/remote_dir_src/link_file12'
       src: '{{ remote_dir }}/remote_dir_src/subdir/file12'
       state: link
 
-  - name: Stat the remote_dir_src/link_file12
+  - name: gather - Stat the remote_dir_src/link_file12
     stat:
       path: '{{ remote_dir }}/remote_dir_src/link_file12'
     register: stat_remote_dir_src_link_file12_before
