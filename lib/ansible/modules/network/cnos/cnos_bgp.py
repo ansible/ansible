@@ -977,7 +977,6 @@ def bgpAFConfig(module, cmd, prompt, answer):
 # EOM
 
 
-
 def bgpConfig(module, cmd, prompt, answer):
     retVal = ''
     command = ''
@@ -999,7 +998,7 @@ def bgpConfig(module, cmd, prompt, answer):
             deviceType, "bgp_address_family", bgpArg2)
         if(value == "ok"):
             command = command + bgpArg2 + " " + "unicast \n"
-            #debugOutput(command)
+            # debugOutput(command)
             inner_cmd = [{'command': command, 'prompt': None, 'answer': None}]
             cmd.extend(inner_cmd)
             retVal = retVal + bgpAFConfig(module, cmd, prompt, answer)
@@ -1238,7 +1237,6 @@ def main():
     outputfile = module.params['outputfile']
     deviceType = module.params['deviceType']
     output = ''
-    #output = output + cnos.routerConfig(module, 'bgp', '(config)#', None)
     command = 'router bgp '
     value = cnos.checkSanityofVariable(deviceType, "bgp_as_number", asNum)
     if(value == "ok"):
@@ -1248,46 +1246,6 @@ def main():
         output = output + bgpConfig(module, cmd, '(config)#', None)
     else:
         output = "Error-176"
-    # Save it into the file
-    file = open(outputfile, "a")
-    file.write(output)
-    file.close()
-
-    # Logic to check when changes occur or not
-    errorMsg = cnos.checkOutputForError(output)
-    if(errorMsg is None):
-        module.exit_json(changed=True, msg="BGP configurations accomplished")
-    else:
-        module.fail_json(msg=errorMsg)
-
-
-if __name__ == '__main__':
-    main()
-def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            outputfile=dict(required=True),
-            host=dict(required=True),
-            username=dict(required=True),
-            password=dict(required=True, no_log=True),
-            enablePassword=dict(required=False, no_log=True),
-            deviceType=dict(required=True),
-            bgpArg1=dict(required=True),
-            bgpArg2=dict(required=False),
-            bgpArg3=dict(required=False),
-            bgpArg4=dict(required=False),
-            bgpArg5=dict(required=False),
-            bgpArg6=dict(required=False),
-            bgpArg7=dict(required=False),
-            bgpArg8=dict(required=False),
-            asNum=dict(required=True),),
-        supports_check_mode=False)
-
-    asNum = module.params['asNum']
-    outputfile = module.params['outputfile']
-    output = ""
-    output = output + cnos.routerConfig(module, 'bgp', '(config)#', None)
-
     # Save it into the file
     file = open(outputfile, "a")
     file.write(output)
