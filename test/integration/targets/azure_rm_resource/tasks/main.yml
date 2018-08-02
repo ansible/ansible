@@ -67,7 +67,7 @@
 - debug:
     var: output
 
-    - name: Try to get information using URL
+- name: Try to get information using URL
   azure_rm_resource_facts:
     api_version: '2018-02-01'
     url: /subscriptions/*/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/networkSecurityGroups/{{ nsgname }}
