@@ -59,6 +59,10 @@ options:
       - The desired state of the library. C(latest) ensures that the latest version is installed.
     choices: [present, latest]
     default: present
+  extra_args:
+    version_added: "2.7"
+    description:
+      - Additional options for C(easy_install) command.
 notes:
     - Please note that the C(easy_install) module can only install Python
       libraries. Thus this module is not able to remove libraries. It is
@@ -80,6 +84,11 @@ EXAMPLES = '''
 - easy_install:
     name: bottle
     virtualenv: /webapps/myapp/venv
+
+# Bootstrap pip from local PyPi mirror.
+- easy_install:
+    name: pip
+    extra_args: -i https://example.com/pypi/simple
 '''
 
 import os
@@ -141,6 +150,7 @@ def main():
         virtualenv_site_packages=dict(default='no', type='bool'),
         virtualenv_command=dict(default='virtualenv', required=False),
         executable=dict(default='easy_install', required=False),
+        extra_args=dict(type='str'),
     )
 
     module = AnsibleModule(argument_spec=arg_spec, supports_check_mode=True)
@@ -150,9 +160,12 @@ def main():
     executable = module.params['executable']
     site_packages = module.params['virtualenv_site_packages']
     virtualenv_command = module.params['virtualenv_command']
+    extra_args = module.params['extra_args']
     executable_arguments = []
     if module.params['state'] == 'latest':
         executable_arguments.append('--upgrade')
+    if extra_args:
+        executable_arguments.extend(extra_args.split(' '))
 
     rc = 0
     err = ''
@@ -162,7 +175,7 @@ def main():
         virtualenv = module.get_bin_path(virtualenv_command, True)
 
         if not os.path.exists(os.path.join(env, 'bin', 'activate')):
-            if module.check_mode:
+            if module.check_mode or extra_args:
                 module.exit_json(changed=True)
             command = '%s %s' % (virtualenv, env)
             if site_packages:
@@ -181,7 +194,7 @@ def main():
     installed = _is_package_installed(module, name, easy_install, executable_arguments)
 
     if not installed:
-        if module.check_mode:
+        if module.check_mode or extra_args:
             module.exit_json(changed=True)
         rc_easy_inst, out_easy_inst, err_easy_inst = install_package(module, name, easy_install, executable_arguments)
 
