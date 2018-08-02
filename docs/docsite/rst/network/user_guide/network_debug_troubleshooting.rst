@@ -432,6 +432,15 @@ To make this a permanent change, add the following to your ``ansible.cfg`` file:
    [persistent_connection]
    command_timeout = 30
 
+.. note::
+
+   ** Slow Connections or Device Response **
+
+   The ``command_timeout`` is now reset while the device is sending output.  As long as the device
+   is sending output within the ``command_timeout`` window, the timer will be extended to give the command
+   time to complete.  This means that setting ``command_timeout`` to excessively high values is less likely in
+   most cases.
+
 Option 2 (Per task command timeout setting):
 Increase command timeout per task basis. All network modules support a
 timeout value that can be set on a per task basis.

@@ -1530,13 +1530,13 @@ PERSISTENT_CONNECT_RETRY_TIMEOUT:
   - {key: connect_retry_timeout, section: persistent_connection}
   type: integer
 PERSISTENT_COMMAND_TIMEOUT:
-  name: Persistence command timeout
+  name: Persistence command idle timeout
   default: 10
   description:
-    - This controls the amount of time to wait for response from remote device before timing out a persistent connection.
-    - Note that this timer is reset when the device is sending output, so commands that return slowly or slow network connections
-    - should not require this to be set to excessive values.  Commands that take a long time but do not print output however will
-    - often need this increased.
+    - This controls the amount of idle time to wait for a response from remote device before the command timeouts.
+    - The timer is reset when the device is sending output, so commands that trickle output or slow network connections
+    - should not require this to be set to excessive values.  Commands that take a long time but do not print any progressive
+    - output however will often need this increased.
   env: [{name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT}]
   ini:
   - {key: command_timeout, section: persistent_connection}

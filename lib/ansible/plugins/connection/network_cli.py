@@ -146,9 +146,10 @@ options:
     type: int
     description:
       - Configures, in seconds, the amount of time to wait for a command to
-        return from the remote device.  If this timer is exceeded before the
-        command returns, the connection plugin will raise an exception and
-        close.
+        return from the remote device.  Once a valid prompt has been detected, the timer
+        will reset as the device prints new output.  Thus it acts as an idle timeout.
+        If this timer is exceeded before the command returns, the connection plugin
+        will raise an exception and close
     default: 10
     ini:
       - section: persistent_connection
