@@ -38,9 +38,12 @@ options:
     description:
       - If the C(replace) argument is set to C(yes), it will replace
         the entire running-config of the device with the C(config)
-        argument value.
-    default: 'no'
-    type: 'bool'
+        argument value. For NXOS devices, C(replace) argument takes
+        path to the file on the device that will be used for replacing
+        the entire running-config. Nexus 9K devices only support replace.
+        Use I(net_put) or I(nxos_file_copy) module to copy the flat file
+        to remote device and then use set the fullpath to this argument.
+    type: 'str'
   rollback:
     description:
       - The C(rollback) argument instructs the module to rollback the
@@ -109,6 +112,31 @@ options:
 """
 
 EXAMPLES = """
+- name: configure device with config
+  cli_config:
+    config: "{{ lookup('template', 'basic/config.j2') }}"
+
+- name: configure device with config with defaults enabled
+  cli_config:
+    config: "{{ lookup('template', 'basic/config.j2') }}"
+    defaults: yes
+
+- name: Use diff_match
+  cli_config:
+    config: |
+      interface loopback999
+      no description
+      shutdown
+    diff_match: none
+
+- name: nxos replace config
+  cli_config:
+    replace: 'bootflash:nxoscfg'
+
+- name: commit with comment
+  cli_config:
+    config: set system host-name foo
+    commit_comment: this is a test
 """
 
 RETURN = """
@@ -183,6 +211,11 @@ def run(module, connection, candidate, running):
 
     commit = not module.check_mode
 
+    if replace in ('yes', 'true', 'True'):
+        replace = True
+    elif replace in ('no', 'false', 'False'):
+        replace = False
+
     kwargs = {'candidate': candidate, 'running': running}
     if diff_match:
         kwargs.update({'diff_match': diff_match})
@@ -239,7 +272,7 @@ def main():
     argument_spec = dict(
         config=dict(required=True, type='str'),
         commit=dict(type='bool'),
-        replace=dict(default=False, type='bool'),
+        replace=dict(type='str'),
         rollback=dict(type='int'),
         commit_comment=dict(type='str'),
         defaults=dict(default=False, type='bool'),
@@ -263,14 +296,14 @@ def main():
 
     if module.params['defaults']:
         if 'get_default_flag' in capabilities.get('rpc'):
-            filter = connection.get_default_flag()
+            flags = connection.get_default_flag()
         else:
-            filter = 'all'
+            flags = 'all'
     else:
-        filter = []
+        flags = []
 
     candidate = to_text(module.params['config'])
-    running = connection.get_config(filter=filter)
+    running = connection.get_config(flags=flags)
 
     try:
         result.update(run(module, connection, candidate, running))
