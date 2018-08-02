@@ -1,2 +1,2 @@
 bugfixes:
-    - allow gathering env exceptoin to work even when injection is off
+    - allow gathering env exception to work even when injection is off
