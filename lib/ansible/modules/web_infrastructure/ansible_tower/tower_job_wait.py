@@ -81,8 +81,7 @@ status:
 '''
 
 
-from ansible.module_utils.ansible_tower import tower_auth_config, tower_check_mode, tower_argument_spec, HAS_TOWER_CLI
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode
 from ansible.module_utils.six.moves import cStringIO as StringIO
 
 
@@ -96,21 +95,17 @@ except ImportError:
 
 
 def main():
-    argument_spec = tower_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         job_id=dict(type='int', required=True),
         timeout=dict(type='int'),
         min_interval=dict(type='float', default=1),
         max_interval=dict(type='float', default=30),
-    ))
+    )
 
-    module = AnsibleModule(
+    module = TowerModule(
         argument_spec,
         supports_check_mode=True
     )
-
-    if not HAS_TOWER_CLI:
-        module.fail_json(msg='ansible-tower-cli required for this module')
 
     json_output = {}
     fail_json = None
