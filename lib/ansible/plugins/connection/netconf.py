@@ -73,8 +73,8 @@ options:
       - The private SSH key or certificate file used to to authenticate to the
         remote device when first establishing the SSH connection.
     ini:
-     - section: defaults
-       key: private_key_file
+      - section: defaults
+        key: private_key_file
     env:
       - name: ANSIBLE_PRIVATE_KEY_FILE
     vars:
