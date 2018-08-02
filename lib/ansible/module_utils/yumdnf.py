@@ -11,9 +11,11 @@
 
 import os
 import tempfile
+from abc import ABCMeta, abstractmethod
 
 from ansible.module_utils._text import to_native
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.six import with_metaclass
 
 yumdnf_argument_spec = dict(
     argument_spec=dict(
@@ -52,7 +54,7 @@ yumdnf_argument_spec = dict(
 BUFSIZE = 65536
 
 
-class YumDnf(object):
+class YumDnf(with_metaclass(ABCMeta, object)):
     """
     Abstract class that handles the population of instance variables that should
     be identical between both YUM and DNF modules because of the feature parity
@@ -97,6 +99,7 @@ class YumDnf(object):
             self.exclude = self.module.params['exclude'].split(',')
 
 
+    @abstractmethod
     def run(self):
         raise NotImplementedError
 
