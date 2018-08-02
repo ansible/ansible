@@ -333,7 +333,7 @@ class TestFormatContent(unittest.TestCase):
         self.assertEqual(
             password._format_content(password=u'hunter42',
                                      salt=None,
-                                     encrypt=False),
+                                     encrypt=None),
             u'hunter42')
 
     def test_encrypt(self):
