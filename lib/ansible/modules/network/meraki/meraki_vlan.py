@@ -128,21 +128,50 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
+
 response:
-    description: Data returned from Meraki dashboard about VLAN.
-    type: dict
-    returned: success
-    example:
-        {
-            "applianceIp": "192.0.1.1",
-            "dnsNameservers": "upstream_dns",
-            "fixedIpAssignments": {},
-            "id": 2,
-            "name": "TestVLAN",
-            "networkId": "N_12345",
-            "reservedIpRanges": [],
-            "subnet": "192.0.1.0/24"
-        }
+  description: Information about the organization which was created or modified
+  returned: success
+  type: complex
+  contains:
+    applianceIp:
+      description: IP address of Meraki appliance in the VLAN
+      returned: success
+      type: string
+      sample: 192.0.1.1
+    dnsnamservers:
+      description: IP address or Meraki defined DNS servers which VLAN should use by default
+      returned: success
+      type: string
+      sample: upstream_dns
+    fixedIpAssignments:
+      description: List of fixed IP address assignments between IP addresses and MAC addresses.
+      returned: success
+      type: list
+    id:
+      description: VLAN ID number.
+      returned: success
+      type: int
+      sample: 2
+    name:
+      description: Descriptive name of VLAN
+      returned: success
+      type: string
+      sample: TestVLAN
+    networkId:
+      description: ID number of Meraki network which VLAN is associated to.
+      returned: success
+      type: string
+      sample: N_12345
+    reservedIpRanges:
+      description: List of IP address ranges which are avoided when assigning IP addresses via DHCP.
+      returned: success
+      type: list
+    subnet:
+      description: CIDR notation IP subnet of VLAN.
+      returned: success
+      type: string
+      sample: 192.0.1.0/24
 '''
 
 import os
