@@ -68,7 +68,7 @@
 - name: add an encrypted password for user
   user:
     name: ansibulluser
-    password: "{{lookup('password', '/dev/null encrypt=sha512_crypt')}}"
+    password: "$6$rounds=656000$TT4O7jz2M57npccl$33LF6FcUMSW11qrESXL1HX0BS.bsiT6aenFLLiVpsQh6hDtI9pJh5iY7x8J7ePkN4fP8hmElidHXaeD51pbGS."
     state: present
     update_password: always
   register: test_user_encrypt0
