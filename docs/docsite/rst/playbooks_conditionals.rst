@@ -68,7 +68,7 @@ decide to do something conditionally based on success or failure::
         when: result|skipped
 
 
-.. note:: the filters have been updated in 2.1 so both `success` and `succeeded` work (`fail`/`failed`, etc).
+.. note:: The filters have been updated in 2.1 so both `success` and `succeeded` work (`fail`/`failed`, etc).
 
 Note that was a little bit of foreshadowing on the 'register' statement.  We'll get to it a bit later in this chapter.
 
@@ -82,7 +82,7 @@ Tip: Sometimes you'll get back a variable that's a string and you'll want to do 
       - shell: echo "only on Red Hat 6, derivatives, and later"
         when: ansible_os_family == "RedHat" and ansible_lsb.major_release|int >= 6
 
-.. note:: the above example requires the lsb_release package on the target host in order to return the ansible_lsb.major_release fact.
+.. note:: The above example requires the lsb_release package on the target host in order to return the ansible_lsb.major_release fact.
 
 Variables defined in the playbooks or inventory can also be used.  An example may be the execution of a task based on a variable's boolean value::
 

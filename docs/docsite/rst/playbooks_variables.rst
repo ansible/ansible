@@ -119,7 +119,7 @@ In the above example, we used a variable to help decide where to place a file.
 Inside a template you automatically have access to all of the variables that are in scope for a host.  Actually
 it's more than that -- you can also read variables about other hosts.  We'll show how to do that in a bit.
 
-.. note:: ansible allows Jinja2 loops and conditionals in templates, but in playbooks, we do not use them.  Ansible
+.. note:: Ansible allows Jinja2 loops and conditionals in templates, but in playbooks, we do not use them.  Ansible
    playbooks are pure machine-parseable YAML.  This is a rather important feature as it means it is possible to code-generate
    pieces of files, or to have other ecosystem tools read Ansible files.  Not everyone will need this but it can unlock
    possibilities.
@@ -179,7 +179,7 @@ To see what information is available, try the following::
 
 This will return a ginormous amount of variable data, which may look like this, as taken from Ansible 1.4 on a Ubuntu 12.04 system
 
-.. code-block: json
+.. code-block:: json
 
     {
         "ansible_all_ipv4_addresses": [
@@ -872,7 +872,7 @@ Basically, anything that goes into "role defaults" (the defaults folder inside t
 .. note:: Within any section, redefining a var will overwrite the previous instance.
           If multiple groups have the same variable, the last one loaded wins.
           If you define a variable twice in a play's vars: section, the 2nd one wins.
-.. note:: the previous describes the default config `hash_behavior=replace`, switch to 'merge' to only partially overwrite.
+.. note:: The previous describes the default config `hash_behavior=replace`, switch to 'merge' to only partially overwrite.
 
 
 Another important thing to consider (for all versions) is that connection variables override config, command line and play/role/task specific options and directives.  For example::
