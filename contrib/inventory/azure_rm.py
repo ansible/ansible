@@ -111,8 +111,7 @@ required. For a specific host, this script returns the following variables:
 
 Run for Specific Virtual machine scale set
 -----------------------
-When run for a specific Virtual machine scale set using the --vmss option, a resource group is
-required. 
+When run for a specific Virtual machine scale set using the --vmss option, a resource group is required.
 
 Groups
 ------
@@ -150,7 +149,7 @@ AZURE_TAGS=key1:value1,key2:value2
 If you don't need the powerstate, you can improve performance by turning off powerstate fetching:
 AZURE_INCLUDE_POWERSTATE=no
 
-Select hosts in Virtual machine scale set by setting below environment variable, 
+Select hosts in Virtual machine scale set by setting below environment variable,
 or set include_vm_scale_sets in azure_rm.ini:
 AZURE_INCLUDE_VM_SCALE_SETS=yes
 
