@@ -4,7 +4,7 @@ Using Local Modules and Plugins
 
 The easiest, quickest, and most popular way to extend Ansible is to copy or write a module or a plugin for local use. You can store local modules and plugins on your Ansible control node for use within your team or organization. If you want to share a local plugin or module more widely, you can embed it in a role and publish it on Ansible Galaxy. If you've been using roles off Galaxy, you may have been using local modules and plugins without even realizing it.
 
-Extending Ansible locally offers lots of shortcuts:
+Extending Ansible with local modules and plugins offers lots of shortcuts:
 
 * you can choose any programming language you like
 * you don't have to clone the main Ansible repo
@@ -12,7 +12,14 @@ Extending Ansible locally offers lots of shortcuts:
 * you don't have to add tests (though we highly recommend that you do!)
 * you can copy other people's modules and plugins
 
-This page shows you where to save local modules and plugins so Ansible can find and use them. It's easy. Drop the module or plugin in the correct "magic" directory, then use the name of the file as the module name: for example, if the module file is `~/.ansible/plugins/modules/local_users.py`, use `local_users` as the module name.
+This page shows you where to save local modules and plugins so Ansible can find and use them. It's easy. Drop the module or plugin in the correct "magic" directory, then use the name of the file as the module name: for example, if the module file is `~/.ansible/plugins/modules/local_users.py`, use `local_users` as the module name. If you're using a local module or plugin that already exists, this page is all you need.
+
+Modules and Plugins: What's the Difference?
+-------------------------------------------
+If you're looking to add local functionality to Ansible, you may be wondering whether you should create a module or a plugin. Here's a quick overview of the differences:
+
+* Modules are reusable, standalone scripts that can be used by the Ansible API, or by the :command:`ansible` or :command:`ansible-playbook` commands. They provide a defined interface, accepting arguments and returning information to Ansible by printing a JSON string to stdout before exiting.
+* Plugins are shared code that can be used by any module. They provide abilities like cacheing information or copying files that are useful for many modules.
 
 .. _local_modules:
 
