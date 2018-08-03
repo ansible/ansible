@@ -109,9 +109,9 @@ required. For a specific host, this script returns the following variables:
   "virtual_machine_size": "Standard_DS4"
 }
 
-Run for Specific Virtual machine scale set
+Run for Specific Virtual Machine Scale Set
 -----------------------
-When run for a specific Virtual machine scale set using the --vmss option, a resource group is required.
+When run for a specific Virtual Machine Scale Set using the --vmss option, a resource group is required.
 
 Groups
 ------
@@ -668,7 +668,7 @@ class AzureInventory(object):
 
                 except Exception as exc:
                     sys.exit("Error: fetching virtual machines for resource group {0} - {1}".format(resource_group, str(exc)))
-                if self._args.host or self.tags:
+                if self._args.host or self.tags or self._args.vmss:
                     selected_machines = self._selected_machines(virtual_machines)
                     self._load_machines(selected_machines)
                 else:
@@ -723,8 +723,14 @@ class AzureInventory(object):
                     vm.private_ip_address = nic_config.get("private_ip_address", None)
                     vm.public_ip_address = nic_config.get("public_ip_address", None)
                     vm.hardware_profile = type('obj', (object,), {'vm_size': vmss.sku.name})
+
+                    # custom properties
                     vm.vmss_vm = True
                     vm.vmss_name = vm_id["virtualMachineScaleSets"]
+                    vm.nic_id = nic_config["id"]
+                    vm.nic_name = nic_id["networkInterfaces"]
+
+
                     vm_instances.append(vm)
         return vm_instances
 
@@ -787,7 +793,7 @@ class AzureInventory(object):
                 operating_system_type=machine.storage_profile.os_disk.os_type.value.lower()
             )
 
-            if self.include_powerstate:
+            if self.include_powerstate and not self.include_vm_scale_sets:
                 host_vars['powerstate'] = self._get_powerstate(resource_group, machine.name)
 
             if machine.storage_profile.image_reference:
@@ -802,7 +808,7 @@ class AzureInventory(object):
             if machine.os_profile is not None and machine.os_profile.windows_configuration is not None:
                 host_vars['ansible_connection'] = 'winrm'
                 host_vars['windows_auto_updates_enabled'] = \
-                    machine.os_profile.windows_configuration.enable_automatic_updates
+                    machine.os_profile.windows_configuration.enable_automatic_updates                
                 host_vars['windows_timezone'] = machine.os_profile.windows_configuration.time_zone
                 host_vars['windows_rm'] = None
                 if machine.os_profile.windows_configuration.win_rm is not None:
@@ -816,6 +822,13 @@ class AzureInventory(object):
             if vmss_vm:
                 host_vars['ansible_host'] = machine.private_ip_address
                 host_vars['public_ip'] = machine.public_ip_address
+                host_vars['private_id'] = machine.private_ip_address
+                host_vars['network_interface_id'] = getattr(machine, 'nic_id', None)
+                host_vars['network_interface'] = getattr(machine, 'nic_name', None)
+
+                if self.group_by_security_group and self._security_groups[resource_group].get(machine.nic_id, None):
+                    host_vars['security_group'] = self._security_groups[resource_group][network_interface.id]['name']
+                    host_vars['security_group_id'] = self._security_groups[resource_group][network_interface.id]['id']
             else:
                 for interface in machine.network_profile.network_interfaces:
                     interface_reference = self._parse_ref_id(interface.id)
