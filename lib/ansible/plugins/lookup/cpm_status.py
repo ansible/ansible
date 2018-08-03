@@ -71,7 +71,7 @@ EXAMPLES = """
                     cpm_password="restfulpassword") }}"
 
 # Get firmware version
-    - name: Get the firmware version of a given WTI device
+  - name: Get the firmware version of a given WTI device
     debug: msg="{{ lookup('cpm_status',
                     'firmware',
                     split_lines=false,
@@ -82,7 +82,7 @@ EXAMPLES = """
                     cpm_password="super") }}"
 
 # Get status output
-    - name: Get the status output from a given WTI device
+  - name: Get the status output from a given WTI device
     debug: msg="{{ lookup('cpm_status',
                     'status',
                     split_lines=false,
@@ -93,7 +93,7 @@ EXAMPLES = """
                     cpm_password="restfulpassword") }}"
 
 # Get Alarm output
-    - name: Get the alarms status of a given WTI device
+  - name: Get the alarms status of a given WTI device
     debug: msg="{{ lookup('cpm_status',
                     'alarms',
                     split_lines=false,
