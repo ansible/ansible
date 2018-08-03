@@ -5,6 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import os.path
 import sys
 import stat
 import tempfile
@@ -146,30 +147,58 @@ def find_ini_config_file(warnings=None):
     ''' Load INI Config File order(first found is used): ENV, CWD, HOME, /etc/ansible '''
     # FIXME: eventually deprecate ini configs
 
-    path0 = os.getenv("ANSIBLE_CONFIG", None)
-    if path0 is not None:
-        path0 = unfrackpath(path0, follow=False)
-        if os.path.isdir(path0):
-            path0 += "/ansible.cfg"
-    try:
-        path1 = os.getcwd()
-        perms1 = os.stat(path1)
-        if perms1.st_mode & stat.S_IWOTH:
-            if warnings is not None:
-                warnings.add("Ansible is in a world writable directory (%s), ignoring it as an ansible.cfg source." % to_text(path1))
-            path1 = None
-        else:
-            path1 += "/ansible.cfg"
-    except OSError:
-        path1 = None
-    path2 = unfrackpath("~/.ansible.cfg", follow=False)
-    path3 = "/etc/ansible/ansible.cfg"
+    if warnings is None:
+        # Note: In this case, warnings does nothing
+        warnings = set()
 
-    for path in [path0, path1, path2, path3]:
-        if path is not None and os.path.exists(path):
+    # A value that can never be a valid path so that we can tell if ANSIBLE_CONFIG was set later
+    # We can't use None because we could set path to None.
+    SENTINEL = object
+
+    potential_paths = []
+
+    # Environment setting
+    path_from_env = os.getenv("ANSIBLE_CONFIG", SENTINEL)
+    if path_from_env is not SENTINEL:
+        path_from_env = unfrackpath(path_from_env, follow=False)
+        if os.path.isdir(path_from_env):
+            path_from_env = os.path.join(path_from_env, "ansible.cfg")
+        potential_paths.append(path_from_env)
+
+    # Current working directory
+    warn_cmd_public = False
+    try:
+        cwd = os.getcwd()
+        perms = os.stat(cwd)
+        if perms.st_mode & stat.S_IWOTH:
+            warn_cmd_public = True
+        else:
+            potential_paths.append(os.path.join(cwd, "ansible.cfg"))
+    except OSError:
+        # If we can't access cwd, we'll simply skip it as a possible config source
+        pass
+
+    # Per user location
+    potential_paths.append(unfrackpath("~/.ansible.cfg", follow=False))
+
+    # System location
+    potential_paths.append("/etc/ansible/ansible.cfg")
+
+    for path in potential_paths:
+        if os.path.exists(path):
             break
     else:
         path = None
+
+    # Emit a warning if all the following are true:
+    # * We did not use a config from ANSIBLE_CONFIG
+    # * There's an ansible.cfg in the current working directory that we skipped
+    if path_from_env != path and warn_cmd_public:
+        warnings.add(u"Ansible is being run in a world writable directory (%s),"
+                     u" ignoring it as an ansible.cfg source."
+                     u" For more information see"
+                     u" https://docs.ansible.com/ansible/devel/reference_appendices/config.html#cfg-in-world-writable-dir"
+                     % to_text(cwd))
 
     return path
 
