@@ -1037,7 +1037,8 @@ class YumModule(YumDnf):
         rc, out, err = self.module.run_command(self.yum_basecmd + ['check-update'])
         return rc, out, err
 
-    def parse_check_update(self, check_update_output):
+    @staticmethod
+    def parse_check_update(check_update_output):
         updates = {}
 
         # remove incorrect new lines in longer columns in output from yum check-update
