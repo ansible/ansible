@@ -183,7 +183,7 @@ def init_plugins(bin_path, project_path):
 
 def get_workspace_context(bin_path, project_path):
     workspace_ctx = {"current": "default", "all": []}
-    command = [bin_path, 'workspace', 'list']
+    command = [bin_path, 'workspace', '-no-color', 'list']
     rc, out, err = module.run_command(command, cwd=project_path)
     if rc != 0:
         module.fail_json(msg="Failed to list Terraform workspaces:\r\n{0}".format(err))
@@ -199,7 +199,7 @@ def get_workspace_context(bin_path, project_path):
 
 
 def _workspace_cmd(bin_path, project_path, action, workspace):
-    command = [bin_path, 'workspace', action, workspace]
+    command = [bin_path, 'workspace', '-no-color', action, workspace]
     rc, out, err = module.run_command(command, cwd=project_path)
     if rc != 0:
         module.fail_json(msg="Failed to {0} workspace:\r\n{1}".format(action, err))
