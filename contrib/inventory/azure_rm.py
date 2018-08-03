@@ -882,15 +882,12 @@ class AzureInventory(object):
         return selected_machines
 
     def _selected_vmss(self, vmsses):
-        selected_vmsses = []
 
         if self._args.vmss:
             for vmss in vmsses:
                 if self._args.vmss == vmss.name:
-                    selected_vmsses.append(vmss)
-        else:
-            selected_vmsses = vmsses
-        return selected_vmsses
+                    return [vmss]
+        return vmsses
 
     def _get_security_groups(self, resource_group):
         ''' For a given resource_group build a mapping of network_interface.id to security_group name '''
