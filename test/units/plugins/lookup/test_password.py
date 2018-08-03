@@ -465,3 +465,25 @@ class TestLookupModule(unittest.TestCase):
         results = self.password_lookup.run([u'/path/to/somewhere chars=a'], None)
         for result in results:
             self.assertEquals(result, u'a' * password.DEFAULT_LENGTH)
+
+    def test_lock_mechanism(self):
+        # pretend the lock file is here
+        password.os.path.exists = lambda x: True
+        try:
+            with patch.object(builtins, 'open', mock_open(read_data=b'hunter42 salt=87654321\n')) as m:
+                # should timeout here
+                results = self.password_lookup.run([u'/path/to/somewhere chars=anything'], None)
+                self.assertEquals(True, False)
+        except AnsibleError:
+            pass
+        # pretend now there is password file but no lock
+        password.os.path.exists = lambda x: True if x == to_bytes('/path/to/somewhere') else False
+        try:
+            with patch.object(builtins, 'open', mock_open(read_data=b'hunter42 salt=87654321\n')) as m:
+                # should not timeout here
+                results = self.password_lookup.run([u'/path/to/somewhere chars=anything'], None)
+        except AnsibleError:
+            self.assertEquals(True, False)
+
+        for result in results:
+            self.assertEqual(result, u'hunter42')
