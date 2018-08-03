@@ -43,6 +43,9 @@ class HttpApi(HttpApiBase):
         self.refresh_token = False
 
     def login(self, username=None, password=None):
+        # Clean any old auth if present in connection plugin
+        self.connection._auth = None
+
         if self.refresh_token:
             payload = {
                 'grant_type': 'refresh_token',
@@ -60,17 +63,24 @@ class HttpApi(HttpApiBase):
                     'username and password are required for login'
                     'in absence of refresh token'
                 )
-        self.connection.send(
+        response, response_data = self.connection.send(
             API_PREFIX + API_TOKEN_PATH,
             json.dumps(payload), method='POST', headers=BASE_HEADERS
         )
+        try:
+            self._set_token_info(response_data)
+        except ValueError as vexc:
+            raise ConnectionError('Did not receive access_token during Auth got'
+                                 '{0}'.format(to_text(cexc)))
+       
 
     def send_request(self, url_path, http_method, body_params=None, path_params=None, query_params=None):
         url = construct_url_path(url_path, path_params, query_params)
         data = json.dumps(body_params) if body_params else None
+
         response, response_data = self.connection.send(
             url, data, method=http_method,
-            headers=BASE_HEADERS
+            headers=self._authorized_headers()
         )
         try:
             ret = json.loads(to_text(response_data.getvalue()))
@@ -85,7 +95,7 @@ class HttpApi(HttpApiBase):
             rf = RequestField('fileToUpload', src_file.read(), os.path.basename(src_file.name))
             rf.make_multipart()
             body, content_type = encode_multipart_formdata([rf])
-            headers = dict(BASE_HEADERS)
+            headers = self._authorized_headers()
             headers['Content-Type'] = content_type
             headers['Content-Length'] = len(body)
             response, response_data = self.connection.send(
@@ -102,7 +112,7 @@ class HttpApi(HttpApiBase):
         url = construct_url_path(from_url)
         response, response_data = self.connection.send(
             url, data=None, method='GET',
-            headers=BASE_HEADERS
+            headers=self._authorized_headers()
         )
         if os.path.isdir(to_path):
             filename = extract_filename_from_headers(response.info())
@@ -112,23 +122,23 @@ class HttpApi(HttpApiBase):
             output_file.write(to_text(response_data.getvalue()))
 
     def update_auth(self, response, response_data):
-        if response_data:
-            try:
-                token_info = json.loads(to_text(response_data.getvalue()))
-            except ValueError:
-                return None
-            if 'refresh_token' in token_info:
-                self.refresh_token = token_info['refresh_token']
-            if 'access_token' in token_info:
-                self.access_token = token_info['access_token']
-                return {'Authorization': 'Bearer %s' % token_info['access_token']}
         return None
 
+    def _set_token_info(self, response_data):
+        try:
+           token_info = json.loads(to_text(response_data.getvalue()))
+        except ValueError:
+            raise
+        if 'refresh_token' in token_info:
+            self.refresh_token = token_info['refresh_token']
+        if 'access_token' in token_info:
+            self.access_token = token_info['access_token']
+        
     def handle_httperror(self, exc):
         # Called by connection plugin when it gets HTTP Error for a request.
         # Connection plugin will resend this request if we return true here.
         if (exc.code == TOKEN_EXPIRATION_STATUS_CODE or
-           exc.code == UNAUTHORIZED_STATUS_CODE) and self.connection._auth:
+           exc.code == UNAUTHORIZED_STATUS_CODE):
             # Stored auth appears to be invalid, clear and retry
             self.connection._auth = None
             self.login(self.connection.get_option('remote_user'),
@@ -136,6 +146,11 @@ class HttpApi(HttpApiBase):
             return True
 
         return False
+
+    def _authorized_headers(self):
+        headers = dict(BASE_HEADERS)
+        headers['Authorization'] = 'Bearer %s' % self.access_token
+        return headers
 
     def logout(self):
         # Revoke the tokens
@@ -146,7 +161,7 @@ class HttpApi(HttpApiBase):
         }
         self.connection.send(
             API_PREFIX + API_TOKEN_PATH, json.dumps(auth_payload),
-            method='POST', headers=BASE_HEADERS
+            method='POST', headers=self._authorized_headers()
         )
         # HTTP error would cause exception Connection failure in connection
         # plugin

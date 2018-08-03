@@ -16,12 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 import json
-import q
 
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils._text import to_bytes, to_text
-
-DEFAULT_PAGE_SIZE = 10
 
 class RestApi(object):
     def __init__(self, socket_path, idempotency_support=True):
@@ -30,21 +27,38 @@ class RestApi(object):
         # in client
         self.idempotency_support = idempotency_support
 
-    def _iterate_resource_by_id(self, resource_list, content=None, primary_keys=None):
+    def _diff_resource(self, old, new, primary_keys=None):
         if primary_keys is not None:
-           want_config = dict()
+           want = dict()
            for keys in primary_keys:
-               want_config.update({keys: content.get(keys, {})})
+               want_config.update({keys: new.get(keys, {})})
         else:
-            want_config = dict(content)
+            want = dict(new)
 
-        for resource in resource_list:
-            if compare_json_resources(resource, want_config):
-                return resource
+        if isinstace(old, list):
+            for resource in old:
+                if compare_json_resources(resource, want):
+                    return resource
+        else:
+             if compare_json_resources(old, want):
+                 return old
                     
         return None
 
-    def getResourceList(self, url_path, query_filters=None):
+    def _replace_resource_content(self, have, want):
+        if not isinstance(have, dict) or not isinstance(want, dict):
+            Raise ValueError(msg="content should be in dict format")
+
+        if self._diff_resource(have, want) is not None:
+            return False
+
+        for key in want:
+           if key in have:
+               have[key] = want[key]
+
+        return True
+
+    def getResource(self, url_path, query_filters=None):
         conn = Connection(self.socket_path)
         
         try:
@@ -57,21 +71,22 @@ class RestApi(object):
         return response.get('items', {})
 
 
-    def addResource(self, url_path, content=None, primary_keys=None):
+    def addResource(self, url_path, content=None, primary_keys=None,
+                   query_params=None):
         conn = Connection(self.socket_path)
         
-        # To support idempotent we will have to check if we already
+        # To support idempotency we will have to check if we already
         # have object with same primary key or content in case of no pk
         if self.idempotency_support is False:
             try:
-                old_obj_list = self.getResourceList(url_path)
+                old_obj_list = self.getResource(url_path, query_params)
             except ConnectionError as e:
                 raise e
             if primary_keys is None:
-                if self._iterate_resource_by_id(old_obj_list, content) is not None:
+                if self._diff_resource(old_obj_list, content) is not None:
                     return (False, None)
-            elif self._iterate_resource_by_id(old_obj_list, content,
-                                             primary_keys=primary_keys) is not None:
+            elif self._diff_resource(old_obj_list, content,
+                                    primary_keys=primary_keys) is not None:
                 return (False, None)
         # Could not find existing object with same primary key or content
         try:
@@ -85,30 +100,61 @@ class RestApi(object):
 
         return (True, response)
 
+    def editResource(self, url_path, content=None, query_params=None):
+        conn = Connection(self.socket_path)
+       
+        # In case of edit, if old resource have same content then
+        # we don't need to send new PUT
+        if self.idempotency_support is False:
+            try:
+                old_obj = self.getResource(url_path, query_params)
+            except ConnectionError as e:
+                raise e
+            try:
+                if not self._replace_resource_content(old_obj, content):
+                    # Old object has same content, nothing to change
+                    return (False, None)
+            except Exception as exc:
+                 raise exc
+
+        try:
+            response =  conn.send_request(
+                url_path=url_path,
+                http_method='PUT',
+                body_params=old_obj
+            )
+        except ConnectionError as e:
+            raise e
+        return (True, response)
+
+    def deleteResource(self, url_path, body_params=None, query_params=None):
+        conn = Connection(self.socket_path)
+
+        try:
+            response =  conn.send_request(
+                url_path=url_path,
+                http_method='DELETE',
+                body_params=body_params,
+                query_params=query_params
+            )
+        except ConnectionError as e:
+            raise e
+        return (True, response)
+
 # Function to compare if 'want' dict is subset/copy of 'have'
 # It supports comparing dicts with mutable objects
 def compare_json_resources(have, want):
     if set(have.keys()) & set(want.keys()) != set(want.keys()):
         return False
-    for k in want:
-        if k in have:
-            if isinstance(have[k], (list, tuple, set)):
-                if not isinstance(want[k], (list, tuple, set)):
-                    return False
-                else:
-                    q(want[k], have[k])
-                    if len(set(have[k]) - set(want[k])) != 0:
-                        return False
-            elif isinstance(have[k], dict):
-                if not isinstance(want[k], dict):
-                    return False
-                else:
-                    if not compare_json_resources(have[k], want[k]): 
-                        return False 
-            elif have[k] != want[k]:
-                return False
-            
-        else:
-            return False
-        
-    return True
+
+    have_subset = dict()
+    for keys in want:
+        have_subset.update({keys: have.get(keys, {})})
+
+    have_str = json.dumps(have_subset, sort_keys=True)
+    want_str = json.dumps(want, sort_keys=True)
+
+    if have_str == want_str:
+        return True
+    else:
+        return False

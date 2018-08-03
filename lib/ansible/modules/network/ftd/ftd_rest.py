@@ -83,6 +83,8 @@ from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.connection import Connection
 from ansible.module_utils.network.common.rest import RestApi
 
+#FIXME
+import q
 
 class FtdRestApi(RestApi):
 
@@ -102,7 +104,7 @@ class FtdRestApi(RestApi):
                 url_path = '/policy/accesspolicies/' + pId + '/accessrules'
                 del content['parentId']
         else:
-            module.fail_json(msg='Unknow Resouce: %s' % res)
+            raise ValueError(msg='Unknow Resource: %s' % res)
         return url_path
 
     def run(self):
@@ -110,7 +112,11 @@ class FtdRestApi(RestApi):
         content = self._params['content']
         op = self._params['operation']
         if op == 'add':
-            return self.addResource(url, content=content)
+            filter_params = dict()
+            filter_params['filter'] = 'name:%s' % self._params['content'].get('name', {})
+            res = self.addResource(url, content=content, primary_keys=['name',
+                                  'sourceNetworks'], query_params=filter_params)
+            return res
 
 
 def main():
@@ -123,12 +129,12 @@ def main():
     )
     result = {'changed': False}
 
-    module = AnsibleModule(argument_spec=fields)
+    module = AnsibleModule(argument_spec=fields, supports_check_mode=True)
     params = module.params
 
     try:
         ftd_rest = FtdRestApi(module._socket_path, params)
-        (changed, response) = ftd_rest.run()
+        changed, response = ftd_rest.run()
 
         result.update({
             'changed': changed,
@@ -137,7 +143,8 @@ def main():
         module.exit_json(**result)
     except Exception as e:
         module.fail_json(changed=False, msg=str(e))
-
+    except ValueError as exc:
+        module.fail_json(changed=False, msg=str(exc))
 
 if __name__ == '__main__':
     main()
