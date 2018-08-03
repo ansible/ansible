@@ -40,6 +40,7 @@ def configure(func):
         return func(self, *args, **kwargs)
     return wrapped
 
+
 class Cliconf(CliconfBase):
 
     def get_text(self, ele, tag):
@@ -139,7 +140,7 @@ class Cliconf(CliconfBase):
         if confirmed:
             command += ' confirmed'
         if at_time:
-            command += ' {}'.format(at_time)
+            command += ' {0}'.format(at_time)
         if synchronize:
             command += ' peers-synchronize'
 

@@ -105,6 +105,7 @@ def is_netconf(module):
     capabilities = get_capabilities(module)
     return True if capabilities.get('network_api') == 'netconf' else False
 
+
 def _validate_rollback_id(module, value):
     try:
         if not 0 <= int(value) <= 49:
