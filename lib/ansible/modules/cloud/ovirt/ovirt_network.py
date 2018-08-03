@@ -61,6 +61,7 @@ options:
     external_provider:
         description:
             - "Type name of external network provider."
+        version_added: 2.7
     vm_network:
         description:
             - "If I(True) network will be marked as network for VM."
