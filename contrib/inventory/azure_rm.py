@@ -810,7 +810,7 @@ class AzureInventory(object):
 
         host_name = self._to_safe(vars['name'])
         resource_group = self._to_safe(vars['resource_group'])
-        operating_system_type = self._to_safe(vars['os_disk']['operating_system_type'].tolower())
+        operating_system_type = self._to_safe(vars['os_disk']['operating_system_type'].lower())
         security_group = None
         if vars.get('security_group'):
             security_group = self._to_safe(vars['security_group'])
