@@ -1,0 +1,21 @@
+# SCW_API_KEY='XXX' ansible-playbook ./test/legacy/scaleway_servers_facts.yml
+
+- name: Test servers information retrival from Scaleway
+  hosts: localhost
+  gather_facts: no
+  environment:
+    SCW_API_KEY: "{{ lookup('env', 'SCW_API_KEY') }}"
+
+  tasks:
+
+  - name: Get servers information and register it in a variable
+    scaleway_servers_facts:
+      region: par1
+
+    register: servers_fetch_task
+
+  - debug: var=servers_fetch_task
+
+  - assert:
+      that:
+        - servers_fetch_task is success
