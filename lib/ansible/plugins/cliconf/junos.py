@@ -139,7 +139,7 @@ class Cliconf(CliconfBase):
         if confirmed:
             command += ' confirmed'
         if at_time:
-            command += ' %s'.format(at_time)
+            command += ' {}'.format(at_time)
         if synchronize:
             command += ' peers-synchronize'
 
