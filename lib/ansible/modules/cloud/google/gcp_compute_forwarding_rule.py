@@ -148,6 +148,15 @@ options:
               if the network is in custom subnet mode, a subnetwork must be specified.
             - This field is not used for external load balancing.
         required: false
+    target:
+        description:
+            - A reference to a TargetPool resource to receive the matched traffic.
+            - For regional forwarding rules, this target must live in the same region as the forwarding
+              rule. For global forwarding rules, this target must be a global load balancing resource.
+              The forwarded traffic must be of a type appropriate to the target object.
+            - This field is not used for internal load balancing.
+        required: false
+        version_added: 2.7
     region:
         description:
             - A reference to the region where the regional forwarding rule resides.
@@ -311,6 +320,15 @@ RETURN = '''
             - This field is not used for external load balancing.
         returned: success
         type: dict
+    target:
+        description:
+            - A reference to a TargetPool resource to receive the matched traffic.
+            - For regional forwarding rules, this target must live in the same region as the forwarding
+              rule. For global forwarding rules, this target must be a global load balancing resource.
+              The forwarded traffic must be of a type appropriate to the target object.
+            - This field is not used for internal load balancing.
+        returned: success
+        type: dict
     region:
         description:
             - A reference to the region where the regional forwarding rule resides.
@@ -349,6 +367,7 @@ def main():
             port_range=dict(type='str'),
             ports=dict(type='list', elements='str'),
             subnetwork=dict(type='dict'),
+            target=dict(type='dict'),
             region=dict(required=True, type='str')
         )
     )
@@ -411,7 +430,8 @@ def resource_to_request(module):
         u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink'),
         u'portRange': module.params.get('port_range'),
         u'ports': module.params.get('ports'),
-        u'subnetwork': replace_resource_dict(module.params.get(u'subnetwork', {}), 'selfLink')
+        u'subnetwork': replace_resource_dict(module.params.get(u'subnetwork', {}), 'selfLink'),
+        u'target': replace_resource_dict(module.params.get(u'target', {}), 'selfLink')
     }
     return_vals = {}
     for k, v in request.items():
@@ -491,7 +511,8 @@ def response_to_hash(module, response):
         u'network': response.get(u'network'),
         u'portRange': response.get(u'portRange'),
         u'ports': response.get(u'ports'),
-        u'subnetwork': response.get(u'subnetwork')
+        u'subnetwork': response.get(u'subnetwork'),
+        u'target': response.get(u'target')
     }
 
 

@@ -135,6 +135,7 @@ EXAMPLES = '''
         advertised_ip_ranges:
         - range: 1.2.3.4
         - range: 6.7.0.0/16
+      region: us-central1
       project: "test_project"
       auth_kind: "service_account"
       service_account_file: "/tmp/auth.pem"
