@@ -560,8 +560,8 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
 
                 # We need to ensure that dns_servers are list like
                 dns_servers_res = results.get('dns_settings').get('dns_servers')
-                _dns_servers_set = sorted(self.dns_servers) if type(self.dns_servers) is list else list()
-                _dns_servers_res = sorted(dns_servers_res) if type(dns_servers_res) is list else list()
+                _dns_servers_set = sorted(self.dns_servers) if istype(self.dns_servers, list) else list()
+                _dns_servers_res = sorted(dns_servers_res) if istype(self.dns_servers, list) else list()
                 if _dns_servers_set != _dns_servers_res:
                     self.log("CHANGED: DNS servers set to {0} (previously {1})".format(
                         ", ".join(_dns_servers_set),
