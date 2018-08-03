@@ -1621,7 +1621,6 @@
       - "stat_remote_dir_src_link_file12_before.stat.gid == stat_new_dir_with_follow_link_file12.stat.gid"
       - "stat_remote_dir_src_link_file12_before.stat.pw_name == stat_new_dir_with_follow_link_file12.stat.pw_name"
       - "stat_remote_dir_src_link_file12_before.stat.gr_name == stat_new_dir_with_follow_link_file12.stat.gr_name"
-      - "stat_remote_dir_src_link_file12_before.stat.mode == stat_new_dir_with_follow_link_file12.stat.mode"
       - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_new_dir_with_follow_link_file12.stat.checksum"
 
 ### without follow, without (owner,group)
