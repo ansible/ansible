@@ -98,7 +98,7 @@
         update_password: always
       register: test_user_encrypt2
 
-    - name:
+    - name: there should be a warning complains about the character set of password
       assert:
         that: "'warnings' in test_user_encrypt2"
   when: ansible_system != 'Darwin'
