@@ -127,10 +127,11 @@ class CallbackModule(CallbackBase):
                                       ).exists(self.log_group_name):
             self.create_log_group(self.boto_client, self.log_group_name)
 
-        self.next_sequence_token = LogStreamPaginator(self.boto_client,self.log_group_name, self.log_stream_name
-                                       ).exists(self.log_stream_name)
-        if not self.next_sequence_token:
+        log_stream_paginator = LogStreamPaginator(self.boto_client,self.log_group_name, self.log_stream_name)
+        if not log_stream_paginator.exists(self.log_stream_name):
             self.create_log_stream(self.boto_client, self.log_group_name, self.log_stream_name)
+
+        self.next_sequence_token = log_stream_paginator.sequence_token
 
     def create_log_group(self, client, log_group_name):
         if self.aws_kms_key_id:
@@ -273,6 +274,7 @@ class LogStreamPaginator(object):
         self.next_token = None
         self.order_by = 'LogStreamName'
         self.descending = True
+        self.sequence_token = None
 
     def __iter__(self):
         return self
@@ -306,7 +308,8 @@ class LogStreamPaginator(object):
         for streams in self:
             for name, token in streams:
                 if name == stream_name:
-                    return token
+                    self.sequence_token = token or None
+                    return True
         return False
 
     # python2 compatibility
