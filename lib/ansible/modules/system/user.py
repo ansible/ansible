@@ -461,7 +461,7 @@ class User(object):
                 else:
                     maybe_invalid = True
             if maybe_invalid:
-                self.module.warn("The iunput password seems not been hashed, "
+                self.module.warn("The input password seems not been hashed, "
                                  "please note that 'password' argument requires an encrypted value or the password will not work properly.")
 
     def execute_command(self, cmd, use_unsafe_shell=False, data=None, obey_checkmode=True):
