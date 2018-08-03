@@ -395,7 +395,7 @@ def copy_left_only(src, dest, module):
                 if group is not None:
                     module.set_group_if_different(dest_item_path, group, False)
             if os.path.isdir(src_item_path):
-                shutil.copytree(src_item_path, dest_item_path, symlinks=follow)
+                shutil.copytree(src_item_path, dest_item_path, symlinks=not(follow))
                 chown_recursive(dest_item_path, module)
             changed = True
     return changed
@@ -598,7 +598,7 @@ def main():
 
             if not os.path.exists(dest):
                 if not module.check_mode:
-                    shutil.copytree(b_src, dest, symlinks=follow)
+                    shutil.copytree(b_src, dest, symlinks=not(follow))
                 chown_recursive(dest, module)
                 changed = True
 
