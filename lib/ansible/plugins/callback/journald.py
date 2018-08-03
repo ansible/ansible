@@ -61,7 +61,7 @@ class CallbackModule(CallbackBase):
         self.logger.setLevel(logging.INFO)
 
     def _send_log(self, status, message):
-        self.logger.info('%s - PlaybookId[%s] %s: %s' % (self.username, self.playbook_id, status, message))
+        self.logger.info('%s - PlaybookId[%s] %s: %s', self.username, self.playbook_id, status, message)
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
         if ignore_errors:
