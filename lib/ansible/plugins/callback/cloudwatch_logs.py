@@ -24,7 +24,7 @@ DOCUMENTATION = '''
         ini:
           - section: callback_cloudwatch_logs
             key: log_group_name
-            
+
       log_stream_name:
         required: True
         description: stream name the logs are written against
@@ -33,7 +33,7 @@ DOCUMENTATION = '''
         ini:
           - section: callback_cloudwatch_logs
             key: log_stream_name
-            
+
       aws_region_name:
         required: False
         description: aws region to use
@@ -42,7 +42,7 @@ DOCUMENTATION = '''
         ini:
           - section: callback_cloudwatch_logs
             key: aws_region_name
-            
+
       aws_access_key_id:
         required: False
         description: aws credentials
@@ -51,7 +51,7 @@ DOCUMENTATION = '''
         ini:
           - section: callback_cloudwatch_logs
             key: aws_access_key_id
-            
+
       aws_secret_access_key:
         required: False
         description: aws credentials
@@ -60,7 +60,7 @@ DOCUMENTATION = '''
         ini:
           - section: callback_cloudwatch_logs
             key: aws_secret_access_key
-            
+
       aws_kms_key_id:
         required: False
         description: id of the kms key to encrypt the logs with
@@ -123,11 +123,10 @@ class CallbackModule(CallbackBase):
             self.boto_client = boto3.client('logs',
                                             region_name=self.aws_region_name)
 
-        if not LogGroupPaginator(self.boto_client, self.log_group_name
-                                      ).exists(self.log_group_name):
+        if not LogGroupPaginator(self.boto_client, self.log_group_name).exists(self.log_group_name):
             self.create_log_group(self.boto_client, self.log_group_name)
 
-        log_stream_paginator = LogStreamPaginator(self.boto_client,self.log_group_name, self.log_stream_name)
+        log_stream_paginator = LogStreamPaginator(self.boto_client, self.log_group_name, self.log_stream_name)
         if not log_stream_paginator.exists(self.log_stream_name):
             self.create_log_stream(self.boto_client, self.log_group_name, self.log_stream_name)
 
@@ -170,7 +169,7 @@ class CallbackModule(CallbackBase):
         self._pending_logs.append(
             dict(
                 timestamp=int(time.time() * 1000),
-                message='{} - PlaybookId[{}] {}: {}'.format(self.username, self.playbook_id, status, message)
+                message='%s - PlaybookId[%s] %s: %s' % (self.username, self.playbook_id, status, message)
             )
         )
 
@@ -178,7 +177,7 @@ class CallbackModule(CallbackBase):
         if ignore_errors:
             return
         host = result._host
-        self._send_log('failed: ', '[{}]'.format(host.get_name()))
+        self._send_log('failed: ', '[%s]' % host.get_name())
 
     def v2_runner_on_ok(self, _result):
         host = _result._host
@@ -194,9 +193,9 @@ class CallbackModule(CallbackBase):
 
         delegated_vars = result.get('_ansible_delegated_vars', None)
         if delegated_vars:
-            msg.append("[{} -> {}]".format(host.get_name(), delegated_vars['ansible_host']))
+            msg.append("[%s -> %s]" % (host.get_name(), delegated_vars['ansible_host']))
         else:
-            msg.append("[{}]".format(host.get_name()))
+            msg.append("[%s]" % host.get_name())
 
         if task.loop and 'results' in result:
             self._process_items(_result)
@@ -205,16 +204,16 @@ class CallbackModule(CallbackBase):
 
             if (self._display.verbosity > 0 or '_ansible_verbose_always' in result) \
                     and '_ansible_verbose_override' not in result:
-                msg[1] += " => {}".format(result)
+                msg[1] += " => %s" % result
         self._send_log(*msg)
 
     def v2_runner_on_skipped(self, result):
         host = result._host
-        self._send_log('skipped: ', '[{}]'.format(host.get_name()))
+        self._send_log('skipped: ', '[%s]' % host.get_name())
 
     def v2_runner_on_unreachable(self, result):
         host = result._host
-        self._send_log('unreachable: ', '[{}]'.format(host.get_name))
+        self._send_log('unreachable: ', '[%s]' % host.get_name)
 
     def v2_playbook_on_start(self, playbook):
         self.playbook_name = os.path.basename(playbook._file_name)
@@ -229,15 +228,15 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_item_on_failed(self, result):
         host = result._host
-        self._send_log('item failed', '[{}]'.format(host.get_name()))
+        self._send_log('item failed', '[%s]' % host.get_name())
 
-    def v2_runner_item_on_skipped(self,result):
+    def v2_runner_item_on_skipped(self, result):
         host = result._host
-        self._send_log('item skipped', '[{}]'.format(host.get_name()))
+        self._send_log('item skipped', '[%s]' % host.get_name())
 
     def v2_runner_retry(self, result):
         host = result._host
-        self._send_log('retry', '[{}]'.format(host.get_name()))
+        self._send_log('retry', '[%s]' % host.get_name())
 
     def v2_playbook_on_stats(self, stats):
         """Display info about playbook statistics"""
@@ -253,7 +252,7 @@ class CallbackModule(CallbackBase):
             failures += s['failures']
             unreachable += s['unreachable']
 
-        status_line = 'OK:{} CHANGED:{} FAILURES:{} UNREACHABLE:{}'.format(
+        status_line = 'OK:%s CHANGED:%s FAILURES:%s UNREACHABLE:%s' % (
             ok, changed, failures, unreachable
         )
 
@@ -262,7 +261,7 @@ class CallbackModule(CallbackBase):
         else:
             final_status = 'Succeeded'
 
-        self._send_log('COMPLETE', 'Playbook {}. {}'.format(final_status, status_line))
+        self._send_log('COMPLETE', 'Playbook %s. %s' % (final_status, status_line))
         self._send_log_to_cloudwatch()
 
 

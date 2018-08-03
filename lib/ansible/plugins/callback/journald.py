@@ -61,13 +61,13 @@ class CallbackModule(CallbackBase):
         self.logger.setLevel(logging.INFO)
 
     def _send_log(self, status, message):
-        self.logger.info('{} - PlaybookId[{}] {}: {}'.format(self.username, self.playbook_id, status, message))
+        self.logger.info('%s - PlaybookId[%s] %s: %s' % (self.username, self.playbook_id, status, message))
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
         if ignore_errors:
             return
         host = result._host
-        self._send_log('failed: ', '[{}]'.format(host.get_name()))
+        self._send_log('failed: ', '[%s]' % (host.get_name()))
 
     def v2_runner_on_ok(self, _result):
         host = _result._host
@@ -77,15 +77,15 @@ class CallbackModule(CallbackBase):
         if isinstance(task, TaskInclude):
             return
         elif result.get('changed', False):
-            msg = [['changed: ']]
+            status = 'changed'
         else:
-            msg = [['ok: ']]
+            status = 'ok'
 
         delegated_vars = result.get('_ansible_delegated_vars', None)
         if delegated_vars:
-            msg.append("[{} -> {}]".format(host.get_name(), delegated_vars['ansible_host']))
+            msg = "[%s -> %s]" % (host.get_name(), delegated_vars['ansible_host'])
         else:
-            msg.append("[{}]".format(host.get_name()))
+            msg = "[%s]" % (host.get_name())
 
         if task.loop and 'results' in result:
             self._process_items(_result)
@@ -94,16 +94,16 @@ class CallbackModule(CallbackBase):
 
             if (self._display.verbosity > 0 or '_ansible_verbose_always' in result) \
                     and '_ansible_verbose_override' not in result:
-                msg[1] += " => {}".format(result)
-        self._send_log(*msg)
+                msg += " => %s" % (result)
+        self._send_log(status, msg)
 
     def v2_runner_on_skipped(self, result):
         host = result._host
-        self._send_log('skipped: ', '[{}]'.format(host.get_name()))
+        self._send_log('skipped: ', '[%s]' % (host.get_name()))
 
     def v2_runner_on_unreachable(self, result):
         host = result._host
-        self._send_log('unreachable: ', '[{}]'.format(host.get_name))
+        self._send_log('unreachable: ', '[%s]' % (host.get_name))
 
     def v2_playbook_on_start(self, playbook):
         self.playbook_name = os.path.basename(playbook._file_name)
@@ -118,15 +118,15 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_item_on_failed(self, result):
         host = result._host
-        self._send_log('item failed', '[{}]'.format(host.get_name()))
+        self._send_log('item failed', '[%s]' % (host.get_name()))
 
-    def v2_runner_item_on_skipped(self,result):
+    def v2_runner_item_on_skipped(self, result):
         host = result._host
-        self._send_log('item skipped', '[{}]'.format(host.get_name()))
+        self._send_log('item skipped', '[%s]' % (host.get_name()))
 
     def v2_runner_retry(self, result):
         host = result._host
-        self._send_log('retry', '[{}]'.format(host.get_name()))
+        self._send_log('retry', '[%s]' % (host.get_name()))
 
     def v2_playbook_on_stats(self, stats):
         """Display info about playbook statistics"""
@@ -142,7 +142,7 @@ class CallbackModule(CallbackBase):
             failures += s['failures']
             unreachable += s['unreachable']
 
-        status_line = 'OK:{} CHANGED:{} FAILURES:{} UNREACHABLE:{}'.format(
+        status_line = 'OK:%s CHANGED:%s FAILURES:%s UNREACHABLE:%s' % (
             ok, changed, failures, unreachable
         )
 
@@ -151,4 +151,4 @@ class CallbackModule(CallbackBase):
         else:
             final_status = 'Succeeded'
 
-        self._send_log('COMPLETE', 'Playbook {}. {}'.format(final_status, status_line))
+        self._send_log('COMPLETE', 'Playbook %s. %s' % (final_status, status_line))
