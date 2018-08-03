@@ -76,6 +76,8 @@ class CallbackModule(CallbackBase):
 
         super(CallbackModule, self).__init__(display=display)
 
+        self._options = cli.options
+
         if not HAS_PRETTYTABLE:
             self.disabled = True
             self._display.warning('The `prettytable` python module is not '
@@ -132,27 +134,25 @@ class CallbackModule(CallbackBase):
             '*Playbook initiated* (_%s_)' % self.guid
         ]
         invocation_items = []
-        if self._plugin_options and self.show_invocation:
-            tags = self.get_option('tags')
-            skip_tags = self.get_option('skip_tags')
-            extra_vars = self.get_option('extra_vars')
-            subset = self.get_option('subset')
-            inventory = os.path.basename(
-                os.path.realpath(self.get_option('inventory'))
-            )
+        if self._options and self.show_invocation:
+            tags = self._options.tags
+            skip_tags = self._options.skip_tags
+            extra_vars = self._options.extra_vars
+            subset = self._options.subset
+            inventory = [os.path.abspath(i) for i in self._options.inventory]
 
-            invocation_items.append('Inventory:  %s' % inventory)
-            if tags and tags != 'all':
-                invocation_items.append('Tags:       %s' % tags)
+            invocation_items.append('Inventory:  %s' % ', '.join(inventory))
+            if tags and tags != ['all']:
+                invocation_items.append('Tags:       %s' % ', '.join(tags))
             if skip_tags:
-                invocation_items.append('Skip Tags:  %s' % skip_tags)
+                invocation_items.append('Skip Tags:  %s' % ', '.join(skip_tags))
             if subset:
                 invocation_items.append('Limit:      %s' % subset)
             if extra_vars:
                 invocation_items.append('Extra Vars: %s' %
                                         ' '.join(extra_vars))
 
-            title.append('by *%s*' % self.get_option('remote_user'))
+            title.append('by *%s*' % self._options.remote_user)
 
         title.append('\n\n*%s*' % self.playbook_name)
         msg_items = [' '.join(title)]
