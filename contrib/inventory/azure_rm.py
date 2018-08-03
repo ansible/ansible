@@ -109,6 +109,11 @@ required. For a specific host, this script returns the following variables:
   "virtual_machine_size": "Standard_DS4"
 }
 
+Run for Specific Virtual machine scale set
+-----------------------
+When run for a specific Virtual machine scale set using the --vmss option, a resource group is
+required. 
+
 Groups
 ------
 When run in --list mode, instances are grouped by the following categories:
@@ -144,6 +149,10 @@ AZURE_TAGS=key1:value1,key2:value2
 
 If you don't need the powerstate, you can improve performance by turning off powerstate fetching:
 AZURE_INCLUDE_POWERSTATE=no
+
+Select hosts in Virtual machine scale set by setting below environment variable, 
+or set include_vm_scale_sets in azure_rm.ini:
+AZURE_INCLUDE_VM_SCALE_SETS=yes
 
 azure_rm.ini
 ------------
@@ -529,7 +538,7 @@ class AzureRM(object):
         if not self._network_client:
             self._network_client = self.get_mgmt_svc_client(NetworkManagementClient,
                                                             self._cloud_environment.endpoints.resource_manager,
-                                                            '2018-02-01')
+                                                            '2017-06-01')
             self._register('Microsoft.Network')
         return self._network_client
 
@@ -539,7 +548,7 @@ class AzureRM(object):
         if not self._resource_client:
             self._resource_client = self.get_mgmt_svc_client(ResourceManagementClient,
                                                              self._cloud_environment.endpoints.resource_manager,
-                                                             '2018-02-01')
+                                                             '2017-05-10')
         return self._resource_client
 
     @property
@@ -548,7 +557,7 @@ class AzureRM(object):
         if not self._compute_client:
             self._compute_client = self.get_mgmt_svc_client(ComputeManagementClient,
                                                             self._cloud_environment.endpoints.resource_manager,
-                                                            '2017-12-01')
+                                                            '2017-03-30')
             self._register('Microsoft.Compute')
         return self._compute_client
 
@@ -617,6 +626,8 @@ class AzureInventory(object):
                             help='Send debug messages to STDOUT')
         parser.add_argument('--host', action='store',
                             help='Get all information about an instance')
+        parser.add_argument('--vmss', action='store',
+                            help='Get all information about a virtual machine scale set')
         parser.add_argument('--pretty', action='store_true', default=False,
                             help='Pretty print JSON output(default: False)')
         parser.add_argument('--profile', action='store',
@@ -654,7 +665,8 @@ class AzureInventory(object):
                 try:
                     virtual_machines = self._compute_client.virtual_machines.list(resource_group.lower())
                     if self.include_vm_scale_sets:
-                        virtual_machines = list(virtual_machines) + self.get_vmss_vm_inventory()
+                        virtual_machines = list(virtual_machines) + self.get_vmss_vm_inventory(resource_group)
+
                 except Exception as exc:
                     sys.exit("Error: fetching virtual machines for resource group {0} - {1}".format(resource_group, str(exc)))
                 if self._args.host or self.tags:
@@ -671,38 +683,51 @@ class AzureInventory(object):
             except Exception as exc:
                 sys.exit("Error: fetching virtual machines - {0}".format(str(exc)))
 
-            if self._args.host or self.tags or self.locations:
+            if self._args.host or self.tags or self.locations or self._args.vmss:
                 selected_machines = self._selected_machines(virtual_machines)
                 self._load_machines(selected_machines)
             else:
                 self._load_machines(virtual_machines)
 
-    def get_vmss_vm_inventory(self):
-        virtual_machine_scale_sets = self._compute_client.virtual_machine_scale_sets.list_all()
-        selected_scale_sets = self._selected_machines(virtual_machine_scale_sets)
+    def get_vmss_vm_inventory(self, resource_group=None):
+        try:
+            if resource_group:
+                virtual_machine_scale_sets = self._compute_client.virtual_machine_scale_sets.list(resource_group)
+            else:
+                virtual_machine_scale_sets = self._compute_client.virtual_machine_scale_sets.list_all()
+        except Exception as exc:
+            sys.exit("Error: fetching virtual machine scale set - {0}".format(str(exc)))
+
         vmss_vms = []
-        for scale_set in selected_scale_sets:
+        selected_vmsses = self._selected_vmss(virtual_machine_scale_sets)
+
+        for scale_set in selected_vmsses:
             vmss_vms += self.get_vm_instances_in_vmss(scale_set)
+
         return vmss_vms
 
     def get_vm_instances_in_vmss(self, vmss):
         id_dict = azure_id_to_dict(vmss.id)
         resource_group = id_dict['resourceGroups']
-        vms = []
+        vm_instances = []
+        vms_raw = self._compute_client.virtual_machine_scale_set_vms.list(resource_group, vmss.name)
         nic_configs = self.get_vm_nics_for_vmss(resource_group, vmss.name)
-        for vm in self._compute_client.virtual_machine_scale_set_vms.list(resource_group, vmss.name):
+
+        for vm in vms_raw:
+
             for nic_config in nic_configs:
                 vm_id = azure_id_to_dict(vm.id)
                 nic_id = azure_id_to_dict(nic_config["id"])
                 if vm_id["virtualMachineScaleSets"] == nic_id["virtualMachineScaleSets"] and \
                    vm_id["virtualMachines"] == nic_id["virtualMachines"] and \
                    vm_id["resourceGroups"].lower() == nic_id["resourceGroups"].lower():
-                    vm.private_ip_address = nic_config.get("private_ip_address")
-                    vm.public_ip_address = nic_config.get("public_ip_address")
+                    vm.private_ip_address = nic_config.get("private_ip_address", None)
+                    vm.public_ip_address = nic_config.get("public_ip_address", None)
                     vm.hardware_profile = type('obj', (object,), {'vm_size': vmss.sku.name})
                     vm.vmss_vm = True
-                    vms.append(vm)
-        return vms
+                    vm.vmss_name = vm_id["virtualMachineScaleSets"]
+                    vm_instances.append(vm)
+        return vm_instances
 
     def get_vm_nics_for_vmss(self, resource_group, name):
         vmss_nics = self._network_client.network_interfaces.list_virtual_machine_scale_set_network_interfaces(resource_group, name)
@@ -712,10 +737,10 @@ class AzureInventory(object):
             vm_nic_info["id"] = vm.id
             for ip_configuration in vm.ip_configurations:
                 if ip_configuration.private_ip_address:
-                    vm_nic_info.update({"private_ip_address": vm.private_ip_address})
+                    vm_nic_info.update({"private_ip_address": ip_configuration.private_ip_address})
 
                 if ip_configuration.public_ip_address:
-                    vm_nic_info.update({"public_ip_address": vm.public_ip_address})
+                    vm_nic_info.update({"public_ip_address": ip_configuration.public_ip_address})
 
             vm_nics.append(vm_nic_info)
         return vm_nics
@@ -789,7 +814,6 @@ class AzureInventory(object):
                             host_vars['windows_rm']['listeners'].append(dict(protocol=listener.protocol.name,
                                                                              certificate_url=listener.certificate_url))
 
-            # here we are assuming all vmss vms have private ip addresses
             if vmss_vm:
                 host_vars['ansible_host'] = machine.private_ip_address
                 host_vars['public_ip'] = machine.public_ip_address
@@ -832,6 +856,7 @@ class AzureInventory(object):
 
     def _selected_machines(self, virtual_machines):
         selected_machines = []
+
         for machine in virtual_machines:
             if self._args.host and self._args.host == machine.name:
                 selected_machines.append(machine)
@@ -839,7 +864,21 @@ class AzureInventory(object):
                 selected_machines.append(machine)
             if self.locations and machine.location in self.locations:
                 selected_machines.append(machine)
+            if self._args.vmss and self._args.vmss == getattr(machine, 'vmss_name', None):
+                selected_machines.append(machine)
+
         return selected_machines
+
+    def _selected_vmss(self, vmsses):
+        selected_vmsses = []
+
+        if self._args.vmss:
+            for vmss in vmsses:
+                if self._args.vmss == vmss.name:
+                    selected_vmsses.append(vmss)
+        else:
+            selected_vmsses = vmsses
+        return selected_vmsses
 
     def _get_security_groups(self, resource_group):
         ''' For a given resource_group build a mapping of network_interface.id to security_group name '''
