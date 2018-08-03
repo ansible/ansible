@@ -85,6 +85,13 @@ options:
     type: bool
     default: False
     version_added: "2.7"
+  local_file_directory:
+    description:
+      - When (file_pull is True) file is copied from a remote SCP server to the NXOS device,
+        and written to this directory on the NXOS device. If the directory does not exist, it
+        will be created under the file_system. This is an optional parameter.
+      - When (file_pull is False), this not used.
+    version_added: "2.7"
   file_pull_timeout:
     description:
       - Use this parameter to set timeout in seconds, when transferring
@@ -121,6 +128,7 @@ EXAMPLES = '''
       nxos_file_copy:
       file_pull: True
       local_file: "xyz"
+      local_filr_directory: "dir1/dir2/dir3"
       remote_file: "/mydir/abc"
       remote_scp_server: "192.168.0.1"
       remote_scp_server_user: "myUser"
@@ -276,7 +284,7 @@ def transfer_file_to_device(module, dest):
     return True
 
 
-def copy_file_from_remote(module, local, file_system='bootflash:'):
+def copy_file_from_remote(module, local, local_file_directory, file_system='bootflash:'):
     hostname = module.params['host']
     username = module.params['username']
     password = module.params['password']
@@ -291,9 +299,18 @@ def copy_file_from_remote(module, local, file_system='bootflash:'):
             child.expect('(?i)Password')
         child.sendline(password)
         child.expect('#')
+        ldir = '/'
+        if local_file_directory:
+            dir_array = local_file_directory.split('/')
+            for each in dir_array:
+                if each:
+                    child.sendline('mkdir ' + ldir + each)
+                    child.expect('#')
+                    ldir += each + '/'
+
         command = ('copy scp://' + module.params['remote_scp_server_user'] +
                    '@' + module.params['remote_scp_server'] + module.params['remote_file'] +
-                   ' ' + file_system + local + ' vrf management')
+                   ' ' + file_system + ldir + local + ' vrf management')
 
         child.sendline(command)
         # response could be remote host connection time out,
@@ -316,14 +333,18 @@ def copy_file_from_remote(module, local, file_system='bootflash:'):
         fpt = module.params['file_pull_timeout']
         # response could be that there is no space left on device,
         # permission denied due to wrong user/password,
-        # remote file non-existent or success
-        index = child.expect(['No space', 'Permission denied', 'No such file', '#'], timeout=fpt)
+        # remote file non-existent or success,
+        # timeout due to large file transfer or network too slow,
+        # success
+        index = child.expect(['No space', 'Permission denied', 'No such file', pexpect.TIMEOUT, '#'], timeout=fpt)
         if index == 0:
             module.fail_json(msg='File copy failed due to no space left on the device')
         elif index == 1:
             module.fail_json(msg='Username/Password for remote scp server is wrong')
         elif index == 2:
             module.fail_json(msg='File copy failed due to remote file not present')
+        elif index == 3:
+            module.fail_json(msg='Timeout occured, please increase "file_pull_timeout" and try again!')
     except pexpect.ExceptionPexpect as e:
         module.fail_json(msg='%s' % to_native(e), exception=traceback.format_exc())
 
@@ -338,6 +359,7 @@ def main():
         connect_ssh_port=dict(required=False, type='int', default=22),
         file_pull=dict(type='bool', default=False),
         file_pull_timeout=dict(type='int', default=300),
+        local_file_directory=dict(required=False, type='str'),
         remote_scp_server=dict(type='str'),
         remote_scp_server_user=dict(type='str'),
         remote_scp_server_password=dict(no_log=True),
@@ -384,6 +406,7 @@ def main():
     local_file = module.params['local_file']
     remote_file = module.params['remote_file']
     file_system = module.params['file_system']
+    local_file_directory = module.params['local_file_directory']
 
     results['transfer_status'] = 'No Transfer'
     results['file_system'] = file_system
@@ -393,7 +416,7 @@ def main():
         local = local_file or src
 
         if not module.check_mode:
-            copy_file_from_remote(module, local, file_system=file_system)
+            copy_file_from_remote(module, local, local_file_directory, file_system=file_system)
             results['transfer_status'] = 'Received'
 
         results['changed'] = True
