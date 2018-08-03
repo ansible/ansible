@@ -5,7 +5,7 @@ Developing Plugins
 
 .. contents:: Topics
 
-Plugins are pieces of code that augment Ansible's core functionality. Ansible ships with a number of handy plugins, and you can easily write your own. This section describes the various types of Ansible plugins and how to implement them.
+Plugins augment Ansible's core functionality with logic and features that are accessible to all modules. Ansible ships with a number of handy plugins, and you can easily write your own. This section describes the various types of Ansible plugins and how to implement them.
 
 .. _plugin_guidelines:
 
