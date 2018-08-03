@@ -1,6 +1,21 @@
 Ansible Changes By Release
 ==========================
 
+<a id="2.4.7"></a>
+
+## 2.4.7 "Dancing Days" - 2018-07-05
+
+### Bugfixes
+
+* The fix for CVE-2018-10875 (https://access.redhat.com/security/cve/cve-2018-10875)
+  prints out a warning message about skipping a config file from a world
+  writable current working directory.  However, if the user explicitly
+  specifies that the config file should be used via the ANSIBLE_CONFIG
+  environment variable then Ansible would honor that but still print out the
+  warning message.  This has been fixed so that Ansible honors the user's
+  explicit wishes and does not print a warning message in that circumstance.
+
+
 <a id="2.4.6"></a>
 
 ## 2.4.6 "Dancing Days" - 2018-07-05
