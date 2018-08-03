@@ -3,6 +3,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import os.path
 
 from ansible.compat.tests import unittest
 
@@ -49,12 +50,6 @@ class TestConfigData(unittest.TestCase):
     def test_ensure_type_float(self):
         self.assertIsInstance(ensure_type('0.10', 'float'), float)
         self.assertIsInstance(ensure_type(0.2, 'float'), float)
-
-    def test_find_ini_file(self):
-        cur_config = os.environ['ANSIBLE_CONFIG']
-        os.environ['ANSIBLE_CONFIG'] = cfg_file
-        self.assertEquals(cfg_file, find_ini_config_file())
-        os.environ['ANSIBLE_CONFIG'] = cur_config
 
     def test_resolve_path(self):
         self.assertEquals(os.path.join(curdir, 'test.yml'), resolve_path('./test.yml', cfg_file))
