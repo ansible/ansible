@@ -45,14 +45,21 @@ options:
   volume:
     description:
     - Volume name to map to the host.
+  personality:
+    description:
+    - Define which operating systen the host is. Recommend for
+      ActiveCluster integration
+    choices: ['hpux', 'vms', 'aix', 'esxi', 'solaris', 'hitachi-vsp', 'oracle-vm-server', '']
+    version_added: '2.7'
 extends_documentation_fragment:
 - purestorage.fa
 '''
 
 EXAMPLES = r'''
-- name: Create new new host
+- name: Create new AIX host
   purefa_host:
     host: foo
+    personaility: aix
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 
@@ -109,6 +116,9 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pure import get_system, purefa_argument_spec
 
 
+AC_REQUIRED_API_VERSION = '1.14'
+
+
 try:
     from purestorage import purestorage
     HAS_PURESTORAGE = True
@@ -119,39 +129,56 @@ except ImportError:
 def _set_host_initiators(module, array):
     if module.params['protocol'] in ['iscsi', 'mixed']:
         if module.params['iqn']:
-            array.set_host(module.params['host'], addiqnlist=module.params['iqn'])
+            array.set_host(module.params['host'],
+                           addiqnlist=module.params['iqn'])
     if module.params['protocol'] in ['fc', 'mixed']:
         if module.params['wwns']:
-            array.set_host(module.params['host'], addwwnlist=module.params['wwns'])
+            array.set_host(module.params['host'],
+                           addwwnlist=module.params['wwns'])
+
+
+def _set_host_personality(module, array):
+    """Set host personality. Only called when AC is supported"""
+    array.set_host(module.params['host'],
+                   personality=module.params['personality'])
 
 
 def get_host(module, array):
 
     host = None
 
-    for h in array.list_hosts():
-        if h["name"] == module.params['host']:
-            host = h
+    for hst in array.list_hosts():
+        if hst["name"] == module.params['host']:
+            host = hst
             break
 
     return host
 
 
 def make_host(module, array):
-    if not module.check_mode:
-        try:
-            host = array.create_host(module.params['host'])
-            _set_host_initiators(module, array)
-            if module.params['volume']:
-                array.connect_host(module.params['host'], module.params['volume'])
-            changed = True
-        except:
-            changed = False
+    changed = True
+    try:
+        array.create_host(module.params['host'])
+        _set_host_initiators(module, array)
+        api_version = array._list_available_rest_versions()
+        if AC_REQUIRED_API_VERSION in api_version:
+            _set_host_personality(module, array)
+        if module.params['volume']:
+            array.connect_host(module.params['host'], module.params['volume'])
+    except:
+        module.fail_json(msg='Host {0} creation failed.'.format(module.params['host']))
     module.exit_json(changed=changed)
 
 
 def update_host(module, array):
     changed = False
+    api_version = array._list_available_rest_versions()
+    if AC_REQUIRED_API_VERSION in api_version:
+        try:
+            _set_host_personality(module, array)
+            changed = True
+        except:
+            module.fail_json(msg='Host {0} personality change failed'.format(module.params['host']))
     module.exit_json(changed=changed)
 
 
@@ -173,9 +200,12 @@ def main():
         iqn=dict(type='list'),
         wwns=dict(type='list'),
         volume=dict(type='str'),
+        personality=dict(type='str', default='',
+                         choices=['hpux', 'vms', 'aix', 'esxi', 'solaris',
+                                  'hitachi-vsp', 'oracle-vm-server', '']),
     ))
 
-    module = AnsibleModule(argument_spec, supports_check_mode=True)
+    module = AnsibleModule(argument_spec, supports_check_mode=False)
 
     if not HAS_PURESTORAGE:
         module.fail_json(msg='purestorage sdk is required for this module in host')
@@ -191,14 +221,14 @@ def main():
         except:
             module.fail_json(msg='Volume {} not found'.format(module.params['volume']))
 
-    if host and state == 'present':
+    if host is None and state == 'present':
+        make_host(module, array)
+    elif host and state == 'present':
         update_host(module, array)
     elif host and state == 'absent':
         delete_host(module, array)
     elif host is None and state == 'absent':
         module.exit_json(changed=False)
-    else:
-        make_host(module, array)
 
 
 if __name__ == '__main__':
