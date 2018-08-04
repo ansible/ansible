@@ -50,9 +50,7 @@ You must convert any strings returned by your plugin that could ever contain non
 Plugin Configuration & Documentation Standards
 ______________________________________________
 
-Plugins that support embedded documentation (see :ref:`ansible-doc` for the list) must include well-formed doc strings to be considered for merge into the Ansible repo. If you inherit from a plugin, you must document the options it takes, either via a documentation fragment or as a copy. Documentation is a good idea even if you're developing a plugin for local use.
-
-To define configurable options, describe them in the ``DOCUMENTATION`` section of the python file. Callback and connection plugins started using this system in Ansible version 2.4; most plugin types now use it. This approach ensures that the documentation of your plugin's options will always be correct and up-to-date. To add a configurable option to your plugin, define it in this format:
+To define configurable options, describe them in the ``DOCUMENTATION`` section of the python file. Callback and connection plugins have used this system since Ansible version 2.4; most plugin types now use it. This approach ensures that the documentation of your plugin's options will always be correct and up-to-date. To add a configurable option to your plugin, define it in this format:
 
 .. code-block:: python
 
@@ -72,6 +70,8 @@ To define configurable options, describe them in the ``DOCUMENTATION`` section o
 To access the configuration settings in your plugin, use ``self.get_option(<option_name>)``. For most plugin types, the controller pre-populates the settings. If you need to populate settings explicitly, use a ``self.set_options()`` call.
 
 Do we need more detail on HOW Ansible provides resolved configuration? (e.g. as YAML dictionaries, or JSON blobs or ???)
+
+Plugins that support embedded documentation (see :ref:`ansible-doc` for the list) must include well-formed doc strings to be considered for merge into the Ansible repo. If you inherit from a plugin, you must document the options it takes, either via a documentation fragment or as a copy. Thorough documentation is a good idea even if you're developing a plugin for local use.
 
 Developing Particular Plugin Types
 ==================================
