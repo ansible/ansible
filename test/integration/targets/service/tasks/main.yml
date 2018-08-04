@@ -29,6 +29,10 @@
         - ansible_distribution == 'Ubuntu'
         - ansible_distribution_version is version('15.04', '<')
 
+    - name: display value of ansible_service_mgr
+      debug:
+        msg: 'ansible_service_mgr: {{ ansible_service_mgr }}'
+
     - name: setup test service script
       include_tasks: '{{ service_type }}_setup.yml'
 
