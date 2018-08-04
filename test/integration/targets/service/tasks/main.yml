@@ -5,9 +5,9 @@
 - name: assert that the daemon script was installed
   assert:
     that:
-    - "install_result.dest == '/usr/sbin/ansible_test_service'"
-    - "install_result.state == 'file'"
-    - "install_result.mode == '0755'"
+      - "install_result.dest == '/usr/sbin/ansible_test_service'"
+      - "install_result.state == 'file'"
+      - "install_result.mode == '0755'"
 
 # determine init system is in use
 - name: detect sysv init system
@@ -39,7 +39,7 @@
 - name: assert that changes reported for check mode run
   assert:
     that:
-    - "enable_in_check_mode_result.changed == true"
+      - "enable_in_check_mode_result is changed"
 
 - name: enable the ansible test service
   service: name=ansible_test enabled=yes
@@ -48,8 +48,8 @@
 - name: assert that the service was enabled and changes reported
   assert:
     that:
-    - "enable_result.enabled == true"
-    - "enable_result.changed == true"
+      - "enable_result.enabled == true"
+      - "enable_result is changed"
 
 - name: start the ansible test service
   service: name=ansible_test state=started
@@ -58,8 +58,8 @@
 - name: assert that the service was started
   assert:
     that:
-    - "start_result.state == 'started'"
-    - "start_result is changed"
+      - "start_result.state == 'started'"
+      - "start_result is changed"
 
 - name: check that the service was started
   shell: 'cat /proc/$(cat /var/run/ansible_test_service.pid)/cmdline'
@@ -75,9 +75,9 @@
 - name: assert that the service was started via the pattern
   assert:
     that:
-    - "start2_result.name == 'ansible_test'"
-    - "start2_result.state == 'started'"
-    - "start2_result is not changed"
+      - "start2_result.name == 'ansible_test'"
+      - "start2_result.state == 'started'"
+      - "start2_result is not changed"
   when: service_type != "systemd"
 
 - name: restart the ansible test service
@@ -87,8 +87,8 @@
 - name: assert that the service was restarted
   assert:
     that:
-    - "restart_result.state == 'started'"
-    - "restart_result is changed"
+      - "restart_result.state == 'started'"
+      - "restart_result is changed"
 
 - name: restart the ansible test service with a sleep
   service: name=ansible_test state=restarted sleep=2
@@ -99,8 +99,8 @@
 - name: assert that the service was restarted with a sleep
   assert:
     that:
-    - "restart_sleep_result.state == 'started'"
-    - "restart_sleep_result is changed"
+      - "restart_sleep_result.state == 'started'"
+      - "restart_sleep_result is changed"
   when: service_type != "systemd"
 
 - name: reload the ansible test service
@@ -113,8 +113,8 @@
 - name: assert that the service was reloaded
   assert:
     that:
-    - "reload_result.state == 'started'"
-    - "reload_result is changed"
+      - "reload_result.state == 'started'"
+      - "reload_result is changed"
   when: service_type != "systemd"
 
 - name: stop the ansible test service
@@ -124,8 +124,8 @@
 - name: assert that the service was stopped
   assert:
     that:
-    - "stop_result.state == 'stopped'"
-    - "stop_result is changed"
+      - "stop_result.state == 'stopped'"
+      - "stop_result is changed"
 
 - name: disable the ansible test service
   service: name=ansible_test enabled=no
@@ -134,8 +134,8 @@
 - name: assert that the service was disabled
   assert:
     that:
-    - "disable_result.enabled == false"
-    - "disable_result is changed"
+      - "disable_result.enabled == false"
+      - "disable_result is changed"
 
 - name: try to enable a broken service
   service: name=ansible_broken_test enabled=yes
@@ -145,7 +145,7 @@
 - name: assert that the broken test failed
   assert:
     that:
-    - "broken_enable_result is failed"
+      - "broken_enable_result is failed"
 
 - name: remove the test daemon script
   file: path=/usr/sbin/ansible_test_service state=absent
@@ -154,8 +154,8 @@
 - name: assert that the test daemon script was removed
   assert:
     that:
-    - "remove_result.path == '/usr/sbin/ansible_test_service'"
-    - "remove_result.state == 'absent'"
+      - "remove_result.path == '/usr/sbin/ansible_test_service'"
+      - "remove_result.state == 'absent'"
 
 # cleaning up changes made by this playbook
 - include: 'sysv_cleanup.yml'
