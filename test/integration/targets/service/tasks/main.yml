@@ -60,6 +60,11 @@
     that:
     - "start_result.state == 'started'"
 
+- name: check that the service was started
+  shell: 'cat /proc/$(cat /var/run/ansible_test_service.pid)/cmdline'
+  register: cmdline
+  failed_when: cmdline is failed or not cmdline.stdout.startswith('python\0/usr/sbin/ansible_test_service\0')
+
 - name: find the service with a pattern
   service: name=ansible_test pattern="ansible_test_ser*" state=started
   register: start2_result
