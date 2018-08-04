@@ -1,23 +1,29 @@
 .. _developing_plugins:
+.. _plugin_guidelines:
 
 Developing Plugins
 ==================
 
 .. contents:: Topics
 
-Plugins augment Ansible's core functionality with logic and features that are accessible to all modules. Ansible ships with a number of handy plugins, and you can easily write your own. This section describes the various types of Ansible plugins and how to implement them.
+Plugins augment Ansible's core functionality with logic and features that are accessible to all modules. Ansible ships with a number of handy plugins, and you can easily write your own. If you want to All plugins must:
 
-.. _plugin_guidelines:
+* be written in Python
+* raise errors
+* return strings in unicode
+* conform to Ansible's configuration and documentation standards
 
-General Guidelines
-------------------
+Once you've reviewed these general guidelines, you can skip to the particular type of plugin you want to develop.
 
-This section lists some things that should apply to any type of plugin you develop.
+Writing Plugins in Python
+_________________________
+
+You must write your plugin in Python so it can be loaded by the PluginLoader and returned as a Python object that any module can use. Since your plugin will execute on the controller, you must write it in a :ref:`compatible version of Python <control_machine_requirements>`.
 
 Raising Errors
-^^^^^^^^^^^^^^
+______________
 
-In general, errors encountered during execution should be returned by raising AnsibleError() or similar class with a message describing the error. When wrapping other exceptions into error messages, you should always use the ``to_text`` Ansible function to ensure proper string compatibility across Python versions:
+You should return errors encountered during plugin execution by raising AnsibleError() or a similar class with a message describing the error. When wrapping other exceptions into error messages, you should always use the ``to_text`` Ansible function to ensure proper string compatibility across Python versions:
 
 .. code-block:: python
 
@@ -28,31 +34,47 @@ In general, errors encountered during execution should be returned by raising An
     except Exception as e:
         raise AnsibleError('Something happened, this was original exception: %s' % to_native(e))
 
-Check the different AnsibleError objects and see which one applies the best to your situation.
+Check the different AnsibleError objects and see which one applies best to your situation.
+## TODO: add link to list of AnsibleError objects!
 
 String Encoding
-^^^^^^^^^^^^^^^
-Any strings returned by your plugin that could ever contain non-ASCII characters must be converted into Python's unicode type because the strings will be run through jinja2.  To do this, you can use:
+_______________
+
+You must convert any strings returned by your plugin that could ever contain non-ASCII characters into Python's unicode type because the strings will be run through Jinja2. To do this, you can use:
 
 .. code-block:: python
 
     from ansible.module_utils._text import to_text
     result_string = to_text(result_string)
 
-Plugin Configuration
-^^^^^^^^^^^^^^^^^^^^
+Plugin Configuration & Documentation Standards
+______________________________________________
 
-Starting with Ansible version 2.4, we are unifying how each plugin type is configured and how they get those settings.  Plugins will be able to declare their requirements and have Ansible provide them with a resolved'configuration. Starting with Ansible 2.4 both callback and connection type plugins can use this system.
+Plugins that support embedded documentation (see :ref:`ansible-doc` for the list) must include well-formed doc strings to be considered for merge into the Ansible repo. If you inherit from a plugin, you must document the options it takes, either via a documentation fragment or as a copy. Documentation is a good idea even if you're developing a plugin for local use.
 
-Most plugins will be able to use  ``self.get_option(<optionname>)`` to access the settings.
-These are pre-populated by a ``self.set_options()`` call, for most plugin types this is done by the controller,
-but for some types you might need to do this explicitly.
-Of course, if you don't have any configurable options, you can ignore this.
+To define configurable options, describe them in the ``DOCUMENTATION`` section of the python file. Callback and connection plugins started using this system in Ansible version 2.4; most plugin types now use it. This approach ensures that the documentation of your plugin's options will always be correct and up-to-date. To add a configurable option to your plugin, define it in this format:
 
-Plugins that support embedded documentation (see :ref:`ansible-doc` for the list) must now include well-formed doc strings to be considered for merge into the Ansible repo. This documentation also doubles as 'configuration definition' so they will never be out of sync.
+.. code-block:: python
 
-If you inherit from a plugin, you must document the options it takes, either via a documentation fragment or as a copy.
+  options:
+    option_name:
+      description: describe this config option
+      default: default value for this config option
+      env:
+        - name: NAME_OF_ENV_VAR
+      ini:
+        - section: what_does_this_do?
+          key: ????
+      required: True/False
+      type: bool/string/????
+      version_added: X.x
 
+To access the configuration settings in your plugin, use ``self.get_option(<option_name>)``. For most plugin types, the controller pre-populates the settings. If you need to populate settings explicitly, use a ``self.set_options()`` call.
+
+Do we need more detail on HOW Ansible provides resolved configuration? (e.g. as YAML dictionaries, or JSON blobs or ???)
+
+Developing Particular Plugin Types
+==================================
 
 .. _developing_callbacks:
 
@@ -61,7 +83,7 @@ Callback Plugins
 
 Callback plugins enable adding new behaviors to Ansible when responding to events. By default, callback plugins control most of the output you see when running the command line programs.
 
-Callback plugins are created by creating a new class with the Base(Callbacks) class as the parent:
+To create a callback plugin, create a new class with the Base(Callbacks) class as the parent:
 
 .. code-block:: python
 
@@ -74,7 +96,6 @@ From there, override the specific methods from the CallbackBase that you want to
 For plugins intended for use with Ansible version 2.0 and later, you should only override methods that start with ``v2``.
 For a complete list of methods that you can override, please see ``__init__.py`` in the
 `lib/ansible/plugins/callback <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/callback>`_ directory.
-
 
 The following is a modified example of how Ansible's timer plugin is implemented,
 but with an extra option so you can see how configuration works in Ansible version 2.4 and later:
@@ -153,7 +174,7 @@ Connection Plugins
 
 Connection plugins allow Ansible to connect to the target hosts so it can execute tasks on them. Ansible ships with many connection plugins, but only one can be used per host at a time.
 
-By default, Ansible ships with several plugins. The most commonly used are the 'paramiko' SSH, native ssh (just called 'ssh'), and 'local' connection types.  All of these can be used in playbooks and with /usr/bin/ansible to decide how you want to talk to remote machines.
+By default, Ansible ships with several connection plugins. The most commonly used are the 'paramiko' SSH, native ssh (just called 'ssh'), and 'local' connection types.  All of these can be used in playbooks and with /usr/bin/ansible to decide how you want to talk to remote machines.
 
 The basics of these connection types are covered in the :ref:`intro_getting_started` section.
 
@@ -170,6 +191,8 @@ Filter Plugins
 --------------
 
 Filter plugins are used for manipulating data. They are a feature of Jinja2 and are also available in Jinja2 templates used by the ``template`` module. As with all plugins, they can be easily extended, but instead of having a file for each one you can have several per file. Most of the filter plugins shipped with Ansible reside in a ``core.py``.
+
+Filter plugins do not use the standard configuration and documentation system described above.
 
 See `lib/ansible/plugins/filter <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/filter>`_ for details.
 
