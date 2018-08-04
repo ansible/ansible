@@ -59,6 +59,7 @@
   assert:
     that:
     - "start_result.state == 'started'"
+    - "start_result is changed"
 
 - name: check that the service was started
   shell: 'cat /proc/$(cat /var/run/ansible_test_service.pid)/cmdline'
@@ -76,6 +77,7 @@
     that:
     - "start2_result.name == 'ansible_test'"
     - "start2_result.state == 'started'"
+    - "start2_result is not changed"
   when: service_type != "systemd"
 
 - name: restart the ansible test service
@@ -86,6 +88,7 @@
   assert:
     that:
     - "restart_result.state == 'started'"
+    - "restart_result is changed"
 
 - name: restart the ansible test service with a sleep
   service: name=ansible_test state=restarted sleep=2
@@ -97,6 +100,7 @@
   assert:
     that:
     - "restart_sleep_result.state == 'started'"
+    - "restart_sleep_result is changed"
   when: service_type != "systemd"
 
 - name: reload the ansible test service
@@ -110,6 +114,7 @@
   assert:
     that:
     - "reload_result.state == 'started'"
+    - "reload_result is changed"
   when: service_type != "systemd"
 
 - name: stop the ansible test service
@@ -120,6 +125,7 @@
   assert:
     that:
     - "stop_result.state == 'stopped'"
+    - "stop_result is changed"
 
 - name: disable the ansible test service
   service: name=ansible_test enabled=no
@@ -129,6 +135,7 @@
   assert:
     that:
     - "disable_result.enabled == false"
+    - "disable_result is changed"
 
 - name: try to enable a broken service
   service: name=ansible_broken_test enabled=yes
