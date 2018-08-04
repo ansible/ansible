@@ -81,6 +81,17 @@
       - "reload_result is changed"
   when: service_type != "systemd"
 
+- name: "test for #42786 (sysvinit)"
+  when: service_type == "sysv"
+  block:
+    - name: "sysvinit (#42786): check state, 'enable' parameter isn't set"
+      service: use=sysvinit name=ansible_test state=started
+
+    - name: "sysvinit (#42786): check that service is still enabled"
+      service: use=sysvinit name=ansible_test enabled=yes
+      register: result_enabled
+      failed_when: result_enabled is changed
+
 - name: stop the ansible test service
   service: name=ansible_test state=stopped
   register: stop_result
