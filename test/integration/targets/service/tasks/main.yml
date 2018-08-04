@@ -40,5 +40,11 @@
       import_tasks: tests.yml
 
   always:
+    - name: disable and stop ansible test service
+      service:
+        name: ansible_test
+        state: stopped
+        enabled: false
+
     # cleaning up changes made by this playbook
     - include_tasks: '{{ service_type }}_cleanup.yml'
