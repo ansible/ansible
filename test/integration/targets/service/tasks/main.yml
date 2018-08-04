@@ -69,8 +69,6 @@
 - name: find the service with a pattern
   service: name=ansible_test pattern="ansible_test_ser*" state=started
   register: start2_result
-  # don't enable this check yet on systems with systemd because of https://github.com/ansible/ansible/issues/16694
-  when: service_type != "systemd"
 
 - name: assert that the service was started via the pattern
   assert:
@@ -78,7 +76,6 @@
       - "start2_result.name == 'ansible_test'"
       - "start2_result.state == 'started'"
       - "start2_result is not changed"
-  when: service_type != "systemd"
 
 - name: restart the ansible test service
   service: name=ansible_test state=restarted
@@ -93,15 +90,12 @@
 - name: restart the ansible test service with a sleep
   service: name=ansible_test state=restarted sleep=2
   register: restart_sleep_result
-  # don't enable this check yet on systems with systemd because of https://github.com/ansible/ansible/issues/16694
-  when: service_type != "systemd"
 
 - name: assert that the service was restarted with a sleep
   assert:
     that:
       - "restart_sleep_result.state == 'started'"
       - "restart_sleep_result is changed"
-  when: service_type != "systemd"
 
 - name: reload the ansible test service
   service: name=ansible_test state=reloaded
