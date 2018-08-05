@@ -1,7 +1,7 @@
 - name: Prepare random number
   set_fact:
     rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
-    auth_source: cli
+    auth_source: auto
   run_once: yes
 
 - name: Create virtual network
