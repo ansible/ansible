@@ -211,8 +211,8 @@ class TaskExecutor:
         if self._task.loop_with:
             if self._task.loop_with in self._shared_loader_obj.lookup_loader:
                 fail = True
-                if self._task.loop_with == 'first_found':
-                    # first_found loops are special. If the item is undefined then we want to fall through to the next value rather than failing.
+                if self._task.loop_with == 'first_found' or self._task.loop_with == 'file_found':
+                    # first_found and file_found loops are special. If the item is undefined then we want to fall through to the next value rather than failing.
                     fail = False
 
                 loop_terms = listify_lookup_plugin_terms(terms=self._task.loop, templar=templar, loader=self._loader, fail_on_undefined=fail,

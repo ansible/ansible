@@ -227,6 +227,19 @@
         - "first_found == first_expected"
         - "first_found != first_unexpected"
 
+# WITH_FILE_FOUND
+
+  - name: test file_found
+    set_fact: resultOfFileFound="{{lookup('file_found', [output_dir + '/foo1', output_dir + '/does_not_exist', output_dir + '/bar1'])}}"
+
+  - name: set expected
+    set_fact: files_expected="{{output_dir}}/foo1,{{output_dir}}/bar1"
+
+  - name: verify with_file_found results
+    assert:
+      that:
+          - "resultOfFileFound == files_expected"
+
 # WITH_LINES
 
 - name: test with_lines
