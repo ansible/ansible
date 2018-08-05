@@ -66,7 +66,9 @@ options:
     description:
       - Specify if the network should allow manual attachment by individual containers.
         For overlay type networks only.
-    default: false
+    type: bool
+    default: 'no'
+    version_added: "2.7"
 
   ipam_driver:
     description:
