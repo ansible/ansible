@@ -224,7 +224,7 @@ def main():
 
     pattern = u''
     if params['after'] and params['before']:
-        pattern = u'%s(?P<subsection>.*?)%s' % (params['before'], params['after'])
+        pattern = u'%s(?P<subsection>.*?)%s' % (params['after'], params['before'])
     elif params['after']:
         pattern = u'%s(?P<subsection>.*)' % params['after']
     elif params['before']:
