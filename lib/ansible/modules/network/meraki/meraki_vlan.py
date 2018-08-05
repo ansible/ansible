@@ -145,9 +145,45 @@ response:
       type: string
       sample: upstream_dns
     fixedIpAssignments:
-      description: List of fixed IP address assignments between IP addresses and MAC addresses.
+      description: List of MAC addresses which have IP addresses assigned.
       returned: success
-      type: list
+      type: complex
+      contains:
+        macaddress:
+          description: MAC address which has IP address assigned to it.
+          returned: success
+          type: complex
+            contains:
+              ip:
+                description: IP address which is assigned to the MAC address.
+                returned: success
+                type: string
+                sample: 192.0.1.4
+              name:
+                description: Descriptive name for binding.
+                returned: success
+                type: string
+                sample: fixed_ip
+    reservedIpRanges:
+      description: List of IP address ranges which are reserved for static assignment.
+      returned: success
+      type: complex
+      contains:
+        comment:
+          description: Description for IP address reservation.
+          returned: success
+          type: string
+          sample: reserved_range
+        end:
+          description: Last IP address in reservation range.
+          returned: success
+          type: string
+          sample: 192.0.1.10
+        start:
+          description: First IP address in reservation range.
+          returned: success
+          type: string
+          sample: 192.0.1.5
     id:
       description: VLAN ID number.
       returned: success
