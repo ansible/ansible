@@ -119,6 +119,8 @@ EXAMPLES = """
     state: absent
 """
 
+RETURN = """ # """
+
 import os
 
 from ansible.module_utils.basic import AnsibleModule
@@ -191,8 +193,8 @@ def main():
         ),
         supports_check_mode=True,
         required_together=[
-		['raid_level', 'vdev']
-			]
+	    ['raid_level', 'vdev']
+	]
     )
 
     name = module.params.get('name')
