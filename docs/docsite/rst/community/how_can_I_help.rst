@@ -16,7 +16,7 @@ A great way to help the Ansible project is to become a power user:
 * Take tutorials and classes
 * Read the :ref:`official documentation <ansible_documentation>`
 * Study some of the `many excellent books <https://www.amazon.com/s/ref=nb_sb_ss_c_2_7?url=search-alias%3Dstripbooks&field-keywords=ansible&sprefix=ansible%2Caps%2C260>`_ about Ansible
-* `Get certified <https://www.ansible.com/training-certification>`_.
+* `Get certified <https://www.ansible.com/products/training-certification>`_.
 
 When you become a power user, your ability and opportunities to help the Ansible project in other ways will multiply quickly.
 
@@ -32,7 +32,7 @@ Participate in your local meetup
 
 There are Ansible meetups `all over the world <https://www.meetup.com/topics/ansible/>`_. Join your local meetup. Attend regularly. Ask good questions. Volunteer to give a presentation about how you use Ansible.
 
-If there isn't a meetup near you, we'll be happy to help you `start one <https://www.ansible.com/ansible-meetup-organizer>`_.
+If there isn't a meetup near you, we'll be happy to help you `start one <https://www.ansible.com/community/events/ansible-meetups>`_.
 
 File and verify issues
 ----------------------
@@ -47,7 +47,7 @@ Review and submit pull requests
 
 As you become more familiar with how Ansible works, you may be able to fix issues or develop new features yourself. If you think you've got a solution to a bug you've found in Ansible, or if you've got a new feature that you've written and would like to share with millions of Ansible users, read all about the :ref:`Ansible development process <community_development_process>` to learn how to get your code accepted into Ansible.
 
-Another good way to help is to review pull requests that other Ansible users have submitted. The Ansible community keeps a full list of `open pull requests by file <https://ansible.sivel.net/byfile.html>`_, so if there's a particular module or plug-in that particularly interests you, you can easily keep track of all the relevant new pull requests and provide testing or feedback.
+Another good way to help is to review pull requests that other Ansible users have submitted. The Ansible community keeps a full list of `open pull requests by file <https://ansible.sivel.net/pr/byfile.html>`_, so if there's a particular module or plug-in that particularly interests you, you can easily keep track of all the relevant new pull requests and provide testing or feedback.
 
 Become a module maintainer
 --------------------------

@@ -58,7 +58,7 @@ Setting the environment parameter RAX_CREDS_FILE to the path of this file will h
 this information.
 
 More information about this credentials file can be found at 
-https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating
+https://github.com/pycontribs/pyrax/blob/master/docs/getting_started.md#authenticating
 
 
 .. _virtual_environment:
