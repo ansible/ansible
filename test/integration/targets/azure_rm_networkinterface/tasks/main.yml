@@ -1,7 +1,7 @@
 - name: Prepare random number
   set_fact:
     rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
-    auth_source: auto
+    auth_source: cli
   run_once: yes
 
 - name: Create virtual network
@@ -155,7 +155,7 @@
         primary: True
         public_ip_allocation_method: Static
       - name: ipconfig1
-        public_ip_name: testnic003
+        public_ip_name: "tn{{ rpfx }}3"
   register: output
   check_mode: yes
 
@@ -181,7 +181,7 @@
         primary: True
         public_ip_allocation_method: Static
       - name: ipconfig1
-        public_ip_name: testnic003
+        public_ip_name: "tn{{ rpfx }}3"
         load_balancer_backend_address_pools:
         - "{{ lb.state.backend_address_pools[0].id }}"
         - name: backendaddrpool1
@@ -211,7 +211,7 @@
         primary: True
         public_ip_allocation_method: Static
       - name: ipconfig1
-        public_ip_name: testnic003
+        public_ip_name: "tn{{ rpfx }}3"
         load_balancer_backend_address_pools:
         - "{{ lb.state.backend_address_pools[0].id }}"
         - name: backendaddrpool1
@@ -234,7 +234,7 @@
     subnet: "tn{{ rpfx }}"
     ip_configurations:
       - name: ipconfig1
-        public_ip_name: testnic003
+        public_ip_name: "tn{{ rpfx }}3"
         load_balancer_backend_address_pools:
         - "{{ lb.state.backend_address_pools[0].id }}"
         - name: backendaddrpool1

@@ -532,6 +532,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                     self.log("CHANGED: Accelerated Networking set to {0} (previously {1})".format(
                         self.enable_accelerated_networking,
                         results.get('enable_accelerated_networking')))
+                    changed = True
 
                 if self.enable_ip_forwarding != bool(results.get('enable_ip_forwarding')):
                     self.log("CHANGED: IP forwarding set to {0} (previously {1})".format(
