@@ -131,6 +131,14 @@ options:
      - Indicate desired state of the instance
     choices: ['present', 'started', 'absent', 'stopped', 'restarted']
     default: present
+  restart:
+    description:
+      - restart container if it's configuration has changed.
+      - if set to C(yes) configuration of the container will be compared with the running instance.
+      - if it doesn't match, container will be stopped, updated with new configuration and restarted.
+      - if set to C(no) configuration will not be updated and container will not be restarted.
+    type: bool
+    default: 'no'
   pubkey:
     description:
       - Public key to add to /root/.ssh/authorized_keys. This was added on Proxmox 4.2, it is ignored for earlier versions
@@ -360,6 +368,65 @@ def create_instance(module, proxmox, vmid, node, disk, storage, cpus, memory, sw
     return False
 
 
+def modify_instance(module, proxmox, vm, vmid, timeout, cpus, memory, swap, **kwargs):
+    kwargs = dict((k, v) for k, v in kwargs.items() if v is not None)
+    if VZ_TYPE == 'lxc':
+        kwargs['cpulimit'] = cpus
+        if 'netif' in kwargs:
+            kwargs.update(kwargs['netif'])
+            del kwargs['netif']
+        if 'mounts' in kwargs:
+            kwargs.update(kwargs['mounts'])
+            del kwargs['mounts']
+        if 'pubkey' in kwargs:
+            if float(proxmox.version.get()['version']) >= 4.2:
+                kwargs['ssh-public-keys'] = kwargs['pubkey']
+            del kwargs['pubkey']
+    else:
+        kwargs['cpus'] = cpus
+        kwargs['memory'] = memory
+        kwargs['swap'] = swap
+    vmconfig = get_vm_conf(proxmox, vm, vmid)
+    if vmconfig_changed(vmconfig, **kwargs):
+        vmstatus = getattr(proxmox.nodes(vm[0]['node']), VZ_TYPE)(vmid).status.current.get()['status']
+        if vmstatus in ('running'):
+            stop_instance(module, proxmox, vm, vmid, timeout, force=module.params['force'])
+            getattr(proxmox.nodes(vm[0]['node']), VZ_TYPE)(vmid).config.set(**kwargs)
+            start_instance(module, proxmox, vm, vmid, timeout)
+            module.exit_json(changed=True, msg="VM %s config updated and vm restarted to apply changes" % vmid)
+        else:
+            getattr(proxmox.nodes(vm[0]['node']), VZ_TYPE)(vmid).config.set(**kwargs)
+            module.exit_json(changed=True, msg="VM %s config updated" % vmid)
+    else:
+        module.exit_json(changed=False, msg="VM %s is already configured" % vmid)
+    return True
+
+
+def vmconfig_changed(vmconfig, **kwargs):
+    configdiff = []
+    for key in kwargs:
+        if key.startswith("net"):
+            netdict = conf_to_dict(kwargs[key])
+            confignetdict = conf_to_dict(vmconfig[key])
+            netdiff = ([netkey for netkey in netdict if str(netdict[netkey]) != str(confignetdict[netkey])])
+            if netdiff:
+                configdiff.append('netconfig')
+        elif str(kwargs[key]) != str(vmconfig[key]):
+            configdiff.append(key)
+    if configdiff:
+        return True
+    else:
+        return False
+
+
+def get_vm_conf(proxmox, vm, vmid):
+    return getattr(proxmox.nodes(vm[0]['node']), VZ_TYPE)(vmid).config.get()
+
+
+def conf_to_dict(conf):
+    return dict(pair.split('=', 1) for pair in conf.split(","))
+
+
 def start_instance(module, proxmox, vm, vmid, timeout):
     taskid = getattr(proxmox.nodes(vm[0]['node']), VZ_TYPE)(vmid).status.start.post()
     while timeout:
@@ -437,6 +504,7 @@ def main():
             timeout=dict(type='int', default=30),
             force=dict(type='bool', default='no'),
             state=dict(default='present', choices=['present', 'absent', 'stopped', 'started', 'restarted']),
+            restart=dict(type='bool', default='no'),
             pubkey=dict(type='str', default=None),
             unprivileged=dict(type='bool', default='no')
         )
@@ -490,40 +558,55 @@ def main():
         module.exit_json(changed=False, msg="Vmid could not be fetched for the following action: %s" % state)
 
     if state == 'present':
-        try:
-            if get_instance(proxmox, vmid) and not module.params['force']:
-                module.exit_json(changed=False, msg="VM with vmid = %s is already exists" % vmid)
-            # If no vmid was passed, there cannot be another VM named 'hostname'
-            if not module.params['vmid'] and get_vmid(proxmox, hostname) and not module.params['force']:
-                module.exit_json(changed=False, msg="VM with hostname %s already exists and has ID number %s" % (hostname, get_vmid(proxmox, hostname)[0]))
-            elif not (node, module.params['hostname'] and module.params['password'] and module.params['ostemplate']):
-                module.fail_json(msg='node, hostname, password and ostemplate are mandatory for creating vm')
-            elif not node_check(proxmox, node):
-                module.fail_json(msg="node '%s' not exists in cluster" % node)
-            elif not content_check(proxmox, node, module.params['ostemplate'], template_store):
-                module.fail_json(msg="ostemplate '%s' not exists on node %s and storage %s"
-                                 % (module.params['ostemplate'], node, template_store))
+        if get_instance(proxmox, vmid):
+            if not module.params['force'] and module.params['restart']:
+                try:
+                    vm = get_instance(proxmox, vmid)
+                    modify_instance(module, proxmox, vm, vmid, timeout, cpus, memory, swap,
+                                    cores=module.params['cores'],
+                                    hostname=module.params['hostname'],
+                                    netif=module.params['netif'],
+                                    mounts=module.params['mounts'],
+                                    ip_address=module.params['ip_address'],
+                                    onboot=int(module.params['onboot']),
+                                    cpuunits=module.params['cpuunits'],
+                                    nameserver=module.params['nameserver'],
+                                    searchdomain=module.params['searchdomain'],)
+                except Exception as e:
+                    module.fail_json(msg="Modification of %s VM %s failed with exception: %s" % (VZ_TYPE, vmid, e))
+        else:
+            try:
+                # If no vmid was passed, there cannot be another VM named 'hostname'
+                if not module.params['vmid'] and get_vmid(proxmox, hostname) and not module.params['force']:
+                    module.exit_json(changed=False, msg="VM with hostname %s already exists and has ID number %s" % (hostname, get_vmid(proxmox, hostname)[0]))
+                elif not (node, module.params['hostname'] and module.params['password'] and module.params['ostemplate']):
+                    module.fail_json(msg='node, hostname, password and ostemplate are mandatory for creating vm')
+                elif not node_check(proxmox, node):
+                    module.fail_json(msg="node '%s' not exists in cluster" % node)
+                elif not content_check(proxmox, node, module.params['ostemplate'], template_store):
+                    module.fail_json(msg="ostemplate '%s' not exists on node %s and storage %s"
+                                     % (module.params['ostemplate'], node, template_store))
 
-            create_instance(module, proxmox, vmid, node, disk, storage, cpus, memory, swap, timeout,
-                            cores=module.params['cores'],
-                            pool=module.params['pool'],
-                            password=module.params['password'],
-                            hostname=module.params['hostname'],
-                            ostemplate=module.params['ostemplate'],
-                            netif=module.params['netif'],
-                            mounts=module.params['mounts'],
-                            ip_address=module.params['ip_address'],
-                            onboot=int(module.params['onboot']),
-                            cpuunits=module.params['cpuunits'],
-                            nameserver=module.params['nameserver'],
-                            searchdomain=module.params['searchdomain'],
-                            force=int(module.params['force']),
-                            pubkey=module.params['pubkey'],
-                            unprivileged=int(module.params['unprivileged']))
+                create_instance(module, proxmox, vmid, node, disk, storage, cpus, memory, swap, timeout,
+                                cores=module.params['cores'],
+                                pool=module.params['pool'],
+                                password=module.params['password'],
+                                hostname=module.params['hostname'],
+                                ostemplate=module.params['ostemplate'],
+                                netif=module.params['netif'],
+                                mounts=module.params['mounts'],
+                                ip_address=module.params['ip_address'],
+                                onboot=int(module.params['onboot']),
+                                cpuunits=module.params['cpuunits'],
+                                nameserver=module.params['nameserver'],
+                                searchdomain=module.params['searchdomain'],
+                                force=int(module.params['force']),
+                                pubkey=module.params['pubkey'],
+                                unprivileged=int(module.params['unprivileged']))
 
-            module.exit_json(changed=True, msg="deployed VM %s from template %s" % (vmid, module.params['ostemplate']))
-        except Exception as e:
-            module.fail_json(msg="creation of %s VM %s failed with exception: %s" % (VZ_TYPE, vmid, e))
+                module.exit_json(changed=True, msg="deployed VM %s from template %s" % (vmid, module.params['ostemplate']))
+            except Exception as e:
+                module.fail_json(msg="creation of %s VM %s failed with exception: %s" % (VZ_TYPE, vmid, e))
 
     elif state == 'started':
         try:
