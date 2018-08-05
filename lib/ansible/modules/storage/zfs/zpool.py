@@ -55,17 +55,18 @@ author:
 EXAMPLES = """
 - name: Create a new raidz zpool
   zpool:
-    name: rpool
+    name: zfspool
     devices:
       - /dev/sdc
       - /dev/sdd
       - /dev/sde
     raid_level: raidz
+    vdev: 3
     state: present
 
 - name: Create a new raid 0 stripe zpool
   zpool:
-    name: rpool
+    name: zfspool
     devices:
       - /dev/sdb
       - /dev/sdc
@@ -73,6 +74,7 @@ EXAMPLES = """
       - /dev/sde
       - /dev/sdf
     raid_level: none
+    vdev: 5
     state: present
 
 - name: Create a new mirror zpool
@@ -81,7 +83,10 @@ EXAMPLES = """
     devices:
       - /dev/sdc
       - /dev/sdd
+      - /dev/sde
+      - /dev/sdf
     raid_level: mirror
+    vdev: 2
     state: present
 
 - name: Create a new mirror zpool with a spare drive
@@ -91,6 +96,7 @@ EXAMPLES = """
       - /dev/sdc
       - /dev/sdd
     raid_level: mirror
+    vdev: 2
     spare:
       - /dev/sde
     state: present
@@ -103,6 +109,7 @@ EXAMPLES = """
     - /dev/sdf
     - /dev/sdg
     raid_level: mirror
+    vdev: 2
     state: present
 
 - name: Add spare dev to an existing zpool
