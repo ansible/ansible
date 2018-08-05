@@ -32,7 +32,7 @@ options:
   raid_level:
     description:
       - type of pool
-    choices: [ none, mirror, raidz, raidz1, raidz2 ]
+    choices: [ none, mirror, raidz, raidz1, raidz2, raidz3 ]
   vdev:
     description:
       - number of devices in a vdev
@@ -191,8 +191,8 @@ def main():
         ),
         supports_check_mode=True,
         required_together=[
-                    ['raid_level', 'vdev']
-                            ]
+		['raid_level', 'vdev']
+			]
     )
 
     name = module.params.get('name')
@@ -212,7 +212,7 @@ def main():
         if vdev is not False:
             device = ''
             for i in range(0, len(devices), vdev):
-                temp = ' ' + raid_level + ' ' + ' '.join(devices[i:i+vdev])
+                temp = ' ' + raid_level + ' ' + ' '.join(devices[i:i + vdev])
                 device += temp
             devices = device
     if spare is False or not spare:
