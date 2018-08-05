@@ -199,10 +199,6 @@ response:
       returned: success
       type: string
       sample: N_12345
-    reservedIpRanges:
-      description: List of IP address ranges which are avoided when assigning IP addresses via DHCP.
-      returned: success
-      type: list
     subnet:
       description: CIDR notation IP subnet of VLAN.
       returned: success
