@@ -194,7 +194,7 @@ options:
             - Lock the password (usermod -L, pw lock, usermod -C).
               BUT implementation differs on different platforms, this option does not always mean the user cannot login via other methods.
               This option does not disable the user, only lock the password. Do not change the password in the same task.
-              Currently supported on Linux, FreeBSD, DragonFlyBSD, NetBSD.
+              Currently supported on Linux, FreeBSD, DragonFlyBSD, NetBSD, OpenBSD.
         type: bool
         version_added: "2.6"
     local:
@@ -1403,6 +1403,11 @@ class OpenBSDUser(User):
             if self.login_class != user_login_class:
                 cmd.append('-L')
                 cmd.append(self.login_class)
+
+        if self.password_lock and not info[1].startswith('*'):
+            cmd.append('-Z')
+        elif self.password_lock is False and info[1].startswith('*'):
+            cmd.append('-U')
 
         if self.update_password == 'always' and self.password is not None \
                 and self.password != '*' and info[1] != self.password:
