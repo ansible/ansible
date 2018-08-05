@@ -150,20 +150,20 @@ response:
       type: complex
       contains:
         macaddress:
-          description: MAC address which has IP address assigned to it.
+          description: MAC address which has IP address assigned to it. Key value is the actual MAC address.
           returned: success
           type: complex
-            contains:
-              ip:
-                description: IP address which is assigned to the MAC address.
-                returned: success
-                type: string
-                sample: 192.0.1.4
-              name:
-                description: Descriptive name for binding.
-                returned: success
-                type: string
-                sample: fixed_ip
+          contains:
+            ip:
+              description: IP address which is assigned to the MAC address.
+              returned: success
+              type: string
+              sample: 192.0.1.4
+            name:
+              description: Descriptive name for binding.
+              returned: success
+              type: string
+              sample: fixed_ip
     reservedIpRanges:
       description: List of IP address ranges which are reserved for static assignment.
       returned: success
