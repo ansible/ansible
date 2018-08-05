@@ -117,7 +117,7 @@ class Group(object):
             if key == 'gid' and kwargs[key] is not None:
                 cmd.append('-g')
                 cmd.append(kwargs[key])
-            elif key == 'system' and kwargs[key] is True:
+            elif key == 'system' and kwargs[key]:
                 cmd.append('-r')
         cmd.append(self.name)
         return self.execute_command(cmd)
@@ -208,7 +208,7 @@ class AIX(Group):
         for key in kwargs:
             if key == 'gid' and kwargs[key] is not None:
                 cmd.append('id=' + kwargs[key])
-            elif key == 'system' and kwargs[key] is True:
+            elif key == 'system' and kwargs[key]:
                 cmd.append('-a')
         cmd.append(self.name)
         return self.execute_command(cmd)
@@ -301,7 +301,7 @@ class DarwinGroup(Group):
         cmd += ['-o', 'create']
         if self.gid is not None:
             cmd += ['-i', self.gid]
-        elif 'system' in kwargs and kwargs['system'] is True:
+        elif 'system' in kwargs and kwargs['system']:
             gid = self.get_lowest_available_system_gid()
             if gid is not False:
                 self.gid = str(gid)
