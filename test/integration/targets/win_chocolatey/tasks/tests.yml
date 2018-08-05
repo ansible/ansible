@@ -1,4 +1,18 @@
 ---
+- name: raise failure when state=present and name=all
+  win_chocolatey:
+    name: all
+    state: present
+  register: fail_all_present
+  failed_when: fail_all_present.msg != "Cannot specify the package name as 'all' when state=present"
+
+- name: raise failure when state=reinstalled and name=all
+  win_chocolatey:
+    name: all
+    state: reinstalled
+  register: fail_all_reinstalled
+  failed_when: fail_all_reinstalled.msg != "Cannot specify the package name as 'all' when state=reinstalled"
+
 - name: install package (check mode)
   win_chocolatey:
     name: '{{ test_choco_package1 }}'
@@ -256,7 +270,7 @@
     state: present
     version: 0.1.0
   register: fail_multiple_versions
-  failed_when: fail_multiple_versions.msg != "Chocolatey package '" + test_choco_package1 + "' is already installed at version '0.0.1' but was expecting '0.1.0'. Either change the expected version, set state=latest, set allow_multiple_versions=yes, or set force=yes to continue"
+  failed_when: fail_multiple_versions.msg != "Chocolatey package '" + test_choco_package1 + "' is already installed at version '0.0.1' but was expecting '0.1.0'. Either change the expected version, set state=latest, or set force=yes to continue"
 
 - name: force the upgrade of an existing version
   win_chocolatey:
@@ -414,3 +428,25 @@
     that:
     - install_prerelease is changed
     - install_prerelease_actual.stdout_lines == [test_choco_package2 + "|1.0.1-beta1"]
+
+- name: downgrade package
+  win_chocolatey:
+    name: '{{ test_choco_package1 }}'
+    state: downgrade
+    version: 0.0.1
+
+- name: upgrade all packages
+  win_chocolatey:
+    name: all
+    state: latest
+  register: all_latest
+
+- name: get result of upgrade all packages
+  win_command: choco.exe list --local-only --limit-output --exact {{ test_choco_package1|quote }}
+  register: all_latest_actual
+
+- name: assert upgrade all packages
+  assert:
+    that:
+    - all_latest is changed
+    - all_latest_actual.stdout_lines == [test_choco_package1 + "|0.1.0"]
