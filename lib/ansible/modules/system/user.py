@@ -718,9 +718,11 @@ class User(object):
                     cmd.append('-e')
                     cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
-        if self.password_lock:
+        # Lock if no password or unlocked, unlock if password and locked
+        if self.password_lock and (info[1] == '' or info[1][0] != '!'):
             cmd.append('-L')
-        elif self.password_lock is not None:
+        elif self.password_lock is False and (info[1] != '' and info[1][0] == '!'):
+            # usermod will refuse to unlock a user with no password, module shows 'changed' regardless
             cmd.append('-U')
 
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
