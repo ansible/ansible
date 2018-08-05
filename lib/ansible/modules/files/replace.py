@@ -122,8 +122,13 @@ EXAMPLES = r'''
     regexp: '^(.+)$'
     replace: '# \1'
 
+<<<<<<< HEAD
 # Previous to 2.x, using before and after in combination switches their logic (see ansible/ansible #31354)
 - name: Replace between the expressions (requires Ansible >= 2.4)
+=======
+# Previous to 2.6, using before and after in combination switches their logic (see ansible/ansible #31354)
+- name: Replace between the expressions (requires >=2.4)
+>>>>>>> Updated for 2.6
   replace:
     path: /etc/hosts
     after: '<VirtualHost [*]>'
