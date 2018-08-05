@@ -192,9 +192,7 @@ def main():
             add=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
-        required_together=[
-          ['raid_level', 'vdev']
-        ]
+        required_together=[['raid_level', 'vdev']]
     )
 
     name = module.params.get('name')
