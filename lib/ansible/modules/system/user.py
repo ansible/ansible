@@ -718,10 +718,10 @@ class User(object):
                     cmd.append('-e')
                     cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
-        # Lock if no password or unlocked, unlock if password and locked
-        if self.password_lock and (info[1] == '' or info[1][0] != '!'):
+        # Lock if no password or unlocked, unlock only if locked
+        if self.password_lock and not info[1].startswith('!'):
             cmd.append('-L')
-        elif self.password_lock is False and (info[1] != '' and info[1][0] == '!'):
+        elif self.password_lock is False and info[1].startswith('!'):
             # usermod will refuse to unlock a user with no password, module shows 'changed' regardless
             cmd.append('-U')
 
@@ -1216,7 +1216,7 @@ class FreeBsdUser(User):
             return self.execute_command(cmd)
 
         # we have to lock/unlock the password in a distinct command
-        if self.password_lock:
+        if self.password_lock and not info[1].startswith('*LOCKED*'):
             cmd = [
                 self.module.get_bin_path('pw', True),
                 'lock',
@@ -1227,7 +1227,7 @@ class FreeBsdUser(User):
                 cmd.append('-u')
                 cmd.append(self.uid)
             return self.execute_command(cmd)
-        elif self.password_lock is not None:
+        elif self.password_lock is False and info[1].startswith('*LOCKED*'):
             cmd = [
                 self.module.get_bin_path('pw', True),
                 'unlock',
@@ -1564,9 +1564,9 @@ class NetBSDUser(User):
             cmd.append('-p')
             cmd.append(self.password)
 
-        if self.password_lock:
+        if self.password_lock and not info[1].startswith('*LOCKED*'):
             cmd.append('-C yes')
-        elif self.password_lock is not None:
+        elif self.password_lock is False and info[1].startswith('*LOCKED*'):
             cmd.append('-C no')
 
         # skip if no changes to be made
