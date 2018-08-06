@@ -63,7 +63,7 @@ This example task uses the ``nios`` lookup to retrieve the host record for a hos
 
 This task is part of an example `get_host_record.yml <https://github.com/network-automation/infoblox_ansible/blob/master/lookup_playbooks/get_host_record.yml>`_ lookup playbook.
 
-If you run this example ``get_host_record.yml`` playbook, you should see results similar to the following:
+If you run this ``get_host_record.yml`` playbook, you should see results similar to the following:
 
 .. code-block:: bash
 
@@ -76,7 +76,7 @@ If you run this example ``get_host_record.yml`` playbook, you should see results
 
     TASK [check the leaf01 return variable] *************************************************************
     ok: [localhost] => {
-    <SNIPPET, REST OF OUTPUT REMOVED FOR BREVITY>
+    <...output omitted...>
         "host": {
             "ipv4addrs": [
                 {
@@ -114,7 +114,7 @@ If you run this example ``get_host_record.yml`` playbook, you should see results
     PLAY RECAP ******************************************************************************************
     localhost                  : ok=5    changed=0    unreachable=0    failed=0
 
-The output above shows the host record for ``leaf01`` that was retrieved by the ``nios`` lookup plugin. This playbook saves the information in variables that you can use in other playbooks. This allows you to use Infoblox as a single source of truth to gather and use information that may be changing dynamically. See `Ansible variables <http://docs.ansible.com/ansible/latest/playbooks_variables.html>`_ for more information on using Ansible variables.
+The output above shows the host record for ``leaf01`` and ``leaf02`` that were retrieved by the ``nios`` lookup plugin. This playbook saves the information in variables that you can use in other playbooks. This allows you to use Infoblox as a single source of truth to gather and use information that changes dynamically. See `Ansible variables <http://docs.ansible.com/ansible/latest/playbooks_variables.html>`_ for more information on using Ansible variables.
 
 Dynamic inventory script
 ========================
@@ -122,35 +122,38 @@ Dynamic inventory script
 You can use the Infoblox dynamic inventory script to import your network node inventory with Infoblox NIOS. To gather the inventory from Infoblox, you need two files:
 
 - `infoblox.yaml <https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/infoblox.yaml>`_ - A file that specifies the NIOS provider arguments and optional filters.
-  - `infoblox.py <https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/infoblox.py>`_ - The python script that retrieves the NIOS inventory.
+
+- `infoblox.py <https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/infoblox.py>`_ - The python script that retrieves the NIOS inventory.
 
 To use the Infoblox dynamic inventory script:
 
-1. Download the files and save them in the ``/etc/ansible`` directory.
+1. Download the ``infoblox.yaml`` file and save it in the ``/etc/ansible`` directory.
+
 2. Modify the ``infoblox.yaml`` file with your NIOS credentials.
-3. Change the permissions on the python file to make it executable:
+
+3. Download the ``infoblox.py`` file and save it in the ``/etc/ansible/hosts`` directory.
+
+4. Change the permissions on the ``infoblox.py`` file to make the file an executable:
 
 .. code-block:: bash
 
-    $ sudo chmod +x /etc/ansible/infoblox.py
+    $ sudo chmod +x /etc/ansible/hosts/infoblox.py
 
-3. Optionally, test the script:
+5. Optionally, test the script:
 
 .. code-block:: bash
 
-   $ python infoblox.py
-   {
-       " ": {
-           "hosts": [
-               "leaf01",
-               "leaf02",
-               "leaf03",
-               "leaf04",
-               "spine01",
-               "spine02"
-           ]
-       },
-   <...output omitted...>
+   $  ./infoblox.py --list
+
+After a few minutes, you should see your Infoblox inventory in JSON format.
+
+You can explicitely use the Infoblox dynamic inventory script as follows:
+
+.. code-block:: bash
+
+    $ ansible -i infoblox.py all -m ping
+
+You can also implicitly use the Infoblox dynamic inventory script by including it in your inventory directory (``etc/ansible/hosts`` by default).
 
 See `Working with Dynamic Inventory <https://docs.ansible.com/ansible/devel/user_guide/intro_dynamic_inventory.html>`_ for more details.
 
