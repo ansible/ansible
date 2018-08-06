@@ -23,8 +23,6 @@ import collections
 import json
 import re
 
-from itertools import chain
-
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.connection import ConnectionError
@@ -138,7 +136,7 @@ class Cliconf(CliconfBase):
 
         lookup = {'running': 'running-config', 'startup': 'startup-config'}
         if source not in lookup:
-            return self.invalid_params("fetching configuration from %s is not supported" % source)
+            raise ValueError("fetching configuration from %s is not supported" % source)
 
         cmd = 'show {0} '.format(lookup[source])
         if format and format is not 'text':
