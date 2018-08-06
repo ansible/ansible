@@ -6,7 +6,7 @@ Developing Plugins
 
 .. contents:: Topics
 
-Plugins augment Ansible's core functionality with logic and features that are accessible to all modules. Ansible ships with a number of handy plugins, and you can easily write your own. If you want to All plugins must:
+Plugins augment Ansible's core functionality with logic and features that are accessible to all modules. Ansible ships with a number of handy plugins, and you can easily write your own. All plugins must:
 
 * be written in Python
 * raise errors
@@ -34,8 +34,7 @@ You should return errors encountered during plugin execution by raising AnsibleE
     except Exception as e:
         raise AnsibleError('Something happened, this was original exception: %s' % to_native(e))
 
-Check the different AnsibleError objects and see which one applies best to your situation.
-## TODO: add link to list of AnsibleError objects (where are they documented? or listed in the code?)
+Check the different `AnsibleError objects <https://github.com/ansible/ansible/blob/devel/lib/ansible/errors/__init__.py>`_ and see which one applies best to your situation.
 
 String Encoding
 _______________
@@ -172,15 +171,11 @@ Note that the CALLBACK_VERSION and CALLBACK_NAME definitions are required for pr
 Connection Plugins
 ------------------
 
-Connection plugins allow Ansible to connect to the target hosts so it can execute tasks on them. Ansible ships with many connection plugins, but only one can be used per host at a time.
-
-By default, Ansible ships with several connection plugins. The most commonly used are the 'paramiko' SSH, native ssh (just called 'ssh'), and 'local' connection types.  All of these can be used in playbooks and with /usr/bin/ansible to decide how you want to talk to remote machines.
-
-The basics of these connection types are covered in the :ref:`intro_getting_started` section.
-
-Should you want to extend Ansible to support other transports (SNMP, Message bus, etc) it's as simple as copying the format of one of the existing modules and dropping it into the connection plugins directory.
+Connection plugins allow Ansible to connect to the target hosts so it can execute tasks on them. Ansible ships with many connection plugins, but only one can be used per host at a time. The most commonly used connection plugins are the 'paramiko' SSH, native ssh (just called 'ssh'), and 'local' connection types.  All of these can be used in playbooks and with /usr/bin/ansible to decide how you want to talk to remote machines.
 
 Ansible version 2.1 introduced the 'smart' connection plugin. The 'smart' connection type allows Ansible to automatically select either the 'paramiko' or 'openssh' connection plugin based on system capabilities, or the 'ssh' connection plugin if OpenSSH supports ControlPersist.
+
+To create a new connection plugin (for example, to support SNMP, Message bus, or other transports), copy the format of one of the existing connection plugins and drop it into the connection plugins directory.
 
 For examples on how to implement a connection plug in, see the source code here:
 `lib/ansible/plugins/connection <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/connection>`_.
@@ -190,7 +185,7 @@ For examples on how to implement a connection plug in, see the source code here:
 Filter Plugins
 --------------
 
-Filter plugins are used for manipulating data. They are a feature of Jinja2 and are also available in Jinja2 templates used by the ``template`` module. As with all plugins, they can be easily extended, but instead of having a file for each one you can have several per file. Most of the filter plugins shipped with Ansible reside in a ``core.py``.
+Filter plugins manipulate data. They are a feature of Jinja2 and are also available in Jinja2 templates used by the ``template`` module. As with all plugins, they can be easily extended, but instead of having a file for each one you can have several per file. Most of the filter plugins shipped with Ansible reside in a ``core.py``.
 
 Filter plugins do not use the standard configuration and documentation system described above.
 
@@ -210,7 +205,7 @@ You can see the details for inventory plugins in the :ref:`developing_inventory`
 Lookup Plugins
 --------------
 
-Lookup plugins are used to pull in data from external data stores. Lookup plugins can be used within playbooks both for looping --- playbook language constructs like ``with_fileglob`` and ``with_items`` are implemented via lookup plugins --- and to return values into a variable or parameter.
+Lookup plugins pull in data from external data stores. Lookup plugins can be used within playbooks both for looping --- playbook language constructs like ``with_fileglob`` and ``with_items`` are implemented via lookup plugins --- and to return values into a variable or parameter.
 
 Lookup plugins are very flexible, allowing you to retrieve and return any type of data. When writing lookup plugins, always return data of a consistent type that can be easily consumed in a playbook. Avoid parameters that change the returned data type. If there is a need to return a single value sometimes and a complex dictionary other times, write two different lookup plugins.
 
@@ -293,7 +288,7 @@ The following is an example of how this lookup is called::
        - debug:
            msg: the value of foo.txt is {{ contents }} as seen today {{ lookup('pipe', 'date +"%Y-%m-%d"') }}
 
-For more example lookup plugins, check out the source code for the lookup plugins that are included with Ansible here: `lib/ansible/plugins/lookup <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/lookup>`_.
+For more example lookup plugins, check out the source code for the `lookup plugins included with Ansible Core <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/lookup>`_.
 
 For more usage examples of lookup plugins, see :ref:`Using Lookups<playbooks_lookups>`.
 
@@ -302,7 +297,7 @@ For more usage examples of lookup plugins, see :ref:`Using Lookups<playbooks_loo
 Test Plugins
 ------------
 
-Test plugins are for verifying data. They are a feature of Jinja2 and are also available in Jinja2 templates used by the ``template`` module. As with all plugins, they can be easily extended, but instead of having a file for each one you can have several per file. Most of the test plugins shipped with Ansible reside in a ``core.py``. These are specially useful in conjunction with some filter plugins like ``map`` and ``select``; they are also available for conditional directives like ``when:``.
+Test plugins verify data. They are a feature of Jinja2 and are also available in Jinja2 templates used by the ``template`` module. As with all plugins, they can be easily extended, but instead of having a file for each one you can have several per file. Most of the test plugins shipped with Ansible reside in a ``core.py``. These are specially useful in conjunction with some filter plugins like ``map`` and ``select``; they are also available for conditional directives like ``when:``.
 
 Test plugins do not use the standard configuration and documentation system described above.
 
