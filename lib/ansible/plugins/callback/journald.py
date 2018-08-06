@@ -11,7 +11,7 @@ DOCUMENTATION = '''
       - whitelist in configuration
       - systemd-python (python library)
     short_description: Sends play events to systemd's journal
-    version_added: "2.5.4"
+    version_added: "2.7"
     description:
         - This is an ansible callback plugin that sends status updates to the system journal during playbook execution.
     options:

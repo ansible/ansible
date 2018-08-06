@@ -12,7 +12,7 @@ DOCUMENTATION = '''
       - whitelist in configuration
       - boto3 (python library)
     short_description: Sends play events AWS CloudWatch Logs
-    version_added: "2.5.4"
+    version_added: "2.7"
     description:
         - This is an ansible callback plugin that sends status updates to CloudWatch Logs during playbook execution.
     options:
