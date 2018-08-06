@@ -17,8 +17,8 @@
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
     output_level: debug
-    state: present
     tenant: anstest
+    state: present
   register: tenant_present
 
 - name: ensure ap exists for tests to kick off
@@ -41,6 +41,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     method: post
     path: api/mo/uni/phys-anstest.json
     content: {"physDomP": {"attributes": {}}}
