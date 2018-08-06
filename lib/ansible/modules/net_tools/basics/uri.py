@@ -30,6 +30,8 @@ options:
     description:
       - A path of where to download the file to (if desired). If I(dest) is a
         directory, the basename of the file on the remote server will be used.
+        This argument is deprecated and will be removed in version 2.11. Please
+        use the M(get_url) module instead.
   user:
     description:
       - A username for the module to use for Digest, Basic or WSSE authentication.
@@ -494,6 +496,10 @@ def main():
     socket_timeout = module.params['timeout']
 
     dict_headers = module.params['headers']
+
+    if dest:
+        module.deprecate('Supplying "dest" with the "uri" module is deprecated. Please use "get_url" instead',
+                         version=2.11)
 
     if body_format == 'json':
         # Encode the body unless its a string, then assume it is pre-formatted JSON
