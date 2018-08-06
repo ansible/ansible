@@ -343,5 +343,6 @@ class SubscriPushConfig(object):
             u'pushEndpoint': self.request.get(u'pushEndpoint')
         })
 
+
 if __name__ == '__main__':
     main()

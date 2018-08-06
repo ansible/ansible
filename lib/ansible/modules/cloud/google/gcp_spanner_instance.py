@@ -340,5 +340,6 @@ def decode_response(response, module):
     response['config'] = response['config'].split('/')[-1]
     return response
 
+
 if __name__ == '__main__':
     main()

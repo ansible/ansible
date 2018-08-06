@@ -407,5 +407,6 @@ class SslPolicyWarningArray(object):
             u'message': item.get(u'message')
         })
 
+
 if __name__ == '__main__':
     main()

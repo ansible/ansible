@@ -1472,5 +1472,6 @@ class InstancTemplatTags(object):
             u'items': self.request.get(u'items')
         })
 
+
 if __name__ == '__main__':
     main()

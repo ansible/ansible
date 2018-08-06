@@ -962,5 +962,6 @@ class InstancAuthoriNetworkArray(object):
             u'value': item.get(u'value')
         })
 
+
 if __name__ == '__main__':
     main()

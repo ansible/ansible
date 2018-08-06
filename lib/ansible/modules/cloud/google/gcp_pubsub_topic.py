@@ -224,5 +224,6 @@ def encode_request(request, module):
                                 'topics', module.params['name']])
     return request
 
+
 if __name__ == '__main__':
     main()
