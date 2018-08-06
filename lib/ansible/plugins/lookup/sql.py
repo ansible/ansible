@@ -6,7 +6,7 @@ __metaclass__ = type
 DOCUMENTATION = """
     lookup: sql
     author: Adam Howard <ahoward0920@gmail.com>
-    version_added: "1.9"
+    version_added: "2.7"
     short_description: query an SQL database using sqlalchemy
     requirements:
         - sqlalchemy (python library, http://www.sqlalchemy.org/)
