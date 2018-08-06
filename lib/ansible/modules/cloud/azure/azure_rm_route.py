@@ -27,11 +27,11 @@ options:
         required: true
     name:
         description:
-            - name of the virtual network.
+            - name of the route.
         required: true
     state:
         description:
-            - Assert the state of the virtual network. Use 'present' to create or update and
+            - Assert the state of the route. Use 'present' to create or update and
               'absent' to delete.
         default: present
         choices:
@@ -71,7 +71,7 @@ author:
 
 EXAMPLES = '''
     - name: Create a route
-      azure_rm_virtualnetwork:
+      azure_rm_route:
         name: foobar
         resource_group: Testing
         address_prefix: 10.1.0.0/16
@@ -197,7 +197,7 @@ class AzureRMRoute(AzureRMModuleBase):
             result = self.get_poller_result(poller)
             return result
         except Exception as exc:
-            self.fail("Error deleting virtual network {0} - {1}".format(self.name, str(exc)))
+            self.fail("Error deleting route {0} - {1}".format(self.name, str(exc)))
 
     def get_route(self):
         try:
