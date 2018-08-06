@@ -438,7 +438,7 @@ class TestLookupModule(unittest.TestCase):
     @patch('ansible.plugins.lookup.password._write_password_file')
     def test_password_already_created_encrypt(self, mock_get_paths, mock_write_file):
         mock_get_paths.return_value = ['/path/one', '/path/two', '/path/three']
-        password.os.path.exists = lambda x: True if x == to_bytes('/path/to/somewhere') else False
+        password.os.path.exists = lambda x: x == to_bytes('/path/to/somewhere')
 
         with patch.object(builtins, 'open', mock_open(read_data=b'hunter42 salt=87654321\n')) as m:
             results = self.password_lookup.run([u'/path/to/somewhere chars=anything encrypt=pbkdf2_sha256'], None)
@@ -449,7 +449,7 @@ class TestLookupModule(unittest.TestCase):
     @patch('ansible.plugins.lookup.password._write_password_file')
     def test_password_already_created_no_encrypt(self, mock_get_paths, mock_write_file):
         mock_get_paths.return_value = ['/path/one', '/path/two', '/path/three']
-        password.os.path.exists = lambda x: True if x == to_bytes('/path/to/somewhere') else False
+        password.os.path.exists = lambda x: x == to_bytes('/path/to/somewhere')
 
         with patch.object(builtins, 'open', mock_open(read_data=b'hunter42 salt=87654321\n')) as m:
             results = self.password_lookup.run([u'/path/to/somewhere chars=anything'], None)
@@ -477,7 +477,7 @@ class TestLookupModule(unittest.TestCase):
         except AnsibleError:
             pass
         # pretend now there is password file but no lock
-        password.os.path.exists = lambda x: True if x == to_bytes('/path/to/somewhere') else False
+        password.os.path.exists = lambda x: x == to_bytes('/path/to/somewhere')
         try:
             with patch.object(builtins, 'open', mock_open(read_data=b'hunter42 salt=87654321\n')) as m:
                 # should not timeout here
