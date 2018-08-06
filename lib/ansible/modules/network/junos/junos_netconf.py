@@ -149,11 +149,11 @@ def map_params_to_obj(module):
 def load_config(module, config, commit=False):
     conn = get_connection(module)
     try:
-        conn.edit_config(to_list(config) + ['top'])
-        diff = conn.compare_configuration()
+        resp = conn.edit_config(to_list(config) + ['top'])
     except ConnectionError as exc:
         module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
+    diff = resp.get('diff', '')
     if diff:
         if commit:
             commit_configuration(module)
