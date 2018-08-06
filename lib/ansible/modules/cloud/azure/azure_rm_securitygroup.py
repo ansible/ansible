@@ -386,6 +386,11 @@ def compare_rules_change(old_list, new_list, purge_list):
             new_list.append(old_rule)
         else:  # one rule is removed
             changed = True
+    # Compare new list and old list is the same? here only compare names
+    if not changed:
+        new_names = [x.name for x in new_list]
+        old_names = [x.name for x in old_list]
+        changed = (set(new_names) == set(old_names))
     return changed, new_list
 
 
