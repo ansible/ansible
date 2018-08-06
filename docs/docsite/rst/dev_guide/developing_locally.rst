@@ -7,7 +7,7 @@ The easiest, quickest, and most popular way to extend Ansible is to copy or writ
 Extending Ansible with local modules and plugins offers lots of shortcuts:
 
 * you can copy other people's modules and plugins
-* if you're writing a new module or plugin, you can choose any programming language you like
+* if you're writing a new module, you can choose any programming language you like
 * you don't have to clone the main Ansible repo
 * you don't have to open a pull request
 * you don't have to add tests (though we highly recommend that you do!)
