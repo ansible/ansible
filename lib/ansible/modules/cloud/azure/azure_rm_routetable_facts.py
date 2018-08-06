@@ -164,5 +164,6 @@ class AzureRMRouteTableFacts(AzureRMModuleBase):
 def main():
     AzureRMRouteTableFacts()
 
+
 if __name__ == '__main__':
     main()

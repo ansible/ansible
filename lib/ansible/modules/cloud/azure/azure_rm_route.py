@@ -210,5 +210,6 @@ class AzureRMRoute(AzureRMModuleBase):
 def main():
     AzureRMRoute()
 
+
 if __name__ == '__main__':
     main()
