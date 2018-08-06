@@ -41,11 +41,11 @@ class Cliconf(CliconfBase):
     def get_config(self, source='running', format='text'):
         return self.send_command('show configuration commands')
 
-    def edit_config(self, command):
-        for cmd in chain(['configure'], to_list(command)):
+    def edit_config(self, candidate=None, commit=True, replace=False, comment=None):
+        for cmd in chain(['configure'], to_list(candidate)):
             self.send_command(cmd)
 
-    def get(self, command, prompt=None, answer=None, sendonly=False):
+    def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None):
         return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
 
     def commit(self, comment=None):
