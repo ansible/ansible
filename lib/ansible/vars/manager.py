@@ -36,7 +36,7 @@ from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVar
 from ansible.inventory.host import Host
 from ansible.inventory.helpers import sort_groups, get_group_vars
 from ansible.module_utils._text import to_native
-from ansible.module_utils.six import iteritems, text_type
+from ansible.module_utils.six import iteritems, text_type, string_types
 from ansible.plugins.loader import lookup_loader, vars_loader
 from ansible.plugins.cache import FactCache
 from ansible.template import Templar
@@ -524,6 +524,10 @@ class VariableManager:
                 cache_items = True
             if delegated_host_name is None:
                 raise AnsibleError(message="Undefined delegate_to host for task:", obj=task._ds)
+            if not isinstance(delegated_host_name, string_types):
+                raise AnsibleError(message="the field 'delegate_to' has an invalid type (%s), and could not be"
+                                           " converted to a string type." % type(delegated_host_name),
+                                   obj=task._ds)
             if delegated_host_name in delegated_host_vars:
                 # no need to repeat ourselves, as the delegate_to value
                 # does not appear to be tied to the loop item variable
