@@ -47,7 +47,9 @@
       type: thin
       datastore: LocalDS_0
     cdrom:
-      type: iso
+    - type: iso
+      iso_path: "[LocalDS_0] base.iso"
+    - type: iso
       iso_path: "[LocalDS_0] base.iso"
   register: cdrom_vm
 
@@ -69,7 +71,7 @@
     name: CDROM-Test
     datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
     cdrom:
-      type: iso
+    - type: iso
       iso_path: "[LocalDS_0] base_new.iso"
     state: present
   register: cdrom_vm
@@ -92,7 +94,7 @@
     name: CDROM-Test
     datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
     cdrom:
-      type: client
+    - type: client
     state: present
   register: cdrom_vm
 
@@ -114,7 +116,7 @@
     name: CDROM-Test
     datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
     cdrom:
-      type: none
+    - type: none
     state: present
   register: cdrom_vm
 
