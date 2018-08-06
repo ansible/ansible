@@ -9,15 +9,15 @@ Who should use this guide?
 
 If you want to extend Ansible by creating a module or plugin, using a non-core module or plugin, adding functionality to an existing module, or expanding test coverage, this guide is for you.
 
-I want to use a custom plugin or module locally.
-I want to write a custom plugin.
-I want to write a custom module.
-I want to write a custom module for Windows.
-I want to write a series of related custom modules that integrate Ansible with a new product (for example, a database, cloud provider, network platform, etc.).
-I want to test my module.
-I want to update my module to run on Python 3.
-I want to write an inventory system 
-I want to contribute content to Ansible Core (including plugins, modules, new functionality, tests, etc.).
+I want to :ref:`use a custom plugin or module locally <developing_locally>`.
+I want to `write a custom plugin <developing_plugins>`.
+I want to `write a custom module <developing_modules>`.
+I want to `write a custom module for Windows <developing_modules_windows>`.
+I want to `write a series of related custom modules <developing_modules_in_groups>` that integrate Ansible with a new product (for example, a database, cloud provider, network platform, etc.).
+I want to `test my module <developing_modules_testing>`.
+I want to `update my module to run on Python 3 <developing_python_3>`.
+I want to :ref:`connect Ansible to a new source of inventory <developing_inventory>`. 
+I want to `contribute to Ansible Core <>` (including plugins, modules, new functionality, tests, etc.).
 
 If you want to contribute changes back to the main Ansible repo, you need both sections, but should probably start by setting up your environment.
 
