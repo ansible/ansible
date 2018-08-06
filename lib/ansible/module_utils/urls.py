@@ -42,6 +42,8 @@ import sys
 import tempfile
 import traceback
 
+from contextlib import contextmanager
+
 try:
     import httplib
 except ImportError:
@@ -385,23 +387,45 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
             return httplib.HTTPSConnection(host, **kwargs)
 
 
+@contextmanager
+def disable_httpconnection_connect():
+    '''Monkey patch ``httplib.HTTPConnection.connect`` temporarily to do nothing,
+    used in the case where we have already built ``self.sock`` but need the
+    extra logic found in a subclass of ``httplib.HTTPConnection.connect``
+
+    Specifically used in ``UnixHTTPSConnection`` where we need to use
+    ``httplib.HTTPSConnection.connect`` without the side effects of what
+    ``httplib.HTTPConnection.connect`` will do to overwrite ``self.sock``
+    '''
+    _connect = httplib.HTTPConnection.connect
+    httplib.HTTPConnection.connect = lambda self: None
+    yield
+    httplib.HTTPConnection.connect = _connect
+
+
+def connect_unix_socket(unix_socket):
+    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    try:
+        sock.connect(unix_socket)
+    except OSError as e:
+        raise OSError('Invalid Socket File (%s): %s' % (unix_socket, e))
+    return sock
+
+
 class UnixHTTPSConnection(httplib.HTTPSConnection):
     def __init__(self, unix_socket):
         self._unix_socket = unix_socket
 
     def connect(self):
-        self.sock = sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        sock.connect(self._unix_socket)
+        self.sock = sock = connect_unix_socket(self._unix_socket)
         if self.timeout is not socket._GLOBAL_DEFAULT_TIMEOUT:
             sock.settimeout(self.timeout)
 
         # We have already built our self.sock, but just need the functionality of
         # httplib.HTTPSConnection.connect to wrap the socket correctly. Prevent
         # httplib.HTTPConnection.connect from doing anything temporarily
-        _connect = httplib.HTTPConnection.connect
-        httplib.HTTPConnection.connect = lambda self: None
-        super(UnixHTTPSConnection, self).connect()
-        httplib.HTTPConnection.connect = _connect
+        with disable_httpconnection_connect():
+            super(UnixHTTPSConnection, self).connect()
 
     def __call__(self, *args, **kwargs):
         super(UnixHTTPSConnection, self).__init__(*args, **kwargs)
@@ -415,8 +439,7 @@ class UnixHTTPConnection(httplib.HTTPConnection):
         self._unix_socket = unix_socket
 
     def connect(self):
-        self.sock = sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        sock.connect(self._unix_socket)
+        self.sock = sock = connect_unix_socket(self._unix_socket)
         if self.timeout is not socket._GLOBAL_DEFAULT_TIMEOUT:
             sock.settimeout(self.timeout)
 
@@ -1096,9 +1119,10 @@ class Request:
                                                    client_key=client_key,
                                                    context=context,
                                                    unix_socket=unix_socket))
-        elif client_cert:
+        elif client_cert or unix_socket:
             handlers.append(HTTPSClientAuthHandler(client_cert=client_cert,
-                                                   client_key=client_key))
+                                                   client_key=client_key,
+                                                   unix_socket=unix_socket))
 
         # pre-2.6 versions of python cannot use the custom https
         # handler, since the socket class is lacking create_connection.
