@@ -29,6 +29,16 @@
 ''' Support class for NetApp ansible modules '''
 
 
+def cmp(a, b):
+    """
+    Python 3 does not have a cmp function, this will do the cmp.
+    :param a: first object to check
+    :param b: second object to check
+    :return:
+    """
+    return (a > b) - (a < b)
+
+
 class NetAppModule(object):
     '''
     Common class for NetApp modules
@@ -52,7 +62,7 @@ class NetAppModule(object):
         ''' store a message in a list '''
         if msg is None:
             name = self.parameters.get('name', '')
-            self.log.append("Action: {}, name: {}, changed: {}"
+            self.log.append("Action: %, name: %, changed: %"
                             .format(action, name, self.changed))
             if params:
                 self.log.append(str(params))

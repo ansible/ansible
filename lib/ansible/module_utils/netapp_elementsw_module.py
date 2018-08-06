@@ -1,8 +1,8 @@
 # This code is part of Ansible, but is an independent component.
 # This particular file snippet, and this file snippet only, is BSD licensed.
 
-from ansible import __version__ as ansible_version
 import solidfire.common
+
 
 class NaElementSWModule(object):
 
@@ -143,5 +143,4 @@ class NaElementSWModule(object):
         attributes = {}
         attributes['config-mgmt'] = 'ansible'
         attributes['event-source'] = source
-        attributes['config-mgmt-version'] = ansible_version
         return(attributes)

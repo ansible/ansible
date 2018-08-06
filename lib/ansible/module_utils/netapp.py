@@ -141,8 +141,7 @@ def setup_na_ontap_zapi(module, vserver=None):
             transport_type = 'HTTPS'
             # HACK to bypass certificate verification
             if no_cert_verify is True:
-                if (not os.environ.get('PYTHONHTTPSVERIFY', '') and
-                    getattr(ssl, '_create_unverified_context', None)):
+                if not os.environ.get('PYTHONHTTPSVERIFY', '') and getattr(ssl, '_create_unverified_context', None):
                     ssl._create_default_https_context = ssl._create_unverified_context
         else:
             if port is None:
