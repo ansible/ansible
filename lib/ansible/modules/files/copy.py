@@ -358,7 +358,7 @@ def copy_diff_files(src, dest, module):
             src_item_path = os.path.join(src, item)
             dest_item_path = os.path.join(dest, item)
 
-            if os.path.islink(src_item_path) and follow:
+            if os.path.islink(src_item_path) and follow is False:
                 linkto = os.readlink(src_item_path)
                 os.symlink(linkto, dest_item_path)
             else:
@@ -385,7 +385,7 @@ def copy_left_only(src, dest, module):
             src_item_path = os.path.join(src, item)
             dest_item_path = os.path.join(dest, item)
             if os.path.isfile(src_item_path):
-                if os.path.islink(src_item_path) and follow:
+                if os.path.islink(src_item_path) and follow is False:
                     linkto = os.readlink(src_item_path)
                     os.symlink(linkto, dest_item_path)
                 else:
