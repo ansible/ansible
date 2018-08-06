@@ -7,7 +7,9 @@ Welcome to the Ansible Developer Guide!
 Who should use this guide?
 ================================================================================
 
-If you want to extend Ansible by creating a module or plugin, using a non-core module or plugin, adding functionality to an existing module, or expanding test coverage, this guide is for you. Find the task that best describes what you want to do:
+If you want to extend Ansible by using a non-core module or plugin locally, creating a module or plugin, adding functionality to an existing module, or expanding test coverage, this guide is for you. We've included detailed information for developers on how to test and document modules, as well as the pre-requisites for getting your module or plugin accepted into Ansible Core. 
+
+Find the task that best describes what you want to do:
 
 * I want to :ref:`use a custom plugin or module locally <developing_locally>`.
 * I want to :ref:`write a custom plugin <developing_plugins>`.
@@ -18,11 +20,9 @@ If you want to extend Ansible by creating a module or plugin, using a non-core m
 * I want to :ref:`document my module <module_documenting>`.
 * I want to :ref:`update my module to run on Python 3 <developing_python_3>`.
 * I want to :ref:`connect Ansible to a new source of inventory <developing_inventory>`. 
-* I want to :ref:`contribute to Ansible Core <>` (including plugins, modules, new functionality, tests, etc.).
+* I want to :ref:`contribute my work to Ansible Core <>` (including plugins, modules, new functionality, tests, etc.).
 
-If you want to contribute changes back to the main Ansible repo, you need both sections, but should probably start by setting up your environment.
-
-This guide shows you how to extend Ansible in many ways, from creating a plugin or module for local use, to contributing documentation, testing, or code back to the main project repo. If you want to add specialized functionality to Ansible, or you want to make the project better, this guide will support your goals.
+## TODO how much TOC do we want? links to Setting Up Your Environment? 
 
 
 .. toctree::
