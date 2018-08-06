@@ -47,6 +47,10 @@
       - "start2_result.state == 'started'"
       - "start2_result is not changed"
 
+- name: fetch PID for ansible_test service (before restart)
+  command: 'cat /var/run/ansible_test_service.pid'
+  register: pid_before_restart
+
 - name: restart the ansible test service
   service: name=ansible_test state=restarted
   register: restart_result
@@ -56,6 +60,19 @@
     that:
       - "restart_result.state == 'started'"
       - "restart_result is changed"
+
+- name: fetch PID for ansible_test service (after restart)
+  command: 'cat /var/run/ansible_test_service.pid'
+  register: pid_after_restart
+
+- name: "check that PIDs aren't the same"
+  fail:
+  when: pid_before_restart.stdout == pid_after_restart.stdout
+
+- name: check that service is started
+  command: 'cat /proc/{{ pid_after_restart.stdout }}/cmdline'
+  register: cmdline
+  failed_when: cmdline is failed or not cmdline.stdout.startswith('python\0/usr/sbin/ansible_test_service\0')
 
 - name: restart the ansible test service with a sleep
   service: name=ansible_test state=restarted sleep=2
@@ -92,9 +109,23 @@
       register: result_enabled
       failed_when: result_enabled is changed
 
+- name: fetch PID for ansible_test service
+  command: 'cat /var/run/ansible_test_service.pid'
+  register: ansible_test_pid
+
+- name: check that service is started
+  command: 'cat /proc/{{ ansible_test_pid.stdout }}/cmdline'
+  register: cmdline
+  failed_when: cmdline is failed or not cmdline.stdout.startswith('python\0/usr/sbin/ansible_test_service\0')
+
 - name: stop the ansible test service
   service: name=ansible_test state=stopped
   register: stop_result
+
+- name: check that the service is stopped
+  command: 'cat /proc/{{ ansible_test_pid.stdout }}/cmdline'
+  register: cmdline
+  failed_when: cmdline is not failed or cmdline.stdout.startswith('python\0/usr/sbin/ansible_test_service\0')
 
 - name: assert that the service was stopped
   assert:
