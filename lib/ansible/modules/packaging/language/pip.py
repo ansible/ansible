@@ -494,7 +494,10 @@ class Package:
             version_string = version_string.lstrip()
             separator = '==' if version_string[0].isdigit() else ' '
             name_string = separator.join((name_string, version_string))
-        self._requirement = Requirement.parse(name_string)
+        try:
+            self._requirement = Requirement.parse(name_string)
+        except ValueError as e:
+            raise ValueError("Can not parse package name '%s', error: '%s'" % (name_string, to_native(e)))
         # old pkg_resource will replace 'setuptools' with 'distribute' when it already installed
         if self._requirement.project_name == "distribute":
             self.package_name = "setuptools"
@@ -623,12 +626,10 @@ def main():
 
             # convert raw input package names to Package instances
             try:
-                packages = []
-                for dist in _recover_package_name(name):
-                    packages.append(Package(dist))
+                packages = [Package(pkg) for pkg in _recover_package_name(name)]
             except ValueError as e:
                 # if users input some invalid package names, show them the parsing error
-                module.fail_json(msg="Can not parse package name '%s', error: '%s'" % (dist, to_native(e)))
+                module.fail_json(msg=to_native(e))
             # check invalid combination of arguments
             if version is not None:
                 if len(packages) > 1:
