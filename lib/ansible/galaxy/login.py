@@ -24,6 +24,7 @@ __metaclass__ = type
 
 import getpass
 import json
+import sys
 
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils.six.moves import input
@@ -77,8 +78,14 @@ class GalaxyLogin(object):
         retrieve the token after creation, so we are forced to create a new one.
         '''
         try:
-            tokens = json.load(open_url(self.GITHUB_AUTH, url_username=self.github_username,
-                               url_password=self.github_password, force_basic_auth=True,))
+            opened = open_url(self.GITHUB_AUTH,
+                              url_username=self.github_username,
+                              url_password=self.github_password,
+                              force_basic_auth=True,)
+            resp = opened.read()
+            if sys.version_info.major > 2:
+                resp = resp.decode()
+            tokens = json.loads(resp)
         except HTTPError as e:
             res = json.load(e)
             raise AnsibleError(res['message'])
@@ -100,8 +107,14 @@ class GalaxyLogin(object):
         self.remove_github_token()
         args = json.dumps({"scopes": ["public_repo"], "note": "ansible-galaxy login"})
         try:
-            data = json.load(open_url(self.GITHUB_AUTH, url_username=self.github_username,
-                             url_password=self.github_password, force_basic_auth=True, data=args))
+            opened = open_url(self.GITHUB_AUTH,
+                              url_username=self.github_username,
+                              url_password=self.github_password,
+                              force_basic_auth=True, data=args)
+            resp = opened.read()
+            if sys.version_info.major > 2:
+                resp = resp.decode()
+            data = json.loads(resp)
         except HTTPError as e:
             res = json.load(e)
             raise AnsibleError(res['message'])
