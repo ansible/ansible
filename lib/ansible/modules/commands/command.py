@@ -133,6 +133,8 @@ import os
 import shlex
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+from ansible.module_utils.common.collections import is_iterable
 
 
 def check_command(module, commandline):
@@ -214,6 +216,10 @@ def main():
         args = shlex.split(args)
 
     args = args or argv
+
+    # All args must be strings
+    if is_iterable(args, include_strings=False):
+        args = [to_native(arg, errors='surrogate_or_strict', nonstring='simplerepr') for arg in args]
 
     if chdir:
         chdir = os.path.abspath(chdir)
