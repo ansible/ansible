@@ -1650,7 +1650,6 @@
   - name: gather - Stat the new_dir_without_follow/link_file12
     stat:
       path: '{{ remote_dir }}/new_dir_without_follow/link_file12'
-      follow: false
     register: stat_new_dir_without_follow_link_file12
 
   - name: assert - remote_dir_src has copied without follow.
