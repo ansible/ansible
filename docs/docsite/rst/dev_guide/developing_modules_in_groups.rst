@@ -1,5 +1,8 @@
+.. _developing_modules_in_groups:
+
+*********************************************
 Information for submitting a group of modules
-=============================================
+*********************************************
 
 .. contents:: Topics
 
