@@ -35,7 +35,7 @@ You should return errors encountered during plugin execution by raising AnsibleE
         raise AnsibleError('Something happened, this was original exception: %s' % to_native(e))
 
 Check the different AnsibleError objects and see which one applies best to your situation.
-## TODO: add link to list of AnsibleError objects!
+## TODO: add link to list of AnsibleError objects (where are they documented? or listed in the code?)
 
 String Encoding
 _______________
@@ -69,7 +69,7 @@ To define configurable options for your plugin, describe them in the ``DOCUMENTA
 
 To access the configuration settings in your plugin, use ``self.get_option(<option_name>)``. For most plugin types, the controller pre-populates the settings. If you need to populate settings explicitly, use a ``self.set_options()`` call.
 
-Do we need more detail on HOW Ansible provides resolved configuration? (e.g. as YAML dictionaries, or JSON blobs or ???)
+## TODO: Do we need more detail on HOW Ansible provides resolved configuration? (e.g. as YAML dictionaries, or JSON blobs or ???)
 
 Plugins that support embedded documentation (see :ref:`ansible-doc` for the list) must include well-formed doc strings to be considered for merge into the Ansible repo. If you inherit from a plugin, you must document the options it takes, either via a documentation fragment or as a copy. Thorough documentation is a good idea even if you're developing a plugin for local use.
 
