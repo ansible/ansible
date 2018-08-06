@@ -82,7 +82,7 @@ class Cliconf(CliconfBase):
 
         lookup = {'running': 'running-config', 'startup': 'startup-config'}
         if source not in lookup:
-            return self.invalid_params("fetching configuration from %s is not supported" % source)
+            raise ValueError("fetching configuration from %s is not supported" % source)
 
         cmd = 'show %s ' % lookup[source]
         if format and format is not 'text':
