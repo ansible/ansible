@@ -26,7 +26,7 @@ In general, errors encountered during execution should be returned by raising An
     try:
         cause_an_exception()
     except Exception as e:
-        AnsibleError('Something happened, this was original exception: %s' % to_native(e))
+        raise AnsibleError('Something happened, this was original exception: %s' % to_native(e))
 
 Check the different AnsibleError objects and see which one applies the best to your situation.
 
