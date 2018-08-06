@@ -48,10 +48,6 @@ options:
     required: false
     type: bool
     default: true
-  split_lines:
-    description: Flag to control if content is returned as a list of lines or as a single text blob
-    type: boolean
-    default: True
   use_proxy:
     description: Flag to control if the lookup will observe HTTP proxy environment variables when present.
     type: boolean
@@ -63,7 +59,6 @@ EXAMPLES = """
   - name: run Get Device Temperature
     debug: msg="{{ lookup('cpm_status',
                     'temperature',
-                    split_lines=false,
                     validate_certs=true,
                     use_https=true,
                     cpm_url="rest.wti.com",
@@ -74,7 +69,6 @@ EXAMPLES = """
   - name: Get the firmware version of a given WTI device
     debug: msg="{{ lookup('cpm_status',
                     'firmware',
-                    split_lines=false,
                     validate_certs=false,
                     use_https=true,
                     cpm_url="192.168.0.158",
@@ -85,7 +79,6 @@ EXAMPLES = """
   - name: Get the status output from a given WTI device
     debug: msg="{{ lookup('cpm_status',
                     'status',
-                    split_lines=false,
                     validate_certs=true,
                     use_https=true,
                     cpm_url="rest.wti.com",
@@ -96,7 +89,6 @@ EXAMPLES = """
   - name: Get the alarms status of a given WTI device
     debug: msg="{{ lookup('cpm_status',
                     'alarms',
-                    split_lines=false,
                     validate_certs=false,
                     use_https=false,
                     cpm_url="192.168.0.158",
@@ -153,6 +145,8 @@ class LookupModule(LookupBase):
             else:
                 raise AnsibleError("Status command not recognized %s " % (term))
 
+            display.v("url lookup connecting to %s" % fullurl)
+
             try:
                 response = open_url(fullurl, validate_certs=self.get_option('validate_certs'), use_proxy=self.get_option('use_proxy'),
                                     headers={'Content-Type': 'application/json', 'Authorization': "Basic %s" % auth})
@@ -165,9 +159,6 @@ class LookupModule(LookupBase):
             except ConnectionError as e:
                 raise AnsibleError("Error connecting to %s: %s" % (fullurl, to_native(e)))
 
-            if self.get_option('split_lines'):
-                for line in response.read().splitlines():
-                    ret.append(to_text(line))
-            else:
-                ret.append(to_text(response.read()))
+            ret.append(to_text(response.read()))
+
         return ret
