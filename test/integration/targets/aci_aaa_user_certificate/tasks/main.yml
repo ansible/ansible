@@ -18,6 +18,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     aaa_user: admin
     certificate_name: admin
     state: absent
@@ -32,6 +33,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     aaa_user: admin
     certificate_name: admin
     certificate: "{{ lookup('file', 'pki/admin.crt') }}"
@@ -69,6 +71,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     aaa_user: admin
     state: query
   check_mode: yes

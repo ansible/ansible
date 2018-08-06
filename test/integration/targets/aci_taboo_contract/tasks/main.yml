@@ -13,7 +13,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
-    output_level: info
+    output_level: '{{ aci_output_level | default("info") }}'
     tenant: ansible_test
     taboo_contract: taboo_contract_test
     state: absent
@@ -26,7 +26,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
-    output_level: info
+    output_level: '{{ aci_output_level | default("info") }}'
     tenant: ansible_test
     state: present
 
@@ -40,7 +40,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
-    output_level: info
+    output_level: '{{ aci_output_level | default("info") }}'
     tenant: ansible_test
     taboo_contract: taboo_contract_test
     state: present
@@ -151,6 +151,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     state: query
   check_mode: yes
   register: cm_query_all_taboo_contracts
@@ -263,7 +264,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
-    output_level: info
+    output_level: '{{ aci_output_level | default("info") }}'
     state: present
   ignore_errors: yes
   register: error_on_missing_required_param
