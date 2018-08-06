@@ -1,42 +1,32 @@
 .. _module_documenting:
 
-Documenting Your Module
-=======================
+Module Formatting and Documentation
+===================================
 
-.. contents:: Topics
+Every module should begin with a shebang, followed by the following six sections in this order:
 
-The online module documentation is generated from the modules themselves.
-As the module documentation is generated from documentation strings contained in the modules, all modules included with Ansible must have a ``DOCUMENTATION`` string.
-This string must be a valid YAML document
-which conforms to the schema defined below. You may find it easier to
-start writing your ``DOCUMENTATION`` string in an editor with YAML
-syntax highlighting before you include it in your Python file.
+1. :ref:`Copyright <copyright>`
+2. :ref:`ANSIBLE_METADATA <ansible_metadata_block>`
+3. :ref:`DOCUMENTATION <documentation_block>`
+4. :ref:`EXAMPLES <examples_block>`
+5. :ref:`RETURN <return_block>`
+6. :ref:`Python imports <python_imports>`
 
-All modules must have the following sections defined in this order:
-
-1. Copyright
-2. ANSIBLE_METADATA
-3. DOCUMENTATION
-4. EXAMPLES
-5. RETURN
-6. Python imports
 
 .. note:: Why don't the imports go first?
 
   Keen Python programmers may notice that contrary to PEP 8's advice we don't put ``imports`` at the top of the file. This is because the ``ANSIBLE_METADATA`` through ``RETURN`` sections are not used by the module code itself; they are essentially extra docstrings for the file. The imports are placed after these special variables for the same reason as PEP 8 puts the imports after the introductory comments and docstrings. This keeps the active parts of the code together and the pieces which are purely informational apart. The decision to exclude E402 is based on readability (which is what PEP 8 is about). Documentation strings in a module are much more similar to module level docstrings, than code, and are never utilized by the module itself. Placing the imports below this documentation and closer to the code, consolidates and groups all related code in a congruent manner to improve readability, debugging and understanding.
 
-.. warning:: Why do some modules have imports at the bottom of the file?
+.. warning:: Copy old modules with care
 
-  If you look at some existing older modules, you may find imports at the bottom of the file. Do not copy that idiom into new modules as it is a historical oddity due to how modules used to be combined with libraries. Over time we're moving the imports to be in their proper place.
-
+  Some existing older modules have imports at the bottom of the file, Copyright notices with the full GPL prefix, and/or ``ANSIBLE_METADATA`` fields in the wrong order. These are legacy idioms that need updating - do not them into new modules. Over time we're updating and correcting older modules. Please follow the guidelines on this page!
 
 .. _copyright:
 
 Copyright
 ----------------------
 
-The beginning of every module should look about the same. After the shebang,
-there should be at least two lines covering copyright and licensing of the
+After the shebang, there should be at least two lines covering copyright and licensing of the
 code.
 
 .. code-block:: python
@@ -46,18 +36,11 @@ code.
     # Copyright: (c) 2018, Terry Jones <terry.jones@example.org>
     # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-Every file should have a copyright line (see `The copyright notice <https://www.gnu.org/licenses/gpl-howto.en.html>`_)
-with the original copyright holder. Major additions to the module (for
-instance, rewrites) may add additional copyright lines. Any legal questions
-need to review the source control history, so an exhaustive copyright header is
-not necessary.
+Every file should have a `copyright line <https://www.gnu.org/licenses/gpl-howto.en.html>`_ with the original copyright holder. Major additions to the module (for
+instance, rewrites) may add additional copyright lines. Any legal review will include the source control history, so an exhaustive copyright header is
+not necessary. The license declaration should be ONLY one line, not the full GPL prefix.
 
-The license declaration should be ONLY one line, not the full GPL prefix. If
-you notice a module with the full prefix, feel free to switch it to the
-one-line declaration instead.
-
-When adding a copyright line after completing a significant feature or rewrite,
-add the newer line above the older one, like so:
+When adding a copyright line after completing a significant feature or rewrite, add the newer line above the older one:
 
 .. code-block:: python
 
@@ -72,9 +55,7 @@ add the newer line above the older one, like so:
 ANSIBLE_METADATA Block
 ----------------------
 
-``ANSIBLE_METADATA`` contains information about the module for use by other tools. At the moment, it informs other tools which type of maintainer the module has and to what degree users can rely on a module's behaviour remaining the same over time.
-
-For new modules, the following block can be simply added into your module
+``ANSIBLE_METADATA`` contains information about the module for use by other tools. For new modules, the following block can be simply added into your module
 
 .. code-block:: python
 
@@ -87,28 +68,6 @@ For new modules, the following block can be simply added into your module
    * ``metadata_version`` is the version of the ``ANSIBLE_METADATA`` schema, *not* the version of the module.
    * Promoting a module's ``status`` or ``supported_by`` status should only be done by members of the Ansible Core Team.
 
-.. note:: Pre-released metadata version
-
-    During development of Ansible-2.3, modules had an initial version of the
-    metadata.  This version was modified slightly after release to fix some
-    points of confusion.  You may occasionally see PRs for modules where the
-    ANSIBLE_METADATA doesn't look quite right because of this.  Module
-    metadata should be fixed before checking it into the repository.
-
-Version 1.1 of the metadata
-+++++++++++++++++++++++++++
-
-Structure
-^^^^^^^^^
-
-.. code-block:: python
-
-  ANSIBLE_METADATA = {
-      'metadata_version': '1.1',
-      'supported_by': 'community',
-      'status': ['preview', 'deprecated']
-  }
-
 Fields
 ^^^^^^
 
@@ -119,7 +78,8 @@ Fields
    to an existing field. We'll increment X if we remove fields or values
    or change the type or meaning of a field.
    Current metadata_version is "1.1"
-:supported_by: This field records who supports the module.
+
+:supported_by: Who supports the module.
    Default value is ``community``. Values are:
 
    * core
@@ -127,7 +87,7 @@ Fields
    * certified
    * community
    * curated (Deprecated.  Modules in this category should probably be core or
-     certified instead)
+     certified instead.)
 
    For information on what the support level values entail, please see
    :ref:`Modules Support <modules_support>`.
@@ -137,34 +97,24 @@ Fields
    is a single element list ["preview"]. The following strings are valid
    statuses and have the following meanings:
 
-   :stableinterface: This means that the module's parameters are
+   :stableinterface: The module's parameters are
       stable. Every effort will be made not to remove parameters or change
       their meaning. It is not a rating of the module's code quality.
-   :preview: This module is a tech preview. This means it may be
+   :preview: The module is in tech preview. It may be
       unstable, the parameters may change, or it may require libraries or
       web services that are themselves subject to incompatible changes.
-   :deprecated: This module is deprecated and will no longer be
-      available in a future release.
-   :removed: This module is not present in the release. A stub is
+   :deprecated: The module is deprecated and will be removed in a future release.
+   :removed: The module is not present in the release. A stub is
       kept so that documentation can be built. The documentation helps
       users port from the removed module to new modules.
 
-Changes from Version 1.0
-++++++++++++++++++++++++
-
-:metadata_version: Version updated from 1.0 to 1.1
-:supported_by: All substantive changes were to potential values of the supported_by field
-
-  * Added the certified value
-  * Deprecated the curated value, modules shipped with Ansible will use
-    certified instead.  Third party modules are encouraged not to use this as
-    it is meaningless within Ansible proper.
-  * Added the network value
+.. _documentation_block:
 
 DOCUMENTATION Block
 -------------------
 
-See an example documentation string in the checkout under `examples/DOCUMENTATION.yml <https://github.com/ansible/ansible/blob/devel/examples/DOCUMENTATION.yml>`_.
+Ansible's online module documentation is generated from the documentation strings contained at the beginning of each module's source code. The ``DOCUMENTATION`` block must be valid YAML. You may find it easier to start writing your ``DOCUMENTATION`` string in an :ref:`editor with YAML
+syntax highlighting <other_tools_and_programs>` before you include it in your Python file. See an example documentation string at `examples/DOCUMENTATION.yml <https://github.com/ansible/ansible/blob/devel/examples/DOCUMENTATION.yml>`_.
 
 Include it in your module file like this:
 
@@ -181,24 +131,21 @@ Include it in your module file like this:
     # ... snip ...
     '''
 
-
-
-
 The following fields can be used and are all required unless specified otherwise:
 
 :module:
   The name of the module. This must be the same as the filename, without the ``.py`` extension.
 :short_description:
   * A short description which is displayed on the :ref:`all_modules` page and ``ansible-doc -l``.
-  * As the short description is displayed by ``ansible-doc -l`` without the category grouping it needs enough detail to explain its purpose without the context of the directory structure in which it lives.
-  * Unlike ``description:`` this field should not have a trailing full stop.
+  * The ``short_description`` is displayed by ``ansible-doc -l`` without any category grouping, so it needs enough detail to explain the module's purpose without the context of the directory structure in which it lives.
+  * Unlike ``description:``, ``short_description`` should not have a trailing period/full stop.
 :description:
   * A detailed description (generally two or more sentences).
-  * Must be written in full sentences, i.e. with capital letters and fullstops.
+  * Must be written in full sentences, i.e. with capital letters and periods/full stops.
   * Shouldn't mention the name module.
 :version_added:
-  The version of Ansible when the module was added.
-  This is a `string`, and not a float, i.e. ``version_added: "2.1"``
+  * The version of Ansible when the module was added.
+  * This is a string, and not a float, i.e. ``version_added: "2.1"``
 :author:
   Name of the module author in the form ``First Last (@GitHubID)``. Use a multi-line list if there is more than one author.
 :deprecated:
@@ -208,7 +155,7 @@ The following fields can be used and are all required unless specified otherwise
   * Referenced in the ``porting_guide_x.y.rst``
   * File should be renamed to start with an ``_``
   * ``ANSIBLE_METADATA`` must contain ``status: ['deprecated']``
-  * Following values must be set:
+  * Following values must be set in the :
 
   :removed_in: A `string`, such as ``"2.9"``, which represents the version of Ansible this module will replaced with docs only module stub.
   :why: Optional string that used to detail why this has been removed.
@@ -261,16 +208,15 @@ The following fields can be used and are all required unless specified otherwise
 
    - If the module doesn't doesn't have any options (for example, it's a ``_facts`` module), you can use ``options: {}``.
 
+.. _examples_block:
+
 EXAMPLES block
 --------------
 
-The EXAMPLES section is required for all new modules.
+Examples should demonstrate real world usage in multi-line plain-text YAML format. The best examples are ready for the user to 
+copy and paste into a playbook. Review and update your examples with every change to your module.
 
-Examples should demonstrate real world usage, and be written in multi-line plain-text YAML format.
-
-Ensure that examples are kept in sync with the options during the PR review and any following code refactor.
-
-As per playbook best practice, a `name:` should be specified.
+As per playbook best practice, each example should include a `name:` line.
 
 ``EXAMPLES`` string within the module like this::
 
@@ -283,10 +229,12 @@ As per playbook best practice, a `name:` should be specified.
 
 If the module returns facts that are often needed, an example of how to use them can be helpful.
 
+.. _return_block:
+
 RETURN Block
 ------------
 
-The RETURN section documents what the module returns, and is required for all new modules.
+The RETURN section documents what the module returns.
 
 For each value returned, provide a ``description``, in what circumstances the value is ``returned``,
 the ``type`` of the value and a ``sample``.  For example, from the ``copy`` module:
@@ -375,8 +323,10 @@ Example::
 
 .. note::
 
-   If your module doesn't return anything (apart from the standard returns), you can use ``RETURN = ''' # '''``.
+   If your module doesn't return anything (apart from the standard returns), this section of your documentation should read:
+   ``RETURN = ''' # '''``
 
+.. _python_imports:
 
 Python Imports
 --------------
@@ -395,16 +345,13 @@ Starting with Ansible version 2.2, all new modules are required to use imports i
 Formatting functions
 --------------------
 
-The formatting functions are:
+You can link from your module documentation to other module docs, other resources on docs.ansible.com, and resources elsewhere on the internet. The formatting functions are:
 
 * ``L()`` for Links with a heading
 * ``U()`` for URLs
 * ``I()`` for option names
 * ``C()`` for files and option values
-* ``M()`` for module names.
-
-Module names should be specified as ``M(module)`` to create a link to the online documentation for that module.
-
+* ``M()`` for module names
 
 Example usage::
 
