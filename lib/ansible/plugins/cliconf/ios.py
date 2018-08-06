@@ -231,13 +231,13 @@ class Cliconf(CliconfBase):
         if commit:
             for key, value in iteritems(banners_obj):
                 key += ' %s' % multiline_delimiter
-                self.send_commad('config terminal', sendonly=True)
+                self.send_command('config terminal', sendonly=True)
                 for cmd in [key, value, multiline_delimiter]:
                     obj = {'command': cmd, 'sendonly': True}
                     results.append(self.send_command(**obj))
                     requests.append(cmd)
 
-                self.send_commad('end', sendonly=True)
+                self.send_command('end', sendonly=True)
                 time.sleep(0.1)
                 results.append(self.send_command('\n'))
                 requests.append('\n')
