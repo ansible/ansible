@@ -1015,6 +1015,8 @@ class Request:
         :kwarg cookies: (optional) CookieJar object to send with the
             request
         :kwarg use_gssapi: (optional) Use GSSAPI handler of requests.
+        :kwarg unix_socket: (optional) String of file system path to unix socket file to use when establishing
+        connection to the provided url
         :returns: HTTPResponse
         """
 
@@ -1312,6 +1314,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     :kwarg last_mod_time: Default: None
     :kwarg int timeout:   Default: 10
     :kwarg boolean use_gssapi:   Default: False
+    :kwarg unix_socket: (optional) String of file system path to unix socket file to use when establishing
+    connection to the provided url
 
     :returns: A tuple of (**response**, **info**). Use ``response.read()`` to read the data.
         The **info** contains the 'status' and other meta data. When a HttpError (status > 400)
