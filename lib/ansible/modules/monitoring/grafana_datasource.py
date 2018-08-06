@@ -433,7 +433,7 @@ def grafana_delete_datasource(module, data):
     if 'grafana_api_key' in data and data['grafana_api_key']:
         headers['Authorization'] = "Bearer %s" % data['grafana_api_key']
     else:
-        auth = base64.b64encode(to_bytes('%s:%s' % (data['grafana_user'], data['grafana_password'])).replace('\n', ''))
+        auth = base64.b64encode(to_bytes(('%s:%s' % (data['grafana_user'], data['grafana_password'])).replace('\n', '')))
         headers['Authorization'] = 'Basic %s' % auth
         grafana_switch_organisation(module, data['grafana_url'], data['org_id'], headers)
 
