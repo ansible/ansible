@@ -1,3 +1,6 @@
+.. _using_local_modules_and_plugins:
+.. _developing_locally:
+
 *******************************
 Using Local Modules and Plugins
 *******************************
@@ -10,9 +13,11 @@ Extending Ansible with local modules and plugins offers lots of shortcuts:
 * if you're writing a new module, you can choose any programming language you like
 * you don't have to clone the main Ansible repo
 * you don't have to open a pull request
-* you don't have to add tests (though we highly recommend that you do!)
+* you don't have to add tests (though we recommend that you do!)
 
 To save a local module or plugin so Ansible can find and use it, drop the module or plugin in the correct "magic" directory. For local modules, use the name of the file as the module name: for example, if the module file is `~/.ansible/plugins/modules/local_users.py`, use `local_users` as the module name. 
+
+.. _modules_vs_plugins:
 
 Modules and Plugins: What's the Difference?
 -------------------------------------------
