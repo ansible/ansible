@@ -34,7 +34,7 @@ module: gcp_compute_instance_facts
 description:
   - Gather facts for GCP Instance
 short_description: Gather facts for GCP Instance
-version_added: 2.6
+version_added: 2.7
 author: Google Inc. (@googlecloudplatform)
 requirements:
     - python >= 2.6
@@ -44,7 +44,7 @@ options:
     filters:
        description:
            A list of filter value pairs. Available filters are listed here
-           U().
+           U(https://cloud.google.com/sdk/gcloud/reference/topic/filters).
            Each additional filter in the list will act be added as an AND condition
            (filter1 and filter2)
     zone:
@@ -499,10 +499,6 @@ def fetch_list(module, link, query):
 
 
 def query_options(filters):
-    '''
-        :param config_data: contents of the inventory config file
-        :return A fully built query string
-    '''
     if not filters:
         return ''
 
@@ -537,9 +533,9 @@ def return_if_object(module, response):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != 'compute#instanceList':
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
+
+
 if __name__ == "__main__":
     main()

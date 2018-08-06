@@ -76,6 +76,20 @@
     that:
       - result.changed == true
       - "result.kind == 'compute#targetTcpProxy'"
+- name: verify that target_tcp_proxy was created
+  gcp_compute_target_tcp_proxy_facts:
+      filters:
+         - name = {{ resource_name }}
+      project: "{{ gcp_project }}"
+      auth_kind: "{{ gcp_cred_kind }}"
+      service_account_file: "{{ gcp_cred_file }}"
+      scopes:
+        - https://www.googleapis.com/auth/compute
+  register: results
+- name: verify that command succeeded
+  assert:
+    that:
+      - results['items'] | length == 1
 # ----------------------------------------------------------------------------
 - name: create a target tcp proxy that already exists
   gcp_compute_target_tcp_proxy:
@@ -108,6 +122,20 @@
     that:
       - result.changed == true
       - result.has_key('kind') == False
+- name: verify that target_tcp_proxy was deleted
+  gcp_compute_target_tcp_proxy_facts:
+      filters:
+         - name = {{ resource_name }}
+      project: "{{ gcp_project }}"
+      auth_kind: "{{ gcp_cred_kind }}"
+      service_account_file: "{{ gcp_cred_file }}"
+      scopes:
+        - https://www.googleapis.com/auth/compute
+  register: results
+- name: verify that command succeeded
+  assert:
+    that:
+      - results['items'] | length == 0
 # ----------------------------------------------------------------------------
 - name: delete a target tcp proxy that does not exist
   gcp_compute_target_tcp_proxy:

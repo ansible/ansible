@@ -95,7 +95,7 @@
 - name: verify that instance was created
   gcp_compute_instance_facts:
       filters:
-         - name = "{{ resource_name }}"
+         - name = {{ resource_name }}
       zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -168,7 +168,7 @@
 - name: verify that instance was deleted
   gcp_compute_instance_facts:
       filters:
-         - name = "{{ resource_name }}"
+         - name = {{ resource_name }}
       zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"

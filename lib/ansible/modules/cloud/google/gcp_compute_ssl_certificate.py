@@ -79,7 +79,7 @@ EXAMPLES = '''
       name: "test_object"
       description: A certificate for testing. Do not use this certificate in production
       certificate: |
-        --BEGIN CERTIFICATE--
+        -----BEGIN CERTIFICATE-----
         MIICqjCCAk+gAwIBAgIJAIuJ+0352Kq4MAoGCCqGSM49BAMCMIGwMQswCQYDVQQG
         EwJVUzETMBEGA1UECAwKV2FzaGluZ3RvbjERMA8GA1UEBwwIS2lya2xhbmQxFTAT
         BgNVBAoMDEdvb2dsZSwgSW5jLjEeMBwGA1UECwwVR29vZ2xlIENsb3VkIFBsYXRm
@@ -95,13 +95,13 @@ EXAMPLES = '''
         0YLKineDNq/BMAwGA1UdEwQFMAMBAf8wCgYIKoZIzj0EAwIDSQAwRgIhALs4vy+O
         M3jcqgA4fSW/oKw6UJxp+M6a+nGMX+UJR3YgAiEAvvl39QRVAiv84hdoCuyON0lJ
         zqGNhIPGq2ULqXKK8BY=
-        --END CERTIFICATE--
+        -----END CERTIFICATE-----
       private_key: |
-        --BEGIN EC PRIVATE KEY--
+        -----BEGIN EC PRIVATE KEY-----
         MHcCAQEEIObtRo8tkUqoMjeHhsOh2ouPpXCgBcP+EDxZCB/tws15oAoGCCqGSM49
         AwEHoUQDQgAEHGzpcRJ4XzfBJCCPMQeXQpTXwlblimODQCuQ4mzkzTv0dXyB750f
         OGN02HtkpBOZzzvUARTR10JQoSe2/5PIwQ==
-        --END EC PRIVATE KEY--
+        -----END EC PRIVATE KEY-----
       project: "test_project"
       auth_kind: "service_account"
       service_account_file: "/tmp/auth.pem"

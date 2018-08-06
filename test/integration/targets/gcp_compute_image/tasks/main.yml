@@ -46,13 +46,19 @@
       - result.changed == true
       - "result.kind == 'compute#image'"
 - name: verify that image was created
-  shell: |
-    gcloud compute images describe  --project="{{ gcp_project}}"  "{{ resource_name }}"
+  gcp_compute_image_facts:
+      filters:
+         - name = {{ resource_name }}
+      project: "{{ gcp_project }}"
+      auth_kind: "{{ gcp_cred_kind }}"
+      service_account_file: "{{ gcp_cred_file }}"
+      scopes:
+        - https://www.googleapis.com/auth/compute
   register: results
 - name: verify that command succeeded
   assert:
     that:
-      - results.rc == 0
+      - results['items'] | length == 1
 # ----------------------------------------------------------------------------
 - name: create a image that already exists
   gcp_compute_image:
@@ -84,15 +90,19 @@
       - result.changed == true
       - result.has_key('kind') == False
 - name: verify that image was deleted
-  shell: |
-    gcloud compute images describe  --project="{{ gcp_project}}"  "{{ resource_name }}"
+  gcp_compute_image_facts:
+      filters:
+         - name = {{ resource_name }}
+      project: "{{ gcp_project }}"
+      auth_kind: "{{ gcp_cred_kind }}"
+      service_account_file: "{{ gcp_cred_file }}"
+      scopes:
+        - https://www.googleapis.com/auth/compute
   register: results
-  failed_when: results.rc == 0
 - name: verify that command succeeded
   assert:
     that:
-      - results.rc == 1
-      - "\"'projects/{{ gcp_project }}/global/images/{{ resource_name }}' was not found\" in results.stderr"
+      - results['items'] | length == 0
 # ----------------------------------------------------------------------------
 - name: delete a image that does not exist
   gcp_compute_image:

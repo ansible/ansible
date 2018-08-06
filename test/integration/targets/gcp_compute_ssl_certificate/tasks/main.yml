@@ -18,7 +18,7 @@
       name: "{{ resource_name }}"
       description: A certificate for testing. Do not use this certificate in production
       certificate: |
-        --BEGIN CERTIFICATE--
+        -----BEGIN CERTIFICATE-----
         MIICqjCCAk+gAwIBAgIJAIuJ+0352Kq4MAoGCCqGSM49BAMCMIGwMQswCQYDVQQG
         EwJVUzETMBEGA1UECAwKV2FzaGluZ3RvbjERMA8GA1UEBwwIS2lya2xhbmQxFTAT
         BgNVBAoMDEdvb2dsZSwgSW5jLjEeMBwGA1UECwwVR29vZ2xlIENsb3VkIFBsYXRm
@@ -34,13 +34,13 @@
         0YLKineDNq/BMAwGA1UdEwQFMAMBAf8wCgYIKoZIzj0EAwIDSQAwRgIhALs4vy+O
         M3jcqgA4fSW/oKw6UJxp+M6a+nGMX+UJR3YgAiEAvvl39QRVAiv84hdoCuyON0lJ
         zqGNhIPGq2ULqXKK8BY=
-        --END CERTIFICATE--
+        -----END CERTIFICATE-----
       private_key: |
-        --BEGIN EC PRIVATE KEY--
+        -----BEGIN EC PRIVATE KEY-----
         MHcCAQEEIObtRo8tkUqoMjeHhsOh2ouPpXCgBcP+EDxZCB/tws15oAoGCCqGSM49
         AwEHoUQDQgAEHGzpcRJ4XzfBJCCPMQeXQpTXwlblimODQCuQ4mzkzTv0dXyB750f
         OGN02HtkpBOZzzvUARTR10JQoSe2/5PIwQ==
-        --END EC PRIVATE KEY--
+        -----END EC PRIVATE KEY-----
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -51,7 +51,7 @@
       name: "{{ resource_name }}"
       description: A certificate for testing. Do not use this certificate in production
       certificate: |
-        --BEGIN CERTIFICATE--
+        -----BEGIN CERTIFICATE-----
         MIICqjCCAk+gAwIBAgIJAIuJ+0352Kq4MAoGCCqGSM49BAMCMIGwMQswCQYDVQQG
         EwJVUzETMBEGA1UECAwKV2FzaGluZ3RvbjERMA8GA1UEBwwIS2lya2xhbmQxFTAT
         BgNVBAoMDEdvb2dsZSwgSW5jLjEeMBwGA1UECwwVR29vZ2xlIENsb3VkIFBsYXRm
@@ -67,13 +67,13 @@
         0YLKineDNq/BMAwGA1UdEwQFMAMBAf8wCgYIKoZIzj0EAwIDSQAwRgIhALs4vy+O
         M3jcqgA4fSW/oKw6UJxp+M6a+nGMX+UJR3YgAiEAvvl39QRVAiv84hdoCuyON0lJ
         zqGNhIPGq2ULqXKK8BY=
-        --END CERTIFICATE--
+        -----END CERTIFICATE-----
       private_key: |
-        --BEGIN EC PRIVATE KEY--
+        -----BEGIN EC PRIVATE KEY-----
         MHcCAQEEIObtRo8tkUqoMjeHhsOh2ouPpXCgBcP+EDxZCB/tws15oAoGCCqGSM49
         AwEHoUQDQgAEHGzpcRJ4XzfBJCCPMQeXQpTXwlblimODQCuQ4mzkzTv0dXyB750f
         OGN02HtkpBOZzzvUARTR10JQoSe2/5PIwQ==
-        --END EC PRIVATE KEY--
+        -----END EC PRIVATE KEY-----
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -85,20 +85,26 @@
       - result.changed == true
       - "result.kind == 'compute#sslCertificate'"
 - name: verify that ssl_certificate was created
-  shell: |
-    gcloud compute ssl-certificates describe  --project="{{ gcp_project}}"  "{{ resource_name }}"
+  gcp_compute_ssl_certificate_facts:
+      filters:
+         - name = {{ resource_name }}
+      project: "{{ gcp_project }}"
+      auth_kind: "{{ gcp_cred_kind }}"
+      service_account_file: "{{ gcp_cred_file }}"
+      scopes:
+        - https://www.googleapis.com/auth/compute
   register: results
 - name: verify that command succeeded
   assert:
     that:
-      - results.rc == 0
+      - results['items'] | length == 1
 # ----------------------------------------------------------------------------
 - name: create a ssl certificate that already exists
   gcp_compute_ssl_certificate:
       name: "{{ resource_name }}"
       description: A certificate for testing. Do not use this certificate in production
       certificate: |
-        --BEGIN CERTIFICATE--
+        -----BEGIN CERTIFICATE-----
         MIICqjCCAk+gAwIBAgIJAIuJ+0352Kq4MAoGCCqGSM49BAMCMIGwMQswCQYDVQQG
         EwJVUzETMBEGA1UECAwKV2FzaGluZ3RvbjERMA8GA1UEBwwIS2lya2xhbmQxFTAT
         BgNVBAoMDEdvb2dsZSwgSW5jLjEeMBwGA1UECwwVR29vZ2xlIENsb3VkIFBsYXRm
@@ -114,13 +120,13 @@
         0YLKineDNq/BMAwGA1UdEwQFMAMBAf8wCgYIKoZIzj0EAwIDSQAwRgIhALs4vy+O
         M3jcqgA4fSW/oKw6UJxp+M6a+nGMX+UJR3YgAiEAvvl39QRVAiv84hdoCuyON0lJ
         zqGNhIPGq2ULqXKK8BY=
-        --END CERTIFICATE--
+        -----END CERTIFICATE-----
       private_key: |
-        --BEGIN EC PRIVATE KEY--
+        -----BEGIN EC PRIVATE KEY-----
         MHcCAQEEIObtRo8tkUqoMjeHhsOh2ouPpXCgBcP+EDxZCB/tws15oAoGCCqGSM49
         AwEHoUQDQgAEHGzpcRJ4XzfBJCCPMQeXQpTXwlblimODQCuQ4mzkzTv0dXyB750f
         OGN02HtkpBOZzzvUARTR10JQoSe2/5PIwQ==
-        --END EC PRIVATE KEY--
+        -----END EC PRIVATE KEY-----
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -137,7 +143,7 @@
       name: "{{ resource_name }}"
       description: A certificate for testing. Do not use this certificate in production
       certificate: |
-        --BEGIN CERTIFICATE--
+        -----BEGIN CERTIFICATE-----
         MIICqjCCAk+gAwIBAgIJAIuJ+0352Kq4MAoGCCqGSM49BAMCMIGwMQswCQYDVQQG
         EwJVUzETMBEGA1UECAwKV2FzaGluZ3RvbjERMA8GA1UEBwwIS2lya2xhbmQxFTAT
         BgNVBAoMDEdvb2dsZSwgSW5jLjEeMBwGA1UECwwVR29vZ2xlIENsb3VkIFBsYXRm
@@ -153,13 +159,13 @@
         0YLKineDNq/BMAwGA1UdEwQFMAMBAf8wCgYIKoZIzj0EAwIDSQAwRgIhALs4vy+O
         M3jcqgA4fSW/oKw6UJxp+M6a+nGMX+UJR3YgAiEAvvl39QRVAiv84hdoCuyON0lJ
         zqGNhIPGq2ULqXKK8BY=
-        --END CERTIFICATE--
+        -----END CERTIFICATE-----
       private_key: |
-        --BEGIN EC PRIVATE KEY--
+        -----BEGIN EC PRIVATE KEY-----
         MHcCAQEEIObtRo8tkUqoMjeHhsOh2ouPpXCgBcP+EDxZCB/tws15oAoGCCqGSM49
         AwEHoUQDQgAEHGzpcRJ4XzfBJCCPMQeXQpTXwlblimODQCuQ4mzkzTv0dXyB750f
         OGN02HtkpBOZzzvUARTR10JQoSe2/5PIwQ==
-        --END EC PRIVATE KEY--
+        -----END EC PRIVATE KEY-----
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -171,22 +177,26 @@
       - result.changed == true
       - result.has_key('kind') == False
 - name: verify that ssl_certificate was deleted
-  shell: |
-    gcloud compute ssl-certificates describe  --project="{{ gcp_project}}"  "{{ resource_name }}"
+  gcp_compute_ssl_certificate_facts:
+      filters:
+         - name = {{ resource_name }}
+      project: "{{ gcp_project }}"
+      auth_kind: "{{ gcp_cred_kind }}"
+      service_account_file: "{{ gcp_cred_file }}"
+      scopes:
+        - https://www.googleapis.com/auth/compute
   register: results
-  failed_when: results.rc == 0
 - name: verify that command succeeded
   assert:
     that:
-      - results.rc == 1
-      - "\"'projects/{{ gcp_project }}/global/sslCertificates/{{ resource_name }}' was not found\" in results.stderr"
+      - results['items'] | length == 0
 # ----------------------------------------------------------------------------
 - name: delete a ssl certificate that does not exist
   gcp_compute_ssl_certificate:
       name: "{{ resource_name }}"
       description: A certificate for testing. Do not use this certificate in production
       certificate: |
-        --BEGIN CERTIFICATE--
+        -----BEGIN CERTIFICATE-----
         MIICqjCCAk+gAwIBAgIJAIuJ+0352Kq4MAoGCCqGSM49BAMCMIGwMQswCQYDVQQG
         EwJVUzETMBEGA1UECAwKV2FzaGluZ3RvbjERMA8GA1UEBwwIS2lya2xhbmQxFTAT
         BgNVBAoMDEdvb2dsZSwgSW5jLjEeMBwGA1UECwwVR29vZ2xlIENsb3VkIFBsYXRm
@@ -202,13 +212,13 @@
         0YLKineDNq/BMAwGA1UdEwQFMAMBAf8wCgYIKoZIzj0EAwIDSQAwRgIhALs4vy+O
         M3jcqgA4fSW/oKw6UJxp+M6a+nGMX+UJR3YgAiEAvvl39QRVAiv84hdoCuyON0lJ
         zqGNhIPGq2ULqXKK8BY=
-        --END CERTIFICATE--
+        -----END CERTIFICATE-----
       private_key: |
-        --BEGIN EC PRIVATE KEY--
+        -----BEGIN EC PRIVATE KEY-----
         MHcCAQEEIObtRo8tkUqoMjeHhsOh2ouPpXCgBcP+EDxZCB/tws15oAoGCCqGSM49
         AwEHoUQDQgAEHGzpcRJ4XzfBJCCPMQeXQpTXwlblimODQCuQ4mzkzTv0dXyB750f
         OGN02HtkpBOZzzvUARTR10JQoSe2/5PIwQ==
-        --END EC PRIVATE KEY--
+        -----END EC PRIVATE KEY-----
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"

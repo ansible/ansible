@@ -63,13 +63,20 @@
       - result.changed == true
       - "result.kind == 'compute#forwardingRule'"
 - name: verify that forwarding_rule was created
-  shell: |
-    gcloud compute forwarding-rules describe  --project="{{ gcp_project }}"  --region=us-west1  "{{ resource_name }}"
+  gcp_compute_forwarding_rule_facts:
+      filters:
+         - name = {{ resource_name }}
+      region: us-west1
+      project: "{{ gcp_project }}"
+      auth_kind: "{{ gcp_cred_kind }}"
+      service_account_file: "{{ gcp_cred_file }}"
+      scopes:
+        - https://www.googleapis.com/auth/compute
   register: results
 - name: verify that command succeeded
   assert:
     that:
-      - results.rc == 0
+      - results['items'] | length == 1
 # ----------------------------------------------------------------------------
 - name: create a forwarding rule that already exists
   gcp_compute_forwarding_rule:
@@ -109,15 +116,20 @@
       - result.changed == true
       - result.has_key('kind') == False
 - name: verify that forwarding_rule was deleted
-  shell: |
-    gcloud compute forwarding-rules describe  --project="{{ gcp_project }}"  --region=us-west1  "{{ resource_name }}"
+  gcp_compute_forwarding_rule_facts:
+      filters:
+         - name = {{ resource_name }}
+      region: us-west1
+      project: "{{ gcp_project }}"
+      auth_kind: "{{ gcp_cred_kind }}"
+      service_account_file: "{{ gcp_cred_file }}"
+      scopes:
+        - https://www.googleapis.com/auth/compute
   register: results
-  failed_when: results.rc == 0
 - name: verify that command succeeded
   assert:
     that:
-      - results.rc == 1
-      - "\"'projects/{{ gcp_project }}/regions/us-west1/forwardingRules/{{ resource_name }}' was not found\" in results.stderr"
+      - results['items'] | length == 0
 # ----------------------------------------------------------------------------
 - name: delete a forwarding rule that does not exist
   gcp_compute_forwarding_rule:
