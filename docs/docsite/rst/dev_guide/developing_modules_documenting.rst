@@ -127,22 +127,37 @@ Fields
 All fields are lower-case. All fields are required unless specified otherwise:
 
 :module:
-  The name of the module. This must be the same as the filename, without the ``.py`` extension.
+
+  * The name of the module. 
+  * Must be the same as the filename, without the ``.py`` extension.
+
 :short_description:
+
   * A short description which is displayed on the :ref:`all_modules` page and ``ansible-doc -l``.
-  * The ``short_description`` is displayed by ``ansible-doc -l`` without any category grouping, so it needs enough detail to explain the module's purpose without the context of the directory structure in which it lives.
+  * The ``short_description`` is displayed by ``ansible-doc -l`` without any category grouping, so it needs enough detail to explain the module's purpose without the 
+context of the directory structure in which it lives.
   * Unlike ``description:``, ``short_description`` should not have a trailing period/full stop.
+
 :description:
+
   * A detailed description (generally two or more sentences).
   * Must be written in full sentences, i.e. with capital letters and periods/full stops.
   * Shouldn't mention the module name.
+
 :version_added:
+
   * The version of Ansible when the module was added.
   * This is a string, and not a float, i.e. ``version_added: "2.1"``
+
 :author:
-  Name of the module author in the form ``First Last (@GitHubID)``. Use a multi-line list if there is more than one author.
+
+  * Name of the module author in the form ``First Last (@GitHubID)``. 
+  * Use a multi-line list if there is more than one author.
+
 :deprecated:
-  Not Required. When you deprecate a module you must:
+
+  * Not Required. 
+  When you deprecate a module you must:
 
   * Mention the deprecation in the relevant ``CHANGELOG``
   * Reference the deprecation in the relevant ``porting_guide_x.y.rst``
@@ -155,7 +170,10 @@ All fields are lower-case. All fields are required unless specified otherwise:
   :alternative: Inform users they should do instead, i.e. ``Use M(whatmoduletouseinstead) instead.``.
 
 :options:
-  Not Required. If the module has no options (for example, it's a ``_facts`` module), you can use ``options: {}``. If your module has options (in other words, accepts arguments), each option should be documented thoroughly. For each module argument, include:
+
+  * Not Required.
+  * If the module has no options (for example, it's a ``_facts`` module), you can use ``options: {}``. 
+  * If your module has options (in other words, accepts arguments), each option should be documented thoroughly. For each module argument, include:
 
   :option-name:
 
@@ -168,8 +186,12 @@ All fields are lower-case. All fields are required unless specified otherwise:
     * Should not list the possible values (that's what ``choices:`` is for, though it should explain `what` the values do if they aren't obvious).
     * If an optional parameter is sometimes required this need to be reflected in the documentation, e.g. "Required when I(state=present)."
     * Mutually exclusive options must be documented as the final sentence on each of the options.
+
   :required:
-    Only needed if ``true``, otherwise we assume the option is not required.
+
+    * Only needed if ``true``.
+    * If missing, we assume the option is not required.
+
   :default:
 
     * If `required` is false/missing, `default` may be specified (assumed 'null' if missing).
@@ -177,23 +199,40 @@ All fields are lower-case. All fields are required unless specified otherwise:
     * The default option must not be listed as part of the description.
     * If the option is a boolean value, you can use any of the boolean values recognized by Ansible:
       (such as true/false or yes/no).  Choose the one that reads better in the context of the option.
+
   :choices:
-    List of option values. Should be absent if empty.
+
+    * List of option values. 
+    * Should be absent if empty.
+
   :type:
 
     * Specifies the data type that option accepts, must match the ``argspec``.
     * If an argument is ``type='bool'``, this field should be set to ``type: bool`` and no ``choices`` should be specified.
+
   :aliases:
-    List of option name aliases; generally not needed.
+    * List of optional name aliases.
+    * Generally not needed.
+
   :version_added:
-    Only needed if this option was extended after initial Ansible release, i.e. this is greater than the top level `version_added` field.
-    This is a string, and not a float, i.e. ``version_added: "2.3"``.
+
+    * Only needed if this option was extended after initial Ansible release, i.e. this is greater than the top level `version_added` field.
+    * This is a string, and not a float, i.e. ``version_added: "2.3"``.
+
   :suboptions:
-    If this option takes a dict, you can define it here. See `azure_rm_securitygroup`, `os_ironic_node` for examples.
+
+    * If this option takes a dict, you can define it here. 
+    * See `azure_rm_securitygroup`, `os_ironic_node` for examples.
+
 :requirements:
-  List of requirements, and minimum versions (if applicable).
+  
+  * List of requirements(if applicable).
+  * Include minimum versions.
+
 :notes:
-    Details of any important information that doesn't fit in one of the above sections; for example if ``check_mode`` isn't supported, or a link to external documentation.
+
+  * Details of any important information that doesn't fit in one of the above sections.
+  * For example if ``check_mode`` isn't supported, or a link to external documentation.
 
 .. _examples_block:
 
@@ -203,7 +242,7 @@ EXAMPLES block
 Examples should demonstrate real-world usage in multi-line plain-text YAML format. The best examples are ready for the user to 
 copy and paste into a playbook. Review and update your examples with every change to your module.
 
-Per playbook best practices, each example should include a `name:` line.
+Per playbook best practices, each example should include a ``name:`` line.
 
 ``EXAMPLES`` string within the module like this::
 
