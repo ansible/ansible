@@ -9,7 +9,7 @@ import datetime
 import os
 
 from ansible.module_utils.urls import (Request, open_url, urllib_request, HAS_SSLCONTEXT, cookiejar, ConnectionError, RequestWithMethod,
-                                       UnixHTTPHandler)
+                                       UnixHTTPHandler, UnixHTTPSConnection, httplib)
 from ansible.module_utils.urls import SSLValidationHandler, HTTPSClientAuthHandler, RedirectHandlerFactory
 
 import pytest
@@ -141,6 +141,24 @@ def test_Request_open_unix_socket(urlopen_mock, install_opener_mock):
             found_handlers.append(handler)
 
     assert len(found_handlers) == 1
+
+
+def test_Request_open_https_unix_socket(urlopen_mock, install_opener_mock):
+    r = Request().open('GET', 'https://ansible.com/', unix_socket='/foo/bar/baz.sock')
+    args = urlopen_mock.call_args[0]
+
+    opener = install_opener_mock.call_args[0][0]
+    handlers = opener.handlers
+
+    found_handlers = []
+    for handler in handlers:
+        if isinstance(handler, HTTPSClientAuthHandler):
+            found_handlers.append(handler)
+
+    assert len(found_handlers) == 1
+
+    inst = found_handlers[0]._build_https_connection('foo')
+    assert isinstance(inst, UnixHTTPSConnection)
 
 
 def test_Request_open_ftp(urlopen_mock, install_opener_mock, mocker):
@@ -288,6 +306,10 @@ def test_Request_open_no_validate_certs(urlopen_mock, install_opener_mock):
             break
 
     assert ssl_handler is not None
+
+    inst = ssl_handler._build_https_connection('foo')
+    assert isinstance(inst, httplib.HTTPSConnection)
+
     context = ssl_handler._context
     assert context.protocol == ssl.PROTOCOL_SSLv23
     if ssl.OP_NO_SSLv2:

@@ -89,3 +89,11 @@ def test_ParseResultDottedDict():
     assert parts[0] == dotted_parts.scheme
 
     assert dotted_parts.as_list() == list(parts)
+
+
+def test_disable_httpconnection_connect():
+    conn = urls.httplib.HTTPConnection('ansible.com')
+    assert conn.sock is None
+    with urls.disable_httpconnection_connect():
+        conn.connect()
+    assert conn.sock is None
