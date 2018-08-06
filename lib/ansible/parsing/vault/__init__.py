@@ -85,8 +85,7 @@ except ImportError:
 
 
 b_HEADER = b'$ANSIBLE_VAULT'
-CIPHER_WHITELIST = frozenset((u'AES', u'AES256'))
-CIPHER_WRITE_WHITELIST = frozenset((u'AES256',))
+DEFAULT_CIPHER = u'AES256'
 # See also CIPHER_MAPPING at the bottom of the file which maps cipher strings
 # (used in VaultFile header) to a cipher class
 
@@ -212,14 +211,14 @@ def format_vaulttext_envelope(b_ciphertext, cipher_name, version=None, vault_id=
             formatted to 80 char columns and has the header prepended
     """
 
-    if not cipher_name:
-        raise AnsibleError("the cipher must be set before adding a header")
-
-    version = version or '1.1'
-
-    # If we specify a vault_id, use format version 1.2. For no vault_id, stick to 1.1
     if vault_id and vault_id != u'default':
-        version = '1.2'
+        if not version:
+            # If we specify a vault_id, use format version 1.2. For no vault_id, stick to 1.1
+            version = '1.2'
+        else:
+            raise AnsibleError("The vault format version must be at least 1.2 if vault_id is specified")
+    elif not version:
+        version = '1.1'
 
     b_version = to_bytes(version, 'utf-8', errors='strict')
     b_vault_id = to_bytes(vault_id, 'utf-8', errors='strict')
@@ -595,7 +594,7 @@ def match_encrypt_secret(secrets, encrypt_vault_id=None):
 class VaultLib:
     def __init__(self, secrets=None):
         self.secrets = secrets or []
-        self.cipher_name = None
+        self.cipher_name = DEFAULT_CIPHER
         self.b_version = b'1.2'
 
     def encrypt(self, plaintext, secret=None, vault_id=None):
@@ -623,7 +622,7 @@ class VaultLib:
             raise AnsibleError("input is already encrypted")
 
         if not self.cipher_name or self.cipher_name not in CIPHER_WRITE_WHITELIST:
-            self.cipher_name = u"AES256"
+            raise AnsibleError(u"The cipher {0} could not be found".format(self.cipher_name))
 
         try:
             this_cipher = CIPHER_MAPPING[self.cipher_name]()
@@ -1214,11 +1213,51 @@ class VaultAES256:
 
         return to_bytes(hmac.hexdigest(), errors='surrogate_or_strict'), hexlify(b_ciphertext)
 
+    @staticmethod
+    def _gen_salt(b_plaintext=None, secret=None):
+        # If no secret is provided, we should not generate the salt based on the hash.
+        # If we would do that, we leak the sha256 hash of the plaintext.
+        # This is most of the time not a problem, except if the plaintext contains guessable
+        # content or is partially known by the attacker. The attacker then could simply
+        # bruteforce the plaintext content. This is not a problem for larger files, where
+        # the structure is not known by the attacker.
+        #
+        # If we use inline encryption and only encrypt the password of the following variable
+        #   password = '1234'
+        # an attacker could take the sha256 hash out of the salt value
+        # and use it to bruteforce the password, as sha256('1234') == salt.
+        #
+        # If a secret was provided, we first append it the the plaintext and than generate the
+        # hash. By doing so we increase the length of the plaintext and also add a string that is
+        # in all cases unknown to the attacker (the passphrase).
+        # So the plaintext hash is now completely useless to the attacker.
+        #
+        # Therefore we also use a randomn salt if no plaintext is provided, or we would leak the
+        # sha256 hash of the secret.
+
+        if not secret or not b_plaintext:
+            return os.urandom(32)
+        # assert secret
+        # assert b_plaintext
+
+        b_secret = secret.bytes
+        b_plaintextAndSecret = b_plaintext + b_secret
+
+        if HAS_CRYPTOGRAPHY:
+            digest = hashes.Hash(hashes.SHA256(), backend=default_backend())
+            digest.update(b_plaintextAndSecret)
+            b_salt = digest.finalize()
+        elif HAS_PYCRYPTO:
+            b_salt = SHA256_pycrypto.new(b_plaintextAndSecret).digest()
+        else:
+            b_salt = os.urandom(32)
+        return b_salt
+
     @classmethod
     def encrypt(cls, b_plaintext, secret):
         if secret is None:
             raise AnsibleVaultError('The secret passed to encrypt() was None')
-        b_salt = os.urandom(32)
+        b_salt = cls._gen_salt(b_plaintext, secret)
         b_password = secret.bytes
         b_key1, b_key2, b_iv = cls._gen_key_initctr(b_password, b_salt)
 
@@ -1330,3 +1369,5 @@ class VaultAES256:
 CIPHER_MAPPING = {
     u'AES256': VaultAES256,
 }
+CIPHER_WHITELIST = frozenset((u'AES', u'AES256'))
+CIPHER_WRITE_WHITELIST = frozenset((u'AES256',))
