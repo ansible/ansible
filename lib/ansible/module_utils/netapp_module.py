@@ -62,8 +62,7 @@ class NetAppModule(object):
         ''' store a message in a list '''
         if msg is None:
             name = self.parameters.get('name', '')
-            self.log.append("Action: %s, name: %s, changed: %s"
-                            .format(action, name, self.changed))
+            self.log.append("Action: %s, name: %s, changed: %s" % (action, name, self.changed))
             if params:
                 self.log.append(str(params))
         else:

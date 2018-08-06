@@ -111,7 +111,7 @@ options:
   username:
       required: true
       description:
-      - Please ensure that the user has the adequate permissions. For more information, please read the official documentation 
+      - Please ensure that the user has the adequate permissions. For more information, please read the official documentation
         U(https://mysupport.netapp.com/documentation/docweb/index.html?productID=62636&language=en-US).
       aliases: ['user']
   password:
