@@ -281,7 +281,7 @@ import base64
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url, url_argument_spec
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_text
 
 __metaclass__ = type
 
@@ -313,7 +313,7 @@ def grafana_datasource_exists(module, grafana_url, name, headers):
     r, info = fetch_url(module, '%s/api/datasources/name/%s' % (grafana_url, name), headers=headers, method='GET')
     if info['status'] == 200:
         datasource_exists = True
-        ds = json.loads(r.read())
+        ds = json.loads(to_text(r.read(), errors='surrogate_or_strict'))
     elif info['status'] == 404:
         datasource_exists = False
     else:
@@ -432,7 +432,7 @@ def grafana_create_datasource(module, data):
             # update
             r, info = fetch_url(module, '%s/api/datasources/%d' % (data['grafana_url'], ds['id']), data=json.dumps(payload), headers=headers, method='PUT')
             if info['status'] == 200:
-                res = json.loads(r.read())
+                res = json.loads(to_text(r.read(), errors='surrogate_or_strict'))
                 result['name'] = data['name']
                 result['id'] = ds['id']
                 result['before'] = ds
@@ -445,7 +445,7 @@ def grafana_create_datasource(module, data):
         # create
         r, info = fetch_url(module, '%s/api/datasources' % data['grafana_url'], data=json.dumps(payload), headers=headers, method='POST')
         if info['status'] == 200:
-            res = json.loads(r.read())
+            res = json.loads(to_text(r.read(), errors='surrogate_or_strict'))
             result['msg'] = "Datasource %s created : %s" % (data['name'], res['message'])
             result['changed'] = True
             result['name'] = data['name']
@@ -468,7 +468,7 @@ def grafana_delete_datasource(module, data):
         # delete
         r, info = fetch_url(module, '%s/api/datasources/name/%s' % (data['grafana_url'], data['name']), headers=headers, method='DELETE')
         if info['status'] == 200:
-            res = json.loads(r.read())
+            res = json.loads(to_text(r.read(), errors='surrogate_or_strict'))
             result['msg'] = "Datasource %s deleted : %s" % (data['name'], res['message'])
             result['changed'] = True
             result['name'] = data['name']
