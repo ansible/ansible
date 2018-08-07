@@ -22,6 +22,11 @@ extends_documentation_fragment:
 version_added: '2.3'
 author: Sumit Kumar (sumit4@netapp.com)
 
+deprecated:
+  removed_in: 2.7
+  why: Updated modules released with increased functionality
+  alternative: Use M(na_ontap_volume) instead.
+
 description:
 - Create or destroy volumes on NetApp cDOT
 
@@ -434,7 +439,6 @@ class NetAppCDOTVolume(object):
 def main():
     v = NetAppCDOTVolume()
     v.apply()
-
 
 if __name__ == '__main__':
     main()

@@ -22,6 +22,11 @@ extends_documentation_fragment:
 version_added: '2.3'
 author: Sumit Kumar (sumit4@netapp.com)
 
+deprecated:
+  removed_in: 2.7
+  why: Updated modules released with increased functionality
+  alternative: Use M(na_ontap_svm) instead.
+
 description:
 - Create or destroy svm on NetApp cDOT
 
@@ -240,7 +245,6 @@ class NetAppCDOTSVM(object):
 def main():
     v = NetAppCDOTSVM()
     v.apply()
-
 
 if __name__ == '__main__':
     main()

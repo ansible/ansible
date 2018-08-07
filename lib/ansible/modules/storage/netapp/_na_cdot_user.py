@@ -22,6 +22,11 @@ extends_documentation_fragment:
 version_added: '2.3'
 author: Sumit Kumar (sumit4@netapp.com)
 
+deprecated:
+  removed_in: 2.7
+  why: Updated modules released with increased functionality
+  alternative: Use M(na_ontap_user) instead.
+
 description:
 - Create or destroy users.
 
@@ -295,7 +300,6 @@ class NetAppCDOTUser(object):
 def main():
     v = NetAppCDOTUser()
     v.apply()
-
 
 if __name__ == '__main__':
     main()
