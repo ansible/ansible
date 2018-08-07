@@ -38,6 +38,10 @@ import sys
 import uuid
 from time import time
 
+# REST API
+import requests
+from requests.auth import HTTPBasicAuth
+
 import six
 from jinja2 import Environment
 from six import integer_types, string_types
@@ -100,6 +104,8 @@ class VMWareInventory(object):
     skip_keys = []
     groupby_patterns = []
     groupby_custom_field_excludes = []
+    tags = None
+    rest_session_id = None
 
     safe_types = [bool, str, float, None] + list(integer_types)
     iter_types = [dict, list]
@@ -182,8 +188,75 @@ class VMWareInventory(object):
 
     def do_api_calls_update_cache(self):
         ''' Get instances and cache the data '''
+        if self.include_tags:
+          self.tags = self.get_tags()
         self.inventory = self.instances_to_inventory(self.get_instances())
         self.write_to_cache(self.inventory)
+
+    def get_rest_vcenter_url(self):
+      return "https://" + self.server + ":" + str(self.port) + "/rest"
+
+    def get_rest_session_id(self):
+      vcenter_url = self.get_rest_vcenter_url()
+      if self.rest_session_id is None:
+        vcenter_auth_url = vcenter_url + "/com/vmware/cis/session"
+        resp = requests.post(vcenter_auth_url,
+          auth=HTTPBasicAuth(self.username, self.password),
+          verify=self.validate_certs)
+        self.rest_session_id = resp.json()['value']
+
+      return self.rest_session_id
+
+    def get_tags(self):
+      if self.tags is not None:
+        return self.tags
+
+      self.tags = {}
+      session_id = self.get_rest_session_id()
+      vcenter_url = self.get_rest_vcenter_url()
+
+      vcenter_tags_url = vcenter_url + "/com/vmware/cis/tagging/tag"
+      vcenter_tags_get_url = vcenter_url + "/com/vmware/cis/tagging/tag/id:{}"
+      vcenter_list_tags_url = vcenter_url + "/com/vmware/cis/tagging/tag/id:{}?~action=list-tags-for-category"
+      vcenter_category_list_url = vcenter_url + "/com/vmware/cis/tagging/category"
+      vcenter_category_get_url = vcenter_url + "/com/vmware/cis/tagging/category/id:{}"
+
+      resp = requests.get(vcenter_tags_url,
+        headers={'vmware-api-session-id' : session_id}, verify=self.validate_certs)
+
+      tags_ids = resp.json()['value']
+
+      categories = {}
+
+      for tag_id in tags_ids:
+        resp = requests.get(vcenter_tags_get_url.format(tag_id),
+          headers={'vmware-api-session-id' : session_id}, verify=self.validate_certs)
+        tag_value = resp.json()['value']
+        tag_name = tag_value['name'].replace(" ", "_")
+        category_id = tag_value['category_id']
+
+        self.tags[tag_id] = { 'name': tag_name, 'category_id': category_id }
+        categories[category_id] = 1
+
+      for category_id, nil in categories.items():
+        resp = requests.get(vcenter_category_get_url.format(category_id),
+          headers={'vmware-api-session-id' : session_id}, verify=self.validate_certs)
+        category_value = resp.json()['value']
+        category_name = category_value['name'].replace(" ", "_")
+        category_cardinality = category_value['cardinality']
+        category_associable_types = category_value['associable_types']
+        category_description = category_value['description']
+
+        categories[category_id] = {
+          'name': category_name,
+          'cardinality': category_cardinality,
+          'associable_types': category_associable_types,
+          'description': category_description
+        }
+      for tag_id, tag_info in self.tags.items():
+        self.tags[tag_id].update({ 'category': categories[tag_info['category_id']] })
+
+      return self.tags
 
     def write_to_cache(self, data):
         ''' Dump inventory to json file '''
@@ -232,7 +305,8 @@ class VMWareInventory(object):
             'lower_var_keys': True,
             'custom_field_group_prefix': 'vmware_tag_',
             'groupby_custom_field_excludes': '',
-            'groupby_custom_field': False}
+            'groupby_custom_field': False,
+            'include_tags': False}
         }
 
         if six.PY3:
@@ -274,6 +348,9 @@ class VMWareInventory(object):
         self.validate_certs = os.environ.get('VMWARE_VALIDATE_CERTS', config.get('vmware', 'validate_certs'))
         if self.validate_certs in ['no', 'false', 'False', False]:
             self.validate_certs = False
+        self.include_tags = os.environ.get('VMWARE_INCLUDE_TAGS', config.get('vmware', 'include_tags'))
+        if self.include_tags in ['yes', 'true', 'True', True]:
+            self.include_tags = True
 
         self.debugl('cert validation is %s' % self.validate_certs)
 
@@ -411,6 +488,37 @@ class VMWareInventory(object):
         except IndexError as exc:
             self.debugl("Unable to gather custom fields due to %s" % exc)
 
+        if self.include_tags:
+          instance_tuples_with_tags = []
+          vcenter_url = self.get_rest_vcenter_url()
+          vcenter_vm_tags = vcenter_url + "/com/vmware/cis/tagging/tag-association?~action=list-attached-tags"
+          session_id = self.get_rest_session_id()
+          for instance in instance_tuples:
+            vmuid = instance[0]
+            vm = str(vmuid).strip("'")
+            type, vmid = vm.split(':')
+            type = type.split('.')[-1]
+
+            vmobj = {"object_id": {"type": type, "id": vmid }}
+            resp = requests.post(vcenter_vm_tags, data=json.dumps(vmobj),
+              headers={ 'vmware-api-session-id' : session_id,
+                        'content-type': 'application/json'},
+              verify=self.validate_certs)
+
+            tag_ids = resp.json()['value']
+            instance_tags = {}
+
+            if len(tag_ids) > 0:
+              for tag_id in tag_ids:
+                tag_category = self.tags[tag_id]['category']['name']
+                tag_name = self.tags[tag_id]['name']
+
+                if tag_category not in instance_tags:
+                  instance_tags[tag_category] = []
+                instance_tags[tag_category].append(tag_name)
+
+            instance[1].update( { "tags": instance_tags })
+
         return instance_tuples
 
     def instances_to_inventory(self, instances):
@@ -495,6 +603,18 @@ class VMWareInventory(object):
                     inventory[v]['hosts'] = []
                 if k not in inventory[v]['hosts']:
                     inventory[v]['hosts'].append(k)
+
+        if self.include_tags:
+          tag_prefix = self.config.get('vmware', 'custom_field_group_prefix')
+          for k, v in inventory['_meta']['hostvars'].items():
+            for cat, tags_val in v['tags'].items():
+              for tag_val in tags_val:
+                tag = "{}{}_{}".format(tag_prefix, cat, tag_val)
+                if tag not in inventory:
+                  inventory[tag] = {}
+                  inventory[tag]['hosts'] = []
+                if k not in inventory[tag]['hosts']:
+                  inventory[tag]['hosts'].append(k)
 
         if self.config.get('vmware', 'groupby_custom_field'):
             for k, v in inventory['_meta']['hostvars'].items():
