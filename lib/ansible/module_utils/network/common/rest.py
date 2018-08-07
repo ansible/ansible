@@ -19,6 +19,7 @@ import json
 
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils._text import to_bytes, to_text
+import q
 
 class RestApi(object):
     def __init__(self, socket_path, idempotency_support=True):
@@ -31,11 +32,11 @@ class RestApi(object):
         if primary_keys is not None:
            want = dict()
            for keys in primary_keys:
-               want_config.update({keys: new.get(keys, {})})
+               want.update({keys: new.get(keys, {})})
         else:
             want = dict(new)
 
-        if isinstace(old, list):
+        if isinstance(old, list):
             for resource in old:
                 if compare_json_resources(resource, want):
                     return resource
@@ -46,8 +47,8 @@ class RestApi(object):
         return None
 
     def _replace_resource_content(self, have, want):
-        if not isinstance(have, dict) or not isinstance(want, dict):
-            Raise ValueError(msg="content should be in dict format")
+        if not isinstance(have, dict) and not isinstance(want, dict):
+            raise ValueError("content should be in dict format")
 
         if self._diff_resource(have, want) is not None:
             return False
@@ -58,28 +59,29 @@ class RestApi(object):
 
         return True
 
-    def getResource(self, url_path, query_filters=None):
+    def getResource(self, url_path, query_params=None):
         conn = Connection(self.socket_path)
         
         try:
             response = conn.send_request(
                 url_path=url_path,
                 http_method='GET',
-                query_params=query_filters)
+                query_params=query_params)
         except ConnectionError as e:
             raise e
-        return response.get('items', {})
+        return (True, response.get('items', {}))
 
 
     def addResource(self, url_path, content=None, primary_keys=None,
                    query_params=None):
         conn = Connection(self.socket_path)
+        q(content, primary_keys, query_params)
         
         # To support idempotency we will have to check if we already
         # have object with same primary key or content in case of no pk
         if self.idempotency_support is False:
             try:
-                old_obj_list = self.getResource(url_path, query_params)
+                (changed, old_obj_list) = self.getResource(url_path, query_params)
             except ConnectionError as e:
                 raise e
             if primary_keys is None:
@@ -107,7 +109,7 @@ class RestApi(object):
         # we don't need to send new PUT
         if self.idempotency_support is False:
             try:
-                old_obj = self.getResource(url_path, query_params)
+                (changed, old_obj) = self.getResource(url_path, query_params)
             except ConnectionError as e:
                 raise e
             try:

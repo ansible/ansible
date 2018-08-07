@@ -80,7 +80,7 @@ import json
 
 from ansible.module_utils.basic import AnsibleModule, to_text
 from ansible.module_utils.six.moves.urllib.error import HTTPError
-from ansible.module_utils.connection import Connection
+from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.network.common.rest import RestApi
 
 #FIXME
@@ -91,33 +91,71 @@ class FtdRestApi(RestApi):
     def __init__(self, module_path, params):
         super(FtdRestApi, self).__init__(module_path, idempotency_support=False)
         self._params = params
+        self._query_params = None
 
-    def build_url_from_resource(self):
+        @property
+        def url_path(self):
+            return self._url_path
+
+        @url_path.setter
+        def url_path(self, v):
+            self._url_path = v
+
+    def build_params_from_args(self):
         op = self._params['operation']
         res = self._params['resource']
         content = self._params['content']
         if res == 'NetworkObject':
-            url_path = '/objects/networks/'
+            self.url_path = '/objects/networks/'
         elif res == 'AccessRules':
             if 'parentId' in content:
                 pId = content['parentId']
-                url_path = '/policy/accesspolicies/' + pId + '/accessrules'
+                self.url_path = '/policy/accesspolicies/' + pId + '/accessrules'
                 del content['parentId']
+            else:
+                raise ValueError('parentId is unknow for AccessRule')
+            if op == 'add' or op == 'get':
+                query_params = dict()
+                query_params['filter'] = 'name:%s' % self._params['content'].get('name', {})
+                self._query_params = query_params
+            if op == 'edit' or op == 'delete':
+                if 'id' in content:
+                    self.url_path = self.url_path + '/' + self._params['content'].get('id', {})
+                    del content['id']
+                else:
+                    raise ValueError('Access rule id is required for op=%s' %
+                                    op)
         else:
-            raise ValueError(msg='Unknow Resource: %s' % res)
-        return url_path
+            raise ValueError('Unknow Resource: %s' % res)
+
+    def _handle_request(self, func, url_path, **kwargs):
+        try:
+           (changed, res) = func(url_path, **kwargs)
+        except ConnectionError as exc:
+            if to_text(exc).find('Response was not valid JSON') != -1:
+                return (True, None)
+            else:
+                raise
+        return (changed, res)
 
     def run(self):
-        url = self.build_url_from_resource()
+        self.build_params_from_args()
         content = self._params['content']
         op = self._params['operation']
         if op == 'add':
-            filter_params = dict()
-            filter_params['filter'] = 'name:%s' % self._params['content'].get('name', {})
-            res = self.addResource(url, content=content, primary_keys=['name',
-                                  'sourceNetworks'], query_params=filter_params)
-            return res
-
+            return self._handle_request(
+                self.addResource, self.url_path,
+                content=content, primary_keys=['name', 'sourceNetworks'],
+                query_params=self._query_params
+            )
+        if op == 'get':
+            return self._handle_request(self.getResource, self.url_path,
+                                       query_params=self._query_params)
+        if op == 'edit':
+            return self._handle_request(self.editResource, self.url_path,
+                                       content=content)
+        if op == 'delete':
+            return self._handle_request(self.deleteResource, self.url_path)
 
 def main():
     fields = dict(
