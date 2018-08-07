@@ -202,7 +202,7 @@
             - 54.120.120.240
             destination_port_range: 22
             access: Deny
-            priority: 101
+            priority: 102
             direction: Inbound
   register: output
 
