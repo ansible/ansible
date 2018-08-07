@@ -28,7 +28,7 @@ As you develop your module, follow these basic conventions and best practices:
 Scope your module appropriately
 `````````````````````````````````````````
 
-Especially if you want to contribute your module back to Ansible Core, make sure it includes enough logic and functionality, but not too much.
+Especially if you want to contribute your module back to Ansible Core, make sure it includes enough logic and functionality, but not too much. If you're finding these guidelines tricky, consider :ref:`whether you really need to write a module <module_dev_should_you>` at all.
 
 * Each module should have a concise and well-defined functionality. Basically, follow the UNIX philosophy of doing one thing well.
 
