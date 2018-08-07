@@ -18,7 +18,7 @@ Function Invoke-Query {
         [string]$Database,
         [string]$ServerInstance,
         [string]$ServerInstanceUser,
-        [string]$ServerInstancePassword,
+        [Security.SecureString]$ServerInstancePassword,
         [bool]$CheckMode
     )
     $output = @()
@@ -28,7 +28,8 @@ Function Invoke-Query {
                 $res = Invoke-SqlCmd -ServerInstance $ServerInstance -Database $Database -Query $Query -QueryTimeout $QueryTimeout
             }
             else {
-                $res = Invoke-SqlCmd -ServerInstance $ServerInstance -Query $Query -Database $Database -Username $ServerInstanceUser -Password $ServerInstancePassword -QueryTimeout $QueryTimeout
+                $SQLCredentials = New-Object -TypeName System.Management.Automation.PSCredential ($ServerInstanceUser, $ServerInstancePassword)
+                $res = Invoke-SqlCmd -ServerInstance $ServerInstance -Query $Query -Database $Database -Credential $SQLCredentials -QueryTimeout $QueryTimeout
             }
         }
     }
@@ -38,9 +39,9 @@ Function Invoke-Query {
         Fail-Json -obj $result -message "Error: $($_.exception.message)"
     }
     if ($res) {
-        Switch ($res.GetType()|Select -ExpandProperty Name) {
-            "Object[]" {$Columns = $res[0].Table.Columns.Caption; $output = $res |Select -Property $Columns}
-            "DataRow" {$Columns = $res.Table.Columns.Caption; $output = @($res |Select -Property $Columns)}
+        Switch ($res.GetType()|Select-Object -ExpandProperty Name) {
+            "Object[]" {$Columns = $res[0].Table.Columns.Caption; $output = $res |Select-Object -Property $Columns}
+            "DataRow" {$Columns = $res.Table.Columns.Caption; $output = @($res |Select-Object -Property $Columns)}
         }
     }
     $result.output = $output
@@ -63,5 +64,5 @@ Invoke-Query -Query $query `
     -Database $database `
     -ServerInstance $serverInstance `
     -ServerInstanceUser $serverInstanceUser `
-    -ServerInstancePassword $serverInstancePassword `
+    -ServerInstancePassword ($serverInstancePassword | ConvertTo-SecureString -AsPlainText -Force) `
     -CheckMode $check_mode
