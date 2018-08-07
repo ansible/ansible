@@ -69,7 +69,6 @@ options:
         satisfied.
     default: all
     choices: ['any', 'all']
-    version_added: "2.2"
   retries:
     description:
       - Specifies the number of retries a command should by tried
