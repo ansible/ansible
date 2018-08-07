@@ -431,6 +431,7 @@ def main():
         else:
             module.fail_json(msg=str(module.params['member_host']) + ' is not a member of the balancer ' + str(module.params['balancer_vhost']) + '!')
 
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
 if __name__ == '__main__':

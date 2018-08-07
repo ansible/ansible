@@ -8,8 +8,8 @@
      parents: interface Loopback911
   become: yes
   check_mode: 1
-  environment:
-    ANSIBLE_EOS_USE_SESSIONS: 1
+  vars:
+    ansible_eos_use_sessions: 1
   register: result
   ignore_errors: yes
 
@@ -17,7 +17,7 @@
    that:
    - "result.msg is defined"
    - "result.failed == true"
-   - "'Error on executing commands' in result.msg"
+   - "'Invalid input' in result.msg"
 
 - name: valid configuration in check mode
   eos_config:
@@ -46,8 +46,8 @@
      parents: interface Loopback911
   become: yes
   check_mode: 1
-  environment:
-    ANSIBLE_EOS_USE_SESSIONS: 0
+  vars:
+    ansible_eos_use_sessions: 0
   register: result
   ignore_errors: yes
 
@@ -63,11 +63,12 @@
   become: yes
   check_mode: yes
   register: result
-  environment:
-    ANSIBLE_EOS_USE_SESSIONS: 0
+  vars:
+    ansible_eos_use_sessions: 0
 
 - assert:
    that:
    - "result.changed == true"
+   - "'session' not in result"
 
 - debug: msg="END cli/check_mode.yaml on connection={{ ansible_connection }}"

@@ -16,8 +16,9 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
-    state: absent
+    output_level: '{{ aci_output_level | default("info") }}'
     tenant: anstest
+    state: absent
 
 - name: ensure tenant exists for tests to kick off
   aci_tenant: &aci_tenant_present
@@ -28,8 +29,8 @@
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
     output_level: debug
-    state: present
     tenant: anstest
+    state: present
   register: tenant_present
 
 - name: ensure filter exists for tests to kick off

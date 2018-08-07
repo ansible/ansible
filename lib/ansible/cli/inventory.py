@@ -42,6 +42,7 @@ INTERNAL_VARS = frozenset(['ansible_diff_mode',
                            'ansible_playbook_python',
                            'ansible_run_tags',
                            'ansible_skip_tags',
+                           'ansible_verbosity',
                            'ansible_version',
                            'inventory_dir',
                            'inventory_file',
@@ -161,7 +162,7 @@ class InventoryCLI(CLI):
         if self.options.host:
             hosts = self.inventory.get_hosts(self.options.host)
             if len(hosts) != 1:
-                raise AnsibleOptionsError("You must pass a single valid host to --hosts parameter")
+                raise AnsibleOptionsError("You must pass a single valid host to --host parameter")
 
             myvars = self._get_host_variables(host=hosts[0])
             self._remove_internal(myvars)

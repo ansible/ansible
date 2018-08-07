@@ -39,6 +39,7 @@ EXAMPLES = r'''
     hostname: esxi_hostname
     username: root
     password: vmware
+  delegate_to: localhost
   register: all_user_facts
 '''
 
@@ -106,6 +107,7 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec)
     vmware_local_user_facts = VMwareUserFactsManager(module)
     vmware_local_user_facts.gather_user_facts()
+
 
 if __name__ == '__main__':
     main()

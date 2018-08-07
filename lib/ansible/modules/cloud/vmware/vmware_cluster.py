@@ -57,8 +57,7 @@ extends_documentation_fragment: vmware.documentation
 
 EXAMPLES = r'''
 - name: Create Cluster
-  local_action:
-    module: vmware_cluster
+  vmware_cluster:
     hostname: '{{ ansible_ssh_host }}'
     username: root
     password: vmware
@@ -67,6 +66,7 @@ EXAMPLES = r'''
     enable_ha: yes
     enable_drs: yes
     enable_vsan: yes
+  delegate_to: localhost
 '''
 
 try:

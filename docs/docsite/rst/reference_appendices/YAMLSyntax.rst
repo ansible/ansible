@@ -228,13 +228,13 @@ value::
        Complete playbook files from the github project source
    `Wikipedia YAML syntax reference <https://en.wikipedia.org/wiki/YAML>`_
        A good guide to YAML syntax
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel and #yaml for YAML specific questions
    `YAML 1.1 Specification <http://yaml.org/spec/1.1/>`_
        The Specification for YAML 1.1, which PyYAML and libyaml are currently
        implementing
-   `YAML 1.2 Specification <http://yaml.org/spec/1.2/>`_
+   `YAML 1.2 Specification <http://yaml.org/spec/1.2/spec.html>`_
        For completeness, YAML 1.2 is the successor of 1.1
 

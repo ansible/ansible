@@ -252,11 +252,6 @@ msg:
 '''
 
 import sys
-try:
-    import paramiko
-    HAS_PARAMIKO = True
-except ImportError:
-    HAS_PARAMIKO = False
 import time
 import socket
 import array
@@ -291,54 +286,11 @@ def main():
             vlagArg4=dict(required=False),),
         supports_check_mode=False)
 
-    username = module.params['username']
-    password = module.params['password']
-    enablePassword = module.params['enablePassword']
     outputfile = module.params['outputfile']
-    hostIP = module.params['host']
-    deviceType = module.params['deviceType']
-    vlagArg1 = module.params['vlagArg1']
-    vlagArg2 = module.params['vlagArg2']
-    vlagArg3 = module.params['vlagArg3']
-    vlagArg4 = module.params['vlagArg4']
     output = ""
-    if not HAS_PARAMIKO:
-        module.fail_json(msg='paramiko is required for this module')
-
-    # Create instance of SSHClient object
-    remote_conn_pre = paramiko.SSHClient()
-
-    # Automatically add untrusted hosts (make sure okay for security policy in
-    # your environment)
-    remote_conn_pre.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-    # initiate SSH connection with the switch
-    remote_conn_pre.connect(hostIP, username=username, password=password)
-    time.sleep(2)
-
-    # Use invoke_shell to establish an 'interactive session'
-    remote_conn = remote_conn_pre.invoke_shell()
-    time.sleep(2)
-
-    # Enable and enter configure terminal then send command
-    output = output + cnos.waitForDeviceResponse("\n", ">", 2, remote_conn)
-
-    output = output + \
-        cnos.enterEnableModeForDevice(enablePassword, 3, remote_conn)
-
-    # Make terminal length = 0
-    output = output + \
-        cnos.waitForDeviceResponse("terminal length 0\n", "#", 2, remote_conn)
-
-    # Go to config mode
-    output = output + \
-        cnos.waitForDeviceResponse(
-            "configure device\n", "(config)#", 2, remote_conn)
 
     # Send the CLi command
-    output = output + cnos.vlagConfig(
-        remote_conn, deviceType, "(config)#", 2, vlagArg1, vlagArg2, vlagArg3,
-        vlagArg4)
+    output = output + str(cnos.vlagConfig(module, '(config)#', None))
 
     # Save it into the file
     file = open(outputfile, "a")
@@ -348,7 +300,7 @@ def main():
     # need to add logic to check when changes occur or not
     errorMsg = cnos.checkOutputForError(output)
     if(errorMsg is None):
-        module.exit_json(changed=True, msg="vlag configurations accomplished")
+        module.exit_json(changed=True, msg="VLAG configurations accomplished")
     else:
         module.fail_json(msg=errorMsg)
 

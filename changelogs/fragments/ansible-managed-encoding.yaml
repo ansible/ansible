@@ -1,5 +1,0 @@
----
-bugfixes:
-- template - Fix for encoding issues when a template path contains non-ascii
-  characters and using the template path in ansible_managed
-  (https://github.com/ansible/ansible/issues/27262)

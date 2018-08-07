@@ -7,8 +7,8 @@
   nxos_snmp_community: &remove
     community: TESTING7
     group: network-operator
-    state: absent 
     provider: "{{ connection }}"
+    state: absent 
   ignore_errors: yes
 
 - block:
@@ -17,8 +17,8 @@
     nxos_snmp_community: &config
       community: TESTING7
       group: network-operator
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: &true
@@ -37,8 +37,8 @@
     nxos_snmp_community: &chg
       community: TESTING7
       group: network-admin
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -65,8 +65,8 @@
     nxos_snmp_community: &configaccess
       community: TESTING7
       access: ro
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -94,8 +94,8 @@
       community: TESTING7
       access: rw
       acl: ansible_acl
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -111,8 +111,8 @@
       community: TESTING7
       access: rw
       acl: new_acl
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -128,8 +128,8 @@
       community: TESTING7
       access: rw
       acl: default
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true

@@ -489,5 +489,6 @@ def main():
     """Main execution"""
     AzureRMVaults()
 
+
 if __name__ == '__main__':
     main()

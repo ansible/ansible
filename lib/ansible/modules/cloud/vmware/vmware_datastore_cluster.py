@@ -56,6 +56,7 @@ EXAMPLES = '''
     datacenter_name: "datacenter"
     datastore_cluster_name: datacluster0
     state: present
+  delegate_to: localhost
 
 
 - name: Delete datastore cluster
@@ -66,6 +67,7 @@ EXAMPLES = '''
     datacenter_name: "datacenter"
     datastore_cluster_name: datacluster0
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = """

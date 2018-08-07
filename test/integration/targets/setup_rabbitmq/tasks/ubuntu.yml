@@ -1,5 +1,18 @@
 ---
 
+# https://www.rabbitmq.com/install-debian.html#apt-pinning
+- name: Pin erlang version that rabbitmq supports
+  copy:
+    dest: /etc/apt/preferences.d/erlang
+    content: |
+        Package: erlang*
+        Pin: version 1:20.1-1
+        Pin-Priority: 1000
+
+        Package: esl-erlang
+        Pin: version 1:20.1.7
+        Pin-Priority: 1000
+
 - name: Install https transport for apt
   apt: name=apt-transport-https state=latest force=yes
 

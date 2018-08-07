@@ -12,6 +12,7 @@
     parents:
       - "interface {{ intname }}"
     match: none
+    provider: "{{ connection }}"
 
 - name: collect any backup files
   find: &backups
@@ -34,6 +35,7 @@
     parents:
       - "interface {{ intname }}"
     backup: yes
+    provider: "{{ connection }}"
   register: result
 
 - assert:

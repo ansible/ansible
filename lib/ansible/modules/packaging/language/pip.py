@@ -186,8 +186,36 @@ EXAMPLES = '''
 # Install (Bottle) while ensuring the umask is 0022 (to ensure other users can use it)
 - pip:
     name: bottle
-    umask: 0022
+    umask: "0022"
   become: True
+'''
+
+RETURN = '''
+cmd:
+  description: pip command used by the module
+  returned: success
+  type: string
+  sample: pip2 install ansible six
+name:
+  description: list of python modules targetted by pip
+  returned: success
+  type: list
+  sample: ['ansible', 'six']
+requirements:
+  description: Path to the requirements file
+  returned: success, if a requirements file was provided
+  type: string
+  sample: "/srv/git/project/requirements.txt"
+version:
+  description: Version of the package specified in 'name'
+  returned: success, if a name and version were provided
+  type: string
+  sample: "2.5.1"
+virtualenv:
+  description: Path to the virtualenv
+  returned: success, if a virtualenv path was provided
+  type: string
+  sample: "/tmp/virtualenv"
 '''
 
 import os
@@ -219,7 +247,7 @@ def _get_cmd_options(module, cmd):
 
 
 def _get_full_name(name, version=None):
-    if version is None:
+    if version is None or version == "":
         resp = name
     else:
         resp = name + '==' + version

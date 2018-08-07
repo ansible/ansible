@@ -55,7 +55,8 @@ options:
     description:
     - The VLAN encapsulation for the EPG when binding a VMM Domain with static encap_mode.
     - This acts as the secondary encap when using useg.
-    choices: [ range from 1 to 4096 ]
+    - Accepted values range between C(1) and C(4096).
+    type: int
   encap_mode:
     description:
     - The ecapsulataion method to be used.
@@ -73,7 +74,8 @@ options:
   primary_encap:
     description:
     - Determines the primary VLAN ID when using useg.
-    choices: [ range from 1 to 4096 ]
+    - Accepted values range between C(1) and C(4096).
+    type: int
   resolution_immediacy:
     description:
     - Determines when the policies should be resolved and available.
@@ -267,7 +269,7 @@ def main():
     argument_spec.update(
         allow_useg=dict(type='str', choices=['encap', 'useg']),
         ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),  # Not required for querying all objects
-        deploy_immediacy=dict(type='str', choices=['immediate', 'on-demand']),
+        deploy_immediacy=dict(type='str', choices=['immediate', 'lazy']),
         domain=dict(type='str', aliases=['domain_name', 'domain_profile']),  # Not required for querying all objects
         domain_type=dict(type='str', choices=['phys', 'vmm'], aliases=['type']),  # Not required for querying all objects
         encap=dict(type='int'),

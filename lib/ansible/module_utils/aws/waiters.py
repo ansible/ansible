@@ -27,6 +27,24 @@ ec2_data = {
                 },
             ]
         },
+        "SecurityGroupExists": {
+            "delay": 5,
+            "maxAttempts": 40,
+            "operation": "DescribeSecurityGroups",
+            "acceptors": [
+                {
+                    "matcher": "path",
+                    "expected": True,
+                    "argument": "length(SecurityGroups[]) > `0`",
+                    "state": "success"
+                },
+                {
+                    "matcher": "error",
+                    "expected": "InvalidGroup.NotFound",
+                    "state": "retry"
+                },
+            ]
+        },
         "SubnetExists": {
             "delay": 5,
             "maxAttempts": 40,
@@ -161,6 +179,30 @@ waf_data = {
     }
 }
 
+eks_data = {
+    "version": 2,
+    "waiters": {
+        "ClusterActive": {
+            "delay": 20,
+            "maxAttempts": 60,
+            "operation": "DescribeCluster",
+            "acceptors": [
+                {
+                    "state": "success",
+                    "matcher": "path",
+                    "argument": "cluster.status",
+                    "expected": "ACTIVE"
+                },
+                {
+                    "state": "retry",
+                    "matcher": "error",
+                    "expected": "ResourceNotFoundException"
+                }
+            ]
+        }
+    }
+}
+
 
 def ec2_model(name):
     ec2_models = core_waiter.WaiterModel(waiter_config=ec2_data)
@@ -172,12 +214,23 @@ def waf_model(name):
     return waf_models.get_waiter(name)
 
 
+def eks_model(name):
+    eks_models = core_waiter.WaiterModel(waiter_config=eks_data)
+    return eks_models.get_waiter(name)
+
+
 waiters_by_name = {
     ('EC2', 'route_table_exists'): lambda ec2: core_waiter.Waiter(
         'route_table_exists',
         ec2_model('RouteTableExists'),
         core_waiter.NormalizedOperationMethod(
             ec2.describe_route_tables
+        )),
+    ('EC2', 'security_group_exists'): lambda ec2: core_waiter.Waiter(
+        'security_group_exists',
+        ec2_model('SecurityGroupExists'),
+        core_waiter.NormalizedOperationMethod(
+            ec2.describe_security_groups
         )),
     ('EC2', 'subnet_exists'): lambda ec2: core_waiter.Waiter(
         'subnet_exists',
@@ -226,6 +279,12 @@ waiters_by_name = {
         waf_model('ChangeTokenInSync'),
         core_waiter.NormalizedOperationMethod(
             waf.get_change_token_status
+        )),
+    ('EKS', 'cluster_active'): lambda eks: core_waiter.Waiter(
+        'cluster_active',
+        eks_model('ClusterActive'),
+        core_waiter.NormalizedOperationMethod(
+            eks.describe_cluster
         )),
 }
 

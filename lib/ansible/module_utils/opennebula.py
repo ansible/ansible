@@ -13,9 +13,8 @@ from ansible.module_utils.basic import AnsibleModule
 HAS_PYONE = True
 
 try:
-    import pyone
     from pyone import OneException
-    from pyone.tester import OneServerTester
+    from pyone.server import OneServer
 except ImportError:
     OneException = Exception
     HAS_PYONE = False
@@ -25,9 +24,7 @@ class OpenNebulaModule:
     """
     Base class for all OpenNebula Ansible Modules.
     This is basically a wrapper of the common arguments, the pyone client and
-    Some utility methods. It will also create a Test client if fixtures are
-    to be replayed or recorded and manage that they are flush to disk when
-    required.
+    some utility methods.
     """
 
     common_args = dict(
@@ -56,16 +53,10 @@ class OpenNebulaModule:
     def create_one_client(self):
         """
         Creates an XMLPRC client to OpenNebula.
-        Dependign on environment variables it will implement a test client.
 
         Returns: the new xmlrpc client.
 
         """
-
-        test_fixture = (environ.get("ONE_TEST_FIXTURE", "False").lower() in ["1", "yes", "true"])
-        test_fixture_file = environ.get("ONE_TEST_FIXTURE_FILE", "undefined")
-        test_fixture_replay = (environ.get("ONE_TEST_FIXTURE_REPLAY", "True").lower() in ["1", "yes", "true"])
-        test_fixture_unit = environ.get("ONE_TEST_FIXTURE_UNIT", "init")
 
         # context required for not validating SSL, old python versions won't validate anyway.
         if hasattr(ssl, '_create_unverified_context'):
@@ -94,36 +85,20 @@ class OpenNebulaModule:
 
         session = "%s:%s" % (username, password)
 
-        if not test_fixture:
-            if not self.module.params.get("validate_certs") and "PYTHONHTTPSVERIFY" not in environ:
-                return pyone.OneServer(url, session=session, context=no_ssl_validation_context)
-            else:
-                return pyone.OneServer(url, session)
+        if not self.module.params.get("validate_certs") and "PYTHONHTTPSVERIFY" not in environ:
+            return OneServer(url, session=session, context=no_ssl_validation_context)
         else:
-            if not self.module.params.get("validate_certs") and "PYTHONHTTPSVERIFY" not in environ:
-                one = OneServerTester(url,
-                                      fixture_file=test_fixture_file,
-                                      fixture_replay=test_fixture_replay,
-                                      session=session,
-                                      context=no_ssl_validation_context)
-            else:
-                one = OneServerTester(url,
-                                      fixture_file=test_fixture_file,
-                                      fixture_replay=test_fixture_replay,
-                                      session=session)
-            one.set_fixture_unit_test(test_fixture_unit)
-            return one
+            return OneServer(url, session)
 
     def close_one_client(self):
         """
-        Closing is only require in the event of fixture recording, as fixtures will be dumped to file
+        Close the pyone session.
         """
-        if self.is_fixture_writing():
-            self.one._close_fixtures()
+        self.one.server_close()
 
     def fail(self, msg):
         """
-        Utility failure method, will ensure fixtures are flushed before failing.
+        Utility failure method, will ensure pyone is properly closed before failing.
         Args:
             msg: human readable failure reason.
         """
@@ -133,7 +108,7 @@ class OpenNebulaModule:
 
     def exit(self):
         """
-        Utility exit method, will ensure fixtures are flushed before exiting.
+        Utility exit method, will ensure pyone is properly closed before exiting.
 
         """
         if hasattr(self, 'one'):
@@ -177,22 +152,6 @@ class OpenNebulaModule:
         parameters from provided Name parameters.
         """
         return self.resolved_parameters.get(name)
-
-    def is_fixture_replay(self):
-        """
-        Returns: true if we are currently running fixtures in replay mode.
-
-        """
-        return (environ.get("ONE_TEST_FIXTURE", "False").lower() in ["1", "yes", "true"]) and \
-               (environ.get("ONE_TEST_FIXTURE_REPLAY", "True").lower() in ["1", "yes", "true"])
-
-    def is_fixture_writing(self):
-        """
-        Returns: true if we are currently running fixtures in write mode.
-
-        """
-        return (environ.get("ONE_TEST_FIXTURE", "False").lower() in ["1", "yes", "true"]) and \
-               (environ.get("ONE_TEST_FIXTURE_REPLAY", "True").lower() in ["0", "no", "false"])
 
     def get_host_by_name(self, name):
         '''
@@ -306,11 +265,6 @@ class OpenNebulaModule:
         if not wait_timeout:
             wait_timeout = self.module.params.get("wait_timeout")
 
-        if self.is_fixture_replay():
-            sleep_time_ms = 0.01
-        else:
-            sleep_time_ms = 1
-
         start_time = time.time()
 
         while (time.time() - start_time) < wait_timeout:
@@ -326,7 +280,7 @@ class OpenNebulaModule:
             if current_state in target_states:
                 return True
 
-            time.sleep(sleep_time_ms)
+            time.sleep(self.one.server_retry_interval())
 
         self.fail(msg="Wait timeout has expired!")
 

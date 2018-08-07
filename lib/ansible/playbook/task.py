@@ -231,7 +231,7 @@ class Task(Base, Conditional, Taggable, Become):
                                        " Please see:\nhttps://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse\n\n"
                                        " for currently supported syntax regarding included files and variables", version="2.7")
                     new_ds['vars'][k] = v
-                elif k in self._valid_attrs:
+                elif C.INVALID_TASK_ATTRIBUTE_FAILED or k in self._valid_attrs:
                     new_ds[k] = v
                 else:
                     display.warning("Ignoring invalid attribute: %s" % k)
@@ -280,7 +280,8 @@ class Task(Base, Conditional, Taggable, Become):
                 except AnsibleUndefinedVariable as e:
                     if self.action in ('setup', 'gather_facts') and 'ansible_env' in to_native(e):
                         # ignore as fact gathering sets ansible_env
-                        pass
+                        return
+                    raise
 
             if isinstance(value, list):
                 for env_item in value:

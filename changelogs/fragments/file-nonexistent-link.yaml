@@ -1,5 +1,0 @@
----
-bugfixes:
-  - file module - Fix error when running a task which assures a symlink to
-    a nonexistent file exists for the second and subsequent times
-    (https://github.com/ansible/ansible/issues/39558)

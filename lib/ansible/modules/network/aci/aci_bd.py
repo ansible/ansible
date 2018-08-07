@@ -64,10 +64,10 @@ options:
     - The APIC defaults to C(garp) when unset during creation.
     choices: [ default, garp ]
   endpoint_retention_action:
-   description:
-   - Determines if the Bridge Domain should inherit or resolve the End Point Retention Policy.
+    description:
+    - Determines if the Bridge Domain should inherit or resolve the End Point Retention Policy.
     - The APIC defaults to C(resolve) when unset during creation.
-   choices: [ inherit, resolve ]
+    choices: [ inherit, resolve ]
   endpoint_retention_policy:
     description:
     - The name of the End Point Retention Policy the Bridge Domain should use when

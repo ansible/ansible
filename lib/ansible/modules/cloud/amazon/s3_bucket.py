@@ -30,7 +30,8 @@ author: "Rob White (@wimnat)"
 options:
   force:
     description:
-      - When trying to delete a bucket, delete all keys in the bucket first (an s3 bucket must be empty for a successful deletion)
+      - When trying to delete a bucket, delete all keys (including versions and delete markers)
+        in the bucket first (an s3 bucket must be empty for a successful deletion)
     type: bool
     default: 'no'
   name:
@@ -108,7 +109,7 @@ import json
 import os
 import time
 
-import ansible.module_utils.six.moves.urllib.parse as urlparse
+from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.six import string_types
 from ansible.module_utils.basic import to_text
 from ansible.module_utils.aws.core import AnsibleAWSModule
@@ -417,6 +418,13 @@ def paginated_list(s3_client, **pagination_params):
         yield [data['Key'] for data in page.get('Contents', [])]
 
 
+def paginated_versions_list(s3_client, **pagination_params):
+    pg = s3_client.get_paginator('list_object_versions')
+    for page in pg.paginate(**pagination_params):
+        # We have to merge the Versions and DeleteMarker lists here, as DeleteMarkers can still prevent a bucket deletion
+        yield [(data['Key'], data['VersionId']) for data in (page.get('Versions', []) + page.get('DeleteMarkers', []))]
+
+
 def destroy_bucket(s3_client, module):
 
     force = module.params.get("force")
@@ -432,12 +440,27 @@ def destroy_bucket(s3_client, module):
         module.exit_json(changed=False)
 
     if force:
-        # if there are contents then we need to delete them before we can delete the bucket
+        # if there are contents then we need to delete them (including versions) before we can delete the bucket
         try:
-            for keys in paginated_list(s3_client, Bucket=name):
-                formatted_keys = [{'Key': key} for key in keys]
+            for key_version_pairs in paginated_versions_list(s3_client, Bucket=name):
+                formatted_keys = [{'Key': key, 'VersionId': version} for key, version in key_version_pairs]
+                for fk in formatted_keys:
+                    # remove VersionId from cases where they are `None` so that
+                    # unversioned objects are deleted using `DeleteObject`
+                    # rather than `DeleteObjectVersion`, improving backwards
+                    # compatibility with older IAM policies.
+                    if not fk.get('VersionId'):
+                        fk.pop('VersionId')
+
                 if formatted_keys:
-                    s3_client.delete_objects(Bucket=name, Delete={'Objects': formatted_keys})
+                    resp = s3_client.delete_objects(Bucket=name, Delete={'Objects': formatted_keys})
+                    if resp.get('Errors'):
+                        module.fail_json(
+                            msg='Could not empty bucket before deleting. Could not delete objects: {0}'.format(
+                                ', '.join([k['Key'] for k in resp['Errors']])
+                            ),
+                            errors=resp['Errors'], response=resp
+                        )
         except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Failed while deleting bucket")
 
@@ -455,7 +478,7 @@ def destroy_bucket(s3_client, module):
 def is_fakes3(s3_url):
     """ Return True if s3_url has scheme fakes3:// """
     if s3_url is not None:
-        return urlparse.urlparse(s3_url).scheme in ('fakes3', 'fakes3s')
+        return urlparse(s3_url).scheme in ('fakes3', 'fakes3s')
     else:
         return False
 
@@ -465,7 +488,7 @@ def is_walrus(s3_url):
 
     We assume anything other than *.amazonaws.com is Walrus"""
     if s3_url is not None:
-        o = urlparse.urlparse(s3_url)
+        o = urlparse(s3_url)
         return not o.hostname.endswith('amazonaws.com')
     else:
         return False

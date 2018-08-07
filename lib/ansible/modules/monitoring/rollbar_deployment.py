@@ -120,7 +120,7 @@ def main():
 
     try:
         data = urlencode(params)
-        response, info = fetch_url(module, url, data=data)
+        response, info = fetch_url(module, url, data=data, method='POST')
     except Exception as e:
         module.fail_json(msg='Unable to notify Rollbar: %s' % to_native(e), exception=traceback.format_exc())
     else:

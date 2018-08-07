@@ -128,7 +128,7 @@ a custom class defined by that resource. Defining a value that takes in a
 For example, to define a ``[CimInstance]`` value in Ansible::
 
     # [CimInstance]AuthenticationInfo == MSFT_xWebAuthenticationInformation
-    AuthenticationInfo
+    AuthenticationInfo:
       Anonymous: no
       Basic: yes
       Digest: no
@@ -389,7 +389,7 @@ Setup IIS Website
        Best practices advice
    `List of Windows Modules :ref:`<windows_modules>`
        Windows specific module list, all implemented in PowerShell
-   `User Mailing List <http://groups.google.com/group/ansible-project>`_
+   `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

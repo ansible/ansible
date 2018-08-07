@@ -53,24 +53,24 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 # save the ESXi configuration locally by authenticating directly against the ESXi host
 - name: ESXI backup test
-  local_action:
-      module: vmware_cfg_backup
-      hostname: esxi_hostname
-      username: user
-      password: pass
-      state: saved
-      dest: /tmp/
+  vmware_cfg_backup:
+    hostname: esxi_hostname
+    username: user
+    password: pass
+    state: saved
+    dest: /tmp/
+  delegate_to: localhost
 
 # save the ESXi configuration locally by authenticating against the vCenter and selecting the ESXi host
 - name: ESXI backup test
-  local_action:
-      module: vmware_cfg_backup
-      hostname: vCenter
-      esxi_hostname: esxi_hostname
-      username: user
-      password: pass
-      state: saved
-      dest: /tmp/
+  vmware_cfg_backup:
+    hostname: vCenter
+    esxi_hostname: esxi_hostname
+    username: user
+    password: pass
+    state: saved
+    dest: /tmp/
+  delegate_to: localhost
 '''
 
 RETURN = '''

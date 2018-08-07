@@ -133,6 +133,17 @@ options:
         client authentication. If I(client_cert) contains both the certificate
         and key, this option is not required.
     version_added: '2.4'
+  src:
+    description:
+      - Path to file to be submitted to the remote server. Cannot be used with I(body).
+    version_added: '2.7'
+  remote_src:
+    description:
+      - If C(no), the module will search for src on originating/master machine, if C(yes) the
+        module will use the C(src) path on the remote/target machine.
+    type: bool
+    default: 'no'
+    version_added: '2.7'
 notes:
   - The dependency on httplib2 was removed in Ansible 2.1.
   - The module returns all the HTTP headers in lower-case.
@@ -206,6 +217,19 @@ EXAMPLES = r'''
     password: "{{ jenkins.password }}"
     force_basic_auth: yes
     status_code: 201
+
+- name: POST from contents of local file
+  uri:
+    url: "https://httpbin.org/post"
+    method: POST
+    src: file.json
+
+- name: POST from contents of remote file
+  uri:
+    url: "https://httpbin.org/post"
+    method: POST
+    src: /path/to/my/file.json
+    remote_src: true
 '''
 
 RETURN = r'''
@@ -237,12 +261,13 @@ import datetime
 import json
 import os
 import shutil
+import sys
 import tempfile
 import traceback
 
 from collections import Mapping, Sequence
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils.six import PY2, iteritems, string_types
 from ansible.module_utils.six.moves.urllib.parse import urlencode, urlsplit
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import fetch_url, url_argument_spec
@@ -252,7 +277,7 @@ JSON_CANDIDATES = ('text', 'json', 'javascript')
 
 def write_file(module, url, dest, content):
     # create a tempfile with some test content
-    fd, tmpsrc = tempfile.mkstemp(dir=getattr(module, 'tmpdir', None))
+    fd, tmpsrc = tempfile.mkstemp(dir=module.tmpdir)
     f = open(tmpsrc, 'wb')
     try:
         f.write(content)
@@ -367,6 +392,19 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout):
     redirected = False
     redir_info = {}
     r = {}
+
+    src = module.params['src']
+    if src:
+        try:
+            headers.update({
+                'Content-Length': os.stat(src).st_size
+            })
+            data = open(src, 'rb')
+        except OSError:
+            module.fail_json(msg='Unable to open source file %s' % src, exception=traceback.format_exc())
+    else:
+        data = body
+
     if dest is not None:
         # Stash follow_redirects, in this block we don't want to follow
         # we'll reset back to the supplied value soon
@@ -393,7 +431,7 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout):
         # Reset follow_redirects back to the stashed value
         module.params['follow_redirects'] = follow_redirects
 
-    resp, info = fetch_url(module, url, data=body, headers=headers,
+    resp, info = fetch_url(module, url, data=data, headers=headers,
                            method=method, timeout=socket_timeout)
 
     try:
@@ -402,6 +440,13 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout):
         # there was no content, but the error read()
         # may have been stored in the info as 'body'
         content = info.pop('body', '')
+
+    if src:
+        # Try to close the open file handle
+        try:
+            data.close()
+        except Exception:
+            pass
 
     r['redirected'] = redirected or info['url'] != url
     r.update(redir_info)
@@ -418,6 +463,7 @@ def main():
         url_password=dict(type='str', aliases=['password'], no_log=True),
         body=dict(type='raw'),
         body_format=dict(type='str', default='raw', choices=['form-urlencoded', 'json', 'raw']),
+        src=dict(type='path'),
         method=dict(type='str', default='GET', choices=['GET', 'POST', 'PUT', 'HEAD', 'DELETE', 'OPTIONS', 'PATCH', 'TRACE', 'CONNECT', 'REFRESH']),
         return_content=dict(type='bool', default=False),
         follow_redirects=dict(type='str', default='safe', choices=['all', 'no', 'none', 'safe', 'urllib2', 'yes']),
@@ -432,7 +478,8 @@ def main():
         argument_spec=argument_spec,
         # TODO: Remove check_invalid_arguments in 2.9
         check_invalid_arguments=False,
-        add_file_common_args=True
+        add_file_common_args=True,
+        mutually_exclusive=[['body', 'src']],
     )
 
     url = module.params['url']
@@ -518,10 +565,8 @@ def main():
         ukey = key.replace("-", "_").lower()
         uresp[ukey] = value
 
-    try:
+    if 'location' in uresp:
         uresp['location'] = absolute_location(url, uresp['location'])
-    except KeyError:
-        pass
 
     # Default content_encoding to try
     content_encoding = 'utf-8'
@@ -535,7 +580,8 @@ def main():
                 js = json.loads(u_content)
                 uresp['json'] = js
             except:
-                pass
+                if PY2:
+                    sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
     else:
         u_content = to_text(content, encoding=content_encoding)
 

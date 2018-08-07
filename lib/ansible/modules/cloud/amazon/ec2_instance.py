@@ -108,7 +108,7 @@ options:
   volumes:
     description:
     - A list of block device mappings, by default this will always use the AMI root device so the volumes option is primarily for adding more storage.
-    - A mapping contains the (optional) keys device_name, virtual_name, ebs.device_type, ebs.device_size, ebs.kms_key_id,
+    - A mapping contains the (optional) keys device_name, virtual_name, ebs.volume_type, ebs.volume_size, ebs.kms_key_id,
       ebs.iops, and ebs.delete_on_termination.
     - For more information about each parameter, see U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_BlockDeviceMapping.html)
   launch_template:
@@ -869,7 +869,6 @@ def build_network_spec(params, ec2=None):
 
         if interface_params.get('ipv6_addresses'):
             spec['Ipv6Addresses'] = [{'Ipv6Address': a} for a in interface_params.get('ipv6_addresses', [])]
-            spec['Ipv6AddressCount'] = len(spec['Ipv6Addresses'])
 
         if interface_params.get('private_ip_address'):
             spec['PrivateIpAddress'] = interface_params.get('private_ip_address')

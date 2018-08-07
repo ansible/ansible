@@ -1,0 +1,5 @@
+---
+minor_changes:
+- Ansible-2.7 changes the Ansiballz strategy for running modules remotely so
+  that invoking a module only needs to invoke python once per module on the
+  remote machine instead of twice.

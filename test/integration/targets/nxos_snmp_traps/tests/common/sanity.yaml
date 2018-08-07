@@ -6,15 +6,15 @@
 - name: Setup - Remove snmp_traps if configured
   nxos_snmp_traps: &remove
     group: all 
-    state: disabled
     provider: "{{ connection }}"
+    state: disabled
 
 - block:
   - name: Configure one snmp trap group 
     nxos_snmp_traps: &config
       group: bridge 
-      state: enabled
       provider: "{{ connection }}"
+      state: enabled
     register: result
 
   - assert: &true
@@ -32,8 +32,8 @@
   - name: Remove snmp trap group
     nxos_snmp_traps: &rem1
       group: bridge
-      state: disabled
       provider: "{{ connection }}"
+      state: disabled
     register: result
 
   - assert: *true
@@ -47,8 +47,8 @@
   - name: Configure all snmp trap groups
     nxos_snmp_traps: &config1
       group: all
-      state: enabled
       provider: "{{ connection }}"
+      state: enabled
     register: result
 
   - assert: *true

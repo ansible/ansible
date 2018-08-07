@@ -261,8 +261,6 @@ def get_policy_statement(module, client):
     :param client:
     :return:
     """
-
-    policy = dict()
     sid = module.params['statement_id']
 
     # set API parameters

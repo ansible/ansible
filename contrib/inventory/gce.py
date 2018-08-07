@@ -534,6 +534,7 @@ class GceInventory(object):
         else:
             return json.dumps(data)
 
+
 # Run the script
 if __name__ == '__main__':
     GceInventory()

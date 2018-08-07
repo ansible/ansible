@@ -277,11 +277,11 @@ class Default(FactsBase):
         return "NA"
 
     def parse_image(self, data):
-        match = re.search(r'(.*) image1(.*)', data, re.M | re.I)
+        match = re.search(r'(.*) image(.*)', data, re.M | re.I)
         if match:
             return "Image1"
         else:
-            return "Image1"
+            return "Image2"
 
     def parse_serialnum(self, data):
         for line in data.split('\n'):
@@ -510,6 +510,7 @@ class Interfaces(FactsBase):
                 if 'loopback' in line:
                     parsed.append(line)
         return parsed
+
 
 FACT_SUBSETS = dict(
     default=Default,

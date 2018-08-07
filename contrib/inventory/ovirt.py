@@ -288,5 +288,6 @@ class OVirtInventory(object):
         else:
             return json.dumps(data)
 
+
 # Run the script
 OVirtInventory()

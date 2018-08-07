@@ -26,6 +26,8 @@ options:
         key: command_timeout
     env:
       - name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT
+    vars:
+      - name: ansible_command_timeout
 """
 import os
 import pty
@@ -117,8 +119,12 @@ class Connection(ConnectionBase):
         # that means only protocol=0 will work.
         src = cPickle.dumps(self._play_context.serialize(), protocol=0)
         stdin.write(src)
-
         stdin.write(b'\n#END_INIT#\n')
+
+        src = cPickle.dumps({'ansible_command_timeout': self.get_option('persistent_command_timeout')}, protocol=0)
+        stdin.write(src)
+        stdin.write(b'\n#END_VARS#\n')
+
         stdin.flush()
 
         (stdout, stderr) = p.communicate()

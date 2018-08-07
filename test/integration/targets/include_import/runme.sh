@@ -64,6 +64,20 @@ ANSIBLE_STRATEGY='linear' ansible-playbook test_grandparent_inheritance.yml -i .
 ANSIBLE_STRATEGY='linear' ansible-playbook undefined_var/playbook.yml  -i ../../inventory "$@"
 ANSIBLE_STRATEGY='free' ansible-playbook undefined_var/playbook.yml  -i ../../inventory "$@"
 
-# Include path inheritance using host var for include file path
-ANSIBLE_STRATEGY='linear' ansible-playbook include_path_inheritance/playbook.yml  -i ../../inventory "$@"
-ANSIBLE_STRATEGY='free' ansible-playbook include_path_inheritance/playbook.yml  -i ../../inventory "$@"
+# include_ + apply (explicit inheritance)
+ANSIBLE_STRATEGY='linear' ansible-playbook apply/include_apply.yml -i ../../inventory "$@" --tags foo
+set +e
+OUT=$(ANSIBLE_STRATEGY='linear' ansible-playbook apply/import_apply.yml -i ../../inventory "$@" --tags foo 2>&1 | grep 'ERROR! Invalid options for import_tasks: apply')
+set -e
+if [[ -z "$OUT" ]]; then
+    echo "apply on import_tasks did not cause error"
+    exit 1
+fi
+
+# Test that duplicate items in loop are not deduped
+ANSIBLE_STRATEGY='linear' ansible-playbook tasks/test_include_dupe_loop.yml -i ../../inventory "$@" | tee test_include_dupe_loop.out
+test "$(grep -c '"item=foo"' test_include_dupe_loop.out)" = 3
+ANSIBLE_STRATEGY='free' ansible-playbook tasks/test_include_dupe_loop.yml -i ../../inventory "$@" | tee test_include_dupe_loop.out
+test "$(grep -c '"item=foo"' test_include_dupe_loop.out)" = 3
+
+ansible-playbook public_exposure/playbook.yml -i ../../inventory "$@"

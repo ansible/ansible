@@ -18,7 +18,7 @@ You can also use the site to share roles that you create. By authenticating with
 them available to the Ansible community. Imported roles become available in the Galaxy search index and visible on the site, allowing users to
 discover and download them.
 
-Learn more by viewing `the About page <https://galaxy.ansible.com/intro>`_.
+Learn more by viewing `the About page <https://galaxy.ansible.com/docs/>`_.
 
 The command line tool
 `````````````````````
@@ -124,11 +124,11 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
       name: http-role
 
     # from Bitbucket
-    - src: git+http://bitbucket.org/willthames/git-ansible-galaxy
+    - src: git+https://bitbucket.org/willthames/git-ansible-galaxy
       version: v1.4
 
     # from Bitbucket, alternative syntax and caveats
-    - src: http://bitbucket.org/willthames/hg-ansible-galaxy
+    - src: https://bitbucket.org/willthames/hg-ansible-galaxy
       scm: hg
 
     # from GitLab or other git-based scm
@@ -165,7 +165,7 @@ Content of the *webserver.yml* file:
     - src: https://github.com/bennojoy/nginx
 
     # from Bitbucket
-    - src: git+http://bitbucket.org/willthames/git-ansible-galaxy
+    - src: git+https://bitbucket.org/willthames/git-ansible-galaxy
       version: v1.4
 
 Dependencies
@@ -178,8 +178,8 @@ the format ``username.role_name``. The more complex format used in ``requirement
 
 Tags are inherited *down* the dependency chain. In order for tags to be applied to a role and all its dependencies, the tag should be applied to the role, not to all the tasks within a role.
 
-Roles listed as dependencies are subject to conditionals and tag filtering, and may not execute fully depeneding on
-what tags and conditinoals are applied.
+Roles listed as dependencies are subject to conditionals and tag filtering, and may not execute fully depending on
+what tags and conditionals are applied.
 
 Dependencies found in Galaxy can be specified as follows:
 
@@ -455,7 +455,7 @@ This only removes the role from Galaxy. It does not remove or alter the actual G
 Travis integrations
 -------------------
 
-You can create an integration or connection between a role in Galaxy and `Travis <http://travis-ci.org>`_. Once the connection is established, a build in Travis will
+You can create an integration or connection between a role in Galaxy and `Travis <https://travis-ci.org>`_. Once the connection is established, a build in Travis will
 automatically trigger an import in Galaxy, updating the search index with the latest information about the role.
 
 You create the integration using the ``setup`` command, but before an integration can be created, you must first authenticate using the ``login`` command; you will
@@ -511,7 +511,7 @@ Provide the ID of the integration to be disabled. You can find the ID by using t
 
    :ref:`playbooks_reuse_roles`
        All about ansible roles
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

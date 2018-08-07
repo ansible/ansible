@@ -1,7 +1,6 @@
 #!powershell
-# This file is part of Ansible
 
-# (c) 2017, Jordan Borean <jborean93@gmail.com>, and others
+# Copyright: (c) 2017, Jordan Borean <jborean93@gmail.com>, and others
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
@@ -10,7 +9,7 @@ $ErrorActionPreference = "Stop"
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
-$diff_mode = Get-AnsibleParam -obj $Params -name "_ansible_diff" -type "bool" -default $false
+$diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
 
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $display_name = Get-AnsibleParam -obj $params -name "display_name" -type "str"

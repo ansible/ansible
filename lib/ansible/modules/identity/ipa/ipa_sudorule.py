@@ -34,6 +34,9 @@ options:
     - List of commands assigned to the rule.
     - If an empty list is passed all commands will be removed from the rule.
     - If option is omitted commands will not be checked or changed.
+  description:
+    description:
+    - Description of the sudo rule.
   host:
     description:
     - List of hosts assigned to the rule.
@@ -62,6 +65,9 @@ options:
       - RunAs Group category the rule applies to.
     choices: ['all']
     version_added: "2.5"
+  sudoopt:
+    description:
+      - List of options to add to the sudo rule.
   user:
     description:
     - List of users assigned to the rule.

@@ -162,6 +162,35 @@ def run_commands(module, commands, check_rc=True):
     return responses
 
 
+def run_cnos_commands(module, commands, check_rc=True):
+    retVal = ''
+    enter_config = {'command': 'configure terminal', 'prompt': None,
+                    'answer': None}
+    exit_config = {'command': 'end', 'prompt': None, 'answer': None}
+    commands.insert(0, enter_config)
+    commands.append(exit_config)
+    for cmd in commands:
+        retVal = retVal + '>> ' + cmd['command'] + '\n'
+    try:
+        responses = run_commands(module, commands, check_rc)
+        for response in responses:
+            retVal = retVal + '<< ' + response + '\n'
+    except Exception as e:
+        errMsg = ''
+        if hasattr(e, 'message'):
+            errMsg = e.message
+        else:
+            errMsg = str(e)
+        # Exception in Exceptions
+        if 'VLAN_ACCESS_MAP' in errMsg:
+            return retVal + '<<' + errMsg + '\n'
+        if 'confederation identifier' in errMsg:
+            return retVal + '<<' + errMsg + '\n'
+        # Add more here if required
+        retVal = retVal + '<< ' + 'Error-101 ' + errMsg + '\n'
+    return str(retVal)
+
+
 def load_config(module, config):
     try:
         conn = get_connection(module)
@@ -186,128 +215,97 @@ def get_defaults_flag(module):
         return 'full'
 
 
-def interfaceConfig(
-    obj, deviceType, prompt, timeout, interfaceArg1,
-        interfaceArg2, interfaceArg3, interfaceArg4, interfaceArg5,
-        interfaceArg6, interfaceArg7, interfaceArg8, interfaceArg9):
+def interfaceConfig(module, prompt, functionality, answer):
     retVal = ""
     command = "interface "
     newPrompt = prompt
-    if(interfaceArg1 == "port-aggregation"):
-        command = command + " " + interfaceArg1 + " " + interfaceArg2 + "\n"
+    interfaceArg1 = functionality
+    interfaceArg2 = module.params['interfaceRange']
+    interfaceArg3 = module.params['interfaceArg1']
+    interfaceArg4 = module.params['interfaceArg2']
+    interfaceArg5 = module.params['interfaceArg3']
+    interfaceArg6 = module.params['interfaceArg4']
+    interfaceArg7 = module.params['interfaceArg5']
+    interfaceArg8 = module.params['interfaceArg6']
+    interfaceArg9 = module.params['interfaceArg7']
+    deviceType = module.params['deviceType']
+
+    if(interfaceArg1 == "port-channel"):
+        command = command + " " + interfaceArg1 + " " + interfaceArg2
         # debugOutput(command)
         value = checkSanityofVariable(
             deviceType, "portchannel_interface_value", interfaceArg2)
         if(value == "ok"):
-            newPrompt = "(config-if)#"
-            retVal = retVal + \
-                waitForDeviceResponse(command, newPrompt, timeout, obj)
+            cmd = [{'command': command, 'prompt': None, 'answer': None}]
         else:
             value = checkSanityofVariable(
                 deviceType, "portchannel_interface_range", interfaceArg2)
             if(value == "ok"):
-                newPrompt = "(config-if-range)#"
-                retVal = retVal + \
-                    waitForDeviceResponse(command, newPrompt, timeout, obj)
+                cmd = [{'command': command, 'prompt': None, 'answer': None}]
             else:
                 value = checkSanityofVariable(
                     deviceType, "portchannel_interface_string", interfaceArg2)
                 if(value == "ok"):
-                    newPrompt = "(config-if-range)#"
-                    if '/' in interfaceArg2:
-                        newPrompt = "(config-if)#"
-                    retVal = retVal + \
-                        waitForDeviceResponse(command, newPrompt, timeout, obj)
+                    cmd = [{'command': command, 'prompt': None,
+                            'answer': None}]
                 else:
                     retVal = "Error-102"
                     return retVal
-
-        retVal = retVal + interfaceLevel2Config(
-            obj, deviceType, newPrompt, timeout, interfaceArg3, interfaceArg4,
-            interfaceArg5, interfaceArg6, interfaceArg7, interfaceArg8,
-            interfaceArg9)
+        retVal = retVal + interfaceLevel2Config(module, cmd, prompt, answer)
     elif(interfaceArg1 == "ethernet"):
-        # command = command + interfaceArg1 + " 1/"
         value = checkSanityofVariable(
             deviceType, "ethernet_interface_value", interfaceArg2)
         if(value == "ok"):
-            newPrompt = "(config-if)#"
-            command = command + interfaceArg1 + " 1/" + interfaceArg2 + " \n"
-            retVal = retVal + \
-                waitForDeviceResponse(command, newPrompt, timeout, obj)
+            command = command + interfaceArg1 + " 1/" + interfaceArg2
+            cmd = [{'command': command, 'prompt': None, 'answer': None}]
         else:
             value = checkSanityofVariable(
                 deviceType, "ethernet_interface_range", interfaceArg2)
             if(value == "ok"):
-                command = command + \
-                    interfaceArg1 + " 1/" + interfaceArg2 + " \n"
-                newPrompt = "(config-if-range)#"
-                retVal = retVal + \
-                    waitForDeviceResponse(command, newPrompt, timeout, obj)
+                command = command + interfaceArg1 + " 1/" + interfaceArg2
+                cmd = [{'command': command, 'prompt': None, 'answer': None}]
             else:
                 value = checkSanityofVariable(
                     deviceType, "ethernet_interface_string", interfaceArg2)
                 if(value == "ok"):
-                    command = command + \
-                        interfaceArg1 + " " + interfaceArg2 + "\n"
-                    newPrompt = "(config-if-range)#"
-                    if '/' in interfaceArg2:
-                        newPrompt = "(config-if)#"
-                    retVal = retVal + \
-                        waitForDeviceResponse(command, newPrompt, timeout, obj)
+                    command = command + interfaceArg1 + " " + interfaceArg2
+                    cmd = [{'command': command, 'prompt': None,
+                            'answer': None}]
                 else:
                     retVal = "Error-102"
                     return retVal
 
-        retVal = retVal + interfaceLevel2Config(
-            obj, deviceType, newPrompt, timeout, interfaceArg3, interfaceArg4,
-            interfaceArg5, interfaceArg6, interfaceArg7, interfaceArg8,
-            interfaceArg9)
+        retVal = retVal + interfaceLevel2Config(module, cmd, prompt, answer)
     elif(interfaceArg1 == "loopback"):
         value = checkSanityofVariable(
             deviceType, "loopback_interface_value", interfaceArg2)
         if(value == "ok"):
-            newPrompt = "(config-if)#"
-            command = command + interfaceArg1 + " " + interfaceArg2 + "\n"
-            retVal = retVal + \
-                waitForDeviceResponse(command, newPrompt, timeout, obj)
+            command = command + interfaceArg1 + " " + interfaceArg2
+            cmd = [{'command': command, 'prompt': None, 'answer': None}]
         else:
             retVal = "Error-102"
             return retVal
-        retVal = retVal + interfaceLevel2Config(
-            obj, deviceType, newPrompt, timeout, interfaceArg3, interfaceArg4,
-            interfaceArg5, interfaceArg6, interfaceArg7, interfaceArg8,
-            interfaceArg9)
+        retVal = retVal + interfaceLevel2Config(module, cmd, prompt, answer)
     elif(interfaceArg1 == "mgmt"):
         value = checkSanityofVariable(
             deviceType, "mgmt_interface_value", interfaceArg2)
         if(value == "ok"):
-            newPrompt = "(config-if)#"
-            command = command + interfaceArg1 + " " + interfaceArg2 + "\n"
-            retVal = retVal + \
-                waitForDeviceResponse(command, newPrompt, timeout, obj)
+            command = command + interfaceArg1 + " " + interfaceArg2
+            cmd = [{'command': command, 'prompt': None, 'answer': None}]
         else:
             retVal = "Error-102"
             return retVal
-        retVal = retVal + interfaceLevel2Config(
-            obj, deviceType, newPrompt, timeout, interfaceArg3, interfaceArg4,
-            interfaceArg5, interfaceArg6, interfaceArg7, interfaceArg8,
-            interfaceArg9)
+        retVal = retVal + interfaceLevel2Config(module, cmd, prompt, answer)
     elif(interfaceArg1 == "vlan"):
         value = checkSanityofVariable(
             deviceType, "vlan_interface_value", interfaceArg2)
         if(value == "ok"):
-            newPrompt = "(config-if)#"
-            command = command + interfaceArg1 + " " + interfaceArg2 + "\n"
-            retVal = retVal + \
-                waitForDeviceResponse(command, newPrompt, timeout, obj)
+            command = command + interfaceArg1 + " " + interfaceArg2
+            cmd = [{'command': command, 'prompt': None, 'answer': None}]
         else:
             retVal = "Error-102"
             return retVal
-        retVal = retVal + interfaceLevel2Config(
-            obj, deviceType, newPrompt, timeout, interfaceArg3, interfaceArg4,
-            interfaceArg5, interfaceArg6, interfaceArg7, interfaceArg8,
-            interfaceArg9)
+        retVal = retVal + interfaceLevel2Config(module, cmd, prompt, answer)
     else:
         retVal = "Error-102"
 
@@ -315,14 +313,20 @@ def interfaceConfig(
 # EOM
 
 
-def interfaceLevel2Config(
-    obj, deviceType, prompt, timeout, interfaceL2Arg1, interfaceL2Arg2,
-    interfaceL2Arg3, interfaceL2Arg4, interfaceL2Arg5, interfaceL2Arg6,
-        interfaceL2Arg7):
+def interfaceLevel2Config(module, cmd, prompt, answer):
     retVal = ""
     command = ""
-    if(interfaceL2Arg1 == "aggregation-group"):
-        # debugOutput("aggregation-group")
+    interfaceL2Arg1 = module.params['interfaceArg1']
+    interfaceL2Arg2 = module.params['interfaceArg2']
+    interfaceL2Arg3 = module.params['interfaceArg3']
+    interfaceL2Arg4 = module.params['interfaceArg4']
+    interfaceL2Arg5 = module.params['interfaceArg5']
+    interfaceL2Arg6 = module.params['interfaceArg6']
+    interfaceL2Arg7 = module.params['interfaceArg7']
+    deviceType = module.params['deviceType']
+
+    if(interfaceL2Arg1 == "channel-group"):
+        # debugOutput("channel-group")
         command = interfaceL2Arg1 + " "
         value = checkSanityofVariable(
             deviceType, "aggregation_group_no", interfaceL2Arg2)
@@ -557,8 +561,8 @@ def interfaceLevel2Config(
             retVal = "Error-205"
             return retVal
 
-    elif (interfaceL2Arg1 == "bridge-port"):
-        # debugOutput("bridge-port")
+    elif (interfaceL2Arg1 == "switchport"):
+        # debugOutput("switchport")
         command = interfaceL2Arg1 + " "
         if(interfaceL2Arg2 is None):
             command = command.strip()
@@ -1309,26 +1313,27 @@ def interfaceLevel2Config(
         retVal = "Error-233"
         return retVal
 
-    command = command + "\n"
     # debugOutput(command)
-    retVal = retVal + waitForDeviceResponse(command, prompt, timeout, obj)
+    inner_cmd = [{'command': command, 'prompt': None, 'answer': None}]
+    cmd.extend(inner_cmd)
+    retVal = retVal + str(run_cnos_commands(module, cmd))
     # Come back to config mode
     if((prompt == "(config-if)#") or (prompt == "(config-if-range)#")):
-        command = "exit \n"
+        command = "exit"
         # debugOutput(command)
-        retVal = retVal + \
-            waitForDeviceResponse(command, "(config)#", timeout, obj)
-
+        cmd = [{'command': command, 'prompt': None, 'answer': None}]
+        # retVal = retVal + str(run_cnos_commands(module, cmd))
     return retVal
 # EOM
 
 
-def portChannelConfig(
-        obj, deviceType, prompt, timeout, portChArg1, portChArg2, portChArg3,
-        portChArg4, portChArg5, portChArg6, portChArg7):
-    retVal = ""
-    command = ""
-    if(portChArg1 == "port-aggregation" and prompt == "(config)#"):
+def portChannelConfig(module, prompt, answer):
+    retVal = ''
+    command = ''
+    portChArg1 = module.params['interfaceArg1']
+    portChArg2 = module.params['interfaceArg2']
+    portChArg3 = module.params['interfaceArg3']
+    if(portChArg1 == "port-channel" and prompt == "(config)#"):
         command = command + portChArg1 + " load-balance ethernet "
         if(portChArg2 == "destination-ip" or
            portChArg2 == "destination-mac" or
@@ -1347,869 +1352,40 @@ def portChannelConfig(
                 command = command + ""
             elif(portChArg3 == "source-interface"):
                 command = command + portChArg3
+                cmd = [{'command': command, 'prompt': None, 'answer': None}]
+                retVal = retVal + str(run_cnos_commands(module, cmd))
             else:
                 retVal = "Error-231"
                 return retVal
         else:
             retVal = "Error-232"
             return retVal
-
 # EOM
 
 
-def routerConfig(
-    obj, deviceType, prompt, timeout, protocol, asNum, routerArg1,
-    routerArg2, routerArg3, routerArg4, routerArg5, routerArg6, routerArg7,
-        routerArg8):
-    retVal = ""
+def vlanConfig(module, prompt, answer):
+
+    retVal = ''
     # Wait time to get response from server
-    timeout = timeout
-    if(protocol == "bgp"):
-        # bgp config command happens here.
-        command = "routing-protocol bgp "
-        value = checkSanityofVariable(deviceType, "bgp_as_number", asNum)
-        if(value == "ok"):
-            # BGP command happens here. It creates if not present
-            command = command + asNum + "\n"
-            # debugOutput(command)
-            retVal = waitForDeviceResponse(
-                command, "(config-router)#", timeout, obj)
-            retVal = retVal + bgpConfig(
-                obj, deviceType, "(config-router)#", timeout, routerArg1,
-                routerArg2, routerArg3, routerArg4, routerArg5, routerArg6,
-                routerArg7, routerArg8)
-        else:
-            retVal = "Error-176"
-
-    elif(protocol == "ospf"):
-        retVal = "Command Value is Not supported as of now"
-
-    else:
-        retVal = "Error-177"
-
-    return retVal
-# EOM
-
-
-def bgpNeighborAFConfig(
-    obj, deviceType, prompt, timeout, bgpNeighborAFArg1, bgpNeighborAFArg2,
-        bgpNeighborAFArg3):
-    retVal = ""
-    command = ""
-    timeout = timeout
-    if(bgpNeighborAFArg1 == "allowas-in"):
-        command = command + bgpNeighborAFArg1 + " "
-        if(bgpNeighborAFArg2 is not None):
-            value = checkSanityofVariable(
-                deviceType, "bgp_neighbor_af_occurances", bgpNeighborAFArg2)
-            if(value == "ok"):
-                command = command + bgpNeighborAFArg2
-            else:
-                retVal = "Error-325"
-                return retVal
-        else:
-            command = command
-    elif(bgpNeighborAFArg1 == "default-originate"):
-        command = command + bgpNeighborAFArg1 + " "
-        if(bgpNeighborAFArg2 is not None and bgpNeighborAFArg2 == "route-map"):
-            command = command + bgpNeighborAFArg2 + " "
-            value = checkSanityofVariable(
-                deviceType, "bgp_neighbor_af_routemap", bgpNeighborAFArg2)
-            if(value == "ok"):
-                command = command + bgpNeighborAFArg3
-            else:
-                retVal = "Error-324"
-                return retVal
-    elif(bgpNeighborAFArg1 == "filter-list"):
-        command = command + bgpNeighborAFArg1 + " "
-        value = checkSanityofVariable(
-            deviceType, "bgp_neighbor_af_filtername", bgpNeighborAFArg2)
-        if(value == "ok"):
-            command = command + bgpNeighborAFArg2 + " "
-            if(bgpNeighborAFArg3 == "in" or bgpNeighborAFArg3 == "out"):
-                command = command + bgpNeighborAFArg3
-            else:
-                retVal = "Error-323"
-                return retVal
-        else:
-            retVal = "Error-322"
-            return retVal
-
-    elif(bgpNeighborAFArg1 == "maximum-prefix"):
-        command = command + bgpNeighborAFArg1 + " "
-        value = checkSanityofVariable(
-            deviceType, "bgp_neighbor_af_maxprefix", bgpNeighborAFArg2)
-        if(value == "ok"):
-            command = command + bgpNeighborAFArg2 + " "
-            if(bgpNeighborAFArg3 is not None):
-                command = command + bgpNeighborAFArg3
-            else:
-                command = command.strip()
-        else:
-            retVal = "Error-326"
-            return retVal
-
-    elif(bgpNeighborAFArg1 == "next-hop-self"):
-        command = command + bgpNeighborAFArg1
-
-    elif(bgpNeighborAFArg1 == "prefix-list"):
-        command = command + bgpNeighborAFArg1 + " "
-        value = checkSanityofVariable(
-            deviceType, "bgp_neighbor_af_prefixname", bgpNeighborAFArg2)
-        if(value == "ok"):
-            command = command + bgpNeighborAFArg2 + " "
-            if(bgpNeighborAFArg3 == "in" or bgpNeighborAFArg3 == "out"):
-                command = command + bgpNeighborAFArg3
-            else:
-                retVal = "Error-321"
-                return retVal
-        else:
-            retVal = "Error-320"
-            return retVal
-
-    elif(bgpNeighborAFArg1 == "route-map"):
-        command = command + bgpNeighborAFArg1 + " "
-        value = checkSanityofVariable(
-            deviceType, "bgp_neighbor_af_routemap", bgpNeighborAFArg2)
-        if(value == "ok"):
-            command = command + bgpNeighborAFArg2
-        else:
-            retVal = "Error-319"
-            return retVal
-    elif(bgpNeighborAFArg1 == "route-reflector-client"):
-        command = command + bgpNeighborAFArg1
-
-    elif(bgpNeighborAFArg1 == "send-community"):
-        command = command + bgpNeighborAFArg1 + " "
-        if(bgpNeighborAFArg2 is not None and bgpNeighborAFArg2 == "extended"):
-            command = command + bgpNeighborAFArg2
-        else:
-            command = command
-
-    elif(bgpNeighborAFArg1 == "soft-reconfiguration"):
-        command = command + bgpNeighborAFArg1 + " inbound"
-
-    elif(bgpNeighborAFArg1 == "unsuppress-map"):
-        command = command + bgpNeighborAFArg1 + " "
-        value = checkSanityofVariable(
-            deviceType, "bgp_neighbor_af_routemap", bgpNeighborAFArg2)
-        if(value == "ok"):
-            command = command + bgpNeighborAFArg2
-        else:
-            retVal = "Error-318"
-            return retVal
-
-    else:
-        retVal = "Error-317"
-        return retVal
-
-    command = command + "\n"
-    # debugOutput(command)
-    retVal = retVal + waitForDeviceResponse(command, prompt, timeout, obj)
-    command = "exit \n"
-    retVal = retVal + \
-        waitForDeviceResponse(
-            command, "(config-router-neighbor)#", timeout, obj)
-    return retVal
-# EOM
-
-
-def bgpNeighborConfig(
-    obj, deviceType, prompt, timeout, bgpNeighborArg1, bgpNeighborArg2,
-        bgpNeighborArg3, bgpNeighborArg4, bgpNeighborArg5):
-    retVal = ""
-    command = ""
-    timeout = timeout
-
-    if(bgpNeighborArg1 == "address-family"):
-        command = command + bgpNeighborArg1 + " "
-        value = checkSanityofVariable(
-            deviceType, "bgp_neighbor_address_family", bgpNeighborArg2)
-        if(value == "ok"):
-            command = command + bgpNeighborArg2 + " unicast \n"
-            # debugOutput(command)
-            retVal = waitForDeviceResponse(
-                command, "(config-router-neighbor-af)#", timeout, obj)
-            retVal = retVal + bgpNeighborAFConfig(
-                obj, deviceType, "(config-router-neighbor-af)#", timeout,
-                bgpNeighborArg3, bgpNeighborArg4, bgpNeighborArg5)
-            return retVal
-        else:
-            retVal = "Error-316"
-            return retVal
-
-    elif(bgpNeighborArg1 == "advertisement-interval"):
-        command = command + bgpNeighborArg1
-
-    elif(bgpNeighborArg1 == "bfd"):
-        command = command + bgpNeighborArg1 + " "
-        if(bgpNeighborArg2 is not None and bgpNeighborArg2 == "mutihop"):
-            command = command + bgpNeighborArg2
-        else:
-            command = command
-
-    elif(bgpNeighborArg1 == "connection-retry-time"):
-        command = command + bgpNeighborArg1 + " "
-        value = checkSanityofVariable(
-            deviceType, "bgp_neighbor_connection_retrytime", bgpNeighborArg2)
-        if(value == "ok"):
-            command = command + bgpNeighborArg2
-        else:
-            retVal = "Error-315"
-            return retVal
-
-    elif(bgpNeighborArg1 == "description"):
-        command = command + bgpNeighborArg1 + " "
-        value = checkSanityofVariable(
-            deviceType, "bgp_neighbor_description", bgpNeighborArg2)
-        if(value == "ok"):
-            command = command + bgpNeighborArg2
-        else:
-            retVal = "Error-314"
-            return retVal
-
-    elif(bgpNeighborArg1 == "disallow-infinite-holdtime"):
-        command = command + bgpNeighborArg1
-
-    elif(bgpNeighborArg1 == "dont-capability-negotiate"):
-        command = command + bgpNeighborArg1
-
-    elif(bgpNeighborArg1 == "dynamic-capability"):
-        command = command + bgpNeighborArg1
-
-    elif(bgpNeighborArg1 == "ebgp-multihop"):
-        command = command + bgpNeighborArg1 + " "
-        value = checkSanityofVariable(
-            deviceType, "bgp_neighbor_maxhopcount", bgpNeighborArg2)
-        if(value == "ok"):
-            command = command + bgpNeighborArg2
-        else:
-            retVal = "Error-313"
-            return retVal
-    elif(bgpNeighborArg1 == "interface"):
-        command = command + bgpNeighborArg1 + " "
-        # TBD
-    elif(bgpNeighborArg1 == "local-as"):
-        command = command + bgpNeighborArg1 + " "
-        value = checkSanityofVariable(
-            deviceType, "bgp_neighbor_local_as", bgpNeighborArg2)
-        if(value == "ok"):
-            command = command + bgpNeighborArg2 + " "
-            if(bgpNeighborArg3 is not None and
-                    bgpNeighborArg3 == "no-prepend"):
-                command = command + bgpNeighborArg3 + " "
-                if(bgpNeighborArg4 is not None and
-                        bgpNeighborArg4 == "replace-as"):
-                    command = command + bgpNeighborArg4 + " "
-                    if(bgpNeighborArg5 is not None and
-                            bgpNeighborArg5 == "dual-as"):
-                        command = command + bgpNeighborArg5
-                    else:
-                        command = command.strip()
-                else:
-                    command = command.strip()
-            else:
-                command = command.strip()
-        else:
-            retVal = "Error-312"
-            return retVal
-
-    elif(bgpNeighborArg1 == "maximum-peers"):
-        command = command + bgpNeighborArg1 + " "
-        value = checkSanityofVariable(
-            deviceType, "bgp_neighbor_maxpeers", bgpNeighborArg2)
-        if(value == "ok"):
-            command = command + bgpNeighborArg2
-        else:
-            retVal = "Error-311"
-            return retVal
-
-    elif(bgpNeighborArg1 == "password"):
-        command = command + bgpNeighborArg1 + " "
-        value = checkSanityofVariable(
-            deviceType, "bgp_neighbor_password", bgpNeighborArg2)
-        if(value == "ok"):
-            command = command + bgpNeighborArg2
-        else:
-            retVal = "Error-310"
-            return retVal
-
-    elif(bgpNeighborArg1 == "remove-private-AS"):
-        command = command + bgpNeighborArg1
-
-    elif(bgpNeighborArg1 == "timers"):
-        command = command + bgpNeighborArg1 + " "
-        value = checkSanityofVariable(
-            deviceType, "bgp_neighbor_timers_Keepalive", bgpNeighborArg2)
-        if(value == "ok"):
-            command = command + bgpNeighborArg2 + " "
-            value = checkSanityofVariable(
-                deviceType, "bgp_neighbor_timers_holdtime", bgpNeighborArg3)
-            if(value == "ok"):
-                command = command + bgpNeighborArg3
-            else:
-                retVal = "Error-309"
-                return retVal
-        else:
-            retVal = "Error-308"
-            return retVal
-
-    elif(bgpNeighborArg1 == "transport"):
-        command = command + bgpNeighborArg1 + " connection-mode passive "
-
-    elif(bgpNeighborArg1 == "ttl-security"):
-        command = command + bgpNeighborArg1 + " hops "
-        value = checkSanityofVariable(
-            deviceType, "bgp_neighbor_ttl_hops", bgpNeighborArg2)
-        if(value == "ok"):
-            command = command + bgpNeighborArg2
-        else:
-            retVal = "Error-307"
-            return retVal
-
-    elif(bgpNeighborArg1 == "update-source"):
-        command = command + bgpNeighborArg1 + " "
-        if(bgpNeighborArg2 is not None):
-            value = checkSanityofVariable(
-                deviceType, "bgp_neighbor_update_options", bgpNeighborArg2)
-            if(value == "ok"):
-                command = command + bgpNeighborArg2 + " "
-                if(bgpNeighborArg2 == "ethernet"):
-                    value = checkSanityofVariable(
-                        deviceType, "bgp_neighbor_update_ethernet",
-                        bgpNeighborArg3)
-                    if(value == "ok"):
-                        command = command + bgpNeighborArg3
-                    else:
-                        retVal = "Error-304"
-                        return retVal
-                elif(bgpNeighborArg2 == "loopback"):
-                    value = checkSanityofVariable(
-                        deviceType, "bgp_neighbor_update_loopback",
-                        bgpNeighborArg3)
-                    if(value == "ok"):
-                        command = command + bgpNeighborArg3
-                    else:
-                        retVal = "Error-305"
-                        return retVal
-                else:
-                    value = checkSanityofVariable(
-                        deviceType, "bgp_neighbor_update_vlan",
-                        bgpNeighborArg3)
-                    if(value == "ok"):
-                        command = command + bgpNeighborArg3
-                    else:
-                        retVal = "Error-306"
-                        return retVal
-            else:
-                command = command + bgpNeighborArg2
-        else:
-            retVal = "Error-303"
-            return retVal
-
-    elif(bgpNeighborArg1 == "weight"):
-        command = command + bgpNeighborArg1 + " "
-        value = checkSanityofVariable(
-            deviceType, "bgp_neighbor_weight", bgpNeighborArg2)
-        if(value == "ok"):
-            command = command + bgpNeighborArg2
-        else:
-            retVal = "Error-302"
-            return retVal
-
-    else:
-        retVal = "Error-301"
-        return retVal
-
-    command = command + "\n"
-    # debugOutput(command)
-    retVal = retVal + waitForDeviceResponse(command, prompt, timeout, obj)
-    command = "exit \n"
-    retVal = retVal + \
-        waitForDeviceResponse(command, "(config-router)#", timeout, obj)
-    return retVal
-# EOM
-
-
-def bgpAFConfig(
-    obj, deviceType, prompt, timeout, bgpAFArg1, bgpAFArg2, bgpAFArg3,
-        bgpAFArg4, bgpAFArg5, bgpAFArg6):
-    retVal = ""
-    command = ""
-    timeout = timeout
-    if(bgpAFArg1 == "aggregate-address"):
-        command = command + bgpAFArg1 + " "
-        value = checkSanityofVariable(
-            deviceType, "bgp_aggregate_prefix", bgpAFArg2)
-        if(value == "ok"):
-            if(bgpAFArg2 is None):
-                command = command.strip()
-            elif(bgpAFArg2 == "as-set" or bgpAFArg2 == "summary-only"):
-                command = command + bgpAFArg2 + " "
-                if((bgpAFArg3 is not None) and (bgpAFArg2 == "as-set")):
-                    command = command + "summary-only"
-            else:
-                retVal = "Error-297"
-                return retVal
-        else:
-            retVal = "Error-296"
-            return retVal
-    elif(bgpAFArg1 == "client-to-client"):
-        command = command + bgpAFArg1 + " reflection "
-    elif(bgpAFArg1 == "dampening"):
-        command = command + bgpAFArg1 + " "
-        if(bgpAFArg2 == "route-map"):
-            command = command + bgpAFArg2 + " "
-            value = checkSanityofVariable(
-                deviceType, "addrfamily_routemap_name", bgpAFArg3)
-            if(value == "ok"):
-                command = command + bgpAFArg3
-            else:
-                retVal = "Error-196"
-                return retVal
-        elif(bgpAFArg2 is not None):
-            value = checkSanityofVariable(
-                deviceType, "reachability_half_life", bgpAFArg2)
-            if(value == "ok"):
-                command = command + bgpAFArg2 + " "
-                if(bgpAFArg3 is not None):
-                    value1 = checkSanityofVariable(
-                        deviceType, "start_reuse_route_value", bgpAFArg3)
-                    value2 = checkSanityofVariable(
-                        deviceType, "start_suppress_route_value", bgpAFArg4)
-                    value3 = checkSanityofVariable(
-                        deviceType, "max_duration_to_suppress_route",
-                        bgpAFArg5)
-                    if(value1 == "ok" and value2 == "ok" and value3 == "ok"):
-                        command = command + bgpAFArg3 + " " + bgpAFArg4 + \
-                            " " + bgpAFArg5 + " "
-                        if(bgpAFArg6 is not None):
-                            value = checkSanityofVariable(
-                                deviceType,
-                                "unreachability_halftime_for_penalty",
-                                bgpAFArg6)
-                            if(value == "ok"):
-                                command = command + bgpAFArg6
-                    else:
-                        retVal = "Error-295"
-                        return retVal
-                else:
-                    command = command.strip()
-            else:
-                retVal = "Error-294"
-                return retVal
-
-    elif(bgpAFArg1 == "distance"):
-        command = command + bgpAFArg1 + " "
-        value = checkSanityofVariable(
-            deviceType, "distance_external_AS", bgpAFArg2)
-        if(value == "ok"):
-            command = command + bgpAFArg2 + " "
-            value = checkSanityofVariable(
-                deviceType, "distance_internal_AS", bgpAFArg3)
-            if(value == "ok"):
-                command = command + bgpAFArg3 + " "
-                value = checkSanityofVariable(
-                    deviceType, "distance_local_routes", bgpAFArg4)
-                if(value == "ok"):
-                    command = command + bgpAFArg4
-                else:
-                    retVal = "Error-291"
-                    return retVal
-            else:
-                retVal = "Error-292"
-                return retVal
-        else:
-            retVal = "Error-293"
-            return retVal
-    elif(bgpAFArg1 == "maximum-paths"):
-        command = command + bgpAFArg1 + " "
-        value = checkSanityofVariable(deviceType, "maxpath_option", bgpAFArg2)
-        if(value == "ok"):
-            command = command + bgpAFArg2 + " "
-            value = checkSanityofVariable(
-                deviceType, "maxpath_numbers", bgpAFArg3)
-            if(value == "ok"):
-                command = command + bgpAFArg3
-            else:
-                retVal = "Error-199"
-                return retVal
-        else:
-            retVal = "Error-290"
-            return retVal
-
-    elif(bgpAFArg1 == "network"):
-        command = command + bgpAFArg1 + " "
-        if(bgpAFArg2 == "synchronization"):
-            command = command + bgpAFArg2
-        else:
-            value = checkSanityofVariable(
-                deviceType, "network_ip_prefix_with_mask", bgpAFArg2)
-            if(value == "ok"):
-                command = command + bgpAFArg2 + " "
-                if(bgpAFArg3 is not None and bgpAFArg3 == "backdoor"):
-                    command = command + bgpAFArg3
-                elif(bgpAFArg3 is not None and bgpAFArg3 == "route-map"):
-                    command = command + bgpAFArg3
-                    value = checkSanityofVariable(
-                        deviceType, "addrfamily_routemap_name", bgpAFArg4)
-                    if(value == "ok"):
-                        command = command + bgpAFArg4 + " "
-                        if(bgpAFArg5 is not None and bgpAFArg5 == "backdoor"):
-                            command = command + bgpAFArg5
-                        else:
-                            retVal = "Error-298"
-                            return retVal
-                    else:
-                        retVal = "Error-196"
-                        return retVal
-                else:
-                    command = command.strip()
-            else:
-                value = checkSanityofVariable(
-                    deviceType, "network_ip_prefix_value", bgpAFArg2)
-                if(value == "ok"):
-                    command = command + bgpAFArg2 + " "
-                    if(bgpAFArg3 is not None and bgpAFArg3 == "backdoor"):
-                        command = command + bgpAFArg3
-                    elif(bgpAFArg3 is not None and bgpAFArg3 == "route-map"):
-                        command = command + bgpAFArg3
-                        value = checkSanityofVariable(
-                            deviceType, "addrfamily_routemap_name", bgpAFArg4)
-                        if(value == "ok"):
-                            command = command + bgpAFArg4 + " "
-                            if(bgpAFArg5 is not None and
-                                    bgpAFArg5 == "backdoor"):
-                                command = command + bgpAFArg5
-                            else:
-                                retVal = "Error-298"
-                                return retVal
-                        else:
-                            retVal = "Error-196"
-                            return retVal
-                    elif(bgpAFArg3 is not None and bgpAFArg3 == "mask"):
-                        command = command + bgpAFArg3
-                        value = checkSanityofVariable(
-                            deviceType, "network_ip_prefix_mask", bgpAFArg4)
-                        if(value == "ok"):
-                            command = command + bgpAFArg4 + " "
-                        else:
-                            retVal = "Error-299"
-                            return retVal
-                    else:
-                        command = command.strip()
-                else:
-                    retVal = "Error-300"
-                    return retVal
-
-    elif(bgpAFArg1 == "nexthop"):
-        command = command + bgpAFArg1 + " trigger-delay critical "
-        value = checkSanityofVariable(
-            deviceType, "nexthop_crtitical_delay", bgpAFArg2)
-        if(value == "ok"):
-            command = command + bgpAFArg2 + " "
-            value = checkSanityofVariable(
-                deviceType, "nexthop_noncrtitical_delay", bgpAFArg3)
-            if(value == "ok"):
-                command = command + bgpAFArg3 + " "
-            else:
-                retVal = "Error-198"
-                return retVal
-        else:
-            retVal = "Error-197"
-            return retVal
-    elif(bgpAFArg1 == "redistribute"):
-        command = command + bgpAFArg1 + " "
-        value = checkSanityofVariable(
-            deviceType, "addrfamily_redistribute_option", bgpAFArg2)
-        if(value == "ok"):
-            if(bgpAFArg2 is not None):
-                command = command + bgpAFArg2 + " " + "route-map "
-                value = checkSanityofVariable(
-                    deviceType, "addrfamily_routemap_name", bgpAFArg3)
-                if(value == "ok"):
-                    command = command + bgpAFArg3
-                else:
-                    retVal = "Error-196"
-                    return retVal
-        else:
-            retVal = "Error-195"
-            return retVal
-    elif(bgpAFArg1 == "save" or bgpAFArg1 == "synchronization"):
-        command = command + bgpAFArg1
-    else:
-        retVal = "Error-194"
-        return retVal
-    command = command + "\n"
-    # debugOutput(command)
-    retVal = retVal + waitForDeviceResponse(command, prompt, timeout, obj)
-    command = "exit \n"
-    retVal = retVal + \
-        waitForDeviceResponse(command, "(config-router)#", timeout, obj)
-    return retVal
-# EOM
-
-
-def bgpConfig(
-    obj, deviceType, prompt, timeout, bgpArg1, bgpArg2, bgpArg3, bgpArg4,
-        bgpAgr5, bgpArg6, bgpArg7, bgpArg8):
-    retVal = ""
-    command = ""
-    # Wait time to get response from server
-    timeout = timeout
-    if(bgpArg1 == "address-family"):
-        # debugOutput(bgpArg1)
-        command = command + bgpArg1 + " "
-        value = checkSanityofVariable(
-            deviceType, "bgp_address_family", bgpArg2)
-        if(value == "ok"):
-            command = command + bgpArg2 + " " + "unicast \n"
-            debugOutput(command)
-            retVal = waitForDeviceResponse(
-                command, "(config-router-af)#", timeout, obj)
-            retVal = retVal + bgpAFConfig(
-                obj, deviceType, "(config-router-af)#", timeout,
-                bgpArg3, bgpArg4, bgpAgr5, bgpArg6, bgpArg7, bgpArg8)
-            return retVal
-        else:
-            retVal = "Error-178"
-            return retVal
-
-    elif(bgpArg1 == "bestpath"):
-        # debugOutput(bgpArg1)
-        command = command + bgpArg1 + " "
-        if(bgpArg2 == "always-compare-med"):
-            # debugOutput(bgpArg2)
-            command = command + bgpArg2
-        elif(bgpArg2 == "compare-confed-aspath"):
-            # debugOutput(bgpArg2)
-            command = command + bgpArg2
-        elif(bgpArg2 == "compare-routerid"):
-            # debugOutput(bgpArg2)
-            command = command + bgpArg2
-        elif(bgpArg2 == "dont-compare-originator-id"):
-            # debugOutput(bgpArg2)
-            command = command + bgpArg2
-        elif(bgpArg2 == "tie-break-on-age"):
-            # debugOutput(bgpArg2)
-            command = command + bgpArg2
-        elif(bgpArg2 == "as-path"):
-            # debugOutput(bgpArg2)
-            command = command + bgpArg2 + " "
-            if(bgpArg3 == "ignore" or bgpArg3 == "multipath-relax"):
-                command = command + bgpArg3
-            else:
-                retVal = "Error-179"
-                return retVal
-        elif(bgpArg2 == "med"):
-            # debugOutput(bgpArg2)
-            command = command + bgpArg2 + " "
-            if(bgpArg3 == "confed" or
-               bgpArg3 == "missing-as-worst" or
-               bgpArg3 == "non-deterministic" or
-               bgpArg3 == "remove-recv-med" or
-               bgpArg3 == "remove-send-med"):
-                command = command + bgpArg3
-            else:
-                retVal = "Error-180"
-                return retVal
-        else:
-            retVal = "Error-181"
-            return retVal
-
-    elif(bgpArg1 == "bgp"):
-        # debugOutput(bgpArg1)
-        command = command + bgpArg1 + " as-local-count "
-        value = checkSanityofVariable(
-            deviceType, "bgp_bgp_local_count", bgpArg2)
-        if(value == "ok"):
-            command = command + bgpArg2
-        else:
-            retVal = "Error-182"
-            return retVal
-
-    elif(bgpArg1 == "cluster-id"):
-        # debugOutput(bgpArg1)
-        command = command + bgpArg1 + " "
-        value = checkSanityofVariable(deviceType, "cluster_id_as_ip", bgpArg2)
-        if(value == "ok"):
-            command = command + bgpArg2
-        else:
-            value = checkSanityofVariable(
-                deviceType, "cluster_id_as_number", bgpArg2)
-            if(value == "ok"):
-                command = command + bgpArg2
-            else:
-                retVal = "Error-183"
-                return retVal
-
-    elif(bgpArg1 == "confederation"):
-        # debugOutput(bgpArg1)
-        command = command + bgpArg1 + " "
-        if(bgpArg2 == "identifier"):
-            value = checkSanityofVariable(
-                deviceType, "confederation_identifier", bgpArg3)
-            if(value == "ok"):
-                command = command + " " + bgpArg2 + " " + bgpArg3
-            else:
-                retVal = "Error-184"
-                return retVal
-        elif(bgpArg2 == "peers"):
-            value = checkSanityofVariable(
-                deviceType, "confederation_peers_as", bgpArg3)
-            if(value == "ok"):
-                command = command + " " + bgpArg2 + " " + bgpArg3
-            else:
-                retVal = "Error-185"
-                return retVal
-        else:
-            retVal = "Error-186"
-            return retVal
-
-    elif(bgpArg1 == "enforce-first-as"):
-        # debugOutput(bgpArg1)
-        command = command + bgpArg1
-
-    elif(bgpArg1 == "fast-external-failover"):
-        # debugOutput(bgpArg1)
-        command = command + bgpArg1
-
-    elif(bgpArg1 == "graceful-restart"):
-        # debugOutput(bgpArg1)
-        command = command + bgpArg1 + " stalepath-time "
-        value = checkSanityofVariable(
-            deviceType, "stalepath_delay_value", bgpArg2)
-        if(value == "ok"):
-            command = command + bgpArg2
-        else:
-            retVal = "Error-187"
-            return retVal
-
-    elif(bgpArg1 == "graceful-restart-helper"):
-        # debugOutput(bgpArg1)
-        command = command + bgpArg1
-
-    elif(bgpArg1 == "log-neighbor-changes"):
-        # debugOutput(bgpArg1)
-        command = command + bgpArg1
-
-    elif(bgpArg1 == "maxas-limit"):
-        # debugOutput(bgpArg1)
-        command = command + bgpArg1 + " "
-        value = checkSanityofVariable(deviceType, "maxas_limit_as", bgpArg2)
-        if(value == "ok"):
-            command = command + bgpArg2
-        else:
-            retVal = "Error-188"
-            return retVal
-
-    elif(bgpArg1 == "neighbor"):
-        # debugOutput(bgpArg1)
-        command = command + bgpArg1 + " "
-        value = checkSanityofVariable(
-            deviceType, "neighbor_ipaddress", bgpArg2)
-        # retVal = "Error-102"
-        # return retVal
-        if(value == "ok"):
-            command = command + bgpArg2
-            if(bgpArg3 is not None):
-                command = command + " remote-as "
-                value = checkSanityofVariable(
-                    deviceType, "neighbor_as", bgpArg3)
-                if(value == "ok"):
-                    command = command + bgpArg3 + "\n"
-                    # debugOutput(command)
-                    retVal = waitForDeviceResponse(
-                        command, "(config-router-neighbor)#", timeout, obj)
-                    retVal = retVal + bgpNeighborConfig(
-                        obj, deviceType, "(config-router-neighbor)#",
-                        timeout, bgpArg4, bgpAgr5, bgpArg6, bgpArg7, bgpArg8)
-                    return retVal
-        else:
-            retVal = "Error-189"
-            return retVal
-
-    elif(bgpArg1 == "router-id"):
-        # debugOutput(bgpArg1)
-        command = command + bgpArg1 + " "
-        value = checkSanityofVariable(deviceType, "router_id", bgpArg2)
-        if(value == "ok"):
-            command = command + bgpArg2
-        else:
-            retVal = "Error-190"
-            return retVal
-
-    elif(bgpArg1 == "shutdown"):
-        # debugOutput(bgpArg1)
-        command = command + bgpArg1
-
-    elif(bgpArg1 == "synchronization"):
-        # debugOutput(bgpArg1)
-        command = command + bgpArg1
-
-    elif(bgpArg1 == "timers"):
-        # debugOutput(bgpArg1)
-        command = command + bgpArg1 + " bgp "
-        value = checkSanityofVariable(
-            deviceType, "bgp_keepalive_interval", bgpArg2)
-        if(value == "ok"):
-            command = command + bgpArg2
-        else:
-            retVal = "Error-191"
-            return retVal
-        if(bgpArg3 is not None):
-            value = checkSanityofVariable(deviceType, "bgp_holdtime", bgpArg3)
-            if(value == "ok"):
-                command = command + " " + bgpArg3
-            else:
-                retVal = "Error-192"
-                return retVal
-        else:
-            retVal = "Error-192"
-            return retVal
-
-    elif(bgpArg1 == "vrf"):
-        # debugOutput(bgpArg1)
-        command = command + bgpArg1 + " default"
-    else:
-        # debugOutput(bgpArg1)
-        retVal = "Error-192"
-        return retVal
-    command = command + "\n"
-    # debugOutput(command)
-    retVal = retVal + waitForDeviceResponse(command, prompt, timeout, obj)
-    # Come back to config mode
-    command = "exit \n"
-    # debugOutput(command)
-    retVal = retVal + waitForDeviceResponse(command, "(config)#", timeout, obj)
-
-    return retVal
-# EOM
-
-
-def vlanConfig(
-    obj, deviceType, prompt, timeout, vlanArg1, vlanArg2, vlanArg3,
-        vlanArg4, vlanArg5):
-
-    retVal = ""
-    # Wait time to get response from server
-    timeout = timeout
+    vlanArg1 = module.params['vlanArg1']
+    vlanArg2 = module.params['vlanArg2']
+    vlanArg3 = module.params['vlanArg3']
+    vlanArg4 = module.params['vlanArg4']
+    vlanArg5 = module.params['vlanArg5']
+    deviceType = module.params['deviceType']
     # vlan config command happens here.
-    command = "vlan "
+    command = 'vlan '
 
     if(vlanArg1 == "access-map"):
         # debugOutput("access-map ")
-        command = command + vlanArg1 + " "
+        command = command + vlanArg1 + ' '
         value = checkSanityofVariable(
             deviceType, "vlan_access_map_name", vlanArg2)
         if(value == "ok"):
-            command = command + vlanArg2 + " \n"
+            command = command + vlanArg2
             # debugOutput(command)
-            retVal = waitForDeviceResponse(
-                command, "(config-access-map)#", timeout, obj)
-            retVal = retVal + vlanAccessMapConfig(
-                obj, deviceType, "(config-access-map)#", timeout, vlanArg3,
-                vlanArg4, vlanArg5)
+            cmd = [{'command': command, 'prompt': None, 'answer': None}]
+            retVal = retVal + vlanAccessMapConfig(module, cmd)
             return retVal
         else:
             retVal = "Error-130"
@@ -2244,7 +1420,7 @@ def vlanConfig(
                     if(value == "ok"):
                         command = command + vlanArg3
                     else:
-                        retVal = "ERROR-133"
+                        retVal = "Error-133"
                     return retVal
             else:
                 retVal = "Error-132"
@@ -2253,37 +1429,34 @@ def vlanConfig(
     else:
         value = checkSanityofVariable(deviceType, "vlan_id", vlanArg1)
         if(value == "ok"):
-            retVal = createVlan(obj, deviceType, "(config-vlan)#",
-                                timeout, vlanArg1, vlanArg2, vlanArg3,
-                                vlanArg4, vlanArg5)
+            retVal = createVlan(module, '(config-vlan)#', None)
             return retVal
         else:
             value = checkSanityofVariable(
                 deviceType, "vlan_id_range", vlanArg1)
             if(value == "ok"):
-                retVal = createVlan(obj, deviceType, "(config-vlan)#",
-                                    timeout, vlanArg1, vlanArg2, vlanArg3,
-                                    vlanArg4, vlanArg5)
+                retVal = createVlan(module, '(config-vlan)#', None)
                 return retVal
             retVal = "Error-133"
             return retVal
 
     # debugOutput(command)
-    command = command + "\n"
-    # debugOutput(command)
-    retVal = retVal + waitForDeviceResponse(command, prompt, timeout, obj)
+    cmd = [{'command': command, 'prompt': None, 'answer': None}]
+    retVal = retVal + str(run_cnos_commands(module, cmd))
     return retVal
 # EOM
 
 
-def vlanAccessMapConfig(
-        obj, deviceType, prompt, timeout, vlanArg3, vlanArg4, vlanArg5):
-    retVal = ""
+def vlanAccessMapConfig(module, cmd):
+    retVal = ''
     # Wait time to get response from server
-    timeout = timeout
-    command = ""
+    command = ''
+    vlanArg3 = module.params['vlanArg3']
+    vlanArg4 = module.params['vlanArg4']
+    vlanArg5 = module.params['vlanArg5']
+    deviceType = module.params['deviceType']
     if(vlanArg3 == "action"):
-        command = command + vlanArg3 + " "
+        command = command + vlanArg3 + ' '
         value = checkSanityofVariable(
             deviceType, "vlan_accessmap_action", vlanArg4)
         if(value == "ok"):
@@ -2292,9 +1465,9 @@ def vlanAccessMapConfig(
             retVal = "Error-135"
             return retVal
     elif(vlanArg3 == "match"):
-        command = command + vlanArg3 + " "
+        command = command + vlanArg3 + ' '
         if(vlanArg4 == "ip" or vlanArg4 == "mac"):
-            command = command + vlanArg4 + " address "
+            command = command + vlanArg4 + ' address '
             value = checkSanityofVariable(
                 deviceType, "vlan_access_map_name", vlanArg5)
             if(value == "ok"):
@@ -2311,18 +1484,24 @@ def vlanAccessMapConfig(
         retVal = "Error-138"
         return retVal
 
-    command = command + "\n"
+    inner_cmd = [{'command': command, 'prompt': None, 'answer': None}]
+    cmd.extend(inner_cmd)
+    retVal = retVal + str(run_cnos_commands(module, cmd))
     # debugOutput(command)
-    retVal = retVal + waitForDeviceResponse(command, prompt, timeout, obj)
     return retVal
 # EOM
 
 
-def checkVlanNameNotAssigned(
-        obj, deviceType, prompt, timeout, vlanId, vlanName):
+def checkVlanNameNotAssigned(module, prompt, answer):
     retVal = "ok"
-    command = "display vlan id " + vlanId + " \n"
-    retVal = waitForDeviceResponse(command, prompt, timeout, obj)
+    vlanId = module.params['vlanArg1']
+    vlanName = module.params['vlanArg3']
+    command = "show vlan id " + vlanId
+    cmd = [{'command': command, 'prompt': None, 'answer': None}]
+    retVal = str(run_cnos_commands(module, cmd))
+    if(retVal.find('Error') != -1):
+        command = "display vlan id " + vlanId
+        retVal = str(run_cnos_commands(module, cmd))
     if(retVal.find(vlanName) != -1):
         return "Nok"
     else:
@@ -2331,25 +1510,30 @@ def checkVlanNameNotAssigned(
 
 
 # Utility Method to create vlan
-def createVlan(
-        obj, deviceType, prompt, timeout, vlanArg1, vlanArg2, vlanArg3,
-        vlanArg4, vlanArg5):
+def createVlan(module, prompt, answer):
 
     # vlan config command happens here. It creates if not present
-    command = "vlan " + vlanArg1 + "\n"
+    vlanArg1 = module.params['vlanArg1']
+    vlanArg2 = module.params['vlanArg2']
+    vlanArg3 = module.params['vlanArg3']
+    vlanArg4 = module.params['vlanArg4']
+    vlanArg5 = module.params['vlanArg5']
+    deviceType = module.params['deviceType']
+    retVal = ''
+    command = 'vlan ' + vlanArg1
     # debugOutput(command)
-    retVal = waitForDeviceResponse(command, prompt, timeout, obj)
+    cmd = [{'command': command, 'prompt': None, 'answer': None}]
     command = ""
     if(vlanArg2 == "name"):
         # debugOutput("name")
         command = vlanArg2 + " "
         value = checkSanityofVariable(deviceType, "vlan_name", vlanArg3)
         if(value == "ok"):
-            value = checkVlanNameNotAssigned(obj, deviceType, prompt, timeout,
-                                             vlanArg1, vlanArg3)
+            value = checkVlanNameNotAssigned(module, prompt, answer)
             if(value == "ok"):
                 command = command + vlanArg3
             else:
+                retVal = retVal + 'VLAN Name is already assigned \n'
                 command = "\n"
         else:
             retVal = "Error-139"
@@ -2470,13 +1654,6 @@ def createVlan(
                 retVal = "Error-149"
                 return retVal
         elif (vlanArg3 == "static-group"):
-            # debugOutput("static-group")
-            # command = command + vlanArg3 + " "
-            # value = checkSanityofVariable(deviceType, variableId, vlanArg4)
-            # if(value == "ok"):
-            #    command = command + vlanArg4
-
-            # else :
             retVal = "Error-102"
             return retVal
         elif (vlanArg3 == "version"):
@@ -2519,28 +1696,25 @@ def createVlan(
     else:
         retVal = "Error-154"
         return retVal
-    command = command + "\n"
+    inner_cmd = [{'command': command, 'prompt': None, 'answer': None}]
+    cmd.extend(inner_cmd)
+    retVal = retVal + str(run_cnos_commands(module, cmd))
     # debugOutput(command)
-    retVal = retVal + "\n" + \
-        waitForDeviceResponse(command, prompt, timeout, obj)
-    # Come back to config mode
-    command = "exit \n"
-    # debugOutput(command)
-    retVal = retVal + waitForDeviceResponse(command, "(config)#", timeout, obj)
-
     return retVal
 # EOM
 
 
-def vlagConfig(
-        obj, deviceType, prompt, timeout, vlagArg1, vlagArg2, vlagArg3,
-        vlagArg4):
+def vlagConfig(module, prompt, answer):
 
-    retVal = ""
-    # Wait time to get response from server
-    timeout = timeout
+    retVal = ''
     # vlag config command happens here.
-    command = "vlag "
+    command = 'vlag '
+
+    vlagArg1 = module.params['vlagArg1']
+    vlagArg2 = module.params['vlagArg2']
+    vlagArg3 = module.params['vlagArg3']
+    vlagArg4 = module.params['vlagArg4']
+    deviceType = module.params['deviceType']
 
     if(vlagArg1 == "enable"):
         # debugOutput("enable")
@@ -2570,7 +1744,7 @@ def vlagConfig(
 
     elif(vlagArg1 == "isl"):
         # debugOutput("isl")
-        command = command + vlagArg1 + " port-aggregation "
+        command = command + vlagArg1 + " port-channel "
         value = checkSanityofVariable(
             deviceType, "vlag_port_aggregation", vlagArg2)
         if(value == "ok"):
@@ -2629,7 +1803,7 @@ def vlagConfig(
         if(value == "ok"):
             command = command + vlagArg2
             if(vlagArg3 is not None):
-                command = command + " port-aggregation "
+                command = command + " port-channel "
                 value = checkSanityofVariable(
                     deviceType, "vlag_port_aggregation", vlagArg3)
                 if(value == "ok"):
@@ -2696,10 +1870,8 @@ def vlagConfig(
         return retVal
 
     # debugOutput(command)
-    command = command + "\n"
-    # debugOutput(command)
-    retVal = retVal + waitForDeviceResponse(command, "(config)#", timeout, obj)
-
+    cmd = [{'command': command, 'prompt': None, 'answer': None}]
+    retVal = retVal + str(run_cnos_commands(module, cmd))
     return retVal
 # EOM
 
@@ -2771,7 +1943,7 @@ def doSecureStartupConfigBackUp(
         username + "@" + server + "/" + confPath + " vrf management\n"
     # debugOutput(command)
     response = waitForDeviceResponse(command, "(yes/no)", 3, obj)
-    if(response.lower().find("error-101")):
+    if(response.lower().find('error-101')):
         command = password + "\n"
         retVal = retVal + waitForDeviceResponse(command, "#", timeout, obj)
         return retVal
@@ -2874,7 +2046,7 @@ def doSecureStartUpConfigRollback(
 
     # debugOutput(command)
     response = waitForDeviceResponse(command, "(yes/no)", 3, obj)
-    if(response.lower().find("error-101")):
+    if(response.lower().find('error-101')):
         command = password + "\n"
         retVal = retVal + waitForDeviceResponse(command, "[n]", timeout, obj)
         command = "y\n"
@@ -2972,7 +2144,7 @@ def doSecureRunningConfigBackUp(
         username + "@" + server + "/" + confPath + " vrf management\n"
     # debugOutput(command)
     response = waitForDeviceResponse(command, "(yes/no)", 3, obj)
-    if(response.lower().find("error-101")):
+    if(response.lower().find('error-101')):
         command = password + "\n"
         retVal = retVal + waitForDeviceResponse(command, "#", timeout, obj)
         return retVal
@@ -3071,7 +2243,7 @@ def doSecureRunningConfigRollback(
 
     # debugOutput(command)
     response = waitForDeviceResponse(command, "(yes/no)", 3, obj)
-    if(response.lower().find("error-101")):
+    if(response.lower().find('error-101')):
         command = password + "\n"
         retVal = retVal + waitForDeviceResponse(command, "#", timeout, obj)
         return retVal
@@ -3135,7 +2307,7 @@ def doImageTransfer(
         return "Error-110"
     # debugOutput(command)
     response = waitForDeviceResponse(command, "[n]", 3, obj)
-    if(response.lower().find("error-101")):
+    if(response.lower().find('error-101')):
         retVal = retVal
     else:
         retVal = retVal + response
@@ -3185,7 +2357,7 @@ def doSecureImageTransfer(
         server + "/" + imgPath + " system-image " + type + " vrf management \n"
     # debugOutput(command)
     response = waitForDeviceResponse(command, "[n]", 3, obj)
-    if(response.lower().find("error-101")):
+    if(response.lower().find('error-101')):
         retVal = retVal
     else:
         retVal = retVal + response
@@ -3194,7 +2366,7 @@ def doSecureImageTransfer(
         command = "y\n"
         # debugOutput(command)
         response = waitForDeviceResponse(command, "(yes/no)?", 3, obj)
-        if(response.lower().find("error-101")):
+        if(response.lower().find('error-101')):
             retVal = retVal
         else:
             retVal = retVal + response
@@ -3208,7 +2380,7 @@ def doSecureImageTransfer(
         command = "y\n"
         # debugOutput(command)
         response = waitForDeviceResponse(command, "(yes/no)?", 3, obj)
-        if(response.lower().find("error-101")):
+        if(response.lower().find('error-101')):
             retVal = retVal
         else:
             retVal = retVal + response
@@ -3320,19 +2492,19 @@ def waitForDeviceResponse(command, prompt, timeout, obj):
 
 def checkOutputForError(output):
     retVal = ""
-    index = output.lower().find("error")
+    index = output.lower().find('error')
     startIndex = index + 6
     if(index == -1):
-        index = output.lower().find("invalid")
+        index = output.lower().find('invalid')
         startIndex = index + 8
         if(index == -1):
-            index = output.lower().find("cannot be enabled in l2 interface")
+            index = output.lower().find('cannot be enabled in l2 interface')
             startIndex = index + 34
             if(index == -1):
-                index = output.lower().find("incorrect")
+                index = output.lower().find('incorrect')
                 startIndex = index + 10
                 if(index == -1):
-                    index = output.lower().find("failure")
+                    index = output.lower().find('failure')
                     startIndex = index + 8
                     if(index == -1):
                         return None
@@ -3580,7 +2752,7 @@ def validateValueAgainstRule(ruleString, variableValue):
         try:
             socket.inet_pton(socket.AF_INET, variableValue)
             result = True
-        except socket.Error:
+        except socket.error:
             result = False
         if(result is True):
             return "ok"
@@ -3598,7 +2770,7 @@ def validateValueAgainstRule(ruleString, variableValue):
                 result = True
             else:
                 result = False
-        except socket.Error:
+        except socket.error:
             result = False
         if(result is True):
             return "ok"
@@ -3609,7 +2781,7 @@ def validateValueAgainstRule(ruleString, variableValue):
         try:
             socket.inet_pton(socket.AF_INET6, variableValue)
             result = True
-        except socket.Error:
+        except socket.error:
             result = False
         if(result is True):
             return "ok"
@@ -3657,7 +2829,7 @@ def checkLong(s):
 
 
 def debugOutput(command):
-    f = open('debugOuput.txt', 'a')
+    f = open('debugOutput.txt', 'a')
     f.write(str(command))  # python will convert \n to os.linesep
     f.close()  # you can omit in most cases as the destructor will call it
 # EOM

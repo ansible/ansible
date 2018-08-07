@@ -12,6 +12,7 @@
   nxos_command:
     commands:
       - show version
+    provider: "{{ connection }}"
 
 # hit to_list()
 - name: setup

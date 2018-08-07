@@ -50,7 +50,7 @@ options:
             - ' - C(type) (string): Type of IP assignment (either C(dhcp) or C(static)).'
             - 'Following parameters are required in case of C(type) is set to C(static)'
             - ' - C(ip_address) (string): Static IP address (implies C(type: static)).'
-            - ' - C(netmask) (string): Static netmask required for C(ip).'
+            - ' - C(subnet_mask) (string): Static netmask required for C(ip).'
         version_added: 2.5
     ip_address:
         description:
@@ -128,6 +128,7 @@ EXAMPLES = '''
         subnet_mask: 255.255.255.0
       state: present
       enable_mgmt: True
+   delegate_to: localhost
 
 -  name: Add Management vmkernel port using DHCP network type
    vmware_vmkernel:
@@ -141,6 +142,7 @@ EXAMPLES = '''
       network:
         type: 'dhcp'
       enable_mgmt: True
+   delegate_to: localhost
 
 -  name: Delete VMkernel port using DHCP network type
    vmware_vmkernel:
@@ -151,7 +153,7 @@ EXAMPLES = '''
       portgroup_name: PG_0002
       vlan_id: vlan_id
       state: absent
-
+   delegate_to: localhost
 '''
 
 RETURN = r'''

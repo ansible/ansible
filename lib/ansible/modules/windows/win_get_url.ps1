@@ -1,7 +1,7 @@
 #!powershell
-# This file is part of Ansible.
-#
-# Copyright: (c) 2015, Paul Durivage <paul.durivage@rackspace.com>, Tal Auslander <tal@cloudshare.com>
+
+# Copyright: (c) 2015, Paul Durivage <paul.durivage@rackspace.com>
+# Copyright: (c) 2015, Tal Auslander <tal@cloudshare.com>
 # Copyright: (c) 2017, Dag Wieers <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -9,6 +9,9 @@
 
 $ErrorActionPreference = 'Stop'
 
+$params = Parse-Args $args -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
+$_remote_tmp = Get-AnsibleParam $params "_ansible_remote_tmp" -type "path" -default $env:TMP
 
 $webclient_util = @"
     using System.Net;
@@ -26,7 +29,10 @@ $webclient_util = @"
         }
     }
 "@
+$original_tmp = $env:TMP
+$env:TMP = $_remote_tmp
 Add-Type -TypeDefinition $webclient_util
+$env:TMP = $original_tmp
 
 
 Function CheckModified-File($url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy) {
@@ -53,9 +59,9 @@ Function CheckModified-File($url, $dest, $headers, $credentials, $timeout, $use_
 
     if ($credentials) {
         if ($force_basic_auth) {
-            $extWebClient.Headers.Add("Authorization","Basic $credentials")
+            $webRequest.Headers.Add("Authorization", "Basic $credentials")
         } else {
-            $extWebClient.Credentials = $credentials
+            $webRequest.Credentials = $credentials
         }
     }
 
@@ -137,10 +143,6 @@ Function Download-File($result, $url, $dest, $headers, $credentials, $timeout, $
     $result.msg = 'OK'
     $result.dest = $dest
 }
-
-
-$params = Parse-Args $args -supports_check_mode $true
-$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
 $url = Get-AnsibleParam -obj $params -name "url" -type "str" -failifempty $true
 $dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true

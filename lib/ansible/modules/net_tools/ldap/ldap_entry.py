@@ -110,7 +110,7 @@ import traceback
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_bytes
 from ansible.module_utils.ldap import LdapGeneric, gen_specs
 
 try:
@@ -145,9 +145,9 @@ class LdapEntry(LdapGeneric):
                 attrs[name] = []
 
             if isinstance(value, list):
-                attrs[name] = value
+                attrs[name] = [map(to_bytes, value)]
             else:
-                attrs[name].append(str(value))
+                attrs[name].append(to_bytes(value))
 
         return attrs
 

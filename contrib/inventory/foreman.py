@@ -229,10 +229,6 @@ class ForemanInventory(object):
 
         return params
 
-    def _get_facts_by_id(self, hid):
-        url = "%s/api/v2/hosts/%s/facts" % (self.foreman_url, hid)
-        return self._get_json(url)
-
     def _get_facts(self, host):
         """Fetch all host facts of the host"""
         if not self.want_facts:
@@ -439,6 +435,7 @@ class ForemanInventory(object):
         self.get_inventory()
         self._print_data()
         return True
+
 
 if __name__ == '__main__':
     sys.exit(not ForemanInventory().run())

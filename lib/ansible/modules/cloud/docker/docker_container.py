@@ -37,6 +37,10 @@ options:
   capabilities:
     description:
       - List of capabilities to add to the container.
+  cap_drop:
+    description:
+      - List of capabilities to drop from the container.
+    version_added: "2.7"
   cleanup:
     description:
       - Use with I(detach=false) to remove the container after successful execution.
@@ -96,7 +100,6 @@ options:
     description:
       - Path to a file containing environment variables I(FOO=BAR).
       - If variable also present in C(env), then C(env) value will override.
-      - Requires docker-py >= 1.4.0.
   entrypoint:
     description:
       - Command that overwrites the default ENTRYPOINT of the image.
@@ -139,6 +142,13 @@ options:
     description:
       - Repository path and tag used to create the container. If an image is not found or pull is true, the image
         will be pulled from the registry. If no tag is included, 'latest' will be used.
+  init:
+    description:
+      - Run an init inside the container that forwards signals and reaps processes.
+        This option requires Docker API 1.25+.
+    type: bool
+    default: 'no'
+    version_added: "2.6"
   interactive:
     description:
       - Keep stdin open after a container is launched, even if not attached.
@@ -166,7 +176,8 @@ options:
        - Dictionary of key value pairs.
   links:
     description:
-      - List of name aliases for linked containers in the format C(container_name:alias)
+      - List of name aliases for linked containers in the format C(container_name:alias).
+      - Setting this will force container to be restarted.
   log_driver:
     description:
       - Specify the logging driver. Docker uses json-file by default.
@@ -238,6 +249,12 @@ options:
       - An integer value containing the score given to the container in order to tune OOM killer preferences.
     default: 0
     version_added: "2.2"
+  output_logs:
+    description:
+      - If set to true, output of the container command will be printed (only effective when log_driver is set to json-file or journald.
+    type: bool
+    default: 'no'
+    version_added: "2.7"
   paused:
     description:
       - Use with the started state to pause running processes inside the container.
@@ -408,6 +425,12 @@ author:
 requirements:
     - "python >= 2.6"
     - "docker-py >= 1.7.0"
+    - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
+       module has been superseded by L(docker,https://pypi.org/project/docker/)
+       (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
+       For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
+       install the C(docker) Python module. Note that both modules should I(not)
+       be installed at the same time."
     - "Docker API >= 1.20"
 '''
 
@@ -542,6 +565,15 @@ EXAMPLES = '''
     name: sleepy
     purge_networks: yes
 
+- name: Create a container with limited capabilities
+  docker_container:
+    name: sleepy
+    image: ubuntu:16.04
+    command: sleep infinity
+    capabilities:
+      - sys_time
+    cap_drop:
+      - all
 '''
 
 RETURN = '''
@@ -591,6 +623,7 @@ docker_container:
 import os
 import re
 import shlex
+from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import human_to_bytes
 from ansible.module_utils.docker_common import HAS_DOCKER_PY_2, HAS_DOCKER_PY_3, AnsibleDockerClient, DockerBaseClass
@@ -602,6 +635,7 @@ try:
         from docker.types import Ulimit, LogConfig
     else:
         from docker.utils.types import Ulimit, LogConfig
+    from ansible.module_utils.docker_common import docker_version
 except:
     # missing docker-py handled in ansible.module_utils.docker
     pass
@@ -629,6 +663,7 @@ class TaskParameters(DockerBaseClass):
         self.auto_remove = None
         self.blkio_weight = None
         self.capabilities = None
+        self.cap_drop = None
         self.cleanup = None
         self.command = None
         self.cpu_period = None
@@ -653,6 +688,7 @@ class TaskParameters(DockerBaseClass):
         self.hostname = None
         self.ignore_image = None
         self.image = None
+        self.init = None
         self.interactive = None
         self.ipc_mode = None
         self.keep_volumes = None
@@ -661,6 +697,7 @@ class TaskParameters(DockerBaseClass):
         self.labels = None
         self.links = None
         self.log_driver = None
+        self.output_logs = None
         self.log_options = None
         self.mac_address = None
         self.memory = None
@@ -829,14 +866,14 @@ class TaskParameters(DockerBaseClass):
             if ':' in vol:
                 if len(vol.split(':')) == 3:
                     host, container, mode = vol.split(':')
-                    if re.match(r'[\.~]', host):
-                        host = os.path.abspath(host)
+                    if re.match(r'[.~]', host):
+                        host = os.path.abspath(os.path.expanduser(host))
                     new_vols.append("%s:%s:%s" % (host, container, mode))
                     continue
                 elif len(vol.split(':')) == 2:
                     parts = vol.split(':')
-                    if parts[1] not in VOLUME_PERMISSIONS and re.match(r'[\.~]', parts[0]):
-                        host = os.path.abspath(parts[0])
+                    if parts[1] not in VOLUME_PERMISSIONS and re.match(r'[.~]', parts[0]):
+                        host = os.path.abspath(os.path.expanduser(parts[0]))
                         new_vols.append("%s:%s:rw" % (host, parts[1]))
                         continue
             new_vols.append(vol)
@@ -882,6 +919,7 @@ class TaskParameters(DockerBaseClass):
             network_mode='network_mode',
             userns_mode='userns_mode',
             cap_add='capabilities',
+            cap_drop='cap_drop',
             extra_hosts='etc_hosts',
             read_only='read_only',
             ipc_mode='ipc_mode',
@@ -898,10 +936,10 @@ class TaskParameters(DockerBaseClass):
             group_add='groups',
             devices='devices',
             pid_mode='pid_mode',
-            tmpfs='tmpfs'
+            tmpfs='tmpfs',
         )
 
-        if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
+        if self.client.HAS_AUTO_REMOVE_OPT:
             # auto_remove is only supported in docker>=2
             host_config_params['auto_remove'] = 'auto_remove'
 
@@ -909,6 +947,9 @@ class TaskParameters(DockerBaseClass):
             # cpu_shares and volume_driver moved to create_host_config in > 3
             host_config_params['cpu_shares'] = 'cpu_shares'
             host_config_params['volume_driver'] = 'volume_driver'
+
+        if self.client.HAS_INIT_OPT:
+            host_config_params['init'] = 'init'
 
         params = dict()
         for key, value in host_config_params.items():
@@ -1022,6 +1063,8 @@ class TaskParameters(DockerBaseClass):
                     protocol = 'tcp'
                     port = int(publish_port)
                 for exposed_port in exposed:
+                    if exposed_port[1] != protocol:
+                        continue
                     if isinstance(exposed_port[0], string_types) and '-' in exposed_port[0]:
                         start_port, end_port = exposed_port[0].split('-')
                         if int(start_port) <= port <= int(end_port):
@@ -1213,7 +1256,7 @@ class Container(DockerBaseClass):
 
         # "ExposedPorts": null returns None type & causes AttributeError - PR #5517
         if config.get('ExposedPorts') is not None:
-            expected_exposed = [re.sub(r'/.+$', '', p) for p in config.get('ExposedPorts', dict()).keys()]
+            expected_exposed = [self._normalize_port(p) for p in config.get('ExposedPorts', dict()).keys()]
         else:
             expected_exposed = []
 
@@ -1628,10 +1671,10 @@ class Container(DockerBaseClass):
         self.log('_get_expected_exposed')
         image_ports = []
         if image:
-            image_ports = [re.sub(r'/.+$', '', p) for p in (image['ContainerConfig'].get('ExposedPorts') or {}).keys()]
+            image_ports = [self._normalize_port(p) for p in (image['ContainerConfig'].get('ExposedPorts') or {}).keys()]
         param_ports = []
         if self.parameters.ports:
-            param_ports = [str(p[0]) for p in self.parameters.ports]
+            param_ports = [str(p[0]) + '/' + p[1] for p in self.parameters.ports]
         result = list(set(image_ports + param_ports))
         self.log(result, pretty_print=True)
         return result
@@ -1672,6 +1715,11 @@ class Container(DockerBaseClass):
             results.append("%s%s%s" % (key, join_with, value))
         return results
 
+    def _normalize_port(self, port):
+        if '/' not in port:
+            return port + '/tcp'
+        return port
+
 
 class ContainerManager(DockerBaseClass):
     '''
@@ -1706,32 +1754,36 @@ class ContainerManager(DockerBaseClass):
 
     def present(self, state):
         container = self._get_container(self.parameters.name)
-        image = self._get_image()
-        self.log(image, pretty_print=True)
-        if not container.exists:
-            # New container
-            self.log('No container found')
-            new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
-            if new_container:
-                container = new_container
-        else:
-            # Existing container
-            different, differences = container.has_different_configuration(image)
-            image_different = False
-            if not self.parameters.ignore_image:
-                image_different = self._image_is_different(image, container)
-            if image_different or different or self.parameters.recreate:
-                self.diff['differences'] = differences
-                if image_different:
-                    self.diff['image_different'] = True
-                self.log("differences")
-                self.log(differences, pretty_print=True)
-                if container.running:
-                    self.container_stop(container.Id)
-                self.container_remove(container.Id)
+
+        # If the image parameter was passed then we need to deal with the image
+        # version comparison, otherwise we should not care
+        if self.parameters.image:
+            image = self._get_image()
+            self.log(image, pretty_print=True)
+            if not container.exists:
+                # New container
+                self.log('No container found')
                 new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
                 if new_container:
                     container = new_container
+            else:
+                # Existing container
+                different, differences = container.has_different_configuration(image)
+                image_different = False
+                if not self.parameters.ignore_image:
+                    image_different = self._image_is_different(image, container)
+                if image_different or different or self.parameters.recreate:
+                    self.diff['differences'] = differences
+                    if image_different:
+                        self.diff['image_different'] = True
+                    self.log("differences")
+                    self.log(differences, pretty_print=True)
+                    if container.running:
+                        self.container_stop(container.Id)
+                    self.container_remove(container.Id)
+                    new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
+                    if new_container:
+                        container = new_container
 
         if container and container.exists:
             container = self.update_limits(container)
@@ -1757,6 +1809,9 @@ class ContainerManager(DockerBaseClass):
 
     def fail(self, msg, **kwargs):
         self.client.module.fail_json(msg=msg, **kwargs)
+
+    def _output_logs(self, msg):
+        self.client.module.log(msg=msg)
 
     def _get_container(self, container):
         '''
@@ -1898,6 +1953,8 @@ class ContainerManager(DockerBaseClass):
 
                 if logging_driver == 'json-file' or logging_driver == 'journald':
                     output = self.client.logs(container_id, stdout=True, stderr=True, stream=False, timestamps=False)
+                    if self.parameters.output_logs:
+                        self._output_logs(msg=output)
                 else:
                     output = "Result logged using `%s` driver" % logging_driver
 
@@ -1971,11 +2028,33 @@ class ContainerManager(DockerBaseClass):
         return response
 
 
+class AnsibleDockerClientContainer(AnsibleDockerClient):
+
+    def __init__(self, **kwargs):
+        super(AnsibleDockerClientContainer, self).__init__(**kwargs)
+
+        docker_api_version = self.version()['ApiVersion']
+        init_supported = LooseVersion(docker_api_version) >= LooseVersion('1.25')
+        if self.module.params.get("init") and not init_supported:
+            self.fail('docker API version is %s. Minimum version required is 1.25 to set init option.' % (docker_api_version,))
+
+        init_supported = init_supported and LooseVersion(docker_version) >= LooseVersion('2.2')
+        if self.module.params.get("init") and not init_supported:
+            self.fail("docker or docker-py version is %s. Minimum version required is 2.2 to set init option. "
+                      "If you use the 'docker-py' module, you have to switch to the docker 'Python' package." % (docker_version,))
+
+        self.HAS_INIT_OPT = init_supported
+        self.HAS_AUTO_REMOVE_OPT = HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3
+        if self.module.params.get('auto_remove') and not self.HAS_AUTO_REMOVE_OPT:
+            self.fail("'auto_remove' is not compatible with the 'docker-py' Python package. It requires the newer 'docker' Python package.")
+
+
 def main():
     argument_spec = dict(
         auto_remove=dict(type='bool', default=False),
         blkio_weight=dict(type='int'),
         capabilities=dict(type='list'),
+        cap_drop=dict(type='list'),
         cleanup=dict(type='bool', default=False),
         command=dict(type='raw'),
         cpu_period=dict(type='int'),
@@ -1999,6 +2078,7 @@ def main():
         hostname=dict(type='str'),
         ignore_image=dict(type='bool', default=False),
         image=dict(type='str'),
+        init=dict(type='bool', default=False),
         interactive=dict(type='bool', default=False),
         ipc_mode=dict(type='str'),
         keep_volumes=dict(type='bool', default=True),
@@ -2021,6 +2101,7 @@ def main():
         networks=dict(type='list'),
         oom_killer=dict(type='bool'),
         oom_score_adj=dict(type='int'),
+        output_logs=dict(type='bool', default=False),
         paused=dict(type='bool', default=False),
         pid_mode=dict(type='str'),
         privileged=dict(type='bool', default=False),
@@ -2054,14 +2135,11 @@ def main():
         ('state', 'present', ['image'])
     ]
 
-    client = AnsibleDockerClient(
+    client = AnsibleDockerClientContainer(
         argument_spec=argument_spec,
         required_if=required_if,
         supports_check_mode=True
     )
-
-    if (not (HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3)) and client.module.params.get('auto_remove'):
-        client.module.fail_json(msg="'auto_remove' is not compatible with the 'docker-py' Python package. It requires the newer 'docker' Python package.")
 
     cm = ContainerManager(client)
     client.module.exit_json(**cm.results)

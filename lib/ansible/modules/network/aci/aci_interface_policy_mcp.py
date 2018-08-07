@@ -35,8 +35,8 @@ options:
   admin_state:
     description:
     - Enable or disable admin state.
-    - The APIC defaults to C(enable) when unset during creation.
-    choices: [ disable, enable ]
+    - The APIC defaults to C(yes) when unset during creation.
+    type: bool
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.

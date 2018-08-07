@@ -6,7 +6,6 @@
 - name: configure with invalid src
   ios_config:
     src: basic/foobar.j2
-    provider: "{{ cli }}"
   register: result
   ignore_errors: yes
 

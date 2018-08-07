@@ -68,6 +68,26 @@ class PkgMgrFactCollector(BaseFactCollector):
     name = 'pkg_mgr'
     _fact_ids = set()
     _platform = 'Generic'
+    required_facts = set(['distribution'])
+
+    def _check_rh_versions(self, pkg_mgr_name, collected_facts):
+        if collected_facts['ansible_distribution'] == 'Fedora':
+            try:
+                if int(collected_facts['ansible_distribution_major_version']) < 23:
+                    for yum in [pkg_mgr for pkg_mgr in PKG_MGRS if pkg_mgr['name'] == 'yum']:
+                        if os.path.exists(yum['path']):
+                            pkg_mgr_name = 'yum'
+                            break
+                else:
+                    for dnf in [pkg_mgr for pkg_mgr in PKG_MGRS if pkg_mgr['name'] == 'dnf']:
+                        if os.path.exists(dnf['path']):
+                            pkg_mgr_name = 'dnf'
+                            break
+            except ValueError:
+                # If there's some new magical Fedora version in the future,
+                # just default to dnf
+                pkg_mgr_name = 'dnf'
+        return pkg_mgr_name
 
     def collect(self, module=None, collected_facts=None):
         facts_dict = {}
@@ -77,6 +97,22 @@ class PkgMgrFactCollector(BaseFactCollector):
         for pkg in PKG_MGRS:
             if os.path.exists(pkg['path']):
                 pkg_mgr_name = pkg['name']
+
+        # Handle distro family defaults when more than one package manager is
+        # installed, the ansible_fact entry should be the default package
+        # manager provided by the distro.
+        if collected_facts['ansible_os_family'] == "RedHat":
+            if pkg_mgr_name not in ('yum', 'dnf'):
+                pkg_mgr_name = self._check_rh_versions(pkg_mgr_name, collected_facts)
+        elif collected_facts['ansible_os_family'] == 'Altlinux':
+            if pkg_mgr_name == 'apt':
+                pkg_mgr_name = 'apt_rpm'
+
+        # pacman has become available by distros other than those that are Arch
+        # based by virtue of a dependency to the systemd mkosi project, this
+        # handles some of those scenarios as they are reported/requested
+        if pkg_mgr_name == 'pacman' and collected_facts['ansible_os_family'] in ["RedHat"]:
+            pkg_mgr_name = self._check_rh_versions(collected_facts)
 
         facts_dict['pkg_mgr'] = pkg_mgr_name
         return facts_dict
