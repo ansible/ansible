@@ -78,9 +78,9 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = r'''
 - name: Change virtual machine's boot order and related parameters
   vmware_guest_boot_manager:
-    hostname: "{{ vcenter_server }}"
-    username: "{{ vcenter_user }}"
-    password: "{{ vcenter_pass }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: testvm
     boot_delay: 2000
     enter_bios_setup: True
