@@ -1,0 +1,26 @@
+Person
+  name: "job ngugi"
+  Occupation: 'Devops'
+  Age: !! float 40
+  GPA: 4.0
+  Fav_num:1e+10
+  Male: True
+  Birthday: 1970-01-01
+  Flaws: null
+  hobbies: ["soccer", "music", "hunting", "snockering"]
+  Description: >
+  I love soccer and music.
+  mombasa my best destination,
+  I want to be a teacher when I grow up,
+  I live in Cananda,
+  I work for the CIA,
+  I love my job but hate my pay,
+  Signature: |
+    job ngugi
+    Engineer academy
+    email-jobsimlaw@gmail.com
+   
+  
+  
+  
+  
