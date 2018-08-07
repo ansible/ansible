@@ -88,7 +88,7 @@
     url: "http://{{ acme_host }}:5000/tls-alpn/{{ item.value['tls-alpn-01'].resource }}"
     method: PUT
     body_format: raw
-    body: "{{ item.value['tls-alpn-01'].resource_value | b64encode }}"
+    body: "{{ item.value['tls-alpn-01'].resource_value }}"
     headers:
       content-type: "application/octet-stream"
   with_dict: "{{ challenge_data.challenge_data }}"
