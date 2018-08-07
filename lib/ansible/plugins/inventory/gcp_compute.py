@@ -60,11 +60,21 @@ projects:
 filters:
   - machineType = n1-standard-1
   - scheduling.automaticRestart = true AND machineType = n1-standard-1
-
 scopes:
   - https://www.googleapis.com/auth/compute
 service_account_file: /tmp/service_account.json
 auth_kind: serviceaccount
+keyed_groups:
+  # Create groups from GCE labels
+  - prefix: gcp
+    key: labels
+hostnames:
+  # List host by name instead of the default public ip
+  - name
+compose:
+  # Set an inventory parameter to use the Public IP address to connect to the host
+  # For Private ip use "networkInterfaces[0].networkIP"
+  ansible_host: networkInterfaces[0].accessConfigs[0].natIP
 '''
 
 from ansible.errors import AnsibleError, AnsibleParserError
