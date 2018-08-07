@@ -15,17 +15,17 @@ DOCUMENTATION = '''
 ---
 module: rds
 version_added: "1.3"
-short_description: create, delete, or modify an Amazon rds instance
+short_description: create, delete, start, stop or modify an Amazon rds instance
 description:
-     - Creates, deletes, or modifies rds instances.  When creating an instance it can be either a new instance or a read-only replica of an existing
-       instance. This module has a dependency on python-boto >= 2.5. The 'promote' command requires boto >= 2.18.0. Certain features such as tags rely
-       on boto.rds2 (boto >= 2.26.0)
+     - Creates, deletes, starts, stops or modifies rds instances.  When creating an instance it can be either a new instance or a read-only replica of an
+       existing instance. This module has a dependency on python-boto >= 2.5. The 'promote' command requires boto >= 2.18.0. Certain features such as tags rely
+       on boto.rds2 (boto >= 2.26.0). Start and stop rely on boto3.
 options:
   command:
     description:
-      - Specifies the action to take. The 'reboot' option is available starting at version 2.0
+      - Specifies the action to take. The 'reboot' option is available starting at version 2.0. Start and stop is available since version 2.7.
     required: true
-    choices: [ 'create', 'replicate', 'delete', 'facts', 'modify' , 'promote', 'snapshot', 'reboot', 'restore' ]
+    choices: [ 'create', 'replicate', 'delete', 'facts', 'modify' , 'promote', 'snapshot', 'reboot', 'restore', 'started', 'stopped' ]
   instance_name:
     description:
       - Database instance identifier. Required except when using command=facts or command=delete on just a snapshot
@@ -43,7 +43,8 @@ options:
       - Size in gigabytes of the initial storage for the DB instance. Used only when command=create or command=modify.
   instance_type:
     description:
-      - The instance type of the database.  Must be specified when command=create. Optional when command=replicate, command=modify or command=restore.
+      - The instance type of the database.  Must be specified when command=create, started or stopped.
+        Optional when command=replicate, command=modify or command=restore.
         If not specified then the replica inherits the same instance type as the source instance.
   username:
     description:
@@ -227,6 +228,11 @@ EXAMPLES = '''
     command: reboot
     instance_name: database
     wait: yes
+
+# Start a stop database instance
+- rds:
+    command: started
+    instance_name: database
 
 # Restore a Postgres db instance from a snapshot, wait for it to become available again, and
 #  then modify it to add your security group. Also, display the new endpoint.
@@ -469,6 +475,11 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import AWSRetry
 from ansible.module_utils.ec2 import HAS_BOTO, connect_to_aws, ec2_argument_spec, get_aws_connection_info
 
+from ansible.module_utils.ec2 import boto3_conn, HAS_BOTO3
+
+if HAS_BOTO3:
+    from botocore.exceptions import ClientError, ValidationError
+
 
 DEFAULT_PORTS = {
     'aurora': 3306,
@@ -681,6 +692,53 @@ class RDS2Connection:
             return RDS2DBInstance(result)
         except boto.exception.BotoServerError as e:
             raise RDSException(e)
+
+
+class BOTO3Connection(object):
+    def __init__(self, module):
+        self.module = module
+
+        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(self.module, boto3=True)
+
+        try:
+            self.client = boto3_conn(module, conn_type='client', resource='rds', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+        except (ClientError, ValidationError) as e:
+            self.module.fail_json_aws(e, msg="Trying to connect to AWS")
+
+    def start_db_instance(self, instance_name):
+        state = self.get_db_state(instance_name=instance_name)
+        if state in ['available', 'starting']:
+            changed = False
+        else:
+            self.client.start_db_instance(DBInstanceIdentifier=instance_name)
+            changed = True
+
+        return changed
+
+    def stop_db_instance(self, instance_name):
+        state = self.get_db_state(instance_name=instance_name)
+        if state in ['stopped', 'stopping']:
+            changed = False
+        else:
+            self.client.stop_db_instance(DBInstanceIdentifier=instance_name)
+            changed = True
+
+        return changed
+
+    def describe_db_instance(self, instance_name):
+        try:
+            response = self.client.describe_db_instances(DBInstanceIdentifier=instance_name)
+        except self.client.exceptions.DBInstanceNotFoundFault:
+            self.module.fail_json(msg='database %s not found' % instance_name)
+        except ClientError as e:
+            self.module.fail_json(ex=e)
+        else:
+            return response['DBInstances'][0]
+
+    def get_db_state(self, instance_name):
+        # a list of states can be found here: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.DBInstance.Status.html
+        state = self.describe_db_instance(instance_name=instance_name)['DBInstanceStatus']
+        return state
 
 
 class RDSDBInstance:
@@ -1161,6 +1219,28 @@ def restore_db_instance(module, conn):
     module.exit_json(changed=changed, instance=resource.get_data())
 
 
+def start_db_instance(module, conn):
+    required_vars = ['instance_name']
+    valid_vars = []
+    validate_parameters(required_vars, valid_vars, module)
+    instance_name = module.params.get('instance_name')
+
+    changed = conn.start_db_instance(instance_name)
+
+    module.exit_json(changed=changed)
+
+
+def stop_db_instance(module, conn):
+    required_vars = ['instance_name']
+    valid_vars = []
+    validate_parameters(required_vars, valid_vars, module)
+    instance_name = module.params.get('instance_name')
+
+    changed = conn.stop_db_instance(instance_name)
+
+    module.exit_json(changed=changed)
+
+
 def validate_parameters(required_vars, valid_vars, module):
     command = module.params.get('command')
     for v in required_vars:
@@ -1248,7 +1328,8 @@ def validate_parameters(required_vars, valid_vars, module):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        command=dict(choices=['create', 'replicate', 'delete', 'facts', 'modify', 'promote', 'snapshot', 'reboot', 'restore'], required=True),
+        command=dict(choices=['create', 'replicate', 'delete', 'facts', 'modify', 'promote', 'snapshot', 'reboot', 'restore', 'started', 'stopped'],
+                     required=True),
         instance_name=dict(required=False),
         source_instance=dict(required=False),
         db_engine=dict(choices=['mariadb', 'MySQL', 'oracle-se1', 'oracle-se2', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex',
@@ -1292,6 +1373,9 @@ def main():
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
 
+    if module.params.get('command') in ['started', 'stopped'] and not HAS_BOTO3:
+        module.fail_json(msg='boto3 required for the command started and stopped')
+
     invocations = {
         'create': create_db_instance,
         'replicate': replicate_db_instance,
@@ -1302,6 +1386,8 @@ def main():
         'snapshot': snapshot_db_instance,
         'reboot': reboot_db_instance,
         'restore': restore_db_instance,
+        'started': start_db_instance,
+        'stopped': stop_db_instance,
     }
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
@@ -1317,7 +1403,9 @@ def main():
         module.params['port'] = DEFAULT_PORTS[engine.lower()]
 
     # connect to the rds endpoint
-    if HAS_RDS2:
+    if module.params.get('command') in ['started', 'stopped']:
+        conn = BOTO3Connection(module)
+    elif HAS_RDS2:
         conn = RDS2Connection(module, region, **aws_connect_params)
     else:
         conn = RDSConnection(module, region, **aws_connect_params)
