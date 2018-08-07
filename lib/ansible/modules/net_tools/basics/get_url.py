@@ -433,7 +433,10 @@ def main():
     # checksum specified, parse for algorithm and checksum
     if checksum:
         try:
-            algorithm, checksum = checksum.rsplit(':', 1)
+            algorithm, checksum = checksum.split(':', 1)
+            if checksum.startswith('http://') or checksum.startswith('https://') or checksum.startswith('ftp://'):
+                module.fail_json(msg="waiting to implement!!!")
+
             # Remove any non-alphanumeric characters, including the infamous
             # Unicode zero-width space
             checksum = re.sub(r'\W+', '', checksum).lower()
