@@ -3,7 +3,7 @@
 Module Format and Documentation
 ===============================
 
-Ansible requires a particular format for modules. Every module should begin with a shebang (``#! /usr/bin/python`` or the equivalent if you're developing in another language), followed by these six sections in this order:
+If you want to contribute your module to Ansible Core, you must follow our required format for modules. Every module must begin with a shebang (``#! /usr/bin/python``), followed by six standard sections in a particular order, followed by the code. The six standard sections, in order:
 
 1. :ref:`Copyright and License <copyright>`
 2. :ref:`ANSIBLE_METADATA <ansible_metadata_block>`
@@ -221,7 +221,6 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
   * Details of any important information that doesn't fit in one of the above sections.
   * For example if ``check_mode`` isn't supported, or a link to external documentation.
 
-
 Linking within module documentation
 -----------------------------------
 
@@ -275,35 +274,18 @@ Otherwise, for each value returned, provide the following fields. All fields are
   :description:
     Detailed description of what this value represents.
   :returned:
-    When this value is returned, such as ``always``, or ``on success``
+    When this value is returned, such as ``always``, or ``on success``.
   :type:
-    Data type
+    Data type.
   :sample:
     One or more examples.
   :version_added:
     Only needed if this return was extended after initial Ansible release, i.e. this is greater than the top level `version_added` field.
     This is a string, and not a float, i.e. ``version_added: "2.3"``.
   :contains:
-    Optional, if you set `type: complex` you can detail the dictionary here by repeating the above elements.
+    Optional. To describe nested return values, set ``type: complex`` and repeat the elements above for each sub-field.
 
-    :return name:
-      One per return
-
-      :description:
-        Detailed description of what this value represents.
-      :returned:
-        When this value is returned, such as `always`, on `success`, `always`
-      :type:
-        Data type
-      :sample:
-        One or more examples.
-      :version_added:
-        Only needed if this return was extended after initial Ansible release, i.e. this is greater than the top level `version_added` field.
-        This is a string, and not a float, i.e. ``version_added: "2.3"``.
-
-
-For complex nested returns type can be specified as ``type: complex``. For example::
-
+Here are two example ``RETURN`` sections, one with three simple fields and one with a complex nested field::
 
     RETURN = '''
     dest:
@@ -351,7 +333,7 @@ For complex nested returns type can be specified as ``type: complex``. For examp
 Python imports
 --------------
 
-After the shebang, the copyright line, the license, and the sections for ``ANSIBLE_METADATA`` and ``DOCUMENTATION`` and ``EXAMPLES`` and ``RETURN``, you can finally add the python imports. All modules must use Python imports in the form:
+After the shebang, the copyright line, the license, and the sections for ``ANSIBLE_METADATA``, ``DOCUMENTATION``, ``EXAMPLES``, and ``RETURN``, you can finally add the python imports. All modules must use Python imports in the form:
 
 .. code-block:: python
 
