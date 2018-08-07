@@ -14,6 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: win_mssql_query
+version_added: '2.7'
 short_description: invokes a query on a MSSQL Server
 description:
     - Invokes a query on a MSSQL Server. This module isn't idempotent, the query will be always executed.
