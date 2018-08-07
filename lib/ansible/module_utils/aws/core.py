@@ -72,6 +72,12 @@ from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict, ec2_ar
 __all__ = ('AnsibleAWSModule', 'HAS_BOTO3', 'is_boto3_error_code')
 
 
+try:
+    from botocore.utils import ArgumentGenerator
+except ImportError:
+    pass
+
+
 class AnsibleAWSModule(object):
     """An ansible module class for AWS modules
 
@@ -283,3 +289,21 @@ def is_boto3_error_code(code, e=None):
     if isinstance(e, ClientError) and e.response['Error']['Code'] == code:
         return ClientError
     return type('NeverEverRaisedException', (Exception,), {})
+
+
+def get_required_parameters(client, method_name):
+    arg_gen = ArgumentGenerator()
+    op = client.meta.method_to_api_mapping.get(method_name)
+    input_shape = client._service_model.operation_model(op).input_shape
+    if not input_shape:
+        return []
+    return list(input_shape.required_members)
+
+
+def get_method_parameters(client, method_name):
+    arg_gen = ArgumentGenerator()
+    op = client.meta.method_to_api_mapping.get(method_name)
+    input_shape = client._service_model.operation_model(op).input_shape
+    if not input_shape:
+        return []
+    return list(input_shape.members.keys())
