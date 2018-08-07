@@ -309,7 +309,7 @@ def main():
                         'instance_filters', 'group_by', 'overwrite',
                         'overwrite_vars', 'update_on_launch',
                         'update_cache_timeout'):
-                if module.params.get(key):
+                if module.params.get(key) is not None:
                     params[key] = module.params.get(key)
 
             if state == 'present':
