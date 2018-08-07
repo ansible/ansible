@@ -5,7 +5,7 @@ Module Format and Documentation
 
 If you want to contribute your module to Ansible Core, you must write your module in Python and follow a standard format. (Unless you're writing a Windows module, in which case the `Windows guidelines <developing_modules_general_windows>` apply.) 
 
-Every Python module must begin with a shebang (``#! /usr/bin/python``), followed by six standard sections in a particular order, followed by the code. The six standard sections, in order:
+Every Python module must begin with a shebang (``#! /usr/bin/python``), followed by six standard sections in a particular order, followed by the code. The six standard sections are:
 
 1. :ref:`Copyright and License <copyright>`
 2. :ref:`ANSIBLE_METADATA <ansible_metadata_block>`
