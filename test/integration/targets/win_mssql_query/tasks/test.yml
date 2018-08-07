@@ -1,0 +1,53 @@
+---
+
+- name: get database master database
+  win_mssql_query:
+    query: "SELECT name FROM sys.databases WHERE name='master'"
+    server_instance: "{{ ansible_hostname }}"
+    server_instance_use: sa
+    server_instance_password: "{{ sa }}"
+  register: res
+
+- name: test database query
+  assert:
+    that:
+      - "res.changed == True"
+      - "res.output[0].name == 'master'"
+
+- name: query failure
+  win_mssql_query:
+    query: "SELECT name FROM sys.databases @WHERE name='master'"
+    server_instance: "{{ ansible_hostname }}"
+    server_instance_use: sa
+    server_instance_password: "{{ sa }}"
+  register: res
+  ignore_errors: yes
+
+- name: test module fail
+  assert:
+    that:
+      - res.changed == False
+      - res.database == 'master'
+      - res.query != []
+
+- name: create database with check mode
+  win_mssql_query:
+    query: "CREATE database myDb"
+    server_instance: "{{ ansible_hostname }}"
+    server_instance_use: sa
+    server_instance_password: "{{ sa }}"
+  register: res
+  check_mode: yes
+
+- name: verify db is not created
+  win_mssql_query:
+    query: "SELECT COUNT(name) as result FROM sys.databases WHERE name='myDb'"
+    server_instance: "{{ ansible_hostname }}"
+    server_instance_use: sa
+    server_instance_password: "{{ sa }}"
+  register: res
+
+- name: test check mode
+  assert:
+    that:
+      - "res.output[0].result == 0"
