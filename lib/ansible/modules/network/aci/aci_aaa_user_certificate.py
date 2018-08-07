@@ -240,14 +240,14 @@ def main():
         root_class=dict(
             aci_class=ACI_MAPPING[aaa_user_type]['aci_class'],
             aci_rn=ACI_MAPPING[aaa_user_type]['aci_mo'] + aaa_user,
-            filter_target='eq({0}.name, "{1}")'.format(ACI_MAPPING[aaa_user_type]['aci_class'], aaa_user),
             module_object=aaa_user,
+            target_filter={'name': aaa_user},
         ),
         subclass_1=dict(
             aci_class='aaaUserCert',
             aci_rn='usercert-{0}'.format(certificate_name),
-            filter_target='eq(aaaUserCert.name, "{0}")'.format(certificate_name),
             module_object=certificate_name,
+            target_filter={'name': certificate_name},
         ),
     )
     aci.get_existing()

@@ -346,8 +346,8 @@ def main():
         root_class=dict(
             aci_class='ospfIfPol',
             aci_rn='tn-{0}/ospfIfPol-{1}'.format(tenant, ospf),
-            filter_target='eq(ospfIfPol.name, "{0}")'.format(ospf),
             module_object=ospf,
+            target_filter={'name': ospf},
         ),
     )
 

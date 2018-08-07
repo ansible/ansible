@@ -352,6 +352,8 @@ def main():
             name=policy_group,
             descr=description,
         )
+        # Reset for target_filter
+        lag_type = None
     elif lag_type in ('link', 'node'):
         aci_class_name = 'infraAccBndlGrp'
         dn_name = 'accbundle'
@@ -366,8 +368,8 @@ def main():
         root_class=dict(
             aci_class=aci_class_name,
             aci_rn='infra/funcprof/{0}-{1}'.format(dn_name, policy_group),
-            filter_target='eq({0}.name, "{1}")'.format(aci_class_name, policy_group),
             module_object=policy_group,
+            target_filter={'name': policy_group, 'lagT': lag_type},
         ),
         child_classes=[
             'infraRsAttEntP',

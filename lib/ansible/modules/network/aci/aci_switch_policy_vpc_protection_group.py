@@ -235,8 +235,8 @@ def main():
         root_class=dict(
             aci_class='fabricExplicitGEp',
             aci_rn='fabric/protpol/expgep-{0}'.format(protection_group),
-            filter_target='eq(fabricExplicitGEp.name, "{0}")'.format(protection_group),
             module_object=protection_group,
+            target_filter={'name': protection_group},
         ),
         child_classes=['fabricNodePEp', 'fabricNodePEp', 'fabricRsVpcInstPol'],
     )
