@@ -3,7 +3,6 @@
 Ansible Module Development Walkthrough
 ======================================
 
-
 In this section, we will walk through developing, testing, and debugging an Ansible module.
 
 What's covered in this section:
@@ -55,17 +54,20 @@ Common Environment setup
 New module development
 ======================
 
-If you are creating a new module that doesn't exist, you would start
-working on a whole new file. Here is an example:
+To create a new module:
 
--  Navigate to the directory that you want to develop your new module
-   in. E.g. ``$ cd lib/ansible/modules/cloud/azure/``
+-  Navigate to the correct directory for your new module: ``$ cd lib/ansible/modules/cloud/azure/``
+
 -  Create your new module file: ``$ touch my_new_test_module.py``
--  Paste this example code into the new module file: (explanation in comments)
+
+-  Paste this content into your new module file. It includes all `required Ansible documentation fields <developing_modules_documenting>` and some example code:
 
 .. code:: python
 
     #!/usr/bin/python
+    
+    # Copyright: (c) 2018, Terry Jones <terry.jones@example.org>
+    # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
     ANSIBLE_METADATA = {
         'metadata_version': '1.1',
