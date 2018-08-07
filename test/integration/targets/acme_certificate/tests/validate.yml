@@ -62,3 +62,12 @@
   assert:
     that:
       - cert_5_recreate_3 == True
+
+- name: Check that certificate 6 is valid
+  assert:
+    that:
+      - cert_6_valid is not failed
+- name: Check that certificate 6 contains correct SANs
+  assert:
+    that:
+      - "'DNS:example.org' in cert_6_text.stdout"

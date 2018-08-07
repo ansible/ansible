@@ -23,7 +23,8 @@ description:
    - "Create and renew SSL certificates with a CA supporting the
       L(ACME protocol,https://tools.ietf.org/html/draft-ietf-acme-acme-12),
       such as L(Let's Encrypt,https://letsencrypt.org/). The current
-      implementation supports the C(http-01) and C(dns-01) challenges."
+      implementation supports the C(http-01), C(dns-01) and C(tls-alpn-01)
+      challenges."
    - "To use this module, it has to be executed twice. Either as two
       different tasks in the same run or during two runs. Note that the output
       of the first run needs to be recorded and passed to the second run as the
@@ -31,10 +32,12 @@ description:
    - "Between these two tasks you have to fulfill the required steps for the
       chosen challenge by whatever means necessary. For C(http-01) that means
       creating the necessary challenge file on the destination webserver. For
-      C(dns-01) the necessary dns record has to be created.
+      C(dns-01) the necessary dns record has to be created. For C(tls-alpn-01)
+      the necessary certificate has to be created and served.
       It is I(not) the responsibility of this module to perform these steps."
    - "For details on how to fulfill these challenges, you might have to read through
-      L(the specification,https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-8).
+      L(the main ACME specification,https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-8)
+      and the L(TLS-ALPN-01 specification,U(https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-01#section-3).
       Also, consider the examples provided for this module."
    - "Although the defaults are chosen so that the module can be used with
       the Let's Encrypt CA, the module can be used with any service using the ACME
@@ -84,7 +87,7 @@ options:
     version_added: "2.6"
   challenge:
     description: The challenge to be performed.
-    choices: [ 'http-01', 'dns-01']
+    choices: [ 'http-01', 'dns-01', 'tls-alpn-01' ]
     default: 'http-01'
   csr:
     description:
@@ -137,6 +140,8 @@ options:
          If C(cert_days < remaining_days), then it will be renewed.
          If the certificate is not renewed, module return values will not
          include C(challenge_data)."
+      - "To make sure that the certificate is renewed in any case, you can
+         use the C(force) option."
     default: 10
   deactivate_authzs:
     description:
@@ -152,7 +157,7 @@ options:
   force:
     description:
       - Enforces the execution of the challenge and validation, even if an
-        existing certificate is still valid.
+        existing certificate is still valid for more than C(remaining_days).
       - This is especially helpful when having an updated CSR e.g. with
         additional domains for which a new certificate is desired.
     type: bool
@@ -273,7 +278,15 @@ challenge_data:
       type: string
       sample: .well-known/acme-challenge/evaGxfADs6pSRb2LAv9IZf17Dt3juxGJ-PCt92wr-oA
     resource_value:
-      description: the value the resource has to produce for the validation
+      description:
+        - The value the resource has to produce for the validation.
+        - For C(http-01) and C(dns-01) challenges, the value can be used as-is.
+        - "For C(tls-alpn-01) challenges, note that this return value contains a
+           Base64 encoded version of the correct binary blob which has to be put
+           into the acmeValidation x509 extension; see
+           U(https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-01#section-3)
+           for details. To do this, you might need the C(b64decode) Jinja filter
+           to extract the binary blob from this return value."
       returned: changed
       type: string
       sample: IlirfxKKXA...17Dt3juxGJ-PCt92wr-oA
@@ -482,6 +495,11 @@ class ACMEClient(object):
                 value = nopad_b64(hashlib.sha256(to_bytes(keyauthorization)).digest())
                 record = (resource + domain[1:]) if domain.startswith('*.') else (resource + '.' + domain)
                 data[type] = {'resource': resource, 'resource_value': value, 'record': record}
+            elif type == 'tls-alpn-01':
+                # https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-01#section-3
+                resource = domain
+                value = base64.b64encode(hashlib.sha256(to_bytes(keyauthorization)).digest())
+                data[type] = {'resource': resource, 'resource_value': value}
             else:
                 continue
 
@@ -856,7 +874,7 @@ def main():
             account_email=dict(required=False, default=None, type='str'),
             agreement=dict(required=False, type='str'),
             terms_agreed=dict(required=False, default=False, type='bool'),
-            challenge=dict(required=False, default='http-01', choices=['http-01', 'dns-01'], type='str'),
+            challenge=dict(required=False, default='http-01', choices=['http-01', 'dns-01', 'tls-alpn-01'], type='str'),
             csr=dict(required=True, aliases=['src'], type='path'),
             data=dict(required=False, default=None, type='dict'),
             dest=dict(aliases=['cert'], type='path'),
