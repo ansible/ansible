@@ -200,9 +200,11 @@ class VMWareInventory(object):
         vcenter_url = self.get_rest_vcenter_url()
         if self.rest_session_id is None:
             vcenter_auth_url = vcenter_url + "/com/vmware/cis/session"
-            resp = requests.post(vcenter_auth_url,
+            resp = requests.post(
+                vcenter_auth_url,
                 auth=HTTPBasicAuth(self.username, self.password),
-                verify=self.validate_certs)
+                verify=self.validate_certs
+            )
             self.rest_session_id = resp.json()['value']
 
         return self.rest_session_id
@@ -221,26 +223,34 @@ class VMWareInventory(object):
         vcenter_category_list_url = vcenter_url + "/com/vmware/cis/tagging/category"
         vcenter_category_get_url = vcenter_url + "/com/vmware/cis/tagging/category/id:{}"
 
-        resp = requests.get(vcenter_tags_url,
-            headers={'vmware-api-session-id' : session_id}, verify=self.validate_certs)
+        resp = requests.get(
+            vcenter_tags_url,
+            headers={'vmware-api-session-id': session_id}, verify=self.validate_certs
+        )
 
         tags_ids = resp.json()['value']
 
         categories = {}
 
         for tag_id in tags_ids:
-            resp = requests.get(vcenter_tags_get_url.format(tag_id),
-                headers={'vmware-api-session-id' : session_id}, verify=self.validate_certs)
+            resp = requests.get(
+                vcenter_tags_get_url.format(tag_id),
+                headers={'vmware-api-session-id': session_id},
+                verify=self.validate_certs
+            )
             tag_value = resp.json()['value']
             tag_name = tag_value['name'].replace(" ", "_")
             category_id = tag_value['category_id']
 
-            self.tags[tag_id] = { 'name': tag_name, 'category_id': category_id }
+            self.tags[tag_id] = {'name': tag_name, 'category_id': category_id}
             categories[category_id] = 1
 
         for category_id, nil in categories.items():
-            resp = requests.get(vcenter_category_get_url.format(category_id),
-                headers={'vmware-api-session-id' : session_id}, verify=self.validate_certs)
+            resp = requests.get(
+                vcenter_category_get_url.format(category_id),
+                headers={'vmware-api-session-id': session_id},
+                verify=self.validate_certs
+            )
             category_value = resp.json()['value']
             category_name = category_value['name'].replace(" ", "_")
             category_cardinality = category_value['cardinality']
@@ -254,7 +264,7 @@ class VMWareInventory(object):
                 'description': category_description
             }
         for tag_id, tag_info in self.tags.items():
-            self.tags[tag_id].update({ 'category': categories[tag_info['category_id']] })
+            self.tags[tag_id].update({'category': categories[tag_info['category_id']]})
 
         return self.tags
 
@@ -499,11 +509,15 @@ class VMWareInventory(object):
                 type, vmid = vm.split(':')
                 type = type.split('.')[-1]
 
-                vmobj = {"object_id": {"type": type, "id": vmid }}
-                resp = requests.post(vcenter_vm_tags, data=json.dumps(vmobj),
-                        headers={ 'vmware-api-session-id' : session_id,
-                            'content-type': 'application/json'},
-                        verify=self.validate_certs)
+                vmobj = {"object_id": {"type": type, "id": vmid}}
+                resp = requests.post(
+                    vcenter_vm_tags, data=json.dumps(vmobj),
+                    headers={
+                        'vmware-api-session-id': session_id,
+                        'content-type': 'application/json'
+                    },
+                    verify=self.validate_certs
+                )
 
                 tag_ids = resp.json()['value']
                 instance_tags = {}
@@ -517,7 +531,7 @@ class VMWareInventory(object):
                             instance_tags[tag_category] = []
                         instance_tags[tag_category].append(tag_name)
 
-                instance[1].update( { "tags": instance_tags })
+                instance[1].update({"tags": instance_tags})
 
         return instance_tuples
 
