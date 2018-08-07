@@ -257,6 +257,14 @@ def main():
                                                tags=module.params['tags'],
                                                retention=module.params['retention'],
                                                module=module)
+        elif found_log_group:
+            if module.params['retention'] != found_log_group['retentionInDays']:
+                changed = True
+                input_retention_policy(client=logs,
+                                       log_group_name=module.params['log_group_name'],
+                                       retention=module.params['retention'],
+                                       module=module)
+                found_log_group['retentionInDays'] = module.params['retention']
 
         module.exit_json(changed=changed, **camel_dict_to_snake_dict(found_log_group))
 
