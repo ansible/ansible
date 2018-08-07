@@ -19,7 +19,6 @@ import json
 
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils._text import to_bytes, to_text
-import q
 
 class RestApi(object):
     def __init__(self, socket_path, idempotency_support=True):
@@ -75,7 +74,6 @@ class RestApi(object):
     def addResource(self, url_path, content=None, primary_keys=None,
                    query_params=None):
         conn = Connection(self.socket_path)
-        q(content, primary_keys, query_params)
         
         # To support idempotency we will have to check if we already
         # have object with same primary key or content in case of no pk

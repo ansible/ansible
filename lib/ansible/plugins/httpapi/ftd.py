@@ -17,7 +17,6 @@ from urllib3 import encode_multipart_formdata
 from urllib3.fields import RequestField
 from ansible.module_utils.connection import ConnectionError
 from ansible.errors import AnsibleConnectionFailure
-import q
 
 try:
     from __main__ import display
