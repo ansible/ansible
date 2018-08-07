@@ -188,7 +188,6 @@ To create a new module:
         main()
 
 
-
 Local/direct module testing
 ===========================
 
@@ -214,20 +213,18 @@ that can run locally.
 -  Run your test module locally and directly:
    ``$ python ./my_new_test_module.py /tmp/args.json``
 
-This should be working output that resembles something like the
-following:
+This should return output something like this:
 
 .. code:: json
 
     {"changed": true, "state": {"original_message": "hello", "new_message": "goodbye"}, "invocation": {"module_args": {"name": "hello", "new": true}}}
 
-The arguments file is just a basic json config file that you can
-use to pass the module your parameters to run the module it
+The arguments file is just a basic json config file that passes parameters to your module so you can run it.
 
 Playbook module testing
 =======================
 
-If you want to test your new module, you can now consume it with an
+The next step in testing your new module is to consume it with an
 Ansible playbook.
 
 -  Create a playbook in any directory: ``$ touch testmod.yml``
@@ -247,8 +244,8 @@ Ansible playbook.
 
 - Run the playbook and analyze the output: ``$ ansible-playbook ./testmod.yml``
 
-Unit testing
-============
+Adding unit tests
+=================
 
 Unit tests for modules will be appropriately located in ``./test/units/modules``. You must first setup your testing environment. In this example, we're using Python 3.5.
 
