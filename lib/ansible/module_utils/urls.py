@@ -428,7 +428,7 @@ class UnixHTTPSConnection(httplib.HTTPSConnection):
             super(UnixHTTPSConnection, self).connect()
 
     def __call__(self, *args, **kwargs):
-        super(UnixHTTPSConnection, self).__init__(*args, **kwargs)
+        httplib.HTTPSConnection.__init__(self, *args, **kwargs)
         return self
 
 
