@@ -474,8 +474,14 @@ def do_install_all(module, issu, image, kick=None):
         # needs to be upgraded.
         if impact_data['disruptive']:
             # Check mode indicated that ISSU is not possible so issue the
-            # upgrade command without the non-disruptive flag.
-            issu = 'no'
+            # upgrade command without the non-disruptive flag unless the
+            # playbook specified issu: yes/required.
+            if issu == 'yes':
+                msg = 'ISSU/ISSD requested but impact data indicates ISSU/ISSD is not possible'
+                module.fail_json(msg=msg, raw_data=impact_data['list_data'])
+            else:
+                issu = 'no'
+
         commands = build_install_cmd_set(issu, image, kick, 'install')
         opts = {'ignore_timeout': True}
         # The system may be busy from the call to check_mode so loop until
@@ -523,6 +529,9 @@ def main():
     sif = module.params['system_image_file']
     kif = module.params['kickstart_image_file']
     issu = module.params['issu']
+
+    if re.search(r'(yes|required)', issu):
+        issu = 'yes'
 
     if kif == 'null' or kif == '':
         kif = None
