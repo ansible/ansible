@@ -438,7 +438,7 @@ class User(object):
         if self.module.params['password'] and self.platform != 'Darwin':
             maybe_invalid = False
             # : for delimiter, * for disable user, ! for lock user
-            # these character are invalid in password
+            # these characters are invalid in the password
             if any(char in self.module.params['password'] for char in ':*!'):
                 maybe_invalid = True
             if '$' not in self.module.params['password']:
@@ -446,7 +446,7 @@ class User(object):
             else:
                 fields = self.module.params['password'].split("$")
                 if len(fields) >= 3:
-                    # contains character outside crypt constrain
+                    # contains character outside the crypto constraint
                     if bool(_HASH_RE.search(fields[-1])):
                         maybe_invalid = True
                     # md5
@@ -461,8 +461,8 @@ class User(object):
                 else:
                     maybe_invalid = True
             if maybe_invalid:
-                self.module.warn("The input password seems not been hashed, "
-                                 "please note that 'password' argument requires an encrypted value or the password will not work properly.")
+                self.module.warn("The input password appears not to have been hashed. "
+                                 "The 'password' argument must be encrypted for this module to work properly.")
 
     def execute_command(self, cmd, use_unsafe_shell=False, data=None, obey_checkmode=True):
         if self.module.check_mode and obey_checkmode:
