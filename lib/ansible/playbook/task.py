@@ -158,8 +158,7 @@ class Task(Base, Conditional, Taggable, Become):
             raise AnsibleError("you must specify a value when using %s" % k, obj=ds)
         new_ds['loop_with'] = loop_name
         new_ds['loop'] = v
-        # FIXME: reenable afte 2.5
-        # display.deprecated("with_ type loops are being phased out, use the 'loop' keyword instead", version="2.10")
+        display.deprecated("with_ type loops are being phased out, use the 'loop' keyword instead", version="2.11")
 
     def preprocess_data(self, ds):
         '''
