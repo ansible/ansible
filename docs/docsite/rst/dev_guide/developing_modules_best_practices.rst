@@ -7,13 +7,13 @@ As you develop your module, follow these basic conventions and guidelines:
 
 * Modules should have a concise and well-defined functionality. Basically, follow the UNIX philosophy of doing one thing well.
 
-* Modules should be self-contained in one file, so they can be be auto-transferred by Ansible.
+* Each module should be self-contained in one file, so it can be be auto-transferred by Ansible.
 
 * If your module is addressing an object, the parameter for that object should be called ``name`` whenever possible, or accept ``name`` as an alias.
 
 * If you have a local module that returns facts specific to your installations, a good name for this module is ``site_facts``.
 
-* Modules accepting boolean status should generally accept ``yes``, ``no``, ``true``, ``false``, or anything else a user may likely throw at them.  The AnsibleModule common code supports this with ``type='bool'``.
+* Modules accepting boolean status should generally accept ``yes``, ``no``, ``true``, ``false``, or anything else a user may likely throw at them. The AnsibleModule common code supports this with ``type='bool'``.
 
 * Eliminate or minimize dependencies. If your module has dependencies, document them at the top of the module file and raise JSON error messages when the import fails.
 
@@ -29,7 +29,7 @@ As you develop your module, follow these basic conventions and guidelines:
 
 * Modules should not require that a user know all the underlying options of an API/tool to be used. For instance, if the legal values for a required module parameter cannot be documented, that's a sign that the module would be rejected.
 
-* Modules should typically encompass much of the logic for interacting with a resource. A lightweight wrapper around an API that does not contain much logic would likely cause users to offload too much logic into a playbook, and for this reason the module would be rejected. Instead try creating multiple modules for interacting with smaller individual pieces of the API.
+* Modules should encompass much of the logic for interacting with a resource. A lightweight wrapper around an API that does not contain much logic would likely cause users to offload too much logic into a playbook, and for this reason the module would be rejected. Instead try creating multiple modules for interacting with smaller individual pieces of the API.
 
 .. _debugging_ansiblemodule_based_modules:
 
