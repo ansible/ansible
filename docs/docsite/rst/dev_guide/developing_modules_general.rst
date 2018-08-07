@@ -51,16 +51,15 @@ Common Environment setup
    ``$ . venv/bin/activate && . hacking/env-setup``
 
 
-New module development
-======================
+Starting a new module
+=====================
 
 To create a new module:
 
--  Navigate to the correct directory for your new module: ``$ cd lib/ansible/modules/cloud/azure/``
-
--  Create your new module file: ``$ touch my_new_test_module.py``
-
--  Paste this content into your new module file. It includes all `required Ansible documentation fields <developing_modules_documenting>` and some example code:
+1. Navigate to the correct directory for your new module: ``$ cd lib/ansible/modules/cloud/azure/``
+2. Create your new module file: ``$ touch my_new_test_module.py``
+3. Paste the content below into your new module file. It includes all `required Ansible documentation fields <developing_modules_documenting>` and some example code.
+4. Modify and extend the code to do what you want your new module to do.
 
 .. code:: python
 
@@ -132,8 +131,7 @@ To create a new module:
     from ansible.module_utils.basic import AnsibleModule
 
     def run_module():
-        # define the available arguments/parameters that a user can pass to
-        # the module
+        # define available arguments/parameters a user can pass to the module
         module_args = dict(
             name=dict(type='str', required=True),
             new=dict(type='bool', required=False, default=False)
@@ -190,6 +188,8 @@ To create a new module:
 
     if __name__ == '__main__':
         main()
+
+
 
 Local/direct module testing
 ===========================
