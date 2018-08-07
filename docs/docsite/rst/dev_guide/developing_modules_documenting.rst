@@ -3,7 +3,9 @@
 Module Format and Documentation
 ===============================
 
-If you want to contribute your module to Ansible Core, you must follow our required format for modules. Every module must begin with a shebang (``#! /usr/bin/python``), followed by six standard sections in a particular order, followed by the code. The six standard sections, in order:
+If you want to contribute your module to Ansible Core, you must write your module in Python and follow a standard format. (Unless you're writing a Windows module, in which case the `Windows guidelines <developing_modules_general_windows>` apply.) 
+
+Every Python module must begin with a shebang (``#! /usr/bin/python``), followed by six standard sections in a particular order, followed by the code. The six standard sections, in order:
 
 1. :ref:`Copyright and License <copyright>`
 2. :ref:`ANSIBLE_METADATA <ansible_metadata_block>`
@@ -18,7 +20,7 @@ If you want to contribute your module to Ansible Core, you must follow our requi
 
 .. warning:: **Copy old modules with care!**
 
-  Some older modules in Ansible Core have ``imports`` at the bottom of the file, ``Copyright`` notices with the full GPL prefix, and/or ``ANSIBLE_METADATA`` fields in the wrong order. These are legacy idioms that need updating - do not copy them into new modules. Over time we're updating and correcting older modules. Please follow the guidelines on this page!
+  Some older modules in Ansible Core have ``imports`` at the bottom of the file, ``Copyright`` notices with the full GPL prefix, and/or ``ANSIBLE_METADATA`` fields in the wrong order. These are legacy files that need updating - do not copy them into new modules. Over time we're updating and correcting older modules. Please follow the guidelines on this page!
 
 .. _copyright:
 
