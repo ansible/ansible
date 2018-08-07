@@ -174,6 +174,23 @@
       account_email: ""
   - set_fact:
       cert_5_recreate_3: "{{ challenge_data is changed }}"
+  - name: Obtain cert 6
+    include_tasks: obtain-cert.yml
+    vars:
+      certgen_title: Certificate 6
+      certificate_name: cert-6
+      key_type: rsa
+      rsa_bits: 2048
+      subject_alt_name: "DNS:example.org"
+      subject_alt_name_critical: no
+      account_key: account-ec256
+      challenge: tls-alpn-01
+      modify_account: yes
+      deactivate_authzs: no
+      force: no
+      remaining_days: 10
+      terms_agreed: yes
+      account_email: "example@example.org"
   ## DISSECT CERTIFICATES #######################################################################
   # Make sure certificates are valid. Root certificate for Pebble equals the chain certificate.
   - name: Verifying cert 1
@@ -196,6 +213,10 @@
     command: openssl verify -CAfile "{{ output_dir }}/cert-5-chain.pem" "{{ output_dir }}/cert-5.pem"
     ignore_errors: yes
     register: cert_5_valid
+  - name: Verifying cert 6
+    command: openssl verify -CAfile "{{ output_dir }}/cert-6-chain.pem" "{{ output_dir }}/cert-6.pem"
+    ignore_errors: yes
+    register: cert_6_valid
   # Dump certificate info
   - name: Dumping cert 1
     command: openssl x509 -in "{{ output_dir }}/cert-1.pem" -noout -text
@@ -212,6 +233,9 @@
   - name: Dumping cert 5
     command: openssl x509 -in "{{ output_dir }}/cert-5.pem" -noout -text
     register: cert_5_text
+  - name: Dumping cert 6
+    command: openssl x509 -in "{{ output_dir }}/cert-6.pem" -noout -text
+    register: cert_6_text
 
   - import_tasks: ../tests/validate.yml
 
