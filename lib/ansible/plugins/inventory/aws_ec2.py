@@ -475,7 +475,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             # Composed variables
             self._set_composite_vars(self.get_option('compose'), host, hostname, strict=strict)
 
-            # Complex groups based on jinaj2 conditionals, hosts that meet the conditional are added to group
+            # Complex groups based on jinja2 conditionals, hosts that meet the conditional are added to group
             self._add_host_to_composed_groups(self.get_option('groups'), host, hostname, strict=strict)
 
             # Create groups based on variable values and add the corresponding hosts to it

@@ -70,7 +70,7 @@ from ansible.utils.vars import combine_vars
 
 
 class InventoryModule(BaseInventoryPlugin, Constructable):
-    """ constructs groups and vars using Jinaj2 template expressions """
+    """ constructs groups and vars using Jinja2 template expressions """
 
     NAME = 'constructed'
 
