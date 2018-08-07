@@ -22,6 +22,7 @@ __metaclass__ = type
 import multiprocessing
 import os
 import tempfile
+import threading
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -361,23 +362,26 @@ class TaskQueueManager:
                 if gotit is not None:
                     methods.append(gotit)
 
-            # send clean copies
-            new_args = []
-            for arg in args:
-                # FIXME: add play/task cleaners
-                if isinstance(arg, TaskResult):
-                    new_args.append(arg.clean_copy())
-                # elif isinstance(arg, Play):
-                # elif isinstance(arg, Task):
-                else:
-                    new_args.append(arg)
+            def _thread():
+                # send clean copies
+                new_args = []
+                for arg in args:
+                    # FIXME: add play/task cleaners
+                    if isinstance(arg, TaskResult):
+                        new_args.append(arg.clean_copy())
+                    # elif isinstance(arg, Play):
+                    # elif isinstance(arg, Task):
+                    else:
+                        new_args.append(arg)
 
-            for method in methods:
-                try:
-                    method(*new_args, **kwargs)
-                except Exception as e:
-                    # TODO: add config toggle to make this fatal or not?
-                    display.warning(u"Failure using method (%s) in callback plugin (%s): %s" % (to_text(method_name), to_text(callback_plugin), to_text(e)))
-                    from traceback import format_tb
-                    from sys import exc_info
-                    display.vvv('Callback Exception: \n' + ' '.join(format_tb(exc_info()[2])))
+                for method in methods:
+                    try:
+                        method(*new_args, **kwargs)
+                    except Exception as e:
+                        # TODO: add config toggle to make this fatal or not?
+                        display.warning(u"Failure using method (%s) in callback plugin (%s): %s" % (to_text(method_name), to_text(callback_plugin), to_text(e)))
+                        from traceback import format_tb
+                        from sys import exc_info
+                        display.vvv('Callback Exception: \n' + ' '.join(format_tb(exc_info()[2])))
+
+            threading.Thread(target=_thread).start()
