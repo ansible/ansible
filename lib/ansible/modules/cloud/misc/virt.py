@@ -25,7 +25,7 @@ options:
     description:
       - name of the guest VM being managed. Note that VM must be previously
         defined with xml.
-      - This option is required unless I(command) is C(list_vms).
+      - This option is required unless I(command) is C(list_vms) or with I(xml). In the latter case I(name) is taken from the xml definition.
   state:
     description:
       - Note that there may be some lag for state requests like C(shutdown)
