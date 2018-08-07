@@ -1118,7 +1118,7 @@ class PyVmomiHelper(PyVmomi):
                 self.module.fail_json(msg="Please specify at least a network name or"
                                           " a VLAN name under VM network list.")
 
-            if 'name' in network and find_obj(self.content, [vim.Network], network['name']) is None:
+            if 'name' in network and self.cache.get_network(network['name']) is None:
                 self.module.fail_json(msg="Network '%(name)s' does not exist." % network)
             elif 'vlan' in network:
                 dvps = self.cache.get_all_objs(self.content, [vim.dvs.DistributedVirtualPortgroup])
@@ -1241,6 +1241,7 @@ class PyVmomiHelper(PyVmomi):
 
             if hasattr(self.cache.get_network(network_name), 'portKeys'):
                 # VDS switch
+
                 pg_obj = None
                 if 'dvswitch_name' in network_devices[key]:
                     dvs_name = network_devices[key]['dvswitch_name']
@@ -1251,7 +1252,7 @@ class PyVmomiHelper(PyVmomi):
                     if pg_obj is None:
                         self.module.fail_json(msg="Unable to find distributed port group %s" % network_name)
                 else:
-                    pg_obj = find_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_name)
+                    pg_obj = self.cache.find_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_name)
 
                 if (nic.device.backing and
                    (not hasattr(nic.device.backing, 'port') or
