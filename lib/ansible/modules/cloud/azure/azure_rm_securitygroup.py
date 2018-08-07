@@ -391,7 +391,7 @@ def compare_rules_change(old_list, new_list, purge_list):
     if not changed:
         new_names = [to_native(x['name']) for x in new_list]
         old_names = [to_native(x['name']) for x in old_list]
-        changed = (set(new_names) == set(old_names))
+        changed = (set(new_names) != set(old_names))
     return changed, new_list
 
 
