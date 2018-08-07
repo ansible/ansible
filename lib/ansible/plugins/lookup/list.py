@@ -13,6 +13,8 @@ DOCUMENTATION = """
     short_description: simply returns what it is given.
     description:
       - this is mostly a noop, to be used as a with_list loop when you dont want the content transformed in any way.
+    notes:
+      - this lookup is deprecated in favor of using "loop"
 """
 
 EXAMPLES = """

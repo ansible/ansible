@@ -19,6 +19,8 @@ DOCUMENTATION = """
       _terms:
         description: list of items
         required: True
+    notes:
+      - This lookup is deprecated in favor of "loop" and the "flatten" filter
 """
 
 EXAMPLES = """

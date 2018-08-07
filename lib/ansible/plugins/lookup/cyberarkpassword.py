@@ -44,10 +44,11 @@ EXAMPLES = """
         query": "safe=CyberArk_Passwords;folder=root;object=AdminPass"
         output: "Password,PassProps.UserName,PassProps.Address,PasswordChangeInProcess"
 
-
   - name: used in a loop
     debug: msg={{item}}
-    with_cyberarkpassword:
+    loop: "{{ q("cyberarkpassword", cyquery) }}"
+    vars:
+      cyquery:
         appid: 'app_ansible'
         query: 'safe=CyberArk_Passwords;folder=root;object=AdminPass'
         output: 'Password,PassProps.UserName,PassProps.Address,PasswordChangeInProcess'

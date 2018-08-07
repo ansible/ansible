@@ -18,15 +18,15 @@ DOCUMENTATION = """
       _terms:
         description: list of lists to merge
         required: True
+    notes:
+        - This lookup is deprecated in favor of "loop" and the "zip_longest" filter
 """
 
 EXAMPLES = """
 - name: item.0 returns from the 'a' list, item.1 returns from the '1' list
   debug:
     msg: "{{ item.0 }} and {{ item.1 }}"
-  with_together:
-    - ['a', 'b', 'c', 'd']
-    - [1, 2, 3, 4]
+  loop: "{{ q('together', ['a', 'b', 'c', 'd'], [1, 2, 3, 4]) }}"
 """
 
 RETURN = """

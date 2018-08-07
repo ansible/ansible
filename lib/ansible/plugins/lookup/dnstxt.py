@@ -26,14 +26,7 @@ EXAMPLES = """
 
 - name: iterate over txt entries
   debug: msg="{{item}}"
-  with_dnstxt:
-    - 'test.example.com'
-    - 'other.example.com'
-    - 'last.example.com'
-
-- name: iterate of a comma delimited DNS TXT entry
-  debug: msg="{{item}}"
-  with_dnstxt: "{{lookup('dnstxt', ['test.example.com']).split(',')}}"
+  loop: "{{ q('dnstxt', 'test.example.com', 'other.example.com', 'last.example.com') }}"
 """
 
 RETURN = """

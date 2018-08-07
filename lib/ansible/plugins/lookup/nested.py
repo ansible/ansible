@@ -15,6 +15,8 @@ DOCUMENTATION = """
          description:
            - a set of lists
          required: True
+    notes:
+        - This lookup is deprecated in favor of "loop" and the "product" filter
 """
 
 EXAMPLES = """
@@ -24,20 +26,16 @@ EXAMPLES = """
     priv: "{{ item[1] }}.*:ALL"
     append_privs: yes
     password: "foo"
-  with_nested:
-    - [ 'alice', 'bob' ]
-    - [ 'clientdb', 'employeedb', 'providerdb' ]
-# As with the case of 'with_items' above, you can use previously defined variables.:
+  loop: "{{ q('nested', ['alice', 'bob'], ['clientdb', 'employeedb', 'providerdb']) }}"
 
+# As with the case of 'with_items' above, you can use previously defined variables.:
 - name: here, 'users' contains the above list of employees
   mysql_user:
     name: "{{ item[0] }}"
     priv: "{{ item[1] }}.*:ALL"
     append_privs: yes
     password: "foo"
-  with_nested:
-    - "{{ users }}"
-    - [ 'clientdb', 'employeedb', 'providerdb' ]
+  loop: "{{ q('nested', users, ['clientdb', 'employeedb', 'providerdb']) }}"
 """
 
 RETURN = """

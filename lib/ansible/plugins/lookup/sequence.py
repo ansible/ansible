@@ -33,6 +33,8 @@ DOCUMENTATION = """
         type: number
       format:
         description: return a string with the generated number formatted in
+    notes:
+      - This lookup is deprecated in favor of using "loop" and the "range" function
 """
 
 EXAMPLES = """
@@ -41,23 +43,23 @@ EXAMPLES = """
     name: "{{ item }}"
     state: present
     groups: "evens"
-  with_sequence: start=0 end=32 format=testuser%02x
+  loop: "{{ q('sequence', 'start=0 end=32 format=testuser%02x') }}"
 
 - name: create a series of directories with even numbers for some reason
   file:
     dest: "/var/stuff/{{ item }}"
     state: directory
-  with_sequence: start=4 end=16 stride=2
+  loop: "{{ q('sequence', 'start=4 end=16 stride=2') }}"
 
 - name: a simpler way to use the sequence plugin create 4 groups
   group:
     name: "group{{ item }}"
     state: present
-  with_sequence: count=4
+  loop: "{{ q('sequence', 'count=4') }}"
 
 - name: the final countdown
   debug: msg={{item}} seconds to detonation
-  with_sequence: end=0 start=10
+  loop: "{{ q('sequence', 'end=0 start=10') }}"
 """
 
 RETURN = """

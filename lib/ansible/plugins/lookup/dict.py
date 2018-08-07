@@ -16,6 +16,8 @@ DOCUMENTATION = """
             description:
                 - A list of dictionaries
             required: True
+    notes:
+        - This lookup is deprecated in favor of "loop" and the "dict2items" filter
 """
 
 EXAMPLES = """
@@ -33,11 +35,13 @@ tasks:
     debug:
       msg: "User {{ item.key }} is {{ item.value.name }} ({{ item.value.telephone }})"
     loop: "{{ lookup('dict', users) }}"
+
   # with inline dictionary
   - name: show dictionary
     debug:
       msg: "{{item.key}}: {{item.value}}"
-    with_dict: {a: 1, b: 2, c: 3}
+    loop: "{{ q('dict', {a: 1, b: 2, c: 3}) }}"
+
   # Items from loop can be used in when: statements
   - name: set_fact when alice in key
     set_fact:

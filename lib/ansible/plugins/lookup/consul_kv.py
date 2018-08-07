@@ -41,14 +41,12 @@ DOCUMENTATION = """
 EXAMPLES = """
   - debug:
       msg: 'key contains {{item}}'
-    with_consul_kv:
-      - 'key/to/retrieve'
+    loop: "{{ q('consul_kv', 'key/to/retrieve') }}"
 
   - name: Parameters can be provided after the key be more specific about what to retrieve
     debug:
       msg: 'key contains {{item}}'
-    with_consul_kv:
-      - 'key/to recurse=true token=E6C060A9-26FB-407A-B83E-12DDAFCB4D98'
+    loop: "{{ q('consul_kv', 'key/to recurse=true token=E6C060A9-26FB-407A-B83E-12DDAFCB4D98') }}"
 
   - name: retrieving a KV from a remote cluster on non default port
     debug:

@@ -16,14 +16,15 @@ DOCUMENTATION = """
       _terms:
         description: list of items
         required: True
+    notes:
+        - This lookup is deprecated in favor of "loop" and "loop_control.index_var"
 """
 
 EXAMPLES = """
 - name: indexed loop demo
   debug:
     msg: "at array position {{ item.0 }} there is a value {{ item.1 }}"
-  with_indexed_items:
-    - "{{ some_list }}"
+  loop: "{{ q('indexed_items', some_list) }}"
 """
 
 RETURN = """

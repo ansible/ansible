@@ -13,17 +13,21 @@ DOCUMENTATION = """
       - The 'random_choice' feature can be used to pick something at random. While it's not a load balancer (there are modules for those),
         it can somewhat be used as a poor man's load balancer in a MacGyver like situation.
       - At a more basic level, they can be used to add chaos and excitement to otherwise predictable automation environments.
+    notes:
+      - This lookup is deprecated in favor of the "random" filter
 """
 
 EXAMPLES = """
 - name: Magic 8 ball for MUDs
   debug:
     msg: "{{ item }}"
-  with_random_choice:
-     - "go through the door"
-     - "drink from the goblet"
-     - "press the red button"
-     - "do nothing"
+  loop: "{{ lookup('random_choice', choices) }}"
+  vars:
+    choices:
+      - "go through the door"
+      - "drink from the goblet"
+      - "press the red button"
+      - "do nothing"
 """
 
 RETURN = """

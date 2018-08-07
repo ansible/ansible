@@ -31,8 +31,7 @@ EXAMPLES = """
     dest: "/etc/fooapp/"
     owner: "root"
     mode: 0600
-  with_fileglob:
-    - "/playbooks/files/fooapp/*"
+  loop: "{{ q('fileglob', '/playbooks/files/fooapp/*') }}"
 """
 
 RETURN = """
