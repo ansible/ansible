@@ -7,12 +7,14 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 from ansible.module_utils.urls import url_argument_spec
+from ansible.module_utils._text import to_native
 
 import json
 # import pdb
 
 # Seed the result
 result = dict(
+    failed=False,
     changed=False,
     name='default',
     msg='the best is coming'
@@ -29,16 +31,22 @@ idg_endpoint_spec.update(
 )
 
 
-class IDG_Utils(object):
+# Custom exception
+class IDGException(Exception):
+    pass
+
+
+class IDGUtils(object):
     """ Class class with very useful things """
 
     #############################
     # Constants
     #############################
 
-    IMMUTABLE_MESSAGE = 'The current state is consistent with the desired configuration'
-    CHECK_MODE_MESSAGE = 'Change was only simulated, due to enabling verification mode'
-    UNCONTROLLED_EXCEPTION = 'Unknown exception'
+    IMMUTABLE_MESSAGE = 'The current state is consistent with the desired configuration.'
+    COMPLETED_MESSAGE = 'Completed.'
+    CHECK_MODE_MESSAGE = 'Change was only simulated, due to enabling verification mode.'
+    UNCONTROLLED_EXCEPTION = 'Unknown exception.'
 
     # Connection agreements
     BASIC_HEADERS = {"Content-Type": "application/json"}
@@ -46,10 +54,15 @@ class IDG_Utils(object):
     BASIC_AUTH_SPEC = True
     HTTP_AGENT_SPEC = None
 
+    #  Directory structure of the file system
+    IDG_DIRS = ["cert:", "chkpoints:", "config:", "export:", "image:", "isamcert:",
+                "isamconfig:", "isamwebroot:", "local:", "logstore:", "logtemp:", "policyframework:",
+                "pubcert:", "sharedcert:", "store:", "tasktemplates:", "temporary:"]
+
     @staticmethod
     def implement_check_mode(module, result):
         if module.check_mode:
-            result['msg'] = IDG_Utils.CHECK_MODE_MESSAGE
+            result['msg'] = IDGUtils.CHECK_MODE_MESSAGE
             module.exit_json(**result)
 
     @staticmethod
@@ -66,12 +79,17 @@ class IDG_Utils(object):
                 return dict(item.split(':', 1) for item in data.split(','))
             except Exception:
                 # Can't parse
-                module.fail_json(msg='The string representation for the `{0}` requires a key:value,key:value,... syntax to be properly parsed.'.format(desc))
+                module.fail_json(msg=to_native('The string representation for the `{0}` requires a key:value,key:value,... syntax to be properly parsed.'.format(desc)))
         else:
             # data is empty
             return None
 
     @staticmethod
-    def on_off(arg):
-        # Translate boolean to: on, off
+    def str_on_off(arg):
+        # Translate boolean to: "on", "off"
         return "on" if arg else "off"
+
+    @staticmethod
+    def bool_on_off(arg):
+        # Translate "on", "off" to boolean
+        return True if arg.lower() == "on" else False
