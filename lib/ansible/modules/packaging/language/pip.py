@@ -331,7 +331,7 @@ def _get_pip(module, env=None, executable=None):
                 # (therefore, that pip was not found)
                 module.fail_json(msg='Unable to find pip in the virtualenv, %s, ' % env +
                                      'under any of these names: %s. ' % (', '.join(candidate_pip_basenames)) +
-                                     'Make sire pip is present in the virtualenv.')
+                                     'Make sure pip is present in the virtualenv.')
 
     return pip
 
