@@ -149,3 +149,9 @@ module file and test that the real module works via :command:`ansible` or
     with Ansible normally.  Those are not bugs in the module; they're
     limitations of ``excommunicate``.  Use at your own risk.
 
+
+Credit
+======
+
+Thank you to Thomas Stringer (`@tstringer <https://github.com/tstringer>`_) for contributing source
+material for this topic.
