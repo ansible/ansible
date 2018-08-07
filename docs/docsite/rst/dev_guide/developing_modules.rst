@@ -5,72 +5,53 @@ Developing Modules
 
 .. contents:: Topics
 
-.. _module_dev_welcome:
+Modules provide specific functionality, interacting with your local machine, an API, or a remote system to perform specialized tasks like changing a database password or spinning up a cloud instance. Each module is a reusable, standalone script that can be used by the Ansible API, or by the :command:`ansible` or :command:`ansible-playbook` programs. A module provides a defined interface, accepting arguments and returning information to Ansible by printing a JSON string to stdout before exiting. Ansible ships with thousands of modules, and you can easily write your own. If you're writing a module for local use, you can choose any programming language and follow your own rules. If you want to contribute a module back to Ansible Core, however, it must:
 
-Welcome
-```````
-This section discusses how to develop, debug, review, and test modules.
-
-Ansible modules are reusable, standalone scripts that can be used by the Ansible API,
-or by the :command:`ansible` or :command:`ansible-playbook` programs.  They provide a defined interface and
-return information to Ansible by printing a JSON string to stdout before
-exiting. They take arguments in one of several ways which we'll go into
-as we work through this tutorial.
-
-See :ref:`all_modules` for a list of existing modules.
-
-Modules can be written in any language and are found in the path specified
-by :envvar:`ANSIBLE_LIBRARY` or the ``--module-path`` command line option or
-in the :envvar:`library section of the Ansible configuration file <ANSIBLE_LIBRARY>`.
+* be written in either Python or Powershell for Windows
+* raise errors
+* return strings in unicode
+* contain comprehensive tests
+* conform to Ansible's formatting and documentation standards
 
 .. _module_dev_should_you:
 
 Should You Develop A Module?
 ````````````````````````````
-Before diving into the work of creating a new module, you should think about whether you actually *should*
-develop a module. Ask the following questions:
+Developing Ansible modules is easy, but often it isn't necessary. Before you start writing a new module, ask:
 
 1. Does a similar module already exist?
 
-There are a lot of existing modules available, you should check out the list of existing modules at :ref:`modules`
+An existing module may cover the functionality you want. Ansible Core includes thousands of modules. Search our :ref:`list of existing modules <all_modules>` to see if there's a module that does what you need.
 
-2. Has someone already worked on a similar Pull Request?
+2. Does a Pull Request already exist?
 
-It's possible that someone has already started developing a similar PR. There are a few ways to find open module Pull Requests:
+An existing Pull Request may cover the functionality you want. If someone else has already started developing a similar module, you can review and test it. There are a few ways to find open module Pull Requests:
 
 * `GitHub new module PRs <https://github.com/ansible/ansible/labels/new_module>`_
 * `All updates to modules <https://github.com/ansible/ansible/labels/module>`_
 * `New module PRs listed by directory <https://ansible.sivel.net/pr/byfile.html>`_ search for `lib/ansible/modules/`
 
-If you find an existing PR that looks like it addresses the issue you are trying to solve, please provide feedback on the PR -  this will speed up getting the PR merged.
+If you find an existing PR that looks like it addresses your needs, please provide feedback on the PR -  this will speed up the review and merge process.
 
 3. Should you use or develop an action plugin instead?
 
-Action plugins get run on the master instead of on the target. For modules like file/copy/template, some of the work needs to be done on the master before the module executes on the target. Action plugins execute first on the master and can then execute the normal module on the target if necessary.
-
-For more information about action plugins, read the :ref:`action plugins documentation <developing_plugins>`.
+An action plugin may be the best way to get the functionality you want. Action plugins run on the master instead of on the target, and their functionality is available to all modules. For more information about developing plugins, read the :ref:`developing plugins page <developing_plugins>`.
 
 4. Should you use a role instead?
 
-Check out the :ref:`roles documentation<playbooks_reuse_roles>`.
+A combination of existing modules may cover the functionality you want. You can write a role for this type of use case. Check out the :ref:`roles documentation<playbooks_reuse_roles>`.
 
 5. Should you write multiple modules instead of one module?
 
-The following guidelines will help you determine if your module attempts to do too much, and should likely be broken into several smaller modules.
+The functionality you want may be too large for a single module. If you want to connect Ansible to a new cloud provider, database, or network platform, you may need to develop a related group of modules.
 
 * Modules should have a concise and well defined functionality. Basically, follow the UNIX philosophy of doing one thing well.
 
-* Modules should not require that a user know all the underlying options of an api/tool to be used. For instance, if the legal values for a required module parameter cannot be documented, that's a sign that the module would be rejected.
+* Modules should not require that a user know all the underlying options of an API/tool to be used. For instance, if the legal values for a required module parameter cannot be documented, that's a sign that the module would be rejected.
 
 * Modules should typically encompass much of the logic for interacting with a resource. A lightweight wrapper around an API that does not contain much logic would likely cause users to offload too much logic into a playbook, and for this reason the module would be rejected. Instead try creating multiple modules for interacting with smaller individual pieces of the API.
 
-
-.. _developing_modules_all:
-
-How To Develop A Module
-```````````````````````
-
-The following topics will discuss how to develop and work with modules:
+If your use case isn't covered by an existing module, an open PR, an action plugin, or a role, and you don't need to create multiple modules, then you're ready to start developing a new module. 
 
 :doc:`developing_program_flow_modules`
     A description of Ansible's module architecture.
