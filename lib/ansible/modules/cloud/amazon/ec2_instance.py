@@ -141,6 +141,20 @@ options:
       - For T2 series instances, choose whether to allow increased charges to buy CPU credits if the default pool is depleted.
       - Choose I(unlimited) to enable buying additional CPU credits.
     choices: [unlimited, standard]
+  cpu_options:
+    description:
+      - Reduce the number of vCPU exposed to the instance.
+      - Those parameters can only be set at instance launch. The two suboptions threads_per_core and core_count are mandatory.
+      - See U(https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-optimize-cpu.html) for combinations available.
+    version_added: 2.7
+    suboptions:
+      threads_per_core:
+        description:
+        - Select the number of threads per core to enable. Disable or Enable Intel HT
+        choices: [1, 2]
+      core_count:
+        description:
+        - Set the number of core to enable.
   detailed_monitoring:
     description:
       - Whether to allow detailed cloudwatch metrics to be collected, enabling more detailed alerting.
@@ -901,6 +915,30 @@ def warn_if_public_ip_assignment_changed(instance):
                 assign_public_ip, instance['InstanceId']))
 
 
+def warn_if_cpu_options_changed(instance):
+    # This is a non-modifiable attribute.
+    cpu_options = module.params.get('cpu_options')
+    if cpu_options is None:
+        return
+
+    # Check that the CpuOptions set are the same and warn if not
+    core_count_curr = instance['CpuOptions'].get('CoreCount')
+    core_count = cpu_options.get('core_count')
+    threads_per_core_curr = instance['CpuOptions'].get('ThreadsPerCore')
+    threads_per_core = cpu_options.get('threads_per_core')
+    if core_count_curr != core_count:
+        module.warn(
+             "Unable to modify core_count from {} to {}."
+             "Assigning a number of core is determinted during instance creation".format(
+                 core_count_curr, core_count))
+
+    if threads_per_core_curr != threads_per_core:
+        module.warn(
+            "Unable to modify threads_per_core from {} to {}."
+            "Assigning a number of threads per core is determined during instance creation.".format(
+                threads_per_core_curr, threads_per_core))
+
+
 def discover_security_groups(group, groups, parent_vpc_id=None, subnet_id=None, ec2=None):
     if ec2 is None:
         ec2 = module.client('ec2')
@@ -1019,6 +1057,20 @@ def build_top_level_options(params):
         spec['InstanceInitiatedShutdownBehavior'] = params.get('instance_initiated_shutdown_behavior')
     if params.get('termination_protection') is not None:
         spec['DisableApiTermination'] = params.get('termination_protection')
+    if params.get('cpu_options') is not None:
+        cpu_opts = params.get('cpu_options')
+        spec['CpuOptions'] = {}
+        if cpu_opts.get('threads_per_core') is not None and cpu_opts.get('core_count') is not None:
+            if isinstance(cpu_opts.get('threads_per_core'), int):
+                spec['CpuOptions']['ThreadsPerCore'] = cpu_opts.get('threads_per_core')
+            else:
+                module.fail_json(msg='thread_per_core option should be an integer')
+            if isinstance(cpu_opts.get('core_count'), int):
+                spec['CpuOptions']['CoreCount'] = cpu_opts.get('core_count')
+            else:
+                module.fail_json(msg='core_count option should be an integer')
+        else:
+            module.fail_json(msg='cpu_options require both threads_per_count and core_count options')
     return spec
 
 
@@ -1445,6 +1497,7 @@ def main():
         launch_template=dict(type='dict'),
         key_name=dict(type='str'),
         cpu_credit_specification=dict(type='str', choices=['standard', 'unlimited']),
+        cpu_options=dict(type='dict'),
         tenancy=dict(type='str', choices=['dedicated', 'default']),
         instance_initiated_shutdown_behavior=dict(type='str', choices=['stop', 'terminate']),
         termination_protection=dict(type='bool'),
@@ -1515,12 +1568,18 @@ def main():
 
         module.params['filters'] = filters
 
+    if module.params.get('cpu_options'):
+        boto3_version = int(boto3.__version__.replace('.', '')[0:3])
+        if boto3_version < 170:
+            module.fail_json(msg="cpu_options is only supported with boto3 > 1.7.0")
+
     existing_matches = find_instances(ec2, filters=module.params.get('filters'))
     changed = False
 
     if state not in ('terminated', 'absent') and existing_matches:
         for match in existing_matches:
             warn_if_public_ip_assignment_changed(match)
+            warn_if_cpu_options_changed(match)
             changed |= manage_tags(match, (module.params.get('tags') or {}), module.params.get('purge_tags', False), ec2)
 
     if state in ('present', 'running', 'started'):
