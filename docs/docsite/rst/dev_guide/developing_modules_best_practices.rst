@@ -3,32 +3,31 @@
 Conventions, Best Practices, and Pitfalls
 `````````````````````````````````````````
 
-As a reminder from the example code above, here are some basic conventions
-and guidelines:
+As you develop your module, follow these basic conventions and guidelines:
 
-* If the module is addressing an object, the parameter for that object should be called 'name' whenever possible, or accept 'name' as an alias.
+* Modules should have a concise and well-defined functionality. Basically, follow the UNIX philosophy of doing one thing well.
 
-* If you have a company module that returns facts specific to your installations, a good name for this module is `site_facts`.
+* Modules should be self-contained in one file, so they can be be auto-transferred by Ansible.
 
-* Modules accepting boolean status should generally accept 'yes', 'no', 'true', 'false', or anything else a user may likely throw at them.  The AnsibleModule common code supports this with "type='bool'".
+* If your module is addressing an object, the parameter for that object should be called ``name`` whenever possible, or accept ``name`` as an alias.
 
-* Include a minimum of dependencies if possible.  If there are dependencies, document them at the top of the module file, and have the module raise JSON error messages when the import fails.
+* If you have a local module that returns facts specific to your installations, a good name for this module is ``site_facts``.
 
-* Modules must be self-contained in one file to be auto-transferred by ansible.
+* Modules accepting boolean status should generally accept ``yes``, ``no``, ``true``, ``false``, or anything else a user may likely throw at them.  The AnsibleModule common code supports this with ``type='bool'``.
 
-* If packaging modules in an RPM, they only need to be installed on the control machine and should be dropped into /usr/share/ansible.  This is entirely optional and up to you.
+* Eliminate or minimize dependencies. If your module has dependencies, document them at the top of the module file and raise JSON error messages when the import fails.
 
-* Modules must output valid JSON only. The top level return type must be a hash (dictionary) although they can be nested.  Lists or simple scalar values are not supported, though they can be trivially contained inside a dictionary.
+* If you package your module(s) in an RPM, install them on the control machine in ``/usr/share/ansible``. Packaging modules in RPMs is optional.
 
-* In the event of failure, a key of 'failed' should be included, along with a string explanation in 'msg'.  Modules that raise tracebacks (stacktraces) are generally considered 'poor' modules, though Ansible can deal with these returns and will automatically convert anything unparseable into a failed result.  If you are using the AnsibleModule common Python code, the 'failed' element will be included for you automatically when you call 'fail_json'.
+* Modules must output valid JSON only. The top level return type must be a hash (dictionary) although they can be nested. Lists or simple scalar values are not supported, though they can be trivially contained inside a dictionary.
+
+* In the event of failure, a key of ``failed`` should be included, along with a string explanation in ``msg``.  Modules that raise tracebacks (stacktraces) are generally considered 'poor' modules, though Ansible can deal with these returns and will automatically convert anything unparseable into a failed result.  If you are using the AnsibleModule common Python code, the 'failed' element will be included for you automatically when you call ``fail_json``.
 
 * Return codes from modules are used if 'failed' is missing, 0=success and non-zero=failure.
 
-* As results from many hosts will be aggregated at once, modules should return only relevant output.  Returning the entire contents of a log file is generally bad form.
+* As results from many hosts will be aggregated at once, modules should return only relevant output. Returning the entire contents of a log file is generally bad form.
 
-* Modules should have a concise and well defined functionality. Basically, follow the UNIX philosophy of doing one thing well.
-
-* Modules should not require that a user know all the underlying options of an api/tool to be used. For instance, if the legal values for a required module parameter cannot be documented, that's a sign that the module would be rejected.
+* Modules should not require that a user know all the underlying options of an API/tool to be used. For instance, if the legal values for a required module parameter cannot be documented, that's a sign that the module would be rejected.
 
 * Modules should typically encompass much of the logic for interacting with a resource. A lightweight wrapper around an API that does not contain much logic would likely cause users to offload too much logic into a playbook, and for this reason the module would be rejected. Instead try creating multiple modules for interacting with smaller individual pieces of the API.
 
