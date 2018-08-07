@@ -204,6 +204,26 @@ eks_data = {
 }
 
 
+rds_data = {
+    "version": 2,
+    "waiters": {
+        "DBInstanceStopped": {
+            "delay": 20,
+            "maxAttempts": 60,
+            "operation": "DescribeDBInstances",
+            "acceptors": [
+                {
+                    "state": "success",
+                    "matcher": "pathAll",
+                    "argument": "DBInstances[].DBInstanceStatus",
+                    "expected": "stopped"
+                },
+            ]
+        }
+    }
+}
+
+
 def ec2_model(name):
     ec2_models = core_waiter.WaiterModel(waiter_config=ec2_data)
     return ec2_models.get_waiter(name)
@@ -217,6 +237,11 @@ def waf_model(name):
 def eks_model(name):
     eks_models = core_waiter.WaiterModel(waiter_config=eks_data)
     return eks_models.get_waiter(name)
+
+
+def rds_model(name):
+    rds_models = core_waiter.WaiterModel(waiter_config=rds_data)
+    return rds_models.get_waiter(name)
 
 
 waiters_by_name = {
@@ -285,6 +310,12 @@ waiters_by_name = {
         eks_model('ClusterActive'),
         core_waiter.NormalizedOperationMethod(
             eks.describe_cluster
+        )),
+    ('RDS', 'db_instance_stopped'): lambda rds: core_waiter.Waiter(
+        'db_instance_stopped',
+        rds_model('DBInstanceStopped'),
+        core_waiter.NormalizedOperationMethod(
+            rds.describe_db_instances
         )),
 }
 
