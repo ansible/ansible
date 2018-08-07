@@ -29,9 +29,15 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: Change the hostname to new_hostname
+---
+- name: Change the hostname to sample-hostname
   win_hostname:
-    name: new_hostname
+    name: sample-hostname
+  register: res
+
+- name: Reboot
+  win_reboot:
+  when: res.reboot_required
 '''
 
 RETURN = r'''
