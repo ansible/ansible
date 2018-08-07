@@ -98,6 +98,9 @@ class AnsibleVultrSSHKeyFacts(Vultr):
 
 
 def parse_keys_list(keys_list):
+    if not keys_list:
+        return []
+
     return [key for id, key in keys_list.items()]
 
 
