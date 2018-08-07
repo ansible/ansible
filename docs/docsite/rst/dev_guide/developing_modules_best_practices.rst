@@ -150,24 +150,6 @@ module file and test that the real module works via :command:`ansible` or
     with Ansible normally.  Those are not bugs in the module; they're
     limitations of ``excommunicate``.  Use at your own risk.
 
-
-Module Paths
-````````````
-
-If you are having trouble getting your module "found" by ansible, be
-sure it is in the :envvar:`ANSIBLE_LIBRARY` environment variable.
-
-If you have a fork of one of the ansible module projects, do something like this::
-
-    ANSIBLE_LIBRARY=~/ansible-modules-core
-
-And this will make the items in your fork be loaded ahead of what ships with Ansible.  Just be sure
-to make sure you're not reporting bugs on versions from your fork!
-
-To be safe, if you're working on a variant on something in Ansible's normal distribution, it's not
-a bad idea to give it a new name while you are working on it, to be sure you know you're pulling
-your version.
-
 Common Pitfalls
 ```````````````
 
