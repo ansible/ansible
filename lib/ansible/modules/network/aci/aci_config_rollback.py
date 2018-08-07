@@ -232,8 +232,8 @@ def main():
             root_class=dict(
                 aci_class='configImportP',
                 aci_rn='fabric/configimp-{0}'.format(import_policy),
-                filter_target='eq(configImportP.name, "{0}")'.format(import_policy),
                 module_object=import_policy,
+                target_filter={'name': import_policy},
             ),
         )
 

@@ -69,8 +69,10 @@
 - name: Verify add_ospf_interface_policy
   assert:
     that:
-    - cm_add_ospf_interface_policy.changed == nm_add_ospf_interface_policy.changed == true
-    - cm_add_ospf_interface_policy_again.changed == nm_add_ospf_interface_policy_again.changed == false
+    - cm_add_ospf_interface_policy is changed
+    - nm_add_ospf_interface_policy is changed
+    - cm_add_ospf_interface_policy_again is not changed
+    - nm_add_ospf_interface_policy_again is not changed
 
 
 # CHANGE OSPF INTERFACE POLICY
@@ -103,8 +105,10 @@
 - name: Verify add_ospf_descr
   assert:
     that:
-    - cm_add_ospf_descr.changed == nm_add_ospf_descr.changed == true
-    - cm_add_ospf_descr_again.changed == nm_add_ospf_descr_again.changed == false
+    - cm_add_ospf_descr is changed
+    - nm_add_ospf_descr is changed
+    - cm_add_ospf_descr_again is not changed
+    - nm_add_ospf_descr_again is not changed
 
 
 # ADD OSPF INTERFACE POLICY AGAIN
@@ -120,7 +124,8 @@
 - name: Verify add_ospf_again_no_descr
   assert:
     that:
-    - cm_add_ospf_again_no_descr.changed == nm_add_ospf_again_no_descr.changed == false
+    - cm_add_ospf_again_no_descr is not changed
+    - nm_add_ospf_again_no_descr is not changed
 
 
 # QUERY ALL OSPF INTERFACE POLICIES
@@ -145,7 +150,8 @@
 - name: Verify query_all_ospfs
   assert:
     that:
-    - cm_query_all_ospfs.changed == nm_query_all_ospfs.changed == false
+    - cm_query_all_ospfs is not changed
+    - nm_query_all_ospfs is not changed
     # NOTE: Order of ospfs is not stable between calls
     #- cm_query_all_ospfs == nm_query_all_ospfs
 
@@ -169,7 +175,8 @@
 - name: Verify query_ospf
   assert:
     that:
-    - cm_query_ospf.changed == nm_query_ospf.changed == false
+    - cm_query_ospf is not changed
+    - nm_query_ospf is not changed
     - cm_query_ospf == nm_query_ospf
 
 
@@ -195,8 +202,10 @@
 - name: Verify remove_ospf
   assert:
     that:
-    - cm_remove_ospf.changed == nm_remove_ospf.changed == true
-    - cm_remove_ospf_again.changed == nm_remove_ospf_again.changed == false
+    - cm_remove_ospf is changed
+    - nm_remove_ospf is changed
+    - cm_remove_ospf_again is not changed
+    - nm_remove_ospf_again is not changed
 
 
 # QUERY NON-EXISTING OSPF INTERFACE POLICY
@@ -217,5 +226,6 @@
 - name: Verify query_non_ospf
   assert:
     that:
-    - cm_query_non_ospf.changed == nm_query_non_ospf.changed == false
+    - cm_query_non_ospf is not changed
+    - nm_query_non_ospf is not changed
     - cm_query_non_ospf == nm_query_non_ospf

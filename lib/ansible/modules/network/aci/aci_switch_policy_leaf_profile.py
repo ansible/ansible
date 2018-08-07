@@ -203,8 +203,8 @@ def main():
         root_class=dict(
             aci_class='infraNodeP',
             aci_rn='infra/nprof-{0}'.format(leaf_profile),
-            filter_target='eq(infraNodeP.name, "{0}")'.format(leaf_profile),
             module_object=leaf_profile,
+            target_filter={'name': leaf_profile},
         ),
     )
 

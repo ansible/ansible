@@ -235,14 +235,14 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='fvCtx',
             aci_rn='ctx-{0}'.format(vrf),
-            filter_target='eq(fvCtx.name, "{0}")'.format(vrf),
             module_object=vrf,
+            target_filter={'name': vrf},
         ),
     )
 

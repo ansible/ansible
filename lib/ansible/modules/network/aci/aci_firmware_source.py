@@ -236,8 +236,8 @@ def main():
         root_class=dict(
             aci_class='firmwareOSource',
             aci_rn='fabric/fwrepop',
-            filter_target='eq(firmwareOSource.name, "{0}")'.format(source),
             module_object=source,
+            target_filter={'name': source},
         ),
     )
     aci.get_existing()

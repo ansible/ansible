@@ -372,20 +372,20 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='fvBD',
             aci_rn='BD-{0}'.format(bd),
-            filter_target='eq(fvBD.name, "{0}")'.format(bd),
             module_object=bd,
+            target_filter={'name': bd},
         ),
         subclass_2=dict(
             aci_class='fvSubnet',
             aci_rn='subnet-[{0}]'.format(gateway),
-            filter_target='eq(fvSubnet.ip, "{0}")'.format(gateway),
             module_object=gateway,
+            target_filter={'ip': gateway},
         ),
         child_classes=['fvRsBDSubnetToProfile', 'fvRsNdPfxPol'],
     )

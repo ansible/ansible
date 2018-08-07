@@ -301,8 +301,8 @@ def main():
         root_class=dict(
             aci_class='aaaUser',
             aci_rn='userext/user-{0}'.format(aaa_user),
-            filter_target='eq(aaaUser.name, "{0}")'.format(aaa_user),
             module_object=aaa_user,
+            target_filter={'name': aaa_user},
         ),
     )
     aci.get_existing()

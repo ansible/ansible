@@ -327,33 +327,15 @@ def main():
                 if not 1 <= encap_id <= 4093:
                     module.fail_json(msg='vsan pools must have "range_start" and "range_end" values between 1 and 4093')
 
-    # Build proper proper filter_target based on range_start, range_end, and range_name
     if range_end is not None and range_start is not None:
         # Validate range_start is less than range_end
         if range_start > range_end:
             module.fail_json(msg='The "range_start" must be less than or equal to the "range_end"')
 
-        if range_name is None:
-            range_filter_target = 'and(eq({0}.from, "{1}"),eq({0}.to, "{2}"))'.format(aci_range_class, encap_start, encap_end)
-        else:
-            range_filter_target = 'and(eq({0}.from, "{1}"),eq({0}.to, "{2}"),eq({0}.name, "{3}"))'.format(aci_range_class, encap_start, encap_end, range_name)
     elif range_end is None and range_start is None:
         if range_name is None:
             # Reset range managed object to None for aci util to properly handle query
             aci_range_mo = None
-            range_filter_target = ''
-        else:
-            range_filter_target = 'eq({0}.name, "{1}")'.format(aci_range_class, range_name)
-    elif range_start is not None:
-        if range_name is None:
-            range_filter_target = 'eq({0}.from, "{1}")'.format(aci_range_class, encap_start)
-        else:
-            range_filter_target = 'and(eq({0}.from, "{1}"),eq({0}.name, "{2}"))'.format(aci_range_class, encap_start, range_name)
-    else:
-        if range_name is None:
-            range_filter_target = 'eq({0}.to, "{1}")'.format(aci_range_class, encap_end)
-        else:
-            range_filter_target = 'and(eq({0}.to, "{1}"),eq({0}.name, "{2}"))'.format(aci_range_class, encap_end, range_name)
 
     # Vxlan does not support setting the allocation mode
     if pool_type == 'vxlan' and allocation_mode is not None:
@@ -371,14 +353,14 @@ def main():
         root_class=dict(
             aci_class=aci_pool_class,
             aci_rn='{0}{1}'.format(aci_pool_mo, pool_name),
-            filter_target='eq({0}.name, "{1}")'.format(aci_pool_class, pool),
             module_object=pool,
+            target_filter={'name': pool},
         ),
         subclass_1=dict(
             aci_class=aci_range_class,
             aci_rn='{0}'.format(aci_range_mo),
-            filter_target=range_filter_target,
             module_object=aci_range_mo,
+            target_filter={'from': encap_start, 'to': encap_end, 'name': range_name},
         ),
     )
 

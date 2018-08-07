@@ -259,8 +259,8 @@ def main():
         root_class=dict(
             aci_class=aci_class,
             aci_rn='{0}{1}'.format(aci_mo, pool_name),
-            filter_target='eq({0}.name, "{1}")'.format(aci_class, pool),
             module_object=pool,
+            target_filter={'name': pool},
         ),
     )
 

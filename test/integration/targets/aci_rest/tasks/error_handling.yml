@@ -26,7 +26,7 @@
 - name: Verify error_on_name_resolution
   assert:
     that:
-    - error_on_name_resolution.failed == true
+    - error_on_name_resolution is failed
     - "error_on_name_resolution.msg == 'Connection failed for https://foo.bar.cisco.com/api/aaaLogin.json. Request failed: <urlopen error [Errno -2] Name or service not known>'"
     - "'current' not in error_on_name_resolution"
     - "'previous' not in error_on_name_resolution"
@@ -54,7 +54,7 @@
 - name: Verify error_on_missing_required_param
   assert:
     that:
-    - error_on_missing_required_param.failed == true
+    - error_on_missing_required_param is failed
     - 'error_on_missing_required_param.msg == "missing required arguments: path"'
     - "'current' not in error_on_missing_required_param"
     - "'previous' not in error_on_missing_required_param"
@@ -82,7 +82,7 @@
 - name: Verify error_on_missing_attributes
   assert:
     that:
-    - error_on_missing_attributes.failed == true
+    - error_on_missing_attributes is failed
     - error_on_missing_attributes.method == 'POST'
     - "error_on_missing_attributes.msg == 'APIC Error 400: invalid data at line \\'1\\'. Attributes are missing, tag \\'attributes\\' must be specified first, before any other tag'"
     - 'error_on_missing_attributes.response == "HTTP Error 400: Bad Request"'
@@ -115,7 +115,7 @@
 - name: Verify error_on_input_validation
   assert:
     that:
-    - error_on_input_validation.failed == true
+    - error_on_input_validation is failed
     - error_on_input_validation.method == 'POST'
     - "error_on_input_validation.msg == 'APIC Error 801: property descr of tn-ansible_test failed validation for value \\'This is an [invalid] description\\''"
     - 'error_on_input_validation.response == "HTTP Error 400: Bad Request"'
@@ -148,7 +148,7 @@
 - name: Verify error_on_invalid_attributes
   assert:
     that:
-    - error_on_invalid_attributes.failed == true
+    - error_on_invalid_attributes is failed
     - error_on_invalid_attributes.method == 'POST'
     - "error_on_invalid_attributes.msg == 'APIC Error 400: unknown attribute \\'description\\' in element \\'fvTenant\\''"
     - 'error_on_invalid_attributes.response == "HTTP Error 400: Bad Request"'
@@ -180,7 +180,7 @@
 - name: Verify error_on_invalid_object
   assert:
     that:
-    - error_on_invalid_object.failed == true
+    - error_on_invalid_object is failed
     - error_on_invalid_object.method == 'POST'
     - "error_on_invalid_object.msg == 'APIC Error 122: unknown managed object class fvFoobar'"
     - 'error_on_invalid_object.response == "HTTP Error 400: Bad Request"'

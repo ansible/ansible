@@ -282,15 +282,15 @@ def main():
         root_class=dict(
             aci_class='infraAccPortP',
             aci_rn='infra/accportprof-{0}'.format(leaf_interface_profile),
-            filter_target='eq(infraAccPortP.name, "{0}")'.format(leaf_interface_profile),
             module_object=leaf_interface_profile,
+            target_filter={'name': leaf_interface_profile},
         ),
         subclass_1=dict(
             aci_class='infraHPortS',
             # NOTE: normal rn: hports-{name}-typ-{type}, hence here hardcoded to range for purposes of module
             aci_rn='hports-{0}-typ-range'.format(access_port_selector),
-            filter_target='eq(infraHPortS.name, "{0}")'.format(access_port_selector),
             module_object=access_port_selector,
+            target_filter={'name': access_port_selector},
         ),
         child_classes=['infraPortBlk', 'infraRsAccBaseGrp'],
     )

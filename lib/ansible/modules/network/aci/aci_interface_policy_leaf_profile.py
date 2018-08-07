@@ -211,8 +211,8 @@ def main():
         root_class=dict(
             aci_class='infraAccPortP',
             aci_rn='infra/accportprof-{0}'.format(leaf_interface_profile),
-            filter_target='eq(infraAccPortP.name, "{0}")'.format(leaf_interface_profile),
-            module_object=leaf_interface_profile
+            module_object=leaf_interface_profile,
+            target_filter={'name': leaf_interface_profile},
         ),
     )
     aci.get_existing()

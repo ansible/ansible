@@ -264,14 +264,14 @@ def main():
         root_class=dict(
             aci_class='infraAttEntityP',
             aci_rn='infra/attentp-{0}'.format(aep),
-            filter_target='eq(infraAttEntityP.name, "{0}")'.format(aep),
             module_object=aep,
+            target_filter={'name': aep},
         ),
         subclass_1=dict(
             aci_class='infraRsDomP',
             aci_rn='rsdomP-[{0}]'.format(domain_mo),
-            filter_target='eq(infraRsDomP.tDn, "{0}")'.format(domain_mo),
             module_object=domain_mo,
+            target_filter={'tDn': domain_mo},
         ),
     )
 

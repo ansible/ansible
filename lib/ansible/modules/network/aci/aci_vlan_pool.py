@@ -231,8 +231,8 @@ def main():
         root_class=dict(
             aci_class='fvnsVlanInstP',
             aci_rn='infra/vlanns-{0}'.format(pool_name),
-            filter_target='eq(fvnsVlanInstP.name, "{0}")'.format(pool),
             module_object=pool,
+            target_filter={'name': pool},
         ),
     )
 

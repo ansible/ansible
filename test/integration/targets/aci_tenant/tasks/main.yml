@@ -54,8 +54,10 @@
 - name: Verify add_tenant
   assert:
     that:
-    - cm_add_tenant.changed == nm_add_tenant.changed == true
-    - cm_add_tenant_again.changed == nm_add_tenant_again.changed == false
+    - cm_add_tenant is changed
+    - nm_add_tenant is changed
+    - cm_add_tenant_again is not changed
+    - nm_add_tenant_again is not changed
 
 
 # CHANGE TENANT
@@ -88,8 +90,10 @@
 - name: Verify add_tenant_descr
   assert:
     that:
-    - cm_add_tenant_descr.changed == nm_add_tenant_descr.changed == true
-    - cm_add_tenant_descr_again.changed == nm_add_tenant_descr_again.changed == false
+    - cm_add_tenant_descr is changed
+    - nm_add_tenant_descr is changed
+    - cm_add_tenant_descr_again is not changed
+    - nm_add_tenant_descr_again is not changed
 
 
 # ADD TENANT AGAIN
@@ -105,7 +109,8 @@
 - name: Verify add_tenant_again_no_descr
   assert:
     that:
-    - cm_add_tenant_again_no_descr.changed == nm_add_tenant_again_no_descr.changed == false
+    - cm_add_tenant_again_no_descr is not changed
+    - nm_add_tenant_again_no_descr is not changed
 
 
 # QUERY ALL TENANTS
@@ -129,7 +134,8 @@
 - name: Verify query_all_tenants
   assert:
     that:
-    - cm_query_all_tenants.changed == nm_query_all_tenants.changed == false
+    - cm_query_all_tenants is not changed
+    - nm_query_all_tenants is not changed
     # NOTE: Order of tenants is not stable between calls
     #- cm_query_all_tenants == nm_query_all_tenants
 
@@ -151,7 +157,8 @@
 - name: Verify query_tenant
   assert:
     that:
-    - cm_query_tenant.changed == nm_query_tenant.changed == false
+    - cm_query_tenant is not changed
+    - nm_query_tenant is not changed
     - cm_query_tenant == nm_query_tenant
 
 
@@ -177,8 +184,10 @@
 - name: Verify remove_tenant
   assert:
     that:
-    - cm_remove_tenant.changed == nm_remove_tenant.changed == true
-    - cm_remove_tenant_again.changed == nm_remove_tenant_again.changed == false
+    - cm_remove_tenant is changed
+    - nm_remove_tenant is changed
+    - cm_remove_tenant_again is not changed
+    - nm_remove_tenant_again is not changed
 
 
 # QUERY NON-EXISTING TENANT
@@ -199,5 +208,6 @@
 - name: Verify query_non_tenant
   assert:
     that:
-    - cm_query_non_tenant.changed == nm_query_non_tenant.changed == false
+    - cm_query_non_tenant is not changed
+    - nm_query_non_tenant is not changed
     - cm_query_non_tenant == nm_query_non_tenant
