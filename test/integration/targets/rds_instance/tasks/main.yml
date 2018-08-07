@@ -1,0 +1,12 @@
+---
+- block:
+
+    - include: ./credential_tests.yml
+    - include: ./test_states.yml
+    - include: ./test_tags.yml
+    - include: ./test_modification.yml
+    - include: ./test_processor_features.yml
+    - include: ./test_encryption.yml
+    - include: ./test_final_snapshot.yml
+    # TODO: uncomment after adding rds_cluster module
+    #- include: ./test_aurora.yml
