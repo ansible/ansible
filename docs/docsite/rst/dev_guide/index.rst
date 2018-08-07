@@ -12,6 +12,7 @@ If you want to extend Ansible by using a non-core module or plugin locally, crea
 Find the task that best describes what you want to do:
 
 * I want to :ref:`use a custom plugin or module locally <developing_locally>`.
+* I want to address a particular use case, and I wonder: `is developing a module is the right approach <developing_modules>`?
 * I want to :ref:`write a custom plugin <developing_plugins>`.
 * I want to :ref:`write a custom module <developing_modules>`.
 * I want to :ref:`write a custom module for Windows <developing_modules_general_windows>`.
