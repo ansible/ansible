@@ -232,8 +232,8 @@ def main():
         root_class=dict(
             aci_class='fabricNodeIdentP',
             aci_rn='controller/nodeidentpol/nodep-{0}'.format(serial),
-            filter_target='eq(fabricNodeIdentP.serial, "{0}")'.format(serial),
             module_object=serial,
+            target_filter={'serial': serial},
         )
     )
 

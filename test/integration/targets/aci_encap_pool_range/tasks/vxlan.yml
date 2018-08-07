@@ -16,4 +16,4 @@
   aci_encap_pool:
     <<: *aci_pool_present
     state: absent
-  when: pool_present.changed == true
+  when: pool_present is changed

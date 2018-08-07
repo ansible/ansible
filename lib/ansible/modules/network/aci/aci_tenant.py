@@ -210,8 +210,8 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
     )
     aci.get_existing()

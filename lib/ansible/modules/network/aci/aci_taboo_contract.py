@@ -229,14 +229,14 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='vzTaboo',
             aci_rn='taboo-{0}'.format(taboo_contract),
-            filter_target='eq(vzTaboo.name, "{0}")'.format(taboo_contract),
             module_object=taboo_contract,
+            target_filter={'name': taboo_contract},
         ),
     )
 

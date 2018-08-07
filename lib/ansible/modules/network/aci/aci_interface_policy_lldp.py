@@ -203,8 +203,8 @@ def main():
         root_class=dict(
             aci_class='lldpIfPol',
             aci_rn='infra/lldpIfP-{0}'.format(lldp_policy),
-            filter_target='eq(lldpIfPol.name, "{0}")'.format(lldp_policy),
             module_object=lldp_policy,
+            target_filter={'name': lldp_policy},
         ),
     )
 

@@ -213,8 +213,8 @@ def main():
         root_class=dict(
             aci_class='l2IfPol',
             aci_rn='infra/l2IfP-{0}'.format(l2_policy),
-            filter_target='eq(l2IfPol.name, "{0}")'.format(l2_policy),
             module_object=l2_policy,
+            target_filter={'name': l2_policy},
         ),
     )
 

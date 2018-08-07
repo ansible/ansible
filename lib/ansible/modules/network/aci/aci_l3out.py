@@ -269,14 +269,14 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='l3extOut',
             aci_rn='out-{0}'.format(l3out),
-            filter_target='eq(l3extOut.name, "{0}")'.format(l3out),
             module_object=l3out,
+            target_filter={'name': l3out},
         ),
         child_classes=child_classes,
     )
