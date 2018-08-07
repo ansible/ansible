@@ -73,7 +73,7 @@ EXAMPLES = '''
     dest: nxos_ping
     vrf: management
     host: 68.170.147.165
-  with_items:
+  loop:
     - 8.8.8.8
     - 4.4.4.4
     - 198.6.1.4

@@ -107,9 +107,9 @@ EXAMPLES = '''
     user: deploy
     state: present
     key: '{{ item }}'
-  with_file:
-    - public_keys/doe-jane
-    - public_keys/doe-john
+  loop:
+    - "{{ lookup('file', 'public_keys/doe-jane') }}"
+    - "{{ lookup('file', 'public_keys/doe-john') }}"
 
 - name: Set authorized key defining key options
   authorized_key:
@@ -128,11 +128,9 @@ EXAMPLES = '''
 - name: Set authorized key, removing all the authorized keys already set
   authorized_key:
     user: root
-    key: '{{ item }}'
+    key: "{{ lookup('file', 'public_keys/doe-jane') }}"
     state: present
     exclusive: True
-  with_file:
-    - public_keys/doe-jane
 
 - name: Set authorized key for user ubuntu copying it from current user
   authorized_key:

@@ -76,7 +76,7 @@ EXAMPLES = '''
     user: admin
     password: secret
     system: ibox001
-  with_items:
+  loop:
     - 10.0.0.2
     - 10.0.0.3
 '''

@@ -253,7 +253,7 @@ EXAMPLES = '''
       add_host:
         hostname: "{{ item.public_ip }}"
         groupname: gce_instances_ips
-      with_items: "{{ gce.instance_data }}"
+      loop: "{{ gce.instance_data }}"
 
     - name: Wait for SSH for instances
       wait_for:
@@ -262,7 +262,7 @@ EXAMPLES = '''
         port: 22
         state: started
         timeout: 30
-      with_items: "{{ gce.instance_data }}"
+      loop: "{{ gce.instance_data }}"
 
     - name: Configure Hosts
       hosts: gce_instances_ips

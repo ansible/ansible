@@ -88,7 +88,7 @@ EXAMPLES = '''
     start_port: 1
     end_port: 65535
     protocol: '{{ item }}'
-  with_items:
+  loop:
   - tcp
   - udp
 

@@ -99,7 +99,7 @@ EXAMPLES = """
     dn: olcDatabase={1}hdb,cn=config
     name: olcDbIndex
     values: "{{ item }}"
-  with_items:
+  loop:
     - objectClass eq
     - uid eq
 
@@ -109,9 +109,11 @@ EXAMPLES = """
     name: "{{ item.key }}"
     values: "{{ item.value }}"
     state: exact
-  with_dict:
-    olcRootDN: cn=root,dc=example,dc=com
-    olcRootPW: "{SSHA}tabyipcHzhwESzRaGA7oQ/SDoBZQOGND"
+  loop: "{{ attrs|dict2items }}"
+  vars:
+    attrs:
+      olcRootDN: cn=root,dc=example,dc=com
+      olcRootPW: "{SSHA}tabyipcHzhwESzRaGA7oQ/SDoBZQOGND"
 
 - name: Get rid of an unneeded attribute
   ldap_attr:

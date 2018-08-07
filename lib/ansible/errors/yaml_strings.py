@@ -59,12 +59,12 @@ We could be wrong, but this one looks like it might be an issue with
 missing quotes.  Always quote template expression brackets when they
 start a value. For instance:
 
-    with_items:
+    loop:
       - {{ foo }}
 
 Should be written as:
 
-    with_items:
+    loop:
       - "{{ foo }}"
 """
 

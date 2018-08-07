@@ -347,7 +347,7 @@ EXAMPLES = """
   lxc_container:
     name: '{{ item }}'
     state: absent
-  with_items:
+  loop:
     - test-container-stopped
     - test-container-started
     - test-container-frozen

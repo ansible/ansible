@@ -89,7 +89,7 @@ EXAMPLES = '''
     subscription: "client:{{ item.key }}"
     reason: "{{ item.value.reason }}"
     creator: "{{ ansible_user_id }}"
-  with_dict: "{{ silence }}"
+  loop: "{{ silence }}"
 '''
 
 RETURN = '''

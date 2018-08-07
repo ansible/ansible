@@ -78,7 +78,7 @@ EXAMPLES = '''
     balancer_vhost: '{{ myloadbalancer_host }}'
     member_host: '{{ item.host }}'
     state: present
-  with_items: '{{ result.members }}'
+  loop: '{{ result.members }}'
 
 # Gracefully disable a member from a loadbalancer node:
 - apache2_mod_proxy:

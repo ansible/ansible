@@ -108,7 +108,7 @@ EXAMPLES = r'''
       esxi_hostname: '{{ inventory_hostname }}'
       state: present
   delegate_to: localhost
-  with_items:
+  loop:
       - { 'name': 'NasDS_vol01', 'server': 'nas01', 'path': '/mnt/vol01', 'type': 'nfs'}
       - { 'name': 'NasDS_vol02', 'server': 'nas01', 'path': '/mnt/vol02', 'type': 'nfs'}
 

@@ -69,7 +69,7 @@ EXAMPLES = '''
 
 - debug:
     msg: 'ZFS dataset {{ item.name }} consumes {{ item.used }} of disk space.'
-  with_items: '{{ ansible_zfs_datasets }}'
+  loop: '{{ ansible_zfs_datasets }}'
 '''
 
 RETURN = '''

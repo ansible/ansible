@@ -43,16 +43,6 @@ Lookup plugins can be used anywhere you can use templating in Ansible: in a play
   vars:
     file_contents: "{{lookup('file', 'path/to/file.txt')}}"
 
-Lookups are an integral part of loops. Wherever you see ``with_``, the part after the underscore is the name of a lookup.
-This is also the reason most lookups output lists and take lists as input; for example, ``with_items`` uses the :doc:`items <lookup/items>` lookup:
-
-.. code-block:: yaml
-
-  tasks:
-    - name: count to 3
-      debug: msg={{item}}
-      with_items: [1, 2, 3]
-
 You can combine lookups with :ref:`playbooks_filters`, :ref:`playbooks_tests` and even each other to do some complex data generation and manipulation. For example:
 
 .. code-block:: yaml
@@ -60,10 +50,11 @@ You can combine lookups with :ref:`playbooks_filters`, :ref:`playbooks_tests` an
   tasks:
     - name: valid but useless and over complicated chained lookups and filters
       debug: msg="find the answer here:\n{{ lookup('url', 'https://google.com/search/?q=' + item|urlencode)|join(' ') }}"
-      with_nested:
-        - "{{lookup('consul_kv', 'bcs/' + lookup('file', '/the/question') + ', host=localhost, port=2000')|shuffle}}"
-        - "{{lookup('sequence', 'end=42 start=2 step=2')|map('log', 4)|list)}}"
-        - ['a', 'c', 'd', 'c']
+      loop: "{{ questions|product(sequence, letters)|list }}"
+      vars:
+        questions: "{{lookup('consul_kv', 'bcs/' + lookup('file', '/the/question') + ', host=localhost, port=2000')|shuffle}}"
+        sequence: "{{range(2, 43, 2)|map('log', 4)|list)}}"
+        letters: ['a', 'c', 'd', 'c']
 
 .. versionadded:: 2.6
 

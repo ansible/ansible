@@ -56,7 +56,7 @@ EXAMPLES = """
     msg: 'Created instance {{ item.id }} of type {{ item.instance_type }}.\\nInstance can be reached at {{ item.public_ip }} in the {{ item.region }} region.'
   delegate_to: loclahost
   when: ec2.instances|length > 0
-  with_items: '{{ ec2.instances }}'
+  loop: '{{ ec2.instances }}'
 """
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url

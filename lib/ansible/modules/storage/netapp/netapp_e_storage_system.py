@@ -80,7 +80,7 @@ EXAMPLES = '''
         controller_addresses:
           - "{{ item.value.address1 }}"
           - "{{ item.value.address2 }}"
-      with_dict: "{{ storage_systems }}"
+      loop: "{{ storage_systems }}"
       when: check_storage_system
 '''
 

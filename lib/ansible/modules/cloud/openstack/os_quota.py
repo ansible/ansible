@@ -169,8 +169,7 @@ EXAMPLES = '''
       snapshots_lvm: "{{ item.snapshots_lvm }}"
     gigabytes_types:
       gigabytes_lvm: "{{ item.gigabytes_lvm }}"
-  with_items:
-    - "{{ projects }}"
+  loop: "{{ projects }}"
   when: item.state == "present"
 '''
 

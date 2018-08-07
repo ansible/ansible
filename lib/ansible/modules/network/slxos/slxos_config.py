@@ -195,7 +195,7 @@ EXAMPLES = """
     lines:
       - lacp timeout long
     parents: "{{ item }}"
-  with_items:
+  loop:
     - interface Ethernet 0/1
     - interface Ethernet 0/2
 

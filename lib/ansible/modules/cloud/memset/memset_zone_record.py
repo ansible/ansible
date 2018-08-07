@@ -25,7 +25,7 @@ notes:
     Memset customer control panel is needed with the following minimum scope -
     I(dns.zone_create), I(dns.zone_delete), I(dns.zone_list).
   - Currently this module can only create one DNS record at a time. Multiple records
-    should be created using C(with_items).
+    should be created using C(loop).
 description:
     - Manage DNS records in a Memset account.
 options:
@@ -104,7 +104,7 @@ EXAMPLES = '''
     record: "{{ item.record }}"
     address: "{{ item.address }}"
   delegate_to: localhost
-  with_items:
+  loop:
     - { 'zone': 'domain1.com', 'type': 'A', 'record': 'www', 'address': '1.2.3.4' }
     - { 'zone': 'domain2.com', 'type': 'A', 'record': 'mail', 'address': '4.3.2.1' }
 '''

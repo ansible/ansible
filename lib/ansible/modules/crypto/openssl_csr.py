@@ -212,9 +212,8 @@ EXAMPLES = '''
 - openssl_csr:
     path: /etc/ssl/csr/www.ansible.com.csr
     privatekey_path: /etc/ssl/private/ansible.com.pem
-    subject_alt_name: "{{ item.value | map('regex_replace', '^', 'DNS:') | list }}"
-  with_dict:
-    dns_server:
+    subject_alt_name: "{{ item | map('regex_replace', '^', 'DNS:') | list }}"
+  loop:
     - www.ansible.com
     - m.ansible.com
 

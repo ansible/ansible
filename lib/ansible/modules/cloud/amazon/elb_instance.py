@@ -83,7 +83,7 @@ post_tasks:
       ec2_elbs: "{{ item }}"
       state: present
     delegate_to: localhost
-    with_items: "{{ ec2_elbs }}"
+    loop: "{{ ec2_elbs }}"
 """
 
 import time

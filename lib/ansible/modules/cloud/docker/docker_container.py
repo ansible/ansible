@@ -484,7 +484,7 @@ EXAMPLES = '''
     recreate: yes
     image: someuser/anotherappimage
     command: sleep 1d
-  with_sequence: count=4
+  loop: "{{ range(5)|list }}"
 
 - name: remove container
   docker_container:

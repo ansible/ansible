@@ -165,8 +165,7 @@ EXAMPLES = r'''
       <fabricNodeIdentPol>
         <fabricNodeIdentP name="{{ item.name }}" nodeId="{{ item.nodeid }}" status="{{ item.status }}" serial="{{ item.serial }}"/>
       </fabricNodeIdentPol>
-  with_items:
-  - '{{ apic_leavesspines }}'
+  loop: '{{ apic_leavesspines }}'
   delegate_to: localhost
 
 - name: Wait for all controllers to become ready

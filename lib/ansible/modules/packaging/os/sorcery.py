@@ -113,7 +113,7 @@ EXAMPLES = '''
     name: "{{ item.spell }}"
     depends: "{{ item.depends | default(None) }}"
     state: present
-  with_items:
+  loop:
     - { spell: 'vifm', depends: '+file,-gtk+2' }
     - { spell: 'fwknop', depends: 'gpgme' }
     - { spell: 'pv,tnftp,tor' }

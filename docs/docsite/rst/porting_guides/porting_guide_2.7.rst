@@ -73,7 +73,7 @@ Instead of relying on implicit squashing, tasks should instead supply the list d
       yum:
         name: "{{ item }}"
         state: present
-      with_items: "{{ packages }}"
+      loop: "{{ packages }}"
 
 **NEW** In Ansible 2.7 it should be changed to look like this:
 

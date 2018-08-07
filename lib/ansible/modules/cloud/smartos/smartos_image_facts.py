@@ -43,7 +43,7 @@ EXAMPLES = '''
 
 - debug: msg="{{ smartos_images[item]['name'] }}-{{smartos_images[item]['version'] }}
             has {{ smartos_images[item]['clones'] }} VM(s)"
-  with_items: "{{ smartos_images.keys() }}"
+  loop: "{{ smartos_images.keys() }}"
 '''
 
 RETURN = '''

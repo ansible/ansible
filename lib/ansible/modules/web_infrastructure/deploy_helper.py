@@ -170,7 +170,7 @@ EXAMPLES = '''
   file:
     path: '{{ deploy_helper.shared_path }}/{{ item }}'
     state: directory
-  with_items:
+  loop:
     - sessions
     - uploads
 - name: Add symlinks from the new release to the shared folder
@@ -178,7 +178,7 @@ EXAMPLES = '''
     path: '{{ deploy_helper.new_release_path }}/{{ item.path }}'
     src: '{{ deploy_helper.shared_path }}/{{ item.src }}'
     state: link
-  with_items:
+  loop:
       - path: app/sessions
         src: sessions
       - path: web/uploads

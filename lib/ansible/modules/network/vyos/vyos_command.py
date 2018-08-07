@@ -94,7 +94,7 @@ tasks:
     vyos_command:
       commands:
         - show interfaces ethernet {{ item }}
-    with_items:
+    loop:
       - eth0
       - eth1
 

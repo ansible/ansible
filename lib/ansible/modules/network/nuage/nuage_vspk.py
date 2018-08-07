@@ -235,7 +235,7 @@ EXAMPLES = '''
     properties:
       name: "{{ item }}"
       description: "Created by Ansible"
-  with_items:
+  loop:
     - "Template-1"
     - "Template-2"
 
@@ -258,7 +258,7 @@ EXAMPLES = '''
     type: DomainTemplate
     state: absent
     id: "{{ item.ID }}"
-  with_items: "{{ nuage_domain_templates.entities }}"
+  loop: "{{ nuage_domain_templates.entities }}"
   when: nuage_domain_templates.entities is defined
 
 # Unassign user from group
