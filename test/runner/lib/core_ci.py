@@ -117,7 +117,8 @@ class AnsibleCoreCI(object):
             self.endpoints = AWS_ENDPOINTS[region],
 
             if self.platform == 'windows':
-                self.ssh_key = None
+                # Windows supports SSH for all hosts except 2008 (non R2)
+                self.ssh_key = None if self.version == '2008' else SshKey(args)
                 self.port = 5986
             else:
                 self.ssh_key = SshKey(args)
