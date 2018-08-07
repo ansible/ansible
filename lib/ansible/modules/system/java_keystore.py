@@ -66,6 +66,7 @@ author: Guillaume Grossetie
 EXAMPLES = '''
 # Create a key store for the given certificate (inline)
 - java_keystore:
+    name: example
     certificate: |
       -----BEGIN CERTIFICATE-----
       h19dUZ2co2fI/ibYiwxWk4aeNE6KWvCaTQOMQ8t6Uo2XKhpL/xnjoAgh1uCQN/69
@@ -81,6 +82,7 @@ EXAMPLES = '''
 
 # Create a key store for the given certificate (lookup)
 - java_keystore:
+    name: example
     certificate: "{{lookup('file', '/path/to/certificate.crt') }}"
     private_key: "{{lookup('file', '/path/to/private.key') }}"
     password: changeit
