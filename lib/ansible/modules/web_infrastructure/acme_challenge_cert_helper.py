@@ -123,17 +123,22 @@ import base64
 import datetime
 import sys
 
-import cryptography
-import cryptography.hazmat.backends
-import cryptography.hazmat.primitives.serialization
-import cryptography.hazmat.primitives.asymmetric.rsa
-import cryptography.hazmat.primitives.asymmetric.ec
-import cryptography.hazmat.primitives.asymmetric.padding
-import cryptography.hazmat.primitives.hashes
-import cryptography.hazmat.primitives.asymmetric.utils
-import cryptography.x509
-import cryptography.x509.oid
-_cryptography_backend = cryptography.hazmat.backends.default_backend()
+try:
+    import cryptography
+    import cryptography.hazmat.backends
+    import cryptography.hazmat.primitives.serialization
+    import cryptography.hazmat.primitives.asymmetric.rsa
+    import cryptography.hazmat.primitives.asymmetric.ec
+    import cryptography.hazmat.primitives.asymmetric.padding
+    import cryptography.hazmat.primitives.hashes
+    import cryptography.hazmat.primitives.asymmetric.utils
+    import cryptography.x509
+    import cryptography.x509.oid
+    from distutils.version import LooseVersion
+    HAS_CRYPTOGRAPHY = (LooseVersion(cryptography.__version__) >= LooseVersion('1.3'))
+    _cryptography_backend = cryptography.hazmat.backends.default_backend()
+except ImportError as e:
+    HAS_CRYPTOGRAPHY = False
 
 
 # TODO: WILL BE IN module_utils IN cryptography BRANCH!
@@ -173,6 +178,8 @@ def main():
             ['private_key_src', 'private_key_content'],
         ),
     )
+    if not HAS_CRYPTOGRAPHY:
+        module.fail(msg='cryptography >= 1.3 is required for this module.')
 
     try:
         # Get parameters
