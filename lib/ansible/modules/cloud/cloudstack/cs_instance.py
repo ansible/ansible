@@ -151,7 +151,7 @@ options:
     description:
       - Enables a volume shrinkage when the new size is smaller than the old one.
     type: bool
-    false: no
+    default: no
   tags:
     description:
       - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
