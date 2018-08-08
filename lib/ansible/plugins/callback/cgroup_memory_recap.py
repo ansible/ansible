@@ -65,7 +65,7 @@ class MemProf(threading.Thread):
             with open(self.path) as f:
                 val = f.read()
             self.results.append(int(val.strip()) / 1024 / 1024)
-            self.csvwriter.writerow([obj.get_name(), val.strip()])
+            self.csvwriter.writerow([self.obj.get_name(), val.strip()])
             time.sleep(0.001)
 
 
