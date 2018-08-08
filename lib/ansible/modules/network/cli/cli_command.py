@@ -16,104 +16,123 @@ DOCUMENTATION = """
 module: cli_command
 version_added: "2.7"
 author: "Nathaniel Case (@qalthos)"
-short_description: Run arbitrary commands on cli-based network devices
+short_description: Run a cli command on cli-based network devices
 description:
-  - Sends an arbitrary set of commands to a network device and returns the
-    results read from the device.  This module includes an argument that
-    will cause the module to wait for a specific condition before returning
-    or timing out if the condition is not met.
+  - Sends a command to a network device and returns the result read from the device.
 options:
-  commands:
+  command:
     description:
-      - The commands to send to the remote EOS device over the
+      - The command to send to the remote network device over the
         configured provider.  The resulting output from the command
         is returned.
     required: true
+  prompt:
+    description:
+      - A single regex pattern or a sequence of patterns to evaluate the expected
+        prompt from I(command).
+    required: false
+  answer:
+    description:
+      - The answer to reply with if I(prompt) is matched.
+    required: false
+  sendonly:
+    description:
+      - Bool value that will send I(command) but not wait for a result.
+    default: false
+    required: false
 """
 
 EXAMPLES = """
 - name: run show version on remote devices
   cli_command:
-    commands: show version
+    command: show version
 
-- name: run multiple commands on remote nodes
+- name: run command with json formatted output
   cli_command:
-    commands:
-      - show version
-      - show interfaces
-
-- name: run commands and specify the output format
-  cli_command:
-    commands:
-      - command: show version
-        output: json
+    command: show version | json
 """
 
 RETURN = """
 stdout:
-  description: The set of responses from the commands
-  returned: always apart from low level errors (such as action plugin)
-  type: list
-  sample: ['...', '...']
+  description: The response from the command
+  returned: when sendonly is false
+  type: string
+  sample: 'Version:      VyOS 1.1.7[...]'
+
+json:
+  description: A dictionary representing a JSON-formatted response
+  returned: when the device response is valid JSON
+  type: dict
+  sample: |
+    {
+      "architecture": "i386",
+      "bootupTimestamp": 1532649700.56,
+      "modelName": "vEOS",
+      "version": "4.15.9M"
+      [...]
+    }
 """
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import Connection, ConnectionError
-from ansible.module_utils.network.common.utils import ComplexList
-
-VALID_KEYS = ['command', 'output', 'prompt', 'response']
+from ansible.module_utils.network.common.utils import ComplexDict
 
 
-def parse_commands(module, warnings):
-    transform = ComplexList(dict(
+def parse_commands(module):
+    transform = ComplexDict(dict(
         command=dict(key=True),
-        output=dict(),
         prompt=dict(),
-        answer=dict()
+        answer=dict(),
+        sendonly=dict(),
     ), module)
 
-    commands = transform(module.params['commands'])
+    command = transform(module.params)
 
     if module.check_mode:
-        for item in list(commands):
-            if not item['command'].startswith('show'):
-                warnings.append(
-                    'Only show commands are supported when using check_mode, not '
-                    'executing %s' % item['command']
-                )
-                commands.remove(item)
+        if not command['command'].startswith('show'):
+            module.fail_json(
+                'Only show commands are supported when using check_mode, not '
+                'executing %s' % command['command']
+            )
 
-    return commands
+    return command
 
 
 def main():
     """entry point for module execution
     """
     argument_spec = dict(
-        commands=dict(type='list', required=True),
-
-        match=dict(default='all', choices=['all', 'any']),
+        command=dict(type='str', required=True),
+        prompt=dict(type='list', required=False),
+        answer=dict(type='str', required=False),
+        sendonly=dict(type='bool', default=False, required=False),
     )
-    module = AnsibleModule(argument_spec=argument_spec,
+    required_together = [['prompt', 'response']]
+    module = AnsibleModule(argument_spec=argument_spec, required_together=required_together,
                            supports_check_mode=True)
 
     warnings = list()
     result = {'changed': False, 'warnings': warnings}
 
-    commands = parse_commands(module, warnings)
+    command = parse_commands(module)
 
     connection = Connection(module._socket_path)
-    responses = []
+    response = ''
     try:
-        for command in commands:
-            responses.append(connection.get(**command))
+        response = connection.get(**command)
     except ConnectionError as exc:
         module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
-    result.update({
-        'stdout': responses,
-    })
+    if not module.params['sendonly']:
+        try:
+            result['json'] = module.from_json(response)
+        except ValueError:
+            pass
+
+        result.update({
+            'stdout': response,
+        })
 
     module.exit_json(**result)
 
