@@ -48,10 +48,6 @@ options:
             if it needs to be updated is not possible this is set to False by default to allow idempotence.
         type: bool
         default: False
-    promote:
-        description: Set to True to promote a read replica cluster.
-        type: bool
-        default: False
     purge_cloudwatch_logs_exports:
         description: Set to False to retain any enabled cloudwatch logs that aren't specified in the task and are associated with the instance.
         type: bool
@@ -60,6 +56,11 @@ options:
         description: Set to False to retain any tags that aren't specified in task and are associated with the instance.
         type: bool
         default: True
+    read_replica:
+        description:
+          - Set to False to promote a read replica cluster or true to create one. When creating a read replica C(creation_source) should
+            be set to 'instance' or not provided. C(source_db_instance_identifier) must be provided with this option.
+        type: bool
     wait:
         description: Whether to wait for the cluster to be available or deleted.
         type: bool
@@ -713,7 +714,7 @@ def arg_spec_to_rds_params(options_dict):
     return camel_options
 
 
-def get_method_name(instance, state, creation_source):
+def get_method_name(instance, state, creation_source, read_replica):
     method_name = None
     if state == 'absent':
         if instance:
@@ -721,6 +722,8 @@ def get_method_name(instance, state, creation_source):
     else:
         if instance:
             method_name = 'modify_db_instance'
+        elif read_replica is True:
+            method_name = 'create_db_instance_read_replica'
         elif creation_source == 'snapshot':
             method_name = 'restore_db_instance_from_db_snapshot'
         elif creation_source == 's3':
@@ -936,6 +939,10 @@ def validate_options(client, module, instance):
     modified_id = module.params['new_db_instance_identifier']
     engine = module.params['engine']
     tde_options = bool(module.params['tde_credential_password'] or module.params['tde_credential_arn'])
+    read_replica = module.params['read_replica']
+    creation_source = module.params['creation_source']
+    source_instance = module.params['source_db_instance_identifier']
+
     if modified_id:
         modified_instance = get_instance(client, module, modified_id)
     else:
@@ -949,6 +956,10 @@ def validate_options(client, module, instance):
         module.fail_json(msg='skip_final_snapshot is false but all of the following are missing: final_db_snapshot_identifier')
     if engine is not None and not (engine.startswith('mysql') or engine.startswith('oracle')) and tde_options:
         module.fail_json(msg='TDE is available for MySQL and Oracle DB instances')
+    if read_replica is True and not instance and creation_source not in [None, 'instance']:
+        module.fail_json(msg='Cannot create a read replica from {0}. You must use a source DB instance'.format(creation_source))
+    if read_replica is True and not instance and not source_instance:
+        module.fail_json(msg='read_replica is true and the instance does not exist yet but all of the following are missing: source_db_instance_identifier')
 
 
 def call_method(client, module, method_name, parameters):
@@ -1047,16 +1058,16 @@ def update_instance(client, module, instance, instance_id):
     changed |= ensure_tags(
         client, module, instance['DBInstanceArn'], instance['Tags'], module.params['tags'], module.params['purge_tags']
     )
-    changed |= promote_replication_instance(client, module, instance, module.params['promote'])
+    changed |= promote_replication_instance(client, module, instance, module.params['read_replica'])
     changed |= update_instance_state(client, module, instance, module.params['state'])
 
     return changed
 
 
-def promote_replication_instance(client, module, instance, promote):
-    if instance.get('ReplicationSourceIdentifier') and promote:
+def promote_replication_instance(client, module, instance, read_replica):
+    if read_replica is False and (instance.get('ReadReplicaSourceDBInstanceIdentifier') or instance.get('StatusInfos')):
         call_method(
-            client, module, method_name='promote_read_replica_db_instance',
+            client, module, method_name='promote_read_replica',
             parameters={'DBInstanceIdentifier': instance['DBInstanceIdentifier']}
         )
         return True
@@ -1099,9 +1110,9 @@ def main():
         state=dict(choices=['present', 'absent', 'running', 'started', 'stopped', 'rebooted', 'restarted'], default='present'),
         creation_source=dict(choices=['snapshot', 's3', 'instance']),
         force_update_password=dict(type='bool', default=False),
-        promote=dict(type='bool', default=False),
         purge_cloudwatch_logs_exports=dict(type='bool', default=True),
         purge_tags=dict(type='bool', default=True),
+        read_replica=dict(type='bool'),
         wait=dict(type='bool', default=True),
     )
 
@@ -1222,7 +1233,7 @@ def main():
     instance_id = module.params['db_instance_identifier']
     instance = get_instance(client, module, instance_id)
     validate_options(client, module, instance)
-    method_name = get_method_name(instance, state, module.params['creation_source'])
+    method_name = get_method_name(instance, state, module.params['creation_source'], module.params['read_replica'])
 
     if method_name:
         raw_parameters = arg_spec_to_rds_params(dict((k, module.params[k]) for k in module.params if k in parameter_options))
