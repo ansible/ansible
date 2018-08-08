@@ -146,15 +146,18 @@ options:
       - Reduce the number of vCPU exposed to the instance.
       - Those parameters can only be set at instance launch. The two suboptions threads_per_core and core_count are mandatory.
       - See U(https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-optimize-cpu.html) for combinations available.
+      - Requires botocore >= 1.10.16
     version_added: 2.7
     suboptions:
       threads_per_core:
         description:
         - Select the number of threads per core to enable. Disable or Enable Intel HT
         choices: [1, 2]
+        required: true
       core_count:
         description:
         - Set the number of core to enable.
+        required: true
   detailed_monitoring:
     description:
       - Whether to allow detailed cloudwatch metrics to be collected, enabling more detailed alerting.
@@ -931,7 +934,7 @@ def warn_if_cpu_options_changed(instance):
         module.warn(
             "Unable to modify core_count from {0} to {1}."
             "Assigning a number of core is determinted during instance creation".format(
-                 core_count_curr, core_count))
+                core_count_curr, core_count))
 
     if threads_per_core_curr != threads_per_core:
         module.warn(
@@ -1059,19 +1062,9 @@ def build_top_level_options(params):
     if params.get('termination_protection') is not None:
         spec['DisableApiTermination'] = params.get('termination_protection')
     if params.get('cpu_options') is not None:
-        cpu_opts = params.get('cpu_options')
         spec['CpuOptions'] = {}
-        if cpu_opts.get('threads_per_core') is not None and cpu_opts.get('core_count') is not None:
-            if isinstance(cpu_opts.get('threads_per_core'), int):
-                spec['CpuOptions']['ThreadsPerCore'] = cpu_opts.get('threads_per_core')
-            else:
-                module.fail_json(msg='thread_per_core option should be an integer')
-            if isinstance(cpu_opts.get('core_count'), int):
-                spec['CpuOptions']['CoreCount'] = cpu_opts.get('core_count')
-            else:
-                module.fail_json(msg='core_count option should be an integer')
-        else:
-            module.fail_json(msg='cpu_options require both threads_per_count and core_count options')
+        spec['CpuOptions']['ThreadsPerCore'] = params.get('cpu_options').get('threads_per_core')
+        spec['CpuOptions']['CoreCount'] = params.get('cpu_options').get('core_count')
     return spec
 
 
@@ -1498,7 +1491,10 @@ def main():
         launch_template=dict(type='dict'),
         key_name=dict(type='str'),
         cpu_credit_specification=dict(type='str', choices=['standard', 'unlimited']),
-        cpu_options=dict(type='dict'),
+        cpu_options=dict(type='dict', options=dict(
+            core_count=dict(type='int', required=True),
+            threads_per_core=dict(type='int', choices=[1, 2], required=True)
+        )),
         tenancy=dict(type='str', choices=['dedicated', 'default']),
         instance_initiated_shutdown_behavior=dict(type='str', choices=['stop', 'terminate']),
         termination_protection=dict(type='bool'),
