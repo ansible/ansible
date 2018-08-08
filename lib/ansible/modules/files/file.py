@@ -100,7 +100,7 @@ EXAMPLES = '''
     src: '/tmp/{{ item.src }}'
     dest: '{{ item.dest }}'
     state: link
-  with_items:
+  loop:
     - { src: 'x', dest: 'y' }
     - { src: 'z', dest: 'k' }
 

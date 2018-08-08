@@ -541,7 +541,7 @@ EXAMPLES = '''
 
     - name: Store private ips to file
       shell: echo {{ item.private_ip }}\\n >> list-of-private-ips
-      with_items: "{{ result.instances }}"
+      loop: "{{ result.instances }}"
     - debug: var=result
 
 # In this example, we create an elastigroup with multiple block device mappings, tags, and also an account id
@@ -592,7 +592,7 @@ EXAMPLES = '''
 
     - name: Store private ips to file
       shell: echo {{ item.private_ip }}\\n >> list-of-private-ips
-      with_items: "{{ result.instances }}"
+      loop: "{{ result.instances }}"
     - debug: var=result
 
 # In this example we have set up block device mapping with ephemeral devices

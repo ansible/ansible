@@ -101,7 +101,7 @@ EXAMPLES = '''
     data: "{{ item.data }}"
     priority: "{{ item.priority }}"
     multiple: yes
-  with_items:
+  loop:
   - { data: mx1.example.com, priority: 10 }
   - { data: mx2.example.com, priority: 10 }
   - { data: mx3.example.com, priority: 20 }

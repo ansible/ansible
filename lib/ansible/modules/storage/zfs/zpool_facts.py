@@ -51,7 +51,7 @@ EXAMPLES = '''
 - zpool_facts: properties='free,size'
 
 - debug: msg='ZFS pool {{ item.name }} has {{ item.free }} free space out of {{ item.size }}.'
-  with_items: '{{ ansible_zfs_pools }}'
+  loop: '{{ ansible_zfs_pools }}'
 '''
 
 RETURN = '''

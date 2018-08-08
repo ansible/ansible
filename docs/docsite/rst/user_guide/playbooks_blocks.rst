@@ -13,11 +13,10 @@ Blocks allow for logical grouping of tasks and in play error handling. Most of w
     - name: Install Apache
       block:
         - yum:
-            name: "{{ item }}"
+            name:
+              - httpd
+              - memcached
             state: installed
-          with_items:
-            - httpd
-            - memcached
         - template:
             src: templates/src.j2
             dest: /etc/foo.conf

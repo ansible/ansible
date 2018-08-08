@@ -48,11 +48,7 @@ EXAMPLES = """
 
 - debug:
     msg: "{{ item }}"
-  with_ini:
-    - value[1-2]
-    - section: section1
-    - file: "lookup.ini"
-    - re: true
+  loop: "{{ q('ini', 'value[1-2] section=section1 file=lookup.ini re=true') }}"
 """
 
 RETURN = """

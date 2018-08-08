@@ -13,6 +13,8 @@ DOCUMENTATION = """
     short_description: simply returns what it is given.
     description:
       - this is mostly a noop, to be used as a with_list loop when you dont want the content transformed in any way.
+    notes:
+      - this lookup is deprecated in favor of using "loop"
 """
 
 EXAMPLES = """
@@ -33,10 +35,18 @@ import collections
 from ansible.plugins.lookup import LookupBase
 from ansible.errors import AnsibleError
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 class LookupModule(LookupBase):
 
     def run(self, terms, **kwargs):
+        display.deprecated('The `list` lookup is deprecated. Directly use the list variable instead', version='2.11')
+
         if not isinstance(terms, collections.Sequence):
             raise AnsibleError("with_list expects a list")
         return terms

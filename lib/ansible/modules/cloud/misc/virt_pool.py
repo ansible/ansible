@@ -122,7 +122,7 @@ EXAMPLES = '''
 - virt_pool:
     command: info
     uri: '{{ item }}'
-  with_items: '{{ libvirt_uris }}'
+  loop: '{{ libvirt_uris }}'
   register: storage_pools
 
 # Ensure that a pool is active (needs to be defined and built first)

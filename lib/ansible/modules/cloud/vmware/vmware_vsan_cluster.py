@@ -54,7 +54,7 @@ EXAMPLES = '''
          password: "{{ site_password }}"
          cluster_uuid: "{{ vsan_cluster.cluster_uuid }}"
       delegate_to: localhost
-      with_items: "{{ groups['esxi'][1:] }}"
+      loop: "{{ groups['esxi'][1:] }}"
 '''
 
 try:

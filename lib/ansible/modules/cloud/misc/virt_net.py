@@ -107,7 +107,7 @@ EXAMPLES = '''
 - virt_net:
     command: info
     uri: '{{ item }}'
-  with_items: '{{ libvirt_uris }}'
+  loop: '{{ libvirt_uris }}'
   register: networks
 
 # Ensure that a network is active (needs to be defined and built first)

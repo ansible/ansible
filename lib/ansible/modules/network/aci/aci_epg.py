@@ -104,7 +104,7 @@ EXAMPLES = r'''
     priority: unspecified
     intra_epg_isolation: unenforced
     state: present
-  with_items:
+  loop:
     - epg: web
       bd: web_bd
     - epg: database

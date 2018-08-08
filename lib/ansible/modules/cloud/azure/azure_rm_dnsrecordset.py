@@ -127,7 +127,7 @@ EXAMPLES = '''
     relative_name: "{{ item.name }}"
     record_type: "{{ item.type }}"
     records: "{{ item.records }}"
-  with_items:
+  loop:
     - { name: 'servera', type: 'A', records: [ { entry: '10.10.10.20' }, { entry: '10.10.10.21' }] }
     - { name: 'serverb', type: 'A', records: [ { entry: '10.10.10.30' }, { entry: '10.10.10.41' }] }
     - { name: 'serverc', type: 'A', records: [ { entry: '10.10.10.40' }, { entry: '10.10.10.41' }] }

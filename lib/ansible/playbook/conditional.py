@@ -127,7 +127,7 @@ class Conditional:
         # - assert:
         #     that:
         #     - item
-        #   with_items:
+        #   loop:
         #   - 1 == 1
         if conditional in all_vars and VALID_VAR_REGEX.match(conditional):
             conditional = all_vars[conditional]

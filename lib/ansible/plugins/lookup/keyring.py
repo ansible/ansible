@@ -21,8 +21,7 @@ EXAMPLES = """
 - name : output secrets to screen (BAD IDEA)
   debug:
     msg: "Password: {{item}}"
-  with_keyring:
-    - 'servicename username'
+  loop: "{{ q('keyring', 'servicename username') }}"
 
 - name: access mysql with password from keyring
   mysql_db: login_password={{lookup('keyring','mysql joe')}} login_user=joe

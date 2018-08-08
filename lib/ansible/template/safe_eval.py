@@ -30,7 +30,7 @@ from ansible.plugins.loader import filter_loader, test_loader
 def safe_eval(expr, locals=None, include_exceptions=False):
     '''
     This is intended for allowing things like:
-    with_items: a_list_variable
+    loop: "{{ a_list_variable }}"
 
     Where Jinja2 would return a string but we do not want to allow it to
     call functions (outside of Jinja2, where the env is constrained).

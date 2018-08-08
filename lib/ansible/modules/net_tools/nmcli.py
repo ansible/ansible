@@ -294,7 +294,7 @@ EXAMPLES = '''
     yum:
       name: '{{ item }}'
       state: installed
-    with_items:
+    loop:
       - NetworkManager-glib
       - libnm-qt-devel.x86_64
       - nm-connection-editor.x86_64
@@ -309,7 +309,7 @@ EXAMPLES = '''
       ip4: '{{ item.ip4 }}'
       gw4: '{{ item.gw4 }}'
       state: present
-    with_items:
+    loop:
       - '{{ nmcli_team }}'
 
   - name: try nmcli add teams-slave
@@ -319,7 +319,7 @@ EXAMPLES = '''
       ifname: '{{ item.ifname }}'
       master: '{{ item.master }}'
       state: present
-    with_items:
+    loop:
       - '{{ nmcli_team_slave }}'
 
 ###### Working with all cloud nodes - Bonding
@@ -331,7 +331,7 @@ EXAMPLES = '''
       gw4: '{{ item.gw4 }}'
       mode: '{{ item.mode }}'
       state: present
-    with_items:
+    loop:
       - '{{ nmcli_bond }}'
 
   - name: try nmcli add bond-slave
@@ -341,7 +341,7 @@ EXAMPLES = '''
       ifname: '{{ item.ifname }}'
       master: '{{ item.master }}'
       state: present
-    with_items:
+    loop:
       - '{{ nmcli_bond_slave }}'
 
 ##### Working with all cloud nodes - Ethernet
@@ -352,7 +352,7 @@ EXAMPLES = '''
       ip4: '{{ item.ip4 }}'
       gw4: '{{ item.gw4 }}'
       state: present
-    with_items:
+    loop:
       - '{{ nmcli_ethernet }}'
 
 ## playbook-del.yml example
@@ -364,7 +364,7 @@ EXAMPLES = '''
     nmcli:
       conn_name: '{{ item.conn_name }}'
       state: absent
-    with_items:
+    loop:
       - conn_name: em1
       - conn_name: em2
       - conn_name: p1p1

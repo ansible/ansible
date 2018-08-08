@@ -17,18 +17,17 @@ DOCUMENTATION = """
         description:
           - a set of lists
         required: True
+    notes:
+        - This lookup is deprecated in favor of "loop" and the "product" filter
 """
 
 EXAMPLES = """
 - name: Example of the change in the description
-  debug: msg="{{ [1,2,3]|lookup('cartesian', [a, b])}}"
+  debug: msg="{{ lookup('cartesian', [1, 2, 3], [a, b])}}"
 
 - name: loops over the cartesian product of the supplied lists
   debug: msg="{{item}}"
-  with_cartesian:
-    - "{{list1}}"
-    - "{{list2}}"
-    - [1,2,3,4,5,6]
+  loop: "{{ q('cartesian', list1, list2, [1,2,3,4,5,6]) }}"
 """
 
 RETURN = """
@@ -43,6 +42,12 @@ from itertools import product
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.listify import listify_lookup_plugin_terms
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 
 class LookupModule(LookupBase):
@@ -64,6 +69,7 @@ class LookupModule(LookupBase):
         return results
 
     def run(self, terms, variables=None, **kwargs):
+        display.deprecated('The `cartesian` lookup is deprecated. Use the `product` filter instead', version='2.11')
 
         terms = self._lookup_variables(terms)
 

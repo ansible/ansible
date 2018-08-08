@@ -107,7 +107,7 @@ EXAMPLES = '''
     ip_address: 4.3.2.1
     port: 53
     protocol: '{{ item }}'
-  with_items:
+  loop:
   - tcp
   - udp
 

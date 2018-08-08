@@ -55,10 +55,12 @@ EXAMPLES = """
   ldap_passwd:
     dn: "{{ item.key }}"
     passwd: "{{ item.value }}"
-  with_dict:
-    alice: alice123123
-    bob:   "|30b!"
-    admin: "{{ vault_secret }}"
+  loop: "{{ users|dict2items }}"
+  vars:
+    users:
+      alice: alice123123
+      bob:   "|30b!"
+      admin: "{{ vault_secret }}"
 """
 
 RETURN = """

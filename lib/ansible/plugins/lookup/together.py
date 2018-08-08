@@ -18,15 +18,15 @@ DOCUMENTATION = """
       _terms:
         description: list of lists to merge
         required: True
+    notes:
+        - This lookup is deprecated in favor of "loop" and the "zip_longest" filter
 """
 
 EXAMPLES = """
 - name: item.0 returns from the 'a' list, item.1 returns from the '1' list
   debug:
     msg: "{{ item.0 }} and {{ item.1 }}"
-  with_together:
-    - ['a', 'b', 'c', 'd']
-    - [1, 2, 3, 4]
+  loop: "{{ q('together', ['a', 'b', 'c', 'd'], [1, 2, 3, 4]) }}"
 """
 
 RETURN = """
@@ -37,6 +37,12 @@ from ansible.errors import AnsibleError
 from ansible.module_utils.six.moves import zip_longest
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.listify import listify_lookup_plugin_terms
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 
 class LookupModule(LookupBase):
@@ -55,6 +61,7 @@ class LookupModule(LookupBase):
         return results
 
     def run(self, terms, variables=None, **kwargs):
+        display.deprecated('The `together` lookup is deprecated. Use the `zip_longest` filter instead', version='2.11')
 
         terms = self._lookup_variables(terms)
 

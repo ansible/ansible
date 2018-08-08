@@ -153,7 +153,7 @@ EXAMPLES = '''
       os_code: "{{ item.os_code }}"
       ssh_keys: "{{ item.ssh_keys }}"
       wait: "{{ item.wait }}"
-    with_items:
+    loop:
       - hostname: instance-2
         domain: anydomain.com
         datacenter: dal09

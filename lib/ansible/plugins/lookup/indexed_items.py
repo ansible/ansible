@@ -16,14 +16,15 @@ DOCUMENTATION = """
       _terms:
         description: list of items
         required: True
+    notes:
+        - This lookup is deprecated in favor of "loop" and "loop_control.index_var"
 """
 
 EXAMPLES = """
 - name: indexed loop demo
   debug:
     msg: "at array position {{ item.0 }} there is a value {{ item.1 }}"
-  with_indexed_items:
-    - "{{ some_list }}"
+  loop: "{{ q('indexed_items', some_list) }}"
 """
 
 RETURN = """
@@ -36,13 +37,21 @@ RETURN = """
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 class LookupModule(LookupBase):
 
     def __init__(self, basedir=None, **kwargs):
+        super(LookupModule, self).__init__(**kwargs)
         self.basedir = basedir
 
     def run(self, terms, variables, **kwargs):
+        display.deprecated('The `indexed_items` lookup is deprecated. Use `loop_control.index_var` instead', version='2.11')
 
         if not isinstance(terms, list):
             raise AnsibleError("with_indexed_items expects a list")

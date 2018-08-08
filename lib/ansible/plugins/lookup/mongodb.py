@@ -90,7 +90,7 @@ EXAMPLES = '''
       sort:  [ [ "startTime" , "ASCENDING" ] , [ "age", "DESCENDING" ] ]
   tasks:
     - debug: msg="Mongo has already started with the following PID [{{ item.pid }}]"
-      with_mongodb: "{{mongodb_parameters}}"
+      loop: "{{ q('mongodb', mongodb_parameters) }}"
 '''
 
 import datetime
@@ -202,8 +202,7 @@ class LookupModule(LookupBase):
 
   tasks:
     - debug: msg="Mongo has already started with the following PID [{{ item.pid }}] - full_data {{ item }} "
-      with_items:
-      - "{{ lookup('mongodb', mongodb_parameters) }}"
+      loop: "{{ q('mongodb', mongodb_parameters) }}"
 -------------------------------------------------------------------------------
             '''
 

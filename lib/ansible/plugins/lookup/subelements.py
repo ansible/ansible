@@ -20,6 +20,8 @@ DOCUMENTATION = """
         description:
           - If set to True, the lookup plugin will skip the lists items that do not contain the given subkey.
             If False, the plugin will yield an error and complain about the missing subkey.
+    notes:
+        - This lookup is deprecated in favor of "loop" and the "subelements" filter
 """
 
 EXAMPLES = """
@@ -58,9 +60,7 @@ EXAMPLES = """
       authorized_key:
         user: "{{ item.0.name }}"
         key: "{{ lookup('file', item.1) }}"
-      with_subelements:
-         - "{{ users }}"
-         - authorized
+      loop: "{{ q('subelements', users, 'authorized') }}"
 
     - name: Setup MySQL users, given the mysql hosts and privs subkey lists
       mysql_user:
@@ -68,13 +68,11 @@ EXAMPLES = """
         password: "{{ item.0.mysql.password }}"
         host: "{{ item.1 }}"
         priv: "{{ item.0.mysql.privs | join('/') }}"
-      with_subelements:
-        - "{{ users }}"
-        - mysql.hosts
+      loop: "{{ q('subelements', users, 'mysql.hosts') }}"
 
     - name: list groups for user that have them, dont error if they don't
       debug: var=item
-      with_list: "{{lookup('subelements', users, 'groups', 'skip_missing=True')}}"
+      loop: "{{ q('subelements', users, 'groups', 'skip_missing=True') }}"
 """
 
 RETURN = """
@@ -88,6 +86,11 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.listify import listify_lookup_plugin_terms
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 FLAGS = ('skip_missing',)
 
@@ -95,6 +98,7 @@ FLAGS = ('skip_missing',)
 class LookupModule(LookupBase):
 
     def run(self, terms, variables, **kwargs):
+        display.deprecated('The `subelements` lookup is deprecated. Used the `subelements` filter instead', version='2.11')
 
         def _raise_terms_error(msg=""):
             raise AnsibleError(

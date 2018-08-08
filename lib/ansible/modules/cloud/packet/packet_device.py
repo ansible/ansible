@@ -212,7 +212,7 @@ EXAMPLES = '''
       port: 22
       state: started
       timeout: 500
-    with_items: "{{ newhosts.devices }}"
+    loop: "{{ newhosts.devices }}"
 
 
 # Other states of devices

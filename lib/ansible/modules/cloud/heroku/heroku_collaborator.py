@@ -64,7 +64,7 @@ EXAMPLES = '''
     apps: '{{ item.apps | default(apps) }}'
     suppress_invitation: '{{ item.suppress_invitation | default(suppress_invitation) }}'
     state: '{{ item.state | default("present") }}'
-  with_items:
+  loop:
     - { user: 'a.b@example.com' }
     - { state: 'absent', user: 'b.c@example.com', suppress_invitation: false }
     - { user: 'x.y@example.com', apps: ["heroku-example-app"] }

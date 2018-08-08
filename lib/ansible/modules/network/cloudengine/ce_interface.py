@@ -106,7 +106,7 @@ EXAMPLES = '''
       interface_type: '{{ item }}'
       state: absent
       provider: '{{ cli }}'
-    with_items:
+    loop:
       - loopback
       - eth-trunk
       - nve

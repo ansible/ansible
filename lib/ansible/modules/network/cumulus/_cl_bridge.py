@@ -133,7 +133,7 @@ EXAMPLES = '''
     virtual_ip: "{{ item.value.virtual_ip|default(omit) }}"
     virtual_mac: "{{ item.value.virtual_mac|default(omit) }}"
     mstpctl_treeprio: "{{ item.value.mstpctl_treeprio|default(omit) }}"
-  with_dict: "{{ cl_bridges }}"
+  loop: "{{ cl_bridges }}"
   notify: reload networking
 
 # In vars file

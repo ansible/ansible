@@ -60,7 +60,7 @@ EXAMPLES = '''
   rhsm_repository:
     name: "{{ item }}"
     state: disabled
-  with_items: "{{
+  loop: "{{
     rhsm_repository.repositories |
     map(attribute='id') |
     difference(['rhel-7-server-rpms']) }}"

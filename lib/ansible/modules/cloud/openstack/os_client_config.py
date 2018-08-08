@@ -38,7 +38,7 @@ EXAMPLES = '''
 
 - debug:
     var: "{{ item }}"
-  with_items: "{{ openstack.clouds | rejectattr('secgroup_source', 'none') | list }}"
+  loop: "{{ openstack.clouds | rejectattr('secgroup_source', 'none') | list }}"
 
 - name: Get the information back just about the mordred cloud
   os_client_config:

@@ -33,6 +33,8 @@ DOCUMENTATION = """
         type: number
       format:
         description: return a string with the generated number formatted in
+    notes:
+      - This lookup is deprecated in favor of using "loop" and the "range" function
 """
 
 EXAMPLES = """
@@ -41,23 +43,23 @@ EXAMPLES = """
     name: "{{ item }}"
     state: present
     groups: "evens"
-  with_sequence: start=0 end=32 format=testuser%02x
+  loop: "{{ q('sequence', 'start=0 end=32 format=testuser%02x') }}"
 
 - name: create a series of directories with even numbers for some reason
   file:
     dest: "/var/stuff/{{ item }}"
     state: directory
-  with_sequence: start=4 end=16 stride=2
+  loop: "{{ q('sequence', 'start=4 end=16 stride=2') }}"
 
 - name: a simpler way to use the sequence plugin create 4 groups
   group:
     name: "group{{ item }}"
     state: present
-  with_sequence: count=4
+  loop: "{{ q('sequence', 'count=4') }}"
 
 - name: the final countdown
   debug: msg={{item}} seconds to detonation
-  with_sequence: end=0 start=10
+  loop: "{{ q('sequence', 'end=0 start=10') }}"
 """
 
 RETURN = """
@@ -71,6 +73,12 @@ from ansible.errors import AnsibleError
 from ansible.module_utils.six.moves import xrange
 from ansible.parsing.splitter import parse_kv
 from ansible.plugins.lookup import LookupBase
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 
 # shortcut format
@@ -230,6 +238,8 @@ class LookupModule(LookupBase):
                 )
 
     def run(self, terms, variables, **kwargs):
+        display.deprecated('The `sequence` lookup is deprecated. Use the jinja2 `range` function instead', version='2.11')
+
         results = []
 
         for term in terms:

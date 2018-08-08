@@ -16,6 +16,8 @@ DOCUMENTATION = """
             description:
                 - A list of dictionaries
             required: True
+    notes:
+        - This lookup is deprecated in favor of "loop" and the "dict2items" filter
 """
 
 EXAMPLES = """
@@ -33,11 +35,13 @@ tasks:
     debug:
       msg: "User {{ item.key }} is {{ item.value.name }} ({{ item.value.telephone }})"
     loop: "{{ lookup('dict', users) }}"
+
   # with inline dictionary
   - name: show dictionary
     debug:
       msg: "{{item.key}}: {{item.value}}"
-    with_dict: {a: 1, b: 2, c: 3}
+    loop: "{{ q('dict', {a: 1, b: 2, c: 3}) }}"
+
   # Items from loop can be used in when: statements
   - name: set_fact when alice in key
     set_fact:
@@ -57,10 +61,17 @@ import collections
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
+        display.deprecated('The `dict` lookup is deprecated. Use the `dict2items` filter instead', version='2.11')
 
         # FIXME: can remove once with_ special case is removed
         if not isinstance(terms, list):
