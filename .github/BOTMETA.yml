@@ -1253,13 +1253,13 @@ macros:
   team_meraki: dagwieers kbreit
   team_netapp: hulquest lmprice ndswartz amit0701 schmots1 carchi8py
   team_netscaler: chiradeep giorgos-nikolopoulos
-  team_netvisor: Qalthos amitsi gundalow privateip
-  team_networking: Qalthos ganeshrn gundalow privateip rcarrillocruz trishnaguha gdpak
+  team_netvisor: Qalthos amitsi privateip
+  team_networking: Qalthos ganeshrn privateip rcarrillocruz trishnaguha gdpak
   team_nso: cmoberg cnasten tbjurman
   team_nxos: mikewiebe privateip rahushen rcarrillocruz trishnaguha tstoner
   team_onyx: samerd
   team_openstack: emonty omgjlk juliakreger rcarrillocruz shrews thingee dagnello
-  team_openswitch: Qalthos gundalow privateip gdpak
+  team_openswitch: Qalthos privateip gdpak
   team_rabbitmq: chrishoffman manuel-sousa hyperized
   team_rhn: alikins barnabycourt flossware vritant
   team_tower: ghjm jlaska matburt wwitzel3 simfarm ryanpetrello rooftopcellist AlanCoding
