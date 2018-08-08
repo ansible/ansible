@@ -19,17 +19,14 @@ Objective requirements
 * include comprehensive :ref:`tests <developing_modules_testing>` for your module
 * minimize module dependencies
 * use consistent arguments, both within your module and across Ansible modules
-* support ``check_mode`` if possible - see :ref:`check_mode_drift` and :ref:`check_mode_dry`
+* support :ref:`check_mode <check_mode_dry>` if possible
 
 Please make sure your module meets these requirements before you submit your PR/proposal. If you have questions, reach out on IRC or the mailing list.
 
 Subjective requirements
 -----------------------
 
-Write clean code
-^^^^^^^^^^^^^^^^
-
-Clean code is clear, concise, secure, and maintainable. It provides reasonable defaults, helpful error messages, and a good user experience. If you follow these suggestions, you'll be well on your way to writing a clean module:
+If your pull request to add your module to Ansible meets our objective requirements, we'll review your code to see if we think it's clear, concise, secure, and maintainable. We'll consider whether your module provides a good user experience, helpful error messages, reasonable defaults, and more. This process is subjective, and we can't list exact standards for acceptance. For the best chance of getting your module accepted into the Ansible repo, follow our best practices for module development.
 
 * Validate upfront--fail fast and return useful and clear error messages.
 * Use defensive programming--use a simple design for your module, handle errors gracefully, and avoid direct stacktraces.
