@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 ---
 module: dyn_record
 author: Olivier Boukili (@oboukili)"
-version_added: "2.6"
+version_added: "2.7"
 short_description: Manage DNS records on Dyn's managed DNS (a DNS service).
 description:
   - Manage DNS records on Dyn's managed DNS (a DNS service) using Dyn API
@@ -243,10 +243,10 @@ def main():
             dyn_password=dict(required=False, default=os.environ.get('DYN_PASSWORD'), type='str', no_log=True),
             api_retries=dict(required=False, default=os.environ.get('DYN_API_RETRIES') or 5, type='int'),
             api_timeout=dict(required=False, default=os.environ.get('DYN_API_TIMEOUT') or 60, type='int'),
-            zone=dict(required=True, default=None, type='str'),
-            node=dict(required=True, default=None, type='str'),
+            zone=dict(required=True, type='str'),
+            node=dict(required=True, type='str'),
             record_type=dict(required=False, default='A', type='str'),
-            rdata=dict(required=True, default=None, type='dict'),
+            rdata=dict(required=True, type='dict'),
             ttl=dict(required=False, default=0, type='int'),
             force_duplicate=dict(required=False, default=False, type='bool'),
             state=dict(required=False, default="present", type='str',
