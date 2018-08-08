@@ -18,7 +18,6 @@ Objective requirements
 * conform to Ansible's :ref:`formatting and documentation <developing_modules_documenting>` standards
 * include comprehensive :ref:`tests <developing_modules_testing>` for your module
 * minimize module dependencies
-* use consistent arguments, both within your module and across Ansible modules
 * support :ref:`check_mode <check_mode_dry>` if possible
 
 Please make sure your module meets these requirements before you submit your PR/proposal. If you have questions, reach out on IRC or the mailing list.
@@ -26,7 +25,7 @@ Please make sure your module meets these requirements before you submit your PR/
 Subjective requirements
 -----------------------
 
-If your pull request to add your module to Ansible meets our objective requirements, we'll review your code to see if we think it's clear, concise, secure, and maintainable. We'll consider whether your module provides a good user experience, helpful error messages, reasonable defaults, and more. This process is subjective, and we can't list exact standards for acceptance. For the best chance of getting your module accepted into the Ansible repo, follow our best practices for module development.
+If your pull request to add your module to Ansible meets our objective requirements, we'll review your code to see if we think it's clear, concise, secure, and maintainable. We'll consider whether your module provides a good user experience, helpful error messages, reasonable defaults, and more. This process is subjective, and we can't list exact standards for acceptance. For the best chance of getting your module accepted into the Ansible repo, follow our :ref:`best practices for module development <developing_modules_best_practices>`.
 
 * Validate upfront--fail fast and return useful and clear error messages.
 * Use defensive programming--use a simple design for your module, handle errors gracefully, and avoid direct stacktraces.
@@ -48,7 +47,8 @@ Follow standard Ansible patterns
 Ansible uses patterns to provide a predictable user interface across all modules, playbooks, and roles. To follow standard Ansible patterns in your module development:
 
 * Use consistent names across modules (yes, we have many legacy deviations - don't make the problem worse!).
-* Normalize parameters with other modules - if Ansible and the API your module connects to use different names for the same parameter, add aliases to your module so the user can choose which names to use in tasks and playbooks.
+* Use consistent parameters (arguments) within your module(s)
+* Normalize parameters with other modules - if Ansible and the API your module connects to use different names for the same parameter, add aliases to your parameters so the user can choose which names to use in tasks and playbooks.
 * Return facts from ``*_facts`` modules in the ``ansible_facts`` field of the :ref:`result dictionary<common_return_values>` so other modules can access them.
 * Implement ``check_mode`` in all ``*_facts`` modules. Playbooks which conditionalize based on fact information will only conditionalize correctly in ``check_mode`` if the facts are returned in ``check_mode``. Usually you can add ``check_mode=True`` when instantiating ``AnsibleModule``.
 * Use module-specific environment variables. For example, if you use the helpers in ``module_utils.api`` for basic authentication with ``module_utils.urls.fetch_url()`` and you fall back on environment variables for default values, use module-specific environment variables like :code:`API_<MODULENAME>_USERNAME` to avoid conflict between modules.

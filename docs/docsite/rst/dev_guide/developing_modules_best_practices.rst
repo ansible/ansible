@@ -45,7 +45,7 @@ Especially if you want to contribute your module back to Ansible Core, make sure
 * Avoid creating a module that does the work of other modules; this leads to code duplication and divergence, and makes things less uniform, unpredictable and harder to maintain. Modules should be the building blocks. If you are asking 'how can I have a module execute other modules' ... you want to write a role. 
 Instead of creating a module that does the work of other modules, use Plays and Roles to meet your needs.
 
-Using shared code
+Importing and using shared code
 `````````````````````````````````````````
 
 * Use shared code whenever possible - don't reinvent the wheel. Ansible offers base functions for many common patterns (retry, throttling, etc). ## TODO where is shared code and how does a dev use it?
