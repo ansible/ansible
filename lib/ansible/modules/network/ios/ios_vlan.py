@@ -97,7 +97,6 @@ commands:
 """
 
 import re
-import q
 import time
 
 from copy import deepcopy
