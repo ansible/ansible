@@ -143,6 +143,25 @@ Function Test-FileClass($root_path) {
     }
     Assert-Equals -actual $failed -expected $true
 
+    # compress/decompress
+    $file.Compress()
+    $file.Refresh()
+    $actual = $file.Attributes
+    Assert-Equals -actual $actual.HasFlag([System.IO.FileAttributes]::Compressed) -expected $true
+
+    $file.Decompress()
+    $file.Refresh()
+    $actual = $file.Attributes
+    Assert-Equals -actual $actual.HasFlag([System.IO.FileAttributes]::Compressed) -expected $false
+
+    [Ansible.IO.File]::Compress($file.FullName)
+    $actual = [Ansible.IO.File]::GetAttributes($file.FullName)
+    Assert-Equals -actual $actual.HasFlag([System.IO.FileAttributes]::Compressed) -expected $true
+
+    [Ansible.IO.File]::Decompress($file.FullName)
+    $actual = [Ansible.IO.File]::GetAttributes($file.FullName)
+    Assert-Equals -actual $actual.HasFlag([System.IO.FileAttributes]::Compressed) -expected $false
+
     $file.Delete()
     $file.Refresh()
     Assert-Equals -actual $file.Exists -expected $false
@@ -694,6 +713,25 @@ Function Test-DirectoryClass($root_path) {
     # create tests
     $subdir = $dir.CreateSubDirectory("subdir")
     Assert-Equals -actual ([Ansible.IO.Directory]::Exists("$directory_path\subdir")) -expected $true
+
+    # compress/decompress
+    $dir.Compress()
+    $dir.Refresh()
+    $actual = $dir.Attributes
+    Assert-Equals -actual $actual.HasFlag([System.IO.FileAttributes]::Compressed) -expected $true
+
+    $dir.Decompress()
+    $dir.Refresh()
+    $actual = $dir.Attributes
+    Assert-Equals -actual $actual.HasFlag([System.IO.FileAttributes]::Compressed) -expected $false
+
+    [Ansible.IO.Directory]::Compress($dir.FullName)
+    $actual = [Ansible.IO.File]::GetAttributes($dir.FullName)
+    Assert-Equals -actual $actual.HasFlag([System.IO.FileAttributes]::Compressed) -expected $true
+
+    [Ansible.IO.Directory]::Decompress($dir.FullName)
+    $actual = [Ansible.IO.File]::GetAttributes($dir.FullName)
+    Assert-Equals -actual $actual.HasFlag([System.IO.FileAttributes]::Compressed) -expected $false
 
     # enumerate tests
     $subdir1 = $dir.CreateSubDirectory("subdir-1")

@@ -243,6 +243,17 @@ namespace Ansible.IO
         internal static extern bool DeleteFileW(
             [MarshalAs(UnmanagedType.LPWStr)] string lpFileName);
 
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        internal static extern bool DeviceIoControl(
+            SafeFileHandle hDevice,
+            UInt32 dwIoControlCode,
+            ref UInt16 lpInBuffer,
+            UInt32 nInBufferSize,
+            IntPtr lpOutBuffer,
+            UInt32 nOutBufferSize,
+            out UInt32 lpBytesReturned,
+            IntPtr lpOverlapped);
+
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         internal static extern bool EncryptFileW(
             [MarshalAs(UnmanagedType.LPWStr)] string lpFileName);
@@ -665,6 +676,22 @@ namespace Ansible.IO
                 RemoveDirectoryRecursive(fullPath, ref findData, topLevel: true);
         }
 
+        public static void SetCompression(string fullPath, bool compress)
+        {
+            using (SafeFileHandle handle = NativeMethods.CreateFileW(fullPath, FileSystemRights.Read | FileSystemRights.Write, FileShare.None,
+                null, FileMode.Open, NativeHelpers.FlagsAndAttributes.FILE_FLAG_BACKUP_SEMANTICS, IntPtr.Zero))
+            {
+                if (handle.IsInvalid)
+                    throw Win32Marshal.GetExceptionForLastWin32Error(fullPath);
+
+                UInt32 bytesReturned = 0;
+                UInt16 compressionAlgo = (UInt16)(compress ? 1 : 0);
+                UInt32 FSCTL_SET_COMPRESSION = 0x0009C040;
+                if (!NativeMethods.DeviceIoControl(handle, FSCTL_SET_COMPRESSION, ref compressionAlgo, sizeof(UInt16), IntPtr.Zero, 0, out bytesReturned, IntPtr.Zero))
+                    throw Win32Marshal.GetExceptionForLastWin32Error(fullPath);
+            }
+        }
+
         public static T GetAccessControl<T>(string fullpath, AccessControlSections includeSections) where T : ObjectSecurity, new()
         {
             NativeHelpers.SECURITY_INFORMATION secInfo = NativeHelpers.SECURITY_INFORMATION.NONE;
@@ -1061,11 +1088,14 @@ namespace Ansible.IO
                 throw Win32Marshal.GetExceptionForWin32Error(_dataInitialized, FullPath);
         }
 
+        public void Compress() { FileSystem.SetCompression(FullPath, true); }
+        public void Decompress() { FileSystem.SetCompression(FullPath, false); }
         public void Refresh() { _dataInitialized = FileSystem.FillAttributeInfo(FullPath, ref _data, returnErrorOnNotFound: false); }
     }
 
     public static class Directory
     {
+        public static void Compress(string path) { FileSystem.SetCompression(Ansible.IO.Path.CheckAndGetFullPath(path), true); }
         public static void Copy(string sourceDirPath, string destDirPath) { Copy(sourceDirPath, destDirPath, false); }
         public static void Copy(string sourceDirPath, string destDirPath, bool overwrite) { FileSystem.CopyFile(sourceDirPath, destDirPath, !overwrite); }
         public static DirectoryInfo CreateDirectory(string path) { return CreateDirectory(path, null); }
@@ -1075,6 +1105,7 @@ namespace Ansible.IO
             FileSystem.CreateDirectory(fullPath, directorySecurity);
             return new DirectoryInfo(path, fullPath, isNormalized: true);
         }
+        public static void Decompress(string path) { FileSystem.SetCompression(Ansible.IO.Path.CheckAndGetFullPath(path), false); }
         public static void Delete(string path) { Delete(path, false); }
         public static void Delete(string path, bool recursive) { FileSystem.RemoveDirectory(Ansible.IO.Path.GetFullPath(path), recursive); }
         public static IEnumerable<string> EnumerateDirectories(string path) { return EnumerateDirectories(path, "*", SearchOption.TopDirectoryOnly); }
@@ -1322,6 +1353,7 @@ namespace Ansible.IO
                 throw;
             }
         }
+        public static void Compress(string path) { FileSystem.SetCompression(Ansible.IO.Path.CheckAndGetFullPath(path), true); }
         public static void Copy(string sourceFileName, string destFileName) { Copy(sourceFileName, destFileName, false); }
         public static void Copy(string sourceFileName, string destFileName, bool overwrite)
         {
@@ -1338,6 +1370,7 @@ namespace Ansible.IO
                 return new FileStream(handle, FileAccess.ReadWrite, DefaultBuffer, options.HasFlag(FileOptions.Asynchronous));
         }
         public static StreamWriter CreateText(string path) { return new StreamWriter(Open(path, FileMode.Create, FileAccess.ReadWrite)); }
+        public static void Decompress(string path) { FileSystem.SetCompression(Ansible.IO.Path.CheckAndGetFullPath(path), false); }
         public static void Decrypt(string path)
         {
             if (!NativeMethods.DecryptFileW(path, 0))
