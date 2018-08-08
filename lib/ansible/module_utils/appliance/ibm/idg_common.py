@@ -79,7 +79,7 @@ class IDGUtils(object):
                 return dict(item.split(':', 1) for item in data.split(','))
             except Exception:
                 # Can't parse
-                module.fail_json(msg=to_native('The string representation for the `{0}` requires a key:value,key:value,... syntax to be properly parsed.'.format(desc)))
+                module.fail_json(msg=to_native('The string representation for the `{0}` requires a key:value,... syntax to be properly parsed.'.format(desc)))
         else:
             # data is empty
             return None

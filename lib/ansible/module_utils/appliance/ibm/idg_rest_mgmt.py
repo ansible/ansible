@@ -26,9 +26,9 @@ class AbstractListDict(object):
     When return a dictionary or list of dictionaries. """
 
     def __init__(self, result):
-        self.data=[]
-        self.k=set()
-        self.d={}
+        self.data = []
+        self.k = set()
+        self.d = {}
 
         if isinstance(result, dict):
             self.data = [result]
@@ -59,8 +59,8 @@ class AbstractListStr(object):
     When return a string or list of strings. """
 
     def __init__(self, data):
-        self.data=[]
-        self.SEP=';'
+        self.data = []
+        self.SEP = ';'
         if data != []:
             self.set_data(data)
 
@@ -84,6 +84,7 @@ class AbstractListStr(object):
 
     def values(self):
         return self.data
+
 
 class ErrorHandler(AbstractListStr):
     """
@@ -140,7 +141,7 @@ class IDGApi(object):
     def apifilestore_uri2path(uri):
         # Converts the URI defined for handling the filestore in the corresponding path in DP
         elist = [e for e in uri.split('/') if e.strip() != ''][3:]
-        return ('/'.join([elist[0]+':'] + elist[1:]))
+        return ('/'.join([elist[0] + ':'] + elist[1:]))
 
     @staticmethod
     def get_operation_status(operations, location):
@@ -227,6 +228,7 @@ class IDGApi(object):
                 self.ansible_module.fail_json(msg=to_native(self.ERROR_RETRIEVING_STATUS.format(kwargs['state'], resource)))
 
         if count == max_steps:
-            self.ansible_module.fail_json(msg=to_native((self.ERROR_RETRIEVING_STATUS + 'Reached the maximum level of interactions').format(kwargs['state'], resource)))
+            self.ansible_module.fail_json(msg=to_native((self.ERROR_RETRIEVING_STATUS
+                                                         + 'Reached the maximum level of interactions').format(kwargs['state'], resource)))
         else:
             return action_result.capitalize()
