@@ -503,17 +503,17 @@ def parse_vlan_non_structured(module, netcfg, vlans):
 
                 state_match = re.search(r'{0}\s*{1}\s*(\S+)'.format(vlan_id, name), vlan, re.M)
                 if state_match:
-                    vlan_state = state_match.group(1)
-                    if vlan_state == 'suspended':
+                    vlan_state_match = state_match.group(1)
+                    if vlan_state_match == 'suspended':
                         vlan_state = 'suspend'
                         admin_state = 'up'
-                    elif vlan_state == 'sus/lshut':
+                    elif vlan_state_match == 'sus/lshut':
                         vlan_state = 'suspend'
                         admin_state = 'down'
-                    if vlan_state == 'active':
+                    if vlan_state_match == 'active':
                         vlan_state = 'active'
                         admin_state = 'up'
-                    if vlan_state == 'act/lshut':
+                    if vlan_state_match == 'act/lshut':
                         vlan_state = 'active'
                         admin_state = 'down'
 
@@ -522,7 +522,7 @@ def parse_vlan_non_structured(module, netcfg, vlans):
 
                     vlan = ','.join(vlan.splitlines())
                     interfaces = list()
-                    intfs_match = re.search(r'{0}\s*{1}\s*{2}\s*(.*)'.format(vlan_id, name, vlan_state),
+                    intfs_match = re.search(r'{0}\s*{1}\s*{2}\s*(.*)'.format(vlan_id, name, vlan_state_match),
                                             vlan, re.M)
                     if intfs_match:
                         intfs = intfs_match.group(1)
@@ -550,7 +550,7 @@ def map_config_to_obj(module):
     output = None
 
     try:
-        command = {'command': 'show vlan', 'output': 'json'}
+        command = ['show vlan | json']
         output = run_commands(module, command, return_error=True)[0]
     except ConnectionError:
         command = {'command': 'show vlan brief', 'output': 'text'}
