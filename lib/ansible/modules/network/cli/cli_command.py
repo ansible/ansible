@@ -76,27 +76,6 @@ json:
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import Connection, ConnectionError
-from ansible.module_utils.network.common.utils import ComplexDict
-
-
-def parse_commands(module):
-    transform = ComplexDict(dict(
-        command=dict(key=True),
-        prompt=dict(),
-        answer=dict(),
-        sendonly=dict(),
-    ), module)
-
-    command = transform(module.params)
-
-    if module.check_mode:
-        if not command['command'].startswith('show'):
-            module.fail_json(
-                'Only show commands are supported when using check_mode, not '
-                'executing %s' % command['command']
-            )
-
-    return command
 
 
 def main():
@@ -112,15 +91,19 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec, required_together=required_together,
                            supports_check_mode=True)
 
+    if module.check_mode and not module.params['command'].startswith('show'):
+        module.fail_json(
+            msg='Only show commands are supported when using check_mode, not '
+            'executing %s' % module.params['command']
+        )
+
     warnings = list()
     result = {'changed': False, 'warnings': warnings}
-
-    command = parse_commands(module)
 
     connection = Connection(module._socket_path)
     response = ''
     try:
-        response = connection.get(**command)
+        response = connection.get(**module.params)
     except ConnectionError as exc:
         module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
