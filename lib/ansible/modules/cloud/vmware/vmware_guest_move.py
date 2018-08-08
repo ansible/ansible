@@ -68,30 +68,30 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = r'''
 - name: Move Virtual Machine
   vmware_guest_move:
-    hostname: "{{ vcenter_ip }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     datacenter: datacenter
-    validate_certs: False
+    validate_certs: no
     name: testvm-1
-    dest_folder: datacenter/vm/prodvms
+    dest_folder: /"{{ datacenter }}"/vm
   delegate_to: localhost
 
 - name: Get VM UUID
   vmware_guest_facts:
-    hostname: "{{ vcenter_ip }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     validate_certs: no
     datacenter: "{{ datacenter }}"
-    folder: "/{{datacenter}}/vm"
+    folder: /"{{datacenter}}"/vm
     name: "{{ vm_name }}"
   delegate_to: localhost
   register: vm_facts
 
 - name: Get UUID from previous task and pass it to this task
   vmware_guest_move:
-    hostname: "{{ vcenter_ip }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     validate_certs: no
