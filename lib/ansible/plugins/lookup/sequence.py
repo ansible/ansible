@@ -74,6 +74,12 @@ from ansible.module_utils.six.moves import xrange
 from ansible.parsing.splitter import parse_kv
 from ansible.plugins.lookup import LookupBase
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 # shortcut format
 NUM = "(0?x?[0-9a-f]+)"
@@ -232,6 +238,9 @@ class LookupModule(LookupBase):
                 )
 
     def run(self, terms, variables, **kwargs):
+        if not self._loop:
+            display.deprecated('The `sequence` lookup is deprecated. Use the jinja2 `range` function instead', version='2.11')
+
         results = []
 
         for term in terms:

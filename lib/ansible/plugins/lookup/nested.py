@@ -51,6 +51,12 @@ from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.listify import listify_lookup_plugin_terms
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 class LookupModule(LookupBase):
 
@@ -65,6 +71,8 @@ class LookupModule(LookupBase):
         return results
 
     def run(self, terms, variables=None, **kwargs):
+        if not self._loop:
+            display.deprecated('The `nested` lookup is deprecated. Use the `product` filter instead', version='2.11')
 
         terms = self._lookup_variables(terms, variables)
 

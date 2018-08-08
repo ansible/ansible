@@ -86,6 +86,11 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.listify import listify_lookup_plugin_terms
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 FLAGS = ('skip_missing',)
 
@@ -93,6 +98,8 @@ FLAGS = ('skip_missing',)
 class LookupModule(LookupBase):
 
     def run(self, terms, variables, **kwargs):
+        if not self._loop:
+            display.deprecated('The `subelements` lookup is deprecated. Used the `subelements` filter instead', version='2.11')
 
         def _raise_terms_error(msg=""):
             raise AnsibleError(

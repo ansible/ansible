@@ -36,6 +36,12 @@ from ansible.module_utils.six import string_types
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.listify import listify_lookup_plugin_terms
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 class LookupModule(LookupBase):
 
@@ -77,6 +83,8 @@ class LookupModule(LookupBase):
         return ret
 
     def run(self, terms, variables, **kwargs):
+        if not self._loop:
+            display.deprecated('The `flattened` lookup is deprecated. Use the `flatten` filter instead', version='2.11')
 
         if not isinstance(terms, list):
             raise AnsibleError("with_flattened expects a list")

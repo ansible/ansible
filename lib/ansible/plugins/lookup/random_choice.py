@@ -41,10 +41,18 @@ from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native
 from ansible.plugins.lookup import LookupBase
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 class LookupModule(LookupBase):
 
     def run(self, terms, inject=None, **kwargs):
+        if not self._loop:
+            display.deprecated('The `random_choice` lookup is deprecated. Use the `random` filter instead', version='2.11')
 
         ret = terms
         if terms:

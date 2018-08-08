@@ -15,12 +15,11 @@ DOCUMENTATION = """
       - this is the standard lookup used for loops in most examples
       - check out the 'flattened' lookup for recursive flattening
       - if you do not want flattening nor any other transformation look at the 'list' lookup.
+      - This lookup is deprecated in favor of "loop" and the "flatten" filter
     options:
       _terms:
         description: list of items
         required: True
-    notes:
-      - This lookup is deprecated in favor of "loop" and the "flatten" filter
 """
 
 EXAMPLES = """
@@ -67,9 +66,17 @@ RETURN = """
 
 from ansible.plugins.lookup import LookupBase
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 class LookupModule(LookupBase):
 
     def run(self, terms, **kwargs):
+        if not self._loop:
+            display.deprecated('The `items` lookup is deprecated. Use the `flatten(levels=1)` filter instead', version='2.11')
 
         return self._flatten(terms)

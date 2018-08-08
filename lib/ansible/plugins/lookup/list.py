@@ -35,10 +35,19 @@ import collections
 from ansible.plugins.lookup import LookupBase
 from ansible.errors import AnsibleError
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 class LookupModule(LookupBase):
 
     def run(self, terms, **kwargs):
+        if not self._loop:
+            display.deprecated('The `list` lookup is deprecated. Directly use the list variable instead', version='2.11')
+
         if not isinstance(terms, collections.Sequence):
             raise AnsibleError("with_list expects a list")
         return terms

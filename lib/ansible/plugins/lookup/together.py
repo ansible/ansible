@@ -38,6 +38,12 @@ from ansible.module_utils.six.moves import zip_longest
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.listify import listify_lookup_plugin_terms
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 class LookupModule(LookupBase):
     """
@@ -55,6 +61,8 @@ class LookupModule(LookupBase):
         return results
 
     def run(self, terms, variables=None, **kwargs):
+        if not self._loop:
+            display.deprecated('The `together` lookup is deprecated. Use the `zip_longest` filter instead', version='2.11')
 
         terms = self._lookup_variables(terms)
 

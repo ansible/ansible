@@ -37,13 +37,22 @@ RETURN = """
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 class LookupModule(LookupBase):
 
     def __init__(self, basedir=None, **kwargs):
+        super(LookupModule, self).__init__(**kwargs)
         self.basedir = basedir
 
     def run(self, terms, variables, **kwargs):
+        if not self._loop:
+            display.deprecated('The `indexed_items` lookup is deprecated. Use `loop_control.index_var` instead', version='2.11')
 
         if not isinstance(terms, list):
             raise AnsibleError("with_indexed_items expects a list")
