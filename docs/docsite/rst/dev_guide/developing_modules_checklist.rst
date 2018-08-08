@@ -4,9 +4,10 @@
 Contributing Your Module to Ansible
 ===================================
 
-If you want to contribute a module to Ansible, you must meet our objective and subjective requirements. Modules accepted into the `main project repo <https://github.com/ansible/ansible>`_ ship with every Ansible installation. However, contributing to the main project isn't the only way to distribute a module - you can embed modules in roles on Galaxy or simply share copies for :ref:`local use <developing_locally>`.
+If you want to contribute a module to Ansible, you must meet our objective and subjective requirements. Modules accepted into the `main project repo <https://github.com/ansible/ansible>`_ ship with every Ansible installation. However, contributing to the main project isn't the only way to distribute a module - you can embed modules in roles on Galaxy or simply share copies of your module code for :ref:`local use <developing_locally>`.
 
-Objective requirements:
+Objective requirements
+----------------------
 
 * write your module in either Python or Powershell for Windows
 * use the ``AnsibleModule`` common code
@@ -22,9 +23,13 @@ Objective requirements:
 
 Please make sure your module meets these requirements before you submit your PR/proposal. If you have questions, reach out on IRC or the mailing list.
 
-Subjective requirements:
+Subjective requirements
+-----------------------
 
-Write clear, concise, secure, maintainable, user-friendly module code
+Write clean code
+^^^^^^^^^^^^^^^^
+
+Clean code is clear, concise, secure, and maintainable. It provides reasonable defaults, helpful error messages, and a good user experience. If you follow these suggestions, you'll be well on your way to writing a clean module:
 
 * Validate upfront--fail fast and return useful and clear error messages.
 * Use defensive programming--use a simple design for your module, handle errors gracefully, and avoid direct stacktraces.
@@ -34,6 +39,8 @@ Write clear, concise, secure, maintainable, user-friendly module code
     * Give out a useful message on what you were doing and add exception messages to that.
     * Avoid catchall exceptions, they are not very useful unless the underlying API gives very good error messages pertaining the attempted action.
 * Avoid ``action``/``command``, they are imperative and not declarative, there are other ways to express the same thing.
+* Enable your return values to be serialized as json via the python stdlib json library. Basic python types (strings, int, dicts, lists, etc) are serializable.  
+* Do not return an object via exit_json(). Instead, convert the fields you need from the object into the fields of a dictionary and return the dictionary.
 * When fetching URLs, use ``fetch_url`` or ``open_url`` from ``ansible.module_utils.urls``. Do not use ``urllib2``, which does not natively verify TLS certificates and so is insecure for https.
 * Include a ``main`` function that wraps the normal execution.
 * Call your :func:`main` from a conditional so we can import it into unit tests - for example:
@@ -56,25 +63,23 @@ Write clear, concise, secure, maintainable, user-friendly module code
 	        HAS_LIB=False
 
 
+Follow standard Ansible patterns
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* Harmonize with Ansible standards for a predictable user interface.
-	* Use consistent names across modules (yes, we have many legacy deviations - don't make the problem worse!).
-	* Normalize parameters with other modules - if Ansible and the API your module connects to use different names for the same parameter, add aliases to your module so the user can choose which names to use in tasks and playbooks.
-	* Return facts from ``*_facts`` modules in the ``ansible_facts`` field of the :ref:`result dictionary<common_return_values>` so other modules can access them.
-	* Implement ``check_mode`` in all ``*_facts`` modules. Playbooks which conditionalize based on fact information will only conditionalize correctly in ``check_mode`` if the facts are returned in ``check_mode``. Usually you can add ``check_mode=True`` when instantiating ``AnsibleModule``.
-	* Use module-specific environment variables. For example, if you use the helpers in ``module_utils.api`` for basic authentication with ``module_utils.urls.fetch_url()`` and you fall back on environment variables for default values, use module-specific environment variables like :code:`API_<MODULENAME>_USERNAME` to avoid conflict between modules.
-	* Keep module options simple and focused - if you're loading a lot of choices/states on an existing option, consider adding a new, simple option instead.
-    * Keep options small when possible. Passing a large data structure to an option might save us a few tasks, but it adds a complex requirement that we cannot easily validate before passing on to the module.
-    * If you want to pass complex data to an option, write an expert module that allows this, along with several smaller modules that provide a more 'atomic' operation against the underlying APIs and services. Complex operations require complex data. Let the user choose whether to reflect that complexity in tasks and plays or in  vars files.
-    * Implement declarative operations (not CRUD) so the user can ignore existing state and focus on final state. For example, use ``started/stopped``, ``present/absent``.
-    * Strive for a consistent final state (aka idempotency). If running your module twice in a row against the same system would result in two different states, see if you can redesign or rewrite to achieve consistent final state. If you can't, document the behavior and the reasons for it.
-    * Provide consistent return values
-		* Follow the standard Ansible return structure, even if NA/None are used for keys normally returned under other options.
-		* Return values must be able to be serialized as json via the python stdlib json library. Basic python types (strings, int, dicts, lists, etc) are serializable.  
-		* Do not return an object via exit_json(). Instead, convert the fields you need from the object into the fields of a dictionary and return the dictionary.
-	* Follow additional guidelines when applicable - for example, certain families of modules have specific guidelines.
-	    * Be sure to check out the modules themselves for additional information.
-		        * `Amazon <https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/cloud/amazon/GUIDELINES.md>`_
+Ansible uses patterns to provide a predictable user interface across all modules, playbooks, and roles. To follow standard Ansible patterns in your module development:
+
+* Use consistent names across modules (yes, we have many legacy deviations - don't make the problem worse!).
+* Normalize parameters with other modules - if Ansible and the API your module connects to use different names for the same parameter, add aliases to your module so the user can choose which names to use in tasks and playbooks.
+* Return facts from ``*_facts`` modules in the ``ansible_facts`` field of the :ref:`result dictionary<common_return_values>` so other modules can access them.
+* Implement ``check_mode`` in all ``*_facts`` modules. Playbooks which conditionalize based on fact information will only conditionalize correctly in ``check_mode`` if the facts are returned in ``check_mode``. Usually you can add ``check_mode=True`` when instantiating ``AnsibleModule``.
+* Use module-specific environment variables. For example, if you use the helpers in ``module_utils.api`` for basic authentication with ``module_utils.urls.fetch_url()`` and you fall back on environment variables for default values, use module-specific environment variables like :code:`API_<MODULENAME>_USERNAME` to avoid conflict between modules.
+* Keep module options simple and focused - if you're loading a lot of choices/states on an existing option, consider adding a new, simple option instead.
+* Keep options small when possible. Passing a large data structure to an option might save us a few tasks, but it adds a complex requirement that we cannot easily validate before passing on to the module.
+* If you want to pass complex data to an option, write an expert module that allows this, along with several smaller modules that provide a more 'atomic' operation against the underlying APIs and services. Complex operations require complex data. Let the user choose whether to reflect that complexity in tasks and plays or in  vars files.
+* Implement declarative operations (not CRUD) so the user can ignore existing state and focus on final state. For example, use ``started/stopped``, ``present/absent``.
+* Strive for a consistent final state (aka idempotency). If running your module twice in a row against the same system would result in two different states, see if you can redesign or rewrite to achieve consistent final state. If you can't, document the behavior and the reasons for it.
+* Provide consistent return values within the standard Ansible return structure, even if NA/None are used for keys normally returned under other options.
+* Follow additional guidelines that apply to families of modules if applicable. For example, AWS modules should follow ` the Amazon guidelines <https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/cloud/amazon/GUIDELINES.md>`_
 
 
 Windows modules checklist
