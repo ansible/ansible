@@ -373,6 +373,7 @@ class Interfaces(FactsBase):
             facts[intf].append(fact)
         return facts
 
+
 FACT_SUBSETS = dict(
     default=Default,
     hardware=Hardware,
