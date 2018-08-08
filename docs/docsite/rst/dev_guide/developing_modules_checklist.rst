@@ -4,12 +4,13 @@
 Contributing Your Module to Ansible
 ===================================
 
-Ansible ships with all the modules in the `main project repo <https://github.com/ansible/ansible>`_. If you want to contribute a module to Ansible, you must meet our objective and subjective requirements. Objective requirements:
+If you want to contribute a module to Ansible, you must meet our objective and subjective requirements. Modules accepted into the `main project repo <https://github.com/ansible/ansible>`_ ship with every Ansible installation. However, contributing to the main project isn't the only way to distribute a module - you can embed modules in roles on Galaxy or simply share copies for :ref:`local use <developing_locally>`.
+
+Objective requirements:
 
 * write your module in either Python or Powershell for Windows
 * use the ``AnsibleModule`` common code
-## TODO confirm required python versions
-* support Python 2.6 and Python 3.5 - if your module cannot support Python 2.6, explain the required minimum Python version and rationale in the requirements section in ``DOCUMENTATION``
+* support Python 2.6 and Python 3.5 - if your module cannot support Python 2.6, explain the required minimum Python version and rationale in the requirements section in ``DOCUMENTATION`` ## TODO confirm required python versions
 * use proper :ref:`Python-3 syntax <developing_python_3>`
 * follow `PEP 8 <https://www.python.org/dev/peps/pep-0008/>`_ Python style conventions - see :ref:`testing_pep8` for more information
 * license your module with GPL 3
@@ -23,18 +24,18 @@ Please make sure your module meets these requirements before you submit your PR/
 
 Subjective requirements:
 
-* Clear, concise, secure, maintainable code
+* Write clear, concise, secure, maintainable, user-friendly module code
     * Validate upfront--fail fast and return useful and clear error messages.
     * Use defensive programming--use a simple design for your module, handle errors gracefully, and avoid direct stacktraces.
     * Fail predictably--if we must fail, do it in a way that is the most expected. Either mimic the underlying tool or the general way the system works.
-    * Don't reinvent the wheel. Part of the problem is that code sharing is not that easy nor documented, we also need to expand our base functions to provide common patterns (retry, throttling, etc).
+    * Use shared code whenever possible - don't reinvent the wheel. Ansible offers base functions for many common patterns (retry, throttling, etc). ## TODO where is shared code and how does a dev use it?
 	* Handle exceptions (bugs) gracefully
 		* Give out a useful message on what you were doing and add exception messages to that.
     	* Avoid catchall exceptions, they are not very useful unless the underlying API gives very good error messages pertaining the attempted action.
 	* Avoid ``action``/``command``, they are imperative and not declarative, there are other ways to express the same thing.
 	* When fetching URLs, use ``fetch_url`` or ``open_url`` from ``ansible.module_utils.urls``. Do not use ``urllib2``, which does not natively verify TLS certificates and so is insecure for https.
 	* Include a ``main`` function that wraps the normal execution.
-	* Call your :func:`main` from a conditional so we can import them into unit tests - for example:
+	* Call your :func:`main` from a conditional so we can import it into unit tests - for example:
 
 	.. code-block:: python
 
@@ -48,11 +49,11 @@ Subjective requirements:
 
 		.. code-block:: python
 
-	       try:
-	           import foo
-	           HAS_LIB=True
-	       except:
-	           HAS_LIB=False
+	        try:
+	            import foo
+	            HAS_LIB=True
+	        except:
+	            HAS_LIB=False
 
 
 * Harmonize with Ansible standards for a predictable user interface.
@@ -64,14 +65,14 @@ Subjective requirements:
 	* Keep module options simple and focused - if you're loading a lot of choices/states on an existing option, consider adding a new, simple option instead.
     * Keep options small when possible. Passing a large data structure to an option might save us a few tasks, but it adds a complex requirement that we cannot easily validate before passing on to the module.
     * If you want to pass complex data to an option, write an expert module that allows this, along with several smaller modules that provide a more 'atomic' operation against the underlying APIs and services. Complex operations require complex data. Let the user choose whether to reflect that complexity in tasks and plays or in  vars files.
-	* Implement declarative operations (not CRUD) so the user can ignore existing state and focus on final state. For example, use ``started/stopped``, ``present/absent``.
-	* Strive for a consistent final state (aka idempotency). If running your module twice in a row against the same system would result in two different states, see if you can redesign or rewrite to achieve consistent final state. If you can't, document the behavior and the reasons for it.
-	* Provide consistent return values
+    * Implement declarative operations (not CRUD) so the user can ignore existing state and focus on final state. For example, use ``started/stopped``, ``present/absent``.
+    * Strive for a consistent final state (aka idempotency). If running your module twice in a row against the same system would result in two different states, see if you can redesign or rewrite to achieve consistent final state. If you can't, document the behavior and the reasons for it.
+    * Provide consistent return values
 		* Follow the standard Ansible return structure, even if NA/None are used for keys normally returned under other options.
 		* Return values must be able to be serialized as json via the python stdlib json library. Basic python types (strings, int, dicts, lists, etc) are
 	  serializable.  
 		* Do not return an object via exit_json(). Instead, convert the fields you need from the object into the fields of a dictionary and return the dictionary.
-	* Follow module-dependent guidelines: Additional module guidelines may exist for certain families of modules.
+	* Follow additional guidelines when applicable - for example, certain families of modules have specific guidelines.
 	    * Be sure to check out the modules themselves for additional information.
 		        * `Amazon <https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/cloud/amazon/GUIDELINES.md>`_
 
@@ -80,5 +81,3 @@ Windows modules checklist
 =========================
 
 For a checklist and details on how to write Windows modules please see :doc:`developing_modules_general_windows`
-
-
