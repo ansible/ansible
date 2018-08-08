@@ -55,6 +55,7 @@ EXAMPLES = r'''
     action_rule: '{{ action_rule }}'
     description: '{{ descr }}'
     tenant: '{{ tenant }}'
+  delegate_to: localhost
 '''
 
 RETURN = r'''

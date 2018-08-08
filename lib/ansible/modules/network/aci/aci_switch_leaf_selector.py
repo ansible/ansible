@@ -80,6 +80,7 @@ EXAMPLES = r'''
     to: 1011
     policy_group: somepolicygroupname
     state: present
+  delegate_to: localhost
 
 - name: adding a switch policy leaf profile selector associated Node Block range (w/o policy group)
   aci_switch_leaf_selector:
@@ -92,6 +93,7 @@ EXAMPLES = r'''
     from: 1011
     to: 1011
     state: present
+  delegate_to: localhost
 
 - name: Removing a switch policy leaf profile selector
   aci_switch_leaf_selector:
@@ -101,6 +103,7 @@ EXAMPLES = r'''
     leaf_profile: sw_name
     leaf: leaf_selector_name
     state: absent
+  delegate_to: localhost
 
 - name: Querying a switch policy leaf profile selector
   aci_switch_leaf_selector:
@@ -110,6 +113,8 @@ EXAMPLES = r'''
     leaf_profile: sw_name
     leaf: leaf_selector_name
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''

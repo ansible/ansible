@@ -68,6 +68,7 @@ EXAMPLES = r'''
     node_id: 1011
     switch: fab4-sw1011
     state: present
+  delegate_to: localhost
 
 - name: Remove fabric node
   aci_fabric_node:
@@ -77,6 +78,7 @@ EXAMPLES = r'''
     serial: FDO2031124L
     node_id: 1011
     state: absent
+  delegate_to: localhost
 
 - name: Query fabric nodes
   aci_fabric_node:
@@ -84,6 +86,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''

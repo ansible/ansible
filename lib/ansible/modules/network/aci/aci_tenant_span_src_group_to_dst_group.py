@@ -57,6 +57,7 @@ EXAMPLES = r'''
     src_group: "{{ src_group }}"
     dst_group: "{{ dst_group }}"
     description: "{{ description }}"
+  delegate_to: localhost
 '''
 
 RETURN = r'''

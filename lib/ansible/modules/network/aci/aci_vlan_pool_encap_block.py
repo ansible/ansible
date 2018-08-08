@@ -78,6 +78,7 @@ EXAMPLES = r'''
     block_start: 20
     block_end: 50
     state: present
+  delegate_to: localhost
 
 - name: Remove a VLAN encap block
   aci_vlan_pool_encap_block:
@@ -88,6 +89,7 @@ EXAMPLES = r'''
     block_start: 20
     block_end: 50
     state: absent
+  delegate_to: localhost
 
 - name: Query a VLAN encap block
   aci_vlan_pool_encap_block:
@@ -98,6 +100,8 @@ EXAMPLES = r'''
     block_start: 20
     block_end: 50
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query a VLAN pool for encap blocks
   aci_vlan_pool_encap_block:
@@ -106,6 +110,8 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     pool: production
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all VLAN encap blocks
   aci_vlan_pool_encap_block:
@@ -113,6 +119,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''

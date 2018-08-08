@@ -135,11 +135,12 @@ EXAMPLES = r'''
     username: "{{ username }}"
     password: "{{ password }}"
     validate_certs: no
-    state: present
     tenant: prod
     bd: web_servers
     mac_address: 00:22:BD:F8:19:FE
     vrf: prod_vrf
+    state: present
+  delegate_to: localhost
 
 - name: Add an FC Bridge Domain
   aci_bd:
@@ -147,12 +148,13 @@ EXAMPLES = r'''
     username: "{{ username }}"
     password: "{{ password }}"
     validate_certs: no
-    state: present
     tenant: prod
     bd: storage
     bd_type: fc
     vrf: fc_vrf
     enable_routing: no
+    state: present
+  delegate_to: localhost
 
 - name: Modify a Bridge Domain
   aci_bd:
@@ -160,11 +162,12 @@ EXAMPLES = r'''
     username: "{{ username }}"
     password: "{{ password }}"
     validate_certs: yes
-    state: present
     tenant: prod
     bd: web_servers
     arp_flooding: yes
     l2_unknown_unicast: flood
+    state: present
+  delegate_to: localhost
 
 - name: Query All Bridge Domains
   aci_bd:
@@ -173,6 +176,8 @@ EXAMPLES = r'''
     password: "{{ password }}"
     validate_certs: yes
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query a Bridge Domain
   aci_bd:
@@ -180,9 +185,11 @@ EXAMPLES = r'''
     username: "{{ username }}"
     password: "{{ password }}"
     validate_certs: yes
-    state: query
     tenant: prod
     bd: web_servers
+    state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Delete a Bridge Domain
   aci_bd:
@@ -190,9 +197,10 @@ EXAMPLES = r'''
     username: "{{ username }}"
     password: "{{ password }}"
     validate_certs: yes
-    state: absent
     tenant: prod
     bd: web_servers
+    state: absent
+  delegate_to: localhost
 '''
 
 RETURN = r'''

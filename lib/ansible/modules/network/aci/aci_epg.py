@@ -91,6 +91,8 @@ EXAMPLES = r'''
     description: Web Intranet EPG
     bd: prod_bd
     preferred_group: yes
+    state: present
+  delegate_to: localhost
 
 - aci_epg:
     host: apic
@@ -104,6 +106,7 @@ EXAMPLES = r'''
     priority: unspecified
     intra_epg_isolation: unenforced
     state: present
+  delegate_to: localhost
   with_items:
     - epg: web
       bd: web_bd
@@ -120,6 +123,7 @@ EXAMPLES = r'''
     app_profile: intranet
     epg: web_epg
     state: absent
+  delegate_to: localhost
 
 - name: Query an EPG
   aci_epg:
@@ -130,6 +134,8 @@ EXAMPLES = r'''
     ap: ticketing
     epg: web_epg
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all EPGs
   aci_epg:
@@ -137,6 +143,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all EPGs with a Specific Name
   aci_epg:
@@ -146,6 +154,8 @@ EXAMPLES = r'''
     validate_certs: no
     epg: web_epg
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all EPGs of an App Profile
   aci_epg:
@@ -155,6 +165,8 @@ EXAMPLES = r'''
     validate_certs: no
     ap: ticketing
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''

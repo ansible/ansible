@@ -139,6 +139,7 @@ EXAMPLES = r'''
     tenant: production
     ospf: ospf1
     state: present
+  delegate_to: localhost
 
 - name: Ensure ospf interface policy does not exist
   aci_interface_policy_ospf:
@@ -148,6 +149,7 @@ EXAMPLES = r'''
     tenant: production
     ospf: ospf1
     state: present
+  delegate_to: localhost
 
 - name: Query an ospf interface policy
   aci_interface_policy_ospf:
@@ -157,6 +159,8 @@ EXAMPLES = r'''
     tenant: production
     ospf: ospf1
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all ospf interface policies in tenant production
   aci_interface_policy_ospf:
@@ -165,6 +169,8 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     tenant: production
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''

@@ -56,6 +56,7 @@ EXAMPLES = r'''
     port_security: '{{ port_security }}'
     description: '{{ descr }}'
     max_end_points: '{{ max_end_points }}'
+  delegate_to: localhost
 '''
 
 RETURN = r'''

@@ -101,6 +101,7 @@ EXAMPLES = r'''
     first_name: Dag
     last_name: Wieers
     state: present
+  delegate_to: localhost
 
 - name: Remove a user
   aci_aaa_user:
@@ -109,6 +110,7 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     aaa_user: dag
     state: absent
+  delegate_to: localhost
 
 - name: Query a user
   aci_aaa_user:
@@ -117,6 +119,8 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     aaa_user: dag
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all users
   aci_aaa_user:
@@ -124,6 +128,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''

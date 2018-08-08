@@ -62,6 +62,7 @@ EXAMPLES = r'''
     pool_type: vlan
     description: Production VLANs
     state: present
+  delegate_to: localhost
 
 - name: Remove a vlan pool
   aci_encap_pool:
@@ -71,6 +72,7 @@ EXAMPLES = r'''
     pool: production
     pool_type: vlan
     state: absent
+  delegate_to: localhost
 
 - name: Query a vlan pool
   aci_encap_pool:
@@ -80,6 +82,8 @@ EXAMPLES = r'''
     pool: production
     pool_type: vlan
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all vlan pools
   aci_encap_pool:
@@ -88,6 +92,8 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     pool_type: vlan
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''

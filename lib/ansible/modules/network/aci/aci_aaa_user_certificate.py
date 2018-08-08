@@ -62,6 +62,7 @@ EXAMPLES = r'''
     certificate_name: admin
     certificate_data: '{{ lookup("file", "pki/admin.crt") }}'
     state: present
+  delegate_to: localhost
 
 - name: Remove a certificate of a user
   aci_aaa_user_certificate:
@@ -71,6 +72,7 @@ EXAMPLES = r'''
     aaa_user: admin
     certificate_name: admin
     state: absent
+  delegate_to: localhost
 
 - name: Query a certificate of a user
   aci_aaa_user_certificate:
@@ -80,6 +82,8 @@ EXAMPLES = r'''
     aaa_user: admin
     certificate_name: admin
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all certificates of a user
   aci_aaa_user_certificate:
@@ -88,6 +92,8 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     aaa_user: admin
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''

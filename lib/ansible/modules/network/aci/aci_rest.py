@@ -142,6 +142,7 @@ EXAMPLES = r'''
     method: get
     path: /api/node/class/fvTenant.json
   delegate_to: localhost
+  register: query_result
 
 - name: Configure contracts
   aci_rest:

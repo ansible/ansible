@@ -77,6 +77,7 @@ EXAMPLES = r'''
     description: Communication between web-servers and database
     scope: application-profile
     state: present
+  delegate_to: localhost
 
 - name: Remove an existing contract
   aci_contract:
@@ -86,6 +87,7 @@ EXAMPLES = r'''
     tenant: production
     contract: web_to_db
     state: absent
+  delegate_to: localhost
 
 - name: Query a specific contract
   aci_contract:
@@ -95,6 +97,8 @@ EXAMPLES = r'''
     tenant: production
     contract: web_to_db
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all contracts
   aci_contract:
@@ -102,6 +106,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''

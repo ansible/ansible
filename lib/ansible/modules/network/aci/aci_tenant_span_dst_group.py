@@ -57,6 +57,7 @@ EXAMPLES = r'''
     dst_group: '{{ dst_group }}'
     description: '{{ descr }}'
     tenant: '{{ tenant }}'
+  delegate_to: localhost
 '''
 
 RETURN = r'''

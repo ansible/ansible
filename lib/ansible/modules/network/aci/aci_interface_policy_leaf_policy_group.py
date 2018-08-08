@@ -116,7 +116,6 @@ options:
 extends_documentation_fragment: aci
 '''
 
-# FIXME: Add query examples
 EXAMPLES = r'''
 - name: Create a Port Channel (PC) Interface Policy Group
   aci_interface_policy_leaf_policy_group:
@@ -129,6 +128,7 @@ EXAMPLES = r'''
     link_level_policy: whateverlinklevelpolicy
     fibre_channel_interface_policy: whateverfcpolicy
     state: present
+  delegate_to: localhost
 
 - name: Create a Virtual Port Channel (VPC) Interface Policy Group (no description)
   aci_interface_policy_leaf_policy_group:
@@ -140,6 +140,7 @@ EXAMPLES = r'''
     link_level_policy: whateverlinklevelpolicy
     fibre_channel_interface_policy: whateverfcpolicy
     state: present
+  delegate_to: localhost
 
 - name: Create a Leaf Access Port Policy Group (no description)
   aci_interface_policy_leaf_policy_group:
@@ -151,6 +152,7 @@ EXAMPLES = r'''
     link_level_policy: whateverlinklevelpolicy
     fibre_channel_interface_policy: whateverfcpolicy
     state: present
+  delegate_to: localhost
 
 - name: Query all Leaf Access Port Policy Groups of type link
   aci_interface_policy_leaf_policy_group:
@@ -159,6 +161,8 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     lag_type: link
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query a specific Lead Access Port Policy Group
   aci_interface_policy_leaf_policy_group:
@@ -168,6 +172,8 @@ EXAMPLES = r'''
     lag_type: leaf
     policy_group: policygroupname
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Delete an Interface policy Leaf Policy Group
   aci_interface_policy_leaf_policy_group:
@@ -177,6 +183,7 @@ EXAMPLES = r'''
     lag_type: type_name
     policy_group: policygroupname
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = r'''

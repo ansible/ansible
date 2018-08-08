@@ -55,6 +55,7 @@ EXAMPLES = r'''
     mcp: '{{ mcp }}'
     description: '{{ descr }}'
     admin_state: '{{ admin_state }}'
+  delegate_to: localhost
 '''
 
 RETURN = r'''

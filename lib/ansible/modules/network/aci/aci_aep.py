@@ -60,6 +60,7 @@ EXAMPLES = r'''
     aep: ACI-AEP
     description: default
     state: present
+  delegate_to: localhost
 
 - name: Remove an existing AEP
   aci_aep:
@@ -68,6 +69,7 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     aep: ACI-AEP
     state: absent
+  delegate_to: localhost
 
 - name: Query all AEPs
   aci_aep:
@@ -75,6 +77,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query a specific AEP
   aci_aep:
@@ -83,6 +87,8 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     aep: ACI-AEP
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''

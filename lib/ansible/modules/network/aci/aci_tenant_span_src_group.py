@@ -64,6 +64,7 @@ EXAMPLES = r'''
     dst_group: "{{ dst_group }}"
     admin_state: "{{ admin_state }}"
     description: "{{ description }}"
+  delegate_to: localhost
 '''
 
 RETURN = r'''
