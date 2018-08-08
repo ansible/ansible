@@ -949,13 +949,13 @@ class TaskExecutor:
         os.close(slave)
 
         try:
-            _write_to_socket(self._play_context.serialize())
+            _write_to_socket(stdin, self._play_context.serialize())
         except AnsibleError:
             raise AnsibleError("Unable to finish writing play_context to socket")
         stdin.write(b'\n#END_INIT#\n')
 
         try:
-            _write_to_socket(variables)
+            _write_to_socket(stdin, variables)
         except AnsibleError:
             raise AnsibleError("Unable to finish writing variable data to socket")
         stdin.write(b'\n#END_VARS#\n')
