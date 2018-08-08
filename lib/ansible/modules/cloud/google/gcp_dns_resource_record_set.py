@@ -89,6 +89,7 @@ EXAMPLES = '''
         - https://www.googleapis.com/auth/ndev.clouddns.readwrite
       state: present
   register: managed_zone
+
 - name: create a resource record set
   gcp_dns_resource_record_set:
       name: 'www.testzone-4.com.'

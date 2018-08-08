@@ -221,6 +221,7 @@ EXAMPLES = '''
         - https://www.googleapis.com/auth/cloud-platform
       state: present
   register: cluster
+
 - name: create a node pool
   gcp_container_node_pool:
       name: testObject

@@ -108,6 +108,7 @@ EXAMPLES = '''
         - https://www.googleapis.com/auth/compute
       state: present
   register: network
+
 - name: create a instance group
   gcp_compute_instance_group:
       name: testObject

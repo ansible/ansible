@@ -161,6 +161,7 @@ EXAMPLES = '''
         - https://www.googleapis.com/auth/compute
       state: present
   register: address
+
 - name: create a target pool
   gcp_compute_target_pool:
       name: 'targetpool-forwardingrule'
@@ -172,6 +173,7 @@ EXAMPLES = '''
         - https://www.googleapis.com/auth/compute
       state: present
   register: targetpool
+
 - name: create a forwarding rule
   gcp_compute_forwarding_rule:
       name: testObject

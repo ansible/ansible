@@ -191,6 +191,7 @@ EXAMPLES = '''
         - https://www.googleapis.com/auth/compute
       state: present
   register: disk
+
 - name: create a image
   gcp_compute_image:
       name: testObject

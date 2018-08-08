@@ -117,6 +117,7 @@ EXAMPLES = '''
         - https://www.googleapis.com/auth/compute
       state: present
   register: network
+
 - name: create a subnetwork
   gcp_compute_subnetwork:
       name: 'ansiblenet'
