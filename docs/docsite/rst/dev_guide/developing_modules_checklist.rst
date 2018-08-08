@@ -31,7 +31,6 @@ If your pull request to add your module to Ansible meets our objective requireme
 * Validate upfront--fail fast and return useful and clear error messages.
 * Use defensive programming--use a simple design for your module, handle errors gracefully, and avoid direct stacktraces.
 * Fail predictably--if we must fail, do it in a way that is the most expected. Either mimic the underlying tool or the general way the system works.
-* Use shared code whenever possible - don't reinvent the wheel. Ansible offers base functions for many common patterns (retry, throttling, etc). ## TODO where is shared code and how does a dev use it?
 * Avoid ``action``/``command``, they are imperative and not declarative, there are other ways to express the same thing.
 * When fetching URLs, use ``fetch_url`` or ``open_url`` from ``ansible.module_utils.urls``. Do not use ``urllib2``, which does not natively verify TLS certificates and so is insecure for https.
 * Include a ``main`` function that wraps the normal execution.
@@ -41,18 +40,6 @@ If your pull request to add your module to Ansible meets our objective requireme
 
 	    if __name__ == '__main__':
 	        main()
-
-* Import ``ansible.module_utils`` code in the same place as you import other libraries.
-* Do not use wildcards for importing other python modules (for example, ``from ansible.module_utils.basic import *``).
-* Import custom packages in ``try``/``except`` and handle them with ``fail_json()`` in ``main()``. For example:
-
-	.. code-block:: python
-
-	    try:
-	        import foo
-	        HAS_LIB=True
-	    except:
-	        HAS_LIB=False
 
 
 Follow standard Ansible patterns
