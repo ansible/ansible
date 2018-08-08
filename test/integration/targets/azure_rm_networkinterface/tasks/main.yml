@@ -1,12 +1,11 @@
 - name: Prepare random number
   set_fact:
     rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
-    auth_source: auto
   run_once: yes
 
 - name: Create virtual network
   azure_rm_virtualnetwork:
-    auth_source: "{{ auth_source }}"
+    auth_source: "cli"
     resource_group: "{{ resource_group_secondary }}"
     name: "tn{{ rpfx }}"
     address_prefixes: "10.10.0.0/16"
@@ -14,7 +13,6 @@
 
 - name: Add subnet
   azure_rm_subnet:
-    auth_source: "{{ auth_source }}"
     resource_group: "{{ resource_group_secondary }}"
     name: "tn{{ rpfx }}"
     address_prefix: "10.10.0.0/24"
@@ -22,13 +20,11 @@
 
 - name: create public ip
   azure_rm_publicipaddress:
-    auth_source: "{{ auth_source }}"
     name: "pip{{ rpfx }}"
     resource_group: '{{ resource_group }}'
 
 - name: create load balancer with multiple parameters
   azure_rm_loadbalancer:
-    auth_source: "{{ auth_source }}"
     resource_group: '{{ resource_group }}'
     name: "lb{{ rpfx }}"
     frontend_ip_configurations:
@@ -58,13 +54,11 @@
 
 - name: create public ip
   azure_rm_publicipaddress:
-    auth_source: "{{ auth_source }}"
     name: "pip{{ rpfx }}"
     resource_group: '{{ resource_group }}'
 
 - name: Create NIC (check mode)
   azure_rm_networkinterface:
-    auth_source: "{{ auth_source }}"
     resource_group: "{{ resource_group }}"
     name: "tn{{ rpfx }}"
     virtual_network: "{{ vn.state.id }}"
@@ -81,7 +75,6 @@
 
 - name: Create NIC using virtual_network resource_group parameter
   azure_rm_networkinterface:
-    auth_source: "{{ auth_source }}"
     resource_group: "{{ resource_group }}"
     name: "tn{{ rpfx }}rg"
     virtual_network:
@@ -95,7 +88,6 @@
 
 - name: Create NIC using virtual_network resource_group parameter (idempotent)
   azure_rm_networkinterface:
-    auth_source: "{{ auth_source }}"
     resource_group: "{{ resource_group }}"
     name: "tn{{ rpfx }}rg"
     virtual_network:
@@ -113,14 +105,12 @@
 
 - name: Delete NIC
   azure_rm_networkinterface:
-    auth_source: "{{ auth_source }}"
     resource_group: "{{ resource_group }}"
     name: "tn{{ rpfx }}rg"
     state: absent
 
 - name: Create NIC
   azure_rm_networkinterface:
-    auth_source: "{{ auth_source }}"
     resource_group: "{{ resource_group }}"
     name: "tn{{ rpfx }}"
     virtual_network: "{{ vn.state.id }}"
@@ -139,7 +129,6 @@
 
 - name: Update the NIC with mutilple ip configurations (check mode)
   azure_rm_networkinterface:
-    auth_source: "{{ auth_source }}"
     resource_group: "{{ resource_group }}"
     name: "tn{{ rpfx }}"
     security_group:
@@ -165,7 +154,6 @@
 
 - name: Update the NIC with mutilple ip configurations
   azure_rm_networkinterface:
-    auth_source: "{{ auth_source }}"
     resource_group: "{{ resource_group }}"
     name: "tn{{ rpfx }}"
     security_group: 
@@ -197,7 +185,6 @@
 
 - name: Update the NIC with mutilple ip configurations (idempotent)
   azure_rm_networkinterface:
-    auth_source: "{{ auth_source }}"
     resource_group: "{{ resource_group }}"
     name: "tn{{ rpfx }}"
     security_group: "{{ output.state.network_security_group.id }}"
@@ -224,7 +211,6 @@
 
 - name: Remove one ip configuration
   azure_rm_networkinterface:
-    auth_source: "{{ auth_source }}"
     resource_group: "{{ resource_group }}"
     name: "tn{{ rpfx }}"
     security_group:
@@ -252,7 +238,6 @@
 
 - name: IP configuration without public IP and NSG
   azure_rm_networkinterface:
-    auth_source: "{{ auth_source }}"
     resource_group: "{{ resource_group }}"
     name: "tn{{ rpfx }}noip"
     create_with_security_group: False
@@ -270,7 +255,6 @@
 
 - name: NIC with Accelerated networking enabled
   azure_rm_networkinterface:
-    auth_source: "{{ auth_source }}"
     resource_group: "{{ resource_group }}"
     name: "tn{{ rpfx }}an"
     virtual_network: "{{ vn.state.id }}"
@@ -285,7 +269,6 @@
 
 - name: NIC with Accelerated networking enabled (check idempotent)
   azure_rm_networkinterface:
-    auth_source: "{{ auth_source }}"
     resource_group: "{{ resource_group }}"
     name: "tn{{ rpfx }}an"
     virtual_network: "{{ vn.state.id }}"
@@ -300,7 +283,6 @@
 
 - name: Disable (previously enabled) Accelerated networking
   azure_rm_networkinterface:
-    auth_source: "{{ auth_source }}"
     resource_group: "{{ resource_group }}"
     name: "tn{{ rpfx }}an"
     virtual_network: "{{ vn.state.id }}"
@@ -315,7 +297,6 @@
 
 - name: Delete AN NIC
   azure_rm_networkinterface:
-    auth_source: "{{ auth_source }}"
     resource_group: "{{ resource_group }}"
     name: "tn{{ rpfx }}an"
     state: absent
@@ -327,7 +308,6 @@
 
 - name: NIC with IP forwarding networking enabled
   azure_rm_networkinterface:
-    auth_source: "{{ auth_source }}"
     resource_group: "{{ resource_group }}"
     name: "tn{{ rpfx }}ipf"
     virtual_network: "{{ vn.state.id }}"
@@ -342,7 +322,6 @@
 
 - name: NIC with IP forwarding enabled (check idempotent)
   azure_rm_networkinterface:
-    auth_source: "{{ auth_source }}"
     resource_group: "{{ resource_group }}"
     name: "tn{{ rpfx }}ipf"
     virtual_network: "{{ vn.state.id }}"
@@ -357,7 +336,6 @@
 
 - name: Disable (previously enabled) IP forwarding
   azure_rm_networkinterface:
-    auth_source: "{{ auth_source }}"
     resource_group: "{{ resource_group }}"
     name: "tn{{ rpfx }}ipf"
     virtual_network: "{{ vn.state.id }}"
@@ -372,7 +350,6 @@
 
 - name: Delete IP forwarding NIC
   azure_rm_networkinterface:
-    auth_source: "{{ auth_source }}"
     resource_group: "{{ resource_group }}"
     name: "tn{{ rpfx }}ipf"
     state: absent
@@ -384,7 +361,6 @@
 
 - name: Delete the NIC (check mode)
   azure_rm_networkinterface:
-    auth_source: "{{ auth_source }}"
     resource_group: "{{ resource_group }}"
     name: "tn{{ rpfx }}"
     state: absent
@@ -397,7 +373,6 @@
 
 - name: Delete the NIC
   azure_rm_networkinterface:
-    auth_source: "{{ auth_source }}"
     resource_group: "{{ resource_group }}"
     name: "{{ item }}"
     state: absent
@@ -412,7 +387,6 @@
 
 - name: Delete the NIC (idempotent)
   azure_rm_networkinterface:
-    auth_source: "{{ auth_source }}"
     resource_group: "{{ resource_group }}"
     name: "tn{{ rpfx }}"
     state: absent
@@ -424,7 +398,6 @@
 
 - name: delete load balancer
   azure_rm_loadbalancer:
-    auth_source: "{{ auth_source }}"
     resource_group: '{{ resource_group }}'
     name: "lb{{ rpfx }}"
     frontend_ip_configurations:
@@ -454,7 +427,6 @@
 
 - name: delete public ip
   azure_rm_publicipaddress:
-    auth_source: "{{ auth_source }}"
     name: "pip{{ rpfx }}"
     resource_group: '{{ resource_group }}'
     state: absent
