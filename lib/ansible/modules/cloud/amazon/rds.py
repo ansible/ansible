@@ -293,7 +293,7 @@ latest_restorable_time:
     returned: when RDS instance exists
     type: string
     sample: "1489707802.0"
-secondary_avaialbility_zone:
+secondary_availability_zone:
     description: the name of the secondary AZ for a DB instance with multi-AZ support
     returned: when RDS instance exists and is multy-AZ
     type: string
@@ -748,7 +748,7 @@ class RDS2DBInstance:
             'latest_restorable_time': self.instance['LatestRestorableTime'],
             'status': self.status,
             'availability_zone': self.instance['AvailabilityZone'],
-            'secondary_avaialbility_zone': self.instance['SecondaryAvailabilityZone'],
+            'secondary_availability_zone': self.instance['SecondaryAvailabilityZone'],
             'backup_retention': self.instance['BackupRetentionPeriod'],
             'backup_window': self.instance['PreferredBackupWindow'],
             'maintenance_window': self.instance['PreferredMaintenanceWindow'],
