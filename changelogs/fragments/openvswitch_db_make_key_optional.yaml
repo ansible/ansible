@@ -1,0 +1,2 @@
+bugfixes:
+  - openvswitch_db - make 'key' argument optional https://github.com/ansible/ansible/issues/42108
