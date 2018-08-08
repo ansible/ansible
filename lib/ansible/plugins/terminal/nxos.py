@@ -49,7 +49,6 @@ class TerminalModule(TerminalBase):
         re.compile(br"user not present"),
         re.compile(br"invalid (.+?)at '\^' marker", re.I),
         re.compile(br"baud rate of console should be (\d*) to increase severity level", re.I),
-        re.compile(br"Configure replace failed", re.I),
     ]
 
     def on_become(self, passwd=None):
