@@ -215,7 +215,6 @@ instance:
 
 import time
 try:
-    import pyVmomi
     from pyVmomi import vim
 except ImportError:
     pass
