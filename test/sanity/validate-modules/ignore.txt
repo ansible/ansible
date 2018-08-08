@@ -659,8 +659,6 @@ lib/ansible/modules/net_tools/basics/uri.py E326
 lib/ansible/modules/net_tools/cloudflare_dns.py E317
 lib/ansible/modules/net_tools/cloudflare_dns.py E325
 lib/ansible/modules/net_tools/cloudflare_dns.py E327
-lib/ansible/modules/net_tools/dnsimple.py E325
-lib/ansible/modules/net_tools/dnsimple.py E327
 lib/ansible/modules/net_tools/haproxy.py E317
 lib/ansible/modules/net_tools/haproxy.py E324
 lib/ansible/modules/net_tools/haproxy.py E325
@@ -898,7 +896,6 @@ lib/ansible/modules/network/nxos/nxos_bgp_neighbor_af.py E325
 lib/ansible/modules/network/nxos/nxos_bgp_neighbor_af.py E326
 lib/ansible/modules/network/nxos/nxos_command.py E326
 lib/ansible/modules/network/nxos/nxos_config.py E324
-lib/ansible/modules/network/nxos/nxos_file_copy.py E324
 lib/ansible/modules/network/nxos/nxos_gir.py E326
 lib/ansible/modules/network/nxos/nxos_igmp_interface.py E326
 lib/ansible/modules/network/nxos/nxos_interface.py E324
@@ -1044,8 +1041,6 @@ lib/ansible/modules/packaging/os/yum_repository.py E324
 lib/ansible/modules/packaging/os/zypper.py E326
 lib/ansible/modules/remote_management/foreman/foreman.py E322
 lib/ansible/modules/remote_management/foreman/foreman.py E325
-lib/ansible/modules/remote_management/foreman/katello.py E322
-lib/ansible/modules/remote_management/foreman/katello.py E325
 lib/ansible/modules/remote_management/hpilo/hpilo_boot.py E324
 lib/ansible/modules/remote_management/hpilo/hpilo_boot.py E326
 lib/ansible/modules/remote_management/ipmi/ipmi_boot.py E326
@@ -1165,7 +1160,6 @@ lib/ansible/modules/system/iptables.py E326
 lib/ansible/modules/system/java_cert.py E324
 lib/ansible/modules/system/java_cert.py E325
 lib/ansible/modules/system/known_hosts.py E324
-lib/ansible/modules/system/lvol.py E324
 lib/ansible/modules/system/make.py E317
 lib/ansible/modules/system/mount.py E324
 lib/ansible/modules/system/open_iscsi.py E322

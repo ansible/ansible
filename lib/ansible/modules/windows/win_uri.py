@@ -61,17 +61,6 @@ options:
     description:
     - Extra headers to set on the request, see the examples for more details on
       how to set this.
-  use_basic_parsing:
-    description:
-    - As of Ansible 2.5, this option is no longer valid and cannot be changed from C(yes), this option will be removed
-      in Ansible 2.7.
-    - Before Ansible 2.5, this module relies upon 'Invoke-WebRequest', which by default uses the Internet Explorer Engine
-      to parse a webpage.
-    - There's an edge-case where if a user hasn't run IE before, this will fail.
-    - The only advantage to using the Internet Explorer praser is that you can traverse the DOM in a powershell script.
-    - That isn't useful for Ansible, so by default we toggle 'UseBasicParsing'. However, you can toggle that off here.
-    type: bool
-    default: 'yes'
   creates:
     description:
     - A filename, when it already exists, this step will be skipped.
@@ -196,7 +185,7 @@ status_code:
   type: int
   sample: 200
 status_description:
-  description: A summery of the status.
+  description: A summary of the status.
   returned: success
   type: string
   sample: OK

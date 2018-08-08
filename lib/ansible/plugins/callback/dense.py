@@ -493,6 +493,7 @@ class CallbackModule_dense(CallbackModule_default):
                 screen_only=True
             )
 
+
 # When using -vv or higher, simply do the default action
 if display.verbosity >= 2 or not HAS_OD:
     CallbackModule = CallbackModule_default

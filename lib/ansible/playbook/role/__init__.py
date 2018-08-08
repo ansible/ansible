@@ -262,7 +262,7 @@ class Role(Base, Become, Conditional, Taggable):
                         data = combine_vars(data, new_data)
                     else:
                         data = new_data
-                    return data
+                return data
             elif main is not None:
                 raise AnsibleParserError("Could not find specified file in role: %s/%s" % (subdir, main))
         return None

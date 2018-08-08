@@ -120,6 +120,7 @@ Errors
   329       Default value from the argument_spec is not compatible with type defined in the argument_spec
   330       Choices value from the argument_spec is not compatible with type defined in the argument_spec
   331       argument in argument_spec must be a dictionary/hash when used
+  332       ``AnsibleModule`` schema validation error
   ..
 ---------   -------------------
   **4xx**   **Syntax**

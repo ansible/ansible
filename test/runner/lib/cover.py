@@ -39,7 +39,7 @@ def command_coverage_combine(args):
     """
     coverage = initialize_coverage(args)
 
-    modules = dict((t.module, t.path) for t in list(walk_module_targets()))
+    modules = dict((t.module, t.path) for t in list(walk_module_targets()) if t.path.endswith('.py'))
 
     coverage_files = [os.path.join(COVERAGE_DIR, f) for f in os.listdir(COVERAGE_DIR) if '=coverage.' in f]
 
@@ -88,10 +88,17 @@ def command_coverage_combine(args):
                 continue
 
             if '/ansible_modlib.zip/ansible/' in filename:
+                # Rewrite the module_utils path from the remote host to match the controller. Ansible 2.6 and earlier.
                 new_name = re.sub('^.*/ansible_modlib.zip/ansible/', ansible_path, filename)
                 display.info('%s -> %s' % (filename, new_name), verbosity=3)
                 filename = new_name
+            elif re.search(r'/ansible_[^/]+_payload\.zip/ansible/', filename):
+                # Rewrite the module_utils path from the remote host to match the controller. Ansible 2.7 and later.
+                new_name = re.sub(r'^.*/ansible_[^/]+_payload\.zip/ansible/', ansible_path, filename)
+                display.info('%s -> %s' % (filename, new_name), verbosity=3)
+                filename = new_name
             elif '/ansible_module_' in filename:
+                # Rewrite the module path from the remote host to match the controller. Ansible 2.6 and earlier.
                 module_name = re.sub('^.*/ansible_module_(?P<module>.*).py$', '\\g<module>', filename)
                 if module_name not in modules:
                     display.warning('Skipping coverage of unknown module: %s' % module_name)
@@ -99,7 +106,19 @@ def command_coverage_combine(args):
                 new_name = os.path.abspath(modules[module_name])
                 display.info('%s -> %s' % (filename, new_name), verbosity=3)
                 filename = new_name
+            elif re.search(r'/ansible_[^/]+_payload(_[^/]+|\.zip)/__main__\.py$', filename):
+                # Rewrite the module path from the remote host to match the controller. Ansible 2.7 and later.
+                # AnsiballZ versions using zipimporter will match the `.zip` portion of the regex.
+                # AnsiballZ versions not using zipimporter will match the `_[^/]+` portion of the regex.
+                module_name = re.sub(r'^.*/ansible_(?P<module>[^/]+)_payload(_[^/]+|\.zip)/__main__\.py$', '\\g<module>', filename).rstrip('_')
+                if module_name not in modules:
+                    display.warning('Skipping coverage of unknown module: %s' % module_name)
+                    continue
+                new_name = os.path.abspath(modules[module_name])
+                display.info('%s -> %s' % (filename, new_name), verbosity=3)
+                filename = new_name
             elif re.search('^(/.*?)?/root/ansible/', filename):
+                # Rewrite the path of code running on a remote host or in a docker container as root.
                 new_name = re.sub('^(/.*?)?/root/ansible/', root_path, filename)
                 display.info('%s -> %s' % (filename, new_name), verbosity=3)
                 filename = new_name

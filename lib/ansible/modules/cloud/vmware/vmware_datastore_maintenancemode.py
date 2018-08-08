@@ -63,6 +63,7 @@ EXAMPLES = '''
     password: vc_pass
     datastore: datastore1
     state: present
+  delegate_to: localhost
 
 - name: Enter all datastores under cluster into Maintenance Mode
   vmware_datastore_maintenancemode:
@@ -71,6 +72,7 @@ EXAMPLES = '''
     password: vc_pass
     cluster_name: DC0_C0
     state: present
+  delegate_to: localhost
 
 - name: Enter all datastores under datastore cluster into Maintenance Mode
   vmware_datastore_maintenancemode:
@@ -79,6 +81,7 @@ EXAMPLES = '''
     password: vc_pass
     datastore_cluster: DSC_POD0
     state: present
+  delegate_to: localhost
 
 - name: Exit datastore into Maintenance Mode
   vmware_datastore_maintenancemode:
@@ -87,6 +90,7 @@ EXAMPLES = '''
     password: vc_pass
     datastore: datastore1
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''

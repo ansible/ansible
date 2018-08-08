@@ -293,6 +293,8 @@ backup_path:
 """
 import json
 
+from ansible.module_utils._text import to_text
+from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.ios.ios import run_commands, get_config
 from ansible.module_utils.network.ios.ios import get_defaults_flag, get_connection
 from ansible.module_utils.network.ios.ios import ios_argument_spec
@@ -419,8 +421,12 @@ def main():
 
         candidate = get_candidate_config(module)
         running = get_running_config(module, contents, flags=flags)
+        try:
+            response = connection.get_diff(candidate=candidate, running=running, diff_match=match, diff_ignore_lines=diff_ignore_lines, path=path,
+                                           diff_replace=replace)
+        except ConnectionError as exc:
+            module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
-        response = connection.get_diff(candidate=candidate, running=running, match=match, diff_ignore_lines=diff_ignore_lines, path=path, replace=replace)
         config_diff = response['config_diff']
         banner_diff = response['banner_diff']
 
@@ -507,6 +513,7 @@ def main():
                 })
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

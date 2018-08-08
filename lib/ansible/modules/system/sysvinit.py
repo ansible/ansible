@@ -221,6 +221,7 @@ def main():
         if not worked:
             # hail mary
             if rc == 0:
+                is_started = True
                 worked = True
             # ps for luck, can only assure positive match
             elif get_ps(module, name):
@@ -310,7 +311,7 @@ def main():
             # FIXME: ERRORS
 
             if rc != 0:
-                module.fail_json(msg="Failed to %s service: %s" % (action, name))
+                module.fail_json(msg="Failed to %s service: %s" % (action, name), rc=rc, stdout=out, stderr=err)
 
             return (rc, out, err)
 

@@ -23,7 +23,7 @@ import json
 from contextlib import contextmanager
 
 from ansible import constants as C
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves import cPickle, StringIO
 from ansible.module_utils.connection import Connection, ConnectionError, send_data, recv_data
@@ -85,6 +85,11 @@ class ConnectionProcess(object):
                                                     ansible_playbook_pid=self._ansible_playbook_pid)
             self.connection.set_options(var_options=variables)
             self.connection._connect()
+
+            # implementation plugins are updated while connection initialization
+            if hasattr(self.connection, 'set_implementation_plugin_options'):
+                self.connection.set_implementation_plugin_options(var_options=variables)
+
             self.connection._socket_path = self.socket_path
             self.srv.register(self.connection)
             messages.extend(sys.stdout.getvalue().splitlines())
@@ -119,7 +124,7 @@ class ConnectionProcess(object):
                     if not data:
                         break
 
-                    signal.alarm(self.connection._play_context.timeout)
+                    signal.alarm(self.connection.get_option('persistent_command_timeout'))
                     resp = self.srv.handle_request(data)
                     signal.alarm(0)
 
@@ -146,7 +151,7 @@ class ConnectionProcess(object):
         self.shutdown()
 
     def command_timeout(self, signum, frame):
-        display.display('command timeout triggered, timeout value is %s secs' % self.play_context.timeout, log_only=True)
+        display.display('command timeout triggered, timeout value is %s secs' % self.connection.get_option('persistent_command_timeout'), log_only=True)
         self.shutdown()
 
     def handler(self, signum, frame):
@@ -209,6 +214,8 @@ def main():
                 raise Exception("EOF found before vars data was complete")
             vars_data += cur_line
             cur_line = stdin.readline()
+        # restore escaped loose \r characters
+        vars_data = vars_data.replace(br'\r', b'\r')
 
         if PY3:
             pc_data = cPickle.loads(init_data, encoding='bytes')
@@ -273,6 +280,7 @@ def main():
             else:
                 messages.append('found existing local domain socket, using it!')
                 conn = Connection(socket_path)
+                conn.set_options(var_options=variables)
                 pc_data = to_text(init_data)
                 try:
                     messages.extend(conn.update_play_context(pc_data))

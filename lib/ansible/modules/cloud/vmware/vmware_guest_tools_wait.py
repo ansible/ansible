@@ -69,6 +69,7 @@ EXAMPLES = '''
     datacenter: "{{ datacenter }}"
     folder: "/{{datacenter}}/vm"
     name: "{{ vm_name }}"
+  delegate_to: localhost
   register: vm_facts
 
 - name: Get UUID from previous task and pass it to this task

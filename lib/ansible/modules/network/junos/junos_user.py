@@ -138,7 +138,9 @@ from functools import partial
 
 from copy import deepcopy
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.utils import remove_default_spec
 from ansible.module_utils.network.junos.junos import junos_argument_spec, get_connection, tostring
 from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes
@@ -160,7 +162,11 @@ def handle_purge(module, want):
     login = SubElement(element, 'login')
 
     conn = get_connection(module)
-    reply = conn.execute_rpc(tostring(Element('get-configuration')), ignore_warning=False)
+    try:
+        reply = conn.execute_rpc(tostring(Element('get-configuration')), ignore_warning=False)
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+
     users = reply.xpath('configuration/system/login/user/name')
     if users:
         for item in users:
@@ -329,6 +335,7 @@ def main():
                 result['diff'] = {'prepared': diff}
 
     module.exit_json(**result)
+
 
 if __name__ == "__main__":
     main()

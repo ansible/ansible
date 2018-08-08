@@ -8,8 +8,8 @@ __metaclass__ = type
 DOCUMENTATION = '''
     name: scaleway
     plugin_type: inventory
-    authors:
-      - Remy Leone <rleone@online.net>
+    author:
+      - Remy Leone (@sieben)
     short_description: Scaleway inventory source
     description:
         - Get inventory hosts from Scaleway
@@ -102,20 +102,43 @@ def extract_public_ipv4(server_info):
 
 
 def extract_private_ipv4(server_info):
-    return server_info["private_ip"]
+    try:
+        return server_info["private_ip"]
+    except (KeyError, TypeError):
+        return None
 
 
 def extract_hostname(server_info):
-    return server_info["hostname"]
+    try:
+        return server_info["hostname"]
+    except (KeyError, TypeError):
+        return None
 
 
 def extract_server_id(server_info):
-    return server_info["id"]
+    try:
+        return server_info["id"]
+    except (KeyError, TypeError):
+        return None
 
 
 def extract_public_ipv6(server_info):
     try:
         return server_info["ipv6"]["address"]
+    except (KeyError, TypeError):
+        return None
+
+
+def extract_tags(server_info):
+    try:
+        return server_info["tags"]
+    except (KeyError, TypeError):
+        return None
+
+
+def extract_zone(server_info):
+    try:
+        return server_info["location"]["zone_id"]
     except (KeyError, TypeError):
         return None
 
@@ -161,8 +184,12 @@ class InventoryModule(BaseInventoryPlugin):
         return set(SCALEWAY_LOCATION.keys()).intersection(config_zones)
 
     def match_groups(self, server_info, tags):
-        server_zone = server_info["location"]["zone_id"]
-        server_tags = server_info["tags"]
+        server_zone = extract_zone(server_info=server_info)
+        server_tags = extract_tags(server_info=server_info)
+
+        # If a server does not have a zone, it means it is archived
+        if server_zone is None:
+            return set()
 
         # If no filtering is defined, all tags are valid groups
         if tags is None:

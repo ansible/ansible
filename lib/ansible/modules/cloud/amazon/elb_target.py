@@ -296,7 +296,7 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
-                           mutually_exclusive=['target_group_arn', 'target_group_name']
+                           mutually_exclusive=[['target_group_arn', 'target_group_name']]
                            )
 
     if not HAS_BOTO3:
@@ -311,6 +311,7 @@ def main():
         register_target(connection, module)
     else:
         deregister_target(connection, module)
+
 
 if __name__ == '__main__':
     main()

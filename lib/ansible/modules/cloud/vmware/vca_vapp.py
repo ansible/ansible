@@ -97,7 +97,6 @@ extends_documentation_fragment: vca
 '''
 
 EXAMPLES = '''
-
 - name: Creates a new vApp in a VCA instance
   vca_vapp:
     vapp_name: tower
@@ -107,7 +106,7 @@ EXAMPLES = '''
     instance_id: '<your instance id here>'
     username: '<your username here>'
     password: '<your password here>'
-
+  delegate_to: localhost
 '''
 
 from ansible.module_utils.vca import VcaAnsibleModule, VcaError

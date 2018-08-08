@@ -88,6 +88,36 @@
         - not alb.changed
         - alb.listeners[0].rules|length == 2
 
+  - name: test a rule can be added and other rules will not be removed when purge_rules is no.
+    elb_application_lb:
+      name: "{{ alb_name }}"
+      subnets: "{{ alb_subnets }}"
+      security_groups: "{{ sec_group.group_id }}"
+      state: present
+      purge_rules: no
+      listeners:
+        - Protocol: HTTP
+          Port: 80
+          DefaultActions:
+            - Type: forward
+              TargetGroupName: "{{ tg_name }}"
+          Rules:
+            - Conditions:
+                - Field: path-pattern
+                  Values:
+                    - '/new'
+              Priority: '2'
+              Actions:
+                - TargetGroupName: "{{ tg_name }}"
+                  Type: forward
+      <<: *aws_connection_info
+    register: alb
+
+  - assert:
+      that:
+        - alb.changed
+        - alb.listeners[0].rules|length == 3
+
   - name: remove the rule
     elb_application_lb:
       name: "{{ alb_name }}"

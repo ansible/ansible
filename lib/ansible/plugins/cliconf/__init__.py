@@ -165,7 +165,7 @@ class CliconfBase(AnsiblePlugin):
         self.response_logging = False
 
     @abstractmethod
-    def get_config(self, source='running', filter=None, format=None):
+    def get_config(self, source='running', flag=None, format=None):
         """Retrieves the specified configuration from the device
 
         This method will retrieve the configuration specified by source and
@@ -175,7 +175,7 @@ class CliconfBase(AnsiblePlugin):
         :param source: The configuration source to return from the device.
             This argument accepts either `running` or `startup` as valid values.
 
-        :param filter: For devices that support configuration filtering, this
+        :param flag: For devices that support configuration filtering, this
             keyword argument is used to filter the returned configuration.
             The use of this keyword argument is device dependent adn will be
             silently ignored on devices that do not support it.
@@ -189,7 +189,7 @@ class CliconfBase(AnsiblePlugin):
         pass
 
     @abstractmethod
-    def edit_config(self, candidate=None, commit=True, replace=False, diff=False, comment=None):
+    def edit_config(self, candidate=None, commit=True, replace=None, diff=False, comment=None):
         """Loads the candidate configuration into the network device
 
         This method will load the specified candidate config into the device
@@ -203,8 +203,10 @@ class CliconfBase(AnsiblePlugin):
         :param commit: Boolean value that indicates if the device candidate
             configuration should be  pushed in the running configuration or discarded.
 
-        :param replace: Boolean flag to indicate if running configuration should be completely
-                        replace by candidate configuration.
+        :param replace: If the value is True/False it indicates if running configuration should be completely
+                        replace by candidate configuration. If can also take configuration file path as value,
+                        the file in this case should be present on the remote host in the mentioned path as a
+                        prerequisite.
         :param comment: Commit comment provided it is supported by remote host
         :return: Returns a json string with contains configuration applied on remote host, the returned
                  response on executing configuration commands and platform relevant data.
@@ -341,7 +343,7 @@ class CliconfBase(AnsiblePlugin):
             with ssh.open_sftp() as sftp:
                 sftp.get(source, destination)
 
-    def get_diff(self, candidate=None, running=None, match=None, diff_ignore_lines=None, path=None, replace=None):
+    def get_diff(self, candidate=None, running=None, diff_match=None, diff_ignore_lines=None, path=None, diff_replace=None):
         """
         Generate diff between candidate and running configuration. If the
         remote host supports onbox diff capabilities ie. supports_onbox_diff in that case
@@ -350,7 +352,7 @@ class CliconfBase(AnsiblePlugin):
         and running argument is optional.
         :param candidate: The configuration which is expected to be present on remote host.
         :param running: The base configuration which is used to generate diff.
-        :param match: Instructs how to match the candidate configuration with current device configuration
+        :param diff_match: Instructs how to match the candidate configuration with current device configuration
                       Valid values are 'line', 'strict', 'exact', 'none'.
                       'line' - commands are matched line by line
                       'strict' - command lines are matched with respect to position
@@ -364,7 +366,7 @@ class CliconfBase(AnsiblePlugin):
                      the commands should be checked against.  If the parents argument
                      is omitted, the commands are checked against the set of top
                     level or global commands.
-        :param replace: Instructs on the way to perform the configuration on the device.
+        :param diff_replace: Instructs on the way to perform the configuration on the device.
                         If the replace argument is set to I(line) then the modified lines are
                         pushed to the device in configuration mode.  If the replace argument is
                         set to I(block) then the entire command block is pushed to the device in
@@ -396,3 +398,20 @@ class CliconfBase(AnsiblePlugin):
         :return: List of returned response
         """
         pass
+
+    def check_edit_config_capabiltiy(self, operations, candidate=None, commit=True, replace=None, comment=None):
+
+        if not candidate and not replace:
+            raise ValueError("must provide a candidate or replace to load configuration")
+
+        if commit not in (True, False):
+            raise ValueError("'commit' must be a bool, got %s" % commit)
+
+        if replace and not operations['supports_replace']:
+            raise ValueError("configuration replace is not supported")
+
+        if comment and not operations.get('supports_commit_comment', False):
+            raise ValueError("commit comment is not supported")
+
+        if replace and not operations.get('supports_replace', False):
+            raise ValueError("configuration replace is not supported")

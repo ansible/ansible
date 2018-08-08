@@ -295,6 +295,7 @@ class NoSSLError(SSLValidationError):
     """Needed to connect to an HTTPS url but no ssl library available to verify the certificate"""
     pass
 
+
 # Some environments (Google Compute Engine's CoreOS deploys) do not compile
 # against openssl and thus do not have any HTTPS support.
 CustomHTTPSConnection = CustomHTTPSHandler = None
@@ -1136,7 +1137,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
 
     Does not require the module environment
     '''
-    method = method or 'GET'
+    method = method or ('POST' if data else 'GET')
     return Request().open(method, url, data=data, headers=headers, use_proxy=use_proxy,
                           force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
                           url_username=url_username, url_password=url_password, http_agent=http_agent,

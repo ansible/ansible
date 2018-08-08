@@ -222,5 +222,6 @@ def main():
     v = NetAppCDOTUserRole()
     v.apply()
 
+
 if __name__ == '__main__':
     main()

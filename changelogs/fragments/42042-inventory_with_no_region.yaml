@@ -1,0 +1,2 @@
+bugfixes:
+- plugins/inventory/openstack.py - Do not create group with empty name if region is not set

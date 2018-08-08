@@ -11,7 +11,7 @@ __metaclass__ = type
 DOCUMENTATION = '''
     name: openstack
     plugin_type: inventory
-    authors:
+    author:
       - Marco Vito Moscaritolo <marco@agavee.com>
       - Jesse Keating <jesse.keating@rackspace.com>
     short_description: OpenStack inventory source
@@ -258,7 +258,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         groups.append(cloud)
 
         # Create a group on region
-        groups.append(region)
+        if region:
+            groups.append(region)
 
         # And one by cloud_region
         groups.append("%s_%s" % (cloud, region))

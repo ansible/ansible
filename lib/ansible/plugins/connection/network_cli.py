@@ -155,6 +155,8 @@ options:
         key: command_timeout
     env:
       - name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT
+    vars:
+      - name: ansible_command_timeout
 """
 
 import getpass
@@ -295,7 +297,6 @@ class Connection(NetworkConnectionBase):
             if self.cliconf:
                 display.vvvv('loaded cliconf plugin for network_os %s' % self._network_os, host=host)
                 self._implementation_plugins.append(self.cliconf)
-                self.cliconf.set_options()
             else:
                 display.vvvv('unable to load cliconf for network_os %s' % self._network_os)
 

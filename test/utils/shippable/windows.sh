@@ -6,7 +6,9 @@ declare -a args
 IFS='/:' read -ra args <<< "$1"
 
 version="${args[1]}"
-target="windows/ci/group${args[2]}/"
+group="${args[2]}"
+
+target="shippable/windows/group${group}/"
 
 stage="${S:-prod}"
 provider="${P:-default}"
@@ -59,9 +61,9 @@ for version in "${python_versions[@]}"; do
             # with change detection enabled run tests for anything changed
             # use the smoketest tests for any change that triggers all tests
             ci="${target}"
-            if [ "${target}" == "windows/ci/group1/" ]; then
+            if [ "${target}" == "shippable/windows/group1/" ]; then
                 # only run smoketest tests for group1
-                changed_all_target="windows/ci/smoketest/"
+                changed_all_target="shippable/windows/smoketest/"
             else
                 # smoketest tests already covered by group1
                 changed_all_target="none"
@@ -72,9 +74,9 @@ for version in "${python_versions[@]}"; do
         fi
     else
         # only run minimal tests for group1
-        if [ "${target}" != "windows/ci/group1/" ]; then continue; fi
+        if [ "${target}" != "shippable/windows/group1/" ]; then continue; fi
         # minimal tests for other python versions
-        ci="windows/ci/minimal/"
+        ci="shippable/windows/minimal/"
     fi
 
     # terminate remote instances on the final python version tested

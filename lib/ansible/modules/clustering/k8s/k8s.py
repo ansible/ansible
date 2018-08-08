@@ -40,6 +40,21 @@ extends_documentation_fragment:
   - k8s_resource_options
   - k8s_auth_options
 
+options:
+  merge_type:
+    description:
+    - Whether to override the default patch merge approach with a specific type. By the default, the strategic
+      merge will typically be used.
+    - For example, Custom Resource Definitions typically aren't updatable by the usual strategic merge. You may
+      want to use C(merge) if you see "strategic merge patch format is not supported"
+    - See U(https://kubernetes.io/docs/tasks/run-application/update-api-object-kubectl-patch/#use-a-json-merge-patch-to-update-a-deployment)
+    - Requires openshift >= 0.6.2
+    choices:
+    - json
+    - merge
+    - strategic-merge
+    version_added: "2.7"
+
 requirements:
   - "python >= 2.7"
   - "openshift >= 0.6"

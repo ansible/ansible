@@ -260,5 +260,6 @@ def main():
     v = SolidFireAccount()
     v.apply()
 
+
 if __name__ == '__main__':
     main()

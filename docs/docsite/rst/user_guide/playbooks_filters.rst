@@ -47,6 +47,22 @@ for example::
     - set_fact:
         myvar: "{{ result.stdout | from_json }}"
 
+
+.. versionadded:: 2.7
+
+To parse multi-document yaml strings, the ``from_yaml_all`` filter is provided.
+The ``from_yaml_all`` filter will return a generator of parsed yaml documents.
+
+for example::
+
+  tasks:
+    - shell: cat /some/path/to/multidoc-file.yaml
+      register: result
+   - debug:
+       msg: '{{ item }}'
+    loop: '{{ result.stdout | from_yaml_all | list }}'
+
+
 .. _forcing_variables_to_be_defined:
 
 Forcing Variables To Be Defined
@@ -765,7 +781,7 @@ An idempotent method to generate unique hashes per system is to use a salt that 
     {{ 'secretpassword'|password_hash('sha512', 65534|random(seed=inventory_hostname)|string) }}
 
 Hash types available depend on the master system running ansible,
-'hash' depends on hashlib password_hash depends on passlib (http://passlib.readthedocs.io/en/stable/lib/passlib.hash.html).
+'hash' depends on hashlib password_hash depends on passlib (https://passlib.readthedocs.io/en/stable/lib/passlib.hash.html).
 
 .. _combine_filter:
 
@@ -992,7 +1008,7 @@ To search a string with a regex, use the "regex_search" filter::
 To search for all occurrences of regex matches, use the "regex_findall" filter::
 
     # Return a list of all IPv4 addresses in the string
-    {{ 'Some DNS servers are 8.8.8.8 and 8.8.4.4' | regex_findall('\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b') }}
+    {{ 'Some DNS servers are 8.8.8.8 and 8.8.4.4' | regex_findall('\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b') }}
 
 
 To replace text in a string with regex, use the "regex_replace" filter::
@@ -1211,7 +1227,7 @@ to be added to core so everyone can make use of them.
        Playbook organization by roles
    :doc:`playbooks_best_practices`
        Best practices in playbooks
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

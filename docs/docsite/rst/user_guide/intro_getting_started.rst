@@ -159,7 +159,7 @@ To enable basic logging on the control machine see :ref:`intro_configuration` do
        Examples of basic commands
    :ref:`working_with_playbooks`
        Learning Ansible's configuration management language
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

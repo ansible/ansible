@@ -89,9 +89,13 @@ class Cliconf(CliconfBase):
     def get(self, command=None, prompt=None, answer=None, sendonly=False, newline=True):
         return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline)
 
-    def commit(self, comment=None):
-        if comment:
+    def commit(self, comment=None, label=None):
+        if comment and label:
+            command = 'commit label {0} comment {1}'.format(label, comment)
+        elif comment:
             command = 'commit comment {0}'.format(comment)
+        elif label:
+            command = 'commit label {0}'.format(label)
         else:
             command = 'commit'
         self.send_command(command)

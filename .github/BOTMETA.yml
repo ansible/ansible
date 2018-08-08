@@ -500,6 +500,7 @@ files:
   $modules/network/panos/: ivanbojer jtschichold
   $modules/network/panos/panos_address.py: itdependsnetworks ivanbojer jtschichold
   $modules/network/protocol/: $team_networking
+  $modules/network/routeros/: heuels
   $modules/network/routing/: $team_networking
   $modules/network/slxos/: $team_extreme
   $modules/network/sros/: privateip
@@ -714,6 +715,12 @@ files:
     maintainers: $team_windows
     ignored: angstwad georgefrank h0nIg
   $modules/windows/win_security_policy.py: rndmh3ro defionscode
+  bin/ansible-connection:
+    keywords:
+    - persistent connection
+    labels:
+    - networking
+    maintainers: $team_networking
   contrib/inventory:
     keywords:
     - dynamic inventory script
@@ -889,6 +896,9 @@ files:
   $module_utils/network/onyx:
     maintainers: $team_onyx
     labels: networking
+  $module_utils/network/routeros:
+    maintainers: heuels
+    labels: networking
   $module_utils/network/slxos:
     maintainers: $team_extreme
     labels: networking
@@ -1015,6 +1025,9 @@ files:
   lib/ansible/plugins/cliconf/onyx.py:
     maintainers: $team_onyx
     labels: networking
+  lib/ansible/plugins/cliconf/routeros.py:
+    maintainers: heuels
+    labels: networking
   lib/ansible/plugins/cliconf/slxos.py:
     maintainers: $team_extreme
     labels: networking
@@ -1122,6 +1135,9 @@ files:
   lib/ansible/plugins/terminal/onyx.py:
     maintainers: $team_onyx
     labels: networking
+  lib/ansible/plugins/terminal/routeros.py:
+    maintainers: heuels
+    labels: networking
   lib/ansible/plugins/terminal/slxos.py:
     maintainers: $team_extreme
     labels: networking
@@ -1142,10 +1158,12 @@ files:
     - validate-modules
   docs/:
     labels: docs
+    maintainers:
+      - acozine
   docs/docsite/rst/network/:
     labels: networking
     maintainers:
-      - acozine
+      - samccann
       - gundalow
   docs/docsite/rst/scenario_guides/guide_aci.rst:
     maintainers: $team_aci

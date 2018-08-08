@@ -321,8 +321,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         self._connection._shell.tmpdir = rc
 
-        if not become_unprivileged:
-            self._connection._shell.env.update({'ANSIBLE_REMOTE_TMP': self._connection._shell.tmpdir})
         return rc
 
     def _should_remove_tmp_path(self, tmp_path):
@@ -764,7 +762,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 tmpdir = self._connection._shell.tmpdir
 
             remote_module_filename = self._connection._shell.get_remote_filename(module_path)
-            remote_module_path = self._connection._shell.join_path(tmpdir, remote_module_filename)
+            remote_module_path = self._connection._shell.join_path(tmpdir, 'AnsiballZ_%s' % remote_module_filename)
 
         args_file_path = None
         if module_style in ('old', 'non_native_want_json', 'binary'):

@@ -150,9 +150,9 @@ options:
   source_dest_check:
     version_added: "1.6"
     description:
-      - Enable or Disable the Source/Destination checks (for NAT instances and Virtual Routers)
+      - Enable or Disable the Source/Destination checks (for NAT instances and Virtual Routers).
+        When initially creating an instance the EC2 API defaults this to True.
     type: bool
-    default: 'yes'
   termination_protection:
     version_added: "2.0"
     description:
@@ -1356,8 +1356,6 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
 
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
-    source_dest_check = module.params.get('source_dest_check')
-    termination_protection = module.params.get('termination_protection')
     group_id = module.params.get('group_id')
     group_name = module.params.get('group')
     changed = False
@@ -1387,28 +1385,8 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
 
             warn_if_public_ip_assignment_changed(module, inst)
 
-            # Check "source_dest_check" attribute
-            try:
-                if inst.vpc_id is not None and inst.get_attribute('sourceDestCheck')['sourceDestCheck'] != source_dest_check:
-                    inst.modify_attribute('sourceDestCheck', source_dest_check)
-                    changed = True
-            except boto.exception.EC2ResponseError as exc:
-                # instances with more than one Elastic Network Interface will
-                # fail, because they have the sourceDestCheck attribute defined
-                # per-interface
-                if exc.code == 'InvalidInstanceID':
-                    for interface in inst.interfaces:
-                        if interface.source_dest_check != source_dest_check:
-                            ec2.modify_network_interface_attribute(interface.id, "sourceDestCheck", source_dest_check)
-                            changed = True
-                else:
-                    module.fail_json(msg='Failed to handle source_dest_check state for instance {0}, error: {1}'.format(inst.id, exc),
-                                     exception=traceback.format_exc())
-
-            # Check "termination_protection" attribute
-            if (inst.get_attribute('disableApiTermination')['disableApiTermination'] != termination_protection and termination_protection is not None):
-                inst.modify_attribute('disableApiTermination', termination_protection)
-                changed = True
+            changed = (check_source_dest_attr(module, inst, ec2) or
+                       check_termination_protection(module, inst) or changed)
 
             # Check security groups and if we're using ec2-vpc; ec2-classic security groups may not be modified
             if inst.vpc_id and group_name:
@@ -1488,8 +1466,6 @@ def restart_instances(module, ec2, instance_ids, state, instance_tags):
     this method will process the intersection of the two.
     """
 
-    source_dest_check = module.params.get('source_dest_check')
-    termination_protection = module.params.get('termination_protection')
     changed = False
     instance_dict_array = []
 
@@ -1516,28 +1492,8 @@ def restart_instances(module, ec2, instance_ids, state, instance_tags):
 
             warn_if_public_ip_assignment_changed(module, inst)
 
-            # Check "source_dest_check" attribute
-            try:
-                if inst.vpc_id is not None and inst.get_attribute('sourceDestCheck')['sourceDestCheck'] != source_dest_check:
-                    inst.modify_attribute('sourceDestCheck', source_dest_check)
-                    changed = True
-            except boto.exception.EC2ResponseError as exc:
-                # instances with more than one Elastic Network Interface will
-                # fail, because they have the sourceDestCheck attribute defined
-                # per-interface
-                if exc.code == 'InvalidInstanceID':
-                    for interface in inst.interfaces:
-                        if interface.source_dest_check != source_dest_check:
-                            ec2.modify_network_interface_attribute(interface.id, "sourceDestCheck", source_dest_check)
-                            changed = True
-                else:
-                    module.fail_json(msg='Failed to handle source_dest_check state for instance {0}, error: {1}'.format(inst.id, exc),
-                                     exception=traceback.format_exc())
-
-            # Check "termination_protection" attribute
-            if (inst.get_attribute('disableApiTermination')['disableApiTermination'] != termination_protection and termination_protection is not None):
-                inst.modify_attribute('disableApiTermination', termination_protection)
-                changed = True
+            changed = (check_source_dest_attr(module, inst, ec2) or
+                       check_termination_protection(module, inst) or changed)
 
             # Check instance state
             if inst.state != state:
@@ -1549,6 +1505,54 @@ def restart_instances(module, ec2, instance_ids, state, instance_tags):
                 changed = True
 
     return (changed, instance_dict_array, instance_ids)
+
+
+def check_termination_protection(module, inst):
+    """
+    Check the instance disableApiTermination attribute.
+
+    module: Ansible module object
+    inst: EC2 instance object
+
+    returns: True if state changed None otherwise
+    """
+
+    termination_protection = module.params.get('termination_protection')
+
+    if (inst.get_attribute('disableApiTermination')['disableApiTermination'] != termination_protection and termination_protection is not None):
+        inst.modify_attribute('disableApiTermination', termination_protection)
+        return True
+
+
+def check_source_dest_attr(module, inst, ec2):
+    """
+    Check the instance sourceDestCheck attribute.
+
+    module: Ansible module object
+    inst: EC2 instance object
+
+    returns: True if state changed None otherwise
+    """
+
+    source_dest_check = module.params.get('source_dest_check')
+
+    if source_dest_check is not None:
+        try:
+            if inst.vpc_id is not None and inst.get_attribute('sourceDestCheck')['sourceDestCheck'] != source_dest_check:
+                inst.modify_attribute('sourceDestCheck', source_dest_check)
+                return True
+        except boto.exception.EC2ResponseError as exc:
+            # instances with more than one Elastic Network Interface will
+            # fail, because they have the sourceDestCheck attribute defined
+            # per-interface
+            if exc.code == 'InvalidInstanceID':
+                for interface in inst.interfaces:
+                    if interface.source_dest_check != source_dest_check:
+                        ec2.modify_network_interface_attribute(interface.id, "sourceDestCheck", source_dest_check)
+                        return True
+            else:
+                module.fail_json(msg='Failed to handle source_dest_check state for instance {0}, error: {1}'.format(inst.id, exc),
+                                 exception=traceback.format_exc())
 
 
 def warn_if_public_ip_assignment_changed(module, instance):
@@ -1591,7 +1595,7 @@ def main():
             private_ip=dict(),
             instance_profile_name=dict(),
             instance_ids=dict(type='list', aliases=['instance_id']),
-            source_dest_check=dict(type='bool', default=True),
+            source_dest_check=dict(type='bool', default=None),
             termination_protection=dict(type='bool', default=None),
             state=dict(default='present', choices=['present', 'absent', 'running', 'restarted', 'stopped']),
             instance_initiated_shutdown_behavior=dict(default=None, choices=['stop', 'terminate']),

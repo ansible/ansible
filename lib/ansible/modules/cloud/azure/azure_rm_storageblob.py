@@ -429,7 +429,7 @@ class AzureRMStorageBlob(AzureRMModuleBase):
                 else:
                     try:
                         self.log('Attempting to makedirs {0}'.format(self.dest))
-                        os.makddirs(self.dest)
+                        os.makedirs(self.dest)
                     except IOError as exc:
                         self.fail("Failed to create directory {0} - {1}".format(self.dest, str(exc)))
                     self.dest += self.blob
@@ -544,6 +544,7 @@ class AzureRMStorageBlob(AzureRMModuleBase):
 
 def main():
     AzureRMStorageBlob()
+
 
 if __name__ == '__main__':
     main()

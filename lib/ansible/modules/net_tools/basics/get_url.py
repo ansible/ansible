@@ -398,7 +398,7 @@ def main():
         argument_spec=argument_spec,
         add_file_common_args=True,
         supports_check_mode=True,
-        mutually_exclusive=(['checksum', 'sha256sum']),
+        mutually_exclusive=[['checksum', 'sha256sum']],
     )
 
     url = module.params['url']
