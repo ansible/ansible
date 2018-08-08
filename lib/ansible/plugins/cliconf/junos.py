@@ -110,10 +110,14 @@ class Cliconf(CliconfBase):
         if diff:
             resp['diff'] = diff
 
-        if commit:
-            self.commit(comment=comment)
+            if commit:
+                self.commit(comment=comment)
+            else:
+                self.discard_changes()
+
         else:
-            self.discard_changes()
+            for cmd in ['top', 'exit']:
+                self.send_command(cmd)
 
         resp['request'] = requests
         resp['response'] = results
@@ -166,7 +170,11 @@ class Cliconf(CliconfBase):
         return resp
 
     def get_diff(self, rollback_id=None):
-        return self.compare_configuration(rollback_id=rollback_id)
+        diff = {'config_diff': None}
+        response = self.compare_configuration(rollback_id=rollback_id)
+        if response:
+            diff['config_diff'] = response
+        return diff
 
     def get_device_operations(self):
         return {

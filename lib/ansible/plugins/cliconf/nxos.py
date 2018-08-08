@@ -215,7 +215,7 @@ class Cliconf(CliconfBase):
                 try:
                     out = json.loads(out)
                 except ValueError:
-                    out = to_text(out, errors='surrogate_or_strict').strip()
+                    pass
 
                 responses.append(out)
         return responses
