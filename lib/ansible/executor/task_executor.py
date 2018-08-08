@@ -54,6 +54,31 @@ def remove_omit(task_args, omit_token):
     return new_args
 
 
+def _write_to_socket(byte_stream, obj):
+    """Handles making sure all data is properly written to byte_stream
+
+    In particular, that data is encoded in a character stream-friendly way and
+    that all data gets written before returning.
+    """
+    # Need to force a protocol that is compatible with both py2 and py3.
+    # That would be protocol=2 or less.
+    # Also need to force a protocol that excludes certain control chars as
+    # stdin in this case is a pty and control chars will cause problems.
+    # that means only protocol=0 will work.
+    src = cPickle.dumps(obj, protocol=0)
+
+    # raw \r characters will not survive socket round-trip
+    # They should be rehydrated on the receiving end
+    src = src.replace(b'\r', br'\r')
+
+    # Don't trust data to be written all at once.
+    while src:
+        bytes_written = stdin.write(src)
+        if bytes_written is None:
+            raise AnsibleError("Data not fully written to stream")
+        src = src[bytes_written:]
+
+
 class TaskExecutor:
 
     '''
@@ -923,25 +948,16 @@ class TaskExecutor:
         stdin = os.fdopen(master, 'wb', 0)
         os.close(slave)
 
-        # Need to force a protocol that is compatible with both py2 and py3.
-        # That would be protocol=2 or less.
-        # Also need to force a protocol that excludes certain control chars as
-        # stdin in this case is a pty and control chars will cause problems.
-        # that means only protocol=0 will work.
-        def write_to_socket(obj):
-            src = cPickle.dumps(obj, protocol=0)
-            # raw \r characters will not survive socket round-trip
-            # They should be rehydrated on the receiving end
-            src = src.replace(b'\r', br'\r')
-            # Don't trust data to be written all at once.
-            while src:
-                bytes_written = stdin.write(src)
-                src = src[bytes_written:]
-
-        write_to_socket(self._play_context.serialize())
+        try:
+            _write_to_socket(self._play_context.serialize())
+        except AnsibleError:
+            raise AnsibleError("Unable to finish writing play_context to socket")
         stdin.write(b'\n#END_INIT#\n')
 
-        write_to_socket(variables)
+        try:
+            _write_to_socket(variables)
+        except AnsibleError:
+            raise AnsibleError("Unable to finish writing variable data to socket")
         stdin.write(b'\n#END_VARS#\n')
 
         stdin.flush()
