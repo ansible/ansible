@@ -147,6 +147,11 @@ options:
       - Force stop/start the instance if required to apply changes, otherwise a running instance will not be changed.
     type: bool
     default: no
+  shrinkok:
+    description:
+      - Enables a volume shrinkage when the new size is smaller than the old one.
+    type: bool
+    false: no
   tags:
     description:
       - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
@@ -743,11 +748,33 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
 
         security_groups_changed = self.security_groups_has_changed()
 
+        # Volume data
+
+        args_volume_update = {}
+        root_disk_size = self.module.params.get('root_disk_size')
+        root_disk_size_changed = False
+
+        if root_disk_size is not None:
+            res = self.query_api('listVolumes', type='ROOT', virtualmachineid=instance['id'])
+            [volume] = res['volume']
+
+            size = volume['size'] >> 30
+
+            args_volume_update['id'] = volume['id']
+            args_volume_update['size'] = root_disk_size
+
+            shrinkok = self.module.params.get('shrinkok')
+            if shrinkok:
+                args_volume_update['shrinkok'] = shrinkok
+
+            root_disk_size_changed = root_disk_size != size
+
         changed = [
             service_offering_changed,
             instance_changed,
             security_groups_changed,
             ssh_key_changed,
+            root_disk_size_changed,
         ]
 
         if any(changed):
@@ -786,6 +813,11 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                         instance = self.query_api('resetSSHKeyForVirtualMachine', **args_ssh_key)
                         instance = self.poll_job(instance, 'virtualmachine')
                         self.instance = instance
+
+                    # Root disk size
+                    if root_disk_size_changed:
+                        async_result = self.query_api('resizeVolume', **args_volume_update)
+                        self.poll_job(async_result, 'volume')
 
                     # Start VM again if it was running before
                     if instance_state == 'running' and start_vm:
