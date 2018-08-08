@@ -195,7 +195,14 @@
    with_dict: "{{ fact.ansible_facts.azure_managed_disk[0] }}"
 
  - name: Create disk with facts return value
-   azure_rm_managed_disk: "{{ parameter | combine({'resource_group': resource_group}) }}"
+   azure_rm_managed_disk:
+       resource_group: "{{ resource_group }}"
+       location: "{{ parameter.location }}"
+       name: "{{ parameter.name }}"
+       storage_account_type: "{{ parameter.storage_account_type }}"
+       disk_size_gb: "{{ parameter.disk_size_gb }}"
+       create_option: "{{ parameter.create_option }}"
+       tags: "{{ parameter.tags }}"
    register: output
 
  - assert:
