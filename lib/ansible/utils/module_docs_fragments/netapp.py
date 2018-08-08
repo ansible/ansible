@@ -51,11 +51,12 @@ options:
       - Enable and disable https
       type: bool
       default: false
-  no_cert_verify:
+  validate_certs:
       description:
-      - Enable and disable https/ssl certification verification
+      - If set to C(False), the SSL certificates will not be validated.
+      - This should only set to C(False) used on personally controlled sites using self-signed certificates.
+      default: true
       type: bool
-      default: false
   http_port:
       description:
       - Override the default port (80 or 443) with this port
@@ -122,7 +123,6 @@ options:
 
 requirements:
   - The modules were developed with SolidFire 10.1
-  - Ansible 2.7
   - solidfire-sdk-python (1.1.0.92) or greater. Install using 'pip install solidfire-sdk-python'
 
 notes:

@@ -88,7 +88,7 @@ def na_ontap_host_argument_spec():
         username=dict(required=True, type='str', aliases=['user']),
         password=dict(required=True, type='str', aliases=['pass'], no_log=True),
         https=dict(required=False, type='bool', default=False),
-        no_cert_verify=dict(required=False, type='bool', default=False),
+        no_cert_verify=dict(required=False, type='bool', default=True),
         http_port=dict(required=False, type='int')
     )
 
@@ -122,7 +122,7 @@ def setup_na_ontap_zapi(module, vserver=None):
     username = module.params['username']
     password = module.params['password']
     https = module.params['https']
-    no_cert_verify = module.params['no_cert_verify']
+    validate_certs = module.params['validate_certs']
     port = module.params['http_port']
 
     if HAS_NETAPP_LIB:
@@ -140,7 +140,7 @@ def setup_na_ontap_zapi(module, vserver=None):
                 port = 443
             transport_type = 'HTTPS'
             # HACK to bypass certificate verification
-            if no_cert_verify is True:
+            if validate_certs is True:
                 if not os.environ.get('PYTHONHTTPSVERIFY', '') and getattr(ssl, '_create_unverified_context', None):
                     ssl._create_default_https_context = ssl._create_unverified_context
         else:

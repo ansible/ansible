@@ -58,25 +58,6 @@ class NetAppModule(object):
                 self.parameters[param] = ansible_params[param]
         return self.parameters
 
-    def logit(self, action=None, msg=None, params=None):
-        ''' store a message in a list '''
-        if msg is None:
-            name = self.parameters.get('name', '')
-            self.log.append("Action: %s, name: %s, changed: %s" % (action, name, self.changed))
-            if params:
-                self.log.append(str(params))
-        else:
-            self.log.append(msg)
-
-    def logdump(self):
-        ''' print log contents
-           TODO: add a afile parameter to print to a file on disk
-        '''
-        print('=' * 20 + ' log ' + ('=' * 20))
-        for aline in self.log:
-            print(aline)
-        print('=' * 45)
-
     def get_cd_action(self, current, desired):
         ''' takes a desired state and a current state, and return an action:
             create, delete, None
