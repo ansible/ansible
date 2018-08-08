@@ -405,6 +405,15 @@ def gather_vm_params(module, vm_ref):
         else:
             vm_params['guest_metrics'] = {}
 
+        # Detect customization agent.
+        xenserver_version = get_xenserver_version(module)
+
+        if (int(xenserver_version[0]) >= 7 and int(xenserver_version[1]) >= 0 and vm_params.get('guest_metrics') and
+                "feature-static-ip-setting" in vm_params['guest_metrics']['other']):
+            vm_params['customization_agent'] = "native"
+        else:
+            vm_params['customization_agent'] = "custom"
+
     except XenAPI.Failure as f:
         module.fail_json(msg="XAPI ERROR: %s" % f.details)
 
@@ -428,16 +437,6 @@ def gather_vm_facts(module, vm_params):
 
     xapi_session = XAPI.connect(module)
 
-    # Detect customization agent.
-    host_ref = xapi_session.xenapi.session.get_this_host(xapi_session._session)
-    xenserver_version = xapi_session.xenapi.host.get_software_version(host_ref)['product_version_text_short'].split('.')
-
-    if (int(xenserver_version[0]) >= 7 and int(xenserver_version[1]) >= 0 and vm_params['guest_metrics'] and
-            "feature-static-ip-setting" in vm_params['guest_metrics']['other']):
-        customization_agent = "native"
-    else:
-        customization_agent = "custom"
-
     # Gather facts.
     vm_facts = {
         "state": xapi_to_module_vm_power_state(vm_params['power_state'].lower()),
@@ -459,7 +458,7 @@ def gather_vm_facts(module, vm_params):
         "platform": vm_params['platform'],
         "other_config": vm_params['other_config'],
         "xenstore_data": vm_params['xenstore_data'],
-        "customization_agent": customization_agent,
+        "customization_agent": vm_params['customization_agent'],
     }
 
     for vm_vbd_params in vm_params['VBDs']:
@@ -501,7 +500,7 @@ def gather_vm_facts(module, vm_params):
             "gateway6": "",
         }
 
-        if customization_agent == "native":
+        if vm_params['customization_agent'] == "native":
             if vm_vif_params['ipv4_addresses'] and vm_vif_params['ipv4_addresses'][0]:
                 vm_network_params['prefix'] = vm_vif_params['ipv4_addresses'][0].split('/')[1]
                 vm_network_params['netmask'] = ip_prefix_to_netmask(vm_network_params['prefix'])
@@ -513,7 +512,7 @@ def gather_vm_facts(module, vm_params):
 
             vm_network_params['gateway6'] = vm_vif_params['ipv6_gateway']
 
-        elif customization_agent == "custom":
+        elif vm_params['customization_agent'] == "custom":
             vm_xenstore_data = vm_params['xenstore_data']
 
             for f in ['prefix', 'netmask', 'gateway', 'prefix6', 'gateway6']:
@@ -553,6 +552,7 @@ def set_vm_power_state(module, vm_ref, power_state, timeout=300):
 
     xapi_session = XAPI.connect(module)
 
+    power_state = power_state.replace('_', '').replace('-', '').lower()
     vm_power_state_resulting = module_to_xapi_vm_power_state(power_state)
 
     state_changed = False
@@ -749,6 +749,21 @@ def wait_for_vm_ip_address(module, vm_ref, timeout=300):
     return vm_guest_metrics
 
 
+def get_xenserver_version(module):
+    """Returns XenServer version.
+
+    Args:
+        module: Reference to Ansible module object.
+
+    Returns:
+        list: Element [0] is major version. Element [1] i minor version.
+    """
+    xapi_session = XAPI.connect(module)
+
+    host_ref = xapi_session.xenapi.session.get_this_host(xapi_session._session)
+    return xapi_session.xenapi.host.get_software_version(host_ref)['product_version_text_short'].split('.')
+
+
 class XAPI(object):
     """Class for XAPI session management."""
     _xapi_session = None
@@ -847,9 +862,6 @@ class XenServerObject(object):
         try:
             self.pool_ref = self.xapi_session.xenapi.pool.get_all()[0]
             self.default_sr_ref = self.xapi_session.xenapi.pool.get_default_SR(self.pool_ref)
-
-            self.host_ref = self.xapi_session.xenapi.session.get_this_host(self.xapi_session._session)
-            host_params = self.xapi_session.xenapi.host.get_record(self.host_ref)
-            self.xenserver_version = host_params['software_version']['product_version_text_short'].split('.')
+            self.xenserver_version = get_xenserver_version(module)
         except XenAPI.Failure as f:
             self.module.fail_json(msg="XAPI ERROR: %s" % f.details)

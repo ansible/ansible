@@ -19,7 +19,7 @@ description: >
    This module can be used to create new virtual machines from templates or other virtual machines,
    modify various virtual machine components like network and disk, rename a virtual machine and
    remove a virtual machine with associated components.
-version_added: '2.7'
+version_added: '2.8'
 author:
 - Bojan Vitnik (@bvitnik) <bvitnik@mainstream.rs>
 notes:
@@ -279,7 +279,7 @@ instance:
         "customization_agent": "native",
         "disks": [
             {
-                "name": "windows-template-testing-0",
+                "name": "testvm_11-0",
                 "name_desc": "",
                 "os_device": "xvda",
                 "size": 42949672960,
@@ -288,7 +288,7 @@ instance:
                 "vbd_userdevice": "0"
             },
             {
-                "name": "windows-template-testing-1",
+                "name": "testvm_11-1",
                 "name_desc": "",
                 "os_device": "xvdb",
                 "size": 42949672960,
@@ -306,7 +306,7 @@ instance:
         },
         "home_server": "",
         "is_template": false,
-        "name": "windows-template-testing",
+        "name": "testvm_11",
         "name_desc": "",
         "networks": [
             {
@@ -435,8 +435,6 @@ class XenServerVM(XenServerObject):
         vm_ref (str): XAPI reference to VM.
         vm_params (dict): A dictionary with VM parameters as returned
             by gather_vm_params() function.
-        customization_agent (str): Detected VM customization agent
-            either 'native' or 'custom'.
     """
 
     def __init__(self, module):
@@ -448,15 +446,7 @@ class XenServerVM(XenServerObject):
         super(XenServerVM, self).__init__(module)
 
         self.vm_ref = get_object_ref(self.module, self.module.params['name'], self.module.params['uuid'], obj_type="VM", fail=False, msg_prefix="VM search: ")
-        self.vm_params = gather_vm_params(self.module, self.vm_ref)
-
-        # Do we have native support for IP reconfiguration? It's supported in
-        # XenServer 7.0 and later for Windows guests.
-        if (int(self.xenserver_version[0]) >= 7 and int(self.xenserver_version[1]) >= 0 and self.vm_params['guest_metrics'] and
-                "feature-static-ip-setting" in self.vm_params['guest_metrics']['other']):
-            self.customization_agent = "native"
-        else:
-            self.customization_agent = "custom"
+        self.gather_params()
 
     def exists(self):
         """Returns True if VM exists, else False."""
@@ -803,7 +793,7 @@ class XenServerVM(XenServerObject):
                                     vif_ref = vif_ref_new
                                     vif_recreated = True
 
-                                if self.customization_agent == "native":
+                                if self.vm_params['customization_agent'] == "native":
                                     vif_reconfigure_needed = False
 
                                     if "type" in network_change_list:
@@ -872,21 +862,43 @@ class XenServerVM(XenServerObject):
                                         self.xapi_session.xenapi.VIF.configure_ipv6(vif_ref, network_type6,
                                                                                     "%s%s" % (network_ip6, network_prefix6), network_gateway6)
 
-                                elif self.customization_agent == "custom":
+                                elif self.vm_params['customization_agent'] == "custom":
                                     vif_device = vm_vif_params['device']
 
-                                    # A user could manually change network or
-                                    # mac e.g. trough XenCenter and then also
+                                    # A user could have manually changed network
+                                    # or mac e.g. trough XenCenter and then also
                                     # make those changes in playbook manually.
                                     # In that case, module will not detect any
                                     # changes and info in xenstore_data will
                                     # become stale. For that reason we always
                                     # update name and mac in xenstore_data.
-                                    network_change_list_updated = network_change_list + ['name', 'mac']
 
-                                    for network_change in network_change_list_updated:
+                                    # Since we handle name and mac differently,
+                                    # we have to remove them from
+                                    # network_change_list.
+                                    network_change_list_tmp = [net_chg for net_chg in network_change_list if net_chg not in ['name', 'mac']]
+
+                                    for network_change in network_change_list_tmp + ['name', 'mac']:
                                         self.xapi_session.xenapi.VM.remove_from_xenstore_data(self.vm_ref,
                                                                                               "vm-data/networks/%s/%s" % (vif_device, network_change))
+
+                                    if network_params.get('name'):
+                                        network_name = network_params['name']
+                                    else:
+                                        network_name = vm_vif_params['network']['name_label']
+
+                                    self.xapi_session.xenapi.VM.add_to_xenstore_data(self.vm_ref,
+                                                                                     "vm-data/networks/%s/%s" % (vif_device, 'name'), network_name)
+
+                                    if network_params.get('mac'):
+                                        network_mac = network_params['mac'].lower()
+                                    else:
+                                        network_mac = vm_vif_params['MAC'].lower()
+
+                                    self.xapi_session.xenapi.VM.add_to_xenstore_data(self.vm_ref,
+                                                                                     "vm-data/networks/%s/%s" % (vif_device, 'mac'), network_mac)
+
+                                    for network_change in network_change_list_tmp:
                                         self.xapi_session.xenapi.VM.add_to_xenstore_data(self.vm_ref,
                                                                                          "vm-data/networks/%s/%s" % (vif_device, network_change),
                                                                                          network_params[network_change])
@@ -926,7 +938,7 @@ class XenServerVM(XenServerObject):
                             if self.vm_params['power_state'].lower() == "running":
                                 self.xapi_session.xenapi.VIF.plug(vif_ref_new)
 
-                            if self.customization_agent == "native":
+                            if self.vm_params['customization_agent'] == "native":
                                 if network_type and network_type == "static":
                                     self.xapi_session.xenapi.VIF.configure_ipv4(vif_ref_new, "Static",
                                                                                 "%s/%s" % (network_ip, network_prefix), network_gateway)
@@ -934,23 +946,14 @@ class XenServerVM(XenServerObject):
                                 if network_type6 and network_type6 == "static":
                                     self.xapi_session.xenapi.VIF.configure_ipv6(vif_ref_new, "Static",
                                                                                 "%s/%s" % (network_ip6, network_prefix6), network_gateway6)
-                            elif self.customization_agent == "custom":
+                            elif self.vm_params['customization_agent'] == "custom":
                                 # We first have to remove any existing data
                                 # from xenstore_data because there could be
                                 # some old leftover data from some interface
                                 # that once occupied same device location as
                                 # our new interface.
-                                self.xapi_session.xenapi.VM.remove_from_xenstore_data(self.vm_ref, "vm-data/networks/%s/name" % vif_device)
-                                self.xapi_session.xenapi.VM.remove_from_xenstore_data(self.vm_ref, "vm-data/networks/%s/mac" % vif_device)
-                                self.xapi_session.xenapi.VM.remove_from_xenstore_data(self.vm_ref, "vm-data/networks/%s/type" % vif_device)
-                                self.xapi_session.xenapi.VM.remove_from_xenstore_data(self.vm_ref, "vm-data/networks/%s/ip" % vif_device)
-                                self.xapi_session.xenapi.VM.remove_from_xenstore_data(self.vm_ref, "vm-data/networks/%s/prefix" % vif_device)
-                                self.xapi_session.xenapi.VM.remove_from_xenstore_data(self.vm_ref, "vm-data/networks/%s/netmask" % vif_device)
-                                self.xapi_session.xenapi.VM.remove_from_xenstore_data(self.vm_ref, "vm-data/networks/%s/gateway" % vif_device)
-                                self.xapi_session.xenapi.VM.remove_from_xenstore_data(self.vm_ref, "vm-data/networks/%s/type6" % vif_device)
-                                self.xapi_session.xenapi.VM.remove_from_xenstore_data(self.vm_ref, "vm-data/networks/%s/ip6" % vif_device)
-                                self.xapi_session.xenapi.VM.remove_from_xenstore_data(self.vm_ref, "vm-data/networks/%s/prefix6" % vif_device)
-                                self.xapi_session.xenapi.VM.remove_from_xenstore_data(self.vm_ref, "vm-data/networks/%s/gateway6" % vif_device)
+                                for network_param in ['name', 'mac', 'type', 'ip', 'prefix', 'netmask', 'gateway', 'type6', 'ip6', 'prefix6', 'gateway6']:
+                                    self.xapi_session.xenapi.VM.remove_from_xenstore_data(self.vm_ref, "vm-data/networks/%s/%s" % (vif_device, network_param))
 
                                 self.xapi_session.xenapi.VM.add_to_xenstore_data(self.vm_ref, "vm-data/networks/%s/name" % vif_device, network_name)
 
@@ -1397,7 +1400,7 @@ class XenServerVM(XenServerObject):
 
                     # XenServer natively supports only 'none' and 'static'
                     # type with 'none' being the same as 'dhcp'.
-                    if self.customization_agent == "native" and network_type and network_type == "dhcp":
+                    if self.vm_params['customization_agent'] == "native" and network_type and network_type == "dhcp":
                         network_type = "none"
 
                     if network_type and network_type == "static":
@@ -1454,7 +1457,7 @@ class XenServerVM(XenServerObject):
 
                     # XenServer natively supports only 'none' and 'static'
                     # type with 'none' being the same as 'dhcp'.
-                    if self.customization_agent == "native" and network_type6 and network_type6 == "dhcp":
+                    if self.vm_params['customization_agent'] == "native" and network_type6 and network_type6 == "dhcp":
                         network_type6 = "none"
 
                     if network_type6 and network_type6 == "static":
@@ -1498,7 +1501,7 @@ class XenServerVM(XenServerObject):
                         if network_mac and network_mac != vm_vif_params['MAC'].lower():
                             network_changes.append('mac')
 
-                        if self.customization_agent == "native":
+                        if self.vm_params['customization_agent'] == "native":
                             if network_type and network_type != vm_vif_params['ipv4_configuration_mode'].lower():
                                 network_changes.append('type')
 
@@ -1534,7 +1537,7 @@ class XenServerVM(XenServerObject):
                                 if network_gateway6 is not None and network_gateway6 != vm_vif_params['ipv6_gateway']:
                                     network_changes.append('gateway6')
 
-                        elif self.customization_agent == "custom":
+                        elif self.vm_params['customization_agent'] == "custom":
                             vm_xenstore_data = self.vm_params['xenstore_data']
 
                             if network_type and network_type != vm_xenstore_data.get('vm-data/networks/%s/type' % vm_vif_params['device'], ""):
@@ -1589,9 +1592,9 @@ class XenServerVM(XenServerObject):
                         # Restart is needed if we are adding new network
                         # interface with IP/gateway parameters specified
                         # and custom agent is used.
-                        if self.customization_agent == "custom":
+                        if self.vm_params['customization_agent'] == "custom":
                             for parameter in ['type', 'ip', 'prefix', 'gateway', 'type6', 'ip6', 'prefix6', 'gateway6']:
-                                if parameter in network_params:
+                                if network_params.get(parameter):
                                     need_poweredoff = True
                                     break
 
@@ -1892,6 +1895,7 @@ def main():
         module.fail_json(**result)
     else:
         module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
