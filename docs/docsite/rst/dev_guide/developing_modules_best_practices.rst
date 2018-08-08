@@ -32,11 +32,14 @@ Especially if you want to contribute your module back to Ansible Core, make sure
 
 * Each module should have a concise and well-defined functionality. Basically, follow the UNIX philosophy of doing one thing well.
 
+* Do not add `list` or `info` state options to an existing module - create a new `_facts` module.
+
 * Modules should not require that a user know all the underlying options of an API/tool to be used. For instance, if the legal values for a required module parameter cannot be documented, the module does not belong in Ansible Core.
 
 * Modules should encompass much of the logic for interacting with a resource. A lightweight wrapper around a complex API forces users to offload too much logic into their playbooks. If you want to connect Ansible to a complex API, create multiple modules that interact with smaller individual pieces of the API.
 
-* Avoid creating a module that does the work of other modules; this leads to code duplication and divergence, and makes things less uniform, unpredictable and harder to maintain. Modules should be the building blocks. Instead of creating a module that does the work of other modules, use Plays and Roles to meet your needs.
+* Avoid creating a module that does the work of other modules; this leads to code duplication and divergence, and makes things less uniform, unpredictable and harder to maintain. Modules should be the building blocks. If you are asking 'how can I have a module execute other modules' ... you want to write a role. 
+Instead of creating a module that does the work of other modules, use Plays and Roles to meet your needs.
 
 Handling module failures
 `````````````````````````````````````````
@@ -45,11 +48,12 @@ When you module fails, help users understand what went wrong. If you are using t
 
 * Include a key of ``failed`` along with a string explanation in ``msg``. If you don't do this, Ansible will use standard return codes: 0=success and non-zero=failure.
 * Don't raise a traceback (stacktrace). Ansible can deal with stacktraces and automatically converts anything unparseable into a failed result, but raising a stacktrace on module failure is not user-friendly.
+* Do not use ``sys.exit()``. Use ``fail_json()`` from the module object.
 
-Creating correct module output (valid JSON)
-```````````````````````````````````````````
+Creating correct and informative module output
+`````````````````````````````````````````````````````````````````
 
-Modules must output valid JSON only. Follow these guidelines for creating correct module output:
+Modules must output valid JSON only. Follow these guidelines for creating correct, useful module output:
 
 * Make your top-level return type a hash (dictionary).
 * Nest complex return values within the top-level hash.
@@ -57,5 +61,9 @@ Modules must output valid JSON only. Follow these guidelines for creating correc
 * Do not send module output to standard error, because the system will merge standard out with standard error and prevent the JSON from parsing.
 * Capture standard error and return it as a variable in the JSON on standard out. This is how the command module is implemented.
 * Never do ``print("some status message")`` in a module, because it will not produce valid JSON output.
+* Always return useful data, even when there is no change.
+* Be consistent about returns (some modules are too random), unless it is detrimental to the state/action.
+* Make returns reusable--most of the time you don't want to read it, but you do want to process it and re-purpose it.
+* Return diff if in diff mode. This is not required for all modules, as it won't make sense for certain ones, but please include it when applicable.
 
 If a module returns stderr or otherwise fails to produce valid JSON, the actual output will still be shown in Ansible, but the command will not succeed.
