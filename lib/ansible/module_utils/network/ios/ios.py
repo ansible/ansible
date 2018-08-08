@@ -147,6 +147,7 @@ def load_config(module, commands):
     except ConnectionError as exc:
         module.fail_json(msg=to_text(exc))
 
+
 def normalize_interface(name):
     """Return the normalized interface name
     """
@@ -193,4 +194,3 @@ def normalize_interface(name):
         proper_interface = name
 
     return proper_interface
-
