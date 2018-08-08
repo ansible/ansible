@@ -7,7 +7,6 @@
       interface Ethernet2
       no description
       no shutdown
-    diff_match: none
   become: yes
 
 - name: configure device with config

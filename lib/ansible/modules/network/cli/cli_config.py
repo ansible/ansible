@@ -82,7 +82,8 @@ options:
         then the modified lines are pushed to the device in configuration
         mode. If the argument is set to I(block) then the entire command
         block is pushed to the device in configuration mode if any
-        line is not correct.
+        line is not correct. Note that this parameter will be ignored if
+        the platform has onbox diff support.
     choices: ['line', 'block', 'config']
   diff_match:
     description:
@@ -93,7 +94,8 @@ options:
         If C(diff_match) is set to I(exact), command lines must be an equal match.
         Finally, if C(diff_match) is set to I(none), the module will not attempt
         to compare the source configuration with the running configuration on the
-        remote device.
+        remote device. Note that this parameter will be ignored if the platform
+        has onbox diff support.
     choices: ['line', 'strict', 'exact', 'none']
   diff_ignore_lines:
     description:
@@ -101,6 +103,8 @@ options:
         ignored during the diff. This is used for lines in the configuration
         that are automatically updated by the system. This argument takes
         a list of regular expressions or exact line matches.
+        Note that this parameter will be ignored if the platform has onbox
+        diff support.
 """
 
 EXAMPLES = """
@@ -180,7 +184,7 @@ def validate_args(module, capabilities):
         module.fail_json(msg='diff_ignore_lines is not supported on this platform')
 
 
-def run(module, connection, candidate, running):
+def run(module, capabilities, connection, candidate, running):
     result = {}
 
     replace = module.params['replace']
@@ -198,42 +202,62 @@ def run(module, connection, candidate, running):
     elif replace in ('no', 'false', 'False'):
         replace = False
 
-    kwargs = {'candidate': candidate, 'running': running}
-    if diff_match:
-        kwargs.update({'diff_match': diff_match})
-    if diff_replace:
-        kwargs.update({'diff_replace': diff_replace})
-    if diff_ignore_lines:
-        kwargs.update({'diff_ignore_lines': diff_ignore_lines})
+    if capabilities['device_operations']['supports_generate_diff']:
+        kwargs = {'candidate': candidate, 'running': running}
+        if diff_match:
+            kwargs.update({'diff_match': diff_match})
+        if diff_replace:
+            kwargs.update({'diff_replace': diff_replace})
+        if diff_ignore_lines:
+            kwargs.update({'diff_ignore_lines': diff_ignore_lines})
 
-    diff_response = connection.get_diff(**kwargs)
+        diff_response = connection.get_diff(**kwargs)
 
-    config_diff = diff_response.get('config_diff')
-    banner_diff = diff_response.get('banner_diff')
+        config_diff = diff_response.get('config_diff')
+        banner_diff = diff_response.get('banner_diff')
 
-    if config_diff:
-        if isinstance(config_diff, list):
-            candidate = config_diff
-        else:
-            candidate = config_diff.splitlines()
+        if config_diff:
+            if isinstance(config_diff, list):
+                candidate = config_diff
+            else:
+                candidate = config_diff.splitlines()
+
+            kwargs = {'candidate': candidate, 'commit': commit, 'replace': replace,
+                      'comment': commit_comment}
+            resp = connection.edit_config(**kwargs)
+            if 'diff' in resp:
+                if resp['diff']:
+                    result['commands'] = resp['diff']
+            else:
+                result['commands'] = candidate
+
+        if banner_diff:
+            candidate = banner_diff
+            result['banners'] = candidate
+
+            kwargs = {'candidate': candidate, 'commit': commit}
+            if multiline_delimiter:
+                kwargs.update({'multiline_delimiter': multiline_delimiter})
+            connection.edit_banner(**kwargs)
+
+    elif capabilities['device_operations']['supports_onbox_diff']:
+        if diff_replace:
+            module.warn('diff_replace is ignored as the device has onbox diff support')
+        if diff_match:
+            module.warn('diff_mattch is ignored as the device has onbox diff support')
+        if diff_ignore_lines:
+            module.warn('diff_ignore_lines is ignored as the device has onbox diff support')
+
+        if not isinstance(candidate, list):
+            candidate = candidate.strip('\n').splitlines()
 
         kwargs = {'candidate': candidate, 'commit': commit, 'replace': replace,
                   'comment': commit_comment}
         resp = connection.edit_config(**kwargs)
+
         if 'diff' in resp:
             if resp['diff']:
                 result['commands'] = resp['diff']
-        else:
-            result['commands'] = candidate
-
-    if banner_diff:
-        candidate = banner_diff
-        result['banners'] = candidate
-
-        kwargs = {'candidate': candidate, 'commit': commit}
-        if multiline_delimiter:
-            kwargs.update({'multiline_delimiter': multiline_delimiter})
-        connection.edit_banner(**kwargs)
 
     if any(key in result for key in ('commands', 'banners')):
         result['changed'] = True
@@ -280,7 +304,7 @@ def main():
     running = connection.get_config(flags=flags)
 
     try:
-        result.update(run(module, connection, candidate, running))
+        result.update(run(module, capabilities, connection, candidate, running))
     except Exception as exc:
         module.fail_json(msg=to_text(exc))
 

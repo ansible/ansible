@@ -8,7 +8,6 @@
 - name: configure device with config
   cli_config: &conf
     config: set interfaces loopback lo description 'this is a test'
-    diff_match: none
   register: result
 
 - assert:

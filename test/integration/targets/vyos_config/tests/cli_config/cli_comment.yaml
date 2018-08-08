@@ -4,7 +4,6 @@
 - name: setup
   cli_config: &rm
     config: set system host-name {{ inventory_hostname_short }}
-    diff_match: none
 
 - name: configure using comment
   cli_config:
