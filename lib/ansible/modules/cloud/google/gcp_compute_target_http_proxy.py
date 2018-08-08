@@ -79,6 +79,7 @@ EXAMPLES = '''
         - https://www.googleapis.com/auth/compute
       state: present
   register: instancegroup
+
 - name: create a http health check
   gcp_compute_http_health_check:
       name: 'httphealthcheck-targethttpproxy'
@@ -93,6 +94,7 @@ EXAMPLES = '''
         - https://www.googleapis.com/auth/compute
       state: present
   register: healthcheck
+
 - name: create a backend service
   gcp_compute_backend_service:
       name: 'backendservice-targethttpproxy'
@@ -108,6 +110,7 @@ EXAMPLES = '''
         - https://www.googleapis.com/auth/compute
       state: present
   register: backendservice
+
 - name: create a url map
   gcp_compute_url_map:
       name: 'urlmap-targethttpproxy'
@@ -119,6 +122,7 @@ EXAMPLES = '''
         - https://www.googleapis.com/auth/compute
       state: present
   register: urlmap
+
 - name: create a target http proxy
   gcp_compute_target_http_proxy:
       name: testObject

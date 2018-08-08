@@ -87,6 +87,7 @@ EXAMPLES = '''
     name: "my-logical-device"
     state: present
   register: logical_device
+
 - name: "Save Logical Device into a JSON file 2/3"
   copy:
     content: "{{ logical_device.value | to_nice_json }}"

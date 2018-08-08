@@ -85,6 +85,7 @@ EXAMPLES = '''
         - https://www.googleapis.com/auth/compute
       state: present
   register: instancegroup
+
 - name: create a health check
   gcp_compute_health_check:
       name: 'healthcheck-targettcpproxy'
@@ -103,6 +104,7 @@ EXAMPLES = '''
         - https://www.googleapis.com/auth/compute
       state: present
   register: healthcheck
+
 - name: create a backend service
   gcp_compute_backend_service:
       name: 'backendservice-targettcpproxy'
@@ -118,6 +120,7 @@ EXAMPLES = '''
         - https://www.googleapis.com/auth/compute
       state: present
   register: backendservice
+
 - name: create a target tcp proxy
   gcp_compute_target_tcp_proxy:
       name: testObject

@@ -364,6 +364,7 @@ EXAMPLES = '''
         - https://www.googleapis.com/auth/compute
       state: present
   register: disk
+
 - name: create a network
   gcp_compute_network:
       name: 'network-instance'
@@ -374,6 +375,7 @@ EXAMPLES = '''
         - https://www.googleapis.com/auth/compute
       state: present
   register: network
+
 - name: create a address
   gcp_compute_address:
       name: 'address-instance'
@@ -385,6 +387,7 @@ EXAMPLES = '''
         - https://www.googleapis.com/auth/compute
       state: present
   register: address
+
 - name: create a instance
   gcp_compute_instance:
       name: testObject

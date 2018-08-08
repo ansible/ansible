@@ -130,6 +130,7 @@ EXAMPLES = '''
         - https://www.googleapis.com/auth/compute
       state: present
   register: network
+
 - name: create a route
   gcp_compute_route:
       name: testObject

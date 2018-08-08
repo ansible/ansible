@@ -87,6 +87,7 @@ EXAMPLES = '''
         - https://www.googleapis.com/auth/devstorage.full_control
       state: present
   register: bucket
+
 - name: create a backend bucket
   gcp_compute_backend_bucket:
       name: testObject

@@ -163,6 +163,7 @@ EXAMPLES = '''
     query: hosted_zone
     max_items: 1
   register: first_facts
+
 - name: example for using next_marker
   route53_facts:
     query: hosted_zone
