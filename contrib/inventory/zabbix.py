@@ -168,7 +168,7 @@ class ZabbixInventory(object):
 
         if self.zabbix_server and self.zabbix_username:
             try:
-                api = ZabbixAPI(server=self.zabbix_server)
+                api = ZabbixAPI(server=self.zabbix_server, validate_certs=self.validate_certs)
                 api.login(user=self.zabbix_username,
                           password=self.zabbix_password)
             except BaseException as e:
