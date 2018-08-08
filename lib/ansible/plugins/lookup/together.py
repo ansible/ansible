@@ -61,8 +61,7 @@ class LookupModule(LookupBase):
         return results
 
     def run(self, terms, variables=None, **kwargs):
-        if not self._loop:
-            display.deprecated('The `together` lookup is deprecated. Use the `zip_longest` filter instead', version='2.11')
+        display.deprecated('The `together` lookup is deprecated. Use the `zip_longest` filter instead', version='2.11')
 
         terms = self._lookup_variables(terms)
 

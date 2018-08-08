@@ -76,7 +76,6 @@ except ImportError:
 class LookupModule(LookupBase):
 
     def run(self, terms, **kwargs):
-        if not self._loop:
-            display.deprecated('The `items` lookup is deprecated. Use the `flatten(levels=1)` filter instead', version='2.11')
+        display.deprecated('The `items` lookup is deprecated. Use the `flatten(levels=1)` filter instead', version='2.11')
 
         return self._flatten(terms)

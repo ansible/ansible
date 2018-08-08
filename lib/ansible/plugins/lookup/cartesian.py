@@ -69,8 +69,7 @@ class LookupModule(LookupBase):
         return results
 
     def run(self, terms, variables=None, **kwargs):
-        if not self._loop:
-            display.deprecated('The `cartesian` lookup is deprecated. Use the `product` filter instead', version='2.11')
+        display.deprecated('The `cartesian` lookup is deprecated. Use the `product` filter instead', version='2.11')
 
         terms = self._lookup_variables(terms)
 

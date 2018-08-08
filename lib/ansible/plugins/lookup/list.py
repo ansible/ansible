@@ -45,8 +45,7 @@ except ImportError:
 class LookupModule(LookupBase):
 
     def run(self, terms, **kwargs):
-        if not self._loop:
-            display.deprecated('The `list` lookup is deprecated. Directly use the list variable instead', version='2.11')
+        display.deprecated('The `list` lookup is deprecated. Directly use the list variable instead', version='2.11')
 
         if not isinstance(terms, collections.Sequence):
             raise AnsibleError("with_list expects a list")

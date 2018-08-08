@@ -51,8 +51,7 @@ except ImportError:
 class LookupModule(LookupBase):
 
     def run(self, terms, inject=None, **kwargs):
-        if not self._loop:
-            display.deprecated('The `random_choice` lookup is deprecated. Use the `random` filter instead', version='2.11')
+        display.deprecated('The `random_choice` lookup is deprecated. Use the `random` filter instead', version='2.11')
 
         ret = terms
         if terms:

@@ -238,8 +238,7 @@ class LookupModule(LookupBase):
                 )
 
     def run(self, terms, variables, **kwargs):
-        if not self._loop:
-            display.deprecated('The `sequence` lookup is deprecated. Use the jinja2 `range` function instead', version='2.11')
+        display.deprecated('The `sequence` lookup is deprecated. Use the jinja2 `range` function instead', version='2.11')
 
         results = []
 

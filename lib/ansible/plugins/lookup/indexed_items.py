@@ -51,8 +51,7 @@ class LookupModule(LookupBase):
         self.basedir = basedir
 
     def run(self, terms, variables, **kwargs):
-        if not self._loop:
-            display.deprecated('The `indexed_items` lookup is deprecated. Use `loop_control.index_var` instead', version='2.11')
+        display.deprecated('The `indexed_items` lookup is deprecated. Use `loop_control.index_var` instead', version='2.11')
 
         if not isinstance(terms, list):
             raise AnsibleError("with_indexed_items expects a list")

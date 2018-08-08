@@ -83,8 +83,7 @@ class LookupModule(LookupBase):
         return ret
 
     def run(self, terms, variables, **kwargs):
-        if not self._loop:
-            display.deprecated('The `flattened` lookup is deprecated. Use the `flatten` filter instead', version='2.11')
+        display.deprecated('The `flattened` lookup is deprecated. Use the `flatten` filter instead', version='2.11')
 
         if not isinstance(terms, list):
             raise AnsibleError("with_flattened expects a list")

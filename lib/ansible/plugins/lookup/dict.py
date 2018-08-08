@@ -71,8 +71,7 @@ except ImportError:
 class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
-        if not self._loop:
-            display.deprecated('The `dict` lookup is deprecated. Use the `dict2items` filter instead', version='2.11')
+        display.deprecated('The `dict` lookup is deprecated. Use the `dict2items` filter instead', version='2.11')
 
         # FIXME: can remove once with_ special case is removed
         if not isinstance(terms, list):

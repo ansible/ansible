@@ -35,14 +35,12 @@ __all__ = ['LookupBase']
 
 class LookupBase(AnsiblePlugin):
 
-    def __init__(self, loader=None, templar=None, loop=False, **kwargs):
+    def __init__(self, loader=None, templar=None, **kwargs):
 
         super(LookupBase, self).__init__()
 
         self._loader = loader
         self._templar = templar
-
-        self._loop = loop
 
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display

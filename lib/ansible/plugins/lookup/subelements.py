@@ -98,8 +98,7 @@ FLAGS = ('skip_missing',)
 class LookupModule(LookupBase):
 
     def run(self, terms, variables, **kwargs):
-        if not self._loop:
-            display.deprecated('The `subelements` lookup is deprecated. Used the `subelements` filter instead', version='2.11')
+        display.deprecated('The `subelements` lookup is deprecated. Used the `subelements` filter instead', version='2.11')
 
         def _raise_terms_error(msg=""):
             raise AnsibleError(
