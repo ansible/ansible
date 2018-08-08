@@ -24,36 +24,37 @@ Please make sure your module meets these requirements before you submit your PR/
 
 Subjective requirements:
 
-* Write clear, concise, secure, maintainable, user-friendly module code
-    * Validate upfront--fail fast and return useful and clear error messages.
-    * Use defensive programming--use a simple design for your module, handle errors gracefully, and avoid direct stacktraces.
-    * Fail predictably--if we must fail, do it in a way that is the most expected. Either mimic the underlying tool or the general way the system works.
-    * Use shared code whenever possible - don't reinvent the wheel. Ansible offers base functions for many common patterns (retry, throttling, etc). ## TODO where is shared code and how does a dev use it?
-	* Handle exceptions (bugs) gracefully
-		* Give out a useful message on what you were doing and add exception messages to that.
-    	* Avoid catchall exceptions, they are not very useful unless the underlying API gives very good error messages pertaining the attempted action.
-	* Avoid ``action``/``command``, they are imperative and not declarative, there are other ways to express the same thing.
-	* When fetching URLs, use ``fetch_url`` or ``open_url`` from ``ansible.module_utils.urls``. Do not use ``urllib2``, which does not natively verify TLS certificates and so is insecure for https.
-	* Include a ``main`` function that wraps the normal execution.
-	* Call your :func:`main` from a conditional so we can import it into unit tests - for example:
+Write clear, concise, secure, maintainable, user-friendly module code
+
+* Validate upfront--fail fast and return useful and clear error messages.
+* Use defensive programming--use a simple design for your module, handle errors gracefully, and avoid direct stacktraces.
+* Fail predictably--if we must fail, do it in a way that is the most expected. Either mimic the underlying tool or the general way the system works.
+* Use shared code whenever possible - don't reinvent the wheel. Ansible offers base functions for many common patterns (retry, throttling, etc). ## TODO where is shared code and how does a dev use it?
+* Handle exceptions (bugs) gracefully
+    * Give out a useful message on what you were doing and add exception messages to that.
+    * Avoid catchall exceptions, they are not very useful unless the underlying API gives very good error messages pertaining the attempted action.
+* Avoid ``action``/``command``, they are imperative and not declarative, there are other ways to express the same thing.
+* When fetching URLs, use ``fetch_url`` or ``open_url`` from ``ansible.module_utils.urls``. Do not use ``urllib2``, which does not natively verify TLS certificates and so is insecure for https.
+* Include a ``main`` function that wraps the normal execution.
+* Call your :func:`main` from a conditional so we can import it into unit tests - for example:
 
 	.. code-block:: python
 
 	    if __name__ == '__main__':
 	        main()
 
-	* Use sensible imports
-		* Import ``ansible.module_utils`` code in the same place as you import other libraries.
-		* Do not use wildcards for importing other python modules (for example, ``from ansible.module_utils.basic import *``).
-		* Import custom packages in ``try``/``except`` and handle them with ``fail_json()`` in ``main()``. For example:
+* Import ``ansible.module_utils`` code in the same place as you import other libraries.
+* Do not use wildcards for importing other python modules (for example, ``from ansible.module_utils.basic import *``).
+* Import custom packages in ``try``/``except`` and handle them with ``fail_json()`` in ``main()``. For example:
 
-		.. code-block:: python
+	.. code-block:: python
 
-	        try:
-	            import foo
-	            HAS_LIB=True
-	        except:
-	            HAS_LIB=False
+	    try:
+            import foo
+	        HAS_LIB=True
+	    except:
+	        HAS_LIB=False
+
 
 
 * Harmonize with Ansible standards for a predictable user interface.
@@ -69,8 +70,7 @@ Subjective requirements:
     * Strive for a consistent final state (aka idempotency). If running your module twice in a row against the same system would result in two different states, see if you can redesign or rewrite to achieve consistent final state. If you can't, document the behavior and the reasons for it.
     * Provide consistent return values
 		* Follow the standard Ansible return structure, even if NA/None are used for keys normally returned under other options.
-		* Return values must be able to be serialized as json via the python stdlib json library. Basic python types (strings, int, dicts, lists, etc) are
-	  serializable.  
+		* Return values must be able to be serialized as json via the python stdlib json library. Basic python types (strings, int, dicts, lists, etc) are serializable.  
 		* Do not return an object via exit_json(). Instead, convert the fields you need from the object into the fields of a dictionary and return the dictionary.
 	* Follow additional guidelines when applicable - for example, certain families of modules have specific guidelines.
 	    * Be sure to check out the modules themselves for additional information.
