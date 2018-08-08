@@ -928,14 +928,20 @@ class TaskExecutor:
         # Also need to force a protocol that excludes certain control chars as
         # stdin in this case is a pty and control chars will cause problems.
         # that means only protocol=0 will work.
-        src = cPickle.dumps(self._play_context.serialize(), protocol=0)
-        stdin.write(src)
+        def write_to_socket(obj):
+            src = cPickle.dumps(obj, protocol=0)
+            # raw \r characters will not survive socket round-trip
+            # They should be rehydrated on the receiving end
+            src = src.replace(b'\r', br'\r')
+            # Don't trust data to be written all at once.
+            while src:
+                bytes_written = stdin.write(src)
+                src = src[bytes_written:]
+
+        write_to_socket(self._play_context.serialize())
         stdin.write(b'\n#END_INIT#\n')
 
-        src = cPickle.dumps(variables, protocol=0)
-        # remaining \r fail to round-trip the socket
-        src = src.replace(b'\r', br'\r')
-        stdin.write(src)
+        write_to_socket(variables)
         stdin.write(b'\n#END_VARS#\n')
 
         stdin.flush()
