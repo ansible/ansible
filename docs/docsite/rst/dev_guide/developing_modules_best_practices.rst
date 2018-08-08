@@ -7,7 +7,7 @@ As you develop your module, follow these basic conventions and best practices:
 
 * Each module should be self-contained in one file, so it can be be auto-transferred by Ansible.
 
-* Always use the hacking/test-module script when developing modules - it will warn you about common pitfalls.
+* Always use the ``hacking/test-module`` script when developing modules - it will warn you about common pitfalls.
 
 * If your module is addressing an object, the parameter for that object should be called ``name`` whenever possible, or accept ``name`` as an alias.
 
@@ -25,7 +25,7 @@ As you develop your module, follow these basic conventions and best practices:
 
 * Avoid creating caches. Ansible is designed without a central server or authority, so you cannot guarantee it will not run with different permissions, options or locations. If you need a central authority, have it on top of Ansible (for example, using bastion/cm/ci server or tower); do not try to build it into modules.
 
-Scope your module appropriately
+Scoping your module appropriately
 `````````````````````````````````````````
 
 Especially if you want to contribute your module back to Ansible Core, make sure it includes enough logic and functionality, but not too much. If you're finding these guidelines tricky, consider :ref:`whether you really need to write a module <module_dev_should_you>` at all.
@@ -36,7 +36,7 @@ Especially if you want to contribute your module back to Ansible Core, make sure
 
 * Modules should encompass much of the logic for interacting with a resource. A lightweight wrapper around a complex API forces users to offload too much logic into their playbooks. If you want to connect Ansible to a complex API, create multiple modules that interact with smaller individual pieces of the API.
 
-* Avoid creating a module that does the work of other modules; this leads to code duplication and divergence, and makes things less uniform, unpredictable and harder to maintain. Modules should be the building blocks. Instead of creating a module that does the work of other modules, use Plays and Roles instead.  
+* Avoid creating a module that does the work of other modules; this leads to code duplication and divergence, and makes things less uniform, unpredictable and harder to maintain. Modules should be the building blocks. Instead of creating a module that does the work of other modules, use Plays and Roles to meet your needs.
 
 Handling module failures
 `````````````````````````````````````````
@@ -45,7 +45,6 @@ When you module fails, help users understand what went wrong. If you are using t
 
 * Include a key of ``failed`` along with a string explanation in ``msg``. If you don't do this, Ansible will use standard return codes: 0=success and non-zero=failure.
 * Don't raise a traceback (stacktrace). Ansible can deal with stacktraces and automatically converts anything unparseable into a failed result, but raising a stacktrace on module failure is not user-friendly.
-
 
 Creating correct module output (valid JSON)
 ```````````````````````````````````````````
