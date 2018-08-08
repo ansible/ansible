@@ -17,6 +17,7 @@ Find the task that best describes what you want to do:
 * I want to :ref:`write a custom module <developing_modules>`.
 * I want to :ref:`write a custom module for Windows <developing_modules_general_windows>`.
 * I want to :ref:`write a series of related custom modules <developing_modules_in_groups>` that integrate Ansible with a new product (for example, a database, cloud provider, network platform, etc.).
+* I want to :ref:`debug my module code <developing_debugging>`.
 * I want to :ref:`test my module <developing_testing>`.
 * I want to :ref:`document my module <module_documenting>`.
 * I want to :ref:`update my module to run on Python 3 <developing_python_3>`.
