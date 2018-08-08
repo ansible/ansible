@@ -59,10 +59,14 @@ $serverInstanceUser = Get-AnsibleParam -obj $params -name "server_instance_user"
 $serverInstancePassword = Get-AnsibleParam -obj $params -name "server_instance_password" -type "str" -default $NULL
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
+if ($serverInstancePassword){
+    $serverInstancePassword = ConvertTo-SecureString $serverInstancePassword -AsPlainText -Force
+}
+
 Invoke-Query -Query $query `
     -QueryTimeout $queryTimeout `
     -Database $database `
     -ServerInstance $serverInstance `
     -ServerInstanceUser $serverInstanceUser `
-    -ServerInstancePassword ($serverInstancePassword | ConvertTo-SecureString -AsPlainText -Force) `
+    -ServerInstancePassword $serverInstancePassword `
     -CheckMode $check_mode
