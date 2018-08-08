@@ -25,8 +25,8 @@ As you develop your module, follow these basic conventions and best practices:
 
 * Avoid creating caches. Ansible is designed without a central server or authority, so you cannot guarantee it will not run with different permissions, options or locations. If you need a central authority, have it on top of Ansible (for example, using bastion/cm/ci server or tower); do not try to build it into modules.
 
-Scoping your module appropriately
-`````````````````````````````````````````
+Scoping your module(s)
+```````````````````````
 
 Especially if you want to contribute your module back to Ansible Core, make sure it includes enough logic and functionality, but not too much. If you're finding these guidelines tricky, consider :ref:`whether you really need to write a module <module_dev_should_you>` at all.
 
