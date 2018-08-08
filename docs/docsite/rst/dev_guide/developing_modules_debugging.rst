@@ -1,4 +1,4 @@
-.. _developing_modules_debugging
+.. _developing_debugging
 
 =================
 Debugging Modules
@@ -7,7 +7,7 @@ Debugging Modules
 Debugging (local)
 =================
 
-If you want to break into a module and step through with the debugger, locally running the module you can do:
+To break into a module running on localhost and step through with the debugger:
 
 - Set a breakpoint in the module: ``import pdb; pdb.set_trace()``
 - Run the module on the local machine: ``$ python -m pdb ./my_new_test_module.py ./args.json``
@@ -15,7 +15,7 @@ If you want to break into a module and step through with the debugger, locally r
 Debugging (remote)
 ==================
 
-In the event you want to debug a module that is running on a remote target (i.e. not localhost), one way to do this is the following:
+To debug a module running on a remote target (i.e. not localhost):
 
 - On your controller machine (running Ansible) set `ANSIBLE_KEEP_REMOTE_FILES=1` (this tells Ansible to retain the modules it sends to the remote machine instead of removing them)
 - Run your playbook targetting the remote machine and specify ``-vvvv`` (the verbose output will show you many things, including the remote location that Ansible uses for the modules)
