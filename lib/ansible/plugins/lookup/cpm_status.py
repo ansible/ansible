@@ -145,7 +145,7 @@ class LookupModule(LookupBase):
             else:
                 raise AnsibleError("Status command not recognized %s " % (term))
 
-            display.v("url lookup connecting to %s" % fullurl)
+            display.vvvv("cpm_status connecting to %s" % fullurl)
 
             try:
                 response = open_url(fullurl, validate_certs=self.get_option('validate_certs'), use_proxy=self.get_option('use_proxy'),
