@@ -151,6 +151,8 @@ options:
     enable_cloudwatch_logs_exports:
         description:
           - A list of log types that need to be enabled for exporting to CloudWatch Logs.
+        aliases:
+          - cloudwatch_log_exports
     enable_iam_database_authentication:
         description:
           - Enable mapping of AWS Identity and Access Management (IAM) accounts to database accounts.
@@ -278,7 +280,7 @@ options:
         description:
           - An integer that specifies the order in which an Aurora Replica is promoted to the primary instance after a failure of
             the existing primary instance.
-    publically_accessible:
+    publicly_accessible:
         description:
           - Specifies the accessibility options for the DB instance. A value of true specifies an Internet-facing instance with
             a publicly resolvable DNS name, which resolves to a public IP address. A value of false specifies an internal
@@ -335,10 +337,16 @@ options:
           - A dictionary of key value pairs to assign the DB cluster.
     tde_credential_arn:
         description:
-          - The ARN from the key store with which to associate the instance for TDE.
+          - The ARN from the key store with which to associate the instance for Transparent Data Encryption. This is
+            supported by Oracle or SQL Server DB instances and may be used in conjunction with C(storage_encrypted)
+            though it might slightly affect the performance of your database.
+        aliases:
+          - transparent_data_encryption_arn
     tde_credential_password:
         description:
           - The password for the given ARN from the key store in order to access the device.
+        aliases:
+          - transparent_data_encryption_password
     timezone:
         description:
           - The time zone of the DB instance.
@@ -347,6 +355,8 @@ options:
           - Whether to restore the DB instance to the latest restorable backup time. Only one of I(use_latest_restorable_time)
             and I(restore_to_time) may be provided.
         type: bool
+        aliases:
+          - restore_from_latest
     vpc_security_group_ids:
         description:
           - A list of EC2 VPC security groups to associate with the DB cluster.
@@ -733,7 +743,7 @@ def get_operation_err(method_name):
         'add_tags_to_resource': 'add tags to DB instance',
         'remove_tags_from_resource': 'remove tags from DB instance',
         'list_tags_for_resource': 'list tags for DB instance',
-        'promote_read_replica_db_instance': 'promote DB instance',
+        'promote_read_replica': 'promote DB instance',
     }.get(method_name, '')
 
 
@@ -924,6 +934,8 @@ def validate_options(client, module, instance):
     skip_final_snapshot = module.params['skip_final_snapshot']
     snapshot_id = module.params['final_db_snapshot_identifier']
     modified_id = module.params['new_db_instance_identifier']
+    engine = module.params['engine']
+    tde_options = bool(module.params['tde_credential_password'] or module.params['tde_credential_arn'])
     if modified_id:
         modified_instance = get_instance(client, module, modified_id)
     else:
@@ -935,6 +947,8 @@ def validate_options(client, module, instance):
         module.fail_json(msg='A new instance ID {0} was provided but the instance to be renamed does not exist'.format(modified_id))
     if state == 'absent' and instance and not skip_final_snapshot and snapshot_id is None:
         module.fail_json(msg='skip_final_snapshot is false but all of the following are missing: final_db_snapshot_identifier')
+    if engine is not None and not (engine.startswith('mysql') or engine.startswith('oracle')) and tde_options:
+        module.fail_json(msg='TDE is available for MySQL and Oracle DB instances')
 
 
 def call_method(client, module, method_name, parameters):
@@ -1111,7 +1125,7 @@ def main():
         db_subnet_group_name=dict(),
         domain=dict(),
         domain_iam_role_name=dict(),
-        enable_cloudwatch_logs_exports=dict(type='list'),
+        enable_cloudwatch_logs_exports=dict(type='list', aliases=['cloudwatch_log_exports']),
         enable_iam_database_authentication=dict(type='bool'),
         enable_performance_insights=dict(type='bool'),
         engine=dict(choices=[
@@ -1138,7 +1152,7 @@ def main():
         license_model=dict(choices=['license-included', 'bring-your-own-license', 'general-public-license']),
         master_user_password=dict(aliases=['password'], no_log=True),
         master_username=dict(aliases=['username']),
-        monitoring_interval=dict(),
+        monitoring_interval=dict(type='int'),
         monitoring_role_arn=dict(),
         multi_az=dict(type='bool'),
         new_db_instance_identifier=dict(aliases=['new_instance_id', 'new_id']),
@@ -1150,7 +1164,7 @@ def main():
         preferred_maintenance_window=dict(aliases=['maintenance_window']),
         processor_features=dict(type='dict'),
         promotion_tier=dict(),
-        publically_accessible=dict(type='bool'),
+        publicly_accessible=dict(type='bool'),
         restore_time=dict(),
         s3_bucket_name=dict(),
         s3_ingestion_role_arn=dict(),
@@ -1163,10 +1177,10 @@ def main():
         storage_encrypted=dict(type='bool'),
         storage_type=dict(choices=['standard', 'gp2', 'io1']),
         tags=dict(type='dict'),
-        tde_credential_arn=dict(),
-        tde_credential_password=dict(no_log=True),
+        tde_credential_arn=dict(aliases=['transparent_data_encryption_arn']),
+        tde_credential_password=dict(no_log=True, aliases=['transparent_data_encryption_password']),
         timezone=dict(),
-        use_latest_restorable_time=dict(type='bool'),
+        use_latest_restorable_time=dict(type='bool', aliases=['restore_from_latest']),
         vpc_security_group_ids=dict(type='list')
 
     )
