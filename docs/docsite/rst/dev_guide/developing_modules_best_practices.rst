@@ -25,6 +25,10 @@ As you develop your module, follow these basic conventions and best practices:
 
 * Avoid creating caches. Ansible is designed without a central server or authority, so you cannot guarantee it will not run with different permissions, options or locations. If you need a central authority, have it on top of Ansible (for example, using bastion/cm/ci server or tower); do not try to build it into modules.
 
+* Handle exceptions (bugs) gracefully
+    * Give out a useful message on what you were doing and add exception messages to that.
+    * Avoid catchall exceptions, they are not very useful unless the underlying API gives very good error messages pertaining the attempted action.
+
 Scoping your module(s)
 ```````````````````````
 
@@ -65,5 +69,7 @@ Modules must output valid JSON only. Follow these guidelines for creating correc
 * Be consistent about returns (some modules are too random), unless it is detrimental to the state/action.
 * Make returns reusable--most of the time you don't want to read it, but you do want to process it and re-purpose it.
 * Return diff if in diff mode. This is not required for all modules, as it won't make sense for certain ones, but please include it when applicable.
+* Enable your return values to be serialized as JSON with Python's standard `JSON encoder and decoder <https://docs.python.org/3/library/json.html>`_ library. Basic python types (strings, int, dicts, lists, etc) are serializable.  
+* Do not return an object via exit_json(). Instead, convert the fields you need from the object into the fields of a dictionary and return the dictionary.
 
 If a module returns stderr or otherwise fails to produce valid JSON, the actual output will still be shown in Ansible, but the command will not succeed.

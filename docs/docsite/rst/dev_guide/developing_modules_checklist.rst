@@ -32,12 +32,7 @@ If your pull request to add your module to Ansible meets our objective requireme
 * Use defensive programming--use a simple design for your module, handle errors gracefully, and avoid direct stacktraces.
 * Fail predictably--if we must fail, do it in a way that is the most expected. Either mimic the underlying tool or the general way the system works.
 * Use shared code whenever possible - don't reinvent the wheel. Ansible offers base functions for many common patterns (retry, throttling, etc). ## TODO where is shared code and how does a dev use it?
-* Handle exceptions (bugs) gracefully
-    * Give out a useful message on what you were doing and add exception messages to that.
-    * Avoid catchall exceptions, they are not very useful unless the underlying API gives very good error messages pertaining the attempted action.
 * Avoid ``action``/``command``, they are imperative and not declarative, there are other ways to express the same thing.
-* Enable your return values to be serialized as json via the python stdlib json library. Basic python types (strings, int, dicts, lists, etc) are serializable.  
-* Do not return an object via exit_json(). Instead, convert the fields you need from the object into the fields of a dictionary and return the dictionary.
 * When fetching URLs, use ``fetch_url`` or ``open_url`` from ``ansible.module_utils.urls``. Do not use ``urllib2``, which does not natively verify TLS certificates and so is insecure for https.
 * Include a ``main`` function that wraps the normal execution.
 * Call your :func:`main` from a conditional so we can import it into unit tests - for example:
