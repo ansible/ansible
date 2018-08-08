@@ -155,8 +155,7 @@ import time
 from copy import deepcopy
 
 from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
-from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
-from ansible.module_utils.network.nxos.nxos import normalize_interface
+from ansible.module_utils.network.nxos.nxos import normalize_interface, nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.config import CustomNetworkConfig
@@ -256,7 +255,7 @@ def map_obj_to_commands(updates, module):
                             else:
                                 if not is_default_name(obj_in_have, vlan_id):
                                     commands.append('no name')
-                        if key == 'vlan_state':
+                        if key == 'vlan_state' and value:
                             commands.append('state {0}'.format(value))
                         if key == 'mapped_vni':
                             if value == 'default':
@@ -269,7 +268,7 @@ def map_obj_to_commands(updates, module):
                                 commands.append('no shutdown')
                             elif value == 'down':
                                 commands.append('shutdown')
-                        if key == 'mode':
+                        if key == 'mode' and value:
                             commands.append('mode {0}'.format(value))
                     if len(commands) > 1:
                         commands.append('exit')
@@ -421,18 +420,20 @@ def parse_admin_state(vlan):
 def parse_mode(config):
     mode = None
 
-    match = re.search(r'mode (\S+)', config, re.M)
-    if match:
-        mode = match.group(1)
+    if config:
+        match = re.search(r'mode (\S+)', config)
+        if match:
+            mode = match.group(1)
     return mode
 
 
 def parse_vni(config):
     vni = None
 
-    match = re.search(r'vn-segment (\S+)', config, re.M)
-    if match:
-        vni = match.group(1)
+    if config:
+        match = re.search(r'vn-segment (\S+)', config)
+        if match:
+            vni = match.group(1)
     return str(vni)
 
 
@@ -549,11 +550,11 @@ def map_config_to_obj(module):
     output = None
 
     try:
-        command = 'show vlan | json'
-        output = run_commands(module, [command], return_error=True)[0]
+        command = {'command': 'show vlan', 'output': 'json'}
+        output = run_commands(module, command, return_error=True)[0]
     except ConnectionError:
-        command = 'show vlan brief'
-        output = run_commands(module, [command])[0]
+        command = {'command': 'show vlan brief', 'output': 'text'}
+        output = run_commands(module, command)[0]
 
     if output:
         netcfg = CustomNetworkConfig(indent=2,
@@ -663,9 +664,6 @@ def main():
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
-    info = get_capabilities(module).get('device_info', {})
-    os_platform = info.get('network_os_platform', '')
-
     warnings = list()
     result = {'changed': False}
     if warnings:
@@ -678,7 +676,7 @@ def main():
         commands = vlan_range_commands(module, have)
         result['commands'] = commands
     else:
-        commands = map_obj_to_commands((want, have), module, os_platform)
+        commands = map_obj_to_commands((want, have), module)
         result['commands'] = commands
 
     if commands:
