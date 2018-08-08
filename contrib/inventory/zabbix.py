@@ -169,8 +169,7 @@ class ZabbixInventory(object):
         if self.zabbix_server and self.zabbix_username:
             try:
                 api = ZabbixAPI(server=self.zabbix_server, validate_certs=self.validate_certs)
-                api.login(user=self.zabbix_username,
-                          password=self.zabbix_password)
+                api.login(user=self.zabbix_username, password=self.zabbix_password)
             except BaseException as e:
                 print("Error: Could not login to Zabbix server. Check your zabbix.ini.",
                       file=sys.stderr)
