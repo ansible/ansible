@@ -27,8 +27,7 @@ Subjective requirements
 
 If your module meets our objective requirements, we'll review your code to see if we think it's clear, concise, secure, and maintainable. We'll consider whether your module provides a good user experience, helpful error messages, reasonable defaults, and more. This process is subjective, and we can't list exact standards for acceptance. For the best chance of getting your module accepted into the Ansible repo, follow our :ref:`best practices for module development <developing_modules_best_practices>`.
 
-
 Windows modules checklist
 =========================
 
-For a checklist and details on how to write Windows modules please see :doc:`developing_modules_general_windows`
+For a checklist and details on how to write Windows modules please see :ref:`developing_modules_general_windows`
