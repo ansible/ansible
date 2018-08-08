@@ -65,6 +65,7 @@ options:
   compact:
     description:
       - When I(state) is C(dump), generate compact dump. Equivalent to C(--compact) flag in C(mysqldump).
+        When this option is disabled, idempotence is lost.
     type: bool
     required: false
     default: 'yes'
