@@ -70,6 +70,11 @@
     that:
        - "'department' not in result.stdout"
 
+- name: remove database file
+  file:
+    path: '{{ db_file_name}}'
+    state: absent
+
 - name: test state=dump to backup the database of type {{ format_type }} (expect changed=true)
   mysql_db: name={{ db_name }} state=dump target={{ db_file_name }}
   register: result
@@ -77,7 +82,18 @@
 - name: assert output message backup the database
   assert:
     that:
-       - "result.db =='{{ db_name }}'"
+      - "result.changed == true"
+      - "result.db =='{{ db_name }}'"
+
+- name: test state=dump to backup the database of type {{ format_type }} (expect changed=false)
+  mysql_db: name={{ db_name }} state=dump target={{ db_file_name }}
+  register: result
+
+- name: assert idempotence of repeated database dumping
+  assert:
+    that:
+      - "result.changed == false"
+      - "result.db =='{{ db_name }}'"
 
 - name: assert database was backed up successfully
   command: file {{ db_file_name }}
