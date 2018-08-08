@@ -392,7 +392,7 @@ class AzureRMTrafficManager(AzureRMModuleBase):
             monitor_config=dict(
                 type='dict',
                 default=dict(
-                    protocol='http',
+                    protocol='HTTP',
                     port=80,
                     path='/'
                 ),
