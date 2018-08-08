@@ -116,6 +116,7 @@ EXAMPLES = '''
         - https://www.googleapis.com/auth/compute
       state: present
   register: network
+
 - name: create a address
   gcp_compute_address:
       name: 'address-instancetemplate'
@@ -127,6 +128,7 @@ EXAMPLES = '''
         - https://www.googleapis.com/auth/compute
       state: present
   register: address
+
 - name: create a instance template
   gcp_compute_instance_template:
       name: "{{ resource_name }}"
@@ -150,6 +152,7 @@ EXAMPLES = '''
         - https://www.googleapis.com/auth/compute
       state: present
   register: instancetemplate
+
 - name: create a instance group manager
   gcp_compute_instance_group_manager:
       name: testObject
