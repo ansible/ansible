@@ -1,0 +1,2 @@
+bugfixes:
+  - mysql_db - Compare checksums of files if dump overwrites an existing file to detect change and use the --compact option in mysqldump to make the dumping of databases idempotent
