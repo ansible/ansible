@@ -93,7 +93,7 @@ class HttpApi(HttpApiBase):
 
         return resp
 
-    def run_commands(self, commands, check_rc=True):
+    def run_commands(self, commands, check_rc=True, return_error=False):
         """Runs list of commands on remote device and returns results
         """
         try:

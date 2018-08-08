@@ -148,15 +148,18 @@ class Cli:
             self._device_configs[cmd] = cfg
             return cfg
 
-    def run_commands(self, commands, check_rc=True):
+    def run_commands(self, commands, check_rc=True, return_error=False):
         """Run list of commands on remote device and return results
         """
         connection = self._get_connection()
 
-        try:
+        if return_error:
             return connection.run_commands(commands, check_rc)
-        except ConnectionError as exc:
-            self._module.fail_json(msg=to_text(exc))
+        else:
+            try:
+                return connection.run_commands(commands, check_rc)
+            except ConnectionError as exc:
+                self._module.fail_json(msg=to_text(exc))
 
     def load_config(self, config, return_error=False, opts=None, replace=None):
         """Sends configuration commands to the remote device
@@ -361,7 +364,7 @@ class Nxapi:
             self._device_configs[cmd] = cfg
             return cfg
 
-    def run_commands(self, commands, check_rc=True):
+    def run_commands(self, commands, check_rc=True, return_error=False):
         """Run list of commands on remote device and return results
         """
         output = None
@@ -497,9 +500,9 @@ def get_config(module, flags=None):
     return conn.get_config(flags=flags)
 
 
-def run_commands(module, commands, check_rc=True):
+def run_commands(module, commands, check_rc=True, return_error=False):
     conn = get_connection(module)
-    return conn.run_commands(to_command(module, commands), check_rc)
+    return conn.run_commands(to_command(module, commands), check_rc, return_error)
 
 
 def load_config(module, config, return_error=False, opts=None, replace=None):

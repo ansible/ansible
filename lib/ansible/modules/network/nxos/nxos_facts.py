@@ -194,7 +194,7 @@ class FactsBase(object):
             'command': command,
             'output': output
         }
-        resp = run_commands(self.module, [command], check_rc=False)
+        resp = run_commands(self.module, [command], check_rc=False, return_error=True)
         try:
             return resp[0]
         except IndexError:

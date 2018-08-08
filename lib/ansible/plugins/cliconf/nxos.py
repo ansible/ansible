@@ -186,7 +186,7 @@ class Cliconf(CliconfBase):
             command = self._get_command_with_output(command, output)
         return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
 
-    def run_commands(self, commands=None, check_rc=True):
+    def run_commands(self, commands=None, check_rc=True, return_error=False):
         if commands is None:
             raise ValueError("'commands' value is required")
 
