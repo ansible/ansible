@@ -5,14 +5,15 @@ Module Format and Documentation
 
 If you want to contribute your module to Ansible Core, you must write your module in Python and follow a standard format. (Unless you're writing a Windows module, in which case the `Windows guidelines <developing_modules_general_windows>` apply.) 
 
-Every Python module must begin with a shebang (``#! /usr/bin/python``), followed by six standard sections in a particular order, followed by the code. The six standard sections are:
+Every Ansible module written in Python must begin with seven standard sections in a particular order, followed by the code. The sections in order are:
 
-1. :ref:`Copyright and License <copyright>`
-2. :ref:`ANSIBLE_METADATA <ansible_metadata_block>`
-3. :ref:`DOCUMENTATION <documentation_block>`
-4. :ref:`EXAMPLES <examples_block>`
-5. :ref:`RETURN <return_block>`
-6. :ref:`Python imports <python_imports>`
+1. :ref: the `Python shebang <shebang>`
+2. :ref:`Copyright and License <copyright>`
+3. :ref:`ANSIBLE_METADATA <ansible_metadata_block>`
+4. :ref:`DOCUMENTATION <documentation_block>`
+5. :ref:`EXAMPLES <examples_block>`
+6. :ref:`RETURN <return_block>`
+7. :ref:`Python imports <python_imports>`
 
 .. note:: Why don't the imports go first?
 
@@ -21,6 +22,13 @@ Every Python module must begin with a shebang (``#! /usr/bin/python``), followed
 .. warning:: **Copy old modules with care!**
 
   Some older modules in Ansible Core have ``imports`` at the bottom of the file, ``Copyright`` notices with the full GPL prefix, and/or ``ANSIBLE_METADATA`` fields in the wrong order. These are legacy files that need updating - do not copy them into new modules. Over time we're updating and correcting older modules. Please follow the guidelines on this page!
+
+.. _shebang:
+
+Python Shebang
+----------------------
+
+Every Ansible module must begin with ``#! /usr/bin/python`` - this "shebang" allows ``ansible_python_interpreter`` to work.
 
 .. _copyright:
 
@@ -107,7 +115,14 @@ DOCUMENTATION block
 
 After the shebang, the copyright line, the license, and the ``ANSIBLE_METADATA`` section comes the ``DOCUMENTATION`` block. Ansible's online module documentation is generated from the ``DOCUMENTATION`` blocks in each module's source code. The ``DOCUMENTATION`` block must be valid YAML. You may find it easier to start writing your ``DOCUMENTATION`` string in an :ref:`editor with YAML syntax highlighting <other_tools_and_programs>` before you include it in your Python file. You can start by copying our `example documentation string <https://github.com/ansible/ansible/blob/devel/examples/DOCUMENTATION.yml>`_ into your module file and modifying it.
 
-If you need more information about any particular documentation field, see below. Before committing your module documentation, please test it. As long as your module file is `available locally <local_modules>`, you can use ``ansible-doc -t module my_module_name`` to view your module documentation. Any parsing errors will be obvious - you can view details by adding ``-vvv`` to the command. If you run into syntax issues in your YAML, you can validate it on the `YAML Lint <http://www.yamllint.com/>`_ website.
+Module documentation should briefly and accurately define what each module and option does, and how it works with others in the underlying system. Documentation should be written for broad audience--readable both by experts and non-experts.
+    * Descriptions should always start with a capital letter and end with a full stop. Consistency always helps.
+    * Verify that arguments in doc and module spec dict are identical.
+    * For password / secret arguments no_log=True should be set.
+    * If an optional parameter is sometimes required, reflect this fact in the documentation, e.g. "Required when C(state=present)."
+    * If your module allows ``check_mode``, reflect this fact in the documentation.
+
+Each documentation field is described below. Before committing your module documentation, please test it. As long as your module file is `available locally <local_modules>`, you can use ``ansible-doc -t module my_module_name`` to view your module documentation. Any parsing errors will be obvious - you can view details by adding ``-vvv`` to the command. If you run into syntax issues in your YAML, you can validate it on the `YAML Lint <http://www.yamllint.com/>`_ website.
 
 Documentation Fields
 ^^^^^^^^^^^^^^^^^^^^
@@ -221,7 +236,7 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 :notes:
 
   * Details of any important information that doesn't fit in one of the above sections.
-  * For example if ``check_mode`` isn't supported, or a link to external documentation.
+  * For example, whether ``check_mode`` is or is not supported, or links to external documentation.
 
 Linking within module documentation
 -----------------------------------
@@ -241,7 +256,15 @@ You can link from your module documentation to other module docs, other resource
 Documentation fragments
 -----------------------
 
-If you're writing several related modules, they may share common documentation, such as authentication details or file mode settings. Rather than duplicate that information in each module's ``DOCUMENTATION`` block, you can save it once as a fragment and use it in each module's documentation. Shared documentation fragments are contained in a ``ModuleDocFragment`` class in `lib/ansible/utils/module_docs_fragments/ <https://github.com/ansible/ansible/tree/devel/lib/ansible/utils/module_docs_fragments>`_. To include a documentation fragment, add ``extends_documentation_fragment: FRAGMENT_NAME`` in your module's documentation. You can find usage examples by searching for ``extends_documentation_fragment`` under the Ansible source tree.
+If you're writing multiple related modules, they may share common documentation, such as authentication details or file mode settings. Rather than duplicate that information in each module's ``DOCUMENTATION`` block, you can save it once as a fragment and use it in each module's documentation. Shared documentation fragments are contained in a ``ModuleDocFragment`` class in `lib/ansible/utils/module_docs_fragments/ <https://github.com/ansible/ansible/tree/devel/lib/ansible/utils/module_docs_fragments>`_. To include a documentation fragment, add ``extends_documentation_fragment: FRAGMENT_NAME`` in your module's documentation. 
+
+For example, all AWS modules should include::
+
+    extends_documentation_fragment:
+        - aws
+        - ec2
+
+You can find more examples by searching for ``extends_documentation_fragment`` under the Ansible source tree.
 
 .. _examples_block:
 
@@ -266,8 +289,9 @@ If your module returns facts that are often needed, an example of how to use the
 RETURN block
 ------------
 
-After the shebang, the copyright line, the license, the ``ANSIBLE_METADATA`` section, ``DOCUMENTATION`` and ``EXAMPLES`` blocks comes the ``RETURN`` block. This section documents the information the module returns for use by other modules. If your module doesn't return anything (apart from the standard returns), this section of your module should read: ``RETURN = ''' # '''``
+After the shebang, the copyright line, the license, the ``ANSIBLE_METADATA`` section, ``DOCUMENTATION`` and ``EXAMPLES`` blocks comes the ``RETURN`` block. This section documents the information the module returns for use by other modules. 
 
+If your module doesn't return anything (apart from the standard returns), this section of your module should read: ``RETURN = ''' # '''``
 Otherwise, for each value returned, provide the following fields. All fields are required unless specified otherwise.
 
 :return name:
