@@ -27,7 +27,7 @@ Emacs
 A free, open-source text editor and IDE that supports auto-indentation, syntax highlighting and built in terminal shell(among other things).
 
 * `yaml-mode <https://github.com/yoshiki/yaml-mode>`_ - YAML highlighting and syntax checking.
-* `inja2-mode <https://github.com/paradoxxxzero/jinja2-mode>`_ - Jinja2 highlighting and syntax checking.
+* `jinja2-mode <https://github.com/paradoxxxzero/jinja2-mode>`_ - Jinja2 highlighting and syntax checking.
 * `magit-mode <https://github.com/magit/magit>`_ -  Git porcelain within Emacs.
 
 
