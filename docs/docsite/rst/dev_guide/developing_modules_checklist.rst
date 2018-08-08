@@ -50,7 +50,7 @@ Write clear, concise, secure, maintainable, user-friendly module code
 	.. code-block:: python
 
 	    try:
-            import foo
+	        import foo
 	        HAS_LIB=True
 	    except:
 	        HAS_LIB=False
