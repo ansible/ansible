@@ -84,7 +84,7 @@ EXAMPLES = """
 
 - name: Load a variable file based on the OS type, or a default if not found. Using free-form to specify the file.
   include_vars: "{{ item }}"
-  loop: "{{ q('first_found', ansible_distribution ~ ".yaml", ansible_os_family ~ ".yaml", "default.yaml") }}"
+  loop: "{{ q('first_found', ansible_distribution ~ '.yaml', ansible_os_family ~ '.yaml', 'default.yaml') }}"
 
 - name: Bare include (free-form)
   include_vars: myvars.yaml

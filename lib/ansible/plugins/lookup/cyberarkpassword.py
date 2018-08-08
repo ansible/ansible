@@ -46,7 +46,7 @@ EXAMPLES = """
 
   - name: used in a loop
     debug: msg={{item}}
-    loop: "{{ q("cyberarkpassword", cyquery) }}"
+    loop: "{{ q('cyberarkpassword', cyquery) }}"
     vars:
       cyquery:
         appid: 'app_ansible'

@@ -29,7 +29,7 @@ EXAMPLES = """
 
 - name: More useful example of looping over a command result
   shell: "/usr/bin/frobnicate {{ item }}"
-  loop: "{{ q('lines', "/usr/bin/frobnications_per_host --param " ~ inventory_hostname) }}"
+  loop: "{{ q('lines', '/usr/bin/frobnications_per_host --param ' ~ inventory_hostname) }}"
 """
 
 RETURN = """

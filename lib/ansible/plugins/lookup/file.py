@@ -36,7 +36,7 @@ EXAMPLES = """
 # "bar.txt" will be looked in files/ dir relative to play or in role
 - name: display multiple file contents
   debug: var=item
-  loop: "{{ q('file', "/path/to/foo.txt", "bar.txt", "/path/to/biz.txt") }}"
+  loop: "{{ q('file', '/path/to/foo.txt', 'bar.txt', '/path/to/biz.txt') }}"
 """
 
 RETURN = """
