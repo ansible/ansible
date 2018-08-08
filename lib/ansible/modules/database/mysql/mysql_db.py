@@ -66,6 +66,7 @@ options:
     description:
       - When I(state) is C(dump), generate compact dump. Equivalent to C(--compact) flag in C(mysqldump).
         When this option is disabled, idempotence is lost.
+        Dumps created with this option enabled cannot be used to overwrite existing tables by using them as a source for importing.
     type: bool
     required: false
     default: 'yes'
