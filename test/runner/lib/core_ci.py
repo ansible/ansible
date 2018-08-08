@@ -115,13 +115,11 @@ class AnsibleCoreCI(object):
                 region = 'us-east-1'
 
             self.endpoints = AWS_ENDPOINTS[region],
+            self.ssh_key = SshKey(args)
 
             if self.platform == 'windows':
-                # Windows supports SSH for all hosts except 2008 (non R2)
-                self.ssh_key = None if self.version == '2008' else SshKey(args)
                 self.port = 5986
             else:
-                self.ssh_key = SshKey(args)
                 self.port = 22
         elif self.provider == 'parallels':
             self.endpoints = self._get_parallels_endpoints()
