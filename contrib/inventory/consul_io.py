@@ -191,10 +191,7 @@ if os.getenv('ANSIBLE_INVENTORY_CONSUL_IO_LOG_ENABLED'):
     setup_logging()
 
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 try:
     import consul
