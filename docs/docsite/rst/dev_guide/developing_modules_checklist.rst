@@ -1,3 +1,4 @@
+.. _developing_modules_checklist:
 .. _module_contribution:
 
 ===================================

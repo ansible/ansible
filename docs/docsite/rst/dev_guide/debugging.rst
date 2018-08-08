@@ -1,4 +1,4 @@
-.. _developing_debugging
+.. _debugging:
 
 =================
 Debugging Modules
