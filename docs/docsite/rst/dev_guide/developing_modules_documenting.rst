@@ -94,7 +94,7 @@ Ansible Metadata Fields
    * curated (*deprecated value - modules in this category should be core or
      certified instead*)
 
-:status: List of strings describing how stable the module is likely to be.
+:status: List of strings describing how stable the module is likely to be. See also :ref:`module_lifecycle`.
    The default value is a single element list ["preview"]. The following strings are valid
    statuses and have the following meanings:
 
@@ -159,20 +159,7 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 
 :deprecated:
 
-  * Marks modules that will be removed in future releases.
-  * When you deprecate a module you must:
-
-    * Mention the deprecation in the relevant ``CHANGELOG``
-    * Reference the deprecation in the relevant ``porting_guide_x.y.rst``
-    * Rename the file so it starts with an ``_``
-    * Update ``ANSIBLE_METADATA`` to contain ``status: ['deprecated']``
-    * Add ``deprecated:`` to the documentation with the following sub-values:
-    :removed_in: A `string`, such as ``"2.9"``, which represents the version of Ansible this module will replaced with docs only module stub.
-    :why: Optional string that used to detail why this has been removed.
-    :alternative: Inform users they should do instead, i.e. ``Use M(whatmoduletouseinstead) instead.``.
-
-  * See the `kubernetes module code <https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/clustering/k8s/_kubernetes.py>`_
-    for an example of documenting deprecation.
+  * Marks modules that will be removed in future releases. See also :ref:`module_lifecycle`.
 
 :options:
 
