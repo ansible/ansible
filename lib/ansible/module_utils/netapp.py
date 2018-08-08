@@ -88,7 +88,7 @@ def na_ontap_host_argument_spec():
         username=dict(required=True, type='str', aliases=['user']),
         password=dict(required=True, type='str', aliases=['pass'], no_log=True),
         https=dict(required=False, type='bool', default=False),
-        no_cert_verify=dict(required=False, type='bool', default=True),
+        validate_certs=dict(required=False, type='bool', default=True),
         http_port=dict(required=False, type='int')
     )
 
