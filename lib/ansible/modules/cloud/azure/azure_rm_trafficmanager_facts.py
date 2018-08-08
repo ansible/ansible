@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_aks_facts
+module: azure_rm_trafficmanager_facts
 
 version_added: "2.7"
 
