@@ -38,6 +38,7 @@ options:
   sendonly:
     description:
       - Bool value that will send I(command) but not wait for a result.
+    type: bool
     default: false
     required: false
 """
