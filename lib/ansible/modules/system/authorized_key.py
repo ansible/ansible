@@ -106,10 +106,10 @@ EXAMPLES = '''
   authorized_key:
     user: deploy
     state: present
-    key: '{{ item }}'
+    key: "{{ lookup('file', item) }}"
   loop:
-    - "{{ lookup('file', 'public_keys/doe-jane') }}"
-    - "{{ lookup('file', 'public_keys/doe-john') }}"
+    - public_keys/doe-jane
+    - public_keys/doe-john
 
 - name: Set authorized key defining key options
   authorized_key:

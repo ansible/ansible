@@ -163,7 +163,7 @@ EXAMPLES = '''
       mstpctl_portnetwork: "{{ item.value.mstpctl_portnetwork | default('no') }}"
       mstpctl_portadminedge: "{{ item.value.mstpctl_portadminedge | default('no') }}"
       mstpctl_bpduguard: "{{ item.value.mstpctl_bpduguard | default('no') }}"
-  loop: '{{ cl_interfaces }}'
+  loop: '{{ cl_interfaces|dict2items }}'
   notify: reload networking
 
 # In vars file
