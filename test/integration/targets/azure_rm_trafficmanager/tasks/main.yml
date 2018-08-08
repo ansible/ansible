@@ -1,0 +1,233 @@
+- name: Prepare random number
+  set_fact:
+    tmname: "tm{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+  run_once: yes
+
+
+- name: Create a Traffic Manager profile(check mode)
+  azure_rm_trafficmanager:
+      resource_group: "{{ resource_group }}"
+      name: "{{ tmname }}"
+      tags:
+          testing: testing
+          delete: on-exit
+          foo: bar
+      location: global
+      profile_status: Enabled
+      traffic_routing_method: Performance
+      dns_config: 
+        relative_name: "{{ tmname }}"
+        ttl: 60
+      monitor_config:
+        protocol: HTTPS
+        port: 80
+        path: '/'
+      endpoints:
+        - name: e1
+          type: Microsoft.network/TrafficManagerProfiles/ExternalEndpoints
+          endpoint_location: West US 2
+          endpoint_status: Enabled
+          priority: 3
+          target: 1.2.3.4
+          weight: 1
+        - name: e2
+          type: Microsoft.network/TrafficManagerProfiles/ExternalEndpoints
+          endpoint_location: West US 2
+          endpoint_status: Enabled
+          priority: 1
+          target: azure.com
+          weight: 1
+  check_mode: yes
+
+- name: Check there is no Traffic Manager profile created
+  azure_rm_trafficmanager_facts:
+      resource_group: "{{ resource_group }}"
+      name: "{{ tmname }}"
+  register: fact
+
+- name: Check there is no Traffic Manager profile created
+  assert: { that: "{{ fact.tms | length }} == 0" }
+
+- name: Create a Traffic Manager profile
+  azure_rm_trafficmanager:
+      resource_group: "{{ resource_group }}"
+      name: "{{ tmname }}"
+      tags:
+          testing: testing
+          delete: on-exit
+          foo: bar
+      location: global
+      profile_status: Enabled
+      traffic_routing_method: Performance
+      dns_config: 
+        relative_name: "{{ tmname }}"
+        ttl: 60
+      monitor_config:
+        protocol: HTTPS
+        port: 80
+        path: '/'
+      endpoints:
+        - name: e1
+          type: Microsoft.network/TrafficManagerProfiles/ExternalEndpoints
+          endpoint_location: West US 2
+          endpoint_status: Enabled
+          priority: 3
+          target: 1.2.3.4
+          weight: 1
+        - name: e2
+          type: Microsoft.network/TrafficManagerProfiles/ExternalEndpoints
+          endpoint_location: West US 2
+          endpoint_status: Enabled
+          priority: 1
+          target: 8.8.8.8
+          weight: 1
+  register: output
+
+- name: Assert the Traffic Manager profile is well created
+  assert:
+    that:
+      - output.changed
+      - output.name == "{{ tmname }}"
+
+- name: Gather Traffic Manager profile facts
+  azure_rm_trafficmanager_facts:
+      resource_group: "{{ resource_group }}"
+      name: "{{ tmname }}"
+  register: fact
+
+- name: Assert fact returns the created one
+  assert:
+      that:
+        - "fact.tms | length == 1"
+        - fact.tms[0].id == output.id
+        - fact.tms[0].endpoints | length == 2
+
+- name: Create a Traffic Manager profile (idempotent)
+  azure_rm_trafficmanager:
+      resource_group: "{{ resource_group }}"
+      name: "{{ tmname }}"
+      tags:
+          testing: testing
+          delete: on-exit
+          foo: bar
+      location: global
+      profile_status: Enabled
+      traffic_routing_method: Performance
+      dns_config: 
+        relative_name: "{{ tmname }}"
+        ttl: 60
+      monitor_config:
+        protocol: HTTPS
+        port: 80
+        path: '/'
+      endpoints:
+        - name: e1
+          type: Microsoft.network/TrafficManagerProfiles/ExternalEndpoints
+          endpoint_location: West US 2
+          endpoint_status: Enabled
+          priority: 3
+          target: 1.2.3.4
+          weight: 1
+        - name: e2
+          type: Microsoft.network/TrafficManagerProfiles/ExternalEndpoints
+          endpoint_location: West US 2
+          endpoint_status: Enabled
+          priority: 1
+          target: 8.8.8.8
+          weight: 1
+  register: output
+
+- name: Assert idempotent
+  assert:
+    that:
+      - not output.changed
+
+- name: Update the Traffic Manager profile
+  azure_rm_trafficmanager:
+      resource_group: "{{ resource_group }}"
+      name: "{{ tmname }}"
+      tags:
+          testing: testing
+          delete: on-exit
+          foo: bar
+      location: global
+      profile_status: Disabled
+      traffic_routing_method: Priority
+      dns_config: 
+        relative_name: "{{ tmname }}"
+        ttl: 60
+      monitor_config:
+        protocol: HTTPS
+        port: 80
+        path: '/'
+      endpoints:
+        - name: e1
+          type: Microsoft.network/TrafficManagerProfiles/ExternalEndpoints
+          endpoint_location: West US 2
+          endpoint_status: Enabled
+          priority: 3
+          target: 1.2.3.4
+          weight: 1
+  register: output
+
+- name: Assert the Traffic Manager profile is upgraded
+  assert:
+    that:
+      - output.changed
+      - output.endpoints | length == 1
+      - output.traffic_routing_method == 'Priority'
+
+- name: Delete the Traffic Manager profile(check mode)
+  azure_rm_trafficmanager:
+    resource_group: "{{ resource_group }}"
+    name: "{{ tmname }}"
+    state: absent
+  check_mode: yes
+
+- name: Gather Traffic Manager profile facts
+  azure_rm_trafficmanager_facts:
+      resource_group: "{{ resource_group }}"
+      name: "{{ tmname }}"
+  register: fact
+
+- name: Assert the traffic manager is still there
+  assert:
+      that:
+        - "fact.tms | length == 1"
+        - fact.tms[0].id == output.id
+        - fact.tms[0].endpoints | length == 1
+
+- name: Delete the Traffic Manager profile
+  azure_rm_trafficmanager:
+    resource_group: "{{ resource_group }}"
+    name: "{{ tmname }}"
+    state: absent
+  register: output
+
+- name: Assert the Traffic Manager profile is well deleted
+  assert:
+    that:
+      - output.changed
+
+- name: Delete the Traffic Manager profile (idempotent)
+  azure_rm_trafficmanager:
+    resource_group: "{{ resource_group }}"
+    name: "{{ tmname }}"
+    state: absent
+  register: output
+
+- name: Assert idempotent
+  assert:
+    that:
+      - not output.changed
+
+- name: Get Traffic Manager profile fact
+  azure_rm_trafficmanager_facts:
+      resource_group: "{{ resource_group }}"
+      name: "{{ tmname }}"
+  register: fact
+
+- name: Assert fact returns empty
+  assert:
+    that:
+      - "fact.tms | length == 0"
