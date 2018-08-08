@@ -166,7 +166,7 @@ EXAMPLES = '''
           relative_name: tmtest
           ttl: 60
         monitor_config:
-          protocol: https
+          protocol: HTTPS
           port: 80
           path: '/'
         endpoints:
@@ -322,6 +322,7 @@ def create_endpoint_instance(self, endpoint):
 
 def create_endpoints(self, endpoints):
     return [create_endpoint_instance(self, endpoint) for endpoint in endpoints]
+
 
 dns_config_spec = dict(
     relative_name=dict(type='str'),
@@ -570,6 +571,7 @@ class AzureRMTrafficManager(AzureRMModuleBase):
 def main():
     """Main execution"""
     AzureRMTrafficManager()
+
 
 if __name__ == '__main__':
     main()
