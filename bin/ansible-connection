@@ -36,6 +36,22 @@ from ansible.utils.display import Display
 from ansible.utils.jsonrpc import JsonRpcServer
 
 
+def read_stream(byte_stream):
+    size = int(byte_stream.readline().strip())
+
+    data = byte_stream.read(size)
+    if len(data) < size:
+        raise Exception("EOF found before data was complete")
+
+    # Read sentinel value
+    byte_stream.read(12)
+
+    # restore escaped loose \r characters
+    data = data.replace(br'\r', b'\r')
+
+    return data
+
+
 @contextmanager
 def file_lock(lock_path):
     """
@@ -204,25 +220,8 @@ def main():
 
     try:
         # read the play context data via stdin, which means depickling it
-        cur_line = stdin.readline()
-        init_data = b''
-
-        while cur_line.strip() != b'#END_INIT#':
-            if cur_line == b'':
-                raise Exception("EOF found before init data was complete")
-            init_data += cur_line
-            cur_line = stdin.readline()
-
-        cur_line = stdin.readline()
-        vars_data = b''
-
-        while cur_line.strip() != b'#END_VARS#':
-            if cur_line == b'':
-                raise Exception("EOF found before vars data was complete")
-            vars_data += cur_line
-            cur_line = stdin.readline()
-        # restore escaped loose \r characters
-        vars_data = vars_data.replace(br'\r', b'\r')
+        init_data = read_stream(stdin)
+        vars_data = read_stream(stdin)
 
         if PY3:
             pc_data = cPickle.loads(init_data, encoding='bytes')
