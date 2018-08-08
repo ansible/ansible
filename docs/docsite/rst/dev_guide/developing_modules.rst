@@ -5,7 +5,7 @@ Developing Modules
 
 .. contents:: Topics
 
-Modules provide specific functionality, interacting with your local machine, an API, or a remote system to perform specialized tasks like changing a database password or spinning up a cloud instance. Each module is a reusable, standalone script that can be used by the Ansible API, or by the :command:`ansible` or :command:`ansible-playbook` programs. A module provides a defined interface, accepting arguments and returning information to Ansible by printing a JSON string to stdout before exiting. Ansible ships with thousands of modules, and you can easily write your own. If you're writing a module for local use, you can choose any programming language and follow your own rules. If you want to contribute a module back to Ansible Core, however, it must:
+Modules interact with your local machine, an API, or a remote system to perform specific tasks like changing a database password or spinning up a cloud instance. Each module is a reusable, standalone script that can be used by the Ansible API, or by the :command:`ansible` or :command:`ansible-playbook` programs. A module provides a defined interface, accepting arguments and returning information to Ansible by printing a JSON string to stdout before exiting. Ansible ships with thousands of modules, and you can easily write your own. If you're writing a module for local use, you can choose any programming language and follow your own rules. If you want to contribute a module back to Ansible Core, however, it must:
 
 * be written in either Python or Powershell for Windows
 * include comprehensive tests
