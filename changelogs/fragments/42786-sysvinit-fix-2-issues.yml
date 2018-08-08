@@ -1,0 +1,4 @@
+bugfixes:
+- "sysvinit module: handle values of optional parameters (https://github.com/ansible/ansible/pull/42786).
+  Don't disable service when `enabled` parameter isn't set.
+  Fix command when `arguments` parameter isn't set."
