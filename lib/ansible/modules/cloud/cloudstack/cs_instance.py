@@ -152,6 +152,7 @@ options:
       - Enables a volume shrinkage when the new size is smaller than the old one.
     type: bool
     default: no
+    version_added: '2.7'
   tags:
     description:
       - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
@@ -1018,6 +1019,7 @@ def main():
         tags=dict(type='list', aliases=['tag']),
         details=dict(type='dict'),
         poll_async=dict(type='bool', default=True),
+        shrinkok=dict(type='bool', default=False),
     ))
 
     required_together = cs_required_together()
