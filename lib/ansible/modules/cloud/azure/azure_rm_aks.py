@@ -123,19 +123,8 @@ EXAMPLES = '''
     - name: Remove a managed Azure Container Services (AKS) instance
       azure_rm_aks:
         name: acctestaks3
-        location: eastus
-        dns_prefix: akstest
         resource_group: Testing
         state: absent
-        linux_profile:
-          admin_username: azureuser
-          ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAA...
-        agent_pool_profiles:
-          - name: default
-            count: 4
-            vm_size: Standard_A0
-        tags:
-          Ansible: azure_rm_aks
 '''
 RETURN = '''
 state:
