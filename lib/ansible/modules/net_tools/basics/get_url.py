@@ -435,8 +435,12 @@ def main():
         try:
             algorithm, checksum = checksum.split(':', 1)
             if checksum.startswith('http://') or checksum.startswith('https://') or checksum.startswith('ftp://'):
-                module.fail_json(msg="waiting to implement!!!")
-
+                checksum_url = checksum
+# implement <<<
+                # download checksum file to tmpsrc
+                checksum_tmpsrc, checksum_info = url_get(module, checksum_url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest)
+                lines = [line.rstrip('\n') for line in open('checksum_tmpsrc')]
+# implement >>>
             # Remove any non-alphanumeric characters, including the infamous
             # Unicode zero-width space
             checksum = re.sub(r'\W+', '', checksum).lower()
