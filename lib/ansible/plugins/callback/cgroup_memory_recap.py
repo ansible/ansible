@@ -43,6 +43,7 @@ DOCUMENTATION = '''
             key: cur_mem_file
 '''
 
+import csv
 import time
 import threading
 
@@ -51,18 +52,20 @@ from ansible.plugins.callback import CallbackBase
 
 class MemProf(threading.Thread):
     """Python thread for recording memory usage"""
-    def __init__(self, path, obj=None):
+    def __init__(self, path, obj=None, csvwriter=None):
         threading.Thread.__init__(self)
         self.obj = obj
         self.path = path
         self.results = []
         self.running = True
+        self.csvwriter = csvwriter
 
     def run(self):
         while self.running:
             with open(self.path) as f:
                 val = f.read()
             self.results.append(int(val.strip()) / 1024 / 1024)
+            self.csvwriter.writerow([obj.get_name(), val.strip()])
             time.sleep(0.001)
 
 
@@ -79,6 +82,8 @@ class CallbackModule(CallbackBase):
 
         self.task_results = []
 
+        self._csv_file = None
+
     def set_options(self, task_keys=None, var_options=None, direct=None):
         super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
@@ -87,6 +92,9 @@ class CallbackModule(CallbackBase):
 
         with open(self.cgroup_max_file, 'w+') as f:
             f.write('0')
+
+        self._csv_file = open('/tmp/results.csv', 'w+')
+        self._csv_writer = csv.writer(self._csv_file)
 
     def _profile_memory(self, obj=None):
         prev_task = None
@@ -99,7 +107,7 @@ class CallbackModule(CallbackBase):
             pass
 
         if obj is not None:
-            self._task_memprof = MemProf(self.cgroup_current_file, obj=obj)
+            self._task_memprof = MemProf(self.cgroup_current_file, obj=obj, csvwriter=self._csv_writer)
             self._task_memprof.start()
 
         if results is not None:
@@ -119,3 +127,9 @@ class CallbackModule(CallbackBase):
 
         for task, memory in self.task_results:
             self._display.display('%s (%s): %0.2fMB' % (task.get_name(), task._uuid, memory))
+
+        if self._csv_file:
+            try:
+                self._csv_file.close()
+            except Exception:
+                pass
