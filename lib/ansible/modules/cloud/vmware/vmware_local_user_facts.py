@@ -36,9 +36,9 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = r'''
 - name: Gather facts about all Users on given ESXi host system
   vmware_local_user_facts:
-    hostname: esxi_hostname
-    username: root
-    password: vmware
+    hostname: '{{ esxi_hostname }}'
+    username: '{{ esxi_username }}'
+    password: '{{ esxi_password }}'
   delegate_to: localhost
   register: all_user_facts
 '''

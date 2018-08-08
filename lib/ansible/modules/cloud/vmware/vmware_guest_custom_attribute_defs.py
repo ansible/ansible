@@ -52,7 +52,7 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 - name: Add VMWare Attribute Definition
   vmware_guest_custom_attribute_defs:
-    hostname: "{{ vcenter_server }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     state: present
@@ -62,7 +62,7 @@ EXAMPLES = '''
 
 - name: Remove VMWare Attribute Definition
   vmware_guest_custom_attribute_defs:
-    hostname: "{{ vcenter_server }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     state: absent

@@ -58,9 +58,9 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = r'''
 - name: Create Cluster
   vmware_cluster:
-    hostname: '{{ ansible_ssh_host }}'
-    username: root
-    password: vmware
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
     datacenter_name: datacenter
     cluster_name: cluster
     enable_ha: yes

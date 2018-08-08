@@ -44,9 +44,9 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 - name: Configure ESXi hostname and DNS servers
   vmware_dns_config:
-    hostname: esxi_hostname
-    username: root
-    password: your_password
+    hostname: '{{ esxi_hostname }}'
+    username: '{{ esxi_username }}'
+    password: '{{ esxi_password }}'
     change_hostname_to: esx01
     domainname: foo.org
     dns_servers:

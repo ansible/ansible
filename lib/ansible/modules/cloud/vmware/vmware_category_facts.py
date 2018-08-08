@@ -39,17 +39,17 @@ extends_documentation_fragment: vmware_rest_client.documentation
 EXAMPLES = r'''
 - name: Gather facts about tag categories
   vmware_category_facts:
-    hostname: "{{ vcenter_server }}"
-    username: "{{ vcenter_user }}"
-    password: "{{ vcenter_pass }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
   delegate_to: localhost
   register: all_tag_category_facts
 
 - name: Gather category id from given tag category
   vmware_category_facts:
-    hostname: "{{ vcenter_server }}"
-    username: "{{ vcenter_user }}"
-    password: "{{ vcenter_pass }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
   delegate_to: localhost
   register: tag_category_results
 

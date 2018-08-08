@@ -51,7 +51,7 @@ EXAMPLES = r'''
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
-    cluster_name: cluster_name
+    cluster_name: '{{ cluster_name }}'
   delegate_to: localhost
   register: cluster_host_vmnics
 

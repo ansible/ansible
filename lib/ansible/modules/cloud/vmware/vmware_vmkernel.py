@@ -116,12 +116,12 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 -  name: Add Management vmkernel port using static network type
    vmware_vmkernel:
-      hostname: 192.168.127.9
-      username: admin
-      password: supersecret123
+      hostname: '{{ esxi_hostname }}'
+      username: '{{ esxi_username }}'
+      password: '{{ esxi_password }}'
       vswitch_name: vSwitch0
       portgroup_name: PG_0001
-      vlan_id: vlan_id
+      vlan_id: '{{ vlan_id }}'
       network:
         type: 'static'
         ip_address: 192.168.127.10
@@ -132,12 +132,12 @@ EXAMPLES = '''
 
 -  name: Add Management vmkernel port using DHCP network type
    vmware_vmkernel:
-      hostname: 192.168.127.9
-      username: admin
-      password: supersecret123
+      hostname: '{{ esxi_hostname }}'
+      username: '{{ esxi_username }}'
+      password: '{{ esxi_password }}'
       vswitch_name: vSwitch0
       portgroup_name: PG_0002
-      vlan_id: vlan_id
+      vlan_id: '{{ vlan_id }}'
       state: present
       network:
         type: 'dhcp'
@@ -146,12 +146,12 @@ EXAMPLES = '''
 
 -  name: Delete VMkernel port using DHCP network type
    vmware_vmkernel:
-      hostname: 192.168.127.9
-      username: admin
-      password: supersecret123
+      hostname: '{{ esxi_hostname }}'
+      username: '{{ esxi_username }}'
+      password: '{{ esxi_password }}'
       vswitch_name: vSwitch0
       portgroup_name: PG_0002
-      vlan_id: vlan_id
+      vlan_id: '{{ vlan_id }}'
       state: absent
    delegate_to: localhost
 '''

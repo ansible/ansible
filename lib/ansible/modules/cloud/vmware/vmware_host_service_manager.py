@@ -68,7 +68,7 @@ EXAMPLES = r'''
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
-    cluster_name: cluster_name
+    cluster_name: '{{ cluster_name }}'
     service_name: ntpd
     state: present
   delegate_to: localhost

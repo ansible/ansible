@@ -52,22 +52,21 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 - name: Gather facts from standalone ESXi server having datacenter as 'ha-datacenter'
   vmware_datastore_facts:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
-    datacenter: ha-datacenter
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter: '{{ datacenter_name }}'
     validate_certs: no
   delegate_to: localhost
   register: facts
 
 - name: Gather facts from datacenter about specific datastore
   vmware_datastore_facts:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
-    datacenter: DC0
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter: '{{ datacenter_name }}'
     name: datastore1
-    validate_certs: no
   delegate_to: localhost
   register: facts
 '''

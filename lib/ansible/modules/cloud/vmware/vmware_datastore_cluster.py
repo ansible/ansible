@@ -50,22 +50,22 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 - name: Create datastore cluster
   vmware_datastore_cluster:
-    hostname: vCenter
-    username: root
-    password: vmware
-    datacenter_name: "datacenter"
-    datastore_cluster_name: datacluster0
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter_name: '{{ datacenter_name }}'
+    datastore_cluster_name: '{{ datastore_cluster_name }}'
     state: present
   delegate_to: localhost
 
 
 - name: Delete datastore cluster
   vmware_datastore_cluster:
-    hostname: vCenter
-    username: root
-    password: vmware
-    datacenter_name: "datacenter"
-    datastore_cluster_name: datacluster0
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter_name: '{{ datacenter_name }}'
+    datastore_cluster_name: '{{ datastore_cluster_name }}'
     state: absent
   delegate_to: localhost
 '''
