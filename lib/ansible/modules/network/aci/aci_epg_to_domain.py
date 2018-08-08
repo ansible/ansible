@@ -112,6 +112,7 @@ EXAMPLES = r'''
     domain: anstest
     domain_type: phys
     state: present
+  delegate_to: localhost
 
 - name: Remove an existing physical domain to EPG binding
   aci_epg_to_domain:
@@ -124,6 +125,7 @@ EXAMPLES = r'''
     domain: anstest
     domain_type: phys
     state: absent
+  delegate_to: localhost
 
 - name: Query a specific physical domain to EPG binding
   aci_epg_to_domain:
@@ -136,6 +138,8 @@ EXAMPLES = r'''
     domain: anstest
     domain_type: phys
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all domain to EPG bindings
   aci_epg_to_domain:
@@ -143,6 +147,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''

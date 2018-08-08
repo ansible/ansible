@@ -63,6 +63,7 @@ EXAMPLES = r'''
     tenant: ansible_test
     taboo_contract: taboo_contract_test
     state: present
+  delegate_to: localhost
 
 - name: Remove taboo contract
   aci_taboo_contract:
@@ -72,6 +73,7 @@ EXAMPLES = r'''
     tenant: ansible_test
     taboo_contract: taboo_contract_test
     state: absent
+  delegate_to: localhost
 
 - name: Query all taboo contracts
   aci_taboo_contract:
@@ -79,6 +81,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query a specific taboo contract
   aci_taboo_contract:
@@ -88,6 +92,8 @@ EXAMPLES = r'''
     tenant: ansible_test
     taboo_contract: taboo_contract_test
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''

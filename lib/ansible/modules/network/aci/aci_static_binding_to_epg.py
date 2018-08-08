@@ -125,6 +125,7 @@ EXAMPLES = r'''
     leafs: 101
     interface: '1/7'
     state: present
+  delegate_to: localhost
 
 - name: Remove Static Path binding for given EPG
   aci_static_binding_to_epg:
@@ -139,6 +140,7 @@ EXAMPLES = r'''
     leafs: 101
     interface: '1/7'
     state: absent
+  delegate_to: localhost
 
 - name: Get specific Static Path binding for given EPG
   aci_static_binding_to_epg:
@@ -153,6 +155,8 @@ EXAMPLES = r'''
     leafs: 101
     interface: '1/7'
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''

@@ -57,6 +57,7 @@ EXAMPLES = r'''
     monitoring_policy: '{{ monitoring_policy }}'
     description: '{{ description }}'
     tenant: '{{ tenant }}'
+  delegate_to: localhost
 '''
 
 RETURN = r'''

@@ -97,6 +97,7 @@ EXAMPLES = r'''
     toi_port: 16
     policy_group: policygroupname
     state: present
+  delegate_to: localhost
 
 - name: Associate an interface access port selector to an Interface Policy Leaf Profile (w/o policy group) (check if this works)
   aci_access_port_to_interface_policy_leaf_profile:
@@ -109,6 +110,7 @@ EXAMPLES = r'''
     from_port: 13
     to_port: 16
     state: present
+  delegate_to: localhost
 
 - name: Remove an interface access port selector associated with an Interface Policy Leaf Profile
   aci_access_port_to_interface_policy_leaf_profile:
@@ -118,6 +120,7 @@ EXAMPLES = r'''
     leaf_interface_profile: leafintprfname
     access_port_selector: accessportselectorname
     state: absent
+  delegate_to: localhost
 
 - name: Query Specific access_port_selector under given leaf_interface_profile
   aci_access_port_to_interface_policy_leaf_profile:
@@ -127,6 +130,8 @@ EXAMPLES = r'''
     leaf_interface_profile: leafintprfname
     access_port_selector: accessportselectorname
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''

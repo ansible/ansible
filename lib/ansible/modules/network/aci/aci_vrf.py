@@ -67,6 +67,7 @@ EXAMPLES = r'''
     policy_control_preference: enforced
     policy_control_direction: ingress
     state: present
+  delegate_to: localhost
 
 - name: Remove a VRF for a tenant
   aci_vrf:
@@ -76,6 +77,7 @@ EXAMPLES = r'''
     vrf: vrf_lab
     tenant: lab_tenant
     state: absent
+  delegate_to: localhost
 
 - name: Query a VRF of a tenant
   aci_vrf:
@@ -85,6 +87,8 @@ EXAMPLES = r'''
     vrf: vrf_lab
     tenant: lab_tenant
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all VRFs
   aci_vrf:
@@ -92,6 +96,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''

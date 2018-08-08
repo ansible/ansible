@@ -76,6 +76,7 @@ EXAMPLES = r'''
     pool_type: vlan
     pool_allocation_mode: dynamic
     state: present
+  delegate_to: localhost
 
 - name: Remove domain to VLAN pool binding
   aci_domain_to_encap_pool:
@@ -88,6 +89,7 @@ EXAMPLES = r'''
     pool_type: vlan
     pool_allocation_mode: dynamic
     state: absent
+  delegate_to: localhost
 
 - name: Query our domain to VLAN pool binding
   aci_domain_to_encap_pool:
@@ -99,6 +101,8 @@ EXAMPLES = r'''
     pool_type: vlan
     pool_allocation_mode: dynamic
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all domain to VLAN pool bindings
   aci_domain_to_encap_pool:
@@ -109,6 +113,8 @@ EXAMPLES = r'''
     pool_type: vlan
     pool_allocation_mode: dynamic
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''

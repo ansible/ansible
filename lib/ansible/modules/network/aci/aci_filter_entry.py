@@ -105,6 +105,7 @@ EXAMPLES = r'''
     icmp_msg_type: "{{ icmp_msg_type }}"
     filter: "{{ filter }}"
     descr: "{{ descr }}"
+  delegate_to: localhost
 '''
 
 RETURN = r'''
