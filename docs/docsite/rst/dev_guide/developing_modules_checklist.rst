@@ -9,6 +9,8 @@ If you want to contribute a module to Ansible, you must meet our objective and s
 Objective requirements
 ----------------------
 
+To contribute a module to Ansible, you must:
+
 * write your module in either Python or Powershell for Windows
 * use the ``AnsibleModule`` common code
 * support Python 2.6 and Python 3.5 - if your module cannot support Python 2.6, explain the required minimum Python version and rationale in the requirements section in ``DOCUMENTATION`` ## TODO confirm required python versions
