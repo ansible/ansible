@@ -152,5 +152,6 @@ class AzureRMResourceGroupFacts(AzureRMModuleBase):
 def main():
     AzureRMResourceGroupFacts()
 
+
 if __name__ == '__main__':
     main()

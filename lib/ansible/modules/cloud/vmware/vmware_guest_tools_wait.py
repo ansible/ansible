@@ -62,20 +62,21 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 - name: Wait for VMware tools to become available by UUID
   vmware_guest_facts:
-    hostname: "{{ vcenter_server }}"
-    username: "{{ vcenter_user }}"
-    password: "{{ vcenter_pass }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     datacenter: "{{ datacenter }}"
-    folder: "/{{datacenter}}/vm"
+    folder: /"{{datacenter}}"/vm
     name: "{{ vm_name }}"
+  delegate_to: localhost
   register: vm_facts
 
 - name: Get UUID from previous task and pass it to this task
   vmware_guest_tools_wait:
-    hostname: "{{ vcenter_server }}"
-    username: "{{ vcenter_user }}"
-    password: "{{ vcenter_pass }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     uuid: "{{ vm_facts.instance.hw_product_uuid }}"
   delegate_to: localhost
@@ -84,12 +85,12 @@ EXAMPLES = '''
 
 - name: Wait for VMware tools to become available by name
   vmware_guest_tools_wait:
-    hostname: "{{ vcenter_server }}"
-    username: "{{ vcenter_user }}"
-    password: "{{ vcenter_pass }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     name: test-vm
-    folder: "/{{datacenter}}/vm"
+    folder: /"{{datacenter}}"/vm
   delegate_to: localhost
   register: facts
 '''

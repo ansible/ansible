@@ -78,6 +78,7 @@ EXAMPLES = r'''
     block_start: 20
     block_end: 50
     state: present
+  delegate_to: localhost
 
 - name: Remove a VLAN encap block
   aci_vlan_pool_encap_block:
@@ -88,6 +89,7 @@ EXAMPLES = r'''
     block_start: 20
     block_end: 50
     state: absent
+  delegate_to: localhost
 
 - name: Query a VLAN encap block
   aci_vlan_pool_encap_block:
@@ -98,6 +100,8 @@ EXAMPLES = r'''
     block_start: 20
     block_end: 50
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query a VLAN pool for encap blocks
   aci_vlan_pool_encap_block:
@@ -106,6 +110,8 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     pool: production
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all VLAN encap blocks
   aci_vlan_pool_encap_block:
@@ -113,6 +119,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -275,33 +283,15 @@ def main():
             if not 1 <= encap_id <= 4094:
                 module.fail_json(msg="vlan pools must have 'block_start' and 'block_end' values between 1 and 4094")
 
-    # Build proper proper filter_target based on block_start, block_end, and block_name
     if block_end is not None and block_start is not None:
         # Validate block_start is less than block_end
         if block_start > block_end:
             module.fail_json(msg="The 'block_start' must be less than or equal to the 'block_end'")
 
-        if block_name is None:
-            block_filter_target = 'and(eq({0}.from, "{1}"),eq({0}.to, "{2}"))'.format('fvnsEncapBlk', encap_start, encap_end)
-        else:
-            block_filter_target = 'and(eq({0}.from, "{1}"),eq({0}.to, "{2}"),eq({0}.name, "{3}"))'.format('fvnsEncapBlk', encap_start, encap_end, block_name)
     elif block_end is None and block_start is None:
         if block_name is None:
             # Reset range managed object to None for aci util to properly handle query
             aci_block_mo = None
-            block_filter_target = ''
-        else:
-            block_filter_target = 'eq({0}.name, "{1}")'.format('fvnsEncapBlk', block_name)
-    elif block_start is not None:
-        if block_name is None:
-            block_filter_target = 'eq({0}.from, "{1}")'.format('fvnsEncapBlk', encap_start)
-        else:
-            block_filter_target = 'and(eq({0}.from, "{1}"),eq({0}.name, "{2}"))'.format('fvnsEncapBlk', encap_start, block_name)
-    else:
-        if block_name is None:
-            block_filter_target = 'eq({0}.to, "{1}")'.format('fvnsEncapBlk', encap_end)
-        else:
-            block_filter_target = 'and(eq({0}.to, "{1}"),eq({0}.name, "{2}"))'.format('fvnsEncapBlk', encap_end, block_name)
 
     # ACI Pool URL requires the allocation mode (ex: uni/infra/vlanns-[poolname]-static)
     if pool is not None:
@@ -315,14 +305,14 @@ def main():
         root_class=dict(
             aci_class='fvnsVlanInstP',
             aci_rn='infra/vlanns-{0}'.format(pool_name),
-            filter_target='eq(fvnsVlanInstP.name, "{0}")'.format(pool),
             module_object=pool,
+            target_filter={'name': pool},
         ),
         subclass_1=dict(
             aci_class='fvnsEncapBlk',
             aci_rn=aci_block_mo,
-            filter_target=block_filter_target,
             module_object=aci_block_mo,
+            target_filter={'from': encap_start, 'to': encap_end, 'name': block_name},
         ),
     )
 

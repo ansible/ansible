@@ -216,6 +216,7 @@ class Interfaces(FactsBase):
         if match:
             return match.group(1)
 
+
 FACT_SUBSETS = dict(
     interfaces=Interfaces,
     config=Config,

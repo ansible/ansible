@@ -107,17 +107,18 @@ extends_documentation_fragment: vmware.documentation
 
 EXAMPLES = r'''
 - vmware_deploy_ovf:
-    hostname: esx.example.org
-    username: root
-    password: passw0rd
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
     ovf: /path/to/ubuntu-16.04-amd64.ovf
     wait_for_ip_address: true
+  delegate_to: localhost
 '''
 
 
 RETURN = r'''
 instance:
-    description: metadata about the new virtualmachine
+    description: metadata about the new virtual machine
     returned: always
     type: dict
     sample: None

@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: nios_cname_record
-version_added: "2.6"
+version_added: "2.7"
 author: "Blair Rampling (@brampling)"
 short_description: Configure Infoblox NIOS CNAME records
 description:
@@ -109,6 +109,7 @@ RETURN = ''' # '''
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.net_tools.nios.api import WapiModule
+from ansible.module_utils.net_tools.nios.api import NIOS_CNAME_RECORD
 
 
 def main():
@@ -139,7 +140,7 @@ def main():
                            supports_check_mode=True)
 
     wapi = WapiModule(module)
-    result = wapi.run('record:cname', ib_spec)
+    result = wapi.run(NIOS_CNAME_RECORD, ib_spec)
 
     module.exit_json(**result)
 

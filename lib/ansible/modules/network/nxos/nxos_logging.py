@@ -395,7 +395,7 @@ def main():
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
 
-    commands = map_obj_to_commands((want, have), module)
+    commands = map_obj_to_commands((want, have))
     result['commands'] = commands
 
     if commands:

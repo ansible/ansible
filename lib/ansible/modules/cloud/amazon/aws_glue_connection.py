@@ -325,5 +325,6 @@ def main():
     else:
         delete_glue_connection(connection_glue, module, glue_connection)
 
+
 if __name__ == '__main__':
     main()

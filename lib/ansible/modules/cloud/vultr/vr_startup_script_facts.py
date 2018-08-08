@@ -102,6 +102,9 @@ class AnsibleVultrStartupScriptFacts(Vultr):
 
 
 def parse_startupscript_list(startupscipts_list):
+    if not startupscipts_list:
+        return []
+
     return [startupscript for id, startupscript in startupscipts_list.items()]
 
 

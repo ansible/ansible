@@ -185,7 +185,6 @@ def load_config_file():
         return None
     else:
         return p
-p = load_config_file()
 
 
 def rax_slugify(value):
@@ -469,5 +468,6 @@ def main():
     sys.exit(0)
 
 
+p = load_config_file()
 if __name__ == '__main__':
     main()

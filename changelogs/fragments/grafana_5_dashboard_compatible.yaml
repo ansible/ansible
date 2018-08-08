@@ -1,0 +1,3 @@
+---
+bugfixes:
+- Grafana dashboard module compatible with grafana 5 (https://github.com/ansible/ansible/pull/41249)

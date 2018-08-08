@@ -105,9 +105,9 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = r'''
 - name: Run command inside a virtual machine
   vmware_vm_shell:
-    hostname: "{{ vcenter_server }}"
-    username: "{{ vcenter_user }}"
-    password: "{{ vcenter_pass }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     datacenter: "{{ datacenter }}"
     folder: /"{{datacenter}}"/vm
     vm_id: "{{ vm_name }}"
@@ -124,9 +124,9 @@ EXAMPLES = r'''
 
 - name: Run command inside a virtual machine with wait and timeout
   vmware_vm_shell:
-    hostname: "{{ vcenter_server }}"
-    username: "{{ vcenter_user }}"
-    password: "{{ vcenter_pass }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     datacenter: "{{ datacenter }}"
     folder: /"{{datacenter}}"/vm
     vm_id: NameOfVM
@@ -141,9 +141,9 @@ EXAMPLES = r'''
 
 - name: Change user password in the guest machine
   vmware_vm_shell:
-    hostname: "{{ vcenter_server }}"
-    username: "{{ vcenter_user }}"
-    password: "{{ vcenter_pass }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     datacenter: "{{ datacenter }}"
     folder: /"{{datacenter}}"/vm
     vm_id: "{{ vm_name }}"
@@ -155,9 +155,9 @@ EXAMPLES = r'''
 
 - name: Change hostname of guest machine
   vmware_vm_shell:
-    hostname: "{{ vcenter_server }}"
-    username: "{{ vcenter_user }}"
-    password: "{{ vcenter_pass }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     datacenter: "{{ datacenter }}"
     folder: /"{{datacenter}}"/vm

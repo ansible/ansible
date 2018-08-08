@@ -69,9 +69,9 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 - name: Gather facts from standalone ESXi server having datacenter as 'ha-datacenter'
   vmware_guest_facts:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     datacenter: ha-datacenter
     validate_certs: no
     uuid: 421e4592-c069-924d-ce20-7e7533fab926

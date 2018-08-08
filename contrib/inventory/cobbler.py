@@ -312,4 +312,5 @@ class CobblerInventory(object):
         else:
             return json.dumps(data)
 
+
 CobblerInventory()

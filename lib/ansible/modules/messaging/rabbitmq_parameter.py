@@ -151,5 +151,6 @@ def main():
     result['state'] = state
     module.exit_json(**result)
 
+
 if __name__ == '__main__':
     main()

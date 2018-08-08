@@ -28,6 +28,7 @@ from subprocess import Popen, PIPE
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.six import string_types
 from ansible.playbook.role.definition import RoleDefinition
 
@@ -189,6 +190,8 @@ class RoleRequirement(RoleDefinition):
 
         def run_scm_cmd(cmd, tempdir):
             try:
+                stdout = ''
+                stderr = ''
                 popen = Popen(cmd, cwd=tempdir, stdout=PIPE, stderr=PIPE)
                 stdout, stderr = popen.communicate()
             except Exception as e:
@@ -203,12 +206,17 @@ class RoleRequirement(RoleDefinition):
         if scm not in ['hg', 'git']:
             raise AnsibleError("- scm %s is not currently supported" % scm)
 
+        try:
+            scm_path = get_bin_path(scm)
+        except (ValueError, OSError, IOError):
+            raise AnsibleError("could not find/use %s, it is required to continue with installing %s" % (scm, src))
+
         tempdir = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)
-        clone_cmd = [scm, 'clone', src, name]
+        clone_cmd = [scm_path, 'clone', src, name]
         run_scm_cmd(clone_cmd, tempdir)
 
         if scm == 'git' and version:
-            checkout_cmd = [scm, 'checkout', version]
+            checkout_cmd = [scm_path, 'checkout', version]
             run_scm_cmd(checkout_cmd, os.path.join(tempdir, name))
 
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.tar', dir=C.DEFAULT_LOCAL_TMP)
@@ -218,12 +226,12 @@ class RoleRequirement(RoleDefinition):
             with tarfile.open(temp_file.name, "w") as tar:
                 tar.add(os.path.join(tempdir, name), arcname=name)
         elif scm == 'hg':
-            archive_cmd = ['hg', 'archive', '--prefix', "%s/" % name]
+            archive_cmd = [scm_path, 'archive', '--prefix', "%s/" % name]
             if version:
                 archive_cmd.extend(['-r', version])
             archive_cmd.append(temp_file.name)
         elif scm == 'git':
-            archive_cmd = ['git', 'archive', '--prefix=%s/' % name, '--output=%s' % temp_file.name]
+            archive_cmd = [scm_path, 'archive', '--prefix=%s/' % name, '--output=%s' % temp_file.name]
             if version:
                 archive_cmd.append(version)
             else:

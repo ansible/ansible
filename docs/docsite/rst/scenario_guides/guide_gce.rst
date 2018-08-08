@@ -240,4 +240,4 @@ rest.
 Note that use of the "add_host" module above creates a temporary, in-memory group.  This means that a play in the same playbook can then manage machines
 in the 'new_instances' group, if so desired.  Any sort of arbitrary configuration is possible at this point.
 
-For more information about Google Cloud, please visit the `Google Cloud website <https://cloud.google.com>`
+For more information about Google Cloud, please visit the `Google Cloud website <https://cloud.google.com>`_.

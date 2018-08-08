@@ -92,6 +92,7 @@ EXAMPLES = r'''
     priority: level1
     dscp: unspecified
     state: present
+  register: query_result
 
 - name: Remove a contract subject
   aci_contract_subject:
@@ -102,6 +103,7 @@ EXAMPLES = r'''
     contract: web_to_db
     subject: default
     state: absent
+  delegate_to: localhost
 
 - name: Query a contract subject
   aci_contract_subject:
@@ -112,6 +114,8 @@ EXAMPLES = r'''
     contract: web_to_db
     subject: default
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all contract subjects
   aci_contract_subject:
@@ -119,6 +123,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -286,20 +292,20 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='vzBrCP',
             aci_rn='brc-{0}'.format(contract),
-            filter_target='eq(vzBrCP.name, "{0}")'.format(contract),
             module_object=contract,
+            target_filter={'name': contract},
         ),
         subclass_2=dict(
             aci_class='vzSubj',
             aci_rn='subj-{0}'.format(subject),
-            filter_target='eq(vzSubj.name, "{0}")'.format(subject),
             module_object=subject,
+            target_filter={'name': subject},
         ),
     )
 
@@ -327,6 +333,7 @@ def main():
         aci.delete_config()
 
     aci.exit_json()
+
 
 if __name__ == "__main__":
     main()

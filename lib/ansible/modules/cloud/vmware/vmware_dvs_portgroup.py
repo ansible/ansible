@@ -139,74 +139,74 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-   - name: Create vlan portgroup
-     connection: local
-     vmware_dvs_portgroup:
-        hostname: vcenter_ip_or_hostname
-        username: vcenter_username
-        password: vcenter_password
-        portgroup_name: vlan-123-portrgoup
-        switch_name: dvSwitch
-        vlan_id: 123
-        num_ports: 120
-        portgroup_type: earlyBinding
-        state: present
+- name: Create vlan portgroup
+  vmware_dvs_portgroup:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    portgroup_name: vlan-123-portrgoup
+    switch_name: dvSwitch
+    vlan_id: 123
+    num_ports: 120
+    portgroup_type: earlyBinding
+    state: present
+  delegate_to: localhost
 
-   - name: Create vlan trunk portgroup
-     connection: local
-     vmware_dvs_portgroup:
-        hostname: vcenter_ip_or_hostname
-        username: vcenter_username
-        password: vcenter_password
-        portgroup_name: vlan-trunk-portrgoup
-        switch_name: dvSwitch
-        vlan_id: 1-1000
-        vlan_trunk: True
-        num_ports: 120
-        portgroup_type: earlyBinding
-        state: present
+- name: Create vlan trunk portgroup
+  vmware_dvs_portgroup:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    portgroup_name: vlan-trunk-portrgoup
+    switch_name: dvSwitch
+    vlan_id: 1-1000
+    vlan_trunk: True
+    num_ports: 120
+    portgroup_type: earlyBinding
+    state: present
+  delegate_to: localhost
 
-   - name: Create no-vlan portgroup
-     connection: local
-     vmware_dvs_portgroup:
-        hostname: vcenter_ip_or_hostname
-        username: vcenter_username
-        password: vcenter_password
-        portgroup_name: no-vlan-portrgoup
-        switch_name: dvSwitch
-        vlan_id: 0
-        num_ports: 120
-        portgroup_type: earlyBinding
-        state: present
+- name: Create no-vlan portgroup
+  vmware_dvs_portgroup:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    portgroup_name: no-vlan-portrgoup
+    switch_name: dvSwitch
+    vlan_id: 0
+    num_ports: 120
+    portgroup_type: earlyBinding
+    state: present
+  delegate_to: localhost
 
-   - name: Create vlan portgroup with all security and port policies
-     connection: local
-     vmware_dvs_portgroup:
-        hostname: vcenter_ip_or_hostname
-        username: vcenter_username
-        password: vcenter_password
-        portgroup_name: vlan-123-portrgoup
-        switch_name: dvSwitch
-        vlan_id: 123
-        num_ports: 120
-        portgroup_type: earlyBinding
-        state: present
-        network_policy:
-          promiscuous: yes
-          forged_transmits: yes
-          mac_changes: yes
-        port_policy:
-          block_override: yes
-          ipfix_override: yes
-          live_port_move: yes
-          network_rp_override: yes
-          port_config_reset_at_disconnect: yes
-          security_override: yes
-          shaping_override: yes
-          traffic_filter_override: yes
-          uplink_teaming_override: yes
-          vendor_config_override: yes
-          vlan_override: yes
+- name: Create vlan portgroup with all security and port policies
+  vmware_dvs_portgroup:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    portgroup_name: vlan-123-portrgoup
+    switch_name: dvSwitch
+    vlan_id: 123
+    num_ports: 120
+    portgroup_type: earlyBinding
+    state: present
+    network_policy:
+      promiscuous: yes
+      forged_transmits: yes
+      mac_changes: yes
+    port_policy:
+      block_override: yes
+      ipfix_override: yes
+      live_port_move: yes
+      network_rp_override: yes
+      port_config_reset_at_disconnect: yes
+      security_override: yes
+      shaping_override: yes
+      traffic_filter_override: yes
+      uplink_teaming_override: yes
+      vendor_config_override: yes
+      vlan_override: yes
+  delegate_to: localhost
 '''
 
 try:

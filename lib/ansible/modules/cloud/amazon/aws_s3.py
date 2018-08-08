@@ -114,7 +114,7 @@ options:
         Boolean or one of [always, never, different], true is equal to 'always' and false is equal to 'never', new in 2.0.
         When this is set to 'different', the md5 sum of the local file is compared with the 'ETag' of the object/key in S3.
         The ETag may or may not be an MD5 digest of the object data. See the ETag response header here
-        U(http://docs.aws.amazon.com/AmazonS3/latest/API/RESTCommonResponseHeaders.html)
+        U(https://docs.aws.amazon.com/AmazonS3/latest/API/RESTCommonResponseHeaders.html)
     default: 'always'
     aliases: ['force']
     version_added: "1.2"
@@ -133,6 +133,13 @@ options:
     description:
       - S3 URL endpoint for usage with Ceph, Eucalypus, fakes3, etc.  Otherwise assumes AWS
     aliases: [ S3_URL ]
+  dualstack:
+    description:
+      - Enables Amazon S3 Dual-Stack Endpoints, allowing S3 communications using both IPv4 and IPv6.
+      - Requires at least botocore version 1.4.45.
+    type: bool
+    default: "no"
+    version_added: "2.7"
   rgw:
     description:
       - Enable Ceph RGW S3 support. This option requires an explicit url via s3_url.
@@ -649,6 +656,12 @@ def get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url, sig_4=F
             params['config'] = botocore.client.Config(signature_version='s3v4')
         elif module.params['mode'] in ('get', 'getstr') and sig_4:
             params['config'] = botocore.client.Config(signature_version='s3v4')
+        if module.params['dualstack']:
+            dualconf = botocore.client.Config(s3={'use_dualstack_endpoint': True})
+            if 'config' in params:
+                params['config'] = params['config'].merge(dualconf)
+            else:
+                params['config'] = dualconf
     return boto3_conn(**params)
 
 
@@ -673,6 +686,7 @@ def main():
             prefix=dict(default=""),
             retries=dict(aliases=['retry'], type='int', default=0),
             s3_url=dict(aliases=['S3_URL']),
+            dualstack=dict(default='no', type='bool'),
             rgw=dict(default='no', type='bool'),
             src=dict(),
             ignore_nonexistent_bucket=dict(default=False, type='bool'),
@@ -706,6 +720,7 @@ def main():
     prefix = module.params.get('prefix')
     retries = module.params.get('retries')
     s3_url = module.params.get('s3_url')
+    dualstack = module.params.get('dualstack')
     rgw = module.params.get('rgw')
     src = module.params.get('src')
     ignore_nonexistent_bucket = module.params.get('ignore_nonexistent_bucket')
@@ -743,6 +758,12 @@ def main():
     # allow eucarc environment variables to be used if ansible vars aren't set
     if not s3_url and 'S3_URL' in os.environ:
         s3_url = os.environ['S3_URL']
+
+    if dualstack and s3_url is not None and 'amazonaws.com' not in s3_url:
+        module.fail_json(msg='dualstack only applies to AWS S3')
+
+    if dualstack and not module.botocore_at_least('1.4.45'):
+        module.fail_json(msg='dualstack requires botocore >= 1.4.45')
 
     # rgw requires an explicit url
     if rgw and not s3_url:

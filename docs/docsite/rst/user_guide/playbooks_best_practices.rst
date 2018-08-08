@@ -505,6 +505,6 @@ This best practice has no limit on the amount of variable and vault files or the
        Learn about how to select hosts
    `GitHub examples directory <https://github.com/ansible/ansible-examples>`_
        Complete playbook files from the github project source
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
 

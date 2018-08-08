@@ -282,5 +282,6 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
 def main():
     AzureRMPublicIPAddress()
 
+
 if __name__ == '__main__':
     main()

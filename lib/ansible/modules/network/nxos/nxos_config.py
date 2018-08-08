@@ -276,13 +276,11 @@ backup_path:
   type: string
   sample: /playbooks/ansible/backup/nxos_config.2016-07-16@22:28:34
 """
-
-
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands, get_connection
-from ansible.module_utils.network.nxos.nxos import get_capabilities
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.network.nxos.nxos import check_args as nxos_check_args
 from ansible.module_utils.network.common.utils import to_list
@@ -393,19 +391,6 @@ def main():
 
     config = None
 
-    try:
-        info = get_capabilities(module)
-        api = info.get('network_api')
-        device_info = info.get('device_info', {})
-        os_platform = device_info.get('network_os_platform', '')
-    except ConnectionError:
-        api = ''
-        os_platform = ''
-
-    if api == 'cliconf' and module.params['replace'] == 'config':
-        if '9K' not in os_platform:
-            module.fail_json(msg='replace: config is supported only on Nexus 9K series switches')
-
     diff_ignore_lines = module.params['diff_ignore_lines']
     path = module.params['parents']
     connection = get_connection(module)
@@ -436,8 +421,12 @@ def main():
 
             result['changed'] = True
         else:
-            response = connection.get_diff(candidate=candidate, running=running, diff_match=match, diff_ignore_lines=diff_ignore_lines, path=path,
-                                           diff_replace=replace)
+            try:
+                response = connection.get_diff(candidate=candidate, running=running, diff_match=match, diff_ignore_lines=diff_ignore_lines, path=path,
+                                               diff_replace=replace)
+            except ConnectionError as exc:
+                module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+
             config_diff = response['config_diff']
             if config_diff:
                 commands = config_diff.split('\n')

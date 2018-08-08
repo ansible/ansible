@@ -68,9 +68,10 @@ EXAMPLES = r'''
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
-    cluster_name: cluster_name
+    cluster_name: '{{ cluster_name }}'
     service_name: ntpd
     state: present
+  delegate_to: localhost
 
 - name: Start ntpd setting for an ESXi Host
   vmware_host_service_manager:
@@ -80,6 +81,7 @@ EXAMPLES = r'''
     esxi_hostname: '{{ esxi_hostname }}'
     service_name: ntpd
     state: present
+  delegate_to: localhost
 
 - name: Start ntpd setting for an ESXi Host with Service policy
   vmware_host_service_manager:
@@ -90,6 +92,7 @@ EXAMPLES = r'''
     service_name: ntpd
     service_policy: on
     state: present
+  delegate_to: localhost
 
 - name: Stop ntpd setting for an ESXi Host
   vmware_host_service_manager:
@@ -99,6 +102,7 @@ EXAMPLES = r'''
     esxi_hostname: '{{ esxi_hostname }}'
     service_name: ntpd
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = r'''#

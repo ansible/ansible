@@ -26,6 +26,7 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 import json
+
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network.common.utils import to_list, ComplexList
@@ -81,8 +82,10 @@ def get_connection(module):
 def get_capabilities(module):
     if hasattr(module, '_ios_capabilities'):
         return module._ios_capabilities
-
-    capabilities = Connection(module._socket_path).get_capabilities()
+    try:
+        capabilities = Connection(module._socket_path).get_capabilities()
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
     module._ios_capabilities = json.loads(capabilities)
     return module._ios_capabilities
 
@@ -93,7 +96,10 @@ def check_args(module, warnings):
 
 def get_defaults_flag(module):
     connection = get_connection(module)
-    out = connection.get_defaults_flag()
+    try:
+        out = connection.get_defaults_flag()
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
     return to_text(out, errors='surrogate_then_replace').strip()
 
 
@@ -104,7 +110,10 @@ def get_config(module, flags=None):
         return _DEVICE_CONFIGS[flag_str]
     except KeyError:
         connection = get_connection(module)
-        out = connection.get_config(filter=flags)
+        try:
+            out = connection.get_config(flags=flags)
+        except ConnectionError as exc:
+            module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
         cfg = to_text(out, errors='surrogate_then_replace').strip()
         _DEVICE_CONFIGS[flag_str] = cfg
         return cfg

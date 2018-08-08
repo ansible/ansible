@@ -58,28 +58,31 @@ EXAMPLES = '''
 # Example vmware_local_role_manager command from Ansible Playbooks
 - name: Add local role to ESXi
   vmware_local_role_manager:
-      hostname: esxi_hostname
-      username: root
-      password: vmware
-      local_role_name: vmware_qa
-      state: present
+    hostname: '{{ esxi_hostname }}'
+    username: '{{ esxi_username }}'
+    password: '{{ esxi_password }}'
+    local_role_name: vmware_qa
+    state: present
+  delegate_to: localhost
 
 - name: Add local role with privileges to ESXi
   vmware_local_role_manager:
-      hostname: esxi_hostname
-      username: root
-      password: vmware
-      local_role_name: vmware_qa
-      local_privilege_ids: [ 'Folder.Create', 'Folder.Delete']
-      state: present
+    hostname: '{{ esxi_hostname }}'
+    username: '{{ esxi_username }}'
+    password: '{{ esxi_password }}'
+    local_role_name: vmware_qa
+    local_privilege_ids: [ 'Folder.Create', 'Folder.Delete']
+    state: present
+  delegate_to: localhost
 
 - name: Remove local role from ESXi
   vmware_local_role_manager:
-      hostname: esxi_hostname
-      username: root
-      password: vmware
-      local_role_name: vmware_qa
-      state: absent
+    hostname: '{{ esxi_hostname }}'
+    username: '{{ esxi_username }}'
+    password: '{{ esxi_password }}'
+    local_role_name: vmware_qa
+    state: absent
+  delegate_to: localhost
 
 '''
 

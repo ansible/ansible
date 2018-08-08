@@ -36,11 +36,6 @@
     provider: "{{ nios_provider }}"
   register: ipv4_create2
 
-- assert:
-    that:
-      - "ipv4_create1.changed"
-      - "not ipv4_create2.changed"
-
 - name: add a comment to an existing host record
   nios_host_record:
     name: host.ansible.com
@@ -75,6 +70,48 @@
     provider: "{{ nios_provider }}"
   register: ipv4_delete2
 
+- name: create an ipv4 host record bypassing DNS
+  nios_host_record:
+    name: host
+    ipv4:
+      - address: 192.168.10.1
+    dns: false
+    state: present
+    provider: "{{ nios_provider }}"
+  register: ipv4_create3
+
+- name: recreate an ipv4 host record bypassing DNS
+  nios_host_record:
+    name: host
+    ipv4:
+      - address: 192.168.10.1
+    dns: false
+    state: present
+    provider: "{{ nios_provider }}"
+  register: ipv4_create4
+
+- name: create an ipv4 host record via DHCP and MAC
+  nios_host_record:
+    name: host
+    ipv4:
+      - address: 192.168.10.1
+        dhcp: true
+        mac: 00-80-C8-E3-4C-BD
+    state: present
+    provider: "{{ nios_provider }}"
+  register: ipv4_create5
+
+- name: recreate an ipv4 host record via DHCP and MAC
+  nios_host_record:
+    name: host
+    ipv4:
+      - address: 192.168.10.1
+        dhcp: true
+        mac: 00-80-C8-E3-4C-BD
+    state: present
+    provider: "{{ nios_provider }}"
+  register: ipv4_create6
+
 - assert:
     that:
       - "ipv4_create1.changed"
@@ -83,3 +120,7 @@
       - "not ipv4_update2.changed"
       - "ipv4_delete1.changed"
       - "not ipv4_delete2.changed"
+      - "ipv4_create3.changed"
+      - "not ipv4_create4.changed"
+      - "ipv4_create5.changed"
+      - "not ipv4_create6.changed"

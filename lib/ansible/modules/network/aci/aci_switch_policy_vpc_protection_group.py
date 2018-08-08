@@ -69,6 +69,7 @@ EXAMPLES = r'''
     switch_1_id: 1011
     switch_2_id: 1012
     state: present
+  delegate_to: localhost
 
 - name: Remove Explicit vPC Protection Group
   aci_switch_policy_vpc_protection_group:
@@ -77,6 +78,7 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     protection_group: leafPair101-vpcGrp
     state: absent
+  delegate_to: localhost
 
 - name: Query vPC Protection Groups
   aci_switch_policy_vpc_protection_group:
@@ -84,6 +86,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query our vPC Protection Group
   aci_switch_policy_vpc_protection_group:
@@ -92,6 +96,8 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     protection_group: leafPair101-vpcGrp
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -235,8 +241,8 @@ def main():
         root_class=dict(
             aci_class='fabricExplicitGEp',
             aci_rn='fabric/protpol/expgep-{0}'.format(protection_group),
-            filter_target='eq(fabricExplicitGEp.name, "{0}")'.format(protection_group),
             module_object=protection_group,
+            target_filter={'name': protection_group},
         ),
         child_classes=['fabricNodePEp', 'fabricNodePEp', 'fabricRsVpcInstPol'],
     )

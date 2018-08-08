@@ -398,7 +398,7 @@ def main():
         argument_spec=argument_spec,
         add_file_common_args=True,
         supports_check_mode=True,
-        mutually_exclusive=(['checksum', 'sha256sum']),
+        mutually_exclusive=[['checksum', 'sha256sum']],
     )
 
     url = module.params['url']
@@ -451,21 +451,17 @@ def main():
             destination_checksum = module.digest_from_file(dest, algorithm)
 
             if checksum == destination_checksum:
-                module.exit_json(msg="file already exists", dest=dest, url=url, changed=False)
+                # Not forcing redownload, unless checksum does not match
+                # allow file attribute changes
+                module.params['path'] = dest
+                file_args = module.load_file_common_arguments(module.params)
+                file_args['path'] = dest
+                changed = module.set_fs_attributes_if_different(file_args, False)
+                if changed:
+                    module.exit_json(msg="file already exists but file attributes changed", dest=dest, url=url, changed=changed)
+                module.exit_json(msg="file already exists", dest=dest, url=url, changed=changed)
 
             checksum_mismatch = True
-
-        # Not forcing redownload, unless checksum does not match
-        if not force and not checksum_mismatch:
-            # allow file attribute changes
-            module.params['path'] = dest
-            file_args = module.load_file_common_arguments(module.params)
-            file_args['path'] = dest
-            changed = module.set_fs_attributes_if_different(file_args, False)
-
-            if changed:
-                module.exit_json(msg="file already exists but file attributes changed", dest=dest, url=url, changed=changed)
-            module.exit_json(msg="file already exists", dest=dest, url=url, changed=changed)
 
         # If the file already exists, prepare the last modified time for the
         # request.

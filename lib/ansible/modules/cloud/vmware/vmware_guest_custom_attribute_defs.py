@@ -20,11 +20,11 @@ DOCUMENTATION = '''
 module: vmware_guest_custom_attribute_defs
 short_description: Manage custom attributes definitions for virtual machine from VMWare
 description:
-    - This module can be used to add, remove and list custom attributes definitions for the given virtual machine from VMWare.
+    - This module can be used to add and remove custom attributes definitions for the given virtual machine from VMWare.
 version_added: 2.7
 author:
     - Jimmy Conner
-    - Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
+    - Abhijeet Kasurde (@Akasurde)
 notes:
     - Tested on vSphere 6.5
 requirements:
@@ -50,22 +50,11 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-- name: List VMWare Attribute Definitions
-  vmware_guest_custom_attribute_defs:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
-    validate_certs: no
-    state: list
-  delegate_to: localhost
-  register: defs
-
 - name: Add VMWare Attribute Definition
   vmware_guest_custom_attribute_defs:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
-    validate_certs: no
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     state: present
     attribute_key: custom_attr_def_1
   delegate_to: localhost
@@ -73,10 +62,9 @@ EXAMPLES = '''
 
 - name: Remove VMWare Attribute Definition
   vmware_guest_custom_attribute_defs:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
-    validate_certs: no
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     state: absent
     attribute_key: custom_attr_def_1
   delegate_to: localhost
@@ -95,7 +83,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec
 
 try:
-    import pyVmomi
     from pyVmomi import vim
 except ImportError:
     pass

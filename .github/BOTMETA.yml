@@ -500,10 +500,12 @@ files:
   $modules/network/panos/: ivanbojer jtschichold
   $modules/network/panos/panos_address.py: itdependsnetworks ivanbojer jtschichold
   $modules/network/protocol/: $team_networking
+  $modules/network/routeros/: heuels
   $modules/network/routing/: $team_networking
   $modules/network/slxos/: $team_extreme
   $modules/network/sros/: privateip
   $modules/network/system/: $team_networking
+  $modules/network/voss/: $team_extreme
   $modules/network/vyos/: Qalthos samdoran
   $modules/notification/bearychat.py: tonyseek
   $modules/notification/campfire.py: fabulops
@@ -895,6 +897,9 @@ files:
   $module_utils/network/onyx:
     maintainers: $team_onyx
     labels: networking
+  $module_utils/network/routeros:
+    maintainers: heuels
+    labels: networking
   $module_utils/network/slxos:
     maintainers: $team_extreme
     labels: networking
@@ -927,6 +932,9 @@ files:
     maintainers: $team_vmware
     labels: vmware
     support: community
+  $module_utils/network/voss:
+    maintainers: $team_extreme
+    labels: networking
   $module_utils/network:
     maintainers: $team_networking
     labels: networking
@@ -1021,6 +1029,9 @@ files:
   lib/ansible/plugins/cliconf/onyx.py:
     maintainers: $team_onyx
     labels: networking
+  lib/ansible/plugins/cliconf/routeros.py:
+    maintainers: heuels
+    labels: networking
   lib/ansible/plugins/cliconf/slxos.py:
     maintainers: $team_extreme
     labels: networking
@@ -1043,6 +1054,9 @@ files:
     labels:
     - cloud
     - openstack
+  lib/ansible/plugins/cliconf/voss.py:
+    maintainers: $team_extreme
+    labels: networking
   lib/ansible/plugins/connection/winrm.py:
     maintainers: $team_windows_core
     labels:
@@ -1128,11 +1142,17 @@ files:
   lib/ansible/plugins/terminal/onyx.py:
     maintainers: $team_onyx
     labels: networking
+  lib/ansible/plugins/terminal/routeros.py:
+    maintainers: heuels
+    labels: networking
   lib/ansible/plugins/terminal/slxos.py:
     maintainers: $team_extreme
     labels: networking
   lib/ansible/plugins/terminal/sros.py:
     maintainers: $team_networking
+    labels: networking
+  lib/ansible/plugins/terminal/voss.py:
+    maintainers: $team_extreme
     labels: networking
   lib/ansible/plugins/terminal/vyos.py:
     maintainers: $team_networking samdoran
@@ -1148,10 +1168,12 @@ files:
     - validate-modules
   docs/:
     labels: docs
+    maintainers:
+      - acozine
   docs/docsite/rst/network/:
     labels: networking
     maintainers:
-      - acozine
+      - samccann
       - gundalow
   docs/docsite/rst/scenario_guides/guide_aci.rst:
     maintainers: $team_aci

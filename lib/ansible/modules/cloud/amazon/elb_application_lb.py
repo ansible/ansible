@@ -540,9 +540,9 @@ def main():
                               required_if=[
                                   ('state', 'present', ['subnets', 'security_groups'])
                               ],
-                              required_together=(
+                              required_together=[
                                   ['access_logs_enabled', 'access_logs_s3_bucket', 'access_logs_s3_prefix']
-                              )
+                              ]
                               )
 
     # Quick check of listeners parameters
@@ -568,6 +568,7 @@ def main():
         create_or_update_elb(elb)
     else:
         delete_elb(elb)
+
 
 if __name__ == '__main__':
     main()

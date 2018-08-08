@@ -1,0 +1,4 @@
+---
+bugfixes:
+- Fix the mount module's handling of swap entries in fstab
+  (https://github.com/ansible/ansible/pull/42837)

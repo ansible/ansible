@@ -103,6 +103,9 @@ class AnsibleVultrFirewallGroupFacts(Vultr):
 
 
 def parse_fw_group_list(fwgroups_list):
+    if not fwgroups_list:
+        return []
+
     return [group for id, group in fwgroups_list.items()]
 
 
