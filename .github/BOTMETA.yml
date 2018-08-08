@@ -505,6 +505,7 @@ files:
   $modules/network/slxos/: $team_extreme
   $modules/network/sros/: privateip
   $modules/network/system/: $team_networking
+  $modules/network/voss/: $team_extreme
   $modules/network/vyos/: Qalthos samdoran
   $modules/notification/bearychat.py: tonyseek
   $modules/notification/campfire.py: fabulops
@@ -931,6 +932,9 @@ files:
     maintainers: $team_vmware
     labels: vmware
     support: community
+  $module_utils/network/voss:
+    maintainers: $team_extreme
+    labels: networking
   $module_utils/network:
     maintainers: $team_networking
     labels: networking
@@ -1050,6 +1054,9 @@ files:
     labels:
     - cloud
     - openstack
+  lib/ansible/plugins/cliconf/voss.py:
+    maintainers: $team_extreme
+    labels: networking
   lib/ansible/plugins/connection/winrm.py:
     maintainers: $team_windows_core
     labels:
@@ -1143,6 +1150,9 @@ files:
     labels: networking
   lib/ansible/plugins/terminal/sros.py:
     maintainers: $team_networking
+    labels: networking
+  lib/ansible/plugins/terminal/voss.py:
+    maintainers: $team_extreme
     labels: networking
   lib/ansible/plugins/terminal/vyos.py:
     maintainers: $team_networking samdoran
