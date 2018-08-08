@@ -102,6 +102,10 @@
 - name: assert file format type
   assert: { that: "'{{format_msg_type}}' in result.stdout" }
 
+- name: create non-compact dump
+  mysql_db: name={{ db_name }} state=dump target={{ db_file_name }} compact=false
+  register: result
+
 - name: update database table employee
   command: mysql {{ db_name }} "-e update employee set name='John Doe' where id=47;"
 
