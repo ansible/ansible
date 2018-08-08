@@ -391,6 +391,10 @@ options:
   stop_timeout:
     description:
       - Number of seconds to wait for the container to stop before sending SIGKILL.
+        When C(state) is I(present), set container's C(StopTimeout) configuration (in seconds). This only applies on container creation time.
+        C(StopTimeout) won't be updated on existing containers.
+        When C(state) is I(stopped), set timeout (in seconds) to stop a container.
+        This ignores default or custom C(StopTimeout) configuration of the container.
   trust_image_content:
     description:
       - If C(yes), skip image verification.
@@ -923,6 +927,7 @@ class TaskParameters(DockerBaseClass):
             mac_address='mac_address',
             labels='labels',
             stop_signal='stop_signal',
+            stop_timeout='stop_timeout',
             working_dir='working_dir',
         )
 
