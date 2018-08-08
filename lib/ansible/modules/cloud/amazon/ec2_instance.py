@@ -641,7 +641,6 @@ import string
 import textwrap
 import time
 from collections import namedtuple
-from distutils.version import LooseVersion
 
 try:
     import boto3
@@ -932,13 +931,13 @@ def warn_if_cpu_options_changed(instance):
     threads_per_core = cpu_options.get('threads_per_core')
     if core_count_curr != core_count:
         module.warn(
-            "Unable to modify core_count from {0} to {1}."
+            "Unable to modify core_count from {0} to {1}. "
             "Assigning a number of core is determinted during instance creation".format(
                 core_count_curr, core_count))
 
     if threads_per_core_curr != threads_per_core:
         module.warn(
-            "Unable to modify threads_per_core from {0} to {1}."
+            "Unable to modify threads_per_core from {0} to {1}. "
             "Assigning a number of threads per core is determined during instance creation.".format(
                 threads_per_core_curr, threads_per_core))
 
@@ -1565,8 +1564,7 @@ def main():
 
         module.params['filters'] = filters
 
-    if module.params.get('cpu_options'):
-        if LooseVersion(botocore.__version__) < LooseVersion("1.10.16"):
+    if module.params.get('cpu_options') and not module.botocore_at_least('1.10.16'):
             module.fail_json(msg="cpu_options is only supported with botocore >= 1.10.16")
 
     existing_matches = find_instances(ec2, filters=module.params.get('filters'))
