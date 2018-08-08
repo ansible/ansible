@@ -5,11 +5,7 @@ Developing Modules
 
 .. contents:: Topics
 
-Modules interact with your local machine, an API, or a remote system to perform specific tasks like changing a database password or spinning up a cloud instance. Each module is a reusable, standalone script that can be used by the Ansible API, or by the :command:`ansible` or :command:`ansible-playbook` programs. A module provides a defined interface, accepting arguments and returning information to Ansible by printing a JSON string to stdout before exiting. Ansible ships with thousands of modules, and you can easily write your own. If you're writing a module for local use, you can choose any programming language and follow your own rules. If you want to contribute a module back to Ansible Core, however, it must:
-
-* be written in either Python or Powershell for Windows
-* include comprehensive tests
-* conform to Ansible's formatting and documentation standards
+Modules interact with your local machine, an API, or a remote system to perform specific tasks like changing a database password or spinning up a cloud instance. Each module is a reusable, standalone script that can be used by the Ansible API, or by the :command:`ansible` or :command:`ansible-playbook` programs. A module provides a defined interface, accepting arguments and returning information to Ansible by printing a JSON string to stdout before exiting. Ansible ships with thousands of modules, and you can easily write your own. If you're writing a module for local use, you can choose any programming language and follow your own rules. If you want to contribute your module back to Ansible, review our :ref:`submission checklist <developing_modules_checklist>` before you start writing code.
 
 .. _module_dev_should_you:
 
@@ -49,26 +45,17 @@ The functionality you want may be too large for a single module. If you want to 
 
 * Modules should typically encompass much of the logic for interacting with a resource. A lightweight wrapper around an API that does not contain much logic would likely cause users to offload too much logic into a playbook, and for this reason the module would be rejected. Instead try creating multiple modules for interacting with smaller individual pieces of the API.
 
-If your use case isn't covered by an existing module, an open PR, an action plugin, or a role, and you don't need to create multiple modules, then you're ready to start developing a new module. 
+If your use case isn't covered by an existing module, an open PR, an action plugin, or a role, and you don't need to create multiple modules, then you're ready to start developing a new module.
 
-:doc:`developing_program_flow_modules`
-    A description of Ansible's module architecture.
-:doc:`developing_modules_general`
-    A general overview of how to develop, debug, and test modules.
-:doc:`developing_modules_general_windows`
-    A general overview of how to develop, debug and test Windows modules.
-:doc:`developing_modules_documenting`
-    How to include in-line documentation in your module.
-:doc:`developing_modules_best_practices`
-    Best practices, recommendations, and things to avoid.
-:doc:`developing_modules_checklist`
-     Checklist for contributing your module to Ansible.
-:doc:`testing`
-    Developing unit and integration tests.
-:ref:`developing_python_3`
-    Adding Python 3 support to modules (all new modules must be Python-2.6 and Python-3.5 compatible).
-:doc:`developing_modules_in_groups`
-    A guide for partners wanting to submit multiple modules.
+I want to :ref:`get started on a new module <developing_modules_general>`
+I want to review :ref:`best practices for developing modules <developing_modules_best_practices>`.
+I want to :ref:`write a Windows module <developing_modules_general_windows>`.
+I want :ref:`an overview of Ansible's architecture<developing_program_flow_modules>`.
+I want to :ref:`document my module <developing_modules_documenting>`.
+I want to :ref:`contribute my module back to Ansible Core <developing_modules_checklist>`.
+I want to :ref:`add unit and integration tests to my module <testing>`.
+I want to :ref:`add Python 3 support to my module <developing_python_3>`.
+I want to :ref:` write multiple modules <developing_modules_in_groups>`.
 
 
 .. seealso::
@@ -85,4 +72,3 @@ If your use case isn't covered by an existing module, an open PR, an action plug
        Development mailing list
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
