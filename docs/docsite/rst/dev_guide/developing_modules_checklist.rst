@@ -20,7 +20,7 @@ Objective requirements
 * minimize module dependencies
 * support :ref:`check_mode <check_mode_dry>` if possible
 
-Please make sure your module meets these requirements before you submit your PR/proposal. If you have questions, reach out on IRC or the mailing list.
+Please make sure your module meets these requirements before you submit your PR/proposal. If you have questions, reach out via `Ansible's IRC chat channel <http://irc.freenode.net>`_ or the `Ansible development mailing list <https://groups.google.com/group/ansible-devel>`_.
 
 Subjective requirements
 -----------------------
