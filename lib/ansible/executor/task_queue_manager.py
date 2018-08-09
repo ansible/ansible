@@ -114,8 +114,7 @@ class TaskQueueManager:
         self._workers = []
 
         for i in range(num):
-            rslt_q = multiprocessing.Queue()
-            self._workers.append([None, rslt_q])
+            self._workers.append(None)
 
     def _initialize_notified_handlers(self, play):
         '''
@@ -307,8 +306,7 @@ class TaskQueueManager:
 
     def _cleanup_processes(self):
         if hasattr(self, '_workers'):
-            for (worker_prc, rslt_q) in self._workers:
-                rslt_q.close()
+            for worker_prc in self._workers:
                 if worker_prc and worker_prc.is_alive():
                     try:
                         worker_prc.terminate()
@@ -340,8 +338,8 @@ class TaskQueueManager:
 
         defunct = False
         for (idx, x) in enumerate(self._workers):
-            if hasattr(x[0], 'exitcode'):
-                if x[0].exitcode in [-9, -11, -15]:
+            if hasattr(x, 'exitcode'):
+                if x.exitcode in [-9, -11, -15]:
                     defunct = True
         return defunct
 

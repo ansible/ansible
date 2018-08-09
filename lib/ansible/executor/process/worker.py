@@ -57,11 +57,11 @@ class WorkerProcess(multiprocessing.Process):
     for reading later.
     '''
 
-    def __init__(self, rslt_q, task_vars, host, task, play_context, loader, variable_manager, shared_loader_obj):
+    def __init__(self, final_q, task_vars, host, task, play_context, loader, variable_manager, shared_loader_obj):
 
         super(WorkerProcess, self).__init__()
         # takes a task queue manager as the sole param:
-        self._rslt_q = rslt_q
+        self._final_q = final_q
         self._task_vars = task_vars
         self._host = host
         self._task = task
@@ -115,7 +115,7 @@ class WorkerProcess(multiprocessing.Process):
                 self._new_stdin,
                 self._loader,
                 self._shared_loader_obj,
-                self._rslt_q
+                self._final_q
             ).run()
 
             display.debug("done running TaskExecutor() for %s/%s [%s]" % (self._host, self._task, self._task._uuid))
@@ -130,7 +130,7 @@ class WorkerProcess(multiprocessing.Process):
 
             # put the result on the result queue
             display.debug("sending task result for task %s" % self._task._uuid)
-            self._rslt_q.put(task_result)
+            self._final_q.put(task_result)
             display.debug("done sending task result for task %s" % self._task._uuid)
 
         except AnsibleConnectionFailure:
@@ -142,7 +142,7 @@ class WorkerProcess(multiprocessing.Process):
                 dict(unreachable=True),
                 task_fields=self._task.dump_attrs(),
             )
-            self._rslt_q.put(task_result, block=False)
+            self._final_q.put(task_result, block=False)
 
         except Exception as e:
             if not isinstance(e, (IOError, EOFError, KeyboardInterrupt, SystemExit)) or isinstance(e, TemplateNotFound):
@@ -155,7 +155,7 @@ class WorkerProcess(multiprocessing.Process):
                         dict(failed=True, exception=to_text(traceback.format_exc()), stdout=''),
                         task_fields=self._task.dump_attrs(),
                     )
-                    self._rslt_q.put(task_result, block=False)
+                    self._final_q.put(task_result, block=False)
                 except:
                     display.debug(u"WORKER EXCEPTION: %s" % to_text(e))
                     display.debug(u"WORKER TRACEBACK: %s" % to_text(traceback.format_exc()))
