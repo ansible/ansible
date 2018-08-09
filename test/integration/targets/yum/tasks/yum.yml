@@ -450,7 +450,7 @@
     state: absent
 
 - set_fact:
-    pkg_url: http://download.fedoraproject.org/pub/epel/7/x86_64/Packages/f/fpaste-0.3.7.4.1-1.el7.noarch.rpm
+    pkg_url: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/yum/fpaste-0.3.7.4.1-2.el7.noarch.rpm
 # setup end
 
 - name: download an rpm
