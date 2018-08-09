@@ -1,3 +1,0 @@
----
-bugfixes:
-- fix azure security group cannot add rules when purge_rule set to false. (https://github.com/ansible/ansible/pull/43699)
