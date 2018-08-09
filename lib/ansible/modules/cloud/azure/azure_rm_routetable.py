@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_routetable
 version_added: "2.7"
-short_description: Manage Azure route resource.
+short_description: Manage Azure route table resource.
 description:
-    - Create, update or delete a route.
+    - Create, update or delete a route table.
 options:
     resource_group:
         description:
@@ -27,11 +27,11 @@ options:
         required: true
     name:
         description:
-            - name of the virtual network.
+            - name of the route table.
         required: true
     state:
         description:
-            - Assert the state of the virtual network. Use 'present' to create or update and
+            - Assert the state of the route table. Use 'present' to create or update and
               'absent' to delete.
         default: present
         choices:
@@ -39,8 +39,7 @@ options:
             - present
     disable_bgp_route_propagation:
         description:
-            - Gets or sets whether to disable the routes learned by BGP on that route table.
-            - True means disable.
+            - Specified whether to disable the routes learned by BGP on that route table.
         type: bool
         default: False
     location:
@@ -81,16 +80,6 @@ id:
     description: resource id.
     returned: success
     type: str
-routes:
-    description: Current routes of the route table.
-    returned: success
-    type: list
-    sample: [
-        {
-          "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/routeTables/foobar/routes/route",
-          "name": "route"
-        }
-    ]
 '''
 
 try:
@@ -164,7 +153,6 @@ class AzureRMRouteTable(AzureRMModuleBase):
                     result = self.create_or_update_table(result)
 
         self.results['id'] = result.id if result else None
-        self.results['routes'] = [dict(id=i.id, name=i.name) for i in result.routes] if result and result.routes else []
         self.results['changed'] = changed
         return self.results
 

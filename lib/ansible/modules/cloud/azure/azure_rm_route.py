@@ -54,7 +54,7 @@ options:
         description:
             - The IP address packets should be forwarded to.
             - Next hop values are only allowed in routes where the next hop type is VirtualAppliance.
-    route_table:
+    route_table_name:
         description:
             - The name of the route table.
         required: true
@@ -76,13 +76,13 @@ EXAMPLES = '''
         resource_group: Testing
         address_prefix: 10.1.0.0/16
         next_hop_type: virtual_network_gateway
-        route_table: table
+        route_table_name: table
 
     - name: Delete a route
       azure_rm_route:
         name: foobar
         resource_group: Testing
-        route_table: table
+        route_table_name: table
         state: absent
 '''
 RETURN = '''
@@ -119,7 +119,7 @@ class AzureRMRoute(AzureRMModuleBase):
                                         'none'],
                                default='none'),
             next_hop_ip_address=dict(type='str'),
-            route_table=dict(type='str', required=True)
+            route_table_name=dict(type='str', required=True)
         )
 
         required_if = [
@@ -133,7 +133,7 @@ class AzureRMRoute(AzureRMModuleBase):
         self.address_prefix = None
         self.next_hop_type = None
         self.next_hop_ip_address = None
-        self.route_table = None
+        self.route_table_name = None
 
         self.results = dict(
             changed=False,
@@ -186,14 +186,14 @@ class AzureRMRoute(AzureRMModuleBase):
 
     def create_or_update_route(self, param):
         try:
-            poller = self.network_client.routes.create_or_update(self.resource_group, self.route_table, self.name, param)
+            poller = self.network_client.routes.create_or_update(self.resource_group, self.route_table_name, self.name, param)
             return self.get_poller_result(poller)
         except Exception as exc:
             self.fail("Error creating or updating route {0} - {1}".format(self.name, str(exc)))
 
     def delete_route(self):
         try:
-            poller = self.network_client.routes.delete(self.resource_group, self.route_table, self.name)
+            poller = self.network_client.routes.delete(self.resource_group, self.route_table_name, self.name)
             result = self.get_poller_result(poller)
             return result
         except Exception as exc:
@@ -201,7 +201,7 @@ class AzureRMRoute(AzureRMModuleBase):
 
     def get_route(self):
         try:
-            return self.network_client.routes.get(self.resource_group, self.route_table, self.name)
+            return self.network_client.routes.get(self.resource_group, self.route_table_name, self.name)
         except Exception as exc:
             self.log('Error getting route {0} - {1}'.format(self.name, str(exc)))
             return None

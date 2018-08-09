@@ -60,7 +60,40 @@ EXAMPLES = '''
           - foo:bar
 '''
 RETURN = '''
-
+id:
+    description: Resource id.
+    returned: success
+    type: str
+name:
+    description: Name of the resource.
+    returned: success
+    type: str
+resource_group:
+    description: Resource group of the route table.
+    returned: success
+    type: str
+disable_bgp_route_propagation:
+    description: Whether the routes learned by BGP on that route table disabled.
+    returned: success
+    type: bool
+tags:
+    description: Tags of the route table.
+    returned: success
+    type: list
+routes:
+    description: Current routes of the route table.
+    returned: success
+    type: list
+    sample: [
+        {
+          "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/routeTables/foobar/routes/route",
+          "name": "route",
+          "resource_group": "Testing",
+          "routeTables": "foobar",
+          "address_prefix": "192.0.0.1",
+          "next_hop_type": "virtual_networkGateway"
+        }
+    ]
 '''
 
 try:
@@ -74,10 +107,12 @@ from ansible.module_utils.common.dict_transformations import _camel_to_snake
 
 
 def route_to_dict(route):
+    id_dict = azure_id_to_dict(route.id)
     return dict(
         id=route.id,
         name=route.name,
-        resource_group=azure_id_to_dict(route.id).get('resourceGroups'),
+        resource_group=id_dict.get('resourceGroups'),
+        route_table_name=id_dict.get('routeTables'),
         address_prefix=route.address_prefix,
         next_hop_type=_camel_to_snake(route.next_hop_type),
         next_hop_ip_address=route.next_hop_ip_address

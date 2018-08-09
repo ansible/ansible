@@ -60,7 +60,7 @@
     resource_group: "{{ resource_group }}"
     next_hop_type: virtual_network_gateway
     address_prefix: "10.1.0.0/16"
-    route_table: "{{ name }}"
+    route_table_name: "{{ name }}"
   check_mode: yes
   register: output
 
@@ -75,7 +75,7 @@
     resource_group: "{{ resource_group }}"
     next_hop_type: virtual_network_gateway
     address_prefix: "10.1.0.0/16"
-    route_table: "{{ name }}"
+    route_table_name: "{{ name }}"
   register: output
 
 - assert:
@@ -89,7 +89,7 @@
     resource_group: "{{ resource_group }}"
     next_hop_type: virtual_network_gateway
     address_prefix: "10.1.0.0/16"
-    route_table: "{{ name }}"
+    route_table_name: "{{ name }}"
   register: output
 
 - assert:
@@ -102,7 +102,7 @@
     resource_group: "{{ resource_group }}"
     next_hop_type: virtual_network_gateway
     address_prefix: "10.1.0.0/24"
-    route_table: "{{ name }}"
+    route_table_name: "{{ name }}"
   register: output
 
 - assert:
@@ -125,7 +125,7 @@
   azure_rm_route:
     name: "{{ route_name }}"
     resource_group: "{{ resource_group }}"
-    route_table: "{{ name }}"
+    route_table_name: "{{ name }}"
     state: absent
   check_mode: yes
 
@@ -134,7 +134,7 @@
     name: "{{ route_name }}"
     resource_group: "{{ resource_group }}"
     state: absent
-    route_table: "{{ name }}"
+    route_table_name: "{{ name }}"
   register: output
 
 - assert:
@@ -146,7 +146,7 @@
     name: "{{ route_name }}"
     resource_group: "{{ resource_group }}"
     state: absent
-    route_table: "{{ name }}"
+    route_table_name: "{{ name }}"
   register: output
 
 - assert:
