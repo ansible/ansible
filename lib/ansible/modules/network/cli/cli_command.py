@@ -51,6 +51,12 @@ EXAMPLES = """
 - name: run command with json formatted output
   cli_command:
     command: show version | json
+
+- name: run command expecting user confirmation
+  cli_command:
+    command: commit replace
+    prompt: This commit will replace or remove the entire running configuration
+    answer: yes
 """
 
 RETURN = """
