@@ -5,7 +5,6 @@
 
 - name: Create virtual network
   azure_rm_virtualnetwork:
-    auth_source: "cli"
     resource_group: "{{ resource_group_secondary }}"
     name: "tn{{ rpfx }}"
     address_prefixes: "10.10.0.0/16"
