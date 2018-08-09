@@ -39,6 +39,7 @@ options:
     force:
         description:
             - Force promotion if sites are not connected (local promotion).
+        type: bool
         required: false
 
 
