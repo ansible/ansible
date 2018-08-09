@@ -25,7 +25,6 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.six.moves.urllib.parse import urlsplit
 from ansible.utils.vars import merge_hash
 
-
 PRIVATE_KEYS_RE = re.compile('__.+__')
 
 
@@ -52,7 +51,7 @@ class ActionModule(_ActionModule):
 
         # strip out any keys that have two leading and two trailing
         # underscore characters
-        for key in list(result.keys()):
+        for key in list(result):
             if PRIVATE_KEYS_RE.match(key):
                 del result[key]
 

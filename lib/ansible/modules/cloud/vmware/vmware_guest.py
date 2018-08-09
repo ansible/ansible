@@ -331,10 +331,10 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = r'''
 - name: Create a virtual machine on given ESXi hostname
   vmware_guest:
-    hostname: "{{ vcenter_ip }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    validate_certs: False
+    validate_certs: no
     folder: /DC1/vm/
     name: test_vm_0001
     state: poweredon
@@ -361,10 +361,10 @@ EXAMPLES = r'''
 
 - name: Create a virtual machine from a template
   vmware_guest:
-    hostname: "{{ vcenter_ip }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    validate_certs: False
+    validate_certs: no
     folder: /testvms
     name: testvm_2
     state: poweredon
@@ -402,10 +402,10 @@ EXAMPLES = r'''
 
 - name: Clone a virtual machine from Windows template and customize
   vmware_guest:
-    hostname: "{{ vcenter_ip }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    validate_certs: False
+    validate_certs: no
     datacenter: datacenter1
     cluster: cluster
     name: testvm-2
@@ -435,8 +435,8 @@ EXAMPLES = r'''
 
 - name:  Clone a virtual machine from Linux template and customize
   vmware_guest:
-    hostname: "{{ vcenter_server }}"
-    username: "{{ vcenter_user }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     validate_certs: no
     datacenter: "{{ datacenter }}"
@@ -462,10 +462,10 @@ EXAMPLES = r'''
 
 - name: Rename a virtual machine (requires the virtual machine's uuid)
   vmware_guest:
-    hostname: "{{ vcenter_ip }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    validate_certs: False
+    validate_certs: no
     uuid: "{{ vm_uuid }}"
     name: new_name
     state: present
@@ -473,20 +473,20 @@ EXAMPLES = r'''
 
 - name: Remove a virtual machine by uuid
   vmware_guest:
-    hostname: "{{ vcenter_ip }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    validate_certs: False
+    validate_certs: no
     uuid: "{{ vm_uuid }}"
     state: absent
   delegate_to: localhost
 
 - name: Manipulate vApp properties
   vmware_guest:
-    hostname: "{{ vcenter_ip }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    validate_certs: False
+    validate_certs: no
     name: vm_name
     state: present
     vapp_properties:
@@ -501,10 +501,10 @@ EXAMPLES = r'''
 
 - name: Set powerstate of a virtual machine to poweroff by using UUID
   vmware_guest:
-    hostname: "{{ vcenter_ip }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    validate_certs: False
+    validate_certs: no
     uuid: "{{ vm_uuid }}"
     state: poweredoff
   delegate_to: localhost
@@ -523,9 +523,7 @@ import time
 
 HAS_PYVMOMI = False
 try:
-    import pyVmomi
     from pyVmomi import vim, vmodl
-
     HAS_PYVMOMI = True
 except ImportError:
     pass
@@ -1118,7 +1116,7 @@ class PyVmomiHelper(PyVmomi):
                 self.module.fail_json(msg="Please specify at least a network name or"
                                           " a VLAN name under VM network list.")
 
-            if 'name' in network and find_obj(self.content, [vim.Network], network['name']) is None:
+            if 'name' in network and self.cache.get_network(network['name']) is None:
                 self.module.fail_json(msg="Network '%(name)s' does not exist." % network)
             elif 'vlan' in network:
                 dvps = self.cache.get_all_objs(self.content, [vim.dvs.DistributedVirtualPortgroup])
@@ -1241,6 +1239,7 @@ class PyVmomiHelper(PyVmomi):
 
             if hasattr(self.cache.get_network(network_name), 'portKeys'):
                 # VDS switch
+
                 pg_obj = None
                 if 'dvswitch_name' in network_devices[key]:
                     dvs_name = network_devices[key]['dvswitch_name']
@@ -1251,7 +1250,7 @@ class PyVmomiHelper(PyVmomi):
                     if pg_obj is None:
                         self.module.fail_json(msg="Unable to find distributed port group %s" % network_name)
                 else:
-                    pg_obj = find_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_name)
+                    pg_obj = self.cache.find_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_name)
 
                 if (nic.device.backing and
                    (not hasattr(nic.device.backing, 'port') or

@@ -64,6 +64,7 @@ EXAMPLES = r'''
     dst_group: "{{ dst_group }}"
     admin_state: "{{ admin_state }}"
     description: "{{ description }}"
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -208,14 +209,14 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='spanSrcGrp',
             aci_rn='srcgrp-{0}'.format(src_group),
-            filter_target='eq(spanSrcGrp.name, "{0}")'.format(src_group),
             module_object=src_group,
+            target_filter={'name': src_group},
         ),
         child_classes=['spanSpanLbl'],
     )

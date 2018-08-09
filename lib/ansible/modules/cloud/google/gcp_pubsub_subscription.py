@@ -98,6 +98,7 @@ EXAMPLES = '''
         - https://www.googleapis.com/auth/pubsub
       state: present
   register: topic
+
 - name: create a subscription
   gcp_pubsub_subscription:
       name: testObject

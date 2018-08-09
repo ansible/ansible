@@ -96,6 +96,7 @@ EXAMPLES = r'''
     move_frequency: 256
     description: test
     state: present
+  delegate_to: localhost
 
 - name: Remove an EPR policy
   aci_epr_policy:
@@ -105,6 +106,7 @@ EXAMPLES = r'''
     tenant: production
     epr_policy: EPRPol1
     state: absent
+  delegate_to: localhost
 
 - name: Query an EPR policy
   aci_epr_policy:
@@ -114,6 +116,8 @@ EXAMPLES = r'''
     tenant: production
     epr_policy: EPRPol1
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all EPR policies
   aci_epr_policy:
@@ -121,6 +125,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -294,14 +300,14 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='fvEpRetPol',
             aci_rn='epRPol-{0}'.format(epr_policy),
-            filter_target='eq(fvEpRetPol.name, "{0}")'.format(epr_policy),
             module_object=epr_policy,
+            target_filter={'name': epr_policy},
         ),
     )
 

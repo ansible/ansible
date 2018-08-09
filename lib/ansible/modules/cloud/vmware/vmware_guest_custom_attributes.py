@@ -67,9 +67,9 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 - name: Add virtual machine custom attributes
   vmware_guest_custom_attributes:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     uuid: 421e4592-c069-924d-ce20-7e7533fab926
     state: present
     attributes:
@@ -80,9 +80,9 @@ EXAMPLES = '''
 
 - name: Add multiple virtual machine custom attributes
   vmware_guest_custom_attributes:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     uuid: 421e4592-c069-924d-ce20-7e7533fab926
     state: present
     attributes:
@@ -95,9 +95,9 @@ EXAMPLES = '''
 
 - name: Remove virtual machine Attribute
   vmware_guest_custom_attributes:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     uuid: 421e4592-c069-924d-ce20-7e7533fab926
     state: absent
     attributes:

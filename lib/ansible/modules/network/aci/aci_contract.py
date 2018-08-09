@@ -77,6 +77,7 @@ EXAMPLES = r'''
     description: Communication between web-servers and database
     scope: application-profile
     state: present
+  delegate_to: localhost
 
 - name: Remove an existing contract
   aci_contract:
@@ -86,6 +87,7 @@ EXAMPLES = r'''
     tenant: production
     contract: web_to_db
     state: absent
+  delegate_to: localhost
 
 - name: Query a specific contract
   aci_contract:
@@ -95,6 +97,8 @@ EXAMPLES = r'''
     tenant: production
     contract: web_to_db
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all contracts
   aci_contract:
@@ -102,6 +106,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -250,14 +256,14 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='vzBrCP',
             aci_rn='brc-{0}'.format(contract),
-            filter_target='eq(vzBrCP.name, "{0}")'.format(contract),
             module_object=contract,
+            target_filter={'name': contract},
         ),
     )
 
