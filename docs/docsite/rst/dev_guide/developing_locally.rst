@@ -20,7 +20,7 @@ To save a local module or plugin so Ansible can find and use it, drop the module
 .. _modules_vs_plugins:
 
 Modules and Plugins: What's the Difference?
--------------------------------------------
+===========================================
 If you're looking to add local functionality to Ansible, you may be wondering whether you need a module or a plugin. Here's a quick overview of the differences:
 
 * Modules are reusable, standalone scripts that can be used by the Ansible API, the :command:`ansible` command, or the :command:`ansible-playbook` command. Modules provide a defined interface, accepting arguments and returning information to Ansible by printing a JSON string to stdout before exiting.
@@ -29,7 +29,7 @@ If you're looking to add local functionality to Ansible, you may be wondering wh
 .. _local_modules:
 
 Using Local Modules
--------------------
+===================
 Ansible automatically loads all executable files found in certain directories as modules, so you can create or add a local module in any of these locations:
 
 * any directory added to the ``ANSIBLE_LIBRARY`` environment variable (``$ANSIBLE_LIBRARY`` takes a colon-separated list like ``$PATH``)
@@ -54,7 +54,7 @@ To use a local module only in a single role:
 .. _local_plugins:
 
 Using Local Plugins
----------------------
+===================
 Ansible loads plugins automatically too, loading each type of plugin separately from a directory named for the type of plugin. Here's the full list of plugin directory names:
 
     * action_plugins*
