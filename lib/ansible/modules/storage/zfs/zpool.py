@@ -122,7 +122,7 @@ EXAMPLES = """
       - /dev/sdg
     zil: mirror /dev/sdh /dev/sdi
     l2arc: /dev/sdj
-    autoreplace: on
+    autoreplace: true
     ashift: 12
     vdev: 2
     state: present
@@ -135,8 +135,8 @@ EXAMPLES = """
       - /dev/sdd
     raid_level: mirror
     vdev: 2
-    autoreplace: on
-    autoexpand: on
+    autoreplace: true
+    autoexpand: true
     spare:
       - /dev/sde
     state: present
@@ -149,7 +149,7 @@ EXAMPLES = """
     - /dev/sdf
     - /dev/sdg
     raid_level: mirror
-    autoexpand: on
+    autoexpand: true
     vdev: 2
     state: present
 
@@ -157,7 +157,7 @@ EXAMPLES = """
   zpool:
     name: rpool
     add: true
-    autoreplace: on
+    autoreplace: true
     spare:
     - /dev/sdf
     state: present
@@ -166,7 +166,7 @@ EXAMPLES = """
   zpool:
     name: zpool
     set: true
-    autoreplace: on
+    autoreplace: true
     autoexpand: off
     state: present
 
@@ -301,7 +301,7 @@ def main():
 
     if autoreplace is True and set is False:
         autoreplace = "-o autoreplace=on"
-    elif autoreplace is True' and set is True:
+    elif autoreplace is True and set is True:
         autoreplace = "-o autoreplace=on"
     elif autoreplace is False and set is True:
         autoreplace = "-o autoreplace=off"
