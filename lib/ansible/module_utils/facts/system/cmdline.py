@@ -38,7 +38,14 @@ class CmdLineFactCollector(BaseFactCollector):
                 if len(item) == 1:
                     cmdline_dict[item[0]] = True
                 else:
-                    cmdline_dict[item[0]] = item[1]
+                    # space separated list if multiple key matches
+                    # allows user to call split() on this fact
+                    # in all cases with consistent behavior
+                    if item[0] in cmdline_dict:
+                        cmdline_dict[item[0]] += " " + item[1]
+                    else:
+                        cmdline_dict[item[0]] = item[1]
+
         except ValueError:
             pass
 
