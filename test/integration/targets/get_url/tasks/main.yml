@@ -257,6 +257,31 @@
       - result is changed
       - "stat_result.stat.mode == '0775'"
 
+# https://github.com/ansible/ansible/issues/27617
+
+#- name: create checksum.txt on {{ httpbin_host }}
+#  copy:
+#    dest: {{ httpbin_host }}/checksum.txt
+#    content: "7036ede810fad2b5d2e7547ec703cae8da61edbba43c23f9d7203a0239b765c4.  index.html"
+#  register: source_file_checksum_copied
+
+- name: Change mode on an already downloaded file and specify checksum
+  get_url:
+    url: 'http://{{ httpbin_host }}/'
+    dest: '{{ output_dir }}/test'
+    checksum: 'sha256:http://{{ httpbin_host }}/checksum.txt'
+  register: result
+
+- stat:
+    path: "{{ output_dir }}/test"
+  register: stat_result
+
+- name: Assert that the file was downloaded
+  assert:
+    that:
+      - result is changed
+      - "stat_result.stat.exists == true"
+
 #https://github.com/ansible/ansible/issues/16191
 - name: Test url split with no filename
   get_url:
