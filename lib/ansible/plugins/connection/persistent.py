@@ -120,16 +120,13 @@ class Connection(ConnectionBase):
 
         try:
             termios.tcsetattr(master, termios.TCSANOW, new)
-            stdin = os.fdopen(master, 'wb', 0)
-            write_to_socket(stdin, self._play_context.serialize())
-            write_to_socket(stdin, {'ansible_command_timeout': self.get_option('persistent_command_timeout')})
-
-            stdin.flush()
+            write_to_socket(master, self._play_context.serialize())
+            write_to_socket(master, {'ansible_command_timeout': self.get_option('persistent_command_timeout')})
 
             (stdout, stderr) = p.communicate()
         finally:
             termios.tcsetattr(master, termios.TCSANOW, old)
-        stdin.close()
+        os.close(master)
 
         if p.returncode == 0:
             result = json.loads(to_text(stdout, errors='surrogate_then_replace'))

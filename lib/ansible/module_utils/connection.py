@@ -39,8 +39,8 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import cPickle
 
 
-def write_to_socket(byte_stream, obj):
-    """Handles making sure all data is properly written to byte_stream
+def write_to_socket(fd, obj):
+    """Handles making sure all data is properly written to file descriptor fd.
 
     In particular, that data is encoded in a character stream-friendly way and
     that all data gets written before returning.
@@ -56,8 +56,8 @@ def write_to_socket(byte_stream, obj):
     # They should be rehydrated on the receiving end
     src = src.replace(b'\r', br'\r')
 
-    byte_stream.write(b'%d\n' % len(src))
-    byte_stream.write(src)
+    os.write(fd, b'%d\n' % len(src))
+    os.write(fd, src)
 
 
 def send_data(s, data):
