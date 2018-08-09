@@ -26,20 +26,20 @@ options:
     required: true
   add:
     description:
-      -  Add devices (spare or mirror to an existing zpool)
+      - Add devices (spare or mirror to an existing zpool)
     type: bool
     default: false
   raid_level:
     description:
       - Pool raid level
-    choices: [ none, mirror, raidz, raidz1, raidz2, raidz3 ]
+    choices: [ raid0, mirror, raidz, raidz1, raidz2, raidz3 ]
   vdev:
     description:
-      - number of devices in a vdev
+      - Number of devices in a vdev
     type: int
   devices:
     description:
-      - full path to list of block devices such as hdd, nvme or file
+      - Full path to list of block devices such as hdd, nvme or file
   ashift:
     description:
       - Alignment shift can be used to improve performance and is set once during the creation
@@ -61,7 +61,7 @@ options:
     choices: [ on, off ]
   spare:
     description:
-      - full path to list of block devices such as hdd, nvme or nvme
+      - Full path to list of block devices such as hdd, nvme or nvme
   zil:
     description:
       - ZFS intent log device or devices when mirrored
@@ -77,6 +77,7 @@ options:
     required: true
 author:
 - Remy Mudingay
+- Stephane Armanet
 """
 
 EXAMPLES = """
@@ -101,7 +102,7 @@ EXAMPLES = """
       - /dev/sdd
       - /dev/sde
       - /dev/sdf
-    raid_level: none
+    raid_level: raid0
     l2arc: /dev/sdg
     vdev: 5
     ashift: 12
@@ -217,7 +218,7 @@ class Zpool(object):
         cmd = [self.zpool_cmd]
         if self.add is True:
             action = 'add'
-        lif self.set is True:
+        elif self.set is True:
             action = 'set'
         else:
             action = 'create'
@@ -258,7 +259,7 @@ def main():
         argument_spec=dict(
             name=dict(type='str', required=True),
             state=dict(type='str', required=True, choices=['absent', 'present']),
-            raid_level=dict(type='str', required=False, choices=['none', 'mirror', 'raidz', 'raidz1', 'raidz2', 'raidz3']),
+            raid_level=dict(type='str', required=False, choices=['raid0', 'mirror', 'raidz', 'raidz1', 'raidz2', 'raidz3']),
             vdev=dict(type='int', require=False),
             devices=dict(type='list', default=None),
             spare=dict(type='list', default=None),
@@ -310,7 +311,7 @@ def main():
     if set is True:
         action = 'set'
 
-    if raid_level is False or 'none' in raid_level:
+    if raid_level is False or 'raid0' in raid_level:
         raid_level = ''
 
     if zil:
