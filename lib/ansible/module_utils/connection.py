@@ -27,6 +27,7 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import hashlib
 import json
 import socket
 import struct
@@ -55,9 +56,11 @@ def write_to_socket(fd, obj):
     # raw \r characters will not survive socket round-trip
     # They should be rehydrated on the receiving end
     src = src.replace(b'\r', br'\r')
+    data_hash = to_bytes(hashlib.md5(src).hexdigest())
 
     os.write(fd, b'%d\n' % len(src))
     os.write(fd, src)
+    os.write(fd, b'%s\n' % data_hash)
 
 
 def send_data(s, data):

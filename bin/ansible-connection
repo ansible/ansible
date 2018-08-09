@@ -12,6 +12,7 @@ except Exception:
     pass
 
 import fcntl
+import hashlib
 import os
 import signal
 import socket
@@ -42,6 +43,10 @@ def read_stream(byte_stream):
     data = byte_stream.read(size)
     if len(data) < size:
         raise Exception("EOF found before data was complete")
+
+    data_hash = to_text(byte_stream.readline().strip())
+    if data_hash != hashlib.md5(data).hexdigest():
+        raise Exception("Read {0} bytes, but data did not match checksum".format(size))
 
     # restore escaped loose \r characters
     data = data.replace(br'\r', b'\r')
