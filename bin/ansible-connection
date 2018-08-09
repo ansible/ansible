@@ -222,8 +222,8 @@ def main():
 
     try:
         # read the play context data via stdin, which means depickling it
-        init_data = read_stream(stdin)
         vars_data = read_stream(stdin)
+        init_data = read_stream(stdin)
 
         if PY3:
             pc_data = cPickle.loads(init_data, encoding='bytes')

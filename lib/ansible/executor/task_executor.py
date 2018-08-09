@@ -932,8 +932,8 @@ class TaskExecutor:
 
         try:
             termios.tcsetattr(master, termios.TCSANOW, new)
-            write_to_file_descriptor(master, self._play_context.serialize())
             write_to_file_descriptor(master, variables)
+            write_to_file_descriptor(master, self._play_context.serialize())
 
             (stdout, stderr) = p.communicate()
         finally:

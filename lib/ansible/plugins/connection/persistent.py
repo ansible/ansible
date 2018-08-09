@@ -120,8 +120,8 @@ class Connection(ConnectionBase):
 
         try:
             termios.tcsetattr(master, termios.TCSANOW, new)
-            write_to_file_descriptor(master, self._play_context.serialize())
             write_to_file_descriptor(master, {'ansible_command_timeout': self.get_option('persistent_command_timeout')})
+            write_to_file_descriptor(master, self._play_context.serialize())
 
             (stdout, stderr) = p.communicate()
         finally:
