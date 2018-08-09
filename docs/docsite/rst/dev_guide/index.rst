@@ -24,33 +24,39 @@ Find the task that best describes what you want to do:
 * I want to :ref:`connect Ansible to a new source of inventory <developing_inventory>`. 
 * I want to :ref:`contribute my module or plugin to Ansible Core <module_contribution>`.
 
-## TODO how much TOC do we want? links to Setting Up Your Environment? 
-
+If you prefer to read the entire guide, here's a list of the pages in order.
 
 .. toctree::
-   :caption: Section 1: Developing Locally
    :maxdepth: 1
 
    developing_locally
-   developing_plugins
-   developing_inventory
    developing_modules
    developing_modules_general
    developing_modules_best_practices
+   developing_python_3
    developing_modules_checklist
-   developing_modules_in_groups
+   testing
+   debugging
+   developing_modules_documenting
    developing_modules_general_windows
+   developing_modules_in_groups
+   developing_rebasing
+   module_lifecycle
+   developing_plugins
+   developing_inventory
+   developing_core
+   developing_program_flow_modules
    developing_api
    developing_module_utilities
+
+.. toctree::
+   :caption: Other Content - Needs Integration
+   :maxdepth: 1
+
    testing_running_locally
    testing_units_modules
    testing_compile
    testing_sanity
-   developing_modules_documenting
-   developing_modules_maintenance
-   developing_python_3
-   repomerge
-   testing
    testing_units
    testing_integration
    testing_httptester
@@ -58,12 +64,8 @@ Find the task that best describes what you want to do:
 
 
 .. toctree::
-   :caption: Section 2: Contributing to Ansible/Ansible
+   :caption: Deprecated Legacy Pages
    :maxdepth: 1
 
-   developing_core
+   repomerge
    overview_architecture
-   developing_program_flow_modules
-   developing_rebasing
-   ../reference_appendices/release_and_maintenance
-   ../community/committer_guidelines
