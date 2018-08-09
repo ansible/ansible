@@ -281,7 +281,7 @@
       - not output.changed
 
 - name: Disable (previously enabled) Accelerated networking
-    azure_rm_networkinterface:
+  azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
       name: "tn{{ rpfx }}an"
       virtual_network: "{{ vn.state.id }}"
