@@ -54,10 +54,12 @@ options:
   autoreplace:
     description:
       - Automatically replace a bad device in pool using a spare device
+    type: bool
     default: false
   autoexpand:
     description:
       - Enable or disable automatic pool expansion when a larger disk replaces a smaller disk
+    type: bool
     default: false
   spare:
     description:
