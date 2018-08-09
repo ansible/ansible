@@ -4,26 +4,21 @@
 Ansible and Python 3
 ********************
 
-Ansible is pursuing a strategy of having one code base that runs on both
+Ansible maintains a single code base that runs on both
 Python-2 and Python-3 because we want Ansible to be able to manage a wide
 variety of machines.  Contributors to Ansible should be aware of the tips in
 this document so that they can write code that will run on the same versions
 of Python as the rest of Ansible.
 
-This page covers Python 3 porting for the three overlapping sections of Ansible code:
+To ensure that your code runs on Python 3 as well as on Python 2, learn the tips and tricks and idioms
+described here. Most of these considerations apply to all three types of Ansible code:
+ 
+1. controller-side code - code that runs on the machine where you invoke :command:`/usr/bin/ansible`
+2. modules - the code which Ansible transmits to and invokes on the managed machine.
+3. shared ``module_utils`` code - the common code that's used by modules to perform tasks and sometimes used by controller-side code as well
 
-1. Porting controller-side code.  This is the code which runs on the machine where you
-   invoke :command:`/usr/bin/ansible`
-2. Porting modules.  This is the code which Ansible transmits over the wire and
-   invokes on the managed machine.
-3. Porting ``module_utils code.  This is code whose primary purpose is to be used by the
-   modules to perform tasks.  However, some controller-side code might use
-   generic functions from here.
-
-Much of the knowledge of porting code will be usable on all three of these
-pieces but there are some special considerations for some of it as well.
-Information that is generally applicable to all three places is located in the
-controller-side section.
+However, there are some special considerations for :ref:`porting modules <porting_modules>` and :ref:`porting module_utils code <porting_module_utils>`. 
+If you're writing or updating a module or some ``module_utils`` code, be sure to read those sections.
 
 Minimum Version of Python-3.x and Python-2.x
 ============================================
@@ -353,6 +348,8 @@ does have support for the older, percent-formatting.
 .. seealso::
     Python documentation on `percent formatting <https://docs.python.org/2/library/stdtypes.html#string-formatting>`_
 
+.. _porting_modules:
+
 Porting Modules to Python 3
 ===================================
 
@@ -381,6 +378,8 @@ In Python-2, these are byte strings.  In Python-3 these are text strings.  The
 module_utils shipped with Ansible attempts to accept native strings as input
 to its functions and emit native strings as their output.  Modules should be
 coded to expect bytes on Python-2 and text on Python-3.
+
+.. _porting_module_utils:
 
 Porting module_utils code to Python 3
 =====================================
