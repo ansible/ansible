@@ -1,7 +1,8 @@
 .. _module_dev_conventions:
 
+*****************************************
 Conventions, Best Practices, and Pitfalls
-`````````````````````````````````````````
+*****************************************
 
 As you develop your module, follow these basic conventions and best practices:
 
@@ -49,7 +50,7 @@ As you develop your module, follow these basic conventions and best practices:
     * Avoid catchall exceptions, they are not very useful unless the underlying API gives very good error messages pertaining the attempted action.
 
 Scoping your module(s)
-```````````````````````
+======================
 
 Especially if you want to contribute your module back to Ansible Core, make sure it includes enough logic and functionality, but not too much. If you're finding these guidelines tricky, consider :ref:`whether you really need to write a module <module_dev_should_you>` at all.
 
@@ -65,7 +66,7 @@ Especially if you want to contribute your module back to Ansible Core, make sure
 Instead of creating a module that does the work of other modules, use Plays and Roles to meet your needs.
 
 Importing and using shared code
-`````````````````````````````````````````
+===============================
 
 * Use shared code whenever possible - don't reinvent the wheel. Ansible offers base functions for many common patterns (retry, throttling, etc). ## TODO where is shared code and how does a dev use it?
 * Import ``ansible.module_utils`` code in the same place as you import other libraries.
@@ -82,7 +83,7 @@ Importing and using shared code
 
 
 Handling module failures
-`````````````````````````````````````````
+========================
 
 When you module fails, help users understand what went wrong. If you are using the AnsibleModule common Python code, the 'failed' element will be included for you automatically when you call ``fail_json``. For polite module failure behavior:
 
@@ -91,7 +92,7 @@ When you module fails, help users understand what went wrong. If you are using t
 * Do not use ``sys.exit()``. Use ``fail_json()`` from the module object.
 
 Creating correct and informative module output
-`````````````````````````````````````````````````````````````````
+==============================================
 
 Modules must output valid JSON only. Follow these guidelines for creating correct, useful module output:
 
@@ -111,7 +112,7 @@ Modules must output valid JSON only. Follow these guidelines for creating correc
 If a module returns stderr or otherwise fails to produce valid JSON, the actual output will still be shown in Ansible, but the command will not succeed.
 
 Following standard Ansible patterns
-`````````````````````````````````````````````````````````````````
+===================================
 
 Ansible uses patterns to provide a predictable user interface across all modules, playbooks, and roles. To follow standard Ansible patterns in your module development:
 
@@ -128,4 +129,3 @@ Ansible uses patterns to provide a predictable user interface across all modules
 * Strive for a consistent final state (aka idempotency). If running your module twice in a row against the same system would result in two different states, see if you can redesign or rewrite to achieve consistent final state. If you can't, document the behavior and the reasons for it.
 * Provide consistent return values within the standard Ansible return structure, even if NA/None are used for keys normally returned under other options.
 * Follow additional guidelines that apply to families of modules if applicable. For example, AWS modules should follow ` the Amazon guidelines <https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/cloud/amazon/GUIDELINES.md>`_
-
