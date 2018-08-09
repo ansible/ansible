@@ -523,9 +523,7 @@ import time
 
 HAS_PYVMOMI = False
 try:
-    import pyVmomi
     from pyVmomi import vim, vmodl
-
     HAS_PYVMOMI = True
 except ImportError:
     pass

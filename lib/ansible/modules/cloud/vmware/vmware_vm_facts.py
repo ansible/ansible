@@ -87,7 +87,7 @@ virtual_machines:
 '''
 
 try:
-    from pyVmomi import vim, vmodl
+    from pyVmomi import vim
 except ImportError:
     pass
 

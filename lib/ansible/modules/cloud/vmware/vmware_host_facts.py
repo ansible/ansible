@@ -107,7 +107,7 @@ from ansible.module_utils.basic import AnsibleModule, bytes_to_human
 from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, find_obj
 
 try:
-    from pyVmomi import vim, vmodl
+    from pyVmomi import vim
 except ImportError:
     pass
 

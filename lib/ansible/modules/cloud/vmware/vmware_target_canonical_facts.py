@@ -109,11 +109,6 @@ scsi_tgt_facts:
     }
 """
 
-try:
-    from pyVmomi import vim, vmodl
-except ImportError:
-    pass
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec
 
