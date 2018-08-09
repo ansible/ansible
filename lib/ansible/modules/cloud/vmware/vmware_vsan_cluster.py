@@ -34,11 +34,8 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-# Example command from Ansible Playbook
-
 - name: Configure VMware VSAN Cluster
   hosts: deploy_node
-  gather_facts: False
   tags:
     - vsan
   tasks:

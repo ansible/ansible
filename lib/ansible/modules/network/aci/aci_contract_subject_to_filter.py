@@ -69,6 +69,7 @@ EXAMPLES = r'''
     filter: '{{ filter }}'
     log: '{{ log }}'
     state: present
+  delegate_to: localhost
 
 - name: Remove an existing contract subject to filter binding
   aci_contract_subject_to_filter:
@@ -81,6 +82,7 @@ EXAMPLES = r'''
     filter: '{{ filter }}'
     log: '{{ log }}'
     state: present
+  delegate_to: localhost
 
 - name: Query a specific contract subject to filter binding
   aci_contract_subject_to_filter:
@@ -92,6 +94,8 @@ EXAMPLES = r'''
     subject: test
     filter: '{{ filter }}'
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all contract subject to filter bindings
   aci_contract_subject_to_filter:
@@ -102,6 +106,8 @@ EXAMPLES = r'''
     contract: web_to_db
     subject: test
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''

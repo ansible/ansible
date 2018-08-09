@@ -331,10 +331,10 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = r'''
 - name: Create a virtual machine on given ESXi hostname
   vmware_guest:
-    hostname: "{{ vcenter_ip }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    validate_certs: False
+    validate_certs: no
     folder: /DC1/vm/
     name: test_vm_0001
     state: poweredon
@@ -361,10 +361,10 @@ EXAMPLES = r'''
 
 - name: Create a virtual machine from a template
   vmware_guest:
-    hostname: "{{ vcenter_ip }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    validate_certs: False
+    validate_certs: no
     folder: /testvms
     name: testvm_2
     state: poweredon
@@ -402,10 +402,10 @@ EXAMPLES = r'''
 
 - name: Clone a virtual machine from Windows template and customize
   vmware_guest:
-    hostname: "{{ vcenter_ip }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    validate_certs: False
+    validate_certs: no
     datacenter: datacenter1
     cluster: cluster
     name: testvm-2
@@ -435,8 +435,8 @@ EXAMPLES = r'''
 
 - name:  Clone a virtual machine from Linux template and customize
   vmware_guest:
-    hostname: "{{ vcenter_server }}"
-    username: "{{ vcenter_user }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     validate_certs: no
     datacenter: "{{ datacenter }}"
@@ -462,10 +462,10 @@ EXAMPLES = r'''
 
 - name: Rename a virtual machine (requires the virtual machine's uuid)
   vmware_guest:
-    hostname: "{{ vcenter_ip }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    validate_certs: False
+    validate_certs: no
     uuid: "{{ vm_uuid }}"
     name: new_name
     state: present
@@ -473,20 +473,20 @@ EXAMPLES = r'''
 
 - name: Remove a virtual machine by uuid
   vmware_guest:
-    hostname: "{{ vcenter_ip }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    validate_certs: False
+    validate_certs: no
     uuid: "{{ vm_uuid }}"
     state: absent
   delegate_to: localhost
 
 - name: Manipulate vApp properties
   vmware_guest:
-    hostname: "{{ vcenter_ip }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    validate_certs: False
+    validate_certs: no
     name: vm_name
     state: present
     vapp_properties:
@@ -501,10 +501,10 @@ EXAMPLES = r'''
 
 - name: Set powerstate of a virtual machine to poweroff by using UUID
   vmware_guest:
-    hostname: "{{ vcenter_ip }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    validate_certs: False
+    validate_certs: no
     uuid: "{{ vm_uuid }}"
     state: poweredoff
   delegate_to: localhost
@@ -523,9 +523,7 @@ import time
 
 HAS_PYVMOMI = False
 try:
-    import pyVmomi
     from pyVmomi import vim, vmodl
-
     HAS_PYVMOMI = True
 except ImportError:
     pass

@@ -12,7 +12,6 @@ import pwd
 import grp
 import time
 import shutil
-import tempfile
 import traceback
 import fcntl
 import sys
@@ -57,30 +56,32 @@ class FileLock:
         self.lockfd = None
 
     @contextmanager
-    def lock_file(self, path, lock_timeout=None):
+    def lock_file(self, path, tmpdir, lock_timeout=None):
         '''
         Context for lock acquisition
         '''
         try:
-            self.set_lock(path, lock_timeout)
+            self.set_lock(path, tmpdir, lock_timeout)
             yield
         finally:
             self.unlock()
 
-    def set_lock(self, path, lock_timeout=None):
+    def set_lock(self, path, tmpdir, lock_timeout=None):
         '''
         Create a lock file based on path with flock to prevent other processes
-        using given path
+        using given path.
+        Please note that currently file locking only works when it's executed by
+        the same user, I.E single user scenarios
 
         :kw path: Path (file) to lock
+        :kw tmpdir: Path where to place the temporary .lock file
         :kw lock_timeout:
             Wait n seconds for lock acquisition, fail if timeout is reached.
             0 = Do not wait, fail if lock cannot be acquired immediately,
             Default is None, wait indefinitely until lock is released.
         :returns: True
         '''
-        tmp_dir = tempfile.gettempdir()
-        lock_path = os.path.join(tmp_dir, 'ansible-{0}.lock'.format(os.path.basename(path)))
+        lock_path = os.path.join(tmpdir, 'ansible-{0}.lock'.format(os.path.basename(path)))
         l_wait = 0.1
         r_exception = IOError
         if sys.version_info[0] == 3:
@@ -115,7 +116,8 @@ class FileLock:
 
     def unlock(self):
         '''
-        Unlock the file descriptor locked by set_lock
+        Make sure lock file is available for everyone and Unlock the file descriptor
+        locked by set_lock
 
         :returns: True
         '''

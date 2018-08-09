@@ -74,7 +74,7 @@ extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
-- name: Add a new vlan range
+- name: Add a new VLAN range
   aci_vlan_pool_encap_block:
     host: apic
     username: admin
@@ -84,8 +84,9 @@ EXAMPLES = r'''
     encap_start: 20
     encap_end: 50
     state: present
+  delegate_to: localhost
 
-- name: Remove a vlan range
+- name: Remove a VLAN range
   aci_vlan_pool_encap_block:
     host: apic
     username: admin
@@ -95,8 +96,9 @@ EXAMPLES = r'''
     encap_start: 20
     encap_end: 50
     state: absent
+  delegate_to: localhost
 
-- name: Query a vlan range
+- name: Query a VLAN range
   aci_vlan_pool_encap_block:
     host: apic
     username: admin
@@ -106,8 +108,10 @@ EXAMPLES = r'''
     encap_start: 20
     encap_end: 50
     state: query
+  delegate_to: localhost
+  register: query_result
 
-- name: Query a vlan pool for ranges
+- name: Query a VLAN pool for ranges
   aci_vlan_pool_encap_block:
     host: apic
     username: admin
@@ -115,14 +119,18 @@ EXAMPLES = r'''
     pool: production
     pool_type: vlan
     state: query
+  delegate_to: localhost
+  register: query_result
 
-- name: Query all vlan ranges
+- name: Query all VLAN ranges
   aci_vlan_pool_encap_block:
     host: apic
     username: admin
     password: SomeSecretPassword
     pool_type: vlan
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''

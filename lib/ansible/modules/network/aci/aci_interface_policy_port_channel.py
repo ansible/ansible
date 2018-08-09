@@ -104,6 +104,7 @@ EXAMPLES = r'''
     min_links: '{{ min_links }}'
     max_links: '{{ max_links }}'
     mode: '{{ mode }}'
+  delegate_to: localhost
 '''
 
 RETURN = r'''

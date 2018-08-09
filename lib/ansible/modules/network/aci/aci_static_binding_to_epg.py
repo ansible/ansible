@@ -125,6 +125,7 @@ EXAMPLES = r'''
     leafs: 101
     interface: '1/7'
     state: present
+  delegate_to: localhost
 
 - name: Remove Static Path binding for given EPG
   aci_static_binding_to_epg:
@@ -139,6 +140,7 @@ EXAMPLES = r'''
     leafs: 101
     interface: '1/7'
     state: absent
+  delegate_to: localhost
 
 - name: Get specific Static Path binding for given EPG
   aci_static_binding_to_epg:
@@ -153,6 +155,8 @@ EXAMPLES = r'''
     leafs: 101
     interface: '1/7'
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -308,8 +312,11 @@ def main():
     pod_id = module.params['pod_id']
     leafs = module.params['leafs']
     if leafs is not None:
-        # Users are likely to use integers for leaf IDs, which would raise an exception when using the join method
-        leafs = [str(leaf) for leaf in module.params['leafs']]
+        # Process leafs, and support dash-delimited leafs
+        leafs = []
+        for leaf in module.params['leafs']:
+            # Users are likely to use integers for leaf IDs, which would raise an exception when using the join method
+            leafs.extend(str(leaf).split('-'))
         if len(leafs) == 1:
             if interface_type != 'vpc':
                 leafs = leafs[0]

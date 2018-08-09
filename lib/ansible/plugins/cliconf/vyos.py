@@ -227,7 +227,7 @@ class Cliconf(CliconfBase):
             'supports_multiline_delimiter': False,
             'supports_diff_match': True,
             'supports_diff_ignore_lines': False,
-            'supports_generate_diff': True,
+            'supports_generate_diff': False,
             'supports_replace': False
         }
 

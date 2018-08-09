@@ -247,6 +247,7 @@ EXAMPLES = '''
         - https://www.googleapis.com/auth/compute
       state: present
   register: instancegroup
+
 - name: create a http health check
   gcp_compute_http_health_check:
       name: 'httphealthcheck-backendservice'
@@ -261,6 +262,7 @@ EXAMPLES = '''
         - https://www.googleapis.com/auth/compute
       state: present
   register: healthcheck
+
 - name: create a backend service
   gcp_compute_backend_service:
       name: testObject
