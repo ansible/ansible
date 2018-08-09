@@ -3,30 +3,28 @@
 The lifecycle of an Ansible module
 ======================================
 
-Include information on all status values: preview, stableinterface, deprecated, and removed.
+Modules in the main Ansible repo have a defined life cycle, from first introduction to final removal. The module life cycle is tied to the `Ansible release cycle <release_cycle>`. A module may move through these four states:
+
+1. When a module is first accepted into Ansible, we consider it in tech preview and mark it ``preview``. Modules in ``preview`` are not stable. You may change the parameters or dependencies, expand or reduce the functionality of ``preview`` modules. Many modules remain ``preview`` for years.
+
+2. If a module matures, we may mark it ``stableinterface`` and commit to maintaining its parameters, dependencies, and functionality. We support (though we cannot guarantee) backwards compatibility for ``stableinterface`` modules, which means their parameters should be maintained with stable meanings.
+
+3. If a module's target API changes radically, or if someone creates a better implementation of its functionality, we may mark it ``deprecated``. Modules that are ``deprecated`` are still available but they are reaching the end of their life cycle. We retain deprecated modules for 4 release cycles with deprecation warnings to help users update playbooks and roles that use them.
+
+4. When a module has been deprecated for four release cycles, we remove the code and mark the stub file ``removed``. Modules that are ``removed`` are no longer shipped with Ansible. The stub file helps users find alternative modules. 
+
+.. _deprecating_modules:
 
 Deprecating modules
 ^^^^^^^^^^^^^^^^^^^
 
-Starting in 1.8, you can deprecate modules by renaming them with a preceding ``_``, i.e. ``old_cloud.py`` to
-``_old_cloud.py``. This keeps the module available, but hides it from the primary docs and listing.
+To deprecate a module, you must:
 
-When deprecating a module:
-
-1) Set the ``ANSIBLE_METADATA`` `status` to `deprecated`.
-2) In the ``DOCUMENTATION`` section, add a `deprecated` field along the lines of::
-
-    deprecated: Deprecated in 2.3. Use M(whatmoduletouseinstead) instead.
-
-3) Add the deprecation to CHANGELOG.md under the ``###Deprecations:`` section.
-
-* When you deprecate a module you must:
-
-  * Mention the deprecation in the relevant ``CHANGELOG``
-  * Reference the deprecation in the relevant ``porting_guide_x.y.rst``
-  * Rename the file so it starts with an ``_``
-  * Update ``ANSIBLE_METADATA`` to contain ``status: ['deprecated']``
-  * Add ``deprecated:`` to the documentation with the following sub-values:
+1. Rename the file so it starts with an ``_``, for example, rename ``old_cloud.py`` to ``_old_cloud.py``. This keeps the module available and marks it as deprecated on the module index pages.
+2. Mention the deprecation in the relevant ``CHANGELOG``.
+3. Reference the deprecation in the relevant ``porting_guide_x.y.rst``.
+4. Update ``ANSIBLE_METADATA`` to contain ``status: ['deprecated']``.
+5. Add ``deprecated:`` to the documentation with the following sub-values:
   :removed_in: A `string`, such as ``"2.9"``, which represents the version of Ansible this module will replaced with docs only module stub.
   :why: Optional string that used to detail why this has been removed.
   :alternative: Inform users they should do instead, i.e. ``Use M(whatmoduletouseinstead) instead.``.
@@ -34,13 +32,11 @@ When deprecating a module:
 * See the `kubernetes module code <https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/clustering/k8s/_kubernetes.py>`_
   for an example of documenting deprecation.
 
+Changing a module name
+----------------------
 
-
-Alias module names
-------------------
-
-You can also rename modules and keep an alias to the old name by using a symlink that starts with _.
-This example allows the stat module to be called with fileinfo, making the following examples equivalent::
+You can also rename a module and keep an alias to the old name by using a symlink that starts with _.
+This example allows the ``stat`` module to be called with ``fileinfo``, making the following examples equivalent::
 
     EXAMPLES = '''
     ln -s stat.py _fileinfo.py
