@@ -692,7 +692,7 @@ vpc_security_groups:
 '''
 
 from ansible.module_utils._text import to_text
-from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code, get_method_parameters, get_required_parameters
+from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code, get_boto3_client_method_parameters
 from ansible.module_utils.aws.waiters import get_waiter
 from ansible.module_utils.common.dict_transformations import snake_dict_to_camel_dict, camel_dict_to_snake_dict
 from ansible.module_utils.ec2 import compare_aws_tags, boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list, AWSRetry
@@ -721,7 +721,7 @@ def arg_spec_to_rds_params(options_dict):
 def get_method_name(instance, state, creation_source, read_replica):
     method_name = None
     if state == 'absent' or state == 'terminated':
-        if instance:
+        if instance and instance['DBInstanceStatus'] not in ['deleting', 'deleted']:
             method_name = 'delete_db_instance'
     else:
         if instance:
@@ -775,7 +775,7 @@ def get_instance(client, module, db_instance_id):
     except is_boto3_error_code('DBInstanceNotFound'):
         instance = {}
     except (BotoCoreError, ClientError) as e:  # pylint: disable=duplicate-except
-        module.fail_json_aws(e, msg="Failed to describe DB instances or the tags of the instances")
+        module.fail_json_aws(e, msg='Failed to describe DB instances or the tags of the instances')
     return instance
 
 
@@ -795,15 +795,17 @@ def get_final_snapshot(client, module, snapshot_identifier):
         if len(snapshots.get('DBSnapshots', [])) == 1:
             return snapshots['DBSnapshots'][0]
         return {}
-    except (BotoCoreError, ClientError) as e:
-        module.fail_json_aws(e, msg="Failed to retrieve information about the final snapshot")
+    except is_boto3_error_code('DBSnapshotNotFound') as e:  # May not be using wait: True
+        return {}
+    except (BotoCoreError, ClientError) as e:  # pylint: disable=duplicate-except
+        module.fail_json_aws(e, msg='Failed to retrieve information about the final snapshot')
 
 
 def get_parameters(client, module, parameters, method_name):
-    required_options = get_required_parameters(client, method_name)
+    required_options = get_boto3_client_method_parameters(client, method_name, required=True)
     if any([parameters[k] is None for k in required_options]):
-        module.fail_json(msg="To {0} requires the parameters: {1}".format(get_operation_err(method_name), required_options))
-    options = get_method_parameters(client, method_name)
+        module.fail_json(msg='To {0} requires the parameters: {1}'.format(get_operation_err(method_name), required_options))
+    options = get_boto3_client_method_parameters(client, method_name)
     parameters = dict((k, v) for k, v in parameters.items() if k in options and v is not None)
 
     # If this parameter is an empty list it can only be used with modify_db_instance (as the parameter UseDefaultProcessorFeatures)
@@ -979,11 +981,11 @@ def call_method(client, module, method_name, parameters):
             if method_name == 'modify_db_instance' and 'No modifications were requested' in e.response['Error']['Message']:
                 changed = False
             elif method_name == 'modify_db_instance' and 'ModifyDbCluster API' in e.response['Error']['Message']:
-                module.fail_json_aws(e, msg="It appears you are trying to modify attributes that are managed at the cluster level. Please see rds_cluster")
+                module.fail_json_aws(e, msg='It appears you are trying to modify attributes that are managed at the cluster level. Please see rds_cluster')
             else:
-                module.fail_json_aws(e, msg="Unable to {0}".format(get_operation_err(method_name)))
+                module.fail_json_aws(e, msg='Unable to {0}'.format(get_operation_err(method_name)))
         except (BotoCoreError, ClientError) as e:  # pylint: disable=duplicate-except
-            module.fail_json_aws(e, msg="Unable to {0}".format(get_operation_err(method_name)))
+            module.fail_json_aws(e, msg='Unable to {0}'.format(get_operation_err(method_name)))
 
         if wait and changed:
             db_instance_id = get_final_instance_identifier(module, parameters)
@@ -1023,9 +1025,9 @@ def wait_for_status(client, module, db_instance_id, waiter_name):
             if e.last_response.get('Error', {}).get('Code') == 'DBInstanceNotFound':
                 sleep(10)
                 continue
-            module.fail_json_aws(e, msg="Error while waiting for DB instance {0} to be {1}".format(db_instance_id, expected_status))
+            module.fail_json_aws(e, msg='Error while waiting for DB instance {0} to be {1}'.format(db_instance_id, expected_status))
         except (BotoCoreError, ClientError) as e:
-            module.fail_json_aws(e, msg="Unexpected error while waiting for DB instance {0} to be {1}".format(
+            module.fail_json_aws(e, msg='Unexpected error while waiting for DB instance {0} to be {1}'.format(
                 db_instance_id, expected_status)
             )
 
@@ -1144,20 +1146,20 @@ def main():
         enable_iam_database_authentication=dict(type='bool'),
         enable_performance_insights=dict(type='bool'),
         engine=dict(choices=[
-            "aurora",
-            "aurora-mysql",
-            "aurora-postgresql",
-            "mariadb",
-            "mysql",
-            "oracle-ee",
-            "oracle-se",
-            "oracle-se1",
-            "oracle-se2",
-            "postgres",
-            "sqlserver-ee",
-            "sqlserver-ex",
-            "sqlserver-se",
-            "sqlserver-web",
+            'aurora',
+            'aurora-mysql',
+            'aurora-postgresql',
+            'mariadb',
+            'mysql',
+            'oracle-ee',
+            'oracle-se',
+            'oracle-se1',
+            'oracle-se2',
+            'postgres',
+            'sqlserver-ee',
+            'sqlserver-ex',
+            'sqlserver-se',
+            'sqlserver-web',
         ]),
         engine_version=dict(),
         final_db_snapshot_identifier=dict(aliases=['final_snapshot_identifier']),
@@ -1256,7 +1258,7 @@ def main():
             instance = get_instance(client, module, instance_id)
 
         if state == 'absent' and changed and not module.params['skip_final_snapshot']:
-            instance.update(FinalSnapshot=get_final_snapshot(client, module, module.params['final_snapshot_identifier']))
+            instance.update(FinalSnapshot=get_final_snapshot(client, module, module.params['final_db_snapshot_identifier']))
 
     module.exit_json(changed=changed, **camel_dict_to_snake_dict(instance, ignore_list=['Tags', 'ProcessorFeatures']))
 
