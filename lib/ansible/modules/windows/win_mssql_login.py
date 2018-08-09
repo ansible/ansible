@@ -59,7 +59,6 @@ options:
   login_type:
     description: specifies what type of login has to be created (sql or windows)
     default: sql
-    type: string
     choices:
       - sql
       - windows
