@@ -1,8 +1,8 @@
 .. _developing_python_3:
 
-====================
+********************
 Ansible and Python 3
-====================
+********************
 
 Ansible is pursuing a strategy of having one code base that runs on both
 Python-2 and Python-3 because we want Ansible to be able to manage a wide
@@ -10,14 +10,13 @@ variety of machines.  Contributors to Ansible should be aware of the tips in
 this document so that they can write code that will run on the same versions
 of Python as the rest of Ansible.
 
-Ansible can be divided into three overlapping pieces for the purposes of
-porting:
+This page covers Python 3 porting for the three overlapping sections of Ansible code:
 
-1. Controller-side code.  This is the code which runs on the machine where you
+1. Porting controller-side code.  This is the code which runs on the machine where you
    invoke :command:`/usr/bin/ansible`
-2. Modules.  This is the code which Ansible transmits over the wire and
+2. Porting modules.  This is the code which Ansible transmits over the wire and
    invokes on the managed machine.
-3. module_utils code.  This is code whose primary purpose is to be used by the
+3. Porting ``module_utils code.  This is code whose primary purpose is to be used by the
    modules to perform tasks.  However, some controller-side code might use
    generic functions from here.
 
@@ -26,9 +25,8 @@ pieces but there are some special considerations for some of it as well.
 Information that is generally applicable to all three places is located in the
 controller-side section.
 
---------------------------------------------
 Minimum Version of Python-3.x and Python-2.x
---------------------------------------------
+============================================
 
 On the controller we support Python-3.5 or greater and Python-2.7 or greater.  Module-side, we
 support Python-3.5 or greater and Python-2.6 or greater.
@@ -54,9 +52,8 @@ only function with a newer version of Python.
     Ansible-2.3 was released in April of 2017 and was the last Ansible release
     to support Python-2.4 on the module-side.
 
------------------------------------
 Porting Controller Code to Python 3
------------------------------------
+===================================
 
 Most of the general tips for porting code to be used on both Python-2 and
 Python-3 applies to porting controller code.  The best place to start learning
@@ -109,14 +106,14 @@ the outside world we first convert the text back into bytes.
 To visualize this, imagine a 'sandwich' consisting of a top and bottom layer
 of bytes, a layer of conversion between, and all text type in the center.
 
-Common Borders
---------------
+Common Borders: Places to convert bytes to text
+--------------------------------------------------------
 
 This is a partial list of places where we have to convert to and from bytes.
 It's not exhaustive but gives you an idea of where to watch for problems.
 
 Reading and writing to files
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In Python-2, reading from files yields bytes.  In Python-3, it can yield text.
 To make code that's portable to both we don't make use of Python-3's ability
@@ -154,7 +151,7 @@ transforming to UTF-8 and all text strings in Python can be transformed back
 to UTF-8.
 
 Filesystem Interaction
-~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^
 
 Dealing with filenames often involves dropping back to bytes because on UNIX-like
 systems filenames are bytes.  On Python-2, if we pass a text string to these
@@ -199,7 +196,7 @@ and manipulate in bytes.
     bytes and text will cause tracebacks.
 
 Interacting with Other Programs
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Interacting with other programs goes through the operating system and
 C libraries and operates on things that the UNIX kernel defines.  These
@@ -316,7 +313,7 @@ String formatting
 -----------------
 
 str.format() compatibility
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Starting in Python-2.6, strings gained a method called ``format()`` to put
 strings together.  However, one commonly used feature of ``format()`` wasn't
@@ -340,7 +337,7 @@ is compatible with Python-2.6.
 
 
 Use percent format with byte strings
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In Python-3.x, byte strings do not have a ``format()`` method.  However, it
 does have support for the older, percent-formatting.
@@ -360,9 +357,9 @@ does have support for the older, percent-formatting.
 .. seealso::
     Python documentation on `percent formatting <https://docs.python.org/2/library/stdtypes.html#string-formatting>`_
 
----------------------------
+***************************
 Porting Modules to Python 3
----------------------------
+***************************
 
 Ansible modules are slightly harder to port than normal code from other
 projects. A lot of mocking has to go into unit testing an Ansible module so
