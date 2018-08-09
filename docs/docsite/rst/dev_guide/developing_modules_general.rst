@@ -1,9 +1,10 @@
 .. _module_dev_tutorial_sample:
 
-Ansible Module Development Walkthrough
-======================================
+*******************************************
+Ansible Module Development: Getting Started
+*******************************************
 
-In this section, we will walk through developing, testing, and debugging an Ansible module.
+A module is a reusable, standalone script that Ansible runs on your behalf, either locally or remotely. Modules interact with your local machine, an API, or a remote system to perform specific tasks like changing a database password or spinning up a cloud instance. Each module can be used by the Ansible API, or by the :command:`ansible` or :command:`ansible-playbook` programs. A module provides a defined interface, accepting arguments and returning information to Ansible by printing a JSON string to stdout before exiting. Ansible ships with thousands of modules, and you can easily write your own. If you're writing a module for local use, you can choose any programming language and follow your own rules. This tutorial illustrates how to get started developing an Ansible module in Python.
 
 What's covered in this section:
 
@@ -17,9 +18,11 @@ What's covered in this section:
    support <#communication-and-development-support>`__
 -  `Credit <#credit>`__
 
+.. _environment_setup:
 
 Environment setup
 =================
+
 Prerequisites Via Apt (Ubuntu)
 ``````````````````````````````
 Due to dependencies (for example ansible -> paramiko -> pynacl -> libffi):
@@ -188,15 +191,14 @@ To create a new module:
         main()
 
 
-Local/direct module testing
-===========================
+Exercising your module code locally
+===================================
 
-You may want to test the module on the local machine without targeting a
-remote host. This is a great way to quickly and easily debug a module
-that can run locally.
+Once you've modified the sample code above to do what you want, you can try out your module.
 
--  Create an arguments file in ``/tmp/args.json`` with the following
-   content: (explanation below)
+If you module does not need to target a remote host, you can quickly and easily exercise you code locally like this:
+
+-  Create an arguments file, a basic JSON config file that passes parameters to your module so you can run it. Name the arguments file ``/tmp/args.json`` and add the following content:
 
 .. code:: json
 
@@ -219,13 +221,11 @@ This should return output something like this:
 
     {"changed": true, "state": {"original_message": "hello", "new_message": "goodbye"}, "invocation": {"module_args": {"name": "hello", "new": true}}}
 
-The arguments file is just a basic json config file that passes parameters to your module so you can run it.
 
-Playbook module testing
-=======================
+Exercising your module code in a playbook
+=========================================
 
-The next step in testing your new module is to consume it with an
-Ansible playbook.
+The next step in testing your new module is to consume it with an Ansible playbook.
 
 -  Create a playbook in any directory: ``$ touch testmod.yml``
 -  Add the following to the new playbook file::
@@ -261,6 +261,8 @@ test/units/modules/.../test/my_new_test_module.py``
 
 Going Further
 =============
+
+If you want to contribute your module back to Ansible, review our :ref:`submission checklist <developing_modules_checklist>` and :ref:`best practices <developing_modules_best_practices>` before you start writing code. 
 
 If you would like to contribute to the main Ansible repository
 by adding a new feature or fixing a bug, `create a fork <https://help.github.com/articles/fork-a-repo/>`_
