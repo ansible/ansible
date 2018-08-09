@@ -49,13 +49,10 @@ only function with a newer version of Python.
     Ansible-2.3 was released in April of 2017 and was the last Ansible release
     to support Python-2.4 on the module-side.
 
-Porting Controller Code to Python 3
+Porting Ansible Code to Python 3
 ===================================
 
-Most of the general tips for porting code to be used on both Python-2 and
-Python-3 apply to porting controller code.  The best place to start learning
-to port code is `Lennart Regebro's book: Porting to Python 3 <http://python3porting.com/>`_.
-
+The best place to start learning to port code is `Lennart Regebro's book: Porting to Python 3 <http://python3porting.com/>`_.
 The book describes several strategies for porting to Python 3.  The one we're
 using is `to support Python-2 and Python-3 from a single code base
 <http://python3porting.com/strategies.html#python-2-and-python-3-without-conversion>`_
@@ -144,8 +141,8 @@ the outside world we first convert the text back into bytes.
 To visualize this, imagine a 'sandwich' consisting of a top and bottom layer
 of bytes, a layer of conversion between, and all text type in the center.
 
-Unicode Sandwich Common Borders: Places to convert bytes to text
-----------------------------------------------------------------
+Unicode Sandwich Common Borders: Places to convert bytes to text in controller code
+-----------------------------------------------------------------------------------
 
 This is a partial list of places where we have to convert to and from bytes
 when using the Unicode Sandwich string strategy. It's not exhaustive but
