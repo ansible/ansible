@@ -81,6 +81,7 @@ hluid:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
+from ansible.module_utils.storage.emc.emc_vnx import emc_vnx_argument_spec
 
 try:
     from storops import VNXSystem
@@ -94,13 +95,11 @@ except:
 def run_module():
     module_args = dict(
         name=dict(type='str', required=True),
-        sp_address=dict(type='str', required=True),
-        sp_user=dict(type='str', required=False, default='sysadmin'),
-        sp_password=dict(type='str', required=False, default='sysadmin',
-                         no_log=True),
         lunid=dict(type='int', required=True),
         state=dict(default='present', choices=['present', 'absent']),
     )
+
+    module_args.update(emc_vnx_argument_spec)
 
     result = dict(
         changed=False,
