@@ -107,6 +107,58 @@
     - cm_disk_group_policy_change_again.changed == nm_disk_group_policy_change_again.changed == false
 
 
+# Clean environment for next tests
+- name: Disk Group Policy absent for automatic testing
+  ucs_disk_group_policy: &disk_group_policy_absent_auto
+    <<: *login_info
+    name: DEE-DG
+    state: absent
+
+
+# Test automatic configuration mode (check_mode)
+- name: Disk Group Policy automatic (check_mode)
+  ucs_disk_group_policy: &disk_group_policy_auto
+    <<: *login_info
+    name: DEE-DG
+    raid_level: mirror
+    configuration_mode: automatic
+    drive_type: SSD
+    num_drives: 2
+    virtual_drive:
+      access_policy: platform-default
+      io_policy: direct
+      strip_size: 64KB
+  check_mode: yes
+  register: cm_disk_group_policy_auto
+
+
+# Automatic configuration (normal mode)
+- name: Disk Group Policy automatic (normal mode)
+  ucs_disk_group_policy: *disk_group_policy_auto
+  register: nm_disk_group_policy_auto
+
+
+# Test automatic configuration again (idempotent)
+- name: Disk Group Policy automatic again (check_mode)
+  ucs_disk_group_policy: *disk_group_policy_auto
+  check_mode: yes
+  register: cm_disk_group_policy_auto_again
+
+
+# Automatic configuration again (normal mode)
+- name: Disk Group Policy automatic again (normal mode)
+  ucs_disk_group_policy: *disk_group_policy_auto
+  register: nm_disk_group_policy_auto_again
+
+
+# Verfiy Automatic configuration 
+- name: Verify Disk Group Policy automatic results
+  assert:
+    that:
+    - cm_disk_group_policy_auto.changed == nm_disk_group_policy_auto.changed == true
+    - cm_disk_group_policy_auto_again.changed == nm_disk_group_policy_auto_again.changed == false
+
+
 # Teardown (clean environment)
 - name: Disk Group Policy absent (check_mode)
   ucs_disk_group_policy: *disk_group_policy_absent
