@@ -33,51 +33,63 @@ DOCUMENTATION = '''
 ---
 module: cnos_conditional_template
 author: "Anil Kumar Muraleedharan (@amuraleedhar)"
-short_description: Manage switch configuration using templates based on condition on devices running Lenovo CNOS
+short_description: Manage switch configuration using templates based on
+ condition on devices running Lenovo CNOS
 description:
-    - This module allows you to work with the running configuration of a switch. It provides a way to
-     execute a set of CNOS commands on a switch by evaluating the current running configuration and
-     executing the commands only if the specific settings have not been already configured.
-     The configuration source can be a set of commands or a template written in the Jinja2 templating language.
-     This module functions the same as the cnos_template module.
-     The only exception is that the following inventory variable can be specified
+    - This module allows you to work with the running configuration of a
+     switch. It provides a way to execute a set of CNOS commands on a switch by
+     evaluating the current running configuration and executing the commands
+     only if the specific settings have not been already configured.
+     The configuration source can be a set of commands or a template written in
+     the Jinja2 templating language. This module functions the same as the
+     cnos_template module. The only exception is that the following inventory
+     variable can be specified.
      ["condition = <flag string>"]
-     When this inventory variable is specified as the variable of a task, the template is executed for
-     the network element that matches the flag string. Usually, templates are used when commands are the
-     same across a group of network devices. When there is a requirement to skip the execution of the
+     When this inventory variable is specified as the variable of a task, the
+     template is executed for the network element that matches the flag string.
+     Usually, templates are used when commands are the same across a group of
+     network devices. When there is a requirement to skip the execution of the
      template on one or more devices, it is recommended to use this module.
-     This module uses SSH to manage network device configuration.
-     For more information about this module from Lenovo and customizing it usage for your
-     use cases, please visit U(http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_conditional_template.html)
+     This module uses SSH to manage network device configuration. For more
+     information about this module and customizing it usage for your use cases,
+     please visit U(http://systemx.lenovofiles.com/help/index.jsp?topic=
+     %2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_conditional_template.html)
 version_added: "2.3"
 extends_documentation_fragment: cnos
 options:
     commandfile:
         description:
-            - This specifies the path to the CNOS command file which needs to be applied. This usually
-             comes from the commands folder. Generally this file is the output of the variables applied
-             on a template file. So this command is preceded by a template module.
-             The command file must contain the Ansible keyword {{ inventory_hostname }} and the condition
-             flag in its filename to ensure that the command file is unique for each switch and condition.
-             If this is omitted, the command file will be overwritten during iteration. For example,
-             commandfile=./commands/clos_leaf_bgp_{{ inventory_hostname }}_LP21_commands.txt
+            - This specifies the path to the CNOS command file which needs to
+             be applied. This usually comes from the commands folder. Generally
+             this file is the output of the variables applied on a template
+             file. So this command is preceded by a template module. The
+             command file must contain the Ansible keyword
+             {{ inventory_hostname }} and the condition flag in its filename to
+             ensure that the command file is unique for each switch and
+             condition. If this is omitted, the command file will be
+             overwritten during iteration. For example,
+             commandfile=./commands/clos_leaf_bgp_
+                         {{ inventory_hostname }}_LP21_commands.txt
         required: true
         default: Null
     condition:
         description:
-            - If you specify condition=<flag string> in the inventory file against any device, the template
-             execution is done for that device in case it matches the flag setting for that task.
+            - If you specify condition=<flag string> in the inventory file
+             against any device, the template execution is done for that device
+             in case it matches the flag setting for that task.
         required: true
         default: Null
     flag:
         description:
-            - If a task needs to be executed, you have to set the flag the same as it is specified in
-             the inventory for that device.
+            - If a task needs to be executed, you have to set the flag the same
+             as it is specified in the inventory for that device.
         required: true
         default: Null
 '''
 EXAMPLES = '''
-Tasks : The following are examples of using the module cnos_conditional_template. These are written in the main.yml file of the tasks directory.
+Tasks : The following are examples of using the module
+ cnos_conditional_template. These are written in the main.yml file of the
+ tasks directory.
 ---
 - name: Applying CLI template on VLAG Tier1 Leaf Switch1
   cnos_conditional_template:
@@ -85,10 +97,12 @@ Tasks : The following are examples of using the module cnos_conditional_template
       username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
       password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      outputfile: "./results/vlag_1tier_leaf_switch1_{{ inventory_hostname }}_output.txt"
+      outputfile: "./results/vlag_1tier_leaf_switch1_
+                  {{ inventory_hostname }}_output.txt"
       condition: "{{ hostvars[inventory_hostname]['condition']}}"
       flag: "leaf_switch1"
-      commandfile: "./commands/vlag_1tier_leaf_switch1_{{ inventory_hostname }}_commands.txt"
+      commandfile: "./commands/vlag_1tier_leaf_switch1_
+                    {{ inventory_hostname }}_commands.txt"
       enablePassword: "anil"
       stp_mode1: "disable"
       port_range1: "17,18,29,30"
@@ -139,17 +153,14 @@ def main():
     flag = module.params['flag']
     commandfile = module.params['commandfile']
     outputfile = module.params['outputfile']
+
     output = ''
-
-    # Here comes the logic against which a template is
-    # conditionally executed for right Network element.
-    if (condition == None or condition != flag):
-        module.exit_json(changed=True, msg="Template Skipped for this Switch")
-        return ''
-
+    if (condition is None or condition != flag):
+        module.exit_json(changed=True, msg="Template Skipped for this switch")
+        return " "
     # Send commands one by one
+    # with open(commandfile, "r") as f:
     f = open(commandfile, "r")
-    cmd = []
     for line in f:
         # Omit the comment lines in template file
         if not line.startswith("#"):
@@ -160,8 +171,7 @@ def main():
     # Write to memory
     save_cmd = [{'command': 'save', 'prompt': None, 'answer': None}]
     cmd.extend(save_cmd)
-    output = output + str(cnos.run_cnos_commands(module, cmd)))
-
+    output = output + str(cnos.run_cnos_commands(module, cmd))
     # Write output to file
     file = open(outputfile, "a")
     file.write(output)
