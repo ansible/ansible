@@ -39,7 +39,7 @@ import termios
 from ansible import constants as C
 from ansible.plugins.connection import ConnectionBase
 from ansible.module_utils._text import to_text
-from ansible.module_utils.connection import Connection as SocketConnection, write_to_socket
+from ansible.module_utils.connection import Connection as SocketConnection, write_to_file_descriptor
 from ansible.errors import AnsibleError
 
 try:
@@ -120,8 +120,8 @@ class Connection(ConnectionBase):
 
         try:
             termios.tcsetattr(master, termios.TCSANOW, new)
-            write_to_socket(master, self._play_context.serialize())
-            write_to_socket(master, {'ansible_command_timeout': self.get_option('persistent_command_timeout')})
+            write_to_file_descriptor(master, self._play_context.serialize())
+            write_to_file_descriptor(master, {'ansible_command_timeout': self.get_option('persistent_command_timeout')})
 
             (stdout, stderr) = p.communicate()
         finally:

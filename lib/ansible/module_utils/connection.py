@@ -40,7 +40,7 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import cPickle
 
 
-def write_to_socket(fd, obj):
+def write_to_file_descriptor(fd, obj):
     """Handles making sure all data is properly written to file descriptor fd.
 
     In particular, that data is encoded in a character stream-friendly way and
@@ -53,7 +53,7 @@ def write_to_socket(fd, obj):
     # that means only protocol=0 will work.
     src = cPickle.dumps(obj, protocol=0)
 
-    # raw \r characters will not survive socket round-trip
+    # raw \r characters will not survive pty round-trip
     # They should be rehydrated on the receiving end
     src = src.replace(b'\r', br'\r')
     data_hash = to_bytes(hashlib.md5(src).hexdigest())

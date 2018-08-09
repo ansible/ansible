@@ -18,7 +18,7 @@ from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVar
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils.six import iteritems, string_types, binary_type
 from ansible.module_utils._text import to_text, to_native
-from ansible.module_utils.connection import write_to_socket
+from ansible.module_utils.connection import write_to_file_descriptor
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
 from ansible.template import Templar
@@ -932,8 +932,8 @@ class TaskExecutor:
 
         try:
             termios.tcsetattr(master, termios.TCSANOW, new)
-            write_to_socket(master, self._play_context.serialize())
-            write_to_socket(master, variables)
+            write_to_file_descriptor(master, self._play_context.serialize())
+            write_to_file_descriptor(master, variables)
 
             (stdout, stderr) = p.communicate()
         finally:
