@@ -31,7 +31,7 @@ options:
     default: false
   raid_level:
     description:
-      - Pool raid level 
+      - Pool raid level
     choices: [ none, mirror, raidz, raidz1, raidz2, raidz3 ]
   vdev:
     description:
@@ -54,11 +54,11 @@ options:
   autoreplace:
     description:
       - Automatically replace a bad device in pool using a spare device
-    choices: [ on, off]
+    choices: [ on, off ]
   autoexpand:
     description:
       - Enable or disable automatic pool expansion when a larger disk replaces a smaller disk
-    choices: [ on, off]
+    choices: [ on, off ]
   spare:
     description:
       - full path to list of block devices such as hdd, nvme or nvme
@@ -217,8 +217,8 @@ class Zpool(object):
         cmd = [self.zpool_cmd]
         if self.add is True:
             action = 'add'
-        elif self.set is True:
-	    action = 'set'
+        lif self.set is True:
+            action = 'set'
         else:
             action = 'create'
         cmd.append(action)
@@ -263,7 +263,7 @@ def main():
             devices=dict(type='list', default=None),
             spare=dict(type='list', default=None),
             add=dict(type='bool', default=False),
-            ashift=dict(type='int', default=0, choices=[0, 9, 10, 11, 12, 13, 14, 15, 16 ]),
+            ashift=dict(type='int', default=0, choices=[0, 9, 10, 11, 12, 13, 14, 15, 16]),
             set=dict(type='bool', default=False),
             autoreplace=dict(type='str', default=None, choices=['on', 'off']),
             autoexpand=dict(type='str', default=None, choices=['on', 'off']),
@@ -272,7 +272,7 @@ def main():
         ),
         supports_check_mode=True,
         required_together=[['raid_level', 'vdev']],
-        mutually_exclusive=[['add','set']]
+        mutually_exclusive=[['add', 'set']]
     )
 
     name = module.params.get('name')
@@ -300,9 +300,9 @@ def main():
 
     if autoreplace == 'on' and set is False:
         autoreplace = "-o autoreplace=on"
-    elif autoreplace =='on' and set is True:
+    elif autoreplace == 'on' and set is True:
         autoreplace = "-o autoreplace=on"
-    elif autoreplace =='off' and set is True:
+    elif autoreplace == 'off' and set is True:
         autoreplace = "-o autoreplace=off"
     else:
         autoreplace = ""
