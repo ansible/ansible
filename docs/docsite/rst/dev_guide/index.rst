@@ -69,3 +69,4 @@ If you prefer to read the entire guide, here's a list of the pages in order.
 
    repomerge
    overview_architecture
+   developing_modules_OLD
