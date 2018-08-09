@@ -4,8 +4,7 @@
 
 - name: get output for single command
   cli_command:
-    commands:
-      - show version
+    command: show version
   register: result
 
 - assert:
@@ -13,17 +12,15 @@
       - "result.changed == false"
       - "result.stdout is defined"
 
-- name: get output for multiple commands
+- name: send invalid command
   cli_command:
-    commands:
-      - show version
-      - show interfaces
+    command: 'show foo'
   register: result
+  ignore_errors: yes
 
 - assert:
     that:
-      - "result.changed == false"
-      - "result.stdout is defined"
-      - "result.stdout | length == 2"
+      - "result.failed == true"
+      - "result.msg is defined"
 
 - debug: msg="END cli/cli_command.yaml on connection={{ ansible_connection }}"
