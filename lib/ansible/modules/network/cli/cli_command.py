@@ -22,9 +22,8 @@ description:
 options:
   command:
     description:
-      - The command to send to the remote network device over the
-        configured provider.  The resulting output from the command
-        is returned.
+      - The command to send to the remote network device.  The resulting output
+        from the command is returned, unless I(sendonly) is set.
     required: true
   prompt:
     description:
@@ -37,7 +36,8 @@ options:
     required: false
   sendonly:
     description:
-      - Bool value that will send I(command) but not wait for a result.
+      - The boolean value, that when set to true will send I(command) to the
+        device but not wait for a result.
     type: bool
     default: false
     required: false
