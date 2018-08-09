@@ -61,7 +61,7 @@ using is `to support Python-2 and Python-3 from a single code base
 Understanding strings in Python-2 and Python-3
 ----------------------------------------------
 
-Python 2 and Python 3 handle strings differently, so when you port code to Python-3
+Python-2 and Python-3 handle strings differently, so when you port code to Python-3
 you must decide what string model to use.  Strings can be an array of bytes (like in C) or
 they can be an array of text.  Text is what we think of as letters, digits,
 numbers, other printable symbols, and a small number of unprintable "symbols"
@@ -106,28 +106,28 @@ string literal:
 
     "This is a native string"
 
-In Python-2, these are byte strings.  In Python-3 these are text strings.  The
+In Python-2, these are byte strings. In Python-3 these are text strings. The
 module_utils shipped with Ansible attempts to accept native strings as input
-to its functions and emit native strings as their output.  Modules should be
+to its functions and emit native strings as their output. Modules should be
 coded to expect bytes on Python-2 and text on Python-3.
 
 .. _module_utils_string_strategy:
 
-Module_utils string strategy: Native String
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Module_utils string strategy: hybrid
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Ansible's ``module_utils`` code is largely like module code.  However, some pieces of it are
-used by the controller as well.  Because of this, it needs to be usable with
-the controller's assumptions, particularly the string strategy.
+In ``module_utils`` code we use a hybrid string strategy. Although Ansible's ``module_utils`` code is largely like module code, some pieces of it are
+used by the controller as well. So it needs to be compatible with modules and with the controller's assumptions, particularly the string strategy.
 
-Module_utils **must** use the Native String Strategy.  Functions in
-module_utils receive either text strings or byte strings and may emit either
-the same type as they were given or the native string for the Python version
-they are run on depending on which makes the most sense for that function.
-Functions which return strings **must** document whether they return text,
-byte, or native strings. Module-utils functions are therefore often very
-defensive in nature, converting from potential text or bytes at the
-beginning of a function and converting to the native string type at the end.
+In ``module_utils`` code:
+ 
+* Functions **must** accept either text strings or byte strings as parameters.
+* Functions may return either the same type of string as they were given or the native string type for the Python version they are run on.
+* Functions that return strings **must** document whether they return strings of the same type as they were given or native strings.
+
+Module-utils functions are therefore often very defensive in nature. They convert their string parameters into text (using ``ansible.module_utils._text.to_text``) at the beginning of the function, do their work, and then convert the return values into the native string type (using ``ansible.module_utils._text.to_native``) or back to the string type that their parameters received.
+
+.._controller_string_strategy:
 
 Controller string strategy: the Unicode Sandwich
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -402,3 +402,4 @@ Ansible modules are slightly harder to port than normal code from other
 projects. A lot of mocking has to go into unit testing an Ansible module so
 it's harder to test that your porting has fixed everything or to to make sure
 that later commits haven't regressed the Python-3 support.
+## TODO: add more content on testing modules for python 3, or link to that content elsewhere, or remove this section.
