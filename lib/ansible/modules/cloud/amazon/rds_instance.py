@@ -37,7 +37,7 @@ options:
             (running if creating the DB instance).
           - I(state=running) and I(state=started) are synonyms, as are I(state=rebooted) and I(state=restarted). Note - rebooting the instance
             is not idempotent.
-        choices: ['present', 'absent', 'running', 'started', 'stopped', 'rebooted', 'restarted']
+        choices: ['present', 'absent', 'terminated', 'running', 'started', 'stopped', 'rebooted', 'restarted']
         default: 'present'
     creation_source:
         description: Which source to use if restoring from a template (an existing instance, S3 bucket, or snapshot).
@@ -85,13 +85,13 @@ options:
         description:
           - Whether minor version upgrades are applied automatically to the DB instance during the maintenance window.
         type: bool
-    availability_zones:
+    availability_zone:
         description:
           - A list of EC2 Availability Zones that instances in the DB cluster can be created in.
-            May be used when creating a cluster or when restoring from S3 or a snapshot.
+            May be used when creating a cluster or when restoring from S3 or a snapshot. Mutually exclusive with I(multi_az).
         aliases:
-          - zones
           - az
+          - zone
     backup_retention_period:
         description:
           - The number of days for which automated backups are retained (must be greater or equal to 1).
@@ -109,8 +109,9 @@ options:
         type: bool
     db_cluster_identifier:
         description:
-          - The DB cluster (lowercase) identifier. The identifier must contain from 1 to 63 letters, numbers, or
-            hyphens and the first character must be a letter and may not end in a hyphen or contain consecutive hyphens.
+          - The DB cluster (lowercase) identifier to add the aurora DB instance to. The identifier must contain from 1 to
+            63 letters, numbers, or hyphens and the first character must be a letter and may not end in a hyphen or
+            contain consecutive hyphens.
         aliases:
           - cluster_id
     db_instance_class:
@@ -118,6 +119,7 @@ options:
           - The compute and memory capacity of the DB instance, for example db.t2.micro.
         aliases:
           - class
+          - instance_type
     db_instance_identifier:
         description:
           - The DB instance (lowercase) identifier. The identifier must contain from 1 to 63 letters, numbers, or
@@ -135,7 +137,7 @@ options:
             argument is omitted the default DBParameterGroup for the specified engine is used.
     db_security_groups:
         description:
-          - A list of DB security groups to associate with this DB instance.
+          - (EC2-Classic platform) A list of DB security groups to associate with this DB instance.
         type: list
     db_snapshot_identifier:
         description:
@@ -143,6 +145,8 @@ options:
     db_subnet_group_name:
         description:
           - The DB subnet group name to use for the DB instance.
+        aliases:
+          - subnet_group
     domain:
         description:
           - The Active Directory Domain to restore the instance in.
@@ -154,6 +158,7 @@ options:
           - A list of log types that need to be enabled for exporting to CloudWatch Logs.
         aliases:
           - cloudwatch_log_exports
+        type: list
     enable_iam_database_authentication:
         description:
           - Enable mapping of AWS Identity and Access Management (IAM) accounts to database accounts.
@@ -231,7 +236,7 @@ options:
           - The ARN for the IAM role that permits RDS to send enhanced monitoring metrics to Amazon CloudWatch Logs.
     multi_az:
         description:
-          - Specifies if the DB instance is a Multi-AZ deployment.
+          - Specifies if the DB instance is a Multi-AZ deployment. Mutually exclusive with I(availability_zone).
         type: bool
     new_db_instance_identifier:
         description:
@@ -328,7 +333,7 @@ options:
         type: bool
     storage_type:
         description:
-          - The storage type to be associated with the DB instance.
+          - The storage type to be associated with the DB instance. I(storage_type) does not apply to Aurora DB instances.
         choices:
           - standard
           - gp2
@@ -361,7 +366,7 @@ options:
     vpc_security_group_ids:
         description:
           - A list of EC2 VPC security groups to associate with the DB cluster.
-
+        type: list
 '''
 
 EXAMPLES = '''
@@ -370,7 +375,10 @@ EXAMPLES = '''
   rds_instance:
     engine: aurora
     db_instance_identifier: ansible-test-aurora-db-instance
-    cluster_id: ansible-test-cluster
+    instance_type: db.t2.small
+    password: "{{ password }}"
+    username: "{{ username }}"
+    cluster_id: ansible-test-cluster  # This cluster must exist - see rds_cluster to manage it
 
 - name: Create a DB instance using the default AWS KMS encryption key
   rds_instance:
@@ -702,13 +710,9 @@ def arg_spec_to_rds_params(options_dict):
     tags = options_dict.pop('tags')
     camel_options = snake_dict_to_camel_dict(options_dict, capitalize_first=True)
     for key, value in camel_options.items():
-        if 'Db' in key:
+        for old, new in (('Db', 'DB'), ('Iam', 'IAM'), ('Az', 'AZ')):
             del camel_options[key]
-            key = key.replace('Db', 'DB')
-            camel_options[key] = value
-        if 'Iam' in key:
-            del camel_options[key]
-            key = key.replace('Iam', 'IAM')
+            key = key.replace(old, new)
             camel_options[key] = value
     camel_options['Tags'] = tags
     return camel_options
@@ -716,7 +720,7 @@ def arg_spec_to_rds_params(options_dict):
 
 def get_method_name(instance, state, creation_source, read_replica):
     method_name = None
-    if state == 'absent':
+    if state == 'absent' or state == 'terminated':
         if instance:
             method_name = 'delete_db_instance'
     else:
@@ -869,8 +873,8 @@ def get_current_attributes_with_inconsistent_keys(instance):
     else:
         options['ProcessorFeatures'] = instance.get('ProcessorFeatures', {})
     options['OptionGroupName'] = [g['OptionGroupName'] for g in instance['OptionGroupMemberships']]
-    options['DBSecurityGroups'] = [db_sg['DBSecurityGroupName'] for db_sg in instance['DBSecurityGroups']]
-    options['VpcSecurityGroupIds'] = [sg['VpcSecurityGroupId'] for sg in instance['VpcSecurityGroups']]
+    options['DBSecurityGroups'] = [sg['DBSecurityGroupName'] for sg in instance['DBSecurityGroups'] if sg['Status'] in ['adding', 'active']]
+    options['VpcSecurityGroupIds'] = [sg['VpcSecurityGroupId'] for sg in instance['VpcSecurityGroups'] if sg['Status'] in ['adding', 'active']]
     options['DBParameterGroupName'] = [parameter_group['DBParameterGroupName'] for parameter_group in instance['DBParameterGroups']]
     options['AllowMajorVersionUpgrade'] = None
     options['EnableIAMDatabaseAuthentication'] = instance['IAMDatabaseAuthenticationEnabled']
@@ -952,7 +956,7 @@ def validate_options(client, module, instance):
         module.fail_json(msg='A new instance ID {0} was provided but it already exists'.format(modified_id))
     if modified_id and not instance and modified_instance:
         module.fail_json(msg='A new instance ID {0} was provided but the instance to be renamed does not exist'.format(modified_id))
-    if state == 'absent' and instance and not skip_final_snapshot and snapshot_id is None:
+    if state in ('absent', 'terminated') and instance and not skip_final_snapshot and snapshot_id is None:
         module.fail_json(msg='skip_final_snapshot is false but all of the following are missing: final_db_snapshot_identifier')
     if engine is not None and not (engine.startswith('mysql') or engine.startswith('oracle')) and tde_options:
         module.fail_json(msg='TDE is available for MySQL and Oracle DB instances')
@@ -1107,7 +1111,7 @@ def start_or_stop_instance(client, module, instance, state):
 
 def main():
     arg_spec = dict(
-        state=dict(choices=['present', 'absent', 'running', 'started', 'stopped', 'rebooted', 'restarted'], default='present'),
+        state=dict(choices=['present', 'absent', 'terminated', 'running', 'started', 'stopped', 'rebooted', 'restarted'], default='present'),
         creation_source=dict(choices=['snapshot', 's3', 'instance']),
         force_update_password=dict(type='bool', default=False),
         purge_cloudwatch_logs_exports=dict(type='bool', default=True),
@@ -1121,19 +1125,19 @@ def main():
         allow_major_version_upgrade=dict(type='bool'),
         apply_immediately=dict(type='bool', default=False),
         auto_minor_version_upgrade=dict(type='bool'),
-        availability_zones=dict(type='list', aliases=['zones', 'az']),
+        availability_zone=dict(aliases=['az', 'zone']),
         backup_retention_period=dict(type='int'),
         ca_certificate_identifier=dict(),
         character_set_name=dict(),
         copy_tags_to_snapshot=dict(type='bool'),
         db_cluster_identifier=dict(aliases=['cluster_id']),
-        db_instance_class=dict(aliases=['class']),
+        db_instance_class=dict(aliases=['class', 'instance_type']),
         db_instance_identifier=dict(required=True, aliases=['instance_id', 'id']),
         db_name=dict(),
         db_parameter_group_name=dict(),
-        db_security_groups=dict(),
+        db_security_groups=dict(type='list'),
         db_snapshot_identifier=dict(),
-        db_subnet_group_name=dict(),
+        db_subnet_group_name=dict(aliases=['subnet_group']),
         domain=dict(),
         domain_iam_role_name=dict(),
         enable_cloudwatch_logs_exports=dict(type='list', aliases=['cloudwatch_log_exports']),
@@ -1193,7 +1197,6 @@ def main():
         timezone=dict(),
         use_latest_restorable_time=dict(type='bool', aliases=['restore_from_latest']),
         vpc_security_group_ids=dict(type='list')
-
     )
     arg_spec.update(parameter_options)
 
@@ -1209,6 +1212,7 @@ def main():
     mutually_exclusive = [
         ('s3_bucket_name', 'source_db_instance_identifier', 'snapshot_identifier'),
         ('use_latest_restorable_time', 'restore_to_time'),
+        ('availability_zone', 'multi_az'),
     ]
 
     module = AnsibleAWSModule(
