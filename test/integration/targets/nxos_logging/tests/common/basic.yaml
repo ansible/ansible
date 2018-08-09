@@ -175,7 +175,8 @@
     dest: server
     remote_server: test-syslogserver.com
     facility: auth
-    dest_level: 1
+    facility_level: 1
+    use_vrf: management
     state: present
     provider: "{{ connection }}"
   register: result
@@ -183,13 +184,32 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"logging server test-syslogserver.com 1 facility auth" in result.commands'
+      - '"logging server test-syslogserver.com 1 facility auth use-vrf management" in result.commands'
 
 - name: Configure Remote Logging (idempotent)
   nxos_logging: *rlog
   register: result
 
 - assert: *false
+
+- name: Configure Source Interface for Logging
+  nxos_logging: &srcint
+    interface_type: mgmt
+    interface: 0
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging source-interface mgmt 0" in result.commands'
+
+- name: Configure Source Interface for Logging (idempotent)
+  nxos_logging: *srcint
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
 
 - name: remove logging as collection tearDown
   nxos_logging: &agg
@@ -199,7 +219,8 @@
       - { dest: monitor, dest_level: 5 }
       - { dest: logfile, dest_level: 1, name: test }
       - { facility: daemon, facility_level: 4 }
-      - { dest: server, remote_server: test-syslogserver.com, facility: auth, dest_level: 1 }
+      - { dest: server, remote_server: test-syslogserver.com, facility: auth, facility_level: 1, use_vrf: management }
+      - { interface_type: mgmt, interface: 0 }
     provider: "{{ connection }}"
     state: absent
   register: result
@@ -212,6 +233,7 @@
       - '"no logging monitor" in result.commands'
       - '"no logging module" in result.commands'
       - '"no logging server test-syslogserver.com" in result.commands'
+      - '"no logging source-interface" in result.commands'
 
 - name: remove aggregate logging (idempotent)
   nxos_logging: *agg
