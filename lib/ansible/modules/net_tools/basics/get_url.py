@@ -439,7 +439,12 @@ def main():
 # implement <<<
                 # download checksum file to tmpsrc
                 checksum_tmpsrc, checksum_info = url_get(module, checksum_url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest)
-                lines = [line.rstrip('\n') for line in open('checksum_tmpsrc')]
+                lines = [line.rstrip('\n') for line in open(checksum_tmpsrc)]
+                lines = dict(s.split(None, 1) for s in lines)
+                filename = url_filename(url)
+                [checksum] = (k for (k, v) in lines.items() if v == filename)
+
+#                module.fail_json(msg=checksums)
 # implement >>>
             # Remove any non-alphanumeric characters, including the infamous
             # Unicode zero-width space
