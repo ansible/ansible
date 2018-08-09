@@ -56,7 +56,7 @@ def write_to_file_descriptor(fd, obj):
     # raw \r characters will not survive pty round-trip
     # They should be rehydrated on the receiving end
     src = src.replace(b'\r', br'\r')
-    data_hash = to_bytes(hashlib.md5(src).hexdigest())
+    data_hash = to_bytes(hashlib.sha1(src).hexdigest())
 
     os.write(fd, b'%d\n' % len(src))
     os.write(fd, src)
