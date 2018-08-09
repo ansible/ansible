@@ -55,12 +55,10 @@ options:
     description:
       - Automatically replace a bad device in pool using a spare device
     type: bool
-    default: false
   autoexpand:
     description:
       - Enable or disable automatic pool expansion when a larger disk replaces a smaller disk
     type: bool
-    default: false
   spare:
     description:
       - Full path to list of block devices such as hdd, nvme or nvme
@@ -169,6 +167,12 @@ EXAMPLES = """
     name: zpool
     set: true
     autoreplace: true
+    state: present
+
+- name: Set options to an existing zpool
+  zpool:
+    name: zpool
+    set: true
     autoexpand: off
     state: present
 
@@ -196,8 +200,8 @@ class Zpool(object):
         self.state = state
         self.add = add
         self.vdev = vdev
-        self.set = set
         self.ashift = ashift
+        self.set = set
         self.autoreplace = autoreplace
         self.autoexpand = autoexpand
         self.zil = zil
@@ -225,18 +229,20 @@ class Zpool(object):
         else:
             action = 'create'
         cmd.append(action)
-        if self.ashift:
-            ashift = '-o ashift=' + str(self.ashift)
-        else:
-            ashift = '-o ashift=0'
-        cmd.append(ashift)
+        if action == 'create':
+            if self.ashift and action == 'create':
+                ashift = '-o ashift=' + str(self.ashift)
+            else:
+                ashift = '-o ashift=0'
+            cmd.append(ashift)
         cmd.append(self.autoreplace)
         cmd.append(self.autoexpand)
         cmd.append(self.name)
-        cmd.append(self.devices)
-        cmd.append(self.spare)
-        cmd.append(self.zil)
-        cmd.append(self.l2arc)
+        if action != 'set':
+            cmd.append(self.devices)
+            cmd.append(self.spare)
+            cmd.append(self.zil)
+            cmd.append(self.l2arc)
         (rc, out, err) = self.module.run_command(' '.join(cmd))
         if rc == 0:
             self.changed = True
@@ -268,8 +274,8 @@ def main():
             add=dict(type='bool', default=False),
             ashift=dict(type='int', default=0, choices=[0, 9, 10, 11, 12, 13, 14, 15, 16]),
             set=dict(type='bool', default=False),
-            autoreplace=dict(type='bool', default=False),
-            autoexpand=dict(type='bool', default=False),
+            autoreplace=dict(type='bool'),
+            autoexpand=dict(type='bool'),
             zil=dict(type='str', default=None),
             l2arc=dict(type='str', default=None),
         ),
@@ -292,54 +298,53 @@ def main():
     l2arc = module.params.get('l2arc')
     zil = module.params.get('zil')
 
-    if autoexpand is True and set is False:
+    if autoexpand is True and (set is True or add is True):
+        autoexpand = "autoexpand=on"
+    elif autoexpand is True and set is False:
         autoexpand = "-o autoexpand=on"
-    elif autoexpand is True and set is True:
-        autoexpand = "-o autoexpand=on"
-    elif autoexpand is False and set is True:
-        autoexpand = "-o autoexpand=off"
+    elif autoexpand is False and set is True and autoreplace is True:
+        autoexpand = ""
     else:
         autoexpand = ""
 
-    if autoreplace is True and set is False:
+    if autoreplace is True and (set is True or add is True):
+        autoreplace = "autoreplace=on"
+    elif autoreplace is True and set is False:
         autoreplace = "-o autoreplace=on"
-    elif autoreplace is True and set is True:
-        autoreplace = "-o autoreplace=on"
-    elif autoreplace is False and set is True:
-        autoreplace = "-o autoreplace=off"
+    elif autoreplace is False and set is True and autoexpand is True:
+        autoreplace = ""
     else:
         autoreplace = ""
 
-    if set is True:
-        action = 'set'
-
-    if raid_level is False or 'raid0' in raid_level:
+    if raid_level is None or 'raid0' in raid_level:
         raid_level = ''
 
     if zil:
         zil = ' log ' + zil
+    else:
+        zil = ''
 
     if l2arc:
         l2arc = ' cache ' + l2arc
+    else:
+        l2arc = ''
 
     if ashift is None:
         ashift = 0
 
-    if devices is False or not devices:
+    if devices is None:
         devices = ''
     else:
-        if vdev is not False:
+        if vdev > 1:
             device = ''
             for i in range(0, len(devices), vdev):
                 temp = ' ' + raid_level + ' ' + ' '.join(devices[i:i + vdev])
                 device += temp
             devices = device
-    if spare is False or not spare:
+    if spare is None:
         spare = ''
-        spares = spare
     else:
-        spares = ' '.join(spare)
-        spare = 'spare ' + spares
+        spare = 'spare ' + ' '.join(spare)
 
     result = dict(
         name=name,
