@@ -43,9 +43,6 @@ def read_stream(byte_stream):
     if len(data) < size:
         raise Exception("EOF found before data was complete")
 
-    # Read sentinel value
-    byte_stream.read(12)
-
     # restore escaped loose \r characters
     data = data.replace(br'\r', b'\r')
 

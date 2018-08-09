@@ -955,9 +955,7 @@ class TaskExecutor:
             termios.tcsetattr(master, termios.TCSANOW, new)
             stdin = os.fdopen(master, 'wb', 0)
             _write_to_socket(stdin, self._play_context.serialize())
-            stdin.write(b'\n#END_INIT#\n')
             _write_to_socket(stdin, variables)
-            stdin.write(b'\n#END_VARS#\n')
 
             stdin.flush()
 
