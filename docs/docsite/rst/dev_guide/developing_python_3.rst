@@ -4,6 +4,8 @@
 Ansible and Python 3
 ********************
 
+.. contents:: Topics
+
 Ansible maintains a single code base that runs on both
 Python-2 and Python-3 because we want Ansible to be able to manage a wide
 variety of machines.  Contributors to Ansible should be aware of the tips in
