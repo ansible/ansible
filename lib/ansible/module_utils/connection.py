@@ -36,6 +36,28 @@ import uuid
 from functools import partial
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six import iteritems
+from ansible.module_utils.six.moves import cPickle
+
+
+def write_to_socket(byte_stream, obj):
+    """Handles making sure all data is properly written to byte_stream
+
+    In particular, that data is encoded in a character stream-friendly way and
+    that all data gets written before returning.
+    """
+    # Need to force a protocol that is compatible with both py2 and py3.
+    # That would be protocol=2 or less.
+    # Also need to force a protocol that excludes certain control chars as
+    # stdin in this case is a pty and control chars will cause problems.
+    # that means only protocol=0 will work.
+    src = cPickle.dumps(obj, protocol=0)
+
+    # raw \r characters will not survive socket round-trip
+    # They should be rehydrated on the receiving end
+    src = src.replace(b'\r', br'\r')
+
+    byte_stream.write(b'%d\n' % len(src))
+    byte_stream.write(src)
 
 
 def send_data(s, data):
