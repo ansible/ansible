@@ -487,7 +487,7 @@ dictionary variable at a relatively high level of precedence, specifically, anyt
 order of precedence found in the :ref:`ansible_variable_precedence` section of the *Variables* chapter. This prevents
 fact gathering on a compromised target system from overwriting the task argument dictionary with potentially
 malicious values. The risk of setting the variable at a lower precedence may also be mitigated by disabling the
-:ref:`inject_facts_as_vars` configuration setting, which prevents fact values from colliding with variables.
+:ref:`inject_facts_as_vars` configuration setting, which prevents fact values from colliding with variables (and also disables the original warning).
 
 
 .. _commercial_support:
