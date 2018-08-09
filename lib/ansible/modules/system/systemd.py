@@ -465,7 +465,7 @@ def main():
                 result['enabled'] = not enabled
 
         # set service state if requested
-        if module.params['state'] is not None:
+        if module.params['state'] is not None and result['status']:
             fail_if_missing(module, found, unit, msg="host")
 
             # default to desired state
