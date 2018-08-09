@@ -219,6 +219,42 @@ options:
     description:
     - Restart policy evaluation window.
     - Maps docker service --restart-window option.
+  update_delay:
+    required: false
+    default: 10
+    description:
+    - Rolling update delay
+    - Maps docker service --update-delay option
+  update_parallelism:
+    required: false
+    default: 1
+    description:
+    - Rolling update parallelism
+    - Maps docker service --update-parallelism option
+  update_failure_action:
+    required: false
+    default: continue
+    description:
+    - Action to take in case of container failure
+    - Maps to docker service --update-failure-action option
+  update_monitor:
+    required: false
+    default: 5000000000
+    description:
+    - Time to monitor updated tasks for failures, in nanoseconds.
+    - Maps to docker service --update-monitor option
+  update_max_failure_ratio:
+    required: false
+    default: 0.00
+    description:
+    - Fraction of tasks that may fail during an update before the failure action is invoked
+    - Maps to docker service --update-max-failure-ratio
+  update_order:
+    required: false
+    default: stop-first
+    description:
+    - Specifies the order of operations when rolling out an updated task.
+    - Maps to docker service --update-order
   user:
     required: false
     default: root
@@ -272,7 +308,13 @@ ansible_swarm_service:
     "restart_policy": "any",
     "restart_policy_attempts": 5,
     "restart_policy_delay": 0,
-    "restart_policy_window": 30
+    "restart_policy_window": 30,
+    "update_delay": 10,
+    "update_parallelism": 1,
+    "update_failure_action": "continue",
+    "update_monitor": 5000000000
+    "update_max_failure_ratio": 0,
+    "update_order": "stop-first"
   }'
 changes:
   returned: always
@@ -451,6 +493,12 @@ class DockerService(DockerBaseClass):
         self.restart_policy_attempts = None
         self.restart_policy_delay = None
         self.restart_policy_window = None
+        self.update_delay = None
+        self.update_parallelism = 1
+        self.update_failure_action = "continue"
+        self.update_monitor = 5000000000
+        self.update_max_failure_ratio = 0.00
+        self.update_order = "stop-first"
 
     def get_facts(self):
         return {
@@ -481,7 +529,13 @@ class DockerService(DockerBaseClass):
             'reserve_memory': self.reserve_memory,
             'restart_policy_delay': self.restart_policy_delay,
             'restart_policy_attempts': self.restart_policy_attempts,
-            'restart_policy_window': self.restart_policy_window}
+            'restart_policy_window': self.restart_policy_window,
+            'update_delay': self.update_delay,
+            'update_parallelism': self.update_parallelism,
+            'update_failure_action': self.update_failure_action,
+            'update_monitor': self.update_monitor,
+            'update_max_failure_ratio': self.update_max_failure_ratio,
+            'update_order': self.update_order}
 
     @staticmethod
     def from_ansible_params(ap, old_service):
@@ -508,6 +562,12 @@ class DockerService(DockerBaseClass):
         s.restart_policy_attempts = ap['restart_policy_attempts']
         s.restart_policy_delay = ap['restart_policy_delay']
         s.restart_policy_window = ap['restart_policy_window']
+        s.update_delay = ap['update_delay']
+        s.update_parallelism = ap['update_parallelism']
+        s.update_failure_action = ap['update_failure_action']
+        s.update_monitor = ap['update_monitor']
+        s.update_max_failure_ratio = ap['update_max_failure_ratio']
+        s.update_order = ap['update_order']
         s.user = ap['user']
 
         if ap['replicas'] == -1:
@@ -622,6 +682,18 @@ class DockerService(DockerBaseClass):
             differences.append('restart_policy_delay')
         if self.restart_policy_window != os.restart_policy_window:
             differences.append('restart_policy_window')
+        if self.update_delay != os.update_delay:
+            differences.append('update_delay')
+        if self.update_parallelism != os.update_parallelism:
+            differences.append('update_parallelism')
+        if self.update_failure_action != os.update_failure_action:
+            differences.append('update_failure_action')
+        if self.update_monitor != os.update_monitor:
+            differences.append('update_monitor')
+        if self.update_max_failure_ratio != os.update_max_failure_ratio:
+            differences.append('update_max_failure_ratio')
+        if self.update_order != os.update_order:
+            differences.append('update_order')
         if self.image != os.image.split('@')[0]:
             differences.append('image')
         if self.user != os.user:
@@ -714,6 +786,16 @@ class DockerService(DockerBaseClass):
             cpu_reservation=int(self.reserve_cpu * 1000000000.0),
             mem_reservation=self.reserve_memory
         )
+
+        update_policy = types.UpdateConfig(
+            parallelism=self.update_parallelism,
+            delay=self.update_delay,
+            failure_action=self.update_failure_action,
+            monitor=self.update_monitor,
+            max_failure_ratio=self.update_max_failure_ratio,
+            order=self.update_order
+        )
+
         task_template = types.TaskTemplate(
             container_spec=cspec,
             log_driver=log_driver,
@@ -739,7 +821,7 @@ class DockerService(DockerBaseClass):
         for port in self.publish:
             ports[int(port['published_port'])] = (int(port['target_port']), port['protocol'], port['mode'])
         endpoint_spec = types.EndpointSpec(mode=self.endpoint_mode, ports=ports)
-        return task_template, networks, endpoint_spec, mode, self.labels
+        return update_policy, task_template, networks, endpoint_spec, mode, self.labels
 
     # def fail(self, msg):
     #     self.parameters.client.module.fail_json(msg=msg)
@@ -864,7 +946,7 @@ class DockerServiceManager():
         return ds
 
     def update_service(self, name, old_service, new_service):
-        task_template, networks, endpoint_spec, mode, labels = new_service.generate_docker_py_service_description(name, self.get_networks_names_ids())
+        update_policy, task_template, networks, endpoint_spec, mode, labels = new_service.generate_docker_py_service_description(name, self.get_networks_names_ids())
         self.client.update_service(
             old_service.service_id,
             old_service.service_version,
@@ -872,16 +954,18 @@ class DockerServiceManager():
             endpoint_spec=endpoint_spec,
             networks=networks,
             mode=mode,
+            update_config=update_policy,
             task_template=task_template,
             labels=labels)
 
     def create_service(self, name, service):
-        task_template, networks, endpoint_spec, mode, labels = service.generate_docker_py_service_description(name, self.get_networks_names_ids())
+        update_policy, task_template, networks, endpoint_spec, mode, labels = service.generate_docker_py_service_description(name, self.get_networks_names_ids())
         self.client.create_service(
             name=name,
             endpoint_spec=endpoint_spec,
             mode=mode,
             networks=networks,
+            update_config=update_policy,
             task_template=task_template,
             labels=labels)
 
@@ -1014,6 +1098,12 @@ def main():
         restart_policy_delay=dict(default=0, type='int'),
         restart_policy_attempts=dict(default=0, type='int'),
         restart_policy_window=dict(default=0, type='int'),
+        update_delay=dict(default=10, type='int'),
+        update_parallelism=dict(default=1, type='int'),
+        update_failure_action=dict(default='continue', choices=['continue','pause']),
+        update_monitor=dict(default=5000000000, type='int'),
+        update_max_failure_ratio=dict(default=0, type='float'),
+        update_order=dict(default='stop-first', choices=['stop-first','start-first']),
         user=dict(default='root'))
     required_if = [
         ('state', 'present', ['image'])
