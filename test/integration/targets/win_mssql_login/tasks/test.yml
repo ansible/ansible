@@ -1,0 +1,67 @@
+---
+- name: create new sql login
+  win_mssql_login:
+    server_instance: localhost
+    server_instance_user: sa
+    server_instance_password: "{{ sa }}"
+    login_name: john_doe
+    password: "{{ my_super_secret }}"
+    state: present
+  register: res
+
+- name: test module success
+  assert:
+    that:
+      - res.changed == True
+      - res.output == "login john_doe created"
+
+- name: create new sql login
+  win_mssql_login:
+    server_instance: localhost
+    server_instance_user: sa
+    server_instance_password: "{{ sa }}"
+    login_name: john_doe
+    password: "{{ my_super_secret }}"
+    state: present
+  register: res
+
+- name: test attempt of existing user creation
+  assert:
+    that:
+      - res.changed == False
+      - res.output == "login john_doe alerady exists"
+
+- name: add a new sql user without password password policy and expiration enforcing
+  win_mssql_login:
+    server_instance: localhost
+    server_instance_user: sa
+    server_instance_password: "{{ sa }}"
+    login_name: jane_doe
+    password: "{{ my_super_secret }}"
+    check_expiration: no
+    check_policy: no
+    state: present
+  register: res
+
+- name: test module success
+  assert:
+    that:
+      - res.changed == True
+      - res.output == "login jane_doe created"
+
+- name: remove a list of sql login
+  win_mssql_login:
+    server_instance: localhost
+    server_instance_user: sa
+    server_instance_password: "{{ sa }}"
+    login_name: "{{ item }}"
+    state: absent
+  register: res
+  loop:
+    - jane_doe
+    - john_doe
+#
+- name: test module success
+  assert:
+    that:
+      - res.changed == True
