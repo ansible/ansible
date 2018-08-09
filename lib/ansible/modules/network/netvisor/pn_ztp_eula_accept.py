@@ -17,20 +17,20 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import shlex
-import threading
 
-from ansible.module_utils.basic import AnsibleModule
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
 module: pn_ztp_eula_accept
 author: "Pluribus Networks (devops@pluribusnetworks.com)"
-description: Module to accept EULA
-version: "1.0"
 short_description: CLI command to accept EULA.
 description:
   - Accepts end user license agreement of the switch.
+version_added: "2.7"
 
 options:
   pn_cliusername:
@@ -41,19 +41,27 @@ options:
     description:
       - Provide login password if user is not root.
     required: True
-  pn_host_list:
+  pn_spine_list:
     description:
-      - Specify list of all hosts/switches.
-    required: True
-  pn_host_ips:
+      - Specify list of all spine switches.
+    required: False
+  pn_spine_ips:
     description:
-      - Specify ips of all hosts/switches separated by comma.
-    required: True
+      - Specify spine ips of all separated by comma.
+    required: False
+  pn_leaf_list:
+    description:
+      - Specify list of all leaf switches.
+    required: False
+  pn_leaf_ips:
+    description:
+      - Specify leaf ips of all separated by comma.
+    required: False
   pn_basic_switch_list:
     description:
       - Specify list of all switches.
     required: False
-  pn_switch_ips:
+  pn_basic_switch_ips:
     description:
       - Specify ips of all switches separated by comma.
     required: False
@@ -61,23 +69,20 @@ options:
 
 EXAMPLES = """
 - name: Auto accept EULA
-    pn_ztp_eula_accept:
-      pn_cliusername: "{{ ansible_user }}"
-      pn_clipassword: "{{ ansible_ssh_pass }}"
-      pn_spine_list: "{{ groups['all'] }}"
-      pn_spine_ips: "{{ groups['all'] |
-        map('extract', hostvars, ['ansible_host']) | join(',') }}"
-      pn_leaf_list: "{{ groups['all'] }}"
-      pn_leaf_ips: "{{ groups['all'] |
-        map('extract', hostvars, ['ansible_host']) | join(',') }}"
+  pn_ztp_eula_accept:
+    pn_cliusername: "{{ ansible_user }}"
+    pn_clipassword: "{{ ansible_ssh_pass }}"
+    pn_spine_list: "{{ groups['all'] }}"
+    pn_spine_ips: "192.168.1.10,192.168.1.11"
+    pn_leaf_list: "{{ groups['all'] }}"
+    pn_leaf_ips: "192.168.1.12,192.168.1.13"
 
-    - name: Auto accept EULA
-      pn_ztp_eula_accept:
-        pn_cliusername: "{{ ansible_user }}"
-        pn_clipassword: "{{ ansible_ssh_pass }}"
-        pn_basic_switch_list: "{{ groups['switch'] }}"
-        pn_basic_switch_ips: "{{ groups['switch'] |
-         map('extract', hostvars, ['ansible_host']) | join(',') }}"
+- name: Auto accept EULA
+  pn_ztp_eula_accept:
+    pn_cliusername: "{{ ansible_user }}"
+    pn_clipassword: "{{ ansible_ssh_pass }}"
+    pn_basic_switch_list: "{{ groups['switch'] }}"
+    pn_basic_switch_ips: "192.168.1.14,192.168.1.15"
 """
 
 RETURN = """
@@ -110,6 +115,11 @@ msg:
   returned: always
   type: str
 """
+
+from ansible.module_utils.basic import AnsibleModule
+
+import shlex
+import threading
 
 CHANGED_FLAG = []
 result = []
@@ -166,7 +176,7 @@ def main():
             ["pn_spine_list", "pn_spine_ips"],
             ["pn_leaf_list", "pn_leaf_ips"],
             ["pn_basic_switch_list", "pn_basic_switch_ips"]
-        ]
+            ]
     )
 
     username = module.params['pn_cliusername']
@@ -199,11 +209,16 @@ def main():
     threads = []
 
     for ip in switch_ips:
-        threads.append(threading.Thread(target=eula_accept,
-                       args=(module, username,
-                       password,
-                       switch_list[count],
-                       ip,)))
+        threads.append(
+            threading.Thread(
+                target=eula_accept,
+                args=(
+                    module, username,
+                    password, switch_list[count],
+                    ip,
+                )
+            )
+        )
         count += 1
 
     for thread in threads:
