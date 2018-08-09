@@ -44,6 +44,7 @@ options:
     resource_group:
         description:
             - The resource group to search for the desired load balancer
+        required: true
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
@@ -153,7 +154,7 @@ class AzureRMLoadBalancerFacts(AzureRMModuleBase):
         self.log('List all load balancers')
 
         try:
-            response = self.network_client.load_balancers.list()
+            response = self.network_client.load_balancers.list(self.resource_group)
         except AzureHttpError as exc:
             self.fail('Failed to list all items - {}'.format(str(exc)))
 
