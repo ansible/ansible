@@ -124,12 +124,12 @@ class RabbitMqBinding(object):
         self.arguments = self.module.params['arguments']
         self.base_url = 'http://{0}:{1}/api/bindings'.format(self.login_host,
                                                              self.login_port)
-        self.url = '{0}/{1}/e/{2}/{3}/{4}/{5}'.format(self.base_url,
-                                                      urllib_parse.quote(self.vhost),
-                                                      urllib_parse.quote(self.name),
-                                                      self.destination_type,
-                                                      self.destination,
-                                                      self.routing_key)
+        self.url = '{0}/{1}/e/{2}/{3}/{4}'.format(self.base_url,
+                                                  urllib_parse.quote(self.vhost, safe=''),
+                                                  urllib_parse.quote(self.name),
+                                                  self.destination_type,
+                                                  self.destination)
+        
         self.result = {
             'changed': False,
             'name': self.module.params['name'],
@@ -141,14 +141,19 @@ class RabbitMqBinding(object):
         self.request = requests
         self.http_check_states = {
             200: True,
+            201: True,
             404: False,
         }
         self.http_actionable_states = {
             201: True,
             204: True,
         }
-        self.api_result = self.request.get(self.url, auth=self.authentication)
-
+        
+        jsonBody = '{ "routingKey" : "' + self.routing_key + '"  }'
+        headers =  { 'content-type' : 'application/json' }
+        
+        self.api_result = self.request.post(self.url, auth=self.authentication, data = jsonBody, headers = headers)
+        
     def run(self):
         """
         :return:
