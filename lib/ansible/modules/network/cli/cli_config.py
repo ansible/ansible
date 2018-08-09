@@ -49,7 +49,7 @@ options:
       - The C(rollback) argument instructs the module to rollback the
         current configuration to the identifier specified in the
         argument.  If the specified rollback identifier does not
-        exist on the remote device, the module will fail.  To rollback
+        exist on the remote device, the module will fail. To rollback
         to the most recent commit, set the C(rollback) argument to 0.
   commit_comment:
     description:
@@ -258,6 +258,10 @@ def run(module, capabilities, connection, candidate, running):
         if 'diff' in resp:
             if resp['diff']:
                 result['commands'] = resp['diff']
+
+    if module._diff and 'diff' in resp:
+        if resp['diff']:
+            result['diff'] = {'prepared': resp['diff']}
 
     if any(key in result for key in ('commands', 'banners')):
         result['changed'] = True
