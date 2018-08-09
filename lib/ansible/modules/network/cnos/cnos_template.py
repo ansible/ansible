@@ -123,8 +123,7 @@ def main():
 
     # Send commands one by one to the device
     f = open(commandfile, "r")
-    cmd = []
-    
+    cmd = []    
     for line in f:
         # Omit the comment lines in template file
         if not line.startswith("#"):
@@ -146,7 +145,6 @@ def main():
         module.exit_json(changed=True, msg="Template Applied")
     else:
         module.fail_json(msg=errorMsg)
-
 
 if __name__ == '__main__':
     main()
