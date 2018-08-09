@@ -360,11 +360,11 @@ def get_running_config(module, current_config=None, flags=None):
         else:
             contents = get_config(module, flags=flags)
     contents, banners = extract_banners(contents)
-    return NetworkConfig(indent=1, contents=contents), banners
+    return NetworkConfig(indent=1, contents=contents, ignore_lines=module.params['diff_ignore_lines']), banners
 
 
 def get_candidate(module):
-    candidate = NetworkConfig(indent=1)
+    candidate = NetworkConfig(indent=1, ignore_lines=module.params['diff_ignore_lines'])
     banners = {}
 
     if module.params['src']:
@@ -445,11 +445,13 @@ def main():
     result['warnings'] = warnings
 
     config = None
+    diff_ignore_lines = module.params['diff_ignore_lines']
+
     flags = get_defaults_flag(module) if module.params['defaults'] else []
 
     if module.params['backup'] or (module._diff and module.params['diff_against'] == 'running'):
         contents = get_config(module, flags=flags)
-        config = NetworkConfig(indent=1, contents=contents)
+        config = NetworkConfig(indent=1, contents=contents, ignore_lines=diff_ignore_lines)
         if module.params['backup']:
             result['__backup__'] = contents
 
@@ -495,8 +497,6 @@ def main():
 
     running_config = module.params['running_config']
     startup_config = None
-
-    diff_ignore_lines = module.params['diff_ignore_lines']
 
     if module.params['save_when'] == 'always' or module.params['save']:
         save_config(module, result)
