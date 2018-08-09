@@ -244,12 +244,12 @@ warnings:
     returned: error
     type: string
     sample: Your git version is too old to fully support the depth argument. Falling back to full checkouts.
-new_git_dir:
+git_dir_now:
     description: Contains the new path of .git directory if it's changed
     returned: success
     type: string
     sample: /path/to/new/git/dir
-old_git_dir:
+git_dir_before:
     description: Contains the original path of .git directory if it's changed
     returned: success
     type: string
@@ -280,8 +280,8 @@ def relocate_repo(module, result, repo_dir, old_repo_dir, worktree_dir):
             shutil.move(old_repo_dir, repo_dir)
             with open(dot_git_file_path, 'w') as dot_git_file:
                 dot_git_file.write('gitdir: %s' % repo_dir)
-            result['old_git_dir'] = old_repo_dir
-            result['new_git_dir'] = repo_dir
+            result['git_dir_before'] = old_repo_dir
+            result['git_dir_now'] = repo_dir
         except (IOError, OSError) as err:
             # if we already moved the .git dir, roll it back
             if os.path.exists(repo_dir):
@@ -442,8 +442,8 @@ def get_submodule_versions(git_path, module, dest, version='HEAD'):
     return submodules
 
 
-def clone(git_path, module, result, repo, dest, remote, depth, version, bare,
-          reference, refspec, verify_commit, separate_git_dir):
+def clone(git_path, module, repo, dest, remote, depth, version, bare,
+          reference, refspec, verify_commit, separate_git_dir, result):
     ''' makes a new git repo if it does not already exist '''
     dest_dirname = os.path.dirname(dest)
     try:
@@ -1027,7 +1027,7 @@ def main():
             archive=dict(type='path'),
             separate_git_dir=dict(type='path'),
         ),
-        mutually_exclusive=['separate_git_dir', 'bare'],
+        mutually_exclusive=[('separate_git_dir', 'bare')],
         supports_check_mode=True
     )
 
@@ -1090,7 +1090,7 @@ def main():
         try:
             repo_path = get_repo_path(dest, bare)
             if separate_git_dir and os.path.exists(repo_path) and separate_git_dir != repo_path:
-                result.update(changed=True)
+                result['changed'] = True
                 if not module.check_mode:
                     relocate_repo(module, result, separate_git_dir, repo_path, dest)
                     repo_path = separate_git_dir
@@ -1137,7 +1137,7 @@ def main():
                     result['diff'] = diff
             module.exit_json(**result)
         # there's no git config, so clone
-        clone(git_path, module, result, repo, dest, remote, depth, version, bare, reference, refspec, verify_commit, separate_git_dir)
+        clone(git_path, module, repo, dest, remote, depth, version, bare, reference, refspec, verify_commit, separate_git_dir, result)
     elif not update:
         # Just return having found a repo already in the dest path
         # this does no checking that the repo is the actual repo
