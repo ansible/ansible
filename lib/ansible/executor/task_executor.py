@@ -10,6 +10,7 @@ import time
 import json
 import subprocess
 import sys
+import termios
 import traceback
 
 from ansible import constants as C
@@ -71,7 +72,7 @@ def _write_to_socket(byte_stream, obj):
     # They should be rehydrated on the receiving end
     src = src.replace(b'\r', br'\r')
 
-    byte_stream.write('{0}\n'.format(len(src)))
+    byte_stream.write(b'%d\n' % len(src))
     byte_stream.write(src)
 
 
@@ -941,17 +942,28 @@ class TaskExecutor:
             [python, find_file_in_path('ansible-connection'), to_text(os.getppid())],
             stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
-        stdin = os.fdopen(master, 'wb', 0)
         os.close(slave)
 
-        _write_to_socket(stdin, self._play_context.serialize())
-        stdin.write(b'\n#END_INIT#\n')
-        _write_to_socket(stdin, variables)
-        stdin.write(b'\n#END_VARS#\n')
+        # We need to set the pty into noncanonical mode. This ensures that we
+        # can receive lines longer than 4095 characters (plus newline) without
+        # truncating.
+        old = termios.tcgetattr(master)
+        new = termios.tcgetattr(master)
+        new[3] = new[3] & ~termios.ICANON
 
-        stdin.flush()
+        try:
+            termios.tcsetattr(master, termios.TCSANOW, new)
+            stdin = os.fdopen(master, 'wb', 0)
+            _write_to_socket(stdin, self._play_context.serialize())
+            stdin.write(b'\n#END_INIT#\n')
+            _write_to_socket(stdin, variables)
+            stdin.write(b'\n#END_VARS#\n')
 
-        (stdout, stderr) = p.communicate()
+            stdin.flush()
+
+            (stdout, stderr) = p.communicate()
+        finally:
+            termios.tcsetattr(master, termios.TCSANOW, old)
         stdin.close()
 
         if p.returncode == 0:
