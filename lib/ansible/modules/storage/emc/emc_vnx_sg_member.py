@@ -20,7 +20,7 @@ DOCUMENTATION = '''
 ---
 module: emc_vnx_sg_member
 
-short_description: Manage storage group member
+short_description: Manage storage group member on EMC VNX
 
 version_added: "2.7"
 
