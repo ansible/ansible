@@ -259,11 +259,10 @@
 
 # https://github.com/ansible/ansible/issues/27617
 
-#- name: create checksum.txt on {{ httpbin_host }}
-#  copy:
-#    dest: {{ httpbin_host }}/checksum.txt
-#    content: "7036ede810fad2b5d2e7547ec703cae8da61edbba43c23f9d7203a0239b765c4.  index.html"
-#  register: source_file_checksum_copied
+- name: create checksum.txt of index.html
+  copy:
+    dest: '{{ output_dir }}/checksum.txt'
+    content: "7036ede810fad2b5d2e7547ec703cae8da61edbba43c23f9d7203a0239b765c4.  index.html"
 
 - name: Change mode on an already downloaded file and specify checksum
   get_url:
