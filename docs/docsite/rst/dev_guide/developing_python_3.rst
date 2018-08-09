@@ -56,7 +56,7 @@ Porting Controller Code to Python 3
 ===================================
 
 Most of the general tips for porting code to be used on both Python-2 and
-Python-3 applies to porting controller code.  The best place to start learning
+Python-3 apply to porting controller code.  The best place to start learning
 to port code is `Lennart Regebro's book: Porting to Python 3 <http://python3porting.com/>`_.
 
 The book describes several strategies for porting to Python 3.  The one we're
@@ -64,10 +64,7 @@ using is `to support Python-2 and Python-3 from a single code base
 <http://python3porting.com/strategies.html#python-2-and-python-3-without-conversion>`_
 
 Controller String Strategy
-==========================
-
-Background
-----------
+------------------------------
 
 One of the most essential things to decide upon for porting code to Python-3
 is what string model to use.  Strings can be an array of bytes (like in C) or
@@ -211,11 +208,11 @@ to the command) to execute into bytes and return stdout and stderr as byte strin
 Higher level functions (like action plugins' ``_low_level_execute_command``)
 transform the output into text strings.
 
-Tips, tricks, and idioms to adopt
-=================================
+Tips, tricks, and idioms for porting controller code
+----------------------------------------------------
 
-Forwards Compatibility Boilerplate
-----------------------------------
+Use forward-compatibility boilerplate
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Use the following boilerplate code at the top of all controller-side modules
 to make certain constructs act the same way on Python-2 and Python-3:
@@ -244,8 +241,8 @@ The ``__future__`` imports do the following:
     * `PEP 0238: Division <https://www.python.org/dev/peps/pep-0238>`_
     * `PEP 3105: Print function <https://www.python.org/dev/peps/pep-3105>`_
 
-Prefix byte strings with "b\_"
-------------------------------
+Prefix byte strings with ``b\_``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Since mixing text and bytes types leads to tracebacks we want to be clear
 about what variables hold text and what variables hold bytes.  We do this by
@@ -262,8 +259,8 @@ We do not prefix the text strings instead because we only operate
 on byte strings at the borders, so there are fewer variables that need bytes
 than text.
 
-Bundled six
------------
+Import Ansible's bundled ``python-six`` library
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The third-party `python-six <https://pythonhosted.org/six/>`_ library exists
 to help projects create code that runs on both Python-2 and Python-3.  Ansible
@@ -280,8 +277,8 @@ it, import it like this:
     Ansible will use a system copy of six if the system copy is a later
     version than the one Ansible bundles.
 
-Exceptions
-----------
+Handle exceptions with ``as``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In order for code to function on Python-2.6+ and Python-3, use the
 new exception-catching syntax which uses the ``as`` keyword:
@@ -303,17 +300,17 @@ Do **not** use the following syntax as it will fail on every version of Python-3
     except ValueError, e:
         module.fail_json(msg="Tried to divide by zero: %s" % e)
 
-Octal numbers
--------------
+Update octal numbers
+^^^^^^^^^^^^^^^^^^^^
 
 In Python-2.x, octal literals could be specified as ``0755``.  In Python-3,
 octals must be specified as ``0o755``.
 
-String formatting
------------------
+String formatting for controller code
+-------------------------------------
 
-str.format() compatibility
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Use ``str.format()`` for compatibility
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Starting in Python-2.6, strings gained a method called ``format()`` to put
 strings together.  However, one commonly used feature of ``format()`` wasn't
@@ -334,7 +331,6 @@ is compatible with Python-2.6.
 
 .. seealso::
     Python documentation on `format strings <https://docs.python.org/2/library/string.html#formatstrings>`_
-
 
 Use percent format with byte strings
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -357,9 +353,8 @@ does have support for the older, percent-formatting.
 .. seealso::
     Python documentation on `percent formatting <https://docs.python.org/2/library/stdtypes.html#string-formatting>`_
 
-***************************
 Porting Modules to Python 3
-***************************
+===================================
 
 Ansible modules are slightly harder to port than normal code from other
 projects. A lot of mocking has to go into unit testing an Ansible module so
@@ -367,11 +362,10 @@ it's harder to test that your porting has fixed everything or to to make sure
 that later commits haven't regressed the Python-3 support.
 
 Module String Strategy
-======================
+----------------------
 
-There are a large number of modules in Ansible.  Most of those are maintained
-by the Ansible community at large, not by a centralized team.  To make life
-easier on them, it was decided not to break backwards compatibility by
+To make things easier on the community members who maintain so many of Ansible's 
+modules, we decided not to break backwards compatibility by
 mandating that all strings inside of modules are text and converting between
 text and bytes at the borders; instead, we're using a native string strategy
 for now.
@@ -388,55 +382,15 @@ module_utils shipped with Ansible attempts to accept native strings as input
 to its functions and emit native strings as their output.  Modules should be
 coded to expect bytes on Python-2 and text on Python-3.
 
-Tips, tricks, and idioms to adopt
-=================================
-
-Python-2.4 Compatible Exception Syntax
---------------------------------------
-
-Until Ansible-2.4, modules needed to be compatible with Python-2.4 as
-well.  Python-2.4 did not understand the new exception-catching syntax so
-we had to write a compatibility function that could work with both
-Python-2 and Python-3.  You may still see this used in some modules:
-
-.. code-block:: python
-
-    from ansible.module_utils.pycompat24 import get_exception
-
-    try:
-        a = 2/0
-    except ValueError:
-        e = get_exception()
-        module.fail_json(msg="Tried to divide by zero: %s" % e)
-
-Unless a change is going to be backported to Ansible-2.3, you should not
-have to use this in new code.
-
-Python 2.4 octal workaround
----------------------------
-
-Before Ansible-2.4, modules had to be compatible with Python-2.4.
-Python-2.4 did not understand the new syntax for octal literals so we used
-the following workaround to specify octal values:
-
-.. code-block:: python
-
-    # Can't use 0755 on Python-3 and can't use 0o755 on Python-2.4
-    EXECUTABLE_PERMS = int('0755', 8)
-
-Unless a change is going to be backported to Ansible-2.3, you should not
-have to use this in new code.
-
--------------------------------------
 Porting module_utils code to Python 3
--------------------------------------
+=====================================
 
-module_utils code is largely like module code.  However, some pieces of it are
+Ansible's ``module_utils`` code is largely like module code.  However, some pieces of it are
 used by the controller as well.  Because of this, it needs to be usable with
-the controller's assumptions.  This is most notable in the string strategy.
+the controller's assumptions, particularly the string strategy.
 
 Module_utils String Strategy
-============================
+----------------------------
 
 Module_utils **must** use the Native String Strategy.  Functions in
 module_utils receive either text strings or byte strings and may emit either
