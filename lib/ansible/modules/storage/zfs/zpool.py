@@ -54,11 +54,11 @@ options:
   autoreplace:
     description:
       - Automatically replace a bad device in pool using a spare device
-    choices: [ on, off ]
+    default: false
   autoexpand:
     description:
       - Enable or disable automatic pool expansion when a larger disk replaces a smaller disk
-    choices: [ on, off ]
+    default: false
   spare:
     description:
       - Full path to list of block devices such as hdd, nvme or nvme
@@ -266,8 +266,8 @@ def main():
             add=dict(type='bool', default=False),
             ashift=dict(type='int', default=0, choices=[0, 9, 10, 11, 12, 13, 14, 15, 16]),
             set=dict(type='bool', default=False),
-            autoreplace=dict(type='str', default=None, choices=['on', 'off']),
-            autoexpand=dict(type='str', default=None, choices=['on', 'off']),
+            autoreplace=dict(type='bool', default=False]),
+            autoexpand=dict(type='bool', default=False]),
             zil=dict(type='str', default=None),
             l2arc=dict(type='str', default=None),
         ),
@@ -290,20 +290,20 @@ def main():
     l2arc = module.params.get('l2arc')
     zil = module.params.get('zil')
 
-    if autoexpand == 'on' and set is False:
+    if autoexpand is True and set is False:
         autoexpand = "-o autoexpand=on"
-    elif autoexpand == 'on' and set is True:
+    elif autoexpand is True and set is True:
         autoexpand = "-o autoexpand=on"
-    elif autoexpand == 'off' and set is True:
+    elif autoexpand is False and set is True:
         autoexpand = "-o autoexpand=off"
     else:
         autoexpand = ""
 
-    if autoreplace == 'on' and set is False:
+    if autoreplace is True and set is False:
         autoreplace = "-o autoreplace=on"
-    elif autoreplace == 'on' and set is True:
+    elif autoreplace is True' and set is True:
         autoreplace = "-o autoreplace=on"
-    elif autoreplace == 'off' and set is True:
+    elif autoreplace is False and set is True:
         autoreplace = "-o autoreplace=off"
     else:
         autoreplace = ""
