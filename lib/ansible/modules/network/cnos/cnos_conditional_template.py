@@ -161,6 +161,7 @@ def main():
     # Send commands one by one
     # with open(commandfile, "r") as f:
     f = open(commandfile, "r")
+    cmd = []
     for line in f:
         # Omit the comment lines in template file
         if not line.startswith("#"):
