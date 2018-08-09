@@ -63,6 +63,8 @@ def test_encrypt_default_rounds():
     assert_hash("$6$12345678$LcV9LQiaPekQxZ.OfkMADjFdSO2k9zfbDQrHPVcYjSLqSdjLYpsgqviYvTEP/R41yPmhH3CCeEDqVhW1VHr3L.",
                 secret="123", algorithm="sha512_crypt", salt="12345678")
 
+    assert encrypt.CryptHash("md5_crypt", AnsibleFilterError).hash("123")
+
 
 def test_password_hash_filter():
     if not encrypt.PASSLIB_AVAILABLE:
@@ -85,6 +87,9 @@ def test_password_hash_filter():
             "$6$12345678$LcV9LQiaPekQxZ.OfkMADjFdSO2k9zfbDQrHPVcYjSLqSdjLYpsgqviYvTEP/R41yPmhH3CCeEDqVhW1VHr3L.")
 
     assert get_encrypted_password("123", "crypt16", salt="12") == "12pELHK2ME3McUFlHxel6uMM"
+
+    # Try algorithm that uses a raw salt
+    assert get_encrypted_password("123", "pbkdf2_sha256")
 
     with passlib_off():
         assert not encrypt.PASSLIB_AVAILABLE

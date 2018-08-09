@@ -21,6 +21,8 @@ PASSLIB_AVAILABLE = False
 try:
     import passlib
     import passlib.hash
+    from passlib.utils.handlers import HasRawSalt
+
     PASSLIB_AVAILABLE = True
 except:
     pass
@@ -69,14 +71,8 @@ class CryptHash(BaseHash):
         return self._encrypt(secret, salt, rounds)
 
     def _salt(self, **settings):
-        salt = settings.get('salt')
-        salt_size = settings.get('salt_size')
-        if salt is None:
-            if salt_size is None:
-                salt_size = self.algo_data.salt_size
-            r = random.SystemRandom()
-            salt = ''.join([r.choice(string.ascii_letters + string.digits) for dummy in range(salt_size)])
-        return salt
+        salt_size = settings.get('salt_size') or self.algo_data.salt_size
+        return settings.get('salt') or random_salt(salt_size)
 
     def _rounds(self, **settings):
         if settings.get('rounds') == self.algo_data.implicit_rounds:
@@ -120,7 +116,7 @@ class PasslibHash(BaseHash):
 
     def _clean_salt(self, settings):
         if "salt" in settings:
-            if self.crypt_algo._salt_is_bytes:
+            if issubclass(self.crypt_algo, HasRawSalt):
                 settings["salt"] = to_bytes(settings["salt"], encoding='ascii', errors='strict')
             else:
                 settings["salt"] = to_text(settings["salt"], encoding='ascii', errors='strict')
@@ -169,6 +165,15 @@ def do_encrypt(result, encrypt, salt_size=None, salt=None):
         settings['salt'] = salt
 
     return passlib_or_crypt(result, encrypt, error_type=AnsibleError, **settings)
+
+
+def random_salt(length):
+    """Return a text string suitable for use as a salt for the hash functions we use to encrypt passwords.
+    """
+    # Note passlib salt values must be pure ascii so we can't let the user
+    # configure this
+    salt_chars = string.ascii_letters + string.digits + u'./'
+    return random_password(length=length, chars=salt_chars)
 
 
 def random_password(length=DEFAULT_PASSWORD_LENGTH, chars=C.DEFAULT_PASSWORD_CHARS):
