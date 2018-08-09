@@ -118,12 +118,11 @@ class AnsibleCoreCI(object):
 
             self.path = "%s-%s" % (self.path, region)
             self.endpoints = AWS_ENDPOINTS[region],
+            self.ssh_key = SshKey(args)
 
             if self.platform == 'windows':
-                self.ssh_key = None
                 self.port = 5986
             else:
-                self.ssh_key = SshKey(args)
                 self.port = 22
         elif self.provider == 'parallels':
             self.endpoints = self._get_parallels_endpoints()
