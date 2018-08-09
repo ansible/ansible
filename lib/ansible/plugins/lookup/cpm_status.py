@@ -112,12 +112,6 @@ from ansible.module_utils.six.moves.urllib.error import HTTPError, URLError
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.urls import open_url, ConnectionError, SSLValidationError
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
-
 
 class LookupModule(LookupBase):
 
@@ -144,8 +138,6 @@ class LookupModule(LookupBase):
                 fullurl = ("%s%s/api/v2/status/alarms" % (protocol, self.get_option('cpm_url')))
             else:
                 raise AnsibleError("Status command not recognized %s " % (term))
-
-            display.vvvv("cpm_status connecting to %s" % fullurl)
 
             try:
                 response = open_url(fullurl, validate_certs=self.get_option('validate_certs'), use_proxy=self.get_option('use_proxy'),
