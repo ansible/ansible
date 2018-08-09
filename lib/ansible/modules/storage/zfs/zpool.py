@@ -31,7 +31,7 @@ options:
     default: false
   raid_level:
     description:
-      - type of pool
+      - Pool raid level 
     choices: [ none, mirror, raidz, raidz1, raidz2, raidz3 ]
   vdev:
     description:
@@ -39,10 +39,37 @@ options:
     type: int
   devices:
     description:
-      - full path to list of block devices such as hdd, nvme or nvme
+      - full path to list of block devices such as hdd, nvme or file
+  ashift:
+    description:
+      - Alignment shift can be used to improve performance and is set once during the creation
+    choices: [ 0, 9, 10, 11, 12, 13, 14, 15, 16 ]
+    type: int
+    default: 0
+  set:
+    description:
+      - Set options for existing pools
+    type: bool
+    default: false
+  autoreplace:
+    description:
+      - Automatically replace a bad device in pool using a spare device
+    choices: [ on, off]
+  autoexpand:
+    description:
+      - Enable or disable automatic pool expansion when a larger disk replaces a smaller disk
+    choices: [ on, off]
   spare:
     description:
       - full path to list of block devices such as hdd, nvme or nvme
+  zil:
+    description:
+      - ZFS intent log device or devices when mirrored
+    type: str
+  l2arc:
+    description:
+      - ZFS cache device or devices
+    type: str
   state:
     description:
       - Create or delete the pool
@@ -61,6 +88,7 @@ EXAMPLES = """
       - /dev/sdd
       - /dev/sde
     raid_level: raidz
+    zil: mirror /dev/sdf /dev/sdg
     vdev: 3
     state: present
 
@@ -74,18 +102,27 @@ EXAMPLES = """
       - /dev/sde
       - /dev/sdf
     raid_level: none
+    l2arc: /dev/sdg
     vdev: 5
+    ashift: 12
     state: present
 
 - name: Create a new mirror zpool
   zpool:
     name: rpool
     devices:
+      - /dev/sdb
       - /dev/sdc
       - /dev/sdd
       - /dev/sde
-      - /dev/sdf
     raid_level: mirror
+    spare:
+      - /dev/sdf
+      - /dev/sdg
+    zil: mirror /dev/sdh /dev/sdi
+    l2arc: /dev/sdj
+    autoreplace: on
+    ashift: 12
     vdev: 2
     state: present
 
@@ -97,6 +134,8 @@ EXAMPLES = """
       - /dev/sdd
     raid_level: mirror
     vdev: 2
+    autoreplace: on
+    autoexpand: on
     spare:
       - /dev/sde
     state: present
@@ -109,6 +148,7 @@ EXAMPLES = """
     - /dev/sdf
     - /dev/sdg
     raid_level: mirror
+    autoexpand: on
     vdev: 2
     state: present
 
@@ -116,8 +156,17 @@ EXAMPLES = """
   zpool:
     name: rpool
     add: true
+    autoreplace: on
     spare:
     - /dev/sdf
+    state: present
+
+- name: Set options to an existing zpool
+  zpool:
+    name: zpool
+    set: true
+    autoreplace: on
+    autoexpand: off
     state: present
 
 - name: Destroy an existing zpool
@@ -135,7 +184,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 class Zpool(object):
 
-    def __init__(self, module, name, state, raid_level, devices, spare, add, vdev):
+    def __init__(self, module, name, state, raid_level, devices, spare, add, vdev, ashift, set, autoreplace, autoexpand, zil, l2arc):
         self.module = module
         self.name = name
         self.raid_level = raid_level
@@ -144,6 +193,12 @@ class Zpool(object):
         self.state = state
         self.add = add
         self.vdev = vdev
+        self.set = set
+        self.ashift = ashift
+        self.autoreplace = autoreplace
+        self.autoexpand = autoexpand
+        self.zil = zil
+        self.l2arc = l2arc
         self.changed = False
         self.zpool_cmd = module.get_bin_path('zpool', True)
 
@@ -162,12 +217,23 @@ class Zpool(object):
         cmd = [self.zpool_cmd]
         if self.add is True:
             action = 'add'
+        elif self.set is True:
+	    action = 'set'
         else:
             action = 'create'
         cmd.append(action)
+        if self.ashift:
+            ashift = '-o ashift=' + str(self.ashift)
+        else:
+            ashift = '-o ashift=0'
+        cmd.append(ashift)
+        cmd.append(self.autoreplace)
+        cmd.append(self.autoexpand)
         cmd.append(self.name)
         cmd.append(self.devices)
         cmd.append(self.spare)
+        cmd.append(self.zil)
+        cmd.append(self.l2arc)
         (rc, out, err) = self.module.run_command(' '.join(cmd))
         if rc == 0:
             self.changed = True
@@ -197,9 +263,16 @@ def main():
             devices=dict(type='list', default=None),
             spare=dict(type='list', default=None),
             add=dict(type='bool', default=False),
+            ashift=dict(type='int', default=0, choices=[0, 9, 10, 11, 12, 13, 14, 15, 16 ]),
+            set=dict(type='bool', default=False),
+            autoreplace=dict(type='str', default=None, choices=['on', 'off']),
+            autoexpand=dict(type='str', default=None, choices=['on', 'off']),
+            zil=dict(type='str', default=None),
+            l2arc=dict(type='str', default=None),
         ),
         supports_check_mode=True,
-        required_together=[['raid_level', 'vdev']]
+        required_together=[['raid_level', 'vdev']],
+        mutually_exclusive=[['add','set']]
     )
 
     name = module.params.get('name')
@@ -209,9 +282,45 @@ def main():
     devices = module.params.get('devices')
     spare = module.params.get('spare')
     vdev = module.params.get('vdev')
+    ashift = module.params.get('ashift')
+    set = module.params.get('set')
+    autoreplace = module.params.get('autoreplace')
+    autoexpand = module.params.get('autoexpand')
+    l2arc = module.params.get('l2arc')
+    zil = module.params.get('zil')
+
+    if autoexpand == 'on' and set is False:
+        autoexpand = "-o autoexpand=on"
+    elif autoexpand == 'on' and set is True:
+        autoexpand = "-o autoexpand=on"
+    elif autoexpand == 'off' and set is True:
+        autoexpand = "-o autoexpand=off"
+    else:
+        autoexpand = ""
+
+    if autoreplace == 'on' and set is False:
+        autoreplace = "-o autoreplace=on"
+    elif autoreplace =='on' and set is True:
+        autoreplace = "-o autoreplace=on"
+    elif autoreplace =='off' and set is True:
+        autoreplace = "-o autoreplace=off"
+    else:
+        autoreplace = ""
+
+    if set is True:
+        action = 'set'
 
     if raid_level is False or 'none' in raid_level:
         raid_level = ''
+
+    if zil:
+        zil = ' log ' + zil
+
+    if l2arc:
+        l2arc = ' cache ' + l2arc
+
+    if ashift is None:
+        ashift = 0
 
     if devices is False or not devices:
         devices = ''
@@ -236,12 +345,18 @@ def main():
         devices=devices,
         spare=spare,
         vdev=vdev,
+        set=set,
+        ashift=ashift,
+        autoreplace=autoreplace,
+        autoexpand=autoexpand,
+        zil=zil,
+        l2arc=l2arc,
     )
 
-    zpool = Zpool(module, name, state, raid_level, devices, spare, add, vdev)
+    zpool = Zpool(module, name, state, raid_level, devices, spare, add, vdev, ashift, set, autoreplace, autoexpand, zil, l2arc)
 
     if state == 'present':
-        if (zpool.exists() is True and add is True) or zpool.exists() is False:
+        if (zpool.exists() is True and add is True) or (zpool.exists() is True and set is True) or zpool.exists() is False:
             zpool.create()
     elif state == 'absent':
         if zpool.exists():
