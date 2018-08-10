@@ -88,6 +88,17 @@ If(-not $forest) {
         $iaf = Install-ADDSForest @install_forest_args
 
         $result.reboot_required = $iaf.RebootRequired
+
+        # The Netlogon service is set to auto start but is not started. This is
+        # required for Ansible to connect back to the host and reboot in a
+        # later task. Even if this fails Ansible can still connect but only
+        # with ansible_winrm_transport=basic so we just display a warning if
+        # this fails.
+        try {
+            Start-Service -Name Netlogon
+        } catch {
+            Add-Warning -obj $result -message "Failed to start the Netlogon service after promoting the host, Ansible may be unable to connect until the host is manually rebooting: $($_.Exception.Message)"
+        }
     }
 }
 
