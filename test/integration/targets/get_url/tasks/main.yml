@@ -264,6 +264,11 @@
     http_port: 27617
     files_dir: '{{ output_dir }}/files'
 
+- name: create files_dir
+  file:
+    dest: "{{ files_dir }}"
+    state: directory
+
 - name: create src file
   copy:
     dest: '{{ files_dir }}/27617.txt'
