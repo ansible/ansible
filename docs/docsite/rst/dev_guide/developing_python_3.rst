@@ -1,7 +1,7 @@
 .. _developing_python_3:
 
 ********************
-Ansible and Python 3
+Ansible and Python-3
 ********************
 
 .. contents:: Topics
@@ -12,14 +12,14 @@ variety of machines.  Contributors to Ansible should be aware of the tips in
 this document so that they can write code that will run on the same versions
 of Python as the rest of Ansible.
 
-To ensure that your code runs on Python 3 as well as on Python 2, learn the tips and tricks and idioms
+To ensure that your code runs on Python-3 as well as on Python-2, learn the tips and tricks and idioms
 described here. Most of these considerations apply to all three types of Ansible code:
  
 1. controller-side code - code that runs on the machine where you invoke :command:`/usr/bin/ansible`
 2. modules - the code which Ansible transmits to and invokes on the managed machine.
 3. shared ``module_utils`` code - the common code that's used by modules to perform tasks and sometimes used by controller-side code as well
 
-However, the three types of code do not use the same string strategy. If you're porting a module or some ``module_utils`` code, be sure
+However, the three types of code do not use the same string strategy. If you're developing a module or some ``module_utils`` code, be sure
 to read the section on string strategy carefully.
 
 Minimum Version of Python-3.x and Python-2.x
@@ -49,18 +49,19 @@ only function with a newer version of Python.
     Ansible-2.3 was released in April of 2017 and was the last Ansible release
     to support Python-2.4 on the module-side.
 
-Porting Ansible Code to Python 3
-===================================
+Developing Ansible code that supports Python-2 and Python-3
+===========================================================
 
-The best place to start learning to port code is `Lennart Regebro's book: Porting to Python 3 <http://python3porting.com/>`_.
-The book describes several strategies for porting to Python 3.  The one we're
+The best place to start learning about writing code that supports both Python-2 and Python-3
+is `Lennart Regebro's book: Porting to Python 3 <http://python3porting.com/>`_.
+The book describes several strategies for porting to Python-3. The one we're
 using is `to support Python-2 and Python-3 from a single code base
 <http://python3porting.com/strategies.html#python-2-and-python-3-without-conversion>`_
 
 Understanding strings in Python-2 and Python-3
 ----------------------------------------------
 
-Python-2 and Python-3 handle strings differently, so when you port code to Python-3
+Python-2 and Python-3 handle strings differently, so when you write code that supports Python-3
 you must decide what string model to use.  Strings can be an array of bytes (like in C) or
 they can be an array of text.  Text is what we think of as letters, digits,
 numbers, other printable symbols, and a small number of unprintable "symbols"
@@ -337,7 +338,7 @@ new exception-catching syntax which uses the ``as`` keyword:
 
 Do **not** use the following syntax as it will fail on every version of Python-3:
 
-.. This code block won't highlight because python2 isn't recognized. This is necessary to pass tests under python 3.
+.. This code block won't highlight because python2 isn't recognized. This is necessary to pass tests under python-3.
 .. code-block:: none
 
     try:
@@ -389,7 +390,7 @@ does have support for the older, percent-formatting.
 
 .. note:: Percent formatting added in Python-3.5
 
-    Percent formatting of byte strings was added back into Python3 in 3.5.
+    Percent formatting of byte strings was added back into Python-3 in 3.5.
     This isn't a problem for us because Python-3.5 is our minimum version.
     However, if you happen to be testing Ansible code with Python-3.4 or
     earlier, you will find that the byte string formatting here won't work.
@@ -400,11 +401,11 @@ does have support for the older, percent-formatting.
 
 .. _testing_modules_python_3:
 
-Testing Modules on Python 3
+Testing Modules on Python-3
 ===================================
 
-Ansible modules are slightly harder to port than normal code from other
-projects. A lot of mocking has to go into unit testing an Ansible module so
-it's harder to test that your porting has fixed everything or to to make sure
+Ansible modules are slightly harder to code to support Python-3 than normal code from other
+projects. A lot of mocking has to go into unit testing an Ansible module, so
+it's harder to test that your changes have fixed everything or to to make sure
 that later commits haven't regressed the Python-3 support.
 ## TODO: add more content on testing modules for python 3, or link to that content elsewhere, or remove this section.
