@@ -258,17 +258,32 @@
       - "stat_result.stat.mode == '0775'"
 
 # https://github.com/ansible/ansible/issues/27617
-
-- name: create checksum.txt of index.html
+- name: create src file
   copy:
-    dest: '{{ output_dir }}/checksum.txt'
-    content: "7036ede810fad2b5d2e7547ec703cae8da61edbba43c23f9d7203a0239b765c4.  index.html"
+    dest: '{{ output_dir }}/27617.txt'
+    content: "ptux"
 
-- name: Change mode on an already downloaded file and specify checksum
+- name: create sha1 checksum file of src
+  copy:
+    dest: '{{ output_dir }}/sha1sum.txt'
+    content: "a492fc1f77b49cac59b3fa65f28c37931463ebec  27617.txt"
+
+- copy:
+    src: "testserver.py"
+    dest: "{{ output_dir }}/testserver.py"
+
+- name: start SimpleHTTPServer for issues 27617
+  shell: cd {{ files_dir }} && {{ ansible_python.executable }} {{ output_dir}}/testserver.py {{ http_port }}
+  async: 120 # this test set can take ~1m to run on FreeBSD (via Shippable)
+  poll: 0
+
+- wait_for: port={{ http_port }}
+
+- name: download src with checksum
   get_url:
-    url: 'http://{{ httpbin_host }}/'
-    dest: '{{ output_dir }}/test'
-    checksum: 'sha256:http://{{ httpbin_host }}/checksum.txt'
+    url: 'http://localhost:{{ http_port }}/27617.txt'
+    dest: '{{ output_dir }}'
+    checksum: 'sha1:http://localhost:{{ http_port }}/sha1sum.txt'
   register: result
 
 - stat:
