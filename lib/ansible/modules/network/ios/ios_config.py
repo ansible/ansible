@@ -339,6 +339,13 @@ def diff_banners(want, have):
             candidate[key] = value
     return candidate
 
+def expand_lines(lines):
+    newlines = list()
+    for thisline in lines:
+        for anotherline in thisline.split('\n'):
+            newlines.append(anotherline)
+    return newlines
+
 
 def load_banners(module, banners):
     delimiter = module.params['multiline_delimiter']
@@ -457,6 +464,8 @@ def main():
         match = module.params['match']
         replace = module.params['replace']
         path = module.params['parents']
+
+        module.params['lines'] = expand_lines(module.params['lines'])
 
         candidate, want_banners = get_candidate(module)
 
