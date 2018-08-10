@@ -170,7 +170,7 @@ vlan_list:
 """
 import re
 
-from ansible.module_utils.network.nxos.nxos import cli_run_commands, get_config
+from ansible.module_utils.network.nxos.nxos import run_commands, get_config
 from ansible.module_utils.network.nxos.nxos import get_capabilities, get_interface_type
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
@@ -194,7 +194,7 @@ class FactsBase(object):
             'command': command,
             'output': output
         }
-        resp = cli_run_commands(self.module, [command], check_rc=False)
+        resp = run_commands(self.module, [command], check_rc='retry_json')
         try:
             return resp[0]
         except IndexError:

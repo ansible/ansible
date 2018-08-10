@@ -154,30 +154,20 @@ class Cli:
         connection = self._get_connection()
 
         try:
-            return connection.run_commands(commands, check_rc)
+            out = connection.run_commands(commands, check_rc)
+            if check_rc == 'retry_json':
+                capabilities = self.get_capabilities()
+                network_api = capabilities.get('network_api')
+
+                if network_api == 'cliconf' and out:
+                    for index, resp in enumerate(out):
+                        if 'Invalid command at' in resp and 'json' in resp:
+                            if commands[index]['output'] == 'json':
+                                commands[index]['output'] = 'text'
+                                out = connection.run_commands(commands, check_rc)
+            return out
         except ConnectionError as exc:
             self._module.fail_json(msg=to_text(exc))
-
-    def cli_run_commands(self, commands, check_rc=True):
-        """
-        Fallback to text command if JSON command fails for cliconf
-        when check_rc is set to False
-        """
-
-        if check_rc:
-            return self.run_commands(commands, check_rc)
-
-        out = self.run_commands(commands, check_rc)
-        capabilities = self.get_capabilities()
-        network_api = capabilities.get('network_api')
-
-        if network_api == 'cliconf' and out:
-            for index, resp in enumerate(out):
-                if 'Invalid command at' in resp and 'json' in resp:
-                    if commands[index]['output'] == 'json':
-                        commands[index]['output'] = 'text'
-                        out = self.run_commands(commands, check_rc)
-        return out
 
     def load_config(self, config, return_error=False, opts=None, replace=None):
         """Sends configuration commands to the remote device
@@ -409,9 +399,6 @@ class Nxapi:
 
         return responses
 
-    def cli_run_commands(self, commands, check_rc=True):
-        return self.run_commands(commands, check_rc)
-
     def load_config(self, commands, return_error=False, opts=None, replace=None):
         """Sends the ordered set of commands to the device
         """
@@ -524,11 +511,6 @@ def get_config(module, flags=None):
 def run_commands(module, commands, check_rc=True):
     conn = get_connection(module)
     return conn.run_commands(to_command(module, commands), check_rc)
-
-
-def cli_run_commands(module, commands, check_rc=True):
-    conn = get_connection(module)
-    return conn.cli_run_commands(to_command(module, commands), check_rc)
 
 
 def load_config(module, config, return_error=False, opts=None, replace=None):

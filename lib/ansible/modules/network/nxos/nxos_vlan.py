@@ -154,7 +154,7 @@ import time
 
 from copy import deepcopy
 
-from ansible.module_utils.network.nxos.nxos import get_config, load_config, cli_run_commands
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import normalize_interface, nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import ConnectionError
@@ -550,7 +550,7 @@ def map_config_to_obj(module):
     output = None
 
     command = ['show vlan brief | json']
-    output = cli_run_commands(module, command, check_rc=False)[0]
+    output = run_commands(module, command, check_rc='retry_json')[0]
     if output:
         netcfg = CustomNetworkConfig(indent=2,
                                      contents=get_config(module, flags=['all']))
