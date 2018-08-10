@@ -60,11 +60,14 @@
       - output.changed == false
       - output.state == 'Ready'
 
-- name: Gather facts MySQL Server
+- name: Gather facts PostgreSQL Server
   azure_rm_postgresqlserver_facts:
     resource_group: "{{ resource_group }}"
     name: postgresqlsrv{{ rpfx }}
-  register: output
+  register: output 
+  until: output.servers[0]['user_visible_state'] == 'Ready'
+  delay: 30
+
 - name: Assert that facts are returned
   assert:
     that:
@@ -79,10 +82,12 @@
       - output.servers[0]['user_visible_state'] != None
       - output.servers[0]['fully_qualified_domain_name'] != None
 
-- name: Gather facts MySQL Server
+- name: Gather facts PostgreSQL Server
   azure_rm_postgresqlserver_facts:
     resource_group: "{{ resource_group }}"
   register: output
+  until: output.servers[1]['user_visible_state'] == 'Ready'
+  delay: 30
 - name: Assert that facts are returned
   assert:
     that:
