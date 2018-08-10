@@ -185,7 +185,6 @@ EXAMPLES = """
 RETURN = """ # """
 
 import os
-import commands
 import ntpath
 
 from ansible.module_utils.basic import AnsibleModule
@@ -286,6 +285,7 @@ class Zpool(object):
 def path_leaf(path):
     head, tail = ntpath.split(path)
     return tail or ntpath.basename(head)
+
 
 def main():
 
@@ -438,7 +438,7 @@ def main():
                             ar = True
                 else:
                     ar = False
-                if (do or so or zo or lo or ae or ar) is False: 
+                if (do or so or zo or lo or ae or ar) is False:
                     zpool.create()
             else:
                 zpool.create()
