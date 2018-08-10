@@ -160,30 +160,25 @@ class Cli:
 
     def cli_run_commands(self, commands, check_rc=True):
         """
-        Sends text command if JSON command fails for cliconf
+        Fallback to text command if JSON command fails for cliconf
         when check_rc is set to False
         """
 
         if check_rc:
             return self.run_commands(commands, check_rc)
 
-        if not check_rc:
-            out = self.run_commands(commands, check_rc)
-            capabilities = self.get_capabilities()
-            network_api = capabilities.get('network_api')
-            if network_api == 'cliconf':
-                if 'Invalid command at' in out and 'json' in out:
-                    for item in commands:
-                        if item['output'] == 'json':
-                            item['output'] = 'text'
-                        if is_json(item['command']):
-                            item['command'] = item['command'].split('| json')[0].strip()
-                            item['output'] = 'text'
-                    return self.run_commands(commands, check_rc)
-                else:
-                    return out
-            else:
-                return out
+        out = self.run_commands(commands, check_rc)
+        capabilities = self.get_capabilities()
+        network_api = capabilities.get('network_api')
+
+        if network_api == 'cliconf' and out:
+            for index, resp in enumerate(out):
+                if 'Invalid command at' in resp and 'json' in resp:
+                    if commands[index]['output'] == 'json':
+                        commands[index]['output'] = 'text'
+                        out = self.run_commands(commands, check_rc)
+            return out
+        return out
 
     def load_config(self, config, return_error=False, opts=None, replace=None):
         """Sends configuration commands to the remote device
