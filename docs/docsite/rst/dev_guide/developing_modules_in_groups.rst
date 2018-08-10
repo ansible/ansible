@@ -5,6 +5,7 @@ Information for submitting a group of modules
 *********************************************
 
 .. contents:: Topics
+   :local:
 
 Submitting a group of modules
 `````````````````````````````
