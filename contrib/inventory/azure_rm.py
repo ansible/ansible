@@ -701,18 +701,20 @@ class AzureInventory(object):
         selected_vmsses = self._selected_vmss(virtual_machine_scale_sets)
 
         for scale_set in selected_vmsses:
-            vmss_vms += self.get_vm_instances_in_vmss(scale_set)
+            vmss_vms += self._get_vmss_vm_instances(scale_set)
 
         return vmss_vms
 
-    def get_vm_instances_in_vmss(self, vmss):
+    def _get_vmss_vm_instances(self, vmss):
         id_dict = azure_id_to_dict(vmss.id)
         resource_group = id_dict['resourceGroups']
         vm_instances = []
         vms_raw = self._compute_client.virtual_machine_scale_set_vms.list(resource_group, vmss.name)
-        nic_configs = self.get_vm_nics_for_vmss(resource_group, vmss.name)
+        nic_configs = self._get_vmss_vm_nics(resource_group, vmss.name)
 
         for vm in vms_raw:
+            if self.include_powerstate:
+                vm.power_state = self._get_vmss_vm_powerstate(resource_group, vmss.name, vm.instance_id)
 
             for nic_config in nic_configs:
                 vm_id = azure_id_to_dict(vm.id)
@@ -721,6 +723,7 @@ class AzureInventory(object):
                    vm_id["virtualMachines"] == nic_id["virtualMachines"] and \
                    vm_id["resourceGroups"].lower() == nic_id["resourceGroups"].lower():
                     vm.private_ip_address = nic_config.get("private_ip_address", None)
+                    vm.private_ip_alloc_method = nic_config.get("private_ip_allocation_method", None)
                     vm.public_ip_address = nic_config.get("public_ip_address", None)
                     vm.hardware_profile = type('obj', (object,), {'vm_size': vmss.sku.name})
 
@@ -734,7 +737,7 @@ class AzureInventory(object):
 
         return vm_instances
 
-    def get_vm_nics_for_vmss(self, resource_group, name):
+    def _get_vmss_vm_nics(self, resource_group, name):
         vmss_nics = self._network_client.network_interfaces.list_virtual_machine_scale_set_network_interfaces(resource_group, name)
         vm_nics = []
         for vm in vmss_nics:
@@ -743,12 +746,27 @@ class AzureInventory(object):
             for ip_configuration in vm.ip_configurations:
                 if ip_configuration.private_ip_address:
                     vm_nic_info.update({"private_ip_address": ip_configuration.private_ip_address})
+                    vm_nic_info.update({"private_ip_allocation_method": ip_configuration.private_ip_allocation_method})
 
                 if ip_configuration.public_ip_address:
                     vm_nic_info.update({"public_ip_address": ip_configuration.public_ip_address})
 
             vm_nics.append(vm_nic_info)
         return vm_nics
+
+    def _get_vmss_vm_powerstate(self, resource_group, vmss_name, instance_id):
+        try:
+            instance_view = self._compute_client.virtual_machine_scale_set_vms.get_instance_view(resource_group, vmss_name, instance_id)
+        except Exception as exc:
+            sys.exit("Error: fetching instance_host for virtual machine scale set {0} instance {1} - {2}".format(vmss_name, instance_id, str(exc)))
+        return self._extract_power_state(instance_view)
+
+    def _extract_power_state(self, instance_view):
+        if instance_view:
+            return next((s.code.replace('PowerState/', '')
+                         for s in instance_view.statuses if s.code.startswith('PowerState')), None)
+        else:
+            return None
 
     def _load_machines(self, machines):
         for machine in machines:
@@ -793,8 +811,11 @@ class AzureInventory(object):
                 operating_system_type=machine.storage_profile.os_disk.os_type.value.lower()
             )
 
-            if self.include_powerstate and not self.include_vm_scale_sets:
-                host_vars['powerstate'] = self._get_powerstate(resource_group, machine.name)
+            if self.include_powerstate:
+                if self.include_vm_scale_sets: 
+                    host_vars['powerstate'] = getattr(machine, 'power_state', None)
+                else:
+                    host_vars['powerstate'] = self._get_powerstate(resource_group, machine.name)
 
             if machine.storage_profile.image_reference:
                 host_vars['image'] = dict(
@@ -808,7 +829,7 @@ class AzureInventory(object):
             if machine.os_profile is not None and machine.os_profile.windows_configuration is not None:
                 host_vars['ansible_connection'] = 'winrm'
                 host_vars['windows_auto_updates_enabled'] = \
-                    machine.os_profile.windows_configuration.enable_automatic_update
+                    machine.os_profile.windows_configuration.enable_automatic_updates
                 host_vars['windows_timezone'] = machine.os_profile.windows_configuration.time_zone
                 host_vars['windows_rm'] = None
                 if machine.os_profile.windows_configuration.win_rm is not None:
@@ -825,6 +846,7 @@ class AzureInventory(object):
                 host_vars['private_id'] = machine.private_ip_address
                 host_vars['network_interface_id'] = getattr(machine, 'nic_id', None)
                 host_vars['network_interface'] = getattr(machine, 'nic_name', None)
+                host_vars['private_ip_alloc_method'] = getattr(machine, 'private_ip_alloc_method', None)
 
                 if self.group_by_security_group and self._security_groups[resource_group].get(machine.nic_id, None):
                     host_vars['security_group'] = self._security_groups[resource_group][network_interface.id]['name']
