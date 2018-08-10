@@ -14,7 +14,7 @@ Find the task that best describes what you want to do:
 * I want to :ref:`use a custom plugin or module locally <developing_locally>`.
 * I want to address a particular use case, and I wonder if :ref:`developing a module is the right approach <module_dev_should_you>`?
 * I want to :ref:`write a custom plugin <developing_plugins>`.
-* I want to :ref:`write a custom module <developing_modules>`.
+* I want to :ref:`write a custom module <developing_modules_general>`.
 * I want to :ref:`write a custom module for Windows <developing_modules_general_windows>`.
 * I want to :ref:`write a series of related custom modules <developing_modules_in_groups>` that integrate Ansible with a new product (for example, a database, cloud provider, network platform, etc.).
 * I want to :ref:`debug my module code <debugging>`.
