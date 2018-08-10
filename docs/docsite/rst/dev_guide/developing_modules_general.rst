@@ -6,17 +6,8 @@ Ansible Module Development: Getting Started
 
 A module is a reusable, standalone script that Ansible runs on your behalf, either locally or remotely. Modules interact with your local machine, an API, or a remote system to perform specific tasks like changing a database password or spinning up a cloud instance. Each module can be used by the Ansible API, or by the :command:`ansible` or :command:`ansible-playbook` programs. A module provides a defined interface, accepting arguments and returning information to Ansible by printing a JSON string to stdout before exiting. Ansible ships with thousands of modules, and you can easily write your own. If you're writing a module for local use, you can choose any programming language and follow your own rules. This tutorial illustrates how to get started developing an Ansible module in Python.
 
-What's covered in this section:
-
--  `Environment setup <#environment-setup>`__
--  `New module development <#new-module-development>`__
--  `Local/direct module testing <#localdirect-module-testing>`__
--  `Playbook module testing <#playbook-module-testing>`__
--  `Unit testing <#unit-testing>`__
--  Integration testing (coming soon)
--  `Communication and development
-   support <#communication-and-development-support>`__
--  `Credit <#credit>`__
+.. contents:: Topics
+   :local:
 
 .. _environment_setup:
 
@@ -59,7 +50,7 @@ To create a new module:
 
 1. Navigate to the correct directory for your new module: ``$ cd lib/ansible/modules/cloud/azure/``
 2. Create your new module file: ``$ touch my_new_test_module.py``
-3. Paste the content below into your new module file. It includes all `required Ansible documentation fields <developing_modules_documenting>` and some example code.
+3. Paste the content below into your new module file. It includes the :ref:`required Ansible format and documentation <developing_modules_documenting>` and some example code.
 4. Modify and extend the code to do what you want your new module to do.
 
 .. code:: python
@@ -244,6 +235,8 @@ The next step in testing your new module is to consume it with an Ansible playbo
 
 - Run the playbook and analyze the output: ``$ ansible-playbook ./testmod.yml``
 
+Our :ref:`debugging tips <debugging>` will help if you run into bugs as you exercise your module code.
+
 Adding unit tests
 =================
 
@@ -262,8 +255,6 @@ test/units/modules/.../test/my_new_test_module.py``
 Going Further
 =============
 
-If you want to contribute your module back to Ansible, review our :ref:`submission checklist <developing_modules_checklist>` and :ref:`best practices <developing_modules_best_practices>` before you start writing code. 
-
 If you would like to contribute to the main Ansible repository
 by adding a new feature or fixing a bug, `create a fork <https://help.github.com/articles/fork-a-repo/>`_
 of the Ansible repository and develop against a new feature
@@ -274,8 +265,11 @@ submit a pull request to the Ansible repository by selecting
 your feature branch as a source and the Ansible devel branch as
 a target.
 
-If you want to submit a new module to the upstream Ansible repo, be sure
-to run through sanity checks first. For example:
+If you want to contribute your module back to the upstream Ansible repo,
+review our :ref:`submission checklist <developing_modules_checklist>` and :ref:`best practices <developing_modules_best_practices>`
+as well as information about :ref:`testing` before you open a pull request.
+
+You can run through Ansible's sanity checks in a container:
 
 ``$ ansible-test sanity -v --docker --python 2.7 MODULE_NAME``
 
