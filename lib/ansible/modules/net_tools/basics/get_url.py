@@ -193,7 +193,7 @@ EXAMPLES = r'''
     dest: /etc/foo.conf
     checksum: md5:66dffb5228a211e61d6d7ef4a86f5758
 
-- name: Download file with checksum url (sha256) 
+- name: Download file with checksum url (sha256)
   get_url:
     url: http://example.com/path/file.conf
     dest: /etc/foo.conf
