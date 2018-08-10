@@ -7,48 +7,37 @@ Conventions, Best Practices, and Pitfalls
 
 As you develop your module, follow these basic conventions and best practices:
 
+General conventions
+======================
+
 * Each module should be self-contained in one file, so it can be be auto-transferred by Ansible.
-
 * Always use the ``hacking/test-module`` script when developing modules - it will warn you about common pitfalls.
-
 * Validate upfront--fail fast and return useful and clear error messages.
-
 * Use defensive programming--use a simple design for your module, handle errors gracefully, and avoid direct stacktraces.
-
 * Fail predictably--if we must fail, do it in a way that is the most expected. Either mimic the underlying tool or the general way the system works.
+* If you have a local module that returns facts specific to your installations, a good name for this module is ``site_facts``.
+* If your module is addressing an object, the parameter for that object should be called ``name`` whenever possible, or accept ``name`` as an alias.
+* Modules accepting boolean status should generally accept ``yes``, ``no``, ``true``, ``false``, or anything else a user may likely throw at them. The AnsibleModule common code supports this with ``type='bool'``.
+* Eliminate or minimize dependencies. If your module has dependencies, document them at the top of the module file and raise JSON error messages when dependency import fails.
+* If you package your module(s) in an RPM, install the modules on the control machine in ``/usr/share/ansible``. Packaging modules in RPMs is optional.
+* Don't write to files directly; use a temporary file and then use the `atomic_move` function from `ansible.module_utils.basic` to move the updated temporary file into place. This prevents data corruption and ensures that the correct context for the file is kept.
+* Avoid creating caches. Ansible is designed without a central server or authority, so you cannot guarantee it will not run with different permissions, options or locations. If you need a central authority, have it on top of Ansible (for example, using bastion/cm/ci server or tower); do not try to build it into modules.
+* Handle exceptions (bugs) gracefully
+    * Give out a useful message on what you were doing and add exception messages to that.
+    * Avoid catchall exceptions, they are not very useful unless the underlying API gives very good error messages pertaining the attempted action.
+
+Python best practices
+======================
 
 * Avoid ``action``/``command``, they are imperative and not declarative, there are other ways to express the same thing.
-
 * When fetching URLs, use ``fetch_url`` or ``open_url`` from ``ansible.module_utils.urls``. Do not use ``urllib2``, which does not natively verify TLS certificates and so is insecure for https.
-
 * Include a ``main`` function that wraps the normal execution.
-
-* Call your :func:`main` from a conditional so we can import it into unit tests - for example:
+* Call your :func:`main` from a conditional so you can import it into unit tests - for example:
 
 	.. code-block:: python
 
 	    if __name__ == '__main__':
 	        main()
-
-* If your module is addressing an object, the parameter for that object should be called ``name`` whenever possible, or accept ``name`` as an alias.
-
-* If you have a local module that returns facts specific to your installations, a good name for this module is ``site_facts``.
-
-* Modules accepting boolean status should generally accept ``yes``, ``no``, ``true``, ``false``, or anything else a user may likely throw at them. The AnsibleModule common code supports this with ``type='bool'``.
-
-* Eliminate or minimize dependencies. If your module has dependencies, document them at the top of the module file and raise JSON error messages when dependency import fails.
-
-* If you package your module(s) in an RPM, install the modules on the control machine in ``/usr/share/ansible``. Packaging modules in RPMs is optional.
-
-* As results from many hosts will be aggregated at once, modules should return only relevant output. Returning the entire contents of a log file is generally bad form.
-
-* Don't write to files directly; use a temporary file and then use the `atomic_move` function from `ansible.module_utils.basic` to move the updated temporary file into place. This prevents data corruption and ensures that the correct context for the file is kept.
-
-* Avoid creating caches. Ansible is designed without a central server or authority, so you cannot guarantee it will not run with different permissions, options or locations. If you need a central authority, have it on top of Ansible (for example, using bastion/cm/ci server or tower); do not try to build it into modules.
-
-* Handle exceptions (bugs) gracefully
-    * Give out a useful message on what you were doing and add exception messages to that.
-    * Avoid catchall exceptions, they are not very useful unless the underlying API gives very good error messages pertaining the attempted action.
 
 Scoping your module(s)
 ======================
@@ -56,15 +45,13 @@ Scoping your module(s)
 Especially if you want to contribute your module back to Ansible Core, make sure it includes enough logic and functionality, but not too much. If you're finding these guidelines tricky, consider :ref:`whether you really need to write a module <module_dev_should_you>` at all.
 
 * Each module should have a concise and well-defined functionality. Basically, follow the UNIX philosophy of doing one thing well.
-
 * Do not add `list` or `info` state options to an existing module - create a new `_facts` module.
-
 * Modules should not require that a user know all the underlying options of an API/tool to be used. For instance, if the legal values for a required module parameter cannot be documented, the module does not belong in Ansible Core.
-
 * Modules should encompass much of the logic for interacting with a resource. A lightweight wrapper around a complex API forces users to offload too much logic into their playbooks. If you want to connect Ansible to a complex API, create multiple modules that interact with smaller individual pieces of the API.
-
 * Avoid creating a module that does the work of other modules; this leads to code duplication and divergence, and makes things less uniform, unpredictable and harder to maintain. Modules should be the building blocks. If you are asking 'how can I have a module execute other modules' ... you want to write a role. 
 Instead of creating a module that does the work of other modules, use Plays and Roles to meet your needs.
+
+.. _shared_code:
 
 Importing and using shared code
 ===============================
@@ -82,6 +69,7 @@ Importing and using shared code
 	    except:
 	        HAS_LIB=False
 
+.. _madule_failures: 
 
 Handling module failures
 ========================
@@ -91,6 +79,8 @@ When you module fails, help users understand what went wrong. If you are using t
 * Include a key of ``failed`` along with a string explanation in ``msg``. If you don't do this, Ansible will use standard return codes: 0=success and non-zero=failure.
 * Don't raise a traceback (stacktrace). Ansible can deal with stacktraces and automatically converts anything unparseable into a failed result, but raising a stacktrace on module failure is not user-friendly.
 * Do not use ``sys.exit()``. Use ``fail_json()`` from the module object.
+
+.. _module_output:
 
 Creating correct and informative module output
 ==============================================
@@ -109,20 +99,23 @@ Modules must output valid JSON only. Follow these guidelines for creating correc
 * Return diff if in diff mode. This is not required for all modules, as it won't make sense for certain ones, but please include it when applicable.
 * Enable your return values to be serialized as JSON with Python's standard `JSON encoder and decoder <https://docs.python.org/3/library/json.html>`_ library. Basic python types (strings, int, dicts, lists, etc) are serializable.  
 * Do not return an object via exit_json(). Instead, convert the fields you need from the object into the fields of a dictionary and return the dictionary.
+* Results from many hosts will be aggregated at once, so your module should return only relevant output. Returning the entire contents of a log file is generally bad form.
 
 If a module returns stderr or otherwise fails to produce valid JSON, the actual output will still be shown in Ansible, but the command will not succeed.
 
-Following standard Ansible patterns
+.. _module_conventions:
+
+Following Ansible conventions
 ===================================
 
-Ansible uses patterns to provide a predictable user interface across all modules, playbooks, and roles. To follow standard Ansible patterns in your module development:
+Ansible conventions offer a predictable user interface across all modules, playbooks, and roles. To follow Ansible conventions in your module development:
 
 * Use consistent names across modules (yes, we have many legacy deviations - don't make the problem worse!).
-* Use consistent parameters (arguments) within your module(s)
+* Use consistent parameters (arguments) within your module(s).
 * Normalize parameters with other modules - if Ansible and the API your module connects to use different names for the same parameter, add aliases to your parameters so the user can choose which names to use in tasks and playbooks.
 * Return facts from ``*_facts`` modules in the ``ansible_facts`` field of the :ref:`result dictionary<common_return_values>` so other modules can access them.
 * Implement ``check_mode`` in all ``*_facts`` modules. Playbooks which conditionalize based on fact information will only conditionalize correctly in ``check_mode`` if the facts are returned in ``check_mode``. Usually you can add ``check_mode=True`` when instantiating ``AnsibleModule``.
-* Use module-specific environment variables. For example, if you use the helpers in ``module_utils.api`` for basic authentication with ``module_utils.urls.fetch_url()`` and you fall back on environment variables for default values, use module-specific environment variables like :code:`API_<MODULENAME>_USERNAME` to avoid conflict between modules.
+* Use module-specific environment variables. For example, if you use the helpers in ``module_utils.api`` for basic authentication with ``module_utils.urls.fetch_url()`` and you fall back on environment variables for default values, use a module-specific environment variable like :code:`API_<MODULENAME>_USERNAME` to avoid conflict between modules.
 * Keep module options simple and focused - if you're loading a lot of choices/states on an existing option, consider adding a new, simple option instead.
 * Keep options small when possible. Passing a large data structure to an option might save us a few tasks, but it adds a complex requirement that we cannot easily validate before passing on to the module.
 * If you want to pass complex data to an option, write an expert module that allows this, along with several smaller modules that provide a more 'atomic' operation against the underlying APIs and services. Complex operations require complex data. Let the user choose whether to reflect that complexity in tasks and plays or in  vars files.
