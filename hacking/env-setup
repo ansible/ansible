@@ -1,6 +1,22 @@
 # usage: source hacking/env-setup [-q]
 #    modifies environment for running Ansible from checkout
 
+# prepend a value to a potentially empty path variable
+# usage: prepend_path variable_name value
+prepend_path()
+{
+    variable_name="$1"
+    value="$2"
+
+    old_value=$( eval "echo \$$variable_name" )
+
+    if [ "x$old_value" != "x" ]; then
+        value="$value:"
+    fi
+
+    export "$variable_name=$value$old_value"
+}
+
 # Default values for shell variables we use
 PYTHONPATH=${PYTHONPATH-""}
 PATH=${PATH-""}
@@ -34,9 +50,9 @@ PREFIX_PYTHONPATH="$ANSIBLE_HOME/lib"
 PREFIX_PATH="$ANSIBLE_HOME/bin:$ANSIBLE_HOME/test/runner"
 PREFIX_MANPATH="$ANSIBLE_HOME/docs/man"
 
-expr "$PYTHONPATH" : "${PREFIX_PYTHONPATH}.*" > /dev/null || export PYTHONPATH="$PREFIX_PYTHONPATH:$PYTHONPATH"
-expr "$PATH" : "${PREFIX_PATH}.*" > /dev/null || export PATH="$PREFIX_PATH:$PATH"
-expr "$MANPATH" : "${PREFIX_MANPATH}.*" > /dev/null || export MANPATH="$PREFIX_MANPATH:$MANPATH"
+expr "$PYTHONPATH" : "${PREFIX_PYTHONPATH}.*" > /dev/null || prepend_path PYTHONPATH "$PREFIX_PYTHONPATH"
+expr "$PATH" : "${PREFIX_PATH}.*" > /dev/null || prepend_path PATH "$PREFIX_PATH"
+expr "$MANPATH" : "${PREFIX_MANPATH}.*" > /dev/null || prepend_path MANPATH "$PREFIX_MANPATH"
 
 #
 # Generate egg_info so that pkg_resources works
