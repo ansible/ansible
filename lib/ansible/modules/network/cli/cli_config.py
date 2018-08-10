@@ -242,11 +242,11 @@ def run(module, capabilities, connection, candidate, running):
 
     elif capabilities['device_operations']['supports_onbox_diff']:
         if diff_replace:
-            module.warn('diff_replace is ignored as the device has onbox diff support')
+            module.warn('diff_replace is ignored as the device supports onbox diff')
         if diff_match:
-            module.warn('diff_mattch is ignored as the device has onbox diff support')
+            module.warn('diff_mattch is ignored as the device supports onbox diff')
         if diff_ignore_lines:
-            module.warn('diff_ignore_lines is ignored as the device has onbox diff support')
+            module.warn('diff_ignore_lines is ignored as the device supports onbox diff')
 
         if not isinstance(candidate, list):
             candidate = candidate.strip('\n').splitlines()
