@@ -65,7 +65,7 @@
     resource_group: "{{ resource_group }}"
     name: postgresqlsrv{{ rpfx }}
   register: output 
-  until: output.servers[0]['user_visible_state'] == 'Ready'
+  until: output.servers | length == 1
   delay: 30
 
 - name: Assert that facts are returned
@@ -86,7 +86,7 @@
   azure_rm_postgresqlserver_facts:
     resource_group: "{{ resource_group }}"
   register: output
-  until: output.servers[1]['user_visible_state'] == 'Ready'
+  until: output.servers | length == 2
   delay: 30
 - name: Assert that facts are returned
   assert:
