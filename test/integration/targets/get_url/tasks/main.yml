@@ -258,19 +258,21 @@
       - "stat_result.stat.mode == '0775'"
 
 # https://github.com/ansible/ansible/issues/27617
-- name: create src file
-  copy:
-    dest: '{{ output_dir }}/27617.txt'
-    content: "ptux"
-
-- name: create sha1 checksum file of src
-  copy:
-    dest: '{{ output_dir }}/sha1sum.txt'
-    content: "a492fc1f77b49cac59b3fa65f28c37931463ebec  27617.txt"
 
 - name: set role facts
   set_fact:
     http_port: 27617
+    files_dir: '{{ output_dir }}/files'
+
+- name: create src file
+  copy:
+    dest: '{{ files_dir }}/27617.txt'
+    content: "ptux"
+
+- name: create sha1 checksum file of src
+  copy:
+    dest: '{{ files_dir }}/sha1sum.txt'
+    content: "a492fc1f77b49cac59b3fa65f28c37931463ebec  27617.txt"
 
 - copy:
     src: "testserver.py"
