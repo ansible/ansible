@@ -194,7 +194,7 @@ def main():
             already_revoked = False
             # Standarized error in draft 14 (https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-7.6)
             if result.get('type') == 'urn:ietf:params:acme:error:alreadyRevoked':
-                already_revoked = True:
+                already_revoked = True
             else:
                 # Hack for Boulder errors
                 if module.params.get('acme_version') == 1:
