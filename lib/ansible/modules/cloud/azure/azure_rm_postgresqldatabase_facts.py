@@ -30,7 +30,7 @@ options:
         description:
             - The name of the server.
         required: True
-    database_name:
+    name:
         description:
             - The name of the database.
 
@@ -47,7 +47,7 @@ EXAMPLES = '''
     azure_rm_postgresqldatabase_facts:
       resource_group: resource_group_name
       server_name: server_name
-      database_name: database_name
+      name: database_name
 
   - name: List instances of PostgreSQL Database
     azure_rm_postgresqldatabase_facts:
@@ -122,7 +122,7 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
                 type='str',
                 required=True
             ),
-            database_name=dict(
+            name=dict(
                 type='str'
             )
         )
@@ -134,7 +134,7 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
         self.mgmt_client = None
         self.resource_group = None
         self.server_name = None
-        self.database_name = None
+        self.name = None
         super(AzureRMDatabasesFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
@@ -145,7 +145,7 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
 
         if (self.resource_group is not None and
                 self.server_name is not None and
-                self.database_name is not None):
+                self.name is not None):
             self.results['databases'] = self.get()
         elif (self.resource_group is not None and
               self.server_name is not None):
@@ -158,7 +158,7 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
         try:
             response = self.mgmt_client.databases.get(resource_group_name=self.resource_group,
                                                       server_name=self.server_name,
-                                                      database_name=self.database_name)
+                                                      database_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Databases.')
