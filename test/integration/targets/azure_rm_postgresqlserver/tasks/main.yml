@@ -60,13 +60,24 @@
       - output.changed == false
       - output.state == 'Ready'
 
+- name: Create second instance of PostgreSQL Server
+  azure_rm_postgresqlserver:
+    resource_group: "{{ resource_group }}"
+    name: postgresqlsrv{{ rpfx }}second
+    sku:
+      name: GP_Gen4_2
+      tier: GeneralPurpose
+    location: westus
+    storage_mb: 51200
+    enforce_ssl: True
+    admin_username: zimxyz
+    admin_password: Testpasswordxyz12!
+
 - name: Gather facts PostgreSQL Server
   azure_rm_postgresqlserver_facts:
     resource_group: "{{ resource_group }}"
     name: postgresqlsrv{{ rpfx }}
   register: output 
-  until: output.servers | length == 1
-  delay: 30
 
 - name: Assert that facts are returned
   assert:
@@ -86,8 +97,6 @@
   azure_rm_postgresqlserver_facts:
     resource_group: "{{ resource_group }}"
   register: output
-  until: output.servers | length == 2
-  delay: 30
 - name: Assert that facts are returned
   assert:
     that:
