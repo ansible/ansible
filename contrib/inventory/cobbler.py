@@ -65,10 +65,7 @@ import re
 from time import time
 import xmlrpclib
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 from six import iteritems
 

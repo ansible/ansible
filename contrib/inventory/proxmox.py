@@ -25,10 +25,7 @@
 #
 # { "groups": ["utility", "databases"], "a": false, "b": true }
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 import os
 import sys
 from optparse import OptionParser

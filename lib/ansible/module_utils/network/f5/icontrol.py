@@ -19,10 +19,7 @@ from ansible.module_utils.urls import urllib_error
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import PY3
 
-try:
-    import json as _json
-except ImportError:
-    import simplejson as _json
+import json as _json
 
 try:
     from library.module_utils.network.f5.common import F5ModuleError

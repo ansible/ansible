@@ -36,10 +36,7 @@ import SoftLayer
 import re
 import argparse
 import itertools
-try:
-    import json
-except:
-    import simplejson as json
+import json
 
 
 class SoftLayerInventory(object):

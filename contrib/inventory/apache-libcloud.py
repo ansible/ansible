@@ -42,10 +42,7 @@ from libcloud.compute.types import Provider
 from libcloud.compute.providers import get_driver
 import libcloud.security as sec
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 
 class LibcloudInventory(object):

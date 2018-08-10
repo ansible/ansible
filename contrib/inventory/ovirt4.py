@@ -70,10 +70,7 @@ try:
 except ImportError:
     import configparser
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 try:
     import ovirtsdk4 as sdk
