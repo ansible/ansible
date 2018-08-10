@@ -372,6 +372,8 @@ class NetworkConfig(object):
         # global config command
         if not parents:
             for line in lines:
+                if ignore_line(line):
+                    continue
                 item = ConfigLine(line)
                 item.raw = line
                 if item not in self.items:
@@ -397,6 +399,8 @@ class NetworkConfig(object):
 
             # add child objects
             for line in lines:
+                if ignore_line(line):
+                    continue
                 # check if child already exists
                 for child in ancestors[-1]._children:
                     if child.text == line:
