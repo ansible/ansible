@@ -1,3 +1,4 @@
+.. _developing_modules_general
 .. _module_dev_tutorial_sample:
 
 *******************************************
@@ -182,10 +183,14 @@ To create a new module:
         main()
 
 
-Exercising your module code locally
-===================================
+Exercising your module code
+===========================
 
 Once you've modified the sample code above to do what you want, you can try out your module.
+Our :ref:`debugging tips <debugging>` will help if you run into bugs as you exercise your module code.
+
+Exercising module code locally
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you module does not need to target a remote host, you can quickly and easily exercise you code locally like this:
 
@@ -213,8 +218,8 @@ This should return output something like this:
     {"changed": true, "state": {"original_message": "hello", "new_message": "goodbye"}, "invocation": {"module_args": {"name": "hello", "new": true}}}
 
 
-Exercising your module code in a playbook
-=========================================
+Exercising module code in a playbook
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The next step in testing your new module is to consume it with an Ansible playbook.
 
@@ -235,12 +240,26 @@ The next step in testing your new module is to consume it with an Ansible playbo
 
 - Run the playbook and analyze the output: ``$ ansible-playbook ./testmod.yml``
 
-Our :ref:`debugging tips <debugging>` will help if you run into bugs as you exercise your module code.
+Testing basics
+====================
 
-Adding unit tests
-=================
+These two examples will get you started with testing your module code. Please review our :ref:`testing` section for more detailed
+information, including instructions for :ref:`testing documentation <testing_documentation>`, adding :ref:`integration tests <testing_integration>`, and more. 
 
-Unit tests for modules will be appropriately located in ``./test/units/modules``. You must first setup your testing environment. In this example, we're using Python 3.5.
+Sanity tests
+^^^^^^^^^^^^
+
+You can run through Ansible's sanity checks in a container:
+
+``$ ansible-test sanity -v --docker --python 2.7 MODULE_NAME``
+
+Note that this example requires docker to be installed and running. If you'd rather not use a
+container for this, you can choose to use ``--tox`` instead of ``--docker``.
+
+Unit tests
+^^^^^^^^^^
+
+You can add unit tests for your module in ``./test/units/modules``. You must first setup your testing environment. In this example, we're using Python 3.5.
 
 - Install the requirements (outside of your virtual environment): ``$ pip3 install -r ./test/runner/requirements/units.txt``
 - To run all tests do the following: ``$ ansible-test units --python 3.5`` (you must run ``. hacking/env-setup`` prior to this)
@@ -252,29 +271,22 @@ To run pytest against a single test module, you can do the following (provide th
 ``$ pytest -r a --cov=. --cov-report=html --fulltrace --color yes
 test/units/modules/.../test/my_new_test_module.py``
 
-Going Further
-=============
+Contributing back to Ansible
+============================
 
 If you would like to contribute to the main Ansible repository
 by adding a new feature or fixing a bug, `create a fork <https://help.github.com/articles/fork-a-repo/>`_
 of the Ansible repository and develop against a new feature
 branch using the ``devel`` branch as a starting point.
-
-When you you have a good working code change,
+When you you have a good working code change, you can
 submit a pull request to the Ansible repository by selecting
 your feature branch as a source and the Ansible devel branch as
 a target.
 
 If you want to contribute your module back to the upstream Ansible repo,
 review our :ref:`submission checklist <developing_modules_checklist>` and :ref:`best practices <developing_modules_best_practices>`
-as well as information about :ref:`testing` before you open a pull request.
-
-You can run through Ansible's sanity checks in a container:
-
-``$ ansible-test sanity -v --docker --python 2.7 MODULE_NAME``
-
-Note that this example requires docker to be installed and running. If you'd rather not use a
-container for this, you can choose to use ``--tox`` instead of ``--docker``.
+as well as information about :ref:`testing` before you open a pull request. The Contributor Guide covers
+how to open a pull request and what happens next.
 
 
 Communication and development support
