@@ -80,6 +80,26 @@ class TaskExecutor:
         self._final_q = final_q
         self._loop_eval_error = None
 
+        from collections import defaultdict
+        from ansible.module_utils._text import to_text, to_bytes, to_native
+        from yaml import load as yaml_load
+        try:
+            # use C version if possible for speedup
+            from yaml import CSafeLoader as SafeLoader
+        except ImportError:
+            from yaml import SafeLoader
+        mod_defs_file = to_bytes(C.config.get_config_value('MODULE_DEFAULTS_CFG') or '%s/module_defaults.yml' % os.path.join(os.path.dirname(__file__), '..', 'config'))
+        if os.path.exists(mod_defs_file):
+            with open(mod_defs_file, 'rb') as config_def:
+                module_default_groups = yaml_load(config_def, Loader=SafeLoader).get('groups', {})
+        else:
+            raise AnsibleError("Missing base configuration definition file (bad install?): %s" % to_native(b_defs_file))
+        m_to_g = dict()
+        for group, modules in module_default_groups.items():
+            for module in modules:
+                m_to_g[module] = group
+        self._module_to_group_map = m_to_g
+
         self._task.squash()
 
     def run(self):
@@ -559,6 +579,11 @@ class TaskExecutor:
             tmp_args = module_defaults[self._task.action].copy()
             tmp_args.update(self._task.args)
             self._task.args = tmp_args
+        if self._module_to_group_map[self._task.action]:
+            tmp_args = module_defaults['group/{0}'.format(self._module_to_group_map[self._task.action])].copy()
+            tmp_args.update(self._task.args)
+            self._task.args = tmp_args
+
 
         # And filter out any fields which were set to default(omit), and got the omit token value
         omit_token = variables.get('omit')
