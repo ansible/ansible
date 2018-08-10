@@ -84,8 +84,8 @@ may work until a user causes an exception by entering non-ASCII input.
 Python-3 forces programmers to proactively define a strategy for
 working with strings in their program so that they don't mix text and byte strings unintentionally.
 
-Ansible uses different strategies for working with strings in modules, in controller-side code, in
-modules, and in ``module_utils`` code.
+Ansible uses different strategies for working with strings in controller-side code, in
+:ref: `modules <module_string_strategy>`, and in :ref:`module_utils <module_utils_string_strategy>` code.
 
 .. _controller_string_strategy:
 
