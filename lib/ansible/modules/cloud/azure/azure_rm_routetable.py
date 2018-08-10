@@ -116,9 +116,9 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase, CIDR_PATTERN, NEXT_HOP_TYPE
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, CIDR_PATTERN
 
-# NEXT_HOP_TYPE = ['VirtualNetworkGateway', 'VnetLocal', 'Internet', 'VirtualAppliance']
+NEXT_HOP_TYPE = ['VirtualNetworkGateway', 'VnetLocal', 'Internet', 'VirtualAppliance']
 
 
 def route_table_to_dict(routetable):
