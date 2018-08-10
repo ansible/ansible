@@ -20,16 +20,15 @@ author: "Nikhil Jain (@jainnikhil30)"
 version_added: "2.7"
 short_description: Get, Modify Ansible Tower settings.
 description:
-    - Get, Modify Ansible Tower settings. See
+    - Get, modify Ansible Tower settings. See
       U(https://www.ansible.com/tower) for an overview.
 options:
     name:
       description:
-        - Name of the settings that you want to get/modify
+        - Name of the setting to get/modify 
     value:
       description:
-        - Value that you want to set for the given setting. If the value is not given, module will print the current 
-        value of the given setting.
+        - Value for given setting. If this paramter is not given, it will print the current value of setting.
     extends_documentation_fragment: tower
 '''
 
