@@ -290,7 +290,7 @@
 - name: create sha256 checksum file of src
   copy:
     dest: '{{ files_dir }}/sha256sum.txt'
-    content: "22dad1844feb094cc4fdac99a812fd6c7129e6161f627f4552d5eed2e4e07c6c  27617.txt"
+    content: "b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.  27617.txt"
 
 - name: add sha256 checksum not going to be downloaded
   lineinfile:
@@ -323,8 +323,8 @@
 - name: download src with sha256 checksum url
   get_url:
     url: 'http://localhost:{{ http_port }}/27617.txt'
-    dest: '{{ output_dir }}'
-    checksum: 'sha1:http://localhost:{{ http_port }}/sha256sum.txt'
+    dest: '{{ output_dir }}/27617sha256.txt'
+    checksum: 'sha256:http://localhost:{{ http_port }}/sha256sum.txt'
   register: result_sha256
 
 - stat:
