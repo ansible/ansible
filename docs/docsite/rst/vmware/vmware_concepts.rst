@@ -16,7 +16,7 @@ Any machine with Ansible installed. You can run commands and playbooks, invoking
 Delegation
 ==========
 
-If you want to perform a VMware specific task on one host with reference to ESXi server or vCenter server, use the ‘delegate_to’ keyword on a task. This delegation host will be any host where you have ``Pyvmomi`` installed. Your control node and ``delegate_to`` host can be same or different.
+If you want to perform a VMware specific task on one host with reference to ESXi server or vCenter server, use the ``delegate_to`` keyword on a task. This delegation host will be any host where you have ``pyVmomi`` installed. Your control node and ``delegate_to`` host can be same or different.
 
 Modules
 =======
@@ -27,16 +27,19 @@ The units of code Ansible executes. Each module has a particular use, from creat
 Playbooks
 =========
 
-Ordered lists of tasks, saved so you can run those tasks in that order repeatedly. Playbooks can include variables as well as tasks. Playbooks are written in YAML and are easy to read, write, share and understand. To learn more about playbooks, see :doc:`../../user_guide/playbooks_intro`.
+Ordered lists of tasks, saved so you can run those tasks in that order repeatedly. Playbooks can include variables as well as tasks. Playbooks are written in YAML and are easy to read, write, share and understand.
 
 
 pyVmomi
 =======
 
-Ansible VMware modules are written on top of `pyVmomi <https://github.com/vmware/pyvmomi>`_. ``pyVmomi`` is the official Python SDK for the VMware vSphere API that allows user to manage ESX, ESXi, and vCenter infrastructure. You can install pyVmomi using pip:
+Ansible VMware modules are written on top of `pyVmomi <https://github.com/vmware/pyvmomi>`_. ``pyVmomi`` is the official Python SDK for the VMware vSphere API that allows user to manage ESX, ESXi, and vCenter infrastructure.
 
+You need to install this Python SDK on host from where you want to invoke VMware automation. For example, if you are using control node then ``pyVmomi`` must be installed on control node.
 
-You need to install this Python SDK on host from where you want to invoke VMware automation. For example, if you are using control node then ``pyVmomi`` must be installed on control node. If you are using any ``delegate_to`` host which is different from your control node then you need to install ``pyVmomi`` on that ``delegate_to`` node.
+If you are using any ``delegate_to`` host which is different from your control node then you need to install ``pyVmomi`` on that ``delegate_to`` node.
+
+You can install pyVmomi using pip:
 
 .. code-block:: bash
 
