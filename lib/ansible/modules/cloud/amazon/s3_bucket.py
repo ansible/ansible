@@ -75,12 +75,12 @@ options:
   encryption:
     description:
       - Describes the default server-side encryption to apply to new objects in the bucket.
-        If the argument is not specified, the default encryption will be applied when creating the bucket.
-        In order to remove the server-side encryption, the encryption needs to be set to 'none' explicitely.
+        In order to remove the server-side encryption, the encryption needs to be set to 'none' explicitly.
     choices: [ 'none', 'AES256', 'aws:kms' ]
     version_added: "2.6"
   encryption_key_id:
-    description: KMS master key ID to use for the default encryption. This parameter is allowed if encryption is aws:kms.
+    description: KMS master key ID to use for the default encryption. This parameter is allowed if encryption is aws:kms. If
+                 not specified then it will default to the AWS provided KMS key.
     version_added: "2.6"
 extends_documentation_fragment:
     - aws
@@ -98,6 +98,7 @@ EXAMPLES = '''
 # Create a simple s3 bucket
 - s3_bucket:
     name: mys3bucket
+    state: present
 
 # Create a simple s3 bucket on Ceph Rados Gateway
 - s3_bucket:
@@ -483,7 +484,7 @@ def wait_encryption_is_applied(module, s3_client, bucket_name, expected_encrypti
             time.sleep(5)
         else:
             return encryption
-    module.fail_json(msg="Bucket encryption failed to apply in the excepted time")
+    module.fail_json(msg="Bucket encryption failed to apply in the expected time")
 
 
 def wait_versioning_is_applied(module, s3_client, bucket_name, required_versioning):
@@ -672,6 +673,14 @@ def main():
         module.fail_json(msg='Unknown error, failed to create s3 connection, no information from boto.')
 
     state = module.params.get("state")
+    encryption = module.params.get("encryption")
+    encryption_key_id = module.params.get("encryption_key_id")
+
+    # Parameter validation
+    if encryption_key_id is not None and encryption is None:
+        module.fail_json(msg="You must specify encryption parameter along with encryption_key_id.")
+    elif encryption_key_id is not None and encryption != 'aws:kms':
+        module.fail_json(msg="Only 'aws:kms' is a valid option for encryption parameter when you specify encryption_key_id.")
 
     if state == 'present':
         create_or_update_bucket(s3_client, module, location)
