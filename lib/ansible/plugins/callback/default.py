@@ -167,7 +167,11 @@ class CallbackModule(CallbackBase):
     def v2_playbook_on_task_start(self, task, is_conditional):
         # Preserve task name, as all vars may not be available for templating
         # when we need it later
-        if self._play.strategy != 'free':
+        if self._play.strategy == 'free':
+            # Explicitly set to None for strategy 'free' to account for any cached
+            # task title from a previous non-free play
+            self._last_task_name = None
+        else:
             self._last_task_name = task.get_name().strip()
 
             # Display the task banner immediately if we're not doing any filtering based on task result
