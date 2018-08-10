@@ -177,7 +177,6 @@ class Cli:
                     if commands[index]['output'] == 'json':
                         commands[index]['output'] = 'text'
                         out = self.run_commands(commands, check_rc)
-            return out
         return out
 
     def load_config(self, config, return_error=False, opts=None, replace=None):
