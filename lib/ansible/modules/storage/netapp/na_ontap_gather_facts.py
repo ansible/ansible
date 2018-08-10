@@ -239,7 +239,7 @@ def _finditem(obj, key):
 
     if key in obj:
         return obj[key]
-    for _, v in obj.items():
+    for dummy, v in obj.items():
         if isinstance(v, dict):
             item = _finditem(v, key)
             if item is not None:
