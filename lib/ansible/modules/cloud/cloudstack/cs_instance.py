@@ -147,7 +147,7 @@ options:
       - Force stop/start the instance if required to apply changes, otherwise a running instance will not be changed.
     type: bool
     default: no
-  shrinkok:
+  allow_root_disk_shrink:
     description:
       - Enables a volume shrinkage when the new size is smaller than the old one.
     type: bool
@@ -764,7 +764,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             args_volume_update['id'] = volume['id']
             args_volume_update['size'] = root_disk_size
 
-            shrinkok = self.module.params.get('shrinkok')
+            shrinkok = self.module.params.get('allow_root_disk_shrink')
             if shrinkok:
                 args_volume_update['shrinkok'] = shrinkok
 
@@ -1019,7 +1019,7 @@ def main():
         tags=dict(type='list', aliases=['tag']),
         details=dict(type='dict'),
         poll_async=dict(type='bool', default=True),
-        shrinkok=dict(type='bool', default=False),
+        allow_root_disk_shrink=dict(type='bool', default=False),
     ))
 
     required_together = cs_required_together()
