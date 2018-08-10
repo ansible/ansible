@@ -105,7 +105,7 @@ output:
   type: string
 role:
   description: name of the server role
-  returned; always
+  returned: always
   sample: "setupadmin"
   type: string
 '''
