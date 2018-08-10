@@ -154,7 +154,7 @@ import time
 
 from copy import deepcopy
 
-from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, cli_run_commands
 from ansible.module_utils.network.nxos.nxos import normalize_interface, nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import ConnectionError
@@ -549,13 +549,8 @@ def map_config_to_obj(module):
     objs = list()
     output = None
 
-    try:
-        command = ['show vlan | json']
-        output = run_commands(module, command, return_error=True)[0]
-    except ConnectionError:
-        command = {'command': 'show vlan brief', 'output': 'text'}
-        output = run_commands(module, command)[0]
-
+    command = ['show vlan brief | json']
+    output = cli_run_commands(module, command, check_rc=False)[0]
     if output:
         netcfg = CustomNetworkConfig(indent=2,
                                      contents=get_config(module, flags=['all']))
@@ -563,7 +558,7 @@ def map_config_to_obj(module):
         if isinstance(output, dict):
             vlans = None
             try:
-                vlans = output['TABLE_vlanbrief']['ROW_vlanbrief']
+                vlans = output['TABLE_vlanbriefxbrief']['ROW_vlanbriefxbrief']
             except KeyError:
                 return objs
 

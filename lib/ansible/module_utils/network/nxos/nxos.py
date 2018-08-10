@@ -148,18 +148,42 @@ class Cli:
             self._device_configs[cmd] = cfg
             return cfg
 
-    def run_commands(self, commands, check_rc=True, return_error=False):
+    def run_commands(self, commands, check_rc=True):
         """Run list of commands on remote device and return results
         """
         connection = self._get_connection()
 
-        if return_error:
+        try:
             return connection.run_commands(commands, check_rc)
-        else:
-            try:
-                return connection.run_commands(commands, check_rc)
-            except ConnectionError as exc:
-                self._module.fail_json(msg=to_text(exc))
+        except ConnectionError as exc:
+            self._module.fail_json(msg=to_text(exc))
+
+    def cli_run_commands(self, commands, check_rc=True):
+        """
+        Sends text command if JSON command fails for cliconf
+        when check_rc is set to False
+        """
+
+        if check_rc:
+            return self.run_commands(commands, check_rc)
+
+        if not check_rc:
+            out = self.run_commands(commands, check_rc)
+            capabilities = self.get_capabilities()
+            network_api = capabilities.get('network_api')
+            if network_api == 'cliconf':
+                if 'Invalid command at' in out and 'json' in out:
+                    for item in commands:
+                        if item['output'] == 'json':
+                            item['output'] = 'text'
+                        if is_json(item['command']):
+                            item['command'] = item['command'].split('| json')[0].strip()
+                            item['output'] = 'text'
+                    return self.run_commands(commands, check_rc)
+                else:
+                    return out
+            else:
+                return out
 
     def load_config(self, config, return_error=False, opts=None, replace=None):
         """Sends configuration commands to the remote device
@@ -364,7 +388,7 @@ class Nxapi:
             self._device_configs[cmd] = cfg
             return cfg
 
-    def run_commands(self, commands, check_rc=True, return_error=False):
+    def run_commands(self, commands, check_rc=True):
         """Run list of commands on remote device and return results
         """
         output = None
@@ -390,6 +414,9 @@ class Nxapi:
             responses.extend(_send(queue, output))
 
         return responses
+
+    def cli_run_commands(self, commands, check_rc=True):
+        return self.run_commands(commands, check_rc)
 
     def load_config(self, commands, return_error=False, opts=None, replace=None):
         """Sends the ordered set of commands to the device
@@ -500,9 +527,14 @@ def get_config(module, flags=None):
     return conn.get_config(flags=flags)
 
 
-def run_commands(module, commands, check_rc=True, return_error=False):
+def run_commands(module, commands, check_rc=True):
     conn = get_connection(module)
-    return conn.run_commands(to_command(module, commands), check_rc, return_error)
+    return conn.run_commands(to_command(module, commands), check_rc)
+
+
+def cli_run_commands(module, commands, check_rc=True):
+    conn = get_connection(module)
+    return conn.cli_run_commands(to_command(module, commands), check_rc)
 
 
 def load_config(module, config, return_error=False, opts=None, replace=None):

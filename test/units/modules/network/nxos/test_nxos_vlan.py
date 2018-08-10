@@ -33,8 +33,8 @@ class TestNxosVlanModule(TestNxosModule):
     def setUp(self):
         super(TestNxosVlanModule, self).setUp()
 
-        self.mock_run_commands = patch('ansible.modules.network.nxos.nxos_vlan.run_commands')
-        self.run_commands = self.mock_run_commands.start()
+        self.mock_cli_run_commands = patch('ansible.modules.network.nxos.nxos_vlan.cli_run_commands')
+        self.cli_run_commands = self.mock_cli_run_commands.start()
 
         self.mock_load_config = patch('ansible.modules.network.nxos.nxos_vlan.load_config')
         self.load_config = self.mock_load_config.start()
@@ -44,7 +44,7 @@ class TestNxosVlanModule(TestNxosModule):
 
     def tearDown(self):
         super(TestNxosVlanModule, self).tearDown()
-        self.mock_run_commands.stop()
+        self.mock_cli_run_commands.stop()
         self.mock_load_config.stop()
         self.mock_get_config.stop()
 
@@ -63,7 +63,7 @@ class TestNxosVlanModule(TestNxosModule):
                 output.append(load_fixture('nxos_vlan', filename))
             return output
 
-        self.run_commands.side_effect = load_from_file
+        self.cli_run_commands.side_effect = load_from_file
         self.load_config.return_value = None
         self.get_config.return_value = load_fixture('nxos_vlan', 'config.cfg')
 
