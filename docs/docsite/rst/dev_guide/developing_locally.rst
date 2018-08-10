@@ -5,6 +5,9 @@
 Using Local Modules and Plugins
 *******************************
 
+.. contents:: Topics
+   :local:
+
 The easiest, quickest, and most popular way to extend Ansible is to copy or write a module or a plugin for local use. You can store local modules and plugins on your Ansible control node for use within your team or organization. You can also share a local plugin or module by embedding it in a role and publishing it on Ansible Galaxy. If you've been using roles off Galaxy, you may have been using local modules and plugins without even realizing it. If you're using a local module or plugin that already exists, this page is all you need.
 
 Extending Ansible with local modules and plugins offers lots of shortcuts:
