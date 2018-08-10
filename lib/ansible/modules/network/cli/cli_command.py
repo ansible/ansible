@@ -94,7 +94,7 @@ def main():
         answer=dict(type='str', required=False),
         sendonly=dict(type='bool', default=False, required=False),
     )
-    required_together = [['prompt', 'response']]
+    required_together = [['prompt', 'answer']]
     module = AnsibleModule(argument_spec=argument_spec, required_together=required_together,
                            supports_check_mode=True)
 
