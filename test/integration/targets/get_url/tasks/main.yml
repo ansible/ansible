@@ -277,7 +277,7 @@
 - name: create sha1 checksum file of src
   copy:
     dest: '{{ files_dir }}/sha1sum.txt'
-    content: "a492fc1f77b49cac59b3fa65f28c37931463ebec  27617.txt"
+    content: "a97e6837f60cec6da4491bab387296bbcd72bdba  27617.txt"
 
 - copy:
     src: "testserver.py"
@@ -285,10 +285,8 @@
 
 - name: start SimpleHTTPServer for issues 27617
   shell: cd {{ files_dir }} && {{ ansible_python.executable }} {{ output_dir}}/testserver.py {{ http_port }}
-  async: 120
+  async: 30
   poll: 0
-
-- wait_for: port={{ http_port }}
 
 - name: download src with checksum
   get_url:
