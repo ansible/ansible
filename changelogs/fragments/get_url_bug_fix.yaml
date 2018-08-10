@@ -1,2 +1,3 @@
 bugfixes:
 - get_url - fix the bug that get_url does not change mode when checksum matches (https://github.com/ansible/ansible/issues/29614)
+- get_url - implement [expend checksum format to <algorithm>:(<checksum>|<url>)] (https://github.com/ansible/ansible/issues/27617)

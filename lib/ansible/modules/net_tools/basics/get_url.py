@@ -85,7 +85,8 @@ options:
       - 'If a checksum is passed to this parameter, the digest of the
         destination file will be calculated after it is downloaded to ensure
         its integrity and verify that the transfer completed successfully.
-        Format: <algorithm>:<checksum>, e.g. checksum="sha256:D98291AC[...]B6DC7B97"'
+        Format: <algorithm>:<checksum|url>, e.g. checksum="sha256:D98291AC[...]B6DC7B97",
+        checksum="sha256:http://example.com/path/sha256sum.txt"'
       - If you worry about portability, only the sha1 algorithm is available
         on all platforms and python versions.
       - The third party hashlib library can be installed for access to additional algorithms.
@@ -191,6 +192,12 @@ EXAMPLES = r'''
     url: http://example.com/path/file.conf
     dest: /etc/foo.conf
     checksum: md5:66dffb5228a211e61d6d7ef4a86f5758
+
+- name: Download file with checksum url (sha256) 
+  get_url:
+    url: http://example.com/path/file.conf
+    dest: /etc/foo.conf
+    checksum: 'sha256:http://example.com/path/sha256sum.txt'
 
 - name: Download file from a file path
   get_url:
