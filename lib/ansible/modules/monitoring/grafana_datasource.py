@@ -393,6 +393,8 @@ def grafana_create_datasource(module, data):
 
     if data['ds_type'] == 'postgres':
         json_data['sslmode'] = data['sslmode']
+        if data.get('password'):
+            payload['secureJsonData'] = {'password': data.get('password')}
 
     if data['ds_type'] == 'alexanderzobnin-zabbix-datasource':
         if data.get('trends'):
