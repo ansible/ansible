@@ -137,7 +137,7 @@ class TestCmdLineFacts(BaseFactsTest):
                     'LANG': 'en_US.UTF-8',
                     'quiet': True,
                     'rd.luks.uuid': 'luks-c80b7537-358b-4a07-b88c-c59ef187479b',
-                    'rd.lvm.lv': 'fedora/swap',
+                    'rd.lvm.lv': 'fedora/root fedora/swap',
                     'rhgb': True,
                     'ro': True,
                     'root': '/dev/mapper/fedora-root'}
@@ -150,16 +150,14 @@ class TestCmdLineFacts(BaseFactsTest):
     def test_parse_proc_cmdline_dup_console(self):
         example = r'BOOT_IMAGE=/boot/vmlinuz-4.4.0-72-generic root=UUID=e12e46d9-06c9-4a64-a7b3-60e24b062d90 ro console=tty1 console=ttyS0'
 
-        # FIXME: Two 'console' keywords? Using a dict for the fact value here loses info. Currently the 'last' one wins
         expected = {'BOOT_IMAGE': '/boot/vmlinuz-4.4.0-72-generic',
                     'root': 'UUID=e12e46d9-06c9-4a64-a7b3-60e24b062d90',
                     'ro': True,
-                    'console': 'ttyS0'}
+                    'console': 'tty1 ttyS0'}
 
         fact_collector = self.collector_class()
         facts_dict = fact_collector._parse_proc_cmdline(example)
 
-        # TODO: fails because we lose a 'console'
         self.assertDictEqual(facts_dict, expected)
 
 
