@@ -649,7 +649,7 @@ class AzureInventory(object):
             # get VMs for requested resource groups
             for resource_group in self.resource_groups:
                 try:
-                    virtual_machines = self._compute_client.virtual_machines.list(resource_group)
+                    virtual_machines = self._compute_client.virtual_machines.list(resource_group.lower())
                 except Exception as exc:
                     sys.exit("Error: fetching virtual machines for resource group {0} - {1}".format(resource_group, str(exc)))
                 if self._args.host or self.tags:
