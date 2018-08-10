@@ -224,18 +224,18 @@ class Zpool(object):
     def dev_exists(self):
         output = []
         cmd = [self.zpool_cmd, "list -v", self.name, "|", self.zpool_awk, "'$0 !~ /mirror|spare|log|cache/ { print $1 }'"]
-	status, output = commands.getstatusoutput(' '.join(cmd))
-        if status == 0:
-            return output
+        (rc, out, err) = self.module.run_command(' '.join(cmd))
+        if rc == 0:
+            return out
         else:
             return False
 
     def opt_exists(self):
         optput = []
         cmd = [self.zpool_cmd, "get all ", self.name, "|", self.zpool_grep, "auto | ", self.zpool_awk, "'{ print $2 $3 }'"]
-	status, output = commands.getstatusoutput(' '.join(cmd))
-        if status == 0:
-            return output
+        (rc, out, err) = self.module.run_command(' '.join(cmd))
+        if rc == 0:
+            return out
         else:
             return False
 
