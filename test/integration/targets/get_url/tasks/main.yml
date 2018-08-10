@@ -294,7 +294,7 @@
 
 - name: add sha256 checksum not going to be downloaded
   lineinfile:
-    dest='{{ files_dir }}/sha1sum.txt'
+    dest='{{ files_dir }}/sha256sum.txt'
     line={{ item }}
   with_items:
     - '30949cc401e30ac494d695ab8764a9f76aae17c5d73c67f65e9b558f47eff892  not_target1.txt'
