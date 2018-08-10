@@ -82,6 +82,8 @@ The following example playbook uses ``nios_network`` module to configure an IPv4
 
 Notice the last parameter, ``provider``, uses the variable ``nios_provider`` defined in the ``groupvars`` directory. You can find complete details on the ``nios_network`` module at `nios_network <http://docs.ansible.com/ansible/latest/modules/nios_network_module.html>`_.
 
+You can find other sample playbooks at  `Infoblox playbooks  <https://github.com/network-automation/infoblox_ansible/tree/master/module_playbooks>`_.
+
 NIOS lookup plugin
 ==================
 
@@ -92,13 +94,14 @@ The `nios <https://docs.ansible.com/ansible/devel/plugins/lookup/nios.html>`_ lo
 Retrieving a host record
 ------------------------
 
-This example task uses the ``nios`` lookup to retrieve the host record for a host called ``leaf01``:
+This example task uses the ``set_fact`` module with the ``nios`` lookup to retrieve the host records, and filters the result for a host called ``leaf01``, which is then saved in the ``host`` variable:
 
 .. code-block:: yaml
 
     - name: fetch host leaf01
           set_fact:
             host: "{{ lookup('nios', 'record:host', filter={'name': 'leaf01'}, provider=nios_provider) }}"
+
 
 This task is part of an example `get_host_record.yml <https://github.com/network-automation/infoblox_ansible/blob/master/lookup_playbooks/get_host_record.yml>`_ lookup playbook.
 
@@ -154,6 +157,8 @@ If you run this ``get_host_record.yml`` playbook, you should see results similar
     localhost                  : ok=5    changed=0    unreachable=0    failed=0
 
 The output above shows the host record for ``leaf01`` and ``leaf02`` that were retrieved by the ``nios`` lookup plugin. This playbook saves the information in variables that you can use in other playbooks. This allows you to use Infoblox as a single source of truth to gather and use information that changes dynamically. See `Ansible variables <http://docs.ansible.com/ansible/latest/playbooks_variables.html>`_ for more information on using Ansible variables.
+
+See the `nios lookup plugin examples <https://docs.ansible.com/ansible/latest/plugins/lookup/nios.html#examples>`_ for more data options that you can retreive.
 
 Dynamic inventory script
 ========================
