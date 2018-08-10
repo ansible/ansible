@@ -69,7 +69,7 @@ class Cliconf(CliconfBase):
         if prompt.endswith(')#'):
             self.send_command('abort')
             if admin and 'admin-' in prompt:
-                self.send_command('abort')
+                self.send_command('exit')
 
     def get_config(self, source='running', format='text', flags=None):
         if source not in ['running']:
