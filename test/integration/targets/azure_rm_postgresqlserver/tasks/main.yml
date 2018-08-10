@@ -63,7 +63,7 @@
 - name: Gather facts MySQL Server
   azure_rm_postgresqlserver_facts:
     resource_group: "{{ resource_group }}"
-    server_name: postgresqlsrv{{ rpfx }}
+    name: postgresqlsrv{{ rpfx }}
   register: output
 - name: Assert that facts are returned
   assert:
