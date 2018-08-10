@@ -215,7 +215,7 @@ class OnePasswordFacts(object):
             if re.search(".*not found.*", str(e)):
                 module.fail_json(msg="Unable to find an item in 1Password named '%s'." % item_id)
             else:
-                module.fail_json(msg="Unexpected error attempting able to find an item in 1Password named '%s': %s" % (item_id, e))
+                module.fail_json(msg="Unexpected error attempting to find an item in 1Password named '%s': %s" % (item_id, e))
 
     def get_field(self, item_id, field, section=None, vault=None):
         output = self.get_raw(item_id, vault)
