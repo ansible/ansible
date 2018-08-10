@@ -23,7 +23,17 @@ Before using Ansible nios modules with Infoblox, you must install the ``infoblox
 Credentials and authenticating
 ==============================
 
+To use Infoblox ``nios`` modules and sample roles, you need to configure the credentials to access your Infoblox system.  The examples in this guide use credentials stored in ``<playbookdir>/groupvars/all``.
 
+This is an example of this ``groupvars/all`` file. Replace these values with your Infoblox credentials:
+
+.. code-block:: yaml
+
+    ---
+    nios_provider:
+      host: 192.0.2.2
+      username: admin
+      password: ansible
 
 Common parameters and settings
 ==============================
@@ -42,6 +52,35 @@ Ansible supports the following modules for NIOS:
 
 Each module includes simple documented example tasks for how to use them.
 
+Use cases with modules
+======================
+
+You can use ``nios`` modules in tasks to simplify common Infoblox workflows.
+
+For these examples, you need to set up your NIOS credentials. See `Credentials and authenticating`_.
+
+Configuring an IPv4 network
+---------------------------
+
+The following example playbook uses ``nios_network`` module to configure an IPv4 network:
+
+.. code-block:: yaml
+
+    ---
+    - hosts: localhost
+      connection: local
+      tasks:
+        - name: set dhcp options for a network
+          nios_network:
+            network: 192.168.100.0/24
+            comment: sets the IPv4 network
+            options:
+              - name: domain-name
+                value: ansible.com
+            state: present
+            provider: "{{nios_provider}}"
+
+Notice the last parameter, ``provider``, uses the variable ``nios_provider`` defined in the ``groupvars`` directory. You can find complete details on the ``nios_network`` module at `nios_network <http://docs.ansible.com/ansible/latest/modules/nios_network_module.html>`_.
 
 NIOS lookup plugin
 ==================
@@ -157,8 +196,8 @@ You can also implicitly use the Infoblox dynamic inventory script by including i
 
 See `Working with Dynamic Inventory <https://docs.ansible.com/ansible/devel/user_guide/intro_dynamic_inventory.html>`_ for more details.
 
-Use Cases
-=========
+Use cases with roles
+====================
 
 Creating a subnet and forward DNS zone
 --------------------------------------
