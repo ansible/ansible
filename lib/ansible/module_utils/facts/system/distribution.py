@@ -587,6 +587,8 @@ class Distribution(object):
         data = get_file_content('/etc/release').splitlines()[0]
 
         if 'Solaris' in data:
+            rc, uname_r, err = self.module.run_command('uname -r')
+            # for solaris 10 uname_r will contain 5.10, for solaris 11 it will have 5.11
             ora_prefix = ''
             if 'Oracle Solaris' in data:
                 data = data.replace('Oracle ', '')
@@ -594,6 +596,7 @@ class Distribution(object):
             sunos_facts['distribution'] = data.split()[0]
             sunos_facts['distribution_version'] = data.split()[1]
             sunos_facts['distribution_release'] = ora_prefix + data
+            sunos_facts['distribution_major_version'] = int(uname_r.split('.')[1])
             return sunos_facts
 
         uname_v = get_uname_version(self.module)

@@ -848,6 +848,7 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             "distribution_release": "Solaris 10 10/09 s10x_u8wos_08a X86",
             "distribution": "Solaris",
             "os_family": "Solaris",
+            "distribution_major_version": "10",
             "distribution_version": "10"
         },
         "platform.dist": [
@@ -869,6 +870,7 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             "distribution_release": "Oracle Solaris 11 11/11 X86",
             "distribution": "Solaris",
             "os_family": "Solaris",
+            "distribution_major_version": "11",
             "distribution_version": "11"
         },
         "platform.dist": [
@@ -891,8 +893,8 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
         ],
         "input": {
             "/etc/release": (
-                "                             Oracle Solaris 11.3 X86\n  Copyright (c) 1983, 2015, Oracle and/or its affiliates.  "
-                "All rights reserved.\n                            Assembled 06 October 2015\n"
+                "                             Oracle Solaris 11.3 X86\n  Copyright (c) 1983, 2018, Oracle and/or its affiliates.  "
+                "All rights reserved.\n                              Assembled 09 May 2018\n"
             )
         },
         "platform.system": "SunOS",
@@ -900,6 +902,7 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             "distribution_release": "Oracle Solaris 11.3 X86",
             "distribution": "Solaris",
             "os_family": "Solaris",
+            "distribution_major_version": "11",
             "distribution_version": "11.3"
         }
     },
@@ -919,6 +922,7 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             "distribution_release": "Oracle Solaris 10 1/13 s10x_u11wos_24a X86",
             "distribution": "Solaris",
             "os_family": "Solaris",
+            "distribution_major_version": "10",
             "distribution_version": "10"
         }
     },
