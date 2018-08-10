@@ -64,7 +64,8 @@
     table: Bridge
     record: br-test
     col: stp_enable
-    value: true
+    value: 'true'
+  become: yes
   register: result
 
 - assert:
@@ -76,7 +77,8 @@
     table: Bridge
     record: br-test
     col: stp_enable
-    value: true
+    value: 'true'
+  become: yes
   register: result
 
 - assert:
@@ -90,6 +92,7 @@
     record: br-test
     col: other_config
     value: true
+  become: yes
   register: result
 
 - assert:

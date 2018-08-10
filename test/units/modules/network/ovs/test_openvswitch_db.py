@@ -114,8 +114,8 @@ class TestOpenVSwitchDBModule(TestOpenVSwitchModule):
                              value='True'))
         self.execute_module(
             changed=True,
-            commands=['/usr/bin/ovs-vsctl -t 5 add Bridge test-br other_config'
-                      ' disable-in-band=True'],
+            commands=['/usr/bin/ovs-vsctl -t 5 set Bridge test-br other_config'
+                      ':disable-in-band=True'],
             test_name='test_openvswitch_db_present_adds_key')
 
     def test_openvswitch_db_present_updates_key(self):
