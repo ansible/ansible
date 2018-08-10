@@ -148,7 +148,7 @@ class Cliconf(CliconfBase):
             try:
                 out = self.get(cmd)
             except AnsibleConnectionFailure as e:
-                if check_rc:
+                if check_rc is True:
                     raise
                 out = getattr(e, 'err', e)
 
