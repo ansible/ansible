@@ -458,7 +458,7 @@ def portChannelConfig(module, prompt, answer):
             elif(portChArg3 == "source-interface"):
                 command = command + portChArg3
                 cmd = [{'command': command, 'prompt': None, 'answer': None}]
-                retVal = retVal + str(run_cnos_commands(module, cmd))
+                retVal = retVal + str(cnos.run_cnos_commands(module, cmd))
             else:
                 retVal = "Error-231"
                 return retVal
