@@ -118,7 +118,7 @@ ansible_net_neighbors:
 import re
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, run_command
+from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, run_commands
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import zip
 
@@ -407,7 +407,7 @@ def main():
     try:
         for inst in instances:
             commands = inst.commands()
-            responses = run_command(module, commands)
+            responses = run_commands(module, commands)
             results = dict(zip(commands, responses))
             inst.populate(results)
             facts.update(inst.facts)

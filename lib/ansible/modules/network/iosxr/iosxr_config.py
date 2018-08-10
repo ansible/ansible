@@ -366,6 +366,8 @@ def run(module, result):
     running_config = get_running_config(module)
 
     commands = None
+    replace_file_path = None
+
     if match != 'none' and replace != 'config':
         commands = candidate_config.difference(running_config, path=path, match=match, replace=replace)
     elif replace_config:
@@ -380,6 +382,7 @@ def run(module, result):
                 module.fail_json(msg='Copy of config file to the node failed')
 
             commands = ['load harddisk:/ansible_config.txt']
+            replace_file_path = 'harddisk:/ansible_config.txt'
     else:
         commands = candidate_config.items
 
@@ -399,7 +402,7 @@ def run(module, result):
         commit = not check_mode
         diff = load_config(
             module, commands, commit=commit,
-            replace=replace_config, comment=comment, admin=admin,
+            replace=replace_file_path, comment=comment, admin=admin,
             label=label
         )
         if diff:
