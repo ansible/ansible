@@ -5,9 +5,12 @@
 Conventions, Best Practices, and Pitfalls
 *****************************************
 
+.. contents:: Topics
+   :local:
+
 As you develop your module, follow these basic conventions and best practices:
 
-General conventions
+General best practices
 ======================
 
 * Each module should be self-contained in one file, so it can be be auto-transferred by Ansible.
