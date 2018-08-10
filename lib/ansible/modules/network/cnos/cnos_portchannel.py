@@ -32,91 +32,130 @@ DOCUMENTATION = '''
 ---
 module: cnos_portchannel
 author: "Anil Kumar Muraleedharan (@amuraleedhar)"
-short_description: Manage portchannel (port channel) configuration on devices running Lenovo CNOS
+short_description: Manage portchannel (port channel) configuration on devices
+ running Lenovo CNOS
 description:
-    - This module allows you to work with port channel related configurations. The operators
-     used are overloaded to ensure control over switch port channel configurations. Apart
-     from the regular device connection related attributes, there are five LAG arguments which are
-     overloaded variables that will perform further configurations. They are interfaceArg1, interfaceArg2,
-     interfaceArg3, interfaceArg4, and interfaceArg5. For more details on how to use these arguments, see
-     [Overloaded Variables].
+    - This module allows you to work with port channel related configurations.
+     The operators used are overloaded to ensure control over switch port
+     channel configurations. Apart from the regular device connection related
+     attributes, there are five LAG arguments which are overloaded variables
+     that will perform further configurations. They are interfaceArg1,
+     interfaceArg2, interfaceArg3, interfaceArg4, and interfaceArg5.
+     For more details on how to use these arguments, see[Overloaded Variables].
      This module uses SSH to manage network device configuration.
      The results of the operation will be placed in a directory named 'results'
-     that must be created by the user in their local directory to where the playbook is run.
-     For more information about this module from Lenovo and customizing it usage for your
-     use cases, please U(http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_portchannel.html)
+     that must be created by the user in their local directory to where the
+     playbook is run. For more information about this module from Lenovo and
+     customizing it usage for your use cases, please
+     U(http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_portchannel.html)
 version_added: "2.3"
 extends_documentation_fragment: cnos
 options:
     interfaceRange:
         description:
-            - This specifies the interface range in which the port channel is envisaged
+            - This specifies the interface range in which the port channel is
+              envisaged
         required: Yes
         default: Null
     interfaceArg1:
         description:
-            - This is an overloaded Port Channel first argument. Usage of this argument can be found is the User Guide referenced above.
+            - This is an overloaded Port Channel first argument. Usage of this
+              argument can be found is the User Guide referenced above.
         required: Yes
         default: Null
-        choices: [channel-group, bfd, bridgeport, description, duplex, flowcontrol, ip, ipv6, lacp, lldp,
-        load-interval, mac, mac-address, mac-learn, microburst-detection, mtu, service, service-policy,
-        shutdown, snmp, spanning-tree, speed, storm-control, vlan, vrrp, port-channel]
+        choices: [channel-group, bfd, bridgeport, description, duplex,
+                  flowcontrol, ip, ipv6, lacp, lldp,load-interval, mac,
+                  mac-address, mac-learn, microburst-detection, mtu, service,
+                  service-policy, shutdown, snmp, spanning-tree, speed,
+                  storm-control, vlan, vrrp, port-channel]
     interfaceArg2:
         description:
-            - This is an overloaded Port Channel second argument. Usage of this argument can be found is the User Guide referenced above.
+            - This is an overloaded Port Channel second argument. Usage of this
+              argument can be found is the User Guide referenced above.
         required: No
         default: Null
-        choices: [channel-group number, access or mode or trunk, description, auto or full or half,
-        receive or send, port-priority, suspend-individual, timeout,     receive or transmit or trap-notification,
-        tlv-select, Load interval delay in seconds, counter, Name for the MAC Access List, mac-address in HHHH.HHHH.HHHH format,
-        THRESHOLD  Value in unit of buffer cell, <64-9216>  MTU in bytes-<64-9216> for L2 packet,<576-9216> for
-        L3 IPv4 packet, <1280-9216> for L3 IPv6 packet, enter the instance id, input or output, copp-system-policy,
-        type, 1000  or  10000  or   40000 or   auto, broadcast or multicast or unicast, disable or enable or egress-only,
-        Virtual router identifier, destination-ip or destination-mac or destination-port or source-dest-ip or
-        source-dest-mac or source-dest-port or source-interface or source-ip or source-mac or source-port]
+        choices: [channel-group number, access or mode or trunk, description,
+                  auto or full or half, receive or send, port-priority,
+                  suspend-individual, timeout,
+                  receive or transmit or trap-notification, tlv-select,
+                  Load interval delay in seconds, counter,
+                  Name for the MAC Access List,
+                  mac-address in HHHH.HHHH.HHHH format,
+                  THRESHOLD  Value in unit of buffer cell,
+                  <64-9216>  MTU in bytes-<64-9216> for L2 packet,
+                  <576-9216> for L3 IPv4 packet, <1280-9216> L3 IPv6 packet,
+                  enter the instance id, input or output, copp-system-policy,
+                  type, 1000  or  10000  or   40000 or   auto, broadcast or
+                  multicast or unicast, disable or enable or egress-only,
+                  Virtual router identifier,
+                  destination-ip or destination-mac or destination-port or
+                  source-dest-ip or source-dest-mac or source-dest-port or
+                  source-interface or source-ip or source-mac or source-port]
     interfaceArg3:
         description:
-            - This is an overloaded Port Channel third argument. Usage of this argument can be found is the User Guide referenced above.
+            - This is an overloaded Port Channel third argument. Usage of this
+              argument can be found is the User Guide referenced above.
         required: No
         default: Null
-        choices: [active or on or passive, on or off, LACP port priority, long or short, link-aggregation or
-        mac-phy-status or management-address or max-frame-size or port-description or port-protocol-vlan or
-        port-vlan or power-mdi or protocol-identity or system-capabilities or system-description or system-name
-        or vid-management or vlan-name, counter for load interval, policy input name, all or Copp class name to attach,
-        qos, queueing, Enter the allowed traffic level, ipv6]
+        choices: [active or on or passive, on or off, LACP port priority,
+        long or short, link-aggregation or mac-phy-status or management-address
+        or max-frame-size or port-description or port-protocol-vlan or
+        port-vlan or power-mdi or protocol-identity or system-capabilities or
+        system-description or system-name or vid-management or vlan-name,
+        counter for load interval, policy input name,
+        all or Copp class name to attach, qos, queueing,
+        Enter the allowed traffic level, ipv6]
     interfaceArg4:
         description:
-            - This is an overloaded Port Channel fourth argument. Usage of this argument can be found is the User Guide referenced above.
+            - This is an overloaded Port Channel fourth argument. Usage of this
+             argument can be found is the User Guide referenced above.
         required: No
         default: Null
-        choices: [key-chain, key-id, keyed-md5 or keyed-sha1 or meticulous-keyed-md5 or meticulous-keyed-sha1 or simple, Interval value in milliseconds,
-         Destination IP (Both IPV4 and IPV6),in or out, MAC address, Time-out value in seconds, class-id, request, Specify the IPv4 address,
-         OSPF area ID as a decimal value, OSPF area ID in IP address format, anycast or secondary, ethernet, vlan,
-         MAC (hardware) address in HHHH.HHHH.HHHH format,
-         Load interval delay in seconds, Specify policy input name, input or output, cost, port-priority, BFD minimum receive interval,source-interface]
+        choices: [key-chain, key-id, keyed-md5 or keyed-sha1 or
+                  meticulous-keyed-md5 or meticulous-keyed-sha1 or simple,
+                  Interval value in milliseconds,
+                  Destination IP (Both IPV4 and IPV6),in or out, MAC address,
+                  Time-out value in seconds, class-id, request,
+                  Specify the IPv4 address, OSPF area ID as a decimal value,
+                  OSPF area ID in IP address format, anycast or secondary,
+                  ethernet, vlan,
+                  MAC (hardware) address in HHHH.HHHH.HHHH format,
+                  Load interval delay in seconds, Specify policy input name,
+                  input or output, cost, port-priority,
+                  BFD minimum receive interval,source-interface]
     interfaceArg5:
         description:
-            - This is an overloaded Port Channel fifth argument. Usage of this argument can be found is the User Guide referenced above.
+            - This is an overloaded Port Channel fifth argument. Usage of this
+              argument can be found is the User Guide referenced above.
         required: No
         default: Null
-        choices: [name of key-chain,  key-Id Value, key-chain , key-id, BFD minimum receive interval, Value of Hello Multiplier,
-        admin-down or multihop or non-persistent, Vendor class-identifier name, bootfile-name or host-name or log-server or ntp-server or tftp-server-name,
-        Slot/chassis number, Vlan interface, Specify policy input name, Port path cost or auto, Port priority increments of 32]
+        choices: [name of key-chain,  key-Id Value, key-chain , key-id,
+                  BFD minimum receive interval, Value of Hello Multiplier,
+                  admin-down or multihop or non-persistent,
+                  Vendor class-identifier name,
+                  bootfile-name or host-name or log-server or ntp-server or
+                  tftp-server-name, Slot/chassis number, Vlan interface,
+                  Specify policy input name, Port path cost or auto,
+                  Port priority increments of 32]
     interfaceArg6:
         description:
-            - This is an overloaded Port Channel sixth argument. Usage of this argument can be found is the User Guide referenced above.
+            - This is an overloaded Port Channel sixth argument. Usage of this
+               argument can be found is the User Guide referenced above.
         required: No
         default: Null
-        choices: [Authentication key string, name of key-chain, key-Id Value, Value of Hello Multiplier, admin-down or non-persistent]
+        choices: [Authentication key string, name of key-chain, key-Id Value,
+                  Value of Hello Multiplier, admin-down or non-persistent]
     interfaceArg7:
         description:
-            - This is an overloaded Port Channel seventh argument. Usage of this argument can be found is the User Guide referenced above.
+            - This is an overloaded Port Channel seventh argument. Usage of
+              this argument can be found is the User Guide referenced above.
         required: No
         default: Null
         choices: [Authentication key string, admin-down]
 '''
 EXAMPLES = '''
-Tasks : The following are examples of using the module cnos_portchannel. These are written in the main.yml file of the tasks directory.
+Tasks : The following are examples of using the module cnos_portchannel. These
+ are written in the main.yml file of the tasks directory.
 ---
 - name: Test Port Channel - channel-group
   cnos_portchannel:
@@ -124,7 +163,7 @@ Tasks : The following are examples of using the module cnos_portchannel. These a
     username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
     password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
     deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-    outputfile: "./results/test_portchannel_{{ inventory_hostname }}_output.txt"
+    outputfile: "./results/test_portchannel_{{inventory_hostname}}_output.txt"
     interfaceRange: 33
     interfaceArg1: "channel-group"
     interfaceArg2: 33
@@ -393,6 +432,42 @@ from ansible.module_utils.basic import AnsibleModule
 from collections import defaultdict
 
 
+def portChannelConfig(module, prompt, answer):
+    retVal = ''
+    command = ''
+    portChArg1 = module.params['interfaceArg1']
+    portChArg2 = module.params['interfaceArg2']
+    portChArg3 = module.params['interfaceArg3']
+    if(portChArg1 == "port-channel" and prompt == "(config)#"):
+        command = command + portChArg1 + " load-balance ethernet "
+        if(portChArg2 == "destination-ip" or
+           portChArg2 == "destination-mac" or
+           portChArg2 == "destination-port" or
+           portChArg2 == "source-dest-ip" or
+           portChArg2 == "source-dest-mac" or
+           portChArg2 == "source-dest-port" or
+           portChArg2 == "source-interface" or
+           portChArg2 == "source-ip" or
+           portChArg2 == "source-mac" or
+           portChArg2 == "source-port"):
+
+            # debugOutput(portChArg2)
+            command = command + portChArg2 + " "
+            if(portChArg3 is None):
+                command = command + ""
+            elif(portChArg3 == "source-interface"):
+                command = command + portChArg3
+                cmd = [{'command': command, 'prompt': None, 'answer': None}]
+                retVal = retVal + str(run_cnos_commands(module, cmd))
+            else:
+                retVal = "Error-231"
+                return retVal
+        else:
+            retVal = "Error-232"
+            return retVal
+# EOM
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -416,9 +491,10 @@ def main():
     output = ''
     # Send the CLi command
     if(module.params['interfaceArg1'] == "port-channel"):
-        output = output + cnos.portChannelConfig(module, "(config)#", None)
+        output = output + portChannelConfig(module, "(config)#", None)
     else:
-        output = output + cnos.interfaceConfig(module, "(config)#", "port-channel", None)
+        output = output + cnos.interfaceConfig(module, "(config)#",
+                                               "port-channel", None)
 
     # Save it into the file
     file = open(outputfile, "a")
@@ -428,7 +504,8 @@ def main():
     # Logic to check when changes occur or not
     errorMsg = cnos.checkOutputForError(output)
     if(errorMsg is None):
-        module.exit_json(changed=True, msg="Port Channel Configuration is done")
+        module.exit_json(changed=True,
+                         msg="Port Channel Configuration is done")
     else:
         module.fail_json(msg=errorMsg)
 
