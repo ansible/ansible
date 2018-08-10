@@ -67,8 +67,15 @@ def test_encrypt_default_rounds():
 
 
 def test_password_hash_filter():
+    with passlib_off():
+        assert not encrypt.PASSLIB_AVAILABLE
+        assert get_encrypted_password("123", "md5", salt="12345678") == "$1$12345678$tRy4cXc3kmcfRZVj4iFXr/"
+
+        with pytest.raises(AnsibleFilterError):
+            get_encrypted_password("123", "crypt16", salt="12")
+
     if not encrypt.PASSLIB_AVAILABLE:
-        return
+        pytest.skip("passlib not available")
 
     with pytest.raises(AnsibleFilterError):
         get_encrypted_password("123", "sha257", salt="12345678")
@@ -91,17 +98,18 @@ def test_password_hash_filter():
     # Try algorithm that uses a raw salt
     assert get_encrypted_password("123", "pbkdf2_sha256")
 
-    with passlib_off():
-        assert not encrypt.PASSLIB_AVAILABLE
-        assert get_encrypted_password("123", "md5", salt="12345678") == "$1$12345678$tRy4cXc3kmcfRZVj4iFXr/"
-
-        with pytest.raises(AnsibleFilterError):
-            get_encrypted_password("123", "crypt16", salt="12")
-
 
 def test_do_encrypt():
+    with passlib_off():
+        assert not encrypt.PASSLIB_AVAILABLE
+
+        assert encrypt.do_encrypt("123", "md5_crypt", salt="12345678") == "$1$12345678$tRy4cXc3kmcfRZVj4iFXr/"
+
+        with pytest.raises(AnsibleError):
+            encrypt.do_encrypt("123", "crypt16", salt="12")
+
     if not encrypt.PASSLIB_AVAILABLE:
-        return
+        pytest.skip("passlib not available")
 
     with pytest.raises(AnsibleError):
         encrypt.do_encrypt("123", "sha257_crypt", salt="12345678")
@@ -113,10 +121,10 @@ def test_do_encrypt():
 
     assert encrypt.do_encrypt("123", "crypt16", salt="12") == "12pELHK2ME3McUFlHxel6uMM"
 
-    with passlib_off():
-        assert not encrypt.PASSLIB_AVAILABLE
 
-        assert encrypt.do_encrypt("123", "md5_crypt", salt="12345678") == "$1$12345678$tRy4cXc3kmcfRZVj4iFXr/"
-
-        with pytest.raises(AnsibleError):
-            encrypt.do_encrypt("123", "crypt16", salt="12")
+def test_random_salt():
+    res = encrypt.random_salt()
+    expected_salt_candidate_chars = u'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./'
+    assert len(res) == 8
+    for res_char in res:
+        assert res_char in expected_salt_candidate_chars

@@ -207,10 +207,6 @@ def _gen_candidate_chars(characters):
     return chars
 
 
-def _random_salt():
-    return random_salt(length=8)
-
-
 def _parse_content(content):
     '''parse our password data format into password and salt
 
@@ -324,7 +320,7 @@ class LookupModule(LookupBase):
 
             if params['encrypt'] and not salt:
                 changed = True
-                salt = _random_salt()
+                salt = random_salt()
 
             if changed and b_path != to_bytes('/dev/null'):
                 content = _format_content(plaintext_password, salt, encrypt=params['encrypt'])

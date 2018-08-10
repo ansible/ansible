@@ -167,7 +167,7 @@ def do_encrypt(result, encrypt, salt_size=None, salt=None):
     return passlib_or_crypt(result, encrypt, error_type=AnsibleError, **settings)
 
 
-def random_salt(length):
+def random_salt(length=8):
     """Return a text string suitable for use as a salt for the hash functions we use to encrypt passwords.
     """
     # Note passlib salt values must be pure ascii so we can't let the user
