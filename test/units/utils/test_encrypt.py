@@ -66,7 +66,7 @@ def test_encrypt_default_rounds():
     assert encrypt.CryptHash("md5_crypt", AnsibleFilterError).hash("123")
 
 
-def test_password_hash_filter():
+def test_password_hash_filter_no_passlib():
     with passlib_off():
         assert not encrypt.PASSLIB_AVAILABLE
         assert get_encrypted_password("123", "md5", salt="12345678") == "$1$12345678$tRy4cXc3kmcfRZVj4iFXr/"
@@ -74,6 +74,8 @@ def test_password_hash_filter():
         with pytest.raises(AnsibleFilterError):
             get_encrypted_password("123", "crypt16", salt="12")
 
+
+def test_password_hash_filter_passlib():
     if not encrypt.PASSLIB_AVAILABLE:
         pytest.skip("passlib not available")
 
@@ -99,15 +101,16 @@ def test_password_hash_filter():
     assert get_encrypted_password("123", "pbkdf2_sha256")
 
 
-def test_do_encrypt():
+def test_do_encrypt_no_passlib():
     with passlib_off():
         assert not encrypt.PASSLIB_AVAILABLE
-
         assert encrypt.do_encrypt("123", "md5_crypt", salt="12345678") == "$1$12345678$tRy4cXc3kmcfRZVj4iFXr/"
 
         with pytest.raises(AnsibleError):
             encrypt.do_encrypt("123", "crypt16", salt="12")
 
+
+def test_do_encrypt_passlib():
     if not encrypt.PASSLIB_AVAILABLE:
         pytest.skip("passlib not available")
 
