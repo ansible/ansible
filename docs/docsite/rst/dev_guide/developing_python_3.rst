@@ -36,7 +36,7 @@ of the Python-3 version.
 For Python 2, the default is for modules to run on at least Python-2.6.  This allows
 users with older distributions that are stuck on Python-2.6 to manage their
 machines.  Modules are allowed to drop support for Python-2.6 when one of
-their dependent libraries requires a higher version of Python.  This is not an
+their dependent libraries requires a higher version of Python. This is not an
 invitation to add unnecessary dependent libraries in order to force your
 module to be usable only with a newer version of Python; instead it is an
 acknowledgment that some libraries (for instance, boto3 and docker-py) will
@@ -70,63 +70,24 @@ In Python-2, the two types for these (:class:`str` for bytes and
 :class:`unicode` for text) are often used interchangeably.  When dealing only
 with ASCII characters, the strings can be combined, compared, and converted
 from one type to another automatically.  When non-ASCII characters are
-introduced, Python starts throwing exceptions due to not knowing what encoding
+introduced, Python-2 starts throwing exceptions due to not knowing what encoding
 the non-ASCII characters should be in.
 
 Python-3 changes this behavior by making the separation between bytes (:class:`bytes`)
-and text (:class:`str`) more strict.  Python will throw an exception when
+and text (:class:`str`) more strict.  Python-3 will throw an exception when
 trying to combine and compare the two types.  The programmer has to explicitly
 convert from one type to the other to mix values from each.
 
 In Python-3 it's immediately apparent to the programmer when code is
-mixing the types inappropriately, where in Python-2 code that mixes bytes
-and text may work until a user causes an exception by entering non-ASCII input.
-However, Python-3 forces programmers to proactively define a strategy for
+mixing the byte and text types inappropriately, whereas in Python-2, code that mixes those types
+may work until a user causes an exception by entering non-ASCII input.
+Python-3 forces programmers to proactively define a strategy for
 working with strings in their program so that they don't mix text and byte strings unintentionally.
 
 Ansible uses different strategies for working with strings in modules, in controller-side code, in
 modules, and in ``module_utils`` code.
 
-.. _module_string_strategy:
-
-Module string strategy: Native String
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-In modules we use a strategy known as Native Strings. This makes things
-easier on the community members who maintain so many of Ansible's
-modules, by not breaking backwards compatibility by
-mandating that all strings inside of modules are text and converting between
-text and bytes at the borders.
-
-Native strings refer to the type that Python uses when you specify a bare
-string literal:
-
-.. code-block:: python
-
-    "This is a native string"
-
-In Python-2, these are byte strings. In Python-3 these are text strings. The
-module_utils shipped with Ansible attempts to accept native strings as input
-to its functions and emit native strings as their output. Modules should be
-coded to expect bytes on Python-2 and text on Python-3.
-
-.. _module_utils_string_strategy:
-
-Module_utils string strategy: hybrid
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-In ``module_utils`` code we use a hybrid string strategy. Although Ansible's ``module_utils`` code is largely like module code, some pieces of it are
-used by the controller as well. So it needs to be compatible with modules and with the controller's assumptions, particularly the string strategy.
-
-In ``module_utils`` code:
- 
-* Functions **must** accept either text strings or byte strings as parameters.
-* Functions may return either the same type of string as they were given or the native string type for the Python version they are run on.
-* Functions that return strings **must** document whether they return strings of the same type as they were given or native strings.
-
-Module-utils functions are therefore often very defensive in nature. They convert their string parameters into text (using ``ansible.module_utils._text.to_text``) at the beginning of the function, do their work, and then convert the return values into the native string type (using ``ansible.module_utils._text.to_native``) or back to the string type that their parameters received.
-
-.._controller_string_strategy:
+.. _controller_string_strategy:
 
 Controller string strategy: the Unicode Sandwich
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -247,13 +208,58 @@ to the command) to execute into bytes and return stdout and stderr as byte strin
 Higher level functions (like action plugins' ``_low_level_execute_command``)
 transform the output into text strings.
 
-Tips, tricks, and idioms for Python-3 compatibility
-----------------------------------------------------
+.. _module_string_strategy:
+
+Module string strategy: Native String
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In modules we use a strategy known as Native Strings. This makes things
+easier on the community members who maintain so many of Ansible's
+modules, by not breaking backwards compatibility by
+mandating that all strings inside of modules are text and converting between
+text and bytes at the borders.
+
+Native strings refer to the type that Python uses when you specify a bare
+string literal:
+
+.. code-block:: python
+
+    "This is a native string"
+
+In Python-2, these are byte strings. In Python-3 these are text strings. Modules should be
+coded to expect bytes on Python-2 and text on Python-3.
+
+.. _module_utils_string_strategy:
+
+Module_utils string strategy: hybrid
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In ``module_utils`` code we use a hybrid string strategy. Although Ansible's
+``module_utils`` code is largely like module code, some pieces of it are
+used by the controller as well. So it needs to be compatible with modules
+and with the controller's assumptions, particularly the string strategy.
+The module_utils code attempts to accept native strings as input
+to its functions and emit native strings as their output.
+
+In ``module_utils`` code:
+ 
+* Functions **must** accept string parameters as either text strings or byte strings.
+* Functions may return either the same type of string as they were given or the native string type for the Python version they are run on.
+* Functions that return strings **must** document whether they return strings of the same type as they were given or native strings.
+
+Module-utils functions are therefore often very defensive in nature.
+They convert their string parameters into text (using ``ansible.module_utils._text.to_text``)
+at the beginning of the function, do their work, and then convert
+the return values into the native string type (using ``ansible.module_utils._text.to_native``)
+or back to the string type that their parameters received.
+
+Tips, tricks, and idioms for Python-2/Python-3 compatibility
+------------------------------------------------------------
 
 Use forward-compatibility boilerplate
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Use the following boilerplate code at the top of all controller-side modules
+Use the following boilerplate code at the top of all python files
 to make certain constructs act the same way on Python-2 and Python-3:
 
 .. code-block:: python
