@@ -58,13 +58,6 @@
     server_name: postgresqlsrv{{ rpfx }}
     name: testdatabase2
 
-- name: Create second instance of PostgreSQL Database
-  azure_rm_postgresqldatabase:
-    server_name: postgresqlsrv{{ rpfx }}
-    name: testdatabase2
-  register: output
-
-
 - name: Gather facts PostgreSQL Database
   azure_rm_postgresqldatabase_facts:
     resource_group: "{{ resource_group }}"
