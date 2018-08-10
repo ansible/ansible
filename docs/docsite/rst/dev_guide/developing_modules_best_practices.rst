@@ -20,7 +20,7 @@ General conventions
 * Modules accepting boolean status should generally accept ``yes``, ``no``, ``true``, ``false``, or anything else a user may likely throw at them. The AnsibleModule common code supports this with ``type='bool'``.
 * Eliminate or minimize dependencies. If your module has dependencies, document them at the top of the module file and raise JSON error messages when dependency import fails.
 * If you package your module(s) in an RPM, install the modules on the control machine in ``/usr/share/ansible``. Packaging modules in RPMs is optional.
-* Don't write to files directly; use a temporary file and then use the `atomic_move` function from `ansible.module_utils.basic` to move the updated temporary file into place. This prevents data corruption and ensures that the correct context for the file is kept.
+* Don't write to files directly; use a temporary file and then use the ``atomic_move`` function from ``ansible.module_utils.basic`` to move the updated temporary file into place. This prevents data corruption and ensures that the correct context for the file is kept.
 * Avoid creating caches. Ansible is designed without a central server or authority, so you cannot guarantee it will not run with different permissions, options or locations. If you need a central authority, have it on top of Ansible (for example, using bastion/cm/ci server or tower); do not try to build it into modules.
 * Handle exceptions (bugs) gracefully
     * Give out a useful message on what you were doing and add exception messages to that.
