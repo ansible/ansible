@@ -271,22 +271,6 @@
 - name: set role facts
   set_fact:
     http_port: 27617
-    files_dir: '{{ output_dir }}/files'
-
-- name: create a directory to serve files from
-  file:
-    dest: "{{ files_dir }}"
-    state: directory
-
-- copy:
-    src: "{{ item }}"
-    dest: "{{files_dir}}/{{ item }}"
-  with_sequence: start=0 end=4 format=pass%d.json
-
-- copy:
-    src: "{{ item }}"
-    dest: "{{files_dir}}/{{ item }}"
-  with_sequence: start=0 end=30 format=fail%d.json
 
 - copy:
     src: "testserver.py"
@@ -294,7 +278,7 @@
 
 - name: start SimpleHTTPServer for issues 27617
   shell: cd {{ files_dir }} && {{ ansible_python.executable }} {{ output_dir}}/testserver.py {{ http_port }}
-  async: 120 # this test set can take ~1m to run on FreeBSD (via Shippable)
+  async: 30
   poll: 0
 
 - wait_for: port={{ http_port }}
