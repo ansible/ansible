@@ -72,20 +72,20 @@
     name: testdatabase
   register: output 
 
+            'resource_group': self.resource_group,
+            'server_name': self.server_name,
+            'name': d['name'],
+            'charset': d['charset'],
+            'collation': d['collation']
 
 - name: Assert that facts are returned
   assert:
     that:
       - output.changed == False
-      - output.servers[0]['id'] != None
-      - output.servers[0]['name'] != None
-      - output.servers[0]['location'] != None
-      - output.servers[0]['sku']['name'] != None
-      - output.servers[0]['sku']['tier'] != None
-      - output.servers[0]['sku']['capacity'] != None
-      - output.servers[0]['version'] != None
-      - output.servers[0]['user_visible_state'] != None
-      - output.servers[0]['fully_qualified_domain_name'] != None
+      - output.datatabases[0]['server_name'] != None
+      - output.datatabases[0]['name'] != None
+      - output.datatabases[0]['charset'] != None
+      - output.datatabases[0]['collation'] != None
 
 - name: Gather facts PostgreSQL Database
   azure_rm_postgresqlserver_facts:
@@ -96,25 +96,14 @@
   assert:
     that:
       - output.changed == False
-      - output.servers[0]['id'] != None
-      - output.servers[0]['name'] != None
-      - output.servers[0]['location'] != None
-      - output.servers[0]['sku']['name'] != None
-      - output.servers[0]['sku']['tier'] != None
-      - output.servers[0]['sku']['capacity'] != None
-      - output.servers[0]['version'] != None
-      - output.servers[0]['user_visible_state'] != None
-      - output.servers[0]['fully_qualified_domain_name'] != None
-      - output.servers[1]['id'] != None
-      - output.servers[1]['name'] != None
-      - output.servers[1]['location'] != None
-      - output.servers[1]['sku']['name'] != None
-      - output.servers[1]['sku']['tier'] != None
-      - output.servers[1]['sku']['capacity'] != None
-      - output.servers[1]['version'] != None
-      - output.servers[1]['user_visible_state'] != None
-      - output.servers[1]['fully_qualified_domain_name'] != None
-
+      - output.datatabases[0]['server_name'] != None
+      - output.datatabases[0]['name'] != None
+      - output.datatabases[0]['charset'] != None
+      - output.datatabases[0]['collation'] != None
+      - output.datatabases[1]['server_name'] != None
+      - output.datatabases[1]['name'] != None
+      - output.datatabases[1]['charset'] != None
+      - output.datatabases[1]['collation'] != None
 
 - name: Delete instance of PostgreSQL Database -- check mode
   azure_rm_postgresqldatabase:

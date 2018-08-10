@@ -154,7 +154,7 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
 
     def get(self):
         response = None
-        results = {}
+        results = []
         try:
             response = self.mgmt_client.databases.get(resource_group_name=self.resource_group,
                                                       server_name=self.server_name,
@@ -164,13 +164,13 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
             self.log('Could not get facts for Databases.')
 
         if response is not None:
-            results[response.name] = self.format_item(response)
+            results.append(self.format_item(response))
 
         return results
 
     def list_by_server(self):
         response = None
-        results = {}
+        results = []
         try:
             response = self.mgmt_client.databases.list_by_server(resource_group_name=self.resource_group,
                                                                  server_name=self.server_name)
@@ -180,7 +180,7 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
 
         if response is not None:
             for item in response:
-                results[item.name] = self.format_item(item)
+                results.append(self.format_item(item))
 
         return results
 
@@ -191,8 +191,7 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
             'server_name': self.server_name,
             'name': d['name'],
             'charset': d['charset'],
-            'collation': d['collation'],
-            'state': 'present'
+            'collation': d['collation']
         }
         return d
 
