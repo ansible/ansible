@@ -2487,6 +2487,6 @@ def main():
     module.exit_json(**result)
 
 
-# module snippets
+# import module snippets
 if __name__ == '__main__':
     main()
