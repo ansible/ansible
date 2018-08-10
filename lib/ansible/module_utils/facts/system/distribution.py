@@ -540,6 +540,7 @@ class Distribution(object):
     def get_distribution_SunOS(self):
         sunos_facts = {}
 
+        uname_v = get_uname_version(self.module)
         data = get_file_content('/etc/release').splitlines()[0]
 
         if 'Solaris' in data:
@@ -550,9 +551,9 @@ class Distribution(object):
             sunos_facts['distribution'] = data.split()[0]
             sunos_facts['distribution_version'] = data.split()[1]
             sunos_facts['distribution_release'] = ora_prefix + data
+            sunos_facts['distribution_major_version'] = uname_v.split('.')[0]
             return sunos_facts
 
-        uname_v = get_uname_version(self.module)
         distribution_version = None
 
         if 'SmartOS' in data:
