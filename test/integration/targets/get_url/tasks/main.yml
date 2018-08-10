@@ -306,7 +306,7 @@
 
 - name: start SimpleHTTPServer for issues 27617
   shell: cd {{ files_dir }} && {{ ansible_python.executable }} {{ output_dir}}/testserver.py {{ http_port }}
-  async: 30
+  async: 90
   poll: 0
 
 - name: download src with sha1 checksum url
