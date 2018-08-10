@@ -341,8 +341,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # If ssh breaks we could leave tmp directories out on the remote system.
             tmp_rm_res = self._low_level_execute_command(cmd, sudoable=False)
 
-            tmp_rm_data = self._parse_returned_data(tmp_rm_res)
-            if tmp_rm_data.get('rc', 0) != 0:
+            if tmp_rm_res.get('rc', 0) != 0:
                 display.warning('Error deleting remote temporary files (rc: %s, stderr: %s})'
                                 % (tmp_rm_res.get('rc'), tmp_rm_res.get('stderr', 'No error string available.')))
             else:
