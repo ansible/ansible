@@ -180,7 +180,7 @@ class OnePasswordFacts(object):
                 module.fail_json(msg="1Password CLI tool failed to execute at path '%s': %s" % (self.cli_path, e))
 
         except AnsibleModuleError as e:
-            # 1Password's CLI doesn't seem to eturn different error codes, so we need to handle a few of the common
+            # 1Password's CLI doesn't seem to return different error codes, so we need to handle a few of the common
             # error cases by searching via regex, so we can provide a clearer error message to the user.
             if re.search(".*You are not currently signed in.*", str(e)) is not None:
                 if (self.auto_login is not None):
