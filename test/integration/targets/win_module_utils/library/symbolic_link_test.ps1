@@ -105,7 +105,7 @@ Function Test-LinkUtil($path) {
     }
     Assert-Equals -actual $failed -expected $true
 
-    # create relative symlink
+    # create relative symlink dir
     New-Link -link_path "$path\symlink-rel" -link_target "folder" -link_type "link"
     $rel_link_result = Get-Link -link_path "$path\symlink-rel"
     Assert-Equals -actual $rel_link_result.Type -expected "SymbolicLink"
@@ -113,6 +113,16 @@ Function Test-LinkUtil($path) {
     Assert-Equals -actual $rel_link_result.PrintName -expected "folder"
     Assert-Equals -actual $rel_link_result.TargetPath -expected "folder"
     Assert-Equals -actual $rel_link_result.AbsolutePath -expected $folder_target
+    Assert-Equals -actual $rel_link_result.HardTargets -expected $null
+
+    # create relative symlink file
+    New-Link -link_path "$path\folder\symlink-rel-file" -link_target "..\file" -link_type "link"
+    $rel_link_result = Get-Link -link_path "$path\folder\symlink-rel-file"
+    Assert-Equals -actual $rel_link_result.Type -expected "SymbolicLink"
+    Assert-Equals -actual $rel_link_result.SubstituteName -expected "..\file"
+    Assert-Equals -actual $rel_link_result.PrintName -expected "..\file"
+    Assert-Equals -actual $rel_link_result.TargetPath -expected "..\file"
+    Assert-Equals -actual $rel_link_result.AbsolutePath -expected $file_target
     Assert-Equals -actual $rel_link_result.HardTargets -expected $null
 
     # create a symbolic file test
@@ -225,7 +235,7 @@ Function Test-LinkUtil($path) {
     Assert-Equals -actual ($hardlink_result_2.HardTargets.Count -eq 3) -expected $true
 
     # check if broken symbolic link still works
-    Remove-Item -Path $folder_target -Force > $null
+    [Ansible.IO.Directory]::Delete($folder_target, $true)
     $broken_link_result = Get-Link -link_path $symlink_folder_path
     Assert-Equals -actual $broken_link_result.Type -expected "SymbolicLink"
     if ($path.StartsWith("\\?\")) {

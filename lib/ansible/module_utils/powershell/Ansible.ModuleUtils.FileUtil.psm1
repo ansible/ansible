@@ -30,12 +30,14 @@ namespace Ansible.IO
         public const Int32 ERROR_NO_MORE_FILES = 0x00000012;
         public const Int32 ERROR_NOT_READY = 0x00000015;
         public const Int32 ERROR_SHARING_VIOLATION = 0x00000020;
+        public const Int32 ERROR_HANDLE_EOF = 0x00000026;
         public const Int32 ERROR_FILE_EXISTS = 0x00000050;
         public const Int32 ERROR_INVALID_PARAMETER = 0x00000057;
         public const Int32 ERROR_INVALID_NAME = 0x0000007B;
         public const Int32 ERROR_DIR_NOT_EMPTY = 0x00000091;
         public const Int32 ERROR_ALREADY_EXISTS = 0x000000B7;
         public const Int32 ERROR_FILENAME_EXCED_RANGE = 0x000000CE;
+        public const Int32 ERROR_MORE_DATA = 0x000000EA;
         public const Int32 ERROR_OPERATION_ABORTED = 0x000003E3;
     }
 
@@ -50,6 +52,30 @@ namespace Ansible.IO
         internal enum SE_OBJECT_TYPE
         {
             SE_FILE_OBJECT = 1,
+        }
+
+        [Flags]
+        internal enum FileSystemFlags : uint
+        {
+            CaseSensitiveSearch = 0x00000001,
+            CasePreservedName = 0x00000002,
+            UnicodeOnDisk = 0x00000004,
+            PersistentAcls = 0x00000008,
+            FileCompression = 0x00000010,
+            VolumeQuotas = 0x00000020,
+            SupportsSparseFiles = 0x00000040,
+            SupportsReparsePoints = 0x00000080,
+            VolumeIsCompressed = 0x00008000,
+            SupportsObjectIds = 0x00010000,
+            SupportsEncryption = 0x00020000,
+            NamedStreams = 0x00040000,            
+            ReadOnlyVolume = 0x00080000,
+            SequentialWriteOnce = 0x00100000,
+            SupportsTransactions = 0x00200000,
+            SupportsHardLinks = 0x00400000,
+            SupportsExtendedAttributes = 0x00800000,
+            SupportsOpenByFileId = 0x01000000,
+            SupportsUsnJournal = 0x02000000,
         }
 
         [Flags]
@@ -119,6 +145,20 @@ namespace Ansible.IO
         }
 
         [StructLayout(LayoutKind.Sequential)]
+        internal struct FILE_ALLOCATED_RANGE_BUFFER
+        {
+            internal Int64 FileOffset;
+            internal Int64 Length;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct FILE_ZERO_DATA_INFORMATION
+        {
+            internal Int64 FileOffset;
+            internal Int64 BeyondFinalZero;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
         internal struct FILETIME
         {
             internal UInt32 dwLowDateTime;
@@ -140,7 +180,7 @@ namespace Ansible.IO
             public UInt32 nFileSizeLow;
         }
 
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         internal struct WIN32_FIND_DATA
         {
             public FileAttributes dwFileAttributes;
@@ -153,6 +193,13 @@ namespace Ansible.IO
             public UInt32 dwReserved1;
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)] public string cFileName;
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 14)] public string cAlternateFileName;
+        }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        internal struct WIN32_FIND_STREAM_DATA
+        {
+            public Int64 StreamSize;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 296)] public string cStreamName;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -197,7 +244,15 @@ namespace Ansible.IO
                 Dictionary<string, bool?> newState = new Dictionary<string, bool?>();
                 for (int i = 0; i < privileges.Length; i++)
                     newState.Add(privileges[i], true);
-                previousState = Ansible.PrivilegeUtil.Privileges.SetTokenPrivileges(process, newState);
+                try
+                {
+                    previousState = Ansible.PrivilegeUtil.Privileges.SetTokenPrivileges(process, newState);
+                }
+                catch (Win32Exception e)
+                {
+                    string msg = String.Format("Failed to enable privilege(s) {0}: {1}", String.Join(", ", privileges), e.Message);
+                    throw new Win32Exception(e.ErrorCode, msg);
+                }
             }
         }
 
@@ -247,7 +302,7 @@ namespace Ansible.IO
         internal static extern bool DeviceIoControl(
             SafeFileHandle hDevice,
             UInt32 dwIoControlCode,
-            ref UInt16 lpInBuffer,
+            IntPtr lpInBuffer,
             UInt32 nInBufferSize,
             IntPtr lpOutBuffer,
             UInt32 nOutBufferSize,
@@ -262,15 +317,32 @@ namespace Ansible.IO
         internal static extern bool FindClose(
             IntPtr hFindFile);
 
-        [DllImport("kernel32", SetLastError = true, CharSet = CharSet.Unicode)]
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         internal static extern IntPtr FindFirstFileW(
             [MarshalAs(UnmanagedType.LPWStr)] string lpFileName,
             out NativeHelpers.WIN32_FIND_DATA lpFindFileData);
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        internal static extern IntPtr FindFirstStreamW(
+            [MarshalAs(UnmanagedType.LPWStr)] string lpFIleName,
+            UInt32 InfoLevel,
+            out NativeHelpers.WIN32_FIND_STREAM_DATA lpFindStreamData,
+            UInt32 dwFlags);
+
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         internal static extern bool FindNextFileW(
             IntPtr hFindFile,
             out NativeHelpers.WIN32_FIND_DATA lpFindFileData);
+
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        internal static extern bool FindNextStreamW(
+            IntPtr hFindStream,
+            out NativeHelpers.WIN32_FIND_STREAM_DATA lpFindStreamData);
+
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        internal static extern UInt32 GetCompressedFileSizeW(
+            [MarshalAs(UnmanagedType.LPWStr)] string lpFileName,
+            out UInt32 lpFileSizeHigh);
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         internal static extern bool GetFileAttributesExW(
@@ -332,6 +404,18 @@ namespace Ansible.IO
             out IntPtr pSacl,
             [MarshalAs(UnmanagedType.Bool)] out bool lpbSaclDefaulted);
 
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public extern static bool GetVolumeInformationByHandleW(
+            SafeHandle hFile,
+            StringBuilder lpVolumeNameBuffer,
+            UInt32 nVolumeNameSize,
+            out UInt32 lpVolumeSerialNumber,
+            out UInt32 lpMaximumComponentLength,
+            out NativeHelpers.FileSystemFlags lpFileSystemFlags,
+            StringBuilder lpFileSystemNameBuffer,
+            UInt32 nFileSystemNameSize);
+
         [DllImport("kernel32.dll")]
         internal static extern IntPtr LocalFree(
             IntPtr hMem);
@@ -375,6 +459,14 @@ namespace Ansible.IO
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         internal static extern bool RemoveDirectoryW(
             [MarshalAs(UnmanagedType.LPWStr)] string lpPathName);
+    }
+
+    internal class VolumeInformation
+    {
+        internal string VolumeName;
+        internal string SystemName;
+        internal UInt32 SerialNumber;
+        internal NativeHelpers.FileSystemFlags SystemFlags;
     }
 
     internal static class Win32Marshal
@@ -504,6 +596,19 @@ namespace Ansible.IO
             }
         }
 
+        public static void Decrypt(string fullPath)
+        {
+            VolumeInformation info;
+            using (SafeHandle handle = OpenHandle(fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, FileOptions.None, null))
+                info = GetVolumeInformation(handle);
+
+            if (!info.SystemFlags.HasFlag(NativeHelpers.FileSystemFlags.SupportsEncryption))
+                throw new NotSupportedException(String.Format("The volume '{0}' does not support encryption", info.VolumeName.ToString()));
+
+            if (!NativeMethods.DecryptFileW(fullPath, 0))
+                throw new Win32Exception(Marshal.GetLastWin32Error(), String.Format("DecryptFileW({0}) failed", fullPath));
+        }
+
         public static void DeleteFile(string fullPath)
         {
             if (!NativeMethods.DeleteFileW(fullPath))
@@ -519,6 +624,19 @@ namespace Ansible.IO
             NativeHelpers.WIN32_FILE_ATTRIBUTE_DATA data = new NativeHelpers.WIN32_FILE_ATTRIBUTE_DATA();
             int lastError = FillAttributeInfo(fullPath, ref data, returnErrorOnNotFound: true);
             return (lastError == 0) && (data.dwFileAttributes != -1) && ((data.dwFileAttributes & (int)FileAttributes.Directory) != 0);
+        }
+
+        public static void Encrypt(string fullPath)
+        {
+            VolumeInformation info;
+            using (SafeHandle handle = OpenHandle(fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, FileOptions.None, null))
+                info = GetVolumeInformation(handle);
+
+            if (!info.SystemFlags.HasFlag(NativeHelpers.FileSystemFlags.SupportsEncryption))
+                throw new NotSupportedException(String.Format("The volume '{0}' does not support encryption", info.VolumeName.ToString()));
+
+            if (!NativeMethods.EncryptFileW(fullPath))
+                throw new Win32Exception(Marshal.GetLastWin32Error(), String.Format("EncryptFileW({0}) failed", fullPath));
         }
 
         internal static int FillAttributeInfo(string path, ref NativeHelpers.WIN32_FILE_ATTRIBUTE_DATA data, bool returnErrorOnNotFound)
@@ -590,6 +708,67 @@ namespace Ansible.IO
         public static DateTimeOffset GetLastAccessTime(string fullPath) { return (DateTimeOffset)GetFileAttributeData(fullPath).ftLastAccessTime; }
         public static DateTimeOffset GetLastWriteTime(string fullPath) { return (DateTimeOffset)GetFileAttributeData(fullPath).ftLastAccessTime; }
 
+        public static List<StreamInformation> GetStreamInfo(string fullPath)
+        {
+            VolumeInformation info;
+            using (SafeHandle volumeHandle = OpenHandle(fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, FileOptions.None, null))
+                info = GetVolumeInformation(volumeHandle);
+
+            if (!info.SystemFlags.HasFlag(NativeHelpers.FileSystemFlags.NamedStreams))
+                throw new NotSupportedException(String.Format("The volume '{0}' does not support named streams", info.VolumeName.ToString()));
+
+            List<StreamInformation> streams = new List<StreamInformation>();
+            NativeHelpers.WIN32_FIND_STREAM_DATA data = new NativeHelpers.WIN32_FIND_STREAM_DATA(); ;
+            IntPtr handle = NativeMethods.FindFirstStreamW(fullPath, 0, out data, 0);
+            if (handle.ToInt64() == -1)
+                throw Win32Marshal.GetExceptionForLastWin32Error(fullPath);
+
+            try
+            {
+                do
+                {
+                    string[] streamNameSplit = data.cStreamName.Split(':');
+                    StreamInformation streamInfo = new StreamInformation()
+                    {
+                        Length = data.StreamSize,
+                        StreamName = streamNameSplit[1],
+                        StreamPath = fullPath + data.cStreamName,
+                        StreamType = streamNameSplit[2],
+                    };
+                    streams.Add(streamInfo);
+                } while (NativeMethods.FindNextStreamW(handle, out data));
+
+                int errorCode = Marshal.GetLastWin32Error();
+                if (errorCode != Win32Errors.ERROR_SUCCESS && errorCode != Win32Errors.ERROR_HANDLE_EOF)
+                    throw Win32Marshal.GetExceptionForWin32Error(errorCode, fullPath);
+            }
+            finally
+            {
+                NativeMethods.FindClose(handle);
+            }
+
+            return streams;
+        }
+
+        public static VolumeInformation GetVolumeInformation(SafeHandle handle)
+        {
+            StringBuilder volumeName = new StringBuilder(261);  // MAX_PATH + 1
+            StringBuilder systemName = new StringBuilder(261);
+            UInt32 serialNumber;
+            UInt32 componentLength;
+            NativeHelpers.FileSystemFlags flagAttributes;
+            if (!NativeMethods.GetVolumeInformationByHandleW(handle, volumeName, (UInt32)volumeName.Capacity, out serialNumber, out componentLength, out flagAttributes, systemName, (UInt32)systemName.Capacity))
+                throw new Win32Exception(Marshal.GetLastWin32Error(), "Failed to get volume information");
+
+            return new VolumeInformation()
+            {
+                SerialNumber = serialNumber,
+                SystemName = systemName.ToString(),
+                SystemFlags = flagAttributes,
+                VolumeName = volumeName.ToString()
+            };
+        }
+
         public static void MoveDirectory(string sourceFullPath, string destFullPath)
         {
             if (!NativeMethods.MoveFileW(sourceFullPath, destFullPath))
@@ -659,6 +838,70 @@ namespace Ansible.IO
             return fileHandle;
         }
 
+        public static List<SparseAllocations> QuerySparseAllocatedRanges(string fullPath, Int64 offset, Int64 length)
+        {
+            List<SparseAllocations> ranges = new List<SparseAllocations>();
+            using (SafeFileHandle handle = NativeMethods.CreateFileW(fullPath, FileSystemRights.Read, FileShare.None,
+                null, FileMode.Open, NativeHelpers.FlagsAndAttributes.FILE_FLAG_BACKUP_SEMANTICS, IntPtr.Zero))
+            {
+                if (handle.IsInvalid)
+                    throw Win32Marshal.GetExceptionForLastWin32Error(fullPath);
+
+                Int64 rangeLength = length;
+                int errorCode = Win32Errors.ERROR_MORE_DATA;
+                while (errorCode == Win32Errors.ERROR_MORE_DATA)
+                {
+                    NativeHelpers.FILE_ALLOCATED_RANGE_BUFFER rangeBuffer = new NativeHelpers.FILE_ALLOCATED_RANGE_BUFFER()
+                    {
+                        FileOffset = offset,
+                        Length = rangeLength
+                    };
+                    Int32 bufferSize = Marshal.SizeOf(typeof(NativeHelpers.FILE_ALLOCATED_RANGE_BUFFER));
+                    IntPtr dataInfoPtr = Marshal.AllocHGlobal(bufferSize);
+
+                    try
+                    {
+                        Marshal.StructureToPtr(rangeBuffer, dataInfoPtr, false);
+                        IntPtr dataOutPtr = Marshal.AllocHGlobal(bufferSize);
+                        try
+                        {
+                            UInt32 bytesReturned;
+                            UInt32 FSCTL_QUERY_ALLOCATED_RANGES = 0x000940cf;
+                            if (!NativeMethods.DeviceIoControl(handle, FSCTL_QUERY_ALLOCATED_RANGES, dataInfoPtr, (UInt32)bufferSize, dataOutPtr, (UInt32)bufferSize, out bytesReturned, IntPtr.Zero))
+                                errorCode = Marshal.GetLastWin32Error();
+                            else
+                                errorCode = 0;
+
+                            if (bytesReturned == 0)
+                                continue;
+
+                            NativeHelpers.FILE_ALLOCATED_RANGE_BUFFER outBuffer = (NativeHelpers.FILE_ALLOCATED_RANGE_BUFFER)Marshal.PtrToStructure(dataOutPtr, typeof(NativeHelpers.FILE_ALLOCATED_RANGE_BUFFER));
+                            ranges.Add(new SparseAllocations()
+                            {
+                                FileOffset = outBuffer.FileOffset,
+                                Length = outBuffer.Length,
+                            });
+                            offset = outBuffer.FileOffset + outBuffer.Length;
+                            rangeLength = length - offset;
+                        }
+                        finally
+                        {
+                            Marshal.FreeHGlobal(dataOutPtr);
+                        }
+                    }
+                    finally
+                    {
+                        Marshal.FreeHGlobal(dataInfoPtr);
+                    }
+                }
+
+                if (errorCode != Win32Errors.ERROR_SUCCESS)
+                    throw Win32Marshal.GetExceptionForWin32Error(errorCode, fullPath);
+            }
+
+            return ranges;
+        }
+
         public static void RemoveDirectory(string fullPath, bool recursive)
         {
             if (!recursive)
@@ -674,22 +917,6 @@ namespace Ansible.IO
                 RemoveDirectoryInternal(fullPath, topLevel: true);
             else
                 RemoveDirectoryRecursive(fullPath, ref findData, topLevel: true);
-        }
-
-        public static void SetCompression(string fullPath, bool compress)
-        {
-            using (SafeFileHandle handle = NativeMethods.CreateFileW(fullPath, FileSystemRights.Read | FileSystemRights.Write, FileShare.None,
-                null, FileMode.Open, NativeHelpers.FlagsAndAttributes.FILE_FLAG_BACKUP_SEMANTICS, IntPtr.Zero))
-            {
-                if (handle.IsInvalid)
-                    throw Win32Marshal.GetExceptionForLastWin32Error(fullPath);
-
-                UInt32 bytesReturned = 0;
-                UInt16 compressionAlgo = (UInt16)(compress ? 1 : 0);
-                UInt32 FSCTL_SET_COMPRESSION = 0x0009C040;
-                if (!NativeMethods.DeviceIoControl(handle, FSCTL_SET_COMPRESSION, ref compressionAlgo, sizeof(UInt16), IntPtr.Zero, 0, out bytesReturned, IntPtr.Zero))
-                    throw Win32Marshal.GetExceptionForLastWin32Error(fullPath);
-            }
         }
 
         public static T GetAccessControl<T>(string fullpath, AccessControlSections includeSections) where T : ObjectSecurity, new()
@@ -874,12 +1101,14 @@ namespace Ansible.IO
                     }
                 }
 
+                bool setAgain = false;  // only set again if dacl/group/sacl is set
                 IntPtr pDacl = IntPtr.Zero;
                 bool daclPresent, daclDefaulted;
                 if (!NativeMethods.GetSecurityDescriptorDacl(securityInfo, out daclPresent, out pDacl, out daclDefaulted))
                     throw new Win32Exception(Marshal.GetLastWin32Error(), "GetSecurityDescriptorDacl() failed");
                 if (daclPresent)
                 {
+                    setAgain = true;
                     securityInformation |= NativeHelpers.SECURITY_INFORMATION.DACL_SECURITY_INFORMATION;
                     securityInformation |= (control & NativeHelpers.SECURITY_DESCRIPTOR_CONTROL.SE_DACL_PROTECTED) != 0
                         ? NativeHelpers.SECURITY_INFORMATION.PROTECTED_DACL_SECURITY_INFORMATION
@@ -891,7 +1120,10 @@ namespace Ansible.IO
                 if (!NativeMethods.GetSecurityDescriptorGroup(securityInfo, out pGroup, out groupDefaulted))
                     throw new Win32Exception(Marshal.GetLastWin32Error(), "GetSecurityDescriptorGroup() failed");
                 if (pGroup != IntPtr.Zero)
+                {
+                    setAgain = true;
                     securityInformation |= NativeHelpers.SECURITY_INFORMATION.GROUP_SECURITY_INFORMATION;
+                }
 
                 IntPtr pSacl = IntPtr.Zero;
                 bool saclPresent, saclDefaulted;
@@ -899,6 +1131,7 @@ namespace Ansible.IO
                     throw new Win32Exception(Marshal.GetLastWin32Error(), "GetSecurityDescriptorSacl() failed");
                 if (saclPresent)
                 {
+                    setAgain = true;
                     securityInformation |= NativeHelpers.SECURITY_INFORMATION.SACL_SECURITY_INFORMATION;
                     securityInformation |= (control & NativeHelpers.SECURITY_DESCRIPTOR_CONTROL.SE_SACL_PROTECTED) != 0
                         ? NativeHelpers.SECURITY_INFORMATION.PROTECTED_SACL_SECURITY_INFORMATION
@@ -906,11 +1139,14 @@ namespace Ansible.IO
                     privileges.Add("SeSecurityPrivilege");
                 }
 
-                using (new PrivilegeEnabler(privileges.ToArray()))
+                if (setAgain)
                 {
-                    UInt32 res = NativeMethods.SetNamedSecurityInfoW(fullPath, NativeHelpers.SE_OBJECT_TYPE.SE_FILE_OBJECT, securityInformation, pOwner, pGroup, pDacl, pSacl);
-                    if (res != Win32Errors.ERROR_SUCCESS)
-                        throw Win32Marshal.GetExceptionForWin32Error((int)res, fullPath);
+                    using (new PrivilegeEnabler(privileges.ToArray()))
+                    {
+                        UInt32 res = NativeMethods.SetNamedSecurityInfoW(fullPath, NativeHelpers.SE_OBJECT_TYPE.SE_FILE_OBJECT, securityInformation, pOwner, pGroup, pDacl, pSacl);
+                        if (res != Win32Errors.ERROR_SUCCESS)
+                            throw Win32Marshal.GetExceptionForWin32Error((int)res, fullPath);
+                    }
                 }
             }
             finally
@@ -919,14 +1155,58 @@ namespace Ansible.IO
             }
         }
 
-        public static void SetAttributes(string fullPath, FileAttributes attributes)
+        public static void SetAttributes(string fullPath, FileAttributes attributes, FileAttributes existingAttributes)
         {
+            if (attributes.HasFlag(FileAttributes.SparseFile) && !existingAttributes.HasFlag(FileAttributes.SparseFile))
+                SetSparseFlag(fullPath, true);  // will overwrite the existing file so we call this first
+            else if (!attributes.HasFlag(FileAttributes.SparseFile) && existingAttributes.HasFlag(FileAttributes.SparseFile))
+                SetSparseFlag(fullPath, false);  // this could be dangerous if the file still has unfilled sparse regions
+
             if (!NativeMethods.SetFileAttributesW(fullPath, attributes))
             {
                 int errorCode = Marshal.GetLastWin32Error();
                 if (errorCode == Win32Errors.ERROR_INVALID_PARAMETER)
                     throw new ArgumentException("Invalid File or Directory attributes value.", "attributes");
                 throw Win32Marshal.GetExceptionForWin32Error(errorCode, fullPath);
+            }
+
+            if (attributes.HasFlag(FileAttributes.Compressed) && !existingAttributes.HasFlag(FileAttributes.Compressed))
+                SetCompression(fullPath, true);
+            else if (!attributes.HasFlag(FileAttributes.Compressed) && existingAttributes.HasFlag(FileAttributes.Compressed))
+                SetCompression(fullPath, false);
+
+            if (attributes.HasFlag(FileAttributes.Encrypted) && !existingAttributes.HasFlag(FileAttributes.Encrypted))
+                Encrypt(fullPath);
+            else if (!attributes.HasFlag(FileAttributes.Encrypted) && existingAttributes.HasFlag(FileAttributes.Encrypted))
+                Decrypt(fullPath);
+        }
+
+        public static void SetCompression(string fullPath, bool compress)
+        {
+            using (SafeFileHandle handle = NativeMethods.CreateFileW(fullPath, FileSystemRights.Read | FileSystemRights.Write, FileShare.None,
+                null, FileMode.Open, NativeHelpers.FlagsAndAttributes.FILE_FLAG_BACKUP_SEMANTICS, IntPtr.Zero))
+            {
+                if (handle.IsInvalid)
+                    throw Win32Marshal.GetExceptionForLastWin32Error(fullPath);
+
+                VolumeInformation info = GetVolumeInformation(handle);
+                if (!info.SystemFlags.HasFlag(NativeHelpers.FileSystemFlags.FileCompression))
+                    throw new NotSupportedException(String.Format("The volume '{0}' does not support compression", info.VolumeName.ToString()));
+
+                UInt16 compressionAlgo = (UInt16)(compress ? 1 : 0);
+                IntPtr algoPointer = Marshal.AllocHGlobal(sizeof(UInt16));
+                try
+                {
+                    Marshal.Copy(BitConverter.GetBytes(compressionAlgo), 0, algoPointer, sizeof(UInt16));
+                    UInt32 bytesReturned = 0;
+                    UInt32 FSCTL_SET_COMPRESSION = 0x0009C040;
+                    if (!NativeMethods.DeviceIoControl(handle, FSCTL_SET_COMPRESSION, algoPointer, sizeof(UInt16), IntPtr.Zero, 0, out bytesReturned, IntPtr.Zero))
+                        throw Win32Marshal.GetExceptionForLastWin32Error(fullPath);
+                }
+                finally
+                {
+                    Marshal.FreeHGlobal(algoPointer);
+                }
             }
         }
 
@@ -945,6 +1225,80 @@ namespace Ansible.IO
                     throw Win32Marshal.GetExceptionForLastWin32Error(fullPath);
             }
         }
+
+        public static void SetSparseFlag(string fullPath, bool sparse)
+        {
+            using (SafeFileHandle handle = NativeMethods.CreateFileW(fullPath, FileSystemRights.Write, FileShare.None,
+                null, FileMode.OpenOrCreate, NativeHelpers.FlagsAndAttributes.FILE_FLAG_BACKUP_SEMANTICS, IntPtr.Zero))
+            {
+                if (handle.IsInvalid)
+                    throw Win32Marshal.GetExceptionForLastWin32Error(fullPath);
+
+                VolumeInformation info = GetVolumeInformation(handle);
+                if (!info.SystemFlags.HasFlag(NativeHelpers.FileSystemFlags.SupportsSparseFiles))
+                    throw new NotSupportedException(String.Format("The volume '{0}' does not support sparse files", info.VolumeName.ToString()));
+
+                byte[] setSparse = new byte[1];
+                setSparse[0] = Convert.ToByte(sparse);
+                IntPtr setSparsePtr = Marshal.AllocHGlobal(setSparse.Length);
+                try
+                {
+                    Marshal.Copy(setSparse, 0, setSparsePtr, setSparse.Length);
+                    UInt32 bytesReturned = 0;
+                    UInt32 FSCTL_SET_SPARSE = 0x000900c4;
+                    if (!NativeMethods.DeviceIoControl(handle, FSCTL_SET_SPARSE, setSparsePtr, (UInt32)setSparse.Length, IntPtr.Zero, 0, out bytesReturned, IntPtr.Zero))
+                        throw Win32Marshal.GetExceptionForLastWin32Error(fullPath);
+                }
+                finally
+                {
+                    Marshal.FreeHGlobal(setSparsePtr);
+                }
+            }
+        }
+
+        public static void SetSparseZeroData(string fullPath, Int64 offset, Int64 length)
+        {
+            using (SafeFileHandle handle = NativeMethods.CreateFileW(fullPath, FileSystemRights.Write, FileShare.None,
+                null, FileMode.Open, NativeHelpers.FlagsAndAttributes.FILE_FLAG_BACKUP_SEMANTICS, IntPtr.Zero))
+            {
+                if (handle.IsInvalid)
+                    throw Win32Marshal.GetExceptionForLastWin32Error(fullPath);
+
+                NativeHelpers.FILE_ZERO_DATA_INFORMATION dataInfo = new NativeHelpers.FILE_ZERO_DATA_INFORMATION()
+                {
+                    FileOffset = offset,
+                    BeyondFinalZero = offset + length
+                };
+                Int32 bufferSize = Marshal.SizeOf(typeof(NativeHelpers.FILE_ZERO_DATA_INFORMATION));
+                IntPtr dataInfoPtr = Marshal.AllocHGlobal(bufferSize);
+                try
+                {
+                    Marshal.StructureToPtr(dataInfo, dataInfoPtr, false);
+                    UInt32 bytesReturned = 0;
+                    UInt32 FSCTL_SET_ZERO_DATA = 0x000980c8;
+                    if (!NativeMethods.DeviceIoControl(handle, FSCTL_SET_ZERO_DATA, dataInfoPtr, (UInt32)bufferSize, IntPtr.Zero, 0, out bytesReturned, IntPtr.Zero))
+                        throw Win32Marshal.GetExceptionForLastWin32Error(fullPath);
+                }
+                finally
+                {
+                    Marshal.FreeHGlobal(dataInfoPtr);
+                }
+            }
+        }
+    }
+
+    public class SparseAllocations
+    {
+        public Int64 FileOffset;
+        public Int64 Length;
+    }
+
+    public class StreamInformation
+    {
+        public Int64 Length;
+        public string StreamName;
+        public string StreamPath;
+        public string StreamType;
     }
 
     public abstract class FileSystemInfo : MarshalByRefObject
@@ -952,6 +1306,8 @@ namespace Ansible.IO
         // -1 is not initialized, else the res of getting the file attribute data
         private int _dataInitialized = -1;
         private NativeHelpers.WIN32_FILE_ATTRIBUTE_DATA _data;
+        private UInt32 _diskLengthLow;
+        private UInt32 _diskLengthHigh;
 
         protected string FullPath;
         protected string OriginalPath;
@@ -1050,6 +1406,15 @@ namespace Ansible.IO
             }
         }
 
+        internal long DiskLengthCore
+        {
+            get
+            {
+                EnsureDataInitialized();
+                return ((long)_diskLengthHigh) << 32 | _diskLengthLow & 0xFFFFFFFFL;
+            }
+        }
+
         internal long LengthCore
         {
             get
@@ -1071,7 +1436,7 @@ namespace Ansible.IO
             }
             set
             {
-                FileSystem.SetAttributes(FullPath, value);
+                FileSystem.SetAttributes(FullPath, value, (FileAttributes)_data.dwFileAttributes);
                 _dataInitialized = -1;
             }
         }
@@ -1081,6 +1446,8 @@ namespace Ansible.IO
             if (_dataInitialized == -1)
             {
                 _data = new NativeHelpers.WIN32_FILE_ATTRIBUTE_DATA();
+                _diskLengthLow = 0;
+                _diskLengthHigh = 0;
                 Refresh();
             }
 
@@ -1090,7 +1457,12 @@ namespace Ansible.IO
 
         public void Compress() { FileSystem.SetCompression(FullPath, true); }
         public void Decompress() { FileSystem.SetCompression(FullPath, false); }
-        public void Refresh() { _dataInitialized = FileSystem.FillAttributeInfo(FullPath, ref _data, returnErrorOnNotFound: false); }
+        public void Refresh()
+        {
+            _dataInitialized = FileSystem.FillAttributeInfo(FullPath, ref _data, returnErrorOnNotFound: false);
+            _diskLengthHigh = 0xFFFFFFFF;
+            _diskLengthLow = NativeMethods.GetCompressedFileSizeW(FullName, out _diskLengthHigh);
+        }
     }
 
     public static class Directory
@@ -1371,22 +1743,14 @@ namespace Ansible.IO
         }
         public static StreamWriter CreateText(string path) { return new StreamWriter(Open(path, FileMode.Create, FileAccess.ReadWrite)); }
         public static void Decompress(string path) { FileSystem.SetCompression(Ansible.IO.Path.CheckAndGetFullPath(path), false); }
-        public static void Decrypt(string path)
-        {
-            if (!NativeMethods.DecryptFileW(path, 0))
-                throw new Win32Exception(Marshal.GetLastWin32Error(), String.Format("DecryptFileW({0}) failed", path));
-        }
+        public static void Decrypt(string path) { FileSystem.Decrypt(Ansible.IO.Path.CheckAndGetFullPath(path)); }
         public static void Delete(string path)
         {
             if (path == null)
                 throw new ArgumentNullException("path");
             FileSystem.DeleteFile(Ansible.IO.Path.GetFullPath(path));
         }
-        public static void Encrypt(string path)
-        {
-            if (!NativeMethods.EncryptFileW(path))
-                throw new Win32Exception(Marshal.GetLastWin32Error(), String.Format("EncryptFileW({0}) failed", path));
-        }
+        public static void Encrypt(string path) { FileSystem.Encrypt(Ansible.IO.Path.CheckAndGetFullPath(path)); }
         public static bool Exists(string path) { return new FileInfo(path).Exists; }
         public static FileSecurity GetAccessControl(string path) { return GetAccessControl(path, AccessControlSections.Access | AccessControlSections.Group | AccessControlSections.Owner); }
         public static FileSecurity GetAccessControl(string path, AccessControlSections includeSections) { return FileSystem.GetAccessControl<FileSecurity>(path, includeSections); }
@@ -1397,6 +1761,7 @@ namespace Ansible.IO
         public static DateTime GetLastAccessTimeUtc(string path) { return FileSystem.GetLastAccessTime(Ansible.IO.Path.GetFullPath(path)).UtcDateTime; }
         public static DateTime GetLastWriteTime(string path) { return FileSystem.GetLastWriteTime(Ansible.IO.Path.GetFullPath(path)).LocalDateTime; }
         public static DateTime GetLastWriteTimeUtc(string path) { return FileSystem.GetLastWriteTime(Ansible.IO.Path.GetFullPath(path)).UtcDateTime; }
+        public static List<StreamInformation> GetStreamInfo(string path) { return FileSystem.GetStreamInfo(Ansible.IO.Path.CheckAndGetFullPath(path)); }
         public static void Move(string sourceFileName, string destFileName)
         {
             string fullSourceFileName = Ansible.IO.Path.CheckAndGetFullPath(sourceFileName);
@@ -1479,7 +1844,12 @@ namespace Ansible.IO
                 ignoreMetadataErrors);
         }
         public static void SetAccessControl(string path, FileSecurity fileSecurity) { FileSystem.SetAccessControl(path, fileSecurity); }
-        public static void SetAttributes(string path, FileAttributes fileAttributes) { FileSystem.SetAttributes(Ansible.IO.Path.GetFullPath(path), fileAttributes); }
+        public static void SetAttributes(string path, FileAttributes fileAttributes)
+        {
+            string fullPath = Ansible.IO.Path.GetFullPath(path);
+            FileAttributes existingAttributes = File.GetAttributes(fullPath);
+            FileSystem.SetAttributes(fullPath, fileAttributes, existingAttributes);
+        }
         public static void SetCreationTime(string path, DateTime creationTime) { SetCreationTimeUtc(path, creationTime.ToUniversalTime()); }
         public static void SetCreationTimeUtc(string path, DateTime creationTimeUtc) { FileSystem.SetFileTime(Ansible.IO.Path.GetFullPath(path), false, creationTimeUtc, null, null); }
         public static void SetLastAccessTime(string path, DateTime lastAccessTime) { SetLastAccessTimeUtc(path, lastAccessTime.ToUniversalTime()); }
@@ -1551,6 +1921,15 @@ namespace Ansible.IO
             }
 
         }
+        public long DiskLength
+        {
+            get
+            {
+                if (Attributes.HasFlag(FileAttributes.Directory))
+                    throw new FileNotFoundException(String.Format("Could not find file '{0}'.", FullPath), FullPath);
+                return DiskLengthCore;
+            }
+        }
         public long Length
         {
             get
@@ -1571,11 +1950,12 @@ namespace Ansible.IO
         }
         public FileStream Create() { return File.Create(FullPath); }
         public StreamWriter CreateText() { return File.CreateText(FullPath); }
-        public void Decrypt() { File.Decrypt(FullPath); }
+        public void Decrypt() { FileSystem.Decrypt(FullPath); }
         public override void Delete() { File.Delete(FullPath); }
-        public void Encrypt() { File.Encrypt(FullPath); }
+        public void Encrypt() { FileSystem.Encrypt(FullPath); }
         public FileSecurity GetAccessControl() { return GetAccessControl(AccessControlSections.Access | AccessControlSections.Group | AccessControlSections.Owner); }
         public FileSecurity GetAccessControl(AccessControlSections includeSelections) { return FileSystem.GetAccessControl<FileSecurity>(FullPath, includeSelections); }
+        public List<StreamInformation> GetStreamInfo() { return FileSystem.GetStreamInfo(FullPath); }
         public void MoveTo(string destFileName)
         {
             string fullDestFileName = Ansible.IO.Path.CheckAndGetFullPath(destFileName);
@@ -1638,10 +2018,7 @@ namespace Ansible.IO
             if (path.IndexOf('\0') != -1)
                 throw new ArgumentException("The path is not of a legal form.", "path");
 
-            // if starting with \\?\ don't parse and return as is, it should not be relative
-            if (path.StartsWith(@"\\?\"))
-                return path;
-
+            // Actual .NET returns the path if \\?\ is used, this is different from the behaviour of GetFullPathNameW which resolves relative paths which we want
             UInt32 bufferLength = 0;
             StringBuilder lpBuffer = new StringBuilder();
             IntPtr lpFilePart = IntPtr.Zero;
@@ -1784,6 +2161,23 @@ namespace Ansible.IO
                 : path;
         }
     }
+
+    public static class SparseFile
+    {
+        public static void AddSparseAttribute(string path) { FileSystem.SetSparseFlag(Ansible.IO.Path.CheckAndGetFullPath(path), true); }
+        public static List<SparseAllocations> GetAllAllocations(string path)
+        {
+            Ansible.IO.FileInfo fileInfo = new Ansible.IO.FileInfo(path);
+            return FileSystem.QuerySparseAllocatedRanges(fileInfo.FullName, 0, fileInfo.Length);
+        }
+        public static List<SparseAllocations> GetAllocations(string path, Int64 offset, Int64 length) { return FileSystem.QuerySparseAllocatedRanges(Ansible.IO.Path.CheckAndGetFullPath(path), offset, length); }
+        public static long GetDiskSize(string path) { return new Ansible.IO.FileInfo(path).DiskLength; }
+        public static long GetFileSize(string path) { return new Ansible.IO.FileInfo(path).Length; }
+
+        public static bool IsSparseFile(string path) { return File.GetAttributes(Ansible.IO.Path.CheckAndGetFullPath(path)).HasFlag(FileAttributes.SparseFile); }
+        public static void RemoveSparseAttribute(string path) { FileSystem.SetSparseFlag(Ansible.IO.Path.CheckAndGetFullPath(path), false); }
+        public static void ZeroData(string path, Int64 offset, Int64 length) { FileSystem.SetSparseZeroData(Ansible.IO.Path.CheckAndGetFullPath(path), offset, length); }
+    }
 }
 '@
 
@@ -1800,6 +2194,9 @@ Function Import-FileUtil {
         Ansible.IO.File
         Ansible.IO.FileInfo
         Ansible.IO.Path
+
+    Also adds Ansible.IO.SparseFile that exposes methods that deal with sparse
+    files.
 
     By default they won't automatically work with paths that exceed 260 chars
     but by prefixing an existing path with \\?\ it will work, e.g.

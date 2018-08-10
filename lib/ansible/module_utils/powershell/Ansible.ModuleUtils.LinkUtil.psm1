@@ -126,13 +126,6 @@ namespace Ansible.LinkUtil
             IntPtr lpOverlapped);
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        internal static extern UInt32 GetFullPathNameW(
-            [MarshalAs(UnmanagedType.LPWStr)] string lpFileName,
-            UInt32 nBufferLength,
-            StringBuilder lpBuffer,
-            out IntPtr lpFilePart);
-
-        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         internal static extern bool GetVolumePathNameW(
             string lpszFileName,
             StringBuilder lpszVolumePathName,
@@ -326,7 +319,7 @@ namespace Ansible.LinkUtil
             string absolutePath;
 
             if (isRelative)
-                absolutePath = ResolveRelativePath(targetPath, Ansible.IO.Path.GetDirectoryName(linkPath));
+                absolutePath = Ansible.IO.Path.GetFullPath(Ansible.IO.Path.Combine(Ansible.IO.Path.GetDirectoryName(linkPath), targetPath));
             else
             {
                 // Remove the NT object namespace \??\, \DosDevices\ and get a normal Win32 path
@@ -439,24 +432,6 @@ namespace Ansible.LinkUtil
                     reparseHeaderSize + buffer.ReparseDataLength, IntPtr.Zero, 0, out bytesReturned, IntPtr.Zero))
                     throw new Win32Exception(String.Format("DeviceIoControl() failed to create junction point at {0} to {1}", linkPath, linkTarget));
             }
-        }
-
-        private static string ResolveRelativePath(string path, string location)
-        {
-            // Cannot use Path.GetFullPath as it will return path if it starts with \\?\
-            path = Ansible.IO.Path.Combine(location, path);
-
-            UInt32 bufferLength = 0;
-            StringBuilder lpBuffer = new StringBuilder();
-            IntPtr lpFilePart = IntPtr.Zero;
-            UInt32 returnLength = NativeMethods.GetFullPathNameW(path, bufferLength, lpBuffer, out lpFilePart);
-
-            lpBuffer.EnsureCapacity((int)returnLength);
-            returnLength = NativeMethods.GetFullPathNameW(path, returnLength, lpBuffer, out lpFilePart);
-            if (returnLength == 0)
-                throw new Win32Exception(Marshal.GetLastWin32Error(), String.Format("GetFullPathName({0}, {1}) failed when getting full path", path, returnLength));
-
-            return lpBuffer.ToString();
         }
     }
 }

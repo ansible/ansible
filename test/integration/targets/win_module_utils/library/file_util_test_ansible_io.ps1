@@ -84,6 +84,7 @@ Function Test-FileClass($root_path) {
     Assert-Equals -actual $file.CreationTimeUtc.ToFileTimeUtc() -expected 0
     Assert-Equals -actual $file.Directory.FullName -expected $root_path
     Assert-Equals -actual $file.DirectoryName -expected $root_path
+    Assert-Equals -actual $file.DiskLength -expected $null
     Assert-Equals -actual $file.Exists -expected $false
     Assert-Equals -actual $file.Extension -expected ".txt"
     Assert-Equals -actual $file.FullName -expected $file_path
@@ -102,6 +103,7 @@ Function Test-FileClass($root_path) {
     Assert-Equals -actual ($file.CreationTimeUtc.ToFileTimeUtc() -ge $current_time) -expected $true
     Assert-Equals -actual $file.Directory.FullName -expected $root_path
     Assert-Equals -actual $file.DirectoryName -expected $root_path
+    Assert-Equals -actual $file.DiskLength -expected 0
     Assert-Equals -actual $file.Exists -expected $true
     Assert-Equals -actual $file.Extension -expected ".txt"
     Assert-Equals -actual $file.FullName -expected $file_path
@@ -230,7 +232,25 @@ Function Test-FileClass($root_path) {
         $file.Decrypt()
         $file.Refresh()
         Assert-Equals $file.Attributes.HasFlag([System.IO.FileAttributes]::Encrypted) -expected $false
+
+        # try setting through attributes (this cannot be done in System.IO.* but we implemented here)
+        $file.Attributes = [System.IO.FileAttributes]::Encrypted
+        $file.Refresh()
+        Assert-Equals $file.Attributes.HasFlag([System.IO.FileAttributes]::Encrypted) -expected $true
+
+        $file.Attributes = [System.IO.FileAttributes]::Normal
+        $file.Refresh()
+        Assert-Equals $file.Attributes.HasFlag([System.IO.FileAttributes]::Encrypted) -expected $false
     }
+
+    # set sparse through attribute (this cannot be done in System.IO.* but we implemented here)
+    $file.Attributes = [System.IO.FileAttributes]::SparseFile
+    $file.Refresh()
+    Assert-Equals $file.Attributes.HasFlag([System.IO.FileAttributes]::SparseFile) -expected $true
+
+    $file.Attributes = [System.IO.FileAttributes]::Normal
+    $file.Refresh()
+    Assert-Equals $file.Attributes.HasFlag([System.IO.FileAttributes]::SparseFile) -expected $false
 
     $original_hash = Get-AnsibleFileHash -Path $copied_file.FullName
     $copied_file.MoveTo("$root_path\moved.txt")
@@ -335,6 +355,50 @@ Function Test-FileClass($root_path) {
     }
     $file_contents = ([System.Text.Encoding]::UTF8).GetString($file_bytes)
     Assert-Equals -actual $file_contents -expected "!!"
+
+    # test out alternative streams
+    $actual = $file.GetStreamInfo()
+    Assert-Equals -actual $actual.Count -expected 1
+    Assert-Equals -actual $actual[0].GetType().FullName -expected "Ansible.IO.StreamInformation"
+    $actual = [Ansible.IO.File]::GetStreamInfo($file.FullName)
+    Assert-Equals -actual $actual.Count -expected 1
+    Assert-Equals -actual $actual[0].GetType().FullName -expected "Ansible.IO.StreamInformation"
+    Assert-Equals -actual $actual[0].Length -expected 2
+    Assert-Equals -actual $actual[0].StreamName -expected ""
+    Assert-Equals -actual $actual[0].StreamPath -expected "$($file.FullName)::`$DATA"
+    Assert-Equals -actual $actual[0].StreamType -expected '$DATA'
+
+    # write to the alternative streams
+    [Ansible.IO.File]::WriteAllText($file.FullName, "default stream")
+    [Ansible.IO.File]::WriteAllText("$($file.FullName):alternative stream 1", "alternative stream 1")
+    [Ansible.IO.File]::WriteAllText("$($file.FullName):alternative stream 2:`$DATA", "alternative stream 2")
+    $actual = [Ansible.IO.File]::GetStreamInfo($file.FullName)
+    Assert-Equals -actual $actual.Count -expected 3
+    Assert-Equals -actual $actual[0].GetType().FullName -expected "Ansible.IO.StreamInformation"
+    $actual = [Ansible.IO.FIle]::GetStreamInfo($file.FullName)
+    Assert-Equals -actual $actual.Count -expected 3
+    Assert-Equals -actual $actual[0].Length -expected 14
+    Assert-Equals -actual $actual[0].StreamName -expected ""
+    Assert-Equals -actual $actual[0].StreamPath -expected "$($file.FullName)::`$DATA"
+    Assert-Equals -actual $actual[0].StreamType -expected '$DATA'
+    Assert-Equals -actual $actual[1].Length -expected 20
+    Assert-Equals -actual $actual[1].StreamName -expected "alternative stream 1"
+    Assert-Equals -actual $actual[1].StreamPath -expected "$($file.FullName):alternative stream 1:`$DATA"
+    Assert-Equals -actual $actual[1].StreamType -expected '$DATA'
+    Assert-Equals -actual $actual[2].Length -expected 20
+    Assert-Equals -actual $actual[2].StreamName -expected "alternative stream 2"
+    Assert-Equals -actual $actual[2].StreamPath -expected "$($file.FullName):alternative stream 2:`$DATA"
+    Assert-Equals -actual $actual[2].StreamType -expected '$DATA'
+
+    # test that we can use the path returned by a StreamInformation object
+    $actual_stream1 = [Ansible.IO.File]::ReadAllText($actual[0].StreamPath)
+    $actual_stream2 = [Ansible.IO.File]::ReadAllText($actual[1].StreamPath)
+    $actual_stream3 = [Ansible.IO.File]::ReadAllText($actual[2].StreamPath)
+    $actual_stream_manual = [Ansible.IO.File]::ReadAllText("$($file.FullName):alternative stream 1")
+    Assert-Equals -actual $actual_stream1 -expected "default stream"
+    Assert-Equals -actual $actual_stream2 -expected "alternative stream 1"
+    Assert-Equals -actual $actual_stream3 -expected "alternative stream 2"
+    Assert-Equals -actual $actual_stream_manual -expected "alternative stream 1"
 
     $current_sid = ([System.Security.Principal.WindowsIdentity]::GetCurrent()).User
     $everyone_sid = New-Object -TypeName System.Security.Principal.SecurityIdentifier -ArgumentList "S-1-1-0"
@@ -725,6 +789,16 @@ Function Test-DirectoryClass($root_path) {
     $actual = $dir.Attributes
     Assert-Equals -actual $actual.HasFlag([System.IO.FileAttributes]::Compressed) -expected $false
 
+    # set through attributes - System.IO does not offer this
+    $dir.Attributes = [System.IO.FileAttributes]::Compressed
+    $dir.Refresh()
+    Assert-Equals -actual $dir.Attributes.HasFlag([System.IO.FileAttributes]::Compressed) -expected $true
+
+    $dir.Decompress()
+    $dir.Attributes = [System.IO.FileAttributes]::Directory
+    $dir.Refresh()
+    Assert-Equals -actual $dir.Attributes.HasFlag([System.IO.FileAttributes]::Compressed) -expected $false
+
     [Ansible.IO.Directory]::Compress($dir.FullName)
     $actual = [Ansible.IO.File]::GetAttributes($dir.FullName)
     Assert-Equals -actual $actual.HasFlag([System.IO.FileAttributes]::Compressed) -expected $true
@@ -983,7 +1057,7 @@ Function Test-DirectoryClass($root_path) {
             $acl_dir.SetAccessControl($dir_sec)
         } catch {
             $failed = $true
-            Assert-Equals -actual $_.Exception.Message -expected "Exception calling `"SetAccessControl`" with `"1`" argument(s): `"AdjustTokenPrivileges() failed (Not all privileges or groups referenced are assigned to the caller, Win32ErrorCode 1300)`""
+            Assert-Equals -actual $_.Exception.Message -expected "Exception calling `"SetAccessControl`" with `"1`" argument(s): `"Failed to enable privilege(s) SeSecurityPrivilege: AdjustTokenPrivileges() failed (Not all privileges or groups referenced are assigned to the caller, Win32ErrorCode 1300)`""
         }
         Assert-Equals -actual $failed -expected $true
     }
@@ -1471,15 +1545,15 @@ Function Test-IOPath($root_path) {
     Assert-Equals -actual ([Ansible.IO.Path]::GetFileNameWithoutExtension("\\127.0.0.1\c$\path\dir\file.")) -expected "file"
     Assert-Equals -actual ([Ansible.IO.Path]::GetFileNameWithoutExtension("\\?\UNC\127.0.0.1\c$\path\$long_path\dir\file.")) -expected "file"
 
-    # GetFullPath - custom impl, heavy scrutiny
+    # GetFullPath - we differ a bit from the latest System.IO.Path.GetFullPath where we still resolve if the prefix starts with \\?\
     Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("C:\path\dir")) -expected "C:\path\dir"
     Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("C:/path/dir")) -expected "C:\path\dir"
     Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\C:\path\dir")) -expected "\\?\C:\path\dir"
-    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\C:\path/dir")) -expected "\\?\C:\path/dir"
+    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\C:\path/dir")) -expected "\\?\C:\path\dir"
     Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\C:\path\$long_path\dir")) -expected "\\?\C:\path\$long_path\dir"
     Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\127.0.0.1\c$\path\dir")) -expected "\\127.0.0.1\c$\path\dir"
     Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\UNC\127.0.0.1\c$\path\$long_path\dir")) -expected "\\?\UNC\127.0.0.1\c$\path\$long_path\dir"
-    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\UNC\127.0.0.1\c$\path/$long_path\dir")) -expected "\\?\UNC\127.0.0.1\c$\path/$long_path\dir"
+    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\UNC\127.0.0.1\c$\path/$long_path\dir")) -expected "\\?\UNC\127.0.0.1\c$\path\$long_path\dir"
 
     Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("C:\path\dir\file.txt")) -expected "C:\path\dir\file.txt"
     Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("C:/path/dir/file.txt")) -expected "C:\path\dir\file.txt"
@@ -1488,14 +1562,14 @@ Function Test-IOPath($root_path) {
     Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\127.0.0.1\c$\path\dir\file.txt")) -expected "\\127.0.0.1\c$\path\dir\file.txt"
     Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\127.0.0.1\c$\path\dir/file.txt")) -expected "\\127.0.0.1\c$\path\dir\file.txt"
     Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\UNC\127.0.0.1\c$\path\$long_path\dir\file.txt")) -expected "\\?\UNC\127.0.0.1\c$\path\$long_path\dir\file.txt"
-    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\UNC\127.0.0.1\c$\path\$long_path\dir/file.txt")) -expected "\\?\UNC\127.0.0.1\c$\path\$long_path\dir/file.txt"
+    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\UNC\127.0.0.1\c$\path\$long_path\dir/file.txt")) -expected "\\?\UNC\127.0.0.1\c$\path\$long_path\dir\file.txt"
 
     Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("C:\path\dir\file.")) -expected "C:\path\dir\file"
     Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("C:/path/dir/file.")) -expected "C:\path\dir\file"
-    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\C:\path\dir\file.")) -expected "\\?\C:\path\dir\file."
-    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\C:\path\$long_path\dir\file.")) -expected "\\?\C:\path\$long_path\dir\file."
+    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\C:\path\dir\file.")) -expected "\\?\C:\path\dir\file"
+    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\C:\path\$long_path\dir\file.")) -expected "\\?\C:\path\$long_path\dir\file"
     Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\127.0.0.1\c$\path\dir\file.")) -expected "\\127.0.0.1\c$\path\dir\file"
-    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\UNC\127.0.0.1\c$\path\dir\file.")) -expected "\\?\UNC\127.0.0.1\c$\path\dir\file."
+    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\UNC\127.0.0.1\c$\path\dir\file.")) -expected "\\?\UNC\127.0.0.1\c$\path\dir\file"
 
     $failed = $false
     try {
@@ -1525,11 +1599,11 @@ Function Test-IOPath($root_path) {
     Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\C")) -expected "\\?\C"
     Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\C:")) -expected "\\?\C:"
     Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\C:\")) -expected "\\?\C:\"
-    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\C:/")) -expected "\\?\C:/"
+    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\C:/")) -expected "\\?\C:\"
     Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\C:\a")) -expected "\\?\C:\a"
-    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\C:/a")) -expected "\\?\C:/a"
-    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\C:/a/")) -expected "\\?\C:/a/"
-    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\C:/a/b")) -expected "\\?\C:/a/b"
+    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\C:/a")) -expected "\\?\C:\a"
+    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\C:/a/")) -expected "\\?\C:\a\"
+    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\C:/a/b")) -expected "\\?\C:\a\b"
 
     Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\server\share")) -expected "\\server\share"
     Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\server\share\")) -expected "\\server\share\"
@@ -1546,9 +1620,9 @@ Function Test-IOPath($root_path) {
     Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\UNC\server\share")) -expected "\\?\UNC\server\share"
     Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\UNC\server\share\")) -expected "\\?\UNC\server\share\"
     Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\UNC\server\share\path")) -expected "\\?\UNC\server\share\path"
-    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\UNC\server/share\path")) -expected "\\?\UNC\server/share\path"
-    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\UNC\server/share\path\")) -expected "\\?\UNC\server/share\path\"
-    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\UNC\server/share\path/")) -expected "\\?\UNC\server/share\path/"
+    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\UNC\server/share\path")) -expected "\\?\UNC\server\share\path"
+    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\UNC\server/share\path\")) -expected "\\?\UNC\server\share\path\"
+    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\UNC\server/share\path/")) -expected "\\?\UNC\server\share\path\"
 
     Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?/UNC")) -expected "\\?\UNC"
     Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?/UNC/")) -expected "\\?\UNC\"
@@ -1559,12 +1633,12 @@ Function Test-IOPath($root_path) {
     Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?/UNC/server/share/path")) -expected "\\?\UNC\server\share\path"
 
     Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\UNC")) -expected "\\?\UNC"
-    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\UNC/")) -expected "\\?\UNC/"
-    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\UNC/server")) -expected "\\?\UNC/server"
-    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\UNC/server/")) -expected "\\?\UNC/server/"
-    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\UNC/server/share")) -expected "\\?\UNC/server/share"
-    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\UNC/server/share/")) -expected "\\?\UNC/server/share/"
-    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\UNC/server/share/path")) -expected "\\?\UNC/server/share/path"
+    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\UNC/")) -expected "\\?\UNC\"
+    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\UNC/server")) -expected "\\?\UNC\server"
+    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\UNC/server/")) -expected "\\?\UNC\server\"
+    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\UNC/server/share")) -expected "\\?\UNC\server\share"
+    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\UNC/server/share/")) -expected "\\?\UNC\server\share\"
+    Assert-Equals -actual ([Ansible.IO.Path]::GetFullPath("\\?\UNC/server/share/path")) -expected "\\?\UNC\server\share\path"
 
     # GetPathRoot() - custom impl
     Assert-Equals -actual ([Ansible.IO.Path]::GetPathRoot("C:\path\dir")) -expected "C:\"
@@ -1667,7 +1741,141 @@ Function Test-IOPath($root_path) {
     Assert-Equals -actual ([Ansible.IO.Path]::IsPathRooted("\\?\UNC\server\share\path")) -expected $true
 }
 
-# call each test five times
+Function Test-SparseFileClass($root_path) {
+    $sparse_path = "$root_path\sparse.txt"
+
+    # don't run if on Server 2008 and it's a network drive, this won't work
+    $os_version = [Version](Get-Item -Path $env:SystemRoot\System32\kernel32.dll).FileVersion.ProductVersion
+    if ($sparse_path.StartsWith("\\") -or $sparse_path.StartsWith("\\?\UNC\") -and $os_version -lt [Version]"6.1") {
+        return
+    }
+
+    # create the empty file and check the size + regions
+    [Ansible.IO.File]::WriteAllBytes($sparse_path, [byte[]]@())
+    $sparse_file = New-Object -TypeName Ansible.IO.FileInfo -ArgumentList $sparse_path
+    $actual = [Ansible.IO.SparseFile]::GetAllAllocations($sparse_path)
+    Assert-Equals -actual $sparse_file.DiskLength -expected 0
+    Assert-Equals -actual $sparse_file.Length -expected 0
+    Assert-Equals -actual $actual.Count -expected 0
+
+    # zero out 3MB of space
+    [Ansible.IO.SparseFile]::ZeroData($sparse_path, 0, 3MB)
+
+    # even though we zero'd out the space we still haven't placed any data so the file is empty
+    $sparse_file.Refresh()
+    $actual = [Ansible.IO.SparseFile]::GetAllAllocations($sparse_path)
+    Assert-Equals -actual $sparse_file.DiskLength -expected 0
+    Assert-Equals -actual $sparse_file.Length -expected 0
+    Assert-Equals -actual $actual.Count -expected 0
+
+    # add an end marker byte (outside of freed data) - the disk size will still be full as we never marked the file as sparse
+    $fs = [Ansible.IO.File]::OpenWrite($sparse_file)
+    try {
+        $fs.Seek(3MB, [System.IO.SeekOrigin]::Begin) > $null
+        $fs.WriteByte(0)
+    } finally {
+        $fs.Close()
+    }
+    $sparse_file.Refresh()
+    $actual = [Ansible.IO.SparseFile]::GetAllAllocations($sparse_path)
+    Assert-Equals -actual $sparse_file.Attributes.HasFlag([System.IO.FileAttributes]::SparseFile) -expected $false
+    Assert-Equals -actual ([Ansible.IO.SparseFile]::IsSparseFile($sparse_path)) -expected $false
+    Assert-Equals -actual $sparse_file.DiskLength -expected (3MB + 1)
+    Assert-Equals -actual $sparse_file.Length -expected (3MB + 1)
+    Assert-Equals -actual $actual.Count -expected 1
+    Assert-Equals -actual $actual[0].GetType().FullName -expected "Ansible.IO.SparseAllocations"
+    Assert-Equals -actual $actual[0].Length -expected (3MB + 1)
+    Assert-Equals -actual $actual[0].FileOffset -expected 0
+
+    # verify that setting the sparse flag post zero out won't work
+    [Ansible.IO.SparseFile]::AddSparseAttribute($sparse_path)
+    $sparse_file.Refresh()
+    Assert-Equals -actual $sparse_file.Attributes.HasFlag([System.IO.FileAttributes]::SparseFile) -expected $true
+    Assert-Equals -actual ([Ansible.IO.SparseFile]::IsSparseFile($sparse_path)) -expected $true
+    Assert-Equals -actual $sparse_file.DiskLength -expected (3MB + 1)
+    Assert-Equals -actual $sparse_file.Length -expected (3MB + 1)
+
+    [Ansible.IO.SparseFile]::RemoveSparseAttribute($sparse_path)
+    $sparse_file.Refresh()
+    Assert-Equals -actual $sparse_file.Attributes.HasFlag([System.IO.FileAttributes]::SparseFile) -expected $false
+    Assert-Equals -actual ([Ansible.IO.SparseFile]::IsSparseFile($sparse_path)) -expected $false
+
+    # delete and try again after marking file as sparse
+    $sparse_file.Delete()
+    [Ansible.IO.File]::WriteAllBytes($sparse_path, [byte[]]@())
+    [Ansible.IO.SparseFile]::AddSparseAttribute($sparse_path)
+    $sparse_file.Refresh()
+    $actual = [Ansible.IO.SparseFile]::GetAllAllocations($sparse_path)
+    Assert-Equals -actual $sparse_file.Attributes.HasFlag([System.IO.FileAttributes]::SparseFile) -expected $true
+    Assert-Equals -actual ([Ansible.IO.SparseFile]::IsSparseFile($sparse_path)) -expected $true
+    Assert-Equals -actual $sparse_file.DiskLength -expected 0
+    Assert-Equals -actual $sparse_file.Length -expected 0
+    Assert-Equals -actual $actual.Count -expected 0
+
+    # add marker at the end of the sparse region
+    [Ansible.IO.SparseFile]::ZeroData($sparse_path, 0, 3MB)
+    $fs = [Ansible.IO.File]::OpenWrite($sparse_file)
+    try {
+        $fs.Seek(3MB, [System.IO.SeekOrigin]::Begin) > $null
+        $fs.WriteByte(0)
+    } finally {
+        $fs.Close()
+    }
+    $sparse_file.Refresh()
+    $actual = [Ansible.IO.SparseFile]::GetAllAllocations($sparse_path)
+    Assert-Equals -actual $sparse_file.DiskLength -expected 65536
+    Assert-Equals -actual $sparse_file.Length -expected (3MB + 1)
+    Assert-Equals -actual $actual.Count -expected 1
+    Assert-Equals -actual $actual[0].GetType().FullName -expected "Ansible.IO.SparseAllocations"
+    Assert-Equals -actual $actual[0].Length -expected 1
+    Assert-Equals -actual $actual[0].FileOffset -expected 3MB
+
+    # write 10 and 20 bytes at the 1 and 2 MB mark respectively
+    $fs = [Ansible.IO.File]::OpenWrite($sparse_file)
+    try {
+        $fs.Seek(1MB, [System.IO.SeekOrigin]::Begin) > $null
+        $fs.WriteByte(1)
+
+        $fs.Seek(2MB, [System.IO.SeekOrigin]::Begin) > $null
+        $fs.WriteByte(2)
+    } finally {
+        $fs.Close()
+    }
+    
+    $actual = [Ansible.IO.SparseFile]::GetAllAllocations($sparse_path)
+    Assert-Equals -actual $actual.Count -expected 3
+    Assert-Equals -actual $actual[0].GetType().FullName -expected "Ansible.IO.SparseAllocations"
+    Assert-Equals -actual $actual[0].Length -expected 65536  # NTFS block size - may need to dynamic get this for test
+    Assert-Equals -actual $actual[0].FileOffset -expected 1MB
+    Assert-Equals -actual $actual[1].Length -expected 65536
+    Assert-Equals -actual $actual[1].FileOffset -expected 2MB
+    Assert-Equals -actual $actual[2].Length -expected 1
+    Assert-Equals -actual $actual[2].FileOffset -expected 3MB
+
+    # get allocation only on specific offset
+    $actual = [Ansible.IO.SParseFile]::GetAllocations($sparse_path, 0.5KB, 2MB)
+    Assert-Equals -actual $actual.Count -expected 1  # should ignore our 2nd allocation as it doesn't go through the entire range
+    Assert-Equals -actual $actual[0].Length -expected 65536
+    Assert-Equals -actual $actual[0].FileOffset -expected 1MB
+
+    $actual = [Ansible.IO.SParseFile]::GetAllocations($sparse_path, 0.5KB, 2.5MB)
+    Assert-Equals -actual $actual.Count -expected 2
+    Assert-Equals -actual $actual[0].Length -expected 65536
+    Assert-Equals -actual $actual[0].FileOffset -expected 1MB
+    Assert-Equals -actual $actual[1].Length -expected 65536
+    Assert-Equals -actual $actual[1].FileOffset -expected 2MB
+
+    # zero out from 0 to 1.5 MB
+    [Ansible.IO.SparseFile]::ZeroData($sparse_path, 0, 1.5MB)
+    $actual = [Ansible.IO.SparseFile]::GetAllAllocations($sparse_path)
+    Assert-Equals -actual $actual.Count -expected 2
+    Assert-Equals -actual $actual[0].Length -expected 65536
+    Assert-Equals -actual $actual[0].FileOffset -expected 2MB
+    Assert-Equals -actual $actual[1].Length -expected 1
+    Assert-Equals -actual $actual[1].FileOffset -expected 3MB
+}
+
+# call each test group five times
 # 1 - Normal Path
 # 2 - Normal Path with the \\?\ prefix
 # 3 - Path exceeding 260 chars with the \\?\ prefix
@@ -1677,26 +1885,31 @@ Function Test-IOPath($root_path) {
 Clear-TestDirectory -path $path
 Test-FileClass -root_path $path
 Test-DirectoryClass -root_path $path
+Test-SparseFileClass -root_path $path
 
 Clear-TestDirectory -path $path
 Test-FileClass -root_path "\\?\$path"
 Test-DirectoryClass -root_path "\\?\$path"
+Test-SparseFileClass -root_path "\\?\$path"
 
 Clear-TestDirectory -path $path
 $long_path = "\\?\$path\long-path-test\{0}\{0}\{0}\{0}\{0}\{0}\{0}" -f ("a" * 250)
 [Ansible.IO.Directory]::CreateDirectory($long_path) > $null
 Test-FileClass -root_path $long_path
 Test-DirectoryClass -root_path $long_path
+Test-SparseFileClass -root_path $long_path
 
 Clear-TestDirectory -path $path
 Test-FileClass -root_path "\\127.0.0.1\c$\$($path.Substring(3))"
 Test-DirectoryClass -root_path "\\127.0.0.1\c$\$($path.Substring(3))"
+Test-SparseFileClass -root_path "\\127.0.0.1\c$\$($path.Substring(3))"
 
 Clear-TestDirectory -path $path
 $long_unc_path = "\\?\UNC\127.0.0.1\c$\$($path.Substring(3))\long-path-test\{0}\{0}\{0}\{0}\{0}\{0}\{0}" -f ("a" * 250)
 [Ansible.IO.Directory]::CreateDirectory($long_unc_path) > $null
 Test-FileClass -root_path $long_unc_path
 Test-DirectoryClass -root_path $long_unc_path
+Test-SparseFileClass -root_path $long_unc_path
 
 # Ansible.IO.Path tests
 Test-IOPath -root_path $path
