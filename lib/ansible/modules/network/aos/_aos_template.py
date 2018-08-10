@@ -96,6 +96,7 @@ EXAMPLES = '''
     name: "my-template"
     state: present
   register: template
+
 - name: "Save Template into a JSON file 2/3"
   copy:
     content: "{{ template.value | to_nice_json }}"

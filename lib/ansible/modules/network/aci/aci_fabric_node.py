@@ -251,7 +251,10 @@ def main():
                 name=switch,
                 nodeId=node_id,
                 podId=pod_id,
-                rn='nodep-{0}'.format(serial),
+                # NOTE: Originally we were sending 'rn', but now we need 'dn' for idempotency
+                # FIXME: Did this change with ACI version ?
+                dn='uni/controller/nodeidentpol/nodep-{0}'.format(serial),
+                # rn='nodep-{0}'.format(serial),
                 role=role,
                 serial=serial,
             )
