@@ -199,5 +199,7 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
 
 def main():
     AzureRMDatabasesFacts()
+
+
 if __name__ == '__main__':
     main()
