@@ -19,6 +19,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import subprocess
 
 from ansible.module_utils.facts.collector import BaseFactCollector
 
@@ -89,6 +90,23 @@ class PkgMgrFactCollector(BaseFactCollector):
                 pkg_mgr_name = 'dnf'
         return pkg_mgr_name
 
+    def _check_apt_flavor(self, pkg_mgr_name):
+        # Check if '/usr/bin/apt' is APT-RPM or an ordinary (dpkg-based) APT.
+        # There's rpm package on Debian, so checking if /usr/bin/rpm exists
+        # is not enough. Instead ask RPM if /usr/bin/apt-get belongs to some
+        # RPM package.
+        rpm_query = '/usr/bin/rpm -q --whatprovides /usr/bin/apt-get'.split()
+        if os.path.exists('/usr/bin/rpm'):
+            with open(os.devnull, 'w') as null:
+                try:
+                    subprocess.check_call(rpm_query, stdout=null, stderr=null)
+                    pkg_mgr_name = 'apt_rpm'
+                except subprocess.CalledProcessError:
+                    # No apt-get in RPM database. Looks like Debian/Ubuntu
+                    # with rpm package installed
+                    pkg_mgr_name = 'apt'
+        return pkg_mgr_name
+
     def collect(self, module=None, collected_facts=None):
         facts_dict = {}
         collected_facts = collected_facts or {}
@@ -107,6 +125,10 @@ class PkgMgrFactCollector(BaseFactCollector):
         elif collected_facts['ansible_os_family'] == 'Altlinux':
             if pkg_mgr_name == 'apt':
                 pkg_mgr_name = 'apt_rpm'
+
+        # Check if /usr/bin/apt-get is ordinary (dpkg-based) APT or APT-RPM
+        if pkg_mgr_name == 'apt':
+            pkg_mgr_name = self._check_apt_flavor(pkg_mgr_name)
 
         # pacman has become available by distros other than those that are Arch
         # based by virtue of a dependency to the systemd mkosi project, this
