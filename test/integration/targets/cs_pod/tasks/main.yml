@@ -90,8 +90,7 @@
   cs_pod:
     name: "{{ cs_resource_prefix }}-pod"
     zone: "{{ cs_resource_prefix }}-zone"
-    start_ip: 10.100.10.102
-    gateway: 10.100.10.1
+    gateway: 10.100.10.2
     netmask: 255.255.255.0
   register: pod
   check_mode: true
@@ -110,8 +109,7 @@
   cs_pod:
     name: "{{ cs_resource_prefix }}-pod"
     zone: "{{ cs_resource_prefix }}-zone"
-    start_ip: 10.100.10.102
-    gateway: 10.100.10.1
+    gateway: 10.100.10.2
     netmask: 255.255.255.0
   register: pod
 - name: verify test update pod
@@ -119,9 +117,9 @@
     that:
       - pod is changed
       - pod.allocation_state == "Enabled"
-      - pod.start_ip == "10.100.10.102"
+      - pod.start_ip == "10.100.10.101"
       - pod.end_ip == "10.100.10.254"
-      - pod.gateway == "10.100.10.1"
+      - pod.gateway == "10.100.10.2"
       - pod.netmask == "255.255.255.0"
       - pod.zone == "{{ cs_resource_prefix }}-zone"
 
@@ -129,8 +127,7 @@
   cs_pod:
     name: "{{ cs_resource_prefix }}-pod"
     zone: "{{ cs_resource_prefix }}-zone"
-    start_ip: 10.100.10.102
-    gateway: 10.100.10.1
+    gateway: 10.100.10.2
     netmask: 255.255.255.0
   register: pod
 - name: verify test update pod idempotence
@@ -138,9 +135,9 @@
     that:
       - pod is not changed
       - pod.allocation_state == "Enabled"
-      - pod.start_ip == "10.100.10.102"
+      - pod.start_ip == "10.100.10.101"
       - pod.end_ip == "10.100.10.254"
-      - pod.gateway == "10.100.10.1"
+      - pod.gateway == "10.100.10.2"
       - pod.netmask == "255.255.255.0"
       - pod.zone == "{{ cs_resource_prefix }}-zone"
 
@@ -157,9 +154,9 @@
       - pod is changed
       - pod.allocation_state == "Enabled"
       - pod.id == pod_origin.id
-      - pod.start_ip == "10.100.10.102"
+      - pod.start_ip == "10.100.10.101"
       - pod.end_ip == "10.100.10.254"
-      - pod.gateway == "10.100.10.1"
+      - pod.gateway == "10.100.10.2"
       - pod.netmask == "255.255.255.0"
       - pod.zone == "{{ cs_resource_prefix }}-zone"
 
@@ -175,9 +172,9 @@
       - pod is changed
       - pod.allocation_state == "Disabled"
       - pod.id == pod_origin.id
-      - pod.start_ip == "10.100.10.102"
+      - pod.start_ip == "10.100.10.101"
       - pod.end_ip == "10.100.10.254"
-      - pod.gateway == "10.100.10.1"
+      - pod.gateway == "10.100.10.2"
       - pod.netmask == "255.255.255.0"
       - pod.zone == "{{ cs_resource_prefix }}-zone"
 
@@ -193,9 +190,9 @@
       - pod is not changed
       - pod.allocation_state == "Disabled"
       - pod.id == pod_origin.id
-      - pod.start_ip == "10.100.10.102"
+      - pod.start_ip == "10.100.10.101"
       - pod.end_ip == "10.100.10.254"
-      - pod.gateway == "10.100.10.1"
+      - pod.gateway == "10.100.10.2"
       - pod.netmask == "255.255.255.0"
       - pod.zone == "{{ cs_resource_prefix }}-zone"
 
@@ -212,9 +209,9 @@
       - pod is changed
       - pod.allocation_state == "Disabled"
       - pod.id == pod_origin.id
-      - pod.start_ip == "10.100.10.102"
+      - pod.start_ip == "10.100.10.101"
       - pod.end_ip == "10.100.10.254"
-      - pod.gateway == "10.100.10.1"
+      - pod.gateway == "10.100.10.2"
       - pod.netmask == "255.255.255.0"
       - pod.zone == "{{ cs_resource_prefix }}-zone"
 
@@ -230,9 +227,9 @@
       - pod is changed
       - pod.allocation_state == "Enabled"
       - pod.id == pod_origin.id
-      - pod.start_ip == "10.100.10.102"
+      - pod.start_ip == "10.100.10.101"
       - pod.end_ip == "10.100.10.254"
-      - pod.gateway == "10.100.10.1"
+      - pod.gateway == "10.100.10.2"
       - pod.netmask == "255.255.255.0"
       - pod.zone == "{{ cs_resource_prefix }}-zone"
 
@@ -249,9 +246,9 @@
       - pod is not changed
       - pod.allocation_state == "Enabled"
       - pod.id == pod_origin.id
-      - pod.start_ip == "10.100.10.102"
+      - pod.start_ip == "10.100.10.101"
       - pod.end_ip == "10.100.10.254"
-      - pod.gateway == "10.100.10.1"
+      - pod.gateway == "10.100.10.2"
       - pod.netmask == "255.255.255.0"
       - pod.zone == "{{ cs_resource_prefix }}-zone"
 
@@ -268,9 +265,9 @@
       - pod is changed
       - pod.id == pod_origin.id
       - pod.allocation_state == "Enabled"
-      - pod.start_ip == "10.100.10.102"
+      - pod.start_ip == "10.100.10.101"
       - pod.end_ip == "10.100.10.254"
-      - pod.gateway == "10.100.10.1"
+      - pod.gateway == "10.100.10.2"
       - pod.netmask == "255.255.255.0"
       - pod.zone == "{{ cs_resource_prefix }}-zone"
 
@@ -286,9 +283,9 @@
       - pod is changed
       - pod.id == pod_origin.id
       - pod.allocation_state == "Enabled"
-      - pod.start_ip == "10.100.10.102"
+      - pod.start_ip == "10.100.10.101"
       - pod.end_ip == "10.100.10.254"
-      - pod.gateway == "10.100.10.1"
+      - pod.gateway == "10.100.10.2"
       - pod.netmask == "255.255.255.0"
       - pod.zone == "{{ cs_resource_prefix }}-zone"
 
