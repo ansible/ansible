@@ -82,7 +82,7 @@
       - output.datatabases[0]['collation'] != None
 
 - name: Gather facts PostgreSQL Database
-  azure_rm_postgresqlserver_facts:
+  azure_rm_postgresqldatabase_facts:
     resource_group: "{{ resource_group }}"
     server_name: postgresqlsrv{{ rpfx }}
   register: output
