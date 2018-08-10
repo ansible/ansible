@@ -1,3 +1,4 @@
+.. _developing_modules_best_practices:
 .. _module_dev_conventions:
 
 *****************************************
