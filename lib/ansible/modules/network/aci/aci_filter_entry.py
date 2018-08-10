@@ -13,24 +13,23 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_filter_entry
-short_description: Manage filter entries on Cisco ACI fabrics (vz:Entry)
+short_description: Manage filter entries (vz:Entry)
 description:
 - Manage filter entries for a filter on Cisco ACI fabrics.
-- More information from the internal APIC class I(vz:Entry) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Jacob McGill (@jmcgill298)
-version_added: '2.4'
 notes:
 - The C(tenant) and C(filter) used must exist before using this module in your playbook.
   The M(aci_tenant) and M(aci_filter) modules can be used for this.
+- More information about the internal APIC class B(vz:Entry) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+author:
+- Jacob McGill (@jmcgill298)
+version_added: '2.4'
 options:
   arp_flag:
     description:
     - The arp flag to use when the ether_type is arp.
-    - The APIC defaults new Filter Entries to C(unspecified).
+    - The APIC defaults to C(unspecified) when unset during creation.
     choices: [ arp_reply, arp_request, unspecified ]
-    default: unspecified
   description:
     description:
     - Description for the Filter Entry.
@@ -38,21 +37,18 @@ options:
   dst_port:
     description:
     - Used to set both destination start and end ports to the same value when ip_protocol is tcp or udp.
-    - The APIC defaults new Filter Entries to C(unspecified).
-    choices: [ Valid TCP/UDP Port Ranges]
-    default: unspecified
+    - Accepted values are any valid TCP/UDP port range.
+    - The APIC defaults to C(unspecified) when unset during creation.
   dst_port_end:
     description:
     - Used to set the destination end port when ip_protocol is tcp or udp.
-    - The APIC defaults new Filter Entries to C(unspecified).
-    choices: [ Valid TCP/UDP Port Ranges]
-    default: unspecified
+    - Accepted values are any valid TCP/UDP port range.
+    - The APIC defaults to C(unspecified) when unset during creation.
   dst_port_start:
     description:
     - Used to set the destination start port when ip_protocol is tcp or udp.
-    - The APIC defaults new Filter Entries to C(unspecified).
-    choices: [ Valid TCP/UDP Port Ranges]
-    default: unspecified
+    - Accepted values are any valid TCP/UDP port range.
+    - The APIC defaults to C(unspecified) when unset during creation.
   entry:
     description:
     - Then name of the Filter Entry.
@@ -60,9 +56,8 @@ options:
   ether_type:
     description:
     - The Ethernet type.
-    - The APIC defaults new Filter Entries to C(unspecified).
+    - The APIC defaults to C(unspecified) when unset during creation.
     choices: [ arp, fcoe, ip, mac_security, mpls_ucast, trill, unspecified ]
-    default: unspecified
   filter:
     description:
       The name of Filter that the entry should belong to.
@@ -70,21 +65,18 @@ options:
   icmp_msg_type:
     description:
     - ICMPv4 message type; used when ip_protocol is icmp.
-    - The APIC defaults new Filter Entries to C(unspecified).
+    - The APIC defaults to C(unspecified) when unset during creation.
     choices: [ dst_unreachable, echo, echo_reply, src_quench, time_exceeded, unspecified ]
-    default: unspecified
   icmp6_msg_type:
     description:
     - ICMPv6 message type; used when ip_protocol is icmpv6.
-    - The APIC defaults new Filter Entries to C(unspecified).
+    - The APIC defaults to C(unspecified) when unset during creation.
     choices: [ dst_unreachable, echo_request, echo_reply, neighbor_advertisement, neighbor_solicitation, redirect, time_exceeded, unspecified ]
-    default: unspecified
   ip_protocol:
     description:
     - The IP Protocol type when ether_type is ip.
-    - The APIC defaults new Filter Entries to C(unspecified).
+    - The APIC defaults to C(unspecified) when unset during creation.
     choices: [ eigrp, egp, icmp, icmpv6, igmp, igp, l2tp, ospfigp, pim, tcp, udp, unspecified ]
-    default: unspecified
   state:
     description:
     - present, absent, query
@@ -93,6 +85,7 @@ options:
   stateful:
     description:
     - Determines the statefulness of the filter entry.
+    type: bool
   tenant:
     description:
     - The name of the tenant.
@@ -112,17 +105,120 @@ EXAMPLES = r'''
     icmp_msg_type: "{{ icmp_msg_type }}"
     filter: "{{ filter }}"
     descr: "{{ descr }}"
+  delegate_to: localhost
 '''
 
-RETURN = ''' # '''
+RETURN = r'''
+current:
+  description: The existing configuration from the APIC after the module has finished
+  returned: success
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production environment",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+error:
+  description: The error information as returned from the APIC
+  returned: failure
+  type: dict
+  sample:
+    {
+        "code": "122",
+        "text": "unknown managed object class foo"
+    }
+raw:
+  description: The raw output returned by the APIC REST API (xml or json)
+  returned: parse error
+  type: string
+  sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
+sent:
+  description: The actual/minimal configuration pushed to the APIC
+  returned: info
+  type: list
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment"
+            }
+        }
+    }
+previous:
+  description: The original configuration from the APIC before the module has started
+  returned: info
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+proposed:
+  description: The assembled configuration from the user-provided parameters
+  returned: info
+  type: dict
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment",
+                "name": "production"
+            }
+        }
+    }
+filter_string:
+  description: The filter string used for the request
+  returned: failure or debug
+  type: string
+  sample: ?rsp-prop-include=config-only
+method:
+  description: The HTTP method used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: POST
+response:
+  description: The HTTP response from the APIC
+  returned: failure or debug
+  type: string
+  sample: OK (30 bytes)
+status:
+  description: The HTTP status from the APIC
+  returned: failure or debug
+  type: int
+  sample: 200
+url:
+  description: The HTTP url used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: https://10.11.12.13/api/mo/uni/tn-production.json
+'''
 
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 VALID_ARP_FLAGS = ['arp_reply', 'arp_request', 'unspecified']
 VALID_ETHER_TYPES = ['arp', 'fcoe', 'ip', 'mac_security', 'mpls_ucast', 'trill', 'unspecified']
-VALID_ICMP_TYPES = ['dst_unreachable', 'echo', 'echo_reply', 'src_quench', 'time_exceeded',
-                    'unspecified', 'echo-rep', 'dst-unreach']
+VALID_ICMP_TYPES = ['dst_unreachable', 'echo', 'echo_reply', 'src_quench', 'time_exceeded', 'unspecified']
 VALID_ICMP6_TYPES = ['dst_unreachable', 'echo_request', 'echo_reply', 'neighbor_advertisement',
                      'neighbor_solicitation', 'redirect', 'time_exceeded', 'unspecified']
 VALID_IP_PROTOCOLS = ['eigrp', 'egp', 'icmp', 'icmpv6', 'igmp', 'igp', 'l2tp', 'ospfigp', 'pim', 'tcp', 'udp', 'unspecified']
@@ -144,15 +240,15 @@ def main():
         dst_port=dict(type='str'),
         dst_port_end=dict(type='str'),
         dst_port_start=dict(type='str'),
-        entry=dict(type='str', aliases=['entry_name', 'filter_entry', 'name']),
+        entry=dict(type='str', aliases=['entry_name', 'filter_entry', 'name']),  # Not required for querying all objects
         ether_type=dict(choices=VALID_ETHER_TYPES, type='str'),
-        filter=dict(type='str', aliases=['filter_name']),
+        filter=dict(type='str', aliases=['filter_name']),  # Not required for querying all objects
         icmp_msg_type=dict(type='str', choices=VALID_ICMP_TYPES),
         icmp6_msg_type=dict(type='str', choices=VALID_ICMP6_TYPES),
         ip_protocol=dict(choices=VALID_IP_PROTOCOLS, type='str'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        stateful=dict(type='str', choices=['no', 'yes']),
-        tenant=dict(type="str", aliases=['tenant_name']),
+        stateful=dict(type='bool'),
+        tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
     )
 
     module = AnsibleModule(
@@ -163,6 +259,8 @@ def main():
             ['state', 'present', ['entry', 'filter', 'tenant']],
         ],
     )
+
+    aci = ACIModule(module)
 
     arp_flag = module.params['arp_flag']
     if arp_flag is not None:
@@ -188,7 +286,7 @@ def main():
         icmp6_msg_type = ICMP6_MAPPING[icmp6_msg_type]
     ip_protocol = module.params['ip_protocol']
     state = module.params['state']
-    stateful = module.params['stateful']
+    stateful = aci.boolean(module.params['stateful'])
     tenant = module.params['tenant']
 
     # validate that dst_port is not passed with dst_start or dst_end
@@ -198,32 +296,30 @@ def main():
         dst_end = dst_port
         dst_start = dst_port
 
-    aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='vzFilter',
             aci_rn='flt-{0}'.format(filter_name),
-            filter_target='eq(vzFilter.name, "{0}")'.format(filter_name),
             module_object=filter_name,
+            target_filter={'name': filter_name},
         ),
         subclass_2=dict(
             aci_class='vzEntry',
             aci_rn='e-{0}'.format(entry),
-            filter_target='eq(vzEntry.name, "{0}")'.format(entry),
-            module_object=entry
+            module_object=entry,
+            target_filter={'name': entry},
         ),
     )
 
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module params with null values
         aci.payload(
             aci_class='vzEntry',
             class_config=dict(
@@ -240,16 +336,14 @@ def main():
             ),
         )
 
-        # generate config diff which will be used as POST request body
         aci.get_diff(aci_class='vzEntry')
 
-        # submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':
         aci.delete_config()
 
-    module.exit_json(**aci.result)
+    aci.exit_json()
 
 
 if __name__ == "__main__":

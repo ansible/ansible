@@ -1,16 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# This file is part of Ansible
-
-# (c) 2017, Red Hat, Inc.
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Red Hat, Inc.
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
-
 
 DOCUMENTATION = r'''
 module: win_domain_controller
@@ -61,12 +58,14 @@ options:
     - The path to a directory on a fixed disk of the Windows host where the
       domain database will be created..
     - If not set then the default path is C(%SYSTEMROOT%\NTDS).
+    type: path
     version_added: '2.5'
   sysvol_path:
     description:
     - The path to a directory on a fixed disk of the Windows host where the
       Sysvol folder will be created.
     - If not set then the default path is C(%SYSTEMROOT%\SYSVOL).
+    type: path
     version_added: '2.5'
 author:
     - Matt Davis (@nitzmahone)
@@ -89,7 +88,7 @@ EXAMPLES = r'''
     domain_admin_password: password123!
     safe_mode_password: password123!
     state: domain_controller
-    log_path: c:\ansible_win_domain_controller.txt
+    log_path: C:\ansible_win_domain_controller.txt
 
 # ensure a server is not a domain controller
 # note that without an action wrapper, in the case where a DC is demoted,
@@ -102,7 +101,7 @@ EXAMPLES = r'''
     domain_admin_password: password123!
     local_admin_password: password123!
     state: member_server
-    log_path: c:\ansible_win_domain_controller.txt
+    log_path: C:\ansible_win_domain_controller.txt
 
 - name: promote server as a read only domain controller
   win_domain_controller:

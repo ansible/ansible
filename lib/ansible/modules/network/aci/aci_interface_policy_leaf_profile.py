@@ -14,11 +14,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_interface_policy_leaf_profile
-short_description: Manage Fabric interface policy leaf profiles on Cisco ACI fabrics (infra:AccPortP)
+short_description: Manage fabric interface policy leaf profiles (infra:AccPortP)
 description:
-- Manage Fabric interface policy leaf profiles on Cisco ACI fabrics.
-- More information from the internal APIC class I(infra:AccPortP) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- Manage fabric interface policy leaf profiles on Cisco ACI fabrics.
+notes:
+- More information about the internal APIC class B(infra:AccPortP) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
@@ -50,6 +51,7 @@ EXAMPLES = r'''
     leaf_interface_profile: leafintprfname
     description:  leafintprfname description
     state: present
+  delegate_to: localhost
 
 - name: Remove a leaf_interface_profile
   aci_interface_policy_leaf_profile:
@@ -58,6 +60,7 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     leaf_interface_profile: leafintprfname
     state: absent
+  delegate_to: localhost
 
 - name: Remove all leaf_interface_profiles
   aci_interface_policy_leaf_profile:
@@ -65,6 +68,7 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: absent
+  delegate_to: localhost
 
 - name: Query a leaf_interface_profile
   aci_interface_policy_leaf_profile:
@@ -73,10 +77,113 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     leaf_interface_profile: leafintprfname
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
-#
+current:
+  description: The existing configuration from the APIC after the module has finished
+  returned: success
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production environment",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+error:
+  description: The error information as returned from the APIC
+  returned: failure
+  type: dict
+  sample:
+    {
+        "code": "122",
+        "text": "unknown managed object class foo"
+    }
+raw:
+  description: The raw output returned by the APIC REST API (xml or json)
+  returned: parse error
+  type: string
+  sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
+sent:
+  description: The actual/minimal configuration pushed to the APIC
+  returned: info
+  type: list
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment"
+            }
+        }
+    }
+previous:
+  description: The original configuration from the APIC before the module has started
+  returned: info
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+proposed:
+  description: The assembled configuration from the user-provided parameters
+  returned: info
+  type: dict
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment",
+                "name": "production"
+            }
+        }
+    }
+filter_string:
+  description: The filter string used for the request
+  returned: failure or debug
+  type: string
+  sample: ?rsp-prop-include=config-only
+method:
+  description: The HTTP method used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: POST
+response:
+  description: The HTTP response from the APIC
+  returned: failure or debug
+  type: string
+  sample: OK (30 bytes)
+status:
+  description: The HTTP status from the APIC
+  returned: failure or debug
+  type: int
+  sample: 200
+url:
+  description: The HTTP url used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
@@ -109,14 +216,13 @@ def main():
         root_class=dict(
             aci_class='infraAccPortP',
             aci_rn='infra/accportprof-{0}'.format(leaf_interface_profile),
-            filter_target='eq(infraAccPortP.name, "{0}")'.format(leaf_interface_profile),
-            module_object=leaf_interface_profile
+            module_object=leaf_interface_profile,
+            target_filter={'name': leaf_interface_profile},
         ),
     )
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='infraAccPortP',
             class_config=dict(
@@ -125,16 +231,14 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='infraAccPortP')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':
         aci.delete_config()
 
-    module.exit_json(**aci.result)
+    aci.exit_json()
 
 
 if __name__ == "__main__":

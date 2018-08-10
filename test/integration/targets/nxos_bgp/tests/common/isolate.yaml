@@ -3,18 +3,25 @@
 - debug: msg="Using provider={{ connection.transport }}"
   when: ansible_connection == "local"
 
+
+- debug: msg="This bgp_isolate is not supported on {{ image_version }}"
+  when: imagetag is search("A8")
+- set_fact: bgp_isolate="false"
+- set_fact: bgp_isolate="true"
+  when: imagetag is not search("A8")
+
 - name: "Disable feature BGP"
   nxos_feature:
     feature: bgp
-    state: disabled
     provider: "{{ connection }}"
+    state: disabled
   ignore_errors: yes
 
 - name: "Enable feature BGP"
   nxos_feature:
     feature: bgp
-    state: enabled
     provider: "{{ connection }}"
+    state: enabled
   ignore_errors: yes
 
 - block:
@@ -26,18 +33,22 @@
       isolate: false
       provider: "{{ connection }}"
     register: result
+    when: bgp_isolate
 
   - assert: &true
       that:
         - "result.changed == true"
+    when: bgp_isolate
 
   - name: "Check Idempotence"
     nxos_bgp: *set1
     register: result
+    when: bgp_isolate
 
   - assert: &false
       that:
         - "result.changed == false"
+    when: bgp_isolate
 
   - name: "reset isolate"
     nxos_bgp: &reset1
@@ -45,14 +56,18 @@
       isolate: true
       provider: "{{ connection }}"
     register: result
+    when: bgp_isolate
 
   - assert: *true
+    when: bgp_isolate
 
   - name: "Check Idempotence"
     nxos_bgp: *reset1
     register: result
+    when: bgp_isolate
 
   - assert: *false
+    when: bgp_isolate
 
   rescue:
   - debug: msg="Tests can fail on A8 images"
@@ -61,8 +76,8 @@
   - name: "Disable feature bgp"
     nxos_feature:
       feature: bgp
-      state: disabled
       provider: "{{ connection }}"
+      state: disabled
     ignore_errors: yes
 
   - debug: msg="END connection={{ ansible_connection }} nxos_bgp parameter test"

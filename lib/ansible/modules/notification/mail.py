@@ -245,50 +245,42 @@ def main():
     if not body:
         body = subject
 
-    smtp = smtplib.SMTP(timeout=timeout)
-
-    if secure in ('never', 'starttls', 'try'):
-        try:
-            code, smtpmessage = smtp.connect(host, port=port)
-        except smtplib.SMTPException as e:
-            if secure == 'try':
-                try:
-                    smtp = smtplib.SMTP_SSL(timeout=timeout)
-                    code, smtpmessage = smtp.connect(host, port=port)
-                    secure_state = True
-                except ssl.SSLError as e:
+    try:
+        if secure != 'never':
+            try:
+                smtp = smtplib.SMTP_SSL(timeout=timeout)
+                code, smtpmessage = smtp.connect(host, port=port)
+                secure_state = True
+            except ssl.SSLError as e:
+                if secure == 'always':
                     module.fail_json(rc=1, msg='Unable to start an encrypted session to %s:%s: %s' %
-                                     (host, port, to_native(e)), exception=traceback.format_exc())
-            else:
-                module.fail_json(rc=1, msg='Unable to Connect to %s:%s: %s' %
-                                 (host, port, to_native(e)), exception=traceback.format_exc())
+                                               (host, port, to_native(e)), exception=traceback.format_exc())
 
-    if (secure == 'always'):
-        try:
-            smtp = smtplib.SMTP_SSL(timeout=timeout)
+        if not secure_state:
+            smtp = smtplib.SMTP(timeout=timeout)
             code, smtpmessage = smtp.connect(host, port=port)
-            secure_state = True
-        except ssl.SSLError as e:
-            module.fail_json(rc=1, msg='Unable to start an encrypted session to %s:%s: %s' %
-                             (host, port, to_native(e)), exception=traceback.format_exc())
+
+    except smtplib.SMTPException as e:
+        module.fail_json(rc=1, msg='Unable to Connect %s:%s: %s' % (host, port, to_native(e)), exception=traceback.format_exc())
+
+    try:
+        smtp.ehlo()
+    except smtplib.SMTPException as e:
+            module.fail_json(rc=1, msg='Helo failed for host %s:%s: %s' % (host, port, to_native(e)), exception=traceback.format_exc())
 
     if int(code) > 0:
-        try:
-            smtp.ehlo()
-        except smtplib.SMTPException as e:
-            module.fail_json(rc=1, msg='Helo failed for host %s:%s: %s' %
-                             (host, port, to_native(e)), exception=traceback.format_exc())
-
-        if secure in ('starttls', 'try'):
+        if not secure_state and secure in ('starttls', 'try'):
             if smtp.has_extn('STARTTLS'):
                 try:
                     smtp.starttls()
-                    smtp.ehlo()
-                    auth_flag = smtp.has_extn('AUTH')
                     secure_state = True
                 except smtplib.SMTPException as e:
                     module.fail_json(rc=1, msg='Unable to start an encrypted session to %s:%s: %s' %
                                      (host, port, to_native(e)), exception=traceback.format_exc())
+                try:
+                    smtp.ehlo()
+                except smtplib.SMTPException as e:
+                    module.fail_json(rc=1, msg='Helo failed for host %s:%s: %s' % (host, port, to_native(e)), exception=traceback.format_exc())
             else:
                 if secure == 'starttls':
                     module.fail_json(rc=1, msg='StartTLS is not offered on server %s:%s' % (host, port))
@@ -319,7 +311,7 @@ def main():
                 h_key, h_val = hdr.split('=')
                 h_val = to_native(Header(h_val, charset))
                 msg.add_header(h_key, h_val)
-            except:
+            except Exception:
                 module.warn("Skipping header '%s', unable to parse" % hdr)
 
     if 'X-Mailer' not in msg:
@@ -374,6 +366,7 @@ def main():
         module.exit_json(msg='Failed to send mail to at least one recipient', result=result)
 
     module.exit_json(msg='Mail sent successfully', result=result)
+
 
 if __name__ == '__main__':
     main()

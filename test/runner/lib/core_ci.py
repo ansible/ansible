@@ -69,10 +69,11 @@ class AnsibleCoreCI(object):
                 'vyos',
                 'junos',
                 'ios',
+                'tower',
+                'rhel',
             ),
             azure=(
                 'azure',
-                'rhel',
             ),
             parallels=(
                 'osx',
@@ -86,6 +87,11 @@ class AnsibleCoreCI(object):
             for candidate in providers:
                 if platform in providers[candidate]:
                     # assign default provider based on platform
+                    self.provider = candidate
+                    break
+            for candidate in providers:
+                if '%s/%s' % (platform, version) in providers[candidate]:
+                    # assign default provider based on platform and version
                     self.provider = candidate
                     break
 
@@ -109,12 +115,11 @@ class AnsibleCoreCI(object):
                 region = 'us-east-1'
 
             self.endpoints = AWS_ENDPOINTS[region],
+            self.ssh_key = SshKey(args)
 
             if self.platform == 'windows':
-                self.ssh_key = None
                 self.port = 5986
             else:
-                self.ssh_key = SshKey(args)
                 self.port = 22
         elif self.provider == 'parallels':
             self.endpoints = self._get_parallels_endpoints()
@@ -157,6 +162,8 @@ class AnsibleCoreCI(object):
             self.started = False
             self.instance_id = str(uuid.uuid4())
             self.endpoint = None
+
+            display.sensitive.add(self.instance_id)
 
     def _get_parallels_endpoints(self):
         """
@@ -290,6 +297,9 @@ class AnsibleCoreCI(object):
                 username=con['username'],
                 password=con.get('password'),
             )
+
+            if self.connection.password:
+                display.sensitive.add(self.connection.password)
 
         status = 'running' if self.connection.running else 'starting'
 
@@ -444,6 +454,8 @@ class AnsibleCoreCI(object):
         self.instance_id = config['instance_id']
         self.endpoint = config['endpoint']
         self.started = True
+
+        display.sensitive.add(self.instance_id)
 
         return True
 

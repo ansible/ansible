@@ -1,11 +1,9 @@
 ##### SUMMARY
 <!--- Describe the change, including rationale and design decisions -->
 
-<!---
-If you are fixing an existing issue, please include "Fixes #nnn" in your
+<!--- If you are fixing an existing issue, please include "Fixes #nnn" in your
 commit message and your description; but you should still explain what
-the change does.
--->
+the change does.-->
 
 ##### ISSUE TYPE
 <!--- Pick one below and delete the rest: -->
@@ -15,7 +13,7 @@ the change does.
  - Docs Pull Request
 
 ##### COMPONENT NAME
-<!--- Name of the module, plugin, module or task -->
+<!--- Name of the module, plugin, task or feature -->
 
 ##### ANSIBLE VERSION
 <!--- Paste verbatim output from "ansible --version" between quotes below -->
@@ -25,11 +23,9 @@ the change does.
 
 
 ##### ADDITIONAL INFORMATION
-<!---
-Include additional information to help people understand the change here.
+<!--- Include additional information to help people understand the change here.
 For bugs that don't have a linked bug report, a step-by-step reproduction
-of the problem is helpful.
-  -->
+of the problem is helpful. -->
 
 <!--- Paste verbatim command output below, e.g. before and after your change -->
 ```

@@ -9,16 +9,16 @@
 - name: "Remove old entries of user - setup"
   net_user:
     name: ansibletest1
-    state: absent
     provider: "{{ connection }}"
+    state: absent
 
 # Start tests
 - name: Create user with platform agnostic module
   net_user:
     name: ansibletest1
     roles: network-operator
-    state: present
     provider: "{{ connection }}"
+    state: present
   register: result
 
 - assert:
@@ -30,7 +30,7 @@
 - name: teardown
   net_user:
     name: ansibletest1
-    state: absent
     provider: "{{ connection }}"
+    state: absent
 
 - debug: msg="END connection={{ ansible_connection }} nxos common/net_user.yaml"

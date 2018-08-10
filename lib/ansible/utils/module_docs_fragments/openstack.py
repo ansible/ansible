@@ -23,9 +23,13 @@ class ModuleDocFragment(object):
 options:
   cloud:
     description:
-      - Named cloud to operate against. Provides default values for I(auth) and
-        I(auth_type). This parameter is not needed if I(auth) is provided or if
-        OpenStack OS_* environment variables are present.
+      - Named cloud or cloud config to operate against.
+        If I(cloud) is a string, it references a named cloud config as defined
+        in an OpenStack clouds.yaml file. Provides default values for I(auth)
+        and I(auth_type). This parameter is not needed if I(auth) is provided
+        or if OpenStack OS_* environment variables are present.
+        If I(cloud) is a dict, it contains a complete cloud configuration like
+        would be in a section of clouds.yaml.
     required: false
   auth:
     description:
@@ -43,7 +47,6 @@ options:
         password authentication, the name of the plugin should be indicated here
         and the contents of the I(auth) parameter should be updated accordingly.
     required: false
-    default: password
   region_name:
     description:
       - Name of the region.
@@ -51,9 +54,9 @@ options:
   wait:
     description:
       - Should ansible wait until the requested resource is complete.
+    type: bool
     required: false
-    default: "yes"
-    choices: ["yes", "no"]
+    default: true
   timeout:
     description:
       - How long should ansible wait for the requested resource.
@@ -64,38 +67,36 @@ options:
       - How long should the socket layer wait before timing out for API calls.
         If this is omitted, nothing will be passed to the requests library.
     required: false
-    default: None
-  validate_certs:
+  verify:
     description:
       - Whether or not SSL API requests should be verified. Before 2.3 this defaulted to True.
+    type: bool
     required: false
-    default: null
-    aliases: ['verify']
+    aliases: ['validate_certs']
   cacert:
     description:
       - A path to a CA Cert bundle that can be used as part of verifying
         SSL API requests.
     required: false
-    default: None
   cert:
     description:
       - A path to a client certificate to use as part of the SSL transaction.
     required: false
-    default: None
   key:
     description:
       - A path to a client key to use as part of the SSL transaction.
     required: false
-    default: None
-  endpoint_type:
+  interface:
     description:
         - Endpoint URL type to fetch from the service catalog.
     choices: [public, internal, admin]
     required: false
     default: public
+    aliases: ['endpoint_type']
+    version_added: "2.3"
 requirements:
   - python >= 2.7
-  - shade
+  - openstacksdk
 notes:
   - The standard OpenStack environment variables, such as C(OS_USERNAME)
     may be used instead of providing explicit values.

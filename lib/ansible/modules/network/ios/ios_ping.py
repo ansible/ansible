@@ -27,7 +27,6 @@ options:
   count:
     description:
     - Number of packets to send.
-    required: false
     default: 5
   dest:
     description:
@@ -36,8 +35,6 @@ options:
   source:
     description:
     - The source IP Address.
-    required: false
-    default: null
   state:
     description:
     - Determines if the expected result is success or fail.
@@ -46,7 +43,6 @@ options:
   vrf:
     description:
     - The VRF to use for forwarding.
-    required: false
     default: default
 notes:
   - For a general purpose network module, see the M(net_ping) module.
@@ -55,31 +51,22 @@ notes:
 '''
 
 EXAMPLES = r'''
-- provider:
-    host: "{{ ansible_host }}"
-    username: "{{ username }}"
-    password: "{{ password }}"
-
 - name: Test reachability to 10.10.10.10 using default vrf
   ios_ping:
-    provider: "{{ provider }}"
     dest: 10.10.10.10
 
 - name: Test reachability to 10.20.20.20 using prod vrf
   ios_ping:
-    provider: "{{ provider }}"
     dest: 10.20.20.20
     vrf: prod
 
 - name: Test unreachability to 10.30.30.30 using default vrf
   ios_ping:
-    provider: "{{ provider }}"
     dest: 10.30.30.30
     state: absent
 
 - name: Test reachability to 10.40.40.40 using prod vrf and setting count and source
   ios_ping:
-    provider: "{{ provider }}"
     dest: 10.40.40.40
     source: loopback0
     vrf: prod
@@ -152,7 +139,12 @@ def main():
     ping_results = run_commands(module, commands=results["commands"])
     ping_results_list = ping_results[0].split("\n")
 
-    success, rx, tx, rtt = parse_ping(ping_results_list[3])
+    stats = ""
+    for line in ping_results_list:
+        if line.startswith('Success'):
+            stats = line
+
+    success, rx, tx, rtt = parse_ping(stats)
     loss = abs(100 - int(success))
     results["packet_loss"] = str(loss) + "%"
     results["packets_rx"] = int(rx)
@@ -176,7 +168,7 @@ def build_ping(dest, count=None, source=None, vrf=None):
     to execute. All args come from the module's unique params.
     """
     if vrf is not None:
-        cmd = "ping {0} {1}".format(vrf, dest)
+        cmd = "ping vrf {0} {1}".format(vrf, dest)
     else:
         cmd = "ping {0}".format(dest)
 

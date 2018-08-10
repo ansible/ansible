@@ -24,46 +24,33 @@ options:
     description:
       - Name of the schema to add or remove.
     required: true
-    default: null
   database:
     description:
       - Name of the database to connect to.
-    required: false
     default: postgres
   login_user:
     description:
       - The username used to authenticate with.
-    required: false
-    default: null
   login_password:
     description:
       - The password used to authenticate with.
-    required: false
-    default: null
   login_host:
     description:
       - Host running the database.
-    required: false
     default: localhost
   login_unix_socket:
     description:
       - Path to a Unix domain socket for local connections.
-    required: false
-    default: null
   owner:
     description:
       - Name of the role to set as owner of the schema.
-    required: false
-    default: null
   port:
     description:
       - Database port to connect to.
-    required: false
     default: 5432
   state:
     description:
       - The schema state.
-    required: false
     default: present
     choices: [ "present", "absent" ]
 notes:

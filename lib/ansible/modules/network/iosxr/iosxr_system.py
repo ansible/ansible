@@ -252,7 +252,8 @@ class CliConfiguration(ConfigBase):
 
     def parse_hostname(self, config):
         match = re.search(r'^hostname (\S+)', config, re.M)
-        return match.group(1)
+        if match:
+            return match.group(1)
 
     def parse_domain_name(self, config):
         match = re.search(r'^domain name (\S+)', config, re.M)
@@ -431,7 +432,7 @@ class NCConfiguration(ConfigBase):
             if self._want['name_servers']:
                 server_param = {}
                 server_param['vrf'] = self._want['vrf']
-                server_param['order'] = '1'
+                server_param['order'] = '0'
                 for server in self._want['name_servers']:
                     if server in sys_node['name_servers']:
                         server_param['name_servers'] = server
@@ -476,7 +477,7 @@ class NCConfiguration(ConfigBase):
                 server_adds, server_removes = diff_list(self._want['name_servers'], sys_node['name_servers'])
                 server_param = {}
                 server_param['vrf'] = self._want['vrf']
-                server_param['order'] = '1'
+                server_param['order'] = '0'
                 for domain in server_adds:
                     if domain not in sys_node['name_servers']:
                         server_param['name_servers'] = domain

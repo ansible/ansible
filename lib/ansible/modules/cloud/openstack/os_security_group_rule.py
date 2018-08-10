@@ -31,26 +31,19 @@ options:
       description:
         - IP protocols TCP UDP ICMP 112 (VRRP)
       choices: ['tcp', 'udp', 'icmp', '112', None]
-      default: None
    port_range_min:
       description:
         - Starting port
-      required: false
-      default: None
    port_range_max:
       description:
         - Ending port
-      required: false
-      default: None
    remote_ip_prefix:
       description:
         - Source IP address(es) in CIDR notation (exclusive with remote_group)
-      required: false
    remote_group:
       description:
         - Name or ID of the Security group to link (exclusive with
           remote_ip_prefix)
-      required: false
    ethertype:
       description:
         - Must be IPv4 or IPv6, and addresses represented in CIDR must
@@ -71,8 +64,7 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
-requirements: ["shade"]
+requirements: ["openstacksdk"]
 '''
 
 EXAMPLES = '''
@@ -167,14 +159,8 @@ security_group_id:
   returned: state == present
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _ports_match(protocol, module_min, module_max, rule_min, rule_max):
@@ -182,15 +168,15 @@ def _ports_match(protocol, module_min, module_max, rule_min, rule_max):
     Capture the complex port matching logic.
 
     The port values coming in for the module might be -1 (for ICMP),
-    which will work only for Nova, but this is handled by shade. Likewise,
+    which will work only for Nova, but this is handled by sdk. Likewise,
     they might be None, which works for Neutron, but not Nova. This too is
-    handled by shade. Since shade will consistently return these port
+    handled by sdk. Since sdk will consistently return these port
     values as None, we need to convert any -1 values input to the module
     to None here for comparison.
 
     For TCP and UDP protocols, None values for both min and max are
     represented as the range 1-65535 for Nova, but remain None for
-    Neutron. Shade returns the full range when Nova is the backend (since
+    Neutron. sdk returns the full range when Nova is the backend (since
     that is how Nova stores them), and None values for Neutron. If None
     values are input to the module for both values, then we need to adjust
     for comparison.
@@ -297,16 +283,13 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
     state = module.params['state']
     security_group = module.params['security_group']
     remote_group = module.params['remote_group']
     changed = False
 
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.openstack_cloud(**module.params)
         secgroup = cloud.get_security_group(security_group)
 
         if remote_group:
@@ -345,7 +328,7 @@ def main():
 
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

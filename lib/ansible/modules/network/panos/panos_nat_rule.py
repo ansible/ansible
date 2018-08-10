@@ -17,8 +17,8 @@ description: >
 author: "Luigi Mori (@jtschichold), Ivan Bojer (@ivanbojer), Robert Hagen (@rnh556)"
 version_added: "2.4"
 requirements:
-    - pan-python can be obtained from PyPi U(https://pypi.python.org/pypi/pan-python)
-    - pandevice can be obtained from PyPi U(https://pypi.python.org/pypi/pandevice)
+    - pan-python can be obtained from PyPi U(https://pypi.org/project/pan-python/)
+    - pandevice can be obtained from PyPi U(https://pypi.org/project/pandevice/)
 notes:
     - Checkmode is not supported.
     - Panorama is supported.
@@ -56,67 +56,50 @@ options:
     source_ip:
         description:
             - list of source addresses
-        required: false
         default: ["any"]
     destination_ip:
         description:
             - list of destination addresses
-        required: false
         default: ["any"]
     service:
         description:
             - service
-        required: false
         default: "any"
     snat_type:
         description:
             - type of source translation
-        required: false
-        default: None
     snat_address_type:
         description:
             - type of source translation. Supported values are I(translated-address)/I(translated-address).
-        required: false
         default: 'translated-address'
     snat_static_address:
         description:
             - Source NAT translated address. Used with Static-IP translation.
-        required: false
-        default: None
     snat_dynamic_address:
         description:
             - Source NAT translated address. Used with Dynamic-IP and Dynamic-IP-and-Port.
-        required: false
-        default: None
     snat_interface:
         description:
             - snat interface
-        required: false
-        default: None
     snat_interface_address:
         description:
             - snat interface address
-        required: false
-        default: None
     snat_bidirectional:
         description:
             - bidirectional flag
-        required: false
-        default: "false"
+        type: bool
+        default: 'no'
     dnat_address:
         description:
             - dnat translated address
-        required: false
-        default: None
     dnat_port:
         description:
             - dnat translated port
-        required: false
-        default: None
     commit:
         description:
             - Commit configuration if changed.
-        default: true
+        type: bool
+        default: 'yes'
 '''
 
 EXAMPLES = '''
@@ -149,7 +132,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 # import pydevd
 # pydevd.settrace('localhost', port=60374, stdoutToServer=True, stderrToServer=True)
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import get_exception
+from ansible.module_utils._text import to_native
 
 try:
     import pan.xapi
@@ -374,9 +357,8 @@ def main():
                 match.delete()
                 if commit:
                     device.commit(sync=True)
-            except PanXapiError:
-                exc = get_exception()
-                module.fail_json(msg=exc.message)
+            except PanXapiError as exc:
+                module.fail_json(msg=to_native(exc))
 
             module.exit_json(changed=True, msg='Rule \'%s\' successfully deleted.' % rule_name)
         else:
@@ -417,9 +399,8 @@ def main():
                 changed = add_rule(rulebase, new_rule)
                 if changed and commit:
                     device.commit(sync=True)
-            except PanXapiError:
-                exc = get_exception()
-                module.fail_json(msg=exc.message)
+            except PanXapiError as exc:
+                module.fail_json(msg=to_native(exc))
             module.exit_json(changed=changed, msg='Rule \'%s\' successfully added.' % rule_name)
     elif operation == 'update':
         # Search for the rule. Update if found.
@@ -450,9 +431,8 @@ def main():
                 changed = update_rule(rulebase, new_rule)
                 if changed and commit:
                     device.commit(sync=True)
-            except PanXapiError:
-                exc = get_exception()
-                module.fail_json(msg=exc.message)
+            except PanXapiError as exc:
+                module.fail_json(msg=to_native(exc))
             module.exit_json(changed=changed, msg='Rule \'%s\' successfully updated.' % rule_name)
         else:
             module.fail_json(msg='Rule \'%s\' does not exist. Use operation: \'add\' to add it.' % rule_name)

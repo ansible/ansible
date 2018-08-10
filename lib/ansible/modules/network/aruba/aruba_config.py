@@ -31,17 +31,13 @@ options:
         in the device running-config.  Be sure to note the configuration
         command syntax as some commands are automatically modified by the
         device config parser.
-    required: false
-    default: null
     aliases: ['commands']
   parents:
     description:
-      - The ordered set of parents that uniquely identify the section
+      - The ordered set of parents that uniquely identify the section or hierarchy
         the commands should be checked against.  If the parents argument
         is omitted, the commands are checked against the set of top
         level or global commands.
-    required: false
-    default: null
   src:
     description:
       - Specifies the source path to the file that contains the configuration
@@ -49,8 +45,6 @@ options:
         either be the full path on the Ansible control host or a relative
         path from the playbook or role root directory.  This argument is mutually
         exclusive with I(lines), I(parents).
-    required: false
-    default: null
   before:
     description:
       - The ordered set of commands to push on to the command stack if
@@ -58,16 +52,12 @@ options:
         the opportunity to perform configuration commands prior to pushing
         any changes without affecting how the set of commands are matched
         against the system.
-    required: false
-    default: null
   after:
     description:
       - The ordered set of commands to append to the end of the command
         stack if a change needs to be made.  Just like with I(before) this
         allows the playbook designer to append a set of commands to be
         executed after the command set.
-    required: false
-    default: null
   match:
     description:
       - Instructs the module on the way to perform the matching of
@@ -78,7 +68,6 @@ options:
         must be an equal match.  Finally, if match is set to I(none), the
         module will not attempt to compare the source configuration with
         the running configuration on the remote device.
-    required: false
     default: line
     choices: ['line', 'strict', 'exact', 'none']
   replace:
@@ -89,7 +78,6 @@ options:
         mode.  If the replace argument is set to I(block) then the entire
         command block is pushed to the device in configuration mode if any
         line is not correct.
-    required: false
     default: line
     choices: ['line', 'block']
   backup:
@@ -99,9 +87,8 @@ options:
         changes are made.  The backup file is written to the C(backup)
         folder in the playbook root directory.  If the directory does not
         exist, it is created.
-    required: false
-    default: no
     type: bool
+    default: 'no'
   running_config:
     description:
       - The module, by default, will connect to the remote device and
@@ -111,8 +98,6 @@ options:
         every task in a playbook.  The I(running_config) argument allows the
         implementer to pass in the configuration to use as the base
         config for comparison.
-    required: false
-    default: null
     aliases: ['config']
   save_when:
     description:
@@ -127,7 +112,6 @@ options:
         I(never), the running-config will never be copied to the
         startup-config.  If the argument is set to I(changed), then the running-config
         will only be copied to the startup-config if the task has made a change.
-    required: false
     default: never
     choices: ['always', 'never', 'modified', 'changed']
     version_added: "2.5"
@@ -143,7 +127,6 @@ options:
       - When this option is configured as I(running), the module will
         return the before and after diff of the running-config with respect
         to any changes made to the device configuration.
-    required: false
     choices: ['startup', 'intended', 'running']
   diff_ignore_lines:
     description:
@@ -151,7 +134,6 @@ options:
         ignored during the diff.  This is used for lines in the configuration
         that are automatically updated by the system.  This argument takes
         a list of regular expressions or exact line matches.
-    required: false
   intended_config:
     description:
       - The C(intended_config) provides the master configuration that
@@ -161,15 +143,14 @@ options:
         of the current device's configuration against.  When specifying this
         argument, the task should also modify the C(diff_against) value and
         set it to I(intended).
-    required: false
   encrypt:
     description:
       - This allows an Aruba controller's passwords and keys to be displayed in plain
         text when set to I(false) or encrypted when set to I(true).
         If set to I(false), the setting will re-encrypt at the end of the module run.
         Backups are still encrypted even when set to I(false).
-    required: false
-    default: true
+    type: bool
+    default: 'yes'
     version_added: "2.5"
 """
 

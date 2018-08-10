@@ -1,0 +1,197 @@
+# Test code for the ACI modules
+# Copyright: (c) 2018, Dag Wieers (@dagwieers) <dag@wieers.com>
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+
+# CLEAN ENVIRONMENT
+- name: Remove firmware source
+  aci_firmware_source: &source_absent
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    source: aci-msft-pkg-3.1.1i.zip
+    state: absent
+
+
+# ADD SOURCE
+#- name: Add source (check_mode)
+#  aci_firmware_source: &source_present
+#    host: '{{ aci_hostname }}'
+#    username: '{{ aci_username }}'
+#    password: '{{ aci_password }}'
+#    validate_certs: '{{ aci_validate_certs | default(false) }}'
+#    use_ssl: '{{ aci_use_ssl | default(true) }}'
+#    use_proxy: '{{ aci_use_proxy | default(true) }}'
+#    output_level: '{{ aci_output_level | default("info") }}'
+#    source: aci-msft-pkg-3.1.1i.zip
+#    url: foobar.cisco.com/download/cisco/aci/aci-msft-pkg-3.1.1i.zip
+#    url_protocol: http
+#    state: present
+#  check_mode: yes
+#  register: cm_add_source
+#
+#- name: Add source (normal mode)
+#  aci_firmware_source: *source_present
+#  register: nm_add_source
+#
+#- name: Verify add_source
+#  assert:
+#    that:
+#    - cm_add_source is changed
+#    - nm_add_source is changed
+#    - 'cm_add_source.sent == nm_add_source.sent == {"firmwareOSource": {"attributes": {"name": "aci-msft-pkg-3.1.1i.zip", "proto": "http", "url": "foobar.cisco.com/download/cisco/aci/aci-msft-pkg-3.1.1i.zip"}}}'
+#    - 'cm_add_source.proposed == nm_add_source.proposed == {"firmwareOSource": {"attributes": {"name": "aci-msft-pkg-3.1.1i.zip", "proto": "http", "url": "foobar.cisco.com/download/cisco/aci/aci-msft-pkg-3.1.1i.zip"}}}'
+#    - cm_add_source.current == cm_add_source.previous == nm_add_source.previous == []
+#    - nm_add_source.current.0.firmwareOSource.attributes.name == 'aci-msft-pkg-3.1.1i.zip'
+#    - nm_add_source.current.0.firmwareOSource.attributes.proto == 'http'
+#    - nm_add_source.current.0.firmwareOSource.attributes.url == 'foobar.cisco.com/download/cisco/aci/aci-msft-pkg-3.1.1i.zip'
+#
+#- name: Add source again (check_mode)
+#  aci_firmware_source: *source_present
+#  check_mode: yes
+#  register: cm_add_source_again
+#
+#- name: Add source again (normal mode)
+#  aci_firmware_source: *souce_present
+#  register: nm_add_source_again
+#
+#- name: Verify add_source_again
+#  assert:
+#    that:
+#    - cm_add_source_again is not changed
+#    - nm_add_source_again is not changed
+
+
+# QUERY ALL SOURCES
+- name: Query all sources (check_mode)
+  aci_firmware_source: &source_query
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    state: query
+  check_mode: yes
+  register: cm_query_all_sources
+
+- name: Query all sources (normal mode)
+  aci_firmware_source: *source_query
+  register: nm_query_all_sources
+
+- name: Verify query_all_sources
+  assert:
+    that:
+    - cm_query_all_sources is not changed
+    - nm_query_all_sources is not changed
+    - cm_query_all_sources == nm_query_all_sources
+#    - nm_query_all_sources.current|length >= 1
+
+
+# QUERY A SOURCE
+#- name: Query our source (check_mode)
+#  aci_firmware_source:
+#    <<: *source_query
+#    source: aci-msft-pkg-3.1.1i.zip
+#  check_mode: yes
+#  register: cm_query_source
+#
+#- name: Query our source (normal mode)
+#  aci_firmware_source:
+#    <<: *source_query
+#    source: aci-msft-pkg-3.1.1i.zip
+#  register: nm_query_source
+#
+#- name: Verify query_source
+#  assert:
+#    that:
+#    - cm_query_source is not changed
+#    -  nm_query_source is not changed
+#    - cm_query_source == nm_query_source
+#    - nm_query_source.current.0.infraRsDomP.attributes.dn == 'uni/infra/attentp-test_aep/rsdomP-[uni/phys-phys_dom]'
+#    - nm_query_source.current.0.infraRsDomP.attributes.tCl == 'physDomP'
+#    - nm_query_source.current.0.infraRsDomP.attributes.tDn == 'uni/phys-phys_dom'
+
+
+# REMOVE SOURCE
+#- name: Remove source (check_mode)
+#  aci_firmware_source: *source_absent
+#  check_mode: yes
+#  register: cm_remove_source
+
+#- name: Remove source (normal mode)
+#  aci_firmware_source: *source_absent
+#  register: nm_remove_source
+#
+#- name: Verify remove_source
+#  assert:
+#    that:
+#    - cm_remove_source is changed
+#    - nm_remove_source is changed
+#    - 'cm_remove_source.current == cm_remove_source.previous == nm_remove_source.previous == [{"infraRsDomP": {"attributes": {"dn": "uni/infra/attentp-test_aep/rsdomP-[uni/phys-phys_dom]", "tDn": "uni/phys-phys_dom"}}}]'
+#    - nm_remove_source.current == []
+#
+#- name: Remove source again (check_mode)
+#  aci_firmware_source: *source_absent
+#  check_mode: yes
+#  register: cm_remove_source_again
+#
+#- name: Remove source again (normal mode)
+#  aci_firmware_source: *source_absent
+#  register: nm_remove_source_again
+#
+#- name: Verify remove_source_again
+#  assert:
+#    that:
+#    - cm_remove_source_again is not changed
+#    - nm_remove_source_again is not changed
+
+
+# QUERY NON-EXISTING SOURCE
+#- name: Query non-existing source (check_mode)
+#  aci_firmware_source:
+#    <<: *source_query
+#    source: aci-msft-pkg-3.1.1i.zip
+#  check_mode: yes
+#  register: cm_query_non_source
+#
+#- name: Query non-existing source (normal mode)
+#  aci_firmware_source:
+#    <<: *source_query
+#    source: aci-msft-pkg-3.1.1i.zip
+#  register: nm_query_non_source
+#
+#- name: Verify query_non_source
+#  assert:
+#    that:
+#    - cm_query_non_source is not changed
+#    - nm_query_non_source is not changed
+#    - cm_query_non_source == nm_query_non_source
+#    - nm_query_non_source.current == []
+
+
+# PROVOKE ERRORS
+- name: Error when required parameter is missing
+  aci_firmware_source:
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    state: present
+  ignore_errors: yes
+  register: error_on_missing_required_param
+
+- name: Verify error_on_missing_required_param
+  assert:
+    that:
+    - error_on_missing_required_param is failed
+    - 'error_on_missing_required_param.msg == "state is present but all of the following are missing: source, url"'

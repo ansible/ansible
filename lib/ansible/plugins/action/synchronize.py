@@ -164,6 +164,7 @@ class ActionModule(ActionBase):
         _tmp_args = self._task.args.copy()
 
         result = super(ActionModule, self).run(tmp, task_vars)
+        del tmp  # tmp no longer has any effect
 
         # Store remote connection type
         self._remote_transport = self._connection.transport
@@ -300,6 +301,9 @@ class ActionModule(ActionBase):
 
             new_connection = connection_loader.get('local', self._play_context, new_stdin)
             self._connection = new_connection
+            # Override _remote_is_local as an instance attribute specifically for the synchronize use case
+            # ensuring we set local tmpdir correctly
+            self._connection._remote_is_local = True
             self._override_module_replaced_vars(task_vars)
 
         # SWITCH SRC AND DEST HOST PER MODE

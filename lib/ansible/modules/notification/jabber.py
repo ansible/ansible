@@ -37,20 +37,16 @@ options:
     description:
       - The message body.
     required: true
-    default: null
   host:
     description:
       - host to connect, overrides user info
-    required: false
   port:
     description:
       - port to connect to, overrides default
-    required: false
     default: 5222
   encoding:
     description:
       - message encoding
-    required: false
 
 # informational: requirements for nodes
 requirements:

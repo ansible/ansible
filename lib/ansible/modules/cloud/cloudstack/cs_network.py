@@ -85,10 +85,14 @@ options:
     type: bool
   acl_type:
     description:
-      - Access control type.
+      - Access control type for the VPC network tier.
       - Only considered on create.
     default: account
     choices: [ account, domain ]
+  acl:
+    description:
+      - The name of the access control list for the VPC network tier.
+    version_added: "2.5"
   subdomain_access:
     description:
       - Defines whether to allow subdomains to use networks dedicated to their parent domain(s).
@@ -133,6 +137,17 @@ EXAMPLES = '''
     zone: gva-01
     network_offering: DefaultIsolatedNetworkOfferingWithSourceNatService
     network_domain: example.com
+
+- name: Create a VPC tier
+  local_action:
+    module: cs_network
+    name: my VPC tier 1
+    zone: gva-01
+    vpc: my VPC
+    network_offering: DefaultIsolatedNetworkOfferingForVpcNetworks
+    gateway: 10.43.0.1
+    netmask: 255.255.255.0
+    acl: my web acl
 
 - name: Update a network
   local_action:
@@ -233,10 +248,22 @@ tags:
   type: dict
   sample: '[ { "key": "foo", "value": "bar" } ]'
 acl_type:
-  description: Access type of the network (Domain, Account).
+  description: Access type of the VPC network tier (Domain, Account).
   returned: success
   type: string
   sample: Account
+acl:
+  description: Name of the access control list for the VPC network tier.
+  returned: success
+  type: string
+  sample: My ACL
+  version_added: "2.5"
+acl_id:
+  description: ID of the access control list for the VPC network tier.
+  returned: success
+  type: string
+  sample: dfafcd55-0510-4b8c-b6c5-b8cedb4cfd88
+  version_added: "2.5"
 broadcast_domain_type:
   description: Broadcast domain type of the network.
   returned: success
@@ -272,6 +299,30 @@ network_offering:
   returned: success
   type: string
   sample: DefaultIsolatedNetworkOfferingWithSourceNatService
+network_offering_display_text:
+  description: The network offering display text.
+  returned: success
+  type: string
+  sample: Offering for Isolated Vpc networks with Source Nat service enabled
+  version_added: "2.5"
+network_offering_conserve_mode:
+  description: Whether the network offering has IP conserve mode enabled or not.
+  returned: success
+  type: bool
+  sample: false
+  version_added: "2.5"
+network_offering_availability:
+  description: The availability of the network offering the network is created from
+  returned: success
+  type: string
+  sample: Optional
+  version_added: "2.5"
+is_system:
+  description: Whether the network is system related or not.
+  returned: success
+  type: bool
+  sample: false
+  version_added: "2.5"
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -287,8 +338,13 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
     def __init__(self, module):
         super(AnsibleCloudStackNetwork, self).__init__(module)
         self.returns = {
-            'networkdomain': 'network domain',
+            'networkdomain': 'network_domain',
             'networkofferingname': 'network_offering',
+            'networkofferingdisplaytext': 'network_offering_display_text',
+            'networkofferingconservemode': 'network_offering_conserve_mode',
+            'networkofferingavailability': 'network_offering_availability',
+            'aclid': 'acl_id',
+            'issystem': 'is_system',
             'ispersistent': 'is_persistent',
             'acltype': 'acl_type',
             'type': 'type',
@@ -304,18 +360,39 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
         }
         self.network = None
 
+    def get_network_acl(self, key=None, acl_id=None):
+        if acl_id is not None:
+            args = {
+                'id': acl_id,
+                'vpcid': self.get_vpc(key='id'),
+            }
+        else:
+            acl_name = self.module.params.get('acl')
+            if not acl_name:
+                return
+
+            args = {
+                'name': acl_name,
+                'vpcid': self.get_vpc(key='id'),
+            }
+        network_acls = self.query_api('listNetworkACLLists', **args)
+        if network_acls:
+            acl = network_acls['networkacllist'][0]
+            return self._get_by_key(key, acl)
+
     def get_network_offering(self, key=None):
         network_offering = self.module.params.get('network_offering')
         if not network_offering:
             self.module.fail_json(msg="missing required arguments: network_offering")
 
         args = {
-            'zoneid': self.get_zone(key='id')
+            'zoneid': self.get_zone(key='id'),
+            'fetch_list': True,
         }
 
         network_offerings = self.query_api('listNetworkOfferings', **args)
         if network_offerings:
-            for no in network_offerings['networkoffering']:
+            for no in network_offerings:
                 if network_offering in [no['name'], no['displaytext'], no['id']]:
                     return self._get_by_key(key, no)
         self.module.fail_json(msg="Network offering '%s' not found" % network_offering)
@@ -329,24 +406,30 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
         }
         return args
 
-    def get_network(self):
-        if not self.network:
+    def get_network(self, refresh=False):
+        if not self.network or refresh:
             network = self.module.params.get('name')
             args = {
                 'zoneid': self.get_zone(key='id'),
                 'projectid': self.get_project(key='id'),
                 'account': self.get_account(key='name'),
-                'domainid': self.get_domain(key='id')
+                'domainid': self.get_domain(key='id'),
+                'vpcid': self.get_vpc(key='id'),
+                'fetch_list': True,
             }
             networks = self.query_api('listNetworks', **args)
             if networks:
-                for n in networks['network']:
+                for n in networks:
                     if network in [n['name'], n['displaytext'], n['id']]:
                         self.network = n
+                        self.network['acl'] = self.get_network_acl(key='name', acl_id=n.get('aclid'))
                         break
         return self.network
 
     def present_network(self):
+        if self.module.params.get('acl') is not None and self.module.params.get('vpc') is None:
+            self.module.fail_json(msg="Missing required params: vpc")
+
         network = self.get_network()
         if not network:
             network = self.create_network(network)
@@ -366,6 +449,19 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
                 poll_async = self.module.params.get('poll_async')
                 if network and poll_async:
                     network = self.poll_job(network, 'network')
+
+        # Skip ACL check if the network is not a VPC tier
+        if network.get('aclid') != self.get_network_acl(key='id'):
+            self.result['changed'] = True
+            if not self.module.check_mode:
+                args = {
+                    'aclid': self.get_network_acl(key='id'),
+                    'networkid': network['id'],
+                }
+                network = self.query_api('replaceNetworkACLList', **args)
+                if self.module.params.get('poll_async'):
+                    self.poll_job(network, 'networkacllist')
+                    network = self.get_network(refresh=True)
         return network
 
     def create_network(self, network):
@@ -374,6 +470,7 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
         args = self._get_args()
         args.update({
             'acltype': self.module.params.get('acl_type'),
+            'aclid': self.get_network_acl(key='id'),
             'zoneid': self.get_zone(key='id'),
             'projectid': self.get_project(key='id'),
             'account': self.get_account(key='name'),
@@ -438,6 +535,12 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
                     self.poll_job(res, 'network')
             return network
 
+    def get_result(self, network):
+        super(AnsibleCloudStackNetwork, self).get_result(network)
+        if network:
+            self.result['acl'] = self.get_network_acl(key='name', acl_id=network.get('aclid'))
+        return self.result
+
 
 def main():
     argument_spec = cs_argument_spec()
@@ -461,6 +564,7 @@ def main():
         network_domain=dict(),
         subdomain_access=dict(type='bool'),
         state=dict(choices=['present', 'absent', 'restarted'], default='present'),
+        acl=dict(),
         acl_type=dict(choices=['account', 'domain']),
         project=dict(),
         domain=dict(),

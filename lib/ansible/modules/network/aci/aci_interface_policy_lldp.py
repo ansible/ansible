@@ -13,11 +13,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_interface_policy_lldp
-short_description: Manage LLDP interface policies on Cisco ACI fabrics (lldp:IfPol)
+short_description: Manage LLDP interface policies (lldp:IfPol)
 description:
 - Manage LLDP interface policies on Cisco ACI fabrics.
-- More information from the internal APIC class I(lldp:IfPol) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+notes:
+- More information about the internal APIC class B(lldp:IfPol) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.4'
@@ -33,16 +34,14 @@ options:
     aliases: [ descr ]
   receive_state:
     description:
-    - Enable or disable Receive state (FIXME!)
-    required: yes
-    choices: [ disabled, enabled ]
-    default: enabled
+    - Enable or disable Receive state.
+    - The APIC defaults to C(yes) when unset during creation.
+    type: bool
   transmit_state:
     description:
-    - Enable or Disable Transmit state (FIXME!)
-    required: false
-    choices: [ disabled, enabled ]
-    default: enabled
+    - Enable or Disable Transmit state.
+    - The APIC defaults to C(yes) when unset during creation.
+    type: bool
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -62,10 +61,112 @@ EXAMPLES = r'''
     description: '{{ description }}'
     receive_state: '{{ receive_state }}'
     transmit_state: '{{ transmit_state }}'
+  delegate_to: localhost
 '''
 
 RETURN = r'''
-#
+current:
+  description: The existing configuration from the APIC after the module has finished
+  returned: success
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production environment",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+error:
+  description: The error information as returned from the APIC
+  returned: failure
+  type: dict
+  sample:
+    {
+        "code": "122",
+        "text": "unknown managed object class foo"
+    }
+raw:
+  description: The raw output returned by the APIC REST API (xml or json)
+  returned: parse error
+  type: string
+  sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
+sent:
+  description: The actual/minimal configuration pushed to the APIC
+  returned: info
+  type: list
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment"
+            }
+        }
+    }
+previous:
+  description: The original configuration from the APIC before the module has started
+  returned: info
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+proposed:
+  description: The assembled configuration from the user-provided parameters
+  returned: info
+  type: dict
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment",
+                "name": "production"
+            }
+        }
+    }
+filter_string:
+  description: The filter string used for the request
+  returned: failure or debug
+  type: string
+  sample: ?rsp-prop-include=config-only
+method:
+  description: The HTTP method used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: POST
+response:
+  description: The HTTP response from the APIC
+  returned: failure or debug
+  type: string
+  sample: OK (30 bytes)
+status:
+  description: The HTTP status from the APIC
+  returned: failure or debug
+  type: int
+  sample: 200
+url:
+  description: The HTTP url used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
@@ -75,13 +176,11 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        lldp_policy=dict(type='str', require=False, aliases=['name']),
+        lldp_policy=dict(type='str', require=False, aliases=['name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
-        receive_state=dict(type='str', choices=['disabled', 'enabled']),
-        transmit_state=dict(type='str', choices=['disabled', 'enabled']),
+        receive_state=dict(type='raw'),  # Turn into a boolean in v2.9
+        transmit_state=dict(type='raw'),  # Turn into a boolean in v2.9
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -93,26 +192,26 @@ def main():
         ],
     )
 
+    aci = ACIModule(module)
+
     lldp_policy = module.params['lldp_policy']
     description = module.params['description']
-    receive_state = module.params['receive_state']
-    transmit_state = module.params['transmit_state']
+    receive_state = aci.boolean(module.params['receive_state'], 'enabled', 'disabled')
+    transmit_state = aci.boolean(module.params['transmit_state'], 'enabled', 'disabled')
     state = module.params['state']
 
-    aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
             aci_class='lldpIfPol',
             aci_rn='infra/lldpIfP-{0}'.format(lldp_policy),
-            filter_target='eq(lldpIfPol.name, "{0}")'.format(lldp_policy),
             module_object=lldp_policy,
+            target_filter={'name': lldp_policy},
         ),
     )
 
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='lldpIfPol',
             class_config=dict(
@@ -123,16 +222,14 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='lldpIfPol')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':
         aci.delete_config()
 
-    module.exit_json(**aci.result)
+    aci.exit_json()
 
 
 if __name__ == "__main__":

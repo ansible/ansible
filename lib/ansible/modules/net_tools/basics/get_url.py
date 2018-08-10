@@ -24,7 +24,7 @@ description:
        the target host, requests will be sent through that proxy. This
        behaviour can be overridden by setting a variable for this task
        (see `setting the environment
-       <http://docs.ansible.com/playbooks_environment.html>`_),
+       <https://docs.ansible.com/playbooks_environment.html>`_),
        or by using the use_proxy option.
      - HTTP redirects can redirect from HTTP to HTTPS so you should be sure that
        your proxy environment for both protocols is correct.
@@ -49,7 +49,8 @@ options:
   tmp_dest:
     description:
       - Absolute path of where temporary file is downloaded to.
-      - Defaults to C(TMPDIR), C(TEMP) or C(TMP) env variables or a platform specific value.
+      - When run on Ansible 2.5 or greater, path defaults to ansible's remote_tmp setting
+      - When run on Ansible prior to 2.5, it defaults to C(TMPDIR), C(TEMP) or C(TMP) env variables or a platform specific value.
       - U(https://docs.python.org/2/library/tempfile.html#tempfile.tempdir)
     version_added: '2.1'
   force:
@@ -113,7 +114,9 @@ options:
     version_added: '1.8'
   headers:
     description:
-        - Add custom HTTP headers to a request in the format "key:value,key:value".
+        - Add custom HTTP headers to a request in hash/dict format. The hash/dict format was added in 2.6.
+          Previous versions used a C("key:value,key:value") string format. The C("key:value,key:value") string
+          format is deprecated and will be removed in version 2.10.
     version_added: '2.0'
   url_username:
     description:
@@ -338,18 +341,17 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
                 module.fail_json(msg="%s is a file but should be a directory." % tmp_dest)
             else:
                 module.fail_json(msg="%s directory does not exist." % tmp_dest)
-
-        fd, tempname = tempfile.mkstemp(dir=tmp_dest)
     else:
-        fd, tempname = tempfile.mkstemp()
+        tmp_dest = module.tmpdir
+
+    fd, tempname = tempfile.mkstemp(dir=tmp_dest)
 
     f = os.fdopen(fd, 'wb')
     try:
         shutil.copyfileobj(rsp, f)
     except Exception as e:
         os.remove(tempname)
-        module.fail_json(msg="failed to create temporary content file: %s" % to_native(e),
-                         exception=traceback.format_exc())
+        module.fail_json(msg="failed to create temporary content file: %s" % to_native(e), exception=traceback.format_exc())
     f.close()
     rsp.close()
     return tempname, info
@@ -387,7 +389,7 @@ def main():
         sha256sum=dict(type='str', default=''),
         checksum=dict(type='str', default=''),
         timeout=dict(type='int', default=10),
-        headers=dict(type='str'),
+        headers=dict(type='raw'),
         tmp_dest=dict(type='path'),
     )
 
@@ -396,7 +398,7 @@ def main():
         argument_spec=argument_spec,
         add_file_common_args=True,
         supports_check_mode=True,
-        mutually_exclusive=(['checksum', 'sha256sum']),
+        mutually_exclusive=[['checksum', 'sha256sum']],
     )
 
     url = module.params['url']
@@ -410,11 +412,14 @@ def main():
     tmp_dest = module.params['tmp_dest']
 
     # Parse headers to dict
-    if module.params['headers']:
+    if isinstance(module.params['headers'], dict):
+        headers = module.params['headers']
+    elif module.params['headers']:
         try:
             headers = dict(item.split(':', 1) for item in module.params['headers'].split(','))
-        except:
-            module.fail_json(msg="The header parameter requires a key:value,key:value syntax to be properly parsed.")
+            module.deprecate('Supplying `headers` as a string is deprecated. Please use dict/hash format for `headers`', version='2.10')
+        except Exception:
+            module.fail_json(msg="The string representation for the `headers` parameter requires a key:value,key:value syntax to be properly parsed.")
     else:
         headers = None
 
@@ -446,21 +451,17 @@ def main():
             destination_checksum = module.digest_from_file(dest, algorithm)
 
             if checksum == destination_checksum:
-                module.exit_json(msg="file already exists", dest=dest, url=url, changed=False)
+                # Not forcing redownload, unless checksum does not match
+                # allow file attribute changes
+                module.params['path'] = dest
+                file_args = module.load_file_common_arguments(module.params)
+                file_args['path'] = dest
+                changed = module.set_fs_attributes_if_different(file_args, False)
+                if changed:
+                    module.exit_json(msg="file already exists but file attributes changed", dest=dest, url=url, changed=changed)
+                module.exit_json(msg="file already exists", dest=dest, url=url, changed=changed)
 
             checksum_mismatch = True
-
-        # Not forcing redownload, unless checksum does not match
-        if not force and not checksum_mismatch:
-            # allow file attribute changes
-            module.params['path'] = dest
-            file_args = module.load_file_common_arguments(module.params)
-            file_args['path'] = dest
-            changed = module.set_fs_attributes_if_different(file_args, False)
-
-            if changed:
-                module.exit_json(msg="file already exists but file attributes changed", dest=dest, url=url, changed=changed)
-            module.exit_json(msg="file already exists", dest=dest, url=url, changed=changed)
 
         # If the file already exists, prepare the last modified time for the
         # request.

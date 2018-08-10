@@ -58,6 +58,7 @@ options:
             - Specifies if client ip needs to be preserved to clone destination.
             - Field introduced in 17.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
@@ -122,6 +123,7 @@ def main():
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'trafficcloneprofile',
                            set([]))
+
 
 if __name__ == '__main__':
     main()

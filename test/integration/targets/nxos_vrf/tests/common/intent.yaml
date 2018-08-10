@@ -64,10 +64,13 @@
     that:
       - "result.changed == false"
 
-- name: Assign interfaces to VRF
+- name: Assign interfaces to VRF (Config + intent)
   nxos_vrf: &interfaces
     name: test1
     interfaces:
+      - "{{ testint1 }}"
+      - "{{ testint2 }}"
+    associated_interfaces:
       - "{{ testint1 }}"
       - "{{ testint2 }}"
     provider: "{{ connection }}"
@@ -76,6 +79,7 @@
 - assert:
     that:
       - 'result.changed == true'
+      - "result.failed == false"
       - '"interface {{ testint1 }}" in result.commands'
       - '"vrf member test1" in result.commands'
       - '"interface {{ testint2 }}" in result.commands'
@@ -88,6 +92,32 @@
 - assert:
     that:
       - 'result.changed == false'
+
+- name: Check interfaces assigned to VRF (intent)
+  nxos_vrf:
+    name: test1
+    associated_interfaces:
+      - "{{ testint1 }}"
+      - "{{ testint2 }}"
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - "result.failed == false"
+
+- name: Assign interfaces to VRF (intent fail)
+  nxos_vrf:
+    name: test1
+    associated_interfaces:
+      - test
+    provider: "{{ connection }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed == True"
 
 - name: Remove interface from vrf
   nxos_vrf: &single_int
@@ -116,8 +146,8 @@
     aggregate:
       - { name: test1, description: Configured by Ansible }
       - { name: test2, description: Testing, admin_state: down }
-    state: absent
     provider: "{{ connection }}"
+    state: absent
   register: result
 
 - assert:

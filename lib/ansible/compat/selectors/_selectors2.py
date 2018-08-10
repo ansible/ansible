@@ -77,6 +77,7 @@ def _fileobj_to_fd(fileobj):
         raise ValueError("Invalid file descriptor: {0}".format(fd))
     return fd
 
+
 # Python 3.5 uses a more direct route to wrap system calls to increase speed.
 if sys.version_info >= (3, 5):
     def _syscall_wrapper(func, _, *args, **kwargs):
@@ -304,6 +305,7 @@ class BaseSelector(object):
 
     def __exit__(self, *args):
         self.close()
+
 
 # Almost all platforms have select.select()
 if hasattr(select, "select"):

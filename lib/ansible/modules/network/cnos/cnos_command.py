@@ -1,166 +1,271 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 #
-# Copyright (C) 2017 Lenovo, Inc.
+# (C) 2017 Red Hat Inc.
+# Copyright (C) 2017 Lenovo.
 #
-# This file is part of Ansible
+# GNU General Public License v3.0+
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
+# This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
-# Module to send CLI commands to Lenovo Switches
+# Module to execute CNOS Commands on Lenovo Switches.
 # Lenovo Networking
 #
-#
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: cnos_command
-author: "Dave Kasberg (@dkasberg)"
-short_description: Execute a single command on devices running Lenovo CNOS
+version_added: "2.6"
+author: "Anil Kumar Muraleedharan (@amuraleedhar)"
+short_description: Run arbitrary commands on Lenovo CNOS devices
 description:
-    - This module allows you to modify the switch running configuration. It provides a way to
-     execute a single CNOS command on a switch by evaluating the current running configuration
-     and executing the command only if the specific setting has not been already configured.
-     The CNOS command is passed as an argument of the method.
-     This module uses SSH to manage network device configuration.
-     The results of the operation will be placed in a directory named 'results'
-     that must be created by the user in their local directory to where the playbook is run.
-     For more information about this module from Lenovo and customizing it usage for your
-     use cases, please visit U(http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_command.html)
-version_added: "2.3"
-extends_documentation_fragment: cnos
+  - Sends arbitrary commands to an CNOS node and returns the results
+    read from the device. The C(cnos_command) module includes an
+    argument that will cause the module to wait for a specific condition
+    before returning or timing out if the condition is not met.
 options:
-    clicommand:
+  provider:
+    version_added: "2.6"
+    description:
+      - A dict object containing connection details.
+    suboptions:
+      host:
         description:
-            - This specifies the CLI command as an attribute to this method. The command is
-             passed using double quotes. The variables can be placed directly on to the CLI
-             commands or can be invoked from the vars directory.
+          - Specifies the DNS host name or address for connecting to the remote
+            device over the specified transport.  The value of host is used as
+            the destination address for the transport.
         required: true
-        default: Null
-'''
-EXAMPLES = '''
-Tasks : The following are examples of using the module cnos_command. These are written in the main.yml file of the tasks directory.
+      port:
+        description:
+          - Specifies the port to use when building the connection to the remote device.
+        default: 22
+      username:
+        description:
+          - Configures the username to use to authenticate the connection to
+            the remote device.  This value is used to authenticate
+            the SSH session. If the value is not specified in the task, the
+            value of environment variable C(ANSIBLE_NET_USERNAME) will be used instead.
+      password:
+        description:
+          - Specifies the password to use to authenticate the connection to
+            the remote device.   This value is used to authenticate
+            the SSH session. If the value is not specified in the task, the
+            value of environment variable C(ANSIBLE_NET_PASSWORD) will be used instead.
+      timeout:
+        description:
+          - Specifies the timeout in seconds for communicating with the network device
+            for either connecting or sending commands.  If the timeout is
+            exceeded before the operation is completed, the module will error.
+        default: 10
+      ssh_keyfile:
+        description:
+          - Specifies the SSH key to use to authenticate the connection to
+            the remote device.   This value is the path to the
+            key used to authenticate the SSH session. If the value is not specified
+            in the task, the value of environment variable C(ANSIBLE_NET_SSH_KEYFILE)
+            will be used instead.
+  commands:
+    version_added: "2.6"
+    description:
+      - List of commands to send to the remote device over the
+        configured provider. The resulting output from the command
+        is returned. If the I(wait_for) argument is provided, the
+        module is not returned until the condition is satisfied or
+        the number of retires as expired.
+    required: true
+  wait_for:
+    version_added: "2.6"
+    description:
+      - List of conditions to evaluate against the output of the
+        command. The task will wait for each condition to be true
+        before moving forward. If the conditional is not true
+        within the configured number of retries, the task fails.
+        See examples.
+  match:
+    version_added: "2.6"
+    description:
+      - The I(match) argument is used in conjunction with the
+        I(wait_for) argument to specify the match policy.  Valid
+        values are C(all) or C(any).  If the value is set to C(all)
+        then all conditionals in the wait_for must be satisfied.  If
+        the value is set to C(any) then only one of the values must be
+        satisfied.
+    default: all
+    choices: ['any', 'all']
+  retries:
+    version_added: "2.6"
+    description:
+      - Specifies the number of retries a command should by tried
+        before it is considered failed. The command is run on the
+        target device every retry and evaluated against the
+        I(wait_for) conditions.
+    default: 10
+  interval:
+    version_added: "2.6"
+    description:
+      - Configures the interval in seconds to wait between retries
+        of the command. If the command does not pass the specified
+        conditions, the interval indicates how long to wait before
+        trying the command again.
+    default: 1
+"""
+
+EXAMPLES = """
+# Note: examples below use the following provider dict to handle
+#       transport and authentication to the node.
 ---
-- name: Test Command
+vars:
+  cli:
+    host: "{{ inventory_hostname }}"
+    port: 22
+    username: admin
+    password: admin
+    timeout: 30
+
+---
+- name: test contains operator
   cnos_command:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
-      deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      outputfile: "./results/test_command_{{ inventory_hostname }}_output.txt"
-      clicommand: "display users"
+    commands:
+      - show version
+      - show system memory
+    wait_for:
+      - "result[0] contains 'Lenovo'"
+      - "result[1] contains 'MemFree'"
+    provider: "{{ cli }}"
+  register: result
 
-'''
-RETURN = '''
-msg:
-  description: Success or failure message
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.stdout is defined"
+
+- name: get output for single command
+  cnos_command:
+    commands: ['show version']
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.stdout is defined"
+
+- name: get output for multiple commands
+  cnos_command:
+    commands:
+      - show version
+      - show interface information
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.stdout is defined"
+      - "result.stdout | length == 2"
+"""
+
+RETURN = """
+stdout:
+  description: the set of responses from the commands
   returned: always
-  type: string
-  sample: "Command Applied"
-'''
+  type: list
+  sample: ['...', '...']
+stdout_lines:
+  description: The value of stdout split into a list
+  returned: always
+  type: list
+  sample: [['...', '...'], ['...'], ['...']]
+failed_conditions:
+  description: the conditionals that failed
+  returned: failed
+  type: list
+  sample: ['...', '...']
+"""
 
-import sys
-try:
-    import paramiko
-    HAS_PARAMIKO = True
-except ImportError:
-    HAS_PARAMIKO = False
 import time
-import socket
-import array
-import json
-import time
-import re
-try:
-    from ansible.module_utils.network.cnos import cnos
-    HAS_LIB = True
-except:
-    HAS_LIB = False
+
 from ansible.module_utils.basic import AnsibleModule
-from collections import defaultdict
+from ansible.module_utils.network.cnos.cnos import run_commands, check_args
+from ansible.module_utils.network.cnos.cnos import cnos_argument_spec
+from ansible.module_utils.network.common.parsing import Conditional
+from ansible.module_utils.six import string_types
+
+
+def to_lines(stdout):
+    for item in stdout:
+        if isinstance(item, string_types):
+            item = str(item).split('\n')
+        yield item
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            clicommand=dict(required=True),
-            outputfile=dict(required=True),
-            host=dict(required=True),
-            deviceType=dict(required=True),
-            username=dict(required=True),
-            password=dict(required=True, no_log=True),
-            enablePassword=dict(required=False, no_log=True),),
-        supports_check_mode=False)
+    spec = dict(
+        # { command: <str>, prompt: <str>, response: <str> }
+        commands=dict(type='list', required=True),
 
-    username = module.params['username']
-    password = module.params['password']
-    enablePassword = module.params['enablePassword']
-    cliCommand = module.params['clicommand']
-    deviceType = module.params['deviceType']
-    outputfile = module.params['outputfile']
-    hostIP = module.params['host']
-    output = ""
-    if not HAS_PARAMIKO:
-        module.fail_json(msg='paramiko is required for this module')
+        wait_for=dict(type='list'),
+        match=dict(default='all', choices=['all', 'any']),
 
-    # Create instance of SSHClient object
-    remote_conn_pre = paramiko.SSHClient()
+        retries=dict(default=10, type='int'),
+        interval=dict(default=1, type='int')
+    )
 
-    # Automatically add untrusted hosts (make sure okay for security policy in your environment)
-    remote_conn_pre.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    spec.update(cnos_argument_spec)
 
-    # initiate SSH connection with the switch
-    remote_conn_pre.connect(hostIP, username=username, password=password)
-    time.sleep(2)
+    module = AnsibleModule(argument_spec=spec, supports_check_mode=True)
+    result = {'changed': False}
 
-    # Use invoke_shell to establish an 'interactive session'
-    remote_conn = remote_conn_pre.invoke_shell()
-    time.sleep(2)
+    wait_for = module.params['wait_for'] or list()
+    conditionals = [Conditional(c) for c in wait_for]
 
-    # Enable and enter configure terminal then send command
-    output = output + cnos.waitForDeviceResponse("\n", ">", 2, remote_conn)
+    commands = module.params['commands']
+    retries = module.params['retries']
+    interval = module.params['interval']
+    match = module.params['match']
 
-    output = output + cnos.enterEnableModeForDevice(enablePassword, 3, remote_conn)
+    while retries > 0:
+        responses = run_commands(module, commands)
 
-    # Make terminal length = 0
-    output = output + cnos.waitForDeviceResponse("terminal length 0\n", "#", 2, remote_conn)
+        for item in list(conditionals):
+            if item(responses):
+                if match == 'any':
+                    conditionals = list()
+                    break
+                conditionals.remove(item)
 
-    # Go to config mode
-    output = output + cnos.waitForDeviceResponse("configure d\n", "(config)#", 2, remote_conn)
+        if not conditionals:
+            break
 
-    # Send the CLi command
-    output = output + cnos.waitForDeviceResponse(cliCommand + "\n", "(config)#", 2, remote_conn)
+        time.sleep(interval)
+        retries -= 1
 
-    # Save it into the file
-    file = open(outputfile, "a")
-    file.write(output)
-    file.close()
+    if conditionals:
+        failed_conditions = [item.raw for item in conditionals]
+        msg = 'One or more conditional statements have not been satisfied'
+        module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
-    # Logic to check when changes occur or not
-    errorMsg = cnos.checkOutputForError(output)
-    if(errorMsg is None):
-        module.exit_json(changed=True, msg="CLI command executed and results saved in file ")
-    else:
-        module.fail_json(msg=errorMsg)
+    result.update({
+        'changed': False,
+        'stdout': responses,
+        'stdout_lines': list(to_lines(responses))
+    })
+
+    module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

@@ -97,7 +97,6 @@ class InventoryData(object):
                                 'You can correct this by setting ansible_python_interpreter for localhost')
             new_host.set_variable("ansible_python_interpreter", py_interp)
             new_host.set_variable("ansible_connection", 'local')
-            new_host.set_variable("ansible_remote_tmp", C.DEFAULT_LOCAL_TMP)
 
             self.localhost = new_host
 
@@ -129,7 +128,7 @@ class InventoryData(object):
             if self.groups['ungrouped'] in mygroups:
                 # clear ungrouped of any incorrectly stored by parser
                 if set(mygroups).difference(set([self.groups['all'], self.groups['ungrouped']])):
-                    host.remove_group(self.groups['ungrouped'])
+                    self.groups['ungrouped'].remove_host(host)
 
             elif not host.implicit:
                 # add ungrouped hosts to ungrouped, except implicit
@@ -162,13 +161,16 @@ class InventoryData(object):
     def add_group(self, group):
         ''' adds a group to inventory if not there already '''
 
-        if group not in self.groups:
-            g = Group(group)
-            self.groups[group] = g
-            self._groups_dict_cache = {}
-            display.debug("Added group %s to inventory" % group)
+        if group:
+            if group not in self.groups:
+                g = Group(group)
+                self.groups[group] = g
+                self._groups_dict_cache = {}
+                display.debug("Added group %s to inventory" % group)
+            else:
+                display.debug("group %s already in inventory" % group)
         else:
-            display.debug("group %s already in inventory" % group)
+            raise AnsibleError("Invalid empty/false group name provided: %s" % group)
 
     def remove_group(self, group):
 
@@ -184,38 +186,41 @@ class InventoryData(object):
     def add_host(self, host, group=None, port=None):
         ''' adds a host to inventory and possibly a group if not there already '''
 
-        g = None
-        if group:
-            if group in self.groups:
-                g = self.groups[group]
-            else:
-                raise AnsibleError("Could not find group %s in inventory" % group)
-
-        if host not in self.hosts:
-            h = Host(host, port)
-            self.hosts[host] = h
-            if self.current_source:  # set to 'first source' in which host was encountered
-                self.set_variable(host, 'inventory_file', self.current_source)
-                self.set_variable(host, 'inventory_dir', basedir(self.current_source))
-            else:
-                self.set_variable(host, 'inventory_file', None)
-                self.set_variable(host, 'inventory_dir', None)
-            display.debug("Added host %s to inventory" % (host))
-
-            # set default localhost from inventory to avoid creating an implicit one. Last localhost defined 'wins'.
-            if host in C.LOCALHOST:
-                if self.localhost is None:
-                    self.localhost = self.hosts[host]
-                    display.vvvv("Set default localhost to %s" % h)
+        if host:
+            g = None
+            if group:
+                if group in self.groups:
+                    g = self.groups[group]
                 else:
-                    display.warning("A duplicate localhost-like entry was found (%s). First found localhost was %s" % (h, self.localhost.name))
-        else:
-            h = self.hosts[host]
+                    raise AnsibleError("Could not find group %s in inventory" % group)
 
-        if g:
-            g.add_host(h)
-            self._groups_dict_cache = {}
-            display.debug("Added host %s to group %s" % (host, group))
+            if host not in self.hosts:
+                h = Host(host, port)
+                self.hosts[host] = h
+                if self.current_source:  # set to 'first source' in which host was encountered
+                    self.set_variable(host, 'inventory_file', self.current_source)
+                    self.set_variable(host, 'inventory_dir', basedir(self.current_source))
+                else:
+                    self.set_variable(host, 'inventory_file', None)
+                    self.set_variable(host, 'inventory_dir', None)
+                display.debug("Added host %s to inventory" % (host))
+
+                # set default localhost from inventory to avoid creating an implicit one. Last localhost defined 'wins'.
+                if host in C.LOCALHOST:
+                    if self.localhost is None:
+                        self.localhost = self.hosts[host]
+                        display.vvvv("Set default localhost to %s" % h)
+                    else:
+                        display.warning("A duplicate localhost-like entry was found (%s). First found localhost was %s" % (h, self.localhost.name))
+            else:
+                h = self.hosts[host]
+
+            if g:
+                g.add_host(h)
+                self._groups_dict_cache = {}
+                display.debug("Added host %s to group %s" % (host, group))
+        else:
+            raise AnsibleError("Invalid empty host name provided: %s" % host)
 
     def remove_host(self, host):
 

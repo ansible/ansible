@@ -36,7 +36,6 @@ options:
     name:
         description:
             - Sets the host lease hostname (mandatory if state=present).
-        default: None
     host:
         description:
             - Sets OMAPI server host to interact with.
@@ -60,18 +59,15 @@ options:
     ip:
         description:
             - Sets the lease host IP address.
-        required: false
-        default: None
     statements:
         description:
             - Attach a list of OMAPI DHCP statements with host lease (without ending semicolon).
-        required: false
         default: []
     ddns:
         description:
             - Enable dynamic DNS updates for this host.
-        required: false
-        default: false
+        type: bool
+        default: 'no'
 
 '''
 EXAMPLES = '''

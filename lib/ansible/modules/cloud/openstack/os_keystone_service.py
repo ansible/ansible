@@ -30,13 +30,11 @@ options:
    description:
      description:
         - Description of the service
-     required: false
-     default: None
    enabled:
      description:
         - Is the service enabled
-     required: false
-     default: True
+     type: bool
+     default: 'yes'
    service_type:
      description:
         - The type of service
@@ -49,10 +47,9 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -104,16 +101,8 @@ id:
     sample: "3292f020780b4d5baf27ff7e1d224c44"
 '''
 
-from distutils.version import StrictVersion
-
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _needs_update(module, service):
@@ -152,21 +141,14 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-    if StrictVersion(shade.__version__) < StrictVersion('1.6.0'):
-        module.fail_json(msg="To utilize this module, the installed version of"
-                             "the shade library MUST be >=1.6.0")
-
     description = module.params['description']
     enabled = module.params['enabled']
     name = module.params['name']
     state = module.params['state']
     service_type = module.params['service_type']
 
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.operator_cloud(**module.params)
-
         services = cloud.search_services(name_or_id=name,
                                          filters=dict(type=service_type))
 
@@ -204,7 +186,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

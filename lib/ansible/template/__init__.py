@@ -27,6 +27,7 @@ import pwd
 import re
 import time
 
+from collections import Sequence, Mapping
 from functools import wraps
 from io import StringIO
 from numbers import Number
@@ -36,11 +37,9 @@ try:
 except ImportError:
     from sha import sha as sha1
 
-from jinja2 import Environment
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
 from jinja2.loaders import FileSystemLoader
 from jinja2.runtime import Context, StrictUndefined
-from jinja2.utils import concat as j2_concat
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleUndefinedVariable, AnsibleAssertionError
@@ -69,20 +68,32 @@ NON_TEMPLATED_TYPES = (bool, Number)
 
 JINJA2_OVERRIDE = '#jinja2:'
 
+USE_JINJA2_NATIVE = False
+if C.DEFAULT_JINJA2_NATIVE:
+    try:
+        from jinja2.nativetypes import NativeEnvironment as Environment
+        from ansible.template.native_helpers import ansible_native_concat as j2_concat
+        USE_JINJA2_NATIVE = True
+    except ImportError:
+        from jinja2 import Environment
+        from jinja2.utils import concat as j2_concat
+else:
+    from jinja2 import Environment
+    from jinja2.utils import concat as j2_concat
+
 
 def generate_ansible_template_vars(path):
-
     b_path = to_bytes(path)
     try:
         template_uid = pwd.getpwuid(os.stat(b_path).st_uid).pw_name
-    except:
+    except (KeyError, TypeError):
         template_uid = os.stat(b_path).st_uid
 
     temp_vars = {}
-    temp_vars['template_host'] = os.uname()[1]
-    temp_vars['template_path'] = b_path
+    temp_vars['template_host'] = to_text(os.uname()[1])
+    temp_vars['template_path'] = path
     temp_vars['template_mtime'] = datetime.datetime.fromtimestamp(os.path.getmtime(b_path))
-    temp_vars['template_uid'] = template_uid
+    temp_vars['template_uid'] = to_text(template_uid)
     temp_vars['template_fullpath'] = os.path.abspath(path)
     temp_vars['template_run_date'] = datetime.datetime.now()
 
@@ -92,7 +103,7 @@ def generate_ansible_template_vars(path):
         uid=temp_vars['template_uid'],
         file=temp_vars['template_path'],
     )
-    temp_vars['ansible_managed'] = time.strftime(managed_str, time.localtime(os.path.getmtime(b_path)))
+    temp_vars['ansible_managed'] = to_text(time.strftime(to_native(managed_str), time.localtime(os.path.getmtime(b_path))))
 
     return temp_vars
 
@@ -170,7 +181,7 @@ def tests_as_filters_warning(name, func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         display.deprecated(
-            'Using tests as filters is deprecated. Instead of using `result|%(name)s` instead use '
+            'Using tests as filters is deprecated. Instead of using `result|%(name)s` use '
             '`result is %(name)s`' % dict(name=name),
             version='2.9'
         )
@@ -289,9 +300,10 @@ class Templar:
             self.environment.block_end_string,
             self.environment.variable_end_string
         ))
-        self._no_type_regex = re.compile(r'.*\|\s*(?:%s)\s*(?:%s)?$' % ('|'.join(C.STRING_TYPE_FILTERS), self.environment.variable_end_string))
+        self._no_type_regex = re.compile(r'.*?\|\s*(?:%s)(?:\([^\|]*\))?\s*\)?\s*(?:%s)' %
+                                         ('|'.join(C.STRING_TYPE_FILTERS), self.environment.variable_end_string))
 
-    def _get_filters(self):
+    def _get_filters(self, builtin_filters):
         '''
         Returns filter plugins, after loading and caching them if need be
         '''
@@ -299,15 +311,17 @@ class Templar:
         if self._filters is not None:
             return self._filters.copy()
 
-        plugins = [x for x in self._filter_loader.all()]
-
         self._filters = dict()
-        for fp in plugins:
-            self._filters.update(fp.filters())
 
         # TODO: Remove registering tests as filters in 2.9
         for name, func in self._get_tests().items():
+            if name in builtin_filters:
+                # If we have a custom test named the same as a builtin filter, don't register as a filter
+                continue
             self._filters[name] = tests_as_filters_warning(name, func)
+
+        for fp in self._filter_loader.all():
+            self._filters.update(fp.filters())
 
         return self._filters.copy()
 
@@ -319,10 +333,8 @@ class Templar:
         if self._tests is not None:
             return self._tests.copy()
 
-        plugins = [x for x in self._test_loader.all()]
-
         self._tests = dict()
-        for fp in plugins:
+        for fp in self._test_loader.all():
             self._tests.update(fp.tests())
 
         return self._tests.copy()
@@ -355,7 +367,7 @@ class Templar:
                 clean_list.append(self._clean_data(list_item))
             ret = clean_list
 
-        elif isinstance(orig_data, dict):
+        elif isinstance(orig_data, (dict, Mapping)):
             clean_dict = {}
             for k in orig_data:
                 clean_dict[self._clean_data(k)] = self._clean_data(orig_data[k])
@@ -478,19 +490,20 @@ class Templar:
                             disable_lookups=disable_lookups,
                         )
 
-                        unsafe = hasattr(result, '__UNSAFE__')
-                        if convert_data and not self._no_type_regex.match(variable):
-                            # if this looks like a dictionary or list, convert it to such using the safe_eval method
-                            if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
-                                    result.startswith("[") or result in ("True", "False"):
-                                eval_results = safe_eval(result, locals=self._available_variables, include_exceptions=True)
-                                if eval_results[1] is None:
-                                    result = eval_results[0]
-                                    if unsafe:
-                                        result = wrap_var(result)
-                                else:
-                                    # FIXME: if the safe_eval raised an error, should we do something with it?
-                                    pass
+                        if not USE_JINJA2_NATIVE:
+                            unsafe = hasattr(result, '__UNSAFE__')
+                            if convert_data and not self._no_type_regex.match(variable):
+                                # if this looks like a dictionary or list, convert it to such using the safe_eval method
+                                if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
+                                        result.startswith("[") or result in ("True", "False"):
+                                    eval_results = safe_eval(result, locals=self._available_variables, include_exceptions=True)
+                                    if eval_results[1] is None:
+                                        result = eval_results[0]
+                                        if unsafe:
+                                            result = wrap_var(result)
+                                    else:
+                                        # FIXME: if the safe_eval raised an error, should we do something with it?
+                                        pass
 
                         # we only cache in the case where we have a single variable
                         # name, to make sure we're not putting things which may otherwise
@@ -508,7 +521,7 @@ class Templar:
                     overrides=overrides,
                     disable_lookups=disable_lookups,
                 ) for v in variable]
-            elif isinstance(variable, dict):
+            elif isinstance(variable, (dict, Mapping)):
                 d = {}
                 # we don't use iteritems() here to avoid problems if the underlying dict
                 # changes sizes due to the templating, which can happen with hostvars
@@ -596,8 +609,13 @@ class Templar:
 
     def _finalize(self, thing):
         '''
-        A custom finalize method for jinja2, which prevents None from being returned
+        A custom finalize method for jinja2, which prevents None from being returned. This
+        avoids a string of ``"None"`` as ``None`` has no importance in YAML.
+
+        If using ANSIBLE_JINJA2_NATIVE we bypass this and return the actual value always
         '''
+        if USE_JINJA2_NATIVE:
+            return thing
         return thing if thing is not None else ''
 
     def _fail_lookup(self, name, *args, **kwargs):
@@ -614,6 +632,7 @@ class Templar:
         if instance is not None:
             wantlist = kwargs.pop('wantlist', False)
             allow_unsafe = kwargs.pop('allow_unsafe', C.DEFAULT_ALLOW_UNSAFE_LOOKUPS)
+            errors = kwargs.pop('errors', 'strict')
 
             from ansible.utils.listify import listify_lookup_plugin_terms
             loop_terms = listify_lookup_plugin_terms(terms=args, templar=self, loader=self._loader, fail_on_undefined=True, convert_bare=False)
@@ -624,8 +643,14 @@ class Templar:
                 raise AnsibleUndefinedVariable(e)
             except Exception as e:
                 if self._fail_on_lookup_errors:
-                    raise AnsibleError("An unhandled exception occurred while running the lookup plugin '%s'. Error was a %s, "
-                                       "original message: %s" % (name, type(e), e))
+                    msg = u"An unhandled exception occurred while running the lookup plugin '%s'. Error was a %s, original message: %s" % \
+                          (name, type(e), to_text(e))
+                    if errors == 'warn':
+                        display.warning(msg)
+                    elif errors == 'ignore':
+                        display.display(msg, log_only=True)
+                    else:
+                        raise AnsibleError(to_native(msg))
                 ran = None
 
             if ran and not allow_unsafe:
@@ -635,7 +660,15 @@ class Templar:
                     try:
                         ran = UnsafeProxy(",".join(ran))
                     except TypeError:
-                        if isinstance(ran, list) and len(ran) == 1:
+                        # Lookup Plugins should always return lists.  Throw an error if that's not
+                        # the case:
+                        if not isinstance(ran, Sequence):
+                            raise AnsibleError("The lookup plugin '%s' did not return a list."
+                                               % name)
+
+                        # The TypeError we can recover from is when the value *inside* of the list
+                        # is not a string
+                        if len(ran) == 1:
                             ran = wrap_var(ran[0])
                         else:
                             ran = wrap_var(ran)
@@ -647,9 +680,15 @@ class Templar:
             raise AnsibleError("lookup plugin (%s) not found" % name)
 
     def do_template(self, data, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None, disable_lookups=False):
+        if USE_JINJA2_NATIVE and not isinstance(data, string_types):
+            return data
+
         # For preserving the number of input newlines in the output (used
         # later in this method)
-        data_newlines = _count_newlines_from_end(data)
+        if not USE_JINJA2_NATIVE:
+            data_newlines = _count_newlines_from_end(data)
+        else:
+            data_newlines = None
 
         if fail_on_undefined is None:
             fail_on_undefined = self._fail_on_undefined_errors
@@ -662,7 +701,7 @@ class Templar:
                 myenv = self.environment.overlay(overrides)
 
             # Get jinja env overrides from template
-            if data.startswith(JINJA2_OVERRIDE):
+            if hasattr(data, 'startswith') and data.startswith(JINJA2_OVERRIDE):
                 eol = data.find('\n')
                 line = data[len(JINJA2_OVERRIDE):eol]
                 data = data[eol + 1:]
@@ -672,7 +711,7 @@ class Templar:
                     setattr(myenv, key, ast.literal_eval(val.strip()))
 
             # Adds Ansible custom filters and tests
-            myenv.filters.update(self._get_filters())
+            myenv.filters.update(self._get_filters(myenv.filters))
             myenv.tests.update(self._get_tests())
 
             if escape_backslashes:
@@ -704,7 +743,7 @@ class Templar:
 
             try:
                 res = j2_concat(rf)
-                if new_context.unsafe:
+                if getattr(new_context, 'unsafe', False):
                     res = wrap_var(res)
             except TypeError as te:
                 if 'StrictUndefined' in to_native(te):
@@ -714,6 +753,9 @@ class Templar:
                 else:
                     display.debug("failing because of a type error, template data is: %s" % to_native(data))
                     raise AnsibleError("Unexpected templating type error occurred on (%s): %s" % (to_native(data), to_native(te)))
+
+            if USE_JINJA2_NATIVE:
+                return res
 
             if preserve_trailing_newlines:
                 # The low level calls above do not preserve the newline

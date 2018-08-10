@@ -27,7 +27,6 @@ options:
   provider:
     description:
       - A dict object containing connection details.
-    default: null
     suboptions:
       host:
         description:
@@ -50,7 +49,6 @@ options:
           - Password to authenticate the SSH session to the remote device. If the
             value is not specified in the task, the value of environment variable
             C(ANSIBLE_NET_PASSWORD) will be used instead.
-        default: null
       ssh_keyfile:
         description:
           - Path to an ssh key used to authenticate the SSH session to the remote

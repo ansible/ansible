@@ -1,12 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright (C): 2015, Dag Wieers <dag@wieers.com>
+# Copyright: (c) 2015, Dag Wieers (@dagwieers) <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -20,16 +19,19 @@ short_description: Copy a file to a vCenter datastore
 description:
     - Upload files to a vCenter datastore
 version_added: 2.0
-author: Dag Wieers (@dagwieers) <dag@wieers.com>
+author:
+- Dag Wieers (@dagwieers)
 options:
   host:
     description:
       - The vCenter server on which the datastore is available.
     required: true
+    aliases: ['hostname']
   login:
     description:
       - The login name to authenticate on the vCenter server.
     required: true
+    aliases: ['username']
   password:
     description:
       - The password to authenticate on the vCenter server.
@@ -55,7 +57,7 @@ options:
       - If C(no), SSL certificates will not be validated. This should only be
         set to C(no) when no other option exists.
     default: 'yes'
-    choices: ['yes', 'no']
+    type: bool
 
 notes:
   - "This module ought to be run from a system that can access vCenter directly and has the file to transfer.
@@ -65,19 +67,19 @@ notes:
 
 EXAMPLES = '''
 - vsphere_copy:
-    host: vhost
-    login: vuser
-    password: vpass
+    host: '{{ vhost }}'
+    login: '{{ vuser }}'
+    password: '{{ vpass }}'
     src: /some/local/file
     datacenter: DC1 Someplace
     datastore: datastore1
     path: some/remote/file
-  transport: local
+  delegate_to: localhost
 
 - vsphere_copy:
-    host: vhost
-    login: vuser
-    password: vpass
+    host: '{{ vhost }}'
+    login: '{{ vuser }}'
+    password: '{{ vpass }}'
     src: /other/local/file
     datacenter: DC2 Someplace
     datastore: datastore2

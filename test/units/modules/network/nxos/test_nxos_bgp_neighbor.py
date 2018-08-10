@@ -47,8 +47,8 @@ class TestNxosBgpNeighborModule(TestNxosModule):
         self.load_config.return_value = []
 
     def test_nxos_bgp_neighbor(self):
-        set_module_args(dict(asn=65535, neighbor='3.3.3.3', description='some words'))
-        self.execute_module(changed=True, commands=['router bgp 65535', 'neighbor 3.3.3.3', 'description some words'])
+        set_module_args(dict(asn=65535, neighbor='192.0.2.3', description='some words'))
+        self.execute_module(changed=True, commands=['router bgp 65535', 'neighbor 192.0.2.3', 'description some words'])
 
     def test_nxos_bgp_neighbor_remove_private_as(self):
         set_module_args(dict(asn=65535, neighbor='3.3.3.4', remove_private_as='all'))

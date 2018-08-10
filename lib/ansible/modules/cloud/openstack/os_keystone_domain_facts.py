@@ -21,23 +21,19 @@ author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
 description:
     - Retrieve facts about a one or more OpenStack domains
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "sdk"
 options:
    name:
      description:
         - Name or ID of the domain
-     required: true
    filters:
      description:
         - A dictionary of meta data to use for further filtering.  Elements of
           this dictionary may be additional dictionaries.
-     required: false
-     default: None
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 '''
 
 EXAMPLES = '''
@@ -89,14 +85,8 @@ openstack_domains:
             type: bool
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def main():
@@ -112,14 +102,10 @@ def main():
     )
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
+    sdk, opcloud = openstack_cloud_from_module(module)
     try:
         name = module.params['name']
         filters = module.params['filters']
-
-        opcloud = shade.operator_cloud(**module.params)
 
         if name:
             # Let's suppose user is passing domain ID
@@ -134,7 +120,7 @@ def main():
         module.exit_json(changed=False, ansible_facts=dict(
             openstack_domains=domains))
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

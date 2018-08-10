@@ -1,28 +1,24 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
 #
-# Copyright (C) 2017 Lenovo, Inc.
+# (C) 2017 Red Hat Inc.
+# Copyright (C) 2017 Lenovo.
 #
-# This file is part of Ansible
+# GNU General Public License v3.0+
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
+# This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
 # Module to Collect facts from Lenovo Switches running Lenovo ENOS commands
 # Lenovo Networking
 #
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -208,7 +204,6 @@ class Default(FactsBase):
         return "NA"
 
     def parse_model(self, data):
-        # match = re.search(r'^Cisco (.+) \(revision', data, re.M)
         match = re.search(r'^Lenovo RackSwitch (\S+)', data, re.M | re.I)
         if match:
             return match.group(1)
@@ -221,7 +216,6 @@ class Default(FactsBase):
             return "Image2"
 
     def parse_serialnum(self, data):
-        # match = re.search(r'board ID (\S+)', data)
         match = re.search(r'^Switch Serial No:  (\S+)', data, re.M | re.I)
         if match:
             return match.group(1)
@@ -370,6 +364,11 @@ class Interfaces(FactsBase):
             innerData['speed'] = intfSplit[1].strip()
             innerData['duplex'] = intfSplit[2].strip()
             innerData['operstatus'] = intfSplit[5].strip()
+            if("up" not in intfSplit[5].strip()) and ("down" not in intfSplit[5].strip()):
+                innerData['description'] = intfSplit[7].strip()
+                innerData['macaddress'] = intfSplit[9].strip()
+                innerData['mtu'] = intfSplit[10].strip()
+                innerData['operstatus'] = intfSplit[6].strip()
             interfaces[intfSplit[0].strip()] = innerData
         return interfaces
 
@@ -381,6 +380,14 @@ class Interfaces(FactsBase):
             else:
                 line = line.strip()
                 match = re.match(r'^([0-9]+)', line)
+                if match:
+                    key = match.group(1)
+                    parsed.append(line)
+                match = re.match(r'^(INT+)', line)
+                if match:
+                    key = match.group(1)
+                    parsed.append(line)
+                match = re.match(r'^(EXT+)', line)
                 if match:
                     key = match.group(1)
                     parsed.append(line)
@@ -401,11 +408,20 @@ class Interfaces(FactsBase):
                 if match:
                     key = match.group(1)
                     parsed.append(line)
+                match = re.match(r'^(INT+)', line)
+                if match:
+                    key = match.group(1)
+                    parsed.append(line)
+                match = re.match(r'^(EXT+)', line)
+                if match:
+                    key = match.group(1)
+                    parsed.append(line)
                 match = re.match(r'^(MGT+)', line)
                 if match:
                     key = match.group(1)
                     parsed.append(line)
         return parsed
+
 
 FACT_SUBSETS = dict(
     default=Default,

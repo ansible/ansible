@@ -32,7 +32,7 @@ botocore = importorskip("botocore")
 
 class AWSModuleTestCase(unittest.TestCase):
 
-    basic._ANSIBLE_ARGS = to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': {}}))
+    basic._ANSIBLE_ARGS = to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': {'_ansible_tmpdir': '/tmp/ansible-abc'}}))
 
     def test_create_aws_module_should_set_up_params(self):
         m = AnsibleAWSModule(argument_spec=dict(
@@ -59,7 +59,7 @@ class ErrorReportingTestcase(unittest.TestCase):
 
     def test_botocore_exception_reports_nicely_via_fail_json_aws(self):
 
-        basic._ANSIBLE_ARGS = to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': {}}))
+        basic._ANSIBLE_ARGS = to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': {'_ansible_tmpdir': '/tmp/ansible-abc'}}))
         module = AnsibleAWSModule(argument_spec=dict(
             fail_mode=dict(type='list', default=['success'])
         ))
@@ -97,7 +97,7 @@ class ErrorReportingTestcase(unittest.TestCase):
             "Failed to find error/code; was: " + str(fail_json_double.mock_calls[0])
 
     def test_botocore_exception_without_response_reports_nicely_via_fail_json_aws(self):
-        basic._ANSIBLE_ARGS = to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': {}}))
+        basic._ANSIBLE_ARGS = to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': {'_ansible_tmpdir': '/tmp/ansible-abc'}}))
         module = AnsibleAWSModule(argument_spec=dict(
             fail_mode=dict(type='list', default=['success'])
         ))

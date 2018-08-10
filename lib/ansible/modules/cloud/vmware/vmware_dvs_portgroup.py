@@ -1,20 +1,18 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # Copyright: (c) 2015, Joseph Callen <jcallen () csc.com>
-# Copyright: (c) 2017-18 Ansible Project
+# Copyright: (c) 2017-2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-#
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
     'supported_by': 'community'
 }
-
 
 DOCUMENTATION = '''
 ---
@@ -62,6 +60,7 @@ options:
         description:
             - Determines if the portgroup should be present or not.
         required: True
+        type: bool
         choices:
             - 'present'
             - 'absent'
@@ -71,6 +70,7 @@ options:
             - Indicates whether this is a VLAN trunk or not.
         required: False
         default: False
+        type: bool
         version_added: '2.5'
     network_policy:
         description:
@@ -81,17 +81,29 @@ options:
             - '- C(mac_changes) (bool): indicates whether mac changes are allowed. (default: false)'
         required: False
         version_added: '2.5'
+        default: {
+            promiscuous: False,
+            forged_transmits: False,
+            mac_changes: False,
+        }
     teaming_policy:
         description:
             - Dictionary which configures the different teaming values for portgroup.
             - 'Valid attributes are:'
             - '- C(load_balance_policy) (string): Network adapter teaming policy. (default: loadbalance_srcid)'
-            - '   - choices: [ loadbalance_ip, loadbalance_srcmac, loadbalance_srcid, failover_explicit]'
+            - '   - choices: [ loadbalance_ip, loadbalance_srcmac, loadbalance_srcid, loadbalance_loadbased, failover_explicit]'
+            - '   - "loadbalance_loadbased" is available from version 2.6 and onwards'
             - '- C(inbound_policy) (bool): Indicate whether or not the teaming policy is applied to inbound frames as well. (default: False)'
             - '- C(notify_switches) (bool): Indicate whether or not to notify the physical switch if a link fails. (default: True)'
             - '- C(rolling_order) (bool): Indicate whether or not to use a rolling policy when restoring links. (default: False)'
         required: False
         version_added: '2.5'
+        default: {
+            'notify_switches': True,
+            'load_balance_policy': 'loadbalance_srcid',
+            'inbound_policy': False,
+            'rolling_order': False
+        }
     port_policy:
         description:
             - Dictionary which configures the advanced policy settings for the portgroup.
@@ -109,78 +121,92 @@ options:
             - '- C(vlan_override) (bool): indicates if the vlan can be changed per port. (default: false)'
         required: False
         version_added: '2.5'
+        default: {
+            'traffic_filter_override': False,
+            'network_rp_override': False,
+            'live_port_move': False,
+            'security_override': False,
+            'vendor_config_override': False,
+            'port_config_reset_at_disconnect': True,
+            'uplink_teaming_override': False,
+            'block_override': True,
+            'shaping_override': False,
+            'vlan_override': False,
+            'ipfix_override': False
+        }
+
 extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-   - name: Create vlan portgroup
-     connection: local
-     vmware_dvs_portgroup:
-        hostname: vcenter_ip_or_hostname
-        username: vcenter_username
-        password: vcenter_password
-        portgroup_name: vlan-123-portrgoup
-        switch_name: dvSwitch
-        vlan_id: 123
-        num_ports: 120
-        portgroup_type: earlyBinding
-        state: present
+- name: Create vlan portgroup
+  vmware_dvs_portgroup:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    portgroup_name: vlan-123-portrgoup
+    switch_name: dvSwitch
+    vlan_id: 123
+    num_ports: 120
+    portgroup_type: earlyBinding
+    state: present
+  delegate_to: localhost
 
-   - name: Create vlan trunk portgroup
-     connection: local
-     vmware_dvs_portgroup:
-        hostname: vcenter_ip_or_hostname
-        username: vcenter_username
-        password: vcenter_password
-        portgroup_name: vlan-trunk-portrgoup
-        switch_name: dvSwitch
-        vlan_id: 1-1000
-        vlan_trunk: True
-        num_ports: 120
-        portgroup_type: earlyBinding
-        state: present
+- name: Create vlan trunk portgroup
+  vmware_dvs_portgroup:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    portgroup_name: vlan-trunk-portrgoup
+    switch_name: dvSwitch
+    vlan_id: 1-1000
+    vlan_trunk: True
+    num_ports: 120
+    portgroup_type: earlyBinding
+    state: present
+  delegate_to: localhost
 
-   - name: Create no-vlan portgroup
-     connection: local
-     vmware_dvs_portgroup:
-        hostname: vcenter_ip_or_hostname
-        username: vcenter_username
-        password: vcenter_password
-        portgroup_name: no-vlan-portrgoup
-        switch_name: dvSwitch
-        vlan_id: 0
-        num_ports: 120
-        portgroup_type: earlyBinding
-        state: present
+- name: Create no-vlan portgroup
+  vmware_dvs_portgroup:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    portgroup_name: no-vlan-portrgoup
+    switch_name: dvSwitch
+    vlan_id: 0
+    num_ports: 120
+    portgroup_type: earlyBinding
+    state: present
+  delegate_to: localhost
 
-   - name: Create vlan portgroup with all security and port policies
-     connection: local
-     vmware_dvs_portgroup:
-        hostname: vcenter_ip_or_hostname
-        username: vcenter_username
-        password: vcenter_password
-        portgroup_name: vlan-123-portrgoup
-        switch_name: dvSwitch
-        vlan_id: 123
-        num_ports: 120
-        portgroup_type: earlyBinding
-        state: present
-        network_policy:
-          promiscuous: yes
-          forged_transmits: yes
-          mac_changes: yes
-        port_policy:
-          block_override: yes
-          ipfix_override: yes
-          live_port_move: yes
-          network_rp_override: yes
-          port_config_reset_at_disconnect: yes
-          security_override: yes
-          shaping_override: yes
-          traffic_filter_override: yes
-          uplink_teaming_override: yes
-          vendor_config_override: yes
-          vlan_override: yes
+- name: Create vlan portgroup with all security and port policies
+  vmware_dvs_portgroup:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    portgroup_name: vlan-123-portrgoup
+    switch_name: dvSwitch
+    vlan_id: 123
+    num_ports: 120
+    portgroup_type: earlyBinding
+    state: present
+    network_policy:
+      promiscuous: yes
+      forged_transmits: yes
+      mac_changes: yes
+    port_policy:
+      block_override: yes
+      ipfix_override: yes
+      live_port_move: yes
+      network_rp_override: yes
+      port_config_reset_at_disconnect: yes
+      security_override: yes
+      shaping_override: yes
+      traffic_filter_override: yes
+      uplink_teaming_override: yes
+      vendor_config_override: yes
+      vlan_override: yes
+  delegate_to: localhost
 '''
 
 try:
@@ -364,6 +390,7 @@ def main():
                                                  'loadbalance_ip',
                                                  'loadbalance_srcmac',
                                                  'loadbalance_srcid',
+                                                 'loadbalance_loadbased',
                                                  'failover_explicit',
                                              ],
                                              )

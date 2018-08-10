@@ -29,8 +29,6 @@ options:
     name:
         description:
             - Only show results for a specific security group.
-        required: false
-        default: null
     resource_group:
         description:
             - Name of the resource group to use.
@@ -38,8 +36,6 @@ options:
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
-        required: false
-        default: null
 
 extends_documentation_fragment:
     - azure
@@ -273,6 +269,7 @@ class AzureRMSecurityGroupFacts(AzureRMModuleBase):
 
 def main():
     AzureRMSecurityGroupFacts()
+
 
 if __name__ == '__main__':
     main()

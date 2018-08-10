@@ -1,0 +1,18 @@
+- vars:
+    is_rhel: "{{ ansible_os_family == 'RedHat' and ansible_distribution != 'Fedora' }}"
+    is_rhel6: "{{ is_rhel and ansible_distribution_major_version == '6' }}"
+    is_rhel7: "{{ is_rhel and ansible_distribution_major_version == '7' }}"
+  block:
+    - include_tasks: "{{ lookup('first_found', params) }}"
+      vars:
+        params:
+          - '{{ ansible_distribution }}.yml'
+          - '{{ ansible_os_family }}.yml'
+      when: not is_rhel6
+
+    - name: Install Python requirements
+      vars:
+        extra_packages: "{{ '' if not is_rhel7 else ',requests==2.6.0' }}"
+      pip:
+        state: present
+        name: 'docker{{ extra_packages }}'

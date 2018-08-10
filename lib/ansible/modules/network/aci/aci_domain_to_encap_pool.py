@@ -14,17 +14,17 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_domain_to_encap_pool
-short_description: Bind Domain to Encap Pools on Cisco ACI fabrics (infra:RsVlanNs)
+short_description: Bind Domain to Encap Pools (infra:RsVlanNs)
 description:
 - Bind Domain to Encap Pools on Cisco ACI fabrics.
-- More information from the internal APIC class I(infra:RsVlanNs) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Dag Wieers (@dagwieers)
-version_added: '2.5'
 notes:
 - The C(domain) and C(encap_pool) parameters should exist before using this module.
   The M(aci_domain) and M(aci_encap_pool) can be used for these.
+- More information about the internal APIC class B(infra:RsVlanNs) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+author:
+- Dag Wieers (@dagwieers)
+version_added: '2.5'
 options:
   domain:
     description:
@@ -48,7 +48,7 @@ options:
     description:
     - The encap type of C(pool).
     required: yes
-    choices: [ vlan, vsan, vxsan ]
+    choices: [ vlan, vsan, vxlan ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -64,9 +64,163 @@ options:
 extends_documentation_fragment: aci
 '''
 
-EXAMPLES = r''' # '''
+EXAMPLES = r'''
+- name: Add domain to VLAN pool binding
+  aci_domain_to_encap_pool:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    domain: phys_dom
+    domain_type: phys
+    pool: test_pool
+    pool_type: vlan
+    pool_allocation_mode: dynamic
+    state: present
+  delegate_to: localhost
 
-RETURN = ''' # '''
+- name: Remove domain to VLAN pool binding
+  aci_domain_to_encap_pool:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    domain: phys_dom
+    domain_type: phys
+    pool: test_pool
+    pool_type: vlan
+    pool_allocation_mode: dynamic
+    state: absent
+  delegate_to: localhost
+
+- name: Query our domain to VLAN pool binding
+  aci_domain_to_encap_pool:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    domain: phys_dom
+    pool: test_pool
+    pool_type: vlan
+    pool_allocation_mode: dynamic
+    state: query
+  delegate_to: localhost
+  register: query_result
+
+- name: Query all domain to VLAN pool bindings
+  aci_domain_to_encap_pool:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    domain_type: phys
+    pool_type: vlan
+    pool_allocation_mode: dynamic
+    state: query
+  delegate_to: localhost
+  register: query_result
+'''
+
+RETURN = r'''
+current:
+  description: The existing configuration from the APIC after the module has finished
+  returned: success
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production environment",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+error:
+  description: The error information as returned from the APIC
+  returned: failure
+  type: dict
+  sample:
+    {
+        "code": "122",
+        "text": "unknown managed object class foo"
+    }
+raw:
+  description: The raw output returned by the APIC REST API (xml or json)
+  returned: parse error
+  type: string
+  sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
+sent:
+  description: The actual/minimal configuration pushed to the APIC
+  returned: info
+  type: list
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment"
+            }
+        }
+    }
+previous:
+  description: The original configuration from the APIC before the module has started
+  returned: info
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+proposed:
+  description: The assembled configuration from the user-provided parameters
+  returned: info
+  type: dict
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment",
+                "name": "production"
+            }
+        }
+    }
+filter_string:
+  description: The filter string used for the request
+  returned: failure or debug
+  type: string
+  sample: ?rsp-prop-include=config-only
+method:
+  description: The HTTP method used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: POST
+response:
+  description: The HTTP response from the APIC
+  returned: failure or debug
+  type: string
+  sample: OK (30 bytes)
+status:
+  description: The HTTP status from the APIC
+  returned: failure or debug
+  type: int
+  sample: 200
+url:
+  description: The HTTP url used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: https://10.11.12.13/api/mo/uni/tn-production.json
+'''
 
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
@@ -83,13 +237,16 @@ VM_PROVIDER_MAPPING = dict(
 
 POOL_MAPPING = dict(
     vlan=dict(
-        aci_mo='uni/infra/vlanns-',
+        aci_mo='uni/infra/vlanns-{0}',
+        child_class='infraRsVlanNs',
     ),
     vxlan=dict(
-        aci_mo='uni/infra/vxlanns-',
+        aci_mo='uni/infra/vxlanns-{0}',
+        child_class='vmmRsVxlanNs',
     ),
     vsan=dict(
-        aci_mo='uni/infra/vsanns-',
+        aci_mo='uni/infra/vsanns-{0}',
+        child_class='fcRsVsanNs',
     ),
 )
 
@@ -162,17 +319,22 @@ def main():
         domain_mo = 'uni/vmmp-{0}/dom-{1}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
         domain_rn = 'vmmp-{0}/dom-{1}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
 
-    pool_mo = POOL_MAPPING[pool_type]["aci_mo"] + pool_name
+    # Ensure that querying all objects works when only domain_type is provided
+    if domain is None:
+        domain_mo = None
+
+    pool_mo = POOL_MAPPING[pool_type]['aci_mo'].format(pool_name)
+    child_class = POOL_MAPPING[pool_type]['child_class']
 
     aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
             aci_class=domain_class,
             aci_rn=domain_rn,
-            filter_target='eq({0}.name, "{1}")'.format(domain_class, domain),
             module_object=domain_mo,
+            target_filter={'name': domain},
         ),
-        child_classes=['infraRsVlanNs'],
+        child_classes=[child_class],
     )
 
     aci.get_existing()
@@ -183,7 +345,7 @@ def main():
             aci_class=domain_class,
             class_config=dict(name=domain),
             child_configs=[
-                {'infraRsVlanNs': {'attributes': {'tDn': pool_mo}}},
+                {child_class: {'attributes': {'tDn': pool_mo}}},
             ]
         )
 
@@ -196,7 +358,7 @@ def main():
     elif state == 'absent':
         aci.delete_config()
 
-    module.exit_json(**aci.result)
+    aci.exit_json()
 
 
 if __name__ == "__main__":

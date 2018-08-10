@@ -27,7 +27,15 @@ import time
 
 
 class OneAndOneResources:
-    firewall_policy, load_balancer, monitoring_policy, private_network, public_ip, role, server, user, vpn = range(9)
+    firewall_policy = 'firewall_policy'
+    load_balancer = 'load_balancer'
+    monitoring_policy = 'monitoring_policy'
+    private_network = 'private_network'
+    public_ip = 'public_ip'
+    role = 'role'
+    server = 'server'
+    user = 'user'
+    vpn = 'vpn'
 
 
 def get_resource(oneandone_conn, resource_type, resource_id):
@@ -43,7 +51,7 @@ def get_resource(oneandone_conn, resource_type, resource_id):
         'vpn': oneandone_conn.get_vpn,
     }
 
-    return switcher.get(resource_type.name, None)(resource_id)
+    return switcher.get(resource_type, None)(resource_id)
 
 
 def get_datacenter(oneandone_conn, datacenter, full_object=False):
@@ -184,16 +192,29 @@ def get_vpn(oneandone_conn, vpn, full_object=False):
             return _vpn['id']
 
 
+def get_public_ip(oneandone_conn, public_ip, full_object=False):
+    """
+    Validates that the public ip exists by ID or a name.
+    Returns the public ip if one was found.
+    """
+    for _public_ip in oneandone_conn.list_public_ips(per_page=1000):
+        if public_ip in (_public_ip['id'], _public_ip['ip']):
+            if full_object:
+                return _public_ip
+            return _public_ip['id']
+
+
 def wait_for_resource_creation_completion(oneandone_conn,
                                           resource_type,
                                           resource_id,
-                                          wait_timeout):
+                                          wait_timeout,
+                                          wait_interval):
     """
     Waits for the resource create operation to complete based on the timeout period.
     """
     wait_timeout = time.time() + wait_timeout
     while wait_timeout > time.time():
-        time.sleep(5)
+        time.sleep(wait_interval)
 
         # Refresh the resource info
         resource = get_resource(oneandone_conn, resource_type, resource_id)
@@ -215,22 +236,23 @@ def wait_for_resource_creation_completion(oneandone_conn,
             continue
         else:
             raise Exception(
-                'Unknown %s state %s' % (resource_type.name, resource_state))
+                'Unknown %s state %s' % (resource_type, resource_state))
 
     raise Exception(
-        'Timed out waiting for %s completion for %s' % (resource_type.name, resource_id))
+        'Timed out waiting for %s completion for %s' % (resource_type, resource_id))
 
 
 def wait_for_resource_deletion_completion(oneandone_conn,
                                           resource_type,
                                           resource_id,
-                                          wait_timeout):
+                                          wait_timeout,
+                                          wait_interval):
     """
     Waits for the resource delete operation to complete based on the timeout period.
     """
     wait_timeout = time.time() + wait_timeout
     while wait_timeout > time.time():
-        time.sleep(5)
+        time.sleep(wait_interval)
 
         # Refresh the operation info
         logs = oneandone_conn.list_logs(q='DELETE',
@@ -243,7 +265,7 @@ def wait_for_resource_deletion_completion(oneandone_conn,
             _type = 'PRIVATENETWORK'
         else:
             raise Exception(
-                'Unsupported wait_for delete operation for %s resource' % resource_type.name)
+                'Unsupported wait_for delete operation for %s resource' % resource_type)
 
         for log in logs:
             if (log['resource']['id'] == resource_id and
@@ -252,4 +274,4 @@ def wait_for_resource_deletion_completion(oneandone_conn,
                     log['status']['state'] == 'OK'):
                 return
     raise Exception(
-        'Timed out waiting for %s deletion for %s' % (resource_type.name, resource_id))
+        'Timed out waiting for %s deletion for %s' % (resource_type, resource_id))

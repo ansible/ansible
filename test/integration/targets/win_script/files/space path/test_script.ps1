@@ -1,1 +1,1 @@
-Write-Host "Ansible supports spaces in the path to the script."
+Write-Output "Ansible supports spaces in the path to the script."

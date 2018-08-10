@@ -1,5 +1,4 @@
 #!powershell
-# This file is part of Ansible
 
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -21,7 +20,7 @@ $store_name = Get-AnsibleParam -obj $params -name "store_name" -type "str" -defa
 $store_location = Get-AnsibleParam -obj $params -name "store_location" -type "str" -default "LocalMachine" -validateset $store_location_values
 $password = Get-AnsibleParam -obj $params -name "password" -type "str"
 $key_exportable = Get-AnsibleParam -obj $params -name "key_exportable" -type "bool" -default $true
-$key_storage = Get-AnsibleParam -obj $param -name "key_storage" -type "str" -default "default" -validateset "default", "machine", "user"
+$key_storage = Get-AnsibleParam -obj $params -name "key_storage" -type "str" -default "default" -validateset "default", "machine", "user"
 $file_type = Get-AnsibleParam -obj $params -name "file_type" -type "str" -default "der" -validateset "der", "pem", "pkcs12"
 
 $result = @{

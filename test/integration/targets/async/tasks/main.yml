@@ -33,13 +33,14 @@
         - "'cmd' in async_result"
         - "'delta' in async_result"
         - "'end' in async_result"
-        - "'finished' in async_result or async_result.finished == 1"
         - "'rc' in async_result"
         - "'start' in async_result"
         - "'stderr' in async_result"
         - "'stdout' in async_result"
         - "'stdout_lines' in async_result"
-        - "async_result.rc == 0"
+        - async_result.rc == 0
+        - async_result.finished == 1
+        - async_result is finished
 
 - name: test async without polling
   command: sleep 5
@@ -54,7 +55,8 @@
     that:
         - "'ansible_job_id' in async_result"
         - "'started' in async_result"
-        - "'finished' not in async_result or async_result.finished == 0"
+        - async_result.finished == 0
+        - async_result is not finished
 
 - name: test skipped task handling
   command: /bin/true
@@ -73,13 +75,13 @@
 - name: assert task was successfully started
   assert:
     that:
-    - fnf_task.started
+    - fnf_task.started == 1
     - "'ansible_job_id' in fnf_task"
 
 - name: 'check on task started as a "fire-and-forget"'
   async_status: jid={{ fnf_task.ansible_job_id }}
   register: fnf_result
-  until: fnf_result.finished
+  until: fnf_result is finished
   retries: 10
   delay: 1
 
@@ -87,6 +89,7 @@
   assert:
     that:
     - fnf_result.finished
+    - fnf_result is finished
 
 - name: test graceful module failure
   async_test:
@@ -101,7 +104,8 @@
     that:
     - async_result.ansible_job_id is match('\d+\.\d+')
     - async_result.finished == 1
-    - async_result is changed == false
+    - async_result is finished
+    - async_result is not changed
     - async_result is failed
     - async_result.msg == 'failed gracefully'
 
@@ -118,8 +122,11 @@
     that:
     - async_result.ansible_job_id is match('\d+\.\d+')
     - async_result.finished == 1
+    - async_result is finished
     - async_result.changed == false
-    - async_result is failed == true
+    - async_result is not changed
+    - async_result.failed == true
+    - async_result is failed
     - async_result.stderr is search('failing via exception', multiline=True)
 
 - name: test leading junk before JSON
@@ -134,7 +141,9 @@
     that:
     - async_result.ansible_job_id is match('\d+\.\d+')
     - async_result.finished == 1
+    - async_result is finished
     - async_result.changed == true
+    - async_result is changed
     - async_result is successful
 
 - name: test trailing junk after JSON
@@ -149,6 +158,21 @@
     that:
     - async_result.ansible_job_id is match('\d+\.\d+')
     - async_result.finished == 1
+    - async_result is finished
     - async_result.changed == true
+    - async_result is changed
     - async_result is successful
     - async_result.warnings[0] is search('trailing junk after module output')
+
+# NOTE: This should report a warning that cannot be tested
+- name: test async properties on non-async task
+  command: sleep 1
+  register: non_async_result
+
+- name: validate response
+  assert:
+    that:
+    - non_async_result is successful
+    - non_async_result is changed
+    - non_async_result is finished
+    - "'ansible_job_id' not in non_async_result"

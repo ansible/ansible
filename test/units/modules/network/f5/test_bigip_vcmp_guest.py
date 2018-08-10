@@ -21,9 +21,9 @@ from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_vcmp_guest import Parameters
-    from library.bigip_vcmp_guest import ModuleManager
-    from library.bigip_vcmp_guest import ArgumentSpec
+    from library.modules.bigip_vcmp_guest import Parameters
+    from library.modules.bigip_vcmp_guest import ModuleManager
+    from library.modules.bigip_vcmp_guest import ArgumentSpec
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
@@ -149,6 +149,11 @@ class TestParameters(unittest.TestCase):
 class TestManager(unittest.TestCase):
     def setUp(self):
         self.spec = ArgumentSpec()
+        self.patcher1 = patch('time.sleep')
+        self.patcher1.start()
+
+    def tearDown(self):
+        self.patcher1.stop()
 
     def test_create_vlan(self, *args):
         set_module_args(dict(

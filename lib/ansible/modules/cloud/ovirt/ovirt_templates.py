@@ -136,6 +136,34 @@ options:
             - "This parameter is used only when C(state) I(present)."
         default: False
         version_added: "2.5"
+    operating_system:
+        description:
+            - Operating system of the template.
+            - Default value is set by oVirt/RHV engine.
+            - "Possible values are: debian_7, freebsd, freebsdx64, other, other_linux,
+               other_linux_ppc64, other_ppc64, rhel_3, rhel_4, rhel_4x64, rhel_5, rhel_5x64,
+               rhel_6, rhel_6x64, rhel_6_ppc64, rhel_7x64, rhel_7_ppc64, sles_11,
+               sles_11_ppc64, ubuntu_12_04, ubuntu_12_10, ubuntu_13_04, ubuntu_13_10,
+               ubuntu_14_04, ubuntu_14_04_ppc64, windows_10, windows_10x64, windows_2003,
+               windows_2003x64, windows_2008, windows_2008x64, windows_2008r2x64,
+               windows_2008R2x64, windows_2012x64, windows_2012R2x64,
+               windows_7, windows_7x64, windows_8, windows_8x64, windows_xp"
+        version_added: "2.6"
+    memory:
+        description:
+            - Amount of memory of the template. Prefix uses IEC 60027-2 standard (for example 1GiB, 1024MiB).
+        version_added: "2.6"
+    memory_guaranteed:
+        description:
+            - Amount of minimal guaranteed memory of the template.
+              Prefix uses IEC 60027-2 standard (for example 1GiB, 1024MiB).
+            - C(memory_guaranteed) parameter can't be lower than C(memory) parameter.
+        version_added: "2.6"
+    memory_max:
+        description:
+            - Upper bound of template memory up to which memory hot-plug can be performed.
+              Prefix uses IEC 60027-2 standard (for example 1GiB, 1024MiB).
+        version_added: "2.6"
 extends_documentation_fragment: ovirt
 '''
 
@@ -252,6 +280,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ovirt import (
     BaseModule,
     check_sdk,
+    convert_to_bytes,
     create_connection,
     equal,
     get_dict_of_struct,
@@ -281,12 +310,29 @@ class TemplatesModule(BaseModule):
                     self._module.params['cpu_profile'],
                 ).id
             ) if self._module.params['cpu_profile'] else None,
+            os=otypes.OperatingSystem(
+                type=self.param('operating_system'),
+            ) if self.param('operating_system') else None,
+            memory=convert_to_bytes(
+                self.param('memory')
+            ) if self.param('memory') else None,
+            memory_policy=otypes.MemoryPolicy(
+                guaranteed=convert_to_bytes(self.param('memory_guaranteed')),
+                max=convert_to_bytes(self.param('memory_max')),
+            ) if any((
+                self.param('memory_guaranteed'),
+                self.param('memory_max')
+            )) else None,
         )
 
     def update_check(self, entity):
         return (
             equal(self._module.params.get('cluster'), get_link_name(self._connection, entity.cluster)) and
             equal(self._module.params.get('description'), entity.description) and
+            equal(self.param('operating_system'), str(entity.os.type)) and
+            equal(convert_to_bytes(self.param('memory_guaranteed')), entity.memory_policy.guaranteed) and
+            equal(convert_to_bytes(self.param('memory_max')), entity.memory_policy.max) and
+            equal(convert_to_bytes(self.param('memory')), entity.memory) and
             equal(self._module.params.get('cpu_profile'), get_link_name(self._connection, entity.cpu_profile))
         )
 
@@ -376,6 +422,17 @@ def _get_vnic_profile_mappings(module):
     return vnicProfileMappings
 
 
+def searchable_attributes(module):
+    """
+    Return all searchable template attributes passed to module.
+    """
+    attributes = {
+        'name': module.params.get('name'),
+        'cluster': module.params.get('cluster'),
+    }
+    return dict((k, v) for k, v in attributes.items() if v is not None)
+
+
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
@@ -402,6 +459,10 @@ def main():
         cluster_mappings=dict(default=[], type='list'),
         role_mappings=dict(default=[], type='list'),
         domain_mappings=dict(default=[], type='list'),
+        operating_system=dict(type='str'),
+        memory=dict(type='str'),
+        memory_guaranteed=dict(type='str'),
+        memory_max=dict(type='str'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -424,6 +485,7 @@ def main():
         if state == 'present':
             ret = templates_module.create(
                 result_state=otypes.TemplateStatus.OK,
+                search_params=searchable_attributes(module),
                 clone_permissions=module.params['clone_permissions'],
                 seal=module.params['seal'],
             )
@@ -489,6 +551,7 @@ def main():
                 template = templates_module.wait_for_import(
                     condition=lambda t: t.status == otypes.TemplateStatus.OK
                 )
+                ret = templates_module.create(result_state=otypes.TemplateStatus.OK)
                 ret = {
                     'changed': True,
                     'id': template.id,
@@ -539,6 +602,7 @@ def main():
                 else:
                     # Fetch template to initialize return.
                     template = template_service.get()
+                ret = templates_module.create(result_state=otypes.TemplateStatus.OK)
             ret = {
                 'changed': changed,
                 'id': template.id,

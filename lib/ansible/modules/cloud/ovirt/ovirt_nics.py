@@ -45,9 +45,9 @@ options:
             - Virtual network interface profile to be attached to VM network interface.
     interface:
         description:
-            - Type of the network interface.
+            - "Type of the network interface."
+            - "It's required parameter when creating the new NIC."
         choices: [ e1000, pci_passthrough, rtl8139, rtl8139_virtio, spapr_vlan, virtio ]
-        default: virtio
     mac_address:
         description:
             - Custom MAC address of the network interface, by default it's obtained from MAC pool.
@@ -268,6 +268,7 @@ def main():
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
         connection.close(logout=auth.get('token') is None)
+
 
 if __name__ == "__main__":
     main()

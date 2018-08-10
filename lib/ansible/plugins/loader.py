@@ -35,13 +35,11 @@ def get_all_plugin_loaders():
 
 
 class PluginLoader:
-
     '''
     PluginLoader loads plugins from the configured plugin directories.
 
-    It searches for plugins by iterating through the combined list of
-    play basedirs, configured paths, and the python path.
-    The first match is used.
+    It searches for plugins by iterating through the combined list of play basedirs, configured
+    paths, and the python path.  The first match is used.
     '''
 
     def __init__(self, class_name, package, config, subdir, aliases=None, required_base_class=None):
@@ -211,9 +209,8 @@ class PluginLoader:
         if self.class_name:
             type_name = get_plugin_class(self.class_name)
 
-            # FIXME: expand to other plugins, but never doc fragments
             # if type name != 'module_doc_fragment':
-            if type_name in ('callback', 'connection', 'inventory', 'lookup', 'shell'):
+            if type_name in C.CONFIGURABLE_PLUGINS:
                 dstring = get_docstring(path, fragment_loader, verbose=False, ignore_errors=True)[0]
 
                 if dstring and 'options' in dstring and isinstance(dstring['options'], dict):
@@ -234,7 +231,7 @@ class PluginLoader:
                 self._paths = None
                 display.debug('Added %s to loader search path' % (directory))
 
-    def find_plugin(self, name, mod_type='', ignore_deprecated=False, check_aliases=False):
+    def _find_plugin(self, name, mod_type='', ignore_deprecated=False, check_aliases=False):
         ''' Find a plugin named name '''
 
         global _PLUGIN_FILTERS
@@ -324,6 +321,20 @@ class PluginLoader:
 
         return None
 
+    def find_plugin(self, name, mod_type='', ignore_deprecated=False, check_aliases=False):
+        ''' Find a plugin named name '''
+
+        # Import here to avoid circular import
+        from ansible.vars.reserved import is_reserved_name
+
+        plugin = self._find_plugin(name, mod_type=mod_type, ignore_deprecated=ignore_deprecated, check_aliases=check_aliases)
+        if plugin and self.package == 'ansible.modules' and is_reserved_name(name):
+            raise AnsibleError(
+                'Module "%s" shadows the name of a reserved keyword. Please rename or remove this module. Found at %s' % (name, plugin)
+            )
+
+        return plugin
+
     def has_plugin(self, name):
         ''' Checks if a plugin named name exists '''
 
@@ -347,9 +358,6 @@ class PluginLoader:
         return module
 
     def _update_object(self, obj, name, path):
-
-        # load plugin config data
-        self._load_config_defs(name, path)
 
         # set extra info on the module, in case we want it later
         setattr(obj, '_original_path', path)
@@ -394,6 +402,10 @@ class PluginLoader:
                     return None
                 raise
 
+        # load plugin config data
+        if not found_in_cache:
+            self._load_config_defs(name, path)
+
         self._update_object(obj, name, path)
         return obj
 
@@ -409,36 +421,75 @@ class PluginLoader:
         display.debug(msg)
 
     def all(self, *args, **kwargs):
-        ''' instantiates all plugins with the same arguments '''
+        '''
+        Iterate through all plugins of this type
+
+        A plugin loader is initialized with a specific type.  This function is an iterator returning
+        all of the plugins of that type to the caller.
+
+        :kwarg path_only: If this is set to True, then we return the paths to where the plugins reside
+            instead of an instance of the plugin.  This conflicts with class_only and both should
+            not be set.
+        :kwarg class_only: If this is set to True then we return the python class which implements
+            a plugin rather than an instance of the plugin.  This conflicts with path_only and both
+            should not be set.
+        :kwarg _dedupe: By default, we only return one plugin per plugin name.  Deduplication happens
+            in the same way as the :meth:`get` and :meth:`find_plugin` methods resolve which plugin
+            should take precedence.  If this is set to False, then we return all of the plugins
+            found, including those with duplicate names.  In the case of duplicates, the order in
+            which they are returned is the one that would take precedence first, followed by the
+            others  in decreasing precedence order.  This should only be used by subclasses which
+            want to manage their own deduplication of the plugins.
+        :*args: Any extra arguments are passed to each plugin when it is instantiated.
+        :**kwargs: Any extra keyword arguments are passed to each plugin when it is instantiated.
+        '''
+        # TODO: Change the signature of this method to:
+        # def all(return_type='instance', args=None, kwargs=None):
+        #     if args is None: args = []
+        #     if kwargs is None: kwargs = {}
+        #     return_type can be instance, class, or path.
+        #     These changes will mean that plugin parameters won't conflict with our params and
+        #     will also make it impossible to request both a path and a class at the same time.
+        #
+        #     Move _dedupe to be a class attribute, CUSTOM_DEDUPE, with subclasses for filters and
+        #     tests setting it to True
 
         global _PLUGIN_FILTERS
 
+        dedupe = kwargs.pop('_dedupe', True)
         path_only = kwargs.pop('path_only', False)
         class_only = kwargs.pop('class_only', False)
+        # Having both path_only and class_only is a coding bug
+        if path_only and class_only:
+            raise AnsibleError('Do not set both path_only and class_only when calling PluginLoader.all()')
+
         all_matches = []
         found_in_cache = True
 
         for i in self._get_paths():
             all_matches.extend(glob.glob(os.path.join(i, "*.py")))
 
+        loaded_modules = set()
         for path in sorted(all_matches, key=os.path.basename):
-            name = os.path.basename(os.path.splitext(path)[0])
+            name = os.path.splitext(path)[0]
+            basename = os.path.basename(name)
 
-            if '__init__' in name or name in _PLUGIN_FILTERS[self.package]:
+            if basename == '__init__' or basename in _PLUGIN_FILTERS[self.package]:
                 continue
+
+            if dedupe and basename in loaded_modules:
+                continue
+            loaded_modules.add(basename)
 
             if path_only:
                 yield path
                 continue
 
             if path not in self._module_cache:
-                module = self._load_module_source(name, path)
-                if module in self._module_cache.values():
-                    # In ``_load_module_source`` if a plugin has a duplicate name, we just return the
-                    # previously matched plugin from sys.modules, which means you are never getting both,
-                    # just one, but cached for both paths, this isn't normally a problem, except with callbacks
-                    # where it will run that single callback twice. This rejects duplicates.
-                    continue
+                try:
+                    module = self._load_module_source(name, path)
+                except Exception as e:
+                    display.warning("Skipping plugin (%s) as it seems to be invalid: %s" % (path, to_text(e)))
                 self._module_cache[path] = module
                 found_in_cache = False
 
@@ -460,15 +511,65 @@ class PluginLoader:
                 if not issubclass(obj, plugin_class):
                     continue
 
-            self._display_plugin_load(self.class_name, name, self._searched_paths, path, found_in_cache=found_in_cache, class_only=class_only)
+            self._display_plugin_load(self.class_name, basename, self._searched_paths, path, found_in_cache=found_in_cache, class_only=class_only)
             if not class_only:
                 try:
                     obj = obj(*args, **kwargs)
                 except TypeError as e:
                     display.warning("Skipping plugin (%s) as it seems to be incomplete: %s" % (path, to_text(e)))
 
-            self._update_object(obj, name, path)
+            # load plugin config data
+            if not found_in_cache:
+                self._load_config_defs(basename, path)
+
+            self._update_object(obj, basename, path)
             yield obj
+
+
+class Jinja2Loader(PluginLoader):
+    """
+    PluginLoader optimized for Jinja2 plugins
+
+    The filter and test plugins are Jinja2 plugins encapsulated inside of our plugin format.
+    The way the calling code is setup, we need to do a few things differently in the all() method
+    """
+    def find_plugin(self, name):
+        # Nothing using Jinja2Loader use this method.  We can't use the base class version because
+        # we deduplicate differently than the base class
+        raise AnsibleError('No code should call find_plugin for Jinja2Loaders (Not implemented)')
+
+    def get(self, name, *args, **kwargs):
+        # Nothing using Jinja2Loader use this method.  We can't use the base class version because
+        # we deduplicate differently than the base class
+        raise AnsibleError('No code should call find_plugin for Jinja2Loaders (Not implemented)')
+
+    def all(self, *args, **kwargs):
+        """
+        Differences with :meth:`PluginLoader.all`:
+
+        * We do not deduplicate ansible plugin names.  This is because we don't care about our
+          plugin names, here.  We care about the names of the actual jinja2 plugins which are inside
+          of our plugins.
+        * We reverse the order of the list of plugins compared to other PluginLoaders.  This is
+          because of how calling code chooses to sync the plugins from the list.  It adds all the
+          Jinja2 plugins from one of our Ansible plugins into a dict.  Then it adds the Jinja2
+          plugins from the next Ansible plugin, overwriting any Jinja2 plugins that had the same
+          name.  This is an encapsulation violation (the PluginLoader should not know about what
+          calling code does with the data) but we're pushing the common code here.  We'll fix
+          this in the future by moving more of the common code into this PluginLoader.
+        * We return a list.  We could iterate the list instead but that's extra work for no gain because
+          the API receiving this doesn't care.  It just needs an iterable
+        """
+        # We don't deduplicate ansible plugin names.  Instead, calling code deduplicates jinja2
+        # plugin names.
+        kwargs['_dedupe'] = False
+
+        # We have to instantiate a list of all plugins so that we can reverse it.  We reverse it so
+        # that calling code will deduplicate this correctly.
+        plugins = [p for p in super(Jinja2Loader, self).all(*args, **kwargs)]
+        plugins.reverse()
+
+        return plugins
 
 
 def _load_plugin_filter():
@@ -605,14 +706,14 @@ lookup_loader = PluginLoader(
     required_base_class='LookupBase',
 )
 
-filter_loader = PluginLoader(
+filter_loader = Jinja2Loader(
     'FilterModule',
     'ansible.plugins.filter',
     C.DEFAULT_FILTER_PLUGIN_PATH,
     'filter_plugins',
 )
 
-test_loader = PluginLoader(
+test_loader = Jinja2Loader(
     'TestModule',
     'ansible.plugins.test',
     C.DEFAULT_TEST_PLUGIN_PATH,
@@ -630,8 +731,9 @@ strategy_loader = PluginLoader(
 terminal_loader = PluginLoader(
     'TerminalModule',
     'ansible.plugins.terminal',
+    C.DEFAULT_TERMINAL_PLUGIN_PATH,
     'terminal_plugins',
-    'terminal_plugins'
+    required_base_class='TerminalBase'
 )
 
 vars_loader = PluginLoader(
@@ -644,7 +746,7 @@ vars_loader = PluginLoader(
 cliconf_loader = PluginLoader(
     'Cliconf',
     'ansible.plugins.cliconf',
-    'cliconf_plugins',
+    C.DEFAULT_CLICONF_PLUGIN_PATH,
     'cliconf_plugins',
     required_base_class='CliconfBase'
 )
@@ -652,7 +754,7 @@ cliconf_loader = PluginLoader(
 netconf_loader = PluginLoader(
     'Netconf',
     'ansible.plugins.netconf',
-    'netconf_plugins',
+    C.DEFAULT_NETCONF_PLUGIN_PATH,
     'netconf_plugins',
     required_base_class='NetconfBase'
 )
@@ -662,4 +764,11 @@ inventory_loader = PluginLoader(
     'ansible.plugins.inventory',
     C.DEFAULT_INVENTORY_PLUGIN_PATH,
     'inventory_plugins'
+)
+
+httpapi_loader = PluginLoader(
+    'HttpApi',
+    'ansible.plugins.httpapi',
+    C.DEFAULT_HTTPAPI_PLUGIN_PATH,
+    'httpapi_plugins',
 )

@@ -55,6 +55,7 @@ options:
             - Force placement on all service engines in the service engine group (container clouds only).
             - Field introduced in 17.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     name:
         description:
             - Name for the vsvip object.
@@ -136,6 +137,7 @@ def main():
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'vsvip',
                            set([]))
+
 
 if __name__ == '__main__':
     main()

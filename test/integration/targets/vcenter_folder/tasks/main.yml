@@ -1,0 +1,156 @@
+# Test code for the vcenter_folder module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: store the vcenter container ip
+  set_fact:
+    vcsim: "{{ lookup('env', 'vcenter_host') }}"
+
+- debug: var=vcsim
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
+
+- name: start vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?cluster=2
+  register: vcsim_instance
+
+- debug:
+    var: vcsim_instance
+
+- name: Wait for vcsim server to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: get datacenter
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=DC
+  register: datacenters
+
+- name: get a datacenter
+  set_fact:
+    dc1: "{{ datacenters.json[0] | basename }}"
+
+- name: Create all types of folder
+  vcenter_folder:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    validate_certs: no
+    datacenter: "{{ dc1 }}"
+    folder_name: "{{ item }}_folder"
+    folder_type: "{{ item }}"
+    state: present
+  register: all_folder_results
+  with_items:
+    - vm
+    - host
+    - datastore
+    - network
+
+- debug: msg="{{ all_folder_results }}"
+
+- name: ensure everything for {{ dc1 }}
+  assert:
+    that:
+        - all_folder_results.changed
+
+- name: Create all types of sub folder
+  vcenter_folder:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    validate_certs: no
+    datacenter: "{{ dc1 }}"
+    folder_name: "sub_{{ item }}_folder"
+    parent_folder: 'vm_folder'
+    state: present
+  register: all_folder_results
+  with_items:
+    - vm
+    - host
+    - datastore
+    - network
+    
+- name: Recreate all types of sub folder
+  vcenter_folder:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    validate_certs: no
+    datacenter: "{{ dc1 }}"
+    folder_name: "sub_{{ item }}_folder"
+    parent_folder: 'vm_folder'
+    state: present
+  register: recreate_folders
+  with_items:
+    - vm
+    - host
+    - datastore
+    - network
+
+- debug: msg="{{ all_folder_results }}"
+
+- name: ensure everything for {{ dc1 }}
+  assert:
+    that:
+        - all_folder_results.changed
+        - not recreate_folders.changed
+
+#- name: Delete all types of folder
+#  vcenter_folder:
+#    hostname: "{{ vcsim }}"
+#    username: "{{ vcsim_instance.json.username }}"
+#    password: "{{ vcsim_instance.json.password }}"
+#    validate_certs: no
+#    datacenter: "{{ dc1 }}"
+#    folder_name: "{{ item }}_folder"
+#    folder_type: "{{ item }}"
+#    state: absent
+#  register: all_folder_results
+#  with_items:
+#    - vm
+#    - host
+#    - datastore
+#    - network
+
+#- debug: msg="{{ all_folder_results }}"
+
+#- name: ensure everything for {{ dc1 }}
+#  assert:
+#    that:
+#        - all_folder_results.changed
+
+#- name: Delete all types of folder again
+#  vcenter_folder:
+#    hostname: "{{ vcsim }}"
+#    username: "{{ vcsim_instance.json.username }}"
+#    password: "{{ vcsim_instance.json.password }}"
+#    validate_certs: no
+#    datacenter: "{{ dc1 }}"
+#    folder_name: "{{ item }}_folder"
+#    folder_type: "{{ item }}"
+#    state: absent
+#  register: all_folder_results
+#  with_items:
+#    - vm
+#    - host
+#    - datastore
+#    - network
+
+#- debug: msg="{{ all_folder_results }}"
+
+#- name: ensure everything for {{ dc1 }}
+#  assert:
+#    that:
+#        - not all_folder_results.changed

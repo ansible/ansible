@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
@@ -20,7 +20,7 @@ description:
   - Allows one to run different config-sync actions. These actions allow
     you to manually sync your configuration across multiple BIG-IPs when
     those devices are in an HA pair.
-version_added: "2.4"
+version_added: 2.4
 options:
   device_group:
     description:
@@ -32,26 +32,20 @@ options:
         device to other members of the device group. In this case, the device
         will do a "push" to all the other devices in the group. This option
         is mutually exclusive with the C(sync_group_to_device) option.
-    choices:
-      - yes
-      - no
+    type: bool
   sync_most_recent_to_device:
     description:
       - Specifies that the system synchronizes configuration data from the
         device with the most recent configuration. In this case, the device
         will do a "pull" from the most recently updated device. This option
         is mutually exclusive with the C(sync_device_to_group) options.
-    choices:
-      - yes
-      - no
+    type: bool
   overwrite_config:
     description:
       - Indicates that the sync operation overwrites the configuration on
         the target.
     default: no
-    choices:
-      - yes
-      - no
+    type: bool
 notes:
   - Requires the objectpath Python package on the host. This is as easy as
     C(pip install objectpath).
@@ -62,7 +56,7 @@ author:
 
 EXAMPLES = r'''
 - name: Sync configuration from device to group
-  bigip_configsync_actions:
+  bigip_configsync_action:
     device_group: foo-group
     sync_device_to_group: yes
     server: lb.mydomain.com
@@ -72,7 +66,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Sync configuration from most recent device to the current host
-  bigip_configsync_actions:
+  bigip_configsync_action:
     device_group: foo-group
     sync_most_recent_to_device: yes
     server: lb.mydomain.com
@@ -82,7 +76,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Perform an initial sync of a device to a new device group
-  bigip_configsync_actions:
+  bigip_configsync_action:
     device_group: new-device-group
     sync_device_to_group: yes
     server: lb.mydomain.com
@@ -99,44 +93,37 @@ RETURN = r'''
 import re
 import time
 
-try:
-    from objectpath import Tree
-    HAS_OBJPATH = True
-except ImportError:
-    HAS_OBJPATH = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import BOOLEANS_TRUE
-
-HAS_DEVEL_IMPORTS = False
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
 
 try:
-    # Sideband repository used for dev
     from library.module_utils.network.f5.bigip import HAS_F5SDK
     from library.module_utils.network.f5.bigip import F5Client
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
     from library.module_utils.network.f5.common import f5_argument_spec
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    # Upstream Ansible
     from ansible.module_utils.network.f5.bigip import HAS_F5SDK
     from ansible.module_utils.network.f5.bigip import F5Client
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
+
+try:
+    from objectpath import Tree
+    HAS_OBJPATH = True
+except ImportError:
+    HAS_OBJPATH = False
 
 
 class Parameters(AnsibleF5Parameters):

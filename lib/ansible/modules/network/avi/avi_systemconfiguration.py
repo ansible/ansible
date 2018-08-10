@@ -65,6 +65,7 @@ options:
         description:
             - Boolean flag to set docker_mode.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     email_configuration:
         description:
             - Emailconfiguration settings for systemconfiguration.
@@ -168,6 +169,7 @@ def main():
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'systemconfiguration',
                            set([]))
+
 
 if __name__ == '__main__':
     main()

@@ -49,9 +49,13 @@ options:
   tx_rate:
     description:
       - Transmit rate in bits per second (bps) for the interface given in C(name) option.
+      - This is state check parameter only.
+      - Supports conditionals, see L(Conditionals in Networking Modules,../network/user_guide/network_working_with_command_output.html)
   rx_rate:
     description:
       - Receiver rate in bits per second (bps) for the interface given in C(name) option.
+      - This is state check parameter only.
+      - Supports conditionals, see L(Conditionals in Networking Modules,../network/user_guide/network_working_with_command_output.html)
   neighbors:
     description:
       - Check the operational state of given interface C(name) for LLDP neighbor.
@@ -330,7 +334,7 @@ def check_declarative_intent_params(module, want, result):
         if result['changed']:
             sleep(w['delay'])
 
-        command = 'show interfaces %s' % w['name']
+        command = {'command': 'show interfaces %s' % w['name'], 'output': 'text'}
         output = run_commands(module, [command])
 
         if want_state in ('up', 'down'):
@@ -363,7 +367,8 @@ def check_declarative_intent_params(module, want, result):
             have_host = []
             have_port = []
             if have_neighbors is None:
-                have_neighbors = run_commands(module, ['show lldp neighbors {}'.format(w['name'])])
+                command = {'command': 'show lldp neighbors {}'.format(w['name']), 'output': 'text'}
+                have_neighbors = run_commands(module, [command])
 
             if have_neighbors[0]:
                 lines = have_neighbors[0].strip().split('\n')

@@ -15,7 +15,7 @@ description:
     - This module allows the management of AWS Lambda policy statements.
       It is idempotent and supports "Check" mode.  Use module M(lambda) to manage the lambda
       function itself, M(lambda_alias) to manage function aliases, M(lambda_event) to manage event source mappings
-      such as Kinesis streams, M(lambda_invoke) to execute a lambda function and M(lambda_facts) to gather facts
+      such as Kinesis streams, M(execute_lambda) to execute a lambda function and M(lambda_facts) to gather facts
       relating to one or more lambda functions.
 
 version_added: "2.4"
@@ -188,6 +188,13 @@ def validate_params(module):
 
     # validate function name
     if function_name.startswith('arn:'):
+        if not re.search(r'^[\w\-:]+$', function_name):
+            module.fail_json(
+                msg='ARN {0} is invalid. ARNs must contain only alphanumeric characters, hyphens and colons.'.format(function_name)
+            )
+        if len(function_name) > 140:
+            module.fail_json(msg='ARN name "{0}" exceeds 140 character limit'.format(function_name))
+    else:
         if not re.search(r'^[\w\-]+$', function_name):
             module.fail_json(
                 msg='Function name {0} is invalid. Names must contain only alphanumeric characters and hyphens.'.format(
@@ -196,13 +203,6 @@ def validate_params(module):
         if len(function_name) > 64:
             module.fail_json(
                 msg='Function name "{0}" exceeds 64 character limit'.format(function_name))
-    else:
-        if not re.search(r'^[\w\-:]+$', function_name):
-            module.fail_json(
-                msg='ARN {0} is invalid. ARNs must contain only alphanumeric characters, hyphens and colons.'.format(function_name)
-            )
-        if len(function_name) > 140:
-            module.fail_json(msg='ARN name "{0}" exceeds 140 character limit'.format(function_name))
 
 
 def get_qualifier(module):
@@ -261,8 +261,6 @@ def get_policy_statement(module, client):
     :param client:
     :return:
     """
-
-    policy = dict()
     sid = module.params['statement_id']
 
     # set API parameters

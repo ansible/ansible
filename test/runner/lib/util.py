@@ -3,8 +3,10 @@
 from __future__ import absolute_import, print_function
 
 import atexit
+import contextlib
 import errno
 import filecmp
+import fcntl
 import inspect
 import json
 import os
@@ -13,12 +15,16 @@ import pkgutil
 import random
 import re
 import shutil
+import socket
 import stat
 import string
 import subprocess
 import sys
 import tempfile
 import time
+
+from struct import unpack, pack
+from termios import TIOCGWINSZ
 
 try:
     from abc import ABC
@@ -57,51 +63,6 @@ def remove_file(path):
     """
     if os.path.isfile(path):
         os.remove(path)
-
-
-def find_pip(path=None, version=None):
-    """
-    :type path: str | None
-    :type version: str | None
-    :rtype: str
-    """
-    if version:
-        version_info = version.split('.')
-        python_bin = find_executable('python%s' % version, path=path)
-    else:
-        version_info = sys.version_info
-        python_bin = sys.executable
-
-    choices = (
-        'pip%s' % '.'.join(str(i) for i in version_info[:2]),
-        'pip%s' % version_info[0],
-        'pip',
-    )
-
-    pip = None
-
-    for choice in choices:
-        pip = find_executable(choice, required=False, path=path)
-
-        if pip:
-            break
-
-    if not pip:
-        raise ApplicationError('Required program not found: %s' % ', '.join(choices))
-
-    with open(pip) as pip_fd:
-        shebang = pip_fd.readline().strip()
-
-    if not shebang.startswith('#!') or ' ' in shebang:
-        raise ApplicationError('Unexpected shebang in "%s": %s' % (pip, shebang))
-
-    our_python = os.path.realpath(python_bin)
-    pip_python = os.path.realpath(shebang[2:])
-
-    if our_python != pip_python and not filecmp.cmp(our_python, pip_python, False):
-        raise ApplicationError('Current interpreter "%s" does not match "%s" interpreter "%s".' % (our_python, pip, pip_python))
-
-    return pip
 
 
 def find_executable(executable, cwd=None, path=None, required=True):
@@ -156,6 +117,30 @@ def find_executable(executable, cwd=None, path=None, required=True):
     return match
 
 
+def find_python(version, path=None):
+    """
+    :type version: str
+    :type path: str | None
+    :rtype: str
+    """
+    version_info = tuple(int(n) for n in version.split('.'))
+
+    if not path and version_info == sys.version_info[:len(version_info)]:
+        python_bin = sys.executable
+    else:
+        python_bin = find_executable('python%s' % version, path=path)
+
+    return python_bin
+
+
+def generate_pip_command(python):
+    """
+    :type python: str
+    :rtype: list[str]
+    """
+    return [python, '-m', 'pip.__main__']
+
+
 def intercept_command(args, cmd, target_name, capture=False, env=None, data=None, cwd=None, python_version=None, path=None):
     """
     :type args: TestConfig
@@ -176,13 +161,17 @@ def intercept_command(args, cmd, target_name, capture=False, env=None, data=None
     inject_path = get_coverage_path(args)
     config_path = os.path.join(inject_path, 'injector.json')
     version = python_version or args.python_version
-    interpreter = find_executable('python%s' % version, path=path)
+    interpreter = find_python(version, path)
     coverage_file = os.path.abspath(os.path.join(inject_path, '..', 'output', '%s=%s=%s=%s=coverage' % (
         args.command, target_name, args.coverage_label or 'local-%s' % version, 'python-%s' % version)))
 
     env['PATH'] = inject_path + os.pathsep + env['PATH']
     env['ANSIBLE_TEST_PYTHON_VERSION'] = version
     env['ANSIBLE_TEST_PYTHON_INTERPRETER'] = interpreter
+
+    if args.coverage:
+        env['_ANSIBLE_COVERAGE_CONFIG'] = os.path.join(inject_path, '.coveragerc')
+        env['_ANSIBLE_COVERAGE_OUTPUT'] = coverage_file
 
     config = dict(
         python_interpreter=interpreter,
@@ -300,7 +289,7 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
 
     escaped_cmd = ' '.join(pipes.quote(c) for c in cmd)
 
-    display.info('Run command: %s' % escaped_cmd, verbosity=cmd_verbosity)
+    display.info('Run command: %s' % escaped_cmd, verbosity=cmd_verbosity, truncate=True)
     display.info('Working directory: %s' % cwd, verbosity=2)
 
     program = find_executable(cmd[0], cwd=cwd, path=env['PATH'], required='warning')
@@ -344,7 +333,7 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
 
     if communicate:
         encoding = 'utf-8'
-        data_bytes = data.encode(encoding) if data else None
+        data_bytes = data.encode(encoding, 'surrogateescape') if data else None
         stdout_bytes, stderr_bytes = process.communicate(data_bytes)
         stdout_text = stdout_bytes.decode(encoding, str_errors) if stdout_bytes else u''
         stderr_text = stderr_bytes.decode(encoding, str_errors) if stderr_bytes else u''
@@ -381,6 +370,7 @@ def common_environment():
         # MacOS High Sierra Compatibility
         # http://sealiesoftware.com/blog/archive/2017/6/5/Objective-C_and_fork_in_macOS_1013.html
         'OBJC_DISABLE_INITIALIZE_FORK_SAFETY',
+        'ANSIBLE_KEEP_REMOTE_FILES',
     )
 
     env.update(pass_vars(required=required, optional=optional))
@@ -457,8 +447,76 @@ def is_binary_file(path):
     :type path: str
     :rtype: bool
     """
+    assume_text = set([
+        '.cfg',
+        '.conf',
+        '.crt',
+        '.css',
+        '.html',
+        '.ini',
+        '.j2',
+        '.js',
+        '.json',
+        '.md',
+        '.pem',
+        '.ps1',
+        '.psm1',
+        '.py',
+        '.rst',
+        '.sh',
+        '.txt',
+        '.xml',
+        '.yaml',
+        '.yml',
+    ])
+
+    assume_binary = set([
+        '.bin',
+        '.eot',
+        '.gz',
+        '.ico',
+        '.iso',
+        '.jpg',
+        '.otf',
+        '.p12',
+        '.png',
+        '.pyc',
+        '.rpm',
+        '.ttf',
+        '.woff',
+        '.woff2',
+        '.zip',
+    ])
+
+    ext = os.path.splitext(path)[1]
+
+    if ext in assume_text:
+        return False
+
+    if ext in assume_binary:
+        return True
+
     with open(path, 'rb') as path_fd:
         return b'\0' in path_fd.read(1024)
+
+
+def generate_password():
+    """Generate a random password.
+    :rtype: str
+    """
+    chars = [
+        string.ascii_letters,
+        string.digits,
+        string.ascii_letters,
+        string.digits,
+        '-',
+    ] * 4
+
+    password = ''.join([random.choice(char) for char in chars[:-1]])
+
+    display.sensitive.add(password)
+
+    return password
 
 
 class Display(object):
@@ -484,6 +542,14 @@ class Display(object):
         self.warnings = []
         self.warnings_unique = set()
         self.info_stderr = False
+        self.rows = 0
+        self.columns = 0
+        self.truncate = 0
+        self.redact = False
+        self.sensitive = set()
+
+        if os.isatty(0):
+            self.rows, self.columns = unpack('HHHH', fcntl.ioctl(0, TIOCGWINSZ, pack('HHHH', 0, 0, 0, 0)))[:2]
 
     def __warning(self, message):
         """
@@ -527,21 +593,31 @@ class Display(object):
         """
         self.print_message('ERROR: %s' % message, color=self.red, fd=sys.stderr)
 
-    def info(self, message, verbosity=0):
+    def info(self, message, verbosity=0, truncate=False):
         """
         :type message: str
         :type verbosity: int
+        :type truncate: bool
         """
         if self.verbosity >= verbosity:
             color = self.verbosity_colors.get(verbosity, self.yellow)
-            self.print_message(message, color=color, fd=sys.stderr if self.info_stderr else sys.stdout)
+            self.print_message(message, color=color, fd=sys.stderr if self.info_stderr else sys.stdout, truncate=truncate)
 
-    def print_message(self, message, color=None, fd=sys.stdout):  # pylint: disable=locally-disabled, invalid-name
+    def print_message(self, message, color=None, fd=sys.stdout, truncate=False):  # pylint: disable=locally-disabled, invalid-name
         """
         :type message: str
         :type color: str | None
         :type fd: file
+        :type truncate: bool
         """
+        if self.redact and self.sensitive:
+            for item in self.sensitive:
+                message = message.replace(item, '*' * len(item))
+
+        if truncate:
+            if len(message) > self.truncate > 5:
+                message = message[:self.truncate - 5] + ' ...'
+
         if color and self.color:
             # convert color resets in message to desired color
             message = message.replace(self.clear, color)
@@ -616,6 +692,11 @@ class CommonConfig(object):
         self.explain = args.explain  # type: bool
         self.verbosity = args.verbosity  # type: int
         self.debug = args.debug  # type: bool
+        self.truncate = args.truncate  # type: int
+        self.redact = args.redact  # type: bool
+
+        if is_shippable():
+            self.redact = True
 
 
 def docker_qualify_image(name):
@@ -643,6 +724,18 @@ def parse_to_dict(pattern, value):
         raise Exception('Pattern "%s" did not match value: %s' % (pattern, value))
 
     return match.groupdict()
+
+
+def get_available_port():
+    """
+    :rtype: int
+    """
+    # this relies on the kernel not reusing previously assigned ports immediately
+    socket_fd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    with contextlib.closing(socket_fd):
+        socket_fd.bind(('', 0))
+        return socket_fd.getsockname()[1]
 
 
 def get_subclasses(class_type):

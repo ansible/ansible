@@ -1,11 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -23,7 +23,7 @@ description:
 - If specific esxi_hostname is provided, then specified service will be managed on given ESXi host only.
 version_added: '2.5'
 author:
-- Abhijeet Kasurde (@akasurde)
+- Abhijeet Kasurde (@Akasurde)
 notes:
 - Tested on vSphere 6.5
 requirements:
@@ -46,12 +46,14 @@ options:
     - "State value 'start' and 'present' has same effect."
     - "State value 'stop' and 'absent' has same effect."
     choices: [ absent, present, restart, start, stop ]
+    default: 'start'
   service_policy:
     description:
     - Set of valid service policy strings.
     - If set C(on), then service should be started when the host starts up.
     - If set C(automatic), then service should run if and only if it has open firewall ports.
     - If set C(off), then Service should not be started when the host starts up.
+    choices: [ 'automatic', 'off', 'on' ]
   service_name:
     description:
     - Name of Service to be managed. This is brief identifier for the service, for example, ntpd, vxsyslogd etc.
@@ -66,9 +68,10 @@ EXAMPLES = r'''
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
-    cluster_name: cluster_name
+    cluster_name: '{{ cluster_name }}'
     service_name: ntpd
     state: present
+  delegate_to: localhost
 
 - name: Start ntpd setting for an ESXi Host
   vmware_host_service_manager:
@@ -78,6 +81,7 @@ EXAMPLES = r'''
     esxi_hostname: '{{ esxi_hostname }}'
     service_name: ntpd
     state: present
+  delegate_to: localhost
 
 - name: Start ntpd setting for an ESXi Host with Service policy
   vmware_host_service_manager:
@@ -88,6 +92,7 @@ EXAMPLES = r'''
     service_name: ntpd
     service_policy: on
     state: present
+  delegate_to: localhost
 
 - name: Stop ntpd setting for an ESXi Host
   vmware_host_service_manager:
@@ -97,6 +102,7 @@ EXAMPLES = r'''
     esxi_hostname: '{{ esxi_hostname }}'
     service_name: ntpd
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = r'''#
@@ -118,19 +124,7 @@ class VmwareServiceManager(PyVmomi):
         cluster_name = self.params.get('cluster_name', None)
         esxi_host_name = self.params.get('esxi_hostname', None)
         self.options = self.params.get('options', dict())
-        self.hosts = []
-        if cluster_name:
-            cluster_obj = self.find_cluster_by_name(cluster_name=cluster_name)
-            if cluster_obj:
-                self.hosts = [host for host in cluster_obj.host]
-            else:
-                module.fail_json(changed=False, msg="Cluster '%s' not found" % cluster_name)
-        elif esxi_host_name:
-            esxi_host_obj = self.find_hostsystem_by_name(host_name=esxi_host_name)
-            if esxi_host_obj:
-                self.hosts = [esxi_host_obj]
-            else:
-                module.fail_json(changed=False, msg="ESXi '%s' not found" % esxi_host_name)
+        self.hosts = self.get_all_host_objs(cluster_name=cluster_name, esxi_host_name=esxi_host_name)
         self.desired_state = self.params.get('state')
         self.desired_policy = self.params.get('service_policy', None)
         self.service_name = self.params.get('service_name')

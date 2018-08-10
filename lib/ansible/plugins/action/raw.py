@@ -31,6 +31,7 @@ class ActionModule(ActionBase):
             self._display.warning('raw module does not support the environment keyword')
 
         result = super(ActionModule, self).run(tmp, task_vars)
+        del tmp  # tmp no longer has any effect
 
         if self._play_context.check_mode:
             # in --check mode, always skip this module execution

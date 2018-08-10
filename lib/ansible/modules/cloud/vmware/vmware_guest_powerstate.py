@@ -7,7 +7,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -20,7 +19,7 @@ description:
 - Power on / Power off / Restart a virtual machine.
 version_added: '2.5'
 author:
-- Abhijeet Kasurde (@akasurde) <akasurde@redhat.com>
+- Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
 requirements:
 - python >= 2.6
 - PyVmomi
@@ -28,7 +27,8 @@ options:
   state:
     description:
     - Set the state of the virtual machine.
-    choices: [ powered-off, powered-on, reboot-guest, restarted, shutdown-guest, suspended ]
+    choices: [ powered-off, powered-on, reboot-guest, restarted, shutdown-guest, suspended, present]
+    default: present
   name:
     description:
     - Name of the virtual machine to work with.
@@ -64,34 +64,58 @@ options:
     - Date and time in string format at which specificed task needs to be performed.
     - "The required format for date and time - 'dd/mm/yyyy hh:mm'."
     - Scheduling task requires vCenter server. A standalone ESXi server does not support this option.
+  force:
+    description:
+    - Ignore warnings and complete the actions.
+    - This parameter is useful while forcing virtual machine state.
+    default: False
+    type: bool
+    version_added: 2.5
+  state_change_timeout:
+    description:
+    - If the C(state) is set to C(shutdown-guest), by default the module will return immediately after sending the shutdown signal.
+    - If this argument is set to a positive integer, the module will instead wait for the VM to reach the poweredoff state.
+    - The value sets a timeout in seconds for the module to wait for the state change.
+    default: 0
+    version_added: '2.6'
 extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = r'''
 - name: Set the state of a virtual machine to poweroff
   vmware_guest_powerstate:
-    hostname: 192.0.2.44
-    username: administrator@vsphere.local
-    password: vmware
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
-    folder: /testvms
-    name: testvm_2
+    folder: /"{{ datacenter_name }}"/vm/my_folder
+    name: "{{ guest_name }}"
     state: powered-off
   delegate_to: localhost
   register: deploy
 
 - name: Set the state of a virtual machine to poweroff at given scheduled time
   vmware_guest_powerstate:
-    hostname: 192.0.2.44
-    username: administrator@vsphere.local
-    password: vmware
-    validate_certs: no
-    folder: /datacenter-1/vm/my_folder
-    name: testvm_2
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    folder: /"{{ datacenter_name }}"/vm/my_folder
+    name: "{{ guest_name }}"
     state: powered-off
     scheduled_at: "09/01/2018 10:18"
   delegate_to: localhost
   register: deploy_at_schedule_datetime
+
+- name: Wait for the virtual machine to shutdown
+  vmware_guest_powerstate:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: "{{ guest_name }}"
+    state: shutdown-guest
+    state_change_timeout: 200
+  delegate_to: localhost
+  register: deploy
 '''
 
 RETURN = r''' # '''
@@ -111,13 +135,14 @@ def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(
         state=dict(type='str', default='present',
-                   choices=['powered-off', 'powered-on', 'reboot-guest', 'restarted', 'shutdown-guest', 'suspended']),
+                   choices=['present', 'powered-off', 'powered-on', 'reboot-guest', 'restarted', 'shutdown-guest', 'suspended']),
         name=dict(type='str'),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
         folder=dict(type='str', default='/vm'),
         force=dict(type='bool', default=False),
         scheduled_at=dict(type='str'),
+        state_change_timeout=dict(type='int', default=0),
     )
 
     module = AnsibleModule(argument_spec=argument_spec,

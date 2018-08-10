@@ -17,7 +17,7 @@ DOCUMENTATION = """
 module: eos_linkagg
 version_added: "2.5"
 author: "Trishna Guha (@trishnaguha)"
-short_description: Manage link aggregation groups on Arist EOS network devices
+short_description: Manage link aggregation groups on Arista EOS network devices
 description:
   - This module provides declarative management of link aggregation groups
     on Arista EOS network devices.
@@ -46,6 +46,10 @@ options:
       - State of the link aggregation group.
     default: present
     choices: ['present', 'absent']
+  purge:
+    description:
+      - Purge links not defined in the I(aggregate) parameter.
+    default: no
 extends_documentation_fragment: eos
 """
 
@@ -339,6 +343,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

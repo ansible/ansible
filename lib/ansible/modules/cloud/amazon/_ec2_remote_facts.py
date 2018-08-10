@@ -15,7 +15,10 @@ DOCUMENTATION = '''
 ---
 module: ec2_remote_facts
 short_description: Gather facts about ec2 instances in AWS
-deprecated: Deprecated in 2.4. Use M(ec2_instance_facts) instead.
+deprecated:
+  removed_in: "2.8"
+  why: Replaced with boto3 version.
+  alternative: Use M(ec2_instance_facts) instead.
 description:
     - Gather facts about ec2 instances in AWS
 version_added: "2.0"
@@ -24,8 +27,6 @@ options:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
         See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html) for possible filters.
-    required: false
-    default: null
 author:
     - "Michael Schuett (@michaeljs1990)"
 extends_documentation_fragment:

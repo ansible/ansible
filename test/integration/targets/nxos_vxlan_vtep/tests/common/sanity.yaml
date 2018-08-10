@@ -12,8 +12,8 @@
     nxos_config: 
       commands:
         - feature nv overlay
-      provider: "{{ connection }}"
       match: none
+      provider: "{{ connection }}"
 
   - block:
     - name: configure vxlan_vtep
@@ -111,8 +111,8 @@
       source_interface: Loopback0
       source_interface_hold_down_time: 30
       shutdown: true
-      state: absent
       provider: "{{ connection }}"
+      state: absent
     register: result
 
   - assert:
@@ -137,8 +137,8 @@
   - name: "Disable feature nv overlay"
     nxos_feature: 
       feature: nve
-      state: disabled
       provider: "{{ connection }}"
+      state: disabled
     ignore_errors: yes
 
 - debug: msg="END connection={{ ansible_connection }} nxos_vxlan_vtep sanity test"

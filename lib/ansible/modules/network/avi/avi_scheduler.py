@@ -49,6 +49,7 @@ options:
         description:
             - Boolean flag to set enabled.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        type: bool
     end_date_time:
         description:
             - Scheduler end date and time.
@@ -149,6 +150,7 @@ def main():
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'scheduler',
                            set([]))
+
 
 if __name__ == '__main__':
     main()
