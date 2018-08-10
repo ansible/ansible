@@ -388,28 +388,15 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
 
 
 @contextmanager
-def disable_httpconnection_connect():
-    '''Monkey patch ``httplib.HTTPConnection.connect`` temporarily to do nothing,
-    used in the case where we have already built ``self.sock`` but need the
-    extra logic found in a subclass of ``httplib.HTTPConnection.connect``
-
-    Specifically used in ``UnixHTTPSConnection`` where we need to use
-    ``httplib.HTTPSConnection.connect`` without the side effects of what
-    ``httplib.HTTPConnection.connect`` will do to overwrite ``self.sock``
+def unix_socket_patch_httpconnection_connect():
+    '''Monkey patch ``httplib.HTTPConnection.connect`` to be ``UnixHTTPConnection.connect``
+    so that when calling ``super(UnixHTTPSConnection, self).connect()`` we get the
+    correct behavior of creating self.sock for the unix socket
     '''
     _connect = httplib.HTTPConnection.connect
-    httplib.HTTPConnection.connect = lambda self: None
+    httplib.HTTPConnection.connect = UnixHTTPConnection.connect
     yield
     httplib.HTTPConnection.connect = _connect
-
-
-def connect_unix_socket(unix_socket):
-    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    try:
-        sock.connect(unix_socket)
-    except OSError as e:
-        raise OSError('Invalid Socket File (%s): %s' % (unix_socket, e))
-    return sock
 
 
 class UnixHTTPSConnection(httplib.HTTPSConnection):
@@ -417,14 +404,9 @@ class UnixHTTPSConnection(httplib.HTTPSConnection):
         self._unix_socket = unix_socket
 
     def connect(self):
-        self.sock = sock = connect_unix_socket(self._unix_socket)
-        if self.timeout is not socket._GLOBAL_DEFAULT_TIMEOUT:
-            sock.settimeout(self.timeout)
-
-        # We have already built our self.sock, but just need the functionality of
-        # httplib.HTTPSConnection.connect to wrap the socket correctly. Prevent
-        # httplib.HTTPConnection.connect from doing anything temporarily
-        with disable_httpconnection_connect():
+        # This method exists simply to ensure we monkeypatch
+        # httplib.HTTPConnection.connect to call UnixHTTPConnection.connect
+        with unix_socket_patch_httpconnection_connect():
             super(UnixHTTPSConnection, self).connect()
 
     def __call__(self, *args, **kwargs):
@@ -439,9 +421,13 @@ class UnixHTTPConnection(httplib.HTTPConnection):
         self._unix_socket = unix_socket
 
     def connect(self):
-        self.sock = sock = connect_unix_socket(self._unix_socket)
+        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        try:
+            self.sock.connect(self._unix_socket)
+        except OSError as e:
+            raise OSError('Invalid Socket File (%s): %s' % (unix_socket, e))
         if self.timeout is not socket._GLOBAL_DEFAULT_TIMEOUT:
-            sock.settimeout(self.timeout)
+            self.sock.settimeout(self.timeout)
 
     def __call__(self, *args, **kwargs):
         httplib.HTTPConnection.__init__(self, *args, **kwargs)

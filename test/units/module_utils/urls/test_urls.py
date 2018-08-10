@@ -91,9 +91,9 @@ def test_ParseResultDottedDict():
     assert dotted_parts.as_list() == list(parts)
 
 
-def test_disable_httpconnection_connect():
+def test_unix_socket_patch_httpconnection_connect(mocker):
+    unix_conn = mocker.patch.object(urls.UnixHTTPConnection, 'connect')
     conn = urls.httplib.HTTPConnection('ansible.com')
-    assert conn.sock is None
-    with urls.disable_httpconnection_connect():
+    with urls.unix_socket_patch_httpconnection_connect():
         conn.connect()
-    assert conn.sock is None
+    assert unix_conn.call_count == 1
