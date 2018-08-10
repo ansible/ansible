@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix setting value type to str to avoid conversion during template read. Fix Idempotency in case of 'no key'.
