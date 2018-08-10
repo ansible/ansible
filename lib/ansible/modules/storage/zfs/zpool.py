@@ -46,7 +46,7 @@ options:
     choices: [ 0, 9, 10, 11, 12, 13, 14, 15, 16 ]
     type: int
     default: 0
-  set:
+  sets:
     description:
       - Set options for existing pools
     type: bool
@@ -165,14 +165,14 @@ EXAMPLES = """
 - name: Set options to an existing zpool
   zpool:
     name: zpool
-    set: true
+    sets: true
     autoreplace: true
     state: present
 
 - name: Set options to an existing zpool
   zpool:
     name: zpool
-    set: true
+    sets: true
     autoexpand: off
     state: present
 
@@ -185,13 +185,15 @@ EXAMPLES = """
 RETURN = """ # """
 
 import os
+import commands
+import ntpath
 
 from ansible.module_utils.basic import AnsibleModule
 
 
 class Zpool(object):
 
-    def __init__(self, module, name, state, raid_level, devices, spare, add, vdev, ashift, set, autoreplace, autoexpand, zil, l2arc):
+    def __init__(self, module, name, state, raid_level, devices, spare, add, vdev, ashift, sets, autoreplace, autoexpand, zil, l2arc):
         self.module = module
         self.name = name
         self.raid_level = raid_level
@@ -201,13 +203,15 @@ class Zpool(object):
         self.add = add
         self.vdev = vdev
         self.ashift = ashift
-        self.set = set
+        self.sets = sets
         self.autoreplace = autoreplace
         self.autoexpand = autoexpand
         self.zil = zil
         self.l2arc = l2arc
         self.changed = False
         self.zpool_cmd = module.get_bin_path('zpool', True)
+        self.zpool_grep = module.get_bin_path('grep', True)
+        self.zpool_awk = module.get_bin_path('awk', True)
 
     def exists(self):
         cmd = [self.zpool_cmd, 'list', self.name]
@@ -217,14 +221,32 @@ class Zpool(object):
         else:
             return False
 
+    def dev_exists(self):
+        output = []
+        cmd = [self.zpool_cmd, "list -v", self.name, "|", self.zpool_awk, "'$0 !~ /mirror|spare|log|cache/ { print $1 }'"]
+	status, output = commands.getstatusoutput(' '.join(cmd))
+        if status == 0:
+            return output
+        else:
+            return False
+
+    def opt_exists(self):
+        optput = []
+        cmd = [self.zpool_cmd, "get all ", self.name, "|", self.zpool_grep, "auto | ", self.zpool_awk, "'{ print $2 $3 }'"]
+	status, output = commands.getstatusoutput(' '.join(cmd))
+        if status == 0:
+            return output
+        else:
+            return False
+
     def create(self):
         if self.module.check_mode:
             self.changed = True
             return
         cmd = [self.zpool_cmd]
-        if self.add is True:
+        if self.add:
             action = 'add'
-        elif self.set is True:
+        elif self.sets:
             action = 'set'
         else:
             action = 'create'
@@ -260,6 +282,10 @@ class Zpool(object):
         else:
             self.module.fail_json(msg=err)
 
+def path_leaf(path):
+    head, tail = ntpath.split(path)
+    return tail or ntpath.basename(head)
+
 
 def main():
 
@@ -273,15 +299,15 @@ def main():
             spare=dict(type='list', default=None),
             add=dict(type='bool', default=False),
             ashift=dict(type='int', default=0, choices=[0, 9, 10, 11, 12, 13, 14, 15, 16]),
-            set=dict(type='bool', default=False),
+            sets=dict(type='bool', default=False),
             autoreplace=dict(type='bool'),
             autoexpand=dict(type='bool'),
             zil=dict(type='str', default=None),
             l2arc=dict(type='str', default=None),
         ),
         supports_check_mode=True,
-        required_together=[['raid_level', 'vdev']],
-        mutually_exclusive=[['add', 'set']]
+        required_together=[['raid_level', 'devices'], ['devices', 'vdev']],
+        mutually_exclusive=[['add', 'sets']]
     )
 
     name = module.params.get('name')
@@ -292,26 +318,26 @@ def main():
     spare = module.params.get('spare')
     vdev = module.params.get('vdev')
     ashift = module.params.get('ashift')
-    set = module.params.get('set')
+    sets = module.params.get('sets')
     autoreplace = module.params.get('autoreplace')
     autoexpand = module.params.get('autoexpand')
     l2arc = module.params.get('l2arc')
     zil = module.params.get('zil')
 
-    if autoexpand is True and (set is True or add is True):
+    if autoexpand is True and (sets is True or add is True):
         autoexpand = "autoexpand=on"
-    elif autoexpand is True and set is False:
+    elif autoexpand is True and sets is False:
         autoexpand = "-o autoexpand=on"
-    elif autoexpand is False and set is True and autoreplace is True:
+    elif autoexpand is False and sets is True and autoreplace is True:
         autoexpand = ""
     else:
         autoexpand = ""
 
-    if autoreplace is True and (set is True or add is True):
+    if autoreplace is True and (sets is True or add is True):
         autoreplace = "autoreplace=on"
-    elif autoreplace is True and set is False:
+    elif autoreplace is True and sets is False:
         autoreplace = "-o autoreplace=on"
-    elif autoreplace is False and set is True and autoexpand is True:
+    elif autoreplace is False and sets is True and autoexpand is True:
         autoreplace = ""
     else:
         autoreplace = ""
@@ -341,7 +367,7 @@ def main():
                 temp = ' ' + raid_level + ' ' + ' '.join(devices[i:i + vdev])
                 device += temp
             devices = device
-    if spare is None:
+    if not spare:
         spare = ''
     else:
         spare = 'spare ' + ' '.join(spare)
@@ -353,7 +379,7 @@ def main():
         devices=devices,
         spare=spare,
         vdev=vdev,
-        set=set,
+        sets=sets,
         ashift=ashift,
         autoreplace=autoreplace,
         autoexpand=autoexpand,
@@ -361,11 +387,61 @@ def main():
         l2arc=l2arc,
     )
 
-    zpool = Zpool(module, name, state, raid_level, devices, spare, add, vdev, ashift, set, autoreplace, autoexpand, zil, l2arc)
+    zpool = Zpool(module, name, state, raid_level, devices, spare, add, vdev, ashift, sets, autoreplace, autoexpand, zil, l2arc)
 
     if state == 'present':
-        if (zpool.exists() is True and add is True) or (zpool.exists() is True and set is True) or zpool.exists() is False:
-            zpool.create()
+        if (zpool.exists() and add) or (zpool.exists() and sets) or zpool.exists() is False:
+            if zpool.dev_exists():
+                outlist = zpool.dev_exists().split()
+                optlist = zpool.opt_exists()
+		if devices:
+		    device_out = devices.split()
+                    device_output = [path_leaf(path) for path in device_out]
+                    do = bool(set(outlist) & set(device_output))
+                else:
+                    do = False 
+                if spare:
+		    spare_out = spare.split()
+                    spare_output = [path_leaf(path) for path in spare_out]
+                    so = bool(set(outlist) & set(outlist))
+                else:
+                    so = False 
+                if zil:
+		    zil_out = zil.split()
+                    zil_output = [path_leaf(path) for path in zil_out]
+                    zo = bool(set(outlist) & set(zil_output))
+                else:
+                    zo = False 
+                if l2arc:
+		    l2arc_out = l2arc.split()
+                    l2arc_output = [path_leaf(path) for path in l2arc_out]
+                    lo = bool(set(outlist) & set(l2arc_output))
+                else:
+                    lo = False 
+                ae = False
+		if autoexpand:
+		    if 'on' in autoexpand:
+                        if 'autoexpandon' in optlist:
+                            ae = True
+		    elif 'off' in autoexpand:
+                        if 'autoexpandoff' in optlist:
+                            ae = True
+                else:
+                    ae = False 
+                ar = False
+		if autoreplace:
+		    if 'on' in autoreplace:
+                        if 'autoreplaceon' in optlist:
+                            ar = True
+		    elif 'off' in autoreplace:
+                        if 'autoreplaceoff' in optlist:
+                            ar = True
+                else:
+                    ar = False 
+		if (do or so or zo or lo or ae or ar) is False: 
+                    zpool.create()
+            else:
+                zpool.create()
     elif state == 'absent':
         if zpool.exists():
             zpool.destroy()
