@@ -27,7 +27,7 @@ options:
             - Returns "info"
         default: "info"
         required: false
-        choices: ['info']    
+        choices: ['info']
 '''
 
 EXAMPLES = '''
@@ -66,8 +66,17 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 import ansible.module_utils.netapp as netapp_utils
 
-import xmltodict
-import json
+try:
+    import xmltodict
+    HAS_XMLTODICT = True
+except ImportError:
+    HAS_XMLTODICT = False
+
+try:
+    import json
+    HAS_JSON = True
+except ImportError:
+    HAS_JSON = False
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
@@ -117,7 +126,7 @@ class NetAppGatherFacts(object):
             net_ifgrp_info.update(tmp)
         return net_ifgrp_info
 
-    def get_generic_get_iter(self, call, attribute=None, field=None, query={}, children='attributes-list'):
+    def get_generic_get_iter(self, call, attribute=None, field=None, query=None, children='attributes-list'):
         generic_call = self.call_api(call, query)
 
         if field is None:
@@ -230,11 +239,12 @@ def _finditem(obj, key):
 
     if key in obj:
         return obj[key]
-    for k, v in obj.items():
+    for _, v in obj.items():
         if isinstance(v, dict):
             item = _finditem(v, key)
             if item is not None:
                 return item
+    return None
 
 
 def convert_keys(d):
@@ -258,6 +268,12 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True
     )
+
+    if not HAS_XMLTODICT:
+        module.fail_json(msg="xmltodict missing")
+
+    if not HAS_JSON:
+        module.fail_json(msg="json missing")
 
     state = module.params['state']
     v = NetAppGatherFacts(module)
