@@ -583,7 +583,7 @@ class AzureInventory(object):
         self.replace_dash_in_groups = False
         self.group_by_resource_group = True
         self.group_by_location = True
-        self.group_by_os_family = True
+        self.group_by_os_family = False
         self.group_by_security_group = True
         self.group_by_tag = True
         self.include_powerstate = True
@@ -812,7 +812,7 @@ class AzureInventory(object):
             )
 
             if self.include_powerstate:
-                if self.include_vm_scale_sets: 
+                if self.include_vm_scale_sets:
                     host_vars['powerstate'] = getattr(machine, 'power_state', None)
                 else:
                     host_vars['powerstate'] = self._get_powerstate(resource_group, machine.name)
