@@ -285,7 +285,7 @@
 
 - name: start SimpleHTTPServer for issues 27617
   shell: cd {{ files_dir }} && {{ ansible_python.executable }} {{ output_dir}}/testserver.py {{ http_port }}
-  async: 90
+  async: 120
   poll: 0
 
 - wait_for: port={{ http_port }}
