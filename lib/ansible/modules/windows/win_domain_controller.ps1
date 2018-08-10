@@ -214,7 +214,20 @@ Try {
                 }
                 $install_result = Install-ADDSDomainController -NoRebootOnCompletion -Force @install_params
 
-                Write-DebugLog "Installation completed, needs reboot..."
+                Write-DebugLog "Installation complete, trying to start the Netlogon service"
+                # The Netlogon service is set to auto start but is not started. This is
+                # required for Ansible to connect back to the host and reboot in a
+                # later task. Even if this fails Ansible can still connect but only
+                # with ansible_winrm_transport=basic so we just display a warning if
+                # this fails.
+                try {
+                    Start-Service -Name Netlogon
+                } catch {
+                    Write-DebugLog "Failed to start the Netlogon service: $($_.Exception.Message)"
+                    Add-Warning -obj $result -message "Failed to start the Netlogon service after promoting the host, Ansible may be unable to connect until the host is manually rebooting: $($_.Exception.Message)"
+                }
+
+                Write-DebugLog "Domain Controller setup completed, needs reboot..."
             }
         }
         member_server {
