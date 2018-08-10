@@ -1,3 +1,4 @@
+.. _developing_modules_documenting:
 .. _module_documenting:
 
 Module Format and Documentation

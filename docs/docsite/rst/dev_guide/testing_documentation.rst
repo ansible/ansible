@@ -1,3 +1,5 @@
+.. _testing_documentation:
+
 *********************
 Testing documentation
 *********************
