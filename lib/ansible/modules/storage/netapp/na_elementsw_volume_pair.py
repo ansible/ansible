@@ -112,9 +112,12 @@ from ansible.module_utils._text import to_native
 import ansible.module_utils.netapp as netapp_utils
 from ansible.module_utils.netapp_elementsw_module import NaElementSWModule
 from ansible.module_utils.netapp_module import NetAppModule
-import solidfire.common
 
 HAS_SF_SDK = netapp_utils.has_sf_sdk()
+try:
+    import solidfire.common
+except:
+    HAS_SF_SDK = False
 
 
 class ElementSWVolumePair(object):
