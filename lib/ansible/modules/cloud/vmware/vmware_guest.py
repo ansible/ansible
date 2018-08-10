@@ -325,6 +325,14 @@ options:
     - This parameter is case sensitive.
     - If set, then overrides C(customization) parameter values.
     version_added: '2.6'
+  datastore:
+    description:
+    - Specify datastore or datastore cluster to provision virtual machine.
+    - 'This will take precendence over "disk.datastore" parameter.'
+    - This parameter is useful to override datastore or datastore cluster setting.
+    - For example, when user has different datastore or datastore cluster for templates and virtual machines.
+    - Please see example for more usage.
+    version_added: '2.7'
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -507,6 +515,22 @@ EXAMPLES = r'''
     validate_certs: no
     uuid: "{{ vm_uuid }}"
     state: poweredoff
+  delegate_to: localhost
+
+- name: Deploy a virtual machine in a datastore different from the datastore of the template
+  vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: "{{ vm_name }}"
+    state: present
+    template: "{{ template_name }}"
+    # Here datastore can be different which holds template
+    datastore: "{{ virtual_machine_datastore }}"
+    hardware:
+      memory_mb: 512
+      num_cpus: 2
+      scsi: paravirtual
   delegate_to: localhost
 '''
 
@@ -1987,7 +2011,19 @@ class PyVmomiHelper(PyVmomi):
         resource_pool = self.get_resource_pool()
 
         # set the destination datastore for VM & disks
-        (datastore, datastore_name) = self.select_datastore(vm_obj)
+        if self.params['datastore']:
+            # Give precendence to datastore value provided by user
+            # User may want to deploy VM to specific datastore.
+            datastore_name = self.params['datastore']
+            # Check if user has provided datastore cluster first
+            datastore_cluster = self.cache.find_obj(self.content, [vim.StoragePod], datastore_name)
+            if datastore_cluster:
+                # If user specified datastore cluster so get recommended datastore
+                datastore_name = self.get_recommended_datastore(datastore_cluster_obj=datastore_cluster)
+            # Check if get_recommended_datastore or user specified datastore exists or not
+            datastore = self.cache.find_obj(self.content, [vim.Datastore], datastore_name)
+        else:
+            (datastore, datastore_name) = self.select_datastore(vm_obj)
 
         self.configspec = vim.vm.ConfigSpec()
         self.configspec.deviceChange = []
@@ -2295,6 +2331,7 @@ def main():
         customization=dict(type='dict', default={}, no_log=True),
         customization_spec=dict(type='str', default=None),
         vapp_properties=dict(type='list', default=[]),
+        datastore=dict(type='str'),
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
