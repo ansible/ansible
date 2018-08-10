@@ -425,7 +425,7 @@ class UnixHTTPConnection(httplib.HTTPConnection):
         try:
             self.sock.connect(self._unix_socket)
         except OSError as e:
-            raise OSError('Invalid Socket File (%s): %s' % (unix_socket, e))
+            raise OSError('Invalid Socket File (%s): %s' % (self._unix_socket, e))
         if self.timeout is not socket._GLOBAL_DEFAULT_TIMEOUT:
             self.sock.settimeout(self.timeout)
 
