@@ -32,6 +32,7 @@ options:
 extends_documentation_fragment: tower
 '''
 
+RETURN = ''' # '''
 
 EXAMPLES = '''
 - name: Set the value of AWX_PROOT_BASE_PATH
