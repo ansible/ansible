@@ -99,7 +99,7 @@ class HttpApi(HttpApiBase):
         try:
             out = self.send_request(commands)
         except ConnectionError as exc:
-            if check_rc:
+            if check_rc is True:
                 raise
             out = to_text(exc)
 
