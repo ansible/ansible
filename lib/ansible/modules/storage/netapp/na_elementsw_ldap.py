@@ -106,7 +106,10 @@ from ansible.module_utils._text import to_native
 import ansible.module_utils.netapp as netapp_utils
 
 HAS_SF_SDK = netapp_utils.has_sf_sdk()
-import solidfire.common
+try:
+    import solidfire.common
+except:
+    HAS_SF_SDK = False
 
 
 class NetappElementLdap(object):
