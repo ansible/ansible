@@ -51,7 +51,7 @@ EXAMPLES = '''
 
 RETURN = '''
 servers:
-    description: A list of dict results where the key is the name of the PostgreSQL Server and the values are the facts for that PostgreSQL Server.
+    description: A list of dictionaries containing facts for PostgreSQL servers.
     returned: always
     type: complex
     contains:
@@ -60,13 +60,13 @@ servers:
                 - Resource ID
             returned: always
             type: str
-            sample: /subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforPostgreSQL/servers/testserver
+            sample: /subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforPostgreSQL/servers/postgreabdud1223
         name:
             description:
                 - Resource name.
             returned: always
             type: str
-            sample: testserver
+            sample: postgreabdud1223
         location:
             description:
                 - The location the resource resides in.
@@ -84,37 +84,37 @@ servers:
                         - The name of the SKU
                     returned: always
                     type: str
-                    sample: PGSQLB100
+                    sample: GP_Gen4_2
                 tier:
                     description:
                         - The tier of the particular SKU
                     returned: always
                     type: str
-                    sample: Basic
+                    sample: GeneralPurpose
                 capacity:
                     description:
                         - The scale capacity.
                     returned: always
                     type: int
-                    sample: 100
+                    sample: 2
         version:
             description:
                 - Server version.
             returned: always
             type: str
-            sample: version
+            sample: "9.6"
         user_visible_state:
             description:
                 - A state of a server that is visible to user.
             returned: always
             type: str
-            sample: user_visible_state
+            sample: Ready
         fully_qualified_domain_name:
             description:
                 - The fully qualified domain name of a server.
             returned: always
             type: str
-            sample: fully_qualified_domain_name
+            sample: postgreabdud1223.postgres.database.azure.com
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
