@@ -61,11 +61,13 @@ options:
       - Whether or not to force full deployment, equivalent to serverless `--force` option.
     required: false
     default: false
+    version_added: "2.7"
   verbose:
     description:
       - Shows all stack events during deployment, and display any Stack Output.
     required: false
     default: false
+    version_added: "2.7"
 notes:
    - Currently, the `serverless` command must be in the path of the node executing the task. In the future this may be a flag.
 requirements: [ "serverless", "yaml" ]
