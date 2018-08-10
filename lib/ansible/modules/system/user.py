@@ -1493,7 +1493,7 @@ class SunOS(User):
                     continue
                 m = re.match(r'^([^#]*)#(.*)$', line)
                 if m:  # The line contains a hash / comment
-                line = m.group(1)
+                    line = m.group(1)
                 key, value = line.split('=')
                 if key == "MINWEEKS":
                     minweeks = value.rstrip('\n')
