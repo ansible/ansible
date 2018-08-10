@@ -486,6 +486,7 @@ files:
   $modules/network/netconf/netconf_rpc.py: wisotzky $team_networking
   $modules/network/netscaler/: $team_netscaler
   $modules/network/netvisor/: $team_netvisor
+  $modules/network/nos/: $team_extreme
   $modules/network/nuage/: pdellaert
   $modules/network/nxos/: $team_nxos
   $modules/network/nso/: $team_nso
@@ -892,6 +893,9 @@ files:
   $module_utils/network/netscaler:
     maintainers: $team_netscaler
     labels: networking
+  $module_utils/network/nos:
+    maintainers: $team_extreme
+    labels: networking
   $module_utils/network/nso:
     maintainers: $team_nso
     labels: networking
@@ -1024,6 +1028,9 @@ files:
   lib/ansible/plugins/cliconf/ironware.py:
     maintainers: paulquack
     labels: networking
+  lib/ansible/plugins/cliconf/nos.py:
+    maintainers: $team_extreme
+    labels: networking
   lib/ansible/plugins/cliconf/nxos.py:
     maintainers: $team_nxos
     labels:
@@ -1136,6 +1143,9 @@ files:
     labels: networking
   lib/ansible/plugins/terminal/junos.py:
     maintainers: $team_networking
+    labels: networking
+  lib/ansible/plugins/terminal/nos.py:
+    maintainers: $team_extreme
     labels: networking
   lib/ansible/plugins/terminal/nxos.py:
     maintainers: $team_networking
