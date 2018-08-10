@@ -311,6 +311,14 @@ def check_args(module, warnings):
                                  'single character')
 
 
+def expand_lines(lines):
+    newlines = list()
+    for thisline in lines:
+        for anotherline in thisline.split('\n'):
+            newlines.append(anotherline)
+    return newlines
+
+
 def get_candidate_config(module):
     candidate = ''
     if module.params['src']:
@@ -418,6 +426,9 @@ def main():
         match = module.params['match']
         replace = module.params['replace']
         path = module.params['parents']
+
+        if module.params['lines']:
+            module.params['lines'] = expand_lines(module.params['lines'])
 
         candidate = get_candidate_config(module)
         running = get_running_config(module, contents, flags=flags)
