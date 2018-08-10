@@ -72,12 +72,6 @@
     name: testdatabase
   register: output 
 
-            'resource_group': self.resource_group,
-            'server_name': self.server_name,
-            'name': d['name'],
-            'charset': d['charset'],
-            'collation': d['collation']
-
 - name: Assert that facts are returned
   assert:
     that:
