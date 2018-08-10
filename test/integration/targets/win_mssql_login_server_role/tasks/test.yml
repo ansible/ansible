@@ -1,0 +1,81 @@
+---
+- name: add server role
+  win_mssql_login_server_role:
+    server_instance: "{{ ansible_hostname }}"
+    server_instance_user: sa
+    server_instance_password: "{{ sa }}"
+    login_name: john_doe
+    server_role: "{{ item }}"
+    state: present
+  loop: 
+    - securityadmin
+    - bulkadmin
+  register: res
+
+- name: test server role
+  assert:
+    that:
+      - "res.changed == True"
+
+- name: remove securityadmin role
+  win_mssql_login_server_role:
+    server_instance: "{{ ansible_hostname }}"
+    server_instance_user: sa
+    server_instance_password: "{{ sa }}"
+    login_name: john_doe
+    server_role: securityadmin
+    state: absent
+  register: res
+
+- name: test server role
+  assert:
+    that:
+      - res.changed == True
+      - res.role == "securityadmin"
+
+- name: check module idempontece
+  win_mssql_login_server_role:
+    server_instance: "{{ ansible_hostname }}"
+    server_instance_user: sa
+    server_instance_password: "{{ sa }}"
+    login_name: john_doe
+    server_role: bulkadmin
+    state: present
+  register: res
+
+- name: check server role idempontece
+  assert:
+    that:
+      - res.changed == False
+      - res.role == "bulkadmin"
+
+- name: test check mode
+  win_mssql_login_server_role:
+    server_instance: "{{ ansible_hostname }}"
+    server_instance_user: sa
+    server_instance_password: "{{ sa }}"
+    login_name: john_doe
+    server_role: bulkadmin
+    state: absent
+  check_mode: yes
+  register: res
+
+- name: check check_mode test
+  assert:
+    that:
+      - res.changed == True
+
+- name: cleanup
+  win_mssql_login_server_role:
+    server_instance: "{{ ansible_hostname }}"
+    server_instance_user: sa
+    server_instance_password: "{{ sa }}"
+    login_name: john_doe
+    server_role: bulkadmin
+    state: absent
+  register: res
+
+- name: check cleanup
+  assert:
+    that:
+      - res.changed == True
