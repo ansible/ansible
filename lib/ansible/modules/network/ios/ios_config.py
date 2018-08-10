@@ -466,7 +466,8 @@ def main():
         replace = module.params['replace']
         path = module.params['parents']
 
-        module.params['lines'] = expand_lines(module.params['lines'])
+        if module.params['lines']:
+            module.params['lines'] = expand_lines(module.params['lines'])
 
         candidate, want_banners = get_candidate(module)
 
