@@ -339,6 +339,7 @@ def diff_banners(want, have):
             candidate[key] = value
     return candidate
 
+
 def expand_lines(lines):
     newlines = list()
     for thisline in lines:
