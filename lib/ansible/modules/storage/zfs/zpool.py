@@ -282,10 +282,10 @@ class Zpool(object):
         else:
             self.module.fail_json(msg=err)
 
+
 def path_leaf(path):
     head, tail = ntpath.split(path)
     return tail or ntpath.basename(head)
-
 
 def main():
 
@@ -394,51 +394,51 @@ def main():
             if zpool.dev_exists():
                 outlist = zpool.dev_exists().split()
                 optlist = zpool.opt_exists()
-		if devices:
-		    device_out = devices.split()
+                if devices:
+                    device_out = devices.split()
                     device_output = [path_leaf(path) for path in device_out]
                     do = bool(set(outlist) & set(device_output))
                 else:
-                    do = False 
+                    do = False
                 if spare:
-		    spare_out = spare.split()
+                    spare_out = spare.split()
                     spare_output = [path_leaf(path) for path in spare_out]
                     so = bool(set(outlist) & set(outlist))
                 else:
-                    so = False 
+                    so = False
                 if zil:
-		    zil_out = zil.split()
+                    zil_out = zil.split()
                     zil_output = [path_leaf(path) for path in zil_out]
                     zo = bool(set(outlist) & set(zil_output))
                 else:
-                    zo = False 
+                    zo = False
                 if l2arc:
-		    l2arc_out = l2arc.split()
+                    l2arc_out = l2arc.split()
                     l2arc_output = [path_leaf(path) for path in l2arc_out]
                     lo = bool(set(outlist) & set(l2arc_output))
                 else:
-                    lo = False 
+                    lo = False
                 ae = False
-		if autoexpand:
-		    if 'on' in autoexpand:
+                if autoexpand:
+                    if 'on' in autoexpand:
                         if 'autoexpandon' in optlist:
                             ae = True
-		    elif 'off' in autoexpand:
+                    elif 'off' in autoexpand:
                         if 'autoexpandoff' in optlist:
                             ae = True
                 else:
-                    ae = False 
+                    ae = False
                 ar = False
-		if autoreplace:
-		    if 'on' in autoreplace:
+                if autoreplace:
+                    if 'on' in autoreplace:
                         if 'autoreplaceon' in optlist:
                             ar = True
-		    elif 'off' in autoreplace:
+                    elif 'off' in autoreplace:
                         if 'autoreplaceoff' in optlist:
                             ar = True
                 else:
-                    ar = False 
-		if (do or so or zo or lo or ae or ar) is False: 
+                    ar = False
+                if (do or so or zo or lo or ae or ar) is False: 
                     zpool.create()
             else:
                 zpool.create()
