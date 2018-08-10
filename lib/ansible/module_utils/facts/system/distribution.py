@@ -57,6 +57,7 @@ class DistributionFiles:
     #  - have a function get_distribution_DISTNAME implemented
     # keep names in sync with Conditionals page of docs
     OSDIST_LIST = (
+        {'path': '/etc/altlinux-release', 'name': 'Altlinux'},
         {'path': '/etc/oracle-release', 'name': 'OracleLinux'},
         {'path': '/etc/slackware-version', 'name': 'Slackware'},
         {'path': '/etc/redhat-release', 'name': 'RedHat'},
@@ -72,7 +73,6 @@ class DistributionFiles:
         {'path': '/etc/os-release', 'name': 'Debian'},
         {'path': '/etc/lsb-release', 'name': 'Debian'},
         {'path': '/etc/lsb-release', 'name': 'Mandriva'},
-        {'path': '/etc/altlinux-release', 'name': 'Altlinux'},
         {'path': '/etc/sourcemage-release', 'name': 'SMGL'},
         {'path': '/etc/os-release', 'name': 'NA'},
         {'path': '/etc/coreos/update.conf', 'name': 'Coreos'},
@@ -82,7 +82,7 @@ class DistributionFiles:
     SEARCH_STRING = {
         'OracleLinux': 'Oracle Linux',
         'RedHat': 'Red Hat',
-        'Altlinux': 'ALT Linux',
+        'Altlinux': 'ALT',
         'ClearLinux': 'Clear Linux',
         'SMGL': 'Source Mage GNU/Linux',
     }
