@@ -24,7 +24,7 @@ To specify the vault-password interactively::
 
     ansible-playbook site.yml --ask-vault-pass
 
-This prompt will then be used to decrypt (in memory only) any vault encrypted files that are accessed.  Currently this requires that all files be encrypted with the same password.
+This prompt will then be used to decrypt (in memory only) any vault encrypted files that are accessed.
 
 Alternatively, passwords can be specified with a file or a script (the script version will require Ansible 1.7 or later).  When using this flag, ensure permissions on the file are such that no one else can access your key and do not add your key to source control::
 
@@ -42,6 +42,56 @@ If you are using a script instead of a flat file, ensure that it is marked as ex
    This is something you may wish to do if using Ansible from a continuous integration system like Jenkins.
 
 The :option:`--vault-password-file <ansible-pull --vault-password-file>` option can also be used with the :ref:`ansible-pull` command if you wish, though this would require distributing the keys to your nodes, so understand the implications -- vault is more intended for push mode.
+
+
+Multiple vault passwords
+````````````````````````
+
+Ansible 2.4 and later support the concept of multiple vaults that are encrypted with different passwords
+Different vaults can be given a label to distinguish them (generally values like dev, prod etc.).
+
+The :option:`--ask-vault-pass <ansible-playbook --ask-vault-pass>` and
+:option:`--vault-password-file <ansible-playbook --vault-password-file>` options can be used as long as
+only a single password is needed for any given run.
+
+Alternatively the :option:`--vault-id <ansible-playbook --vault-id>` option can be used to provide the
+password and indicate which vault label it's for. This can be clearer when multiple vaults are used within
+a single inventory. For example:
+
+To be prompted for the 'dev' password:
+
+.. code-block:: bash
+
+    ansible-playbook site.yml --vault-id dev@prompt
+
+To get the 'dev' password from a file or script:
+
+.. code-block:: bash
+
+    ansible-playbook site.yml --vault-id dev@~/.vault_pass.txt
+
+    ansible-playbook site.yml --vault-id dev@~/.vault_pass.py
+
+If multiple vault passwords are required for a single run, :option:`--vault-id <ansible-playbook --vault-id>` must
+be used as it can be specified multiple times to provide the multiple passwords.  For example:
+
+To the 'dev' password from a file and prompt for the 'prod' password:
+
+.. code-block:: bash
+
+    ansible-playbook site.yml --vault-id dev@~/.vault_pass.txt --vault-id prod@prompt
+
+The :option:`--ask-vault-pass <ansible-playbook --ask-vault-pass>` or
+:option:`--vault-password-file <ansible-playbook --vault-password-file>` options can be used to specify one of
+the passwords, but it's generally cleaner to avoid mixing these with :option:`--vault-id <ansible-playbook --vault-id>`.
+
+.. note::
+    By defaut the vault label (dev, prod etc.) is just a hint. Ansible will try to decrypt each
+    vault with every provided password.
+
+    Setting the config option :ref:`DEFAULT_VAULT_ID_MATCH` will change this behaiour so that each password
+    is only used to decrypt data that was encrypted with the same label. See :ref:`specifying_vault_ids`
+    for more details.
 
 
 .. _single_encrypted_variable:
