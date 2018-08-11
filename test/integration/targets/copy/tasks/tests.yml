@@ -1816,6 +1816,17 @@
       - "stat_remote_dir_src_subdir_file12_before.stat.mode == stat_new_dir_without_follow_subdir_file12.stat.mode"
       - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_new_dir_without_follow_subdir_file12.stat.checksum"
 
+## testcase4 Copy the directory on remote without chown
+
+- block:
+  - name: execute - Copy the directory on remote with chown
+    copy:
+      remote_src: True
+      src: '{{ remote_dir }}/remote_dir_src/'
+      dest: '{{ remote_dir }}/new_dir_with_chown'
+      owner: tmp_ansible_test_user
+      group: tmp_ansible_test_user
+    register: testcase4_with_chown
 
 ## testcase last - make sure remote_dir_src not change
 - block:
