@@ -217,7 +217,7 @@ class Vultr:
             return {}
 
         for r_id, r_data in r_list.items():
-            if r_data[key] == value:
+            if str(r_data[key]) == str(value):
                 self.api_cache.update({
                     resource: r_data
                 })
