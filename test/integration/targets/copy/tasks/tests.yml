@@ -1770,12 +1770,12 @@
 
 - block:
   - name: execute - modify the file1
-    inlinefile: 
+    lineinfile: 
       path: '{{ remote_dir }}/file1'
       line: 'ptux'
 
   - name: execute - modify the file12
-    inlinefile: 
+    lineinfile: 
       path: '{{ remote_dir }}/subdir/file12'
       line: 'ptux'
 
