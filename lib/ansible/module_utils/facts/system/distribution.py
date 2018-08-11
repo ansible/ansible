@@ -589,7 +589,7 @@ class Distribution(object):
         if 'Solaris' in data:
             # FIXME: the proper way would be to exec 'uname -r' and parse it.
             # For solaris 10 it will return 5.10, for solaris 11 it will be 5.11
-            # but I can't pass ansible test unit test_distribution_version.py with it, 
+            # but I can't pass ansible test unit test_distribution_version.py with it,
             # since I've no idea how to mock `uname -r` on CI (github/shippable) run.
             # rc, uname_r, err = self.module.run_command('uname -r')
             ora_prefix = ''
@@ -599,7 +599,7 @@ class Distribution(object):
             sunos_facts['distribution'] = data.split()[0]
             sunos_facts['distribution_version'] = data.split()[1]
             sunos_facts['distribution_release'] = ora_prefix + data
-            #sunos_facts['distribution_major_version'] = int(uname_r.split('.')[1])
+            # sunos_facts['distribution_major_version'] = int(uname_r.split('.')[1])
             sunos_facts['distribution_major_version'] = sunos_facts['distribution_version'].split('.')[0]
             return sunos_facts
 
