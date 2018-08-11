@@ -170,7 +170,7 @@ class AnsibleVultrDnsDomain(Vultr):
 def main():
     argument_spec = vultr_argument_spec()
     argument_spec.update(dict(
-        name=dict(required=True),
+        name=dict(required=True, aliases=['domain']),
         server_ip=dict(),
         state=dict(choices=['present', 'absent'], default='present'),
     ))

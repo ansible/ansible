@@ -39,10 +39,10 @@ options:
     - CNAME
     - MX
     - SRV
-    - ALIAS
-    - SPF
+    - CAA
     - TXT
     - NS
+    - SSHFP
     aliases: [ type ]
   data:
     description:

@@ -38,18 +38,18 @@ options:
   cidr:
     description:
       - Network in CIDR format
-      - The CIDR format must match with the C(ip_type) value.
+      - The CIDR format must match with the C(ip_version) value.
       - Required if C(state=present).
-    default: 0.0.0.0/0 or ::/0 depending on C(ip_version)
+      - Defaulted to 0.0.0.0/0 or ::/0 depending on C(ip_version).
   start_port:
     description:
       - Start port for the firewall rule.
-      - Required if C(protocol) is tcp or udp and C(state=present).
+      - Required if C(protocol) is tcp or udp and I(state=present).
     aliases: [ port ]
   end_port:
     description:
       - End port for the firewall rule.
-      - Only considered if C(protocol) is tcp or udp and C(state=present).
+      - Only considered if C(protocol) is tcp or udp and I(state=present).
   state:
     description:
       - State of the firewall rule.
@@ -354,7 +354,7 @@ def main():
         end_port=dict(type='int'),
         protocol=dict(choices=['tcp', 'udp', 'gre', 'icmp'], default='tcp'),
         cidr=dict(),
-        ip_version=dict(choices=['v4', 'v6'], default='v4'),
+        ip_version=dict(choices=['v4', 'v6'], default='v4', aliases=['ip_type']),
         state=dict(choices=['present', 'absent'], default='present'),
     ))
 

@@ -56,6 +56,7 @@ options:
       - abuse
       - dns
       - upgrade
+    aliases: [ acl ]
   state:
     description:
       - State of the user.
@@ -199,12 +200,6 @@ class AnsibleVultrUser(Vultr):
         return {}
 
     def present_user(self):
-        # Choices with list
-        acls = self.module.params.get('acls')
-        for acl in acls or []:
-            if acl not in ACLS:
-                self.fail_json(msg='value of acls must be one or more of: %s, got: %s' % (ACLS, acls))
-
         user = self.get_user()
         if not user:
             user = self._create_user(user)
@@ -297,7 +292,7 @@ def main():
         password=dict(no_log=True),
         force=dict(type='bool', default=False),
         api_enabled=dict(type='bool', default=True),
-        acls=dict(type='list', aliases=['acl']),
+        acls=dict(type='list', choices=ACLS, aliases=['acl']),
         state=dict(choices=['present', 'absent'], default='present'),
     ))
 

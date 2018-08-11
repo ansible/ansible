@@ -44,6 +44,7 @@ options:
     description:
       - Force stop/start the server if required to apply changes
       - Otherwise a running server will not be changed.
+    type: bool
   notify_activate:
     description:
       - Whether to send an activation email when the server is ready or not.
