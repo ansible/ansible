@@ -20,8 +20,10 @@ __metaclass__ = type
 import pytest
 
 from ansible.compat.tests import unittest
+from ansible.errors import AnsibleFilterError
 from ansible.plugins.filter.ipaddr import (ipaddr, _netmask_query, nthhost, next_nth_usable, ipsubnet,
-                                           previous_nth_usable, network_in_usable, network_in_network, cidr_merge)
+                                           previous_nth_usable, network_in_usable, network_in_network,
+                                           cidr_merge, ipmath)
 netaddr = pytest.importorskip('netaddr')
 
 
@@ -474,7 +476,6 @@ class TestIpFilter(unittest.TestCase):
         self.assertEqual(cidr_merge(subnets), ['1.12.1.1/32', '1.12.1.255/32'])
         self.assertEqual(cidr_merge(subnets, 'span'), '1.12.1.0/24')
 
-<<<<<<< HEAD
     def test_ipmath(self):
         self.assertEqual(ipmath('192.168.1.5', 5), '192.168.1.10')
         self.assertEqual(ipmath('192.168.1.5', -5), '192.168.1.0')
@@ -501,8 +502,8 @@ class TestIpFilter(unittest.TestCase):
         with self.assertRaises(AnsibleFilterError) as exc:
             ipmath('1.2.3.4', 'some_number')
         self.assertEqual(exc.exception.message, expected)
-=======
-     def test_ipsubnet(self):
+
+    def test_ipsubnet(self):
         address = '1.1.1.1/24'
         self.assertEqual(ipsubnet(address, '30'), '64')
         address = '1.1.1.1/25'
@@ -530,4 +531,3 @@ class TestIpFilter(unittest.TestCase):
         self.assertEqual(ipsubnet(address, '18', '-1'), '192.168.144.4/31')
         self.assertEqual(ipsubnet(address, '18', '5'), '192.168.144.0/23')
         self.assertEqual(ipsubnet(address, '18', '-5'), '192.168.144.0/27')
->>>>>>> adding test for ipsubnet
