@@ -1699,7 +1699,72 @@
 
 ## testcase2 remote_dir_dest exists, left only subdir and file exists
 
-### pass
+- block:
+  - name: execute - delete the subdir
+    file:
+      path: '{{ remote_dir }}/new_dir_with_follow/subdir'
+      state: absent
+
+  - name: execute - delete the file1
+    file:
+      path: '{{ remote_dir }}/new_dir_with_follow/file1'
+      state: absent
+
+  - name: execute - delete the file link_file12
+    file:
+      path: '{{ remote_dir }}/new_dir_with_follow/link_file12'
+      state: absent
+
+  - name: execute - delete the link link_file12
+    file:
+      path: '{{ remote_dir }}/new_dir_without_follow/link_file12'
+      state: absent
+
+  - name: execute - Copy the directory on remote with follow
+    copy:
+      remote_src: True
+      src: '{{ remote_dir }}/remote_dir_src/'
+      dest: '{{ remote_dir }}/new_dir_with_follow'
+      follow: True
+    register: testcase2_with_follow
+
+  - name: execute - Copy the directory on remote without follow
+    copy:
+      remote_src: True
+      src: '{{ remote_dir }}/remote_dir_src/'
+      dest: '{{ remote_dir }}/new_dir_without_follow'
+      follow: False
+    register: testcase2_without_follow
+
+  - name: gather - Stat the new_dir_with_follow/subdir
+    stat:
+      path: '{{ remote_dir }}/new_dir_with_follow/subdir'
+    register: stat_new_dir_with_follow_subdir
+
+  - name: gather - Stat the new_dir_with_follow/file1
+    stat:
+      path: '{{ remote_dir }}/new_dir_with_follow/file1'
+    register: stat_new_dir_with_follow_file1
+
+  - name: gather - Stat the new_dir_with_follow/link_file12
+    stat:
+      path: '{{ remote_dir }}/new_dir_with_follow/link_file12'
+    register: stat_new_dir_with_follow_link_file12
+
+  - name: gather - Stat the new_dir_without_follow/link_file12
+    stat:
+      path: '{{ remote_dir }}/new_dir_without_follow/link_file12'
+    register: stat_new_dir_without_follow_link_file12
+
+  - name: assert - left only subdir and file have copied.
+    assert:
+      that:
+      - testcase2_with_follow is changed
+      - testcase2_without_follow is changed
+      - "stat_new_dir_with_follow_subdir.stat.isdir"
+      - "stat_new_dir_with_follow_file1.stat.exists"
+      - "stat_new_dir_with_follow_link_file12.stat.exists"
+      - "stat_new_dir_without_follow_link_file12.stat.islnk"
 
 ## testcase3 remote_dir_dest exists, diff files in common subdirs
 
