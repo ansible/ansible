@@ -59,7 +59,7 @@ options:
     default: null
   quotas:
     description:
-    - The tenant quotas. 
+    - The tenant quotas.
     - All parameters case sensitive.
     - 'Valid attributes are:'
     - ' - C(cpu_allocated) (int): use null to remove the quota.'
@@ -103,7 +103,7 @@ EXAMPLES = '''
       username: 'admin'
       password: 'smartvm'
       verify_ssl: False
-      
+
 - name: Set tenant quota for cpu_allocated, mem_allocated, remove quota for vms_allocated
   manageiq_tenant:
     name: 'Dep1'
@@ -111,7 +111,7 @@ EXAMPLES = '''
     quotas:
       - cpu_allocated: 100
       - mem_allocated: 50
-      - vms_allocated: 
+      - vms_allocated: null
     manageiq_connection:
       url: 'http://127.0.0.1:3000'
       username: 'admin'
@@ -132,15 +132,22 @@ EXAMPLES = '''
 
 RETURN = '''
 tenant:
-  description:
-   The tenant.
-  returned: on success
+  description: The tenant.
+  returned: success
   type: complex
-tenant_quotas:
-  description:
-  - The tenant quotas.
-  returned: when quotas are supplied
-  type: complex
+  contains:
+    name:
+      description: The tenant name
+      returned: success
+      type: string
+    description:
+      description: The tenant description
+      returned: success
+      type: string
+    id:
+      description: The tenant id
+      returned: success
+      type: int
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -186,8 +193,8 @@ class ManageIQTenant(object):
             false if tenant fields have some difference from new fields, true o/w.
         """
         found_difference = (
-                (name and tenant['name'] != name) or
-                (description and tenant['description'] != description)
+            (name and tenant['name'] != name) or
+            (description and tenant['description'] != description)
         )
 
         return not found_difference
@@ -297,10 +304,9 @@ class ManageIQTenant(object):
             if quota_value:
                 # Change the byte values to GB
                 if quota_key in ['storage_allocated', 'mem_allocated']:
-                    quota_value_int = int(quota_value) * 1024*1024*1024
+                    quota_value_int = int(quota_value) * 1024 * 1024 * 1024
                 else:
                     quota_value_int = int(quota_value)
-
                 if current_quota:
                     res = self.edit_tenant_quota(tenant, current_quota, quota_key, quota_value_int)
                 else:
@@ -311,7 +317,6 @@ class ManageIQTenant(object):
                 else:
                     res = dict(changed=False, msg="tenant quota %s does not exist" % quota_key)
 
-
             if res['changed']:
                 changed = True
 
@@ -321,8 +326,7 @@ class ManageIQTenant(object):
             changed=changed,
             msg=', '.join(messages))
 
-
-    def edit_tenant_quota(self, tenant,current_quota, quota_key, quota_value):
+    def edit_tenant_quota(self, tenant, current_quota, quota_key, quota_value):
         """ Update the tenant quotas in manageiq.
 
         Returns:
@@ -338,7 +342,7 @@ class ManageIQTenant(object):
             url = '%s/quotas/%s' % (tenant['href'], current_quota['id'])
             resource = {'value': quota_value}
             try:
-                result = self.client.post(url, action='edit', resource=resource)
+                self.client.post(url, action='edit', resource=resource)
             except Exception as e:
                 self.module.fail_json(msg="failed to update tenant quota %s: %s" % (quota_key, str(e)))
 
@@ -355,14 +359,13 @@ class ManageIQTenant(object):
         url = '%s/quotas' % (tenant['href'])
         resource = {'name': quota_key, 'value': quota_value}
         try:
-            result = self.client.post(url, action='create', resource=resource)
+            self.client.post(url, action='create', resource=resource)
         except Exception as e:
             self.module.fail_json(msg="failed to create tenant quota %s: %s" % (quota_key, str(e)))
 
         return dict(
             changed=True,
-            msg="successfully created tenant quota %s" % quota_key,
-            tenant_quota=result['results'])
+            msg="successfully created tenant quota %s" % quota_key)
 
     def delete_tenant_quota(self, tenant, quota):
         """ deletes the tenant quotas in manageiq.
@@ -377,6 +380,7 @@ class ManageIQTenant(object):
             self.module.fail_json(msg="failed to delete tenant %s: %s" % (tenant['name'], str(e)))
 
         return dict(changed=True, msg=result['message'])
+
 
 def main():
     argument_spec = dict(
@@ -437,6 +441,7 @@ def main():
             res_args['tenant'] = tenant._data
 
     module.exit_json(**res_args)
+
 
 if __name__ == "__main__":
     main()
