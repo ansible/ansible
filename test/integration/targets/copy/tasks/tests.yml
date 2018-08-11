@@ -1820,16 +1820,16 @@
 
 - block:
   - name: create a user for test
-      user:
-        name: ptux
-        uid: 14131
-        state: present
+    user:
+      name: ptux
+      uid: 14131
+      state: present
 
   - name: create a group for test
-      group:
-        name: ptux
-        gid: 14131
-        state: present
+    group:
+      name: ptux
+      gid: 14131
+      state: present
 
   - name: execute - Copy the directory on remote with chown
     copy:
