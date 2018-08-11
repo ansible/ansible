@@ -357,17 +357,18 @@ def copy_diff_files(src, dest, module):
         for item in diff_files:
             src_item_path = os.path.join(src, item)
             dest_item_path = os.path.join(dest, item)
-
-            if os.path.islink(src_item_path) and follow is False:
-                linkto = os.readlink(src_item_path)
-                os.symlink(linkto, dest_item_path)
+            b_src_item_path = to_bytes(src_item_path, errors='surrogate_or_strict')
+            b_dest_item_path = to_bytes(dest_item_path, errors='surrogate_or_strict')
+            if os.path.islink(b_src_item_path) and follow is False:
+                linkto = os.readlink(b_src_item_path)
+                os.symlink(linkto, b_dest_item_path)
             else:
-                shutil.copyfile(src_item_path, dest_item_path)
+                shutil.copyfile(b_src_item_path, b_dest_item_path)
 
             if owner is not None:
-                module.set_owner_if_different(dest_item_path, owner, False)
+                module.set_owner_if_different(b_dest_item_path, owner, False)
             if group is not None:
-                module.set_group_if_different(dest_item_path, group, False)
+                module.set_group_if_different(b_dest_item_path, group, False)
             changed = True
     return changed
 
@@ -384,19 +385,21 @@ def copy_left_only(src, dest, module):
         for item in left_only:
             src_item_path = os.path.join(src, item)
             dest_item_path = os.path.join(dest, item)
-            if os.path.isfile(src_item_path):
-                if os.path.islink(src_item_path) and follow is False:
-                    linkto = os.readlink(src_item_path)
-                    os.symlink(linkto, dest_item_path)
+            b_src_item_path = to_bytes(src_item_path, errors='surrogate_or_strict')
+            b_dest_item_path = to_bytes(dest_item_path, errors='surrogate_or_strict')
+            if os.path.isfile(b_src_item_path):
+                if os.path.islink(b_src_item_path) and follow is False:
+                    linkto = os.readlink(b_src_item_path)
+                    os.symlink(linkto, b_dest_item_path)
                 else:
-                    shutil.copyfile(src_item_path, dest_item_path)
+                    shutil.copyfile(b_src_item_path, b_dest_item_path)
                 if owner is not None:
-                    module.set_owner_if_different(dest_item_path, owner, False)
+                    module.set_owner_if_different(b_dest_item_path, owner, False)
                 if group is not None:
-                    module.set_group_if_different(dest_item_path, group, False)
-            if os.path.isdir(src_item_path):
-                shutil.copytree(src_item_path, dest_item_path, symlinks=not(follow))
-                chown_recursive(dest_item_path, module)
+                    module.set_group_if_different(b_dest_item_path, group, False)
+            if os.path.isdir(b_src_item_path):
+                shutil.copytree(b_src_item_path, b_dest_item_path, symlinks=not(follow))
+                chown_recursive(b_dest_item_path, module)
             changed = True
     return changed
 
@@ -407,8 +410,10 @@ def copy_common_dirs(src, dest, module):
     for item in common_dirs:
         src_item_path = os.path.join(src, item)
         dest_item_path = os.path.join(dest, item)
-        diff_files_changed = copy_diff_files(src_item_path, dest_item_path, module)
-        left_only_changed = copy_left_only(src_item_path, dest_item_path, module)
+        b_src_item_path = to_bytes(src_item_path, errors='surrogate_or_strict')
+        b_dest_item_path = to_bytes(dest_item_path, errors='surrogate_or_strict')
+        diff_files_changed = copy_diff_files(b_src_item_path, b_dest_item_path, module)
+        left_only_changed = copy_left_only(b_src_item_path, b_dest_item_path, module)
         if diff_files_changed or left_only_changed:
             changed = True
     return changed
