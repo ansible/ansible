@@ -1766,11 +1766,45 @@
       - "stat_new_dir_with_follow_link_file12.stat.exists"
       - "stat_new_dir_without_follow_link_file12.stat.islnk"
 
-## testcase3 remote_dir_dest exists, diff files in common subdirs
+## testcase3 remote_dir_dest exists, diff files in common dirs
 
-### pass
+- block:
+  - name: execute - modify the file1
+    inlinefile: 
+      path: '{{ remote_dir }}/file1
+      line: 'ptux'
 
-## testcase4 make sure remote_dir_src not change
+  - name: execute - modify the file12
+    inlinefile: 
+      path: '{{ remote_dir }}/subdir/file12
+      line: 'ptux'
+
+  - name: execute - Copy the directory on remote without follow
+    copy:
+      remote_src: True
+      src: '{{ remote_dir }}/remote_dir_src/'
+      dest: '{{ remote_dir }}/new_dir_without_follow'
+      follow: False
+    register: testcase3_without_follow
+
+  - name: gather - Stat the new_dir_without_follow/file1
+    stat:
+      path: '{{ remote_dir }}/new_dir_without_follow/file1'
+    register: stat_new_dir_without_follow_file1
+
+  - name: gather - Stat the new_dir_without_follow/link_file12
+    stat:
+      path: '{{ remote_dir }}/new_dir_without_follow/link_file12'
+    register: stat_new_dir_without_follow_link_file12
+
+  - name: assert - diff files in common dir have copied.
+    assert:
+      that:
+      - testcase3_without_follow is changed
+      - "stat_new_dir_without_follow_file1.stat.exists"
+      - "stat_new_dir_without_follow_file12.stat.exists"
+
+## testcase last - make sure remote_dir_src not change
 - block:
   - name: Stat the remote_dir_src
     stat:
