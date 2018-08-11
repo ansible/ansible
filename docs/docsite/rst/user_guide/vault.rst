@@ -280,7 +280,7 @@ without requiring the :option:`--vault-password-file <ansible-playbook --vault-p
 Multiple vault passwords
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Since Ansible 2.4 and later support using multiple vault passwords, :option:`--vault-id <ansible-playbook --vault-id>` can
+Ansible 2.4 and later support using multiple vault passwords, :option:`--vault-id <ansible-playbook --vault-id>` can
 be provided multiple times.
 
 If multiple vault passwords are provided, by default Ansible will attempt to decrypt vault content
