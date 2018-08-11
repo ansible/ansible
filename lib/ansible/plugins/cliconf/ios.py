@@ -166,7 +166,7 @@ class Cliconf(CliconfBase):
                 self.send_command('config terminal', sendonly=True)
                 obj = {'command': commands, 'sendonly': True}
                 results.append(self.send_command(**obj))
-                requests.append(cmd)
+                requests.append(commands)
 
             self.send_command('end', sendonly=True)
             time.sleep(0.1)
