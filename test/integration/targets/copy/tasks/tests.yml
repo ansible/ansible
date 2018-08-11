@@ -1488,3 +1488,479 @@
     - 'new_sub_dir1/foo.txt'
   loop_control:
     loop_var: 'dest'
+
+
+#
+# Recursive copying on remote host with symlinks tests
+#
+
+## prepare for test
+- block:
+  - name: execute - Create a test dir to copy
+    file:
+      path: '{{ remote_dir }}/remote_dir_src'
+      state: directory
+
+  - name: gather - Stat the remote_dir_src
+    stat:
+      path: '{{ remote_dir }}/remote_dir_src'
+    register: stat_remote_dir_src_before
+
+  - name: execute - Create a subdir
+    file:
+      path: '{{ remote_dir }}/remote_dir_src/subdir'
+      state: directory
+
+  - name: gather - Stat the remote_dir_src/subdir
+    stat:
+      path: '{{ remote_dir }}/remote_dir_src/subdir'
+    register: stat_remote_dir_src_subdir_before
+
+  - name: execute - Create a file in the top of src
+    copy:
+      dest: '{{ remote_dir }}/remote_dir_src/file1'
+      content: 'hello world 1'
+
+  - name: gather - Stat the remote_dir_src/file1
+    stat:
+      path: '{{ remote_dir }}/remote_dir_src/file1'
+    register: stat_remote_dir_src_file1_before
+
+  - name: execute - Create a file in the subdir
+    copy:
+      dest: '{{ remote_dir }}/remote_dir_src/subdir/file12'
+      content: 'hello world 12'
+
+  - name: gather - Stat the remote_dir_src/subdir/file12
+    stat:
+      path: '{{ remote_dir }}/remote_dir_src/subdir/file12'
+    register: stat_remote_dir_src_subdir_file12_before
+
+  - name: execute -  Create a link to the file12
+    file:
+      path: '{{ remote_dir }}/remote_dir_src/link_file12'
+      src: '{{ remote_dir }}/remote_dir_src/subdir/file12'
+      state: link
+
+  - name: gather - Stat the remote_dir_src/link_file12
+    stat:
+      path: '{{ remote_dir }}/remote_dir_src/link_file12'
+    register: stat_remote_dir_src_link_file12_before
+
+## testcase1 remote_dir_dest not exists
+
+- block:
+### with follow, without (owner,group)
+  - name: execute - Copy the directory on remote with follow
+    copy:
+      remote_src: True
+      src: '{{ remote_dir }}/remote_dir_src/'
+      dest: '{{ remote_dir }}/new_dir_with_follow'
+      follow: True
+    register: testcase1_with_follow
+
+  - name: gather - Stat the new_dir_with_follow
+    stat:
+      path: '{{ remote_dir }}/new_dir_with_follow'
+    register: stat_new_dir_with_follow
+  - name: gather - Stat the new_dir_with_follow/subdir
+    stat:
+      path: '{{ remote_dir }}/new_dir_with_follow/subdir'
+    register: stat_new_dir_with_follow_subdir
+  - name: gather - Stat the new_dir_with_follow/file1
+    stat:
+      path: '{{ remote_dir }}/new_dir_with_follow/file1'
+    register: stat_new_dir_with_follow_file1
+  - name: gather - Stat the new_dir_with_follow/subdir/file12
+    stat:
+      path: '{{ remote_dir }}/new_dir_with_follow/subdir/file12'
+    register: stat_new_dir_with_follow_subdir_file12
+  - name: gather - Stat the new_dir_with_follow/link_file12
+    stat:
+      path: '{{ remote_dir }}/new_dir_with_follow/link_file12'
+    register: stat_new_dir_with_follow_link_file12
+
+  - name: assert - remote_dir_src has copied with follow.
+    assert:
+      that:
+      - testcase1_with_follow is changed
+      - "stat_new_dir_with_follow.stat.exists"
+      - "stat_new_dir_with_follow.stat.isdir"
+      - "stat_remote_dir_src_before.stat.uid == stat_new_dir_with_follow.stat.uid"
+      - "stat_remote_dir_src_before.stat.gid == stat_new_dir_with_follow.stat.gid"
+      - "stat_remote_dir_src_before.stat.pw_name == stat_new_dir_with_follow.stat.pw_name"
+      - "stat_remote_dir_src_before.stat.gr_name == stat_new_dir_with_follow.stat.gr_name"
+      - "stat_remote_dir_src_before.stat.mode == stat_new_dir_with_follow.stat.mode"
+
+      - "stat_new_dir_with_follow_subdir.stat.exists"
+      - "stat_new_dir_with_follow_subdir.stat.isdir"
+      - "stat_remote_dir_src_subdir_before.stat.uid == stat_new_dir_with_follow_subdir.stat.uid"
+      - "stat_remote_dir_src_subdir_before.stat.gid == stat_new_dir_with_follow_subdir.stat.gid"
+      - "stat_remote_dir_src_subdir_before.stat.pw_name == stat_new_dir_with_follow_subdir.stat.pw_name"
+      - "stat_remote_dir_src_subdir_before.stat.gr_name == stat_new_dir_with_follow_subdir.stat.gr_name"
+      - "stat_remote_dir_src_subdir_before.stat.mode == stat_new_dir_with_follow_subdir.stat.mode"
+
+      - "stat_new_dir_with_follow_file1.stat.exists"
+      - "stat_remote_dir_src_file1_before.stat.uid == stat_new_dir_with_follow_file1.stat.uid"
+      - "stat_remote_dir_src_file1_before.stat.gid == stat_new_dir_with_follow_file1.stat.gid"
+      - "stat_remote_dir_src_file1_before.stat.pw_name == stat_new_dir_with_follow_file1.stat.pw_name"
+      - "stat_remote_dir_src_file1_before.stat.gr_name == stat_new_dir_with_follow_file1.stat.gr_name"
+      - "stat_remote_dir_src_file1_before.stat.mode == stat_new_dir_with_follow_file1.stat.mode"
+      - "stat_remote_dir_src_file1_before.stat.checksum == stat_new_dir_with_follow_file1.stat.checksum"
+
+      - "stat_new_dir_with_follow_subdir_file12.stat.exists"
+      - "stat_remote_dir_src_subdir_file12_before.stat.uid == stat_new_dir_with_follow_subdir_file12.stat.uid"
+      - "stat_remote_dir_src_subdir_file12_before.stat.gid == stat_new_dir_with_follow_subdir_file12.stat.gid"
+      - "stat_remote_dir_src_subdir_file12_before.stat.pw_name == stat_new_dir_with_follow_subdir_file12.stat.pw_name"
+      - "stat_remote_dir_src_subdir_file12_before.stat.gr_name == stat_new_dir_with_follow_subdir_file12.stat.gr_name"
+      - "stat_remote_dir_src_subdir_file12_before.stat.mode == stat_new_dir_with_follow_subdir_file12.stat.mode"
+      - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_new_dir_with_follow_subdir_file12.stat.checksum"
+
+      - "stat_new_dir_with_follow_link_file12.stat.exists"
+      - "not stat_new_dir_with_follow_link_file12.stat.islnk"
+      - "stat_remote_dir_src_link_file12_before.stat.uid == stat_new_dir_with_follow_link_file12.stat.uid"
+      - "stat_remote_dir_src_link_file12_before.stat.gid == stat_new_dir_with_follow_link_file12.stat.gid"
+      - "stat_remote_dir_src_link_file12_before.stat.pw_name == stat_new_dir_with_follow_link_file12.stat.pw_name"
+      - "stat_remote_dir_src_link_file12_before.stat.gr_name == stat_new_dir_with_follow_link_file12.stat.gr_name"
+      - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_new_dir_with_follow_link_file12.stat.checksum"
+
+### without follow, without (owner,group)
+  - name: execute - Copy the directory on remote without follow
+    copy:
+      remote_src: True
+      src: '{{ remote_dir }}/remote_dir_src/'
+      dest: '{{ remote_dir }}/new_dir_without_follow'
+      follow: False
+    register: testcase1_without_follow
+
+  - name: gather - Stat the new_dir_without_follow
+    stat:
+      path: '{{ remote_dir }}/new_dir_without_follow'
+    register: stat_new_dir_without_follow
+  - name: gather - Stat the new_dir_without_follow/subdir
+    stat:
+      path: '{{ remote_dir }}/new_dir_without_follow/subdir'
+    register: stat_new_dir_without_follow_subdir
+  - name: gather - Stat the new_dir_without_follow/file1
+    stat:
+      path: '{{ remote_dir }}/new_dir_without_follow/file1'
+    register: stat_new_dir_without_follow_file1
+  - name: gather - Stat the new_dir_without_follow/subdir/file12
+    stat:
+      path: '{{ remote_dir }}/new_dir_without_follow/subdir/file12'
+    register: stat_new_dir_without_follow_subdir_file12
+  - name: gather - Stat the new_dir_without_follow/link_file12
+    stat:
+      path: '{{ remote_dir }}/new_dir_without_follow/link_file12'
+    register: stat_new_dir_without_follow_link_file12
+
+  - name: assert - remote_dir_src has copied without follow.
+    assert:
+      that:
+      - testcase1_without_follow is changed
+      - "stat_new_dir_without_follow.stat.exists"
+      - "stat_new_dir_without_follow.stat.isdir"
+      - "stat_remote_dir_src_before.stat.uid == stat_new_dir_without_follow.stat.uid"
+      - "stat_remote_dir_src_before.stat.gid == stat_new_dir_without_follow.stat.gid"
+      - "stat_remote_dir_src_before.stat.pw_name == stat_new_dir_without_follow.stat.pw_name"
+      - "stat_remote_dir_src_before.stat.gr_name == stat_new_dir_without_follow.stat.gr_name"
+      - "stat_remote_dir_src_before.stat.mode == stat_new_dir_without_follow.stat.mode"
+
+      - "stat_new_dir_without_follow_subdir.stat.exists"
+      - "stat_new_dir_without_follow_subdir.stat.isdir"
+      - "stat_remote_dir_src_subdir_before.stat.uid == stat_new_dir_without_follow_subdir.stat.uid"
+      - "stat_remote_dir_src_subdir_before.stat.gid == stat_new_dir_without_follow_subdir.stat.gid"
+      - "stat_remote_dir_src_subdir_before.stat.pw_name == stat_new_dir_without_follow_subdir.stat.pw_name"
+      - "stat_remote_dir_src_subdir_before.stat.gr_name == stat_new_dir_without_follow_subdir.stat.gr_name"
+      - "stat_remote_dir_src_subdir_before.stat.mode == stat_new_dir_without_follow_subdir.stat.mode"
+
+      - "stat_new_dir_without_follow_file1.stat.exists"
+      - "stat_remote_dir_src_file1_before.stat.uid == stat_new_dir_without_follow_file1.stat.uid"
+      - "stat_remote_dir_src_file1_before.stat.gid == stat_new_dir_without_follow_file1.stat.gid"
+      - "stat_remote_dir_src_file1_before.stat.pw_name == stat_new_dir_without_follow_file1.stat.pw_name"
+      - "stat_remote_dir_src_file1_before.stat.gr_name == stat_new_dir_without_follow_file1.stat.gr_name"
+      - "stat_remote_dir_src_file1_before.stat.mode == stat_new_dir_without_follow_file1.stat.mode"
+      - "stat_remote_dir_src_file1_before.stat.checksum == stat_new_dir_without_follow_file1.stat.checksum"
+
+      - "stat_new_dir_without_follow_subdir_file12.stat.exists"
+      - "stat_remote_dir_src_subdir_file12_before.stat.uid == stat_new_dir_without_follow_subdir_file12.stat.uid"
+      - "stat_remote_dir_src_subdir_file12_before.stat.gid == stat_new_dir_without_follow_subdir_file12.stat.gid"
+      - "stat_remote_dir_src_subdir_file12_before.stat.pw_name == stat_new_dir_without_follow_subdir_file12.stat.pw_name"
+      - "stat_remote_dir_src_subdir_file12_before.stat.gr_name == stat_new_dir_without_follow_subdir_file12.stat.gr_name"
+      - "stat_remote_dir_src_subdir_file12_before.stat.mode == stat_new_dir_without_follow_subdir_file12.stat.mode"
+      - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_new_dir_without_follow_subdir_file12.stat.checksum"
+
+      - "stat_new_dir_without_follow_link_file12.stat.exists"
+      - "stat_new_dir_without_follow_link_file12.stat.islnk"
+      - "stat_remote_dir_src_link_file12_before.stat.uid == stat_new_dir_without_follow_link_file12.stat.uid"
+      - "stat_remote_dir_src_link_file12_before.stat.gid == stat_new_dir_without_follow_link_file12.stat.gid"
+      - "stat_remote_dir_src_link_file12_before.stat.pw_name == stat_new_dir_without_follow_link_file12.stat.pw_name"
+      - "stat_remote_dir_src_link_file12_before.stat.gr_name == stat_new_dir_without_follow_link_file12.stat.gr_name"
+
+## testcase2 remote_dir_dest exists, left only subdir and file exists
+
+- block:
+  - name: execute - delete the subdir
+    file:
+      path: '{{ remote_dir }}/new_dir_with_follow/subdir'
+      state: absent
+
+  - name: execute - delete the file1
+    file:
+      path: '{{ remote_dir }}/new_dir_with_follow/file1'
+      state: absent
+
+  - name: execute - delete the file link_file12
+    file:
+      path: '{{ remote_dir }}/new_dir_with_follow/link_file12'
+      state: absent
+
+  - name: execute - delete the link link_file12
+    file:
+      path: '{{ remote_dir }}/new_dir_without_follow/link_file12'
+      state: absent
+
+  - name: execute - Copy the directory on remote with follow
+    copy:
+      remote_src: True
+      src: '{{ remote_dir }}/remote_dir_src/'
+      dest: '{{ remote_dir }}/new_dir_with_follow'
+      follow: True
+    register: testcase2_with_follow
+
+  - name: execute - Copy the directory on remote without follow
+    copy:
+      remote_src: True
+      src: '{{ remote_dir }}/remote_dir_src/'
+      dest: '{{ remote_dir }}/new_dir_without_follow'
+      follow: False
+    register: testcase2_without_follow
+
+  - name: gather - Stat the new_dir_with_follow/subdir
+    stat:
+      path: '{{ remote_dir }}/new_dir_with_follow/subdir'
+    register: stat_new_dir_with_follow_subdir
+
+  - name: gather - Stat the new_dir_with_follow/file1
+    stat:
+      path: '{{ remote_dir }}/new_dir_with_follow/file1'
+    register: stat_new_dir_with_follow_file1
+
+  - name: gather - Stat the new_dir_with_follow/link_file12
+    stat:
+      path: '{{ remote_dir }}/new_dir_with_follow/link_file12'
+    register: stat_new_dir_with_follow_link_file12
+
+  - name: gather - Stat the new_dir_without_follow/link_file12
+    stat:
+      path: '{{ remote_dir }}/new_dir_without_follow/link_file12'
+    register: stat_new_dir_without_follow_link_file12
+
+  - name: assert - left only subdir and file have copied.
+    assert:
+      that:
+      - testcase2_with_follow is changed
+      - testcase2_without_follow is changed
+      - "stat_new_dir_with_follow_subdir.stat.isdir"
+      - "stat_new_dir_with_follow_file1.stat.exists"
+      - "stat_new_dir_with_follow_link_file12.stat.exists"
+      - "stat_new_dir_without_follow_link_file12.stat.islnk"
+
+## testcase3 remote_dir_dest exists, diff files in common dirs
+
+- block:
+  - name: execute - modify the file1
+    lineinfile: 
+      path: '{{ remote_dir }}/new_dir_without_follow/file1'
+      line: 'ptux'
+
+  - name: execute - modify the file12
+    lineinfile: 
+      path: '{{ remote_dir }}/new_dir_without_follow/subdir/file12'
+      line: 'ptux'
+
+  - name: execute - Copy the directory on remote without follow
+    copy:
+      remote_src: True
+      src: '{{ remote_dir }}/remote_dir_src/'
+      dest: '{{ remote_dir }}/new_dir_without_follow'
+      follow: False
+    register: testcase3_without_follow
+
+  - name: gather - Stat the new_dir_without_follow/file1
+    stat:
+      path: '{{ remote_dir }}/new_dir_without_follow/file1'
+    register: stat_new_dir_without_follow_file1
+
+  - name: gather - Stat the new_dir_without_follow/subdir/file12
+    stat:
+      path: '{{ remote_dir }}/new_dir_without_follow/subdir/file12'
+    register: stat_new_dir_without_follow_subdir_file12
+
+  - name: assert - diff files in common dir have copied.
+    assert:
+      that:
+      - testcase3_without_follow is changed
+      - "stat_new_dir_without_follow_file1.stat.exists"
+      - "stat_remote_dir_src_file1_before.stat.uid == stat_new_dir_without_follow_file1.stat.uid"
+      - "stat_remote_dir_src_file1_before.stat.gid == stat_new_dir_without_follow_file1.stat.gid"
+      - "stat_remote_dir_src_file1_before.stat.pw_name == stat_new_dir_without_follow_file1.stat.pw_name"
+      - "stat_remote_dir_src_file1_before.stat.gr_name == stat_new_dir_without_follow_file1.stat.gr_name"
+      - "stat_remote_dir_src_file1_before.stat.mode == stat_new_dir_without_follow_file1.stat.mode"
+      - "stat_remote_dir_src_file1_before.stat.checksum == stat_new_dir_without_follow_file1.stat.checksum"
+      - "stat_new_dir_without_follow_subdir_file12.stat.exists"
+      - "stat_remote_dir_src_subdir_file12_before.stat.uid == stat_new_dir_without_follow_subdir_file12.stat.uid"
+      - "stat_remote_dir_src_subdir_file12_before.stat.gid == stat_new_dir_without_follow_subdir_file12.stat.gid"
+      - "stat_remote_dir_src_subdir_file12_before.stat.pw_name == stat_new_dir_without_follow_subdir_file12.stat.pw_name"
+      - "stat_remote_dir_src_subdir_file12_before.stat.gr_name == stat_new_dir_without_follow_subdir_file12.stat.gr_name"
+      - "stat_remote_dir_src_subdir_file12_before.stat.mode == stat_new_dir_without_follow_subdir_file12.stat.mode"
+      - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_new_dir_without_follow_subdir_file12.stat.checksum"
+
+## testcase4 Copy the directory on remote without chown
+
+- block:
+  - name: create a user for test
+    user:
+      name: ptux
+      uid: 14131
+      state: present
+
+  - name: create a group for test
+    group:
+      name: ptux
+      gid: 14131
+      state: present
+
+  - name: execute - Copy the directory on remote with chown
+    copy:
+      remote_src: True
+      src: '{{ remote_dir }}/remote_dir_src/'
+      dest: '{{ remote_dir }}/new_dir_with_chown'
+      owner: ptux
+      group: ptux
+    register: testcase4_with_chown
+
+  - name: gather - Stat the new_dir_with_chown
+    stat:
+      path: '{{ remote_dir }}/new_dir_with_chown'
+    register: stat_new_dir_with_chown
+
+  - name: gather - Stat the new_dir_with_chown/file1
+    stat:
+      path: '{{ remote_dir }}/new_dir_with_chown/file1'
+    register: stat_new_dir_with_chown_file1
+
+  - name: gather - Stat the new_dir_with_chown/subdir
+    stat:
+      path: '{{ remote_dir }}/new_dir_with_chown/subdir'
+    register: stat_new_dir_with_chown_subdir
+
+  - name: gather - Stat the new_dir_with_chown/subdir/file12
+    stat:
+      path: '{{ remote_dir }}/new_dir_with_chown/subdir/file12'
+    register: stat_new_dir_with_chown_subdir_file12
+
+  - name: gather - Stat the new_dir_with_chown/link_file12
+    stat:
+      path: '{{ remote_dir }}/new_dir_with_chown/link_file12'
+    register: stat_new_dir_with_chown_link_file12
+
+  - name: assert - owner and group have changed
+    assert:
+      that:
+      - testcase4_with_chown is changed
+      - "stat_new_dir_with_chown.stat.uid == 14131"
+      - "stat_new_dir_with_chown.stat.gid == 14131"
+      - "stat_new_dir_with_chown.stat.pw_name == 'ptux'"
+      - "stat_new_dir_with_chown.stat.gr_name == 'ptux'"
+      - "stat_new_dir_with_chown_file1.stat.uid == 14131"
+      - "stat_new_dir_with_chown_file1.stat.gid == 14131"
+      - "stat_new_dir_with_chown_file1.stat.pw_name == 'ptux'"
+      - "stat_new_dir_with_chown_file1.stat.gr_name == 'ptux'"
+      - "stat_new_dir_with_chown_subdir.stat.uid == 14131"
+      - "stat_new_dir_with_chown_subdir.stat.gid == 14131"
+      - "stat_new_dir_with_chown_subdir.stat.pw_name == 'ptux'"
+      - "stat_new_dir_with_chown_subdir.stat.gr_name == 'ptux'"
+      - "stat_new_dir_with_chown_subdir_file12.stat.uid == 14131"
+      - "stat_new_dir_with_chown_subdir_file12.stat.gid == 14131"
+      - "stat_new_dir_with_chown_subdir_file12.stat.pw_name == 'ptux'"
+      - "stat_new_dir_with_chown_subdir_file12.stat.gr_name == 'ptux'"
+      - "stat_new_dir_with_chown_link_file12.stat.uid == 14131"
+      - "stat_new_dir_with_chown_link_file12.stat.gid == 14131"
+      - "stat_new_dir_with_chown_link_file12.stat.pw_name == 'ptux'"
+      - "stat_new_dir_with_chown_link_file12.stat.gr_name == 'ptux'"
+
+## testcase last - make sure remote_dir_src not change
+- block:
+  - name: Stat the remote_dir_src
+    stat:
+      path: '{{ remote_dir }}/remote_dir_src'
+    register: stat_remote_dir_src_after
+
+  - name: Stat the remote_dir_src/subdir
+    stat:
+      path: '{{ remote_dir }}/remote_dir_src/subdir'
+    register: stat_remote_dir_src_subdir_after
+
+  - name: Stat the remote_dir_src/file1
+    stat:
+      path: '{{ remote_dir }}/remote_dir_src/file1'
+    register: stat_remote_dir_src_file1_after
+
+  - name: Stat the remote_dir_src/subdir/file12
+    stat:
+      path: '{{ remote_dir }}/remote_dir_src/subdir/file12'
+    register: stat_remote_dir_src_subdir_file12_after
+
+  - name: Stat the remote_dir_src/link_file12
+    stat:
+      path: '{{ remote_dir }}/remote_dir_src/link_file12'
+    register: stat_remote_dir_src_link_file12_after
+
+  - name: Assert that remote_dir_src not change.
+    assert:
+      that:
+      - "stat_remote_dir_src_after.stat.exists"
+      - "stat_remote_dir_src_after.stat.isdir"
+      - "stat_remote_dir_src_before.stat.uid == stat_remote_dir_src_after.stat.uid"
+      - "stat_remote_dir_src_before.stat.gid == stat_remote_dir_src_after.stat.gid"
+      - "stat_remote_dir_src_before.stat.pw_name == stat_remote_dir_src_after.stat.pw_name"
+      - "stat_remote_dir_src_before.stat.gr_name == stat_remote_dir_src_after.stat.gr_name"
+      - "stat_remote_dir_src_before.stat.path == stat_remote_dir_src_after.stat.path"
+      - "stat_remote_dir_src_before.stat.mode == stat_remote_dir_src_after.stat.mode"
+
+      - "stat_remote_dir_src_subdir_after.stat.exists"
+      - "stat_remote_dir_src_subdir_after.stat.isdir"
+      - "stat_remote_dir_src_subdir_before.stat.uid == stat_remote_dir_src_subdir_after.stat.uid"
+      - "stat_remote_dir_src_subdir_before.stat.gid == stat_remote_dir_src_subdir_after.stat.gid"
+      - "stat_remote_dir_src_subdir_before.stat.pw_name == stat_remote_dir_src_subdir_after.stat.pw_name"
+      - "stat_remote_dir_src_subdir_before.stat.gr_name == stat_remote_dir_src_subdir_after.stat.gr_name"
+      - "stat_remote_dir_src_subdir_before.stat.path == stat_remote_dir_src_subdir_after.stat.path"
+      - "stat_remote_dir_src_subdir_before.stat.mode == stat_remote_dir_src_subdir_after.stat.mode"
+
+      - "stat_remote_dir_src_file1_after.stat.exists"
+      - "stat_remote_dir_src_file1_before.stat.uid == stat_remote_dir_src_file1_after.stat.uid"
+      - "stat_remote_dir_src_file1_before.stat.gid == stat_remote_dir_src_file1_after.stat.gid"
+      - "stat_remote_dir_src_file1_before.stat.pw_name == stat_remote_dir_src_file1_after.stat.pw_name"
+      - "stat_remote_dir_src_file1_before.stat.gr_name == stat_remote_dir_src_file1_after.stat.gr_name"
+      - "stat_remote_dir_src_file1_before.stat.path == stat_remote_dir_src_file1_after.stat.path"
+      - "stat_remote_dir_src_file1_before.stat.mode == stat_remote_dir_src_file1_after.stat.mode"
+      - "stat_remote_dir_src_file1_before.stat.checksum == stat_remote_dir_src_file1_after.stat.checksum"
+
+      - "stat_remote_dir_src_subdir_file12_after.stat.exists"
+      - "stat_remote_dir_src_subdir_file12_before.stat.uid == stat_remote_dir_src_subdir_file12_after.stat.uid"
+      - "stat_remote_dir_src_subdir_file12_before.stat.gid == stat_remote_dir_src_subdir_file12_after.stat.gid"
+      - "stat_remote_dir_src_subdir_file12_before.stat.pw_name == stat_remote_dir_src_subdir_file12_after.stat.pw_name"
+      - "stat_remote_dir_src_subdir_file12_before.stat.gr_name == stat_remote_dir_src_subdir_file12_after.stat.gr_name"
+      - "stat_remote_dir_src_subdir_file12_before.stat.path == stat_remote_dir_src_subdir_file12_after.stat.path"
+      - "stat_remote_dir_src_subdir_file12_before.stat.mode == stat_remote_dir_src_subdir_file12_after.stat.mode"
+      - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_remote_dir_src_subdir_file12_after.stat.checksum"
+
+      - "stat_remote_dir_src_link_file12_after.stat.exists"
+      - "stat_remote_dir_src_link_file12_after.stat.islnk"
+      - "stat_remote_dir_src_link_file12_before.stat.uid == stat_remote_dir_src_link_file12_after.stat.uid"
+      - "stat_remote_dir_src_link_file12_before.stat.gid == stat_remote_dir_src_link_file12_after.stat.gid"
+      - "stat_remote_dir_src_link_file12_before.stat.pw_name == stat_remote_dir_src_link_file12_after.stat.pw_name"
+      - "stat_remote_dir_src_link_file12_before.stat.gr_name == stat_remote_dir_src_link_file12_after.stat.gr_name"
+      - "stat_remote_dir_src_link_file12_before.stat.path == stat_remote_dir_src_link_file12_after.stat.path"
+      - "stat_remote_dir_src_link_file12_before.stat.mode == stat_remote_dir_src_link_file12_after.stat.mode"
