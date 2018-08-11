@@ -844,7 +844,11 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
     {
         "name": "Solaris 10",
         "uname_v": "Generic_141445-09",
+<<<<<<< HEAD
         "uname_v": "5.10",
+=======
+        "uname_r": "5.10",
+>>>>>>> Try to fix test unit
         "result": {
             "distribution_release": "Solaris 10 10/09 s10x_u8wos_08a X86",
             "distribution": "Solaris",
