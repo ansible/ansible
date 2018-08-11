@@ -281,6 +281,22 @@ To get the 'dev' vault id password from an executable script :file:`my-vault-pas
 
     ansible-playbook --vault-id dev@my-vault-password.py
 
+Since Ansible 2.5 a single executable script can be used to get different password for depending on the vault label.  Scripts with
+names ending in ``-client`` are called with a ``--vault-id`` option indicating which vault to get the
+password for. This is typically used when looking up passwords from a secret manager.
+For example the :file:`contrib/vault/vault-keyring-client.py` script loads keys from the system keyring:
+
+.. code-block:: bash
+
+    ansible-playbook --vault-id dev@contrib/vault/vault-keyring-client.py
+
+Will result in the :file:`vault-keyring-client.py` script being called as follows to get the dev key:
+
+.. code-block:: bash
+
+    contrib/vault/vault-keyring-client.py --vault-id dev
+
+
 The config option :ref:`DEFAULT_VAULT_IDENTITY_LIST` can be used to specify a default vault id and password source
 so that the :option:`--vault-id <ansible-playbook --vault-id>` cli option does not have to be specified every time.
 
