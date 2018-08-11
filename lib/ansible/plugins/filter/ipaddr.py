@@ -24,7 +24,8 @@ import types
 
 try:
     import netaddr
-    
+    from netaddr.core import AddrConversionError, AddrFormatError, NotRegisteredError
+    NETADDR_ERRORS = AddrConversionError, AddrFormatError, NotRegisteredError
 except ImportError:
     # in this case, we'll make the filters return error messages (see bottom)
     netaddr = None
@@ -33,8 +34,6 @@ else:
         pass
     mac_linux.word_fmt = '%.2x'
 
-from netaddr.core import AddrConversionError, AddrFormatError, NotRegisteredError
-NETADDR_ERRORS = AddrConversionError, AddrFormatError, NotRegisteredError
 from ansible import errors
 
 
