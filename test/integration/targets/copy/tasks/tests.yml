@@ -1771,12 +1771,12 @@
 - block:
   - name: execute - modify the file1
     lineinfile: 
-      path: '{{ remote_dir }}/file1'
+      path: '{{ remote_dir }}/remote_dir_src/file1'
       line: 'ptux'
 
   - name: execute - modify the file12
     lineinfile: 
-      path: '{{ remote_dir }}/subdir/file12'
+      path: '{{ remote_dir }}/remote_dir_src/subdir/file12'
       line: 'ptux'
 
   - name: execute - Copy the directory on remote without follow
