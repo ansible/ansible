@@ -13,10 +13,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: vr_startup_script_facts
+module: vultr_startup_script_facts
 short_description: Gather facts about the Vultr startup scripts available.
 description:
-  - Gather facts about vr_startup_scripts available.
+  - Gather facts about vultr_startup_scripts available.
 version_added: "2.7"
 author: "Yanis Guenane (@Spredzy)"
 extends_documentation_fragment: vultr
@@ -25,7 +25,7 @@ extends_documentation_fragment: vultr
 EXAMPLES = r'''
 - name: Gather Vultr startup scripts facts
   local_action:
-    module: vr_startup_script_facts
+    module: vultr_startup_script_facts
 
 - name: Print the gathered facts
   debug:

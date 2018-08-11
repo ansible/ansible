@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: vr_region_facts
+module: vultr_region_facts
 short_description: Gather facts about the Vultr regions available.
 description:
   - Gather facts about regions available to boot servers.
@@ -25,7 +25,7 @@ extends_documentation_fragment: vultr
 EXAMPLES = r'''
 - name: Gather Vultr regions facts
   local_action:
-    module: vr_region_facts
+    module: vultr_region_facts
 
 - name: Print the gathered facts
   debug:

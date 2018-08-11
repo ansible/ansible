@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: vr_user_facts
+module: vultr_user_facts
 short_description: Gather facts about the Vultr user available.
 description:
   - Gather facts about users available in Vultr.
@@ -24,7 +24,7 @@ extends_documentation_fragment: vultr
 EXAMPLES = r'''
 - name: Gather Vultr user facts
   local_action:
-    module: vr_user_facts
+    module: vultr_user_facts
 
 - name: Print the gathered facts
   debug:

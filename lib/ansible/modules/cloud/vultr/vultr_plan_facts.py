@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: vr_plan_facts
+module: vultr_plan_facts
 short_description: Gather facts about the Vultr plans available.
 description:
   - Gather facts about plans available to boot servers.
@@ -25,7 +25,7 @@ extends_documentation_fragment: vultr
 EXAMPLES = r'''
 - name: Gather Vultr plans facts
   local_action:
-    module: vr_plan_facts
+    module: vultr_plan_facts
 
 - name: Print the gathered facts
   debug:

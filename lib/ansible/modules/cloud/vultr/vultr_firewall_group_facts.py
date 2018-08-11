@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: vr_firewall_group_facts
+module: vultr_firewall_group_facts
 short_description: Gather facts about the Vultr firewall groups available.
 description:
   - Gather facts about firewall groups available in Vultr.
@@ -24,7 +24,7 @@ extends_documentation_fragment: vultr
 EXAMPLES = r'''
 - name: Gather Vultr firewall groups facts
   local_action:
-    module: vr_firewall_group_facts
+    module: vultr_firewall_group_facts
 
 - name: Print the gathered facts
   debug:

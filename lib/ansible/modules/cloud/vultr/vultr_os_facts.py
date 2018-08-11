@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: vr_os_facts
+module: vultr_os_facts
 short_description: Gather facts about the Vultr OSes available.
 description:
   - Gather facts about OSes available to boot servers.
@@ -25,7 +25,7 @@ extends_documentation_fragment: vultr
 EXAMPLES = r'''
 - name: Gather Vultr OSes facts
   local_action:
-    module: vr_os_facts
+    module: vultr_os_facts
 
 - name: Print the gathered facts
   debug:

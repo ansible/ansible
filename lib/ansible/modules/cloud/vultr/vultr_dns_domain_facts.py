@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: vr_dns_domain_facts
+module: vultr_dns_domain_facts
 short_description: Gather facts about the Vultr DNS domains available.
 description:
   - Gather facts about DNS domains available in Vultr.
@@ -24,7 +24,7 @@ extends_documentation_fragment: vultr
 EXAMPLES = r'''
 - name: Gather Vultr DNS domains facts
   local_action:
-    module: vr_dns_domains_facts
+    module: vultr_dns_domains_facts
 
 - name: Print the gathered facts
   debug:

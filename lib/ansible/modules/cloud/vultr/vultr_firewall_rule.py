@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: vr_firewall_rule
+module: vultr_firewall_rule
 short_description: Manages firewall rules on Vultr.
 description:
   - Create and remove firewall rules.
@@ -61,7 +61,7 @@ extends_documentation_fragment: vultr
 EXAMPLES = '''
 - name: ensure a firewall rule is present
   local_action:
-    module: vr_firewall_rule
+    module: vultr_firewall_rule
     group: application
     protocol: tcp
     start_port: 8000
@@ -70,7 +70,7 @@ EXAMPLES = '''
 
 - name: open DNS port for all ipv4 and ipv6
   local_action:
-    module: vr_firewall_rule
+    module: vultr_firewall_rule
     group: dns
     protocol: udp
     port: 53
@@ -79,13 +79,13 @@ EXAMPLES = '''
 
 - name: allow ping
   local_action:
-    module: vr_firewall_rule
+    module: vultr_firewall_rule
     group: web
     protocol: icmp
 
 - name: ensure a firewall rule is absent
   local_action:
-    module: vr_firewall_rule
+    module: vultr_firewall_rule
     group: application
     protocol: tcp
     start_port: 8000
@@ -363,13 +363,13 @@ def main():
         supports_check_mode=True,
     )
 
-    vr_firewall_rule = AnsibleVultrFirewallRule(module)
+    vultr_firewall_rule = AnsibleVultrFirewallRule(module)
     if module.params.get('state') == "absent":
-        firewall_rule = vr_firewall_rule.absent_firewall_rule()
+        firewall_rule = vultr_firewall_rule.absent_firewall_rule()
     else:
-        firewall_rule = vr_firewall_rule.present_firewall_rule()
+        firewall_rule = vultr_firewall_rule.present_firewall_rule()
 
-    result = vr_firewall_rule.get_result(firewall_rule)
+    result = vultr_firewall_rule.get_result(firewall_rule)
     module.exit_json(**result)
 
 

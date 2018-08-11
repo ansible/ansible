@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: vr_user
+module: vultr_user
 short_description: Manages users on Vultr.
 description:
   - Create, update and remove users.
@@ -67,7 +67,7 @@ extends_documentation_fragment: vultr
 EXAMPLES = r'''
 - name: Ensure a user exists
   local_action:
-    module: vr_user
+    module: vultr_user
     name: john
     email: john.doe@example.com
     password: s3cr3t
@@ -80,7 +80,7 @@ EXAMPLES = r'''
 
 - name: Remove a user
   local_action:
-    module: vr_user
+    module: vultr_user
     name: john
     state: absent
 '''
@@ -309,13 +309,13 @@ def main():
         supports_check_mode=True,
     )
 
-    vr_user = AnsibleVultrUser(module)
+    vultr_user = AnsibleVultrUser(module)
     if module.params.get('state') == "absent":
-        user = vr_user.absent_user()
+        user = vultr_user.absent_user()
     else:
-        user = vr_user.present_user()
+        user = vultr_user.present_user()
 
-    result = vr_user.get_result(user)
+    result = vultr_user.get_result(user)
     module.exit_json(**result)
 
 

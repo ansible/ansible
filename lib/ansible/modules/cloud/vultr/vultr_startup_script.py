@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: vr_startup_script
+module: vultr_startup_script
 short_description: Manages startup scripts on Vultr.
 description:
   - Create, update and remove startup scripts.
@@ -45,20 +45,20 @@ extends_documentation_fragment: vultr
 EXAMPLES = r'''
 - name: ensure a pxe script exists, source from a file
   local_action:
-    module: vr_startup_script
+    module: vultr_startup_script
     name: my_web_script
     script_type: pxe
     script: "{{ lookup('file', 'path/to/script') }}"
 
 - name: ensure a boot script exists
   local_action:
-    module: vr_startup_script
-    name: vr_startup_script
+    module: vultr_startup_script
+    name: vultr_startup_script
     script: "#!/bin/bash\necho Hello World > /root/hello"
 
 - name: ensure a script is absent
   local_action:
-    module: vr_startup_script
+    module: vultr_startup_script
     name: my_web_script
     state: absent
 '''
@@ -246,13 +246,13 @@ def main():
         supports_check_mode=True,
     )
 
-    vr_script = AnsibleVultrStartupScript(module)
+    vultr_script = AnsibleVultrStartupScript(module)
     if module.params.get('state') == "absent":
-        script = vr_script.absent_script()
+        script = vultr_script.absent_script()
     else:
-        script = vr_script.present_script()
+        script = vultr_script.present_script()
 
-    result = vr_script.get_result(script)
+    result = vultr_script.get_result(script)
     module.exit_json(**result)
 
 

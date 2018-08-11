@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: vr_account_facts
+module: vultr_account_facts
 short_description: Gather facts about the Vultr account.
 description:
   - Gather facts about account balance, charges and payments.
@@ -25,7 +25,7 @@ extends_documentation_fragment: vultr
 EXAMPLES = r'''
 - name: Gather Vultr account facts
   local_action:
-    module: vr_account_facts
+    module: vultr_account_facts
 
 - name: Print the gathered facts
   debug:

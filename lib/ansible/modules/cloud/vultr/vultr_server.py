@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: vr_server
+module: vultr_server
 short_description: Manages virtual servers on Vultr.
 description:
   - Deploy, start, stop, update, restart, reinstall servers.
@@ -94,8 +94,8 @@ extends_documentation_fragment: vultr
 EXAMPLES = '''
 - name: create server
   local_action:
-    module: vr_server
-    name: "{{ vr_server_name }}"
+    module: vultr_server
+    name: "{{ vultr_server_name }}"
     os: CentOS 7 x64
     plan: 1024 MB RAM,25 GB SSD,1.00 TB BW
     region: Amsterdam
@@ -103,8 +103,8 @@ EXAMPLES = '''
 
 - name: ensure a server is present and started
   local_action:
-    module: vr_server
-    name: "{{ vr_server_name }}"
+    module: vultr_server
+    name: "{{ vultr_server_name }}"
     os: CentOS 7 x64
     plan: 1024 MB RAM,25 GB SSD,1.00 TB BW
     region: Amsterdam
@@ -112,8 +112,8 @@ EXAMPLES = '''
 
 - name: ensure a server is present and stopped
   local_action:
-    module: vr_server
-    name: "{{ vr_server_name }}"
+    module: vultr_server
+    name: "{{ vultr_server_name }}"
     os: CentOS 7 x64
     plan: 1024 MB RAM,25 GB SSD,1.00 TB BW
     region: Amsterdam
@@ -121,20 +121,20 @@ EXAMPLES = '''
 
 - name: ensure an existing server is stopped
   local_action:
-    module: vr_server
-    name: "{{ vr_server_name }}"
+    module: vultr_server
+    name: "{{ vultr_server_name }}"
     state: stopped
 
 - name: ensure an existing server is started
   local_action:
-    module: vr_server
-    name: "{{ vr_server_name }}"
+    module: vultr_server
+    name: "{{ vultr_server_name }}"
     state: started
 
 - name: ensure a server is absent
   local_action:
-    module: vr_server
-    name: "{{ vr_server_name }}"
+    module: vultr_server
+    name: "{{ vultr_server_name }}"
     state: absent
 '''
 
@@ -851,25 +851,25 @@ def main():
         supports_check_mode=True,
     )
 
-    vr_server = AnsibleVultrServer(module)
+    vultr_server = AnsibleVultrServer(module)
     if module.params.get('state') == "absent":
-        server = vr_server.absent_server()
+        server = vultr_server.absent_server()
     else:
         if module.params.get('state') == "started":
-            server = vr_server.present_server()
-            server = vr_server.start_server()
+            server = vultr_server.present_server()
+            server = vultr_server.start_server()
         elif module.params.get('state') == "stopped":
-            server = vr_server.present_server(start_server=False)
-            server = vr_server.stop_server()
+            server = vultr_server.present_server(start_server=False)
+            server = vultr_server.stop_server()
         elif module.params.get('state') == "restarted":
-            server = vr_server.present_server()
-            server = vr_server.restart_server()
+            server = vultr_server.present_server()
+            server = vultr_server.restart_server()
         elif module.params.get('state') == "reinstalled":
-            server = vr_server.reinstall_server()
+            server = vultr_server.reinstall_server()
         else:
-            server = vr_server.present_server()
+            server = vultr_server.present_server()
 
-    result = vr_server.get_result(server)
+    result = vultr_server.get_result(server)
     module.exit_json(**result)
 
 

@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: vr_ssh_key
+module: vultr_ssh_key
 short_description: Manages ssh keys on Vultr.
 description:
   - Create, update and remove ssh keys.
@@ -40,13 +40,13 @@ extends_documentation_fragment: vultr
 EXAMPLES = '''
 - name: ensure an SSH key is present
   local_action:
-    module: vr_ssh_key
+    module: vultr_ssh_key
     name: my ssh key
     ssh_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
 
 - name: ensure an SSH key is absent
   local_action:
-    module: vr_ssh_key
+    module: vultr_ssh_key
     name: my ssh key
     state: absent
 '''
@@ -218,13 +218,13 @@ def main():
         supports_check_mode=True,
     )
 
-    vr_ssh_key = AnsibleVultrSshKey(module)
+    vultr_ssh_key = AnsibleVultrSshKey(module)
     if module.params.get('state') == "absent":
-        ssh_key = vr_ssh_key.absent_ssh_key()
+        ssh_key = vultr_ssh_key.absent_ssh_key()
     else:
-        ssh_key = vr_ssh_key.present_ssh_key()
+        ssh_key = vultr_ssh_key.present_ssh_key()
 
-    result = vr_ssh_key.get_result(ssh_key)
+    result = vultr_ssh_key.get_result(ssh_key)
     module.exit_json(**result)
 
 

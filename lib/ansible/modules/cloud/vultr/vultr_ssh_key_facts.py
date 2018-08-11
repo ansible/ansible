@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: vr_ssh_key_facts
+module: vultr_ssh_key_facts
 short_description: Gather facts about the Vultr SSH keys available.
 description:
   - Gather facts about SSH keys available.
@@ -25,7 +25,7 @@ extends_documentation_fragment: vultr
 EXAMPLES = r'''
 - name: Gather Vultr SSH keys facts
   local_action:
-    module: vr_ssh_key_facts
+    module: vultr_ssh_key_facts
 
 - name: Print the gathered facts
   debug:

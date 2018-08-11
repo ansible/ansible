@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: vr_dns_domain
+module: vultr_dns_domain
 short_description: Manages DNS domains on Vultr.
 description:
   - Create and remove DNS domains.
@@ -28,7 +28,7 @@ options:
   server_ip:
     description:
       - The default server IP.
-      - Use M(vr_dns_record) to change it once the domain is created.
+      - Use M(vultr_dns_record) to change it once the domain is created.
       - Required if C(state=present).
   state:
     description:
@@ -41,13 +41,13 @@ extends_documentation_fragment: vultr
 EXAMPLES = r'''
 - name: Ensure a domain exists
   local_action:
-    module: vr_dns_domain
+    module: vultr_dns_domain
     name: example.com
     server_ip: 10.10.10.10
 
 - name: Ensure a domain is absent
   local_action:
-    module: vr_dns_domain
+    module: vultr_dns_domain
     name: example.com
     state: absent
 '''
@@ -183,13 +183,13 @@ def main():
         supports_check_mode=True,
     )
 
-    vr_domain = AnsibleVultrDnsDomain(module)
+    vultr_domain = AnsibleVultrDnsDomain(module)
     if module.params.get('state') == "absent":
-        domain = vr_domain.absent_domain()
+        domain = vultr_domain.absent_domain()
     else:
-        domain = vr_domain.present_domain()
+        domain = vultr_domain.present_domain()
 
-    result = vr_domain.get_result(domain)
+    result = vultr_domain.get_result(domain)
     module.exit_json(**result)
 
 

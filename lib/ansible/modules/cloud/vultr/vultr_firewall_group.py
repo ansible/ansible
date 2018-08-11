@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: vr_firewall_group
+module: vultr_firewall_group
 short_description: Manages firewall groups on Vultr.
 description:
   - Create and remove firewall groups.
@@ -36,12 +36,12 @@ extends_documentation_fragment: vultr
 EXAMPLES = '''
 - name: ensure a firewall group is present
   local_action:
-    module: vr_firewall_group
+    module: vultr_firewall_group
     name: my http firewall
 
 - name: ensure a firewall group is absent
   local_action:
-    module: vr_firewall_group
+    module: vultr_firewall_group
     name: my http firewall
     state: absent
 '''
@@ -183,13 +183,13 @@ def main():
         supports_check_mode=True,
     )
 
-    vr_firewall_group = AnsibleVultrFirewallGroup(module)
+    vultr_firewall_group = AnsibleVultrFirewallGroup(module)
     if module.params.get('state') == "absent":
-        firewall_group = vr_firewall_group.absent_firewall_group()
+        firewall_group = vultr_firewall_group.absent_firewall_group()
     else:
-        firewall_group = vr_firewall_group.present_firewall_group()
+        firewall_group = vultr_firewall_group.present_firewall_group()
 
-    result = vr_firewall_group.get_result(firewall_group)
+    result = vultr_firewall_group.get_result(firewall_group)
     module.exit_json(**result)
 
 
