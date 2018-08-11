@@ -261,7 +261,7 @@ To prompt for the 'dev' vault id:
 
 *Prior to Ansible 2.4*
 
-To be prompted for a vault password, use the :option:`--ask-vault-pass <ansible-playbook --vault-id>` cli option:
+To be prompted for a vault password, use the :option:`--ask-vault-pass <ansible-playbook --ask-vault-pass>` cli option:
 
 .. code-block:: bash
 
