@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright: (c) 2018, Remy Mudingay <remy.mudingay@esss.se>
-# Copyright: (c) 2018, Stephane Armanet <stephane.armanet@esss.se>
+# Copyright: (c) 2018, Remy Mudingay <remy.mudingay[at]esss.se>
+# Copyright: (c) 2018, Stephane Armanet <stephane.armanet[at]esss.se>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -186,6 +186,7 @@ RETURN = """ # """
 
 import os
 import ntpath
+import commands
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -223,8 +224,10 @@ class Zpool(object):
     def dev_exists(self):
         output = []
         cmd = [self.zpool_cmd, "list -v", self.name, "|", self.zpool_awk, "'$0 !~ /mirror|spare|log|cache/ { print $1 }'"]
-        (rc, out, err) = self.module.run_command(' '.join(cmd))
+        #rc, out, err = self.module.run_command(' '.join(cmd))
+        rc, out = commands.getstatusoutput(' '.join(cmd))
         if rc == 0:
+            #raise Exception("Error while setting attributes: %s" % (out + err))
             return out
         else:
             return False
@@ -232,8 +235,10 @@ class Zpool(object):
     def opt_exists(self):
         optput = []
         cmd = [self.zpool_cmd, "get all ", self.name, "|", self.zpool_grep, "auto | ", self.zpool_awk, "'{ print $2 $3 }'"]
-        (rc, out, err) = self.module.run_command(' '.join(cmd))
+        #rc, out, err = self.module.run_command(' '.join(cmd))
+        rc, out = commands.getstatusoutput(' '.join(cmd))
         if rc == 0:
+            #raise Exception("Error while setting attributes: %s" % (out + err))
             return out
         else:
             return False
@@ -403,7 +408,7 @@ def main():
                 if spare:
                     spare_out = spare.split()
                     spare_output = [path_leaf(path) for path in spare_out]
-                    so = bool(set(outlist) & set(outlist))
+                    so = bool(set(outlist) & set(spare_out))
                 else:
                     so = False
                 if zil:
