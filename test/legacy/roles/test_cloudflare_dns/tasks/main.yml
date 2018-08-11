@@ -62,3 +62,5 @@
 - include: spf_record.yml
 - include: mx_record.yml
 - include: srv_record.yml
+- include: sshfp_record.yml
+- include: tlsa_record.yml

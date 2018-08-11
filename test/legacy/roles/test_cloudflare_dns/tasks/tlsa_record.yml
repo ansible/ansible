@@ -1,0 +1,239 @@
+---
+######## TLSA record tests #################
+
+- name: "Test: TLSA record creation"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    port: 25
+    proto: tcp
+    type: TLSA
+    cert_usage: 3
+    selector: 1
+    hash_type: 1
+    value: 09c5d90ef4cf74625de04719c71c85ea99182ab81aaab99795466a8c100ead5f
+    ttl: 150
+  register: cloudflare_dns
+
+- name: "Validate: TLSA record creation"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+      - cloudflare_dns.result.record.content == "3\t1\t1\t09c5d90ef4cf74625de04719c71c85ea99182ab81aaab99795466a8c100ead5f"
+      - cloudflare_dns.result.record.ttl == 150
+      - cloudflare_dns.result.record.type == "TLSA"
+      - cloudflare_dns.result.record.name == "_25._tcp.{{ cloudflare_dns_record }}.{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.zone_name == "{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.data.matching_type == 1
+      - cloudflare_dns.result.record.data.selector == 1
+      - cloudflare_dns.result.record.data.usage == 3
+      - cloudflare_dns.result.record.data.certificate == "09c5d90ef4cf74625de04719c71c85ea99182ab81aaab99795466a8c100ead5f"
+
+- name: "Test: TLSA record idempotency"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    port: 25
+    proto: tcp
+    type: TLSA
+    cert_usage: 3
+    selector: 1
+    hash_type: 1
+    value: 09c5d90ef4cf74625de04719c71c85ea99182ab81aaab99795466a8c100ead5f
+    ttl: 150
+  register: cloudflare_dns
+
+
+- name: "Validate: TLSA record idempotency"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
+
+- name: "Test: TLSA record update"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    port: 25
+    proto: tcp
+    type: TLSA
+    cert_usage: 3
+    selector: 1
+    hash_type: 1
+    value: 09c5d90ef4cf74625de04719c71c85ea99182ab81aaab99795466a8c100ead5f
+    ttl: 300
+  register: cloudflare_dns
+
+- name: "Validate: TLSA record update"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+      - cloudflare_dns.result.record.ttl == 300
+
+- name: "Test: TLSA record duplicate (create new record)"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    port: 25
+    proto: tcp
+    type: TLSA
+    cert_usage: 3
+    selector: 1
+    hash_type: 1
+    value: 76e283e0cde1d28a85c7b44a26f35260f42e176f4f076e7bdd29895ca76da3d2
+    ttl: 300
+  register: cloudflare_dns
+
+- name: "Validate: TLSA record duplicate (create new record)"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+      - cloudflare_dns.result.record.content == "3\t1\t1\t76e283e0cde1d28a85c7b44a26f35260f42e176f4f076e7bdd29895ca76da3d2"
+      - cloudflare_dns.result.record.ttl == 300
+      - cloudflare_dns.result.record.type == "TLSA"
+      - cloudflare_dns.result.record.name == "_25._tcp.{{ cloudflare_dns_record }}.{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.zone_name == "{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.data.matching_type == 1
+      - cloudflare_dns.result.record.data.selector == 1
+      - cloudflare_dns.result.record.data.usage == 3
+      - cloudflare_dns.result.record.data.certificate == "76e283e0cde1d28a85c7b44a26f35260f42e176f4f076e7bdd29895ca76da3d2"
+
+- name: "Test: TLSA record duplicate (old record present)"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    port: 25
+    proto: tcp
+    type: TLSA
+    cert_usage: 3
+    selector: 1
+    hash_type: 1
+    value: 09c5d90ef4cf74625de04719c71c85ea99182ab81aaab99795466a8c100ead5f
+    ttl: 300
+  register: cloudflare_dns
+
+- name: "Validate: TLSA record duplicate (old record present)"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
+      - cloudflare_dns.result.record.content == "3\t1\t1\t09c5d90ef4cf74625de04719c71c85ea99182ab81aaab99795466a8c100ead5f"
+      - cloudflare_dns.result.record.ttl == 300
+      - cloudflare_dns.result.record.type == "TLSA"
+      - cloudflare_dns.result.record.name == "_25._tcp.{{ cloudflare_dns_record }}.{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.zone_name == "{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.data.matching_type == 1
+      - cloudflare_dns.result.record.data.selector == 1
+      - cloudflare_dns.result.record.data.usage == 3
+      - cloudflare_dns.result.record.data.certificate == "09c5d90ef4cf74625de04719c71c85ea99182ab81aaab99795466a8c100ead5f"
+
+- name: "Test: TLSA record duplicate (make new record solo)"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    port: 25
+    proto: tcp
+    type: TLSA
+    cert_usage: 3
+    selector: 1
+    hash_type: 1
+    value: 76e283e0cde1d28a85c7b44a26f35260f42e176f4f076e7bdd29895ca76da3d2
+    ttl: 300
+    solo: true
+  register: cloudflare_dns
+
+- name: "Validate: TLSA record duplicate (make new record solo)"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+      - cloudflare_dns.result.record.content == "3\t1\t1\t76e283e0cde1d28a85c7b44a26f35260f42e176f4f076e7bdd29895ca76da3d2"
+      - cloudflare_dns.result.record.ttl == 300
+      - cloudflare_dns.result.record.type == "TLSA"
+      - cloudflare_dns.result.record.name == "_25._tcp.{{ cloudflare_dns_record }}.{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.zone_name == "{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.data.matching_type == 1
+      - cloudflare_dns.result.record.data.selector == 1
+      - cloudflare_dns.result.record.data.usage == 3
+      - cloudflare_dns.result.record.data.certificate == "76e283e0cde1d28a85c7b44a26f35260f42e176f4f076e7bdd29895ca76da3d2"
+
+- name: "Test: TLSA record duplicate (old record absent)"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    port: 25
+    proto: tcp
+    type: TLSA
+    cert_usage: 3
+    selector: 1
+    hash_type: 1
+    value: 09c5d90ef4cf74625de04719c71c85ea99182ab81aaab99795466a8c100ead5f
+    state: absent
+  register: cloudflare_dns
+
+- name: "Validate: TLSA record duplicate (old record absent)"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
+
+- name: "Test: TLSA record deletion"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    port: 25
+    proto: tcp
+    type: TLSA
+    cert_usage: 3
+    selector: 1
+    hash_type: 1
+    value: 76e283e0cde1d28a85c7b44a26f35260f42e176f4f076e7bdd29895ca76da3d2
+    state: absent
+  register: cloudflare_dns
+
+- name: "Validate: TLSA record deletion"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+
+- name: "Test: TLSA record deletion succeeded"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    port: 25
+    proto: tcp
+    type: TLSA
+    cert_usage: 3
+    selector: 1
+    hash_type: 1
+    value: 76e283e0cde1d28a85c7b44a26f35260f42e176f4f076e7bdd29895ca76da3d2
+    state: absent
+  register: cloudflare_dns
+
+- name: "Validate: TLSA record deletion succeeded"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
