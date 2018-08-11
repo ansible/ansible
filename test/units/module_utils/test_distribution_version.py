@@ -844,7 +844,6 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
     {
         "name": "Solaris 10",
         "uname_v": "Generic_141445-09",
-        "uname_r": "5.10",
         "result": {
             "distribution_release": "Solaris 10 10/09 s10x_u8wos_08a X86",
             "distribution": "Solaris",
@@ -867,7 +866,6 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
     {
         "name": "Solaris 11",
         "uname_v": "11.0",
-        "uname_r": "5.11",
         "result": {
             "distribution_release": "Oracle Solaris 11 11/11 X86",
             "distribution": "Solaris",
@@ -888,7 +886,6 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
     },
     {
         "name": "Solaris 11.3",
-        "uname_r": "5.11",
         "platform.dist": [
             "",
             "",
@@ -911,7 +908,6 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
     },
     {
         "name": "Solaris 10",
-        "uname_r": "5.10",
         "platform.dist": [
             "",
             "",
