@@ -1014,9 +1014,9 @@ class AzureInventory(object):
             if not config.has_section('cache'):
                 config.add_section('cache')
 
-            settings['cache_path'] = config.get('cache', 'cache_path')
-            settings['cache_max_age'] = config.getint('cache', 'cache_max_age')
-            settings['cache_filename'] = config.get('cache', 'cache_filename')
+            settings['cache_path'] = os.getenv('AZURE_CACHE_PATH', config.get('cache', 'cache_path'))
+            settings['cache_max_age'] = int(os.getenv('AZURE_CACHE_MAX_AGE', config.getint('cache', 'cache_max_age')))
+            settings['cache_filename'] = os.getenv('AZURE_CACHE_FILENAME', config.get('cache', 'cache_filename'))
         return settings
 
     def _tags_match(self, tag_obj, tag_args):
