@@ -1802,7 +1802,7 @@
       that:
       - testcase3_without_follow is changed
       - "stat_new_dir_without_follow_file1.stat.exists"
-      - "stat_new_dir_without_follow_file12.stat.exists"
+      - "stat_new_dir_without_follow_link_file12.stat.exists"
 
 ## testcase last - make sure remote_dir_src not change
 - block:
