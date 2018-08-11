@@ -209,8 +209,7 @@ a label for a particular vault password.
 
 Vault encrypted content can specify which vault id it was encrypted with.
 
-Prior to Ansible 2.4, only one vault password could be used at a time. Post
-Ansible 2.4, multiple vault passwords can be used each time Ansible runs, so any
+Prior to Ansible 2.4, only one vault password could be used at a time, So any
 vault files or vars that needed to be decrypted all had to use the same password.
 
 Since Ansible 2.4, vault files or vars that are encrypted with different
