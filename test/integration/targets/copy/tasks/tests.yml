@@ -1771,12 +1771,12 @@
 - block:
   - name: execute - modify the file1
     lineinfile: 
-      path: '{{ remote_dir }}/remote_dir_src/file1'
+      path: '{{ remote_dir }}/new_dir_without_follow/file1'
       line: 'ptux'
 
   - name: execute - modify the file12
     lineinfile: 
-      path: '{{ remote_dir }}/remote_dir_src/subdir/file12'
+      path: '{{ remote_dir }}/new_dir_without_follow/subdir/file12'
       line: 'ptux'
 
   - name: execute - Copy the directory on remote without follow
@@ -1792,17 +1792,30 @@
       path: '{{ remote_dir }}/new_dir_without_follow/file1'
     register: stat_new_dir_without_follow_file1
 
-  - name: gather - Stat the new_dir_without_follow/link_file12
+  - name: gather - Stat the new_dir_without_follow/subdir/file12
     stat:
-      path: '{{ remote_dir }}/new_dir_without_follow/link_file12'
-    register: stat_new_dir_without_follow_link_file12
+      path: '{{ remote_dir }}/new_dir_without_follow/subdir/file12'
+    register: stat_new_dir_without_follow_subdir_file12
 
   - name: assert - diff files in common dir have copied.
     assert:
       that:
       - testcase3_without_follow is changed
       - "stat_new_dir_without_follow_file1.stat.exists"
-      - "stat_new_dir_without_follow_link_file12.stat.exists"
+      - "stat_remote_dir_src_file1_before.stat.uid == stat_new_dir_without_follow_file1.stat.uid"
+      - "stat_remote_dir_src_file1_before.stat.gid == stat_new_dir_without_follow_file1.stat.gid"
+      - "stat_remote_dir_src_file1_before.stat.pw_name == stat_new_dir_without_follow_file1.stat.pw_name"
+      - "stat_remote_dir_src_file1_before.stat.gr_name == stat_new_dir_without_follow_file1.stat.gr_name"
+      - "stat_remote_dir_src_file1_before.stat.mode == stat_new_dir_without_follow_file1.stat.mode"
+      - "stat_remote_dir_src_file1_before.stat.checksum == stat_new_dir_without_follow_file1.stat.checksum"
+      - "stat_new_dir_without_follow_subdir_file12.stat.exists"
+      - "stat_remote_dir_src_subdir_file12_before.stat.uid == stat_new_dir_without_follow_subdir_file12.stat.uid"
+      - "stat_remote_dir_src_subdir_file12_before.stat.gid == stat_new_dir_without_follow_subdir_file12.stat.gid"
+      - "stat_remote_dir_src_subdir_file12_before.stat.pw_name == stat_new_dir_without_follow_subdir_file12.stat.pw_name"
+      - "stat_remote_dir_src_subdir_file12_before.stat.gr_name == stat_new_dir_without_follow_subdir_file12.stat.gr_name"
+      - "stat_remote_dir_src_subdir_file12_before.stat.mode == stat_new_dir_without_follow_subdir_file12.stat.mode"
+      - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_new_dir_without_follow_subdir_file12.stat.checksum"
+
 
 ## testcase last - make sure remote_dir_src not change
 - block:
