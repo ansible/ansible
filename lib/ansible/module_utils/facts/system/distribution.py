@@ -606,7 +606,7 @@ class Distribution(object):
 =======
             # FIXME: the proper way would be to exec 'uname -r' and parse it.
             # For solaris 10 it will return 5.10, for solaris 11 it will be 5.11
-            # but I can't pass ansible test unit test_distribution_version.py with it, 
+            # but I can't pass ansible test unit test_distribution_version.py with it,
             # since I've no idea how to mock `uname -r` on CI (github/shippable) run.
             # rc, uname_r, err = self.module.run_command('uname -r')
 >>>>>>> should work now...
@@ -618,6 +618,7 @@ class Distribution(object):
             sunos_facts['distribution_version'] = data.split()[1]
             sunos_facts['distribution_release'] = ora_prefix + data
 <<<<<<< HEAD
+<<<<<<< HEAD
             sunos_facts['distribution_major_version'] = int(uname_r.split('.')[1])
 <<<<<<< HEAD
             # sunos_facts['distribution_major_version'] = sunos_facts['distribution_version'].split('.')[0]
@@ -625,6 +626,9 @@ class Distribution(object):
 >>>>>>> facts: solaris: introduce distribution_major version detection for Solaris
 =======
             #sunos_facts['distribution_major_version'] = int(uname_r.split('.')[1])
+=======
+            # sunos_facts['distribution_major_version'] = int(uname_r.split('.')[1])
+>>>>>>> fixes for W291 (trailing whitespace) and E265 (block comment)
             sunos_facts['distribution_major_version'] = sunos_facts['distribution_version'].split('.')[0]
 >>>>>>> should work now...
             return sunos_facts
