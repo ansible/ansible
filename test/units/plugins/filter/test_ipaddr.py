@@ -21,7 +21,7 @@ import pytest
 
 from ansible.compat.tests import unittest
 from ansible.errors import AnsibleFilterError
-from ansible.plugins.filter.ipaddr import (ipaddr, _netmask_query, nthhost, next_nth_usable,
+from ansible.plugins.filter.ipaddr import (ipaddr, _netmask_query, nthhost, next_nth_usable,ipsubnet
                                            previous_nth_usable, network_in_usable, network_in_network,
                                            cidr_merge, ipmath)
 netaddr = pytest.importorskip('netaddr')
@@ -476,6 +476,7 @@ class TestIpFilter(unittest.TestCase):
         self.assertEqual(cidr_merge(subnets), ['1.12.1.1/32', '1.12.1.255/32'])
         self.assertEqual(cidr_merge(subnets, 'span'), '1.12.1.0/24')
 
+<<<<<<< HEAD
     def test_ipmath(self):
         self.assertEqual(ipmath('192.168.1.5', 5), '192.168.1.10')
         self.assertEqual(ipmath('192.168.1.5', -5), '192.168.1.0')
@@ -502,3 +503,33 @@ class TestIpFilter(unittest.TestCase):
         with self.assertRaises(AnsibleFilterError) as exc:
             ipmath('1.2.3.4', 'some_number')
         self.assertEqual(exc.exception.message, expected)
+=======
+     def test_ipsubnet(self):
+        address = '1.1.1.1/24'
+        self.assertEqual(ipsubnet(address, '30'), '64')
+        address = '1.1.1.1/25'
+        self.assertEqual(ipsubnet(address, '24'), '0')
+        address = '1.12.1.34/32'
+        subnet = '1.12.1.34/24'
+        self.assertEqual(ipsubnet(address, subnet), '35')
+        address = '192.168.50.0/24'
+        subnet = '192.168.0.0/16'
+        self.assertEqual(ipsubnet(address, subnet), '51')
+        address = '1.12.1.34/32'
+        subnet = '1.12.1.34/24'
+        self.assertEqual(ipsubnet(address, subnet), False)
+        address = '192.168.144.5'
+        subnet = '192.168.0.0/16'
+        self.assertEqual(ipsubnet(address), '192.168.144.5/32')
+        self.assertEqual(ipsubnet(subnet), '192.168.0.0/16')
+        self.assertEqual(ipsubnet(subnet, '20'), '16')
+        self.assertEqual(ipsubnet(subnet, '20', '0'), '192.168.0.0/20')
+        self.assertEqual(ipsubnet(subnet, '20', '-1'), '192.168.240.0/20')
+        self.assertEqual(ipsubnet(subnet, '20', '5'), '192.168.80.0/20')
+        self.assertEqual(ipsubnet(subnet, '20', '-5'), '192.168.176.0/20')
+        self.assertEqual(ipsubnet(address, '20'), '192.168.144.0/20')
+        self.assertEqual(ipsubnet(address, '18', '0'), '192.168.128.0/18')
+        self.assertEqual(ipsubnet(address, '18', '-1'), '192.168.144.4/31')
+        self.assertEqual(ipsubnet(address, '18', '5'), '192.168.144.0/23')
+        self.assertEqual(ipsubnet(address, '18', '-5'), '192.168.144.0/27')
+>>>>>>> adding test for ipsubnet
