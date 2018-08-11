@@ -20,10 +20,8 @@ __metaclass__ = type
 import pytest
 
 from ansible.compat.tests import unittest
-from ansible.errors import AnsibleFilterError
-from ansible.plugins.filter.ipaddr import (ipaddr, _netmask_query, nthhost, next_nth_usable, ipsubnet
-                                           previous_nth_usable, network_in_usable, network_in_network,
-                                           cidr_merge, ipmath)
+from ansible.plugins.filter.ipaddr import (ipaddr, _netmask_query, nthhost, next_nth_usable, ipsubnet,
+                                           previous_nth_usable, network_in_usable, network_in_network, cidr_merge)
 netaddr = pytest.importorskip('netaddr')
 
 
