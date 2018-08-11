@@ -316,8 +316,8 @@ def edit_config_or_macro(connection, commands):
         connection.edit_macro(candidate=commands)
     else:
         connection.edit_config(candidate=commands)
-        
-        
+
+
 def get_candidate_config(module):
     candidate = ''
     if module.params['src']:
