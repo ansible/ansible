@@ -39,5 +39,5 @@ requirements:
   - Ansible 2.7.
   - storops (0.5.10 or greater). Install using 'pip install storops'.
 notes:
-  - The modules prefixed with emc_vnx are built to support the ONTAP storage platform.
+  - The modules prefixed with emc_vnx are built to support the EMC VNX storage platform.
     """
