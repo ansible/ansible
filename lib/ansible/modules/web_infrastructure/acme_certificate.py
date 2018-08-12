@@ -328,7 +328,9 @@ account_uri:
 '''
 
 from ansible.module_utils.acme import (
-    ModuleFailException, fetch_url, write_file, nopad_b64, simple_get, ACMEAccount
+    ModuleFailException, fetch_url, write_file, nopad_b64, simple_get, pem_to_der, ACMEAccount,
+    HAS_CURRENT_CRYPTOGRAPHY, cryptography_get_csr_domains, cryptography_get_cert_days,
+    set_crypto_backend,
 )
 
 import base64
@@ -350,6 +352,8 @@ def get_cert_days(module, cert_file):
     if the file was not found. If cert_file contains more than one
     certificate, only the first one will be considered.
     '''
+    if HAS_CURRENT_CRYPTOGRAPHY:
+        return cryptography_get_cert_days(module, cert_file)
     if not os.path.exists(cert_file):
         return -1
 
@@ -422,6 +426,8 @@ class ACMEClient(object):
         '''
         Parse the CSR and return the list of requested domains
         '''
+        if HAS_CURRENT_CRYPTOGRAPHY:
+            return cryptography_get_csr_domains(self.module, self.csr)
         openssl_csr_cmd = [self._openssl_bin, "req", "-in", self.csr, "-noout", "-text"]
         dummy, out, dummy = self.module.run_command(openssl_csr_cmd, check_rc=True)
 
@@ -569,11 +575,9 @@ class ACMEClient(object):
         Return the certificate object as dict
         https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.4
         '''
-        openssl_csr_cmd = [self._openssl_bin, "req", "-in", self.csr, "-outform", "DER"]
-        dummy, out, dummy = self.module.run_command(openssl_csr_cmd, check_rc=True)
-
+        csr = pem_to_der(self.csr)
         new_cert = {
-            "csr": nopad_b64(to_bytes(out)),
+            "csr": nopad_b64(csr),
         }
         result, info = self.account.send_signed_request(self.finalize_uri, new_cert)
         if info['status'] not in [200]:
@@ -650,12 +654,10 @@ class ACMEClient(object):
         Return the certificate object as dict
         https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-6.5
         '''
-        openssl_csr_cmd = [self._openssl_bin, "req", "-in", self.csr, "-outform", "DER"]
-        dummy, out, dummy = self.module.run_command(openssl_csr_cmd, check_rc=True)
-
+        csr = pem_to_der(self.csr)
         new_cert = {
             "resource": "new-cert",
-            "csr": nopad_b64(to_bytes(out)),
+            "csr": nopad_b64(csr),
         }
         result, info = self.account.send_signed_request(self.directory['new-cert'], new_cert)
 
@@ -883,6 +885,7 @@ def main():
             remaining_days=dict(required=False, default=10, type='int'),
             deactivate_authzs=dict(required=False, default=False, type='bool'),
             force=dict(required=False, default=False, type='bool'),
+            select_crypto_backend=dict(required=False, choices=['auto', 'openssl', 'cryptography'], default='auto', type='str'),
         ),
         required_one_of=(
             ['account_key_src', 'account_key_content'],
@@ -895,6 +898,7 @@ def main():
     )
     if module._name == 'letsencrypt':
         module.deprecate("The 'letsencrypt' module is being renamed 'acme_certificate'", version='2.10')
+    set_crypto_backend(module)
 
     # AnsibleModule() changes the locale, so change it back to C because we rely on time.strptime() when parsing certificate dates.
     module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')

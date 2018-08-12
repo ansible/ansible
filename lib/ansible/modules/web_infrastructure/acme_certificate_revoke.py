@@ -53,6 +53,10 @@ options:
          important private key — it can be used to change the account key,
          or to revoke your certificates without knowing their private keys
          —, this might not be acceptable."
+      - "In case C(cryptography) is used, the content is not written into a
+         temporary file. It can still happen that it is written to disk by
+         Ansible in the process of moving the module with its argument to
+         the node where it is executed."
   revoke_reason:
     description:
       - "One of the revocation reasonCodes defined in
@@ -80,16 +84,10 @@ RETURN = '''
 '''
 
 from ansible.module_utils.acme import (
-    ModuleFailException, ACMEAccount, nopad_b64
+    ModuleFailException, ACMEAccount, nopad_b64, pem_to_der, set_crypto_backend,
 )
 
-import base64
-import os
-import tempfile
-import traceback
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
 
 
 def main():
@@ -104,6 +102,7 @@ def main():
             private_key_content=dict(type='str', no_log=True),
             certificate=dict(required=True, type='path'),
             revoke_reason=dict(required=False, type='int'),
+            select_crypto_backend=dict(required=False, choices=['auto', 'openssl', 'cryptography'], default='auto', type='str'),
         ),
         required_one_of=(
             ['account_key_src', 'account_key_content', 'private_key_src', 'private_key_content'],
@@ -113,6 +112,7 @@ def main():
         ),
         supports_check_mode=False,
     )
+    set_crypto_backend(module)
 
     if not module.params.get('validate_certs'):
         module.warn(warning='Disabling certificate validation for communications with ACME endpoint. ' +
@@ -122,22 +122,8 @@ def main():
     try:
         account = ACMEAccount(module)
         # Load certificate
-        certificate_lines = []
-        try:
-            with open(module.params.get('certificate'), "rt") as f:
-                header_line_count = 0
-                for line in f:
-                    if line.startswith('-----'):
-                        header_line_count += 1
-                        if header_line_count == 2:
-                            # If certificate file contains other certs appended
-                            # (like intermediate certificates), ignore these.
-                            break
-                        continue
-                    certificate_lines.append(line.strip())
-        except Exception as err:
-            raise ModuleFailException("cannot load certificate file: %s" % to_native(err), exception=traceback.format_exc())
-        certificate = nopad_b64(base64.b64decode(''.join(certificate_lines)))
+        certificate = pem_to_der(module.params.get('certificate'))
+        certificate = nopad_b64(certificate)
         # Construct payload
         payload = {
             'certificate': certificate
@@ -152,24 +138,11 @@ def main():
             endpoint = account.directory['revokeCert']
         # Get hold of private key (if available) and make sure it comes from disk
         private_key = module.params.get('private_key_src')
-        if module.params.get('private_key_content') is not None:
-            fd, tmpsrc = tempfile.mkstemp()
-            module.add_cleanup_file(tmpsrc)  # Ansible will delete the file on exit
-            f = os.fdopen(fd, 'wb')
-            try:
-                f.write(module.params.get('private_key_content').encode('utf-8'))
-                private_key = tmpsrc
-            except Exception as err:
-                try:
-                    f.close()
-                except Exception as e:
-                    pass
-                raise ModuleFailException("failed to create temporary content file: %s" % to_native(err), exception=traceback.format_exc())
-            f.close()
+        private_key_content = module.params.get('private_key_content')
         # Revoke certificate
-        if private_key:
+        if private_key or private_key_content:
             # Step 1: load and parse private key
-            error, private_key_data = account.parse_account_key(private_key)
+            error, private_key_data = account.parse_key(private_key, private_key_content)
             if error:
                 raise ModuleFailException("error while parsing private key: %s" % error)
             # Step 2: sign revokation request with private key
@@ -177,8 +150,7 @@ def main():
                 "alg": private_key_data['alg'],
                 "jwk": private_key_data['jwk'],
             }
-            result, info = account.send_signed_request(endpoint, payload, key=private_key,
-                                                       key_data=private_key_data, jws_header=jws_header)
+            result, info = account.send_signed_request(endpoint, payload, key_data=private_key_data, jws_header=jws_header)
         else:
             # Step 1: get hold of account URI
             changed = account.init_account(
