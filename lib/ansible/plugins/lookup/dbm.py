@@ -23,6 +23,10 @@ DOCUMENTATION = """
         description: Return value for an absent key.
         type: string
         default: ''
+      encoding:
+        description: Decode key values with encoding.
+        type: string
+        default: utf-8
 """
 
 EXAMPLES = """
@@ -42,7 +46,7 @@ except ImportError:
 
 from ansible.plugins.lookup import LookupBase
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 
 
 class LookupModule(LookupBase):
@@ -51,6 +55,8 @@ class LookupModule(LookupBase):
         dbm_file = kwargs.get('file')
         if not dbm_file:
             raise AnsibleError('dbm lookup: missing file option')
+
+        encoding = kwargs.get('encoding', 'utf-8')
 
         dflt = kwargs.get('default')
 
@@ -62,7 +68,7 @@ class LookupModule(LookupBase):
         ret = []
         for term in terms:
             try:
-                value = dbm[term]
+                value = to_text(dbm[term], encoding=encoding)
             except KeyError:
                 value = dflt
             ret.append(value)
