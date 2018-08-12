@@ -224,7 +224,7 @@ class Zpool(object):
     def dev_exists(self):
         cmd = [self.zpool_cmd, "list -v", self.name, "|", self.zpool_awk, "'$0 !~ /mirror|spare|log|cache/ { print $1 }'"]
         p = subprocess.Popen(' '.join(cmd), stdout=subprocess.PIPE, shell=True)
-        out = p.communicate()
+        out, err = p.communicate()
         rc = p.returncode
         if rc == 0:
             return out
@@ -234,7 +234,7 @@ class Zpool(object):
     def opt_exists(self):
         cmd = [self.zpool_cmd, "get all ", self.name, "|", self.zpool_grep, "auto | ", self.zpool_awk, "'{ print $2 $3 }'"]
         p = subprocess.Popen(' '.join(cmd), stdout=subprocess.PIPE, shell=True)
-        out = p.communicate()
+        out, err = p.communicate()
         rc = p.returncode
         if rc == 0:
             return out
@@ -253,36 +253,36 @@ class Zpool(object):
         else:
             action = 'create'
         cmd.append(action)
-    if action == 'create':
-        if self.ashift and action == 'create':
-        ashift = '-o ashift=' + str(self.ashift)
+        if action == 'create':
+            if self.ashift and action == 'create':
+                ashift = '-o ashift=' + str(self.ashift)
+            else:
+                ashift = '-o ashift=0'
+            cmd.append(ashift)
+        cmd.append(self.autoreplace)
+        cmd.append(self.autoexpand)
+        cmd.append(self.name)
+        if action != 'set':
+            cmd.append(self.devices)
+            cmd.append(self.spare)
+            cmd.append(self.zil)
+            cmd.append(self.l2arc)
+        (rc, out, err) = self.module.run_command(' '.join(cmd))
+        if rc == 0:
+            self.changed = True
         else:
-        ashift = '-o ashift=0'
-        cmd.append(ashift)
-    cmd.append(self.autoreplace)
-    cmd.append(self.autoexpand)
-    cmd.append(self.name)
-    if action != 'set':
-        cmd.append(self.devices)
-        cmd.append(self.spare)
-        cmd.append(self.zil)
-        cmd.append(self.l2arc)
-    (rc, out, err) = self.module.run_command(' '.join(cmd))
-    if rc == 0:
-        self.changed = True
-    else:
-        self.module.fail_json(msg=err)
+            self.module.fail_json(msg=err)
 
     def destroy(self):
-    if self.module.check_mode:
-        self.changed = True
-        return
-    cmd = [self.zpool_cmd, 'destroy', self.name]
-    (rc, out, err) = self.module.run_command(' '.join(cmd))
-    if rc == 0:
-        self.changed = True
-    else:
-        self.module.fail_json(msg=err)
+        if self.module.check_mode:
+            self.changed = True
+            return
+        cmd = [self.zpool_cmd, 'destroy', self.name]
+        (rc, out, err) = self.module.run_command(' '.join(cmd))
+        if rc == 0:
+            self.changed = True
+        else:
+            self.module.fail_json(msg=err)
 
 
 def path_leaf(path):
@@ -328,50 +328,50 @@ def main():
     zil = module.params.get('zil')
 
     if autoexpand is True and (sets is True or add is True):
-    autoexpand = "autoexpand=on"
+        autoexpand = "autoexpand=on"
     elif autoexpand is True and sets is False:
-    autoexpand = "-o autoexpand=on"
+        autoexpand = "-o autoexpand=on"
     elif autoexpand is False and sets is True and autoreplace is True:
-    autoexpand = ""
+        autoexpand = ""
     else:
-    autoexpand = ""
+        autoexpand = ""
 
     if autoreplace is True and (sets is True or add is True):
-    autoreplace = "autoreplace=on"
+        autoreplace = "autoreplace=on"
     elif autoreplace is True and sets is False:
-    autoreplace = "-o autoreplace=on"
+        autoreplace = "-o autoreplace=on"
     elif autoreplace is False and sets is True and autoexpand is True:
-    autoreplace = ""
+        autoreplace = ""
     else:
-    autoreplace = ""
+        autoreplace = ""
 
     if raid_level is None or 'raid0' in raid_level:
-    raid_level = ''
+        raid_level = ''
 
     if zil:
-    zil = ' log ' + zil
+        zil = ' log ' + zil
     else:
-    zil = ''
+        zil = ''
 
     if l2arc:
-    l2arc = ' cache ' + l2arc
+        l2arc = ' cache ' + l2arc
     else:
-    l2arc = ''
+        l2arc = ''
 
     if ashift is None:
-    ashift = 0
+        ashift = 0
 
     if devices is None:
-    devices = ''
+        devices = ''
     else:
-    if vdev > 1:
-        device = ''
-        for i in range(0, len(devices), vdev):
-        temp = ' ' + raid_level + ' ' + ' '.join(devices[i:i + vdev])
-        device += temp
-        devices = device
+        if vdev > 1:
+            device = ''
+            for i in range(0, len(devices), vdev):
+                temp = ' ' + raid_level + ' ' + ' '.join(devices[i:i + vdev])
+                device += temp
+            devices = device
     if not spare:
-    spare = ''
+        spare = ''
     else:
         spare = 'spare ' + ' '.join(spare)
 
@@ -393,7 +393,7 @@ def main():
     zpool = Zpool(module, name, state, raid_level, devices, spare, add, vdev, ashift, sets, autoreplace, autoexpand, zil, l2arc)
 
     if state == 'present':
-        if (zpool.exists() and add) or (zpool.exists() and sets):
+        if (zpool.exists() and add) or (zpool.exists() and sets) or zpool.exists() is False:
             if zpool.dev_exists():
                 outlist = zpool.dev_exists().split()
                 optlist = zpool.opt_exists()
@@ -445,8 +445,6 @@ def main():
                     zpool.create()
             else:
                 zpool.create()
-        elif zpool.exists() is False:
-            zpool.create()
     elif state == 'absent':
         if zpool.exists():
             zpool.destroy()
