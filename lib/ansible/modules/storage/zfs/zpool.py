@@ -185,6 +185,7 @@ EXAMPLES = """
 RETURN = """ # """
 
 import os
+import re
 import ntpath
 import subprocess
 
@@ -223,9 +224,7 @@ class Zpool(object):
 
     def dev_exists(self):
         cmd = [self.zpool_cmd, "list -v", self.name, "|", self.zpool_awk, "'$0 !~ /mirror|spare|log|cache/ { print $1 }'"]
-        p = subprocess.Popen(' '.join(cmd), stdout=subprocess.PIPE, shell=True)
-        out, err = p.communicate()
-        rc = p.returncode
+        (rc, out, err) = self.module.run_command(' '.join(cmd), use_unsafe_shell=True)
         if rc == 0:
             return out
         else:
@@ -233,9 +232,7 @@ class Zpool(object):
 
     def opt_exists(self):
         cmd = [self.zpool_cmd, "get all ", self.name, "|", self.zpool_grep, "auto | ", self.zpool_awk, "'{ print $2 $3 }'"]
-        p = subprocess.Popen(' '.join(cmd), stdout=subprocess.PIPE, shell=True)
-        out, err = p.communicate()
-        rc = p.returncode
+        (rc, out, err) = self.module.run_command(' '.join(cmd), use_unsafe_shell=True)
         if rc == 0:
             return out
         else:
@@ -331,8 +328,8 @@ def main():
         autoexpand = "autoexpand=on"
     elif autoexpand is True and sets is False:
         autoexpand = "-o autoexpand=on"
-    elif autoexpand is False and sets is True and autoreplace is True:
-        autoexpand = ""
+    elif autoexpand is False and sets is True:
+        autoexpand = "autoexpand=off"
     else:
         autoexpand = ""
 
@@ -340,8 +337,8 @@ def main():
         autoreplace = "autoreplace=on"
     elif autoreplace is True and sets is False:
         autoreplace = "-o autoreplace=on"
-    elif autoreplace is False and sets is True and autoexpand is True:
-        autoreplace = ""
+    elif autoreplace is False and sets is True:
+        autoreplace = "autoreplace=off"
     else:
         autoreplace = ""
 
@@ -393,10 +390,9 @@ def main():
     zpool = Zpool(module, name, state, raid_level, devices, spare, add, vdev, ashift, sets, autoreplace, autoexpand, zil, l2arc)
 
     if state == 'present':
-        if (zpool.exists() and add) or (zpool.exists() and sets) or zpool.exists() is False:
+        if (zpool.exists() and add) or (zpool.exists() and sets) or (zpool.exists() is False):
             if zpool.dev_exists():
                 outlist = zpool.dev_exists().split()
-                optlist = zpool.opt_exists()
                 if devices:
                     device_out = devices.split()
                     device_output = [path_leaf(path) for path in device_out]
@@ -406,7 +402,7 @@ def main():
                 if spare:
                     spare_out = spare.split()
                     spare_output = [path_leaf(path) for path in spare_out]
-                    so = bool(set(outlist) & set(spare_out))
+                    so = bool(set(outlist) & set(spare_output))
                 else:
                     so = False
                 if zil:
@@ -421,6 +417,7 @@ def main():
                     lo = bool(set(outlist) & set(l2arc_output))
                 else:
                     lo = False
+                optlist = zpool.opt_exists().split()
                 ae = False
                 if autoexpand:
                     if 'on' in autoexpand:
