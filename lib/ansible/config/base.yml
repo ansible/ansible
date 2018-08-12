@@ -589,7 +589,7 @@ DEFAULT_GATHERING:
   choices: ['smart', 'explicit', 'implicit']
 DEFAULT_GATHER_SUBSET:
   name: Gather facts subset
-  default: 'all'
+  default: ['all']
   description:
       - Set the `gather_subset` option for the M(setup) task in the implicit fact gathering.
         See the module documentation for specifics.
