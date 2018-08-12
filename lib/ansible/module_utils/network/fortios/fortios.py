@@ -132,12 +132,12 @@ class AnsibleFortios(object):
             except IOError as e:
                 self.module.fail_json(msg='Error reading configuration file. %s' % to_native(e),
                                       exception=traceback.format_exc())
-            self.forti_device.load_config(config_text=running, path=path)
+            self.forti_device.load_config(config_text=running, path=path, in_candidate=True)
 
         else:
             # get  config
             try:
-                self.forti_device.load_config(path=path)
+                self.forti_device.load_config(path=path, in_candidate=True)
             except Exception as e:
                 self.forti_device.close()
                 self.module.fail_json(msg='Error reading running config. %s' % to_native(e),
