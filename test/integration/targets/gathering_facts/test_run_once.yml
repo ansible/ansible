@@ -2,6 +2,10 @@
 - hosts: facthost1
   gather_facts: no
   tasks:
+    - name: check that smart gathering is enabled
+      fail:
+        msg: 'smart gathering must be enabled'
+      when: 'lookup("env", "ANSIBLE_GATHERING") != "smart"'
     - name: install test local facts
       copy:
         src: uuid.fact
