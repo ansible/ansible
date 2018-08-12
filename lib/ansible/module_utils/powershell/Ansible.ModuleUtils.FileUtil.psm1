@@ -923,6 +923,13 @@ namespace Ansible.IO
         {
             NativeHelpers.SECURITY_INFORMATION secInfo = NativeHelpers.SECURITY_INFORMATION.NONE;
             List<string> privileges = new List<string>();
+
+            // Add the SeBackupPrivilege if it is on the process token
+            SafeWaitHandle process = Ansible.PrivilegeUtil.Privileges.GetCurrentProcess();
+            Dictionary<string, Ansible.PrivilegeUtil.PrivilegeAttributes> currPrivileges = Ansible.PrivilegeUtil.Privileges.GetAllPrivilegeInfo(process);
+            if (currPrivileges.ContainsKey("SeBackupPrivilege"))
+                privileges.Add("SeBackupPrivilege");
+
             if ((includeSections.HasFlag(AccessControlSections.Access)))
                 secInfo |= NativeHelpers.SECURITY_INFORMATION.DACL_SECURITY_INFORMATION;
             if ((includeSections.HasFlag(AccessControlSections.Audit)))
