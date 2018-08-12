@@ -1,0 +1,264 @@
+- name: 'Add custom fact, call setup using a gather_subset param, save custom
+        fact value'
+  hosts: '~facthost[1-5]'
+  gather_facts: no
+  tasks:
+    - name: check that smart gathering is enabled
+      run_once: true
+      fail:
+        msg: smart gathering must be enabled
+      when: 'lookup("env", "ANSIBLE_GATHERING") != "smart"'
+
+    - name: install test local facts
+      copy:
+        src: uuid.fact
+        dest: /etc/ansible/facts.d/
+        mode: 0755
+
+    - block:
+        - name: "explicit call to setup (gather_subset: '!min' and 'local')"
+          setup:
+            gather_subset:
+              - '!min'
+              - 'local'
+
+        - name: save uuid custom fact
+          set_fact:
+            uuid_first_play: '{{ ansible_local.uuid }}'
+
+        - name: 'check that os_family fact is not defined (due to gather_subset task value)'
+          fail:
+          when: ansible_os_family is defined
+
+      rescue:
+        - name: remove test local facts
+          file:
+            path: /etc/ansible/facts.d/uuid.fact
+            state: absent
+
+# gather_subset at setup task: ['!min', 'local']
+# gather_subset at play: '!min,local'
+# => setup is called once
+- name: "use 'gather_subset' keyword at play level, value is a string"
+  hosts: facthost1
+  gather_subset: '!min,local'
+  tasks:
+    - block:
+        - name: 'check gather_subset fact'
+          fail:
+            msg: "expected: ['!min', 'local'], encountered: {{ gather_subset }}"
+          when: "gather_subset|symmetric_difference(['!min', 'local'])"
+
+        - name: 'check that os_family fact is not defined (due to gather_subset play value)'
+          fail:
+          when: ansible_os_family is defined
+
+        - name: "check that setup has been called once"
+          fail:
+            msg: uuids must be equal
+          when: "uuid_first_play != ansible_local.uuid"
+
+      always:
+        - name: remove test local facts
+          file:
+            path: /etc/ansible/facts.d/uuid.fact
+            state: absent
+
+# gather_subset at setup task: ['!min', 'local']
+# gather_subset at play: ['local', '!min']
+# => setup is called once
+- name: "use 'gather_subset' keyword at play level, value is a list"
+  hosts: facthost2
+  gather_subset:
+    # items are not in the same order than gather_subset task value
+    - 'local'
+    - '!min'
+  tasks:
+    - block:
+        - name: 'check gather_subset fact'
+          fail:
+            msg: "expected: ['!min', 'local'], encountered: {{ gather_subset }}"
+          when: "gather_subset|symmetric_difference(['!min', 'local'])"
+
+        - name: 'check that os_family fact is not defined (due to gather_subset play value)'
+          fail:
+          when: ansible_os_family is defined
+
+        - name: "check that setup has been called once"
+          fail:
+            msg: uuids must be equal
+          when: "uuid_first_play != ansible_local.uuid"
+
+      always:
+        - name: remove test local facts
+          file:
+            path: /etc/ansible/facts.d/uuid.fact
+            state: absent
+
+# gather_subset at setup task: ['!min', 'local']
+# gather_subset at play: ['local', 'virtual', '!min']
+# => setup is called twice
+- name: "use 'gather_subset' keyword at play level, one item added"
+  hosts: facthost3
+  gather_subset:
+    # one item added ('virtual')
+    - 'local'
+    - 'virtual'
+    - '!min'
+  tasks:
+    - block:
+        - name: 'check gather_subset fact'
+          fail:
+            msg: "expected: ['local', 'virtual', '!min'], encountered: {{ gather_subset }}"
+          when: "gather_subset|symmetric_difference(['local', 'virtual', '!min'])"
+
+        - name: 'check that os_family fact is not defined (due to gather_subset play value)'
+          fail:
+          when: ansible_os_family is defined
+
+        - name: check that setup has been called twice
+          fail:
+            msg: uuids must not be equal
+          when: "uuid_first_play == ansible_local.uuid"
+
+      always:
+        - name: remove test local facts
+          file:
+            path: /etc/ansible/facts.d/uuid.fact
+            state: absent
+
+# gather_subset at setup task: ['!min', 'local']
+# gather_subset at play: ['!min']
+# => setup is called once
+- name: "use 'gather_subset' keyword at play level, one item removed, setup
+        isn't called again, facts already gathered are kept"
+  hosts: facthost4
+  gather_subset:
+    # one item removed ('local')
+    - '!min'
+  tasks:
+    - block:
+        - name: 'check gather_subset fact ("local" facts still there)'
+          fail:
+            msg: "expected: ['!min', 'local'], encountered: {{ gather_subset }}"
+          when: "gather_subset|symmetric_difference(['!min', 'local'])"
+
+        - name: 'check that os_family fact still not defined'
+          fail:
+          when: ansible_os_family is defined
+
+        - name: 'check that local facts have been kept'
+          fail:
+          when: "ansible_local is not defined or 'uuid' not in ansible_local"
+
+        - name: "check that setup hasn't been called"
+          fail:
+            msg: uuids must be equal
+          when: "uuid_first_play != ansible_local.uuid"
+
+      always:
+        - name: remove test local facts
+          file:
+            path: /etc/ansible/facts.d/uuid.fact
+            state: absent
+
+# gather_subset at setup task: ['!min', 'local']
+# gather_subset at play: ['local']
+# => setup is called twice
+- hosts: facthost5
+  gather_subset:
+    # one item removed ('!min')
+    - 'local'
+  tasks:
+    - block:
+        - name: 'check gather_subset fact'
+          fail:
+            msg: "expected: ['local'], encountered: {{ gather_subset }}"
+          when: "gather_subset != ['local']"
+
+        - name: 'check that os_family fact is defined'
+          fail:
+          when: ansible_os_family is not defined
+
+        - name: 'check that local fact is present'
+          fail:
+          when: "ansible_local is not defined or 'uuid' not in ansible_local"
+
+        - name: "check that setup has been called twice"
+          fail:
+            msg: uuids must not be equal
+          when: "uuid_first_play == ansible_local.uuid"
+
+      always:
+        - name: remove test local facts
+          file:
+            path: /etc/ansible/facts.d/uuid.fact
+            state: absent
+
+###############################################################################
+# gather_subset at setup task: all
+# gather_subset at play: 'local'
+# => setup is called once
+- hosts: facthost6
+  gather_facts: no
+  tasks:
+    - name: check that smart gathering is enabled
+      run_once: true
+      fail:
+        msg: smart gathering must be enabled
+      when: 'lookup("env", "ANSIBLE_GATHERING") != "smart"'
+
+    - name: install test local facts
+      copy:
+        src: uuid.fact
+        dest: /etc/ansible/facts.d/
+        mode: 0755
+
+    - block:
+        - name: "explicit call to setup (default value of gather_subset)"
+          setup:
+
+        - name: save uuid custom fact
+          set_fact:
+            uuid_first_play: '{{ ansible_local.uuid }}'
+
+        - name: 'check that os_family fact is defined (due to setup task)'
+          fail:
+          when: ansible_os_family is not defined
+
+      rescue:
+        - name: remove test local facts
+          file:
+            path: /etc/ansible/facts.d/uuid.fact
+            state: absent
+
+- name: "'gather_subset' at play level is included in fact subsets used by
+        setup task: setup isn't called again, facts already gathered are kept"
+  hosts: facthost6
+  gather_subset:
+    - 'local'
+  tasks:
+    - block:
+        - name: 'check gather_subset fact ("local" facts still there)'
+          fail:
+            msg: "expected: ['all'], encountered: {{ gather_subset }}"
+          when: "gather_subset != ['all']"
+
+        - name: 'check that os_family fact is defined (due to gather_subset setup value)'
+          fail:
+          when: ansible_os_family is not defined
+
+        - name: 'check that local facts have been kept'
+          fail:
+          when: "ansible_local is not defined or 'uuid' not in ansible_local"
+
+        - name: "check that setup hasn't been called"
+          fail:
+            msg: uuids must be equal
+          when: "uuid_first_play != ansible_local.uuid"
+
+      always:
+        - name: remove test local facts
+          file:
+            path: /etc/ansible/facts.d/uuid.fact
+            state: absent

@@ -1,0 +1,54 @@
+- hosts: facthost1
+  gather_facts: no
+  tasks:
+    - name: check that smart gathering is enabled
+      fail:
+        msg: 'smart gathering must be enabled'
+      when: 'lookup("env", "ANSIBLE_GATHERING") != "smart"'
+
+    - name: install test local facts
+      copy:
+        src: uuid.fact
+        dest: /etc/ansible/facts.d/
+        mode: 0755
+
+    - block:
+        - name: "explicit call to setup (gather_subset: '!min' and 'local')"
+          setup:
+            gather_subset:
+              - '!min'
+              - 'local'
+
+        - name: save uuid custom fact
+          set_fact:
+            uuid_first_play: '{{ ansible_local.uuid }}'
+
+        - name: 'check that os_family fact is not defined (due to gather_subset value)'
+          fail:
+            msg: os_family fact is defined, it should not
+          when: ansible_os_family is defined
+
+      rescue:
+        - name: remove test local facts
+          file:
+            path: /etc/ansible/facts.d/uuid.fact
+            state: absent
+
+- hosts: facthost1
+  tasks:
+    - block:
+        - name: check that os_family fact is defined
+          fail:
+            msg: "os_family fact isn't defined"
+          when: ansible_os_family is not defined
+
+        - name: check that setup has been called
+          fail:
+            msg: uuids should not be equal
+          when: uuid_first_play == ansible_local.uuid
+
+      always:
+        - name: remove test local facts
+          file:
+            path: /etc/ansible/facts.d/uuid.fact
+            state: absent
