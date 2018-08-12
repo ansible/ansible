@@ -228,8 +228,8 @@ class Zpool(object):
         rc = p.returncode
         if rc == 0:
             return out
-    else:
-        return False
+        else:
+            return False
 
     def opt_exists(self):
         cmd = [self.zpool_cmd, "get all ", self.name, "|", self.zpool_grep, "auto | ", self.zpool_awk, "'{ print $2 $3 }'"]
