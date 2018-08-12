@@ -192,7 +192,7 @@ def parse_args():
                       help=argparse.SUPPRESS)
 
     add_changes(test, argparse)
-    add_environments(test, None)
+    add_environments(test)
 
     integration = argparse.ArgumentParser(add_help=False, parents=[test])
 
