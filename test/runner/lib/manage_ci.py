@@ -46,6 +46,7 @@ class ManageWindowsCI(object):
             self.ssh_args += ['-o', '%s=%s' % (ssh_option, ssh_options[ssh_option])]
 
     def setup(self):
+        """Used in delegate_remote to setup the host, no action is required for Windows."""
         pass
 
     def wait(self):
