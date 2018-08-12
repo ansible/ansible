@@ -26,13 +26,11 @@ description:
       L(Let's Encrypt,https://letsencrypt.org/)."
    - "Note that exactly one of C(account_key_src), C(account_key_content),
       C(private_key_src) or C(private_key_content) must be specified."
-   - "Also note that in general, trying to revoke an already revoked
-      certificate will lead to an error. The module tries to detect some
-      common error messages (for example, the ones issued by
-      L(Let's Encrypt,https://letsencrypt.org/)'s
-      L(Boulder,https://github.com/letsencrypt/boulder/) software), but
-      this might stop working and probably will not work for other server
-      softwares."
+   - "Also note that trying to revoke an already revoked certificate
+      should result in an unchanged status, even if the revocation reason
+      was different than the one specified here. Also, depending on the
+      server, it can happen that some other error is returned if the
+      certificate has already been revoked."
 extends_documentation_fragment:
   - acme
 options:
@@ -193,12 +191,22 @@ def main():
             # Step 2: sign revokation request with account key
             result, info = account.send_signed_request(endpoint, payload)
         if info['status'] != 200:
-            if module.params.get('acme_version') == 1:
-                error_type = 'urn:acme:error:malformed'
+            already_revoked = False
+            # Standarized error in draft 14 (https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-7.6)
+            if result.get('type') == 'urn:ietf:params:acme:error:alreadyRevoked':
+                already_revoked = True
             else:
-                error_type = 'urn:ietf:params:acme:error:malformed'
-            if result.get('type') == error_type and result.get('detail') == 'Certificate already revoked':
-                # Fallback: boulder returns this in case the certificate was already revoked.
+                # Hack for Boulder errors
+                if module.params.get('acme_version') == 1:
+                    error_type = 'urn:acme:error:malformed'
+                else:
+                    error_type = 'urn:ietf:params:acme:error:malformed'
+                if result.get('type') == error_type and result.get('detail') == 'Certificate already revoked':
+                    # Fallback: boulder returns this in case the certificate was already revoked.
+                    already_revoked = True
+            # If we know the certificate was already revoked, we don't fail,
+            # but successfully terminate while indicating no change
+            if already_revoked:
                 module.exit_json(changed=False)
             raise ModuleFailException('Error revoking certificate: {0} {1}'.format(info['status'], result))
         module.exit_json(changed=True)
