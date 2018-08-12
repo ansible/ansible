@@ -115,21 +115,24 @@ def main():
         module.fail_json(msg='Could not import the python library pyFG required by this module')
 
     # define device
-    f = FortiOS(module.params['host'],
-                username=module.params['username'],
-                password=module.params['password'],
-                timeout=module.params['timeout'],
-                vdom=module.params['vdom'])
-
-    # connect
-    try:
-        f.open()
-    except Exception:
-        module.fail_json(msg='Error connecting device')
+    if module.params["file_mode"]:
+        f = FortiOS("")
+    else:
+        f = FortiOS(module.params['host'],
+                    username=module.params['username'],
+                    password=module.params['password'],
+                    timeout=module.params['timeout'],
+                    vdom=module.params['vdom'])
+        # connect
+        try:
+            f.open()
+        except Exception:
+            module.fail_json(msg='Error connecting device')
 
     # get  config
     try:
-        f.load_config(path=module.params['filter'])
+        if not module.params["file_mode"]:
+            f.load_config(path=module.params['filter'])
         result['running_config'] = f.running_config.to_text()
 
     except Exception:
