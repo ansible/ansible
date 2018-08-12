@@ -10,8 +10,8 @@ except ImportError:
 
 def main():
     d = db.open(sys.argv[1], 'n')
-    d['k1'] = 'v1'
-    d['k2'] = 'v2'
+    d['k1'] = 'v1'.encode('utf-8')
+    d['k2'] = 'v2'.encode('utf-8')
     d.close()
 
 if __name__ == "__main__":
