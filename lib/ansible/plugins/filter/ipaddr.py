@@ -29,6 +29,7 @@ try:
 except ImportError:
     # in this case, we'll make the filters return error messages (see bottom)
     netaddr = None
+    NETADDR_ERRORS = ()
 else:
     class mac_linux(netaddr.mac_unix):
         pass
