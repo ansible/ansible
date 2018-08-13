@@ -98,7 +98,7 @@ This can be done using one of the following methods:
 
 Active Directory Certificate Services is beyond of scope in this documentation but may be
 the best option to use when running in a domain environment. For more information,
-see the `Active Directory Certificate Services documentation <https://technet.microsoft.com/en-us/library/cc732625(v=ws.11).aspx>`_.
+see the `Active Directory Certificate Services documentation <https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-R2-and-2008/cc732625(v=ws.11)>`_.
 
 .. Note:: Using the PowerShell cmdlet ``New-SelfSignedCertificate`` to generate
     a certificate for authentication only works when being generated from a
@@ -483,7 +483,7 @@ There are two ways that older hosts can be used with CredSSP:
   has no way of supporting TLS 1.2
 
 To enable TLS 1.2 support on Server 2008 R2 and Windows 7, the optional update
-`KRB3080079 <https://support.microsoft.com/en-us/help/3080079/update-to-add-rds-support-for-tls-1.1-and-tls-1.2-in-windows-7-or-windows-server-2008-r2>`_
+`KRB3080079 <https://support.microsoft.com/en-us/help/3080079/update-to-add-rds-support-for-tls-1-1-and-tls-1-2-in-windows-7-or-wind>`_
 needs to be installed.
 
 Once the update has been applied and the Windows host rebooted, run the following
