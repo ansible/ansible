@@ -234,7 +234,7 @@ class Task(Base, Conditional, Taggable, Become):
                 elif C.INVALID_TASK_ATTRIBUTE_FAILED or k in self._valid_attrs:
                     new_ds[k] = v
                 else:
-                    display.warning("Ignoring invalid attribute: %s" % k)
+                    raise AnsibleError("Unknown attribute %s" % k)
 
         return super(Task, self).preprocess_data(new_ds)
 
