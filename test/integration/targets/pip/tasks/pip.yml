@@ -230,6 +230,48 @@
     that:
       - "pip_install_venv is changed"
 
+# https://github.com/ansible/ansible/issues/37912
+# support chdir without virtualenv
+- name: create chdir test directories
+  file:
+    state: directory
+    name: "{{ output_dir }}/{{ item }}"
+  loop:
+    - pip_module
+    - pip_root
+    - pip_module/ansible_test_pip_chdir
+
+- name: copy test module
+  copy:
+    src: "{{ item }}"
+    dest: "{{ output_dir }}/pip_module/{{ item }}"
+  loop:
+    - setup.py
+    - ansible_test_pip_chdir/__init__.py
+
+- name: install test module
+  pip:
+    name: .
+    chdir: "{{ output_dir }}/pip_module"
+    extra_args: --user --upgrade --root {{ output_dir }}/pip_root
+
+- name: register python_site_lib
+  command: 'python -c "import site; print(site.USER_SITE)"'
+  register: pip_python_site_lib
+
+- name: register python_user_base
+  command: 'python -c "import site; print(site.USER_BASE)"'
+  register: pip_python_user_base
+
+- name: run test module
+  shell: "PYTHONPATH=$(echo {{ output_dir }}/pip_root{{ pip_python_site_lib.stdout }}) {{ output_dir }}/pip_root{{ pip_python_user_base.stdout }}/bin/ansible_test_pip_chdir"
+  register: pip_chdir_command
+
+- name: make sure command ran
+  assert:
+    that:
+      - pip_chdir_command.stdout == "success"
+
 # https://github.com/ansible/ansible/issues/25122
 - name: ensure is a fresh virtualenv
   file:
