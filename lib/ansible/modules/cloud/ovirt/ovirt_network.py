@@ -107,6 +107,12 @@ EXAMPLES = '''
     id: 00000000-0000-0000-0000-000000000000
     name: "new_network_name"
     data_center: mydatacenter
+
+# Add network from external provider
+- ovirt_networks:
+    data_center: mydatacenter
+    name: mynetwork
+    external_provider: ovirt-provider-ovn
 '''
 
 RETURN = '''
