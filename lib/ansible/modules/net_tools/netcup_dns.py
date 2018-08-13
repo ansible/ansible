@@ -77,7 +77,7 @@ author: "Nicolai Buchwitz (@nbuchwitz)"
 
 EXAMPLES = '''
 - name: Create a record of type A
-  netcup_dns_record:
+  netcup_dns:
     api_key: "..."
     api_password: "..."
     customer_id: "..."
@@ -87,7 +87,7 @@ EXAMPLES = '''
     value: "127.0.0.1"
 
 - name: Delete that record
-  netcup_dns_record:
+  netcup_dns:
     api_key: "..."
     api_password: "..."
     customer_id: "..."
@@ -97,17 +97,69 @@ EXAMPLES = '''
     value: "127.0.0.1"
     state: absent
 
-- name: Set MX record
-  netcup_dns_record:
+- name: Create a wildcard record
+  netcup_dns:
+    api_key: "..."
+    api_password: "..."
+    customer_id: "..."
+    domain: "example.com"
+    name: "*"
+    type: "A"
+    value: "127.0.1.1"
+
+- name: Set the MX record for example.com
+  netcup_dns:
     api_key: "..."
     api_password: "..."
     customer_id: "..."
     domain: "example.com"
     type: "MX"
     value: "mail.example.com"
+
+- name: Set a record and ensure that this is the only one
+  netcup_dns:
+    api_key: "..."
+    api_password: "..."
+    customer_id: "..."
+    name: "demo"
+    domain: "example.com"
+    type: "AAAA"
+    value: "::1"
+    solo: true
 '''
 
-RETURN = r"""# """
+RETURN = '''
+records:
+    description: list containing all records
+    returned: success
+    type: complex
+    contains:
+        name:
+            description: the record name
+            returned: success
+            type: string
+            sample: fancy-hostname
+        type:
+            description: the record type
+            returned: succcess
+            type: string
+            sample: A
+        value:
+            description: the record destination
+            returned: success
+            type: string
+            sample: 127.0.0.1
+        priority:
+            description: the record priority (only relevant if type=MX)
+            returned: success
+            type: int
+            sample: 0
+        id:
+            description: internal id of the record
+            returned: success
+            type: int
+            sample: 12345
+'''
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -157,41 +209,53 @@ def main():
         module.fail_json(msg="record type MX required the 'priority' argument")
 
     has_changed = False
-    result = []
+    all_records = []
     try:
         with nc_dnsapi.Client(customer_id, api_key, api_password) as api:
-            new_record = DNSRecord(record, record_type, value, priority=priority)
-            record_exists = api.dns_record_exists(domain, new_record)
+            all_records = api.dns_records(domain)
+            record = DNSRecord(record, record_type, value, priority=priority)
+
+            # try to get existing record
+            record_exists = False
+            for r in all_records:
+                if r == record:
+                    record_exists = True
+                    record = r
+
+                    break
 
             if state == 'present':
                 if solo:
-                    all_records = api.dns_records(domain)
                     obsolete_records = [r for r in all_records if
-                                        r.hostname == new_record.hostname
-                                        and r.type == new_record.type
-                                        and not r.destination == new_record.destination]
+                                        r.hostname == record.hostname
+                                        and r.type == record.type
+                                        and not r.destination == record.destination]
 
                     if obsolete_records:
                         if not module.check_mode:
-                            result = api.delete_dns_records(domain, obsolete_records)
+                            all_records = api.delete_dns_records(domain, obsolete_records)
 
                         has_changed = True
 
                 if not record_exists:
                     if not module.check_mode:
-                        result = api.add_dns_record(domain, new_record)
+                        all_records = api.add_dns_record(domain, record)
 
                     has_changed = True
             elif state == 'absent' and record_exists:
                 if not module.check_mode:
-                    result = api.delete_dns_record(domain, api.dns_record(domain, new_record))
+                    all_records = api.delete_dns_record(domain, record)
 
                 has_changed = True
 
     except Exception as ex:
         module.fail_json(msg=ex.message)
 
-    module.exit_json(changed=has_changed, result=result)
+    module.exit_json(changed=has_changed, result={"records": [record_data(r) for r in all_records]})
+
+
+def record_data(r):
+    return {"name": r.hostname, "type": r.type, "value": r.destination, "priority": r.priority, "id": r.id}
 
 
 if __name__ == '__main__':
