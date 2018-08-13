@@ -51,6 +51,7 @@ from six import iteritems, string_types
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.common.collections import is_sequence
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.loader import fragment_loader
 from ansible.utils import plugin_docs
 from ansible.utils.display import Display
@@ -157,6 +158,17 @@ def rst_xline(width, char="="):
 
 
 test_list = partial(is_sequence, include_strings=False)
+
+
+def normalize_options(value):
+    """Normalize boolean option value."""
+
+    if value.get('type') == 'bool' and 'default' in value:
+        try:
+            value['default'] = boolean(value['default'], strict=True)
+        except TypeError:
+            pass
+    return value
 
 
 def write_data(text, output_dir, outputname, module=None):
@@ -273,6 +285,16 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
 
         # use ansible core library to parse out doc metadata YAML and plaintext examples
         doc, examples, returndocs, metadata = plugin_docs.get_docstring(module_path, fragment_loader, verbose=verbose)
+
+        if 'options' in doc and doc['options'] is None:
+            display.error("*** ERROR: DOCUMENTATION.options must be a dictionary/hash when used. ***")
+            pos = getattr(doc, "ansible_pos", None)
+            if pos is not None:
+                display.error("Module position: %s, %d, %d" % doc.ansible_pos)
+            doc['options'] = dict()
+
+        for key, opt in doc.get('options', {}).items():
+            doc['options'][key] = normalize_options(opt)
 
         # save all the information
         module_info[module] = {'path': module_path,
