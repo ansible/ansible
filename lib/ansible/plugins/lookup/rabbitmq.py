@@ -121,8 +121,8 @@ class LookupModule(LookupBase):
             method_frame, properties, body = conn_channel.basic_get(queue=channel)
             if method_frame:
                 display.vvv(u"%s, %s, %s " % (method_frame, properties, body))
-                msg_details = dict(
-                                  {'msg': body,
+                msg_details = dict({
+                                   'msg': body,
                                    'message_count': method_frame.message_count,
                                    'routing_key': method_frame.routing_key,
                                    'delivery_tag': method_frame.delivery_tag,
@@ -135,7 +135,7 @@ class LookupModule(LookupBase):
                     try:
                         msg_details['json'] = json.loads(body)
                     except ValueError as e:
-                        raise AnsibleError("Unable to decode JSON for message %s" % method_frame.delivery_tag )
+                        raise AnsibleError("Unable to decode JSON for message %s" % method_frame.delivery_tag)
 
                 ret.append(msg_details)
                 conn_channel.basic_ack(method_frame.delivery_tag)
