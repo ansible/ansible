@@ -239,6 +239,35 @@ except ImportError:
     HAS_CLI_TRANSPORT = False
 
 
+class NoChangeReporter(object):
+    stdout_re = [
+        # A general error when a resource already exists
+        re.compile(r"The requested.*already exists"),
+
+        # Returned when creating a duplicate cli alias
+        re.compile(r"Data Input Error: shared.*already exists"),
+    ]
+
+    def find_no_change(self, responses):
+        """Searches the response for something that looks like a change
+
+        This method borrows heavily from Ansible's ``_find_prompt`` method
+        defined in the ``lib/ansible/plugins/connection/network_cli.py::Connection``
+        class.
+
+        Arguments:
+            response (string): The output from the command.
+
+        Returns:
+            bool: True when change is detected. False otherwise.
+        """
+        for response in responses:
+            for regex in self.stdout_re:
+                if regex.search(response):
+                    return True
+        return False
+
+
 class Parameters(AnsibleF5Parameters):
     returnables = ['stdout', 'stdout_lines', 'warnings', 'executed_commands']
 
@@ -398,7 +427,7 @@ class BaseManager(object):
         lines = list()
         for item in stdout:
             if isinstance(item, string_types):
-                item = str(item).split('\n')
+                item = item.split('\n')
             lines.append(item)
         return lines
 
@@ -505,13 +534,19 @@ class BaseManager(object):
         if self.want.warn:
             changes['warnings'] = self.warnings
         self.changes = Parameters(params=changes, module=self.module)
+        return self.determine_change(responses)
+
+    def determine_change(self, responses):
+        changer = NoChangeReporter()
+        if changer.find_no_change(responses):
+            return False
         if any(x for x in self.want.normalized_commands if x.startswith(self.changed_command_prefixes)):
             return True
         return False
 
     def _check_known_errors(self, responses):
         # A regex to match the error IDs used in the F5 v2 logging framework.
-        pattern = r'^[0-9A-Fa-f]+:?\d+?:'
+        # pattern = r'^[0-9A-Fa-f]+:?\d+?:'
 
         for resp in responses:
             if 'usage: tmsh' in resp:
@@ -519,8 +554,6 @@ class BaseManager(object):
                     "tmsh command printed its 'help' message instead of running your command. "
                     "This usually indicates unbalanced quotes."
                 )
-            if re.match(pattern, resp):
-                raise F5ModuleError(str(resp))
 
     def _transform_to_complex_commands(self, commands):
         spec = dict(
@@ -598,9 +631,10 @@ class V2Manager(BaseManager):
                     utilCmdArgs=command
                 )
                 if hasattr(output, 'commandResult'):
-                    responses.append(str(output.commandResult).strip())
-            except Exception as ex:
-                pass
+                    output = u'{0}'.format(output.commandResult)
+                    responses.append(output.strip())
+            except F5ModuleError:
+                raise
         return responses
 
 
@@ -673,9 +707,9 @@ def main():
     )
     if is_cli(module) and not HAS_F5SDK:
         module.fail_json(msg="The python f5-sdk module is required to use the REST api")
+    client = F5Client(**module.params)
 
     try:
-        client = F5Client(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         if not is_cli(module):
