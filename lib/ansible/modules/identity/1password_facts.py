@@ -15,44 +15,62 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 DOCUMENTATION = '''
-    module: 1password_facts
-    author:
-      - Ryan Conway (@rylon)
-    version_added: ""
-    requirements:
-      - C(op) 1Password command line utility (v0.5.1). See U(https://support.1password.com/command-line/)
-    notes:
-      - "Based on the `onepassword` lookup plugin by Scott Buchanan <sbuchanan@ri.pn>."
-    short_description: Fetch facts from 1Password items
-    description:
-      - M(1password_facts) wraps the C(op) command line utility to fetch data about one or more 1password items.
-    options:
-      search_terms:
+module: 1password_facts
+author:
+    - Ryan Conway (@rylon)
+version_added: "2.7"
+requirements:
+    - C(op) 1Password command line utility (v0.5.1). See U(https://support.1password.com/command-line/)
+notes:
+    - "Based on the `onepassword` lookup plugin by Scott Buchanan <sbuchanan@ri.pn>."
+short_description: Fetch facts from 1Password items
+description:
+    - M(1password_facts) wraps the C(op) command line utility to fetch data about one or more 1password items and return as Ansible facts.
+    - A fatal error occurs if any of the items being searched for can not be found.
+    - Recommend using with the I(no_log) option to avoid logging the values of the secrets being retrieved.
+options:
+    search_terms:
         description:
-          - A list of one or more search terms.
-            Each search term can either be a simple string (in which case the "field" is assumed to be "password"),
-            or it can be a dictionary for more control.
-          - When passing a dictionary, the following fields are available:
-            I(name):    The name of the 1Password item to search for (required)
-            I(field):   The name of the field to search for within this item (optional, defaults to "password")
-            I(section): The name of a section within this item containing the specified field (optional, will search all sections if not specified)
-            I(vault):   The name of the particular vault to search, useful if your user has access to multiple vaults (optional)
-          - If the 1Password item is a document (attachment), only the I(name) is required, and the I(field) is implied to be "document".
+            - A list of one or more search terms.
+            - Each search term can either be a simple string or it can be a dictionary for more control.
+            - When passing a simple string, I(field) is assumed to be C(password).
+            - When passing a dictionary, the following fields are available.
+        suboptions:
+            name:
+                description:
+                    - The name of the 1Password item to search for (required).
+            field:
+                description:
+                    - The name of the field to search for within this item (optional, defaults to "password" (or "document" if the item has an attachment).
+            section:
+                description:
+                    - The name of a section within this item containing the specified field (optional, will search all sections if not specified).
+            vault:
+                description:
+                    - The name of the particular 1Password vault to search, useful if your 1Password user has access to multiple vaults (optional).
         required: True
-      auto_login:
+    auto_login:
         description:
-          - A dictionary containing authentication details. If this is set, M(1password_facts) will attempt to login to 1password automatically.
-            If it is not set, you must have already logged in via the CLI before running Ansible.
-          - Required sub-fields:
-            I(account):        1Password account name (<account>.1password.com)
-            I(username):       1Password username
-            I(masterpassword): The master password for your user
-            I(secretkey):      The secret key for your user
-          - These values can be stored via Ansible vault, and passed to the module securely that way.
-        default: 'None'
+            - A dictionary containing authentication details. If this is set, M(1password_facts) will attempt to login to 1password automatically.
+            - The required values can be stored in Ansible Vault, and passed to the module securely that way.
+            - Without this option, you must have already logged in via the 1Password CLI before running Ansible.
+        suboptions:
+            account:
+                description:
+                    - 1Password account name (<account>.1password.com).
+            username:
+                description:
+                    - 1Password username.
+            masterpassword:
+                description:
+                    - The master password for your user.
+            secretkey:
+                description:
+                    - The secret key for your user.
+        default: {}
         required: False
-      cli_path:
-        description: Used to specify the exact path to the C(op) command line interface (optional, defaults to "op")
+    cli_path:
+        description: Used to specify the exact path to the C(op) command line interface
         required: False
         default: 'op'
 '''
