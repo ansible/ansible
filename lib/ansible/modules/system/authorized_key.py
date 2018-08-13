@@ -78,6 +78,12 @@ options:
         cases such as fetching it from GitHub or GitLab.
       - If no comment is specified, the existing comment will be kept.
     version_added: "2.4"
+  follow:
+    description:
+      - Follow path symlink instead of replacing it
+    type: bool
+    default: 'no'
+    version_added: "2.7"
 author: "Ansible Core Team"
 '''
 
@@ -659,7 +665,7 @@ def main():
             exclusive=dict(default=False, type='bool'),
             comment=dict(required=False, default=None, type='str'),
             validate_certs=dict(default=True, type='bool'),
-            follow=dict(default=True, type='bool')
+            follow=dict(default=False, type='bool')
         ),
         supports_check_mode=True
     )
