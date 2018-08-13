@@ -142,8 +142,8 @@ class ElementSWNode(object):
             Get Node List
             :description: Find and retrieve node_id from the active cluster
 
-            :return: List of node_id
-            :rtype: list (node_id integers)
+            :return: None
+            :rtype: None
         """
         if len(self.node_id) > 0:
             unprocessed_node_list = self.node_id
@@ -171,18 +171,18 @@ class ElementSWNode(object):
             if self.state == "present":
                 for current_node in all_nodes.nodes:
                     if current_node.node_id in unprocessed_node_list:
-                        unprocessed_nodes.remove(current_node.node_id)
+                        unprocessed_node_list.remove(current_node.node_id)
                     elif current_node.name in unprocessed_node_list:
-                        unprocessed_nodes.remove(current_node.name)
+                        unprocessed_node_list.remove(current_node.name)
                     elif current_node.mip in unprocessed_node_list:
-                        unprocessed_nodes.remove(current_node.mip)
+                        unprocessed_node_list.remove(current_node.mip)
                 for current_node in all_nodes.pending_nodes:
                     if current_node.pending_node_id in unprocessed_node_list:
-                        unprocessed_nodes.remove(current_node.node_id)
+                        unprocessed_node_list.remove(current_node.node_id)
                     elif current_node.name in unprocessed_node_list:
-                        unprocessed_nodes.remove(current_node.name)
+                        unprocessed_node_list.remove(current_node.name)
                     elif current_node.mip in unprocessed_node_list:
-                        unprocessed_nodes.remove(current_node.mip)
+                        unprocessed_node_list.remove(current_node.mip)
                 if len(unprocessed_node_list) > 0:
                     self.module.fail_json(msg='Error adding node %s: node not in pending or active lists' % to_native(unprocessed_node_list))
         return None
