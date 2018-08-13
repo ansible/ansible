@@ -219,13 +219,20 @@ class Vultr:
 
         if not r_list:
             return {}
-
-        for r_id, r_data in r_list.items():
-            if str(r_data[key]) == str(value):
-                self.api_cache.update({
-                    resource: r_data
-                })
-                return r_data
+        elif isinstance(r_list, list):
+            for r_data in r_list:
+                if str(r_data[key]) == str(value):
+                    self.api_cache.update({
+                        resource: r_data
+                    })
+                    return r_data
+        elif isinstance(r_list, dict):
+            for r_id, r_data in r_list.items():
+                if str(r_data[key]) == str(value):
+                    self.api_cache.update({
+                        resource: r_data
+                    })
+                    return r_data
 
         self.module.fail_json(msg="Could not find %s with %s: %s" % (resource, key, value))
 
