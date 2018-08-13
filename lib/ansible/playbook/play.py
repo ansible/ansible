@@ -64,7 +64,7 @@ class Play(Base, Taggable, Become):
 
     # Variable Attributes
     _vars_files = FieldAttribute(isa='list', default=[], priority=99)
-    _vars_prompt = FieldAttribute(isa='list', default=[], always_post_validate=True)
+    _vars_prompt = FieldAttribute(isa='list', default=[], always_post_validate=False)
 
     # Role Attributes
     _roles = FieldAttribute(isa='list', default=[], priority=90)
