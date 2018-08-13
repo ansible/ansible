@@ -18,17 +18,15 @@
       name: "{{ resource_name }}"
       initial_node_count: 2
       master_auth:
-        username: "cluster_admin"
-        password: "my-secret-password"
+        username: cluster_admin
+        password: my-secret-password
       node_config:
-        machine_type: "n1-standard-4"
+        machine_type: n1-standard-4
         disk_size_gb: 500
-      zone: 'us-central1-a'
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/cloud-platform
       state: absent
 #----------------------------------------------------------
 - name: create a cluster
@@ -36,17 +34,15 @@
       name: "{{ resource_name }}"
       initial_node_count: 2
       master_auth:
-        username: "cluster_admin"
-        password: "my-secret-password"
+        username: cluster_admin
+        password: my-secret-password
       node_config:
-        machine_type: "n1-standard-4"
+        machine_type: n1-standard-4
         disk_size_gb: 500
-      zone: 'us-central1-a'
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/cloud-platform
       state: present
   register: result
 - name: assert changed is true
@@ -67,17 +63,15 @@
       name: "{{ resource_name }}"
       initial_node_count: 2
       master_auth:
-        username: "cluster_admin"
-        password: "my-secret-password"
+        username: cluster_admin
+        password: my-secret-password
       node_config:
-        machine_type: "n1-standard-4"
+        machine_type: n1-standard-4
         disk_size_gb: 500
-      zone: 'us-central1-a'
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/cloud-platform
       state: present
   register: result
 - name: assert changed is false
@@ -90,17 +84,15 @@
       name: "{{ resource_name }}"
       initial_node_count: 2
       master_auth:
-        username: "cluster_admin"
-        password: "my-secret-password"
+        username: cluster_admin
+        password: my-secret-password
       node_config:
-        machine_type: "n1-standard-4"
+        machine_type: n1-standard-4
         disk_size_gb: 500
-      zone: 'us-central1-a'
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/cloud-platform
       state: absent
   register: result
 - name: assert changed is true
@@ -123,17 +115,15 @@
       name: "{{ resource_name }}"
       initial_node_count: 2
       master_auth:
-        username: "cluster_admin"
-        password: "my-secret-password"
+        username: cluster_admin
+        password: my-secret-password
       node_config:
-        machine_type: "n1-standard-4"
+        machine_type: n1-standard-4
         disk_size_gb: 500
-      zone: 'us-central1-a'
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/cloud-platform
       state: absent
   register: result
 - name: assert changed is false
