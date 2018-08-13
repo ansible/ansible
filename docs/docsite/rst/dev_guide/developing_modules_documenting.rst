@@ -237,7 +237,7 @@ You can link from your module documentation to other module docs, other resource
 * ``L()`` for Links with a heading. For example: ``See L(IOS Platform Options guide, ../network/user_guide/platform_ios.html).``
 * ``U()`` for URLs. For example: ``See U(https://www.ansible.com/products/tower) for an overview.``
 * ``I()`` for option names. For example: ``Required if I(state=present).``
-* ``C()`` for files and option values. For example: ``If not set the environment variable C(ACME_PASSWORD) will be used.
+* ``C()`` for files and option values. For example: ``If not set the environment variable C(ACME_PASSWORD) will be used.``
 * ``M()`` for module names. For example: ``See also M(win_copy) or M(win_template).``
 
 .. note::

@@ -25,6 +25,7 @@ To deprecate a module, you must:
 3. Reference the deprecation in the relevant ``porting_guide_x.y.rst``.
 4. Update ``ANSIBLE_METADATA`` to contain ``status: ['deprecated']``.
 5. Add ``deprecated:`` to the documentation with the following sub-values:
+
   :removed_in: A `string`, such as ``"2.9"``, which represents the version of Ansible this module will replaced with docs only module stub.
   :why: Optional string that used to detail why this has been removed.
   :alternative: Inform users they should do instead, i.e. ``Use M(whatmoduletouseinstead) instead.``.

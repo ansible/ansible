@@ -54,18 +54,18 @@ To define configurable options for your plugin, describe them in the ``DOCUMENTA
 
 .. code-block:: python
 
-  options:
-    option_name:
-      description: describe this config option
-      default: default value for this config option
-      env:
-        - name: NAME_OF_ENV_VAR
-      ini:
-        - section: what_does_this_do?
-          key: ????
-      required: True/False
-      type: boolean/float/integer/list/none/path/pathlist/pathspec/string/tmppath
-      version_added: X.x
+   options:
+     option_name:
+       description: describe this config option
+       default: default value for this config option
+       env:
+         - name: NAME_OF_ENV_VAR
+       ini:
+         - section: what_does_this_do?
+           key: ????
+       required: True/False
+       type: boolean/float/integer/list/none/path/pathlist/pathspec/string/tmppath
+       version_added: X.x
 
 To access the configuration settings in your plugin, use ``self.get_option(<option_name>)``. For most plugin types, the controller pre-populates the settings. If you need to populate settings explicitly, use a ``self.set_options()`` call.
 
