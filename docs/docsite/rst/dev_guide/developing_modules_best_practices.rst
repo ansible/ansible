@@ -59,9 +59,9 @@ Instead of creating a module that does the work of other modules, use Plays and 
 Importing and using shared code
 ===============================
 
-* Use shared code whenever possible - don't reinvent the wheel. Ansible offers base functions for many common patterns (retry, throttling, etc). ## TODO where is shared code and how does a dev use it?
+* Use shared code whenever possible - don't reinvent the wheel. Ansible offers :ref:`utilities <appendix_module_utilities>` for many common use cases and patterns.
 * Import ``ansible.module_utils`` code in the same place as you import other libraries.
-* Do not use wildcards for importing other python modules (for example, ``from ansible.module_utils.basic import *``).
+* Do not use wildcards for importing other python modules (for example, ``from some.other_python_module.basic import *``).
 * Import custom packages in ``try``/``except`` and handle them with ``fail_json()`` in ``main()``. For example:
 
 	.. code-block:: python
