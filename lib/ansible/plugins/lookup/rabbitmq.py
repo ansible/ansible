@@ -65,10 +65,10 @@ RETURN = """
         description: The message_count for the message on the queue
         type: str
       msg:
-        description: The content of the messagec
+        description: The content of the message
         type: str
       redelivered:
-        description:
+        description: The redelivered flag.  True if the message has been delivered before.
         type: str
       routing_key:
         description: The routing_key on the message in the queue
@@ -135,4 +135,4 @@ class LookupModule(LookupBase):
                 break
 
         connection.close()
-        return ret
+        return [ret]
