@@ -73,6 +73,9 @@ RETURN = """
       routing_key:
         description: The routing_key on the message in the queue
         type: str
+      json:
+        description: If application/json is specified in content_typa, json will be loaded into variables
+        type: dict
 
 """
 
