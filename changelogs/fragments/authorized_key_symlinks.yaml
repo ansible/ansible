@@ -1,0 +1,4 @@
+---
+bugfixes:
+- authorized_key now have an option for following symlinks,
+  default behaviour (False) can be changed by setting follow True/False
