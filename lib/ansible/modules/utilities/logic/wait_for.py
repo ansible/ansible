@@ -314,7 +314,7 @@ class LinuxTCPConnectionInfo(TCPConnectionInfo):
     def get_active_connections_count(self):
         active_connections = 0
         for family, socket_path in self.source_file.items():
-            if os.path.exists(socket_path):
+            try:
                 with open(socket_path) as f:
                     for tcp_connection in f.readlines():
                         tcp_connection = tcp_connection.strip().split()
@@ -336,6 +336,8 @@ class LinuxTCPConnectionInfo(TCPConnectionInfo):
                                 (family, self.ipv4_mapped_ipv6_address['match_all']) in self.ips,
                         )):
                             active_connections += 1
+            except IOError:
+                """Socket does not exist."""
         return active_connections
 
 
