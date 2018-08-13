@@ -143,6 +143,8 @@ commands:
   sample: ['interface Loopback999', 'no shutdown']
 """
 
+import json
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import Connection
 from ansible.module_utils._text import to_text
@@ -186,6 +188,9 @@ def validate_args(module, capabilities):
 
 def run(module, capabilities, connection, candidate, running):
     result = {}
+    resp = {}
+    config_diff = []
+    banner_diff = {}
 
     replace = module.params['replace']
     rollback = module.params['rollback']
@@ -224,21 +229,17 @@ def run(module, capabilities, connection, candidate, running):
 
             kwargs = {'candidate': candidate, 'commit': commit, 'replace': replace,
                       'comment': commit_comment}
-            resp = connection.edit_config(**kwargs)
-            if 'diff' in resp:
-                if resp['diff']:
-                    result['commands'] = resp['diff']
-            else:
-                result['commands'] = candidate
+            connection.edit_config(**kwargs)
+            result['changed'] = True
 
         if banner_diff:
-            candidate = banner_diff
-            result['banners'] = candidate
+            candidate = json.dumps(banner_diff)
 
             kwargs = {'candidate': candidate, 'commit': commit}
             if multiline_delimiter:
                 kwargs.update({'multiline_delimiter': multiline_delimiter})
             connection.edit_banner(**kwargs)
+            result['changed'] = True
 
     elif capabilities['device_operations']['supports_onbox_diff']:
         if diff_replace:
@@ -256,15 +257,21 @@ def run(module, capabilities, connection, candidate, running):
         resp = connection.edit_config(**kwargs)
 
         if 'diff' in resp:
-            if resp['diff']:
-                result['commands'] = resp['diff']
+            result['changed'] = True
 
-    if module._diff and 'diff' in resp:
-        if resp['diff']:
+    if module._diff:
+        if 'diff' in resp:
             result['diff'] = {'prepared': resp['diff']}
-
-    if any(key in result for key in ('commands', 'banners')):
-        result['changed'] = True
+        else:
+            diff = ''
+            if config_diff:
+                if isinstance(config_diff, list):
+                    diff += '\n'.join(config_diff)
+                else:
+                    diff += config_diff
+            if banner_diff:
+                diff += json.dumps(banner_diff)
+            result['diff'] = {'prepared': diff}
 
     return result
 
