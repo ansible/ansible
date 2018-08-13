@@ -298,15 +298,36 @@ class PlayIterator:
 
                     gathering = C.DEFAULT_GATHERING
                     implied = self._play.gather_facts is None or boolean(self._play.gather_facts, strict=False)
+                    already_gathered = False
 
-                    if (gathering == 'implicit' and implied) or \
-                       (gathering == 'explicit' and boolean(self._play.gather_facts, strict=False)) or \
-                       (gathering == 'smart' and implied and not (self._variable_manager._fact_cache.get(host.name, {}).get('module_setup', False))):
-                        # The setup block is always self._blocks[0], as we inject it
-                        # during the play compilation in __init__ above.
-                        setup_block = self._blocks[0]
-                        if setup_block.has_tasks() and len(setup_block.block) > 0:
-                            task = setup_block.block[0]
+                    # The setup block is always self._blocks[0], as we inject it
+                    # during the play compilation in __init__ above.
+                    setup_block = self._blocks[0]
+                    if setup_block.has_tasks() and len(setup_block.block) > 0:
+                        setup_task = setup_block.block[0]
+
+                        fact_cache = self._variable_manager._fact_cache
+                        # check if setup module has already been called
+                        if 'module_setup' in fact_cache.get(host.name, {}):
+
+                            available_subsets = fact_cache.get(host.name, {}).get('gather_subset', C.DEFAULT_GATHER_SUBSET)
+                            if available_subsets == ['all']:
+                                already_gathered = True
+                            else:
+                                desired_subsets = setup_task.args['gather_subset'] or C.DEFAULT_GATHER_SUBSET
+
+                                # if 'min' subset wasn't gathered and is implicitly requested, then facts must be gathered
+                                if not('!min' in available_subsets and '!min' not in desired_subsets):
+                                    # ignore excluded subsets
+                                    desired_subsets = set(filter(lambda subset: not subset.startswith('!'), desired_subsets))
+
+                                    already_gathered = set(available_subsets).issuperset(desired_subsets)
+
+                        if (gathering == 'implicit' and implied) or \
+                           (gathering == 'explicit' and boolean(self._play.gather_facts, strict=False)) or \
+                           (gathering == 'smart' and implied and not already_gathered):
+
+                            task = setup_task
                 else:
                     # This is the second trip through ITERATING_SETUP, so we clear
                     # the flag and move onto the next block in the list while setting
