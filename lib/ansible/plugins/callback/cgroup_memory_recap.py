@@ -41,6 +41,13 @@ DOCUMENTATION = '''
         ini:
           - section: callback_cgroupmemrecap
             key: cur_mem_file
+      csv_file:
+        description: Output path for CSV file containing recorded memory readings
+        env:
+            - name: CGROUP_CSV_FILE
+        ini:
+            - section: callback_cgroupmemrecap
+              key: csv_file
 '''
 
 import csv
@@ -65,7 +72,8 @@ class MemProf(threading.Thread):
             with open(self.path) as f:
                 val = f.read()
             self.results.append(int(val.strip()) / 1024 / 1024)
-            self.csvwriter.writerow([self.obj.get_name(), val.strip()])
+            if self.csvwriter:
+                self.csvwriter.writerow([time.time(), self.obj.get_name(), val.strip()])
             time.sleep(0.001)
 
 
@@ -83,6 +91,7 @@ class CallbackModule(CallbackBase):
         self.task_results = []
 
         self._csv_file = None
+        self._csv_writer = None
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
         super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
@@ -93,8 +102,10 @@ class CallbackModule(CallbackBase):
         with open(self.cgroup_max_file, 'w+') as f:
             f.write('0')
 
-        self._csv_file = open('/tmp/results.csv', 'w+')
-        self._csv_writer = csv.writer(self._csv_file)
+        csv_file = self.get_option('csv_file')
+        if csv_file:
+            self._csv_file = open(csv_file, 'w+')
+            self._csv_writer = csv.writer(self._csv_file)
 
     def _profile_memory(self, obj=None):
         prev_task = None
