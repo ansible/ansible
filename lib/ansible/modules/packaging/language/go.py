@@ -14,9 +14,7 @@ description:
     - Manage Go packages
 module: go
 notes:
-    - This module depends on the C(GOPATH) environment variable. Utilize the C(environment) task keyword to affect
-      this module
-    - Similarly to C(GOPATH) use C(environment) to influence Go with any other accepted environment variable
+    - Use C(environment) to influence Go with any other accepted environment variable
     - To utilize a C(go) binary in another path, utilize the C(PATH) environment variable via C(environment)
 options:
     name:
@@ -37,6 +35,9 @@ options:
         description:
             - Whether or not to validate SSL certificates when downloading packages
         type: bool
+    go_path:
+        description:
+            - Path to be used for C(GOPATH), defaults to the target systems C(GOPATH) environment variable
 requirements: []
 short_description: Manage Go packages
 version_added: 2.7
@@ -73,8 +74,7 @@ EXAMPLES = '''
   go:
     state: latest
     name: gopkg.in/yaml.v2
-  environment:
-    GOPATH: /home/user/go
+    go_path: /home/user/go
 '''
 
 RETURN = '''#
@@ -84,7 +84,7 @@ import json
 import shutil
 
 from ansible.module_utils._text import to_native
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, env_fallback
 
 
 def install(module):
@@ -204,9 +204,14 @@ def main():
             name=dict(type='list', required=True),
             state=dict(type='str', choices=['present', 'absent', 'latest', 'download'], default='present'),
             validate_certs=dict(type='bool', default=True),
+            go_path=dict(type='path', fallback=(env_fallback, ['GOPATH'])),
         )
     )
-    module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
+    env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
+    if module.params['go_path']:
+        env['GOPATH'] = module.params['go_path']
+
+    module.run_command_environ_update = env
 
     if module.params['state'] in ('present', 'latest', 'download'):
         rc, stdout, stderr, changed = install(module)
