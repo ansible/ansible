@@ -5,6 +5,7 @@ Testing Ansible
 ***************
 
 .. contents:: Topics
+   :local:
 
 Introduction
 ============
@@ -21,17 +22,17 @@ Types of tests
 At a high level we have the following classifications of tests:
 
 :compile:
-  * :doc:`testing_compile`
+  * :ref:`testing_compile`
   * Test python code against a variety of Python versions.
 :sanity:
-  * :doc:`testing_sanity`
+  * :ref:`testing_sanity`
   * Sanity tests are made up of scripts and tools used to perform static code analysis.
   * The primary purpose of these tests is to enforce Ansible coding standards and requirements.
 :integration:
-  * :doc:`testing_integration`
+  * :ref:`testing_integration`
   * Functional tests of modules and Ansible core functionality.
 :units:
-  * :doc:`testing_units`
+  * :ref:`testing_units`
   * Tests directly against individual parts of the code base.
 
 
