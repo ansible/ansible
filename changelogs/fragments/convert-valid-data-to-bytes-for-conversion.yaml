@@ -1,0 +1,2 @@
+bugfixes:
+  - openssl_certificate - Convert valid_date to bytes for conversion
