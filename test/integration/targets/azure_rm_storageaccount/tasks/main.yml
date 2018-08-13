@@ -39,7 +39,6 @@
  - name: Gather facts by tags
    azure_rm_storageaccount_facts:
        resource_group: "{{ resource_group }}"
-       append_tags: no
        tags:
          - test
          - galaxy
