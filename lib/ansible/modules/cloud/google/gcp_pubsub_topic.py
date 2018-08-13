@@ -56,12 +56,10 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a topic
   gcp_pubsub_topic:
-      name: 'test-topic1'
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
-      scopes:
-        - https://www.googleapis.com/auth/pubsub
+      name: test-topic1
+      project: "test_project"
+      auth_kind: "service_account"
+      service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
@@ -94,6 +92,9 @@ def main():
             name=dict(type='str')
         )
     )
+
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/pubsub']
 
     state = module.params['state']
 
