@@ -215,7 +215,7 @@ def check_compatibility(module, client):
     """
     loose_srv_version = LooseVersion(client.server_info()['version'])
     loose_driver_version = LooseVersion(PyMongoVersion)
-    loose_versions_accepted = ['2.6', '3.0', '3.2', '3.4']
+    loose_versions_accepted = ['2.6', '3.0', '3.2', '3.4', '3.6']
 
     for version in loose_versions_accepted:
       if loose_srv_version >= LooseVersion(version) and loose_driver_version < LooseVersion(version):
