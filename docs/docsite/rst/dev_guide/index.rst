@@ -48,7 +48,7 @@ If you prefer to read the entire guide, here's a list of the pages in order.
    developing_core
    developing_program_flow_modules
    developing_api
-   developing_module_utilities
    developing_rebasing
+   developing_module_utilities
    repomerge
    overview_architecture
