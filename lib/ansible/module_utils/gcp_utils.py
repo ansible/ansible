@@ -95,6 +95,13 @@ class GcpSession(object):
         except getattr(requests.exceptions, 'RequestException') as inst:
             self.module.fail_json(msg=inst.message)
 
+    def patch(self, url, body=None, **kwargs):
+        kwargs.update({'json': body, 'headers': self._headers()})
+        try:
+            return self.session().patch(url, **kwargs)
+        except getattr(requests.exceptions, 'RequestException') as inst:
+            self.module.fail_json(msg=inst.message)
+
     def session(self):
         return AuthorizedSession(
             self._credentials().with_scopes(self.module.params['scopes']))
@@ -105,9 +112,6 @@ class GcpSession(object):
 
         if not HAS_GOOGLE_LIBRARIES:
             self.module.fail_json(msg="Please install the google-auth library")
-
-        if 'auth_kind' not in self.module.params:
-            self.module.fail_json(msg="Auth kind parameter is missing")
 
         if self.module.params.get('service_account_email') is not None and self.module.params['auth_kind'] != 'machineaccount':
             self.module.fail_json(
