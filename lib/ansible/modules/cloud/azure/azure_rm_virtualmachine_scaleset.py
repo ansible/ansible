@@ -188,7 +188,6 @@ options:
             - Indicates whether user wants to allow accelerated networking for virtual machines in scaleset being created.
         version_added: "2.7"
         type: bool
-        default: false
     security_group:
         description:
             - Existing security group with which to associate the subnet.
@@ -403,7 +402,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             virtual_network_resource_group=dict(type='str'),
             virtual_network_name=dict(type='str', aliases=['virtual_network']),
             remove_on_absent=dict(type='list', default=['all']),
-            enable_accelerated_networking=dict(type='bool', default=False),
+            enable_accelerated_networking=dict(type='bool'),
             security_group=dict(type='raw', aliases=['security_group_name'])
         )
 
