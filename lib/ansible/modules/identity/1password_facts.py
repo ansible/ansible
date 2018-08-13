@@ -116,18 +116,17 @@ RETURN = '''
 # One or more dictionaries for each matching item from 1Password, along with the appropriate fields.
 # This shows the response you would expect to receive from the third example documented above.
 1password:
-  description: Dictionary of each 1password item matching the given search terms.
-  returned: success
-  type: dict
-  sample: {
-    "My 1Password item": {
-      "password": "the value of this field",
-      "Custom field name": "the value of this field"
-    },
-    "A 1Password item with document attachment": {
-      "document": "the contents of the document attached to this item",
-    }
-  }
+    description: Dictionary of each 1password item matching the given search terms, shows what would be returned from the third example above.
+    returned: success
+    type: dict
+    sample:
+        "My 1Password item":
+            password: the value of this field
+            Custom field name: the value of this field
+        "My Other 1Password item":
+            password: the value of this field
+        "A 1Password item with document attachment":
+            document: the contents of the document attached to this item
 '''
 
 
