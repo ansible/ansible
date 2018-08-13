@@ -688,7 +688,7 @@ class ELBListenerRules(object):
         for current_rule in self.current_rules:
             current_rule_passed_to_module = False
             for new_rule in self.rules[:]:
-                if current_rule['Priority'] == new_rule['Priority']:
+                if current_rule['Priority'] == str(new_rule['Priority']):
                     current_rule_passed_to_module = True
                     # Remove what we match so that what is left can be marked as 'to be added'
                     rules_to_add.remove(new_rule)

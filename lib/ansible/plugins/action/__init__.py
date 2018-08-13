@@ -60,6 +60,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
 
+        self._used_interpreter = None
+
     @abstractmethod
     def run(self, tmp=None, task_vars=None):
         """ Action Plugins should implement this method to perform their
@@ -339,8 +341,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # If ssh breaks we could leave tmp directories out on the remote system.
             tmp_rm_res = self._low_level_execute_command(cmd, sudoable=False)
 
-            tmp_rm_data = self._parse_returned_data(tmp_rm_res)
-            if tmp_rm_data.get('rc', 0) != 0:
+            if tmp_rm_res.get('rc', 0) != 0:
                 display.warning('Error deleting remote temporary files (rc: %s, stderr: %s})'
                                 % (tmp_rm_res.get('rc'), tmp_rm_res.get('stderr', 'No error string available.')))
             else:
@@ -573,8 +574,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 x = "2"  # cannot read file
             elif errormsg.endswith(u'MODULE FAILURE'):
                 x = "4"  # python not found or module uncaught exception
-            elif 'json' in errormsg or 'simplejson' in errormsg:
-                x = "5"  # json or simplejson modules needed
+            elif 'json' in errormsg:
+                x = "5"  # json module needed
         finally:
             return x  # pylint: disable=lost-exception
 
@@ -753,6 +754,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if not shebang and module_style != 'binary':
             raise AnsibleError("module (%s) is missing interpreter line" % module_name)
 
+        self._used_interpreter = shebang
         remote_module_path = None
 
         if not self._is_pipelining_enabled(module_style, wrap_async):
@@ -896,12 +898,20 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         except ValueError:
             # not valid json, lets try to capture error
             data = dict(failed=True, _ansible_parsed=False)
-            data['msg'] = "MODULE FAILURE"
             data['module_stdout'] = res.get('stdout', u'')
             if 'stderr' in res:
                 data['module_stderr'] = res['stderr']
                 if res['stderr'].startswith(u'Traceback'):
                     data['exception'] = res['stderr']
+
+            # try to figure out if we are missing interpreter
+            if self._used_interpreter is not None and '%s: No such file or directory' % self._used_interpreter.lstrip('!#') in data['module_stderr']:
+                data['msg'] = "The module failed to execute correctly, you probably need to set the interpreter."
+            else:
+                data['msg'] = "MODULE FAILURE"
+
+            data['msg'] += '\nSee stdout/stderr for the exact error'
+
             if 'rc' in res:
                 data['rc'] = res['rc']
         return data

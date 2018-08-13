@@ -75,20 +75,20 @@ class Cliconf(CliconfBase):
         return resp
 
     @enable_mode
-    def get_config(self, source='running', format='text', flag=None):
+    def get_config(self, source='running', format='text', flags=None):
         options_values = self.get_option_values()
         if format not in options_values['format']:
             raise ValueError("'format' value %s is invalid. Valid values are %s" % (format, ','.join(options_values['format'])))
 
         lookup = {'running': 'running-config', 'startup': 'startup-config'}
         if source not in lookup:
-            return self.invalid_params("fetching configuration from %s is not supported" % source)
+            raise ValueError("fetching configuration from %s is not supported" % source)
 
         cmd = 'show %s ' % lookup[source]
         if format and format is not 'text':
             cmd += '| %s ' % format
 
-        cmd += ' '.join(to_list(flag))
+        cmd += ' '.join(to_list(flags))
         cmd = cmd.strip()
         return self.send_command(cmd)
 
@@ -214,7 +214,7 @@ class Cliconf(CliconfBase):
             raise ValueError("'replace' value %s in invalid, valid values are %s" % (diff_replace, ', '.join(option_values['diff_replace'])))
 
         # prepare candidate configuration
-        candidate_obj = NetworkConfig(indent=3)
+        candidate_obj = NetworkConfig(indent=3, ignore_lines=diff_ignore_lines)
         candidate_obj.load(candidate)
 
         if running and diff_match != 'none' and diff_replace != 'config':
@@ -275,7 +275,7 @@ class Cliconf(CliconfBase):
             'supports_multiline_delimiter': False,
             'supports_diff_match': True,
             'supports_diff_ignore_lines': True,
-            'supports_generate_diff': True,
+            'supports_generate_diff': False if self.supports_sessions else True,
             'supports_replace': True if self.supports_sessions else False
         }
 
@@ -289,8 +289,8 @@ class Cliconf(CliconfBase):
 
     def get_capabilities(self):
         result = {}
-        result['rpc'] = self.get_base_rpc()
-        result['device_info'] = self.get_device_info()
+        rpc_list = ['commit', 'discard_changes', 'get_diff', 'run_commands', 'supports_sessions']
+        result['rpc'] = self.get_base_rpc() + rpc_list
         result['device_info'] = self.get_device_info()
         result['device_operations'] = self.get_device_operations()
         result.update(self.get_option_values())

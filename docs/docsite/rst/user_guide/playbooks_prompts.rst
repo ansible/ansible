@@ -98,7 +98,7 @@ of size 8 will be generated.
        Conditional statements in playbooks
    :doc:`playbooks_variables`
        All about variables
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

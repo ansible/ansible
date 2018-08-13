@@ -37,21 +37,21 @@ from ansible.plugins.cliconf import CliconfBase, enable_mode
 class Cliconf(CliconfBase):
 
     @enable_mode
-    def get_config(self, source='running', flag=None, format=None):
+    def get_config(self, source='running', flags=None, format=None):
         if source not in ('running', 'startup'):
-            return self.invalid_params("fetching configuration from %s is not supported" % source)
+            raise ValueError("fetching configuration from %s is not supported" % source)
 
         if format:
             raise ValueError("'format' value %s is not supported for get_config" % format)
 
-        if not flag:
-            flag = []
+        if not flags:
+            flags = []
         if source == 'running':
             cmd = 'show running-config '
         else:
             cmd = 'show startup-config '
 
-        cmd += ' '.join(to_list(flag))
+        cmd += ' '.join(to_list(flags))
         cmd = cmd.strip()
 
         return self.send_command(cmd)
@@ -105,7 +105,7 @@ class Cliconf(CliconfBase):
             raise ValueError("'replace' value %s in invalid, valid values are %s" % (diff_replace, ', '.join(option_values['diff_replace'])))
 
         # prepare candidate configuration
-        candidate_obj = NetworkConfig(indent=1)
+        candidate_obj = NetworkConfig(indent=1, ignore_lines=diff_ignore_lines)
         want_src, want_banners = self._extract_banners(candidate)
         candidate_obj.load(want_src)
 
@@ -231,13 +231,13 @@ class Cliconf(CliconfBase):
         if commit:
             for key, value in iteritems(banners_obj):
                 key += ' %s' % multiline_delimiter
-                self.send_commad('config terminal', sendonly=True)
+                self.send_command('config terminal', sendonly=True)
                 for cmd in [key, value, multiline_delimiter]:
                     obj = {'command': cmd, 'sendonly': True}
                     results.append(self.send_command(**obj))
                     requests.append(cmd)
 
-                self.send_commad('end', sendonly=True)
+                self.send_command('end', sendonly=True)
                 time.sleep(0.1)
                 results.append(self.send_command('\n'))
                 requests.append('\n')

@@ -7,7 +7,8 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
-    state: absent
+    output_level: '{{ aci_output_level | default("info") }}'
     pool: anstest
     pool_type: vsan
     pool_allocation_mode: static
+    state: absent

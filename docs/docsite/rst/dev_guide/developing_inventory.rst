@@ -344,7 +344,7 @@ An easy way to see how this should look is using :ref:`ansible-inventory`, which
        How to develop plugins
    `Ansible Tower <https://ansible.com/ansible-tower>`_
        REST API endpoint and GUI for Ansible, syncs with dynamic inventory
-   `Development Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `Development Mailing List <https://groups.google.com/group/ansible-devel>`_
        Mailing list for development topics
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

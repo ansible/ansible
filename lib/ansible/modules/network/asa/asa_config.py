@@ -162,6 +162,12 @@ vars:
     passwords: yes
     provider: "{{ cli }}"
 
+- name: attach ASA acl on interface vlan13/nameif cloud13
+  asa_config:
+    lines:
+      - access-group cloud-acl_access_in in interface cloud13
+    provider: "{{ cli }}"
+
 """
 
 RETURN = """

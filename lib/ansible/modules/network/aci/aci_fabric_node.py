@@ -68,6 +68,7 @@ EXAMPLES = r'''
     node_id: 1011
     switch: fab4-sw1011
     state: present
+  delegate_to: localhost
 
 - name: Remove fabric node
   aci_fabric_node:
@@ -77,6 +78,7 @@ EXAMPLES = r'''
     serial: FDO2031124L
     node_id: 1011
     state: absent
+  delegate_to: localhost
 
 - name: Query fabric nodes
   aci_fabric_node:
@@ -84,6 +86,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -232,8 +236,8 @@ def main():
         root_class=dict(
             aci_class='fabricNodeIdentP',
             aci_rn='controller/nodeidentpol/nodep-{0}'.format(serial),
-            filter_target='eq(fabricNodeIdentP.serial, "{0}")'.format(serial),
             module_object=serial,
+            target_filter={'serial': serial},
         )
     )
 
@@ -247,7 +251,10 @@ def main():
                 name=switch,
                 nodeId=node_id,
                 podId=pod_id,
-                rn='nodep-{0}'.format(serial),
+                # NOTE: Originally we were sending 'rn', but now we need 'dn' for idempotency
+                # FIXME: Did this change with ACI version ?
+                dn='uni/controller/nodeidentpol/nodep-{0}'.format(serial),
+                # rn='nodep-{0}'.format(serial),
                 role=role,
                 serial=serial,
             )

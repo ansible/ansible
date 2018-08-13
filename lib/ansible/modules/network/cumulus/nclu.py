@@ -64,6 +64,12 @@ EXAMPLES = '''
         - add int swp1
         - add int swp2
 
+- name: Modify hostname to Cumulus-1 and commit the change
+  nclu:
+    commands:
+        - add hostname Cumulus-1
+    commit: true
+
 - name: Add 48 interfaces and commit the change.
   nclu:
     template: |
@@ -78,6 +84,7 @@ EXAMPLES = '''
     commands:
         - show interface swp1
   register: output
+
 - name: Print Status Of Interface
   debug:
     var: output
@@ -87,6 +94,7 @@ EXAMPLES = '''
     commands:
         - show interface json
   register: output
+
 - name: Print Interface Details
   debug:
     var: output["msg"]
@@ -120,6 +128,7 @@ EXAMPLES = '''
     commands:
         - show bgp summary json
   register: output
+
 - name: Print BGP Status In JSON
   debug:
     var: output["msg"]

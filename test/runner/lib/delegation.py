@@ -33,6 +33,7 @@ from lib.core_ci import (
 
 from lib.manage_ci import (
     ManagePosixCI,
+    ManageWindowsCI,
 )
 
 from lib.util import (
@@ -321,30 +322,35 @@ def delegate_remote(args, exclude, require, integration_targets):
 
         core_ci.wait()
 
-        options = {
-            '--remote': 1,
-        }
+        if platform == 'windows':
+            # Windows doesn't need the ansible-test fluff, just run the SSH command
+            manage = ManageWindowsCI(core_ci)
+            cmd = ['powershell.exe']
+        else:
+            options = {
+                '--remote': 1,
+            }
 
-        cmd = generate_command(args, 'ansible/test/runner/test.py', options, exclude, require)
+            cmd = generate_command(args, 'ansible/test/runner/test.py', options, exclude, require)
 
-        if httptester_id:
-            cmd += ['--inject-httptester']
+            if httptester_id:
+                cmd += ['--inject-httptester']
 
-        if isinstance(args, TestConfig):
-            if args.coverage and not args.coverage_label:
-                cmd += ['--coverage-label', 'remote-%s-%s' % (platform, version)]
+            if isinstance(args, TestConfig):
+                if args.coverage and not args.coverage_label:
+                    cmd += ['--coverage-label', 'remote-%s-%s' % (platform, version)]
 
-        if isinstance(args, IntegrationConfig):
-            if not args.allow_destructive:
-                cmd.append('--allow-destructive')
+            if isinstance(args, IntegrationConfig):
+                if not args.allow_destructive:
+                    cmd.append('--allow-destructive')
 
-        # remote instances are only expected to have a single python version available
-        if isinstance(args, UnitsConfig) and not args.python:
-            cmd += ['--python', 'default']
+            # remote instances are only expected to have a single python version available
+            if isinstance(args, UnitsConfig) and not args.python:
+                cmd += ['--python', 'default']
 
-        manage = ManagePosixCI(core_ci)
+            manage = ManagePosixCI(core_ci)
+
         manage.setup()
-
         if isinstance(args, IntegrationConfig):
             cloud_platforms = get_cloud_providers(args)
 
@@ -355,8 +361,9 @@ def delegate_remote(args, exclude, require, integration_targets):
             manage.ssh(cmd, ssh_options)
             success = True
         finally:
-            manage.ssh('rm -rf /tmp/results && cp -a ansible/test/results /tmp/results && chmod -R a+r /tmp/results')
-            manage.download('/tmp/results', 'test')
+            if platform != 'windows':
+                manage.ssh('rm -rf /tmp/results && cp -a ansible/test/results /tmp/results && chmod -R a+r /tmp/results')
+                manage.download('/tmp/results', 'test')
     finally:
         if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):
             core_ci.stop()

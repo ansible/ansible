@@ -199,8 +199,7 @@ def build_xml_subtree(container_ele, xmap, param=None, opcode=None):
 
 
 def build_xml(container, xmap=None, params=None, opcode=None):
-
-    '''
+    """
     Builds netconf xml rpc document from meta-data
 
     Args:
@@ -240,8 +239,7 @@ def build_xml(container, xmap=None, params=None, opcode=None):
               </banners>
             </config>
     :returns: xml rpc document as a string
-    '''
-
+    """
     if opcode == 'filter':
         root = etree.Element("filter", type="subtree")
     elif opcode in ('delete', 'merge'):
@@ -285,30 +283,17 @@ def etree_findall(root, node):
 
 def is_cliconf(module):
     capabilities = get_device_capabilities(module)
-    network_api = capabilities.get('network_api')
-    if network_api not in ('cliconf', 'netconf'):
-        module.fail_json(msg=('unsupported network_api: {!s}'.format(network_api)))
-        return False
-
-    if network_api == 'cliconf':
-        return True
-
-    return False
+    return True if capabilities.get('network_api') == 'cliconf' else False
 
 
 def is_netconf(module):
     capabilities = get_device_capabilities(module)
     network_api = capabilities.get('network_api')
-    if network_api not in ('cliconf', 'netconf'):
-        module.fail_json(msg=('unsupported network_api: {!s}'.format(network_api)))
-        return False
-
     if network_api == 'netconf':
         if not HAS_NCCLIENT:
-            module.fail_json(msg=('ncclient is not installed'))
+            module.fail_json(msg='ncclient is not installed')
         if not HAS_XML:
-            module.fail_json(msg=('lxml is not installed'))
-
+            module.fail_json(msg='lxml is not installed')
         return True
 
     return False
@@ -348,12 +333,15 @@ def commit_config(module, comment=None, confirmed=False, confirm_timeout=None,
     conn = get_connection(module)
     reply = None
     try:
-        if check:
-            reply = conn.validate()
-        else:
-            if is_netconf(module):
+        if is_netconf(module):
+            if check:
+                reply = conn.validate()
+            else:
                 reply = conn.commit(confirmed=confirmed, timeout=confirm_timeout, persist=persist)
-            elif is_cliconf(module):
+        elif is_cliconf(module):
+            if check:
+                module.fail_json(msg="Validate configuration is not supported with network_cli connection type")
+            else:
                 reply = conn.commit(comment=comment, label=label)
     except ConnectionError as exc:
         module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
@@ -380,10 +368,10 @@ def get_config(module, config_filter=None, source='running'):
 
     # Note: Does not cache config in favour of latest config on every get operation.
     try:
-        out = conn.get_config(source=source, filter=config_filter)
         if is_netconf(module):
             out = to_xml(conn.get_config(source=source, filter=config_filter))
-
+        elif is_cliconf(module):
+            out = conn.get_config(source=source, flags=config_filter)
         cfg = out.strip()
     except ConnectionError as exc:
         module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
@@ -429,10 +417,6 @@ def load_config(module, command_filter, commit=False, replace=False,
             pass
 
     elif is_cliconf(module):
-        # to keep the pre-cliconf behaviour, make a copy, avoid adding commands to input list
-        cmd_filter = deepcopy(command_filter)
-        # If label is present check if label already exist before entering
-        # config mode
         try:
             if label:
                 old_label = check_existing_commit_labels(conn, label)
@@ -442,67 +426,22 @@ def load_config(module, command_filter, commit=False, replace=False,
                         ' an earlier commit, please choose a different label'
                         ' and rerun task' % label
                     )
-            cmd_filter.insert(0, 'configure terminal')
-            if admin:
-                cmd_filter.insert(0, 'admin')
 
-            conn.edit_config(cmd_filter)
+            response = conn.edit_config(candidate=command_filter, commit=commit, admin=admin, replace=replace, comment=comment, label=label)
             if module._diff:
-                diff = get_config_diff(module)
-
-            if replace:
-                cmd = list()
-                cmd.append({'command': 'commit replace',
-                            'prompt': 'This commit will replace or remove the entire running configuration',
-                            'answer': 'yes'})
-                cmd.append('end')
-                conn.edit_config(cmd)
-            elif commit:
-                commit_config(module, comment=comment, label=label)
-                conn.edit_config('end')
-                if admin:
-                    conn.edit_config('exit')
-            else:
-                conn.discard_changes()
+                diff = response.get('diff')
         except ConnectionError as exc:
             module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
     return diff
 
 
-def run_command(module, commands):
-    conn = get_connection(module)
-    responses = list()
-    for cmd in to_list(commands):
-
-        try:
-            if isinstance(cmd, str):
-                cmd = json.loads(cmd)
-            command = cmd.get('command', None)
-            prompt = cmd.get('prompt', None)
-            answer = cmd.get('answer', None)
-            sendonly = cmd.get('sendonly', False)
-            newline = cmd.get('newline', True)
-        except:
-            command = cmd
-            prompt = None
-            answer = None
-            sendonly = False
-            newline = True
-
-        try:
-            out = conn.get(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline)
-        except ConnectionError as exc:
-            module.fail_json(msg=to_text(exc))
-
-        try:
-            out = to_text(out, errors='surrogate_or_strict')
-        except UnicodeError:
-            module.fail_json(msg=u'Failed to decode output from {0}: {1}'.format(cmd, to_text(out)))
-
-        responses.append(out)
-
-    return responses
+def run_commands(module, commands, check_rc=True):
+    connection = get_connection(module)
+    try:
+        return connection.run_commands(commands=commands, check_rc=check_rc)
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc))
 
 
 def copy_file(module, src, dst, proto='scp'):

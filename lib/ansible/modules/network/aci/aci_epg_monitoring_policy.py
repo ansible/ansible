@@ -57,6 +57,7 @@ EXAMPLES = r'''
     monitoring_policy: '{{ monitoring_policy }}'
     description: '{{ description }}'
     tenant: '{{ tenant }}'
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -196,14 +197,14 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='monEPGPol',
             aci_rn='monepg-{0}'.format(monitoring_policy),
-            filter_target='eq(monEPGPol.name, "{0}")'.format(monitoring_policy),
             module_object=monitoring_policy,
+            target_filter={'name': monitoring_policy},
         ),
     )
 

@@ -1,0 +1,7 @@
+---
+major_changes:
+- Support for running an Ansible controller with Python-2.6 has been dropped.
+  You can still manage machines which use Python-2.6 but you will have to
+  manage them from a machine which has Python-2.7 or Python-3.5 or greater
+  installed.  See the `porting guide <https://docs.ansible.com/ansible/devel/porting_guides/porting_guide_2.7.html>`_
+  if you need more information.

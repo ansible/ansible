@@ -83,8 +83,8 @@ EXAMPLES = r'''
 - name: Mount VMFS datastores to ESXi
   vmware_host_datastore:
       hostname: '{{ vcenter_hostname }}'
-      username: '{{ vcenter_user }}'
-      password: '{{ vcenter_pass }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
       datacenter_name: '{{ datacenter }}'
       datastore_name: '{{ item.name }}'
       datastore_type: '{{ item.type }}'
@@ -97,8 +97,8 @@ EXAMPLES = r'''
 - name: Mount NFS datastores to ESXi
   vmware_host_datastore:
       hostname: '{{ vcenter_hostname }}'
-      username: '{{ vcenter_user }}'
-      password: '{{ vcenter_pass }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
       datacenter_name: '{{ datacenter }}'
       datastore_name: '{{ item.name }}'
       datastore_type: '{{ item.type }}'
@@ -115,8 +115,8 @@ EXAMPLES = r'''
 - name: Remove/Umount Datastores from ESXi
   vmware_host_datastore:
       hostname: '{{ vcenter_hostname }}'
-      username: '{{ vcenter_user }}'
-      password: '{{ vcenter_pass }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
       datacenter_name: '{{ datacenter }}'
       datastore_name: NasDS_vol01
       esxi_hostname: '{{ inventory_hostname }}'

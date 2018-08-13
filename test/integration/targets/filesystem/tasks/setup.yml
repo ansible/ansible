@@ -35,6 +35,24 @@
       name: ocfs2-tools
       state: present
     when: ansible_os_family == 'Debian'
+
+  - when:
+      - ansible_os_family != 'RedHat' or ansible_distribution == 'Fedora'
+      - ansible_distribution != 'Ubuntu' or ansible_distribution_version is version('16.04', '>=')
+    block:
+      - name: install f2fs
+        package:
+          name: f2fs-tools
+          state: present
+
+      - name: fetch f2fs version
+        command: mkfs.f2fs /dev/null
+        ignore_errors: yes
+        register: mkfs_f2fs
+
+      - set_fact:
+          f2fs_version: '{{ mkfs_f2fs.stdout | regex_search("F2FS-tools: mkfs.f2fs Ver:.*") | regex_replace("F2FS-tools: mkfs.f2fs Ver: ([0-9.]+) .*", "\1") }}'
+
   when: ansible_system == 'Linux'
 
 - block:

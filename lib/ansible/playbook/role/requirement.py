@@ -190,6 +190,8 @@ class RoleRequirement(RoleDefinition):
 
         def run_scm_cmd(cmd, tempdir):
             try:
+                stdout = ''
+                stderr = ''
                 popen = Popen(cmd, cwd=tempdir, stdout=PIPE, stderr=PIPE)
                 stdout, stderr = popen.communicate()
             except Exception as e:

@@ -97,6 +97,7 @@ EXAMPLES = r'''
     toi_port: 16
     policy_group: policygroupname
     state: present
+  delegate_to: localhost
 
 - name: Associate an interface access port selector to an Interface Policy Leaf Profile (w/o policy group) (check if this works)
   aci_access_port_to_interface_policy_leaf_profile:
@@ -109,6 +110,7 @@ EXAMPLES = r'''
     from_port: 13
     to_port: 16
     state: present
+  delegate_to: localhost
 
 - name: Remove an interface access port selector associated with an Interface Policy Leaf Profile
   aci_access_port_to_interface_policy_leaf_profile:
@@ -118,6 +120,7 @@ EXAMPLES = r'''
     leaf_interface_profile: leafintprfname
     access_port_selector: accessportselectorname
     state: absent
+  delegate_to: localhost
 
 - name: Query Specific access_port_selector under given leaf_interface_profile
   aci_access_port_to_interface_policy_leaf_profile:
@@ -127,6 +130,8 @@ EXAMPLES = r'''
     leaf_interface_profile: leafintprfname
     access_port_selector: accessportselectorname
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -282,15 +287,15 @@ def main():
         root_class=dict(
             aci_class='infraAccPortP',
             aci_rn='infra/accportprof-{0}'.format(leaf_interface_profile),
-            filter_target='eq(infraAccPortP.name, "{0}")'.format(leaf_interface_profile),
             module_object=leaf_interface_profile,
+            target_filter={'name': leaf_interface_profile},
         ),
         subclass_1=dict(
             aci_class='infraHPortS',
             # NOTE: normal rn: hports-{name}-typ-{type}, hence here hardcoded to range for purposes of module
             aci_rn='hports-{0}-typ-range'.format(access_port_selector),
-            filter_target='eq(infraHPortS.name, "{0}")'.format(access_port_selector),
             module_object=access_port_selector,
+            target_filter={'name': access_port_selector},
         ),
         child_classes=['infraPortBlk', 'infraRsAccBaseGrp'],
     )

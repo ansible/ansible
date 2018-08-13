@@ -165,7 +165,7 @@ class CliconfBase(AnsiblePlugin):
         self.response_logging = False
 
     @abstractmethod
-    def get_config(self, source='running', flag=None, format=None):
+    def get_config(self, source='running', flags=None, format=None):
         """Retrieves the specified configuration from the device
 
         This method will retrieve the configuration specified by source and
@@ -175,7 +175,7 @@ class CliconfBase(AnsiblePlugin):
         :param source: The configuration source to return from the device.
             This argument accepts either `running` or `startup` as valid values.
 
-        :param flag: For devices that support configuration filtering, this
+        :param flags: For devices that support configuration filtering, this
             keyword argument is used to filter the returned configuration.
             The use of this keyword argument is device dependent adn will be
             silently ignored on devices that do not support it.
@@ -212,7 +212,8 @@ class CliconfBase(AnsiblePlugin):
                  response on executing configuration commands and platform relevant data.
                {
                    "diff": "",
-                   "response": []
+                   "response": [],
+                   "request": []
                }
 
         """
@@ -264,9 +265,11 @@ class CliconfBase(AnsiblePlugin):
                     'supports_onbox_diff: <bool>,          # identify if on box diff capability is supported or not
                     'supports_generate_diff: <bool>,       # identify if diff capability is supported within plugin
                     'supports_multiline_delimiter: <bool>, # identify if multiline demiliter is supported within config
-                    'supports_diff_match: <bool>,           # identify if match is supported
-                    'supports_diff_ignore_lines: <bool>,    # identify if ignore line in diff is supported
-                    'supports_config_replace': <bool>,      # identify if running config replace with candidate config is supported
+                    'supports_diff_match: <bool>,          # identify if match is supported
+                    'supports_diff_ignore_lines: <bool>,   # identify if ignore line in diff is supported
+                    'supports_config_replace': <bool>,     # identify if running config replace with candidate config is supported
+                    'supports_admin': <bool>,              # identify if admin configure mode is supported or not
+                    'supports_commit_label': <bool>,       # identify if commit label is supported or not
                 }
                 'format': [list of supported configuration format],
                 'diff_match': [list of supported match values],

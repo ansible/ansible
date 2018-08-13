@@ -27,6 +27,7 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import hashlib
 import json
 import socket
 import struct
@@ -36,6 +37,30 @@ import uuid
 from functools import partial
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six import iteritems
+from ansible.module_utils.six.moves import cPickle
+
+
+def write_to_file_descriptor(fd, obj):
+    """Handles making sure all data is properly written to file descriptor fd.
+
+    In particular, that data is encoded in a character stream-friendly way and
+    that all data gets written before returning.
+    """
+    # Need to force a protocol that is compatible with both py2 and py3.
+    # That would be protocol=2 or less.
+    # Also need to force a protocol that excludes certain control chars as
+    # stdin in this case is a pty and control chars will cause problems.
+    # that means only protocol=0 will work.
+    src = cPickle.dumps(obj, protocol=0)
+
+    # raw \r characters will not survive pty round-trip
+    # They should be rehydrated on the receiving end
+    src = src.replace(b'\r', br'\r')
+    data_hash = to_bytes(hashlib.sha1(src).hexdigest())
+
+    os.write(fd, b'%d\n' % len(src))
+    os.write(fd, src)
+    os.write(fd, b'%s\n' % data_hash)
 
 
 def send_data(s, data):
@@ -111,10 +136,9 @@ class Connection(object):
         req = request_builder(name, *args, **kwargs)
         reqid = req['id']
 
-        troubleshoot = 'https://docs.ansible.com/ansible/latest/network/user_guide/network_debug_troubleshooting.html#category-socket-path-issue'
-
         if not os.path.exists(self.socket_path):
-            raise ConnectionError('socket_path does not exist or cannot be found. Please check %s' % troubleshoot)
+            raise ConnectionError('socket_path does not exist or cannot be found.'
+                                  '\nSee the socket_path issue catergory in Network Debug and Troubleshooting Guide')
 
         try:
             data = json.dumps(req)
@@ -122,8 +146,8 @@ class Connection(object):
             response = json.loads(out)
 
         except socket.error as e:
-            raise ConnectionError('unable to connect to socket. Please check %s' % troubleshoot, err=to_text(e, errors='surrogate_then_replace'),
-                                  exception=traceback.format_exc())
+            raise ConnectionError('unable to connect to socket. See the socket_path issue catergory in Network Debug and Troubleshooting Guide',
+                                  err=to_text(e, errors='surrogate_then_replace'), exception=traceback.format_exc())
 
         if response['id'] != reqid:
             raise ConnectionError('invalid json-rpc id received')

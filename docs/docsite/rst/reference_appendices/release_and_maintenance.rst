@@ -167,7 +167,7 @@ For modules/plugins, we keep the documentation after the removal for users of ol
        Community information and contributing
    `Ansible release tarballs <https://releases.ansible.com/ansible/>`_
        Ansible release tarballs
-   `Development Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `Development Mailing List <https://groups.google.com/group/ansible-devel>`_
        Mailing list for development topics
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

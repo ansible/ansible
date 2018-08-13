@@ -5,6 +5,11 @@ tested_filesystems:
   # Other minimal sizes:
   # - XFS: 20Mo
   # - Btrfs: 100Mo (50Mo when "--metadata single" is used)
+  # - f2fs:
+  #     - 1.2.0 requires at leat 116Mo
+  #     - 1.7.0 requires at least 30Mo
+  #     - 1.10.0 requires at least 38Mo
+  #     - resizefs asserts when initial fs is smaller than 60Mo and seems to require 1.10.0
   ext4: {fssize: 10, grow: True}
   ext4dev: {fssize: 10, grow: True}
   ext3: {fssize: 10, grow: True}
@@ -13,4 +18,5 @@ tested_filesystems:
   btrfs: {fssize: 100, grow: False}  # grow not implemented
   vfat: {fssize: 20, grow: True}
   ocfs2: {fssize: '{{ ocfs2_fssize }}', grow: False}  # grow not implemented
+  f2fs: {fssize: '{{ f2fs_fssize|default(60) }}', grow: 'f2fs_version is version("1.10.0", ">=")'}
   # untested: lvm, requires a block device

@@ -14,6 +14,28 @@ This document is part of a collection on porting. The complete list of porting g
 
 .. contents:: Topics
 
+Python Compatibility
+====================
+
+Ansible has dropped compatibility with Python-2.6 on the controller (The host where :command:`/usr/bin/ansible`
+or :command:`/usr/bin/ansible-playbook` is run).  Modules shipped with Ansible can still be used to
+manage hosts which only have Python-2.6.  You just need to have a host with Python-2.7 or Python-3.5
+or greater to manage those hosts from.
+
+One thing that this does affect is the ability to use :command:`/usr/bin/ansible-pull` to manage
+a host which has Python-2.6.  ``ansible-pull`` runs on the host being managed but it is a controller
+script, not a module so it will need an updated Python.  Actively developed Linux distros which ship
+with Python-2.6 have some means to install newer Python versions (For instance, you can install
+Python-2.7 via an SCL on RHEL-6) but you may need to also install Python bindings for many common
+modules to work (For RHEL-6, for instance, selinux bindings and yum would have to be installed for
+the updated Python install).
+
+The decision to drop Python-2.6 support on the controller was made because many dependent libraries
+are becoming unavailable there.  In particular, python-cryptography is no longer available for Python-2.6
+and the last release of pycrypto (the alternative to python-cryptography) has known security bugs
+which will never be fixed.
+
+
 Playbook
 ========
 
@@ -31,7 +53,7 @@ include_role and import_role variable exposure
 
 In Ansible 2.7 a new module argument named ``public`` was added to the ``include_role`` module that dictates whether or not the role's ``defaults`` and ``vars`` will be exposed outside of the role, allowing those variables to be used by later tasks.  This value defaults to ``public: False``, matching current behavior.
 
-``import_role`` does not support the ``public`` argument, and will unconditionally expose the role's ``defaults`` and ``vars`` to the rest of the playbook. This functinality brings ``import_role`` into closer alignment with roles listed within the ``roles`` header in a play.
+``import_role`` does not support the ``public`` argument, and will unconditionally expose the role's ``defaults`` and ``vars`` to the rest of the playbook. This functionality brings ``import_role`` into closer alignment with roles listed within the ``roles`` header in a play.
 
 There is an important difference in the way that ``include_role`` (dynamic) will expose the role's variables, as opposed to ``import_role`` (static). ``import_role`` is a pre-processor, and the ``defaults`` and ``vars`` are evaluated at playbook parsing, making the variables available to tasks and roles listed at any point in the play. ``include_role`` is a conditional task, and the ``defaults`` and ``vars`` are evaluated at execution time, making the variables available to tasks and roles listed *after* the ``include_role`` task.
 

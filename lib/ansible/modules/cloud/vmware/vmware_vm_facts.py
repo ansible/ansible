@@ -45,9 +45,9 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = r'''
 - name: Gather all registered virtual machines
   vmware_vm_facts:
-    hostname: esxi_or_vcenter_ip_or_hostname
-    username: username
-    password: password
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
   delegate_to: localhost
   register: vmfacts
 
@@ -56,9 +56,9 @@ EXAMPLES = r'''
 
 - name: Gather only registered virtual machine templates
   vmware_vm_facts:
-    hostname: esxi_or_vcenter_ip_or_hostname
-    username: username
-    password: password
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
     vm_type: template
   delegate_to: localhost
   register: template_facts
@@ -68,9 +68,9 @@ EXAMPLES = r'''
 
 - name: Gather only registered virtual machines
   vmware_vm_facts:
-    hostname: esxi_or_vcenter_ip_or_hostname
-    username: username
-    password: password
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
     vm_type: vm
   delegate_to: localhost
   register: vm_facts
@@ -87,7 +87,7 @@ virtual_machines:
 '''
 
 try:
-    from pyVmomi import vim, vmodl
+    from pyVmomi import vim
 except ImportError:
     pass
 

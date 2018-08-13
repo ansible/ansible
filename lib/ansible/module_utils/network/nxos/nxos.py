@@ -154,7 +154,18 @@ class Cli:
         connection = self._get_connection()
 
         try:
-            return connection.run_commands(commands, check_rc)
+            out = connection.run_commands(commands, check_rc)
+            if check_rc == 'retry_json':
+                capabilities = self.get_capabilities()
+                network_api = capabilities.get('network_api')
+
+                if network_api == 'cliconf' and out:
+                    for index, resp in enumerate(out):
+                        if 'Invalid command at' in resp and 'json' in resp:
+                            if commands[index]['output'] == 'json':
+                                commands[index]['output'] = 'text'
+                                out = connection.run_commands(commands, check_rc)
+            return out
         except ConnectionError as exc:
             self._module.fail_json(msg=to_text(exc))
 
@@ -392,6 +403,9 @@ class Nxapi:
         """Sends the ordered set of commands to the device
         """
         if replace:
+            device_info = self.get_device_info()
+            if '9K' not in device_info.get('network_os_platform', ''):
+                self._module.fail_json(msg='replace is supported only on Nexus 9K devices')
             commands = 'config replace {0}'.format(replace)
 
         commands = to_list(commands)

@@ -421,6 +421,6 @@ Read the Ansible Galaxy documentation <https://galaxy.ansible.com/docs/>_ page f
        Learn how to extend Ansible by writing your own modules
    `GitHub Ansible examples <https://github.com/ansible/ansible-examples>`_
        Complete playbook files from the GitHub project source
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
 

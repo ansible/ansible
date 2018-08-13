@@ -40,7 +40,7 @@ class ActionModule(_ActionModule):
             try:
                 self._handle_template()
             except ValueError as exc:
-                return dict(failed=True, msg=exc.message)
+                return dict(failed=True, msg=to_text(exc))
 
         result = super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect
