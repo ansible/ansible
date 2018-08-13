@@ -385,8 +385,8 @@ def modify_instance(module, proxmox, vm, vmid, timeout, cpus, memory, swap, **kw
             del kwargs['pubkey']
     else:
         kwargs['cpus'] = cpus
-        kwargs['memory'] = memory
-        kwargs['swap'] = swap
+    kwargs['memory'] = memory
+    kwargs['swap'] = swap
     vmconfig = get_vm_conf(proxmox, vm, vmid)
     if vmconfig_changed(vmconfig, **kwargs):
         vmstatus = getattr(proxmox.nodes(vm[0]['node']), VZ_TYPE)(vmid).status.current.get()['status']
