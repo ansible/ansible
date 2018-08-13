@@ -8,7 +8,7 @@ If you want to contribute your module to Ansible Core, you must write your modul
 
 Every Ansible module written in Python must begin with seven standard sections in a particular order, followed by the code. The sections in order are:
 
-1. :ref: the `Python shebang <shebang>`
+1. The :ref:`Python shebang <shebang>`
 2. :ref:`Copyright and License <copyright>`
 3. :ref:`ANSIBLE_METADATA <ansible_metadata_block>`
 4. :ref:`DOCUMENTATION <documentation_block>`
