@@ -1,9 +1,8 @@
 ---
 - debug: msg="START cli/not_hardware_facts.yaml"
 
-
 - name: test not hardware
-  enos_facts:
+  cnos_facts:
     gather_subset:
       - "!hardware"
   register: result
