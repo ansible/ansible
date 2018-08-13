@@ -244,7 +244,7 @@ The next step in testing your new module is to consume it with an Ansible playbo
 Testing basics
 ====================
 
-These two examples will get you started with testing your module code. Please review our :ref:`testing` section for more detailed
+These two examples will get you started with testing your module code. Please review our :ref:`testing <developing_testing>` section for more detailed
 information, including instructions for :ref:`testing documentation <testing_documentation>`, adding :ref:`integration tests <testing_integration>`, and more. 
 
 Sanity tests
@@ -287,7 +287,7 @@ a target.
 If you want to contribute your module back to the upstream Ansible repo,
 review our :ref:`submission checklist <developing_modules_checklist>`, :ref:`best practices <developing_modules_best_practices>`,
 and :ref:`strategy for maintaining Python-2 and Python-3 compatibility <developing_python_3>`, as well as
-information about :ref:`testing` before you open a pull request.
+information about :ref:`testing <developing_testing>` before you open a pull request.
 The :ref:`Community Guide <ansible_community_guide>` covers how to open a pull request and what happens next.
 
 

@@ -408,5 +408,5 @@ Testing Modules on Python-3
 Ansible modules are slightly harder to code to support Python-3 than normal code from other
 projects. A lot of mocking has to go into unit testing an Ansible module, so
 it's harder to test that your changes have fixed everything or to to make sure
-that later commits haven't regressed the Python-3 support. Review our :ref:`testing` pages
+that later commits haven't regressed the Python-3 support. Review our :ref:`testing <developing_testing>` pages
 for more information.

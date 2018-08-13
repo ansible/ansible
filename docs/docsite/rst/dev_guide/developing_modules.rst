@@ -44,10 +44,10 @@ If your use case isn't covered by an existing module, an open PR, an action plug
 I want to :ref:`get started on a new module <developing_modules_general>`
 I want to review :ref:`best practices for developing modules <developing_modules_best_practices>`.
 I want to :ref:`write a Windows module <developing_modules_general_windows>`.
-I want :ref:`an overview of Ansible's architecture<developing_program_flow_modules>`.
+I want :ref:`an overview of Ansible's architecture <developing_program_flow_modules>`.
 I want to :ref:`document my module <developing_modules_documenting>`.
 I want to :ref:`contribute my module back to Ansible Core <developing_modules_checklist>`.
-I want to :ref:`add unit and integration tests to my module <testing>`.
+I want to :ref:`add unit and integration tests to my module <developing_testing>`.
 I want to :ref:`add Python 3 support to my module <developing_python_3>`.
 I want to :ref:` write multiple modules <developing_modules_in_groups>`.
 
