@@ -1,0 +1,35 @@
+
+PLAY [testhost] ****************************************************************
+
+TASK [Changed task] ************************************************************
+[0;33mchanged: [testhost][0m
+
+TASK [Failed task] *************************************************************
+[0;31mfatal: [testhost]: FAILED! => {"changed": false, "msg": "no reason"}[0m
+[0;36m...ignoring[0m
+
+TASK [Skipped task] ************************************************************
+[0;36mskipping: [testhost][0m
+
+TASK [Task with var in name (foo bar)] *****************************************
+[0;33mchanged: [testhost][0m
+
+TASK [Loop task] ***************************************************************
+[0;33mchanged: [testhost] => (item=foo-1)[0m
+[0;33mchanged: [testhost] => (item=foo-2)[0m
+[0;33mchanged: [testhost] => (item=foo-3)[0m
+
+RUNNING HANDLER [Test handler] *************************************************
+[0;33mchanged: [testhost][0m
+
+PLAY [testhost] ****************************************************************
+
+TASK [First free task] *********************************************************
+[0;33mchanged: [testhost][0m
+
+TASK [Second free task] ********************************************************
+[0;33mchanged: [testhost][0m
+
+PLAY RECAP *********************************************************************
+[0;33mtesthost[0m                   : [0;32mok=8   [0m [0;33mchanged=6   [0m unreachable=0    failed=0   
+
