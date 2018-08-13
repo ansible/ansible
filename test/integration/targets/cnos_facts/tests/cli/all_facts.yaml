@@ -2,7 +2,7 @@
 - debug: msg="START cli/all_facts.yaml"
 
 - name: test getting all facts
-  enos_facts:
+  cnos_facts:
     gather_subset:
       - all
   register: result
