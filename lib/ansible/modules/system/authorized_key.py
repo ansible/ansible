@@ -78,6 +78,12 @@ options:
         cases such as fetching it from GitHub or GitLab.
       - If no comment is specified, the existing comment will be kept.
     version_added: "2.4"
+  follow:
+    description:
+      - Follow path symlink instead of replacing it
+    type: bool
+    default: 'no'
+    version_added: "2.7"
 author: "Ansible Core Team"
 '''
 
@@ -284,7 +290,7 @@ class keydict(dict):
         return [item[1] for item in self.items()]
 
 
-def keyfile(module, user, write=False, path=None, manage_dir=True):
+def keyfile(module, user, write=False, path=None, manage_dir=True, follow=False):
     """
     Calculate name of authorized keys file, optionally creating the
     directories and file, properly setting permissions.
@@ -293,11 +299,16 @@ def keyfile(module, user, write=False, path=None, manage_dir=True):
     :param bool write: if True, write changes to authorized_keys file (creating directories if needed)
     :param str path: if not None, use provided path rather than default of '~user/.ssh/authorized_keys'
     :param bool manage_dir: if True, create and set ownership of the parent dir of the authorized_keys file
+    :param bool follow: if True symlinks will be followed and not replaced
     :return: full path string to authorized_keys for user
     """
 
     if module.check_mode and path is not None:
         keysfile = path
+
+        if follow:
+            return os.path.realpath(keysfile)
+
         return keysfile
 
     try:
@@ -313,6 +324,9 @@ def keyfile(module, user, write=False, path=None, manage_dir=True):
     else:
         sshdir = os.path.dirname(path)
         keysfile = path
+
+    if follow:
+        keysfile = os.path.realpath(keysfile)
 
     if not write:
         return keysfile
@@ -518,6 +532,7 @@ def enforce_state(module, params):
     key_options = params.get("key_options", None)
     exclusive = params.get("exclusive", False)
     comment = params.get("comment", None)
+    follow = params.get('follow', False)
     error_msg = "Error getting key from: %s"
 
     # if the key is a url, request it and use it as key source
@@ -613,7 +628,7 @@ def enforce_state(module, params):
             do_write = True
 
     if do_write:
-        filename = keyfile(module, user, do_write, path, manage_dir)
+        filename = keyfile(module, user, do_write, path, manage_dir, follow)
         new_content = serialize(existing_keys)
 
         diff = None
@@ -650,6 +665,7 @@ def main():
             exclusive=dict(default=False, type='bool'),
             comment=dict(required=False, default=None, type='str'),
             validate_certs=dict(default=True, type='bool'),
+            follow=dict(default=False, type='bool')
         ),
         supports_check_mode=True
     )
