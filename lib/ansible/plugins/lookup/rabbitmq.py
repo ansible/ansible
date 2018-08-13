@@ -130,9 +130,9 @@ class LookupModule(LookupBase):
                                    })
                 if properties.content_type == 'application/json':
                     try:
-                        msg_details['json'] = json.loads(properties.content_type)
+                        msg_details['json'] = json.loads(body)
                     except ValueError as e:
-                        AnsibleError("Unable to decode JSON for message %s" % method_frame.delivery_tag )
+                        raise AnsibleError("Unable to decode JSON for message %s" % method_frame.delivery_tag )
 
                 ret.append(msg_details)
                 conn_channel.basic_ack(method_frame.delivery_tag)
