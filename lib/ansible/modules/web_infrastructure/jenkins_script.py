@@ -113,7 +113,8 @@ from ansible.module_utils._text import to_native
 def get_crumb(module):
     resp, info = fetch_url(module,
                            module.params['url'] + '/crumbIssuer/api/json',
-                           method='GET')
+                           method='GET',
+                           timeout=module.params['timeout'])
     if info["status"] == 404:
         return None
 
