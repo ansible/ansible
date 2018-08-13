@@ -1,0 +1,70 @@
+# Copyright (c) 2018, René Moser <mail@renemoser.net>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: test update or add another dns record in check mode
+  vultr_dns_record:
+    name: "{{ item.name | default(omit) }}"
+    domain: "{{ vultr_dns_domain_name }}"
+    data: "{{ item.update_data | default(item.data) }}"
+    ttl: "{{ item.update_ttl | default(omit) }}"
+    record_type: "{{ item.record_type | default(omit) }}"
+    priority: "{{ item.update_priority | default(omit) }}"
+    multiple: "{{ item.multiple | default(omit) }}"
+  check_mode: yes
+  register: result
+- name: verify test updatein check mode
+  assert:
+    that:
+    - result is changed
+    - result.vultr_dns_record.data == "{{ item.data }}"
+    - result.vultr_dns_record.name == "{{ item.name | default("") }}"
+    - result.vultr_dns_record.record_type == "{{ item.record_type | default('A') }}"
+    - result.vultr_dns_record.ttl == {{ item.ttl | default(300) }}
+    - result.vultr_dns_record.priority == {{ item.priority | default(0) }}
+  when: item.multiple is undefined or item.multiple == false
+- name: verify test add another dns record in check mode
+  assert:
+    that:
+    - result is changed
+    - not result.vultr_dns_record
+  when: item.multiple is defined and item.multiple == true
+
+- name: test update or add another dns record
+  vultr_dns_record:
+    name: "{{ item.name | default(omit) }}"
+    domain: "{{ vultr_dns_domain_name }}"
+    data: "{{ item.update_data | default(item.data) }}"
+    ttl: "{{ item.update_ttl | default(omit) }}"
+    record_type: "{{ item.record_type | default(omit) }}"
+    priority: "{{ item.update_priority | default(omit) }}"
+    multiple: "{{ item.multiple | default(omit) }}"
+  register: result
+- name: verify test update a dns record
+  assert:
+    that:
+    - result is changed
+    - result.vultr_dns_record.data == "{{ item.update_data | default(item.data) }}"
+    - result.vultr_dns_record.name == "{{ item.name | default("") }}"
+    - result.vultr_dns_record.ttl == {{ item.update_ttl | default(300) }}
+    - result.vultr_dns_record.record_type == "{{ item.record_type | default('A') }}"
+    - result.vultr_dns_record.priority == {{ item.update_priority | default(0) }}
+
+- name: test update or add another dns record idempotence
+  vultr_dns_record:
+    name: "{{ item.name | default(omit) }}"
+    domain: "{{ vultr_dns_domain_name }}"
+    data: "{{ item.update_data | default(item.data) }}"
+    ttl: "{{ item.update_ttl | default(omit) }}"
+    record_type: "{{ item.record_type | default(omit) }}"
+    priority: "{{ item.update_priority | default(omit) }}"
+    multiple: "{{ item.multiple | default(omit) }}"
+  register: result
+- name: verify test update a dns record idempotence
+  assert:
+    that:
+    - result is not changed
+    - result.vultr_dns_record.data == "{{ item.update_data | default(item.data) }}"
+    - result.vultr_dns_record.name == "{{ item.name | default("") }}"
+    - result.vultr_dns_record.ttl == {{ item.update_ttl | default(300) }}
+    - result.vultr_dns_record.record_type == "{{ item.record_type | default('A') }}"
+    - result.vultr_dns_record.priority == {{ item.update_priority | default(0) }}

@@ -30,6 +30,10 @@ def vultr_argument_spec():
 class Vultr:
 
     def __init__(self, module, namespace):
+
+        if module._name.startswith('vr_'):
+            module.deprecate("The Vultr modules were renamed. The prefix of the modules changed from vr_ to vultr_", version='2.11')
+
         self.module = module
 
         # Namespace use for returns
