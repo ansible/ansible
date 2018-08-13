@@ -58,16 +58,16 @@ EXAMPLES = """
     prompt: This commit will replace or remove the entire running configuration
     answer: yes
 
-  - name: run config mode command and handle prompt/answer
-    cli_command:
-      command: "{{ item }}"
-      prompt:
-        - "Exit with uncommitted changes"
-      answer: yes
-    loop:
-      - configure
-      - set system syslog file test any any
-      - exit
+- name: run config mode command and handle prompt/answer
+  cli_command:
+    command: "{{ item }}"
+    prompt:
+      - "Exit with uncommitted changes"
+    answer: yes
+  loop:
+    - configure
+    - set system syslog file test any any
+    - exit
 """
 
 RETURN = """
