@@ -21,22 +21,13 @@
   set_fact: test_items="{{ test_cases.files | map(attribute='path') | list }}"
 
 - name: run test cases (connection=httpapi)
-  include: "{{ test_case_to_run }}"
-  vars:
-    ansible_connection: httpapi
-    ansible_httpapi_use_ssl: no
-    ansible_httpapi_port: 80
-    ansible_httpapi_validate_certs: no
-    connection: "{{ nxapi }}"
+  include: "{{ test_case_to_run }} ansible_connection=httpapi connection={{ nxapi }}"
   with_items: "{{ test_items }}"
   loop_control:
     loop_var: test_case_to_run
 
 - name: run test cases (connection=local)
-  include: "{{ test_case_to_run }}"
-  vars:
-    ansible_connection: local
-    connection: "{{ nxapi }}"
+  include: "{{ test_case_to_run }} ansible_connection=local connection={{ nxapi }}"
   with_items: "{{ test_items }}"
   loop_control:
     loop_var: test_case_to_run

@@ -2,8 +2,6 @@
 
 - block:
 
-  - meta: end_play
-
   - set_fact:
       tls:
         - [ yes, no, no ]

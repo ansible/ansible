@@ -6,7 +6,6 @@
   connection: httpapi
   vars:
     ansible_httpapi_use_ssl: yes
-    ansible_httpapi_port: 443
     ansible_httpapi_validate_certs: no
   register: result
 
