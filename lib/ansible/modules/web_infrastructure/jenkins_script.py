@@ -110,23 +110,15 @@ from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native
 
 
-def is_csrf_protection_enabled(module):
-    resp, info = fetch_url(module,
-                           module.params['url'] + '/api/json',
-                           method='GET')
-    if info["status"] != 200:
-        module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"], output='')
-
-    content = to_native(resp.read())
-    return json.loads(content).get('useCrumbs', False)
-
-
 def get_crumb(module):
     resp, info = fetch_url(module,
                            module.params['url'] + '/crumbIssuer/api/json',
                            method='GET')
+    if info["status"] == 404:
+        return None
+
     if info["status"] != 200:
-        module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"], output='')
+        module.fail_json(msg="HTTP error getting crumb " + str(info["status"]) + " " + info["msg"], output='')
 
     content = to_native(resp.read())
     return json.loads(content)
@@ -163,8 +155,8 @@ def main():
         script_contents = module.params['script']
 
     headers = {}
-    if is_csrf_protection_enabled(module):
-        crumb = get_crumb(module)
+    crumb = get_crumb(module)
+    if crumb != None:
         headers = {crumb['crumbRequestField']: crumb['crumb']}
 
     resp, info = fetch_url(module,
@@ -175,7 +167,7 @@ def main():
                            timeout=module.params['timeout'])
 
     if info["status"] != 200:
-        module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"], output='')
+        module.fail_json(msg="HTTP error executing script " + str(info["status"]) + " " + info["msg"], output='')
 
     result = to_native(resp.read())
 
