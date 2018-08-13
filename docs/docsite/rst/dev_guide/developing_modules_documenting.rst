@@ -4,7 +4,7 @@
 Module Format and Documentation
 ===============================
 
-If you want to contribute your module to Ansible Core, you must write your module in Python and follow a standard format. (Unless you're writing a Windows module, in which case the `Windows guidelines <developing_modules_general_windows>` apply.) 
+If you want to contribute your module to Ansible Core, you must write your module in Python and follow a standard format. (Unless you're writing a Windows module, in which case the :ref:`Windows guidelines <developing_modules_general_windows>` apply.) 
 
 Every Ansible module written in Python must begin with seven standard sections in a particular order, followed by the code. The sections in order are:
 
