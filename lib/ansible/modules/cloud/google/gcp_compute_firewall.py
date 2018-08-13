@@ -88,11 +88,10 @@ options:
         required: false
     network:
         description:
-            - 'URL of the network resource for this firewall rule. If not
-              specified when creating a firewall rule, the default network is
-              used: global/networks/default If you choose to specify this
-              property, you can specify the network as a full or partial URL.
-              For example, the following are all valid URLs:
+            - 'URL of the network resource for this firewall rule. If not specified when creating
+              a firewall rule, the default network is used: global/networks/default If you choose to
+              specify this property, you can specify the network as a full or partial URL. For
+              example, the following are all valid URLs:
               U(https://www.googleapis.com/compute/v1/projects/myproject/global/)
               networks/my-network projects/myproject/global/networks/my-network
               global/networks/default .'
@@ -130,21 +129,19 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a firewall
   gcp_compute_firewall:
-      name: testObject
+      name: "test_object"
       allowed:
-        - ip_protocol: 'tcp'
-          ports:
-            - "22"
+      - ip_protocol: tcp
+        ports:
+        - '22'
       target_tags:
-        - test-ssh-server
-        - staging-ssh-server
+      - test-ssh-server
+      - staging-ssh-server
       source_tags:
-        - test-ssh-clients
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
-      scopes:
-        - https://www.googleapis.com/auth/compute
+      - test-ssh-clients
+      project: "test_project"
+      auth_kind: "service_account"
+      service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
@@ -199,11 +196,10 @@ RETURN = '''
         type: str
     network:
         description:
-            - 'URL of the network resource for this firewall rule. If not
-              specified when creating a firewall rule, the default network is
-              used: global/networks/default If you choose to specify this
-              property, you can specify the network as a full or partial URL.
-              For example, the following are all valid URLs:
+            - 'URL of the network resource for this firewall rule. If not specified when creating
+              a firewall rule, the default network is used: global/networks/default If you choose to
+              specify this property, you can specify the network as a full or partial URL. For
+              example, the following are all valid URLs:
               U(https://www.googleapis.com/compute/v1/projects/myproject/global/)
               networks/my-network projects/myproject/global/networks/my-network
               global/networks/default .'
@@ -272,6 +268,9 @@ def main():
             target_tags=dict(type='list', elements='str')
         )
     )
+
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
 
     state = module.params['state']
     kind = 'compute#firewall'
@@ -416,7 +415,7 @@ def async_op_url(module, extra_data=None):
 def wait_for_operation(module, response):
     op_result = return_if_object(module, response, 'compute#operation')
     if op_result is None:
-        return None
+        return {}
     status = navigate_hash(op_result, ['status'])
     wait_done = wait_for_completion(status, op_result, module)
     return fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#firewall')
