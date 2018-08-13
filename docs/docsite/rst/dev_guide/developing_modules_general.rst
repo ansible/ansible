@@ -190,7 +190,7 @@ Once you've modified the sample code above to do what you want, you can try out 
 Our :ref:`debugging tips <debugging>` will help if you run into bugs as you exercise your module code.
 
 Exercising module code locally
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+______________________________
 
 If you module does not need to target a remote host, you can quickly and easily exercise you code locally like this:
 
@@ -219,7 +219,7 @@ This should return output something like this:
 
 
 Exercising module code in a playbook
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+____________________________________
 
 The next step in testing your new module is to consume it with an Ansible playbook.
 
