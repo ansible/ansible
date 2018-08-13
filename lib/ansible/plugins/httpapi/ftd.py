@@ -2,6 +2,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import json
 import os
@@ -70,8 +71,7 @@ class HttpApi(HttpApiBase):
             self._set_token_info(response_data)
         except ValueError as vexc:
             raise ConnectionError('Did not receive access_token during Auth got'
-                                 '{0}'.format(to_text(cexc)))
-       
+                                  '{0}'.format(to_text(vexc)))
 
     def send_request(self, url_path, http_method, body_params=None, path_params=None, query_params=None):
         url = construct_url_path(url_path, path_params, query_params)
@@ -125,14 +125,14 @@ class HttpApi(HttpApiBase):
 
     def _set_token_info(self, response_data):
         try:
-           token_info = json.loads(to_text(response_data.getvalue()))
+            token_info = json.loads(to_text(response_data.getvalue()))
         except ValueError:
             raise
         if 'refresh_token' in token_info:
             self.refresh_token = token_info['refresh_token']
         if 'access_token' in token_info:
             self.access_token = token_info['access_token']
-        
+
     def handle_httperror(self, exc):
         # Called by connection plugin when it gets HTTP Error for a request.
         # Connection plugin will resend this request if we return true here.
