@@ -106,6 +106,7 @@
   azure_rm_securitygroup:
       resource_group: "{{ resource_group }}"
       name: "{{ secgroupname }}"
+      append_tags: false
       tags:
           testing: testing
           delete: on-exit
