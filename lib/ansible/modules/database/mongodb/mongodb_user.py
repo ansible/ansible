@@ -215,17 +215,13 @@ def check_compatibility(module, client):
     """
     loose_srv_version = LooseVersion(client.server_info()['version'])
     loose_driver_version = LooseVersion(PyMongoVersion)
+    loose_versions_accepted = ['2.6', '3.0', '3.2', '3.4', '3.6']
 
-    if loose_srv_version >= LooseVersion('3.2') and loose_driver_version < LooseVersion('3.2'):
-        module.fail_json(msg=' (Note: you must use pymongo 3.2+ with MongoDB >= 3.2)')
+    for version in loose_versions_accepted:
+      if loose_srv_version >= LooseVersion(version) and loose_driver_version < LooseVersion(version):
+        module.fail_json(msg=' (Note: you must use pymongo {ver}+ with MongoDB >= {ver})'.format(ver=version))
 
-    elif loose_srv_version >= LooseVersion('3.0') and loose_driver_version <= LooseVersion('2.8'):
-        module.fail_json(msg=' (Note: you must use pymongo 2.8+ with MongoDB 3.0)')
-
-    elif loose_srv_version >= LooseVersion('2.6') and loose_driver_version <= LooseVersion('2.7'):
-        module.fail_json(msg=' (Note: you must use pymongo 2.7+ with MongoDB 2.6)')
-
-    elif LooseVersion(PyMongoVersion) <= LooseVersion('2.5'):
+    if LooseVersion(PyMongoVersion) <= LooseVersion('2.5'):
         module.fail_json(msg=' (Note: you must be on mongodb 2.4+ and pymongo 2.5+ to use the roles param)')
 
 
