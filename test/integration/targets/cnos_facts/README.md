@@ -1,4 +1,4 @@
-# Ansible Role: cnos_facts - Displays switch inforamtion
+# Ansible Role: cnos_facts - Displays switch information
 ---
 <add role description below>
 
