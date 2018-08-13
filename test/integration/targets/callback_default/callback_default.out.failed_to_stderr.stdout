@@ -1,0 +1,43 @@
+
+PLAY [testhost] ****************************************************************
+
+TASK [Changed task] ************************************************************
+changed: [testhost]
+
+TASK [Ok task] *****************************************************************
+ok: [testhost]
+
+TASK [Failed task] *************************************************************
+...ignoring
+
+TASK [Skipped task] ************************************************************
+skipping: [testhost]
+
+TASK [Task with var in name (foo bar)] *****************************************
+changed: [testhost]
+
+TASK [Loop task] ***************************************************************
+changed: [testhost] => (item=foo-1)
+changed: [testhost] => (item=foo-2)
+changed: [testhost] => (item=foo-3)
+
+RUNNING HANDLER [Test handler 1] ***********************************************
+changed: [testhost]
+
+RUNNING HANDLER [Test handler 2] ***********************************************
+ok: [testhost]
+
+RUNNING HANDLER [Test handler 3] ***********************************************
+changed: [testhost]
+
+PLAY [testhost] ****************************************************************
+
+TASK [First free task] *********************************************************
+changed: [testhost]
+
+TASK [Second free task] ********************************************************
+changed: [testhost]
+
+PLAY RECAP *********************************************************************
+testhost                   : ok=10   changed=7    unreachable=0    failed=0   
+
