@@ -96,38 +96,42 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_on_ok(self, result):
 
-        if self.display_ok_hosts:
+        delegated_vars = result._result.get('_ansible_delegated_vars', None)
 
-            delegated_vars = result._result.get('_ansible_delegated_vars', None)
+        if isinstance(result._task, TaskInclude):
+            return
+        elif result._result.get('changed', False):
+            if self._last_task_banner != result._task._uuid:
+                self._print_task_banner(result._task)
+
+            if delegated_vars:
+                msg = "changed: [%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
+            else:
+                msg = "changed: [%s]" % result._host.get_name()
+            color = C.COLOR_CHANGED
+        else:
+            if not self.display_ok_hosts:
+                return
 
             if self._last_task_banner != result._task._uuid:
                 self._print_task_banner(result._task)
 
-            if isinstance(result._task, TaskInclude):
-                return
-            elif result._result.get('changed', False):
-                if delegated_vars:
-                    msg = "changed: [%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
-                else:
-                    msg = "changed: [%s]" % result._host.get_name()
-                color = C.COLOR_CHANGED
+            if delegated_vars:
+                msg = "ok: [%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
             else:
-                if delegated_vars:
-                    msg = "ok: [%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
-                else:
-                    msg = "ok: [%s]" % result._host.get_name()
-                color = C.COLOR_OK
+                msg = "ok: [%s]" % result._host.get_name()
+            color = C.COLOR_OK
 
-            self._handle_warnings(result._result)
+        self._handle_warnings(result._result)
 
-            if result._task.loop and 'results' in result._result:
-                self._process_items(result)
-            else:
-                self._clean_results(result._result, result._task.action)
+        if result._task.loop and 'results' in result._result:
+            self._process_items(result)
+        else:
+            self._clean_results(result._result, result._task.action)
 
-                if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
-                    msg += " => %s" % (self._dump_results(result._result),)
-                self._display.display(msg, color=color)
+            if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
+                msg += " => %s" % (self._dump_results(result._result),)
+            self._display.display(msg, color=color)
 
     def v2_runner_on_skipped(self, result):
 
@@ -165,6 +169,9 @@ class CallbackModule(CallbackBase):
         self._display.banner("NO MORE HOSTS LEFT")
 
     def v2_playbook_on_task_start(self, task, is_conditional):
+        self._task_start(task, prefix='TASK')
+
+    def _task_start(self, task, force_banner=False, prefix=None):
         # Preserve task name, as all vars may not be available for templating
         # when we need it later
         if self._play.strategy == 'free':
@@ -176,9 +183,13 @@ class CallbackModule(CallbackBase):
 
             # Display the task banner immediately if we're not doing any filtering based on task result
             if self.display_skipped_hosts and self.display_ok_hosts:
-                self._print_task_banner(task)
+                self._print_task_banner(task, prefix=prefix)
 
-    def _print_task_banner(self, task):
+        # Force display of banner with any strategy if told to
+        if force_banner and self._last_task_banner != task._uuid:
+            self._print_task_banner(task, prefix=prefix)
+
+    def _print_task_banner(self, task, prefix='TASK'):
         # args can be specified as no_log in several places: in the task or in
         # the argument spec.  We can check whether the task is no_log but the
         # argument spec can't be because that is only run on the target
@@ -197,7 +208,7 @@ class CallbackModule(CallbackBase):
         if task_name is None:
             task_name = task.get_name().strip()
 
-        self._display.banner(u"TASK [%s%s]" % (task_name, args))
+        self._display.banner(u"%s [%s%s]" % (prefix, task_name, args))
         if self._display.verbosity >= 2:
             path = task.get_path()
             if path:
@@ -206,10 +217,12 @@ class CallbackModule(CallbackBase):
         self._last_task_banner = task._uuid
 
     def v2_playbook_on_cleanup_task_start(self, task):
-        self._display.banner("CLEANUP TASK [%s]" % task.get_name().strip())
+        # Display banner immediately
+        self._task_start(task, force_banner=True, prefix='CLEANUP TASK')
 
     def v2_playbook_on_handler_task_start(self, task):
-        self._display.banner("RUNNING HANDLER [%s]" % task.get_name().strip())
+        # Display banner immediately
+        self._task_start(task, force_banner=True, prefix='RUNNING HANDLER')
 
     def v2_playbook_on_play_start(self, play):
         name = play.get_name().strip()
@@ -239,31 +252,36 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_item_on_ok(self, result):
 
-        if self.display_ok_hosts:
+        delegated_vars = result._result.get('_ansible_delegated_vars', None)
+        self._clean_results(result._result, result._task.action)
+        if isinstance(result._task, TaskInclude):
+            return
+        elif result._result.get('changed', False):
             if self._last_task_banner != result._task._uuid:
                 self._print_task_banner(result._task)
 
-            delegated_vars = result._result.get('_ansible_delegated_vars', None)
-            self._clean_results(result._result, result._task.action)
-            if isinstance(result._task, TaskInclude):
+            msg = 'changed'
+            color = C.COLOR_CHANGED
+        else:
+            if not self.display_ok_hosts:
                 return
-            elif result._result.get('changed', False):
-                msg = 'changed'
-                color = C.COLOR_CHANGED
-            else:
-                msg = 'ok'
-                color = C.COLOR_OK
 
-            if delegated_vars:
-                msg += ": [%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
-            else:
-                msg += ": [%s]" % result._host.get_name()
+            if self._last_task_banner != result._task._uuid:
+                self._print_task_banner(result._task)
 
-            msg += " => (item=%s)" % (self._get_item_label(result._result),)
+            msg = 'ok'
+            color = C.COLOR_OK
 
-            if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
-                msg += " => %s" % self._dump_results(result._result)
-            self._display.display(msg, color=color)
+        if delegated_vars:
+            msg += ": [%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
+        else:
+            msg += ": [%s]" % result._host.get_name()
+
+        msg += " => (item=%s)" % (self._get_item_label(result._result),)
+
+        if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
+            msg += " => %s" % self._dump_results(result._result)
+        self._display.display(msg, color=color)
 
     def v2_runner_item_on_failed(self, result):
         if self._last_task_banner != result._task._uuid:
