@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - To fix the bug where existing host_record was deleted when existing record name is used with different IP.
+    (https://github.com/ansible/ansible/pull/43235)
