@@ -19,7 +19,10 @@ from ansible.module_utils.urls import urllib_error
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import PY3
 
-import json as _json
+try:
+    import json as _json
+except ImportError:
+    import simplejson as _json
 
 try:
     from library.module_utils.network.f5.common import F5ModuleError
@@ -173,6 +176,18 @@ class Response(object):
 
     def json(self):
         return _json.loads(self._content)
+
+    @property
+    def ok(self):
+        if self.status is not None and int(self.status) > 400:
+            return False
+        try:
+            response = self.json()
+            if 'code' in response and response['code'] > 400:
+                return False
+        except ValueError:
+            pass
+        return True
 
 
 class iControlRestSession(object):
@@ -385,10 +400,32 @@ def download_file(client, url, dest):
 def upload_file(client, url, dest):
     """Upload a file to an arbitrary URL.
 
+    This method is responsible for correctly chunking an upload request to an
+    arbitrary file worker URL.
+
     Arguments:
         client (object): The F5RestClient connection object.
         url (string): The URL to upload a file to.
         dest (string): The file to be uploaded.
+
+    Examples:
+        The ``dest`` may be either an absolute or relative path. The basename
+        of the path is used as the remote file name upon upload. For instance,
+        in the example below, ``BIGIP-13.1.0.8-0.0.3.iso`` would be the name
+        of the remote file.
+
+        The specified URL should be the full URL to where you want to upload a
+        file. BIG-IP has many different URLs that can be used to handle different
+        types of files. This is why a full URL is required.
+
+        >>> from ansible.module_utils.network.f5.icontrol import upload_client
+        >>> url = 'https://{0}:{1}/mgmt/cm/autodeploy/software-image-uploads'.format(
+        ...   self.client.provider['server'],
+        ...   self.client.provider['server_port']
+        ... )
+        >>> dest = '/path/to/BIGIP-13.1.0.8-0.0.3.iso'
+        >>> upload_file(self.client, url, dest)
+        True
 
     Returns:
         bool: True on success. False otherwise.
