@@ -465,7 +465,7 @@ class AzureRMModuleBase(object):
         '''
         new_tags = copy.copy(tags) if isinstance(tags, dict) else dict()
         param_tags = self.module.params.get('tags') if isinstance(self.module.params.get('tags'), dict) else dict()
-        append_tags = self.module.get('append_tags') if self.module.get('append_tags') != None else True
+        append_tags = self.module.params.get('append_tags') if self.module.params.get('append_tags') is not None else True
         changed = False
         # check add or update
         for key, value in param_tags.items():
