@@ -313,10 +313,9 @@ class LinuxTCPConnectionInfo(TCPConnectionInfo):
 
     def get_active_connections_count(self):
         active_connections = 0
-        for family in self.source_file.keys():
-            socket = self.source_file[family]
-            if os.path.exists(socket):
-                with open(socket) as f:
+        for family, socket_path in self.source_file.items():
+            if os.path.exists(socket_path):
+                with open(socket_path) as f:
                     for tcp_connection in f.readlines():
                         tcp_connection = tcp_connection.strip().split()
                         if tcp_connection[self.local_address_field] == 'local_address':
