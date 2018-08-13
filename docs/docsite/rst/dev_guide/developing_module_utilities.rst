@@ -3,9 +3,9 @@
 Appendix: Module Utilities
 ``````````````````````````
 
-Ansible provides a number of module utilities that provide helper functions that you can use when developing your own modules. The ``basic.py`` module utility provides the main entry point for accessing the Ansible library, and all Ansible modules must, at minimum, import from ``basic.py``::
+Ansible provides a number of module utilities that provide helper functions that you can use when developing your own modules. The ``basic.py`` module utility provides the main entry point for accessing the Ansible library, and all Ansible modules must, at minimum, import ``AnsibleModule``::
 
-  from ansible.module_utils.basic import *
+  from ansible.module_utils.basic import AnsibleModule
 
 
 The following is a list of ``module_utils`` files and a general description. The module utility source code lives in the ``./lib/module_utils`` directory under your main Ansible path - for more details on any specific module utility, please see the source code.
