@@ -1,4 +1,4 @@
-.. _developing_modules_general
+.. _developing_modules_general:
 .. _module_dev_tutorial_sample:
 
 *******************************************
