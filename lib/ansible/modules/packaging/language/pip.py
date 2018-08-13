@@ -457,7 +457,7 @@ def main():
     env = module.params['virtualenv']
 
     venv_created = False
-    if chdir:
+    if env and chdir:
         env = os.path.join(chdir, env)
 
     if umask and not isinstance(umask, int):
