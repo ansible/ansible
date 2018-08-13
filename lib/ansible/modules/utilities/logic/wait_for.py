@@ -337,7 +337,6 @@ class LinuxTCPConnectionInfo(TCPConnectionInfo):
                                 (family, self.ipv4_mapped_ipv6_address['match_all']) in self.ips,
                         )):
                             active_connections += 1
-                    f.close()
         return active_connections
 
 
