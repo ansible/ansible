@@ -1,8 +1,9 @@
 .. _developing_plugins:
 .. _plugin_guidelines:
 
+******************
 Developing Plugins
-==================
+******************
 
 .. contents:: Topics
 
@@ -16,12 +17,12 @@ Plugins augment Ansible's core functionality with logic and features that are ac
 Once you've reviewed these general guidelines, you can skip to the particular type of plugin you want to develop.
 
 Writing Plugins in Python
-_________________________
+=========================
 
 You must write your plugin in Python so it can be loaded by the ``PluginLoader`` and returned as a Python object that any module can use. Since your plugin will execute on the controller, you must write it in a :ref:`compatible version of Python <control_machine_requirements>`.
 
 Raising Errors
-______________
+==============
 
 You should return errors encountered during plugin execution by raising ``AnsibleError()`` or a similar class with a message describing the error. When wrapping other exceptions into error messages, you should always use the ``to_text`` Ansible function to ensure proper string compatibility across Python versions:
 
@@ -37,7 +38,7 @@ You should return errors encountered during plugin execution by raising ``Ansibl
 Check the different `AnsibleError objects <https://github.com/ansible/ansible/blob/devel/lib/ansible/errors/__init__.py>`_ and see which one applies best to your situation.
 
 String Encoding
-_______________
+===============
 
 You must convert any strings returned by your plugin into Python's unicode type. Converting to unicode ensures that these strings can run through Jinja2. To convert strings:
 
@@ -47,7 +48,7 @@ You must convert any strings returned by your plugin into Python's unicode type.
     result_string = to_text(result_string)
 
 Plugin Configuration & Documentation Standards
-______________________________________________
+==============================================
 
 To define configurable options for your plugin, describe them in the ``DOCUMENTATION`` section of the python file. Callback and connection plugins have declared configuration requirements this way since Ansible version 2.4; most plugin types now do the same. This approach ensures that the documentation of your plugin's options will always be correct and up-to-date. To add a configurable option to your plugin, define it in this format:
 
