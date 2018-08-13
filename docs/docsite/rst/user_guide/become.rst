@@ -395,7 +395,7 @@ If running on a version of Ansible that is older than 2.5 or the normal
   full control over the operating system. No user is given this privilege by
   default, and care should be taken if you grant this privilege to a user or group.
   For more information on this privilege, please see
-  `Act as part of the operating system <https://technet.microsoft.com/en-us/library/dn221957(v=ws.11).aspx>`_.
+  `Act as part of the operating system <https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-R2-and-2012/dn221957(v=ws.11)>`_.
   You can use the below task to set this privilege on a Windows host::
 
     - name: grant the ansible user the SeTcbPrivilege right
@@ -453,7 +453,7 @@ variables like normal but either do not define ``ansible_become_pass`` or set
 ``ansible_become_pass: ''``.
 
 Before become can work on an account like this, the local policy
-`Accounts: Limit local account use of blank passwords to console logon only <https://technet.microsoft.com/en-us/library/jj852174.aspx>`_
+`Accounts: Limit local account use of blank passwords to console logon only <https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-R2-and-2012/jj852174(v=ws.11)>`_
 must be disabled. This can either be done through a Group Policy Object (GPO)
 or with this Ansible task:
 
@@ -511,7 +511,7 @@ can be set to one of the following:
   logon session as running a normal WinRM process with credential delegation.
 
 For more information, see
-`dwLogonType <https://msdn.microsoft.com/en-au/library/windows/desktop/aa378184.aspx>`_.
+`dwLogonType <https://docs.microsoft.com/en-gb/windows/desktop/api/winbase/nf-winbase-logonusera>`_.
 
 The ``logon_flags`` key specifies how Windows will log the user on when creating
 the new process. The value can be set to none or multiple of the following:
@@ -528,7 +528,7 @@ By default ``logon_flags=with_profile`` is set, if the profile should not be
 loaded set ``logon_flags=`` or if the profile should be loaded with
 ``netcredentials_only``, set ``logon_flags=with_profile,netcredentials_only``.
 
-For more information, see `dwLogonFlags <https://msdn.microsoft.com/en-us/library/windows/desktop/ms682434.aspx>`_.
+For more information, see `dwLogonFlags <https://docs.microsoft.com/en-gb/windows/desktop/api/winbase/nf-winbase-createprocesswithtokenw>`_.
 
 Here are some examples of how to use ``become_flags`` with Windows tasks:
 

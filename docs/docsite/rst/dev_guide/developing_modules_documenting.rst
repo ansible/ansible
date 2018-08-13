@@ -417,7 +417,7 @@ Example usage::
     See also M(win_copy) or M(win_template).
     ...
     Time zone names are from the L(tz database,https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
-    See U(https://www.ansible.com/tower) for an overview.
+    See U(https://www.ansible.com/products/tower) for an overview.
     ...
     See L(IOS Platform Options guide, ../network/user_guide/platform_ios.html)
 

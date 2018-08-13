@@ -34,7 +34,7 @@ Still using Dockerfile to build images? Check out `ansible-container <https://gi
 and start building images from your Ansible playbooks.
 
 Use the *shipit* command in `ansible-container <https://github.com/ansible/ansible-container>`_
-to launch your docker-compose file on `OpenShift <https://www.openshift.org/>`_. Go from an app on your laptop to a fully
+to launch your docker-compose file on `OpenShift <https://www.okd.io/>`_. Go from an app on your laptop to a fully
 scalable app in the cloud in just a few moments.
 
 There's more planned. See the latest ideas and thinking at the `Ansible proposal repo <https://github.com/ansible/proposals/tree/master/docker>`_.
