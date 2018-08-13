@@ -106,19 +106,19 @@ EXAMPLES = r'''
   wait_for: timeout=300
   delegate_to: localhost
 
-- name: Wait 300 seconds for port 8000 to become open on the host, don't start checking for 10 seconds
+- name: Wait for port 8000 to become open on the host, don't start checking for 10 seconds
   wait_for:
     port: 8000
     delay: 10
 
-- name: Wait 300 seconds for port 8000 of any IP to close active connections, don't start checking for 10 seconds
+- name: Waits for port 8000 of any IP to close active connections, don't start checking for 10 seconds
   wait_for:
     host: 0.0.0.0
     port: 8000
     delay: 10
     state: drained
 
-- name: Wait 300 seconds for port 8000 of any IP to close active connections, ignoring connections for specified hosts
+- name: Wait for port 8000 of any IP to close active connections, ignoring connections for specified hosts
   wait_for:
     host: 0.0.0.0
     port: 8000
