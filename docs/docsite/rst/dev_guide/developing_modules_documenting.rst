@@ -114,7 +114,7 @@ Ansible Metadata Fields
 DOCUMENTATION block
 -------------------
 
-After the shebang, the copyright line, the license, and the ``ANSIBLE_METADATA`` section comes the ``DOCUMENTATION`` block. Ansible's online module documentation is generated from the ``DOCUMENTATION`` blocks in each module's source code. The ``DOCUMENTATION`` block must be valid YAML. You may find it easier to start writing your ``DOCUMENTATION`` string in an :ref:`editor with YAML syntax highlighting <other_tools_and_programs>` before you include it in your Python file. You can start by copying our `example documentation string <https://github.com/ansible/ansible/blob/devel/examples/DOCUMENTATION.yml>`_ into your module file and modifying it.
+After the shebang, the copyright line, the license, and the ``ANSIBLE_METADATA`` section comes the ``DOCUMENTATION`` block. Ansible's online module documentation is generated from the ``DOCUMENTATION`` blocks in each module's source code. The ``DOCUMENTATION`` block must be valid YAML. You may find it easier to start writing your ``DOCUMENTATION`` string in an :ref:`editor with YAML syntax highlighting <other_tools_and_programs>` before you include it in your Python file. You can start by copying our `example documentation string <https://github.com/ansible/ansible/blob/devel/examples/DOCUMENTATION.yml>`_ into your module file and modifying it. If you run into syntax issues in your YAML, you can validate it on the `YAML Lint <http://www.yamllint.com/>`_ website.
 
 Module documentation should briefly and accurately define what each module and option does, and how it works with others in the underlying system. Documentation should be written for broad audience--readable both by experts and non-experts.
     * Descriptions should always start with a capital letter and end with a full stop. Consistency always helps.
@@ -123,7 +123,9 @@ Module documentation should briefly and accurately define what each module and o
     * If an optional parameter is sometimes required, reflect this fact in the documentation, e.g. "Required when C(state=present)."
     * If your module allows ``check_mode``, reflect this fact in the documentation.
 
-Each documentation field is described below. Before committing your module documentation, please test it. As long as your module file is `available locally <local_modules>`, you can use ``ansible-doc -t module my_module_name`` to view your module documentation. Any parsing errors will be obvious - you can view details by adding ``-vvv`` to the command. If you run into syntax issues in your YAML, you can validate it on the `YAML Lint <http://www.yamllint.com/>`_ website.
+Each documentation field is described below. Before committing your module documentation, please test it at the command line and as HTML:
+* As long as your module file is `available locally <local_modules>`, you can use ``ansible-doc -t module my_module_name`` to view your module documentation at the command line. Any parsing errors will be obvious - you can view details by adding ``-vvv`` to the command. 
+* You should also :ref:`test the HTML output <testing_documentation>` of your documentation.
 
 Documentation Fields
 ^^^^^^^^^^^^^^^^^^^^
