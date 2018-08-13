@@ -1,4 +1,4 @@
 ---
 bugfixes:
-- authorized_key now follows symlinks by default instead of overwriting them
-  this behaviour can be changed by setting follow_symlinks True/False
+- authorized_key now have an option for following symlinks,
+  default behaviour (False) can be changed by setting follow True/False
