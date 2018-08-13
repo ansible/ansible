@@ -82,7 +82,7 @@ options:
   allocation_state:
     description:
       - Allocation state of the storage pool.
-    choices: [ enabled, disabled ]
+    choices: [ enabled, disabled, maintenance ]
   state:
     description:
       - State of the storage pool.
