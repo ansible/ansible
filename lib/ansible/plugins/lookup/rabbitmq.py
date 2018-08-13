@@ -79,6 +79,7 @@ RETURN = """
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.plugins.lookup import LookupBase
 from ansible.module_utils._text import to_native
+import json
 
 try:
     from __main__ import display
@@ -117,15 +118,23 @@ class LookupModule(LookupBase):
             method_frame, properties, body = conn_channel.basic_get(queue=channel)
             if method_frame:
                 display.vvv(u"%s, %s, %s " % (method_frame, properties, body))
-                ret.append({'msg': body,
-                            'message_count': method_frame.message_count,
-                            'routing_key': method_frame.routing_key,
-                            'delivery_tag': method_frame.delivery_tag,
-                            'redelivered': method_frame.redelivered,
-                            'exchange': method_frame.exchange,
-                            'delivery_mode': properties.delivery_mode,
-                            'content_type': properties.content_type
-                            })
+                msg_details = dict(
+                                  {'msg': body,
+                                   'message_count': method_frame.message_count,
+                                   'routing_key': method_frame.routing_key,
+                                   'delivery_tag': method_frame.delivery_tag,
+                                   'redelivered': method_frame.redelivered,
+                                   'exchange': method_frame.exchange,
+                                   'delivery_mode': properties.delivery_mode,
+                                   'content_type': properties.content_type
+                                   })
+                if properties.content_type == 'application/json':
+                    try:
+                        msg_details['json'] = json.loads(properties.content_type)
+                    except ValueError as e:
+                        AnsibleError("Unable to decode JSON for message %s" % method_frame.delivery_tag )
+
+                ret.append(msg_details)
                 conn_channel.basic_ack(method_frame.delivery_tag)
                 idx += 1
                 if method_frame.message_count == 0 or idx == count:
