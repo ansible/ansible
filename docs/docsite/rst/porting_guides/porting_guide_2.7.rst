@@ -117,13 +117,13 @@ Deprecation notices
 The following modules will be removed in Ansible 2.11. Please update your playbooks accordingly.
 
 * ``na_cdot_aggregate`` use :ref:`na_ontap_aggregate <na_ontap_aggregate>` instead.
-* ``na_cdot_license`` use :ref:`na_ontap_aggregate <na_ontap_license>` instead.
-* ``na_cdot_lun`` use :ref:`na_ontap_aggregate <na_ontap_lun>` instead.
-* ``na_cdot_qtree`` use :ref:`na_ontap_aggregate <na_ontap_qtree>` instead.
-* ``na_cdot_svm`` use :ref:`na_ontap_aggregate <na_ontap_svm>` instead.
-* ``na_cdot_user`` use :ref:`na_ontap_aggregate <na_ontap_user>` instead.
-* ``na_cdot_user_role`` use :ref:`na_ontap_aggregate <na_ontap_user_role>` instead.
-* ``na_cdot_volume`` use :ref:`na_ontap_aggregate <na_ontap_volume>` instead.
+* ``na_cdot_license`` use :ref:`na_ontap_license <na_ontap_license>` instead.
+* ``na_cdot_lun`` use :ref:`na_ontap_lun <na_ontap_lun>` instead.
+* ``na_cdot_qtree`` use :ref:`na_ontap_qtree <na_ontap_qtree>` instead.
+* ``na_cdot_svm`` use :ref:`na_ontap_svm <na_ontap_svm>` instead.
+* ``na_cdot_user`` use :ref:`na_ontap_user <na_ontap_user>` instead.
+* ``na_cdot_user_role`` use :ref:`na_ontap_user_role <na_ontap_user_role>` instead.
+* ``na_cdot_volume`` use :ref:`na_ontap_volume <na_ontap_volume>` instead.
 
 Noteworthy module changes
 -------------------------
