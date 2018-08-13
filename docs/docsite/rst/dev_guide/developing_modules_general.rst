@@ -52,7 +52,8 @@ To create a new module:
 1. Navigate to the correct directory for your new module: ``$ cd lib/ansible/modules/cloud/azure/``
 2. Create your new module file: ``$ touch my_new_test_module.py``
 3. Paste the content below into your new module file. It includes the :ref:`required Ansible format and documentation <developing_modules_documenting>` and some example code.
-4. Modify and extend the code to do what you want your new module to do.
+4. Modify and extend the code to do what you want your new module to do. See the :ref:`best practices <developing_modules_best_practices>`
+and :ref:`Python-3 compatibility <developing_python_3>` pages for pointers on writing clean, concise module code.
 
 .. code:: python
 
@@ -284,9 +285,10 @@ your feature branch as a source and the Ansible devel branch as
 a target.
 
 If you want to contribute your module back to the upstream Ansible repo,
-review our :ref:`submission checklist <developing_modules_checklist>` and :ref:`best practices <developing_modules_best_practices>`
-as well as information about :ref:`testing` before you open a pull request. The Contributor Guide covers
-how to open a pull request and what happens next.
+review our :ref:`submission checklist <developing_modules_checklist>`, :ref:`best practices <developing_modules_best_practices>`,
+and :ref:`strategy for maintaining Python-2 and Python-3 compatibility <developing_python_3>`, as well as
+information about :ref:`testing` before you open a pull request.
+The :ref:`Community Guide <ansible_community_guide>` covers how to open a pull request and what happens next.
 
 
 Communication and development support
