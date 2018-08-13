@@ -140,7 +140,6 @@ import re
 from subprocess import Popen, PIPE
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.errors import AnsibleModuleError
 
 
 class OnePasswordFacts(object):
@@ -200,7 +199,7 @@ class OnePasswordFacts(object):
             else:
                 module.fail_json(msg="1Password CLI tool failed to execute at path '%s': %s" % (self.cli_path, e))
 
-        except AnsibleModuleError as e:
+        except Exception as e:
             # 1Password's CLI doesn't seem to return different error codes, so we need to handle a few of the common
             # error cases by searching via regex, so we can provide a clearer error message to the user.
             if re.search(".*You are not currently signed in.*", str(e)) is not None:
@@ -232,7 +231,7 @@ class OnePasswordFacts(object):
             output, dummy = self._run(args)
             return output
 
-        except AnsibleModuleError as e:
+        except Exception as e:
             if re.search(".*not found.*", str(e)):
                 module.fail_json(msg="Unable to find an item in 1Password named '%s'." % item_id)
             else:
@@ -255,7 +254,7 @@ class OnePasswordFacts(object):
         rc = p.wait()
 
         if rc != expected_rc:
-            raise AnsibleModuleError(err)
+            raise Exception(err)
 
         return out, err
 
