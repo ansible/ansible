@@ -96,11 +96,12 @@ EXAMPLES = '''
 
 # Gather secrets combining simple and advanced search terms to retrieve two items, one of which we fetch two
 # fields. In the first 'password' is fetched, as a field name is not specified (default behaviour) and in the
-# second, 'Custom field name' is fetched as that is specified explicitly.
+# second, 'Custom field name' is fetched, as that is specified explicitly.
 - name: Get a password
   1password_facts:
     search_terms:
-      - My 1Password item
+      - My 1Password item                # 'name' is optional when passing a simple string...
+      - name: My Other 1Password item    # ...but it can also be set for consistency
       - name:    My 1Password item
         field:   Custom field name       # optional, defaults to 'password'
         section: Custom section name     # optional, defaults to 'None'
