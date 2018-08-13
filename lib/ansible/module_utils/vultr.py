@@ -30,6 +30,10 @@ def vultr_argument_spec():
 class Vultr:
 
     def __init__(self, module, namespace):
+
+        if module._name.startswith('vr_'):
+            module.deprecate("The Vultr modules were renamed. The prefix of the modules changed from vr_ to vultr_", version='2.11')
+
         self.module = module
 
         # Namespace use for returns
@@ -217,7 +221,7 @@ class Vultr:
             return {}
 
         for r_id, r_data in r_list.items():
-            if r_data[key] == value:
+            if str(r_data[key]) == str(value):
                 self.api_cache.update({
                     resource: r_data
                 })

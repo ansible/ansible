@@ -57,6 +57,17 @@ EXAMPLES = """
     command: commit replace
     prompt: This commit will replace or remove the entire running configuration
     answer: yes
+
+- name: run config mode command and handle prompt/answer
+  cli_command:
+    command: "{{ item }}"
+    prompt:
+      - "Exit with uncommitted changes"
+    answer: yes
+  loop:
+    - configure
+    - set system syslog file test any any
+    - exit
 """
 
 RETURN = """
@@ -94,7 +105,7 @@ def main():
         answer=dict(type='str', required=False),
         sendonly=dict(type='bool', default=False, required=False),
     )
-    required_together = [['prompt', 'response']]
+    required_together = [['prompt', 'answer']]
     module = AnsibleModule(argument_spec=argument_spec, required_together=required_together,
                            supports_check_mode=True)
 

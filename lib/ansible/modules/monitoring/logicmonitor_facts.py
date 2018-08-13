@@ -113,29 +113,9 @@ RETURN = '''
 ...
 '''
 
+import json
 import socket
 import types
-
-HAS_LIB_JSON = True
-try:
-    import json
-    # Detect the python-json library which is incompatible
-    # Look for simplejson if that's the case
-    try:
-        if (
-            not isinstance(json.loads, types.FunctionType) or
-            not isinstance(json.dumps, types.FunctionType)
-        ):
-            raise ImportError
-    except AttributeError:
-        raise ImportError
-except ImportError:
-    try:
-        import simplejson as json
-    except ImportError:
-        HAS_LIB_JSON = False
-    except SyntaxError:
-        HAS_LIB_JSON = False
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib.parse import urlencode
@@ -576,9 +556,6 @@ def main():
         ),
         supports_check_mode=True
     )
-
-    if HAS_LIB_JSON is not True:
-        module.fail_json(msg="Unable to load JSON library")
 
     selector(module)
 
