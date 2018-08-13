@@ -87,7 +87,7 @@
   when: "challenge_data is changed and challenge == 'dns-01'"
 - name: ({{ certgen_title }}) Create TLS ALPN challenges
   uri:
-    url: "http://{{ acme_host }}:5000/tls-alpn/{{ item.value['tls-alpn-01'].resource }}"
+    url: "http://{{ acme_host }}:5000/tls-alpn/{{ item.value['tls-alpn-01'].resource }}/der-value-b64"
     method: PUT
     body_format: raw
     body: "{{ item.value['tls-alpn-01'].resource_value }}"
@@ -154,4 +154,8 @@
     method: DELETE
   with_dict: "{{ challenge_data.challenge_data }}"
   when: "challenge_data is changed and challenge == 'tls-alpn-01'"
+- name: ({{ certgen_title }}) Get root certificate
+  get_url:
+    url: "http://{{ acme_host }}:5000/root-certificate-for-ca"
+    dest: "{{ output_dir }}/{{ certificate_name }}-root.pem"
 ###############################################################################################
