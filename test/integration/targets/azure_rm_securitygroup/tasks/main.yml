@@ -181,6 +181,30 @@
 - assert:
       that: not output.changed
 
+- name: Add a single one group
+  azure_rm_securitygroup:
+      resource_group: "{{ resource_group }}"
+      name: mysecgroup
+      tags:
+          testing: testing
+          delete: on-exit
+          foo: bar
+      rules:
+          - name: DenySSH
+            protocol: Tcp
+            source_address_prefix:
+            - 54.120.120.240
+            destination_port_range: 22
+            access: Deny
+            priority: 102
+            direction: Inbound
+  register: output
+
+- assert:
+     that: 
+      - output.changed
+      - "{{ output.state.rules | length }} == 2"
+
 - name: Delete all security groups
   azure_rm_securitygroup:
       resource_group: "{{ resource_group }}"

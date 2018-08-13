@@ -1,0 +1,5 @@
+---
+bugfixes:
+- fix azure security group cannot add rules when purge_rule set to false. (https://github.com/ansible/ansible/pull/43699)
+- fix azure_rm_deployment collect tags from existing Resource Group. (https://github.com/ansible/ansible/pull/26104)
+- fix azure_rm_loadbalancer_facts list takes at least 2 arguments. (https://github.com/ansible/ansible/pull/29050)
