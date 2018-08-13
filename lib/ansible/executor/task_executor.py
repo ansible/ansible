@@ -68,7 +68,7 @@ class TaskExecutor:
     # the module
     SQUASH_ACTIONS = frozenset(C.DEFAULT_SQUASH_ACTIONS)
 
-    def __init__(self, host, task, job_vars, play_context, new_stdin, loader, shared_loader_obj, rslt_q):
+    def __init__(self, host, task, job_vars, play_context, new_stdin, loader, shared_loader_obj, final_q):
         self._host = host
         self._task = task
         self._job_vars = job_vars
@@ -77,7 +77,7 @@ class TaskExecutor:
         self._loader = loader
         self._shared_loader_obj = shared_loader_obj
         self._connection = None
-        self._rslt_q = rslt_q
+        self._final_q = final_q
         self._loop_eval_error = None
 
         self._task.squash()
@@ -348,7 +348,7 @@ class TaskExecutor:
             # gets templated here unlike rest of loop_control fields, depends on loop_var above
             res['_ansible_item_label'] = templar.template(label, cache=False)
 
-            self._rslt_q.put(
+            self._final_q.put(
                 TaskResult(
                     self._host.name,
                     self._task._uuid,
@@ -669,7 +669,7 @@ class TaskExecutor:
                         result['_ansible_retry'] = True
                         result['retries'] = retries
                         display.debug('Retrying task, attempt %d of %d' % (attempt, retries))
-                        self._rslt_q.put(TaskResult(self._host.name, self._task._uuid, result, task_fields=self._task.dump_attrs()), block=False)
+                        self._final_q.put(TaskResult(self._host.name, self._task._uuid, result, task_fields=self._task.dump_attrs()), block=False)
                         time.sleep(delay)
         else:
             if retries > 1:
