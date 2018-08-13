@@ -124,7 +124,8 @@ Module documentation should briefly and accurately define what each module and o
     * If your module allows ``check_mode``, reflect this fact in the documentation.
 
 Each documentation field is described below. Before committing your module documentation, please test it at the command line and as HTML:
-* As long as your module file is `available locally <local_modules>`, you can use ``ansible-doc -t module my_module_name`` to view your module documentation at the command line. Any parsing errors will be obvious - you can view details by adding ``-vvv`` to the command. 
+
+* As long as your module file is :ref:`available locally <local_modules>`, you can use ``ansible-doc -t module my_module_name`` to view your module documentation at the command line. Any parsing errors will be obvious - you can view details by adding ``-vvv`` to the command. 
 * You should also :ref:`test the HTML output <testing_documentation>` of your documentation.
 
 Documentation Fields
