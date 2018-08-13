@@ -694,6 +694,7 @@ files:
   $modules/web_infrastructure/_letsencrypt.py: mgruener resmo felixfontein
   $modules/web_infrastructure/acme_account.py: mgruener resmo felixfontein
   $modules/web_infrastructure/acme_certificate.py: mgruener resmo felixfontein
+  $modules/web_infrastructure/acme_certificate_revoke.py: mgruener resmo felixfontein
   $modules/web_infrastructure/ansible_tower/: $team_tower
   $modules/web_infrastructure/apache2_mod_proxy.py: oboukili
   $modules/web_infrastructure/deploy_helper.py: ramondelafuente
@@ -1225,6 +1226,8 @@ files:
     labels:
     - networking
     - nxos
+  test/integration/targets/setup_acme:
+    maintainers: mgruener resmo felixfontein
   test/integration/targets/setup_zabbix:
     maintainers: eikef D3DeFi
   test/integration/targets/ucs:
