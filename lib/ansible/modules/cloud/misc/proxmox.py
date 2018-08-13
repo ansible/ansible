@@ -139,6 +139,7 @@ options:
       - if set to C(no) configuration will not be updated and container will not be restarted.
     type: bool
     default: 'no'
+    version_added: "2.7"
   pubkey:
     description:
       - Public key to add to /root/.ssh/authorized_keys. This was added on Proxmox 4.2, it is ignored for earlier versions
