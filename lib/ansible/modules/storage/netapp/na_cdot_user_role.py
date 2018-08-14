@@ -149,6 +149,9 @@ class NetAppCDOTUserRole(object):
             # Error 16031 denotes a role not being found.
             if to_native(e.code) == "16031":
                 return False
+            # Error 16039 denotes a role existing but missing the command
+            elif str(e.code) == "16039":
+                return False
             else:
                 self.module.fail_json(msg='Error getting role %s: %s' % (self.name, to_native(e)),
                                       exception=traceback.format_exc())

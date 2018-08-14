@@ -194,6 +194,9 @@ class NetAppCDOTUser(object):
             # Error 16034 denotes a user not being found.
             if to_native(e.code) == "16034":
                 return False
+            # Error 16043 denotes the user existing, but the application missing
+            elif str(e.code) == "16043":
+                return False
             else:
                 self.module.fail_json(msg='Error getting user %s: %s' % (self.name, to_native(e)),
                                       exception=traceback.format_exc())
