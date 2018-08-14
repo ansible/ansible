@@ -99,7 +99,8 @@ class Cliconf(CliconfBase):
         else:
             self.send_command('exit')
 
-        resp['diff'] = diff_config
+        if diff_config:
+            resp['diff'] = diff_config
         resp['response'] = results
         resp['request'] = requests
         return resp
