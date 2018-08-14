@@ -56,6 +56,30 @@
     - mailto:example@example.com
   register: account_modified_idempotent
 
+- name: Clear contact email addresses
+  acme_account:
+    select_crypto_backend: "{{ select_crypto_backend }}"
+    account_key_src: "{{ output_dir }}/accountkey.pem"
+    acme_version: 2
+    acme_directory: https://{{ acme_host }}:14000/dir
+    validate_certs: no
+    state: present
+    # allow_creation: no
+    contact: []
+  register: account_modified_2
+
+- name: Clear contact email addresses (idempotent)
+  acme_account:
+    select_crypto_backend: "{{ select_crypto_backend }}"
+    account_key_src: "{{ output_dir }}/accountkey.pem"
+    acme_version: 2
+    acme_directory: https://{{ acme_host }}:14000/dir
+    validate_certs: no
+    state: present
+    # allow_creation: no
+    contact: []
+  register: account_modified_2_idempotent
+
 - name: Generate new account key
   command: openssl ecparam -name secp384r1 -genkey -out {{ output_dir }}/accountkey2.pem
 
