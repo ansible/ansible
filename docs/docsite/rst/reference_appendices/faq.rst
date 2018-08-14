@@ -446,7 +446,7 @@ In OpenBSD, a similar option is available in the base system called encrypt(1):
 
     encrypt
 
-.. _commercial_support:
+.. _dot_or_array_notation:
 
 Ansible supports dot notation and array notation for variables. Which notation should I use?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -463,6 +463,38 @@ safer to use the array notation for variables.
     It is {{ temperature['Celsius']['-3'] }} outside.
 
 Also array notation allows for dynamic variable composition, see dynamic_variables_.
+
+
+.. _argsplat_unsafe:
+
+When is it unsafe to bulk-set task arguments from a variable?
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+You can set all of a task's arguments from a dictionary-typed variable. This
+technique can be useful in some dynamic execution scenarios. However, it
+introduces a security risk. We do not recommend it, so Ansible issues a
+warning when you do something like this::
+
+    #...
+    vars:
+      usermod_args:
+        name: testuser
+        state: present
+        update_password: always
+    tasks:
+    - user: '{{ usermod_args }}'
+
+This particular example is safe. However, constructing tasks like this is
+risky because the parameters and values passed to ``usermod_args`` could
+be overwritten by malicious values in the ``host facts`` on a compromised
+target machine. To mitigate this risk:
+
+* set bulk variables at a level of precedence greater than ``host facts`` in the order of precedence found in :ref:`ansible_variable_precedence` (the example above is safe because play vars take precedence over facts)
+* disable the :ref:`inject_facts_as_vars` configuration setting to prevent fact values from colliding with variables (this will also disable the original warning)
+
+
+.. _commercial_support:
 
 Can I get training on Ansible?
 ++++++++++++++++++++++++++++++
