@@ -19,7 +19,7 @@ To contribute a module to Ansible, you must:
 * follow `PEP 8 <https://www.python.org/dev/peps/pep-0008/>`_ Python style conventions - see :ref:`testing_pep8` for more information
 * license your module with GPL 3
 * conform to Ansible's :ref:`formatting and documentation <developing_modules_documenting>` standards
-* include comprehensive :ref:`tests <developing_modules_testing>` for your module
+* include comprehensive :ref:`tests <developing_testing>` for your module
 * minimize module dependencies
 * support :ref:`check_mode <check_mode_dry>` if possible
 

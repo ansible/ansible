@@ -4,7 +4,7 @@
 Module Format and Documentation
 ===============================
 
-If you want to contribute your module to Ansible Core, you must write your module in Python and follow the standard format described below. (Unless you're writing a Windows module, in which case the :ref:`Windows guidelines <developing_modules_general_windows>` apply.) In addition to following this format, you should review our :ref:`submission checklist <developing_modules_checklist>`, :ref:`best practices <developing_modules_best_practices>`, and :ref:`strategy for maintaining Python-2 and Python-3 compatibility <developing_python_3>`, as well as information about :ref:`testing` before you open a pull request. 
+If you want to contribute your module to Ansible Core, you must write your module in Python and follow the standard format described below. (Unless you're writing a Windows module, in which case the :ref:`Windows guidelines <developing_modules_general_windows>` apply.) In addition to following this format, you should review our :ref:`submission checklist <developing_modules_checklist>`, :ref:`best practices <developing_modules_best_practices>`, and :ref:`strategy for maintaining Python-2 and Python-3 compatibility <developing_python_3>`, as well as information about :ref:`testing <developing_testing>` before you open a pull request. 
 
 Every Ansible module written in Python must begin with seven standard sections in a particular order, followed by the code. The sections in order are:
 
@@ -217,7 +217,7 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
   :suboptions:
 
     * If this option takes a dict, you can define it here. 
-    * See :ref:`azure_rm_securitygroup`, :ref:`os_ironic_node` for examples.
+    * See :ref:`azure_rm_securitygroup_module`, :ref:`os_ironic_node_module` for examples.
 
 :requirements:
   
