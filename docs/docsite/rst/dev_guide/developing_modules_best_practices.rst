@@ -71,7 +71,7 @@ Importing and using shared code
 	    except:
 	        HAS_LIB=False
 
-.. _madule_failures: 
+.. _module_failures: 
 
 Handling module failures
 ========================
