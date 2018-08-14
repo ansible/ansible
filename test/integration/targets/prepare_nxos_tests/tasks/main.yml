@@ -11,6 +11,12 @@
     state: present
   connection: network_cli
 
+- name: Enable lldp
+  nxos_config:
+    lines:
+      - feature lldp
+  ignore_errors: yes
+
 # Gather the list of interfaces on this device and make the list
 # available for integration tests that need them.
 #
