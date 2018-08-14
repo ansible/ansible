@@ -93,7 +93,12 @@ class TaskExecutor:
             with open(mod_defs_file, 'rb') as config_def:
                 module_default_groups = yaml_load(config_def, Loader=SafeLoader).get('groups', {})
         else:
-            raise AnsibleError("Missing base configuration definition file (bad install?): %s" % to_native(b_defs_file))
+            raise AnsibleError("Missing base module_defaults definition file (bad install?): %s" % to_native(mod_defs_file))
+        if C.config.get_config_value('MODULE_DEFAULTS_CFG') is not None and os.path.exists(to_bytes(C.config.get_config_value('MODULE_DEFAULTS_CFG'))):
+            with open(to_bytes(C.config.get_config_value('MODULE_DEFAULTS_CFG')), 'rb') as config_def:
+                module_default_groups = module_default_groups.update(yaml_load(config_def, Loader=SafeLoader).get('groups', {}))
+        elif C.config.get_config_value('MODULE_DEFAULTS_CFG') is not None:
+            raise AnsibleError("Missing user-specified MODULE_DEFAULTS_CFG file: %s" % to_native(C.config.get_config_value('MODULE_DEFAULTS_CFG')))
         m_to_g = dict()
         for group, modules in module_default_groups.items():
             for module in modules:
