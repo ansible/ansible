@@ -1,3 +1,13 @@
+- name: get the value of AWX_PROOT_BASE_PATH for resetting it again after the test
+  tower_settings:
+    name: "AWX_PROOT_BASE_PATH"
+  register: base_path
+
+- name: get the value of AWX_PROOT_SHOW_PATHS for resetting it again after the test
+  tower_settings:
+    name: "AWX_PROOT_SHOW_PATHS"
+  register: show_path
+
 - name: Set the value of AWX_PROOT_SHOW_PATHS
   tower_settings:
     name: "AWX_PROOT_SHOW_PATHS"
@@ -22,3 +32,13 @@
 - assert:
     that:
       - "result.value == '/tmp'"
+
+- name: reset the value of AWX_PROOT_BASE_PATH to previous value
+  tower_settings:
+    name: "AWX_PROOT_BASE_PATH"
+    value: "{{ base_path.value }}"
+
+- name: reset the value of AWX_PROOT_SHOW_PATHS to previous value
+  tower_settings:
+    name: "AWX_PROOT_SHOW_PATHS"
+    value: "{{ show_path.value }}"
