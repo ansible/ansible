@@ -62,7 +62,7 @@ Example CLI Task
 
    - name: Get version information (nos)
      nos_command:
-       command: "show version"
+       commands: "show version"
      register: show_ver
      when: ansible_network_os == 'nos'
 
