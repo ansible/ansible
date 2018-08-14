@@ -1,0 +1,45 @@
+---
+- debug: msg="START cli_config/cli_basic.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  cli_config: &rm
+    config: |
+      interface loopback1
+      no description
+      no shutdown
+    diff_match: none
+
+- name: configure device with config
+  cli_config: &conf
+    config: "{{ lookup('template', 'basic/config.j2') }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: Idempotence
+  cli_config: *conf
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: remove config
+  cli_config: *rm
+
+- name: configure device with config
+  cli_config:
+    config: "{{ lookup('template', 'basic/config.j2') }}"
+    defaults: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: teardown
+  cli_config: *rm
+
+- debug: msg="END cli_config/cli_basic.yaml on connection={{ ansible_connection }}"
