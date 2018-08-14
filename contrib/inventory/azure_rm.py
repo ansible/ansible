@@ -707,7 +707,7 @@ class AzureInventory(object):
             )
             host_vars['os_disk'] = dict(
                 name=machine.storage_profile.os_disk.name,
-                operating_system_type=machine.storage_profile.os_disk.os_type.value,             
+                operating_system_type=machine.storage_profile.os_disk.os_type.value.lower()             
             )
 
             if self.include_powerstate:
