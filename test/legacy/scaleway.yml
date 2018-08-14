@@ -4,3 +4,4 @@
   connection: local
   roles:
     - { role: scaleway_security_group_facts, tags: test_scaleway_security_group_facts }
+    - { role: scaleway_volume_facts, tags: test_scaleway_volume_facts }
