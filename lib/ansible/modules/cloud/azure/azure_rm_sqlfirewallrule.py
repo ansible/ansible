@@ -145,8 +145,6 @@ class AzureRMFirewallRules(AzureRMModuleBase):
             if hasattr(self, key):
                 setattr(self, key, kwargs[key])
 
-        resource_group = self.get_resource_group(self.resource_group)
-
         old_response = self.get_firewallrule()
         response = None
 
