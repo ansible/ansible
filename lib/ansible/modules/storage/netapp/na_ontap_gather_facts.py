@@ -37,15 +37,18 @@ EXAMPLES = '''
     hostname: "na-vsim"
     username: "admin"
     password: "admins_password"
+
+- debug:
+    var: ontap_facts
 '''
 
 RETURN = '''
-netapp_info:
+ontap_facts:
     description: Returns various information about NetApp cluster configuration
     returned: always
     type: dict
     sample: '{
-        "netapp_info": {
+        "ontap_facts": {
             "aggregate_info": {...},
             "cluster_node_info": {...},
             "net_ifgrp_info": {...},
@@ -278,8 +281,8 @@ def main():
     state = module.params['state']
     v = NetAppGatherFacts(module)
     g = v.get_all()
-    result = {'state': state, 'changed': False, 'netapp_info': g}
-    module.exit_json(**result)
+    result = {'state': state, 'changed': False}
+    module.exit_json(ansible_facts={'ontap_facts': g}, **result)
 
 
 if __name__ == '__main__':
