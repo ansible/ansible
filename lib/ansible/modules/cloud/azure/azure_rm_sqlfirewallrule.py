@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_sqlfirewallrule
-version_added: "2.5"
+version_added: "2.7"
 short_description: Manage Firewall Rule instance.
 description:
     - Create, update and delete instance of Firewall Rule.
@@ -139,15 +139,13 @@ class AzureRMFirewallRules(AzureRMModuleBase):
             if hasattr(self, key):
                 setattr(self, key, kwargs[key])
 
-        old_response = None
-        response = None
-
         self.mgmt_client = self.get_mgmt_svc_client(SqlManagementClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
         resource_group = self.get_resource_group(self.resource_group)
 
         old_response = self.get_firewallrule()
+        response = None
 
         if not old_response:
             self.log("Firewall Rule instance doesn't exist")
