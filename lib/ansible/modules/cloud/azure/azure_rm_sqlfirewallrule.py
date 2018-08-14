@@ -272,5 +272,6 @@ def main():
     """Main execution"""
     AzureRMFirewallRules()
 
+
 if __name__ == '__main__':
     main()
