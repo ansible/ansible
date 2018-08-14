@@ -11,15 +11,15 @@ You can call `aws_kms_encrypt` and `aws_kms_encrypt` from this plugin with follo
 
 Mandatory - ciphertext (str): Encrypted item to decrypt.
 Mandatory - key_arn (str): AWS ARN to the KMS key.
-Optional - region_name (str): AWS region to use.
-Optional - profile_name (str): AWS credential profile to use.
-Optional - role_to_assume (str): AWS IAM role to use to get credentials.
-Optional - aws_access_key_id (str): AWS access key to use.
-Optional - aws_secret_access_key (str): AWS secret key to use.
+Optional - region (str): AWS region to use.
+Optional - profile (str): AWS credential profile to use.
+Optional - role_arn (str): AWS IAM role to use to get credentials.
+Optional - aws_access_key (str): AWS access key to use.
+Optional - aws_secret_key (str): AWS secret key to use.
 
 Getting AWS Credentias will use following order.
 
-profile_name > role_to_assume > aws_access_key_id and aws_secret_access_key > instance IAM profile
+profile > role_arn > aws_access_key and aws_secret_key > instance IAM profile
 
 ## Example
 
@@ -88,32 +88,32 @@ def role_arn_to_session(role_arn, role_session_name):
         aws_session_token=response['Credentials']['SessionToken'])
 
 
-def get_boto_session(profile_name=None,
-                     role_to_assume=None,
-                     aws_access_key_id=None,
-                     aws_secret_access_key=None):
+def get_boto_session(profile=None,
+                     role_arn=None,
+                     aws_access_key=None,
+                     aws_secret_key=None):
     """
     Get boto3 session object.
     Args:
-        profile_name (str): AWS credential profile to use.
-        role_to_assume (str): AWS IAM role to use to get credentials.
-        aws_access_key_id (str): AWS access key to use.
-        aws_secret_access_key (str): AWS secret key to use.
+        profile (str): AWS credential profile to use.
+        role_arn (str): AWS IAM role to use to get credentials.
+        aws_access_key (str): AWS access key to use.
+        aws_secret_key (str): AWS secret key to use.
     Returns:
         boto3.Session: Returns a boto3.Session object.
     """
     try:
-        if profile_name:
-            return boto3.session.Session(profile_name=profile_name)
-        elif role_to_assume:
+        if profile:
+            return boto3.session.Session(profile_name=profile)
+        elif role_arn:
             return role_arn_to_session(
-                role_arn=role_to_assume,
-                role_session_name=basename(role_to_assume)
+                role_arn=role_arn,
+                role_session_name=basename(role_arn)
             )
-        elif aws_access_key_id and aws_secret_access_key:
+        elif aws_access_key and aws_secret_key:
             return boto3.Session(
-                aws_access_key_id=aws_access_key_id,
-                aws_secret_access_key=aws_secret_access_key,
+                aws_access_key_id=aws_access_key,
+                aws_secret_access_key=aws_secret_key,
             )
         return boto3.session.Session()
     except Exception as ex:
@@ -122,28 +122,28 @@ def get_boto_session(profile_name=None,
 
 
 def get_key_provider(key_arn,  # pylint: disable=too-many-arguments
-                     region_name,
-                     profile_name=None,
-                     role_to_assume=None,
-                     aws_access_key_id=None,
-                     aws_secret_access_key=None):
+                     region,
+                     profile=None,
+                     role_arn=None,
+                     aws_access_key=None,
+                     aws_secret_key=None):
     """
     Get KMS key provider object.
     Args:
         key_arn (str): AWS ARN to the KMS key.
-        region_name (str): AWS region to use.
-        profile_name (str): AWS credential profile to use.
-        role_to_assume (str): AWS IAM role to use to get credentials.
-        aws_access_key_id (str): AWS access key to use.
-        aws_secret_access_key (str): AWS secret key to use.
+        region (str): AWS region to use.
+        profile (str): AWS credential profile to use.
+        role_arn (str): AWS IAM role to use to get credentials.
+        aws_access_key (str): AWS access key to use.
+        aws_secret_key (str): AWS secret key to use.
     Returns:
         KMSMasterKeyProvider: KMS Master Key Provider object.
     """
-    boto_session = get_boto_session(profile_name=profile_name,
-                                    role_to_assume=role_to_assume,
-                                    aws_access_key_id=aws_access_key_id,
-                                    aws_secret_access_key=aws_secret_access_key)
-    client = boto_session.client('kms', region_name=region_name)
+    boto_session = get_boto_session(profile=profile,
+                                    role_arn=role_arn,
+                                    aws_access_key=aws_access_key,
+                                    aws_secret_key=aws_secret_key)
+    client = boto_session.client('kms', region=region)
     key_provider = KMSMasterKeyProvider()
     regional_master_key = KMSMasterKey(client=client, key_id=key_arn)
     key_provider.add_master_key_provider(regional_master_key)
@@ -152,32 +152,32 @@ def get_key_provider(key_arn,  # pylint: disable=too-many-arguments
 
 def aws_kms_encrypt(plaintext,  # pylint: disable=too-many-arguments
                     key_arn,
-                    region_name='us-east-1',
-                    profile_name=None,
-                    role_to_assume=None,
-                    aws_access_key_id=None,
-                    aws_secret_access_key=None):
+                    region='us-east-1',
+                    profile=None,
+                    role_arn=None,
+                    aws_access_key=None,
+                    aws_secret_key=None):
     """
     Encrypt with KMS.
     Args:
         plaintext (str): Plain text item to encrypt.
         key_arn (str): AWS ARN to the KMS key.
-        region_name (str): AWS region to use.
-        profile_name (str): AWS credential profile to use.
-        role_to_assume (str): AWS IAM role to use to get credentials.
-        aws_access_key_id (str): AWS access key to use.
-        aws_secret_access_key (str): AWS secret key to use.
+        region (str): AWS region to use.
+        profile (str): AWS credential profile to use.
+        role_arn (str): AWS IAM role to use to get credentials.
+        aws_access_key (str): AWS access key to use.
+        aws_secret_key (str): AWS secret key to use.
     Returns:
         str: Encrypted item with KMS.
     """
     check_dependencies()
     try:
         key_provider = get_key_provider(key_arn=key_arn,
-                                        region_name=region_name,
-                                        profile_name=profile_name,
-                                        role_to_assume=role_to_assume,
-                                        aws_access_key_id=aws_access_key_id,
-                                        aws_secret_access_key=aws_secret_access_key)
+                                        region=region,
+                                        profile=profile,
+                                        role_arn=role_arn,
+                                        aws_access_key=aws_access_key,
+                                        aws_secret_key=aws_secret_key)
         ciphertext, dummy = encrypt(
             source=plaintext,
             key_provider=key_provider
@@ -189,32 +189,32 @@ def aws_kms_encrypt(plaintext,  # pylint: disable=too-many-arguments
 
 def aws_kms_decrypt(ciphertext,  # pylint: disable=too-many-arguments
                     key_arn,
-                    region_name='us-east-1',
-                    profile_name=None,
-                    role_to_assume=None,
-                    aws_access_key_id=None,
-                    aws_secret_access_key=None):
+                    region='us-east-1',
+                    profile=None,
+                    role_arn=None,
+                    aws_access_key=None,
+                    aws_secret_key=None):
     """
     Decrypt with KMS.
     Args:
         ciphertext (str): Encrypted item to decrypt.
         key_arn (str): AWS ARN to the KMS key.
-        region_name (str): AWS region to use.
-        profile_name (str): AWS credential profile to use.
-        role_to_assume (str): AWS IAM role to use to get credentials.
-        aws_access_key_id (str): AWS access key to use.
-        aws_secret_access_key (str): AWS secret key to use.
+        region (str): AWS region to use.
+        profile (str): AWS credential profile to use.
+        role_arn (str): AWS IAM role to use to get credentials.
+        aws_access_key (str): AWS access key to use.
+        aws_secret_key (str): AWS secret key to use.
     Returns:
         str: Decrypted plain text item.
     """
     check_dependencies()
     try:
         key_provider = get_key_provider(key_arn=key_arn,
-                                        region_name=region_name,
-                                        profile_name=profile_name,
-                                        role_to_assume=role_to_assume,
-                                        aws_access_key_id=aws_access_key_id,
-                                        aws_secret_access_key=aws_secret_access_key)
+                                        region=region,
+                                        profile=profile,
+                                        role_arn=role_arn,
+                                        aws_access_key=aws_access_key,
+                                        aws_secret_key=aws_secret_key)
         cycled_plaintext, dummy = decrypt(
             source=base64.b64decode(ciphertext),
             key_provider=key_provider
