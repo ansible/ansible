@@ -1,0 +1,12 @@
+- name: Get snapshot informations and register it in a variable
+  scaleway_snapshot_facts:
+  register: snapshots
+
+- name: Display snapshots variable
+  debug:
+    var: snapshots
+
+- name: Ensure retrieval of snapshots facts is success
+  assert:
+    that:
+      - snapshots is success
