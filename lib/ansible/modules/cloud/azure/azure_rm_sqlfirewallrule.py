@@ -63,8 +63,8 @@ EXAMPLES = '''
       resource_group: firewallrulecrudtest-12
       server_name: firewallrulecrudtest-6285
       name: firewallrulecrudtest-5370
-      start_ip_address: NOT FOUND
-      end_ip_address: NOT FOUND
+      start_ip_address: 172.28.10.136
+      end_ip_address: 172.28.10.138
 '''
 
 RETURN = '''
