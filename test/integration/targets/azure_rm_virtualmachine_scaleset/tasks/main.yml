@@ -59,6 +59,38 @@
   assert:
     that: results.changed
 
+- name: Create VMSS -- test upgrade_policy idempotence
+  azure_rm_virtualmachine_scaleset:
+    resource_group: "{{ resource_group }}"
+    name: testVMSS{{ rpfx }}
+    vm_size: Standard_DS1_v2
+    admin_username: testuser
+    ssh_password_enabled: true
+    admin_password: "Password1234!"
+    capacity: 2
+    virtual_network_name: testVnet
+    subnet_name: testSubnet
+    upgrade_policy: Automatic
+    tier: Standard
+    managed_disk_type: Standard_LRS
+    os_disk_caching: ReadWrite
+    image:
+      offer: CoreOS
+      publisher: CoreOS
+      sku: Stable
+      version: latest
+    data_disks:
+      - lun: 0
+        disk_size_gb: 64
+        caching: ReadWrite
+        managed_disk_type: Standard_LRS
+  check_mode: yes
+  register: results
+
+- name: Assert that VMSS was created
+  assert:
+    that: results.changed
+
 - name: Retrieve scaleset facts
   azure_rm_virtualmachine_scaleset_facts:
     resource_group: "{{ resource_group }}"
