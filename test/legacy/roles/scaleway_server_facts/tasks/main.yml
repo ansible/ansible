@@ -1,0 +1,12 @@
+- name: Get server informations and register it in a variable
+  scaleway_server_facts:
+  register: servers
+
+- name: Display servers variable
+  debug:
+    var: servers
+
+- name: Ensure retrieval of servers facts is success
+  assert:
+    that:
+      - servers is success
