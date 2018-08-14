@@ -52,7 +52,7 @@ Plugin Configuration & Documentation Standards
 
 To define configurable options for your plugin, describe them in the ``DOCUMENTATION`` section of the python file. Callback and connection plugins have declared configuration requirements this way since Ansible version 2.4; most plugin types now do the same. This approach ensures that the documentation of your plugin's options will always be correct and up-to-date. To add a configurable option to your plugin, define it in this format:
 
-.. code-block:: python
+.. code-block:: yaml
 
     options:
       option_name:
