@@ -16,7 +16,8 @@ Environment setup
 =================
 
 Prerequisites Via Apt (Ubuntu)
-``````````````````````````````
+------------------------------
+
 Due to dependencies (for example ansible -> paramiko -> pynacl -> libffi):
 
 .. code:: bash
@@ -25,7 +26,8 @@ Due to dependencies (for example ansible -> paramiko -> pynacl -> libffi):
     sudo apt install build-essential libssl-dev libffi-dev python-dev
 
 Common Environment setup
-````````````````````````
+------------------------------
+
 1. Clone the Ansible repository:
    ``$ git clone https://github.com/ansible/ansible.git``
 2. Change directory into the repository root dir: ``$ cd ansible``
