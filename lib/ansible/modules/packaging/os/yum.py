@@ -830,6 +830,16 @@ def exec_install(module, items, action, pkgs, res, yum_basecmd):
         res['changed'] = False
         module.fail_json(**res)
 
+    # Fail if yum prints 'No space left on device' because that means some
+    # packages failed executing their post install scripts because of lack of
+    # free space (e.g. kernel package couldn't generate initramfs). Note that
+    # yum can still exit with rc=0 even if some post scripts didn't execute
+    # correctly.
+    if 'No space left on device' in (out or err):
+        res['changed'] = False
+        res['msg'] = 'No space left on device'
+        module.fail_json(**res)
+
     # FIXME - if we did an install - go and check the rpmdb to see if it actually installed
     # look for each pkg in rpmdb
     # look for each pkg via obsoletes
