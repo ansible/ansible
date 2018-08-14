@@ -142,7 +142,7 @@ class AnsibleVultrStartupScript(Vultr):
         self.returns = {
             'SCRIPTID': dict(key='id'),
             'type': dict(key='script_type'),
-            'name': dict(key='name'),
+            'name': dict(),
             'script': dict(),
             'date_created': dict(),
             'date_modified': dict(),
