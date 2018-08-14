@@ -1080,6 +1080,10 @@ files:
     labels:
       - ovirt
       - cloud
+  lib/ansible/plugins/inventory/scaleway.py:
+    maintainers: sieben hekonsek
+    labels:
+      - cloud
   lib/ansible/plugins/filter/network.py:
     maintainers: $team_networking
     labels: networking
