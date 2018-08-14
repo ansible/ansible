@@ -143,8 +143,15 @@ class CallbackModule(CallbackBase):
                 self.disabled = True
                 return
 
-        with open(self.mem_max_file, 'w+') as f:
-            f.write('0')
+        try:
+            with open(self.mem_max_file, 'w+') as f:
+                f.write('0')
+        except Exception as e:
+            self._display.warning(
+                u'Unable to reset max memory value in %s: %s' % (to_text(self.mem_max_file), to_text(e))
+            )
+            self.disabled = True
+            return
 
         csv_file = self.get_option('csv_file')
         if csv_file:
