@@ -1,0 +1,2 @@
+bugfixes:
+- fact names that conflict with well-known connection vars are now filtered (https://github.com/ansible/ansible/issues/41684)
