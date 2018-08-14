@@ -8,11 +8,15 @@ class ModuleDocFragment(object):
     # Standard documentation fragment
     DOCUMENTATION = '''
 options:
-  oauth_token:
+  api_token:
     description:
       - Scaleway OAuth token.
-    aliases: ['api_token']
-  timeout:
+    aliases: ['oauth_token']
+  api_url:
+    description:
+      - Scaleway API URL
+    default: 'https://api.scaleway.com'
+  api_timeout:
     description:
       - HTTP timeout to Scaleway API in seconds.
     default: 30
