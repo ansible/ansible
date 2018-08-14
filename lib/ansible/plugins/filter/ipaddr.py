@@ -21,6 +21,7 @@ __metaclass__ = type
 
 from functools import partial
 import types
+from ansible.module_utils import six
 
 try:
     import netaddr
@@ -800,7 +801,7 @@ def ipsubnet(value, query='', index='x'):
                 v = ipaddr(query, 'subnet')
             query = netaddr.IPNetwork(v)
         except NETADDR_ERRORS as err:
-            raise errors.AnsibleFilterError(err)
+            six.raise_from(errors.AnsibleFilterError(err), err)
         for i, subnet in enumerate(query.subnet(value.prefixlen), 1):
             if subnet == value:
                 return str(i)
