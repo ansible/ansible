@@ -145,9 +145,6 @@ class AzureRMFirewallRules(AzureRMModuleBase):
             if hasattr(self, key):
                 setattr(self, key, kwargs[key])
 
-        self.sql_client = self.get_mgmt_svc_client(SqlManagementClient,
-                                                   base_url=self._cloud_environment.endpoints.resource_manager)
-
         resource_group = self.get_resource_group(self.resource_group)
 
         old_response = self.get_firewallrule()
