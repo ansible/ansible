@@ -12,7 +12,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
-    'metadata_version': '1.1',
+    'metadata_version': '1.2',
     'status': ['preview'],
     'supported_by': 'community'
 }
@@ -43,17 +43,15 @@ options:
             - Required parameter only if C(state) is set to C(present).
             - Optional parameter from version 2.5 and onwards.
         required: False
-        version_added: 2.7
     is_dvs_switch:
         description:
             - Whether or not C(switch_name) is a DVS
-        version_added: 2.7
+        version_added: XXX
         default: False
-        type: bool
     device_name:
         description:
             - The name of the vmkernel device
-        version_added: 2.7
+        version_added: XXX
         required: True
     portgroup_name:
         description:
@@ -231,6 +229,7 @@ class PyVmomiHelper(PyVmomi):
         if not self.port_group_obj:
             module.fail_json(msg="Portgroup name %s not found" % self.port_group_name)
 
+
         if self.network_type == 'static':
             if not self.ip_address:
                 module.fail_json(msg="network.ip_address is required parameter when network is set to 'static'.")
@@ -292,7 +291,7 @@ class PyVmomiHelper(PyVmomi):
 
         """
         ret = False
-        vnics = [vnic for vnic in self.esxi_host_obj.config.network.vnic if vnic.device == device_name]
+        vnics = [ vnic for vnic in self.esxi_host_obj.config.network.vnic if vnic.device == device_name]
 
         if vnics:
             ret = vnics[0]
