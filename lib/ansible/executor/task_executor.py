@@ -80,7 +80,6 @@ class TaskExecutor:
         self._final_q = final_q
         self._loop_eval_error = None
 
-        from collections import defaultdict
         from ansible.module_utils._text import to_text, to_bytes, to_native
         from yaml import load as yaml_load
         try:
@@ -91,19 +90,17 @@ class TaskExecutor:
         mod_defs_file = '%s/module_defaults.yml' % os.path.join(os.path.dirname(__file__), '..', 'config')
         if os.path.exists(mod_defs_file):
             with open(mod_defs_file, 'rb') as config_def:
-                module_default_groups = yaml_load(config_def, Loader=SafeLoader).get('groups', {})
+                module_default_groups = yaml_load(config_def, Loader=SafeLoader).get('groupings', {})
         else:
             raise AnsibleError("Missing base module_defaults definition file (bad install?): %s" % to_native(mod_defs_file))
         if C.config.get_config_value('MODULE_DEFAULTS_CFG') is not None and os.path.exists(to_bytes(C.config.get_config_value('MODULE_DEFAULTS_CFG'))):
             with open(to_bytes(C.config.get_config_value('MODULE_DEFAULTS_CFG')), 'rb') as config_def:
-                module_default_groups = module_default_groups.update(yaml_load(config_def, Loader=SafeLoader).get('groups', {}))
+                user_def_groups = module_default_groups.update(yaml_load(config_def, Loader=SafeLoader).get('groups', {}))
+                for k, v in user_def_groups.items():
+                    module_default_groups[k] = v + module_default_groups.get(k, [])
         elif C.config.get_config_value('MODULE_DEFAULTS_CFG') is not None:
             raise AnsibleError("Missing user-specified MODULE_DEFAULTS_CFG file: %s" % to_native(C.config.get_config_value('MODULE_DEFAULTS_CFG')))
-        m_to_g = dict()
-        for group, modules in module_default_groups.items():
-            for module in modules:
-                m_to_g[module] = group
-        self._module_to_group_map = m_to_g
+        self._module_to_group_map = module_default_groups
 
         self._task.squash()
 
@@ -584,10 +581,11 @@ class TaskExecutor:
             tmp_args = module_defaults[self._task.action].copy()
             tmp_args.update(self._task.args)
             self._task.args = tmp_args
-        if self._module_to_group_map[self._task.action]:
-            tmp_args = module_defaults['group/{0}'.format(self._module_to_group_map[self._task.action])].copy()
-            tmp_args.update(self._task.args)
-            self._task.args = tmp_args
+        if self._task.action in self._module_to_group_map:
+            for group in self._module_to_group_map.get(self._task.action, []):
+                tmp_args = module_defaults['group/{0}'.format(group)].copy()
+                tmp_args.update(self._task.args)
+                self._task.args = tmp_args
 
 
         # And filter out any fields which were set to default(omit), and got the omit token value
