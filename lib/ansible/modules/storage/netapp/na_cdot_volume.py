@@ -89,6 +89,12 @@ options:
     default: default
     version_added: '2.6'
 
+  vol_new_name:
+    description:
+    - The new name to rename the volume.
+    required: false
+    version_added: '2.6'
+
 '''
 
 EXAMPLES = """
@@ -120,6 +126,17 @@ EXAMPLES = """
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"
 
+    - name: Rename FlexVol
+      na_cdot_volume:
+        state: present
+        name: ansibleVolume
+        vol_new_name: ansiVol
+        infinite: False
+        aggregate_name: aggr1
+        vserver: ansibleVServer
+        hostname: "{{ netapp_hostname }}"
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
 """
 
 RETURN = """
@@ -168,6 +185,7 @@ class NetAppCDOTVolume(object):
             junction_path=dict(required=False, type='str', default=None),
             export_policy=dict(required=False, type='str', default='default'),
             snapshot_policy=dict(required=False, type='str', default='default'),
+            vol_new_name=dict(required=False, type='str', default=None),
         ))
 
         self.module = AnsibleModule(
@@ -196,6 +214,7 @@ class NetAppCDOTVolume(object):
         else:
             self.size = None
         self.aggregate_name = p['aggregate_name']
+        self.new_name = p['vol_new_name']
 
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
@@ -303,11 +322,11 @@ class NetAppCDOTVolume(object):
             volume_rename = netapp_utils.zapi.NaElement.create_node_with_children(
                 'volume-rename-async',
                 **{'volume-name': self.name, 'new-volume-name': str(
-                    self.name)})
+                    self.new_name)})
         else:
             volume_rename = netapp_utils.zapi.NaElement.create_node_with_children(
                 'volume-rename', **{'volume': self.name, 'new-volume-name': str(
-                    self.name)})
+                    self.new_name)})
         try:
             self.server.invoke_successfully(volume_rename,
                                             enable_tunneling=True)
@@ -401,6 +420,9 @@ class NetAppCDOTVolume(object):
                     else:
                         # Volume is offline but requested state is online
                         pass
+                if self.new_name is not None and not self.name == self.new_name:
+                    rename_volume = True
+                    changed = True
 
         else:
             if self.state == 'present':
