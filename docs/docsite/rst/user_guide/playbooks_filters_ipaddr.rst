@@ -482,15 +482,15 @@ the first you can have the rank of the first subnet in the second ::
     36870
 
     # The rank in the /24 that contain the address
-    # {{ address | ipsubnet(192.168.144.0/24) }}
+    # {{ address | ipsubnet('192.168.144.0/24') }}
     6
 
     # An IP with the subnet in the first /30 in a /24
-    # {{ 192.168.144.1/30 | ipsubnet(192.168.144.0/24) }}
+    # {{ '192.168.144.1/30' | ipsubnet('192.168.144.0/24') }}
     1
 
     # The fifth subnet /30 in a /24
-    # {{ 192.168.144.16/30 | ipsubnet(192.168.144.0/24) }}
+    # {{ '192.168.144.16/30' | ipsubnet('192.168.144.0/24') }}
     5
 
 If the secound subnet doesn't include the first it return False
