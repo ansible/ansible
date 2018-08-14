@@ -1,0 +1,12 @@
+- name: Get image informations and register it in a variable
+  scaleway_image_facts:
+  register: images
+
+- name: Display images variable
+  debug:
+    var: images
+
+- name: Ensure retrieval of images facts is success
+  assert:
+    that:
+      - images is success
