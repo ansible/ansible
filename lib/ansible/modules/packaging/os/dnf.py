@@ -240,6 +240,7 @@ EXAMPLES = '''
 '''
 
 import os
+import tempfile
 
 try:
     import dnf
@@ -253,11 +254,15 @@ except ImportError:
     HAS_DNF = False
 
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.six import PY2
 from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
+
+# 64k.  Number of bytes to read at a time when manually downloading pkgs via a url
+BUFSIZE = 65536
 
 
 class DnfModule(YumDnf):

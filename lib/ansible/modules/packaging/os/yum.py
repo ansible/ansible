@@ -308,10 +308,12 @@ EXAMPLES = '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
+from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 
 import os
 import re
+import tempfile
 
 try:
     import rpm
@@ -336,6 +338,9 @@ from contextlib import contextmanager
 
 def_qf = "%{epoch}:%{name}-%{version}-%{release}.%{arch}"
 rpmbin = None
+
+# 64k.  Number of bytes to read at a time when manually downloading pkgs via a url
+BUFSIZE = 65536
 
 
 class YumModule(YumDnf):
@@ -827,7 +832,7 @@ class YumModule(YumDnf):
         if 'No space left on device' in (out or err):
             res['changed'] = False
             res['msg'] = 'No space left on device'
-            module.fail_json(**res)
+            self.module.fail_json(**res)
 
         # FIXME - if we did an install - go and check the rpmdb to see if it actually installed
         # look for each pkg in rpmdb

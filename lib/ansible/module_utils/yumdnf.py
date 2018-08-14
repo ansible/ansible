@@ -14,7 +14,6 @@ import tempfile
 from abc import ABCMeta, abstractmethod
 
 from ansible.module_utils._text import to_native
-from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.six import with_metaclass
 
 yumdnf_argument_spec = dict(
@@ -49,9 +48,6 @@ yumdnf_argument_spec = dict(
     mutually_exclusive=[['name', 'list']],
     supports_check_mode=True,
 )
-
-# 64k.  Number of bytes to read at a time when manually downloading pkgs via a url
-BUFSIZE = 65536
 
 
 class YumDnf(with_metaclass(ABCMeta, object)):
