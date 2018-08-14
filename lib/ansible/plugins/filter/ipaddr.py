@@ -797,12 +797,14 @@ def ipsubnet(value, query='', index='x'):
         elif vtype == 'network':
             v = ipaddr(query, 'subnet')
         else:
-            return False
+            msg = 'You must pass a valid subnet or IP address; {0} is invalid'.format(query_string)
+            raise errors.AnsibleFilterError(msg)
         query = netaddr.IPNetwork(v)
         for i, subnet in enumerate(query.subnet(value.prefixlen), 1):
             if subnet == value:
                 return str(i)
-
+        msg = '{0} is not in the subnet {1}'.format(value.cidr, query.cidr)
+        raise errors.AnsibleFilterError(msg)
     return False
 
 

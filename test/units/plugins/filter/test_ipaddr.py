@@ -512,7 +512,6 @@ class TestIpFilter(unittest.TestCase):
             (('192.168.144.5', '192.168.0.0/16'), '36870'),
             (('192.168.144.5', '192.168.144.5/24'), '6'),
             (('192.168.144.5/32', '192.168.144.0/24'), '6'),
-            (('192.168.144.1/30', '192.168.144.5/30'), False),
             (('192.168.144.16/30', '192.168.144.0/24'), '5'),
             (('192.168.144.5', ), '192.168.144.5/32'),
             (('192.168.0.0/16', ), '192.168.0.0/16'),
@@ -527,11 +526,8 @@ class TestIpFilter(unittest.TestCase):
             (('192.168.144.5', '18', '-1'), '192.168.144.4/31'),
             (('192.168.144.5', '18', '5'), '192.168.144.0/23'),
             (('192.168.144.5', '18', '-5'), '192.168.144.0/27'),
-            (('1.12.1.34/24', '1.12.1.34/32'), False),
             (('span', 'test', 'error'), False),
             (('test', ), False),
-            (('192.168.144.5', 'invalid_subnet'), False),
-            (('192.168.144.5', '192.168.144.5/254'), False),
             (('192.168.144.5', '500000', '-5'), False),
             (('192.168.144.5', '18', '500000'), False),
             (('200000', '18', '-5'), '0.3.13.64/27'),
@@ -541,3 +537,12 @@ class TestIpFilter(unittest.TestCase):
 
     def _test_ipsubnet(self, ipsubnet_args, expected_result):
         self.assertEqual(ipsubnet(*ipsubnet_args), expected_result)
+        expected = 'You must pass a valid subnet or IP address; invalid_subnet is invalid'
+        with self.assertRaises(AnsibleFilterError) as exc:
+            ipsubnet('192.168.144.5', 'invalid_subnet')
+        self.assertEqual(exc.exception.message, expected)
+
+        expected = '192.168.144.0/30 is not in the subnet 192.168.144.4/30'
+        with self.assertRaises(AnsibleFilterError) as exc:
+            ipsubnet('192.168.144.1/30', '192.168.144.5/30')
+        self.assertEqual(exc.exception.message, expected)
