@@ -322,7 +322,7 @@ class WapiModule(WapiBase):
         ''' this function gets the reference object of pre-existing nios objects '''
 
         update = False
-        old_name = new_name = temp = None
+        old_name = new_name = None
         if ('name' in obj_filter):
             # gets and returns the current object based on name/old_name passed
             try:
