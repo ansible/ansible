@@ -2,12 +2,11 @@
 - hosts: localhost
   gather_facts: no
   connection: local
-  environment:
-    SCW_API_KEY: "{{ lookup('env', 'SCW_API_KEY') }}"
   vars:
     scw_org: "{{ lookup('env', 'SCW_ORG') }}"
 
   roles:
+    - { role: scaleway_compute, tags: test_scaleway_compute }
+    - { role: scaleway_security_group_facts, tags: test_scaleway_security_group_facts }
     - { role: scaleway_ssh, tags: test_scaleway_ssh }
     - { role: scaleway_volume, tags: test_scaleway_volume }
-    - { role: scaleway_compute, tags: test_scaleway_compute }
