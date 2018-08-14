@@ -493,7 +493,7 @@ the first you can have the rank of the first subnet in the second ::
     # {{ '192.168.144.16/30' | ipsubnet('192.168.144.0/24') }}
     5
 
-If the secound subnet doesn't include the first it return False
+If the secound subnet doesn't include the first it raise an error
 
 
 You can use ``ipsubnet()`` filter with ``ipaddr()`` filter to for example split
