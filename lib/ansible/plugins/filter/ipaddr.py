@@ -792,16 +792,16 @@ def ipsubnet(value, query='', index='x'):
                     return str(value.supernet(query)[0])
                 except:
                     return False
+
     elif query_string:
-        try:
-            vtype = ipaddr(query, 'type')
-            if vtype == 'address':
-                v = ipaddr(query, 'cidr')
-            elif vtype == 'network':
-                v = ipaddr(query, 'subnet')
-            query = netaddr.IPNetwork(v)
-        except NETADDR_ERRORS as err:
-            six.raise_from(errors.AnsibleFilterError(err), err)
+        vtype = ipaddr(query, 'type')
+        if vtype == 'address':
+            v = ipaddr(query, 'cidr')
+        elif vtype == 'network':
+            v = ipaddr(query, 'subnet')
+        else:
+            return False
+        query = netaddr.IPNetwork(v)
         for i, subnet in enumerate(query.subnet(value.prefixlen), 1):
             if subnet == value:
                 return str(i)

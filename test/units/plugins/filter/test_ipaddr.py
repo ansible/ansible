@@ -21,11 +21,11 @@ import pytest
 
 from ansible.compat.tests import unittest
 from ansible.errors import AnsibleFilterError
-from netaddr.core import AddrConversionError, AddrFormatError, NotRegisteredError
 from ansible.plugins.filter.ipaddr import (ipaddr, _netmask_query, nthhost, next_nth_usable, ipsubnet,
                                            previous_nth_usable, network_in_usable, network_in_network,
                                            cidr_merge, ipmath)
 netaddr = pytest.importorskip('netaddr')
+
 
 class TestIpFilter(unittest.TestCase):
     def test_netmask(self):
@@ -529,7 +529,9 @@ class TestIpFilter(unittest.TestCase):
             (('192.168.144.5', '18', '-5'), '192.168.144.0/27'),
             (('1.12.1.34/24', '1.12.1.34/32'), False),
             (('span', 'test', 'error'), False),
-            (('test', ), False),            
+            (('test', ), False),
+            (('192.168.144.5', 'invalid_subnet'), False),
+            (('192.168.144.5', 'invalid_mask'), False),
             (('192.168.144.5', '500000', '-5'), False),
             (('192.168.144.5', '18', '500000'), False),
             (('200000', '18', '-5'), '0.3.13.64/27'),
@@ -539,13 +541,3 @@ class TestIpFilter(unittest.TestCase):
 
     def _test_ipsubnet(self, ipsubnet_args, expected_result):
         self.assertEqual(ipsubnet(*ipsubnet_args), expected_result)
-
-        expected = 'An Exception indicating a network address is not correctly formatted.'
-        with self.assertRaises(AddrConversionError) as exc:
-            ipsubnet('192.168.144.5', 'invalid_subnet')
-            self.assertEqual(exc.exception.message, expected)
-
-        expected = 'An Exception indicating a failure to convert between address types or notations.'
-        with self.assertRaises(AddrConversionError) as exc:
-            ipsubnet('192.168.144.5', '192.168.8.1.5')
-            self.assertEqual(exc.exception.message, expected)
