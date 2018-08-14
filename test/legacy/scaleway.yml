@@ -1,0 +1,6 @@
+---
+- hosts: localhost
+  gather_facts: no
+  connection: local
+  roles:
+    - { role: scaleway_security_group_facts, tags: test_scaleway_security_group_facts }
