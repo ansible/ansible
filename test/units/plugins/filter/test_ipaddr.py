@@ -531,7 +531,7 @@ class TestIpFilter(unittest.TestCase):
             (('span', 'test', 'error'), False),
             (('test', ), False),
             (('192.168.144.5', 'invalid_subnet'), False),
-            (('192.168.144.5', 'invalid_mask'), False),
+            (('192.168.144.5', '192.168.144.5/254'), False),
             (('192.168.144.5', '500000', '-5'), False),
             (('192.168.144.5', '18', '500000'), False),
             (('200000', '18', '-5'), '0.3.13.64/27'),

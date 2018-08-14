@@ -25,12 +25,9 @@ from ansible.module_utils import six
 
 try:
     import netaddr
-    from netaddr.core import AddrConversionError, AddrFormatError, NotRegisteredError
-    NETADDR_ERRORS = AddrConversionError, AddrFormatError, NotRegisteredError
 except ImportError:
     # in this case, we'll make the filters return error messages (see bottom)
     netaddr = None
-    NETADDR_ERRORS = ()
 else:
     class mac_linux(netaddr.mac_unix):
         pass
