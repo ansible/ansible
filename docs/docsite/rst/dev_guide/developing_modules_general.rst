@@ -190,7 +190,7 @@ Once you've modified the sample code above to do what you want, you can try out 
 Our :ref:`debugging tips <debugging>` will help if you run into bugs as you exercise your module code.
 
 Exercising module code locally
-______________________________
+------------------------------
 
 If you module does not need to target a remote host, you can quickly and easily exercise you code locally like this:
 
@@ -219,7 +219,7 @@ This should return output something like this:
 
 
 Exercising module code in a playbook
-____________________________________
+------------------------------------
 
 The next step in testing your new module is to consume it with an Ansible playbook.
 
@@ -247,7 +247,7 @@ These two examples will get you started with testing your module code. Please re
 information, including instructions for :ref:`testing documentation <testing_documentation>`, adding :ref:`integration tests <testing_integration>`, and more. 
 
 Sanity tests
-^^^^^^^^^^^^
+------------
 
 You can run through Ansible's sanity checks in a container:
 
@@ -257,7 +257,7 @@ Note that this example requires docker to be installed and running. If you'd rat
 container for this, you can choose to use ``--tox`` instead of ``--docker``.
 
 Unit tests
-^^^^^^^^^^
+----------
 
 You can add unit tests for your module in ``./test/units/modules``. You must first setup your testing environment. In this example, we're using Python 3.5.
 
