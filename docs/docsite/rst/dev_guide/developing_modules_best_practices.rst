@@ -71,6 +71,15 @@ Importing and using shared code
 	    except:
 	        HAS_LIB=False
 
+  Then in main(), just after the argspec, do
+
+	.. code-block:: python
+
+		if not HAS_LIB:
+		    module.fail_json(msg='The foo Python module is required')
+
+  And document the dependency in the ``requirements`` section of your module's :ref:`documentation_block`.
+
 .. _module_failures: 
 
 Handling module failures
