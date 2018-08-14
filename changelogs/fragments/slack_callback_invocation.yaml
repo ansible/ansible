@@ -1,0 +1,2 @@
+bugfixes:
+- slack callback - Fix invocation by looking up data from cli.options (https://github.com/ansible/ansible/pull/43542)
