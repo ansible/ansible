@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 #
-# # Copyright: (c) 2018, Red Hat, Inc
-# Written by Adam Miller <admiller@redhat.com>
+# # Copyright: (c) 2012, Red Hat, Inc
+# Written by Seth Vidal <skvidal at fedoraproject.org>
 # Contributing Authors:
 #    - Ansible Core Team
-# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
+#    - Eduard Snesarev (@verm666)
+#    - Berend De Schouwer (@berenddeschouwer)
+#    - Abhijeet Kasurde (@Akasurde)
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 import os
 import tempfile
@@ -99,10 +102,6 @@ class YumDnf(with_metaclass(ABCMeta, object)):
     def run(self):
         raise NotImplementedError
 
-    # This function originated from the YUM module which is GPLv3 licensed, there was
-    # explicit permission from the function's original author to relicence as documented
-    # in the below GitHub ticket for posterity.
-    #   https://github.com/ansible/ansible/pull/19172#issuecomment-278409867
     def fetch_rpm_from_url(self, spec):
         # download package so that we can query it
         package_name, dummy = os.path.splitext(str(spec.rsplit('/', 1)[1]))
