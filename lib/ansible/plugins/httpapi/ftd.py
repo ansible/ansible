@@ -13,7 +13,7 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.plugins.httpapi import HttpApiBase
-from six import wraps
+from ansible.module_utils.six import wraps
 from urllib3 import encode_multipart_formdata
 from urllib3.fields import RequestField
 from ansible.module_utils.connection import ConnectionError
