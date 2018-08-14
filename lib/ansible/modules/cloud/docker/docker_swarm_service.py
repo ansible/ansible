@@ -946,7 +946,8 @@ class DockerServiceManager():
         return ds
 
     def update_service(self, name, old_service, new_service):
-        update_policy, task_template, networks, endpoint_spec, mode, labels = new_service.generate_docker_py_service_description(name, self.get_networks_names_ids())
+        update_policy, task_template, networks, endpoint_spec, mode, labels = new_service.generate_docker_py_service_description(
+            name, self.get_networks_names_ids())
         self.client.update_service(
             old_service.service_id,
             old_service.service_version,
@@ -959,7 +960,8 @@ class DockerServiceManager():
             labels=labels)
 
     def create_service(self, name, service):
-        update_policy, task_template, networks, endpoint_spec, mode, labels = service.generate_docker_py_service_description(name, self.get_networks_names_ids())
+        update_policy, task_template, networks, endpoint_spec, mode, labels = service.generate_docker_py_service_description(
+            name, self.get_networks_names_ids())
         self.client.create_service(
             name=name,
             endpoint_spec=endpoint_spec,
@@ -1100,10 +1102,10 @@ def main():
         restart_policy_window=dict(default=0, type='int'),
         update_delay=dict(default=10, type='int'),
         update_parallelism=dict(default=1, type='int'),
-        update_failure_action=dict(default='continue', choices=['continue','pause']),
+        update_failure_action=dict(default='continue', choices=['continue', 'pause']),
         update_monitor=dict(default=5000000000, type='int'),
         update_max_failure_ratio=dict(default=0, type='float'),
-        update_order=dict(default='stop-first', choices=['stop-first','start-first']),
+        update_order=dict(default='stop-first', choices=['stop-first', 'start-first']),
         user=dict(default='root'))
     required_if = [
         ('state', 'present', ['image'])
@@ -1124,6 +1126,7 @@ def main():
     msg, changed, rebuilt, changes, facts = dsm.run()
 
     client.module.exit_json(msg=msg, changed=changed, rebuilt=rebuilt, changes=changes, ansible_docker_service=facts)
+
 
 if __name__ == '__main__':
     main()
