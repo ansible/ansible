@@ -1,4 +1,4 @@
-# Test code for the file module.
+# Test code for the get_url module
 # (c) 2014, Richard Isaacson <richard.c.isaacson@gmail.com>
 
 # This file is part of Ansible
@@ -51,8 +51,8 @@
 - name: assert success and change
   assert:
     that:
-        - result.changed
-        - '"OK" in result.msg'
+      - result is changed
+      - '"OK" in result.msg'
 
 - name: test nonexisting file fetch
   get_url:
@@ -64,21 +64,27 @@
 - name: assert success and change
   assert:
     that:
-        - result.failed
+      - result is failed
 
 - name: test HTTP HEAD request for file in check mode
-  get_url: url="https://{{ httpbin_host }}/get" dest={{ output_dir }}/get_url_check.txt force=yes
+  get_url:
+    url: "https://{{ httpbin_host }}/get"
+    dest: "{{ output_dir }}/get_url_check.txt"
+    force: yes
   check_mode: True
   register: result
 
 - name: assert that the HEAD request was successful in check mode
   assert:
     that:
-    - result.changed
+    - result is changed
     - '"OK" in result.msg'
 
 - name: test HTTP HEAD for nonexistent URL in check mode
-  get_url: url="https://{{ httpbin_host }}/DOESNOTEXIST" dest={{ output_dir }}/shouldnotexist.html force=yes
+  get_url:
+    url: "https://{{ httpbin_host }}/DOESNOTEXIST"
+    dest: "{{ output_dir }}/shouldnotexist.html"
+    force: yes
   check_mode: True
   register: result
   ignore_errors: True
@@ -86,7 +92,7 @@
 - name: assert that HEAD request for nonexistent URL failed
   assert:
     that:
-    - result.failed
+      - result is failed
 
 - name: test https fetch
   get_url: url="https://{{ httpbin_host }}/get" dest={{output_dir}}/get_url.txt force=yes
@@ -95,8 +101,8 @@
 - name: assert the get_url call was successful
   assert:
     that:
-    - result.changed
-    - '"OK" in result.msg'
+      - result is changed
+      - '"OK" in result.msg'
 
 - name: test https fetch to a site with mismatched hostname and certificate
   get_url:
@@ -130,7 +136,7 @@
 - name: Assert that the file was downloaded
   assert:
     that:
-      - "result.changed == true"
+      - result is changed
       - "stat_result.stat.exists == true"
 
 # SNI Tests
@@ -144,21 +150,23 @@
 
 - command: "grep '{{ sni_host }}' {{ output_dir}}/sni.html"
   register: data_result
-  when: "{{ python_has_ssl_context }}"
+  when: python_has_ssl_context
 
-- debug: var=get_url_result
+- debug:
+    var: get_url_result
+
 - name: Assert that SNI works with this python version
   assert:
     that:
       - 'data_result.rc == 0'
-  when: "{{ python_has_ssl_context }}"
+  when: python_has_ssl_context
 
 # If the client doesn't support SNI then get_url should have failed with a certificate mismatch
 - name: Assert that hostname verification failed because SNI is not supported on this version of python
   assert:
     that:
       - 'get_url_result is failed'
-  when: "{{ not python_has_ssl_context }}"
+  when: not python_has_ssl_context
 
 # These tests are just side effects of how the site is hosted.  It's not
 # specifically a test site.  So the tests may break due to the hosting changing
@@ -171,22 +179,24 @@
 
 - command: "grep '{{ sni_host }}' {{ output_dir}}/sni.html"
   register: data_result
-  when: "{{ python_has_ssl_context }}"
+  when: python_has_ssl_context
 
-- debug: var=get_url_result
+- debug:
+    var: get_url_result
+
 - name: Assert that SNI works with this python version
   assert:
     that:
       - 'data_result.rc == 0'
       - 'get_url_result is not failed'
-  when: "{{ python_has_ssl_context }}"
+  when: python_has_ssl_context
 
 # If the client doesn't support SNI then get_url should have failed with a certificate mismatch
 - name: Assert that hostname verification failed because SNI is not supported on this version of python
   assert:
     that:
       - 'get_url_result is failed'
-  when: "{{ not python_has_ssl_context }}"
+  when: not python_has_ssl_context
 # End hacky SNI test section
 
 - name: Test get_url with redirect
@@ -208,7 +218,7 @@
 - name: Assert that the file has the right permissions
   assert:
     that:
-      - "result.changed == true"
+      - result is changed
       - "stat_result.stat.mode == '0707'"
 
 - name: Test that setting file modes on an already downlaoded file work
@@ -225,8 +235,27 @@
 - name: Assert that the file has the right permissions
   assert:
     that:
-      - "result.changed == true"
+      - result is changed
       - "stat_result.stat.mode == '0070'"
+
+# https://github.com/ansible/ansible/issues/29614
+- name: Change mode on an already downloaded file and specify checksum
+  get_url:
+    url: 'https://{{ httpbin_host }}/'
+    dest: '{{ output_dir }}/test'
+    checksum: 'sha256:7036ede810fad2b5d2e7547ec703cae8da61edbba43c23f9d7203a0239b765c4.'
+    mode: '0775'
+  register: result
+
+- stat:
+    path: "{{ output_dir }}/test"
+  register: stat_result
+
+- name: Assert that file permissions on already downloaded file were changed
+  assert:
+    that:
+      - result is changed
+      - "stat_result.stat.mode == '0775'"
 
 #https://github.com/ansible/ansible/issues/16191
 - name: Test url split with no filename
