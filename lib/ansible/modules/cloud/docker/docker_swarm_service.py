@@ -809,6 +809,9 @@ class DockerService(DockerBaseClass):
             placement=placement,
             resources=resources)
 
+        if self.mode == 'global':
+            self.replicas = None
+        
         mode = types.ServiceMode(self.mode, replicas=self.replicas)
 
         networks = []
