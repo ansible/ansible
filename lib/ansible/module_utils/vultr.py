@@ -237,6 +237,10 @@ class Vultr:
         self.module.fail_json(msg="Could not find %s with %s: %s" % (resource, key, value))
 
     def normalize_result(self, resource):
+        fields_to_remove = set(resource.keys()) - set(self.returns.keys())
+        for field in fields_to_remove:
+            resource.pop(field)
+
         for search_key, config in self.returns.items():
             if search_key in resource:
                 if 'convert_to' in config:
