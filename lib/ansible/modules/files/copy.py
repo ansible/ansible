@@ -602,6 +602,9 @@ def main():
                     changed = True
 
             if not os.path.exists(b_dest):
+                if not src.endswith(os.path.sep):
+                    dest = os.path.join(b_dest, os.path.basename(src))
+                    b_dest = to_bytes(dest, errors='surrogate_or_strict')
                 if not module.check_mode:
                     shutil.copytree(b_src, b_dest, symlinks=not(follow))
                 chown_recursive(dest, module)
