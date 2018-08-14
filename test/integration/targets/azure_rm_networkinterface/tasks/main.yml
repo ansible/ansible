@@ -367,10 +367,12 @@
       dns_servers:
         - 8.9.10.11
   register: output
+
 - assert:
     that:
       - output.changed
       - output.state.dns_settings.dns_servers == ['8.9.10.11']
+
 - name: NIC with dns servers is idempotent
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
@@ -380,9 +382,11 @@
       dns_servers:
         - 8.9.10.11
   register: output
+
 - assert:
     that:
       - not output.changed
+
 - name: NIC with dns servers adding server
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
@@ -393,10 +397,12 @@
         - 8.9.10.11
         - 10.11.12.13
   register: output
+
 - assert:
     that:
       - output.changed
       - output.state.dns_settings.dns_servers | sort() == ['8.9.10.11', '10.11.12.13'] | sort()
+
 - name: NIC with dns servers removing server
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
@@ -406,10 +412,12 @@
       dns_servers:
         - 10.11.12.13
   register: output
+
 - assert:
     that:
       - output.changed
       - output.state.dns_settings.dns_servers == ['10.11.12.13']
+
 - name: Delete DNS servers NIC
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
