@@ -178,6 +178,7 @@ import os
 import ssl as ssl_lib
 import traceback
 from distutils.version import LooseVersion
+from ansible.module_utils.six import iteritems
 
 try:
     from pymongo.errors import ConnectionFailure
@@ -215,18 +216,23 @@ def check_compatibility(module, client):
     """
     loose_srv_version = LooseVersion(client.server_info()['version'])
     loose_driver_version = LooseVersion(PyMongoVersion)
+    # The structure is:
+    #   mongodb_version => pymongo_version
+    loose_versions_accepted = {
+        '2.6': '2.6',
+        '3.0': '2.8',
+        '3.2': '3.2',
+        '3.4': '3.4',
+        '3.6': '3.6',
+    }
+    if LooseVersion(PyMongoVersion) <= LooseVersion('2.5'):
+        module.fail_json(
+            msg=' (Note: you must be on mongodb 2.4+ and pymongo 2.5+ to use the roles param)')
 
-    if loose_srv_version >= LooseVersion('3.2') and loose_driver_version < LooseVersion('3.2'):
-        module.fail_json(msg=' (Note: you must use pymongo 3.2+ with MongoDB >= 3.2)')
-
-    elif loose_srv_version >= LooseVersion('3.0') and loose_driver_version <= LooseVersion('2.8'):
-        module.fail_json(msg=' (Note: you must use pymongo 2.8+ with MongoDB 3.0)')
-
-    elif loose_srv_version >= LooseVersion('2.6') and loose_driver_version <= LooseVersion('2.7'):
-        module.fail_json(msg=' (Note: you must use pymongo 2.7+ with MongoDB 2.6)')
-
-    elif LooseVersion(PyMongoVersion) <= LooseVersion('2.5'):
-        module.fail_json(msg=' (Note: you must be on mongodb 2.4+ and pymongo 2.5+ to use the roles param)')
+    for version, pymongo_version in iteritems(loose_versions_accepted):
+        if loose_srv_version >= LooseVersion(version) and loose_driver_version < LooseVersion(pymongo_version):
+            module.fail_json(msg=' (Note: you must use pymongo {pymongo}+ with MongoDB >= {version})'.format(
+                pymongo=pymongo_version, version=version))
 
 
 def user_find(client, user, db_name):
