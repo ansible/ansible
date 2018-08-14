@@ -88,7 +88,7 @@ class TaskExecutor:
             from yaml import CSafeLoader as SafeLoader
         except ImportError:
             from yaml import SafeLoader
-        mod_defs_file = to_bytes(C.config.get_config_value('MODULE_DEFAULTS_CFG') or '%s/module_defaults.yml' % os.path.join(os.path.dirname(__file__), '..', 'config'))
+        mod_defs_file = '%s/module_defaults.yml' % os.path.join(os.path.dirname(__file__), '..', 'config')
         if os.path.exists(mod_defs_file):
             with open(mod_defs_file, 'rb') as config_def:
                 module_default_groups = yaml_load(config_def, Loader=SafeLoader).get('groups', {})
