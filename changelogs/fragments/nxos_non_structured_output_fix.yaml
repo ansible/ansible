@@ -1,0 +1,3 @@
+bugfixes:
+- nxos_vlan refactor to support non structured output (https://github.com/ansible/ansible/pull/43805).
+- nxos_facts test lldp feature and fix nxapi check_rc (https://github.com/ansible/ansible/pull/44104).
