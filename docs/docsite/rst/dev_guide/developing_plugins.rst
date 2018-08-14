@@ -61,8 +61,8 @@ To define configurable options for your plugin, describe them in the ``DOCUMENTA
         env:
           - name: NAME_OF_ENV_VAR
         ini:
-          - section: what_does_this_do?
-            key: ????
+          - section: section_of_ansible.cfg_where_this_config_option_is_defined
+            key: key_used_in_ansible.cfg
         required: True/False
         type: boolean/float/integer/list/none/path/pathlist/pathspec/string/tmppath
         version_added: X.x
