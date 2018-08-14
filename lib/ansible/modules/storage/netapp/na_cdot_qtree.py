@@ -47,6 +47,12 @@ options:
     - The name of the vserver to use.
     required: true
 
+  qtree_new_name:
+    description:
+    - The new name to rename the qtree.
+    required: false
+    version_added: '2.6'
+
 '''
 
 EXAMPLES = """
@@ -64,6 +70,7 @@ EXAMPLES = """
   na_cdot_qtree:
     state: present
     name: ansibleQTree
+    qtree_new_name: ansibleQTreeNew
     flexvol_name: ansibleVolume
     vserver: ansibleVServer
     hostname: "{{ netapp_hostname }}"
@@ -93,6 +100,7 @@ class NetAppCDOTQTree(object):
             name=dict(required=True, type='str'),
             flexvol_name=dict(type='str'),
             vserver=dict(required=True, type='str'),
+            qtree_new_name=dict(required=False, type='str', default=None),
         ))
 
         self.module = AnsibleModule(
@@ -110,6 +118,7 @@ class NetAppCDOTQTree(object):
         self.name = p['name']
         self.flexvol_name = p['flexvol_name']
         self.vserver = p['vserver']
+        self.new_name = p['qtree_new_name']
 
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
@@ -171,7 +180,7 @@ class NetAppCDOTQTree(object):
 
     def rename_qtree(self):
         path = '/vol/%s/%s' % (self.flexvol_name, self.name)
-        new_path = '/vol/%s/%s' % (self.flexvol_name, self.name)
+        new_path = '/vol/%s/%s' % (self.flexvol_name, self.new_name)
         qtree_rename = netapp_utils.zapi.NaElement.create_node_with_children(
             'qtree-rename', **{'qtree': path,
                                'new-qtree-name': new_path})
@@ -197,7 +206,7 @@ class NetAppCDOTQTree(object):
                 changed = True
 
             elif self.state == 'present':
-                if self.name is not None and not self.name == \
+                if self.new_name is not None and not self.new_name == \
                         self.name:
                     changed = True
                     rename_qtree = True
