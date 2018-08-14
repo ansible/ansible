@@ -48,9 +48,9 @@ Scoping your module(s)
 Especially if you want to contribute your module back to Ansible Core, make sure it includes enough logic and functionality, but not too much. If you're finding these guidelines tricky, consider :ref:`whether you really need to write a module <module_dev_should_you>` at all.
 
 * Each module should have a concise and well-defined functionality. Basically, follow the UNIX philosophy of doing one thing well.
-* Do not add `list` or `info` state options to an existing module - create a new `_facts` module.
+* Do not add ``list`` or ``info`` state options to an existing module - create a new ``_facts`` module.
 * Modules should not require that a user know all the underlying options of an API/tool to be used. For instance, if the legal values for a required module parameter cannot be documented, the module does not belong in Ansible Core.
-* Modules should encompass much of the logic for interacting with a resource. A lightweight wrapper around a complex API forces users to offload too much logic into their playbooks. If you want to connect Ansible to a complex API, create multiple modules that interact with smaller individual pieces of the API.
+* Modules should encompass much of the logic for interacting with a resource. A lightweight wrapper around a complex API forces users to offload too much logic into their playbooks. If you want to connect Ansible to a complex API, :ref:`create multiple modules <developing_modules_in_groups>` that interact with smaller individual pieces of the API.
 * Avoid creating a module that does the work of other modules; this leads to code duplication and divergence, and makes things less uniform, unpredictable and harder to maintain. Modules should be the building blocks. If you are asking 'how can I have a module execute other modules' ... you want to write a role. 
 
 .. _shared_code:
