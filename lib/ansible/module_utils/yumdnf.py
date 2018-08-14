@@ -58,7 +58,7 @@ class YumDnf(with_metaclass(ABCMeta, object)):
     """
     Abstract class that handles the population of instance variables that should
     be identical between both YUM and DNF modules because of the feature parity
-    and shared argement spec
+    and shared argument spec
     """
 
     def __init__(self, module):

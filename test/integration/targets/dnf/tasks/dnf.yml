@@ -245,8 +245,6 @@
     download_only: true
   register: dnf_result
 
-- debug: var=dnf_result
-
 - name: verify download of sos (part 1 -- dnf "install" succeeded)
   assert:
     that:
@@ -273,8 +271,6 @@
     name: "@Books and Guides"
     state: present
   register: dnf_result
-
-- debug: var=dnf_result
 
 - name: verify installation of the group
   assert:
@@ -346,8 +342,6 @@
 - shell: 'dnf -y group install "Books and Guides" && dnf -y group remove "Books and Guides"'
   register: shell_dnf_result
 
-- debug: var=shell_dnf_result
-
 # GROUP UPGRADE - this will go to the same method as group install
 # but through group_update - it is its invocation we're testing here
 # see commit 119c9e5d6eb572c4a4800fbe8136095f9063c37b
@@ -356,8 +350,6 @@
     name: "@Books and Guides"
     state: latest
   register: dnf_result
-
-- debug: var=dnf_result
 
 - name: verify installation of the group
   assert:
