@@ -19,45 +19,48 @@ DOCUMENTATION = '''
     short_description: Profiles maximum memory usage of tasks and full execution using cgroups
     version_added: "2.6"
     description:
-        - This is an ansible callback plugin that profiles maximum memory usage of ansible and individual tasks, and displays a recap at the end using cgroups
+        - This is an ansible callback plugin utilizes cgroups to profile peak memory and CPU usage of ansible and
+          individual tasks, and display a recap at the end of the playbook execution
     notes:
-        - Requires ansible to be run from within a cgroup, such as with C(cgexec -g memory:ansible_profile ansible-playbook ...)
+        - Requires ansible to be run from within a cgroup, such as with
+          C(cgexec -g cpuacct,memory:ansible_profile ansible-playbook ...)
         - This cgroup should only be used by ansible to get accurate results
-        - To create the cgroup, first use a command such as C(sudo cgcreate -a ec2-user:ec2-user -t ec2-user:ec2-user -g memory:ansible_profile)
+        - To create the cgroup, first use a command such as
+          C(sudo cgcreate -a ec2-user:ec2-user -t ec2-user:ec2-user -g cpuacct,memory:ansible_profile)
     options:
-      max_mem_file:
+      control_group:
         required: True
-        description: Path to cgroups C(memory.max_usage_in_bytes) file. Example C(/sys/fs/cgroup/memory/ansible_profile/memory.max_usage_in_bytes)
-        env:
-          - name: CGROUP_MAX_MEM_FILE
-        ini:
-          - section: callback_cgroupmemrecap
-            key: max_mem_file
-      cur_mem_file:
-        required: True
-        description: Path to C(memory.usage_in_bytes) file. Example C(/sys/fs/cgroup/memory/ansible_profile/memory.usage_in_bytes)
-        env:
-          - name: CGROUP_CUR_MEM_FILE
-        ini:
-          - section: callback_cgroupmemrecap
-            key: cur_mem_file
-      cgroup_control_group:
+        description: Name of cgroups control group
         env:
           - name: CGROUP_CONTROL_GROUP
+        ini:
+          - section: callback_cgroup_perf_recap
+            key: control_group
       csv_file:
         description: Output path for CSV file containing recorded memory readings
         env:
-            - name: CGROUP_CSV_FILE
+          - name: CGROUP_CSV_FILE
         ini:
-            - section: callback_cgroupmemrecap
-              key: csv_file
+          - section: callback_cgroup_perf_recap
+            key: csv_file
+      features:
+        description: Enable specific profiling features
+        default:
+          - memory
+          - cpu
+        type: list
+        env:
+          - name: CGROUP_FEATURES
+        ini:
+          - section: callback_cgroup_perf_recap
+            key: features
 '''
 
 import csv
 import time
 import threading
 
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins.callback import CallbackBase
 
 
@@ -124,10 +127,7 @@ class CallbackModule(CallbackBase):
     def set_options(self, task_keys=None, var_options=None, direct=None):
         super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
-        #self.mem_max_file = self.get_option('max_mem_file')
-        #self.mem_current_file = self.get_option('cur_mem_file')
-
-        self.control_group = to_bytes(self.get_option('cgroup_control_group'))
+        self.control_group = to_bytes(self.get_option('control_group'), errors='surrogate_or_strict')
         self.mem_max_file = b'/sys/fs/cgroup/memory/%s/memory.max_usage_in_bytes' % self.control_group
         self.mem_current_file = b'/sys/fs/cgroup/memory/%s/memory.usage_in_bytes' % self.control_group
         self.cpu_usage_file = b'/sys/fs/cgroup/cpuacct/%s/cpuacct.usage' % self.control_group
