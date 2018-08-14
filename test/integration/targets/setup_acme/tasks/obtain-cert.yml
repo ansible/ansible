@@ -85,7 +85,25 @@
     body: "{{ item.value }}"
   with_dict: "{{ challenge_data.challenge_data_dns }}"
   when: "challenge_data is changed and challenge == 'dns-01'"
-- name: ({{ certgen_title }}) Create TLS ALPN challenges
+- name: ({{ certgen_title }}) Create TLS ALPN challenges (acm_challenge_cert_helper)
+  acme_challenge_cert_helper:
+    challenge: tls-alpn-01
+    challenge_data: "{{ item.value['tls-alpn-01'] }}"
+    private_key_src: "{{ output_dir }}/{{ certificate_name }}.key"
+  with_dict: "{{ challenge_data.challenge_data }}"
+  register: tls_alpn_challenges
+  when: "challenge_data is changed and challenge == 'tls-alpn-01' and (challenge_alpn_tls is defined and challenge_alpn_tls == 'acme_challenge_cert_helper')"
+- name: ({{ certgen_title }}) Set TLS ALPN challenges (acm_challenge_cert_helper)
+  uri:
+    url: "http://{{ acme_host }}:5000/tls-alpn/{{ item.domain }}/certificate-and-key"
+    method: PUT
+    body_format: raw
+    body: "{{ item.challenge_certificate }}\n{{ lookup('file', output_dir ~ '/' ~ certificate_name ~ '.key') }}"
+    headers:
+      content-type: "application/pem-certificate-chain"
+  with_items: "{{ tls_alpn_challenges.results }}"
+  when: "challenge_data is changed and challenge == 'tls-alpn-01' and (challenge_alpn_tls is defined and challenge_alpn_tls == 'acme_challenge_cert_helper')"
+- name: ({{ certgen_title }}) Create TLS ALPN challenges (der-value-b64)
   uri:
     url: "http://{{ acme_host }}:5000/tls-alpn/{{ item.value['tls-alpn-01'].resource }}/der-value-b64"
     method: PUT
@@ -94,7 +112,7 @@
     headers:
       content-type: "application/octet-stream"
   with_dict: "{{ challenge_data.challenge_data }}"
-  when: "challenge_data is changed and challenge == 'tls-alpn-01'"
+  when: "challenge_data is changed and challenge == 'tls-alpn-01' and (challenge_alpn_tls is not defined or challenge_alpn_tls == 'der-value-b64')"
 ## ACME STEP 2 ################################################################################
 - name: ({{ certgen_title }}) Obtain cert, step 2
   acme_certificate:
