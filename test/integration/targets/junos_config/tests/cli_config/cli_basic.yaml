@@ -1,0 +1,29 @@
+---
+- debug: msg="START cli_config/cli_basic.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  cli_config: &rm
+    config: delete interfaces ge-0/0/1
+  become: yes
+
+- name: configure device with config
+  cli_config: &conf
+    config: set interfaces ge-0/0/1 description 'test-interface'
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: Idempotence
+  cli_config: *conf
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  cli_config: *rm
+
+- debug: msg="END cli_config/cli_basic.yaml on connection={{ ansible_connection }}"
