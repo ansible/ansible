@@ -3,7 +3,7 @@
 The lifecycle of an Ansible module
 ======================================
 
-Modules in the main Ansible repo have a defined life cycle, from first introduction to final removal. The module life cycle is tied to the `Ansible release cycle <release_cycle>`. A module may move through these four states:
+Modules in the main Ansible repo have a defined life cycle, from first introduction to final removal. The module life cycle is tied to the `Ansible release cycle <release_cycle>` and reflected in the :ref:`ansible_metadata_block`. A module may move through these four states:
 
 1. When a module is first accepted into Ansible, we consider it in tech preview and mark it ``preview``. Modules in ``preview`` are not stable. You may change the parameters or dependencies, expand or reduce the functionality of ``preview`` modules. Many modules remain ``preview`` for years.
 
@@ -30,8 +30,7 @@ To deprecate a module, you must:
   :why: Optional string that used to detail why this has been removed.
   :alternative: Inform users they should do instead, i.e. ``Use M(whatmoduletouseinstead) instead.``.
 
-* See the `kubernetes module code <https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/clustering/k8s/_kubernetes.py>`_
-  for an example of documenting deprecation.
+* For an example of documenting deprecation, see this `PR that deprecates multiple modules <https://github.com/ansible/ansible/pull/43781/files>`_.
 
 Changing a module name
 ----------------------
