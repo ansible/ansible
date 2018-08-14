@@ -1890,6 +1890,87 @@
       - "stat_new_dir_with_chown_link_file12.stat.pw_name == 'ptux'"
       - "stat_new_dir_with_chown_link_file12.stat.gr_name == 'ptux'"
 
+
+## testcase5 behaviour of remot_src when src not endswith os sep
+
+- block:
+  - name: execute - Copy the directory  src not endswith os sep
+    copy:
+      remote_src: True
+      src: '{{ remote_dir }}/remote_dir_src'
+      dest: '{{ remote_dir }}/new_dir_without_os_sep'
+    register: testcase5_without_os_sep
+
+  - name: stat the new_dir_without_os_sep/remote_dir_src
+    stat:
+      path: '{{ remote_dir }}/new_dir_without_os_sep/remote_dir_src'
+    register: stat_remote_dir_src_without_os_sep
+
+  - name: Stat the remote_dir_src/subdir
+    stat:
+      path: '{{ remote_dir }}/remote_dir_src/subdir'
+    register: stat_remote_dir_src_without_os_sep_subdir
+
+  - name: Stat the remote_dir_src/file1
+    stat:
+      path: '{{ remote_dir }}/new_dir_without_os_sep/remote_dir_src/file1'
+    register: stat_remote_dir_src_without_os_sep_file1
+
+  - name: Stat the remote_dir_src/subdir/file12
+    stat:
+      path: '{{ remote_dir }}/new_dir_without_os_sep/remote_dir_src/subdir/file12'
+    register: stat_remote_dir_src_without_os_sep_subdir_file12
+
+  - name: Stat the remote_dir_src/link_file12
+    stat:
+      path: '{{ remote_dir }}/new_dir_without_os_sep/remote_dir_src/link_file12'
+    register: stat_remote_dir_src_without_os_sep_link_file12
+
+  - name: assert - Copy the directory  src not endswith os sep
+    assert:
+      that:
+      - testcase5_without_os_sep is changed
+
+      - "stat_remote_dir_src_without_os_sep.stat.exists"
+      - "stat_remote_dir_src_without_os_sep.stat.isdir"
+      - "stat_remote_dir_src_before.stat.uid == stat_remote_dir_src_without_os_sep.stat.uid"
+      - "stat_remote_dir_src_before.stat.gid == stat_remote_dir_src_without_os_sep.stat.gid"
+      - "stat_remote_dir_src_before.stat.pw_name == stat_remote_dir_src_without_os_sep.stat.pw_name"
+      - "stat_remote_dir_src_before.stat.gr_name == stat_remote_dir_src_without_os_sep.stat.gr_name"
+      - "stat_remote_dir_src_before.stat.mode == stat_remote_dir_src_without_os_sep.stat.mode"
+
+      - "stat_remote_dir_src_without_os_sep_subdir.stat.exists"
+      - "stat_remote_dir_src_without_os_sep_subdir.stat.isdir"
+      - "stat_remote_dir_src_subdir_before.stat.uid == stat_remote_dir_src_without_os_sep_subdir.stat.uid"
+      - "stat_remote_dir_src_subdir_before.stat.gid == stat_remote_dir_src_without_os_sep_subdir.stat.gid"
+      - "stat_remote_dir_src_subdir_before.stat.pw_name == stat_remote_dir_src_without_os_sep_subdir.stat.pw_name"
+      - "stat_remote_dir_src_subdir_before.stat.gr_name == stat_remote_dir_src_without_os_sep_subdir.stat.gr_name"
+      - "stat_remote_dir_src_subdir_before.stat.mode == stat_remote_dir_src_without_os_sep_subdir.stat.mode"
+
+      - "stat_remote_dir_src_without_os_sep_file1.stat.exists"
+      - "stat_remote_dir_src_file1_before.stat.uid == stat_remote_dir_src_without_os_sep_file1.stat.uid"
+      - "stat_remote_dir_src_file1_before.stat.gid == stat_remote_dir_src_without_os_sep_file1.stat.gid"
+      - "stat_remote_dir_src_file1_before.stat.pw_name == stat_remote_dir_src_without_os_sep_file1.stat.pw_name"
+      - "stat_remote_dir_src_file1_before.stat.gr_name == stat_remote_dir_src_without_os_sep_file1.stat.gr_name"
+      - "stat_remote_dir_src_file1_before.stat.mode == stat_remote_dir_src_without_os_sep_file1.stat.mode"
+      - "stat_remote_dir_src_file1_before.stat.checksum == stat_remote_dir_src_without_os_sep_file1.stat.checksum"
+
+      - "stat_remote_dir_src_without_os_sep_subdir_file12.stat.exists"
+      - "stat_remote_dir_src_subdir_file12_before.stat.uid == stat_remote_dir_src_without_os_sep_subdir_file12.stat.uid"
+      - "stat_remote_dir_src_subdir_file12_before.stat.gid == stat_remote_dir_src_without_os_sep_subdir_file12.stat.gid"
+      - "stat_remote_dir_src_subdir_file12_before.stat.pw_name == stat_remote_dir_src_without_os_sep_subdir_file12.stat.pw_name"
+      - "stat_remote_dir_src_subdir_file12_before.stat.gr_name == stat_remote_dir_src_without_os_sep_subdir_file12.stat.gr_name"
+      - "stat_remote_dir_src_subdir_file12_before.stat.mode == stat_remote_dir_src_without_os_sep_subdir_file12.stat.mode"
+      - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_remote_dir_src_without_os_sep_subdir_file12.stat.checksum"
+
+      - "stat_remote_dir_src_without_os_sep_link_file12.stat.exists"
+      - "stat_remote_dir_src_without_os_sep_link_file12.stat.islnk"
+      - "stat_remote_dir_src_link_file12_before.stat.uid == stat_remote_dir_src_without_os_sep_link_file12.stat.uid"
+      - "stat_remote_dir_src_link_file12_before.stat.gid == stat_remote_dir_src_without_os_sep_link_file12.stat.gid"
+      - "stat_remote_dir_src_link_file12_before.stat.pw_name == stat_remote_dir_src_without_os_sep_link_file12.stat.pw_name"
+      - "stat_remote_dir_src_link_file12_before.stat.gr_name == stat_remote_dir_src_without_os_sep_link_file12.stat.gr_name"
+
+
 ## testcase last - make sure remote_dir_src not change
 - block:
   - name: Stat the remote_dir_src
