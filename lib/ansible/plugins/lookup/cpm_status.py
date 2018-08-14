@@ -30,11 +30,11 @@ options:
   cpm_username:
     description:
       - This is the Basic Authentication Username of the WTI device to send the module.
-    required: true
+    required: false
   cpm_password:
     description:
       - This is the Basic Authentication Password of the WTI device to send the module.
-    required: true
+    required: false
   use_https:
     description:
       - Designates to use an https connection or http connection.
@@ -57,43 +57,47 @@ options:
 EXAMPLES = """
 # Get temperature
   - name: run Get Device Temperature
-    debug: msg="{{ lookup('cpm_status',
-                    'temperature',
-                    validate_certs=true,
-                    use_https=true,
-                    cpm_url="rest.wti.com",
-                    cpm_username="rest",
-                    cpm_password="restfulpassword") }}"
+  - debug:
+        var: lookup('cpm_status',
+                'temperature',
+                validate_certs=true,
+                use_https=true,
+                cpm_url='rest.wti.com',
+                cpm_username='rest',
+                cpm_password='restfulpassword')
 
 # Get firmware version
   - name: Get the firmware version of a given WTI device
-    debug: msg="{{ lookup('cpm_status',
-                    'firmware',
-                    validate_certs=false,
-                    use_https=true,
-                    cpm_url="192.168.0.158",
-                    cpm_username="super",
-                    cpm_password="super") }}"
+  - debug:
+        var: lookup('cpm_status',
+                'firmware',
+                validate_certs=false,
+                use_https=true,
+                cpm_url="192.168.0.158",
+                cpm_username="super",
+                cpm_password="super")
 
 # Get status output
   - name: Get the status output from a given WTI device
-    debug: msg="{{ lookup('cpm_status',
-                    'status',
-                    validate_certs=true,
-                    use_https=true,
-                    cpm_url="rest.wti.com",
-                    cpm_username="rest",
-                    cpm_password="restfulpassword") }}"
+  - debug:
+        var: lookup('cpm_status',
+                'status',
+                validate_certs=true,
+                use_https=true,
+                cpm_url="rest.wti.com",
+                cpm_username="rest",
+                cpm_password="restfulpassword")
 
 # Get Alarm output
   - name: Get the alarms status of a given WTI device
-    debug: msg="{{ lookup('cpm_status',
-                    'alarms',
-                    validate_certs=false,
-                    use_https=false,
-                    cpm_url="192.168.0.158",
-                    cpm_username="super",
-                    cpm_password="super") }}"
+  - debug:
+        var: lookup('cpm_status',
+                'alarms',
+                validate_certs=false,
+                use_https=false,
+                cpm_url="192.168.0.158",
+                cpm_username="super",
+                cpm_password="super")
 """
 
 RETURN = """
@@ -119,6 +123,7 @@ class LookupModule(LookupBase):
         self.set_options(direct=kwargs)
 
         ret = []
+
         for term in terms:
             auth = to_text(base64.b64encode(to_bytes('{0}:{1}'.format(self.get_option('cpm_username'), self.get_option('cpm_password')),
                            errors='surrogate_or_strict')))
