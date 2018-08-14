@@ -636,8 +636,11 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         # and compile them into single temp file for use
         # in the ssl check to speed up the test
         for path in paths_checked:
-            if os.path.exists(path) and os.path.isdir(path):
+            try:
                 dir_contents = os.listdir(path)
+            except OSError:
+                pass
+            else:
                 for f in dir_contents:
                     full_path = os.path.join(path, f)
                     if os.path.isfile(full_path) and os.path.splitext(f)[1] in ('.crt', '.pem'):
