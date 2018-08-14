@@ -4,13 +4,15 @@
 # Copyright: (c) 2015, Joseph Callen <jcallen () csc.com>
 # Copyright: (c) 2017-18, Ansible Project
 # Copyright: (c) 2017-18, Abhijeet Kasurde <akasurde@redhat.com>
+# Copyright 2018 VMware, Inc.
+# SPDX-License-Identifier: GPL-3.0-or-later
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
-    'metadata_version': '1.1',
+    'metadata_version': '1.2',
     'status': ['preview'],
     'supported_by': 'community'
 }
@@ -27,18 +29,30 @@ author:
 - Joseph Callen (@jcpowermac)
 - Russell Teague (@mtnbikenc)
 - Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
+- Joseph Andreatta (@vmwjoseph) <joseph () vmware.com>
+
 notes:
-    - Tested on vSphere 5.5, 6.5
+    - Tested on vSphere 5.5, 6.5, 6.7
 requirements:
     - "python >= 2.6"
     - PyVmomi
 options:
-    vswitch_name:
+    switch_name:
         description:
-            - The name of the vSwitch where to add the VMKernel interface.
+            - The name of the switch where to add the VMKernel interface.
             - Required parameter only if C(state) is set to C(present).
             - Optional parameter from version 2.5 and onwards.
         required: False
+    is_dvs_switch:
+        description:
+            - Whether or not C(switch_name) is a DVS
+        version_added: XXX
+        default: False
+    device_name:
+        description:
+            - The name of the vmkernel device
+        version_added: XXX
+        required: True
     portgroup_name:
         description:
             - The name of the port group for the VMKernel interface.
@@ -62,13 +76,6 @@ options:
             - The Subnet Mask for the VMKernel interface.
             - Use C(network) parameter with C(subnet_mask) instead.
             - Deprecated option, will be removed in version 2.9.
-    vlan_id:
-        description:
-            - The VLAN ID for the VMKernel interface.
-            - Required parameter only if C(state) is set to C(present).
-            - Optional parameter from version 2.5 and onwards.
-        required: False
-        version_added: 2.0
     mtu:
         description:
             - The MTU for the VMKernel interface.
@@ -116,44 +123,56 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 -  name: Add Management vmkernel port using static network type
    vmware_vmkernel:
-      hostname: '{{ esxi_hostname }}'
-      username: '{{ esxi_username }}'
-      password: '{{ esxi_password }}'
-      vswitch_name: vSwitch0
+      hostname: 192.168.127.9
+      device_name: vmk1
+      username: admin
+      password: supersecret123
+      switch_name: vSwitch0
       portgroup_name: PG_0001
-      vlan_id: '{{ vlan_id }}'
       network:
         type: 'static'
         ip_address: 192.168.127.10
         subnet_mask: 255.255.255.0
       state: present
       enable_mgmt: True
-   delegate_to: localhost
 
--  name: Add Management vmkernel port using DHCP network type
+-  name: Add Management VMkernel port using DHCP network type
    vmware_vmkernel:
-      hostname: '{{ esxi_hostname }}'
-      username: '{{ esxi_username }}'
-      password: '{{ esxi_password }}'
-      vswitch_name: vSwitch0
+      hostname: 192.168.127.9
+      device_name: vmk1
+      username: admin
+      password: supersecret123
+      switch_name: vSwitch0
       portgroup_name: PG_0002
-      vlan_id: '{{ vlan_id }}'
       state: present
       network:
         type: 'dhcp'
       enable_mgmt: True
-   delegate_to: localhost
 
--  name: Delete VMkernel port using DHCP network type
+-  name: Add vSAN VMkernel device using DHCP network type to DVS portgroup
    vmware_vmkernel:
-      hostname: '{{ esxi_hostname }}'
-      username: '{{ esxi_username }}'
-      password: '{{ esxi_password }}'
-      vswitch_name: vSwitch0
+      hostname: 192.168.127.9
+      device_name: vmk2
+      username: admin
+      password: supersecret123
+      switch_name: dvswitch
+      is_dvs_switch: True
+      portgroup_name: vsan-traffic
+      state: present
+      network:
+        type: 'dhcp'
+      enable_vsan: True
+
+-  name: Delete VMkernel device
+   vmware_vmkernel:
+      device_name: vmk3
+      hostname: 192.168.127.9
+      username: admin
+      password: supersecret123
+      switch_name: vSwitch0
       portgroup_name: PG_0002
-      vlan_id: '{{ vlan_id }}'
       state: absent
-   delegate_to: localhost
+
 '''
 
 RETURN = r'''
@@ -170,7 +189,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, wait_for_task
+from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, wait_for_task, find_dvspg_by_name, find_dvs_by_name
 from ansible.module_utils._text import to_native
 
 
@@ -178,6 +197,8 @@ class PyVmomiHelper(PyVmomi):
     def __init__(self, module):
         super(PyVmomiHelper, self).__init__(module)
         self.port_group_name = self.params['portgroup_name']
+        self.device_name = self.params['device_name']
+        self.is_dvs_switch = self.params['is_dvs_switch']
         self.ip_address = self.params['network'].get('ip_address', None)
         self.subnet_mask = self.params['network'].get('subnet_mask', None)
         self.network_type = self.params['network']['type']
@@ -186,8 +207,7 @@ class PyVmomiHelper(PyVmomi):
         self.enable_vmotion = self.params['enable_vmotion']
         self.enable_mgmt = self.params['enable_mgmt']
         self.enable_ft = self.params['enable_ft']
-        self.vswitch_name = self.params['vswitch_name']
-        self.vlan_id = self.params['vlan_id']
+        self.switch_name = self.params['switch_name']
 
         self.esxi_host_name = self.params['esxi_hostname']
 
@@ -198,9 +218,17 @@ class PyVmomiHelper(PyVmomi):
             self.module.fail_json("Failed to get details of ESXi server."
                                   " Please specify esxi_hostname.")
 
-        self.port_group_obj = self.get_port_group_by_name(host_system=self.esxi_host_obj, portgroup_name=self.port_group_name)
+        if not self.is_dvs_switch:
+            self.port_group_obj = self.get_port_group_by_name(host_system=self.esxi_host_obj, portgroup_name=self.port_group_name)
+            if not self.port_group_obj:
+                module.fail_json(msg="Portgroup name %s not found" % self.port_group_name)
+        else:
+            self.dv_switch = find_dvs_by_name(self.content, self.switch_name)
+            self.port_group_obj = find_dvspg_by_name(self.dv_switch, self.port_group_name)
+
         if not self.port_group_obj:
             module.fail_json(msg="Portgroup name %s not found" % self.port_group_name)
+
 
         if self.network_type == 'static':
             if not self.ip_address:
@@ -253,17 +281,18 @@ class PyVmomiHelper(PyVmomi):
         except Exception as e:
             self.module.fail_json(msg=to_native(e))
 
-    def get_vmkernel(self, port_group_name=None):
+    def get_vmkernel(self, device_name):
         """
-        Function to check if vmkernel
+        Function to check if vmkernel device exists
         Args:
-            port_group_name: name of port group
+            device_name: name of vmkernel device
 
         Returns: vmkernel managed object if vmkernel found, false if not
 
         """
         ret = False
-        vnics = [vnic for vnic in self.esxi_host_obj.config.network.vnic if vnic.spec.portgroup == port_group_name]
+        vnics = [ vnic for vnic in self.esxi_host_obj.config.network.vnic if vnic.device == device_name]
+
         if vnics:
             ret = vnics[0]
         return ret
@@ -275,7 +304,7 @@ class PyVmomiHelper(PyVmomi):
 
         """
         state = 'absent'
-        self.vnic = self.get_vmkernel(port_group_name=self.port_group_name)
+        self.vnic = self.get_vmkernel(device_name=self.device_name)
         if self.vnic:
             state = 'present'
             if self.vnic.spec.mtu != self.mtu:
@@ -453,10 +482,16 @@ class PyVmomiHelper(PyVmomi):
         vnic_config.mtu = self.mtu
         vmk_device = None
         try:
-            vmk_device = self.esxi_host_obj.configManager.networkSystem.AddVirtualNic(self.port_group_name, vnic_config)
+            if self.is_dvs_switch:
+                vnic_config.distributedVirtualPort = vim.dvs.PortConnection()
+                vnic_config.distributedVirtualPort.switchUuid = self.dv_switch.uuid
+                vnic_config.distributedVirtualPort.portgroupKey = self.port_group_obj.key
+                vmk_device = self.esxi_host_obj.configManager.networkSystem.AddVirtualNic(portgroup="", nic=vnic_config)
+            else:
+                vmk_device = self.esxi_host_obj.configManager.networkSystem.AddVirtualNic(self.port_group_name, vnic_config)
             results['changed'] = True
             results['result'] = vmk_device
-            self.vnic = self.get_vmkernel(port_group_name=self.port_group_name)
+            self.vnic = self.get_vmkernel(device_name=self.device_name)
         except vim.fault.AlreadyExists as already_exists:
             self.module.fail_json(msg="Failed to add vmk as portgroup already has a "
                                       "virtual network adapter %s" % to_native(already_exists.msg))
@@ -565,7 +600,9 @@ def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(dict(
         esxi_hostname=dict(required=True, type='str'),
+        device_name=dict(required=True, type='str'),
         portgroup_name=dict(required=True, type='str'),
+        is_dvs_switch=dict(default=False, type='bool'),
         ip_address=dict(removed_in_version=2.9, type='str'),
         subnet_mask=dict(removed_in_version=2.9, type='str'),
         mtu=dict(required=False, type='int', default=1500),
@@ -573,8 +610,7 @@ def main():
         enable_vmotion=dict(required=False, type='bool'),
         enable_mgmt=dict(required=False, type='bool'),
         enable_ft=dict(required=False, type='bool'),
-        vswitch_name=dict(required=False, type='str'),
-        vlan_id=dict(required=False, type='int'),
+        switch_name=dict(required=False, type='str'),
         state=dict(type='str',
                    choices=['present', 'absent'],
                    default='present'),
@@ -591,9 +627,9 @@ def main():
     )
 
     required_if = [
-        ['state', 'present', ['vswitch_name', 'vlan_id']],
+        ['state', 'present', ['switch_name']],
+        ['is_dvs_switch', True, ['switch_name']],
     ]
-
     module = AnsibleModule(argument_spec=argument_spec,
                            required_if=required_if,
                            supports_check_mode=False)
