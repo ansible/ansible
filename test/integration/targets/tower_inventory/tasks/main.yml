@@ -1,0 +1,21 @@
+- name: Create an Inventory
+  tower_inventory:
+    name: my-inventory
+    organization: Default
+    state: present
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Delete an Inventory
+  tower_inventory:
+    name: my-inventory
+    organization: Default
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - "result is changed"

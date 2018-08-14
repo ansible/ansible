@@ -94,6 +94,7 @@
     - include_tasks: tasks/external_resource_attach.yml
     - include_tasks: tasks/block_devices.yml
     - include_tasks: tasks/default_vpc_tests.yml
+    - include_tasks: tasks/iam_instance_role.yml
 
 
     # ============================================================

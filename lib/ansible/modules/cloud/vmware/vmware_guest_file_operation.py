@@ -107,14 +107,14 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 - name: Create directory inside a vm
   vmware_guest_file_operation:
-    hostname: myVSphere
-    username: myUsername
-    password: mySecret
-    datacenter: myDatacenter
-    validate_certs: True
-    vm_id: NameOfVM
-    vm_username: root
-    vm_password: superSecret
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter_name }}"
+    validate_certs: no
+    vm_id: "{{ guest_name }}"
+    vm_username: "{{ guest_username }}"
+    vm_password: "{{ guest_userpassword }}"
     directory:
       path: "/test"
       operation: create
@@ -123,14 +123,13 @@ EXAMPLES = '''
 
 - name: copy file to vm
   vmware_guest_file_operation:
-    hostname: myVSphere
-    username: myUsername
-    password: mySecret
-    datacenter: myDatacenter
-    validate_certs: True
-    vm_id: NameOfVM
-    vm_username: root
-    vm_password: superSecret
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter_name }}"
+    vm_id: "{{ guest_name }}"
+    vm_username: "{{ guest_username }}"
+    vm_password: "{{ guest_userpassword }}"
     copy:
         src: "files/test.zip"
         dest: "/root/test.zip"
@@ -139,14 +138,13 @@ EXAMPLES = '''
 
 - name: fetch file from vm
   vmware_guest_file_operation:
-    hostname: myVSphere
-    username: myUsername
-    password: mySecret
-    datacenter: myDatacenter
-    validate_certs: True
-    vm_id: NameOfVM
-    vm_username: root
-    vm_password: superSecret
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter_name }}"
+    vm_id: "{{ guest_name }}"
+    vm_username: "{{ guest_username }}"
+    vm_password: "{{ guest_userpassword }}"
     fetch:
         src: "/root/test.zip"
         dest: "files/test.zip"
@@ -277,6 +275,7 @@ class VmwareGuestFileManager(PyVmomi):
         result = dict(changed=True, uuid=self.vm.summary.config.uuid)
         vm_username = self.module.params['vm_username']
         vm_password = self.module.params['vm_password']
+        hostname = self.module.params['hostname']
         dest = self.module.params["fetch"]['dest']
         src = self.module.params['fetch']['src']
         creds = vim.vm.guest.NamePasswordAuthentication(username=vm_username, password=vm_password)
@@ -286,6 +285,7 @@ class VmwareGuestFileManager(PyVmomi):
             fileTransferInfo = file_manager.InitiateFileTransferFromGuest(vm=self.vm, auth=creds,
                                                                           guestFilePath=src)
             url = fileTransferInfo.url
+            url = url.replace("*", hostname)
             resp, info = urls.fetch_url(self.module, url, method="GET")
             try:
                 with open(dest, "wb") as local_file:
@@ -316,6 +316,7 @@ class VmwareGuestFileManager(PyVmomi):
         result = dict(changed=True, uuid=self.vm.summary.config.uuid)
         vm_username = self.module.params['vm_username']
         vm_password = self.module.params['vm_password']
+        hostname = self.module.params['hostname']
         overwrite = self.module.params["copy"]["overwrite"]
         dest = self.module.params["copy"]['dest']
         src = self.module.params['copy']['src']
@@ -340,6 +341,7 @@ class VmwareGuestFileManager(PyVmomi):
             url = file_manager.InitiateFileTransferToGuest(vm=self.vm, auth=creds, guestFilePath=dest,
                                                            fileAttributes=file_attributes, overwrite=overwrite,
                                                            fileSize=file_size)
+            url = url.replace("*", hostname)
             resp, info = urls.fetch_url(self.module, url, data=data, method="PUT")
 
             status_code = info["status"]

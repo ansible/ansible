@@ -1,0 +1,53 @@
+# SCW_API_KEY='XXX' SCW_ORG='YYY' ansible-playbook ./test/legacy/scaleway_volume.yml
+
+- name: Test compute instance lifecyle on a Scaleway account
+  hosts: localhost
+  gather_facts: no
+  environment:
+    SCW_API_KEY: "{{ lookup('env', 'SCW_API_KEY') }}"
+  vars:
+    scw_org: "{{ lookup('env', 'SCW_ORG') }}"
+
+  tasks:
+
+  - name: Make sure volume is not there before tests
+    scaleway_volume:
+      name: ansible-test-volume
+      state: absent
+      region: par1
+      organization: "{{ scw_org }}"
+    register: server_creation_check_task
+
+  - assert:
+      that:
+        - server_creation_check_task is success
+
+  - name: Create volume
+    scaleway_volume:
+      name: ansible-test-volume
+      state: present
+      region: par1
+      organization: "{{ scw_org }}"
+      "size": 10000000000
+      volume_type: l_ssd
+    register: server_creation_check_task
+
+  - debug: var=server_creation_check_task
+
+  - assert:
+      that:
+        - server_creation_check_task is success
+        - server_creation_check_task is changed
+
+  - name: Make sure volume is deleted
+    scaleway_volume:
+      name: ansible-test-volume
+      state: absent
+      region: par1
+      organization: "{{ scw_org }}"
+    register: server_creation_check_task
+
+  - assert:
+      that:
+        - server_creation_check_task is success
+        - server_creation_check_task is changed

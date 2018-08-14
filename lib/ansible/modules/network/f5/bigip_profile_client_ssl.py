@@ -16,8 +16,9 @@ DOCUMENTATION = r'''
 ---
 module: bigip_profile_client_ssl
 short_description: Manages client SSL profiles on a BIG-IP
-description: Manages client SSL profiles on a BIG-IP.
-version_added: "2.5"
+description:
+  - Manages client SSL profiles on a BIG-IP.
+version_added: 2.5
 options:
   name:
     description:
@@ -28,11 +29,11 @@ options:
       - The parent template of this monitor template. Once this value has
         been set, it cannot be changed. By default, this value is the C(clientssl)
         parent on the C(Common) partition.
-    default: "/Common/clientssl"
+    default: /Common/clientssl
   ciphers:
     description:
       - Specifies the list of ciphers that the system supports. When creating a new
-        profile, the default cipher list is C(DEFAULT).
+        profile, the default cipher list is provided by the parent profile.
   cert_key_chain:
     description:
       - One or more certificates and keys to associate with the SSL profile. This
@@ -41,7 +42,8 @@ options:
         type of each certificate/key type. This means that you can only have one
         RSA, one DSA, and one ECDSA per profile. If you attempt to assign two
         RSA, DSA, or ECDSA certificate/key combo, the device will reject this.
-      - This list is a complex list that specifies a number of keys. There are several supported keys.
+      - This list is a complex list that specifies a number of keys. There are
+        several supported keys.
     suboptions:
       cert:
         description:
@@ -131,30 +133,25 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.six import iteritems
 
-HAS_DEVEL_IMPORTS = False
-
 try:
-    # Sideband repository used for dev
     from library.module_utils.network.f5.bigip import HAS_F5SDK
     from library.module_utils.network.f5.bigip import F5Client
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
+    from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    # Upstream Ansible
     from ansible.module_utils.network.f5.bigip import HAS_F5SDK
     from ansible.module_utils.network.f5.bigip import F5Client
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
+    from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
@@ -164,11 +161,13 @@ except ImportError:
 
 class Parameters(AnsibleF5Parameters):
     api_map = {
-        'certKeyChain': 'cert_key_chain'
+        'certKeyChain': 'cert_key_chain',
+        'defaultsFrom': 'parent'
     }
 
     api_attributes = [
-        'ciphers', 'certKeyChain'
+        'ciphers', 'certKeyChain',
+        'defaultsFrom'
     ]
 
     returnables = [
@@ -181,11 +180,6 @@ class Parameters(AnsibleF5Parameters):
 
 
 class ModuleParameters(Parameters):
-    def _fqdn_name(self, value):
-        if value is not None and not value.startswith('/'):
-            return '/{0}/{1}'.format(self.partition, value)
-        return value
-
     def _key_filename(self, name):
         if name.endswith('.key'):
             return name
@@ -202,14 +196,14 @@ class ModuleParameters(Parameters):
         if 'chain' not in item or item['chain'] == 'none':
             result = 'none'
         else:
-            result = self._cert_filename(self._fqdn_name(item['chain']))
+            result = self._cert_filename(fq_name(self.partition, item['chain']))
         return result
 
     @property
     def parent(self):
         if self._values['parent'] is None:
             return None
-        result = self._fqdn_name(self._values['parent'])
+        result = fq_name(self.partition, self._values['parent'])
         return result
 
     @property
@@ -233,8 +227,8 @@ class ModuleParameters(Parameters):
             filename, ex = os.path.splitext(name)
             tmp = {
                 'name': filename,
-                'cert': self._fqdn_name(cert),
-                'key': self._fqdn_name(key),
+                'cert': fq_name(self.partition, cert),
+                'key': fq_name(self.partition, key),
                 'chain': chain
             }
             if 'passphrase' in item:
@@ -408,8 +402,6 @@ class ModuleManager(object):
 
     def create(self):
         self._set_changed_options()
-        if self.want.ciphers is None:
-            self.want.update({'ciphers': 'DEFAULT'})
         if self.module.check_mode:
             return True
         self.create_on_device()
@@ -488,7 +480,7 @@ class ArgumentSpec(object):
         self.supports_check_mode = True
         argument_spec = dict(
             name=dict(required=True),
-            parent=dict(),
+            parent=dict(default='/Common/clientssl'),
             ciphers=dict(),
             cert_key_chain=dict(
                 type='list',

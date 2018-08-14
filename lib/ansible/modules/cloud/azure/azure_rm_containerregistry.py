@@ -27,7 +27,6 @@ options:
     name:
         description:
             - Name of the Container Registry.
-        default: null
         required: true
     state:
         description:
@@ -39,11 +38,11 @@ options:
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
-        default: resource_group location
     admin_user_enabled:
         description:
             - If enabled, you can use the registry name as username and admin user access key as password to docker login to your container registry.
-        default: false
+        type: bool
+        default: no
     sku:
         description:
             - Specifies the SKU to use. Currently can be either Basic, Standard or Premium.
@@ -235,7 +234,7 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
             sku=dict(
                 type='str',
                 required=False,
-                default='Basic',
+                default='Standard',
                 choices=['Basic', 'Standard', 'Premium']
             )
         )
@@ -424,6 +423,7 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
 def main():
     """Main execution"""
     AzureRMContainerRegistry()
+
 
 if __name__ == '__main__':
     main()

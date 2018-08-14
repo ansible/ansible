@@ -21,7 +21,7 @@ description:
 - This module can be used to manage firewall configurations about an ESXi host when ESXi hostname or Cluster name is given.
 version_added: '2.5'
 author:
-- Abhijeet Kasurde (@akasurde)
+- Abhijeet Kasurde (@Akasurde)
 notes:
 - Tested on vSphere 6.5
 requirements:
@@ -58,6 +58,7 @@ EXAMPLES = r'''
     rules:
         - name: vvold
           enabled: True
+  delegate_to: localhost
 
 - name: Enable vvold rule set for an ESXi Host
   vmware_host_firewall_manager:
@@ -68,6 +69,7 @@ EXAMPLES = r'''
     rules:
         - name: vvold
           enabled: True
+  delegate_to: localhost
 
 - name: Manage multiple rule set for an ESXi Host
   vmware_host_firewall_manager:
@@ -80,6 +82,7 @@ EXAMPLES = r'''
           enabled: True
         - name: CIMHttpServer
           enabled: False
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -107,7 +110,7 @@ rule_set_state:
 '''
 
 try:
-    from pyVmomi import vim, vmodl
+    from pyVmomi import vim
 except ImportError:
     pass
 

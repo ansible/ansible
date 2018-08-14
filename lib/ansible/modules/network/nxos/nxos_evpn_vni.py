@@ -50,35 +50,26 @@ options:
     description:
       - The EVPN VXLAN Network Identifier.
     required: true
-    default: null
   route_distinguisher:
     description:
       - The VPN Route Distinguisher (RD). The RD is combined with
         the IPv4 or IPv6 prefix learned by the PE router to create a
         globally unique address.
     required: true
-    default: null
   route_target_both:
     description:
       - Enables/Disables route-target settings for both import and
         export target communities using a single property.
-    required: false
-    default: null
   route_target_import:
     description:
       - Sets the route-target 'import' extended communities.
-    required: false
-    default: null
   route_target_export:
     description:
       - Sets the route-target 'export' extended communities.
-    required: false
-    default: null
   state:
     description:
       - Determines whether the config should be present or not
         on the device.
-    required: false
     default: present
     choices: ['present','absent']
 '''

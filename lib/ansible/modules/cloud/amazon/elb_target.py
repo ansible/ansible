@@ -19,7 +19,7 @@ options:
     description:
       - The default behaviour for targets that are unused is to leave them registered. If instead you would like to remove them
         set I(deregister_unused) to yes.
-    choices: [ 'yes', 'no' ]
+    type: bool
   target_az:
     description:
       - An Availability Zone or all. This determines whether the target receives traffic from the load balancer nodes in the specified
@@ -296,7 +296,7 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
-                           mutually_exclusive=['target_group_arn', 'target_group_name']
+                           mutually_exclusive=[['target_group_arn', 'target_group_name']]
                            )
 
     if not HAS_BOTO3:
@@ -311,6 +311,7 @@ def main():
         register_target(connection, module)
     else:
         deregister_target(connection, module)
+
 
 if __name__ == '__main__':
     main()

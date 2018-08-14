@@ -50,31 +50,24 @@ options:
   mode:
     description:
       - Mode for the port-channel, i.e. on, active, passive.
-    required: false
     default: on
     choices: ['active','passive','on']
   min_links:
     description:
       - Min links required to keep portchannel up.
-    required: false
-    default: null
   members:
     description:
       - List of interfaces that will be managed in a given portchannel.
-    required: false
-    default: null
   force:
     description:
       - When true it forces port-channel members to match what is
         declared in the members param. This can be used to remove
         members.
-    required: false
-    choices: ['true', 'false']
-    default: false
+    choices: [ 'false', 'true' ]
+    default: 'false'
   state:
     description:
       - Manage the state of the resource.
-    required: false
     default: present
     choices: ['present','absent']
 '''
@@ -145,22 +138,6 @@ def get_custom_value(arg, config, module):
     return value
 
 
-def execute_show_command(command, module):
-    device_info = get_capabilities(module)
-    network_api = device_info.get('network_api', 'nxapi')
-
-    if network_api == 'cliconf':
-        if 'show port-channel summary' in command:
-            command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif network_api == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
-
-    return body
-
-
 def get_portchannel_members(pchannel):
     try:
         members = pchannel['TABLE_member']['ROW_member']
@@ -194,13 +171,13 @@ def get_portchannel_mode(interface, protocol, module, netcfg):
 
 
 def get_portchannel(module, netcfg=None):
-    command = 'show port-channel summary'
+    command = 'show port-channel summary | json'
     portchannel = {}
     portchannel_table = {}
     members = []
 
     try:
-        body = execute_show_command(command, module)[0]
+        body = run_commands(module, [command])[0]
         pc_table = body['TABLE_channel']['ROW_channel']
 
         if isinstance(pc_table, dict):

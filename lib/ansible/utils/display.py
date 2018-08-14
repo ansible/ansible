@@ -57,15 +57,15 @@ class FilterBlackList(logging.Filter):
 
 logger = None
 # TODO: make this a logging callback instead
-if C.DEFAULT_LOG_PATH:
+if getattr(C, 'DEFAULT_LOG_PATH'):
     path = C.DEFAULT_LOG_PATH
-    if (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
+    if path and (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
         logging.basicConfig(filename=path, level=logging.DEBUG, format='%(asctime)s %(name)s %(message)s')
         mypid = str(os.getpid())
         user = getpass.getuser()
         logger = logging.getLogger("p=%s u=%s | " % (mypid, user))
         for handler in logging.root.handlers:
-            handler.addFilter(FilterBlackList(C.DEFAULT_LOG_FILTER))
+            handler.addFilter(FilterBlackList(getattr(C, 'DEFAULT_LOG_FILTER', [])))
     else:
         print("[WARNING]: log file at %s is not writeable and we cannot create it, aborting\n" % path, file=sys.stderr)
 
@@ -191,9 +191,12 @@ class Display:
     def vvvvvv(self, msg, host=None):
         return self.verbose(msg, host=host, caplevel=5)
 
-    def debug(self, msg):
+    def debug(self, msg, host=None):
         if C.DEFAULT_DEBUG:
-            self.display("%6d %0.5f: %s" % (os.getpid(), time.time(), msg), color=C.COLOR_DEBUG)
+            if host is None:
+                self.display("%6d %0.5f: %s" % (os.getpid(), time.time(), msg), color=C.COLOR_DEBUG)
+            else:
+                self.display("%6d %0.5f [%s]: %s" % (os.getpid(), time.time(), host, msg), color=C.COLOR_DEBUG)
 
     def verbose(self, msg, host=None, caplevel=2):
         if self.verbosity > caplevel:

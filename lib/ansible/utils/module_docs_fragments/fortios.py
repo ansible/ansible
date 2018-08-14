@@ -56,7 +56,7 @@ options:
         changes are made.  The backup file is written to the i(backup)
         folder.
     default: no
-    choices: ['yes', 'no']
+    type: bool
   backup_path:
     description:
       - Specifies where to store backup files. Required if I(backup=yes).

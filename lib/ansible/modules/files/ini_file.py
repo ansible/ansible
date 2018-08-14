@@ -103,7 +103,8 @@ EXAMPLES = '''
     mode: 0600
     backup: yes
 
-- ini_file:
+- name: Ensure "temperature=cold is in section "[drinks]" in specified file
+  ini_file:
     path: /etc/anotherconf
     section: drinks
     option: temperature
@@ -321,6 +322,7 @@ def main():
 
     # Mission complete
     module.exit_json(**results)
+
 
 if __name__ == '__main__':
     main()

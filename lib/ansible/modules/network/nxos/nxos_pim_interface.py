@@ -51,66 +51,47 @@ options:
   sparse:
     description:
       - Enable/disable sparse-mode on the interface.
-    required: false
-    default: false
-    choices: ['true', 'false']
+    type: bool
+    default: 'no'
   dr_prio:
     description:
       - Configures priority for PIM DR election on interface.
   hello_auth_key:
     description:
       - Authentication for hellos on this interface.
-    required: false
-    default: null
   hello_interval:
     description:
       - Hello interval in milliseconds for this interface.
-    required: false
-    default: null
-    choices: ['true', 'false']
+    type: bool
   jp_policy_out:
     description:
       - Policy for join-prune messages (outbound).
-    required: true
-    default: null
   jp_policy_in:
     description:
       - Policy for join-prune messages (inbound).
-    required: false
-    default: null
   jp_type_out:
     description:
       - Type of policy mapped to C(jp_policy_out).
-    required: false
-    default: null
     choices: ['prefix', 'routemap']
   jp_type_in:
     description:
       - Type of policy mapped to C(jp_policy_in).
-    required: false
-    default: null
     choices: ['prefix', 'routemap']
   border:
     description:
       - Configures interface to be a boundary of a PIM domain.
-    required: false
-    default: false
-    choices: ['true', 'false']
+    type: bool
+    default: 'no'
   neighbor_policy:
     description:
       - Configures a neighbor policy for filtering adjacencies.
-    required: false
-    default: null
   neighbor_type:
     description:
       - Type of policy mapped to neighbor_policy.
-    required: false
-    default: null
     choices: ['prefix', 'routemap']
   state:
     description:
       - Manages desired state of the resource.
-    required: false
     default: present
     choices: ['present', 'default']
 '''
@@ -154,6 +135,7 @@ import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_interface_type
 from ansible.module_utils.six import string_types
 
 
@@ -217,23 +199,6 @@ def local_existing(gexisting):
             gexisting.pop('isauth')
 
     return gexisting, jp_bidir, isauth
-
-
-def get_interface_type(interface):
-    if interface.upper().startswith('ET'):
-        return 'ethernet'
-    elif interface.upper().startswith('VL'):
-        return 'svi'
-    elif interface.upper().startswith('LO'):
-        return 'loopback'
-    elif interface.upper().startswith('MG'):
-        return 'management'
-    elif interface.upper().startswith('MA'):
-        return 'management'
-    elif interface.upper().startswith('PO'):
-        return 'portchannel'
-    else:
-        return 'unknown'
 
 
 def get_interface_mode(interface, intf_type, module):

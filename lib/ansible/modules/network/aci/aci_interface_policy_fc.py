@@ -34,9 +34,9 @@ options:
     aliases: [ descr ]
   port_mode:
     description:
-    - Port Mode
+    - The Port Mode to use.
+    - The APIC defaults to C(f) when unset during creation.
     choices: [ f, np ]
-    default: f
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -55,6 +55,7 @@ EXAMPLES = r'''
     port_mode: '{{ port_mode }}'
     description: '{{ description }}'
     state: present
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -173,8 +174,6 @@ def main():
         description=dict(type='str', aliases=['descr']),
         port_mode=dict(type='str', choices=['f', 'np']),  # No default provided on purpose
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -196,8 +195,8 @@ def main():
         root_class=dict(
             aci_class='fcIfPol',
             aci_rn='infra/fcIfPol-{0}'.format(fc_policy),
-            filter_target='eq(fcIfPol.name, "{0}")'.format(fc_policy),
             module_object=fc_policy,
+            target_filter={'name': fc_policy},
         ),
     )
 

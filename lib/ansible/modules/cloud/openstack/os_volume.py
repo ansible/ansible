@@ -26,8 +26,6 @@ options:
      description:
         - Size of volume in GB. This parameter is required when the
           I(state) parameter is 'present'.
-     required: false
-     default: None
    display_name:
      description:
         - Name of volume
@@ -35,28 +33,18 @@ options:
    display_description:
      description:
        - String describing the volume
-     required: false
-     default: None
    volume_type:
      description:
        - Volume type for volume
-     required: false
-     default: None
    image:
      description:
        - Image name or id for boot from volume
-     required: false
-     default: None
    snapshot_id:
      description:
        - Volume snapshot id to create from
-     required: false
-     default: None
    volume:
      description:
        - Volume name or id to create from
-     required: false
-     default: None
      version_added: "2.3"
    state:
      description:
@@ -66,16 +54,13 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
    scheduler_hints:
      description:
        - Scheduler hints passed to volume API in form of dict
-     required: false
-     default: None
      version_added: "2.4"
 requirements:
-     - "python >= 2.6"
-     - "shade"
+     - "python >= 2.7"
+     - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -132,14 +117,14 @@ def _present_volume(module, cloud):
     module.exit_json(changed=True, id=volume['id'], volume=volume)
 
 
-def _absent_volume(module, cloud, shade):
+def _absent_volume(module, cloud, sdk):
     changed = False
     if cloud.volume_exists(module.params['display_name']):
         try:
             changed = cloud.delete_volume(name_or_id=module.params['display_name'],
                                           wait=module.params['wait'],
                                           timeout=module.params['timeout'])
-        except shade.OpenStackCloudTimeout:
+        except sdk.exceptions.OpenStackCloudTimeout:
             module.exit_json(changed=changed)
 
     module.exit_json(changed=changed)
@@ -164,23 +149,18 @@ def main():
     )
     module = AnsibleModule(argument_spec=argument_spec, **module_kwargs)
 
-    if (module.params['scheduler_hints'] and
-            StrictVersion(shade.__version__) < StrictVersion('1.22')):
-        module.fail_json(msg="To utilize scheduler_hints, the installed version of"
-                             "the shade library MUST be >= 1.22")
-
     state = module.params['state']
 
     if state == 'present' and not module.params['size']:
         module.fail_json(msg="Size is required when state is 'present'")
 
-    shade, cloud = openstack_cloud_from_module(module)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         if state == 'present':
             _present_volume(module, cloud)
         if state == 'absent':
-            _absent_volume(module, cloud, shade)
-    except shade.OpenStackCloudException as e:
+            _absent_volume(module, cloud, sdk)
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

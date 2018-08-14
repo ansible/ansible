@@ -44,7 +44,7 @@ options:
         type: bool
         default: 'no'
     local:
-        version_added: "2.5"
+        version_added: "2.6"
         required: false
         default: 'no'
         description:
@@ -283,7 +283,7 @@ class DragonFlyBsdGroup(FreeBsdGroup):
 
 class DarwinGroup(Group):
     """
-    This is a Mac OS X Darwin Group manipulation class.
+    This is a Mac macOS Darwin Group manipulation class.
 
     This overrides the following methods from the generic class:-
       - group_del()

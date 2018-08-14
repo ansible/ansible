@@ -1,7 +1,7 @@
 FROM ubuntu:xenial
 
 RUN apt-get update && apt-get install -y \
-    asciidoc \
+    python-docutils \
     cdbs \
     debootstrap \
     devscripts \

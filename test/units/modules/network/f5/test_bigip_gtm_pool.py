@@ -20,17 +20,19 @@ from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_gtm_pool import Parameters
-    from library.bigip_gtm_pool import ModuleManager
-    from library.bigip_gtm_pool import ArgumentSpec
-    from library.bigip_gtm_pool import UntypedManager
-    from library.bigip_gtm_pool import TypedManager
+    from library.modules.bigip_gtm_pool import ApiParameters
+    from library.modules.bigip_gtm_pool import ModuleParameters
+    from library.modules.bigip_gtm_pool import ModuleManager
+    from library.modules.bigip_gtm_pool import ArgumentSpec
+    from library.modules.bigip_gtm_pool import UntypedManager
+    from library.modules.bigip_gtm_pool import TypedManager
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
 except ImportError:
     try:
-        from ansible.modules.network.f5.bigip_gtm_pool import Parameters
+        from ansible.modules.network.f5.bigip_gtm_pool import ApiParameters
+        from ansible.modules.network.f5.bigip_gtm_pool import ModuleParameters
         from ansible.modules.network.f5.bigip_gtm_pool import ModuleManager
         from ansible.modules.network.f5.bigip_gtm_pool import ArgumentSpec
         from ansible.modules.network.f5.bigip_gtm_pool import UntypedManager
@@ -73,13 +75,27 @@ class TestParameters(unittest.TestCase):
             fallback_ip='10.10.10.10',
             type='a'
         )
-        p = Parameters(params=args)
+        p = ModuleParameters(params=args)
         assert p.name == 'foo'
         assert p.preferred_lb_method == 'topology'
         assert p.alternate_lb_method == 'ratio'
         assert p.fallback_lb_method == 'fewest-hops'
         assert p.fallback_ip == '10.10.10.10'
         assert p.type == 'a'
+
+    def test_module_parameters_members(self):
+        args = dict(
+            partition='Common',
+            members=[
+                dict(
+                    server='foo',
+                    virtual_server='bar'
+                )
+            ]
+        )
+        p = ModuleParameters(params=args)
+        assert len(p.members) == 1
+        assert p.members[0] == '/Common/foo:bar'
 
     def test_api_parameters(self):
         args = dict(
@@ -89,12 +105,20 @@ class TestParameters(unittest.TestCase):
             fallbackMode='fewest-hops',
             fallbackIp='10.10.10.10'
         )
-        p = Parameters(params=args)
+        p = ApiParameters(params=args)
         assert p.name == 'foo'
         assert p.preferred_lb_method == 'topology'
         assert p.alternate_lb_method == 'ratio'
         assert p.fallback_lb_method == 'fewest-hops'
         assert p.fallback_ip == '10.10.10.10'
+
+    def test_api_parameters_members(self):
+        args = load_fixture('load_gtm_pool_a_with_members_1.json')
+        p = ApiParameters(params=args)
+        assert len(p.members) == 3
+        assert p.members[0] == '/Common/server1:vs1'
+        assert p.members[1] == '/Common/server1:vs2'
+        assert p.members[2] == '/Common/server1:vs3'
 
 
 class TestUntypedManager(unittest.TestCase):
@@ -148,7 +172,7 @@ class TestUntypedManager(unittest.TestCase):
             supports_check_mode=self.spec.supports_check_mode
         )
 
-        current = Parameters(params=load_fixture('load_gtm_pool_untyped_default.json'))
+        current = ApiParameters(params=load_fixture('load_gtm_pool_untyped_default.json'))
 
         # Override methods in the specific type of manager
         tm = UntypedManager(module=module)
@@ -252,7 +276,7 @@ class TestTypedManager(unittest.TestCase):
             supports_check_mode=self.spec.supports_check_mode
         )
 
-        current = Parameters(params=load_fixture('load_gtm_pool_a_default.json'))
+        current = ApiParameters(params=load_fixture('load_gtm_pool_a_default.json'))
 
         # Override methods in the specific type of manager
         tm = TypedManager(module=module)

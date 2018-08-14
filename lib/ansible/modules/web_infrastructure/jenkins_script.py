@@ -30,41 +30,32 @@ options:
       - The groovy script to be executed.
         This gets passed as a string Template if args is defined.
     required: true
-    default: null
   url:
     description:
       - The jenkins server to execute the script against. The default is a local
         jenkins instance that is not being proxied through a webserver.
-    required: false
     default: http://localhost:8080
   validate_certs:
     description:
       - If set to C(no), the SSL certificates will not be validated.
         This should only set to C(no) used on personally controlled sites
         using self-signed certificates as it avoids verifying the source site.
-    required: false
-    default: True
+    type: bool
+    default: 'yes'
   user:
     description:
       - The username to connect to the jenkins server with.
-    required: false
-    default: null
   password:
     description:
       - The password to connect to the jenkins server with.
-    required: false
-    default: null
   timeout:
     description:
       - The request timeout in seconds
-    required: false
     default: 10
     version_added: "2.4"
   args:
     description:
       - A dict of key-value pairs used in formatting the script using string.Template (see https://docs.python.org/2/library/string.html#template-strings).
-    required: false
-    default: null
 
 notes:
     - Since the script can do anything this does not report on changes.
@@ -124,7 +115,7 @@ def is_csrf_protection_enabled(module):
                            module.params['url'] + '/api/json',
                            method='GET')
     if info["status"] != 200:
-        module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"])
+        module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"], output='')
 
     content = to_native(resp.read())
     return json.loads(content).get('useCrumbs', False)
@@ -135,7 +126,7 @@ def get_crumb(module):
                            module.params['url'] + '/crumbIssuer/api/json',
                            method='GET')
     if info["status"] != 200:
-        module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"])
+        module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"], output='')
 
     content = to_native(resp.read())
     return json.loads(content)
@@ -157,14 +148,17 @@ def main():
 
     if module.params['user'] is not None:
         if module.params['password'] is None:
-            module.fail_json(msg="password required when user provided")
+            module.fail_json(msg="password required when user provided", output='')
         module.params['url_username'] = module.params['user']
         module.params['url_password'] = module.params['password']
         module.params['force_basic_auth'] = True
 
     if module.params['args'] is not None:
         from string import Template
-        script_contents = Template(module.params['script']).substitute(module.params['args'])
+        try:
+            script_contents = Template(module.params['script']).substitute(module.params['args'])
+        except KeyError as err:
+            module.fail_json(msg="Error with templating variable: %s" % err, output='')
     else:
         script_contents = module.params['script']
 
@@ -181,12 +175,12 @@ def main():
                            timeout=module.params['timeout'])
 
     if info["status"] != 200:
-        module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"])
+        module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"], output='')
 
     result = to_native(resp.read())
 
     if 'Exception:' in result and 'at java.lang.Thread' in result:
-        module.fail_json(msg="script failed with stacktrace:\n " + result)
+        module.fail_json(msg="script failed with stacktrace:\n " + result, output='')
 
     module.exit_json(
         output=result,

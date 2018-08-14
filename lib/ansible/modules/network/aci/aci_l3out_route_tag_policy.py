@@ -41,8 +41,10 @@ options:
     aliases: [ tenant_name ]
   tag:
     description:
-    - The value of the route tag (range 0-4294967295).
-    default: '4294967295'
+    - The value of the route tag.
+    - Accepted values range between C(0) and C(4294967295).
+    - The APIC defaults to C(4294967295) when unset during creation.
+    type: int
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -62,6 +64,7 @@ EXAMPLES = r'''
     tenant: production
     tag: '{{ tag }}'
     description: '{{ description }}'
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -181,8 +184,6 @@ def main():
         description=dict(type='str', aliases=['descr']),
         tag=dict(type='int'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -205,14 +206,14 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='l3extRouteTagPol',
             aci_rn='rttag-{0}'.format(rtp),
-            filter_target='eq(l3extRouteTagPol.name, "{0}")'.format(rtp),
             module_object=rtp,
+            target_filter={'name': rtp},
         ),
     )
 

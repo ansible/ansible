@@ -58,33 +58,26 @@ options:
     priority:
         description:
             - VRRP priority or 'default' keyword
-        required: false
         default: 100
     preempt:
         description:
             - Enable/Disable preempt.
-        choices: ['True', 'False']
-        default: True
+        type: bool
+        default: 'yes'
     vip:
         description:
             - VRRP virtual IP address or 'default' keyword
-        required: false
-        default: null
     authentication:
         description:
             - Clear text authentication string or 'default' keyword
-        required: false
-        default: null
     admin_state:
         description:
             - Used to enable or disable the VRRP process.
-        required: false
         choices: ['shutdown', 'no shutdown', 'default']
         default: shutdown
     state:
         description:
             - Specify desired state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''
@@ -125,6 +118,7 @@ commands:
 
 from ansible.module_utils.network.nxos.nxos import load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
+from ansible.module_utils.network.nxos.nxos import get_interface_type
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -159,23 +153,6 @@ def apply_key_map(key_map, table):
             else:
                 new_dict[new_key] = value
     return new_dict
-
-
-def get_interface_type(interface):
-    if interface.upper().startswith('ET'):
-        return 'ethernet'
-    elif interface.upper().startswith('VL'):
-        return 'svi'
-    elif interface.upper().startswith('LO'):
-        return 'loopback'
-    elif interface.upper().startswith('MG'):
-        return 'management'
-    elif interface.upper().startswith('MA'):
-        return 'management'
-    elif interface.upper().startswith('PO'):
-        return 'portchannel'
-    else:
-        return 'unknown'
 
 
 def is_default(interface, module):

@@ -26,19 +26,17 @@ options:
     description:
       - The name of the vhost to manage
     required: true
-    default: null
     aliases: [vhost]
   node:
     description:
       - erlang node name of the rabbit we wish to configure
-    required: false
     default: rabbit
     version_added: "1.2"
   tracing:
     description:
       - Enable/disable tracing for a vhost
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
     aliases: [trace]
   state:
     description:
@@ -78,6 +76,9 @@ class RabbitMqVhost(object):
         vhosts = self._exec(['list_vhosts', 'name', 'tracing'], True)
 
         for vhost in vhosts:
+            if '\t' not in vhost:
+                continue
+
             name, tracing = vhost.split('\t')
             if name == self.name:
                 self._tracing = self.module.boolean(tracing)
@@ -139,6 +140,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

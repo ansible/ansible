@@ -57,6 +57,7 @@ EXAMPLES = r'''
     dst_group: '{{ dst_group }}'
     description: '{{ descr }}'
     tenant: '{{ tenant }}'
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -175,8 +176,6 @@ def main():
         tenant=dict(type='str', required=False, aliases=['tenant_name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -198,14 +197,14 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='spanDestGrp',
             aci_rn='destgrp-{0}'.format(dst_group),
-            filter_target='eq(spanDestGrp.name, "{0}")'.format(dst_group),
             module_object=dst_group,
+            target_filter={'name': dst_group},
         ),
     )
 

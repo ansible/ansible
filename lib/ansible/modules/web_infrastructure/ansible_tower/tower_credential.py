@@ -33,23 +33,15 @@ options:
     user:
       description:
         - User that should own this credential.
-      required: False
-      default: null
     team:
       description:
         - Team that should own this credential.
-      required: False
-      default: null
     project:
       description:
         - Project that should for this credential.
-      required: False
-      default: null
     organization:
       description:
         - Organization that should own the credential.
-      required: False
-      default: null
     kind:
       description:
         - Type of credential being added.
@@ -58,86 +50,67 @@ options:
     host:
       description:
         - Host for this credential.
-      required: False
-      default: null
     username:
       description:
         - Username for this credential. access_key for AWS.
-      required: False
-      default: null
     password:
       description:
         - Password for this credential. Use ASK for prompting. secret_key for AWS. api_key for RAX.
-      required: False
-      default: null
     ssh_key_data:
       description:
         - Path to SSH private key.
-      required: False
-      default: null
     ssh_key_unlock:
       description:
         - Unlock password for ssh_key. Use ASK for prompting.
     authorize:
       description:
-        - Should use authroize for net type.
-      required: False
-      default: False
+        - Should use authorize for net type.
+      type: bool
+      default: 'no'
     authorize_password:
       description:
-        - Password for net credentials that require authroize.
-      required: False
-      default: null
+        - Password for net credentials that require authorize.
     client:
       description:
         - Client or application ID for azure_rm type.
       required: False
       default: null
+    security_token:
+      description:
+        - STS token for aws type.
+      required: False
+      default: null
+      version_added: "2.6"
     secret:
       description:
         - Secret token for azure_rm type.
-      required: False
-      default: null
     subscription:
       description:
         - Subscription ID for azure_rm type.
-      required: False
-      default: null
     tenant:
       description:
         - Tenant ID for azure_rm type.
-      required: False
-      default: null
     domain:
       description:
         - Domain for openstack type.
-      required: False
-      default: null
     become_method:
       description:
         - Become method to Use for privledge escalation.
-      required: False
       choices: ["None", "sudo", "su", "pbrun", "pfexec", "pmrun"]
-      default: "None"
     become_username:
       description:
         - Become username. Use ASK for prompting.
-      required: False
-      default: null
     become_password:
       description:
         - Become password. Use ASK for prompting.
-      required: False
-      default: null
     vault_password:
       description:
-        - Valut password. Use ASK for prompting.
+        - Vault password. Use ASK for prompting.
     state:
       description:
         - Desired state of the resource.
-      required: False
-      default: "present"
       choices: ["present", "absent"]
+      default: "present"
 extends_documentation_fragment: tower
 '''
 
@@ -154,7 +127,8 @@ EXAMPLES = '''
 
 import os
 
-from ansible.module_utils.ansible_tower import tower_argument_spec, tower_auth_config, tower_check_mode, HAS_TOWER_CLI
+from ansible.module_utils._text import to_text
+from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode
 
 try:
     import tower_cli
@@ -204,8 +178,7 @@ def credential_type_for_v1_kind(params, module):
 
 def main():
 
-    argument_spec = tower_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         name=dict(required=True),
         user=dict(),
         team=dict(),
@@ -219,6 +192,7 @@ def main():
         authorize=dict(type='bool', default=False),
         authorize_password=dict(no_log=True),
         client=dict(),
+        security_token=dict(),
         secret=dict(),
         tenant=dict(),
         subscription=dict(),
@@ -231,12 +205,9 @@ def main():
         organization=dict(required=True),
         project=dict(),
         state=dict(choices=['present', 'absent'], default='present'),
-    ))
+    )
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
-
-    if not HAS_TOWER_CLI:
-        module.fail_json(msg='ansible-tower-cli required for this module')
+    module = TowerModule(argument_spec=argument_spec, supports_check_mode=True)
 
     name = module.params.get('name')
     organization = module.params.get('organization')
@@ -289,13 +260,14 @@ def main():
                 if os.path.isdir(filename):
                     module.fail_json(msg='attempted to read contents of directory: %s' % filename)
                 with open(filename, 'rb') as f:
-                    module.params['ssh_key_data'] = f.read()
+                    module.params['ssh_key_data'] = to_text(f.read())
 
-            for key in ('authorize', 'authorize_password', 'client', 'secret',
-                        'tenant', 'subscription', 'domain', 'become_method',
-                        'become_username', 'become_password', 'vault_password',
-                        'project', 'host', 'username', 'password',
-                        'ssh_key_data', 'ssh_key_unlock'):
+            for key in ('authorize', 'authorize_password', 'client',
+                        'security_token', 'secret', 'tenant', 'subscription',
+                        'domain', 'become_method', 'become_username',
+                        'become_password', 'vault_password', 'project', 'host',
+                        'username', 'password', 'ssh_key_data',
+                        'ssh_key_unlock'):
                 if 'kind' in params:
                     params[key] = module.params.get(key)
                 elif module.params.get(key):
@@ -315,6 +287,5 @@ def main():
     module.exit_json(**json_output)
 
 
-from ansible.module_utils.basic import AnsibleModule
 if __name__ == '__main__':
     main()

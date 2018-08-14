@@ -105,6 +105,10 @@ ansible_net_filesystems:
   description: All file system names available on the device
   returned: when hardware is configured
   type: list
+ansible_net_filesystems_info:
+  description: A hash of all file systems containing info about each file system (e.g. free and total space)
+  returned: when hardware is configured
+  type: dict
 ansible_net_memfree_mb:
   description: The available free memory on the remote device in Mb
   returned: when hardware is configured
@@ -204,11 +208,11 @@ class Default(FactsBase):
             return match.group(1)
 
     def parse_stacks(self, data):
-        match = re.findall(r'^Model number\s+: (\S+)', data, re.M)
+        match = re.findall(r'^Model [Nn]umber\s+: (\S+)', data, re.M)
         if match:
             self.facts['stacked_models'] = match
 
-        match = re.findall(r'^System serial number\s+: (\S+)', data, re.M)
+        match = re.findall(r'^System [Ss]erial [Nn]umber\s+: (\S+)', data, re.M)
         if match:
             self.facts['stacked_serialnums'] = match
 
@@ -225,18 +229,37 @@ class Hardware(FactsBase):
         data = self.responses[0]
         if data:
             self.facts['filesystems'] = self.parse_filesystems(data)
+            self.facts['filesystems_info'] = self.parse_filesystems_info(data)
 
         data = self.responses[1]
         if data:
-            processor_line = [l for l in data.splitlines()
-                              if 'Processor' in l].pop()
-            match = re.findall(r'\s(\d+)\s', processor_line)
-            if match:
-                self.facts['memtotal_mb'] = int(match[0]) / 1024
-                self.facts['memfree_mb'] = int(match[3]) / 1024
+            if 'Invalid input detected' in data:
+                warnings.append('Unable to gather memory statistics')
+            else:
+                processor_line = [l for l in data.splitlines()
+                                  if 'Processor' in l].pop()
+                match = re.findall(r'\s(\d+)\s', processor_line)
+                if match:
+                    self.facts['memtotal_mb'] = int(match[0]) / 1024
+                    self.facts['memfree_mb'] = int(match[3]) / 1024
 
     def parse_filesystems(self, data):
         return re.findall(r'^Directory of (\S+)/', data, re.M)
+
+    def parse_filesystems_info(self, data):
+        facts = dict()
+        fs = ''
+        for line in data.split('\n'):
+            match = re.match(r'^Directory of (\S+)/', line)
+            if match:
+                fs = match.group(1)
+                facts[fs] = dict()
+                continue
+            match = re.match(r'^(\d+) bytes total \((\d+) bytes free\)', line)
+            if match:
+                facts[fs]['spacetotal_kb'] = int(match.group(1)) / 1024
+                facts[fs]['spacefree_kb'] = int(match.group(2)) / 1024
+        return facts
 
 
 class Config(FactsBase):
@@ -281,7 +304,9 @@ class Interfaces(FactsBase):
             self.populate_ipv6_interfaces(data)
 
         data = self.responses[3]
-        if data:
+        lldp_errs = ['Invalid input', 'LLDP is not enabled']
+
+        if data and not any(err in data for err in lldp_errs):
             neighbors = self.run(['show lldp neighbors detail'])
             if neighbors:
                 self.facts['neighbors'] = self.parse_neighbors(neighbors[0])
@@ -374,7 +399,7 @@ class Interfaces(FactsBase):
             return match.group(1)
 
     def parse_macaddress(self, data):
-        match = re.search(r'address is (\S+)', data)
+        match = re.search(r'Hardware is (?:.*), address is (\S+)', data)
         if match:
             return match.group(1)
 
@@ -444,6 +469,9 @@ FACT_SUBSETS = dict(
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
 
+global warnings
+warnings = list()
+
 
 def main():
     """main entry point for module execution
@@ -506,7 +534,6 @@ def main():
         key = 'ansible_net_%s' % key
         ansible_facts[key] = value
 
-    warnings = list()
     check_args(module, warnings)
 
     module.exit_json(ansible_facts=ansible_facts, warnings=warnings)

@@ -1,7 +1,9 @@
+.. _intro_modules:
+
 Introduction
 ============
 
-Modules (also referred to as "task plugins" or "library plugins") are discrete unites of code that can be used from the command line or in a playbook task.
+Modules (also referred to as "task plugins" or "library plugins") are discrete units of code that can be used from the command line or in a playbook task.
 
 Let's review how we execute three different modules from the command line::
 
@@ -42,22 +44,22 @@ Documentation for each module can be accessed from the command line with the ans
 
     ansible-doc yum
 
-For a list of all available modules, see :doc:`modules_by_category`, or run the following at a command prompt::
+For a list of all available modules, see :doc:`../modules/modules_by_category`, or run the following at a command prompt::
 
     ansible-doc -l
 
 
 .. seealso::
 
-   :doc:`intro_adhoc`
+   :ref:`intro_adhoc`
        Examples of using modules in /usr/bin/ansible
-   :doc:`playbooks`
+   :ref:`working_with_playbooks`
        Examples of using modules with /usr/bin/ansible-playbook
-   :doc:`dev_guide/developing_modules`
+   :ref:`developing_modules`
        How to write your own modules
-   :doc:`dev_guide/developing_api`
+   :ref:`developing_api`
        Examples of using modules with the Python API
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

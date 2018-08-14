@@ -8,7 +8,7 @@ __metaclass__ = type
 DOCUMENTATION = '''
     name: openshift
     plugin_type: inventory
-    authors:
+    author:
       - Chris Houseknecht <@chouseknecht>
 
     short_description: OpenShift inventory source
@@ -19,6 +19,10 @@ DOCUMENTATION = '''
       - Uses openshift.(yml|yaml) YAML configuration file to set parameter values.
 
     options:
+      plugin:
+        description: token that ensures this is a source file for the 'openshift' plugin.
+        required: True
+        choices: ['openshift']
       connections:
           description:
           - Optional list of cluster connection settings. If no connections are provided, the default
@@ -77,7 +81,7 @@ DOCUMENTATION = '''
 
     requirements:
     - "python >= 2.7"
-    - "openshift == 0.4.1"
+    - "openshift >= 0.6"
     - "PyYAML >= 3.11"
 '''
 

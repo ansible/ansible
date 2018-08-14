@@ -27,7 +27,6 @@ options:
   count:
     description:
     - Number of packets to send.
-    required: false
     default: 5
   dest:
     description:
@@ -36,8 +35,6 @@ options:
   source:
     description:
     - The source IP Address.
-    required: false
-    default: null
   state:
     description:
     - Determines if the expected result is success or fail.
@@ -46,7 +43,6 @@ options:
   vrf:
     description:
     - The VRF to use for forwarding.
-    required: false
     default: default
 notes:
   - For a general purpose network module, see the M(net_ping) module.

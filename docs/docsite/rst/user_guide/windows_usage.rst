@@ -43,7 +43,7 @@ Below are some examples of using all three options to install 7-Zip::
     # install/uninstall with win_package
     - name: download the 7-Zip package
       win_get_url:
-        url: http://www.7-zip.org/a/7z1701-x64.msi
+        url: https://www.7-zip.org/a/7z1701-x64.msi
         dest: C:\temp\7z.msi
 
     - name: ensure 7-Zip is installed via win_package
@@ -59,7 +59,7 @@ Below are some examples of using all three options to install 7-Zip::
     # install/uninstall with win_command
     - name: download the 7-Zip package
       win_get_url:
-        url: http://www.7-zip.org/a/7z1701-x64.msi
+        url: https://www.7-zip.org/a/7z1701-x64.msi
         dest: C:\temp\7z.msi
     
     - name: check if 7-Zip is already installed
@@ -371,10 +371,10 @@ standard:
 .. Note:: You should only quote strings when it is absolutely
     necessary or required by YAML, and then use single quotes.
 
-The YAML specification considers the following `escape sequences <http://www.yaml.org/spec/current.html#id2517668>`_:
+The YAML specification considers the following `escape sequences <http://yaml.org/spec/current.html#id2517668>`_:
 
-* ``\0``, ``\``, ``"``, ``\a``, ``\b``, ``\e``, ``\f``, ``\n``, ``\r``, ``\t``
-  and ``\v`` -- Single character escape
+* ``\0``, ``\\``, ``\"``, ``\_``, ``\a``, ``\b``, ``\e``, ``\f``, ``\n``, ``\r``, ``\t``,
+  ``\v``, ``\L``, ``\N`` and ``\P`` -- Single character escape
 
 * ``<TAB>``, ``<SPACE>``, ``<NBSP>``, ``<LNSP>``, ``<PSP>`` -- Special
   characters
@@ -473,7 +473,7 @@ Developing Windows Modules
 ``````````````````````````
 Because Ansible modules for Windows are written in PowerShell, the development
 guides for Windows modules differ substantially from those for standard standard modules. Please see
-:doc:`dev_guide/developing_modules_general_windows` for more information.
+:ref:`developing_modules_general_windows` for more information.
 
 .. seealso::
 
@@ -483,9 +483,9 @@ guides for Windows modules differ substantially from those for standard standard
        An introduction to playbooks
    :doc:`playbooks_best_practices`
        Best practices advice
-   `List of Windows Modules <http://docs.ansible.com/list_of_windows_modules.html>`_
+   :ref:`List of Windows Modules <windows_modules>`
        Windows specific module list, all implemented in PowerShell
-   `User Mailing List <http://groups.google.com/group/ansible-project>`_
+   `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

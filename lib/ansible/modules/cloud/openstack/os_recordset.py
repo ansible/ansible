@@ -42,13 +42,9 @@ options:
    description:
      description:
         - Description of the recordset
-     required: false
-     default: None
    ttl:
      description:
         -  TTL (Time To Live) value in seconds
-     required: false
-     default: None
    state:
      description:
        - Should the resource be present or absent.
@@ -57,10 +53,9 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -169,7 +164,7 @@ def main():
     name = module.params.get('name')
     state = module.params.get('state')
 
-    shade, cloud = openstack_cloud_from_module(module, min_version='1.9.0')
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         recordset_type = module.params.get('recordset_type')
         recordset_filter = {'type': recordset_type}
@@ -233,7 +228,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

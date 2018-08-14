@@ -1,0 +1,29 @@
+{
+    "kind": "tm:net:trunk:trunkstate",
+    "name": "foo",
+    "fullPath": "foo",
+    "generation": 79,
+    "selfLink": "https://localhost/mgmt/tm/net/trunk/foo?ver=13.1.0.4",
+    "bandwidth": 10000,
+    "cfgMbrCount": 1,
+    "distributionHash": "dst-mac",
+    "id": 0,
+    "lacp": "disabled",
+    "lacpMode": "active",
+    "lacpTimeout": "long",
+    "linkSelectPolicy": "maximum-bandwidth",
+    "macAddress": "08:00:27:ea:18:52",
+    "media": "10000",
+    "qinqEthertype": "0x8100",
+    "stp": "enabled",
+    "type": "normal",
+    "workingMbrCount": 1,
+    "interfaces": [
+        "1.3"
+    ],
+    "interfacesReference": [
+        {
+            "link": "https://localhost/mgmt/tm/net/interface/1.3?ver=13.1.0.4"
+        }
+    ]
+}

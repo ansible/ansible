@@ -35,41 +35,33 @@ options:
     name:
         description:
             - list of names of packages to install/remove
-        required: false
-        default: None
         aliases: ['pkg', 'package', 'formula']
     path:
         description:
             - "A ':' separated list of paths to search for 'brew' executable.
               Since a package (I(formula) in homebrew parlance) location is prefixed relative to the actual path of I(brew) command,
               providing an alternative I(brew) path enables managing different set of packages in an alternative location in the system."
-        required: false
         default: '/usr/local/bin'
     state:
         description:
             - state of the package
         choices: [ 'head', 'latest', 'present', 'absent', 'linked', 'unlinked' ]
-        required: false
         default: present
     update_homebrew:
         description:
             - update homebrew itself first
-        required: false
-        default: no
-        choices: [ "yes", "no" ]
+        type: bool
+        default: 'no'
         aliases: ['update-brew']
     upgrade_all:
         description:
             - upgrade all homebrew packages
-        required: false
-        default: no
-        choices: [ "yes", "no" ]
+        type: bool
+        default: 'no'
         aliases: ['upgrade']
     install_options:
         description:
             - options flags to install a package
-        required: false
-        default: null
         aliases: ['options']
         version_added: "1.4"
 notes:
@@ -695,7 +687,7 @@ class Homebrew(object):
             raise HomebrewException(self.message)
 
         opts = (
-            [self.brew_path, 'uninstall']
+            [self.brew_path, 'uninstall', '--force']
             + self.install_options
             + [self.current_package]
         )

@@ -46,11 +46,9 @@ options:
     host_groups:
         description:
             - List of host groups the host is part of.
-        required: false
     link_templates:
         description:
             - List of templates linked to the host.
-        default: None
     inventory_mode:
         description:
             - Configure the inventory mode.
@@ -77,7 +75,6 @@ options:
     proxy:
         description:
             - The name of the Zabbix proxy to be used.
-        default: None
     interfaces:
         description:
             - List of interfaces to be created for the host (see example below).
@@ -158,8 +155,8 @@ options:
     force:
         description:
             - Overwrite the host configuration, even if already present.
+        type: bool
         default: 'yes'
-        choices: [ 'yes', 'no' ]
         version_added: '2.0'
 extends_documentation_fragment:
     - zabbix
@@ -399,7 +396,7 @@ class Host(object):
         if len(proxy_list) < 1:
             self._module.fail_json(msg="Proxy not found: %s" % proxy_name)
         else:
-            return proxy_list[0]['proxyid']
+            return int(proxy_list[0]['proxyid'])
 
     # get group ids by group names
     def get_group_ids_by_group_names(self, group_names):
@@ -512,27 +509,27 @@ class Host(object):
             if proposed_inventory != host['inventory']:
                 return True
 
-        if tls_accept is not None:
+        if tls_accept is not None and 'tls_accept' in host:
             if int(host['tls_accept']) != tls_accept:
                 return True
 
-        if tls_psk_identity is not None:
+        if tls_psk_identity is not None and 'tls_psk_identity' in host:
             if host['tls_psk_identity'] != tls_psk_identity:
                 return True
 
-        if tls_psk is not None:
+        if tls_psk is not None and 'tls_psk' in host:
             if host['tls_psk'] != tls_psk:
                 return True
 
-        if tls_issuer is not None:
+        if tls_issuer is not None and 'tls_issuer' in host:
             if host['tls_issuer'] != tls_issuer:
                 return True
 
-        if tls_subject is not None:
+        if tls_subject is not None and 'tls_subject' in host:
             if host['tls_subject'] != tls_subject:
                 return True
 
-        if tls_connect is not None:
+        if tls_connect is not None and 'tls_connect' in host:
             if int(host['tls_connect']) != tls_connect:
                 return True
         if ipmi_authtype is not None:
@@ -766,7 +763,7 @@ def main():
 
         # If proxy is not specified as a module parameter, use the existing setting
         if proxy is None:
-            proxy_id = zabbix_host_obj['proxy_hostid']
+            proxy_id = int(zabbix_host_obj['proxy_hostid'])
 
         if state == "absent":
             # remove host
@@ -792,7 +789,7 @@ def main():
             if not force or not interfaces:
                 for interface in copy.deepcopy(exist_interfaces):
                     # remove values not used during hostinterface.add/update calls
-                    for key in interface.keys():
+                    for key in tuple(interface.keys()):
                         if key in ['interfaceid', 'hostid', 'bulk']:
                             interface.pop(key, None)
 

@@ -97,6 +97,13 @@ options:
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
+    type:
+        description:
+            - Ssl profile type.
+            - Enum options - SSL_PROFILE_TYPE_APPLICATION, SSL_PROFILE_TYPE_SYSTEM.
+            - Field introduced in 17.2.8.
+            - Default value when not specified in API or module is interpreted by Avi Controller as SSL_PROFILE_TYPE_APPLICATION.
+        version_added: "2.6"
     url:
         description:
             - Avi controller URL of the object.
@@ -187,6 +194,7 @@ def main():
         ssl_session_timeout=dict(type='int',),
         tags=dict(type='list',),
         tenant_ref=dict(type='str',),
+        type=dict(type='str',),
         url=dict(type='str',),
         uuid=dict(type='str',),
     )
@@ -199,6 +207,7 @@ def main():
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'sslprofile',
                            set([]))
+
 
 if __name__ == '__main__':
     main()

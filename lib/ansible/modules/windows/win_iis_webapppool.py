@@ -18,8 +18,8 @@ description:
 options:
   attributes:
     description:
-      - As of Ansible 2.4, this field can take in dict entries to set the
-        application pool attributes.
+      - This field is a free form dictionary value for the application pool
+        attributes.
       - These attributes are based on the naming standard at
         U(https://www.iis.net/configreference/system.applicationhost/applicationpools/add#005),
         see the examples section for more details on how to set this.
@@ -36,11 +36,6 @@ options:
         keystore. Please follow
         U(http://structuredsight.com/2014/10/26/im-out-of-range-youre-out-of-range/)
         to help fix your host.
-      - DEPRECATED As of Ansible 2.4 this field should be set using a dict
-        form, in older versions of Ansible this field used to be a string.
-      - This string has attributes that are separated by a pipe '|' and
-        attribute name/values by colon ':'
-        Ex. "startMode:OnDemand|managedPipelineMode:Classic".
   name:
     description:
       - Name of the application pool.
@@ -89,13 +84,6 @@ EXAMPLES = r'''
       managedRuntimeVersion: v4.0
       autoStart: no
 
-# Note this format style has been deprecated, please use the newer dict style instead
-- name: change application pool attributes using older string style
-  win_iis_webapppool:
-    name: AppPool
-    attributes: 'managedRuntimeVersion:v4.0|autoStart:false'
-
-# This is the preferred style to use when setting attributes
 - name: creates an application pool, sets attributes and starts it
   win_iis_webapppool:
     name: AnotherAppPool

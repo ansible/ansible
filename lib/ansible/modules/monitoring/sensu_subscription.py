@@ -40,7 +40,7 @@ options:
     description:
       - Create a backup file (if yes), including the timestamp information so you
       - can get the original file back if you somehow clobbered it incorrectly.
-    choices: [ 'yes', 'no' ]
+    type: bool
     required: false
     default: no
 requirements: [ ]
@@ -64,6 +64,8 @@ EXAMPLES = '''
 - name: unsubscribe from common checks
   sensu_subscription: name=common state=absent
 '''
+
+import json
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
@@ -73,11 +75,6 @@ from ansible.module_utils._text import to_native
 def sensu_subscription(module, path, name, state='present', backup=False):
     changed = False
     reasons = []
-
-    try:
-        import json
-    except ImportError:
-        import simplejson as json
 
     try:
         config = json.load(open(path))

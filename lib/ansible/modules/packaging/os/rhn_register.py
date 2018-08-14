@@ -30,62 +30,47 @@ options:
     state:
         description:
           - whether to register (C(present)), or unregister (C(absent)) a system
-        required: false
         choices: [ "present", "absent" ]
         default: "present"
     username:
         description:
             - Red Hat Network username
-        required: False
-        default: null
     password:
         description:
             - Red Hat Network password
-        required: False
-        default: null
     server_url:
         description:
             - Specify an alternative Red Hat Network server URL
-        required: False
         default: Current value of I(serverURL) from C(/etc/sysconfig/rhn/up2date) is the default
     activationkey:
         description:
             - supply an activation key for use with registration
-        required: False
-        default: null
     profilename:
         description:
             - supply an profilename for use with registration
-        required: False
-        default: null
         version_added: "2.0"
     sslcacert:
         description:
             - supply a custom ssl CA certificate file for use with registration
-        required: False
-        default: None
         version_added: "2.1"
     systemorgid:
         description:
             - supply an organizational id for use with registration
-        required: False
-        default: None
         version_added: "2.1"
     channels:
         description:
             - Optionally specify a list of comma-separated channels to subscribe to upon successful registration.
-        required: false
         default: []
     enable_eus:
         description:
-            - If true, extended update support will be requested.
-        required: false
-        default: false
+            - If C(no), extended update support will be requested.
+        type: bool
+        default: 'no'
     nopackages:
         description:
-            - If true, the registered node will not upload its installed packages information to Satellite server
-        required: false
-        default: false
+            - If C(yes), the registered node will not upload its installed packages information to Satellite server
+        type: bool
+        default: 'no'
         version_added: "2.5"
 '''
 

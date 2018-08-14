@@ -1,3 +1,6 @@
+.. _yaml_syntax:
+
+
 YAML Syntax
 ===========
 
@@ -8,7 +11,7 @@ We use YAML because it is easier for humans to read and write than other common
 data formats like XML or JSON.  Further, there are libraries available in most
 programming languages for working with YAML.
 
-You may also wish to read :doc:`playbooks` at the same time to see how this
+You may also wish to read :ref:`working_with_playbooks` at the same time to see how this
 is used in practice.
 
 
@@ -217,7 +220,7 @@ value::
 
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`working_with_playbooks`
        Learn what playbooks can do and how to write/run them.
    `YAMLLint <http://yamllint.com/>`_
        YAML Lint (online) helps you debug YAML syntax if you are having problems
@@ -225,13 +228,13 @@ value::
        Complete playbook files from the github project source
    `Wikipedia YAML syntax reference <https://en.wikipedia.org/wiki/YAML>`_
        A good guide to YAML syntax
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel and #yaml for YAML specific questions
    `YAML 1.1 Specification <http://yaml.org/spec/1.1/>`_
        The Specification for YAML 1.1, which PyYAML and libyaml are currently
        implementing
-   `YAML 1.2 Specification <http://yaml.org/spec/1.2/>`_
+   `YAML 1.2 Specification <http://yaml.org/spec/1.2/spec.html>`_
        For completeness, YAML 1.2 is the successor of 1.1
 

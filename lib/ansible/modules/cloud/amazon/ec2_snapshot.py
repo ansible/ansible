@@ -43,7 +43,7 @@ options:
   wait:
     description:
       - wait for the snapshot to be ready
-    choices: ['yes', 'no']
+    type: bool
     required: false
     default: yes
     version_added: "1.5.1"

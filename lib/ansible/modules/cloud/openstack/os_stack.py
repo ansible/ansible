@@ -28,7 +28,6 @@ options:
       description:
         - Indicate desired state of the resource
       choices: ['present', 'absent']
-      required: false
       default: present
     name:
       description:
@@ -37,41 +36,31 @@ options:
     tag:
       description:
         - Tag for the stack that should be created, name could be char and digit, no space
-      required: false
-      default: None
       version_added: "2.5"
     template:
       description:
         - Path of the template file to use for the stack creation
-      required: false
-      default: None
     environment:
       description:
         - List of environment files that should be used for the stack creation
-      required: false
-      default: None
     parameters:
       description:
         - Dictionary of parameters for the stack creation
-      required: false
-      default: None
     rollback:
       description:
         - Rollback stack creation
-      required: false
-      default: false
+      type: bool
+      default: 'yes'
     timeout:
       description:
         - Maximum number of seconds to wait for the stack creation
-      required: false
       default: 3600
     availability_zone:
       description:
         - Ignored. Present for backwards compatibility
-      required: false
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 '''
 EXAMPLES = '''
 ---
@@ -160,9 +149,10 @@ stack:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
+from ansible.module_utils._text import to_native
 
 
-def _create_stack(module, stack, cloud, shade):
+def _create_stack(module, stack, cloud, sdk):
     try:
         stack = cloud.create_stack(module.params['name'],
                                    tags=module.params['tag'],
@@ -178,11 +168,14 @@ def _create_stack(module, stack, cloud, shade):
             return stack
         else:
             module.fail_json(msg="Failure in creating stack: {0}".format(stack))
-    except shade.OpenStackCloudException as e:
-        module.fail_json(msg=str(e))
+    except sdk.exceptions.OpenStackCloudException as e:
+        if hasattr(e, 'response'):
+            module.fail_json(msg=to_native(e), response=e.response.json())
+        else:
+            module.fail_json(msg=to_native(e))
 
 
-def _update_stack(module, stack, cloud, shade):
+def _update_stack(module, stack, cloud, sdk):
     try:
         stack = cloud.update_stack(
             module.params['name'],
@@ -198,8 +191,11 @@ def _update_stack(module, stack, cloud, shade):
         else:
             module.fail_json(msg="Failure in updating stack: %s" %
                              stack['stack_status_reason'])
-    except shade.OpenStackCloudException as e:
-        module.fail_json(msg=str(e))
+    except sdk.exceptions.OpenStackCloudException as e:
+        if hasattr(e, 'response'):
+            module.fail_json(msg=to_native(e), response=e.response.json())
+        else:
+            module.fail_json(msg=to_native(e))
 
 
 def _system_state_change(module, stack, cloud):
@@ -230,13 +226,6 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    # stack API introduced in 1.8.0
-    min_version = '1.8.0'
-    tag = module.params['tag']
-    if tag is not None:
-        # stack tag API was introduced in 1.26.0
-        min_version = '1.26.0'
-
     state = module.params['state']
     name = module.params['name']
     # Check for required parameters when state == 'present'
@@ -245,7 +234,7 @@ def main():
             if not module.params[p]:
                 module.fail_json(msg='%s required with present state' % p)
 
-    shade, cloud = openstack_cloud_from_module(module, min_version='1.26.0')
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         stack = cloud.get_stack(name)
 
@@ -255,9 +244,9 @@ def main():
 
         if state == 'present':
             if not stack:
-                stack = _create_stack(module, stack, cloud, shade)
+                stack = _create_stack(module, stack, cloud, sdk)
             else:
-                stack = _update_stack(module, stack, cloud, shade)
+                stack = _update_stack(module, stack, cloud, sdk)
             changed = True
             module.exit_json(changed=changed,
                              stack=stack,
@@ -270,8 +259,8 @@ def main():
                 if not cloud.delete_stack(name, wait=module.params['wait']):
                     module.fail_json(msg='delete stack failed for stack: %s' % name)
             module.exit_json(changed=changed)
-    except shade.OpenStackCloudException as e:
-        module.fail_json(msg=str(e))
+    except sdk.exceptions.OpenStackCloudException as e:
+        module.fail_json(msg=to_native(e))
 
 
 if __name__ == '__main__':

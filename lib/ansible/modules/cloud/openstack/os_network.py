@@ -30,35 +30,30 @@ options:
    shared:
      description:
         - Whether this network is shared or not.
-     required: false
-     default: false
+     type: bool
+     default: 'no'
    admin_state_up:
      description:
         - Whether the state should be marked as up or down.
-     required: false
-     default: true
+     type: bool
+     default: 'yes'
    external:
      description:
         - Whether this network is externally accessible.
-     required: false
-     default: false
+     type: bool
+     default: 'no'
    state:
      description:
         - Indicate desired state of the resource.
      choices: ['present', 'absent']
-     required: false
      default: present
    provider_physical_network:
      description:
         - The physical network where this network object is implemented.
-     required: false
-     default: None
      version_added: "2.1"
    provider_network_type:
      description:
         - The type of physical network that maps to this network resource.
-     required: false
-     default: None
      version_added: "2.1"
    provider_segmentation_id:
      description:
@@ -66,20 +61,15 @@ options:
           attribute defines the segmentation model. For example, if the
           I(network_type) value is vlan, this ID is a vlan identifier. If
           the I(network_type) value is gre, this ID is a gre key.
-     required: false
-     default: None
      version_added: "2.1"
    project:
      description:
         - Project name or ID containing the network (name admin-only)
-     required: false
-     default: None
      version_added: "2.1"
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
-requirements: ["shade"]
+requirements: ["openstacksdk"]
 '''
 
 EXAMPLES = '''
@@ -181,7 +171,7 @@ def main():
     provider_segmentation_id = module.params['provider_segmentation_id']
     project = module.params.get('project')
 
-    shade, cloud = openstack_cloud_from_module(module, min_version='1.6.0')
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         if project is not None:
             proj = cloud.get_project(project)
@@ -222,7 +212,7 @@ def main():
                 cloud.delete_network(name)
                 module.exit_json(changed=True)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

@@ -18,7 +18,7 @@ module: digital_ocean_certificate
 short_description: Manage certificates in DigitalOcean.
 description:
     - Create, Retrieve and remove certificates DigitalOcean.
-author: "Abhijeet Kasurde (@akasurde)"
+author: "Abhijeet Kasurde (@Akasurde)"
 version_added: "2.5"
 options:
   name:
@@ -108,7 +108,7 @@ def core(module):
             if cert['name'] == name:
                 module.fail_json(msg="Certificate name %s already exists" % name)
 
-        # Certificate does not exists, let us create it
+        # Certificate does not exist, let us create it
         cert_data = dict(name=name,
                          private_key=module.params['private_key'],
                          leaf_certificate=module.params['leaf_certificate'])

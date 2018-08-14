@@ -57,7 +57,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Remove an (unused) vCenter license
-  vmware_license:
+  vcenter_license:
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
@@ -77,7 +77,7 @@ licenses:
 '''
 
 try:
-    from pyVmomi import vim, vmodl
+    from pyVmomi import vim
     HAS_PYVMOMI = True
 except ImportError:
     HAS_PYVMOMI = False

@@ -50,6 +50,7 @@ EXAMPLES = r'''
     tenant: production
     description: Production tenant
     state: present
+  delegate_to: localhost
 
 - name: Remove a tenant
   aci_tenant:
@@ -58,6 +59,7 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     tenant: production
     state: absent
+  delegate_to: localhost
 
 - name: Query a tenant
   aci_tenant:
@@ -66,6 +68,8 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     tenant: production
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all tenants
   aci_tenant:
@@ -73,6 +77,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -190,8 +196,6 @@ def main():
         tenant=dict(type='str', required=False, aliases=['name', 'tenant_name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -212,8 +216,8 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
     )
     aci.get_existing()

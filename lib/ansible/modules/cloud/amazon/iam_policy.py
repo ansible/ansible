@@ -30,7 +30,6 @@ options:
     description:
       - Type of IAM resource
     required: true
-    default: null
     choices: [ "user", "group", "role"]
   iam_name:
     description:
@@ -43,23 +42,19 @@ options:
   policy_document:
     description:
       - The path to the properly json formatted policy file (mutually exclusive with C(policy_json))
-    required: false
   policy_json:
     description:
       - A properly json formatted policy as string (mutually exclusive with C(policy_document),
         see https://github.com/ansible/ansible/issues/7005#issuecomment-42894813 on how to use it properly)
-    required: false
   state:
     description:
       - Whether to create or delete the IAM policy.
     required: true
-    default: null
     choices: [ "present", "absent"]
   skip_duplicates:
     description:
       - By default the module looks for any policies that match the document you pass in, if there is a match it will not make a new policy object with
         the same rules. You can override this by specifying false which would allow for two policy objects with different names but same rules.
-    required: false
     default: "/"
 
 notes:
@@ -291,20 +286,27 @@ def main():
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
 
-    state = module.params.get('state').lower()
     iam_type = module.params.get('iam_type').lower()
     state = module.params.get('state')
     name = module.params.get('iam_name')
     policy_name = module.params.get('policy_name')
     skip = module.params.get('skip_duplicates')
 
-    if module.params.get('policy_document') is not None and module.params.get('policy_json') is not None:
+    policy_document = module.params.get('policy_document')
+    if policy_document is not None and module.params.get('policy_json') is not None:
         module.fail_json(msg='Only one of "policy_document" or "policy_json" may be set')
 
-    if module.params.get('policy_document') is not None:
-        with open(module.params.get('policy_document'), 'r') as json_data:
-            pdoc = json.dumps(json.load(json_data))
-            json_data.close()
+    if policy_document is not None:
+        try:
+            with open(policy_document, 'r') as json_data:
+                pdoc = json.dumps(json.load(json_data))
+                json_data.close()
+        except IOError as e:
+            if e.errno == 2:
+                module.fail_json(
+                    msg='policy_document {0:!r} does not exist'.format(policy_document))
+            else:
+                raise
     elif module.params.get('policy_json') is not None:
         pdoc = module.params.get('policy_json')
         # if its a string, assume it is already JSON

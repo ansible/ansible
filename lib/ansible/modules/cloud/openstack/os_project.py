@@ -32,20 +32,15 @@ options:
    description:
      description:
         - Description for the project
-     required: false
-     default: None
    domain_id:
      description:
         - Domain id to create the project in if the cloud supports domains.
-          The domain_id parameter requires shade >= 1.8.0
-     required: false
-     default: None
      aliases: ['domain']
    enabled:
      description:
         - Is the project enabled
-     required: false
-     default: True
+     type: bool
+     default: 'yes'
    state:
      description:
        - Should the resource be present or absent.
@@ -54,16 +49,16 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
 # Create a project
 - os_project:
     cloud: mycloud
+    endpoint_type: admin
     state: present
     name: demoproject
     description: demodescription
@@ -73,6 +68,7 @@ EXAMPLES = '''
 # Delete a project
 - os_project:
     cloud: mycloud
+    endpoint_type: admin
     state: absent
     name: demoproject
 '''
@@ -157,13 +153,7 @@ def main():
     enabled = module.params['enabled']
     state = module.params['state']
 
-    if domain:
-        min_version = '1.8.0'
-    else:
-        min_version = None
-
-    shade, cloud = openstack_cloud_from_module(
-        module, min_version=min_version)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         if domain:
             try:
@@ -213,7 +203,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=e.message, extra_data=e.extra_data)
 
 

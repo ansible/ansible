@@ -15,7 +15,6 @@ from lib.util import (
     display,
     ApplicationError,
     is_shippable,
-    find_pip,
     run_command,
     generate_password,
     SubprocessError,
@@ -84,7 +83,7 @@ class TowerCloudProvider(CloudProvider):
         """
         tower_cli_version_map = {
             '3.1.5': '3.1.8',
-            '3.2.3': '3.2.1',
+            '3.2.3': '3.3.0',
         }
 
         cli_version = tower_cli_version_map.get(self.version, fallback)
@@ -151,8 +150,7 @@ class TowerCloudEnvironment(CloudEnvironment):
 
         display.info('Installing Tower CLI version: %s' % tower_cli_version)
 
-        pip = find_pip(version=self.args.python_version)
-        cmd = [pip, 'install', '--disable-pip-version-check', 'ansible-tower-cli==%s' % tower_cli_version]
+        cmd = self.args.pip_command + ['install', '--disable-pip-version-check', 'ansible-tower-cli==%s' % tower_cli_version]
 
         run_command(self.args, cmd)
 
@@ -207,6 +205,7 @@ class TowerConfig(object):
         :rtype: dict[str, str]
         """
         env = dict(
+            TOWER_VERSION=self.version,
             TOWER_HOST=self.host,
             TOWER_USERNAME=self.username,
             TOWER_PASSWORD=self.password,
@@ -232,6 +231,11 @@ class TowerConfig(object):
 
         values = dict((k, parser.get('general', k)) for k in keys)
         config = TowerConfig(values)
+
+        missing = [k for k in keys if not values.get(k)]
+
+        if missing:
+            raise ApplicationError('Missing or empty Tower configuration value(s): %s' % ', '.join(missing))
 
         return config
 

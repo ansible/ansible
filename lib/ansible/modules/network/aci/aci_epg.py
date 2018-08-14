@@ -46,14 +46,14 @@ options:
     aliases: [ bd_name, bridge_domain ]
   priority:
     description:
-    - QoS class.
+    - The QoS class.
+    - The APIC defaults to C(unspecified) when unset during creation.
     choices: [ level1, level2, level3, unspecified ]
-    default: unspecified
   intra_epg_isolation:
     description:
-    - Intra EPG Isolation.
+    - The Intra EPG Isolation.
+    - The APIC defaults to C(unenforced) when unset during creation.
     choices: [ enforced, unenforced ]
-    default: unenforced
   description:
     description:
     - Description for the EPG.
@@ -61,15 +61,14 @@ options:
   fwd_control:
     description:
     - The forwarding control used by the EPG.
-    - The APIC defaults new EPGs to C(none).
+    - The APIC defaults to C(none) when unset during creation.
     choices: [ none, proxy-arp ]
-    default: none
   preferred_group:
     description:
     - Whether ot not the EPG is part of the Preferred Group and can communicate without contracts.
     - This is very convenient for migration scenarios, or when ACI is used for network automation but not for policy.
+    - The APIC defaults to C(no) when unset during creation.
     type: bool
-    default: 'no'
     version_added: '2.5'
   state:
     description:
@@ -92,6 +91,8 @@ EXAMPLES = r'''
     description: Web Intranet EPG
     bd: prod_bd
     preferred_group: yes
+    state: present
+  delegate_to: localhost
 
 - aci_epg:
     host: apic
@@ -105,6 +106,7 @@ EXAMPLES = r'''
     priority: unspecified
     intra_epg_isolation: unenforced
     state: present
+  delegate_to: localhost
   with_items:
     - epg: web
       bd: web_bd
@@ -121,6 +123,7 @@ EXAMPLES = r'''
     app_profile: intranet
     epg: web_epg
     state: absent
+  delegate_to: localhost
 
 - name: Query an EPG
   aci_epg:
@@ -131,6 +134,8 @@ EXAMPLES = r'''
     ap: ticketing
     epg: web_epg
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all EPGs
   aci_epg:
@@ -138,6 +143,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all EPGs with a Specific Name
   aci_epg:
@@ -147,6 +154,8 @@ EXAMPLES = r'''
     validate_certs: no
     epg: web_epg
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all EPGs of an App Profile
   aci_epg:
@@ -156,6 +165,8 @@ EXAMPLES = r'''
     validate_certs: no
     ap: ticketing
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -280,8 +291,6 @@ def main():
         fwd_control=dict(type='str', choices=['none', 'proxy-arp']),
         preferred_group=dict(type='bool'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -310,20 +319,20 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='fvAp',
             aci_rn='ap-{0}'.format(ap),
-            filter_target='eq(fvAp.name, "{0}")'.format(ap),
             module_object=ap,
+            target_filter={'name': ap},
         ),
         subclass_2=dict(
             aci_class='fvAEPg',
             aci_rn='epg-{0}'.format(epg),
-            filter_target='eq(fvAEPg.name, "{0}")'.format(epg),
             module_object=epg,
+            target_filter={'name': epg},
         ),
         child_classes=['fvRsBd'],
     )

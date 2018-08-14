@@ -18,7 +18,7 @@ description:
 - Bind Bridge Domain to L3 Out on Cisco ACI fabrics.
 notes:
 - The C(bd) and C(l3out) parameters should exist before using this module.
-  The M(aci_bd) and M(aci_l3out) can be used for these.
+  The M(aci_bd) and C(aci_l3out) can be used for these.
 - More information about the internal APIC class B(fv:RsBDToOut) from
   L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
@@ -166,8 +166,6 @@ def main():
         l3out=dict(type='str'),  # Not required for querying all objects
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -190,20 +188,20 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='fvBD',
             aci_rn='BD-{0}'.format(bd),
-            filter_target='eq(fvBD.name, "{0}")'.format(bd),
             module_object=bd,
+            target_filter={'name': bd},
         ),
         subclass_2=dict(
             aci_class='fvRsBDToOut',
             aci_rn='rsBDToOut-{0}'.format(l3out),
-            filter_target='eq(fvRsBDToOut.tnL3extOutName, "{0}")'.format(l3out),
             module_object=l3out,
+            target_filter={'tnL3extOutName': l3out},
         ),
     )
 

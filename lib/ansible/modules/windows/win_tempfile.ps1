@@ -1,23 +1,9 @@
 #!powershell
-# (c) 2017, Dag Wieers <dag@wieers.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# WANT_JSON
-# POWERSHELL_COMMON
+# Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 Function New-TempFile {
     Param ([string]$path, [string]$prefix, [string]$suffix, [string]$type, [bool]$checkmode)
@@ -51,9 +37,9 @@ $params = Parse-Args $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
 $path = Get-AnsibleParam -obj $params -name "path" -type "path" -default "%TEMP%" -aliases "dest"
-$state = Get-AnsibleParam -obj $params -name "state" -type "string" -default "file" -validateset "file","directory"
-$prefix = Get-AnsibleParam -obj $params -name "prefix" -type "string" -default "ansible."
-$suffix = Get-AnsibleParam -obj $params -name "suffix" -type "string"
+$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "file" -validateset "file","directory"
+$prefix = Get-AnsibleParam -obj $params -name "prefix" -type "str" -default "ansible."
+$suffix = Get-AnsibleParam -obj $params -name "suffix" -type "str"
 
 # Expand environment variables on non-path types
 $prefix = Expand-Environment($prefix)

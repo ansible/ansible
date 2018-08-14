@@ -39,7 +39,7 @@ The ``backup`` directory and the files in it get created when you run modules li
 Tracking Changes to Inventory and Playbooks: Source Control with Git
 ================================================================================
 
-As you expand your inventory, roles and playbooks, you should place your Ansible projects under source control. We recommend ``git`` for source control. ``git`` provides an audit trail, letting you you track changes, roll back mistakes, view history and share the workload of managing, maintaining and expanding your Ansible ecosystem. There are plenty of tutorials and guides to using ``git`` available.
+As you expand your inventory, roles and playbooks, you should place your Ansible projects under source control. We recommend ``git`` for source control. ``git`` provides an audit trail, letting you track changes, roll back mistakes, view history and share the workload of managing, maintaining and expanding your Ansible ecosystem. There are plenty of tutorials and guides to using ``git`` available.
 
 Resources and Next Steps
 ================================================================================
@@ -49,8 +49,8 @@ Text
 
 Read more about Ansible for Network Automation:
 
-- Network Automation on the `Ansible website <http://ansible.com/overview/networking>`_
-- Ansible Network `Blog posts <http://ansible.com/blog/topic/networks>`_
+- Network Automation on the `Ansible website <https://www.ansible.com/overview/networking>`_
+- Ansible Network `Blog posts <https://www.ansible.com/blog/topic/networks>`_
 
 Events (on Video and in Person)
 --------------------------------
@@ -66,15 +66,10 @@ GitHub Repos
 
 Ansible hosts module code, examples, demonstrations, and other content on GitHub. Anyone with a GitHub account is able to create Pull Requests (PRs) or issues on these repos:
 
-- `Network-Automation <https://github.com/network-automation>`_ is an open community for all things network automation
+- `Network-Automation <https://github.com/network-automation>`_ is an open community for all things network automation. Have an idea, some playbooks, or roles to share? Email ansible-network@redhat.com and we will add you as a contributor to the repository.
+
 - `Ansible <https://github.com/ansible/ansible>`_ is the main codebase, including code for network modules
 
-Email
---------
-
-Join the Ansible Network Community email list:
-
-- email ansible-network@redhat.com and we will get you added right away
 
 IRC
 --------

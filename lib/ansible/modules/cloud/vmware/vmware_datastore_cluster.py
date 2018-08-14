@@ -24,7 +24,7 @@ description:
     - All parameters and VMware object values are case sensitive.
 version_added: 2.6
 author:
--  Abhijeet Kasurde (@akasurde)
+-  Abhijeet Kasurde (@Akasurde)
 notes:
     - Tested on vSphere 6.0, 6.5
 requirements:
@@ -50,22 +50,24 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 - name: Create datastore cluster
   vmware_datastore_cluster:
-    hostname: vCenter
-    username: root
-    password: vmware
-    datacenter_name: "datacenter"
-    datastore_cluster_name: datacluster0
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter_name: '{{ datacenter_name }}'
+    datastore_cluster_name: '{{ datastore_cluster_name }}'
     state: present
+  delegate_to: localhost
 
 
 - name: Delete datastore cluster
   vmware_datastore_cluster:
-    hostname: vCenter
-    username: root
-    password: vmware
-    datacenter_name: "datacenter"
-    datastore_cluster_name: datacluster0
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter_name: '{{ datacenter_name }}'
+    datastore_cluster_name: '{{ datastore_cluster_name }}'
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = """
@@ -75,11 +77,6 @@ result:
     type: string
     sample: "Datastore cluster 'DSC2' created successfully."
 """
-
-try:
-    from pyVmomi import vim, vmodl
-except ImportError:
-    pass
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, wait_for_task

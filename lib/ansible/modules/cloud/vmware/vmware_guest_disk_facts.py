@@ -23,7 +23,7 @@ description:
     - All parameters and VMware object names are case sensitive.
 version_added: 2.6
 author:
-    - Abhijeet Kasurde (@akasurde) <akasurde@redhat.com>
+    - Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
 notes:
     - Tested on vSphere 6.0 and 6.5
 requirements:
@@ -65,9 +65,9 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 - name: Gather disk facts from virtual machine using UUID
   vmware_guest_disk_facts:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     datacenter: ha-datacenter
     validate_certs: no
     uuid: 421e4592-c069-924d-ce20-7e7533fab926
@@ -76,9 +76,9 @@ EXAMPLES = '''
 
 - name: Gather disk facts from virtual machine using name
   vmware_guest_disk_facts:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     datacenter: ha-datacenter
     validate_certs: no
     name: VM_225
@@ -126,7 +126,7 @@ class PyVmomiHelper(PyVmomi):
 
     def gather_disk_facts(self, vm_obj):
         """
-        Function to gather facts about VM's disks
+        Gather facts about VM's disks
         Args:
             vm_obj: Managed object of virtual machine
 

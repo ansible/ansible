@@ -34,8 +34,8 @@ description:
 author: "Bob Hagen (@rnh556)"
 version_added: "2.4"
 requirements:
-    - pan-python can be obtained from PyPi U(https://pypi.python.org/pypi/pan-python)
-    - pandevice can be obtained from PyPi U(https://pypi.python.org/pypi/pandevice)
+    - pan-python can be obtained from PyPi U(https://pypi.org/project/pan-python/)
+    - pandevice can be obtained from PyPi U(https://pypi.org/project/pandevice/)
 notes:
     - Checkmode is not supported.
     - Panorama is supported.
@@ -47,7 +47,6 @@ options:
     username:
         description:
             - Username credentials to use for authentication.
-        required: false
         default: "admin"
     password:
         description:
@@ -110,8 +109,6 @@ options:
         description: >
             - The name of the Panorama device group. The group must exist on Panorama. If device group is not defined it
             is assumed that we are contacting a firewall.
-        required: false
-        default: None
 '''
 
 EXAMPLES = '''

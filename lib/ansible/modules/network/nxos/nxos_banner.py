@@ -39,14 +39,12 @@ options:
       - Specifies which banner that should be
         configured on the remote device.
     required: true
-    default: null
     choices: ['exec', 'motd']
   text:
     description:
       - The banner text that should be
         present in the remote device running configuration. This argument
         accepts a multiline string, with no empty lines. Requires I(state=present).
-    default: null
   state:
     description:
       - Specifies whether or not the configuration is present in the current
@@ -199,7 +197,17 @@ def main():
 
     if commands:
         if not module.check_mode:
-            load_config(module, commands)
+            msgs = load_config(module, commands, True)
+            if msgs:
+                for item in msgs:
+                    if item:
+                        if isinstance(item, dict):
+                            err_str = item['clierror']
+                        else:
+                            err_str = item
+                        if 'more than 40 lines' in err_str or 'buffer overflowed' in err_str:
+                            load_config(module, commands)
+
         result['changed'] = True
 
     module.exit_json(**result)

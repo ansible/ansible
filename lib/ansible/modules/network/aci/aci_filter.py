@@ -59,6 +59,7 @@ EXAMPLES = r'''
     description: Filter for web protocols
     tenant: production
     state: present
+  delegate_to: localhost
 
 - name: Remove a filter for a tenant
   aci_filter:
@@ -68,6 +69,7 @@ EXAMPLES = r'''
     filter: web_filter
     tenant: production
     state: absent
+  delegate_to: localhost
 
 - name: Query a filter of a tenant
   aci_filter:
@@ -77,6 +79,8 @@ EXAMPLES = r'''
     filter: web_filter
     tenant: production
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all filters for a tenant
   aci_filter:
@@ -85,6 +89,8 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     tenant: production
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -203,8 +209,6 @@ def main():
         tenant=dict(type='str', required=False, aliases=['tenant_name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -226,14 +230,14 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='vzFilter',
             aci_rn='flt-{0}'.format(filter_name),
-            filter_target='eq(vzFilter.name, "{0}")'.format(filter_name),
             module_object=filter_name,
+            target_filter={'name': filter_name},
         ),
     )
 

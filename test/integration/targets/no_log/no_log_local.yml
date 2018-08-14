@@ -63,3 +63,30 @@
       - name: args should be logged when task-level no_log overrides play-level
         shell: echo "LOG_ME_OVERRIDE"
         no_log: false
+
+      - name: Add a fake host for next play
+        add_host:
+            hostname: fake
+
+- name: use 'fake' unreachable host to force unreachable error
+  hosts: fake
+  gather_facts: no
+  connection: ssh
+  tasks:
+    - name: 'EXPECTED FAILURE: Fail to run a lineinfile task'
+      vars:
+        logins:
+          - machine: foo
+            login: bar
+            password: DO_NOT_LOG_UNREACHABLE_ITEM
+          - machine: two
+            login: three
+            password: DO_NOT_LOG_UNREACHABLE_ITEM
+      lineinfile:
+        path: /dev/null
+        mode: 0600
+        create: true
+        insertafter: EOF
+        line: "machine {{ item.machine }} login {{ item.login }} password {{ item.password }}"
+      loop: "{{ logins }}"
+      no_log: true

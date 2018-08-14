@@ -167,7 +167,7 @@ class GalaxyRole(object):
 
     def fetch(self, role_data):
         """
-        Downloads the archived role from github to a temp location
+        Downloads the archived role to a temp location based on role data
         """
         if role_data:
 
@@ -241,6 +241,11 @@ class GalaxyRole(object):
                         raise AnsibleError("- the specified version (%s) of %s was not found in the list of available versions (%s)." % (self.version,
                                                                                                                                          self.name,
                                                                                                                                          role_versions))
+
+                # check if there's a source link for our role_version
+                for role_version in role_versions:
+                    if role_version['name'] == self.version and 'source' in role_version:
+                        self.src = role_version['source']
 
                 tmp_file = self.fetch(role_data)
 

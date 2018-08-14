@@ -67,6 +67,7 @@ add the newer line above the older one, like so:
     # Copyright: (c) 2015, [Original Contributor(s)]
     # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+.. _ansible_metadata_block:
 
 ANSIBLE_METADATA Block
 ----------------------
@@ -129,7 +130,7 @@ Fields
      certified instead)
 
    For information on what the support level values entail, please see
-   `Modules Support <http://docs.ansible.com/ansible/modules_support.html>`_.
+   :ref:`Modules Support <modules_support>`.
 
 :status: This field records information about the module that is
    important to the end user. It's a list of strings. The default value
@@ -188,7 +189,7 @@ The following fields can be used and are all required unless specified otherwise
 :module:
   The name of the module. This must be the same as the filename, without the ``.py`` extension.
 :short_description:
-  * A short description which is displayed on the :doc:`../list_of_all_modules` page and ``ansible-doc -l``.
+  * A short description which is displayed on the :ref:`all_modules` page and ``ansible-doc -l``.
   * As the short description is displayed by ``ansible-doc -l`` without the category grouping it needs enough detail to explain its purpose without the context of the directory structure in which it lives.
   * Unlike ``description:`` this field should not have a trailing full stop.
 :description:
@@ -238,7 +239,9 @@ The following fields can be used and are all required unless specified otherwise
   :choices:
     List of option values. Should be absent if empty.
   :type:
-    If an argument is ``type='bool'``, this field should be set to ``type: bool`` and no ``choices`` should be specified.
+
+    * Specifies the data type that option accepts, must match the ``argspec``.
+    * If an argument is ``type='bool'``, this field should be set to ``type: bool`` and no ``choices`` should be specified.
   :aliases:
     List of option name aliases; generally not needed.
   :version_added:
@@ -392,7 +395,14 @@ Starting with Ansible version 2.2, all new modules are required to use imports i
 Formatting functions
 --------------------
 
-These formatting functions are ``U()`` for URLs, ``I()`` for option names, ``C()`` for files and option values and ``M()`` for module names.
+The formatting functions are:
+
+* ``L()`` for Links with a heading
+* ``U()`` for URLs
+* ``I()`` for option names
+* ``C()`` for files and option values
+* ``M()`` for module names.
+
 Module names should be specified as ``M(module)`` to create a link to the online documentation for that module.
 
 
@@ -406,7 +416,8 @@ Example usage::
     ...
     See also M(win_copy) or M(win_template).
     ...
-    See U(https://www.ansible.com/tower) for an overview.
+    Time zone names are from the L(tz database,https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
+    See U(https://www.ansible.com/products/tower) for an overview.
     ...
     See L(IOS Platform Options guide, ../network/user_guide/platform_ios.html)
 

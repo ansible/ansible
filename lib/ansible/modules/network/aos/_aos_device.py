@@ -65,7 +65,7 @@ options:
       - The approve argument instruct the module to convert a device in quarantine
         mode into approved mode.
     default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
   location:
     description:
       - When approving a device using the I(approve) argument, it's possible
@@ -216,6 +216,7 @@ def main():
     check_aos_version(module, '0.6.0')
 
     aos_device(module)
+
 
 if __name__ == "__main__":
     main()

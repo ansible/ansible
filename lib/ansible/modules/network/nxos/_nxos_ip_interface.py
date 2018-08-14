@@ -51,8 +51,6 @@ options:
     addr:
         description:
             - IPv4 or IPv6 Address.
-        required: false
-        default: null
     version:
         description:
             - Version of IP address. If the IP address is IPV4 version should be v4.
@@ -62,30 +60,24 @@ options:
     mask:
         description:
             - Subnet mask for IPv4 or IPv6 Address in decimal format.
-        required: false
-        default: null
     dot1q:
         description:
             - Configures IEEE 802.1Q VLAN encapsulation on the subinterface. The range is from 2 to 4093.
-        required: false
-        default: null
         version_added: "2.5"
     tag:
         description:
             - Route tag for IPv4 or IPv6 Address in integer format.
-        required: false
         default: 0
         version_added: "2.4"
     allow_secondary:
         description:
             - Allow to configure IPv4 secondary addresses on interface.
-        required: false
-        default: false
+        type: bool
+        default: 'no'
         version_added: "2.4"
     state:
         description:
             - Specify desired state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 requirements:
@@ -187,6 +179,7 @@ except ImportError:
 
 from ansible.module_utils.network.nxos.nxos import load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
+from ansible.module_utils.network.nxos.nxos import get_interface_type
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -215,23 +208,6 @@ def execute_show_command(command, module):
     body = run_commands(module, [cmd])
 
     return body
-
-
-def get_interface_type(interface):
-    if interface.upper().startswith('ET'):
-        return 'ethernet'
-    elif interface.upper().startswith('VL'):
-        return 'svi'
-    elif interface.upper().startswith('LO'):
-        return 'loopback'
-    elif interface.upper().startswith('MG'):
-        return 'management'
-    elif interface.upper().startswith('MA'):
-        return 'management'
-    elif interface.upper().startswith('PO'):
-        return 'portchannel'
-    else:
-        return 'unknown'
 
 
 def is_default(interface, module):

@@ -31,19 +31,6 @@ version_added: "2.3"
 requirements:
     - pan-python
 options:
-    ip_address:
-        description:
-            - IP address (or hostname) of PAN-OS device
-        required: true
-    password:
-        description:
-            - password for authentication
-        required: true
-    username:
-        description:
-            - username for authentication
-        required: false
-        default: "admin"
     timeout:
         description:
             - timeout of API calls
@@ -54,6 +41,7 @@ options:
             - time waited between checks
         required: false
         default: "0"
+extends_documentation_fragment: panos
 '''
 
 EXAMPLES = '''
@@ -148,6 +136,7 @@ def main():
         time.sleep(interval)
 
     module.fail_json(msg="Timeout")
+
 
 if __name__ == '__main__':
     main()

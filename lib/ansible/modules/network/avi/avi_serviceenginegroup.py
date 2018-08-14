@@ -193,6 +193,15 @@ options:
             - Use both the active and standby service engines for virtual service placement in the legacy active standby ha mode.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         type: bool
+    enable_hsm_priming:
+        description:
+            - (this is a beta feature).
+            - Enable hsm key priming.
+            - If enabled, key handles on the hsm will be synced to se before processing client connections.
+            - Field introduced in 17.2.7.
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        version_added: "2.6"
+        type: bool
     enable_routing:
         description:
             - Enable routing for this serviceenginegroup .
@@ -673,6 +682,7 @@ def main():
         disable_tso=dict(type='bool',),
         disk_per_se=dict(type='int',),
         distribute_load_active_standby=dict(type='bool',),
+        enable_hsm_priming=dict(type='bool',),
         enable_routing=dict(type='bool',),
         enable_vip_on_all_interfaces=dict(type='bool',),
         enable_vmac=dict(type='bool',),
@@ -763,6 +773,7 @@ def main():
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'serviceenginegroup',
                            set([]))
+
 
 if __name__ == '__main__':
     main()

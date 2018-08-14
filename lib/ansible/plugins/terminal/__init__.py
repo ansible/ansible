@@ -52,6 +52,15 @@ class TerminalBase(with_metaclass(ABCMeta, object)):
         re.compile(br'\x08.')
     ]
 
+    #: terminal initial prompt
+    terminal_initial_prompt = None
+
+    #: terminal initial answer
+    terminal_initial_answer = None
+
+    #: Send newline after prompt match
+    terminal_inital_prompt_newline = True
+
     def __init__(self, connection):
         self._connection = connection
 

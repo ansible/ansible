@@ -20,8 +20,6 @@ __metaclass__ = type
 
 ########################################################
 
-import os
-
 from ansible import constants as C
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
@@ -135,7 +133,7 @@ class AdHocCLI(CLI):
             raise AnsibleOptionsError(err)
 
         # Avoid modules that don't work with ad-hoc
-        if self.options.module_name.startswith(('include', 'import_')):
+        if self.options.module_name in ('import_playbook',):
             raise AnsibleOptionsError("'%s' is not a valid action for ad-hoc commands" % self.options.module_name)
 
         play_ds = self._play_ds(pattern, self.options.seconds, self.options.poll_interval)

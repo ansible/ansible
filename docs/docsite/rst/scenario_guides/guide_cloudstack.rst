@@ -13,7 +13,7 @@ Ansible contains a number of extra modules for interacting with CloudStack based
 
 Prerequisites
 `````````````
-Prerequisites for using the CloudStack modules are minimal. In addition to Ansible itself, all of the modules require the python library ``cs`` https://pypi.python.org/pypi/cs.
+Prerequisites for using the CloudStack modules are minimal. In addition to Ansible itself, all of the modules require the python library ``cs`` https://pypi.org/project/cs/
 
 You'll need this Python module installed on the execution host, usually your workstation.
 
@@ -94,12 +94,12 @@ If you use more than one CloudStack region, you can define as many sections as y
     key = api key
     secret = api secret
 
-    [exmaple_cloud_one]
+    [example_cloud_one]
     endpoint = https://cloud-one.example.com/client/api
     key = api key
     secret = api secret
 
-    [exmaple_cloud_two]
+    [example_cloud_two]
     endpoint = https://cloud-two.example.com/client/api
     key = api key
     secret = api secret
@@ -127,8 +127,8 @@ Or by looping over a regions list if you want to do the task in every region:
         api_region: "{{ item }}"
         loop:
           - exoscale
-          - exmaple_cloud_one
-          - exmaple_cloud_two
+          - example_cloud_one
+          - example_cloud_two
 
 Environment Variables
 `````````````````````

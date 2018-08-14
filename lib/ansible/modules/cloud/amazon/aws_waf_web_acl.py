@@ -135,6 +135,7 @@ except ImportError:
 import re
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.aws.waiters import get_waiter
 from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec, camel_dict_to_snake_dict
 from ansible.module_utils.aws.waf import list_rules_with_backoff, list_web_acls_with_backoff, run_func_with_change_token_backoff
 
@@ -193,18 +194,33 @@ def find_and_update_web_acl(client, module, web_acl_id):
         'WebACLId': acl['WebACLId'],
         'DefaultAction': acl['DefaultAction']
     }
+    change_tokens = []
     if deletions:
         try:
             params['Updates'] = deletions
-            run_func_with_change_token_backoff(client, module, params, client.update_web_acl)
+            result = run_func_with_change_token_backoff(client, module, params, client.update_web_acl)
+            change_tokens.append(result['ChangeToken'])
+            get_waiter(
+                client, 'change_token_in_sync',
+            ).wait(
+                ChangeToken=result['ChangeToken']
+            )
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg='Could not update Web ACL')
     if insertions:
         try:
             params['Updates'] = insertions
-            run_func_with_change_token_backoff(client, module, params, client.update_web_acl)
+            result = run_func_with_change_token_backoff(client, module, params, client.update_web_acl)
+            change_tokens.append(result['ChangeToken'])
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg='Could not update Web ACL')
+    if change_tokens:
+        for token in change_tokens:
+            get_waiter(
+                client, 'change_token_in_sync',
+            ).wait(
+                ChangeToken=token
+            )
     if changed:
         acl = get_web_acl(client, module, web_acl_id)
     return changed, acl
@@ -261,7 +277,7 @@ def ensure_web_acl_absent(client, module):
         if web_acl['Rules']:
             remove_rules_from_web_acl(client, module, web_acl_id)
         try:
-            run_func_with_change_token_backoff(client, module, {'WebACLId': web_acl_id}, client.delete_web_acl)
+            run_func_with_change_token_backoff(client, module, {'WebACLId': web_acl_id}, client.delete_web_acl, wait=True)
             return True, {}
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg='Could not delete Web ACL')

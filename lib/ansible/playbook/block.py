@@ -69,6 +69,10 @@ class Block(Base, Become, Conditional, Taggable):
         '''object comparison based on _uuid'''
         return self._uuid == other._uuid
 
+    def __ne__(self, other):
+        '''object comparison based on _uuid'''
+        return self._uuid != other._uuid
+
     def get_vars(self):
         '''
         Blocks do not store variables directly, however they may be a member
@@ -157,6 +161,12 @@ class Block(Base, Become, Conditional, Taggable):
         except AssertionError as e:
             raise AnsibleParserError("A malformed block was encountered while loading always", obj=self._ds, orig_exc=e)
 
+    def _validate_always(self, attr, name, value):
+        if value and not self.block:
+            raise AnsibleParserError("'%s' keyword cannot be used without 'block'" % name, obj=self._ds)
+
+    _validate_rescue = _validate_always
+
     def get_dep_chain(self):
         if self._dep_chain is None:
             if self._parent:
@@ -173,21 +183,16 @@ class Block(Base, Become, Conditional, Taggable):
                 new_task = task.copy(exclude_parent=True)
                 if task._parent:
                     new_task._parent = task._parent.copy(exclude_tasks=True)
-                    # go up the parentage tree until we find an
-                    # object without a parent and make this new
-                    # block their parent
-                    cur_obj = new_task
-                    while cur_obj._parent:
-                        if cur_obj._parent:
-                            prev_obj = cur_obj
-                        cur_obj = cur_obj._parent
-
-                    # Ensure that we don't make the new_block the parent of itself
-                    if cur_obj != new_block:
-                        cur_obj._parent = new_block
+                    if task._parent == new_block:
+                        # If task._parent is the same as new_block, just replace it
+                        new_task._parent = new_block
                     else:
-                        # prev_obj._parent is cur_obj, to allow for mutability we need to use prev_obj
-                        prev_obj._parent = new_block
+                        # task may not be a direct child of new_block, search for the correct place to insert new_block
+                        cur_obj = new_task._parent
+                        while cur_obj._parent and cur_obj._parent != new_block:
+                            cur_obj = cur_obj._parent
+
+                        cur_obj._parent = new_block
                 else:
                     new_task._parent = new_block
                 new_task_list.append(new_task)
@@ -203,7 +208,7 @@ class Block(Base, Become, Conditional, Taggable):
 
         new_me._parent = None
         if self._parent and not exclude_parent:
-            new_me._parent = self._parent.copy(exclude_tasks=exclude_tasks)
+            new_me._parent = self._parent.copy(exclude_tasks=True)
 
         if not exclude_tasks:
             new_me.block = _dupe_task_list(self.block or [], new_me)
@@ -299,13 +304,20 @@ class Block(Base, Become, Conditional, Taggable):
         prepend = self._valid_attrs[attr].prepend
         try:
             value = self._attributes[attr]
-            if self._parent and (value is None or extend):
+            # If parent is static, we can grab attrs from the parent
+            # otherwise, defer to the grandparent
+            if getattr(self._parent, 'statically_loaded', True):
+                _parent = self._parent
+            else:
+                _parent = self._parent._parent
+
+            if _parent and (value is None or extend):
                 try:
-                    if getattr(self._parent, 'statically_loaded', True):
-                        if hasattr(self._parent, '_get_parent_attribute'):
-                            parent_value = self._parent._get_parent_attribute(attr)
+                    if getattr(_parent, 'statically_loaded', True):
+                        if hasattr(_parent, '_get_parent_attribute'):
+                            parent_value = _parent._get_parent_attribute(attr)
                         else:
-                            parent_value = self._parent._attributes.get(attr, None)
+                            parent_value = _parent._attributes.get(attr, None)
                         if extend:
                             value = self._extend_value(value, parent_value, prepend)
                         else:

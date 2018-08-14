@@ -1,0 +1,23 @@
+---
+- name: "Reload to upgrade to OS image {{ si }} using provider"
+  nxos_config:
+    lines:
+      - terminal dont-ask
+      - no boot nxos
+      - "boot nxos bootflash:{{ si }}"
+      - reload
+    match: none
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: Wait for device to come back up with new image
+  wait_for:
+    port: 22
+    state: started
+    timeout: 500
+    delay: 60
+    host: "{{ inventory_hostname }}"
+
+- debug: msg='Wait 5 mins to allow system to stabilize'
+- pause:
+    seconds: 300

@@ -33,15 +33,12 @@ options:
         description:
             - state of the package
         choices: [ 'present', 'absent', 'active', 'inactive' ]
-        required: false
         default: present
     update_cache:
         description:
             - update the package db first
-        required: false
         default: "no"
-        choices: [ "yes", "no" ]
-notes:  []
+        type: bool
 '''
 EXAMPLES = '''
 - macports:

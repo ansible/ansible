@@ -570,6 +570,7 @@ def run_module():
         # The 'vdo status' keys that are currently modifiable.
         statusparamkeys = ['Acknowledgement threads',
                            'Bio submission threads',
+                           'Block map cache size',
                            'CPU-work threads',
                            'Logical threads',
                            'Physical threads',
@@ -866,6 +867,7 @@ def run_module():
 
 def main():
     run_module()
+
 
 if __name__ == '__main__':
     main()

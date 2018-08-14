@@ -87,6 +87,82 @@ EXAMPLES = '''
   delegate_to: localhost
 '''
 
+RETURN = '''
+ansible_sysdescr:
+  description: A textual description of the entity.
+  returned: success
+  type: string
+  sample: Linux ubuntu-user 4.4.0-93-generic #116-Ubuntu SMP Fri Aug 11 21:17:51 UTC 2017 x86_64
+ansible_sysobjectid:
+  description: The vendor's authoritative identification of the network management subsystem contained in the entity.
+  returned: success
+  type: string
+  sample: 1.3.6.1.4.1.8072.3.2.10
+ansible_sysuptime:
+  description: The time (in hundredths of a second) since the network management portion of the system was last re-initialized.
+  returned: success
+  type: int
+  sample: 42388
+ansible_syscontact:
+  description: The textual identification of the contact person for this managed node, together with information on how to contact this person.
+  returned: success
+  type: string
+  sample: Me <me@example.org>
+ansible_sysname:
+  description: An administratively-assigned name for this managed node.
+  returned: success
+  type: string
+  sample: ubuntu-user
+ansible_syslocation:
+  description: The physical location of this node (e.g., `telephone closet, 3rd floor').
+  returned: success
+  type: string
+  sample: Sitting on the Dock of the Bay
+ansible_all_ipv4_addresses:
+  description: List of all IPv4 addresses.
+  returned: success
+  type: list
+  sample: ["127.0.0.1", "172.17.0.1"]
+ansible_interfaces:
+  description: Dictionary of each network interface and its metadata.
+  returned: success
+  type: dict
+  sample: {
+    "1": {
+        "adminstatus": "up",
+        "description": "",
+        "ifindex": "1",
+        "ipv4": [
+            {
+                "address": "127.0.0.1",
+                "netmask": "255.0.0.0"
+            }
+        ],
+        "mac": "",
+        "mtu": "65536",
+        "name": "lo",
+        "operstatus": "up",
+        "speed": "65536"
+    },
+    "2": {
+        "adminstatus": "up",
+        "description": "",
+        "ifindex": "2",
+        "ipv4": [
+            {
+                "address": "192.168.213.128",
+                "netmask": "255.255.255.0"
+            }
+        ],
+        "mac": "000a305a52a1",
+        "mtu": "1500",
+        "name": "Intel Corporation 82545EM Gigabit Ethernet Controller (Copper)",
+        "operstatus": "up",
+        "speed": "1500"
+    }
+  }
+'''
+
 import binascii
 from collections import defaultdict
 
@@ -319,7 +395,7 @@ def main():
             if v.ifMtu in current_oid:
                 ifIndex = int(current_oid.rsplit('.', 1)[-1])
                 results['ansible_interfaces'][ifIndex]['mtu'] = current_val
-            if v.ifMtu in current_oid:
+            if v.ifSpeed in current_oid:
                 ifIndex = int(current_oid.rsplit('.', 1)[-1])
                 results['ansible_interfaces'][ifIndex]['speed'] = current_val
             if v.ifPhysAddress in current_oid:

@@ -1,0 +1,2 @@
+bugfixes:
+- inventory - When using an inventory directory, ensure extension comparison uses text types (https://github.com/ansible/ansible/pull/42475)

@@ -26,7 +26,7 @@ version_added: 2.0
 author:
 - Joseph Callen (@jcpowermac)
 - Russell Teague (@mtnbikenc)
-- Abhijeet Kasurde (@akasurde) <akasurde@redhat.com>
+- Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
 notes:
     - Tested on vSphere 5.5, 6.5
 requirements:
@@ -50,7 +50,7 @@ options:
             - ' - C(type) (string): Type of IP assignment (either C(dhcp) or C(static)).'
             - 'Following parameters are required in case of C(type) is set to C(static)'
             - ' - C(ip_address) (string): Static IP address (implies C(type: static)).'
-            - ' - C(netmask) (string): Static netmask required for C(ip).'
+            - ' - C(subnet_mask) (string): Static netmask required for C(ip).'
         version_added: 2.5
     ip_address:
         description:
@@ -116,42 +116,44 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 -  name: Add Management vmkernel port using static network type
    vmware_vmkernel:
-      hostname: 192.168.127.9
-      username: admin
-      password: supersecret123
+      hostname: '{{ esxi_hostname }}'
+      username: '{{ esxi_username }}'
+      password: '{{ esxi_password }}'
       vswitch_name: vSwitch0
       portgroup_name: PG_0001
-      vlan_id: vlan_id
+      vlan_id: '{{ vlan_id }}'
       network:
         type: 'static'
         ip_address: 192.168.127.10
         subnet_mask: 255.255.255.0
       state: present
       enable_mgmt: True
+   delegate_to: localhost
 
 -  name: Add Management vmkernel port using DHCP network type
    vmware_vmkernel:
-      hostname: 192.168.127.9
-      username: admin
-      password: supersecret123
+      hostname: '{{ esxi_hostname }}'
+      username: '{{ esxi_username }}'
+      password: '{{ esxi_password }}'
       vswitch_name: vSwitch0
       portgroup_name: PG_0002
-      vlan_id: vlan_id
+      vlan_id: '{{ vlan_id }}'
       state: present
       network:
         type: 'dhcp'
       enable_mgmt: True
+   delegate_to: localhost
 
 -  name: Delete VMkernel port using DHCP network type
    vmware_vmkernel:
-      hostname: 192.168.127.9
-      username: admin
-      password: supersecret123
+      hostname: '{{ esxi_hostname }}'
+      username: '{{ esxi_username }}'
+      password: '{{ esxi_password }}'
       vswitch_name: vSwitch0
       portgroup_name: PG_0002
-      vlan_id: vlan_id
+      vlan_id: '{{ vlan_id }}'
       state: absent
-
+   delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -188,7 +190,13 @@ class PyVmomiHelper(PyVmomi):
         self.vlan_id = self.params['vlan_id']
 
         self.esxi_host_name = self.params['esxi_hostname']
-        self.esxi_host_obj = self.get_all_host_objs(esxi_host_name=self.esxi_host_name)[0]
+
+        hosts = self.get_all_host_objs(esxi_host_name=self.esxi_host_name)
+        if hosts:
+            self.esxi_host_obj = hosts[0]
+        else:
+            self.module.fail_json("Failed to get details of ESXi server."
+                                  " Please specify esxi_hostname.")
 
         self.port_group_obj = self.get_port_group_by_name(host_system=self.esxi_host_obj, portgroup_name=self.port_group_name)
         if not self.port_group_obj:

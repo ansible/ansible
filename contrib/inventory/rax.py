@@ -155,10 +155,7 @@ import ConfigParser
 
 from six import iteritems
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 try:
     import pyrax
@@ -185,7 +182,6 @@ def load_config_file():
         return None
     else:
         return p
-p = load_config_file()
 
 
 def rax_slugify(value):
@@ -469,5 +465,6 @@ def main():
     sys.exit(0)
 
 
+p = load_config_file()
 if __name__ == '__main__':
     main()

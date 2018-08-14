@@ -22,7 +22,7 @@ description:
 - User can specify an ESXi hostname or Cluster name. In case of cluster name, all ESXi hosts are updated.
 version_added: '2.5'
 author:
-- Abhijeet Kasurde (@akasurde)
+- Abhijeet Kasurde (@Akasurde)
 notes:
 - Tested on vSphere 6.5
 requirements:
@@ -64,6 +64,7 @@ EXAMPLES = r'''
     ntp_servers:
         - 0.pool.ntp.org
         - 1.pool.ntp.org
+  delegate_to: localhost
 
 - name: Set NTP setting for an ESXi Host
   vmware_host_ntp:
@@ -75,6 +76,7 @@ EXAMPLES = r'''
     ntp_servers:
         - 0.pool.ntp.org
         - 1.pool.ntp.org
+  delegate_to: localhost
 
 - name: Remove NTP setting for an ESXi Host
   vmware_host_ntp:
@@ -85,13 +87,14 @@ EXAMPLES = r'''
     state: absent
     ntp_servers:
         - bad.server.ntp.org
+  delegate_to: localhost
 '''
 
 RETURN = r'''#
 '''
 
 try:
-    from pyVmomi import vim, vmodl
+    from pyVmomi import vim
 except ImportError:
     pass
 

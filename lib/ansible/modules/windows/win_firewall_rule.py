@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2014, Timothy Vandenbrande <timothy.vandenbrande@gmail.com>
@@ -75,6 +75,7 @@ options:
   profiles:
     description:
       - The profile this rule applies to.
+    type: list
     default: domain,private,public
     aliases: [ profile ]
   force:

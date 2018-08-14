@@ -512,5 +512,6 @@ def main():
     vrf_intf = VrfInterface(argument_spec)
     vrf_intf.work()
 
+
 if __name__ == '__main__':
     main()

@@ -1,6 +1,6 @@
 #!powershell
 
-# Copyright (c) 2018 Ansible Project
+# Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
@@ -29,24 +29,32 @@ Function Get-MachineSid {
     # only accessible by the Local System account. This method get's the local
     # admin account (ends with -500) and lops it off to get the machine sid.
 
+    $admins_sid = "S-1-5-32-544"
+    $admin_group = ([Security.Principal.SecurityIdentifier]$admins_sid).Translate([Security.Principal.NTAccount]).Value 
+
     Add-Type -AssemblyName System.DirectoryServices.AccountManagement
     $principal_context = New-Object -TypeName System.DirectoryServices.AccountManagement.PrincipalContext([System.DirectoryServices.AccountManagement.ContextType]::Machine)
-    $user_principal = New-Object -TypeName System.DirectoryServices.AccountManagement.UserPrincipal($principal_context)
-    $searcher = New-Object -TypeName System.DirectoryServices.AccountManagement.PrincipalSearcher($user_principal)
-    $users = $searcher.FindAll() | Where-Object { $_.Sid -like "*-500" }
+    $group_principal = New-Object -TypeName System.DirectoryServices.AccountManagement.GroupPrincipal($principal_context, $admin_group)
+    $searcher = New-Object -TypeName System.DirectoryServices.AccountManagement.PrincipalSearcher($group_principal)
+    $groups = $searcher.FindOne()
 
     $machine_sid = $null
-    if ($users -ne $null) {
-        $machine_sid = $users.Sid.AccountDomainSid.Value
+    foreach ($user in $groups.Members) {
+        $user_sid = $user.Sid
+        if ($user_sid.Value.EndsWith("-500")) {
+            $machine_sid = $user_sid.AccountDomainSid.Value
+            break
+        }
     }
+
     return $machine_sid
 }
 
 $cim_instances = @{}
 
-Function Get-LazyCimInstance([string]$instance_name) {
+Function Get-LazyCimInstance([string]$instance_name, [string]$namespace="Root\CIMV2") {
     if(-not $cim_instances.ContainsKey($instance_name)) {
-        $cim_instances[$instance_name] = $(Get-CimInstance $instance_name)    
+        $cim_instances[$instance_name] = $(Get-CimInstance -Namespace $namespace -ClassName $instance_name)
     }
 
     return $cim_instances[$instance_name]
@@ -184,12 +192,20 @@ if($gather_subset.Contains('date_time')) {
 
 if($gather_subset.Contains('distribution')) {
     $win32_os = Get-LazyCimInstance Win32_OperatingSystem
+    $product_type = switch($win32_os.ProductType) {
+        1 { "workstation" }
+        2 { "domain_controller" }
+        3 { "server" }
+        default { "unknown" }
+    }
+
     $ansible_facts += @{
         ansible_distribution = $win32_os.Caption
         ansible_distribution_version = $osversion.Version.ToString()
         ansible_distribution_major_version = $osversion.Version.Major.ToString()
         ansible_os_family = "Windows"
         ansible_os_name = ($win32_os.Name.Split('|')[0]).Trim()
+        ansible_os_product_type = $product_type
     }
 }
 
@@ -229,15 +245,26 @@ if($gather_subset.Contains('facter')) {
 
 if($gather_subset.Contains('interfaces')) {
     $netcfg = Get-LazyCimInstance Win32_NetworkAdapterConfiguration
-
     $ActiveNetcfg = @()
     $ActiveNetcfg += $netcfg | where {$_.ipaddress -ne $null}
+
+    $namespaces = Get-LazyCimInstance __Namespace -namespace root
+    if ($namespaces | Where-Object { $_.Name -eq "StandardCimv" }) {
+        $net_adapters = Get-LazyCimInstance MSFT_NetAdapter -namespace Root\StandardCimv2
+        $guid_key = "InterfaceGUID"
+        $name_key = "Name"
+    } else {
+        $net_adapters = Get-LazyCimInstance Win32_NetworkAdapter        
+        $guid_key = "GUID"
+        $name_key = "NetConnectionID"
+    }
 
     $formattednetcfg = @()
     foreach ($adapter in $ActiveNetcfg)
     {
         $thisadapter = @{
             default_gateway = $null
+            connection_name = $null
             dns_domain = $adapter.dnsdomain
             interface_index = $adapter.InterfaceIndex
             interface_name = $adapter.description
@@ -247,6 +274,10 @@ if($gather_subset.Contains('interfaces')) {
         if ($adapter.defaultIPGateway)
         {
             $thisadapter.default_gateway = $adapter.DefaultIPGateway[0].ToString()
+        }
+        $net_adapter = $net_adapters | Where-Object { $_.$guid_key -eq $adapter.SettingID }
+        if ($net_adapter) {
+            $thisadapter.connection_name = $net_adapter.$name_key
         }
 
         $formattednetcfg += $thisadapter

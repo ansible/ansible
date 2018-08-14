@@ -36,7 +36,7 @@ options:
     description:
       - Whether the user should be in the admin role or not.
     default: no
-    choices: [ yes, no]
+    type: bool
   state:
     description:
       - State of the user.

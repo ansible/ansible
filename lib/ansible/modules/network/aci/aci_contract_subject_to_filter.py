@@ -36,10 +36,9 @@ options:
   log:
     description:
     - Determines if the binding should be set to log.
-    - The APIC defaults new Subject to Filter bindings to C(none).
+    - The APIC defaults to C(none) when unset during creation.
     choices: [ log, none ]
     aliases: [ directive ]
-    default: none
   subject:
     description:
     - The name of the Contract Subject.
@@ -70,6 +69,7 @@ EXAMPLES = r'''
     filter: '{{ filter }}'
     log: '{{ log }}'
     state: present
+  delegate_to: localhost
 
 - name: Remove an existing contract subject to filter binding
   aci_contract_subject_to_filter:
@@ -82,6 +82,7 @@ EXAMPLES = r'''
     filter: '{{ filter }}'
     log: '{{ log }}'
     state: present
+  delegate_to: localhost
 
 - name: Query a specific contract subject to filter binding
   aci_contract_subject_to_filter:
@@ -93,6 +94,8 @@ EXAMPLES = r'''
     subject: test
     filter: '{{ filter }}'
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all contract subject to filter bindings
   aci_contract_subject_to_filter:
@@ -103,6 +106,8 @@ EXAMPLES = r'''
     contract: web_to_db
     subject: test
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -223,8 +228,6 @@ def main():
         subject=dict(type='str', aliases=['contract_subject', 'subject_name']),  # Not required for querying all objects
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -255,26 +258,26 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='vzBrCP',
             aci_rn='brc-{0}'.format(contract),
-            filter_target='eq(vzBrCP.name, "{0}")'.format(contract),
             module_object=contract,
+            target_filter={'name': contract},
         ),
         subclass_2=dict(
             aci_class='vzSubj',
             aci_rn='subj-{0}'.format(subject),
-            filter_target='eq(vzSubj.name, "{0}")'.format(subject),
             module_object=subject,
+            target_filter={'name': subject},
         ),
         subclass_3=dict(
             aci_class='vzRsSubjFiltAtt',
             aci_rn='rssubjFiltAtt-{0}'.format(filter_name),
-            filter_target='eq(vzRsSubjFiltAtt.tnVzFilterName, "{0}")'.format(filter_name),
             module_object=filter_name,
+            target_filter={'tnVzFilterName': filter_name},
         ),
     )
 

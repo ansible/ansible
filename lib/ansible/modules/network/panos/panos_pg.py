@@ -30,19 +30,6 @@ version_added: "2.3"
 requirements:
     - pan-python
 options:
-    ip_address:
-        description:
-            - IP address (or hostname) of PAN-OS device
-        required: true
-    password:
-        description:
-            - password for authentication
-        required: true
-    username:
-        description:
-            - username for authentication
-        required: false
-        default: "admin"
     pg_name:
         description:
             - name of the security profile group
@@ -50,43 +37,30 @@ options:
     data_filtering:
         description:
             - name of the data filtering profile
-        required: false
-        default: None
     file_blocking:
         description:
             - name of the file blocking profile
-        required: false
-        default: None
     spyware:
         description:
             - name of the spyware profile
-        required: false
-        default: None
     url_filtering:
         description:
             - name of the url filtering profile
-        required: false
-        default: None
     virus:
         description:
             - name of the anti-virus profile
-        required: false
-        default: None
     vulnerability:
         description:
             - name of the vulnerability profile
-        required: false
-        default: None
     wildfire:
         description:
             - name of the wildfire analysis profile
-        required: false
-        default: None
     commit:
         description:
             - commit if changed
-        required: false
-        default: true
+        type: bool
+        default: 'yes'
+extends_documentation_fragment: panos
 '''
 
 EXAMPLES = '''

@@ -63,7 +63,7 @@ class PylintTest(SanitySingleVersion):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
-        :rtype: SanityResult
+        :rtype: TestResult
         """
         if args.python_version in UNSUPPORTED_PYTHON_VERSIONS:
             display.warning('Skipping pylint on unsupported Python version %s.' % args.python_version)
@@ -252,8 +252,8 @@ class PylintTest(SanitySingleVersion):
         load_plugins = set(self.plugin_names) - disable_plugins
 
         cmd = [
-            'python%s' % args.python_version,
-            find_executable('pylint'),
+            args.python_executable,
+            '-m', 'pylint',
             '--jobs', '0',
             '--reports', 'n',
             '--max-line-length', '160',

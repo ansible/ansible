@@ -35,14 +35,13 @@ options:
   receive_state:
     description:
     - Enable or disable Receive state.
-    required: yes
-    choices: [ disabled, enabled ]
-    default: enabled
+    - The APIC defaults to C(yes) when unset during creation.
+    type: bool
   transmit_state:
     description:
     - Enable or Disable Transmit state.
-    choices: [ disabled, enabled ]
-    default: enabled
+    - The APIC defaults to C(yes) when unset during creation.
+    type: bool
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -62,6 +61,7 @@ EXAMPLES = r'''
     description: '{{ description }}'
     receive_state: '{{ receive_state }}'
     transmit_state: '{{ transmit_state }}'
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -181,8 +181,6 @@ def main():
         receive_state=dict(type='raw'),  # Turn into a boolean in v2.9
         transmit_state=dict(type='raw'),  # Turn into a boolean in v2.9
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -206,8 +204,8 @@ def main():
         root_class=dict(
             aci_class='lldpIfPol',
             aci_rn='infra/lldpIfP-{0}'.format(lldp_policy),
-            filter_target='eq(lldpIfPol.name, "{0}")'.format(lldp_policy),
             module_object=lldp_policy,
+            target_filter={'name': lldp_policy},
         ),
     )
 

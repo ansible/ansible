@@ -36,69 +36,56 @@ options:
           - zfs
         description:
           - Backend storage type for the container.
-        required: false
         default: dir
     template:
         description:
           - Name of the template to use within an LXC create.
-        required: false
         default: ubuntu
     template_options:
         description:
           - Template options when building the container.
-        required: false
     config:
         description:
           - Path to the LXC configuration file.
-        required: false
-        default: null
     lv_name:
         description:
           - Name of the logical volume, defaults to the container name.
         default: $CONTAINER_NAME
-        required: false
     vg_name:
         description:
           - If Backend store is lvm, specify the name of the volume group.
         default: lxc
-        required: false
     thinpool:
         description:
           - Use LVM thin pool called TP.
-        required: false
     fs_type:
         description:
           - Create fstype TYPE.
         default: ext4
-        required: false
     fs_size:
         description:
           - File system Size.
         default: 5G
-        required: false
     directory:
         description:
           - Place rootfs directory under DIR.
-        required: false
     zfs_root:
         description:
           - Create zfs under given zfsroot.
-        required: false
     container_command:
         description:
           - Run a command within a container.
-        required: false
     lxc_path:
         description:
           - Place container under PATH
-        required: false
     container_log:
         choices:
           - true
           - false
         description:
           - Enable a container log for host actions to the container.
-        default: false
+        type: bool
+        default: 'no'
     container_log_level:
         choices:
           - INFO
@@ -109,15 +96,13 @@ options:
         required: false
         default: INFO
     clone_name:
-        version_added: "2.0"
         description:
           - Name of the new cloned server. This is only used when state is
             clone.
-        required: false
-        default: false
-    clone_snapshot:
+        type: bool
+        default: 'no'
         version_added: "2.0"
-        required: false
+    clone_snapshot:
         choices:
           - true
           - false
@@ -125,7 +110,9 @@ options:
           - Create a snapshot a container when cloning. This is not supported
             by all container storage backends. Enabling this may fail if the
             backing store does not support snapshots.
-        default: false
+        type: bool
+        default: 'no'
+        version_added: "2.0"
     archive:
         choices:
           - true
@@ -133,12 +120,12 @@ options:
         description:
           - Create an archive of a container. This will create a tarball of the
             running container.
-        default: false
+        type: bool
+        default: 'no'
     archive_path:
         description:
           - Path the save the archived container. If the path does not exist
             the archive method will attempt to create it.
-        default: null
     archive_compression:
         choices:
           - gzip
@@ -161,12 +148,10 @@ options:
             The running container will be stopped while the clone operation is
             happening and upon completion of the clone the original container
             state will be restored.
-        required: false
         default: started
     container_config:
         description:
           - list of 'key=value' options to use when configuring a container.
-        required: false
 requirements:
   - 'lxc >= 1.0 # OS package'
   - 'python >= 2.6 # OS Package'

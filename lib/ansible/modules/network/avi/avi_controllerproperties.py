@@ -107,6 +107,13 @@ options:
     dummy:
         description:
             - Number of dummy.
+    enable_memory_balancer:
+        description:
+            - Enable/disable memory balancer.
+            - Field introduced in 17.2.8.
+            - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        version_added: "2.6"
+        type: bool
     fatal_error_lease_time:
         description:
             - Number of fatal_error_lease_time.
@@ -329,6 +336,7 @@ def main():
         dead_se_detection_timer=dict(type='int',),
         dns_refresh_period=dict(type='int',),
         dummy=dict(type='int',),
+        enable_memory_balancer=dict(type='bool',),
         fatal_error_lease_time=dict(type='int',),
         max_dead_se_in_grp=dict(type='int',),
         max_pcap_per_tenant=dict(type='int',),
@@ -374,6 +382,7 @@ def main():
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'controllerproperties',
                            set(['portal_token']))
+
 
 if __name__ == '__main__':
     main()

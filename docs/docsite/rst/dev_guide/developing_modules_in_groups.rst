@@ -22,22 +22,22 @@ Although it's tempting to get straight into coding, there are a few things to be
 * For new modules going into Ansible 2.4 we are raising the bar so they must be PEP 8 compliant. See :doc:`testing_pep8` for more information.
 * Starting with Ansible version 2.4, all new modules must support Python 2.6 and Python 3.5+. If this is an issue, please contact us (see the "Speak to us" section later in this document to learn how).
 * All modules shipped with Ansible must be done so under the GPLv3 license. Files under the ``lib/ansible/module_utils/`` directory should be done so under the BSD license.
-* Have a look at the existing modules and how they've been named in the :doc:`../list_of_all_modules`, especially in the same functional area (such as cloud, networking, databases).
+* Have a look at the existing modules and how they've been named in the :ref:`all_modules`, especially in the same functional area (such as cloud, networking, databases).
 * Shared code can be placed into ``lib/ansible/module_utils/``
 * Shared documentation (for example describing common arguments) can be placed in ``lib/ansible/utils/module_docs_fragments/``.
 * With great power comes great responsibility: Ansible module maintainers have a duty to help keep modules up to date. As with all successful community projects, module maintainers should keep a watchful eye for reported issues and contributions.
 * Although not required, unit and/or integration tests are strongly recommended. Unit tests are especially valuable when external resources (such as cloud or network devices) are required. For more information see :doc:`testing` and the `Testing Working Group <https://github.com/ansible/community/blob/master/meetings/README.md>`_.
-  * Starting with Ansible 2.4 all :doc:`../list_of_network_modules` MUST have unit tests.
+  * Starting with Ansible 2.4 all :ref:`network_modules` MUST have unit tests.
 
 
 Naming Convention
 `````````````````
 
-As you may have noticed when looking under ``lib/ansible/modules/`` we support up to two directories deep (but no deeper), e.g. `databases/mysql`. This is used to group files on disk as well as group related modules into categories and topics the Module Index, for example: :doc:`../list_of_database_modules`.
+As you may have noticed when looking under ``lib/ansible/modules/`` we support up to two directories deep (but no deeper), e.g. `databases/mysql`. This is used to group files on disk as well as group related modules into categories and topics the Module Index, for example: :ref:`database_modules`.
 
 The directory name should represent the *product* or *OS* name, not the company name.
 
-Each module should have the above (or similar) prefix; see existing :doc:`../list_of_all_modules` for existing examples.
+Each module should have the above (or similar) prefix; see existing :ref:`all_modules` for existing examples.
 
 **Note:**
 
@@ -61,7 +61,7 @@ Where to get support
 
 Ansible has a thriving and knowledgeable community of module developers that is a great resource for getting your questions answered.
 
-On :doc:`../community` you can find how to:
+In the :ref:`ansible_community_guide` you can find how to:
 
 * Subscribe to the Mailing Lists - We suggest "Ansible Development List" (for codefreeze info) and "Ansible Announce list"
 * ``#ansible-devel`` - We have found that IRC ``#ansible-devel`` on FreeNode's IRC network works best for module developers so we can have an interactive dialogue.
@@ -93,7 +93,7 @@ And that's it.
 
 Before pushing your PR to GitHub it's a good idea to review the :doc:`developing_modules_checklist` again.
 
-After publishing your PR to https://github.com/ansible/ansible, a Shippable CI test should run within a few minutes. Check the results (at the end of the PR page) to ensure that it's passing (green). If it's not passing, inspect each of the results. Most of the errors should be self-explanatory and are often related to badly formatted documentation (see :doc:`../YAMLSyntax`) or code that isn't valid Python 2.6  or valid Python 3.5 (see :doc:`developing_python3`). If you aren't sure what a Shippable test message means, copy it into the PR along with a comment and we will review.
+After publishing your PR to https://github.com/ansible/ansible, a Shippable CI test should run within a few minutes. Check the results (at the end of the PR page) to ensure that it's passing (green). If it's not passing, inspect each of the results. Most of the errors should be self-explanatory and are often related to badly formatted documentation (see :ref:`yaml_syntax`) or code that isn't valid Python 2.6  or valid Python 3.5 (see :ref:`developing_python_3`). If you aren't sure what a Shippable test message means, copy it into the PR along with a comment and we will review.
 
 If you need further advice, consider join the ``#ansible-devel`` IRC channel (see how in the "Where to get support").
 
@@ -129,7 +129,7 @@ If there are multiple people that can be notified, please list them. That avoids
 
 
 **Review Module web docs**
-Review the autogenerated module documentation for each of your modules, found in `Module Docs <http://docs.ansible.com/ansible/modules_by_category.html>`_ to ensure they are correctly formatted. If there are any issues please fix by raising a single PR.
+Review the autogenerated module documentation for each of your modules, found in :ref:`Module Docs <modules_by_category>` to ensure they are correctly formatted. If there are any issues please fix by raising a single PR.
 
 If the module documentation hasn't been published live yet, please let a member of the Ansible Core Team know in the ``#ansible-devel`` IRC channel.
 

@@ -22,7 +22,6 @@ options:
   name:
     description:
       - Name to give the queue
-    default: null
   state:
     description:
       - Indicate desired state of the resource

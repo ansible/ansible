@@ -1,8 +1,15 @@
+.. _communication:
+
 *************
 Communicating
 *************
 
 .. contents:: Topics
+
+Code of Conduct
+===============
+
+Please read and understand the :ref:`code_of_conduct`.
 
 Mailing List Information
 ========================
@@ -63,6 +70,6 @@ participate. For more information about Ansible meetings, consult the `meeting s
 Tower Support Questions
 ========================
 
-Ansible `Tower <https://ansible.com/tower>`_ is a UI, Server, and REST endpoint for Ansible.
+Ansible `Tower <https://www.ansible.com/products/tower>`_ is a UI, Server, and REST endpoint for Ansible.
 
 If you have a question about Ansible Tower, visit `Red Hat support <https://access.redhat.com/products/ansible-tower-red-hat/>`_ rather than using the IRC channel or the general project mailing list.

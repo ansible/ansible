@@ -41,24 +41,21 @@ options:
   fail_on_decrypt:
     description:
     - Determines if the APIC should fail the rollback if unable to decrypt secured data.
-    - The APIC defaults new Import Policies to C(yes).
+    - The APIC defaults to C(yes) when unset.
     type: bool
-    default: 'yes'
   import_mode:
     description:
     - Determines how the import should be handled by the APIC.
-    - The APIC defaults new Import Policies to C(atomic).
+    - The APIC defaults to C(atomic) when unset.
     choices: [ atomic, best-effort ]
-    default: atomic
   import_policy:
     description:
     - The name of the Import Policy to use for config rollback.
   import_type:
     description:
     - Determines how the current and snapshot configuration should be compared for replacement.
-    - The APIC defaults new Import Policies to C(replace).
+    - The APIC defaults to C(replace) when unset.
     choices: [ merge, replace ]
-    default: replace
   snapshot:
     description:
     - The name of the snapshot to rollback to, or the base snapshot to use for comparison.
@@ -80,44 +77,47 @@ EXAMPLES = r'''
     host: apic
     username: admin
     password: SomeSecretPassword
-    state: present
     export_policy: config_backup
+    state: present
+  delegate_to: localhost
 
 - name: Query Existing Snapshots
   aci_config_snapshot:
     host: apic
     username: admin
     password: SomeSecretPassword
-    state: query
     export_policy: config_backup
+    state: query
+  delegate_to: localhost
 
 - name: Compare Snapshot Files
   aci_config_rollback:
     host: apic
     username: admin
     password: SomeSecretPassword
-    state: preview
     export_policy: config_backup
     snapshot: run-2017-08-28T06-24-01
     compare_export_policy: config_backup
     compare_snapshot: run-2017-08-27T23-43-56
+    state: preview
+  delegate_to: localhost
 
 - name: Rollback Configuration
   aci_config_rollback:
     host: apic
     username: admin
     password: SomeSecretPassword
-    state: rollback
     import_policy: rollback_config
     export_policy: config_backup
     snapshot: run-2017-08-28T06-24-01
+    state: rollback
+  delegate_to: localhost
 
 - name: Rollback Configuration
   aci_config_rollback:
     host: apic
     username: admin
     password: SomeSecretPassword
-    state: rollback
     import_policy: rollback_config
     export_policy: config_backup
     snapshot: run-2017-08-28T06-24-01
@@ -125,6 +125,8 @@ EXAMPLES = r'''
     import_mode: atomic
     import_type: replace
     fail_on_decrypt: yes
+    state: rollback
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -235,8 +237,8 @@ def main():
             root_class=dict(
                 aci_class='configImportP',
                 aci_rn='fabric/configimp-{0}'.format(import_policy),
-                filter_target='eq(configImportP.name, "{0}")'.format(import_policy),
                 module_object=import_policy,
+                target_filter={'name': import_policy},
             ),
         )
 

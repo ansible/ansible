@@ -5,14 +5,12 @@
   eos_config:
     lines: hostname switch
     match: none
-    timeout: 30
-    provider: "{{ eapi }}"
+  become: yes
 
 - name: configure hostname
   eos_system:
     hostname: foo
-    timeout: 30
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -22,8 +20,7 @@
 - name: verify hostname
   eos_system:
     hostname: foo
-    timeout: 30
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -34,7 +31,6 @@
   eos_config:
     lines: "hostname {{ inventory_hostname }}"
     match: none
-    timeout: 30
-    provider: "{{ eapi }}"
+  become: yes
 
 - debug: msg="END eapi/set_hostname.yaml"

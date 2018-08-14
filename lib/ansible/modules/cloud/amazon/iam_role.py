@@ -27,6 +27,14 @@ options:
     description:
       - Provide a description of the new role
     version_added: "2.5"
+  boundary:
+    description:
+      - Add the ARN of an IAM managed policy to restrict the permissions this role can pass on to IAM roles/users that it creates.
+      - Boundaries cannot be set on Instance Profiles, so if this option is specified then C(create_instance_profile) must be false.
+      - This is intended for roles/users that have permissions to create new IAM objects.
+      - For more information on boundaries, see U(https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html)
+    aliases: [boundary_policy_arn]
+    version_added: "2.7"
   assume_role_policy_document:
     description:
       - The trust relationship policy document that grants an entity permission to assume the role.
@@ -150,9 +158,9 @@ iam_role:
 '''
 
 from ansible.module_utils._text import to_native
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info, boto3_conn, sort_json_policy_dict
-from ansible.module_utils.ec2 import HAS_BOTO3
+from ansible.module_utils.ec2 import AWSRetry
 
 import json
 import traceback
@@ -160,7 +168,7 @@ import traceback
 try:
     from botocore.exceptions import ClientError, BotoCoreError
 except ImportError:
-    pass  # caught by imported HAS_BOTO3
+    pass  # caught by AnsibleAWSModule
 
 
 def compare_assume_role_policy_doc(current_policy_doc, new_policy_doc):
@@ -206,7 +214,8 @@ def convert_friendly_names_to_arns(connection, module, policy_names):
 def remove_policies(connection, module, policies_to_remove, params):
     for policy in policies_to_remove:
         try:
-            connection.detach_role_policy(RoleName=params['RoleName'], PolicyArn=policy)
+            if not module.check_mode:
+                connection.detach_role_policy(RoleName=params['RoleName'], PolicyArn=policy)
         except ClientError as e:
             module.fail_json(msg="Unable to detach policy {0} from {1}: {2}".format(policy, params['RoleName'], to_native(e)),
                              exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
@@ -217,13 +226,14 @@ def remove_policies(connection, module, policies_to_remove, params):
 
 
 def create_or_update_role(connection, module):
-
     params = dict()
     params['Path'] = module.params.get('path')
     params['RoleName'] = module.params.get('name')
     params['AssumeRolePolicyDocument'] = module.params.get('assume_role_policy_document')
     if module.params.get('description') is not None:
         params['Description'] = module.params.get('description')
+    if module.params.get('boundary') is not None:
+        params['PermissionsBoundary'] = module.params.get('boundary')
     managed_policies = module.params.get('managed_policy')
     create_instance_profile = module.params.get('create_instance_profile')
     if managed_policies:
@@ -236,7 +246,15 @@ def create_or_update_role(connection, module):
     # If role is None, create it
     if role is None:
         try:
-            role = connection.create_role(**params)
+            if not module.check_mode:
+                role = connection.create_role(**params)
+                # 'Description' is documented as key of the role returned by create_role
+                # but appears to be an AWS bug (the value is not returned using the AWS CLI either).
+                # Get the role after creating it.
+                role = get_role_with_backoff(connection, module, params['RoleName'])
+            else:
+                role = {'MadeInCheckMode': True}
+                role['AssumeRolePolicyDocument'] = json.loads(params['AssumeRolePolicyDocument'])
             changed = True
         except ClientError as e:
             module.fail_json(msg="Unable to create role: {0}".format(to_native(e)),
@@ -248,7 +266,8 @@ def create_or_update_role(connection, module):
         # Check Assumed Policy document
         if not compare_assume_role_policy_doc(role['AssumeRolePolicyDocument'], params['AssumeRolePolicyDocument']):
             try:
-                connection.update_assume_role_policy(RoleName=params['RoleName'], PolicyDocument=json.dumps(json.loads(params['AssumeRolePolicyDocument'])))
+                if not module.check_mode:
+                    connection.update_assume_role_policy(RoleName=params['RoleName'], PolicyDocument=json.dumps(json.loads(params['AssumeRolePolicyDocument'])))
                 changed = True
             except ClientError as e:
                 module.fail_json(msg="Unable to update assume role policy for role {0}: {1}".format(params['RoleName'], to_native(e)),
@@ -279,7 +298,8 @@ def create_or_update_role(connection, module):
             # Attach roles not already attached
             for policy_arn in set(managed_policies) - set(current_attached_policies_arn_list):
                 try:
-                    connection.attach_role_policy(RoleName=params['RoleName'], PolicyArn=policy_arn)
+                    if not module.check_mode:
+                        connection.attach_role_policy(RoleName=params['RoleName'], PolicyArn=policy_arn)
                 except ClientError as e:
                     module.fail_json(msg="Unable to attach policy {0} to role {1}: {2}".format(policy_arn, params['RoleName'], to_native(e)),
                                      exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
@@ -289,7 +309,7 @@ def create_or_update_role(connection, module):
                 changed = True
 
     # Instance profile
-    if create_instance_profile:
+    if create_instance_profile and not role.get('MadeInCheckMode', False):
         try:
             instance_profiles = connection.list_instance_profiles_for_role(RoleName=params['RoleName'])['InstanceProfiles']
         except ClientError as e:
@@ -301,7 +321,8 @@ def create_or_update_role(connection, module):
         if not any(p['InstanceProfileName'] == params['RoleName'] for p in instance_profiles):
             # Make sure an instance profile is attached
             try:
-                connection.create_instance_profile(InstanceProfileName=params['RoleName'], Path=params['Path'])
+                if not module.check_mode:
+                    connection.create_instance_profile(InstanceProfileName=params['RoleName'], Path=params['Path'])
                 changed = True
             except ClientError as e:
                 # If the profile already exists, no problem, move on
@@ -313,12 +334,48 @@ def create_or_update_role(connection, module):
             except BotoCoreError as e:
                 module.fail_json(msg="Unable to create instance profile for role {0}: {1}".format(params['RoleName'], to_native(e)),
                                  exception=traceback.format_exc())
-            connection.add_role_to_instance_profile(InstanceProfileName=params['RoleName'], RoleName=params['RoleName'])
+            if not module.check_mode:
+                connection.add_role_to_instance_profile(InstanceProfileName=params['RoleName'], RoleName=params['RoleName'])
+
+    # Check Description update
+    if not role.get('MadeInCheckMode') and params.get('Description') and role['Description'] != params['Description']:
+        try:
+            if not module.check_mode:
+                connection.update_role_description(RoleName=params['RoleName'], Description=params['Description'])
+
+            changed = True
+        except (BotoCoreError, ClientError) as e:
+            module.fail_json(msg="Unable to update description for role {0}: {1}".format(params['RoleName'], to_native(e)),
+                             exception=traceback.format_exc())
+
+    # Check if permission boundary needs update
+    if not role.get('MadeInCheckMode') and (
+            (role.get('PermissionsBoundary') or {}).get('PermissionsBoundaryArn') or
+            params.get('PermissionsBoundary') is not None):
+        # the existing role has a boundary
+        if module.params.get('boundary') is None:
+            pass
+        elif module.params.get('boundary') == '':
+            if (role.get('PermissionsBoundary') or {}).get('PermissionsBoundaryArn'):
+                try:
+                    if not module.check_mode:
+                        connection.delete_role_permissions_boundary(RoleName=params['RoleName'])
+                    changed = True
+                except (BotoCoreError, ClientError) as e:
+                    module.fail_json_aws(e, msg="Unable to remove permission boundary for role {0}: {1}".format(params['RoleName'], to_native(e)))
+        elif (role.get('PermissionsBoundary') or {}).get('PermissionsBoundaryArn') != params['PermissionsBoundary']:
+            try:
+                if not module.check_mode:
+                    connection.put_role_permissions_boundary(RoleName=params['RoleName'], PermissionsBoundary=params['PermissionsBoundary'])
+                changed = True
+            except (BotoCoreError, ClientError) as e:
+                module.fail_json_aws(e, msg="Unable to update permission boundary for role {0}: {1}".format(params['RoleName'], to_native(e)))
 
     # Get the role again
-    role = get_role(connection, module, params['RoleName'])
+    if not role.get('MadeInCheckMode', False):
+        role = get_role(connection, module, params['RoleName'])
+        role['attached_policies'] = get_attached_policy_list(connection, module, params['RoleName'])
 
-    role['attached_policies'] = get_attached_policy_list(connection, module, params['RoleName'])
     module.exit_json(changed=changed, iam_role=camel_dict_to_snake_dict(role), **camel_dict_to_snake_dict(role))
 
 
@@ -327,7 +384,9 @@ def destroy_role(connection, module):
     params = dict()
     params['RoleName'] = module.params.get('name')
 
-    if get_role(connection, module, params['RoleName']):
+    role = get_role(connection, module, params['RoleName'])
+
+    if role:
 
         # We need to remove any instance profiles from the role before we delete it
         try:
@@ -339,10 +398,17 @@ def destroy_role(connection, module):
             module.fail_json(msg="Unable to list instance profiles for role {0}: {1}".format(params['RoleName'], to_native(e)),
                              exception=traceback.format_exc())
 
+        if role.get('PermissionsBoundary') is not None:
+            try:
+                connection.delete_role_permissions_boundary(RoleName=params['RoleName'])
+            except (ClientError, BotoCoreError) as e:
+                module.fail_json_aws(e, msg="Could not delete role permission boundary on role {0}: {1}".format(params['RoleName'], e))
+
         # Now remove the role from the instance profile(s)
         for profile in instance_profiles:
             try:
-                connection.remove_role_from_instance_profile(InstanceProfileName=profile['InstanceProfileName'], RoleName=params['RoleName'])
+                if not module.check_mode:
+                    connection.remove_role_from_instance_profile(InstanceProfileName=profile['InstanceProfileName'], RoleName=params['RoleName'])
             except ClientError as e:
                 module.fail_json(msg="Unable to remove role {0} from instance profile {1}: {2}".format(
                                  params['RoleName'], profile['InstanceProfileName'], to_native(e)),
@@ -355,7 +421,8 @@ def destroy_role(connection, module):
         # Now remove any attached policies otherwise deletion fails
         try:
             for policy in get_attached_policy_list(connection, module, params['RoleName']):
-                connection.detach_role_policy(RoleName=params['RoleName'], PolicyArn=policy['PolicyArn'])
+                if not module.check_mode:
+                    connection.detach_role_policy(RoleName=params['RoleName'], PolicyArn=policy['PolicyArn'])
         except ClientError as e:
             module.fail_json(msg="Unable to detach policy {0} from role {1}: {2}".format(policy['PolicyArn'], params['RoleName'], to_native(e)),
                              exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
@@ -364,7 +431,8 @@ def destroy_role(connection, module):
                              exception=traceback.format_exc())
 
         try:
-            connection.delete_role(**params)
+            if not module.check_mode:
+                connection.delete_role(**params)
         except ClientError as e:
             module.fail_json(msg="Unable to delete role: {0}".format(to_native(e)),
                              exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
@@ -374,6 +442,13 @@ def destroy_role(connection, module):
         module.exit_json(changed=False)
 
     module.exit_json(changed=True)
+
+
+def get_role_with_backoff(connection, module, name):
+    try:
+        return AWSRetry.jittered_backoff(catch_extra_error_codes=['NoSuchEntity'])(connection.get_role)(RoleName=name)['Role']
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json(msg="Unable to get role {0}: {1}".format(name, to_native(e)), exception=traceback.format_exc())
 
 
 def get_role(connection, module, name):
@@ -406,29 +481,28 @@ def get_attached_policy_list(connection, module, name):
 
 def main():
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(type='str', required=True),
-            path=dict(type='str', default="/"),
-            assume_role_policy_document=dict(type='json'),
-            managed_policy=dict(type='list', aliases=['managed_policies']),
-            state=dict(type='str', choices=['present', 'absent'], default='present'),
-            description=dict(type='str'),
-            create_instance_profile=dict(type='bool', default=True),
-            purge_policies=dict(type='bool', default=True),
-        )
+    argument_spec = dict(
+        name=dict(type='str', required=True),
+        path=dict(type='str', default="/"),
+        assume_role_policy_document=dict(type='json'),
+        managed_policy=dict(type='list', aliases=['managed_policies']),
+        state=dict(type='str', choices=['present', 'absent'], default='present'),
+        description=dict(type='str'),
+        boundary=dict(type='str', aliases=['boundary_policy_arn']),
+        create_instance_profile=dict(type='bool', default=True),
+        purge_policies=dict(type='bool', default=True),
     )
+    module = AnsibleAWSModule(argument_spec=argument_spec,
+                              required_if=[('state', 'present', ['assume_role_policy_document'])],
+                              supports_check_mode=True)
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                           required_if=[('state', 'present', ['assume_role_policy_document'])])
+    if module.params.get('boundary') and module.params.get('create_instance_profile'):
+        module.fail_json(msg="When using a boundary policy, `create_instance_profile` must be set to `false`.")
+    if module.params.get('boundary') is not None and not module.botocore_at_least('1.10.57'):
+        module.fail_json(msg="When using a boundary policy, botocore must be at least v1.10.57. "
+                         "Current versions: boto3-{boto3_version} botocore-{botocore_version}".format(**module._gather_versions()))
 
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
-
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
-    connection = boto3_conn(module, conn_type='client', resource='iam', region=region, endpoint=ec2_url, **aws_connect_params)
+    connection = module.client('iam')
 
     state = module.params.get("state")
 

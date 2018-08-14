@@ -26,20 +26,15 @@ options:
     description:
       - Name of user to add
     required: true
-    default: null
     aliases: [username, name]
   password:
     description:
       - Password of user to add.
       - To change the password of an existing user, you must also specify
-        C(force=yes).
-    required: false
-    default: null
+        C(update_password=always).
   tags:
     description:
       - User tags specified as comma delimited
-    required: false
-    default: null
   permissions:
     description:
       - a list of dicts, each dict contains vhost, configure_priv, write_priv, and read_priv,
@@ -47,18 +42,15 @@ options:
       - This option should be preferable when you care about all permissions of the user.
       - You should use vhost, configure_priv, write_priv, and read_priv options instead
         if you care about permissions for just some vhosts.
-    required: false
     default: []
   vhost:
     description:
       - vhost to apply access privileges.
       - This option will be ignored when permissions option is used.
-    required: false
     default: /
   node:
     description:
       - erlang node name of the rabbit we wish to configure
-    required: false
     default: rabbit
     version_added: "1.2"
   configure_priv:
@@ -67,7 +59,6 @@ options:
         for the specified vhost.
       - By default all actions are restricted.
       - This option will be ignored when permissions option is used.
-    required: false
     default: ^$
   write_priv:
     description:
@@ -75,7 +66,6 @@ options:
         for the specified vhost.
       - By default all actions are restricted.
       - This option will be ignored when permissions option is used.
-    required: false
     default: ^$
   read_priv:
     description:
@@ -83,20 +73,24 @@ options:
         for the specified vhost.
       - By default all actions are restricted.
       - This option will be ignored when permissions option is used.
-    required: false
     default: ^$
   force:
     description:
       - Deletes and recreates the user.
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   state:
     description:
       - Specify if user is to be added or removed
-    required: false
     default: present
     choices: [present, absent]
+  update_password:
+    description:
+      - C(on_create) will only set the password for newly created users.  C(always) will update passwords if they differ.
+    required: false
+    default: on_create
+    choices: [ on_create, always ]
+    version_added: "2.6"
 '''
 
 EXAMPLES = '''
@@ -193,6 +187,9 @@ class RabbitMqUser(object):
                                        write_priv=write_priv, read_priv=read_priv))
         return perms_list
 
+    def check_password(self):
+        return self._exec(['authenticate_user', self.username, self.password], True)
+
     def add(self):
         if self.password is not None:
             self._exec(['add_user', self.username, self.password])
@@ -202,6 +199,12 @@ class RabbitMqUser(object):
 
     def delete(self):
         self._exec(['delete_user', self.username])
+
+    def change_password(self):
+        if self.password is not None:
+            self._exec(['change_password', self.username, self.password])
+        else:
+            self._exec(['clear_password', self.username])
 
     def set_tags(self):
         self._exec(['set_user_tags', self.username] + self.tags)
@@ -242,7 +245,8 @@ def main():
         read_priv=dict(default='^$'),
         force=dict(default='no', type='bool'),
         state=dict(default='present', choices=['present', 'absent']),
-        node=dict(default=None)
+        node=dict(default=None),
+        update_password=dict(default='on_create', choices=['on_create', 'always'])
     )
     module = AnsibleModule(
         argument_spec=arg_spec,
@@ -260,6 +264,7 @@ def main():
     force = module.params['force']
     state = module.params['state']
     node = module.params['node']
+    update_password = module.params['update_password']
 
     bulk_permissions = True
     if not permissions:
@@ -287,6 +292,10 @@ def main():
                 rabbitmq_user.add()
                 rabbitmq_user.get()
                 result['changed'] = True
+            elif update_password == 'always':
+                if not rabbitmq_user.check_password():
+                    rabbitmq_user.change_password()
+                    result['changed'] = True
 
             if rabbitmq_user.has_tags_modifications():
                 rabbitmq_user.set_tags()
@@ -302,6 +311,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

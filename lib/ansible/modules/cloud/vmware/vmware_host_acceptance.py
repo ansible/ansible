@@ -22,7 +22,7 @@ description:
 - This module can be used to manage acceptance level of an ESXi host.
 version_added: '2.5'
 author:
-- Abhijeet Kasurde (@akasurde)
+- Abhijeet Kasurde (@Akasurde)
 notes:
 - Tested on vSphere 6.5
 requirements:
@@ -68,6 +68,7 @@ EXAMPLES = r'''
     cluster_name: cluster_name
     acceptance_level: 'community'
     state: present
+  delegate_to: localhost
   register: cluster_acceptance_level
 
 - name: Set acceptance level to vmware_accepted for the given ESXi Host
@@ -78,6 +79,7 @@ EXAMPLES = r'''
     esxi_hostname: '{{ esxi_hostname }}'
     acceptance_level: 'vmware_accepted'
     state: present
+  delegate_to: localhost
   register: host_acceptance_level
 
 - name: Get acceptance level from the given ESXi Host
@@ -87,6 +89,7 @@ EXAMPLES = r'''
     password: '{{ vcenter_password }}'
     esxi_hostname: '{{ esxi_hostname }}'
     state: list
+  delegate_to: localhost
   register: host_acceptance_level
 '''
 
@@ -100,7 +103,7 @@ facts:
 '''
 
 try:
-    from pyVmomi import vim, vmodl
+    from pyVmomi import vim
 except ImportError:
     pass
 from ansible.module_utils.basic import AnsibleModule

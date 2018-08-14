@@ -49,23 +49,16 @@ options:
   vrf:
     description:
       - VRF for static route.
-    required: false
     default: default
   tag:
     description:
-      - Route tag value (numeric).
-    required: false
-    default: null
+      - Route tag value (numeric) or keyword 'default'.
   route_name:
     description:
-      - Name of the route. Used with the name parameter on the CLI.
-    required: false
-    default: null
+      - Name of the route or keyword 'default'. Used with the name parameter on the CLI.
   pref:
     description:
-      - Preference or administrative difference of route (range 1-255).
-    required: false
-    default: null
+      - Preference or administrative difference of route (range 1-255) or keyword 'default'.
     aliases:
       - admin_distance
   aggregate:
@@ -74,14 +67,14 @@ options:
   state:
     description:
       - Manage the state of the resource.
-    required: true
     choices: ['present','absent']
+    default: 'present'
 '''
 
 EXAMPLES = '''
 - nxos_static_route:
     prefix: "192.168.20.64/24"
-    next_hop: "3.3.3.3"
+    next_hop: "192.0.2.3"
     route_name: testing
     pref: 100
 '''
@@ -91,7 +84,7 @@ commands:
     description: commands sent to the device
     returned: always
     type: list
-    sample: ["ip route 192.168.20.0/24 3.3.3.3 name testing 100"]
+    sample: ["ip route 192.168.20.0/24 192.0.2.3 name testing 100"]
 '''
 import re
 from copy import deepcopy
@@ -112,64 +105,39 @@ def reconcile_candidate(module, candidate, prefix, w):
 
     parents = []
     commands = []
+    yrc = remove_command.replace('no ', '')
     if w['vrf'] == 'default':
-        config = netcfg.get_section(set_command)
-        if config and state == 'absent':
+        netcfg = str(netcfg).split('\n')
+        ncfg = []
+        for line in netcfg:
+            # remove ip route commands of non-default vrfs from
+            # the running config just in case the same commands
+            # exist in default and non-default vrfs
+            if '  ip route' not in line:
+                ncfg.append(line)
+        if any(yrc in s for s in ncfg) and state == 'absent':
             commands = [remove_command]
-        elif not config and state == 'present':
-            commands = [set_command]
+        elif set_command not in ncfg and state == 'present':
+            if any(yrc in s for s in ncfg):
+                commands = [remove_command, set_command]
+            else:
+                commands = [set_command]
     else:
         parents = ['vrf context {0}'.format(w['vrf'])]
         config = netcfg.get_section(parents)
         if not isinstance(config, list):
             config = config.split('\n')
         config = [line.strip() for line in config]
-        if set_command in config and state == 'absent':
+        if any(yrc in s for s in config) and state == 'absent':
             commands = [remove_command]
         elif set_command not in config and state == 'present':
-            commands = [set_command]
+            if any(yrc in s for s in config):
+                commands = [remove_command, set_command]
+            else:
+                commands = [set_command]
 
     if commands:
         candidate.add(commands, parents=parents)
-
-
-def fix_prefix_to_regex(prefix):
-    prefix = prefix.replace('.', r'\.').replace('/', r'\/')
-    return prefix
-
-
-def get_existing(module, prefix, warnings):
-    key_map = ['tag', 'pref', 'route_name', 'next_hop']
-    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
-    parents = 'vrf context {0}'.format(module.params['vrf'])
-    prefix_to_regex = fix_prefix_to_regex(prefix)
-
-    route_regex = r'.*ip\sroute\s{0}\s(?P<next_hop>\S+)(\sname\s(?P<route_name>\S+))?(\stag\s(?P<tag>\d+))?(\s(?P<pref>\d+))?.*'.format(prefix_to_regex)
-
-    if module.params['vrf'] == 'default':
-        config = str(netcfg)
-    else:
-        config = netcfg.get_section(parents)
-
-    if config:
-        try:
-            match_route = re.match(route_regex, config, re.DOTALL)
-            group_route = match_route.groupdict()
-
-            for key in key_map:
-                if key not in group_route:
-                    group_route[key] = ''
-            group_route['prefix'] = prefix
-            group_route['vrf'] = module.params['vrf']
-        except (AttributeError, TypeError):
-            group_route = {}
-    else:
-        group_route = {}
-        msg = ("VRF {0} didn't exist.".format(module.params['vrf']))
-        if msg not in warnings:
-            warnings.append(msg)
-
-    return group_route
 
 
 def remove_route_command(prefix, w):
@@ -179,11 +147,12 @@ def remove_route_command(prefix, w):
 def set_route_command(prefix, w):
     route_cmd = 'ip route {0} {1}'.format(prefix, w['next_hop'])
 
-    if w['route_name']:
+    if w['route_name'] and w['route_name'] != 'default':
         route_cmd += ' name {0}'.format(w['route_name'])
     if w['tag']:
-        route_cmd += ' tag {0}'.format(w['tag'])
-    if w['pref']:
+        if w['tag'] != 'default' and w['tag'] != '0':
+            route_cmd += ' tag {0}'.format(w['tag'])
+    if w['pref'] and w['pref'] != 'default':
         route_cmd += ' {0}'.format(w['pref'])
 
     return route_cmd
@@ -320,6 +289,7 @@ def main():
             result['commands'] = []
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

@@ -13,10 +13,10 @@ but can also be used to add additional output, integrate with other tools and ma
 Example Callback Plugins
 ++++++++++++++++++++++++
 
-The :doc:`log_plays <callback/log_plays>` callback is an example of how to record playbook events to a log file,
+The :doc:`_plays <callback/log_plays>` callback is an example of how to record playbook events to a log file,
 and the :doc:`mail <callback/mail>` callback sends email on playbook failures.
 
-The :doc:`osx_say <callback/oxs_say>` callback responds with computer synthesized speech on OS X in relation to playbook events.
+The :doc:`osx_say <callback/osx_say>` callback responds with computer synthesized speech on macOS in relation to playbook events.
 
 
 .. _enabling_callbacks:
@@ -24,11 +24,11 @@ The :doc:`osx_say <callback/oxs_say>` callback responds with computer synthesize
 Enabling Callback Plugins
 ++++++++++++++++++++++++++
 
-You can activate a custom callback by either dropping it into a ``callback_plugins`` directory adjacent to your play,  inside a role, or by putting it in one of the callback directory sources configured in :doc:`ansible.cfg <../config>`.
+You can activate a custom callback by either dropping it into a ``callback_plugins`` directory adjacent to your play,  inside a role, or by putting it in one of the callback directory sources configured in :ref:`ansible.cfg <ansible_configuration_settings>`.
 
 Plugins are loaded in alphanumeric order. For example, a plugin implemented in a file named `1_first.py` would run before a plugin file named `2_second.py`.
 
-Most callbacks shipped with Ansible are disabled by default and need to be whitelisted in your :doc:`ansible.cfg <../config>` file in order to function. For example:
+Most callbacks shipped with Ansible are disabled by default and need to be whitelisted in your :ref:`ansible.cfg <ansible_configuration_settings>` file in order to function. For example:
 
 .. code-block:: ini
 
@@ -38,7 +38,7 @@ Most callbacks shipped with Ansible are disabled by default and need to be white
 Managing stdout
 ```````````````
 
-You can only have one plugin be the main manager of your console output. If you want to replace the default, you should define CALLBACK_TYPE = stdout in the subclass and then configure the stdout plugin in :doc:`ansible.cfg <../config>`. For example:
+You can only have one plugin be the main manager of your console output. If you want to replace the default, you should define CALLBACK_TYPE = stdout in the subclass and then configure the stdout plugin in :ref:`ansible.cfg <ansible_configuration_settings>`. For example:
 
 .. code-block:: ini
 
@@ -50,13 +50,13 @@ or for my custom callback:
 
   stdout_callback = mycallback
 
-This only affects :doc:`../ansible-playbook` by default.
+This only affects :ref:`ansible-playbook` by default.
 
 Managing AdHoc
 ``````````````
 
-The :doc:`ansible <../ansible>` AdHoc command specifically uses a different callback plugin for stdout,
-so there is an extra setting in :doc:`ansible.cfg <../config>` you need to add to use the stdout callback defined above:
+The :ref:`ansible` ad hoc command specifically uses a different callback plugin for stdout,
+so there is an extra setting in :ref:`ansible_configuration_settings` you need to add to use the stdout callback defined above:
 
 .. code-block:: ini
 
@@ -75,7 +75,7 @@ You can also set this as an environment variable:
 Plugin List
 +++++++++++
 
-You can use ``ansible-doc -t callback -l`` to see the list of available plugins. 
+You can use ``ansible-doc -t callback -l`` to see the list of available plugins.
 Use ``ansible-doc -t callback <plugin name>`` to see specific documents and examples.
 
 
@@ -87,19 +87,21 @@ Use ``ansible-doc -t callback <plugin name>`` to see specific documents and exam
 
 .. seealso::
 
-   :doc:`../playbooks`
-       An introduction to playbooks
+   :doc:`action`
+       Ansible Action plugins
+   :doc:`cache`
+       Ansible cache plugins
+   :doc:`connection`
+       Ansible connection plugins
    :doc:`inventory`
        Ansible inventory plugins
-   :doc:`../playbooks_filters`
-       Jinja2 filter plugins
-   :doc:`../playbooks_tests`
-       Jinja2 test plugins
-   :doc:`../playbooks_lookups`
-       Jinja2 lookup plugins
+   :doc:`shell`
+       Ansible Shell plugins
+   :doc:`strategy`
+       Ansible Strategy plugins
    :doc:`vars`
-       Ansible vars plugins
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+       Ansible Vars plugins
+   `User Mailing List <https://groups.google.com/forum/#!forum/ansible-devel>`_
        Have a question?  Stop by the google group!
-   `irc.freenode.net <http://irc.freenode.net>`_
+   `webchat.freenode.net <https://webchat.freenode.net>`_
        #ansible IRC chat channel

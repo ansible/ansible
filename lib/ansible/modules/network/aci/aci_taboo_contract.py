@@ -43,9 +43,8 @@ options:
   scope:
     description:
     - The scope of a service contract.
-    - The APIC defaults new Taboo Contracts to C(context).
+    - The APIC defaults to C(context) when unset during creation.
     choices: [ application-profile, context, global, tenant ]
-    default: context
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -64,6 +63,7 @@ EXAMPLES = r'''
     tenant: ansible_test
     taboo_contract: taboo_contract_test
     state: present
+  delegate_to: localhost
 
 - name: Remove taboo contract
   aci_taboo_contract:
@@ -73,6 +73,7 @@ EXAMPLES = r'''
     tenant: ansible_test
     taboo_contract: taboo_contract_test
     state: absent
+  delegate_to: localhost
 
 - name: Query all taboo contracts
   aci_taboo_contract:
@@ -80,6 +81,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query a specific taboo contract
   aci_taboo_contract:
@@ -89,6 +92,8 @@ EXAMPLES = r'''
     tenant: ansible_test
     taboo_contract: taboo_contract_test
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -208,8 +213,6 @@ def main():
         scope=dict(type='str', choices=['application-profile', 'context', 'global', 'tenant']),
         description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -232,14 +235,14 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='vzTaboo',
             aci_rn='taboo-{0}'.format(taboo_contract),
-            filter_target='eq(vzTaboo.name, "{0}")'.format(taboo_contract),
             module_object=taboo_contract,
+            target_filter={'name': taboo_contract},
         ),
     )
 

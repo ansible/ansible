@@ -1,0 +1,64 @@
+# test code for repositories with separate git dir updating
+# see https://github.com/ansible/ansible/pull/38016
+# see https://github.com/ansible/ansible/issues/30034
+
+- name: SEPARATE-GIT-DIR | clear checkout_dir
+  file:
+    state: absent
+    path: '{{ checkout_dir }}'
+
+- name: create a tempdir for separate git dir
+  local_action: shell mktemp -du
+  register: tempdir
+
+- name: SEPARATE-GIT-DIR | clone with a separate git dir
+  command: git clone {{ repo_format1 }} {{ checkout_dir }} --separate-git-dir={{ tempdir.stdout }}
+
+- name: SEPARATE-GIT-DIR | update repo the usual way
+  git:
+    repo: "{{ repo_format1 }}"
+    dest: "{{ checkout_dir }}"
+
+- name: SEPARATE-GIT-DIR | set git dir to non-existent dir
+  shell: "echo gitdir: /dev/null/non-existent-dir > .git"
+  args:
+    chdir: "{{ checkout_dir }}"
+
+- name: SEPARATE-GIT-DIR | update repo the usual way
+  git:
+    repo: "{{ repo_format1 }}"
+    dest: "{{ checkout_dir }}"
+  ignore_errors: yes
+  register: result
+
+- name: SEPARATE-GIT-DIR | check update has failed
+  assert:
+    that:
+      - result is failed
+
+- name: SEPARATE-GIT-DIR | set .git file to bad format
+  shell: "echo some text  gitdir: {{ checkout_dir }} > .git"
+  args:
+    chdir: "{{ checkout_dir }}"
+
+- name: SEPARATE-GIT-DIR | update repo the usual way
+  git:
+    repo: "{{ repo_format1 }}"
+    dest: "{{ checkout_dir }}"
+  ignore_errors: yes
+  register: result
+
+- name: SEPARATE-GIT-DIR | check update has failed
+  assert:
+    that:
+      - result is failed
+
+- name: SEPARATE-GIT-DIR | clear separate git dir
+  file:
+    state: absent
+    path: "{{ tempdir.stdout }}"
+
+- name: SEPARATE-GIT-DIR | clear checkout_dir
+  file:
+    state: absent
+    path: '{{ checkout_dir }}'

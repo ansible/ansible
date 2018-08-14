@@ -29,7 +29,7 @@ from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.stats import AggregateStats
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
@@ -101,7 +101,10 @@ class TaskQueueManager:
         self._failed_hosts = dict()
         self._unreachable_hosts = dict()
 
-        self._final_q = multiprocessing.Queue()
+        try:
+            self._final_q = multiprocessing.Queue()
+        except OSError as e:
+            raise AnsibleError("Unable to use multiprocessing, this is normally caused by lack of access to /dev/shm: %s" % to_native(e))
 
         # A temporary file (opened pre-fork) used by connection
         # plugins for inter-process locking.
@@ -111,8 +114,7 @@ class TaskQueueManager:
         self._workers = []
 
         for i in range(num):
-            rslt_q = multiprocessing.Queue()
-            self._workers.append([None, rslt_q])
+            self._workers.append(None)
 
     def _initialize_notified_handlers(self, play):
         '''
@@ -188,22 +190,21 @@ class TaskQueueManager:
             raise AnsibleError("callback must be an instance of CallbackBase or the name of a callback plugin")
 
         for callback_plugin in callback_loader.all(class_only=True):
-            if hasattr(callback_plugin, 'CALLBACK_VERSION') and callback_plugin.CALLBACK_VERSION >= 2.0:
-                # we only allow one callback of type 'stdout' to be loaded, so check
-                # the name of the current plugin and type to see if we need to skip
-                # loading this callback plugin
-                callback_type = getattr(callback_plugin, 'CALLBACK_TYPE', None)
-                callback_needs_whitelist = getattr(callback_plugin, 'CALLBACK_NEEDS_WHITELIST', False)
-                (callback_name, _) = os.path.splitext(os.path.basename(callback_plugin._original_path))
-                if callback_type == 'stdout':
-                    if callback_name != self._stdout_callback or stdout_callback_loaded:
-                        continue
-                    stdout_callback_loaded = True
-                elif callback_name == 'tree' and self._run_tree:
-                    pass
-                elif not self._run_additional_callbacks or (callback_needs_whitelist and (
-                        C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST)):
+            callback_type = getattr(callback_plugin, 'CALLBACK_TYPE', '')
+            callback_needs_whitelist = getattr(callback_plugin, 'CALLBACK_NEEDS_WHITELIST', False)
+            (callback_name, _) = os.path.splitext(os.path.basename(callback_plugin._original_path))
+            if callback_type == 'stdout':
+                # we only allow one callback of type 'stdout' to be loaded,
+                if callback_name != self._stdout_callback or stdout_callback_loaded:
                     continue
+                stdout_callback_loaded = True
+            elif callback_name == 'tree' and self._run_tree:
+                # special case for ansible cli option
+                pass
+            elif not self._run_additional_callbacks or (callback_needs_whitelist and (
+                    C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST)):
+                # 2.x plugins shipped with ansible should require whitelisting, older or non shipped should load automatically
+                continue
 
             callback_obj = callback_plugin()
             try:
@@ -211,7 +212,7 @@ class TaskQueueManager:
             except AttributeError:
                     display.deprecated("%s callback, does not support setting 'options', it will work for now, "
                                        " but this will be required in the future and should be updated, "
-                                       " see the 2.4 porting guide for details." % self._stdout_callback._load_name, version="2.9")
+                                       " see the 2.4 porting guide for details." % callback_obj._load_name, version="2.9")
             self._callback_plugins.append(callback_obj)
 
         self._callbacks_loaded = True
@@ -305,8 +306,7 @@ class TaskQueueManager:
 
     def _cleanup_processes(self):
         if hasattr(self, '_workers'):
-            for (worker_prc, rslt_q) in self._workers:
-                rslt_q.close()
+            for worker_prc in self._workers:
                 if worker_prc and worker_prc.is_alive():
                     try:
                         worker_prc.terminate()
@@ -338,8 +338,8 @@ class TaskQueueManager:
 
         defunct = False
         for (idx, x) in enumerate(self._workers):
-            if hasattr(x[0], 'exitcode'):
-                if x[0].exitcode in [-9, -11, -15]:
+            if hasattr(x, 'exitcode'):
+                if x.exitcode in [-9, -11, -15]:
                     defunct = True
         return defunct
 

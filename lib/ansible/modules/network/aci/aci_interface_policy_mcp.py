@@ -35,8 +35,8 @@ options:
   admin_state:
     description:
     - Enable or disable admin state.
-    choices: [ disable, enable ]
-    default: enable
+    - The APIC defaults to C(yes) when unset during creation.
+    type: bool
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -55,6 +55,7 @@ EXAMPLES = r'''
     mcp: '{{ mcp }}'
     description: '{{ descr }}'
     admin_state: '{{ admin_state }}'
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -173,8 +174,6 @@ def main():
         description=dict(type='str', aliases=['descr']),
         admin_state=dict(type='raw'),  # Turn into a boolean in v2.9
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -197,8 +196,8 @@ def main():
         root_class=dict(
             aci_class='mcpIfPol',
             aci_rn='infra/mcpIfP-{0}'.format(mcp),
-            filter_target='eq(mcpIfPol.name, "{0}")'.format(mcp),
             module_object=mcp,
+            target_filter={'name': mcp},
         ),
     )
 

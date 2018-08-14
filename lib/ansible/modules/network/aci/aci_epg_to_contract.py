@@ -37,7 +37,7 @@ options:
     description:
     - Determines if the EPG should Provide or Consume the Contract.
     required: yes
-    choices: [ consumer, proivder ]
+    choices: [ consumer, provider ]
   epg:
     description:
     - The name of the end point group.
@@ -45,15 +45,13 @@ options:
   priority:
     description:
     - QoS class.
-    - The APIC defaults new EPG to Contract bindings to C(unspecified).
+    - The APIC defaults to C(unspecified) when unset during creation.
     choices: [ level1, level2, level3, unspecified ]
-    default: unspecified
   provider_match:
     description:
     - The matching algorithm for Provided Contracts.
-    - The APIC defaults new EPG to Provided Contracts to C(at_least_one).
+    - The APIC defaults to C(at_least_one) when unset during creation.
     choices: [ all, at_least_one, at_most_one, none ]
-    default: at_least_one
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -79,6 +77,7 @@ EXAMPLES = r'''
     contract: anstest_http
     contract_type: provider
     state: present
+  delegate_to: localhost
 
 - name: Remove an existing contract to EPG binding
   aci_epg_to_contract:
@@ -91,6 +90,7 @@ EXAMPLES = r'''
     contract: anstest_http
     contract_type: provider
     state: absent
+  delegate_to: localhost
 
 - name: Query a specific contract to EPG binding
   aci_epg_to_contract:
@@ -103,6 +103,8 @@ EXAMPLES = r'''
     contract: anstest_http
     contract_type: provider
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all provider contract to EPG bindings
   aci_epg_to_contract:
@@ -111,6 +113,8 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     contract_type: provider
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -236,8 +240,6 @@ def main():
         provider_match=dict(type='str', choices=['all', 'at_least_one', 'at_most_one', 'none']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -271,26 +273,26 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='fvAp',
             aci_rn='ap-{0}'.format(ap),
-            filter_target='eq(fvAp.name, "{0}")'.format(ap),
             module_object=ap,
+            target_filter={'name': ap},
         ),
         subclass_2=dict(
             aci_class='fvAEPg',
             aci_rn='epg-{0}'.format(epg),
-            filter_target='eq(fvAEPg.name, "{0}")'.format(epg),
             module_object=epg,
+            target_filter={'name': epg},
         ),
         subclass_3=dict(
             aci_class=aci_class,
             aci_rn='{0}{1}'.format(aci_rn, contract),
-            filter_target='eq({0}.tnVzBrCPName, "{1}'.format(aci_class, contract),
             module_object=contract,
+            target_filter={'tnVzBrCPName': contract},
         ),
     )
 

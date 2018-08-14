@@ -35,68 +35,53 @@ options:
     required: true
   port:
     description: Service port. Required for C(type=SRV)
-    required: false
-    default: null
   priority:
     description: Record priority. Required for C(type=MX) and C(type=SRV)
-    required: false
     default: "1"
   proto:
-    description: Service protocol. Required for C(type=SRV). Common values are tcp and udp. (Before Ansible 2.6 only tcp and udp were available).
-    required: false
-    default: null
+    description:
+    - Service protocol. Required for C(type=SRV).
+    - Common values are tcp and udp.
+    - Before Ansible 2.6 only tcp and udp were available.
   proxied:
     description: Proxy through cloudflare network or just use DNS
-    required: false
-    default: no
+    type: bool
+    default: 'no'
     version_added: "2.3"
   record:
     description:
       - Record to add. Required if C(state=present). Default is C(@) (e.g. the zone name)
-    required: false
     default: "@"
     aliases: [ "name" ]
   service:
     description: Record service. Required for C(type=SRV)
-    required: false
-    default: null
   solo:
     description:
       - Whether the record should be the only one for that record type and record name. Only use with C(state=present)
       - This will delete all other records with the same record name and type.
-    required: false
-    default: null
   state:
     description:
       - Whether the record(s) should exist or not
-    required: false
     choices: [ 'present', 'absent' ]
     default: present
   timeout:
     description:
       - Timeout for Cloudflare API calls
-    required: false
     default: 30
   ttl:
     description:
       - The TTL to give the new record. Must be between 120 and 2,147,483,647 seconds, or 1 for automatic.
-    required: false
     default: 1 (automatic)
   type:
     description:
       - The type of DNS record to create. Required if C(state=present)
-    required: false
     choices: [ 'A', 'AAAA', 'CNAME', 'TXT', 'SRV', 'MX', 'NS', 'SPF' ]
-    default: null
   value:
     description:
       - The record value. Required for C(state=present)
-    required: false
-    default: null
     aliases: [ "content" ]
   weight:
     description: Service weight. Required for C(type=SRV)
-    required: false
     default: "1"
   zone:
     description:
@@ -369,11 +354,11 @@ class CloudflareAPI(object):
         if content:
             try:
                 result = json.loads(to_text(content, errors='surrogate_or_strict'))
-            except (json.JSONDecodeError, UnicodeError) as e:
+            except (getattr(json, 'JSONDecodeError', ValueError)) as e:
                 error_msg += "; Failed to parse API response with error {0}: {1}".format(to_native(e), content)
 
-        # received an error status but no data with details on what failed
-        if (info['status'] not in [200, 304]) and (result is None):
+        # Without a valid/parsed JSON response no more error processing can be done
+        if result is None:
             self.module.fail_json(msg=error_msg)
 
         if not result['success']:
@@ -572,8 +557,10 @@ class CloudflareAPI(object):
                 do_update = True
             if (params['priority'] is not None) and ('priority' in cur_record) and (cur_record['priority'] != params['priority']):
                 do_update = True
+            if ('proxied' in new_record) and ('proxied' in cur_record) and (cur_record['proxied'] != params['proxied']):
+                do_update = True
             if ('data' in new_record) and ('data' in cur_record):
-                if (cur_record['data'] > new_record['data']) - (cur_record['data'] < new_record['data']):
+                if (cur_record['data'] != new_record['data']):
                     do_update = True
             if (params['type'] == 'CNAME') and (cur_record['content'] != new_record['content']):
                 do_update = True

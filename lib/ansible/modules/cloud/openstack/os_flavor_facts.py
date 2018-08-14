@@ -29,14 +29,12 @@ notes:
     - This module creates a new top-level C(openstack_flavors) fact, which
       contains a list of unsorted flavors.
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 options:
    name:
      description:
        - A flavor name. Cannot be used with I(ram) or I(vcpus) or I(ephemeral).
-     required: false
-     default: None
    ram:
      description:
        - "A string used for filtering flavors based on the amount of RAM
@@ -51,31 +49,28 @@ options:
          prefix the amount of RAM with one of these acceptable range values:
          '<', '>', '<=', '>='. These values represent less than, greater than,
          less than or equal to, and greater than or equal to, respectively."
-     required: false
-     default: false
+     type: bool
+     default: 'no'
    vcpus:
      description:
        - A string used for filtering flavors based on the number of virtual
          CPUs desired. Format is the same as the I(ram) parameter.
-     required: false
-     default: false
+     type: bool
+     default: 'no'
    limit:
      description:
        - Limits the number of flavors returned. All matching flavors are
          returned by default.
-     required: false
-     default: None
    ephemeral:
      description:
        - A string used for filtering flavors based on the amount of ephemeral
          storage. Format is the same as the I(ram) parameter
-     required: false
-     default: false
+     type: bool
+     default: 'no'
      version_added: "2.3"
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 extends_documentation_fragment: openstack
 '''
 
@@ -206,13 +201,7 @@ def main():
     if ephemeral:
         filters['ephemeral'] = ephemeral
 
-    if filters:
-        # Range search added in 1.5.0
-        min_version = '1.5.0'
-    else:
-        min_version = None
-
-    shade, cloud = openstack_cloud_from_module(module, min_version=min_version)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         if name:
             flavors = cloud.search_flavors(filters={'name': name})
@@ -228,7 +217,7 @@ def main():
         module.exit_json(changed=False,
                          ansible_facts=dict(openstack_flavors=flavors))
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

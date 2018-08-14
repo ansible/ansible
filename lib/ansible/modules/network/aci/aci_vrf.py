@@ -40,7 +40,7 @@ options:
     choices: [ egress, ingress ]
   policy_control_preference:
     description:
-    - Determines if the Fabric should enforce Contrac Policies.
+    - Determines if the fabric should enforce contract policies to allow routing and packet forwarding.
     choices: [ enforced, unenforced ]
   description:
     description:
@@ -67,6 +67,7 @@ EXAMPLES = r'''
     policy_control_preference: enforced
     policy_control_direction: ingress
     state: present
+  delegate_to: localhost
 
 - name: Remove a VRF for a tenant
   aci_vrf:
@@ -76,6 +77,7 @@ EXAMPLES = r'''
     vrf: vrf_lab
     tenant: lab_tenant
     state: absent
+  delegate_to: localhost
 
 - name: Query a VRF of a tenant
   aci_vrf:
@@ -85,6 +87,8 @@ EXAMPLES = r'''
     vrf: vrf_lab
     tenant: lab_tenant
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all VRFs
   aci_vrf:
@@ -92,6 +96,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -212,8 +218,6 @@ def main():
         state=dict(choices=['absent', 'present', 'query'], type='str', default='present'),
         tenant=dict(type='str', required=False, aliases=['tenant_name']),  # Not required for querying all objects
         vrf=dict(type='str', required=False, aliases=['context', 'name', 'vrf_name']),  # Not required for querying all objects
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -237,14 +241,14 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='fvCtx',
             aci_rn='ctx-{0}'.format(vrf),
-            filter_target='eq(fvCtx.name, "{0}")'.format(vrf),
             module_object=vrf,
+            target_filter={'name': vrf},
         ),
     )
 

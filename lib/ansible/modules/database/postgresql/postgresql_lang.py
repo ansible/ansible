@@ -36,63 +36,50 @@ options:
     description:
       - name of the procedural language to add, remove or change
     required: true
-    default: null
   trust:
     description:
       - make this language trusted for the selected db
-    required: false
-    default: no
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   db:
     description:
       - name of database where the language will be added, removed or changed
-    required: false
-    default: null
   force_trust:
     description:
       - marks the language as trusted, even if it's marked as untrusted in pg_pltemplate.
       - use with care!
-    required: false
-    default: no
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   fail_on_drop:
     description:
       - if C(yes), fail when removing a language. Otherwise just log and continue
       - in some cases, it is not possible to remove a language (used by the db-system). When         dependencies block the removal, consider using C(cascade).
-    required: false
+    type: bool
     default: 'yes'
-    choices: [ "yes", "no" ]
   cascade:
     description:
       - when dropping a language, also delete object that depend on this language.
       - only used when C(state=absent).
-    required: false
-    default: no
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   port:
     description:
       - Database port to connect to.
-    required: false
     default: 5432
   login_user:
     description:
       - User used to authenticate with PostgreSQL
-    required: false
     default: postgres
   login_password:
     description:
       - Password used to authenticate with PostgreSQL (must match C(login_user))
-    required: false
-    default: null
   login_host:
     description:
       - Host running PostgreSQL where you want to execute the actions.
-    required: false
     default: localhost
   state:
     description:
       - The state of the language for the selected database
-    required: false
     default: present
     choices: [ "present", "absent" ]
 notes:

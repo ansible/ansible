@@ -28,10 +28,12 @@ options:
     description:
       - File to be unzipped (provide absolute path).
     required: yes
+    type: path
   dest:
     description:
       - Destination of zip file (provide absolute path of directory). If it does not exist, the directory will be created.
     required: yes
+    type: path
   delete_archive:
     description:
       - Remove the zip file, after unzipping.
@@ -47,6 +49,7 @@ options:
   creates:
     description:
       - If this file or directory exists the specified src will not be extracted.
+    type: path
 notes:
 - This module is not really idempotent, it will extract the archive every time, and report a change.
 - For extracting any compression types other than .zip, the PowerShellCommunityExtensions (PSCX) Module is required.  This module (in conjunction with PSCX)
@@ -84,15 +87,10 @@ EXAMPLES = r'''
         recurse: yes
         delete_archive: yes
 
-# Install PSCX to use for extracting a gz file
-- name: Grab PSCX msi
-  win_get_url:
-    url: http://download-codeplex.sec.s-msft.com/Download/Release?ProjectName=pscx&DownloadId=923562&FileTime=130585918034470000&Build=20959
-    dest: C:\Windows\Temp\pscx.msi
-
 - name: Install PSCX
-  win_msi:
-    path: C:\Windows\Temp\pscx.msi
+  win_psmodule:
+    name: Pscx
+    state: present
 '''
 
 RETURN = r'''

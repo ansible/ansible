@@ -48,7 +48,14 @@
     - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora']
     - ansible_python.version.major == 2
 
-- include: 'repo.yml'
+- block:
+    - include: 'repo.yml'
+  always:
+    - yum_repository:
+        name: "{{ item }}"
+        state: absent
+      with_items: "{{ repos }}"
+    - command: yum clean metadata
   when:
     - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora']
     - ansible_python.version.major == 2

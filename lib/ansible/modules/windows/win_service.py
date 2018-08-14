@@ -24,6 +24,7 @@ options:
       service.
     - This works by C(dependency_action) to either add/remove or set the
       services in this list.
+    type: list
     version_added: "2.3"
   dependency_action:
     description:
@@ -95,7 +96,9 @@ options:
   username:
     description:
       - The username to set the service to start as.
-      - This and the C(password) argument must be supplied together.
+      - This and the C(password) argument must be supplied together when using
+        a local or domain account.
+      - Set to C(LocalSystem) to use the SYSTEM account.
     version_added: "2.3"
 notes:
     - For non-Windows targets, use the M(service) module instead.

@@ -1,3 +1,5 @@
+.. _working_with_modules:
+
 Working With Modules
 ====================
 
@@ -5,7 +7,7 @@ Working With Modules
    :maxdepth: 1
 
    modules_intro
-   common_return_values
+   ../reference_appendices/common_return_values
    modules_support
    ../modules/modules_by_category
 
@@ -27,7 +29,7 @@ like services, packages, or files (anything really), or handle executing system 
        How to write your own modules
    :doc:`../dev_guide/developing_api`
        Examples of using modules with the Python API
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

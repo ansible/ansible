@@ -32,18 +32,13 @@ options:
             - The channel TAG you wish to broadcast a push notification,
               as seen on the "My Channels" > "Edit your channel" at
               Pushbullet page.
-        required: false
-        default: null
     device:
         description:
             - The device NAME you wish to send a push notification,
               as seen on the Pushbullet main page.
-        required: false
-        default: null
     push_type:
         description:
           - Thing you wish to push.
-        required: false
         default: note
         choices: [ "note", "link" ]
     title:
@@ -53,7 +48,6 @@ options:
     body:
         description:
           - Body of the notification, e.g. Details of the fault you're alerting.
-        required: false
 
 notes:
    - Requires pushbullet.py Python package on the remote host.
@@ -74,7 +68,7 @@ EXAMPLES = '''
     device: Chrome
     push_type: link
     title: Ansible Documentation
-    body: http://docs.ansible.com/
+    body: https://docs.ansible.com/
 
 # Sends a push notification to a channel
 - pushbullet:

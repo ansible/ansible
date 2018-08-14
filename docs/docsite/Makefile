@@ -26,7 +26,7 @@ ifdef PLUGINS
 	PLUGIN_ARGS = -l $(PLUGINS)
 endif
 
-DOC_PLUGINS ?= cache callback connection inventory lookup strategy vars
+DOC_PLUGINS ?= cache callback connection inventory lookup shell strategy vars
 
 assertrst:
 ifndef rst
@@ -108,8 +108,8 @@ staticmin:
 	cat _themes/srtd/static/css/theme.css | sed -e 's/^[ 	]*//g; s/[ 	]*$$//g; s/\([:{;,]\) /\1/g; s/ {/{/g; s/\/\*.*\*\///g; /^$$/d' | sed -e :a -e '$$!N; s/\n\(.\)/\1/; ta' > _themes/srtd/static/css/theme.min.css
 
 epub:
-	(CPUS=$(CPUS) make -f Makefile.sphinx epub)
+	(CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx epub)
 
 htmlsingle: assertrst
 	sphinx-build -j $(CPUS) -b html -d $(BUILDDIR)/doctrees ./rst $(BUILDDIR)/html rst/$(rst)
-	@echo "Output is in $(BUILDDIR)/$(rst:.rst=.html)"
+	@echo "Output is in $(BUILDDIR)/html/$(rst:.rst=.html)"
