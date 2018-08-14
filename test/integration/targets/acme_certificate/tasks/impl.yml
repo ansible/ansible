@@ -196,27 +196,27 @@
 ## DISSECT CERTIFICATES #######################################################################
 # Make sure certificates are valid. Root certificate for Pebble equals the chain certificate.
 - name: Verifying cert 1
-  command: openssl verify -CAfile "{{ output_dir }}/cert-1-chain.pem" "{{ output_dir }}/cert-1.pem"
+  command: openssl verify -CAfile "{{ output_dir }}/cert-1-root.pem" -untrusted "{{ output_dir }}/cert-1-chain.pem" "{{ output_dir }}/cert-1.pem"
   ignore_errors: yes
   register: cert_1_valid
 - name: Verifying cert 2
-  command: openssl verify -CAfile "{{ output_dir }}/cert-2-chain.pem" "{{ output_dir }}/cert-2.pem"
+  command: openssl verify -CAfile "{{ output_dir }}/cert-2-root.pem" -untrusted "{{ output_dir }}/cert-2-chain.pem" "{{ output_dir }}/cert-2.pem"
   ignore_errors: yes
   register: cert_2_valid
 - name: Verifying cert 3
-  command: openssl verify -CAfile "{{ output_dir }}/cert-3-chain.pem" "{{ output_dir }}/cert-3.pem"
+  command: openssl verify -CAfile "{{ output_dir }}/cert-3-root.pem" -untrusted "{{ output_dir }}/cert-3-chain.pem" "{{ output_dir }}/cert-3.pem"
   ignore_errors: yes
   register: cert_3_valid
 - name: Verifying cert 4
-  command: openssl verify -CAfile "{{ output_dir }}/cert-4-chain.pem" "{{ output_dir }}/cert-4.pem"
+  command: openssl verify -CAfile "{{ output_dir }}/cert-4-root.pem" -untrusted "{{ output_dir }}/cert-4-chain.pem" "{{ output_dir }}/cert-4.pem"
   ignore_errors: yes
   register: cert_4_valid
 - name: Verifying cert 5
-  command: openssl verify -CAfile "{{ output_dir }}/cert-5-chain.pem" "{{ output_dir }}/cert-5.pem"
+  command: openssl verify -CAfile "{{ output_dir }}/cert-5-root.pem" -untrusted "{{ output_dir }}/cert-5-chain.pem" "{{ output_dir }}/cert-5.pem"
   ignore_errors: yes
   register: cert_5_valid
 - name: Verifying cert 6
-  command: openssl verify -CAfile "{{ output_dir }}/cert-6-chain.pem" "{{ output_dir }}/cert-6.pem"
+  command: openssl verify -CAfile "{{ output_dir }}/cert-6-root.pem" -untrusted "{{ output_dir }}/cert-6-chain.pem" "{{ output_dir }}/cert-6.pem"
   ignore_errors: yes
   register: cert_6_valid
 # Dump certificate info
