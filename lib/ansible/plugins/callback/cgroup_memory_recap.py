@@ -57,6 +57,7 @@ import csv
 import time
 import threading
 
+from ansible.module_utils._text import to_bytes
 from ansible.plugins.callback import CallbackBase
 
 
@@ -126,10 +127,21 @@ class CallbackModule(CallbackBase):
         #self.mem_max_file = self.get_option('max_mem_file')
         #self.mem_current_file = self.get_option('cur_mem_file')
 
-        self.control_group = self.get_option('cgroup_control_group')
-        self.mem_max_file = '/sys/fs/cgroup/memory/%s/memory.max_usage_in_bytes' % self.control_group
-        self.mem_current_file = '/sys/fs/cgroup/memory/%s/memory.usage_in_bytes' % self.control_group
-        self.cpu_usage_file = '/sys/fs/cgroup/cpuacct/%s/cpuacct.usage' % self.control_group
+        self.control_group = to_bytes(self.get_option('cgroup_control_group'))
+        self.mem_max_file = b'/sys/fs/cgroup/memory/%s/memory.max_usage_in_bytes' % self.control_group
+        self.mem_current_file = b'/sys/fs/cgroup/memory/%s/memory.usage_in_bytes' % self.control_group
+        self.cpu_usage_file = b'/sys/fs/cgroup/cpuacct/%s/cpuacct.usage' % self.control_group
+
+        for path in (self.mem_max_file, self.mem_current_file, self.cpu_usage_file):
+            try:
+                with open(path) as f:
+                    pass
+            except Exception as e:
+                self._display.warning(
+                    u'Cannot open %s for reading (%s). Disabling %s' % (to_text(path), to_text(e), self.CALLBACK_NAME)
+                )
+                self.disabled = True
+                return
 
         with open(self.mem_max_file, 'w+') as f:
             f.write('0')
