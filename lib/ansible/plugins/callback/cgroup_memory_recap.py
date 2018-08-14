@@ -41,6 +41,9 @@ DOCUMENTATION = '''
         ini:
           - section: callback_cgroupmemrecap
             key: cur_mem_file
+      cgroup_control_group:
+        env:
+          - name: CGROUP_CONTROL_GROUP
       csv_file:
         description: Output path for CSV file containing recorded memory readings
         env:
@@ -77,6 +80,26 @@ class MemProf(threading.Thread):
             time.sleep(0.001)
 
 
+class CpuProf(threading.Thread):
+    def __init__(self, path, obj=None):
+        threading.Thread.__init__(self)
+        self.obj = obj
+        self.path = path
+        self.results = []
+        self.running = True
+
+    def run(self):
+        while self.running:
+            with open(self.path) as f:
+                start_time = time.time() * 1000**2
+                start_usage = int(f.read().strip()) / 1000
+            time.sleep(0.1)
+            with open(self.path) as f:
+                end_time = time.time() * 1000**2
+                end_usage = int(f.read().strip()) / 1000
+            self.results.append((end_usage - start_usage) / (end_time - start_time) * 100)
+
+
 class CallbackModule(CallbackBase):
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'aggregate'
@@ -87,8 +110,12 @@ class CallbackModule(CallbackBase):
         super(CallbackModule, self).__init__(display)
 
         self._task_memprof = None
+        self._task_cpuprof = None
 
-        self.task_results = []
+        self.task_results = {
+            'memory': [],
+            'cpu': [],
+        }
 
         self._csv_file = None
         self._csv_writer = None
@@ -96,10 +123,15 @@ class CallbackModule(CallbackBase):
     def set_options(self, task_keys=None, var_options=None, direct=None):
         super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
-        self.cgroup_max_file = self.get_option('max_mem_file')
-        self.cgroup_current_file = self.get_option('cur_mem_file')
+        #self.mem_max_file = self.get_option('max_mem_file')
+        #self.mem_current_file = self.get_option('cur_mem_file')
 
-        with open(self.cgroup_max_file, 'w+') as f:
+        self.control_group = self.get_option('cgroup_control_group')
+        self.mem_max_file = '/sys/fs/cgroup/memory/%s/memory.max_usage_in_bytes' % self.control_group
+        self.mem_current_file = '/sys/fs/cgroup/memory/%s/memory.usage_in_bytes' % self.control_group
+        self.cpu_usage_file = '/sys/fs/cgroup/cpuacct/%s/cpuacct.usage' % self.control_group
+
+        with open(self.mem_max_file, 'w+') as f:
             f.write('0')
 
         csv_file = self.get_option('csv_file')
@@ -107,37 +139,60 @@ class CallbackModule(CallbackBase):
             self._csv_file = open(csv_file, 'w+')
             self._csv_writer = csv.writer(self._csv_file)
 
-    def _profile_memory(self, obj=None):
+    def _profile(self, obj=None):
         prev_task = None
-        results = None
+        mem = None
+        cpu = None
         try:
             self._task_memprof.running = False
-            results = self._task_memprof.results
+            self._task_cpuprof.running = False
+            mem = self._task_memprof.results
+            cpu = self._task_cpuprof.results
             prev_task = self._task_memprof.obj
         except AttributeError:
             pass
 
         if obj is not None:
-            self._task_memprof = MemProf(self.cgroup_current_file, obj=obj, csvwriter=self._csv_writer)
+            self._task_memprof = MemProf(self.mem_current_file, obj=obj, csvwriter=self._csv_writer)
             self._task_memprof.start()
+            self._task_cpuprof = CpuProf(self.cpu_usage_file, obj=obj)
+            self._task_cpuprof.start()
 
-        if results is not None:
-            self.task_results.append((prev_task, max(results)))
+        if mem is not None:
+            try:
+                self.task_results['memory'].append((prev_task, max(mem)))
+            except ValueError:
+                pass
+        if cpu is not None:
+            try:
+                self.task_results['cpu'].append((prev_task, max(cpu)))
+            except ValueError:
+                pass
 
     def v2_playbook_on_task_start(self, task, is_conditional):
-        self._profile_memory(task)
+        self._profile(task)
 
     def v2_playbook_on_stats(self, stats):
-        self._profile_memory()
+        self._profile()
 
-        with open(self.cgroup_max_file) as f:
+        with open(self.mem_max_file) as f:
             max_results = int(f.read().strip()) / 1024 / 1024
 
-        self._display.banner('CGROUP MEMORY RECAP')
-        self._display.display('Execution Maximum: %0.2fMB\n\n' % max_results)
+        self._display.banner('CGROUP PERF RECAP')
+        self._display.display('Memory Execution Maximum: %0.2fMB\n' % max_results)
+        try:
+            self._display.display('CPU Execution Maximum: %0.2f%%\n\n' % max((t[1] for t in self.task_results['cpu'])))
+        except:
+            self._display.display('CPU profiling error: no results collected\n\n')
 
-        for task, memory in self.task_results:
+        self._display.display('Memory:\n')
+        for task, memory in self.task_results['memory']:
             self._display.display('%s (%s): %0.2fMB' % (task.get_name(), task._uuid, memory))
+
+        if self.task_results['cpu']:
+            self._display.display('CPU:\n')
+        for task, cpu in self.task_results['cpu']:
+            self._display.display('%s (%s): %0.2f%%' % (task.get_name(), task._uuid, cpu))
 
         if self._csv_file:
             try:
