@@ -519,7 +519,11 @@ class TaskExecutor:
         if '_variable_params' in self._task.args:
             variable_params = self._task.args.pop('_variable_params')
             if isinstance(variable_params, dict):
-                raise AnsibleError("Using a variable for a task's 'args' is not allowed as it is unsafe, facts can come from untrusted sources.")
+                if C.INJECT_FACTS_AS_VARS:
+                    display.warning("Using a variable for a task's 'args' is unsafe in some situations "
+                                    "(see https://docs.ansible.com/ansible/devel/reference_appendices/faq.html#argsplat-unsafe)")
+                variable_params.update(self._task.args)
+                self._task.args = variable_params
 
         # get the connection and the handler for this execution
         if (not self._connection or
