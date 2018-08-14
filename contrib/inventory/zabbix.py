@@ -30,7 +30,7 @@ name, use asterisk. For example --limit="Linux*servers".
 
 Configuration is read from `zabbix.ini`.
 
-Tested with Zabbix Server 2.0.6 and 3.2.3.
+Tested with Zabbix Server 2.0.6, 3.2.3 and 3.4.
 """
 
 from __future__ import print_function
