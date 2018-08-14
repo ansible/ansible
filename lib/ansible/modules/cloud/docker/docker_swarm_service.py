@@ -237,6 +237,9 @@ options:
     description:
     - Action to take in case of container failure
     - Maps to docker service --update-failure-action option
+    choices:
+    - continue
+    - pause
   update_monitor:
     required: false
     default: 5000000000
@@ -255,6 +258,9 @@ options:
     description:
     - Specifies the order of operations when rolling out an updated task.
     - Maps to docker service --update-order
+    choices:
+    - stop-first
+    - start-first
   user:
     required: false
     default: root
