@@ -471,7 +471,10 @@ When is it unsafe to bulk-set task arguments from a variable?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
-Ansible allows all of a task's arguments to be bulk-set from a dictionary-typed variable, but issues a warning that the practice is unsafe. For example::
+You can set all of a task's arguments from a dictionary-typed variable. This
+technique can be useful in some dynamic execution scenarios. However, it
+introduces a security risk. We do not recommend it, so Ansible issues a
+warning when you do something like this::
 
     #...
     vars:
@@ -482,12 +485,13 @@ Ansible allows all of a task's arguments to be bulk-set from a dictionary-typed 
     tasks:
     - user: '{{ usermod_args }}'
 
-This technique can be useful in some dynamic execution scenarios. However, it is important to define the argument
-dictionary variable at a relatively high level of precedence, specifically, anything greater than *host facts* in the
-order of precedence found in the :ref:`ansible_variable_precedence` section of the *Variables* chapter. This prevents
-fact gathering on a compromised target system from overwriting the task argument dictionary with potentially
-malicious values. The risk of setting the variable at a lower precedence may also be mitigated by disabling the
-:ref:`inject_facts_as_vars` configuration setting, which prevents fact values from colliding with variables (and also disables the original warning).
+This particular example is safe. However, constructing tasks like this is
+risky because the parameters and values passed to ``usermod_args`` could
+be overwritten by malicious values in the ``host facts`` on a compromised
+target machine. To mitigate this risk:
+
+* set bulk variables at a level of precedence greater than ``host facts`` in the order of precedence found in :ref:`ansible_variable_precedence` (the example above is safe because play vars take precedence over facts)
+* disable the :ref:`inject_facts_as_vars` configuration setting to prevent fact values from colliding with variables (this will also disable the original warning)
 
 
 .. _commercial_support:
