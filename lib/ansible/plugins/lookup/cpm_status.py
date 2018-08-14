@@ -30,11 +30,11 @@ options:
   cpm_username:
     description:
       - This is the Basic Authentication Username of the WTI device to send the module.
-    required: false
+    required: true
   cpm_password:
     description:
       - This is the Basic Authentication Password of the WTI device to send the module.
-    required: false
+    required: true
   use_https:
     description:
       - Designates to use an https connection or http connection.
