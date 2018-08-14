@@ -110,6 +110,7 @@ Errors
   321       ``Exception`` attempting to import module for ``argument_spec`` introspection
   322       argument is listed in the argument_spec, but not documented in the module
   323       argument is listed in DOCUMENTATION.options, but not accepted by the module
+  332       ``AnsibleModule`` schema validation error
   ..
 ---------   -------------------
   **4xx**   **Syntax**
