@@ -63,7 +63,7 @@ cdnprofiles:
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
-    from msrestazure.azure_exceptions import CloudError
+    from azure.mgmt.cdn.models import ErrorResponseException
     from azure.common import AzureHttpError
 except:
     # handled in azure_rm_common
@@ -128,7 +128,7 @@ class AzureRMCdnprofileFacts(AzureRMModuleBase):
         try:
             item = self.cdn_management_client.profiles.get(
                 self.resource_group, self.name)
-        except CloudError:
+        except ErrorResponseException:
             pass
 
         if item and self.has_tags(item.tags, self.tags):

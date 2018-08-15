@@ -30,8 +30,7 @@ RETURN = '''
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
-    from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.cdn.models import Profile, Sku
+    from azure.mgmt.cdn.models import Profile, Sku, ErrorResponseException
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -168,7 +167,7 @@ class AzureRMCdnprofile(AzureRMModuleBase):
             poller = self.cdn_management_client.profiles.create(self.resource_group, self.name, parameters)
             response = self.get_poller_result(poller)
             return cdnprofile_to_dict(response)
-        except CloudError as exc:
+        except ErrorResponseException as exc:
             self.log('Error attempting to create Azure CDN profile instance.')
             self.fail("Error creating Azure CDN profile instance: {0}".format(exc.message))
 
@@ -184,7 +183,7 @@ class AzureRMCdnprofile(AzureRMModuleBase):
             poller = self.cdn_management_client.profiles.update(self.resource_group, self.name, self.tags)
             response = self.get_poller_result(poller)
             return cdnprofile_to_dict(response)
-        except CloudError as exc:
+        except ErrorResponseException as exc:
             self.log('Error attempting to update Azure CDN profile instance.')
             self.fail("Error updating Azure CDN profile instance: {0}".format(exc.message))
 
@@ -200,7 +199,7 @@ class AzureRMCdnprofile(AzureRMModuleBase):
                 self.resource_group, self.name)
             self.get_poller_result(poller)
             return True
-        except CloudError as e:
+        except ErrorResponseException as e:
             self.log('Error attempting to delete the CDN profile.')
             self.fail("Error deleting the CDN profile: {0}".format(e.message))
             return False
@@ -218,7 +217,7 @@ class AzureRMCdnprofile(AzureRMModuleBase):
             self.log("Response : {0}".format(response))
             self.log("CDN profile : {0} found".format(response.name))
             return cdnprofile_to_dict(response)
-        except CloudError:
+        except ErrorResponseException:
             self.log('Did not find the CDN profile.')
             return False
 
