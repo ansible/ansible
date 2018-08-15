@@ -93,7 +93,11 @@ class Netconf(NetconfBase):
 
     @staticmethod
     def guess_network_os(obj):
-
+        """
+        Guess the remote network os name
+        :param obj: Netconf connection class object
+        :return: Network OS name
+        """
         try:
             m = manager.connect(
                 host=obj._play_context.remote_addr,
@@ -140,25 +144,26 @@ class Netconf(NetconfBase):
             raise Exception(to_xml(exc.xml))
 
     @ensure_connected
-    def edit_config(self, *args, **kwargs):
+    def edit_config(self, config, format='xml', target='candidate', default_operation=None, test_option=None, error_option=None):
         try:
-            response = self.m.edit_config(*args, **kwargs)
+            response = self.m.edit_config(config, format=format, target=target, default_operation=default_operation, test_option=test_option,
+                                          error_option=error_option)
             return remove_namespaces(response)
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
     @ensure_connected
-    def commit(self, *args, **kwargs):
+    def commit(self, confirmed=False, timeout=None, persist=None):
         try:
-            response = self.m.commit(*args, **kwargs)
+            response = self.m.commit(confirmed=confirmed, timeout=timeout, persist=persist)
             return remove_namespaces(response)
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
     @ensure_connected
-    def validate(self, *args, **kwargs):
+    def validate(self, source="candidate"):
         try:
-            response = self.m.validate(*args, **kwargs)
+            response = self.m.validate(source=source)
             return remove_namespaces(response)
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
