@@ -260,11 +260,13 @@ pause_test = pexpect.spawn(
 pause_test.logfile = log_buffer
 pause_test.expect(r'Enter some text:')
 pause_test.send('hello there')
+pause_test.expect('hello there')
 pause_test.send('\r')
 pause_test.expect(r'Enter some text to edit:')
 pause_test.send('hello there')
 pause_test.send(backspace * 4)
 pause_test.send('ommy boy')
+pause_test.expect('ommy boy')
 pause_test.send('\r')
 pause_test.expect(r'Enter some text \(output is hidden\):')
 pause_test.send('supersecretpancakes')

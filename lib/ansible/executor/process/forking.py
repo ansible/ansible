@@ -22,6 +22,8 @@ __metaclass__ = type
 import multiprocessing
 import os
 import sys
+import time
+import threading
 import traceback
 
 from jinja2.exceptions import TemplateNotFound
@@ -37,12 +39,105 @@ except Exception:
     pass
 
 from ansible.errors import AnsibleConnectionFailure
+from ansible.executor.process.model import ProcessModelBase, ResultsSentinel
 from ansible.executor.task_executor import TaskExecutor
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils._text import to_text
+from ansible.module_utils.six.moves import queue as Queue
 from ansible.utils.display import Display
 
-__all__ = ['WorkerProcess']
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+>>>>>>> Start of work to redo the threading and forking split:lib/ansible/executor/process/forking.py
+
+__all__ = ['ProcessModelForking', 'WorkerProcess']
+
+
+def results_thread_main(pm):
+    while True:
+        try:
+            result = pm._worker_results_q.get()
+            if isinstance(result, ResultsSentinel):
+                break
+            else:
+                pm._final_q_lock.acquire()
+                pm._final_q.append(result)
+                pm._final_q_lock.release()
+        except (IOError, EOFError) as e:
+            break
+        except Queue.Empty:
+            pass
+
+
+class ProcessModelForking(ProcessModelBase):
+    def __init__(self, tqm):
+        super(ProcessModelForking, self).__init__(tqm)
+
+        # save a couple of things from the TQM we need for forking
+        self._loader = tqm._loader
+        self._variable_manager = tqm._variable_manager
+
+        # create the worker results queue, which is where all workers
+        # send their results. The results thread reads from this in the
+        # background and copies the results to the final_q deque object
+        self._worker_results_q = multiprocessing.Queue()
+
+        # create the result processing thread for reading results in the background
+        self._results_thread = threading.Thread(target=results_thread_main, args=(self,))
+        self._results_thread.daemon = True
+        self._results_thread.start()
+
+    def initialize_workers(self, num):
+        self._cur_worker = 0
+        self._workers = [None for i in range(num)]
+
+    def put_task(self, data):
+        try:
+            (host, task, play_context, task_vars) = data
+
+            queued = False
+            starting_worker = self._cur_worker
+            while True:
+                worker_prc = self._workers[self._cur_worker]
+                if worker_prc is None or not worker_prc.is_alive():
+                    worker_prc = WorkerProcess(
+                        self,
+                        task_vars,
+                        host,
+                        task,
+                        play_context,
+                        self._loader,
+                        self._variable_manager,
+                        self._shared_loader_obj,
+                    )
+                    self._workers[self._cur_worker] = worker_prc
+                    worker_prc.start()
+                    display.debug("worker is %d (out of %d available)" % (self._cur_worker + 1, len(self._workers)))
+                    queued = True
+                self._cur_worker += 1
+                if self._cur_worker >= len(self._workers):
+                    self._cur_worker = 0
+                if queued:
+                    break
+                elif self._cur_worker == starting_worker:
+                    time.sleep(0.0001)
+
+            return True
+        except (EOFError, IOError, AssertionError) as e:
+            # most likely an abort
+            display.debug("got an error while queuing: %s" % e)
+            return False
+
+    def put_result(self, data):
+        self._worker_results_q.put(data, block=False)
+
+    def cleanup(self):
+        self._worker_results_q.put(self._sentinel)
+        self._results_thread.join()
+        self._worker_results_q.close()
 
 display = Display()
 
@@ -54,11 +149,11 @@ class WorkerProcess(multiprocessing.Process):
     for reading later.
     '''
 
-    def __init__(self, final_q, task_vars, host, task, play_context, loader, variable_manager, shared_loader_obj):
+    def __init__(self, process_manager, task_vars, host, task, play_context, loader, variable_manager, shared_loader_obj):
 
         super(WorkerProcess, self).__init__()
         # takes a task queue manager as the sole param:
-        self._final_q = final_q
+        self._process_manager = process_manager
         self._task_vars = task_vars
         self._host = host
         self._task = task
@@ -156,7 +251,7 @@ class WorkerProcess(multiprocessing.Process):
                 self._new_stdin,
                 self._loader,
                 self._shared_loader_obj,
-                self._final_q
+                self._process_manager,
             ).run()
 
             display.debug("done running TaskExecutor() for %s/%s [%s]" % (self._host, self._task, self._task._uuid))
@@ -171,7 +266,7 @@ class WorkerProcess(multiprocessing.Process):
 
             # put the result on the result queue
             display.debug("sending task result for task %s" % self._task._uuid)
-            self._final_q.put(task_result)
+            self._process_manager.put_result(task_result)
             display.debug("done sending task result for task %s" % self._task._uuid)
 
         except AnsibleConnectionFailure:
@@ -183,7 +278,7 @@ class WorkerProcess(multiprocessing.Process):
                 dict(unreachable=True),
                 task_fields=self._task.dump_attrs(),
             )
-            self._final_q.put(task_result, block=False)
+            self._process_manager.put_result(task_result)
 
         except Exception as e:
             if not isinstance(e, (IOError, EOFError, KeyboardInterrupt, SystemExit)) or isinstance(e, TemplateNotFound):

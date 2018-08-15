@@ -596,6 +596,16 @@ DEFAULT_FORKS:
   ini:
   - {key: forks, section: defaults}
   type: integer
+DEFAULT_PROCESS_MODEL:
+  name: Sets the Ansible process model
+  default: "threading"
+  description:
+    - "Ansible supports two process models: forking (default) and threading."
+    - "The threading model is currently a technology preview."
+  env: [{name: ANSIBLE_PROCESS_MODEL}]
+  ini:
+  - {key: process_model, section: defaults}
+  yaml: {key: defaults.process_model}
 DEFAULT_GATHERING:
   name: Gathering behaviour
   default: 'implicit'

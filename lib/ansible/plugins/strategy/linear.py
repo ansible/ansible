@@ -310,7 +310,7 @@ class StrategyModule(StrategyBase):
                     if run_once:
                         break
 
-                    results += self._process_pending_results(iterator, max_passes=max(1, int(len(self._tqm._workers) * 0.1)))
+                    results += self._process_pending_results(iterator, max_passes=max(1, int(len(self._tqm._process_manager._workers) * 0.1)))
 
                 # go to next host/task group
                 if skip_rest:

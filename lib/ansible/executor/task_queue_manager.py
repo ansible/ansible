@@ -92,24 +92,28 @@ class TaskQueueManager:
         # a special flag to help us exit cleanly
         self._terminated = False
 
+        self._process_manager = None
+        if C.DEFAULT_PROCESS_MODEL == 'threading':
+            from ansible.executor.process.threading import ProcessModelThreading
+            self._process_manager = ProcessModelThreading(self)
+        else:
+            if C.DEFAULT_PROCESS_MODEL != 'forking' and C.DEFAULT_PROCESS_MODEL not in (None, ""):
+                display.warning(
+                    'Invalid process model specified: "%s". Defaulting to the "forking" process model.' % (C.DEFAULT_PROCESS_MODEL,)
+                )
+            from ansible.executor.process.forking import ProcessModelForking
+            self._process_manager = ProcessModelForking(self)
+
         # dictionaries to keep track of failed/unreachable hosts
         self._failed_hosts = dict()
         self._unreachable_hosts = dict()
-
-        try:
-            self._final_q = multiprocessing.Queue()
-        except OSError as e:
-            raise AnsibleError("Unable to use multiprocessing, this is normally caused by lack of access to /dev/shm: %s" % to_native(e))
 
         # A temporary file (opened pre-fork) used by connection
         # plugins for inter-process locking.
         self._connection_lockfile = tempfile.TemporaryFile()
 
     def _initialize_processes(self, num):
-        self._workers = []
-
-        for i in range(num):
-            self._workers.append(None)
+        self._process_manager.initialize_workers(num)
 
     def load_callbacks(self):
         '''
@@ -249,17 +253,10 @@ class TaskQueueManager:
     def cleanup(self):
         display.debug("RUNNING CLEANUP")
         self.terminate()
-        self._final_q.close()
-        self._cleanup_processes()
 
     def _cleanup_processes(self):
-        if hasattr(self, '_workers'):
-            for worker_prc in self._workers:
-                if worker_prc and worker_prc.is_alive():
-                    try:
-                        worker_prc.terminate()
-                    except AttributeError:
-                        pass
+        if self._process_manager is not None:
+            self._process_manager.cleanup()
 
     def clear_failed_hosts(self):
         self._failed_hosts = dict()
@@ -273,9 +270,6 @@ class TaskQueueManager:
     def get_loader(self):
         return self._loader
 
-    def get_workers(self):
-        return self._workers[:]
-
     def terminate(self):
         self._terminated = True
 
@@ -285,7 +279,7 @@ class TaskQueueManager:
         # <WorkerProcess(WorkerProcess-2, stopped[SIGTERM])>
 
         defunct = False
-        for (idx, x) in enumerate(self._workers):
+        for (idx, x) in enumerate(self._process_manager._workers):
             if hasattr(x, 'exitcode'):
                 if x.exitcode in [-9, -11, -15]:
                     defunct = True

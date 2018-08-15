@@ -18,14 +18,16 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import datetime
-import signal
+import select
 import sys
 import termios
 import time
+import threading
 import tty
 
 from os import isatty
 from ansible.errors import AnsibleError
+from ansible.executor.process.model import keyboard_interrupt_event
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import PY3
@@ -54,12 +56,8 @@ else:
     CLEAR_TO_EOL = b'\x1b[K'
 
 
-class AnsibleTimeoutExceeded(Exception):
-    pass
-
-
-def timeout_handler(signum, frame):
-    raise AnsibleTimeoutExceeded
+def timeout_handler(event):
+    event.set()
 
 
 def clear_line(stdout):
@@ -143,25 +141,6 @@ class ActionModule(ActionBase):
         stdin_fd = None
         old_settings = None
         try:
-            if seconds is not None:
-                if seconds < 1:
-                    seconds = 1
-
-                # setup the alarm handler
-                signal.signal(signal.SIGALRM, timeout_handler)
-                signal.alarm(seconds)
-
-                # show the timer and control prompts
-                display.display("Pausing for %d seconds%s" % (seconds, echo_prompt))
-                display.display("(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)\r"),
-
-                # show the prompt specified in the task
-                if 'prompt' in self._task.args:
-                    display.display(prompt)
-
-            else:
-                display.display(prompt)
-
             # save the attributes on the existing (duped) stdin so
             # that we can restore them later after we set raw mode
             stdin_fd = None
@@ -179,6 +158,28 @@ class ActionModule(ActionBase):
                 # ValueError: someone is using a closed file descriptor as stdin
                 # AttributeError: someone is using a null file descriptor as stdin on windoez
                 stdin = None
+
+            thread_timer = None
+            timeout_event = None
+            if seconds is not None:
+                if seconds < 1:
+                    seconds = 1
+
+                # use threading.Timer() to simulate a SIGALRM, as we might be in a thread here
+                timeout_event = threading.Event()
+                thread_timer = threading.Timer(seconds, timeout_handler, args=[timeout_event, ])
+                thread_timer.start()
+
+                # show the timer and control prompts
+                display.display("Pausing for %d seconds%s" % (seconds, echo_prompt))
+                display.display("(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)\r"),
+
+                # show the prompt specified in the task
+                if 'prompt' in self._task.args:
+                    display.display(prompt)
+
+            else:
+                display.display(prompt)
 
             if stdin_fd is not None:
                 if isatty(stdin_fd):
@@ -214,50 +215,53 @@ class ActionModule(ActionBase):
                     termios.tcflush(stdin, termios.TCIFLUSH)
 
             while True:
+                if (stdin is None or not isatty(stdin_fd)) and not seconds:
+                    if thread_timer:
+                        thread_timer.cancel()
+                    display.warning("Not waiting for response to prompt as stdin is not interactive")
+                    break
 
-                try:
-                    if stdin_fd is not None:
-
-                        key_pressed = stdin.read(1)
-
-                        if key_pressed == intr:  # value for Ctrl+C
-                            clear_line(stdout)
-                            raise KeyboardInterrupt
-
-                    if not seconds:
-                        if stdin_fd is None or not isatty(stdin_fd):
-                            display.warning("Not waiting for response to prompt as stdin is not interactive")
-                            break
-
-                        # read key presses and act accordingly
-                        if key_pressed in (b'\r', b'\n'):
+                if timeout_event and timeout_event.is_set():
+                    break
+                elif keyboard_interrupt_event.is_set():
+                    if thread_timer:
+                        thread_timer.cancel()
+                    if stdin_fd is not None and isatty(stdin_fd):
+                        keyboard_interrupt_event.clear()
+                        display.display("Press 'C' to continue the play or 'A' to abort \r"),
+                        if self._c_or_a(stdin):
                             clear_line(stdout)
                             break
-                        elif key_pressed in backspace:
-                            # delete a character if backspace is pressed
-                            result['user_input'] = result['user_input'][:-1]
-                            clear_line(stdout)
-                            if echo:
-                                stdout.write(result['user_input'])
-                            stdout.flush()
-                        else:
-                            result['user_input'] += key_pressed
-
-                except KeyboardInterrupt:
-                    signal.alarm(0)
-                    display.display("Press 'C' to continue the play or 'A' to abort \r"),
-                    if self._c_or_a(stdin):
-                        clear_line(stdout)
-                        break
 
                     clear_line(stdout)
-
                     raise AnsibleError('user requested abort!')
 
-        except AnsibleTimeoutExceeded:
-            # this is the exception we expect when the alarm signal
-            # fires, so we simply ignore it to move into the cleanup
-            pass
+                if stdin_fd is not None and isatty(stdin_fd):
+                    # use select to poll stdin so we can timeout if
+                    # nothing is written, and we won't block on the read
+                    r, dummy, dummy = select.select([stdin], [], [], 0.01)
+                    if stdin in r:
+                        key_pressed = stdin.read(1)
+                        if key_pressed == intr:  # value for Ctrl+C
+                            keyboard_interrupt_event.set()
+
+                        if not seconds:
+                            # read key presses and act accordingly
+                            if key_pressed in (b'\r', b'\n'):
+                                clear_line(stdout)
+                                break
+                            elif key_pressed in backspace:
+                                # delete a character if backspace is pressed
+                                result['user_input'] = result['user_input'][:-1]
+                                clear_line(stdout)
+                                if echo:
+                                    stdout.write(result['user_input'])
+                                stdout.flush()
+                            else:
+                                result['user_input'] += key_pressed
+                    else:
+                        continue
+
         finally:
             # cleanup and save some information
             # restore the old settings for the duped stdin stdin_fd

@@ -35,7 +35,6 @@ from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleParserError, AnsibleUndefinedVariable
 from ansible.executor import action_write_locks
-from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
 from ansible.module_utils.six.moves import queue as Queue
@@ -45,7 +44,7 @@ from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task_include import TaskInclude
-from ansible.plugins.loader import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
+from ansible.plugins.loader import action_loader, connection_loader
 from ansible.template import Templar
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
@@ -54,46 +53,6 @@ from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
 display = Display()
 
 __all__ = ['StrategyBase']
-
-
-class StrategySentinel:
-    pass
-
-
-# TODO: this should probably be in the plugins/__init__.py, with
-#       a smarter mechanism to set all of the attributes based on
-#       the loaders created there
-class SharedPluginLoaderObj:
-    '''
-    A simple object to make pass the various plugin loaders to
-    the forked processes over the queue easier
-    '''
-    def __init__(self):
-        self.action_loader = action_loader
-        self.connection_loader = connection_loader
-        self.filter_loader = filter_loader
-        self.test_loader = test_loader
-        self.lookup_loader = lookup_loader
-        self.module_loader = module_loader
-
-
-_sentinel = StrategySentinel()
-
-
-def results_thread_main(strategy):
-    while True:
-        try:
-            result = strategy._final_q.get()
-            if isinstance(result, StrategySentinel):
-                break
-            else:
-                strategy._results_lock.acquire()
-                strategy._results.append(result)
-                strategy._results_lock.release()
-        except (IOError, EOFError):
-            break
-        except Queue.Empty:
-            pass
 
 
 def debug_closure(func):
@@ -167,13 +126,11 @@ class StrategyBase:
     def __init__(self, tqm):
         self._tqm = tqm
         self._inventory = tqm.get_inventory()
-        self._workers = tqm.get_workers()
         self._variable_manager = tqm.get_variable_manager()
         self._loader = tqm.get_loader()
-        self._final_q = tqm._final_q
-        self._step = context.CLIARGS.get('step', False)
-        self._diff = context.CLIARGS.get('diff', False)
-        self.flush_cache = context.CLIARGS.get('flush_cache', False)
+        self._step = getattr(tqm._options, 'step', False)
+        self._diff = getattr(tqm._options, 'diff', False)
+        self.flush_cache = getattr(tqm._options, 'flush_cache', False)
 
         # the task cache is a dictionary of tuples of (host.name, task._uuid)
         # used to find the original task object of in-flight tasks and to store
@@ -183,9 +140,8 @@ class StrategyBase:
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
 
-        # internal counters
+        # counter for pending results
         self._pending_results = 0
-        self._cur_worker = 0
 
         # this dictionary is used to keep track of hosts that have
         # outstanding tasks still in queue
@@ -194,14 +150,6 @@ class StrategyBase:
         # this dictionary is used to keep track of hosts that have
         # flushed handlers
         self._flushed_hosts = dict()
-
-        self._results = deque()
-        self._results_lock = threading.Condition(threading.Lock())
-
-        # create the result processing thread for reading results in the background
-        self._results_thread = threading.Thread(target=results_thread_main, args=(self,))
-        self._results_thread.daemon = True
-        self._results_thread.start()
 
         # holds the list of active (persistent) connections to be shutdown at
         # play completion
@@ -218,8 +166,6 @@ class StrategyBase:
             except ConnectionError as e:
                 # most likely socket is already closed
                 display.debug("got an error while closing persistent connection: %s" % e)
-        self._final_q.put(_sentinel)
-        self._results_thread.join()
 
     def run(self, iterator, play_context, result=0):
         # execute one more pass through the iterator without peeking, to
@@ -292,44 +238,17 @@ class StrategyBase:
             display.debug('Creating lock for %s' % task.action)
             action_write_locks.action_write_locks[task.action] = Lock()
 
-        # and then queue the new task
-        try:
+        self._queued_task_cache[(host.name, task._uuid)] = {
+            'host': host,
+            'task': task,
+            'task_vars': task_vars,
+            'play_context': play_context
+        }
+        # use the process manager to queue the task for its workers
+        self._tqm._process_manager.put_task(data=(host, task, play_context, task_vars))
 
-            # create a dummy object with plugin loaders set as an easier
-            # way to share them with the forked processes
-            shared_loader_obj = SharedPluginLoaderObj()
+        self._pending_results += 1
 
-            queued = False
-            starting_worker = self._cur_worker
-            while True:
-                worker_prc = self._workers[self._cur_worker]
-                if worker_prc is None or not worker_prc.is_alive():
-                    self._queued_task_cache[(host.name, task._uuid)] = {
-                        'host': host,
-                        'task': task,
-                        'task_vars': task_vars,
-                        'play_context': play_context
-                    }
-
-                    worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, shared_loader_obj)
-                    self._workers[self._cur_worker] = worker_prc
-                    self._tqm.send_callback('v2_runner_on_start', host, task)
-                    worker_prc.start()
-                    display.debug("worker is %d (out of %d available)" % (self._cur_worker + 1, len(self._workers)))
-                    queued = True
-                self._cur_worker += 1
-                if self._cur_worker >= len(self._workers):
-                    self._cur_worker = 0
-                if queued:
-                    break
-                elif self._cur_worker == starting_worker:
-                    time.sleep(0.0001)
-
-            self._pending_results += 1
-        except (EOFError, IOError, AssertionError) as e:
-            # most likely an abort
-            display.debug("got an error while queuing: %s" % e)
-            return
         display.debug("exiting _queue_task() for %s/%s" % (host.name, task.action))
 
     def get_task_hosts(self, iterator, task_host, task):
@@ -353,7 +272,7 @@ class StrategyBase:
     @debug_closure
     def _process_pending_results(self, iterator, one_pass=False, max_passes=None):
         '''
-        Reads results off the final queue and takes appropriate action
+        Reads results from the process model final queue and takes appropriate action
         based on the result (executing callbacks, updating state, etc.).
         '''
 
@@ -398,13 +317,9 @@ class StrategyBase:
 
         cur_pass = 0
         while True:
-            try:
-                self._results_lock.acquire()
-                task_result = self._results.popleft()
-            except IndexError:
+            task_result = self._tqm._process_manager.get_result()
+            if task_result is None:
                 break
-            finally:
-                self._results_lock.release()
 
             # get the original host and task. We then assign them to the TaskResult for use in callbacks/etc.
             original_host = get_original_host(task_result._host)

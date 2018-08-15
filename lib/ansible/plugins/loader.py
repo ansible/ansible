@@ -14,6 +14,7 @@ import sys
 import warnings
 
 from collections import defaultdict
+from threading import Lock
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -140,6 +141,7 @@ class PluginLoader:
         self._plugin_path_cache = PLUGIN_PATH_CACHE[class_name]
 
         self._searched_paths = set()
+        self._lock = Lock()
 
     def _clear_caches(self):
 
@@ -556,7 +558,8 @@ class PluginLoader:
     def get(self, name, *args, **kwargs):
         ''' instantiates a plugin of the given name using arguments '''
 
-        found_in_cache = True
+        found_in_cache = False
+        configured = False
         class_only = kwargs.pop('class_only', False)
         collection_list = kwargs.pop('collection_list', None)
         if name in self.aliases:
@@ -565,12 +568,15 @@ class PluginLoader:
         if path is None:
             return None
 
-        if path not in self._module_cache:
-            self._module_cache[path] = self._load_module_source(name, path)
-            self._load_config_defs(name, self._module_cache[path], path)
-            found_in_cache = False
+        try:
+            self._lock.acquire()
+            if path not in self._module_cache:
+                self._module_cache[path] = self._load_module_source(name, path)
+                self._load_config_defs(name, self._module_cache[path], path)
+                found_in_cache = False
+        finally:
+            self._lock.release()
 
-        obj = getattr(self._module_cache[path], self.class_name)
         if self.base_class:
             # The import path is hardcoded and should be the right place,
             # so we are not expecting an ImportError.
@@ -595,7 +601,12 @@ class PluginLoader:
                     return None
                 raise
 
-        self._update_object(obj, name, path)
+        try:
+            self._lock.acquire()
+            self._update_object(obj, name, path)
+        finally:
+            self._lock.release()
+
         return obj
 
     def _display_plugin_load(self, class_name, name, searched_paths, path, found_in_cache=None, class_only=None):
@@ -655,7 +666,8 @@ class PluginLoader:
             raise AnsibleError('Do not set both path_only and class_only when calling PluginLoader.all()')
 
         all_matches = []
-        found_in_cache = True
+        found_in_cache = False
+        configured = False
 
         for i in self._get_paths():
             all_matches.extend(glob.glob(os.path.join(i, "*.py")))
@@ -712,7 +724,6 @@ class PluginLoader:
                 except TypeError as e:
                     display.warning("Skipping plugin (%s) as it seems to be incomplete: %s" % (path, to_text(e)))
 
-            self._update_object(obj, basename, path)
             yield obj
 
 

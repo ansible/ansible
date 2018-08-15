@@ -23,10 +23,11 @@ from units.mock.loader import DictDataLoader
 from copy import deepcopy
 import uuid
 
+from ansible import constants as C
 from units.compat import unittest
 from units.compat.mock import patch, MagicMock
 from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.executor.process.worker import WorkerProcess
+from ansible.executor.process.forking import WorkerProcess
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
@@ -172,6 +173,7 @@ class TestStrategyBase(unittest.TestCase):
         strategy_base.cleanup()
 
     @patch.object(WorkerProcess, 'run')
+    @unittest.skipUnless(C.DEFAULT_PROCESS_MODEL == 'forking', "not using forking")
     def test_strategy_base_queue_task(self, mock_worker):
         def fake_run(self):
             return
@@ -202,18 +204,19 @@ class TestStrategyBase(unittest.TestCase):
         try:
             strategy_base = StrategyBase(tqm=tqm)
             strategy_base._queue_task(host=mock_host, task=mock_task, task_vars=dict(), play_context=MagicMock())
-            self.assertEqual(strategy_base._cur_worker, 1)
+            self.assertEqual(tqm._process_manager._cur_worker, 1)
             self.assertEqual(strategy_base._pending_results, 1)
             strategy_base._queue_task(host=mock_host, task=mock_task, task_vars=dict(), play_context=MagicMock())
-            self.assertEqual(strategy_base._cur_worker, 2)
+            self.assertEqual(tqm._process_manager._cur_worker, 2)
             self.assertEqual(strategy_base._pending_results, 2)
             strategy_base._queue_task(host=mock_host, task=mock_task, task_vars=dict(), play_context=MagicMock())
-            self.assertEqual(strategy_base._cur_worker, 0)
+            self.assertEqual(tqm._process_manager._cur_worker, 0)
             self.assertEqual(strategy_base._pending_results, 3)
         finally:
             tqm.cleanup()
 
-    def test_strategy_base_process_pending_results(self):
+    @unittest.skipUnless(C.DEFAULT_PROCESS_MODEL == 'forking', "not using forking")
+    def test_strategy_base_process_pending_results_forking(self):
         mock_tqm = MagicMock()
         mock_tqm._terminated = False
         mock_tqm._failed_hosts = dict()
@@ -277,6 +280,9 @@ class TestStrategyBase(unittest.TestCase):
         mock_handler_block.always = []
         mock_play.handlers = [mock_handler_block]
 
+        mock_process_manager = MagicMock()
+        mock_tqm._process_manager = mock_process_manager
+
         mock_group = MagicMock()
         mock_group.add_host.return_value = None
 
@@ -313,10 +319,12 @@ class TestStrategyBase(unittest.TestCase):
             return False
 
         strategy_base._tqm.has_dead_workers.side_effect = _has_dead_workers
+        mock_process_manager.get_result.return_value = None
         results = strategy_base._wait_on_pending_results(iterator=mock_iterator)
         self.assertEqual(len(results), 0)
 
         task_result = TaskResult(host=mock_host.name, task=mock_task._uuid, return_data=dict(changed=True))
+        mock_process_manager.get_result.return_value = task_result
         queue_items.append(task_result)
         strategy_base._blocked_hosts['test01'] = True
         strategy_base._pending_results = 1
@@ -331,6 +339,7 @@ class TestStrategyBase(unittest.TestCase):
         }
 
         strategy_base._queued_task_cache = deepcopy(mock_queued_task_cache)
+        mock_process_manager.get_result.return_value = task_result
         results = strategy_base._wait_on_pending_results(iterator=mock_iterator)
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0], task_result)
@@ -338,6 +347,7 @@ class TestStrategyBase(unittest.TestCase):
         self.assertNotIn('test01', strategy_base._blocked_hosts)
 
         task_result = TaskResult(host=mock_host.name, task=mock_task._uuid, return_data='{"failed":true}')
+        mock_process_manager.get_result.return_value = task_result
         queue_items.append(task_result)
         strategy_base._blocked_hosts['test01'] = True
         strategy_base._pending_results = 1
@@ -353,6 +363,7 @@ class TestStrategyBase(unittest.TestCase):
         mock_iterator.is_failed.return_value = False
 
         task_result = TaskResult(host=mock_host.name, task=mock_task._uuid, return_data='{"unreachable": true}')
+        mock_process_manager.get_result.return_value = task_result
         queue_items.append(task_result)
         strategy_base._blocked_hosts['test01'] = True
         strategy_base._pending_results = 1
@@ -366,6 +377,7 @@ class TestStrategyBase(unittest.TestCase):
         del mock_tqm._unreachable_hosts['test01']
 
         task_result = TaskResult(host=mock_host.name, task=mock_task._uuid, return_data='{"skipped": true}')
+        mock_process_manager.get_result.return_value = task_result
         queue_items.append(task_result)
         strategy_base._blocked_hosts['test01'] = True
         strategy_base._pending_results = 1
@@ -376,6 +388,8 @@ class TestStrategyBase(unittest.TestCase):
         self.assertEqual(strategy_base._pending_results, 0)
         self.assertNotIn('test01', strategy_base._blocked_hosts)
 
+        task_result = TaskResult(host=mock_host.name, task=mock_task._uuid, return_data=dict(add_host=dict(host_name='newhost01', new_groups=['foo'])))
+        mock_process_manager.get_result.return_value = task_result
         queue_items.append(TaskResult(host=mock_host.name, task=mock_task._uuid, return_data=dict(add_host=dict(host_name='newhost01', new_groups=['foo']))))
         strategy_base._blocked_hosts['test01'] = True
         strategy_base._pending_results = 1
@@ -385,6 +399,8 @@ class TestStrategyBase(unittest.TestCase):
         self.assertEqual(strategy_base._pending_results, 0)
         self.assertNotIn('test01', strategy_base._blocked_hosts)
 
+        task_result = TaskResult(host=mock_host.name, task=mock_task._uuid, return_data=dict(add_group=dict(group_name='foo')))
+        mock_process_manager.get_result.return_value = task_result
         queue_items.append(TaskResult(host=mock_host.name, task=mock_task._uuid, return_data=dict(add_group=dict(group_name='foo'))))
         strategy_base._blocked_hosts['test01'] = True
         strategy_base._pending_results = 1
@@ -394,6 +410,8 @@ class TestStrategyBase(unittest.TestCase):
         self.assertEqual(strategy_base._pending_results, 0)
         self.assertNotIn('test01', strategy_base._blocked_hosts)
 
+        task_result = TaskResult(host=mock_host.name, task=mock_task._uuid, return_data=dict(changed=True, _ansible_notify=['test handler']))
+        mock_process_manager.get_result.return_value = task_result
         queue_items.append(TaskResult(host=mock_host.name, task=mock_task._uuid, return_data=dict(changed=True, _ansible_notify=['test handler'])))
         strategy_base._blocked_hosts['test01'] = True
         strategy_base._pending_results = 1
@@ -540,7 +558,7 @@ class TestStrategyBase(unittest.TestCase):
                 'task_vars': {},
                 'play_context': mock_play_context
             }
-            tqm._final_q.put(task_result)
+            tqm._process_manager.put_result(task_result)
 
             result = strategy_base.run_handlers(iterator=mock_iterator, play_context=mock_play_context)
         finally:

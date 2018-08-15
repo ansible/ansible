@@ -46,7 +46,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_shared_loader = MagicMock()
         new_stdin = None
         job_vars = dict()
-        mock_queue = MagicMock()
+        mock_process_manager = MagicMock()
         te = TaskExecutor(
             host=mock_host,
             task=mock_task,
@@ -55,7 +55,7 @@ class TestTaskExecutor(unittest.TestCase):
             new_stdin=new_stdin,
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
-            final_q=mock_queue,
+            process_manager=mock_process_manager,
         )
 
     def test_task_executor_run(self):
@@ -69,7 +69,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_play_context = MagicMock()
 
         mock_shared_loader = MagicMock()
-        mock_queue = MagicMock()
+        mock_process_manager = MagicMock()
 
         new_stdin = None
         job_vars = dict()
@@ -82,7 +82,7 @@ class TestTaskExecutor(unittest.TestCase):
             new_stdin=new_stdin,
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
-            final_q=mock_queue,
+            process_manager=mock_process_manager,
         )
 
         te._get_loop_items = MagicMock(return_value=None)
@@ -116,7 +116,7 @@ class TestTaskExecutor(unittest.TestCase):
 
         new_stdin = None
         job_vars = dict()
-        mock_queue = MagicMock()
+        mock_process_manager = MagicMock()
 
         te = TaskExecutor(
             host=mock_host,
@@ -126,7 +126,7 @@ class TestTaskExecutor(unittest.TestCase):
             new_stdin=new_stdin,
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
-            final_q=mock_queue,
+            process_manager=mock_process_manager,
         )
 
         items = te._get_loop_items()
@@ -149,7 +149,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_play_context = MagicMock()
 
         mock_shared_loader = MagicMock()
-        mock_queue = MagicMock()
+        mock_process_manager = MagicMock()
 
         new_stdin = None
         job_vars = dict()
@@ -162,7 +162,7 @@ class TestTaskExecutor(unittest.TestCase):
             new_stdin=new_stdin,
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
-            final_q=mock_queue,
+            process_manager=mock_process_manager,
         )
 
         def _execute(variables):
@@ -195,7 +195,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_play_context = MagicMock()
 
         mock_shared_loader = None
-        mock_queue = MagicMock()
+        mock_process_manager = MagicMock()
 
         new_stdin = None
         job_vars = dict(pkg_mgr='yum')
@@ -208,7 +208,7 @@ class TestTaskExecutor(unittest.TestCase):
             new_stdin=new_stdin,
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
-            final_q=mock_queue,
+            process_manager=mock_process_manager,
         )
 
         # No replacement
@@ -386,7 +386,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_connection._connect.return_value = None
 
         mock_action = MagicMock()
-        mock_queue = MagicMock()
+        mock_process_manager = MagicMock()
 
         shared_loader = None
         new_stdin = None
@@ -400,7 +400,7 @@ class TestTaskExecutor(unittest.TestCase):
             new_stdin=new_stdin,
             loader=fake_loader,
             shared_loader_obj=shared_loader,
-            final_q=mock_queue,
+            process_manager=mock_process_manager,
         )
 
         te._get_connection = MagicMock(return_value=mock_connection)
@@ -439,7 +439,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_connection = MagicMock()
 
         mock_action = MagicMock()
-        mock_queue = MagicMock()
+        mock_process_manager = MagicMock()
 
         shared_loader = MagicMock()
         shared_loader.action_loader = action_loader
@@ -455,7 +455,7 @@ class TestTaskExecutor(unittest.TestCase):
             new_stdin=new_stdin,
             loader=fake_loader,
             shared_loader_obj=shared_loader,
-            final_q=mock_queue,
+            process_manager=mock_process_manager,
         )
 
         te._connection = MagicMock()
