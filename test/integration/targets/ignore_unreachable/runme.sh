@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -eux
 
+export ANSIBLE_CONNECTION_PLUGINS=./fake_connectors
+# use fake connectors that raise srrors at different stages
+ansible-playbook test_with_bad_plugins.yml -i inventory -v "$@"
+unset ANSIBLE_CONNECTION_PLUGINS
+
 ansible-playbook test_cannot_connect.yml -i inventory -v "$@"
 
 if ansible-playbook test_base_cannot_connect.yml -i inventory -v "$@"; then
@@ -9,4 +14,3 @@ if ansible-playbook test_base_cannot_connect.yml -i inventory -v "$@"; then
 else
     echo "Connection to nonexistent hosts failed without using ignore_unreachable. Success!"
 fi
-
