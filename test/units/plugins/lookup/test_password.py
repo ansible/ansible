@@ -473,7 +473,7 @@ class TestLookupModule(unittest.TestCase):
             with patch.object(builtins, 'open', mock_open(read_data=b'hunter42 salt=87654321\n')) as m:
                 # should timeout here
                 results = self.password_lookup.run([u'/path/to/somewhere chars=anything'], None)
-                self.fail('Lookup didnt timeout when lock already been held, testcase failed')
+                self.fail("Lookup didn't timeout when lock already been held")
         except AnsibleError:
             pass
 
@@ -485,7 +485,7 @@ class TestLookupModule(unittest.TestCase):
                 # should not timeout here
                 results = self.password_lookup.run([u'/path/to/somewhere chars=anything'], None)
         except AnsibleError:
-            self.fail('Lookup timeouts when lock is free, testcase failed')
+            self.fail('Lookup timeouts when lock is free')
 
         for result in results:
             self.assertEqual(result, u'hunter42')
