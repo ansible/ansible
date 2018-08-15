@@ -181,6 +181,7 @@ class SunOSHardware(Hardware):
             vendors = [
                 "Fujitsu",
                 "Oracle Corporation",
+                "QEMU",
                 "Sun Microsystems",
                 "VMware, Inc.",
             ]
