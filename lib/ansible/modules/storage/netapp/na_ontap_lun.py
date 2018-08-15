@@ -98,6 +98,7 @@ options:
       not support this do not enable it.
     type: bool
     default: False
+    version_added: '2.7'
 
 '''
 
