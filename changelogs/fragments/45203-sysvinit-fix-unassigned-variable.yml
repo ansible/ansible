@@ -1,0 +1,2 @@
+bugfixes:
+- Fix referenced before assignment in sysvinit module
