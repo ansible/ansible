@@ -42,13 +42,19 @@ options:
     template_name:
         description:
             - Name of zabbix template.
-            - It isn't required if and only if template_json is defined for import.
+            - It isn't required if and only if template_content is defined for import.
         required: false
-    template_json:
+    template_content:
         description:
-            - JSON dump of template to import
+            - Content of the template to be added.
             - It is required in import conditions when template_name is ignored. 
         required: false
+    template_type:
+        description:
+            - The file format of the template to be imported.
+        required: false
+        choices: [json, xml]
+        default: "json"
     template_groups:
         description:
             - List of template groups to create or delete.
@@ -113,8 +119,8 @@ EXAMPLES = '''
     server_url: http://127.0.0.1
     login_user: username
     login_password: password
-    template_name: Apache2
-    template_json: "{{ lookup('file', 'zabbix_apache2.json') }}"
+    template_content: "{{ lookup('file', 'zabbix_apache2.json') }}"
+    template_type: json
     template_groups:
       - Webservers
     state: present
@@ -171,13 +177,14 @@ EXAMPLES = '''
     login_user: username
     login_password: password
     template_name: Template
+    template_type: xml
     state: dump
   register: template_dump
 '''
 
 RETURN = '''
-template_json:
-  description: The JSON dump of the template
+template_content:
+  description: The dump of the template
   returned: when state is dump
   type: string
   sample: {
@@ -204,12 +211,17 @@ template_json:
     }
 '''
 
-from distutils.version import LooseVersion
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
 import json
 import traceback
 
+import sys
+import xml.etree.ElementTree as ET
+from tempfile import NamedTemporaryFile
+import subprocess
+
+from distutils.version import LooseVersion
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 try:
     from zabbix_api import ZabbixAPI, ZabbixAPIException
@@ -220,16 +232,19 @@ except ImportError:
 
 
 class Template(object):
+
     def __init__(self, module, zbx):
         self._module = module
         self._zapi = zbx
+        self._important_configuration_keys = {'graphs', 'templates', 'triggers', 'value_maps'}
 
     # check if host group exists
     def check_host_group_exist(self, group_names):
         for group_name in group_names:
             result = self._zapi.hostgroup.get({'filter': {'name': group_name}})
             if not result:
-                self._module.fail_json(msg="Hostgroup not found: %s" % group_name)
+                self._module.fail_json(msg="HostGroup not found: %s" %
+                                       group_name)
         return True
 
     # get group ids by group names
@@ -261,8 +276,7 @@ class Template(object):
                 template_ids.append(template_id)
         return template_ids
 
-    def add_template(self, template_name, group_ids,
-                     child_template_ids, macros):
+    def add_template(self, template_name, template_content, template_type, group_ids, child_template_ids, macros):
         if self._module.check_mode:
             self._module.exit_json(changed=True)
         self._zapi.template.create({'host': template_name,
@@ -270,30 +284,36 @@ class Template(object):
                                     'templates': child_template_ids,
                                     'macros': macros})
 
-    def update_template(self, templateids, template_json_to_import,
+        self.import_template(template_content, template_type)
+
+    def update_template(self, templateids, input_template, template_type,
                         group_ids, child_template_ids,
                         clear_template_ids, macros,
-                        existing_template_json=None):
+                        existing_template=None):
         changed = False
         template_changes = {}
         if group_ids is not None:
             template_changes.update({'groups': group_ids})
             changed = True
-
         if child_template_ids is not None:
             template_changes.update({'templates': child_template_ids})
             changed = True
-
         if macros is not None:
             template_changes.update({'macros': macros})
             changed = True
-
         do_import = False
-        if template_json_to_import:
-            parsed_template_json_to_import = self.load_json_template(template_json_to_import)
-            if self.diff_template(parsed_template_json_to_import, existing_template_json):
-                do_import = True
-                changed = True
+        if input_template:
+            if template_type == 'json':
+                parsed_template_json = self.load_json_template(input_template)
+                if self.diff_json_template(parsed_template_json, existing_template):
+                    do_import = True
+                    changed = True
+            else:
+                a = self.diff_xml_template(input_template, existing_template)
+                # self._module.fail_json(msg=str(a))
+                if self.diff_xml_template(input_template, existing_template):
+                    do_import = True
+                    changed = True
 
         if self._module.check_mode:
             self._module.exit_json(changed=changed)
@@ -306,7 +326,7 @@ class Template(object):
             self._zapi.template.update(template_changes)
 
         if do_import:
-            self.import_template(template_json_to_import)
+            self.import_template(input_template, template_type)
 
         return changed
 
@@ -324,31 +344,33 @@ class Template(object):
         else:
             return obj
 
-    def dump_template(self, template_ids):
+    def dump_template(self, template_ids, template_type):
         if self._module.check_mode:
             self._module.exit_json(changed=True)
         try:
             dump = self._zapi.configuration.export({
-                'format': 'json',
+                'format': template_type,
                 'options': {'templates': template_ids}
             })
-            return self.load_json_template(dump)
+
+            if template_type == 'json':
+                return self.load_json_template(dump)
+            return dump
+
         except ZabbixAPIException as e:
             self._module.fail_json(msg='Unable to export template: %s' % e)
 
-    def diff_template(self, template_json_a, template_json_b):
-        # Compare 2 zabbix templates and return True if they don't have the same content.
-        template_json_a = self.filter_template(template_json_a)
-        template_json_b = self.filter_template(template_json_b)
-
+    def diff_json_template(self, template_json_a, template_json_b):
+        # Compare 2 zabbix templates and return True if they differ.
+        template_json_a = self.get_filtered_json(template_json_a)
+        template_json_b = self.get_filtered_json(template_json_b)
         if self.ordered_json(template_json_a) == self.ordered_json(template_json_b):
             return False
         return True
 
-    def filter_template(self, template_json):
+    def get_filtered_json(self, template_json):
         # Filter the template json to contain only the keys we will update
-        keep_keys = set(['graphs', 'templates', 'triggers', 'value_maps'])
-        unwanted_keys = set(template_json['zabbix_export']) - keep_keys
+        unwanted_keys = set(template_json['zabbix_export']) - self._important_configuration_keys
         for unwanted_key in unwanted_keys:
             del template_json['zabbix_export'][unwanted_key]
         return template_json
@@ -363,8 +385,88 @@ class Template(object):
                 exception=traceback.format_exc()
             )
 
-    def import_template(self, template_json):
-        # Rules schema latest version
+    @staticmethod
+    def xml_attribute_to_str(k, v):
+        return "{}=\"{}\"".format(k, v)
+
+    def xml_node_to_str(self, n):
+        attrs = sorted(n.attrib.items())
+        astr = " ".join(self.xml_attribute_to_str(k, v) for k, v in attrs)
+        s = n.tag
+        if astr:
+            s += " " + astr
+        return s
+
+    def node_key(self, n):
+        return self.xml_node_to_str(n)
+
+    @staticmethod
+    def indent(s, level):
+        return "  " * level + s
+
+    def write_sorted(self, stream, node, level=0):
+        children = node.getchildren()
+        text = (node.text or "").strip()
+        tail = (node.tail or "").strip()
+
+        if children or text:
+            children.sort(key=self.node_key)
+
+            stream.write(self.indent("<" + self.xml_node_to_str(node) + ">\n", level))
+
+            if text:
+                stream.write(self.indent(text + "\n", level))
+
+            for child in children:
+                self.write_sorted(stream, child, level + 1)
+
+            stream.write(self.indent("</" + node.tag + ">\n", level))
+        else:
+            stream.write(self.indent("<" + self.xml_node_to_str(node) + "/>\n", level))
+
+        if tail:
+            stream.write(self.indent(tail + "\n", level))
+
+    if sys.version_info < (3, 0):
+        # Python 2
+        import codecs
+
+        def unicode_writer(self, fp):
+            return self.codecs.getwriter('utf-8')(fp)
+    else:
+        # Python 3
+        @staticmethod
+        def unicode_writer(fp):
+            return fp
+
+    def get_filtered_xml(self, input_xml_template):
+        input_xml_template = input_xml_template.replace("\n", "").replace("\t", "").strip()
+        root = ET.fromstring(input_xml_template)
+
+        # Removing unimportant tags from xml.
+        for child in root[:]:
+            if child.tag not in self._important_configuration_keys:
+                root.remove(child)
+
+        return root
+
+    def diff_xml_template(self, input_xml_template, existing_template, diffargs=["-u"]):
+        tmp1 = self.unicode_writer(NamedTemporaryFile('w', delete=False))
+        self.write_sorted(tmp1, self.get_filtered_xml(input_xml_template))
+        tmp1.flush()
+
+        tmp2 = self.unicode_writer(NamedTemporaryFile('w', delete=False))
+        self.write_sorted(tmp2, self.get_filtered_xml(existing_template))
+        tmp2.flush()
+
+        args = ["diff"]
+        args += diffargs
+        args += [tmp1.name, tmp2.name]
+
+        return subprocess.call(args)
+
+    def import_template(self, template_content, template_type):
+        # rules schema latest version
         update_rules = {
             'applications': {
                 'createMissing': True,
@@ -411,20 +513,21 @@ class Template(object):
         }
 
         try:
-            # Old api version support here
+            # old api version support here
             api_version = self._zapi.api_version()
-            # UpdateExisting for application removed from zabbix api after 3.2
+            # updateExisting for application removed from zabbix api after 3.2
             if LooseVersion(api_version).version[:2] <= LooseVersion(
                     '3.2').version:
                 update_rules['applications']['updateExisting'] = True
+
             self._zapi.configuration.import_({
-                'format': 'json',
-                'source': template_json,
+                'format': template_type,
+                'source': template_content,
                 'rules': update_rules
             })
         except ZabbixAPIException as e:
             self._module.fail_json(
-                msg='Unable to import JSON template',
+                msg='Unable to import template',
                 details=to_native(e),
                 exception=traceback.format_exc()
             )
@@ -441,7 +544,8 @@ def main():
                                      default=None, no_log=True),
             validate_certs=dict(type='bool', required=False, default=True),
             template_name=dict(type='str', required=False),
-            template_json=dict(type='json', required=False),
+            template_content=dict(type='str', required=False),
+            template_type=dict(type='str', required=False, default="json", choices=['json', 'xml']),
             template_groups=dict(type='list', required=False),
             link_templates=dict(type='list', required=False),
             clear_templates=dict(type='list', required=False),
@@ -465,7 +569,8 @@ def main():
     http_login_password = module.params['http_login_password']
     validate_certs = module.params['validate_certs']
     template_name = module.params['template_name']
-    template_json = module.params['template_json']
+    template_content = module.params['template_content']
+    template_type = module.params['template_type']
     template_groups = module.params['template_groups']
     link_templates = module.params['link_templates']
     clear_templates = module.params['clear_templates']
@@ -487,19 +592,37 @@ def main():
 
     # Taking the name of template.
     if template_name is None:
-        if template_json is None:
-            module.fail_json(msg="Missing template name or template_json which defines template's name")
+        if template_content is None:
+            module.fail_json(msg="Missing template name or template_content")
         else:
-            template_name = template.load_json_template(template_json)["zabbix_export"]['templates'][0]['template']
+            if template_type is None:
+                module.fail_json(msg="Missing template type: it could be json or xml ")
+            elif template_type == 'json':
+                template_name = \
+                    template.load_json_template(template_content)["zabbix_export"]['templates'][0]['template']
+            elif template_type == 'xml':
+                root = ET.fromstring(template_content)
+                for child in root:
+                    if child.tag == 'templates':
+                        root = child
+                for child in root:
+                    if child.tag == 'template':
+                        root = child
+                for child in root:
+                    if child.tag == 'name':
+                        template_name = child.text
 
     template_ids = template.get_template_ids([template_name])
+    existing_template = None
+    if template_ids:
+        existing_template = template.dump_template(template_ids, template_type)
     existing_template_json = None
     if template_ids:
-        existing_template_json = template.dump_template(template_ids)
+        existing_template_json = template.dump_template(template_ids, 'json')
 
     # Delete template
     if state == "absent":
-        # If template not found. no change, no fail
+        # if template not found. no change, no fail
         if not template_ids:
             module.exit_json(changed=False,
                              msg="Template not found. " +
@@ -512,7 +635,7 @@ def main():
     elif state == "dump":
         if not template_ids:
             module.fail_json(msg='Template not found: %s' % template_name)
-        module.exit_json(changed=False, template_json=existing_template_json)
+        module.exit_json(changed=False, template_content=existing_template)
 
     elif state == "present":
         child_template_ids = None
@@ -528,8 +651,8 @@ def main():
             # If the template exists, compare the already set groups
             existing_groups = None
             if existing_template_json:
-                existing_groups = set(list(group['name'] for group in
-                                           existing_template_json['zabbix_export']['groups']))
+                existing_groups = \
+                    set(list(group['name'] for group in existing_template_json['zabbix_export']['groups']))
             if not existing_groups or set(template_groups) != existing_groups:
                 group_ids = template.get_group_ids_by_group_names(template_groups)
 
@@ -542,19 +665,19 @@ def main():
                 macros = template_macros
 
         if not template_ids:
-            if template_json:
-                template.import_template(template_json)
+            if template_content:
+                template.add_template(template_name, template_content, template_type, group_ids,
+                                      child_template_ids, macros)
+                module.exit_json(changed=True,
+                                 result="Successfully added template: %s" %
+                                 template_name)
 
-            else:
-                template.add_template(template_name, group_ids, child_template_ids, macros)
-
-            module.exit_json(changed=True,
-                             result="Successfully added template: %s" % template_name)
         else:
-            changed = template.update_template(template_ids[0], template_json,
+            changed = template.update_template(template_ids[0], template_content, template_type,
                                                group_ids, child_template_ids,
                                                clear_template_ids, macros,
-                                               existing_template_json)
+                                               existing_template)
+
             module.exit_json(changed=changed,
                              result="Successfully updated template: %s" %
                              template_name)
