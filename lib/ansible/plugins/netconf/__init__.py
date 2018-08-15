@@ -111,8 +111,6 @@ class NetconfBase(AnsiblePlugin):
         :param name: Name of rpc in string format
         :return: Received rpc response from remote host
         """
-        """RPC to be execute on remote device
-           :name: Name of rpc in string format"""
         try:
             obj = to_ele(name)
             resp = self.m.rpc(obj)
