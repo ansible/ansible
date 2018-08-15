@@ -41,6 +41,11 @@
 
 
 - block:
+  - name: Ensure ssh key is not world readable
+    file:
+      path: "{{ role_path }}/files/test_rsa"
+      mode: 0600
+
   - name: Create user with sshkey
     ios_user:
       name: ssh_user
@@ -51,7 +56,7 @@
       sshkey: "{{ lookup('file', 'files/test_rsa.pub') }}"
 
   - name: test sshkey login
-    shell: "ssh ssh_user@{{ ansible_ssh_host }} -p {{ ansible_ssh_port|default(22) }} -o IdentityFile={{ role_path }}/files/test_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o PubkeyAuthentication=yes show version"
+    shell: "ssh ssh_user@{{ ansible_ssh_host }} -p {{ ansible_ssh_port|default(22) }} -o IdentityFile={{ role_path }}/files/test_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o BatchMode=yes -o PubkeyAuthentication=yes show version"
 
   - name: test login without sshkey (should fail)
     expect:
