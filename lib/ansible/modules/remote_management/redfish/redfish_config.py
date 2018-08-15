@@ -19,6 +19,8 @@ short_description: Manages Out-Of-Band controllers using Redfish APIs
 description:
   - Builds Redfish URIs locally and sends them to remote OOB controllers to
     set or update a configuration attribute.
+  - Manages BIOS configuration settings
+  - Manages OOB controller configuration settings
 options:
   category:
     required: true
