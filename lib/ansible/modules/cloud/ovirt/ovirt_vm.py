@@ -251,13 +251,7 @@ options:
     host_devices:
         description:
             - Single Root I/O Virtualization - technology that allows single device to expose multiple endpoints that can be passed to VMs
-            - PF - Physical Function - refers to a physical device (possibly supporting SR-IOV)
-            - VF - Virtual Function - virtual function exposed by SR-IOV capable device
-            - "IOMMU group - unit of isolation created by the kernel IOMMU driver.
-            Each IOMMU group is isolated from other IOMMU groups with respect to DMA. For our purposes,
-            IOMMU groups are a set of PCI devices which may span multiple PCI buses."
-            - VFIO[2] - Virtual Function I/O - virtualization device driver, replacement of the pci-stub driver
-            - mdev - mediated devices - devices that are capable of creating and assigning device instances to a VMs (similar to SR-IOV)
+            - host_devices is an list which contain dictinary with name and state of device
         version_added: "2.7"
     delete_protected:
         description:
@@ -864,6 +858,7 @@ EXAMPLES = '''
         - spice
         - vnc
 
+<<<<<<< HEAD:lib/ansible/modules/cloud/ovirt/ovirt_vm.py
 # Execute remote viever to VM
 - block:
   - name: Create a ticket for console for a running VM
@@ -891,6 +886,20 @@ EXAMPLES = '''
       state: absent
     - name: pci_0000_00_08_0
       state: present
+=======
+# Default value of host_device state is present
+- name: Attach host devices to virtual machine
+  ovirt_vm:
+    name: myvm
+    host: myhost
+    placement_policy: pinned
+    host_devices:
+      - name: pci_0000_00_06_0
+      - name: pci_0000_00_07_0
+        state: absent
+      - name: pci_0000_00_08_0
+        state: present
+>>>>>>> update docs:lib/ansible/modules/cloud/ovirt/ovirt_vms.py
 
 '''
 
