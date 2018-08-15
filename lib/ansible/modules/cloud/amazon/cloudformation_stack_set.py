@@ -59,6 +59,12 @@ options:
       - If 'state' is 'present' and the stack does not exist yet, either 'template', 'template_body' or 'template_url'
         must be specified (but only one of them). If 'state' is present, the stack does exist, and neither 'template',
         'template_body' nor 'template_url' are specified, the previous template will be reused.
+  purge_stacks:
+    description:
+    - Only applicable when I(state=absent). Sets whether, when deleting a stack set, the stack instances should also be deleted. By default, instances will be deleted.
+    - Set to 'no' or 'false' to keep stacks when stack set is deleted.
+    type: bool
+    default: true
   wait:
     description:
     - Whether or not to wait for stack operation to complete. This includes waiting for stack instances to reach UPDATE_COMPLETE status.
@@ -627,9 +633,9 @@ def main():
                 StackSetName=module.params['name'],
             )
             module.exit_json(msg='Stack set {0} deleted'.format(module.params['name']))
-        except is_boto3_error_code('OperationInProgressException') as e:
+        except is_boto3_error_code('OperationInProgressException') as e:  # pylint: disable=duplicate-except
             module.fail_json_aws(e, msg='Cannot delete stack {0} while there is an operation in progress'.format(module.params['name']))
-        except is_boto3_error_code('StackSetNotEmptyException'):
+        except is_boto3_error_code('StackSetNotEmptyException'):  # pylint: disable=duplicate-except
             delete_instances_op = 'Ansible-StackInstance-Delete-{0}'.format(operation_uuid)
             cfn.delete_stack_instances(
                 StackSetName=module.params['name'],
@@ -647,7 +653,7 @@ def main():
                 cfn.delete_stack_set(
                     StackSetName=module.params['name'],
                 )
-            except is_boto3_error_code('StackSetNotEmptyException') as exc:
+            except is_boto3_error_code('StackSetNotEmptyException') as exc:  # pylint: disable=duplicate-except
                 # this time, it is likely that either the delete failed or there are more stacks.
                 instances = cfn.list_stack_instances(
                     StackSetName=module.params['name'],
