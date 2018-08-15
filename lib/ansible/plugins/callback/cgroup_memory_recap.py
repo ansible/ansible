@@ -36,27 +36,29 @@ DOCUMENTATION = '''
         ini:
           - section: callback_cgroup_perf_recap
             key: control_group
-      csv_file:
-        description: Output path for CSV file containing recorded memory readings
+      csv_output_dir:
+        description: Output path for CSV file containing recorded memory readings. If the value contains a single %s,
+                     the start time of the playbook run will be inserted in that space
         env:
-          - name: CGROUP_CSV_FILE
+          - name: CGROUP_CSV_OUTPUT_DIR
         ini:
           - section: callback_cgroup_perf_recap
-            key: csv_file
-      features:
-        description: Enable specific profiling features
-        default:
-          - memory
-          - cpu
-        type: list
+            key: csv_output_dir
+      cpu_poll_interval:
+        description: Interval between CPU polling for determining CPU usage. A lower value may produce inaccurate
+                     results, a higher value may not be short enough to collect results for short tasks.
+        default: 0.25
+        type: float
         env:
-          - name: CGROUP_FEATURES
+          - name: CGROUP_CPU_POLL_INTERVAL
         ini:
           - section: callback_cgroup_perf_recap
-            key: features
+            key: cpu_poll_interval
 '''
 
 import csv
+import datetime
+import os
 import time
 import threading
 
@@ -80,28 +82,41 @@ class MemProf(threading.Thread):
                 val = f.read()
             self.results.append(int(val.strip()) / 1024 / 1024)
             if self.csvwriter:
-                self.csvwriter.writerow([time.time(), self.obj.get_name(), val.strip()])
+                try:
+                    self.csvwriter.writerow([time.time(), self.obj.get_name(), val.strip()])
+                except ValueError:
+                    # We may be profiling after the playbook has ended
+                    break
             time.sleep(0.001)
 
 
 class CpuProf(threading.Thread):
-    def __init__(self, path, obj=None):
+    def __init__(self, path, poll_interval=0.25, obj=None, csvwriter=None):
         threading.Thread.__init__(self)
         self.obj = obj
         self.path = path
         self.results = []
         self.running = True
+        self.csvwriter = csvwriter
+        self._poll_interval = poll_interval
 
     def run(self):
         while self.running:
             with open(self.path) as f:
                 start_time = time.time() * 1000**2
                 start_usage = int(f.read().strip()) / 1000
-            time.sleep(0.1)
+            time.sleep(self._poll_interval)
             with open(self.path) as f:
                 end_time = time.time() * 1000**2
                 end_usage = int(f.read().strip()) / 1000
-            self.results.append((end_usage - start_usage) / (end_time - start_time) * 100)
+            val = (end_usage - start_usage) / (end_time - start_time) * 100
+            self.results.append(val)
+            if self.csvwriter:
+                try:
+                    self.csvwriter.writerow([time.time(), self.obj.get_name(), val])
+                except ValueError:
+                    # We may be profiling after the playbook has ended
+                    break
 
 
 class CallbackModule(CallbackBase):
@@ -116,16 +131,20 @@ class CallbackModule(CallbackBase):
         self._task_memprof = None
         self._task_cpuprof = None
 
+        self._features = ('memory', 'cpu')
+
         self.task_results = {
             'memory': [],
             'cpu': [],
         }
 
-        self._csv_file = None
-        self._csv_writer = None
+        self._csv_files = dict.fromkeys(self._features)
+        self._csv_writers = dict.fromkeys(self._features)
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
         super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+
+        self._cpu_poll_interval = self.get_option('cpu_poll_interval')
 
         self.control_group = to_bytes(self.get_option('control_group'), errors='surrogate_or_strict')
         self.mem_max_file = b'/sys/fs/cgroup/memory/%s/memory.max_usage_in_bytes' % self.control_group
@@ -153,10 +172,28 @@ class CallbackModule(CallbackBase):
             self.disabled = True
             return
 
-        csv_file = self.get_option('csv_file')
-        if csv_file:
-            self._csv_file = open(csv_file, 'w+')
-            self._csv_writer = csv.writer(self._csv_file)
+        try:
+            with open(self.cpu_usage_file, 'w+') as f:
+                f.write('0')
+        except Exception as e:
+            self._display.warning(
+                u'Unable to reset CPU usage value in %s: %s' % (to_text(self.cpu_usage_file), to_text(e))
+            )
+            self.disabled = True
+            return
+
+        csv_output_dir = self.get_option('csv_output_dir')
+        try:
+            csv_output_dir %= datetime.datetime.now().isoformat()
+        except TypeError:
+            pass
+
+        if csv_output_dir:
+            if not os.path.exists(csv_output_dir):
+                os.mkdir(csv_output_dir)
+            for feature in self._features:
+                self._csv_files[feature] = open(os.path.join(csv_output_dir, '%s.csv' % feature), 'w+')
+                self._csv_writers[feature] = csv.writer(self._csv_files[feature])
 
     def _profile(self, obj=None):
         prev_task = None
@@ -172,9 +209,10 @@ class CallbackModule(CallbackBase):
             pass
 
         if obj is not None:
-            self._task_memprof = MemProf(self.mem_current_file, obj=obj, csvwriter=self._csv_writer)
+            self._task_memprof = MemProf(self.mem_current_file, obj=obj, csvwriter=self._csv_writers['memory'])
             self._task_memprof.start()
-            self._task_cpuprof = CpuProf(self.cpu_usage_file, obj=obj)
+            self._task_cpuprof = CpuProf(self.cpu_usage_file, poll_interval=self._cpu_poll_interval, obj=obj,
+                                         csvwriter=self._csv_writers['cpu'])
             self._task_cpuprof.start()
 
         if mem is not None:
@@ -213,8 +251,8 @@ class CallbackModule(CallbackBase):
         for task, cpu in self.task_results['cpu']:
             self._display.display('%s (%s): %0.2f%%' % (task.get_name(), task._uuid, cpu))
 
-        if self._csv_file:
+        for dummy, f in self._csv_files.items():
             try:
-                self._csv_file.close()
+                f.close()
             except Exception:
                 pass
