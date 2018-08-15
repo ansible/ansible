@@ -106,48 +106,52 @@ azure_webapps:
             return: always
             type: complex
     example: [{
-        app_settings:
-          testkey: testvalue
-        frameworks:
-          - name: net_framework
-            version: v4.0
-          - name: node
-            version: '6.6'
-        id: /subscriptions/xxxx/resourceGroups/ansiblewebapp1/providers/Microsoft.Web/sites/ansiblewindows
-        location: East US
-        name: ansiblewindows
-        plan: /subscriptions/xxxx/resourceGroups/appserviceplan_test/providers/Microsoft.Web/serverfarms/linux_appplan1
-        properties:
-          availabilityState: Normal
-          clientAffinityEnabled: true
-          clientCertEnabled: false
-          containerSize: 0
-          dailyMemoryTimeQuota: 0
-          defaultHostName: ansiblewindows.azurewebsites.net
-          enabled: true
-          enabledHostNames:
-          - ansiblewindows.azurewebsites.net
-          - ansiblewindows.scm.azurewebsites.net
-          hostNameSslStates:
-          - hostType: Standard
-            name: ansiblewindows.azurewebsites.net
-            sslState: Disabled
-          - hostType: Repository
-            name: ansiblewindows.scm.azurewebsites.net
-            sslState: Disabled
-          hostNames:
-          - ansiblewindows.azurewebsites.net
-          hostNamesDisabled: false
-          lastModifiedTimeUtc: '2018-08-14T03:04:07.613333Z'
-          outboundIpAddresses: 13.92.237.218,13.82.169.160,52.168.4.130,13.82.171.2,13.82.169.153
-          repositorySiteName: ansiblewindows
-          reserved: true
-          resourceGroup: ansiblewebapp1
-          scmSiteAlsoStopped: false
-          serverFarmId: /subscriptions/xxxx/resourceGroups/appserviceplan_test/providers/Microsoft.Web/serverfarms/linux_appplan1
-          state: Running
-          usageState: Normal
-        resource_group: ansiblewebapp1
+		"app_settings": {
+			"testkey": "testvalue"
+		},
+		"id": "/subscriptions/xxxx/resourceGroups/ansiblewebapp1/providers/Microsoft.Web/sites/ansiblewindows",
+		"location": "East US",
+		"name": "ansiblewindows",
+		"plan": "/subscriptions/xxxx/resourceGroups/appserviceplan_test/providers/Microsoft.Web/serverfarms/linux_appplan1",
+		"properties": {
+			"availabilityState": "Normal",
+			"clientAffinityEnabled": true,
+			"clientCertEnabled": false,
+			"containerSize": 0,
+			"dailyMemoryTimeQuota": 0,
+			"defaultHostName": "ansiblewindows.azurewebsites.net",
+			"enabled": true,
+			"enabledHostNames": [
+				"ansiblewindows.azurewebsites.net",
+				"ansiblewindows.scm.azurewebsites.net"
+			],
+			"hostNameSslStates": [
+				{
+					"hostType": "Standard",
+					"name": "ansiblewindows.azurewebsites.net",
+					"sslState": "Disabled"
+				},
+				{
+					"hostType": "Repository",
+					"name": "ansiblewindows.scm.azurewebsites.net",
+					"sslState": "Disabled"
+				}
+			],
+			"hostNames": [
+				"ansiblewindows.azurewebsites.net"
+			],
+			"hostNamesDisabled": false,
+			"lastModifiedTimeUtc": "2018-08-14T03:04:07.613333Z",
+			"outboundIpAddresses": "13.92.237.218,13.82.169.160,52.168.4.130,13.82.171.2,13.82.169.153",
+			"repositorySiteName": "ansiblewindows",
+			"reserved": true,
+			"resourceGroup": "ansiblewebapp1",
+			"scmSiteAlsoStopped": false,
+			"serverFarmId": "/subscriptions/xxxx/resourceGroups/appserviceplan_test/providers/Microsoft.Web/serverfarms/linux_appplan1",
+			"state": "Running",
+			"usageState": "Normal"
+		},
+		"resource_group": "ansiblewebapp1"
     }]
 '''
 try:
