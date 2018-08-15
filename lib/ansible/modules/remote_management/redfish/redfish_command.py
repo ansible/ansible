@@ -19,6 +19,9 @@ short_description: Manages Out-Of-Band controllers using Redfish APIs
 description:
   - Builds Redfish URIs locally and sends them to remote OOB controllers to
     perform an action.
+  - Manages OOB controller: Reboot, log management
+  - Manages OOB controller users: add, remove, update user properties and status
+  - Manages system power: Power on/off, graceful and forced reboot
 options:
   category:
     required: true
