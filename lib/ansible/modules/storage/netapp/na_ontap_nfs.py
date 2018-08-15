@@ -43,6 +43,7 @@ options:
     description:
     - status of if NFSv3 clients see change in FSID as they traverse filesystems.
     choices: ['enabled', 'disabled']
+    version_added: '2.7'
   nfsv4:
     description:
     - status of nfsv4.
@@ -63,26 +64,32 @@ options:
     description:
     - status of NFS v4.0 ACL feature
     choices: ['enabled', 'disabled']
+    version_added: '2.7'
   nfsv40_read_delegation:
     description:
     - status for NFS v4.0 read delegation feature.
     choices: ['enabled', 'disabled']
+    version_added: '2.7'
   nfsv40_write_delegation:
     description:
     - status for NFS v4.0 write delegation feature.
     choices: ['enabled', 'disabled']
+    version_added: '2.7'
   nfsv41_acl:
     description:
     - status of NFS v4.1 ACL feature
     choices: ['enabled', 'disabled']
+    version_added: '2.7'
   nfsv41_read_delegation:
     description:
     - status for NFS v4.1 read delegation feature.
     choices: ['enabled', 'disabled']
+    version_added: '2.7'
   nfsv41_write_delegation:
     description:
     - status for NFS v4.1 write delegation feature.
     choices: ['enabled', 'disabled']
+    version_added: '2.7'
   tcp:
     description:
     - Enable TCP (support from ONTAP 9.3 onward).
@@ -95,6 +102,7 @@ options:
     description:
     - status for if SVM allows showmount
     choices: ['enabled', 'disabled']
+    version_added: '2.7'
 
 """
 
