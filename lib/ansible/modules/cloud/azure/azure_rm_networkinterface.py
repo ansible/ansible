@@ -414,7 +414,7 @@ def nic_to_dict(nic):
         provisioning_state=nic.provisioning_state,
         etag=nic.etag,
         enable_accelerated_networking=nic.enable_accelerated_networking,
-        dns_servers=nic.dns_servers,
+        dns_servers=nic.dns_settings.dns_servers,
     )
 
 
@@ -648,7 +648,6 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                     ip_configurations=nic_ip_configurations,
                     enable_accelerated_networking=self.enable_accelerated_networking,
                     enable_ip_forwarding=self.enable_ip_forwarding,
-                    dns_server=self.dns_servers,
                     network_security_group=nsg
                 )
                 if self.dns_servers:
