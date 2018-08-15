@@ -40,7 +40,7 @@ options:
   snapmirror_label:
     description:
       - A human readable SnapMirror label to be attached with the consistency group snapshot copies.
-version_added: "2.6"
+version_added: "2.7"
 
 '''
 
