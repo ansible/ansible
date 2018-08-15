@@ -22,6 +22,7 @@ __metaclass__ = type
 import multiprocessing
 import os
 import tempfile
+import threading
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -343,7 +344,7 @@ class TaskQueueManager:
                     defunct = True
         return defunct
 
-    def send_callback(self, method_name, *args, **kwargs):
+    def _send_callback(self, method_name, *args, **kwargs):
         for callback_plugin in [self._stdout_callback] + self._callback_plugins:
             # a plugin that set self.disabled to True will not be called
             # see osx_say.py example for such a plugin
@@ -379,3 +380,7 @@ class TaskQueueManager:
                     from traceback import format_tb
                     from sys import exc_info
                     display.vvv('Callback Exception: \n' + ' '.join(format_tb(exc_info()[2])))
+
+    def send_callback(self, method_name, *args, **kwargs):
+        args = (method_name,) + args
+        threading.Thread(target=self._send_callback, args=args, kwargs=kwargs).start()
