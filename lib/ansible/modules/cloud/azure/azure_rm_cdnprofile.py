@@ -13,6 +13,41 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
+module: azure_rm_cdnprofile
+version_added: "2.7"
+short_description: Manage a CDN profile.
+description:
+    - Create, update and delete a CDN profile.
+
+options:
+    resource_group:
+        description:
+            - Name of a resource group where the CDN profile exists or will be created.
+        required: true
+    name:
+        description:
+            - Name of the CDN profile.
+        required: true
+    state:
+        description:
+            - Assert the state of the CDN profile. Use C(present) to create or update a CDN profile and C(absent) to delete it.
+        default: present
+        choices:
+            - absent
+            - present
+    location:
+        description:
+            - Valid azure location. Defaults to location of the resource group.
+    sku:
+        description:
+            - The pricing tier (defines a CDN provider, feature list and rate) of the CDN profile.
+            - Detailed pricing can be find at https://azure.microsoft.com/en-us/pricing/details/cdn/
+        choices:
+            - Standard_Verizon
+            - Premium_Verizon
+            - Custom_Verizon
+            - Standard_Akamai
+            - Standard_ChinaCdn
 
 extends_documentation_fragment:
     - azure
@@ -20,12 +55,39 @@ extends_documentation_fragment:
 
 author:
     - "Hai Cao <t-haicao@microsoft.com>"
-
 '''
 
 EXAMPLES = '''
+    - name: Create a CDN profile
+      azure_rm_cdnprofile:
+          resource_group: Testing
+          name: cdntest
+          sku: Standard_Akamai
+          tags:
+              testing: testing
+
+    - name: Delete the CDN profile
+      azure_rm_cdnprofile:
+        resource_group: Testing
+        name: cdntest
+        state: absent
 '''
 RETURN = '''
+state:
+    description: Current state of the CDN profile
+    returned: always
+    type: dict
+    example:
+            id: /subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourcegroups/cdntest/providers/Microsoft.Cdn/profiles/cdntest
+            location: WestUs
+            name: cdntest
+            provisioning_state: Succeeded
+            resource_state: Active
+            sku: Standard_Akamai
+            tags: {
+                Environment: Test
+            },
+            type: Microsoft.Cdn/profiles
 '''
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
