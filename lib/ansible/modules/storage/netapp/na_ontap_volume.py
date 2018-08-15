@@ -46,6 +46,7 @@ options:
   from_name:
     description:
     - Name of the existing volume to be renamed to name.
+    version_added: '2.7'
 
   is_infinite:
     type: bool
@@ -106,10 +107,12 @@ options:
     description:
     - Whether or not to enable Volume Encryption.
     default: False
+    version_added: '2.7'
 
   efficiency_policy:
     description:
     - Allows a storage efficiency policy to be set on volume creation.
+    version_added: '2.7'
 
 '''
 
