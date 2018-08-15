@@ -51,7 +51,7 @@ class StrategyModule(StrategyBase):
 
     def __init__(self, tqm):
         super(StrategyModule, self).__init__(tqm)
-        self._streamlined_per_host = False
+        self._host_pinned = False
 
     def run(self, iterator, play_context):
         '''
@@ -173,7 +173,7 @@ class StrategyModule(StrategyBase):
 
                 # all workers have tasks to do (and the current host isn't done with the play).
                 # loop back to starting host and break out
-                if self._streamlined_per_host and workers_free == 0 and work_to_do:
+                if self._host_pinned and workers_free == 0 and work_to_do:
                     last_host = starting_host
                     break
 
