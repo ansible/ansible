@@ -64,6 +64,7 @@ options:
     description:
     - The Organizational Unit (OU) within the Windows Active Directory
       this CIFS server belongs to.
+    version_added: '2.7'
 
   force:
     type: bool
@@ -71,6 +72,7 @@ options:
     - If this is set and a machine account with the same name as
       specified in 'cifs_server_name' exists in the Active Directory, it
       will be overwritten and reused.
+    version_added: '2.7'
 
   vserver:
     description:
