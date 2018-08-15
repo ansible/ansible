@@ -584,6 +584,7 @@ class AzureRMWebApps(AzureRMModuleBase):
 
                 to_be_updated = True
                 self.to_do = Actions.CreateOrUpdate
+                self.site.tags = self.tags
 
                 # service plan is required for creation
                 if not self.plan:
@@ -620,7 +621,7 @@ class AzureRMWebApps(AzureRMModuleBase):
 
                 self.log('Result: {0}'.format(old_response))
 
-                update_tags, old_response['tags'] = self.update_tags(old_response.get('tags', dict()))
+                update_tags, self.site.tags = self.update_tags(old_response.get('tags', None))
 
                 if update_tags:
                     to_be_updated = True
