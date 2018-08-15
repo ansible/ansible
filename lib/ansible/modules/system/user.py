@@ -22,6 +22,8 @@ notes:
     they generally come pre-installed with the system and Ansible will require they
     are present at runtime. If they are not, a descriptive error message will be shown.
   - For Windows targets, use the M(win_user) module instead.
+  - On SunOS platforms, the shadow file is backed up automatically since this module edits it directly.
+    On other platforms, the shadow file is backed up by the underlying tools used by this module.
 description:
     - Manage user accounts and user attributes.
     - For Windows targets, use the M(win_user) module instead.
@@ -473,6 +475,10 @@ class User(object):
             # cast all args to strings ansible-modules-core/issues/4397
             cmd = [str(x) for x in cmd]
             return self.module.run_command(cmd, use_unsafe_shell=use_unsafe_shell, data=data)
+
+    def backup_shadow(self):
+        if not self.module.check_mode and self.SHADOWFILE:
+            return self.module.backup_local(self.SHADOWFILE)
 
     def remove_user_userdel(self):
         if self.local:
@@ -1598,6 +1604,7 @@ class SunOS(User):
         if not self.module.check_mode:
             # we have to set the password by editing the /etc/shadow file
             if self.password is not None:
+                self.backup_shadow()
                 minweeks, maxweeks, warnweeks = self.get_password_defaults()
                 try:
                     lines = []
@@ -1702,6 +1709,7 @@ class SunOS(User):
 
         # we have to set the password by editing the /etc/shadow file
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
+            self.backup_shadow()
             (rc, out, err) = (0, '', '')
             if not self.module.check_mode:
                 minweeks, maxweeks, warnweeks = self.get_password_defaults()

@@ -1,0 +1,2 @@
+minor_changes:
+  - user - backup shadow file on platforms where the module modifies it directly (https://github.com/ansible/ansible/issues/40696)
