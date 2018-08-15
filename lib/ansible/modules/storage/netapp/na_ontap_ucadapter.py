@@ -21,7 +21,7 @@ short_description: ONTAP UC adapter configuration
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: chhaya gunawat (chhayag@netapp.com)
+author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 
 description:
     - modify the UC adapter mode and type taking pending type and mode into account.
@@ -157,6 +157,34 @@ class NetAppOntapadapter(object):
             self.module.fail_json(msg='Error modifying adapter %s: %s' % (self.adapter_name, to_native(e)),
                                   exception=traceback.format_exc())
 
+    def offline_adapter(self):
+        """
+        Bring a Fibre Channel target adapter offline.
+        """
+        adapter_offline = netapp_utils.zapi.NaElement('fcp-adapter-config-down')
+        adapter_offline.add_new_child('fcp-adapter', self.adapter_name)
+        adapter_offline.add_new_child('node', self.node_name)
+        try:
+            self.server.invoke_successfully(adapter_offline,
+                                            enable_tunneling=True)
+        except netapp_utils.zapi.NaApiError as e:
+            self.module.fail_json(msg='Error trying to offline fc-adapter %s: %s' % (self.adapter_name, to_native(e)),
+                                  exception=traceback.format_exc())
+
+    def online_adapter(self):
+        """
+        Bring a Fibre Channel target adapter online.
+        """
+        adapter_online = netapp_utils.zapi.NaElement('fcp-adapter-config-up')
+        adapter_online.add_new_child('fcp-adapter', self.adapter_name)
+        adapter_online.add_new_child('node', self.node_name)
+        try:
+            self.server.invoke_successfully(adapter_online,
+                                            enable_tunneling=True)
+        except netapp_utils.zapi.NaApiError as e:
+            self.module.fail_json(msg='Error trying to online fc-adapter %s: %s' % (self.adapter_name, to_native(e)),
+                                  exception=traceback.format_exc())
+
     def apply(self):
         ''' calling all adapter features '''
         changed = False
@@ -182,7 +210,9 @@ class NetAppOntapadapter(object):
             if self.module.check_mode:
                 pass
             else:
+                self.offline_adapter()
                 self.modify_adapter()
+                self.online_adapter()
 
         self.module.exit_json(changed=changed)
 
