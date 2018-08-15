@@ -180,7 +180,15 @@ volumes:
   returned: success
   type: list
   sample: '[ { name: "ROOT-1369", type: "ROOT", size: 10737418240 }, { name: "data01, type: "DATADISK", size: 10737418240 } ]'
+network_ip_addresses:
+  description: Dictionary with all assigned networks and IPs
+  returned: success
+  type: dict
+  sample: '{ "network1": [ "10.0.0.1", "10.0.0.2" ] }'
 '''
+
+import itertools
+from collections import defaultdict
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudstack import AnsibleCloudStack, cs_argument_spec
@@ -265,9 +273,20 @@ class AnsibleCloudStackInstanceFacts(AnsibleCloudStack):
                     affinity_groups.append(affinitygroup['name'])
                 self.result['affinity_groups'] = affinity_groups
             if 'nic' in instance:
+                network_ip_addresses = defaultdict(list)
                 for nic in instance['nic']:
+                    networkname = nic['networkname']
                     if nic['isdefault'] and 'ipaddress' in nic:
                         self.result['default_ip'] = nic['ipaddress']
+                    for nic_section in itertools.chain((nic, ), nic['secondaryip']):
+                        try:
+                            ip_address = nic_section['ipaddress']
+                        except KeyError:
+                            continue
+                        network_ip_addresses[networkname].append(ip_address)
+
+                self.result['network_ip_addresses'] = network_ip_addresses
+
             volumes = self.get_volumes(instance)
             if volumes:
                 self.result['volumes'] = volumes
