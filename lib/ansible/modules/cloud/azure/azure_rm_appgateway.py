@@ -471,7 +471,12 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                     if 'policy_type' in ev:
                         ev['policy_type'] = _snake_to_camel(ev['policy_type'], True)
                     if 'policy_name' in ev:
-                        ev['policy_name'] = _snake_to_camel(ev['policy_name'], True)
+                        if ev['policy_name'] == 'ssl_policy20150501':
+                            ev['policy_name'] = 'AppGwSslPolicy20150501'
+                        elif ev['policy_name'] == 'ssl_policy20170401':
+                            ev['policy_name'] = 'AppGwSslPolicy20170401'
+                        elif ev['policy_name'] == 'ssl_policy20170401_s':
+                            ev['policy_name'] = 'AppGwSslPolicy20170401S'
                     if 'min_protocol_version' in ev:
                         if ev['min_protocol_version'] == 'tls_v1_0':
                             ev['min_protocol_version'] = 'TLSv1_0'
