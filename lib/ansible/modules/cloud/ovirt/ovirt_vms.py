@@ -270,6 +270,13 @@ options:
             - Name of the storage domain this virtual machine lease reside on.
             - NOTE - Supported since oVirt 4.1.
         version_added: "2.4"
+    custom_compatibility_version:
+        description:
+            - "Enables a virtual machine to be customized to its own compatibility version. If
+            `C(custom_compatibility_version)` is set, it overrides the cluster's compatibility version
+            for this particular virtual machine."
+        version_added: "2.7"
+
     delete_protected:
         description:
             - If I(yes) Virtual Machine will be set as delete protected.
@@ -1069,6 +1076,10 @@ class VmsModule(BaseModule):
                     self.param('instance_type'),
                 ),
             ) if self.param('instance_type') else None,
+            custom_compatibility_version=otypes.Version(
+                major=self._get_major(self.param('custom_compatibility_version')),
+                minor=self._get_minor(self.param('custom_compatibility_version')),
+            ) if self.param('custom_compatibility_version') else None,
             description=self.param('description'),
             comment=self.param('comment'),
             time_zone=otypes.TimeZone(
@@ -1156,6 +1167,8 @@ class VmsModule(BaseModule):
             equal(self.param('io_threads'), entity.io.threads) and
             equal(self.param('ballooning_enabled'), entity.memory_policy.ballooning) and
             equal(self.param('serial_console'), entity.console.enabled) and
+            equal(self._get_minor(self.param('custom_compatibility_version')), self._get_minor(entity.custom_compatibility_version)) and
+            equal(self._get_major(self.param('custom_compatibility_version')), self._get_major(entity.custom_compatibility_version)) and
             equal(self.param('usb_support'), entity.usb.enabled) and
             equal(self.param('sso'), True if entity.sso.methods else False) and
             equal(self.param('quota_id'), getattr(entity.quota, 'id', None)) and
@@ -1592,7 +1605,6 @@ class VmsModule(BaseModule):
 
 def _get_role_mappings(module):
     roleMappings = list()
-
     for roleMapping in module.params['role_mappings']:
         roleMappings.append(
             otypes.RegistrationRoleMapping(
@@ -1895,6 +1907,7 @@ def main():
         kvm=dict(type='dict'),
         cpu_mode=dict(type='str'),
         placement_policy=dict(type='str'),
+        custom_compatibility_version=dict(type='str'),
         cpu_pinning=dict(type='list'),
         soundcard_enabled=dict(type='bool', default=None),
         smartcard_enabled=dict(type='bool', default=None),
