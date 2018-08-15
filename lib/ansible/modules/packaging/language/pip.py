@@ -486,23 +486,21 @@ class Package:
         self._plain_package = False
         self.package_name = name_string
         self._requirement = None
-        if name_string.startswith('file:') or _is_vcs_url(name_string):
-            return
 
-        self._plain_package = True
         if version_string:
             version_string = version_string.lstrip()
             separator = '==' if version_string[0].isdigit() else ' '
             name_string = separator.join((name_string, version_string))
         try:
             self._requirement = Requirement.parse(name_string)
+            # old pkg_resource will replace 'setuptools' with 'distribute' when it already installed
+            if self._requirement.project_name == "distribute":
+                self.package_name = "setuptools"
+            else:
+                self.package_name = self._requirement.project_name
+            self._plain_package = True
         except ValueError as e:
-            raise ValueError("Can not parse package name '%s', error: '%s'" % (name_string, to_native(e)))
-        # old pkg_resource will replace 'setuptools' with 'distribute' when it already installed
-        if self._requirement.project_name == "distribute":
-            self.package_name = "setuptools"
-        else:
-            self.package_name = self._requirement.project_name
+            pass
 
     @property
     def has_version_specifier(self):
@@ -625,11 +623,7 @@ def main():
                     break
 
             # convert raw input package names to Package instances
-            try:
-                packages = [Package(pkg) for pkg in _recover_package_name(name)]
-            except ValueError as e:
-                # if users input some invalid package names, show them the parsing error
-                module.fail_json(msg=to_native(e))
+            packages = [Package(pkg) for pkg in _recover_package_name(name)]
             # check invalid combination of arguments
             if version is not None:
                 if len(packages) > 1:

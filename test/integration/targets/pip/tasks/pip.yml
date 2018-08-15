@@ -418,6 +418,16 @@
       - git+https://github.com/dvarrazzo/pyiso8601#egg=pyiso8601
       - "{{pip_test_pkg_ver[0]}},{{pip_test_pkg_ver[1]}}"
 
+- name: test the invalid package name
+  pip:
+    name: djan=+-~!@#$go>1.11.1,<1.11.3
+  ignore_errors: yes
+  register: version13
+
+- name: the invalid package should make module failed
+  assert:
+    that: "version13 is failed"
+
 - name: clean up
   pip:
     name: "{{ pip_test_packages }}"
