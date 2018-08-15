@@ -13,9 +13,14 @@ from pylint.checkers.utils import check_messages
 from ansible.release import __version__ as ansible_version_raw
 
 MSGS = {
-    'E9999': ("Deprecated version found (%r)",
+    'E9501': ("Deprecated version (%r) found in call to Display.deprecated",
               "ansible-deprecated-version",
-              "",
+              "Used when a call to Display.deprecated specifies a version "
+              "less than or equal to the current version of Ansible",
+              {'minversion': (2, 6)}),
+    'W9502': ("Display.deprecated call without a version",
+              "ansible-deprecated-no-version",
+              "Used when a call to Display.deprecated does not specify a version",
               {'minversion': (2, 6)}),
 }
 
@@ -23,9 +28,21 @@ MSGS = {
 ANSIBLE_VERSION = StrictVersion('.'.join(ansible_version_raw.split('.')[:3]))
 
 
+def _get_expr_name(node):
+    """Funciton to get either ``attrname`` or ``name`` from ``node.func.expr``
+
+    Created specifically for the case of ``display.deprecated`` or ``self._display.deprecated``
+    """
+    try:
+        return node.func.expr.attrname
+    except AttributeError:
+        # If this fails too, we'll let it raise, pylint should catch, ignore and continue
+        return node.func.expr.name
+
+
 class AnsibleDeprecatedChecker(BaseChecker):
-    """Checks string formatting operations to ensure that the format string
-    is valid and the arguments match the format string.
+    """Checks for Display.deprecated calls to ensure that the ``version``
+    has not passed or met the time for removal
     """
 
     __implements__ = (IAstroidChecker,)
@@ -36,7 +53,7 @@ class AnsibleDeprecatedChecker(BaseChecker):
     def visit_call(self, node):
         version = None
         try:
-            if node.func.attrname == 'deprecated':
+            if node.func.attrname == 'deprecated' and 'display' in _get_expr_name(node):
                 if node.keywords:
                     for keyword in node.keywords:
                         if keyword.arg == 'version':
@@ -45,7 +62,9 @@ class AnsibleDeprecatedChecker(BaseChecker):
                     try:
                         version = node.args[1].value
                     except IndexError:
+                        self.add_message('ansible-deprecated-no-version', node=node)
                         return
+
                 if ANSIBLE_VERSION >= StrictVersion(str(version)):
                     self.add_message('ansible-deprecated-version', node=node, args=(version,))
         except AttributeError:
