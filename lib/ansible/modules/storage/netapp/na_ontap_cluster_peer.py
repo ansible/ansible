@@ -114,7 +114,7 @@ class NetAppONTAPClusterPeer(object):
 
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
-            required_together=['source_intercluster_lif', 'dest_intercluster_lif', 'passphrase'],
+            required_together=(['source_intercluster_lif', 'dest_intercluster_lif', 'passphrase']),
             required_if=[('state', 'absent', ['source_cluster_name', 'dest_cluster_name'])],
             supports_check_mode=True
         )
