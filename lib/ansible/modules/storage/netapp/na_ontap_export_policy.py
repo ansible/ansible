@@ -33,6 +33,7 @@ options:
   from_name:
     description:
     - The name of the export-policy to be renamed.
+    version_added: '2.7'
   vserver:
     description:
     - Name of the vserver to use.
