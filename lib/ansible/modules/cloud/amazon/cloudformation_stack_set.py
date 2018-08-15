@@ -61,8 +61,8 @@ options:
         'template_body' nor 'template_url' are specified, the previous template will be reused.
   purge_stacks:
     description:
-    - Only applicable when I(state=absent). Sets whether, when deleting a stack set, the stack instances should also be deleted. By default, instances will be deleted.
-    - Set to 'no' or 'false' to keep stacks when stack set is deleted.
+    - Only applicable when I(state=absent). Sets whether, when deleting a stack set, the stack instances should also be deleted.
+    - By default, instances will be deleted. Set to 'no' or 'false' to keep stacks when stack set is deleted.
     type: bool
     default: true
   wait:
