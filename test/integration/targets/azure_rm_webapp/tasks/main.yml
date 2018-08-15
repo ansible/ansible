@@ -15,15 +15,6 @@
       is_linux: false
       sku: S1
 
-- name: get web app with resource group and tag
-  azure_rm_webapp_facts:
-    resource_group: "{{ resource_group }}"
-  register: output
-
-- assert:
-    that:
-      - output.ansible_facts.azure_webapps | length == 1
-
 - name: Create a windows web app with existing app service plan
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
@@ -38,7 +29,20 @@
     plan: "{{ win_plan_name }}"
     dns_registration: true
     https_only: true
+    tags:
+      testwebappfacts: test
   register: output
+
+- name: get web app with resource group and tag
+  azure_rm_webapp_facts:
+    resource_group: "{{ resource_group }}"
+    tags:
+      - testwebappfacts
+  register: output
+
+- assert:
+    that:
+      - output.ansible_facts.azure_webapps | length == 1
 
 - name: Create a win web app with java run time specific
   azure_rm_webapp:
