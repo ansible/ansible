@@ -14,6 +14,7 @@ module: ovirt_vnics
 short_description: Module to manage network interfaces of Virtual Machines in oVirt/RHV
 version_added: "2.7"
 author:
+- Ondra Machacek
 - Martin Necas (@mnecas)
 description:
     - Module to manage network interfaces of Virtual Machines in oVirt/RHV.
@@ -99,11 +100,11 @@ class EntityVnicPorfileModule(BaseModule):
 
     def update_check(self, entity):
         return (
-            equal(self._module.params.get('migratable'), entity.migratable) and
-            equal(self._module.params.get('pass_through'), entity.pass_through) and
+            equal(self._module.params.get('migratable'), getattr(entity, 'migratable', None)) and
+            equal(self._module.params.get('pass_through'), entity.pass_through.mode) and
             equal(self._module.params.get('description'), entity.description) and
             # equal(self._module.params.get('network_filter'), entity.network_filter) and
-            equal(self._module.params.get('port_mirroring'), entity.port_mirroring)
+            equal(self._module.params.get('port_mirroring'), getattr(entity, 'port_mirroring', None))
         )
 
 
@@ -139,15 +140,7 @@ def main():
             module=module,
             service=vnic_services,
         )
-        """
-            custom_properties=[
-                otypes.CustomProperty(
-                    name=cp.get('name'),
-                    regexp=cp.get('regexp'),
-                    value=str(cp.get('value')),
-                ) for cp in self.param('custom_properties') if cp
-            ] if self.param('custom_properties') is not None else None,"""
-        # custom_properties=[otypes.CustomProperty(name=prop['name'],value=prop['value'],regexp=prop['regexp']) for prop in module.params['custom_properties']]
+        # custom_properties=[ otypes.CustomProperty(name=prop.get('name'),value=prop.get('value'),regexp=prop.get('regexp')) for prop in module.params['custom_properties']] if self.param('custom_properties') is not None else None
         state = module.params['state']
         if state == 'present':
             ret = entitynics_module.create()
