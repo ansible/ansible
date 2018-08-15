@@ -41,22 +41,27 @@ author:
 options:
     state:
         description:
-            - If C(present), the job is submitted to the nomad API, if C(absent) the job is deleted via the nomad API.
+            - If C(present), the job is submitted to the nomad API, if C(absent) the job is deleted via the nomad API, if C(status) the health of the job is checked.
         required: no
         default: present
-        choices: [present, absent]
+        choices: [present, absent, status]
     name:
         description:
-            - The name of the job to be handled (needs to match the Job-ID in the jobs json description I(jobdesc) when the desired I(state=present)).
+            - The name of the job to be handled (needs to match the Job-ID in the jobs definition I(jobjson) or I(jobhcl) when the desired I(state=present)).
         required: yes
         aliases: ['job']
-    jobdesc:
+    jobjson:
         description:
            - The nomad job description in json (https://www.nomadproject.io/api/json-jobs.html).
            - Required if I(state=present)
         required: no
         default: ""
-        aliases: ['jobjson', 'desc']
+    jobhcl:
+        description:
+           - The nomad job description in HCL
+           - Required if I(state=present)
+        required: no
+        default: ""
     url:
         description:
             - The nomad server URL.
@@ -73,12 +78,24 @@ options:
             - The time in seconds to wait between api requests. This times I(timeout) equals the total number of seconds.
         required: no
         default: 1
-    wait_for_completion:
+    wait_for_healthy:
         description:
-            - If set to C(False) (default C(True)) this module will not wait for the allocations of a job to enter the 'running' state.
+            - If set to C(False) (default C(True)) this module will not wait for the allocations of a job to enter the 'healthy' state.
         required: no
         type: bool
         default: True
+    wait_for_completion:
+        description:
+            - If set to C(False) (default C(True)) this module will not wait for the job to enter the 'running' state.
+        required: no
+        type: bool
+        default: True
+    check_deploy_health:
+        description:
+            - If set to C(True) (default C(False)) this module will check the deployment-health instead of the status of each allocation (>= 0.6)
+        required: no
+        type: bool
+        default: False
 notes:
     - check_mode is not supported yet.
     - the I(purge) option on deletion of a job is not implemented yet.
@@ -90,7 +107,7 @@ EXAMPLES = '''
   nomad_job:
     name: my-job
     state: present
-    jobdesc: "{{ lookup('template', 'my-job.json.j2') }}"
+    jobjson: "{{ lookup('template', 'my-job.json.j2') }}"
     timeout: 30
 
 - name: Delete / Stop a job
@@ -101,7 +118,7 @@ EXAMPLES = '''
 - name: Create / Update a job and don't wait for its completion
   nomad_job:
     name: my-2nd-job
-    jobdesc: "{{ lookup('file', 'my-2nd-job.json') }}"
+    jobhcl: "{{ lookup('file', 'my-2nd-job.hcl') }}"
     wait_for_completion: False
 '''
 
@@ -110,6 +127,10 @@ evaluation:
     description: the json object return by the nomad API when evaluating the job.
     returned: success, changed
     type: dict
+deployment:
+    description: the deployment id.
+    returned: success, changed
+    type: string
 job:
     description: the json object of the previous job (in case it existed)
     returned: success, changed
@@ -140,147 +161,353 @@ from ansible.module_utils.urls import fetch_url
 
 # Import other modules
 import json
+import signal
+from collections import Counter
 from time import sleep
 
 
-class ResponseErrors:
-    JOB_DESC_ERROR = "A job description in json (jobdesc) needs to be provided for the state 'present'!"
-    EVALUATION_ERROR = "Evaluation failure!"
-    CONNECTION_ERROR = "Cannot connect to Nomad Server!"
-    JOB_LIST_ERROR = "Error on getting the current job-list from Nomad"
-    DELETE_ERROR = "Deleting job failed!"
-    CURRENT_ALLOCATION_ERROR = "Failed to get current allocations!"
-    SUBMISSION_ERROR = "Failed to submit job!"
-    DEFERRED_EVALUATION_ERROR = 'Evaluation was deferred and did not complete!'
-    INCOMPLETE_EVALUATION_ERROR = 'Evaluation did not complete!'
-    ALLOCATION_STATUS_ERROR = "Failed to get allocation status!"
-    ALLOCATION_FAILURE_ERROR = "Allocation failed!"
-    ALLOCATION_TIMEOUT_ERROR = "Timeout while waiting for allocations to be running. Please check the jobs logs!"
+class NomadJobException(Exception):
+    """Base exception for errors raised by ansible nomad job module"""
+    def __init__(self, message, meta=None, *args):
+        super(NomadJobException, self).__init__(*args)
+        self.message = message
+        self.meta = meta
 
 
-def get_response_or_fail(ansible_module, url, fail_msg=None, **kwargs):
-    resp, info = fetch_url(ansible_module, url, **kwargs)
-    status = info['status']
-    if status != 200:
-        ansible_module.fail_json(msg=fail_msg if fail_msg else info, meta=info)
-    return status, info, json.loads(resp.read())
+class NomadException(NomadJobException):
+    """responsible for errors returned from nomad"""
 
 
-def check_evaluation(ansible_module, url, job_evaluation, timeout, retry_delay):
-    evaluation_url = url + '/v1/evaluation/' + job_evaluation
-    evaluation_done = False
-    for i in range(timeout):
-        status, info, body = get_response_or_fail(ansible_module, evaluation_url, ResponseErrors.EVALUATION_ERROR)
-        if body['Status'] == 'complete':
-            evaluation_done = True
-            break
-        else:
-            sleep(retry_delay)
-    return evaluation_done, body
+class JobDescriptionError(NomadJobException):
+    """Raises when there is no job description."""
+    def __init__(self):
+        super(JobDescriptionError, self).__init__(
+            "A job description in json (jobjson) or hcl (jobhcl) needs to be provided for the state 'present'!",
+        )
 
 
-def get_evaluation_or_fail(ansible_module, url, job_evaluation, timeout, retry_delay, fail_msg):
-    evaluation_done, eval_response = check_evaluation(ansible_module, url, job_evaluation, timeout, retry_delay)
-    if not evaluation_done:
-        ansible_module.fail_json(msg=fail_msg, meta=eval_response)
-    return eval_response
+class DoubleJobDescriptionError(NomadJobException):
+    """Raises when there are multiple job descriptions."""
+    def __init__(self):
+        super(DoubleJobDescriptionError, self).__init__(
+            "A job description in json (jobjson) OR hcl (jobhcl) needs to be provided. NOT both!",
+        )
 
 
-def delete_job(ansible_module, jobs_url, job):
-    resp, info = fetch_url(ansible_module, jobs_url, method='DELETE')
-    status = info['status']
+class JobNameMismatch(NomadJobException):
+    """Raises when the name parameter does not match the ID in the job description."""
+    def __init__(self):
+        super(JobNameMismatch, self).__init__(
+            "The Jobname specified does not match the Jobs ID in the jobdescription (jobjson) OR (jobhcl) !",
+        )
 
-    if status != 200:
-        ansible_module.fail_json(msg=ResponseErrors.DELETE_ERROR, meta=info['msg'])
-    ansible_module.exit_json(changed=True, status=status, job=job, info=info)
+
+class EvaluationError(NomadException):
+    def __init__(self, msg, meta):
+        super(EvaluationError, self).__init__(
+            "Evaluation failure! nomad response: {}".format(msg),
+            meta=meta
+        )
 
 
-def main():
-    ansible_module = AnsibleModule(
-        argument_spec={
-            "state": {"default": 'present', "choices": ['present', 'absent']},
-            "name": {"required": True},
-            "jobdesc": {"default": "", "type": 'json'},
-            "job": {"aliases": ['name']},
-            "jobjson": {"aliases": ['jobdesc']},
-            "desc": {"aliases": ['jobdesc']},
-            "url": {"default": 'http://localhost:4646'},
-            "server": {"aliases": ['url']},
-            "timeout": {"default": 120, "type": 'int'},
-            "retry_delay": {"default": 1, "type": 'int'},
-            "wait_for_completion": {"default": True, "type": 'bool'}
-        }
-    )
+class JobListError(NomadException):
+    def __init__(self, msg, meta):
+        super(JobListError, self).__init__(
+            "Error on getting the current job-list from Nomad. nomad response: {}".format(msg),
+            meta=meta
+        )
 
-    newjob = ansible_module.params['jobdesc']
+
+class DeleteError(NomadException):
+    def __init__(self, msg, meta):
+        super(DeleteError, self).__init__(
+            "Deleting job failed!. nomad response: {}".format(msg),
+            meta=meta
+        )
+
+
+class SubmissionError(NomadException):
+    def __init__(self, msg, meta):
+        super(SubmissionError, self).__init__(
+            "Failed to submit job!. nomad response: {}".format(msg),
+            meta=meta
+        )
+
+
+class HCLConversionError(NomadException):
+    def __init__(self, msg, meta):
+        super(HCLConversionError, self).__init__(
+            "Failed to convert job from HCL to JSON!. nomad response: {}".format(msg),
+            meta=meta
+        )
+
+
+class JobStatusError(NomadException):
+    def __init__(self, msg, meta):
+        super(JobStatusError, self).__init__(
+            "Failed to get job status! nomad response: {}".format(msg),
+            meta=meta
+        )
+
+
+class AllocationFailureError(NomadException):
+    def __init__(self, msg, meta):
+        super(AllocationFailureError, self).__init__(
+            "Allocation failed! nomad response: {}".format(msg),
+            meta=meta
+        )
+
+
+class AllocationTimeoutError(NomadException):
+    def __init__(self, msg, meta):
+        super(AllocationTimeoutError, self).__init__(
+            "Timeout while waiting for allocations to be running. Please check the jobs logs! {}".format(msg),
+            meta=meta
+        )
+
+
+class Endpoint(object):
+    """This class is used by Nomad class to send requests to nomad and get the
+    response from nomad."""
+    def __init__(self, ansible_module, base_url):
+        self.ansible_module = ansible_module
+        self.base_url = base_url
+
+    def _endpoint_builder(self, *args):
+        return '/'.join((self.base_url,) + args).strip('/')
+
+    def _request(self, data=None, headers=None, method='GET', path=(), timeout=30):
+        resp, info = fetch_url(
+            self.ansible_module,
+            self._endpoint_builder(*path),
+            data=data,
+            headers=headers,
+            method=method,
+            timeout=timeout
+        )
+
+        try:
+            resp = json.loads(resp.read())
+        except AttributeError:
+            resp = ''
+
+        return info['status'], info, resp
+
+    def get(self, *args):
+        return self._request(path=args)
+
+    def post(self, data, headers=None, *args):
+        return self._request(data=data, headers=headers, method='POST', path=args)
+
+    def delete(self, *args):
+        return self._request(method='DELETE', path=args)
+
+
+class Nomad(object):
+    """This class is a Wrapper for nomad restful api."""
+
+    def __init__(self, ansible_module, url='http://127.0.0.1', token=None, timeout=5, version='v1', verify=False, cert=()):
+        self.ansible_module = ansible_module
+        self.url = url
+        self.token = token
+        self.timeout = timeout
+        self.version = version
+        self.verify = verify
+        self.cert = cert
+        self._endpoints = [
+            'job',
+            'jobs',
+            'deployment',
+            'deployments',
+            'evaluation',
+            'evaluations',
+            'allocation',
+            'allocations',
+        ]
+
+    def _endpoint_builder(self, *args):
+        addr=""
+        if args:
+            addr = "/".join(args)
+        return "{version}/{addr}".format(version=self.version, addr=addr)
+
+    def _url_builder(self, endpoint):
+        url = "{url}/{endpoint}".format(
+            url=self.url,
+            endpoint=self._endpoint_builder(endpoint)
+        )
+        return url
+
+    def __getattr__(self, name):
+        if name not in self._endpoints:
+            # default behaviour
+            raise AttributeError('attribute with name: "{}" is not defined'.format(name))
+
+        return Endpoint(self.ansible_module, self._url_builder(name))
+
+    def get_job_stable_status(self, name):
+        """when a job is sent to nomad the first status is always running.
+        in case we get the correct status we try a few times to check that
+        the status we want to return is the most common status returned by
+        api. in case of one failure we return the failed status. this doesn't
+        guarantee the correct status, but it is a better measure for job status.
+        """
+        count = 6
+        status_list = []
+
+        while count > 1:
+            status, info, body = self.job.get(name)
+            if status == 200 and type(body) == dict:
+                status_list.append(body['Status'])
+
+            count -= 1
+            sleep(0.5)
+        counter = Counter(status_list)
+        if counter['running'] > 2:
+            return 'running'
+        return counter.most_common(1)[0][0]
+
+    def get_evaluation_or_fail(self, evaluation_id, retry_timeout_sec, retry_delay):
+        with Timeout(retry_timeout_sec):
+            while True:
+                status, info, body = self.evaluation.get(evaluation_id)
+
+                if body['Status'] == 'complete':
+                    return body
+
+                if body['Status'] not in ('complete', 'pending'):
+                    raise EvaluationError(body, info)
+
+                sleep(retry_delay)
+
+    def get_allocations_or_fail(self, deployment_id, retry_timeout_sec, retry_delay):
+        # Get all allocations
+        status, info, allocation_list = None, None, []
+        try:
+            with Timeout(retry_timeout_sec):
+                while len(allocation_list) < 1:
+                    status, info, allocation_list = self.deployment.get('allocations', deployment_id)
+                    if allocation_list:
+                        break
+                    sleep(retry_delay)
+
+        except Timeout.Timeout:
+            raise AllocationTimeoutError(allocation_list, info)
+
+        return allocation_list
+
+
+def run_module(ansible_module):
+
+    jobjson = ansible_module.params['jobjson']
+    jobhcl = ansible_module.params['jobhcl']
     url = ansible_module.params['url']
     name = ansible_module.params['name']
     state = ansible_module.params['state']
     timeout = ansible_module.params['timeout']
     retry_delay = ansible_module.params['retry_delay']
+    wait_for_healthy = ansible_module.params['wait_for_healthy']
     wait_for_completion = ansible_module.params['wait_for_completion']
-    wait_for_allocations_timeout = 10
+    check_deploy_health = ansible_module.params['check_deploy_health']
+    wait_for_allocations_timeout = 20
+
+    # Initialize some defaults
+    job_deployment_id = None
+    job_evaluation = ''
+    new_job_info = None
+
+    nomad_cli = Nomad(ansible_module, url=url, timeout=timeout)
 
     # Check if we have a job description when the desired state is 'present'
-    if not newjob and state == 'present':
-        ansible_module.fail_json(msg=ResponseErrors.JOB_DESC_ERROR)
+    if not jobjson and not jobhcl and state == 'present':
+        raise JobDescriptionError()
+
+    # Check if we have only one job description
+    if jobjson and jobhcl:
+        raise DoubleJobDescriptionError()
 
     # get possible running job
-    jobs_url = url + '/v1/job/' + name
-    resp, info = fetch_url(ansible_module, jobs_url)
-    status = info['status']
-
-    # couldn't connect to server
-    if status < 0:
-        ansible_module.fail_json(msg=ResponseErrors.CONNECTION_ERROR, meta=info['msg'])
+    status, info, job = nomad_cli.job.get(name)
 
     job_changed = True
-    job = []
     if status == 404:
         # if the job does not exist - exit here with no change
         if state == 'absent':
             ansible_module.exit_json(changed=job_changed, status=status, job=job, info=info)
+        if state == 'status':
+            raise JobStatusError(job, info['body'])
+
     elif status != 200:
-        ansible_module.fail_json(msg=ResponseErrors.JOB_LIST_ERROR, meta=info['body'])
-    else:
-        job = json.loads(resp.read())
+        if type(body) == dict:
+            raise JobListError(job, info['body'])
+        else:
+            raise JobListError(job, info)
 
     # Delete job if requested (TODO: implement purge option)
     if state == 'absent':
-        delete_job(ansible_module, jobs_url, job)
+        status, info, body = nomad_cli.job.delete(name)
+        if status != 200:
+            raise DeleteError(body, info['msg'])
 
-    # Submit Job:
-    status, info, body = get_response_or_fail(ansible_module,
-                                              jobs_url,
-                                              fail_msg=ResponseErrors.SUBMISSION_ERROR,
-                                              method='POST',
-                                              data=newjob,
-                                              headers={'Content-Type': 'application/json'})
-    new_job_info = info
-    evaluation_response = body
-    job_evaluation = evaluation_response['EvalID']
+        ansible_module.exit_json(changed=True, status=status, job=job, info=info)
+
+    if state == 'status':
+        job_changed = False
+        # Get jobs info
+        if 'JobModifyIndex' in job:
+            status, info, body = nomad_cli.job.get(name, 'evaluations')
+            for evaluation in body:
+                if evaluation['JobModifyIndex'] == job['JobModifyIndex']:
+                    job_evaluation = evaluation['ID']
+        else:
+            raise JobStatusError(job, job)
+    else:
+        # Get job in correct format:
+        if jobjson:
+            # already json format
+            jobdesc=jobjson
+        elif jobhcl:
+            # hcl that needs to be converted via the API
+            jobdescrequest=json.dumps({"Canonicalize": True, "JobHCL": jobhcl})
+            status, evaluation_response, convertedjob = nomad_cli.jobs.post(
+                jobdescrequest, {}, 'parse')
+            if status != 200:
+                raise HCLConversionError(evaluation_response, convertedjob)
+            jobdesc=json.dumps({ "Job": convertedjob})
+        else:
+            raise JobDescriptionError()
+        
+        # Check if the Jobs ID matches the specified name
+        if name != json.loads(jobdesc)["Job"]["ID"]:
+            raise JobNameMismatch()
+
+        # Submit Job:
+        status, new_job_info, evaluation_response = nomad_cli.jobs.post(
+            data=jobdesc,
+            headers={'Content-Type': 'application/json'}
+        )
+        if status != 200:
+            raise SubmissionError(evaluation_response, new_job_info)
+
+        job_evaluation = evaluation_response['EvalID']
+
     if not job_evaluation:
         # Must be a batch job ... nothing else to do here
-        ansible_module.exit_json(changed=job_changed, status=status, job=job, info=new_job_info)
-
-    # Wait for evluation to be complete
-    eval_response = get_evaluation_or_fail(ansible_module,
-                                           url,
-                                           job_evaluation,
-                                           timeout,
-                                           retry_delay,
-                                           fail_msg=ResponseErrors.INCOMPLETE_EVALUATION_ERROR)
+        ansible_module.exit_json(
+            changed=job_changed,
+            status=status,
+            job=job,
+            info=new_job_info
+        )
+    eval_response = nomad_cli.get_evaluation_or_fail(
+        job_evaluation,
+        timeout,
+        retry_delay
+    )
 
     # Read possible deferred evaluation and check for completion
     if eval_response['BlockedEval']:
         job_evaluation = eval_response['BlockedEval']
-
-    eval_response = get_evaluation_or_fail(ansible_module,
-                                           url,
-                                           job_evaluation,
-                                           timeout,
-                                           retry_delay,
-                                           fail_msg=ResponseErrors.DEFERRED_EVALUATION_ERROR)
 
     # If we don't want to wait for the completion of the job, exit here.
     if not wait_for_completion:
@@ -290,43 +517,41 @@ def main():
             job=job,
             info=new_job_info)
 
-    # Set Deployment-ID if it exists (nomad >= 0.6.0)
-    if 'DeploymentID' in eval_response:
-        if eval_response['DeploymentID']:
-            job_deployment_id = eval_response['DeploymentID']
-            allocationsurl = url + '/v1/deployment/allocations/' + job_deployment_id
-        else:
-            # DeploymentID is empty when count = 0
-            ansible_module.exit_json(changed=job_changed,
-                                     status=status,
-                                     job=job,
-                                     total_jobs=0,
-                                     total_allocations=0,
-                                     allocations=[],
-                                     info=new_job_info)
-    else:
-        allocationsurl = url + '/v1/evaluation/' + job_evaluation + '/allocations'
+    # if we don't want to check health get the stable status of the job and exit here
+    if not wait_for_healthy:
+        with Timeout(wait_for_allocations_timeout):
+            while True:
+                status = nomad_cli.get_job_stable_status(name)
+                if status == "running":
+                    ansible_module.exit_json(
+                        changed=job_changed,
+                        status=status,
+                        job=job,
+                        info=new_job_info
+                    )
 
-    # Get all allocations
-    allocation_list = []
-    for i in range(wait_for_allocations_timeout):
-        status, info, body = get_response_or_fail(ansible_module, allocationsurl)
-        allocation_list = body
-        if len(allocation_list) > 0:
-            break
-        sleep(retry_delay)
+                if status == "dead":
+                    raise JobStatusError(status, info)
 
-    # We might not find any (count = 0)
-    if len(allocation_list) <= 0:
-        ansible_module.exit_json(
-            changed=job_changed,
-            status=status,
-            job=job,
-            total_jobs=0,
-            total_allocations=0,
-            allocations=allocation_list,
-            info=new_job_info
-        )
+                sleep(retry_delay)
+
+    if not eval_response.get('DeploymentID'):
+        # DeploymentID is empty when count = 0
+        ansible_module.exit_json(changed=job_changed,
+                                 status=status,
+                                 job=job,
+                                 total_jobs=0,
+                                 total_allocations=0,
+                                 allocations=[],
+                                 info=new_job_info)
+
+    # Work with the deployment ID from here on
+    deployment_id = eval_response.get('DeploymentID')
+    allocation_list = nomad_cli.get_allocations_or_fail(
+        deployment_id,
+        wait_for_allocations_timeout,
+        retry_delay
+    )
 
     # Check each allocation and each task for their status
     total_jobs = 0
@@ -334,46 +559,101 @@ def main():
     for allocation in allocation_list:
         allocation_id = allocation['ID']
         is_running = 0  # needs to get 2 successful "running" states within 2 seconds !
-        for i in range(timeout):
-            status, info, body = get_response_or_fail(
-                ansible_module,
-                url + '/v1/allocation/' + allocation_id,
-                fail_msg=ResponseErrors.ALLOCATION_STATUS_ERROR
-            )
-            allocation_info = body
-            if 'TaskStates' in allocation_info and allocation_info['TaskStates']:
-                num_tasks = len(allocation_info['TaskStates'])
-                for task in allocation_info['TaskStates']:
-                    task_state = allocation_info['TaskStates'][task]['State']
-                    if (task_state == 'failed') or (task_state == 'dead'):
-                        ansible_module.fail_json(msg=ResponseErrors.ALLOCATION_FAILURE_ERROR,
-                                                 meta=allocation_info)
-                    if task_state == 'running':
-                        is_running += 1
-                    else:
-                        is_running = 0
-            if is_running > 1:
-                total_jobs += num_tasks
-                break
-            sleep(retry_delay)
-        if is_running < 2:
-            ansible_module.fail_json(msg=ResponseErrors.ALLOCATION_TIMEOUT_ERROR,
-                                     meta=allocation_info)
+        allocation_info = None
+
+        try:
+            with Timeout(timeout):
+                while True:
+                    status, info, allocation_info = nomad_cli.allocation.get(allocation_id)
+                    if status == 200 and type(allocation_info) == dict:
+                        num_tasks = 0
+                        if check_deploy_health:
+                            if allocation_info['DeploymentStatus']:
+                                if allocation_info['DeploymentStatus']['Healthy']:
+                                    num_tasks = len(allocation_info['TaskStates'])
+                                    is_running += 1
+                                else:
+                                    is_running = 0
+                        else:
+                            if allocation_info['ClientStatus'] == 'running':
+                                num_tasks = len(allocation_info['TaskStates'])
+                                is_running += 1
+                            else:
+                                is_running = 0
+
+                        if is_running > 1:
+                            total_jobs += num_tasks
+                            break
+
+                    sleep(retry_delay)
+        except Timeout.Timeout:
+            if is_running < 2:
+                raise AllocationTimeoutError("timeout: {}".format(timeout), allocation_info)
 
     # Get new allocations
-    status, info, body = get_response_or_fail(ansible_module,
-                                              jobs_url + '/allocations')
-    new_job_allocations = body
+    status, info, new_job_allocations = nomad_cli.job.get(name, 'allocations')
 
     ansible_module.exit_json(
         changed=job_changed,
         evaluation=job_evaluation,
+        deployment=deployment_id,
         job=job,
         total_jobs=total_jobs,
         total_allocations=total_allocations,
         allocations=new_job_allocations,
         info=new_job_info
     )
+
+
+class Timeout:
+    """Timeout class using ALARM signal."""
+
+    class Timeout(NomadException):
+        """raises when there is a timeout for getting response from nomad!
+        Attention! DO NOT use this context manager within an already created
+        Timeout context, otherwise you will end up in an infinit loop!
+        """
+        pass
+
+    def __init__(self, sec):
+        self.sec = sec
+
+    def __enter__(self):
+        signal.signal(signal.SIGALRM, self.raise_timeout)
+        signal.alarm(self.sec)
+
+    def __exit__(self, *args):
+        signal.alarm(0)  # disable alarm
+
+    def raise_timeout(self, *args):
+        raise Timeout.Timeout("Time out! {} seconds passed and nothing happened".format(self.sec))
+
+
+def main():
+    ansible_module = AnsibleModule(
+        argument_spec={
+            "state": {"default": 'present', "choices": ['present', 'absent', 'status']},
+            "name": {"required": True},
+            "jobjson": {"default": "", "type": 'json'},
+            "jobhcl": {"default": "", "type": 'str'},
+            "job": {"aliases": ['name']},
+            "url": {"default": 'http://localhost:4646'},
+            "server": {"aliases": ['url']},
+            "timeout": {"default": 120, "type": 'int'},
+            "retry_delay": {"default": 1, "type": 'int'},
+            "wait_for_healthy": {"default": True, "type": 'bool'},
+            "wait_for_completion": {"default": True, "type": 'bool'},
+            "check_deploy_health": {"default": False, "type": 'bool'}
+        }
+    )
+    try:
+        run_module(ansible_module)
+    except NomadJobException as exc:
+        ansible_module.fail_json(
+            msg=exc.message,
+            meta=exc.meta
+        )
+
 
 if __name__ == '__main__':
     main()
