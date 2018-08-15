@@ -318,7 +318,8 @@ def rule_cmp(a, b):
     for prop in ['port_range', 'protocol', 'target', 'target_type']:
         if prop == 'port_range' and to_text(a.protocol) == to_text(b.protocol):
             # equal protocols can interchange `(-1, -1)` and `(None, None)`
-            if (a.port_range in ((None, None), (-1, -1))
+            if (
+                   a.port_range in ((None, None), (-1, -1))
                    and b.port_range in ((None, None), (-1, -1))):
                 continue
             else:
