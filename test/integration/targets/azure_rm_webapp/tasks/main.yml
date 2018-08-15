@@ -30,14 +30,15 @@
     dns_registration: true
     https_only: true
     tags:
-      testwebappfacts: test
+      testwebapptag: test
   register: output
 
 - name: get web app with resource group and tag
   azure_rm_webapp_facts:
     resource_group: "{{ resource_group }}"
+    name: "{{{ win_app_name }}3"
     tags:
-      - testwebappfacts
+      - testwebapptag
   register: output
 
 - assert:
@@ -68,8 +69,8 @@
 - assert:
     that:
       - output.ansible_facts.azure_webapps | length == 1
-      - output.ansible_facts.azure_webapps[0].app_settings.length == 1
-      - output.ansible_facts.azure_webapps[0].frameworks.length == 2 # net_framework is default
+      - output.ansible_facts.azure_webapps[0].app_settings | length == 1
+      - output.ansible_facts.azure_webapps[0].frameworks | length == 2 # net_framework is default
 
 - name: assert the function was created
   assert:
