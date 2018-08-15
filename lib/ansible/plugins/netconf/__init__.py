@@ -283,7 +283,6 @@ class NetconfBase(AnsiblePlugin):
         """
         return self.m.locked(target)
 
-
     @abstractmethod
     def get_capabilities(self):
         """
