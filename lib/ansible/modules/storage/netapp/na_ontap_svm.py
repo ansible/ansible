@@ -42,6 +42,7 @@ options:
   from_name:
     description:
     - Name of the SVM to be renamed
+    version_added: '2.7'
 
   root_volume:
     description:
@@ -101,6 +102,7 @@ options:
     description:
     - IPSpace name
     - Cannot be modified after creation.
+    version_added: '2.7'
 
 
   snapshot_policy:
@@ -111,6 +113,7 @@ options:
       snapshot policy or volume is modified later with a specific
       snapshot policy. A volume-level snapshot policy always overrides
       the default Vserver-wide snapshot policy.
+    version_added: '2.7'
 
   language:
     description:
@@ -151,12 +154,14 @@ options:
     - zh.gbk            Simplified Chinese (GBK)
     - zh_tw             Traditional Chinese euc-tw
     - zh_tw.big5        Traditional Chinese Big 5
+    version_added: '2.7'
 
   subtype:
     description:
     - The subtype for vserver to be created.
     - Cannot be modified after creation.
     choices: ['default', 'dp_destination', 'sync_source', 'sync_destination']
+    version_added: '2.7'
 
 
 '''
