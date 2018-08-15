@@ -12,6 +12,7 @@
 - name: "Disable feature nv overlay"
   nxos_feature: &disable_feature_nv_overlay
     feature: nv overlay
+    provider: "{{ connection }}"
     state: disabled
   ignore_errors: yes
 
@@ -19,6 +20,7 @@
   - name: "Enable feature nv overlay"
     nxos_feature: &enable_feature_nv_overlay
       feature: nv overlay
+      provider: "{{ connection }}"
       state: enabled
     ignore_errors: yes
 

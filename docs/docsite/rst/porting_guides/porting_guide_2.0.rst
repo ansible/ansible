@@ -9,7 +9,7 @@ This section discusses the behavioral changes between Ansible 1.x and Ansible 2.
 It is intended to assist in updating your playbooks, plugins and other parts of your Ansible infrastructure so they will work with this version of Ansible.
 
 
-We suggest you read this page along with `Ansible Changelog <https://github.com/ansible/ansible/blob/devel/CHANGELOG.md#2.0>`_ to understand what updates you may need to make.
+We suggest you read this page along with `Ansible Changelog for 2.0 <https://github.com/ansible/ansible/blob/stable-2.0/CHANGELOG.md>`_ to understand what updates you may need to make.
 
 This document is part of a collection on porting. The complete list of porting guides can be found at :ref:`porting guides <porting_guides>`.
 
@@ -107,7 +107,7 @@ Deprecated
 
 While all items listed here will show a deprecation warning message, they still work as they did in 1.9.x. Please note that they will be removed in 2.2 (Ansible always waits two major releases to remove a deprecated feature).
 
-* Bare variables in ``with_`` loops should instead use the ``"{ {var }}"`` syntax, which helps eliminate ambiguity.
+* Bare variables in ``with_`` loops should instead use the ``"{{ var }}"`` syntax, which helps eliminate ambiguity.
 * The ansible-galaxy text format requirements file. Users should use the YAML format for requirements instead.
 * Undefined variables within a ``with_`` loop's list currently do not interrupt the loop, but they do issue a warning; in the future, they will issue an error.
 * Using dictionary variables to set all task parameters is unsafe and will be removed in a future version. For example::

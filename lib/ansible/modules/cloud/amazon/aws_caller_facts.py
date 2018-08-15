@@ -13,7 +13,7 @@ DOCUMENTATION = '''
 module: aws_caller_facts
 short_description: Get facts about the user and account being used to make AWS calls.
 description:
-    - This module returns information about the accont and user / role that the AWS access tokens are from.
+    - This module returns information about the account and user / role from which the AWS access tokens originate.
     - The primary use of this is to get the account id for templating into ARNs or similar to avoid needing to specify this information in inventory.
 version_added: "2.6"
 

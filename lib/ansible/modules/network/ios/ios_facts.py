@@ -105,6 +105,10 @@ ansible_net_filesystems:
   description: All file system names available on the device
   returned: when hardware is configured
   type: list
+ansible_net_filesystems_info:
+  description: A hash of all file systems containing info about each file system (e.g. free and total space)
+  returned: when hardware is configured
+  type: dict
 ansible_net_memfree_mb:
   description: The available free memory on the remote device in Mb
   returned: when hardware is configured
@@ -225,6 +229,7 @@ class Hardware(FactsBase):
         data = self.responses[0]
         if data:
             self.facts['filesystems'] = self.parse_filesystems(data)
+            self.facts['filesystems_info'] = self.parse_filesystems_info(data)
 
         data = self.responses[1]
         if data:
@@ -240,6 +245,21 @@ class Hardware(FactsBase):
 
     def parse_filesystems(self, data):
         return re.findall(r'^Directory of (\S+)/', data, re.M)
+
+    def parse_filesystems_info(self, data):
+        facts = dict()
+        fs = ''
+        for line in data.split('\n'):
+            match = re.match(r'^Directory of (\S+)/', line)
+            if match:
+                fs = match.group(1)
+                facts[fs] = dict()
+                continue
+            match = re.match(r'^(\d+) bytes total \((\d+) bytes free\)', line)
+            if match:
+                facts[fs]['spacetotal_kb'] = int(match.group(1)) / 1024
+                facts[fs]['spacefree_kb'] = int(match.group(2)) / 1024
+        return facts
 
 
 class Config(FactsBase):

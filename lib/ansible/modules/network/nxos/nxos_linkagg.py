@@ -327,7 +327,7 @@ def map_config_to_obj(module):
 
     try:
         channels = output['TABLE_channel']['ROW_channel']
-    except KeyError:
+    except (TypeError, KeyError):
         return objs
 
     if channels:
@@ -393,6 +393,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

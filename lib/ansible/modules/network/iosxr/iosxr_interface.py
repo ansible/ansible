@@ -195,7 +195,7 @@ import collections
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.iosxr.iosxr import get_config, load_config, build_xml
-from ansible.module_utils.network.iosxr.iosxr import run_command, iosxr_argument_spec, get_oper
+from ansible.module_utils.network.iosxr.iosxr import run_commands, iosxr_argument_spec, get_oper
 from ansible.module_utils.network.iosxr.iosxr import is_netconf, is_cliconf, etree_findall, etree_find
 from ansible.module_utils.network.common.utils import conditional, remove_default_spec
 
@@ -382,7 +382,7 @@ class CliConfiguration(ConfigBase):
                 sleep(want_item['delay'])
 
             command = 'show interfaces {!s}'.format(want_item['name'])
-            out = run_command(self._module, command)[0]
+            out = run_commands(self._module, command)[0]
 
             if want_state in ('up', 'down'):
                 match = re.search(r'%s (\w+)' % 'line protocol is', out, re.M)

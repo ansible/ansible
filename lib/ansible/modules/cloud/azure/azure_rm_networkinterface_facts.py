@@ -206,5 +206,6 @@ class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
 def main():
     AzureRMNetworkInterfaceFacts()
 
+
 if __name__ == '__main__':
     main()

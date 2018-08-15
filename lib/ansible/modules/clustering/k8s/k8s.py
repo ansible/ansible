@@ -30,6 +30,7 @@ description:
   - Pass the object definition from a source file or inline. See examples for reading
     files and using Jinja templates.
   - Access to the full range of K8s APIs.
+  - Use the M(k8s_facts) module to obtain a list of items about an object of type C(kind)
   - Authenticate using either a config file, certificates, password or token.
   - Supports check mode.
 
@@ -38,6 +39,21 @@ extends_documentation_fragment:
   - k8s_name_options
   - k8s_resource_options
   - k8s_auth_options
+
+options:
+  merge_type:
+    description:
+    - Whether to override the default patch merge approach with a specific type. By the default, the strategic
+      merge will typically be used.
+    - For example, Custom Resource Definitions typically aren't updatable by the usual strategic merge. You may
+      want to use C(merge) if you see "strategic merge patch format is not supported"
+    - See U(https://kubernetes.io/docs/tasks/run-application/update-api-object-kubectl-patch/#use-a-json-merge-patch-to-update-a-deployment)
+    - Requires openshift >= 0.6.2
+    choices:
+    - json
+    - merge
+    - strategic-merge
+    version_added: "2.7"
 
 requirements:
   - "python >= 2.7"
@@ -80,21 +96,6 @@ EXAMPLES = '''
     state: present
     src: /testing/service.yml
 
-- name: Get an existing Service object
-  k8s:
-    api_version: v1
-    kind: Service
-    name: web
-    namespace: testing
-  register: web_service
-
-- name: Get a list of all service objects
-  k8s:
-    api_version: v1
-    kind: ServiceList
-    namespace: testing
-  register: service_list
-
 - name: Remove an existing Service object
   k8s:
     state: absent
@@ -113,12 +114,12 @@ EXAMPLES = '''
 - name: Read definition file from the Ansible controller file system
   k8s:
     state: present
-    definition: "{{ lookup('file', '/testing/deployment.yml') | from_yaml }}"
+    definition: "{{ lookup('file', '/testing/deployment.yml') }}"
 
 - name: Read definition file from the Ansible controller file system after Jinja templating
   k8s:
     state: present
-    definition: "{{ lookup('template', '/testing/deployment.yml') | from_yaml }}"
+    definition: "{{ lookup('template', '/testing/deployment.yml') }}"
 '''
 
 RETURN = '''
@@ -149,8 +150,8 @@ result:
        returned: success
        type: complex
      items:
-       description: Returned only when the I(kind) is a List type resource. Contains a set of objects.
-       returned: when resource is a List
+       description: Returned only when multiple yaml documents are passed to src or resource_definition
+       returned: when resource_definition or src contains list of objects
        type: list
 '''
 

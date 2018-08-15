@@ -6,14 +6,15 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
-    state: present
+    output_level: '{{ aci_output_level | default("info") }}'
     pool: anstest
     pool_type: vsan
     allocation_mode: static
     description: Ansible Test
+    state: present
 
 - name: cleanup vsan pool
   aci_encap_pool:
     <<: *aci_pool_present
     state: absent
-  when: pool_present.changed == true
+  when: pool_present is changed

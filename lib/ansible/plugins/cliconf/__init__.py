@@ -19,12 +19,13 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
 from functools import wraps
 
+from ansible.plugins import AnsiblePlugin
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.six import with_metaclass
+
 
 try:
     from scp import SCPClient
@@ -49,7 +50,7 @@ def enable_mode(func):
     return wrapped
 
 
-class CliconfBase(with_metaclass(ABCMeta, object)):
+class CliconfBase(AnsiblePlugin):
     """
     A base class for implementing cli connections
 
@@ -84,6 +85,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
     __rpc__ = ['get_config', 'edit_config', 'get_capabilities', 'get', 'enable_response_logging', 'disable_response_logging']
 
     def __init__(self, connection):
+        super(CliconfBase, self).__init__()
         self._connection = connection
         self.history = list()
         self.response_logging = False
@@ -93,7 +95,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         display.display('closing shell due to command timeout (%s seconds).' % self._connection._play_context.timeout, log_only=True)
         self.close()
 
-    def send_command(self, command, prompt=None, answer=None, sendonly=False, newline=True, prompt_retry_check=False):
+    def send_command(self, command=None, prompt=None, answer=None, sendonly=False, newline=True, prompt_retry_check=False):
         """Executes a command over the device connection
 
         This method will execute a command over the device connection and
@@ -101,7 +103,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         logging of any commands based on the `nolog` argument.
 
         :param command: The command to send over the connection to the device
-        :param prompt: A regex pattern to evalue the expected prompt from the command
+        :param prompt: A single regex pattern or a sequence of patterns to evaluate the expected prompt from the command
         :param answer: The answer to respond with if the prompt is matched.
         :param sendonly: Bool value that will send the command but not wait for a result.
         :param newline: Bool value that will append the newline character to the command
@@ -117,7 +119,10 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         }
 
         if prompt is not None:
-            kwargs['prompt'] = to_bytes(prompt)
+            if isinstance(prompt, list):
+                kwargs['prompt'] = [to_bytes(p) for p in prompt]
+            else:
+                kwargs['prompt'] = to_bytes(prompt)
         if answer is not None:
             kwargs['answer'] = to_bytes(answer)
 
@@ -160,7 +165,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         self.response_logging = False
 
     @abstractmethod
-    def get_config(self, source='running', filter=None, format='text'):
+    def get_config(self, source='running', flags=None, format=None):
         """Retrieves the specified configuration from the device
 
         This method will retrieve the configuration specified by source and
@@ -170,7 +175,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         :param source: The configuration source to return from the device.
             This argument accepts either `running` or `startup` as valid values.
 
-        :param filter: For devices that support configuration filtering, this
+        :param flags: For devices that support configuration filtering, this
             keyword argument is used to filter the returned configuration.
             The use of this keyword argument is device dependent adn will be
             silently ignored on devices that do not support it.
@@ -184,7 +189,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         pass
 
     @abstractmethod
-    def edit_config(self, candidate, check_mode=False, replace=None):
+    def edit_config(self, candidate=None, commit=True, replace=None, diff=False, comment=None):
         """Loads the candidate configuration into the network device
 
         This method will load the specified candidate config into the device
@@ -195,20 +200,27 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         :param candidate: The configuration to load into the device and merge
             with the current running configuration
 
-        :param check_mode: Boolean value that indicates if the device candidate
+        :param commit: Boolean value that indicates if the device candidate
             configuration should be  pushed in the running configuration or discarded.
 
-        :param replace: Specifies the way in which provided config value should replace
-            the configuration running on the remote device. If the device
-            doesn't support config replace, an error is return.
+        :param replace: If the value is True/False it indicates if running configuration should be completely
+                        replace by candidate configuration. If can also take configuration file path as value,
+                        the file in this case should be present on the remote host in the mentioned path as a
+                        prerequisite.
+        :param comment: Commit comment provided it is supported by remote host
+        :return: Returns a json string with contains configuration applied on remote host, the returned
+                 response on executing configuration commands and platform relevant data.
+               {
+                   "diff": "",
+                   "response": [],
+                   "request": []
+               }
 
-        :return: Returns response of executing the configuration command received
-             from remote host
         """
         pass
 
     @abstractmethod
-    def get(self, command, prompt=None, answer=None, sendonly=False, newline=True):
+    def get(self, command=None, prompt=None, answer=None, sendonly=False, newline=True, output=None):
         """Execute specified command on remote device
         This method will retrieve the specified data and
         return it to the caller as a string.
@@ -218,6 +230,9 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         :param answer: the string to respond to the prompt with
         :param sendonly: bool to disable waiting for response, default is false
         :param newline: bool to indicate if newline should be added at end of answer or not
+        :param output: For devices that support fetching command output in different
+            format, this keyword argument is used to specify the output in which
+            response is to be retrieved.
         :return:
         """
         pass
@@ -242,7 +257,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
                     'network_os_platform': <str>,
                 },
                 'device_operations': {
-                    'supports_replace': <bool>,            # identify if config should be merged or replaced is supported
+                    'supports_diff_replace': <bool>,       # identify if config should be merged or replaced is supported
                     'supports_commit': <bool>,             # identify if commit is supported by device or not
                     'supports_rollback': <bool>,           # identify if rollback is supported or not
                     'supports_defaults': <bool>,           # identify if fetching running config with default is supported
@@ -250,12 +265,16 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
                     'supports_onbox_diff: <bool>,          # identify if on box diff capability is supported or not
                     'supports_generate_diff: <bool>,       # identify if diff capability is supported within plugin
                     'supports_multiline_delimiter: <bool>, # identify if multiline demiliter is supported within config
-                    'support_match: <bool>,                # identify if match is supported
-                    'support_diff_ignore_lines: <bool>,    # identify if ignore line in diff is supported
+                    'supports_diff_match: <bool>,          # identify if match is supported
+                    'supports_diff_ignore_lines: <bool>,   # identify if ignore line in diff is supported
+                    'supports_config_replace': <bool>,     # identify if running config replace with candidate config is supported
+                    'supports_admin': <bool>,              # identify if admin configure mode is supported or not
+                    'supports_commit_label': <bool>,       # identify if commit label is supported or not
                 }
                 'format': [list of supported configuration format],
-                'match': ['line', 'strict', 'exact', 'none'],
-                'replace': ['line', 'block', 'config'],
+                'diff_match': [list of supported match values],
+                'diff_replace': [list of supported replace values],
+                'output': [list of supported command output format]
             }
         :return: capability as json string
         """
@@ -326,3 +345,76 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         elif proto == 'sftp':
             with ssh.open_sftp() as sftp:
                 sftp.get(source, destination)
+
+    def get_diff(self, candidate=None, running=None, diff_match=None, diff_ignore_lines=None, path=None, diff_replace=None):
+        """
+        Generate diff between candidate and running configuration. If the
+        remote host supports onbox diff capabilities ie. supports_onbox_diff in that case
+        candidate and running configurations are not required to be passed as argument.
+        In case if onbox diff capability is not supported candidate argument is mandatory
+        and running argument is optional.
+        :param candidate: The configuration which is expected to be present on remote host.
+        :param running: The base configuration which is used to generate diff.
+        :param diff_match: Instructs how to match the candidate configuration with current device configuration
+                      Valid values are 'line', 'strict', 'exact', 'none'.
+                      'line' - commands are matched line by line
+                      'strict' - command lines are matched with respect to position
+                      'exact' - command lines must be an equal match
+                      'none' - will not compare the candidate configuration with the running configuration
+        :param diff_ignore_lines: Use this argument to specify one or more lines that should be
+                                  ignored during the diff.  This is used for lines in the configuration
+                                  that are automatically updated by the system.  This argument takes
+                                  a list of regular expressions or exact line matches.
+        :param path: The ordered set of parents that uniquely identify the section or hierarchy
+                     the commands should be checked against.  If the parents argument
+                     is omitted, the commands are checked against the set of top
+                    level or global commands.
+        :param diff_replace: Instructs on the way to perform the configuration on the device.
+                        If the replace argument is set to I(line) then the modified lines are
+                        pushed to the device in configuration mode.  If the replace argument is
+                        set to I(block) then the entire command block is pushed to the device in
+                        configuration mode if any line is not correct.
+        :return: Configuration and/or banner diff in json format.
+               {
+                   'config_diff': ''
+               }
+
+        """
+        pass
+
+    def run_commands(self, commands=None, check_rc=True):
+        """
+        Execute a list of commands on remote host and return the list of response
+        :param commands: The list of command that needs to be executed on remote host.
+                The individual command in list can either be a command string or command dict.
+                If the command is dict the valid keys are
+                {
+                    'command': <command to be executed>
+                    'prompt': <expected prompt on executing the command>,
+                    'answer': <answer for the prompt>,
+                    'output': <the format in which command output should be rendered eg: 'json', 'text'>,
+                    'sendonly': <Boolean flag to indicate if it command execution response should be ignored or not>
+                }
+        :param check_rc: Boolean flag to check if returned response should be checked for error or not.
+                         If check_rc is False the error output is appended in return response list, else if the
+                         value is True an exception is raised.
+        :return: List of returned response
+        """
+        pass
+
+    def check_edit_config_capability(self, operations, candidate=None, commit=True, replace=None, comment=None):
+
+        if not candidate and not replace:
+            raise ValueError("must provide a candidate or replace to load configuration")
+
+        if commit not in (True, False):
+            raise ValueError("'commit' must be a bool, got %s" % commit)
+
+        if replace and not operations['supports_replace']:
+            raise ValueError("configuration replace is not supported")
+
+        if comment and not operations.get('supports_commit_comment', False):
+            raise ValueError("commit comment is not supported")
+
+        if replace and not operations.get('supports_replace', False):
+            raise ValueError("configuration replace is not supported")

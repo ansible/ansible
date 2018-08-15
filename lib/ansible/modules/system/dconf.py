@@ -370,5 +370,6 @@ def main():
         changed = dconf.reset(module.params['key'])
         module.exit_json(changed=changed)
 
+
 if __name__ == '__main__':
     main()

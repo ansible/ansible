@@ -29,7 +29,7 @@ description:
   - Uses the Infoblox WAPI API to return the next available IP addresses
     for a given network CIDR
 requirements:
-  - infoblox_client
+  - infoblox-client
 extends_documentation_fragment: nios
 options:
     _terms:

@@ -223,3 +223,13 @@
 - assert:
     that:
       - with_list_passed_a_dict is failed
+
+- debug:
+    var: "item"
+  loop:
+    - "{{ ansible_search_path }}"
+  register: loop_search_path
+
+- assert:
+    that:
+      - ansible_search_path == loop_search_path.results.0.item

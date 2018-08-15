@@ -77,7 +77,7 @@ licenses:
 '''
 
 try:
-    from pyVmomi import vim, vmodl
+    from pyVmomi import vim
     HAS_PYVMOMI = True
 except ImportError:
     HAS_PYVMOMI = False

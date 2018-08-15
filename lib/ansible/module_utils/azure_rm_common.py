@@ -23,8 +23,7 @@ except ImportError:
 AZURE_COMMON_ARGS = dict(
     auth_source=dict(
         type='str',
-        choices=['auto', 'cli', 'env', 'credential_file', 'msi'],
-        default='auto'
+        choices=['auto', 'cli', 'env', 'credential_file', 'msi']
     ),
     profile=dict(type='str'),
     subscription_id=dict(type='str', no_log=True),
@@ -67,7 +66,8 @@ AZURE_API_PROFILES = {
         ),
         'NetworkManagementClient': '2017-11-01',
         'ResourceManagementClient': '2017-05-10',
-        'StorageManagementClient': '2017-10-01'
+        'StorageManagementClient': '2017-10-01',
+        'WebsiteManagementClient': '2016-08-01'
     },
 
     '2017-03-09-profile': {
@@ -1047,7 +1047,8 @@ class AzureRMModuleBase(object):
         self.log('Getting web client')
         if not self._web_client:
             self._web_client = self.get_mgmt_svc_client(WebSiteManagementClient,
-                                                        base_url=self._cloud_environment.endpoints.resource_manager)
+                                                        base_url=self._cloud_environment.endpoints.resource_manager,
+                                                        api_version='2016-08-01')
         return self._web_client
 
     @property

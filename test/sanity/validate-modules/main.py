@@ -43,7 +43,7 @@ from ansible.utils.plugin_docs import BLACKLIST, add_fragments, get_docstring
 
 from module_args import AnsibleModuleImportError, get_argument_spec
 
-from schema import doc_schema, metadata_1_1_schema, return_schema
+from schema import ansible_module_kwargs_schema, doc_schema, metadata_1_1_schema, return_schema
 
 from utils import CaptureStd, NoArgsAnsibleModule, compare_unordered_lists, is_empty, parse_yaml
 from voluptuous.humanize import humanize_error
@@ -80,6 +80,8 @@ BLACKLIST_IMPORTS = {
         }
     },
 }
+SUBPROCESS_REGEX = re.compile(r'subprocess\.Po.*')
+OS_CALL_REGEX = re.compile(r'os\.call.*')
 
 
 class ReporterEncoder(json.JSONEncoder):
@@ -395,6 +397,34 @@ class ModuleValidator(Validator):
                     msg='Found old style GPLv3 license header: '
                         'https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_documenting.html#copyright'
                 )
+
+    def _check_for_subprocess(self):
+        for child in self.ast.body:
+            if isinstance(child, ast.Import):
+                if child.names[0].name == 'subprocess':
+                    for line_no, line in enumerate(self.text.splitlines()):
+                        sp_match = SUBPROCESS_REGEX.search(line)
+                        if sp_match:
+                            self.reporter.error(
+                                path=self.object_path,
+                                code=210,
+                                msg=('subprocess.Popen call found. Should be module.run_command'),
+                                line=(line_no + 1),
+                                column=(sp_match.span()[0] + 1)
+                            )
+
+    def _check_for_os_call(self):
+        if 'os.call' in self.text:
+            for line_no, line in enumerate(self.text.splitlines()):
+                os_call_match = OS_CALL_REGEX.search(line)
+                if os_call_match:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=211,
+                        msg=('os.call() call found. Should be module.run_command'),
+                        line=(line_no + 1),
+                        column=(os_call_match.span()[0] + 1)
+                    )
 
     def _find_blacklist_imports(self):
         for child in self.ast.body:
@@ -1002,19 +1032,7 @@ class ModuleValidator(Validator):
                 msg='version_added should be %s. Currently %s' % (should_be, version_added)
             )
 
-    def _validate_argument_spec(self, docs):
-        if not self.analyze_arg_spec:
-            return
-
-        if docs is None:
-            docs = {}
-
-        try:
-            add_fragments(docs, self.object_path, fragment_loader=fragment_loader)
-        except Exception:
-            # Cannot merge fragments
-            return
-
+    def _validate_ansible_module_call(self, docs):
         try:
             spec, args, kwargs = get_argument_spec(self.path)
         except AnsibleModuleImportError as e:
@@ -1029,6 +1047,23 @@ class ModuleValidator(Validator):
             )
             return
 
+        self._validate_docs_schema(kwargs, ansible_module_kwargs_schema, 'AnsibleModule', 332)
+
+        self._validate_argument_spec(docs, spec, kwargs)
+
+    def _validate_argument_spec(self, docs, spec, kwargs):
+        if not self.analyze_arg_spec:
+            return
+
+        if docs is None:
+            docs = {}
+
+        try:
+            add_fragments(docs, self.object_path, fragment_loader=fragment_loader)
+        except Exception:
+            # Cannot merge fragments
+            return
+
         # Use this to access type checkers later
         module = NoArgsAnsibleModule({})
 
@@ -1036,6 +1071,13 @@ class ModuleValidator(Validator):
         args_from_argspec = set()
         deprecated_args_from_argspec = set()
         for arg, data in spec.items():
+            if not isinstance(data, dict):
+                self.reporter.error(
+                    path=self.object_path,
+                    code=331,
+                    msg="argument '%s' in argument_spec must be a dictionary/hash when used" % arg,
+                )
+                continue
             if not data.get('removed_in_version', None):
                 args_from_argspec.add(arg)
                 args_from_argspec.update(data.get('aliases', []))
@@ -1301,7 +1343,6 @@ class ModuleValidator(Validator):
 
     def validate(self):
         super(ModuleValidator, self).validate()
-
         if not self._python_module() and not self._powershell_module():
             self.reporter.error(
                 path=self.object_path,
@@ -1333,13 +1374,17 @@ class ModuleValidator(Validator):
 
             # See if current version => deprecated.removed_in, ie, should be docs only
             if docs and 'deprecated' in docs and docs['deprecated'] is not None:
-                removed_in = docs.get('deprecated')['removed_in']
-                strict_ansible_version = StrictVersion('.'.join(ansible_version.split('.')[:2]))
-                end_of_deprecation_should_be_docs_only = strict_ansible_version >= removed_in
-                # FIXME if +2 then file should be empty? - maybe add this only in the future
+                try:
+                    removed_in = StrictVersion(str(docs.get('deprecated')['removed_in']))
+                except ValueError:
+                    end_of_deprecation_should_be_docs_only = False
+                else:
+                    strict_ansible_version = StrictVersion('.'.join(ansible_version.split('.')[:2]))
+                    end_of_deprecation_should_be_docs_only = strict_ansible_version >= removed_in
+                    # FIXME if +2 then file should be empty? - maybe add this only in the future
 
         if self._python_module() and not self._just_docs() and not end_of_deprecation_should_be_docs_only:
-            self._validate_argument_spec(docs)
+            self._validate_ansible_module_call(docs)
             self._check_for_sys_exit()
             self._find_blacklist_imports()
             main = self._find_main_call()
@@ -1347,6 +1392,8 @@ class ModuleValidator(Validator):
             self._find_has_import()
             first_callable = self._get_first_callable()
             self._ensure_imports_below_docs(doc_info, first_callable)
+            self._check_for_subprocess()
+            self._check_for_os_call()
 
         if self._powershell_module():
             self._validate_ps_replacers()

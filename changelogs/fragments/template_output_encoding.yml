@@ -1,0 +1,5 @@
+---
+minor_changes:
+- Explicit encoding for the output of the template module, to be able
+  to generate non-utf8 files from a utf-8 template.
+  (https://github.com/ansible/proposals/issues/121)

@@ -155,6 +155,7 @@ EXAMPLES = '''
         - https://www.googleapis.com/auth/compute
       state: present
   register: instancegroup
+
 - name: create a http health check
   gcp_compute_http_health_check:
       name: 'httphealthcheck-urlmap'
@@ -169,6 +170,7 @@ EXAMPLES = '''
         - https://www.googleapis.com/auth/compute
       state: present
   register: healthcheck
+
 - name: create a backend service
   gcp_compute_backend_service:
       name: 'backendservice-urlmap'
@@ -184,6 +186,7 @@ EXAMPLES = '''
         - https://www.googleapis.com/auth/compute
       state: present
   register: backendservice
+
 - name: create a url map
   gcp_compute_url_map:
       name: testObject
@@ -672,6 +675,7 @@ class UrlMapTestsArray(object):
             u'path': item.get(u'path'),
             u'service': item.get(u'service')
         })
+
 
 if __name__ == '__main__':
     main()

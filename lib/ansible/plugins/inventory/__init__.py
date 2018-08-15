@@ -146,14 +146,30 @@ class BaseInventoryPlugin(AnsiblePlugin):
         self.cache = None
 
     def parse(self, inventory, loader, path, cache=True):
-        ''' Populates self.groups from the given data. Raises an error on any parse failure.  '''
+        ''' Populates inventory from the given data. Raises an error on any parse failure
+            :arg inventory: a copy of the previously accumulated inventory data,
+                 to be updated with any new data this plugin provides.
+                 The inventory can be empty if no other source/plugin ran successfully.
+            :arg loader: a reference to the DataLoader, which can read in YAML and JSON files,
+                 it also has Vault support to automatically decrypt files.
+            :arg path: the string that represents the 'inventory source',
+                 normally a path to a configuration file for this inventory,
+                 but it can also be a raw string for this plugin to consume
+            :arg cache: a boolean that indicates if the plugin should use the cache or not
+                 you can ignore if this plugin does not implement caching.
+        '''
 
         self.loader = loader
         self.inventory = inventory
         self.templar = Templar(loader=loader)
 
     def verify_file(self, path):
-        ''' Verify if file is usable by this plugin, base does minimal accessability check '''
+        ''' Verify if file is usable by this plugin, base does minimal accessibility check
+            :arg path: a string that was passed as an inventory source,
+                 it normally is a path to a config file, but this is not a requirement,
+                 it can also be parsed itself as the inventory data to process.
+                 So only call this base class if you expect it to be a file.
+        '''
 
         b_path = to_bytes(path, errors='surrogate_or_strict')
         return (os.path.exists(b_path) and os.access(b_path, os.R_OK))
@@ -168,7 +184,9 @@ class BaseInventoryPlugin(AnsiblePlugin):
                 self.inventory.set_variable(host, k, variables[k])
 
     def _read_config_data(self, path):
-        ''' validate config and set options as appropriate '''
+        ''' validate config and set options as appropriate
+            :arg path: path to common yaml format config file for this plugin
+        '''
 
         config = {}
         try:
@@ -200,7 +218,10 @@ class BaseInventoryPlugin(AnsiblePlugin):
                                               cache_dir=options.get('cache_connection'))
 
     def _consume_options(self, data):
-        ''' update existing options from file data'''
+        ''' update existing options from alternate configuration sources not normally used by Ansible.
+            Many API libraries already have existing configuration sources, this allows plugin author to leverage them.
+            :arg data: key/value pairs that correspond to configuration options for this plugin
+        '''
 
         for k in self._options:
             if k in data:
@@ -252,7 +273,7 @@ class Cacheable(object):
 class Constructable(object):
 
     def _compose(self, template, variables):
-        ''' helper method for pluigns to compose variables for Ansible based on jinja2 expression and inventory vars'''
+        ''' helper method for plugins to compose variables for Ansible based on jinja2 expression and inventory vars'''
         t = self.templar
         t.set_available_variables(variables)
         return t.template('%s%s%s' % (t.environment.variable_start_string, template, t.environment.variable_end_string), disable_lookups=True)
@@ -270,7 +291,7 @@ class Constructable(object):
                 self.inventory.set_variable(host, varname, composite)
 
     def _add_host_to_composed_groups(self, groups, variables, host, strict=False):
-        ''' helper to create complex groups for plugins based on jinaj2 conditionals, hosts that meet the conditional are added to group'''
+        ''' helper to create complex groups for plugins based on jinja2 conditionals, hosts that meet the conditional are added to group'''
         # process each 'group entry'
         if groups and isinstance(groups, dict):
             self.templar.set_available_variables(variables)

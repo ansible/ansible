@@ -28,21 +28,40 @@ author:
 options:
     name:
         description:
-            - Name of the plugin to install. In Eleasticsearch >= 2.0, the name can be an URL or file location.
+            - Name of the plugin to install.
         required: True
     state:
         description:
             - Desired state of a plugin.
         choices: ["present", "absent"]
         default: present
+    src:
+        description:
+            - Optionally set the source location to retrieve the plugin from. This can be a file://
+              URL to install from a local file, or a remote URL. If this is not set, the plugin
+              location is just based on the name.
+            - The name parameter must match the descriptor in the plugin ZIP specified.
+            - Is only used if the state would change, which is solely checked based on the name
+              parameter. If, for example, the plugin is already installed, changing this has no
+              effect.
+            - For ES 1.x use url.
+        required: False
+        version_added: "2.7"
     url:
         description:
-            - Set exact URL to download the plugin from (Only works for ES 1.x)
+            - Set exact URL to download the plugin from (Only works for ES 1.x).
+            - For ES 2.x and higher, use src.
+        required: False
     timeout:
         description:
             - "Timeout setting: 30s, 1m, 1h..."
             - Only valid for Elasticsearch < 5.0. This option is ignored for Elasticsearch > 5.0.
         default: 1m
+    force:
+        description:
+            - "Force batch mode when installing plugins. This is only necessary if a plugin requires additional permissions and console detection fails."
+        default: False
+        version_added: "2.7"
     plugin_bin:
         description:
             - Location of the plugin binary. If this file is not found, the default plugin binaries will be used.
@@ -85,6 +104,12 @@ EXAMPLES = '''
 - elasticsearch_plugin:
     name: analysis-icu
     state: present
+
+# Install the ingest-geoip plugin with a forced installation
+- elasticsearch_plugin:
+    name: ingest-geoip
+    state: present
+    force: yes
 '''
 
 import os
@@ -122,8 +147,8 @@ def parse_plugin_repo(string):
     return repo
 
 
-def is_plugin_present(plugin_dir, working_dir):
-    return os.path.isdir(os.path.join(working_dir, plugin_dir))
+def is_plugin_present(plugin_name, plugin_dir):
+    return os.path.isdir(os.path.join(plugin_dir, plugin_name))
 
 
 def parse_error(string):
@@ -134,11 +159,12 @@ def parse_error(string):
         return string
 
 
-def install_plugin(module, plugin_bin, plugin_name, version, url, proxy_host, proxy_port, timeout):
-    cmd_args = [plugin_bin, PACKAGE_STATE_MAP["present"], plugin_name]
+def install_plugin(module, plugin_bin, plugin_name, version, src, url, proxy_host, proxy_port, timeout, force):
+    cmd_args = [plugin_bin, PACKAGE_STATE_MAP["present"]]
+    is_old_command = (os.path.basename(plugin_bin) == 'plugin')
 
     # Timeout and version are only valid for plugin, not elasticsearch-plugin
-    if os.path.basename(plugin_bin) == 'plugin':
+    if is_old_command:
         if timeout:
             cmd_args.append("--timeout %s" % timeout)
 
@@ -149,8 +175,16 @@ def install_plugin(module, plugin_bin, plugin_name, version, url, proxy_host, pr
     if proxy_host and proxy_port:
         cmd_args.append("-DproxyHost=%s -DproxyPort=%s" % (proxy_host, proxy_port))
 
+    # Legacy ES 1.x
     if url:
         cmd_args.append("--url %s" % url)
+
+    if force:
+        cmd_args.append("--batch")
+    if src:
+        cmd_args.append(src)
+    else:
+        cmd_args.append(plugin_name)
 
     cmd = " ".join(cmd_args)
 
@@ -161,7 +195,7 @@ def install_plugin(module, plugin_bin, plugin_name, version, url, proxy_host, pr
 
     if rc != 0:
         reason = parse_error(out)
-        module.fail_json(msg='Is %s a valid plugin name?' % plugin_name, err=reason)
+        module.fail_json(msg="Installing plugin '%s' failed: %s" % (plugin_name, reason), err=err)
 
     return True, cmd, out, err
 
@@ -178,7 +212,7 @@ def remove_plugin(module, plugin_bin, plugin_name):
 
     if rc != 0:
         reason = parse_error(out)
-        module.fail_json(msg=reason)
+        module.fail_json(msg="Removing plugin '%s' failed: %s" % (plugin_name, reason), err=err)
 
     return True, cmd, out, err
 
@@ -219,21 +253,26 @@ def main():
         argument_spec=dict(
             name=dict(required=True),
             state=dict(default="present", choices=PACKAGE_STATE_MAP.keys()),
+            src=dict(default=None),
             url=dict(default=None),
             timeout=dict(default="1m"),
+            force=dict(default=False),
             plugin_bin=dict(type="path"),
             plugin_dir=dict(default="/usr/share/elasticsearch/plugins/", type="path"),
             proxy_host=dict(default=None),
             proxy_port=dict(default=None),
             version=dict(default=None)
         ),
+        mutually_exclusive=[("src", "url")],
         supports_check_mode=True
     )
 
     name = module.params["name"]
     state = module.params["state"]
     url = module.params["url"]
+    src = module.params["src"]
     timeout = module.params["timeout"]
+    force = module.params["force"]
     plugin_bin = module.params["plugin_bin"]
     plugin_dir = module.params["plugin_dir"]
     proxy_host = module.params["proxy_host"]
@@ -243,14 +282,15 @@ def main():
     # Search provided path and system paths for valid binary
     plugin_bin = get_plugin_bin(module, plugin_bin)
 
-    present = is_plugin_present(parse_plugin_repo(name), plugin_dir)
+    repo = parse_plugin_repo(name)
+    present = is_plugin_present(repo, plugin_dir)
 
     # skip if the state is correct
     if (present and state == "present") or (state == "absent" and not present):
         module.exit_json(changed=False, name=name, state=state)
 
     if state == "present":
-        changed, cmd, out, err = install_plugin(module, plugin_bin, name, version, url, proxy_host, proxy_port, timeout)
+        changed, cmd, out, err = install_plugin(module, plugin_bin, name, version, src, url, proxy_host, proxy_port, timeout, force)
 
     elif state == "absent":
         changed, cmd, out, err = remove_plugin(module, plugin_bin, name)

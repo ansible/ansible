@@ -6,9 +6,7 @@ python:
   - '2.7'
 
 env:
-  - OPENSHIFT_VERSION=latest
-  - OPENSHIFT_VERSION=v3.9
-  - KUBERNETES_VERSION=latest
+  - OPENSHIFT_VERSION=v3.9.0
   - KUBERNETES_VERSION=v1.9.0
 
 script:
@@ -16,11 +14,12 @@ script:
   - export apb_name=APB_NAME
 
   # Download test shim.
-  - wget -O ${PWD}/apb-test.sh https://raw.githubusercontent.com/djzager/apb-test-shim/ansible-galaxy/apb-test.sh
+  - wget -O ${PWD}/apb-test.sh https://raw.githubusercontent.com/ansibleplaybookbundle/apb-test-shim/master/apb-test.sh
   - chmod +x ${PWD}/apb-test.sh
 
   # Run tests.
   - ${PWD}/apb-test.sh
 
+# Uncomment to allow travis to notify galaxy
 # notifications:
 #  webhooks: https://galaxy.ansible.com/api/v1/notifications/

@@ -11,15 +11,21 @@ __metaclass__ = type
 DOCUMENTATION = '''
     name: openstack
     plugin_type: inventory
-    authors:
+    author:
       - Marco Vito Moscaritolo <marco@agavee.com>
       - Jesse Keating <jesse.keating@rackspace.com>
     short_description: OpenStack inventory source
+    requirements:
+        - openstacksdk
     description:
         - Get inventory hosts from OpenStack clouds
         - Uses openstack.(yml|yaml) YAML configuration file to configure the inventory plugin
         - Uses standard clouds.yaml YAML configuration file to configure cloud credentials
     options:
+        plugin:
+            description: token that ensures this is a source file for the 'openstack' plugin.
+            required: True
+            choices: ['openstack']
         show_all:
             description: toggles showing all vms vs only those with a working IP
             type: bool
@@ -254,7 +260,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         groups.append(cloud)
 
         # Create a group on region
-        groups.append(region)
+        if region:
+            groups.append(region)
 
         # And one by cloud_region
         groups.append("%s_%s" % (cloud, region))

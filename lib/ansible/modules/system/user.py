@@ -12,7 +12,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'core'}
 
 DOCUMENTATION = '''
----
 module: user
 author:
 - Stephen Fromm (@sfromm)
@@ -42,7 +41,7 @@ options:
         required: false
         type: bool
         description:
-            - Darwin/OS X only, optionally hide the user from the login window and system preferences.
+            - macOS only, optionally hide the user from the login window and system preferences.
             - The default will be 'True' if the I(system) option is used.
         version_added: "2.6"
     non_unique:
@@ -60,20 +59,23 @@ options:
             - Optionally sets the user's primary group (takes a group name).
     groups:
         description:
-            - Puts the user in  list of groups. When set to the empty string ('groups='),
-              the user is removed from all groups except the primary group.
-            - Before version 2.3, the only input format allowed was a 'comma separated string',
-              now it should be able to accept YAML lists also.
+            - List of groups user will be added to. When set to an empty string C(''),
+              C(null), or C(~), the user is removed from all groups except the
+              primary group. (C(~) means C(null) in YAML)
+            - Before version 2.3, the only input format allowed was a comma separated string.
+              Now this parameter accepts a list as well as a comma separated string.
     append:
         description:
-            - If C(yes), will only add groups, not set them to just the list in I(groups).
+            - If C(yes), add the user to the groups specified in C(groups).
+            - If C(no), user will only be added to the groups specified in C(groups),
+              removing them from all other groups.
         type: bool
         default: "no"
     shell:
         description:
             - Optionally set the user's shell.
-            - On Mac OS X, before version 2.5, the default shell for non-system users was /usr/bin/false.
-              Since 2.5, the default shell for non-system users on Mac OS X is /bin/bash.
+            - On macOS, before version 2.5, the default shell for non-system users was /usr/bin/false.
+              Since 2.5, the default shell for non-system users on macOS is /bin/bash.
     home:
         description:
             - Optionally set the user's home directory.
@@ -84,7 +86,7 @@ options:
     password:
         description:
             - Optionally set the user's password to this crypted value.
-            - On Darwin/OS X systems, this value has to be cleartext. Beware of security issues.
+            - On macOS systems, this value has to be cleartext. Beware of security issues.
             - See U(https://docs.ansible.com/ansible/faq.html#how-do-i-generate-crypted-passwords-for-the-user-module)
               for details on various ways to generate these password values.
     state:
@@ -233,12 +235,114 @@ EXAMPLES = '''
   user:
     name: james18
     expires: -1
-
 '''
+
+RETURN = '''
+append:
+  description: Whether or not to append the user to groups
+  returned: When state is 'present' and the user exists
+  type: bool
+  sample: True
+comment:
+  description: Comment section from passwd file, usually the user name
+  returned: When user exists
+  type: string
+  sample: Agent Smith
+create_home:
+  description: Whether or not to create the home directory
+  returned: When user does not exist and not check mode
+  type: bool
+  sample: True
+force:
+  description: Whether or not a user account was forcibly deleted
+  returned: When state is 'absent' and user exists
+  type: bool
+  sample: False
+group:
+  description: Primary user group ID
+  returned: When user exists
+  type: int
+  sample: 1001
+groups:
+  description: List of groups of which the user is a member
+  returned: When C(groups) is not empty and C(state) is 'present'
+  type: string
+  sample: 'chrony,apache'
+home:
+  description: "Path to user's home directory"
+  returned: When C(state) is 'present'
+  type: string
+  sample: '/home/asmith'
+move_home:
+  description: Whether or not to move an existing home directory
+  returned: When C(state) is 'present' and user exists
+  type: bool
+  sample: False
+name:
+  description: User account name
+  returned: always
+  type: string
+  sample: asmith
+password:
+  description: Masked value of the password
+  returned: When C(state) is 'present' and C(password) is not empty
+  type: string
+  sample: 'NOT_LOGGING_PASSWORD'
+remove:
+  description: Whether or not to remove the user account
+  returned: When C(state) is 'absent' and user exists
+  type: bool
+  sample: True
+shell:
+  description: User login shell
+  returned: When C(state) is 'present'
+  type: string
+  sample: '/bin/bash'
+ssh_fingerprint:
+  description: Fingerprint of generated SSH key
+  returned: When C(generate_ssh_key) is C(True)
+  type: string
+  sample: '2048 SHA256:aYNHYcyVm87Igh0IMEDMbvW0QDlRQfE0aJugp684ko8 ansible-generated on host (RSA)'
+ssh_key_file:
+  description: Path to generated SSH public key file
+  returned: When C(generate_ssh_key) is C(True)
+  type: string
+  sample: /home/asmith/.ssh/id_rsa
+ssh_public_key:
+  description: Generated SSH public key file
+  returned: When C(generate_ssh_key) is C(True)
+  type: string
+  sample: >
+    'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC95opt4SPEC06tOYsJQJIuN23BbLMGmYo8ysVZQc4h2DZE9ugbjWWGS1/pweUGjVstgzMkBEeBCByaEf/RJKNecKRPeGd2Bw9DCj/bn5Z6rGfNENKBmo
+    618mUJBvdlEgea96QGjOwSB7/gmonduC7gsWDMNcOdSE3wJMTim4lddiBx4RgC9yXsJ6Tkz9BHD73MXPpT5ETnse+A3fw3IGVSjaueVnlUyUmOBf7fzmZbhlFVXf2Zi2rFTXqvbdGHKkzpw1U8eB8xFPP7y
+    d5u1u0e6Acju/8aZ/l17IDFiLke5IzlqIMRTEbDwLNeO84YQKWTm9fODHzhYe0yvxqLiK07 ansible-generated on host'
+stderr:
+  description: Standard error from running commands
+  returned: When stderr is returned by a command that is run
+  type: string
+  sample: Group wheels does not exist
+stdout:
+  description: Standard output from running commands
+  returned: When standard output is returned by the command that is run
+  type: string
+  sample:
+system:
+  description: Whether or not the account is a system account
+  returned: When C(system) is passed to the module and the account does not exist
+  type: bool
+  sample: True
+uid:
+  description: User ID of the user account
+  returned: When C(UID) is passed to the module
+  type: int
+  sample: 1044
+'''
+
 
 import errno
 import grp
 import os
+import re
 import platform
 import pwd
 import shutil
@@ -253,6 +357,9 @@ try:
     HAVE_SPWD = True
 except ImportError:
     HAVE_SPWD = False
+
+
+_HASH_RE = re.compile(r'[^a-zA-Z0-9./=]')
 
 
 class User(object):
@@ -325,6 +432,37 @@ class User(object):
             self.ssh_file = module.params['ssh_key_file']
         else:
             self.ssh_file = os.path.join('.ssh', 'id_%s' % self.ssh_type)
+
+    def check_password_encrypted(self):
+        # darwin need cleartext password, so no check
+        if self.module.params['password'] and self.platform != 'Darwin':
+            maybe_invalid = False
+            # : for delimiter, * for disable user, ! for lock user
+            # these characters are invalid in the password
+            if any(char in self.module.params['password'] for char in ':*!'):
+                maybe_invalid = True
+            if '$' not in self.module.params['password']:
+                maybe_invalid = True
+            else:
+                fields = self.module.params['password'].split("$")
+                if len(fields) >= 3:
+                    # contains character outside the crypto constraint
+                    if bool(_HASH_RE.search(fields[-1])):
+                        maybe_invalid = True
+                    # md5
+                    if fields[1] == '1' and len(fields[-1]) != 22:
+                        maybe_invalid = True
+                    # sha256
+                    if fields[1] == '5' and len(fields[-1]) != 43:
+                        maybe_invalid = True
+                    # sha512
+                    if fields[1] == '6' and len(fields[-1]) != 86:
+                        maybe_invalid = True
+                else:
+                    maybe_invalid = True
+            if maybe_invalid:
+                self.module.warn("The input password appears not to have been hashed. "
+                                 "The 'password' argument must be encrypted for this module to work properly.")
 
     def execute_command(self, cmd, use_unsafe_shell=False, data=None, obey_checkmode=True):
         if self.module.check_mode and obey_checkmode:
@@ -905,10 +1043,11 @@ class FreeBsdUser(User):
             cmd.append(self.comment)
 
         if self.home is not None:
-            if (info[5] != self.home and self.move_home) or (not os.path.exists(self.home) and self.createhome):
+            if (info[5] != self.home and self.move_home) or (not os.path.exists(self.home) and self.create_home):
                 cmd.append('-m')
-            cmd.append('-d')
-            cmd.append(self.home)
+            if info[5] != self.home:
+                cmd.append('-d')
+                cmd.append(self.home)
 
             if self.skeleton is not None:
                 cmd.append('-k')
@@ -1590,7 +1729,7 @@ class SunOS(User):
 
 class DarwinUser(User):
     """
-    This is a Darwin Mac OS X User manipulation class.
+    This is a Darwin macOS User manipulation class.
     Main differences are that Darwin:-
       - Handles accounts in a database managed by dscl(1)
       - Has no useradd/groupadd
@@ -2288,6 +2427,7 @@ def main():
     )
 
     user = User(module)
+    user.check_password_encrypted()
 
     module.debug('User instantiated - platform %s' % user.platform)
     if user.distribution:

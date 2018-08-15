@@ -18,6 +18,7 @@
 - name: "Enable feature BGP"
   nxos_feature:
     feature: bgp
+    provider: "{{ connection }}"
     state: enabled
   ignore_errors: yes
 
@@ -26,6 +27,7 @@
     asn: 65535
     neighbor: 192.0.2.3
     vrf: "{{ item }}"
+    provider: "{{ connection }}"
     state: absent
   with_items: "{{ vrfs }}"
   ignore_errors: yes
@@ -35,6 +37,7 @@
     asn: 65535
     neighbor: 192.0.2.3/32
     vrf: "{{ item }}"
+    provider: "{{ connection }}"
     state: absent
   with_items: "{{ vrfs }}"
   ignore_errors: yes
@@ -60,6 +63,7 @@
       description: "just a description"
       update_source: "{{ intname.capitalize() }}"
       shutdown: true
+      provider: "{{ connection }}"
       state: present
     with_items: "{{ vrfs }}"
     register: result
@@ -97,6 +101,7 @@
       description: default
       update_source: default
       shutdown: False
+      provider: "{{ connection }}"
       state: present
     with_items: "{{ vrfs }}"
     register: result
@@ -131,6 +136,7 @@
       vrf: "{{ item }}"
       description: "tested by ansible"
       remove_private_as: "{{remove_private_asa|default(omit)}}"
+      provider: "{{ connection }}"
       state: present
     with_items: "{{ vrfs }}"
     register: result
@@ -151,6 +157,7 @@
       vrf: "{{ item }}"
       description: "tested by ansible"
       remove_private_as: "{{remove_private_asr|default(omit)}}"
+      provider: "{{ connection }}"
       state: present
     with_items: "{{ vrfs }}"
     register: result
@@ -307,6 +314,7 @@
   - name: "Disable feature bgp"
     nxos_feature: &disable_bgp
       feature: bgp
+      provider: "{{ connection }}"
       state: disabled
 
 - debug: msg="END connection={{ ansible_connection }} nxos_bgp_neighbor sanity test"

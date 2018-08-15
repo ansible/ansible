@@ -213,7 +213,7 @@ class ActionModule(ActionBase):
         # so we just return the result as is
         # https://github.com/ansible/ansible/issues/38232
         failed = result.get('failed', False)
-        if "updates" not in result.keys() or failed:
+        if ("updates" not in result.keys() and self._task.async_val == 0) or failed:
             result['failed'] = True
             return result
 

@@ -28,11 +28,12 @@ DOCUMENTATION = """
          required: True
       encrypt:
         description:
-           - Whether the user requests that this password is returned encrypted or in plain text.
-           - Note that the password is always stored as plain text.
+           - Which hash scheme to encrypt the returning password, should be one hash scheme from C(passlib.hash).
+           - If not provided, the password will be returned in plain text.
+           - Note that the password is always stored as plain text, only the returning password is encrypted.
            - Encrypt also forces saving the salt value for idempotence.
-        type: boolean
-        default: True
+           - Note that before 2.6 this option was incorrectly labeled as a boolean for a long time.
+        default: None
       chars:
         version_added: "1.4"
         description:
@@ -234,13 +235,13 @@ def _parse_content(content):
     return password, salt
 
 
-def _format_content(password, salt, encrypt=True):
+def _format_content(password, salt, encrypt=None):
     """Format the password and salt for saving
     :arg password: the plaintext password to save
     :arg salt: the salt to use when encrypting a password
-    :arg encrypt: Whether the user requests that this password is encrypted.
+    :arg encrypt: Which method the user requests that this password is encrypted.
         Note that the password is saved in clear.  Encrypt just tells us if we
-        must save the salt value for idempotence.  Defaults to True.
+        must save the salt value for idempotence.  Defaults to None.
     :returns: a text string containing the formatted information
 
     .. warning:: Passwords are saved in clear.  This is because the playbooks

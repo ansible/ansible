@@ -213,11 +213,12 @@ def state_present(module, existing, proposed, candidate):
             evalue = existing_commands.get(key)
             dvalue = PARAM_TO_DEFAULT_KEYMAP.get('ingress_replication', 'default')
             if value != dvalue:
-                if evalue != dvalue:
+                if evalue and evalue != dvalue:
                     commands.append('no {0} {1}'.format(key, evalue))
                 commands.append('{0} {1}'.format(key, value))
             else:
-                commands.append('no {0} {1}'.format(key, evalue))
+                if evalue:
+                    commands.append('no {0} {1}'.format(key, evalue))
 
         elif value is True:
             commands.append(key)

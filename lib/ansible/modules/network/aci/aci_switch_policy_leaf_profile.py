@@ -50,6 +50,7 @@ EXAMPLES = r'''
     leaf_profile: sw_name
     description: sw_description
     state: present
+  delegate_to: localhost
 
 - name: Deleting a Leaf Profile
   aci_switch_policy_leaf_profile:
@@ -58,6 +59,7 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     leaf_profile: sw_name
     state: absent
+  delegate_to: localhost
 
 - name: Query a Leaf Profile
   aci_switch_policy_leaf_profile:
@@ -66,6 +68,8 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     leaf_profile: sw_name
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -203,8 +207,8 @@ def main():
         root_class=dict(
             aci_class='infraNodeP',
             aci_rn='infra/nprof-{0}'.format(leaf_profile),
-            filter_target='eq(infraNodeP.name, "{0}")'.format(leaf_profile),
             module_object=leaf_profile,
+            target_filter={'name': leaf_profile},
         ),
     )
 

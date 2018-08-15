@@ -24,7 +24,7 @@ Azure External Inventory Script
 ===============================
 Generates dynamic inventory by making API requests to the Azure Resource
 Manager using the Azure Python SDK. For instruction on installing the
-Azure Python SDK see http://azure-sdk-for-python.readthedocs.org/
+Azure Python SDK see https://azure-sdk-for-python.readthedocs.io/
 
 Authentication
 --------------
@@ -261,6 +261,7 @@ AZURE_CONFIG_SETTINGS = dict(
     group_by_location='AZURE_GROUP_BY_LOCATION',
     group_by_security_group='AZURE_GROUP_BY_SECURITY_GROUP',
     group_by_tag='AZURE_GROUP_BY_TAG',
+    group_by_os_family='AZURE_GROUP_BY_OS_FAMILY',
     use_private_ip='AZURE_USE_PRIVATE_IP'
 )
 
@@ -425,6 +426,7 @@ class AzureRM(object):
 
     def _get_msi_credentials(self, subscription_id_param=None):
         credentials = MSIAuthentication()
+        subscription_id_param = subscription_id_param or os.environ.get(AZURE_CREDENTIAL_ENV_MAPPING['subscription_id'], None)
         try:
             # try to get the subscription in MSI to test whether MSI is enabled
             subscription_client = SubscriptionClient(credentials)
@@ -571,6 +573,7 @@ class AzureInventory(object):
         self.replace_dash_in_groups = False
         self.group_by_resource_group = True
         self.group_by_location = True
+        self.group_by_os_family = True
         self.group_by_security_group = True
         self.group_by_tag = True
         self.include_powerstate = True
@@ -646,7 +649,7 @@ class AzureInventory(object):
             # get VMs for requested resource groups
             for resource_group in self.resource_groups:
                 try:
-                    virtual_machines = self._compute_client.virtual_machines.list(resource_group)
+                    virtual_machines = self._compute_client.virtual_machines.list(resource_group.lower())
                 except Exception as exc:
                     sys.exit("Error: fetching virtual machines for resource group {0} - {1}".format(resource_group, str(exc)))
                 if self._args.host or self.tags:
@@ -705,7 +708,7 @@ class AzureInventory(object):
 
             host_vars['os_disk'] = dict(
                 name=machine.storage_profile.os_disk.name,
-                operating_system_type=machine.storage_profile.os_disk.os_type.value
+                operating_system_type=machine.storage_profile.os_disk.os_type.value.lower()
             )
 
             if self.include_powerstate:
@@ -810,9 +813,15 @@ class AzureInventory(object):
 
         host_name = self._to_safe(vars['name'])
         resource_group = self._to_safe(vars['resource_group'])
+        operating_system_type = self._to_safe(vars['os_disk']['operating_system_type'].lower())
         security_group = None
         if vars.get('security_group'):
             security_group = self._to_safe(vars['security_group'])
+
+        if self.group_by_os_family:
+            if not self._inventory.get(operating_system_type):
+                self._inventory[operating_system_type] = []
+            self._inventory[operating_system_type].append(host_name)
 
         if self.group_by_resource_group:
             if not self._inventory.get(resource_group):

@@ -180,12 +180,6 @@ class CLI(with_metaclass(ABCMeta, object)):
             ver = deprecated[1]['version']
             display.deprecated("%s option, %s %s" % (name, why, alt), version=ver)
 
-        # Errors with configuration entries
-        if C.config.UNABLE:
-            for unable in C.config.UNABLE:
-                display.error("Unable to set correct type for configuration entry for %s: %s" % (unable, C.config.UNABLE[unable]))
-            raise AnsibleError("Invalid configuration settings")
-
     @staticmethod
     def split_vault_id(vault_id):
         # return (before_@, after_@)
@@ -664,7 +658,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                 ansible_versions[counter] = 0
             try:
                 ansible_versions[counter] = int(ansible_versions[counter])
-            except:
+            except Exception:
                 pass
         if len(ansible_versions) < 3:
             for counter in range(len(ansible_versions), 3):
@@ -808,6 +802,12 @@ class CLI(with_metaclass(ABCMeta, object)):
         # create the variable manager, which will be shared throughout
         # the code, ensuring a consistent view of global variables
         variable_manager = VariableManager(loader=loader, inventory=inventory)
+
+        if hasattr(options, 'basedir'):
+            if options.basedir:
+                variable_manager.safe_basedir = True
+        else:
+            variable_manager.safe_basedir = True
 
         # load vars from cli options
         variable_manager.extra_vars = load_extra_vars(loader=loader, options=options)

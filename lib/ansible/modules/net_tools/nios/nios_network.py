@@ -22,7 +22,7 @@ description:
     using the Infoblox WAPI interface over REST.
   - Supports both IPV4 and IPV6 internet protocols
 requirements:
-  - infoblox_client
+  - infoblox-client
 extends_documentation_fragment: nios
 options:
   network:

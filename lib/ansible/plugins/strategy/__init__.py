@@ -302,7 +302,7 @@ class StrategyBase:
             queued = False
             starting_worker = self._cur_worker
             while True:
-                (worker_prc, rslt_q) = self._workers[self._cur_worker]
+                worker_prc = self._workers[self._cur_worker]
                 if worker_prc is None or not worker_prc.is_alive():
                     self._queued_task_cache[(host.name, task._uuid)] = {
                         'host': host,
@@ -312,7 +312,7 @@ class StrategyBase:
                     }
 
                     worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, shared_loader_obj)
-                    self._workers[self._cur_worker][0] = worker_prc
+                    self._workers[self._cur_worker] = worker_prc
                     worker_prc.start()
                     display.debug("worker is %d (out of %d available)" % (self._cur_worker + 1, len(self._workers)))
                     queued = True
@@ -717,7 +717,12 @@ class StrategyBase:
         # the host here is from the executor side, which means it was a
         # serialized/cloned copy and we'll need to look up the proper
         # host object from the master inventory
-        real_host = self._inventory.hosts[host.name]
+        real_host = self._inventory.hosts.get(host.name)
+        if real_host is None:
+            if host.name == self._inventory.localhost.name:
+                real_host = self._inventory.localhost
+            else:
+                raise AnsibleError('%s cannot be matched in inventory' % host.name)
         group_name = result_item.get('add_group')
         parent_group_names = result_item.get('parent_groups', [])
 
@@ -831,7 +836,14 @@ class StrategyBase:
             #        we consider the ability of meta tasks to flush handlers
             for handler in handler_block.block:
                 if handler._uuid in self._notified_handlers and len(self._notified_handlers[handler._uuid]):
-                    result = self._do_handler_run(handler, handler.get_name(), iterator=iterator, play_context=play_context)
+                    handler_vars = self._variable_manager.get_vars(play=iterator._play, task=handler)
+                    templar = Templar(loader=self._loader, variables=handler_vars)
+                    handler_name = handler.get_name()
+                    try:
+                        handler_name = templar.template(handler_name)
+                    except (UndefinedError, AnsibleUndefinedVariable):
+                        pass
+                    result = self._do_handler_run(handler, handler_name, iterator=iterator, play_context=play_context)
                     if not result:
                         break
         return result
@@ -993,8 +1005,30 @@ class StrategyBase:
                         iterator._host_states[host.name].run_state = iterator.ITERATING_COMPLETE
                 msg = "ending play"
         elif meta_action == 'reset_connection':
+            all_vars = self._variable_manager.get_vars(play=iterator._play, host=target_host, task=task)
+            templar = Templar(loader=self._loader, variables=all_vars)
+
+            # apply the given task's information to the connection info,
+            # which may override some fields already set by the play or
+            # the options specified on the command line
+            play_context = play_context.set_task_and_variable_override(task=task, variables=all_vars, templar=templar)
+
+            # fields set from the play/task may be based on variables, so we have to
+            # do the same kind of post validation step on it here before we use it.
+            play_context.post_validate(templar=templar)
+
+            # now that the play context is finalized, if the remote_addr is not set
+            # default to using the host's address field as the remote address
+            if not play_context.remote_addr:
+                play_context.remote_addr = target_host.address
+
+            # We also add "magic" variables back into the variables dict to make sure
+            # a certain subset of variables exist.
+            play_context.update_vars(all_vars)
+
             if task.when:
                 self._cond_not_supported_warn(meta_action)
+
             if target_host in self._active_connections:
                 connection = Connection(self._active_connections[target_host])
                 del self._active_connections[target_host]

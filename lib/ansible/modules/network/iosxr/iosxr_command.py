@@ -122,7 +122,7 @@ failed_conditions:
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.iosxr.iosxr import run_command, iosxr_argument_spec
+from ansible.module_utils.network.iosxr.iosxr import run_commands, iosxr_argument_spec
 from ansible.module_utils.network.iosxr.iosxr import command_spec
 from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.six import string_types
@@ -188,7 +188,7 @@ def main():
     match = module.params['match']
 
     while retries > 0:
-        responses = run_command(module, commands)
+        responses = run_commands(module, commands)
 
         for item in list(conditionals):
             if item(responses):
@@ -216,6 +216,7 @@ def main():
     }
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

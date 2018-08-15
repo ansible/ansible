@@ -8,8 +8,9 @@ import json
 import time
 
 from ansible.module_utils._text import to_text
-from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.connection import ConnectionError
+from ansible.module_utils.network.common.utils import to_list
+from ansible.plugins.httpapi import HttpApiBase
 
 try:
     from __main__ import display
@@ -18,11 +19,7 @@ except ImportError:
     display = Display()
 
 
-class HttpApi:
-    def __init__(self, connection):
-        self.connection = connection
-        self._become = False
-
+class HttpApi(HttpApiBase):
     def send_request(self, data, **message_kwargs):
         data = to_list(data)
         if self._become:
@@ -33,13 +30,16 @@ class HttpApi:
         request = request_builder(data, output)
         headers = {'Content-Type': 'application/json-rpc'}
 
-        response = self.connection.send('/command-api', request, headers=headers, method='POST')
-        response_text = to_text(response.read())
+        response, response_data = self.connection.send('/command-api', request, headers=headers, method='POST')
+
         try:
-            response = json.loads(response_text)
+            response_data = json.loads(to_text(response_data.getvalue()))
         except ValueError:
-            raise ConnectionError('Response was not valid JSON, got {0}'.format(response_text))
-        results = handle_response(response)
+            raise ConnectionError('Response was not valid JSON, got {0}'.format(
+                to_text(response_data.getvalue())
+            ))
+
+        results = handle_response(response_data)
 
         if self._become:
             results = results[1:]
@@ -52,12 +52,7 @@ class HttpApi:
         # Fake a prompt for @enable_mode
         if self._become:
             return '#'
-        else:
-            return '>'
-
-    def set_become(self, play_context):
-        self._become = play_context.become
-        self._become_pass = getattr(play_context, 'become_pass') or ''
+        return '>'
 
     # Imported from module_utils
     def edit_config(self, config, commit=False, replace=False):
@@ -91,7 +86,12 @@ class HttpApi:
             else:
                 commands.append(command)
 
-        response = self.send_request(commands)
+        try:
+            response = self.send_request(commands)
+        except Exception:
+            commands = ['configure session %s' % session, 'abort']
+            response = self.send_request(commands, output='text')
+            raise
 
         commands = ['configure session %s' % session, 'show session-config diffs']
         if commit:
@@ -114,29 +114,36 @@ class HttpApi:
         responses = list()
 
         def run_queue(queue, output):
-            response = to_list(self.send_request(queue, output=output))
+            try:
+                response = to_list(self.send_request(queue, output=output))
+            except Exception as exc:
+                if check_rc:
+                    raise
+                return to_text(exc)
+
             if output == 'json':
                 response = [json.loads(item) for item in response]
             return response
 
         for item in to_list(commands):
-            cmd_output = None
+            cmd_output = 'text'
             if isinstance(item, dict):
                 command = item['command']
-                if command.endswith('| json'):
-                    command = command.replace('| json', '')
-                    cmd_output = 'json'
-                elif 'output' in item:
+                if 'output' in item:
                     cmd_output = item['output']
             else:
                 command = item
+
+            # Emulate '| json' from CLI
+            if command.endswith('| json'):
+                command = command.rsplit('|', 1)[0]
                 cmd_output = 'json'
 
             if output and output != cmd_output:
                 responses.extend(run_queue(queue, output))
                 queue = list()
 
-            output = cmd_output or 'json'
+            output = cmd_output
             queue.append(command)
 
         if queue:
@@ -157,7 +164,13 @@ class HttpApi:
 def handle_response(response):
     if 'error' in response:
         error = response['error']
-        raise ConnectionError(error['message'], code=error['code'])
+
+        error_text = []
+        for data in error['data']:
+            error_text.extend(data.get('errors', []))
+        error_text = '\n'.join(error_text) or error['message']
+
+        raise ConnectionError(error_text, code=error['code'])
 
     results = []
     for result in response['result']:

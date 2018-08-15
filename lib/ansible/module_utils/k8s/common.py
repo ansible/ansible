@@ -1,5 +1,4 @@
-#
-#  Copyright 2018 Red Hat | Ansible
+# Copyright 2018 Red Hat | Ansible
 #
 # This file is part of Ansible
 #
@@ -22,11 +21,12 @@ import os
 import copy
 
 
-from ansible.module_utils.six import iteritems
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import iteritems, string_types
 
 try:
     import kubernetes
+    import openshift
     from openshift.dynamic import DynamicClient
     from openshift.dynamic.exceptions import ResourceNotFoundError, ResourceNotUniqueError
     HAS_K8S_MODULE_HELPER = True
@@ -51,6 +51,17 @@ try:
 except ImportError:
     pass
 
+
+def list_dict_str(value):
+    if isinstance(value, list):
+        return value
+    elif isinstance(value, dict):
+        return value
+    elif isinstance(value, string_types):
+        return value
+    raise TypeError
+
+
 ARG_ATTRIBUTES_BLACKLIST = ('property_path',)
 
 COMMON_ARG_SPEC = {
@@ -63,7 +74,7 @@ COMMON_ARG_SPEC = {
         'default': False,
     },
     'resource_definition': {
-        'type': 'dict',
+        'type': list_dict_str,
         'aliases': ['definition', 'inline']
     },
     'src': {
@@ -138,8 +149,11 @@ class K8sAnsibleMixin(object):
             elif key in auth_args and value is None:
                 env_value = os.getenv('K8S_AUTH_{0}'.format(key.upper()), None)
                 if env_value is not None:
-                    setattr(configuration, key, env_value)
-                    auth[key] = env_value
+                    if key == 'api_key':
+                        setattr(configuration, key, {'authorization': "Bearer {0}".format(env_value)})
+                    else:
+                        setattr(configuration, key, env_value)
+                        auth[key] = env_value
 
         kubernetes.client.Configuration.set_default(configuration)
 
@@ -189,6 +203,17 @@ class K8sAnsibleMixin(object):
             if fail:
                 self.fail(msg='Failed to find exact match for {0}.{1} by [kind, name, singularName, shortNames]'.format(api_version, kind))
 
+    def kubernetes_facts(self, kind, api_version, name=None, namespace=None, label_selectors=None, field_selectors=None):
+        resource = self.find_resource(kind, api_version)
+        result = resource.get(name=name,
+                              namespace=namespace,
+                              label_selector=','.join(label_selectors),
+                              field_selector=','.join(field_selectors)).to_dict()
+        if 'items' in result:
+            return result
+        else:
+            return dict(items=[result])
+
     def remove_aliases(self):
         """
         The helper doesn't know what to do with aliased keys
@@ -234,6 +259,7 @@ class KubernetesAnsibleModule(AnsibleModule, K8sAnsibleMixin):
 
         if not HAS_K8S_MODULE_HELPER:
             self.fail_json(msg="This module requires the OpenShift Python client. Try `pip install openshift`")
+        self.openshift_version = openshift.__version__
 
         if not HAS_YAML:
             self.fail_json(msg="This module requires PyYAML. Try `pip install PyYAML`")

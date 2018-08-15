@@ -1,4 +1,4 @@
 cloud/azure
-posix/ci/cloud/group3/azure
+shippable/azure/group2
 unstable
 destructive

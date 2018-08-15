@@ -143,7 +143,7 @@
           primary: True
           public_ip_allocation_method: Static
         - name: ipconfig1
-          public_ip_name: testnic003
+          public_ip_name: "tn{{ rpfx }}3"
   register: output
   check_mode: yes
 
@@ -168,7 +168,7 @@
           primary: True
           public_ip_allocation_method: Static
         - name: ipconfig1
-          public_ip_name: testnic003
+          public_ip_name: "tn{{ rpfx }}3"
           load_balancer_backend_address_pools:
           - "{{ lb.state.backend_address_pools[0].id }}"
           - name: backendaddrpool1
@@ -197,7 +197,7 @@
           primary: True
           public_ip_allocation_method: Static
         - name: ipconfig1
-          public_ip_name: testnic003
+          public_ip_name: "tn{{ rpfx }}3"
           load_balancer_backend_address_pools:
           - "{{ lb.state.backend_address_pools[0].id }}"
           - name: backendaddrpool1
@@ -219,7 +219,7 @@
       subnet: "tn{{ rpfx }}"
       ip_configurations:
         - name: ipconfig1
-          public_ip_name: testnic003
+          public_ip_name: "tn{{ rpfx }}3"
           load_balancer_backend_address_pools:
           - "{{ lb.state.backend_address_pools[0].id }}"
           - name: backendaddrpool1
@@ -251,6 +251,112 @@
     that:
       - output.state.ip_configurations[0].public_ip_address == None
       - output.state.network_security_group == None
+
+- name: NIC with Accelerated networking enabled
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}an"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      enable_accelerated_networking: True
+  register: output
+
+- assert:
+    that:
+      - output.state.enable_accelerated_networking
+      - output.changed
+
+- name: NIC with Accelerated networking enabled (check idempotent)
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}an"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      enable_accelerated_networking: True
+  register: output
+
+- assert:
+    that:
+      - output.state.enable_accelerated_networking
+      - not output.changed
+
+- name: Disable (previously enabled) Accelerated networking
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}an"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      enable_accelerated_networking: False
+  register: output
+
+- assert:
+    that:
+      - not output.state.enable_accelerated_networking
+      - output.changed
+
+- name: Delete AN NIC
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}an"
+      state: absent
+  register: output
+
+- assert:
+    that:
+      - output.changed
+
+- name: NIC with IP forwarding networking enabled
+  azure_rm_networkinterface:
+    resource_group: "{{ resource_group }}"
+    name: "tn{{ rpfx }}ipf"
+    virtual_network: "{{ vn.state.id }}"
+    subnet: "tn{{ rpfx }}"
+    enable_ip_forwarding: True
+  register: output
+
+- assert:
+    that:
+      - output.state.enable_ip_forwarding
+      - output.changed
+
+- name: NIC with IP forwarding enabled (check idempotent)
+  azure_rm_networkinterface:
+    resource_group: "{{ resource_group }}"
+    name: "tn{{ rpfx }}ipf"
+    virtual_network: "{{ vn.state.id }}"
+    subnet: "tn{{ rpfx }}"
+    enable_ip_forwarding: True
+  register: output
+
+- assert:
+    that:
+      - output.state.enable_ip_forwarding
+      - not output.changed
+
+- name: Disable (previously enabled) IP forwarding
+  azure_rm_networkinterface:
+    resource_group: "{{ resource_group }}"
+    name: "tn{{ rpfx }}ipf"
+    virtual_network: "{{ vn.state.id }}"
+    subnet: "tn{{ rpfx }}"
+    enable_ip_forwarding: False
+  register: output
+
+- assert:
+    that:
+      - not output.state.enable_ip_forwarding
+      - output.changed
+
+- name: Delete IP forwarding NIC
+  azure_rm_networkinterface:
+    resource_group: "{{ resource_group }}"
+    name: "tn{{ rpfx }}ipf"
+    state: absent
+  register: output
+
+- assert:
+    that:
+      - output.changed
 
 - name: Delete the NIC (check mode)
   azure_rm_networkinterface:

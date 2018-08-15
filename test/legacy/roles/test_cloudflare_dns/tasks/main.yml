@@ -35,7 +35,7 @@
   assert:
     that:
       - cloudflare_dns is failed
-      - "cloudflare_dns.msg.find('but the following are missing: ') != -1"
+      - "cloudflare_dns.msg.find('but all of the following are missing: ') != -1"
 
 - name: "Test: credentials, zone and type"
   cloudflare_dns:
@@ -50,7 +50,7 @@
   assert:
     that:
       - cloudflare_dns is failed
-      - "cloudflare_dns.msg.find('but the following are missing: ') != -1"
+      - "cloudflare_dns.msg.find('but all of the following are missing: ') != -1"
 
 ######## record tests #################
 

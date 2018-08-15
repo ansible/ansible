@@ -32,7 +32,7 @@ script contacts can be defined using environment variables or a configuration fi
 Requirements
 ------------
 
-Using the docker modules requires having docker-py <https://docker-py.readthedocs.org/en/stable/>
+Using the docker modules requires having docker-py <https://docker-py.readthedocs.io/en/stable/>
 installed on the host running Ansible. To install docker-py:
 
    pip install docker-py
@@ -888,5 +888,6 @@ def main():
         fail("Failed to import docker-py. Try `pip install docker-py` - %s" % (HAS_DOCKER_ERROR))
 
     DockerInventory().run()
+
 
 main()

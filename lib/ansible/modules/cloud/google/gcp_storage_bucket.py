@@ -1162,5 +1162,6 @@ class BucketWebsite(object):
             u'notFoundPage': self.request.get(u'notFoundPage')
         })
 
+
 if __name__ == '__main__':
     main()

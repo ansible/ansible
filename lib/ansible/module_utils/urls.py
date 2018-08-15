@@ -248,8 +248,8 @@ if not HAS_MATCH_HOSTNAME:
     HAS_MATCH_HOSTNAME = True
 
 
-# This is a dummy cacert provided for Mac OS since you need at least 1
-# ca cert, regardless of validity, for Python on Mac OS to use the
+# This is a dummy cacert provided for macOS since you need at least 1
+# ca cert, regardless of validity, for Python on macOS to use the
 # keychain functionality in OpenSSL for validating SSL certificates.
 # See: http://mercurial.selenic.com/wiki/CACertificates#Mac_OS_X_10.6_and_higher
 b_DUMMY_CA_CERT = b"""-----BEGIN CERTIFICATE-----
@@ -294,6 +294,7 @@ class SSLValidationError(ConnectionError):
 class NoSSLError(SSLValidationError):
     """Needed to connect to an HTTPS url but no ssl library available to verify the certificate"""
     pass
+
 
 # Some environments (Google Compute Engine's CoreOS deploys) do not compile
 # against openssl and thus do not have any HTTPS support.
@@ -625,7 +626,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         to_add_fd, to_add_path = tempfile.mkstemp()
         to_add = False
 
-        # Write the dummy ca cert if we are running on Mac OS X
+        # Write the dummy ca cert if we are running on macOS
         if system == u'Darwin':
             os.write(tmp_fd, b_DUMMY_CA_CERT)
             # Default Homebrew path for OpenSSL certs
@@ -734,7 +735,12 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             if https_proxy:
                 proxy_parts = generic_urlparse(urlparse(https_proxy))
                 port = proxy_parts.get('port') or 443
-                s = socket.create_connection((proxy_parts.get('hostname'), port))
+                proxy_hostname = proxy_parts.get('hostname', None)
+                if proxy_hostname is None or proxy_parts.get('scheme') == '':
+                    raise ProxyError("Failed to parse https_proxy environment variable."
+                                     " Please make sure you export https proxy as 'https_proxy=<SCHEME>://<IP_ADDRESS>:<PORT>'")
+
+                s = socket.create_connection((proxy_hostname, port))
                 if proxy_parts.get('scheme') == 'http':
                     s.sendall(to_bytes(self.CONNECT_COMMAND % (self.hostname, self.port), errors='surrogate_or_strict'))
                     if proxy_parts.get('username'):
@@ -1131,7 +1137,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
 
     Does not require the module environment
     '''
-    method = method or 'GET'
+    method = method or ('POST' if data else 'GET')
     return Request().open(method, url, data=data, headers=headers, use_proxy=use_proxy,
                           force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
                           url_username=url_username, url_password=url_password, http_agent=http_agent,

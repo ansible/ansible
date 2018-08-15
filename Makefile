@@ -9,7 +9,7 @@
 #   make deb-src -------------- produce a DEB source
 #   make deb ------------------ produce a DEB
 #   make docs ----------------- rebuild the manpages (results are checked in)
-#   make tests ---------------- run the tests (see https://docs.ansible.com/ansible/dev_guide/testing_units.html for requirements)
+#   make tests ---------------- run the tests (see https://docs.ansible.com/ansible/devel/dev_guide/testing_units.html for requirements)
 #   make pyflakes, make pep8 -- source code checks
 
 ########################################################

@@ -7,18 +7,21 @@
   nxos_config: &remove_evpn
     lines: no nv overlay evpn
     match: none
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - block:
   - name: "Enable feature BGP"
     nxos_feature:
       feature: bgp
+      provider: "{{ connection }}"
       state: enabled
 
   - name: "Enable nv overlay evpn"
     nxos_config:
       lines: nv overlay evpn
       match: none
+      provider: "{{ connection }}"
 
   - name: "Configure nxos_evpn_vni"
     nxos_evpn_vni: &evpn_vni
@@ -32,6 +35,7 @@
           - auto
           - "5000:10"
           - "192.0.2.1:43"
+      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -52,6 +56,7 @@
       route_distinguisher: "50:20"
       route_target_import: auto
       route_target_export: auto
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -68,6 +73,7 @@
       route_distinguisher: default
       route_target_import: default
       route_target_export: default
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -81,6 +87,7 @@
   - name: "remove nxos_evpn_vni"
     nxos_evpn_vni: &rvni
       vni: 6000
+      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -102,6 +109,7 @@
   - name: "Disable feature bgp"
     nxos_feature:
       feature: bgp
+      provider: "{{ connection }}"
       state: disabled
     ignore_errors: yes
 

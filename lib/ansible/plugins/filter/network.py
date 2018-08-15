@@ -28,11 +28,11 @@ import string
 from collections import Mapping
 from xml.etree.ElementTree import fromstring
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.network.common.utils import Template
 from ansible.module_utils.six import iteritems, string_types
 from ansible.errors import AnsibleError, AnsibleFilterError
 from ansible.utils.encrypt import random_password
-from ansible.plugins.lookup import password as ansible_password
 
 
 try:
@@ -362,7 +362,11 @@ def type5_pw(password, salt=None):
     if not isinstance(password, string_types):
         raise AnsibleFilterError("type5_pw password input should be a string, but was given a input of %s" % (type(password).__name__))
 
-    salt_chars = ansible_password._gen_candidate_chars(['ascii_letters', 'digits', './'])
+    salt_chars = u''.join((
+        to_text(string.ascii_letters),
+        to_text(string.digits),
+        u'./'
+    ))
     if salt is not None and not isinstance(salt, string_types):
         raise AnsibleFilterError("type5_pw salt input should be a string, but was given a input of %s" % (type(salt).__name__))
     elif not salt:

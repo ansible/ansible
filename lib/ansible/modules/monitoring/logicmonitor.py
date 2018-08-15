@@ -497,6 +497,7 @@ EXAMPLES = '''
 '''
 
 import datetime
+import json
 import os
 import platform
 import socket
@@ -506,28 +507,6 @@ import types
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import open_url
-
-
-HAS_LIB_JSON = True
-try:
-    import json
-    # Detect the python-json library which is incompatible
-    # Look for simplejson if that's the case
-    try:
-        if (
-            not isinstance(json.loads, types.FunctionType) or
-            not isinstance(json.dumps, types.FunctionType)
-        ):
-            raise ImportError
-    except AttributeError:
-        raise ImportError
-except ImportError:
-    try:
-        import simplejson as json
-    except ImportError:
-        HAS_LIB_JSON = False
-    except SyntaxError:
-        HAS_LIB_JSON = False
 
 
 class LogicMonitor(object):
@@ -2147,9 +2126,6 @@ def main():
         ),
         supports_check_mode=True
     )
-
-    if HAS_LIB_JSON is not True:
-        module.fail_json(msg="Unable to load JSON library")
 
     selector(module)
 

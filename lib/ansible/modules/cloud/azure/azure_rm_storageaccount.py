@@ -104,8 +104,8 @@ EXAMPLES = '''
         name: clh0002
         type: Standard_RAGRS
         tags:
-          - testing: testing
-          - delete: on-exit
+          testing: testing
+          delete: on-exit
 '''
 
 
@@ -450,6 +450,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
 
 def main():
     AzureRMStorageAccount()
+
 
 if __name__ == '__main__':
     main()

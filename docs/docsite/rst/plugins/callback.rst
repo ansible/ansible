@@ -16,7 +16,7 @@ Example Callback Plugins
 The :doc:`_plays <callback/log_plays>` callback is an example of how to record playbook events to a log file,
 and the :doc:`mail <callback/mail>` callback sends email on playbook failures.
 
-The :doc:`osx_say <callback/osx_say>` callback responds with computer synthesized speech on OS X in relation to playbook events.
+The :doc:`osx_say <callback/osx_say>` callback responds with computer synthesized speech on macOS in relation to playbook events.
 
 
 .. _enabling_callbacks:
@@ -75,7 +75,7 @@ You can also set this as an environment variable:
 Plugin List
 +++++++++++
 
-You can use ``ansible-doc -t callback -l`` to see the list of available plugins. 
+You can use ``ansible-doc -t callback -l`` to see the list of available plugins.
 Use ``ansible-doc -t callback <plugin name>`` to see specific documents and examples.
 
 

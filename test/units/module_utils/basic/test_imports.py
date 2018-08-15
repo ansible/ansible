@@ -66,18 +66,15 @@ class TestImports(ModuleTestCase):
         def _mock_import(name, *args, **kwargs):
             if name == 'json':
                 raise ImportError
-            elif name == 'simplejson':
-                sj = MagicMock()
-                sj.__version__ = '3.10.0'
-                return sj
             return realimport(name, *args, **kwargs)
 
         self.clear_modules(['json', 'ansible.module_utils.basic'])
-        mod = builtins.__import__('ansible.module_utils.basic')
+        builtins.__import__('ansible.module_utils.basic')
 
         self.clear_modules(['json', 'ansible.module_utils.basic'])
         mock_import.side_effect = _mock_import
-        mod = builtins.__import__('ansible.module_utils.basic')
+        with self.assertRaises(SystemExit):
+            builtins.__import__('ansible.module_utils.basic')
 
     # FIXME: doesn't work yet
     # @patch.object(builtins, 'bytes')

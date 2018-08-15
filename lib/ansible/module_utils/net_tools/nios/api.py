@@ -46,6 +46,15 @@ NIOS_HOST_RECORD = 'record:host'
 NIOS_IPV4_NETWORK = 'network'
 NIOS_IPV6_NETWORK = 'ipv6network'
 NIOS_ZONE = 'zone_auth'
+NIOS_PTR_RECORD = 'record:ptr'
+NIOS_A_RECORD = 'record:a'
+NIOS_AAAA_RECORD = 'record:aaaa'
+NIOS_CNAME_RECORD = 'record:cname'
+NIOS_MX_RECORD = 'record:mx'
+NIOS_SRV_RECORD = 'record:srv'
+NIOS_NAPTR_RECORD = 'record:naptr'
+NIOS_TXT_RECORD = 'record:txt'
+
 
 NIOS_PROVIDER_SPEC = {
     'host': dict(),
@@ -236,6 +245,8 @@ class WapiModule(WapiBase):
                     self.create_object(ib_obj_type, proposed_object)
                 result['changed'] = True
             elif modified:
+                self.check_if_recordname_exists(obj_filter, ib_obj_ref, ib_obj_type, current_object, proposed_object)
+
                 if (ib_obj_type in (NIOS_HOST_RECORD, NIOS_NETWORK_VIEW, NIOS_DNS_VIEW)):
                     proposed_object = self.on_update(proposed_object, ib_spec)
                     res = self.update_object(ref, proposed_object)
@@ -253,6 +264,23 @@ class WapiModule(WapiBase):
                 result['changed'] = True
 
         return result
+
+    def check_if_recordname_exists(self, obj_filter, ib_obj_ref, ib_obj_type, current_object, proposed_object):
+        ''' Send POST request if host record input name and retrieved ref name is same,
+            but input IP and retrieved IP is different'''
+
+        if 'name' in (obj_filter and ib_obj_ref[0]) and ib_obj_type == NIOS_HOST_RECORD:
+            obj_host_name = obj_filter['name']
+            ref_host_name = ib_obj_ref[0]['name']
+            if 'ipv4addrs' in (current_object and proposed_object):
+                current_ip_addr = current_object['ipv4addrs'][0]['ipv4addr']
+                proposed_ip_addr = proposed_object['ipv4addrs'][0]['ipv4addr']
+            elif 'ipv6addrs' in (current_object and proposed_object):
+                current_ip_addr = current_object['ipv6addrs'][0]['ipv6addr']
+                proposed_ip_addr = proposed_object['ipv6addrs'][0]['ipv6addr']
+
+            if obj_host_name == ref_host_name and current_ip_addr != proposed_ip_addr:
+                self.create_object(ib_obj_type, proposed_object)
 
     def issubset(self, item, objects):
         ''' Checks if item is a subset of objects
@@ -318,7 +346,11 @@ class WapiModule(WapiBase):
             update = True
             return ib_obj, update, new_name
         if (ib_obj_type == NIOS_HOST_RECORD):
-            test_obj_filter = dict([('name', name), ('view', obj_filter['view'])])
+            # to check only by name if dns bypassing is set
+            if not obj_filter['configure_for_dns']:
+                test_obj_filter = dict([('name', name)])
+            else:
+                test_obj_filter = dict([('name', name), ('view', obj_filter['view'])])
         else:
             test_obj_filter = dict([('name', name)])
         ib_obj = self.get_object(ib_obj_type, test_obj_filter.copy(), return_fields=ib_spec.keys())

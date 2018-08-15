@@ -486,7 +486,10 @@ class PluginLoader:
                 continue
 
             if path not in self._module_cache:
-                module = self._load_module_source(name, path)
+                try:
+                    module = self._load_module_source(name, path)
+                except Exception as e:
+                    display.warning("Skipping plugin (%s) as it seems to be invalid: %s" % (path, to_text(e)))
                 self._module_cache[path] = module
                 found_in_cache = False
 

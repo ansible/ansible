@@ -346,14 +346,16 @@ EXAMPLES = '''
         probe_interval: 10
         probe_fail_count: 3
         protocol: Tcp
-        load_distribution: Default
-        frontend_port: 80
+        frontend_port_range_start: 80
+        frontend_port_range_end: 81
         backend_port: 8080
-        idle_timeout: 4
-        natpool_frontend_port_start: 1030
-        natpool_frontend_port_end: 1040
-        natpool_backend_port: 80
-        natpool_protocol: Tcp
+    load_balancing_rules:
+      - name: lbrbalancingrule0
+        frontend_ip_configuration: frontendipconf0
+        backend_address_pool: backendaddrpool0
+        frontend_port: 80
+        backend_port: 80
+        probe: prob0
 '''
 
 RETURN = '''
@@ -997,6 +999,7 @@ def probe_id(subscription_id, resource_group_name, load_balancer_name, name):
 def main():
     """Main execution"""
     AzureRMLoadBalancer()
+
 
 if __name__ == '__main__':
     main()

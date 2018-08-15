@@ -293,6 +293,8 @@ backup_path:
 """
 import json
 
+from ansible.module_utils._text import to_text
+from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.ios.ios import run_commands, get_config
 from ansible.module_utils.network.ios.ios import get_defaults_flag, get_connection
 from ansible.module_utils.network.ios.ios import ios_argument_spec
@@ -400,6 +402,7 @@ def main():
     check_args(module, warnings)
     result['warnings'] = warnings
 
+    diff_ignore_lines = module.params['diff_ignore_lines']
     config = None
     contents = None
     flags = get_defaults_flag(module) if module.params['defaults'] else []
@@ -418,11 +421,14 @@ def main():
 
         candidate = get_candidate_config(module)
         running = get_running_config(module, contents, flags=flags)
+        try:
+            response = connection.get_diff(candidate=candidate, running=running, diff_match=match, diff_ignore_lines=diff_ignore_lines, path=path,
+                                           diff_replace=replace)
+        except ConnectionError as exc:
+            module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
-        response = connection.get_diff(candidate=candidate, running=running, match=match, diff_ignore_lines=None, path=path, replace=replace)
-        diff = json.loads(response)
-        config_diff = diff['config_diff']
-        banner_diff = diff['banner_diff']
+        config_diff = response['config_diff']
+        banner_diff = response['banner_diff']
 
         if config_diff or banner_diff:
             commands = config_diff.split('\n')
@@ -441,16 +447,14 @@ def main():
             # them with the current running config
             if not module.check_mode:
                 if commands:
-                    connection.edit_config(commands)
+                    connection.edit_config(candidate=commands)
                 if banner_diff:
-                    connection.edit_banner(json.dumps(banner_diff), multiline_delimiter=module.params['multiline_delimiter'])
+                    connection.edit_banner(candidate=json.dumps(banner_diff), multiline_delimiter=module.params['multiline_delimiter'])
 
             result['changed'] = True
 
     running_config = module.params['running_config']
     startup_config = None
-
-    diff_ignore_lines = module.params['diff_ignore_lines']
 
     if module.params['save_when'] == 'always' or module.params['save']:
         save_config(module, result)
@@ -509,6 +513,7 @@ def main():
                 })
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

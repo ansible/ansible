@@ -835,12 +835,9 @@ Here is the order of precedence from least to greatest (the last listed variable
   * inventory group_vars/* [3]_
   * playbook group_vars/* [3]_
   * inventory file or script host vars [2]_
-  * inventory host_vars/*
-  * playbook host_vars/*
-  * host facts / cached set_facts [4]_
   * inventory host_vars/* [3]_
   * playbook host_vars/* [3]_
-  * host facts
+  * host facts / cached set_facts [4]_
   * play vars
   * play vars_prompt
   * play vars_files
@@ -1044,7 +1041,7 @@ For information about advanced YAML syntax used to declare variables and have mo
        Playbook organization by roles
    :doc:`playbooks_best_practices`
        Best practices in playbooks
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
