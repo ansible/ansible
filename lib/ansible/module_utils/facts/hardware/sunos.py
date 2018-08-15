@@ -173,8 +173,8 @@ class SunOSHardware(Hardware):
         # On Solaris 8 the prtdiag wrapper is absent from /usr/sbin,
         # but that's okay, because we know where to find the real thing:
         if not prtdiag_path:
-             rc, platform, err = self.module.run_command('/usr/bin/uname -i')
-             prtdiag_path = '/usr/platform/' + platform.rstrip() + '/sbin/prtdiag'
+            rc, platform, err = self.module.run_command('/usr/bin/uname -i')
+            prtdiag_path = '/usr/platform/' + platform.rstrip() + '/sbin/prtdiag'
 
         rc, out, err = self.module.run_command(prtdiag_path)
         """
