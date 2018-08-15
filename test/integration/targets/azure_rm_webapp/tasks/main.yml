@@ -70,7 +70,7 @@
     that:
       - output.ansible_facts.azure_webapps | length == 1
       - output.ansible_facts.azure_webapps[0].app_settings | length == 1
-      - output.ansible_facts.azure_webapps[0].frameworks | length == 2 # net_framework is default
+      - output.ansible_facts.azure_webapps[0].frameworks | length > 1 # there's default frameworks eg net_framework
 
 - name: assert the function was created
   assert:
