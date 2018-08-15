@@ -465,7 +465,7 @@ The ``requests-credssp`` wrapper can be installed using ``pip``:
 
 .. code-block:: bash
 
-    pip install pywinrm[credssp]
+    pip install requests-credssp
 
 CredSSP and TLS 1.2
 +++++++++++++++++++
