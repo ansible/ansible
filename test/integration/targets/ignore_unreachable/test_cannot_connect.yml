@@ -1,0 +1,13 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Hi
+      ping:
+- hosts: [localhost, nonexistent]
+  ignore_unreachable: true
+  gather_facts: false
+  tasks:
+    - name: Hi
+      ping:
