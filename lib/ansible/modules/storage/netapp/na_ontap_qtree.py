@@ -41,6 +41,7 @@ options:
   from_name:
     description:
     - Name of the Qtree to be renamed.
+    version_added: '2.7'
 
   flexvol_name:
     description:
