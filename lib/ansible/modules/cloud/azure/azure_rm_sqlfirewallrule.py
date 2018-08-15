@@ -51,7 +51,6 @@ options:
 
 extends_documentation_fragment:
     - azure
-    - azure_tags
 
 author:
     - "Zim Kalinowski (@zikalino)"
@@ -133,17 +132,16 @@ class AzureRMFirewallRules(AzureRMModuleBase):
 
         self.results = dict(changed=False)
         self.state = None
-        self.tags = None
         self.to_do = Actions.NoAction
 
         super(AzureRMFirewallRules, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                    supports_check_mode=True,
-                                                   supports_tags=True)
+                                                   supports_tags=False)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
 
-        for key in list(self.module_arg_spec.keys()) + ['tags']:
+        for key in list(self.module_arg_spec.keys()):
             if hasattr(self, key):
                 setattr(self, key, kwargs[key])
 
@@ -165,9 +163,6 @@ class AzureRMFirewallRules(AzureRMModuleBase):
                 if (self.start_ip_address is not None) and (self.start_ip_address != old_response['start_ip_address']):
                     self.to_do = Actions.Update
                 if (self.end_ip_address is not None) and (self.end_ip_address != old_response['end_ip_address']):
-                    self.to_do = Actions.Update
-                update_tags, self.tags = self.update_tags(old_response['tags'])
-                if update_tags:
                     self.to_do = Actions.Update
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
@@ -219,8 +214,7 @@ class AzureRMFirewallRules(AzureRMModuleBase):
                                                                        server_name=self.server_name,
                                                                        firewall_rule_name=self.name,
                                                                        start_ip_address=self.start_ip_address,
-                                                                       end_ip_address=self.end_ip_address,
-                                                                       tags=self.tags)
+                                                                       end_ip_address=self.end_ip_address)
             if isinstance(response, AzureOperationPoller):
                 response = self.get_poller_result(response)
 
