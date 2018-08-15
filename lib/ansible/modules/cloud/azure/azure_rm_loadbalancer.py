@@ -195,7 +195,6 @@ options:
                     - The port used for internal connections on the endpoint.
                     - Acceptable values are between 0 and 65535.
                     - Note that value 0 enables "Any Port"
-                required: True
             idle_timeout:
                 description:
                     - The timeout for the TCP idle connection.
