@@ -29,12 +29,14 @@
 - assert:
     that:
       - output.ansible_facts.azure_webapps | length == 1
-      - output.ansible_facts.azure_webapps[0].app_settings.properties.length == 1
-      - output.ansible_facts.azure_webapps[0].site_configuration.length == 1
+      - output.ansible_facts.azure_webapps[0].app_settings.length == 1
+      - output.ansible_facts.azure_webapps[0].frameworks.length == 2 # net_framework is default
 
-- name: get web app with resource group
+- name: get web app with resource group and tag
   azure_rm_webapp_facts:
     resource_group: "{{ resource_group }}"
+    tags:
+      - testkey
   register: output
 
 - assert:

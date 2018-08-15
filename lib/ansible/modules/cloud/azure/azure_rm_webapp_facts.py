@@ -34,20 +34,6 @@ options:
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
-    info_level:
-        description:
-            - A list to describe what information of the web app to return.
-            - Only works with C(name) option.
-        suboptions:
-            level: 
-                description:
-                    - name of return information level.
-                choices:
-                    - basic
-                    - app_settings
-                    - configuration
-                    - deployment_slot
-                default: basic
 
 extends_documentation_fragment:
     - azure
@@ -63,16 +49,14 @@ EXAMPLES = '''
         name: winwebapp1
 
     - name: Get facts for web apps in resource group
-      azure_rm_publicip_facts:
+      azure_rm_webapp_facts:
         resource_group: testrg
 
-    - name: Get facts for web apps by name, with app_setting and configuration info
-      azure_rm_publicip_facts:
-        resource_group: testrg
-        name: winwebapp1
-        info_level:
-            - level: "app_settings"
-            - level: "configuration"
+    - name: Get facts for web apps with tags
+      azure_rm_webapp_facts:
+        tags:
+          - testtag
+          - foo:bar
 '''
 
 RETURN = '''
@@ -81,107 +65,50 @@ azure_webapps:
     returned: always
     type: list
     example: [{
-                "app_settings": {
-                    "id": "/subscriptions/<subs_id>/resourceGroups/ansiblewebapp1/providers/Microsoft.Web/sites/ansiblewindows1/config/appsettings",
-                    "location": "East US",
-                    "name": "appsettings",
-                    "properties": {},
-                    "tags": {
-                        "tag1": "test"
-                    },
-                    "type": "Microsoft.Web/sites/config"
-                },
-                "id": "/subscriptions/<subs_id>/resourceGroups/ansiblewebapp1/providers/Microsoft.Web/sites/ansiblewindows1",
-                "kind": "app",
-                "location": "East US",
-                "name": "ansiblewindows1",
-                "properties": {
-                    "availabilityState": "Normal",
-                    "clientAffinityEnabled": true,
-                    "clientCertEnabled": false,
-                    "containerSize": 0,
-                    "dailyMemoryTimeQuota": 0,
-                    "defaultHostName": "ansiblewindows1.azurewebsites.net",
-                    "enabled": true,
-                    "enabledHostNames": [
-                        "ansiblewindows1.azurewebsites.net",
-                        "ansiblewindows1.scm.azurewebsites.net"
-                    ],
-                    "hostNameSslStates": [
-                        {
-                            "hostType": "Standard",
-                            "name": "ansiblewindows1.azurewebsites.net",
-                            "sslState": "Disabled"
-                        },
-                        {
-                            "hostType": "Repository",
-                            "name": "ansiblewindows1.scm.azurewebsites.net",
-                            "sslState": "Disabled"
-                        }
-                    ],
-                    "hostNames": [
-                        "ansiblewindows1.azurewebsites.net"
-                    ],
-                    "hostNamesDisabled": false,
-                    "lastModifiedTimeUtc": "2018-05-29T06:55:50.6066659999999999Z",
-                    "outboundIpAddresses": "13.82.93.245,40.121.151.32,40.121.151.100,52.179.11.174,40.121.148.162",
-                    "repositorySiteName": "ansiblewindows1",
-                    "reserved": false,
-                    "resourceGroup": "ansiblewebapp1",
-                    "scmSiteAlsoStopped": false,
-                    "serverFarmId": "/subscriptions/<subs_id>/resourceGroups/ansiblewebapp1/providers/Microsoft.Web/serverfarms/win_appplan1",
-                    "state": "Running",
-                    "usageState": "Normal"
-                },
-                "site_config": {
-                    "always_on": false,
-                    "app_command_line": "",
-                    "auto_heal_enabled": false,
-                    "default_documents": [
-                        "..."
-                    ],
-                    "detailed_error_logging_enabled": false,
-                    "experiments": {
-                        "ramp_up_rules": []
-                    },
-                    "http_logging_enabled": false,
-                    "id": "/subscriptions/<subs_id>/resourceGroups/ansiblewebapp1/providers/Microsoft.Web/sites/ansiblewindows1/config/web",
-                    "linux_fx_version": "",
-                    "load_balancing": "LeastRequests",
-                    "local_my_sql_enabled": false,
-                    "location": "East US",
-                    "logs_directory_size_limit": 35,
-                    "managed_pipeline_mode": "Integrated",
-                    "name": "ansiblewindows1",
-                    "net_framework_version": "v4.0",
-                    "node_version": "",
-                    "number_of_workers": 1,
-                    "php_version": "5.6",
-                    "publishing_username": "$ansiblewindows1",
-                    "python_version": "",
-                    "remote_debugging_enabled": false,
-                    "request_tracing_enabled": false,
-                    "scm_type": "None",
-                    "tags": {
-                        "tag1": "test"
-                    },
-                    "type": "Microsoft.Web/sites/config",
-                    "use32_bit_worker_process": true,
-                    "virtual_applications": [
-                        {
-                            "physical_path": "site\\wwwroot",
-                            "preload_enabled": false,
-                            "virtual_path": "/"
-                        }
-                    ],
-                    "vnet_name": "",
-                    "web_sockets_enabled": false
-                },
-                "tags": {
-                    "tag1": "test"
-                },
-                "type": "Microsoft.Web/sites"
-            }]
+      azure_webapps:
+      - app_settings:
+          testkey: testvalue
+        frameworks:
+        - name: net_framework
+          version: v4.0
+        - name: node
+          versoin: '6.6'
+        id: /subscriptions/xxxx/resourceGroups/ansiblewebapp1/providers/Microsoft.Web/sites/ansiblewindows
+        location: East US
+        name: ansiblewindows
+        plan: /subscriptions/xxxx/resourceGroups/appserviceplan_test/providers/Microsoft.Web/serverfarms/linux_appplan1
+        properties:
+          availabilityState: Normal
+          clientAffinityEnabled: true
+          clientCertEnabled: false
+          containerSize: 0
+          dailyMemoryTimeQuota: 0
+          defaultHostName: ansiblewindows.azurewebsites.net
+          enabled: true
+          enabledHostNames:
+          - ansiblewindows.azurewebsites.net
+          - ansiblewindows.scm.azurewebsites.net
+          hostNameSslStates:
+          - hostType: Standard
+            name: ansiblewindows.azurewebsites.net
+            sslState: Disabled
+          - hostType: Repository
+            name: ansiblewindows.scm.azurewebsites.net
+            sslState: Disabled
+          hostNames:
+          - ansiblewindows.azurewebsites.net
+          hostNamesDisabled: false
+          lastModifiedTimeUtc: '2018-08-14T03:04:07.613333Z'
+          outboundIpAddresses: 13.92.237.218,13.82.169.160,52.168.4.130,13.82.171.2,13.82.169.153
+          repositorySiteName: ansiblewindows
+          reserved: true
+          resourceGroup: ansiblewebapp1
+          scmSiteAlsoStopped: false
+          serverFarmId: /subscriptions/xxxx/resourceGroups/appserviceplan_test/providers/Microsoft.Web/serverfarms/linux_appplan1
+          state: Running
+          usageState: Normal
+        resource_group: ansiblewebapp1
+    }]
 '''
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -194,18 +121,6 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 AZURE_OBJECT_CLASS = 'WebApp'
 
-info_level_spec = dict(
-    level=dict(
-        type='str',
-        choices=[
-            'basic',
-            'configuration',
-            'app_settings'
-        ],
-        default='basic'
-    )
-)
-
 
 class AzureRMWebAppFacts(AzureRMModuleBase):
 
@@ -214,12 +129,7 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
         self.module_arg_spec = dict(
             name=dict(type='str'),
             resource_group=dict(type='str'),
-            tags=dict(type='list'),
-            info_level=dict(
-                type='list',
-                elements='dict',
-                options=info_level_spec
-            )
+            tags=dict(type='list')
         )
 
         self.results = dict(
@@ -232,31 +142,19 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
         self.tags = None
         self.info_level = None
 
+        self.framework_names = ['net_framework', 'java', 'php', 'node', 'python', 'dotnetcore', 'ruby']
+
         super(AzureRMWebAppFacts, self).__init__(self.module_arg_spec,
-                                                   supports_tags=False,
-                                                   facts_module=True)
+                                                 supports_tags=False,
+                                                 facts_module=True)
 
     def exec_module(self, **kwargs):
 
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
 
-        if self.format == "curated":
-            self.fail('Not implemented.')
-
-        if not self.name and self.info_level:
-            self.fail('info_level must be specified with name parameter')
-
         if self.name:
             self.results['ansible_facts']['azure_webapps'] = self.list_by_name()
-
-            if self.info_level:
-                for level in self.info_level:
-                    if level["level"] == "configuration":
-                        self.results['ansible_facts']['azure_webapps'][0]['site_config'] = self.list_webapp_configuration()
-                    if level["level"] == "app_settings":
-                        self.results['ansible_facts']['azure_webapps'][0]['app_settings'] = self.list_webapp_appsettings()
-
         elif self.resource_group:
             self.results['ansible_facts']['azure_webapps'] = self.list_by_resource_group()
         else:
@@ -271,14 +169,16 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
 
         try:
             item = self.web_client.web_apps.get(self.resource_group, self.name)
+            site_config = self.list_webapp_configuration(self.resource_group, self.name)
+            app_settings =  self.list_webapp_appsettings(self.resource_group, self.name)
         except CloudError:
             pass
 
         if item and self.has_tags(item.tags, self.tags):
             pip = self.serialize_obj(item, AZURE_OBJECT_CLASS)
-            pip['name'] = item.name
-            pip['type'] = item.type
-            result = [pip]
+
+            curated_result = self.construct_curated_webapp(pip, site_config, app_settings)
+            result = [curated_result]
 
         return result
 
@@ -293,10 +193,11 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
         for item in response:
             if self.has_tags(item.tags, self.tags):
                 pip = self.serialize_obj(item, AZURE_OBJECT_CLASS)
-                pip['name'] = item.name
-                pip['type'] = item.type
-                results.append(pip)
-        return results    
+                site_config = self.list_webapp_configuration(self.resource_group, item.name)
+                app_settings =  self.list_webapp_appsettings(self.resource_group, item.name)
+                curated_output = self.construct_curated_webapp(pip, site_config, app_settings)
+                results.append(curated_output)
+        return results
 
     def list_all(self):
         self.log('List web apps in current subscription')
@@ -309,35 +210,78 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
         for item in response:
             if self.has_tags(item.tags, self.tags):
                 pip = self.serialize_obj(item, AZURE_OBJECT_CLASS)
-                pip['name'] = item.name
-                pip['type'] = item.type
-                results.append(pip)
-        return results    
+                site_config = self.list_webapp_configuration(pip['properties']['resourceGroup'], item.name)
+                app_settings =  self.list_webapp_appsettings(pip['properties']['resourceGroup'], item.name)
+                curated_output = self.construct_curated_webapp(pip, site_config, app_settings)
+                results.append(curated_output)
+        return results
 
-    def list_webapp_configuration(self):
-        self.log('Get web app {0} configuration'.format(self.name))
-
-        response = []
-
-        try:
-            response = self.web_client.web_apps.get_configuration(resource_group_name=self.resource_group, name=self.name)
-        except CloudError as ex:
-            self.fail('Error getting web app {0} configuration'.format(self.name))
-        
-        return response.as_dict()
-
-    def list_webapp_appsettings(self):
-        self.log('Get web app {0} app settings'.format(self.name))
+    def list_webapp_configuration(self, resource_group, name):
+        self.log('Get web app {0} configuration'.format(name))
 
         response = []
 
         try:
-            response = self.web_client.web_apps.list_application_settings(resource_group_name=self.resource_group, name=self.name)
+            response = self.web_client.web_apps.get_configuration(resource_group_name=resource_group, name=name)
         except CloudError as ex:
-            self.fail('Error getting web app {0} app settings'.format(self.name))
-        
+            self.fail('Error getting web app {0} configuration'.format(name))
+
         return response.as_dict()
 
+    def list_webapp_appsettings(self, resource_group, name):
+        self.log('Get web app {0} app settings'.format(name))
+
+        response = []
+
+        try:
+            response = self.web_client.web_apps.list_application_settings(resource_group_name=resource_group, name=name)
+        except CloudError as ex:
+            self.fail('Error getting web app {0} app settings'.format(name))
+
+        return response.as_dict()
+
+    def construct_curated_webapp(self, webapp, configuration=None, app_settings=None, deployment_slot=None):
+        curated_output = dict()
+        curated_output['id'] = webapp['id']
+        curated_output['name'] = webapp['name']
+        curated_output['resource_group'] = webapp['properties']['resourceGroup']
+        curated_output['location'] = webapp['location']
+        curated_output['plan'] = webapp['properties']['serverFarmId']
+        curated_output['tags'] = webapp.get('tags', None)
+
+        # add properties
+        curated_output['properties'] = webapp['properties']
+
+        # curated site_config
+        if configuration:
+            curated_output['frameworks'] = []
+            for fx_name in self.framework_names:
+                fx_version = configuration.get(fx_name + '_version', None)
+                if fx_version:
+                    fx = {
+                        'name': fx_name,
+                        'version': fx_version
+                    }
+                    curated_output['frameworks'].append(fx)
+
+            # java container setting
+
+            # linux_fx_version
+            if configuration.get('linux_fx_version', None):
+                tmp = configuration.get('linux_fx_version').split("|")
+                if len(tmp) == 2:
+                    curated_output['frameworks'].append({ 'name': tmp[0].lower(), 'version': tmp[1] })
+
+        # curated app_settings
+        if app_settings and app_settings.get('properties', None):
+            curated_output['app_settings'] = dict()
+            for item in app_settings['properties']:
+                curated_output['app_settings'][item] = app_settings['properties'][item]
+        
+        # curated deploymenet_slot
+        if deployment_slot:
+            curated_output['deployment_slot'] = deployment_slot
+        return curated_output
 
 
 def main():
