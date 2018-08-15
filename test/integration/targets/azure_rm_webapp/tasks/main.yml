@@ -60,6 +60,10 @@
       testkey: "testvalue"
   register: output
 
+- name: assert the web app was created
+  assert:
+    that: output.changed
+
 - name: get web app with name
   azure_rm_webapp_facts:
     resource_group: "{{ resource_group }}"
@@ -71,10 +75,6 @@
       - output.ansible_facts.azure_webapps | length == 1
       - output.ansible_facts.azure_webapps[0].app_settings | length == 1
       - output.ansible_facts.azure_webapps[0].frameworks | length > 1 # there's default frameworks eg net_framework
-
-- name: assert the function was created
-  assert:
-    that: output.changed
 
 - name: Update app settings
   azure_rm_webapp:
