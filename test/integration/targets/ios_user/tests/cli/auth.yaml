@@ -41,6 +41,11 @@
 
 
 - block:
+  - name: Ensure ssh key is not world readable
+    file:
+      path: "{{ role_path }}/files/test_rsa"
+      mode: 0600
+
   - name: Create user with sshkey
     ios_user:
       name: ssh_user
