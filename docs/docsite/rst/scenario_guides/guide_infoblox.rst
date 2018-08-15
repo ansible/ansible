@@ -23,9 +23,9 @@ Before using Ansible nios modules with Infoblox, you must install the ``infoblox
 Credentials and authenticating
 ==============================
 
-To use Infoblox ``nios`` modules and sample roles, you need to configure the credentials to access your Infoblox system.  The examples in this guide use credentials stored in ``<playbookdir>/groupvars/all``.
+To use Infoblox ``nios`` modules and sample roles, you need to configure the credentials to access your Infoblox system.  The examples in this guide use credentials stored in ``<playbookdir>/group_vars/all``.
 
-This is an example of this ``groupvars/all`` file. Replace these values with your Infoblox credentials:
+This is an example of this ``group_vars/all`` file. Replace these values with your Infoblox credentials:
 
 .. code-block:: yaml
 
@@ -34,11 +34,6 @@ This is an example of this ``groupvars/all`` file. Replace these values with you
       host: 192.0.2.2
       username: admin
       password: ansible
-
-Common parameters and settings
-==============================
-
-
 
 Module list
 ============
@@ -83,6 +78,12 @@ The following example playbook uses ``nios_network`` module to configure an IPv4
 Notice the last parameter, ``provider``, uses the variable ``nios_provider`` defined in the ``groupvars`` directory. You can find complete details on the ``nios_network`` module at `nios_network <http://docs.ansible.com/ansible/latest/modules/nios_network_module.html>`_.
 
 You can find other sample playbooks at  `Infoblox playbooks  <https://github.com/network-automation/infoblox_ansible/tree/master/module_playbooks>`_.
+
+Creating a subnet and forward DNS zone
+--------------------------------------
+
+Creating a host record for the gateway address
+----------------------------------------------
 
 NIOS lookup plugin
 ==================
@@ -204,11 +205,6 @@ See `Working with Dynamic Inventory <https://docs.ansible.com/ansible/devel/user
 Use cases with roles
 ====================
 
-Creating a subnet and forward DNS zone
---------------------------------------
-
-Creating a host record for the gateway address
-----------------------------------------------
 
 Example: Provisioning a grid master
 -----------------------------------
