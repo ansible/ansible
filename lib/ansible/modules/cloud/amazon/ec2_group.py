@@ -962,6 +962,14 @@ def main():
                     rule['proto'] = '-1'
                     rule['from_port'] = None
                     rule['to_port'] = None
+                try:
+                    int(rule.get('proto', 'tcp'))
+                    rule['proto'] = to_text(rule.get('proto', 'tcp'))
+                    rule['from_port'] = None
+                    rule['to_port'] = None
+                except ValueError:
+                    # rule does not use numeric protocol spec
+                    pass
 
                 named_tuple_rule_list.append(
                     Rule(
