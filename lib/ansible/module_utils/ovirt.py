@@ -31,6 +31,7 @@ try:
     from enum import Enum  # enum is a ovirtsdk4 requirement
     import ovirtsdk4 as sdk
     import ovirtsdk4.version as sdk_version
+    import ovirtsdk4.types as otypes
     HAS_SDK = LooseVersion(sdk_version.VERSION) >= LooseVersion('4.2.4')
 except ImportError:
     HAS_SDK = False
@@ -786,3 +787,17 @@ class BaseModule(object):
             entity = search_by_attributes(self._service, list_params=list_params, name=self._module.params['name'])
 
         return entity
+
+    def _get_major(self, full_version):
+        if full_version is None:
+            return None
+        if isinstance(full_version, otypes.Version):
+            return int(full_version.major)
+        return int(full_version.split('.')[0])
+
+    def _get_minor(self, full_version):
+        if full_version is None:
+            return None
+        if isinstance(full_version, otypes.Version):
+            return int(full_version.minor)
+        return int(full_version.split('.')[1])
