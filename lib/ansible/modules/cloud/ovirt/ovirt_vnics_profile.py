@@ -11,14 +11,53 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: ovirt_vnics
-short_description: Module to manage network interfaces of Virtual Machines in oVirt/RHV
+short_description: Module to manage vNIC profile of network in oVirt/RHV
 version_added: "2.7"
 author:
 - Ondra Machacek (@machacekondra)
 - Martin Necas (@mnecas)
 description:
-    - Module to manage network interfaces of Virtual Machines in oVirt/RHV.
+    - Module to manage vNIC profile of network in oVirt/RHV
 options:
+    name:
+        description:
+            - Name of the vNIC to manage.
+        required: true
+    state:
+        description:
+            - Should the vNIC be absent/present.
+        choices: [ absent, present]
+        default: present
+    data_center:
+        description:
+            - Datacenter name where network reside.
+        required: true
+    network:
+        description:
+            - Name of network to which is vNIC attached.
+        required: true
+    network_filter:
+        description:
+            - Name of network filter.
+    custom_properties:
+        description:
+            - "Properties sent to VDSM to configure various hooks."
+            - "Custom properties is a list of dictionary which can have following values:"
+            - "C(name) - Name of the custom property. For example: I(hugepages), I(vhost), I(sap_agent), etc."
+            - "C(regexp) - Regular expression to set for custom property."
+            - "C(value) - Value to set for custom property."
+    qos:
+        description:
+            - Name of Quality of Service.
+    port_mirroring:
+        description:
+            - Boolean, sets usage of port mirroring.
+    pass_through:
+        description:
+            - Boolean which enables being directly attached to a VF.
+    migratable:
+        description:
+            - Boolean which can be set only when pass_through is True.
 
 extends_documentation_fragment: ovirt
 '''
@@ -26,7 +65,49 @@ extends_documentation_fragment: ovirt
 EXAMPLES = '''
 # Examples don't contain auth parameter for simplicity,
 # look at ovirt_auth module to see how to reuse authentication:
+  - name: Add vNIC
+    ovirt_vnics_profile:
+        name: myvnic
+        network: mynetwork
+        state:  present
+        data_center: datacenter
 
+  - name: Editing vNICs network_filter, custom_properties, qos
+    ovirt_vnics_profile:
+        name: myvnic
+        network: mynetwork
+        data_center: datacenter
+        qos: myqos
+        custom_properties:
+          - name: SecurityGroups
+            value: uuid
+        network_filter: allow-dhcp
+
+  - name: Editing vNICs network_filter, custom_properties, qos
+    ovirt_vnics_profile:
+        name: myvnic
+        network: mynetwork
+        data_center: datacenter
+        qos: myqos
+        custom_properties:
+          - name: SecurityGroups
+            value: uuid
+        network_filter: allow-dhcp
+
+  - name: Dont use migratable
+    ovirt_vnics_profile:
+        name: myvnic
+        network: mynetwork
+        data_center: datacenter
+        migratable: False
+        pass_through: True
+
+  - name: Remove vNIC
+    ovirt_vnics_profile:
+        name: myvnic
+        network: mynetwork
+        state:  absent
+        data_center: datacenter
 '''
 
 RETURN = '''
@@ -147,7 +228,6 @@ def main():
         connection = create_connection(auth)
 
         vnic_services = connection.system_service().vnic_profiles_service()
-        #service = vnic_services.service(get_id_by_name(vnic_services,module.params['name']))
 
         entitynics_module = EntityVnicPorfileModule(
             connection=connection,
