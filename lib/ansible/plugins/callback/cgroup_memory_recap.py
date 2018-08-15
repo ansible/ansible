@@ -72,18 +72,19 @@ class MemProf(threading.Thread):
         threading.Thread.__init__(self)
         self.obj = obj
         self.path = path
-        self.results = []
+        self.max = 0
         self.running = True
         self.csvwriter = csvwriter
 
     def run(self):
         while self.running:
             with open(self.path) as f:
-                val = f.read()
-            self.results.append(int(val.strip()) / 1024 / 1024)
+                val = int(f.read().strip())
+            if val > self.max:
+                self.max = val
             if self.csvwriter:
                 try:
-                    self.csvwriter.writerow([time.time(), self.obj.get_name(), val.strip()])
+                    self.csvwriter.writerow([time.time(), self.obj.get_name(), val])
                 except ValueError:
                     # We may be profiling after the playbook has ended
                     break
@@ -95,7 +96,7 @@ class CpuProf(threading.Thread):
         threading.Thread.__init__(self)
         self.obj = obj
         self.path = path
-        self.results = []
+        self.max = 0
         self.running = True
         self.csvwriter = csvwriter
         self._poll_interval = poll_interval
@@ -110,7 +111,8 @@ class CpuProf(threading.Thread):
                 end_time = time.time() * 1000**2
                 end_usage = int(f.read().strip()) / 1000
             val = (end_usage - start_usage) / (end_time - start_time) * 100
-            self.results.append(val)
+            if val > self.max:
+                self.max = val
             if self.csvwriter:
                 try:
                     self.csvwriter.writerow([time.time(), self.obj.get_name(), val])
@@ -202,8 +204,8 @@ class CallbackModule(CallbackBase):
         try:
             self._task_memprof.running = False
             self._task_cpuprof.running = False
-            mem = self._task_memprof.results
-            cpu = self._task_cpuprof.results
+            mem = self._task_memprof.max
+            cpu = self._task_cpuprof.max
             prev_task = self._task_memprof.obj
         except AttributeError:
             pass
@@ -217,12 +219,12 @@ class CallbackModule(CallbackBase):
 
         if mem is not None:
             try:
-                self.task_results['memory'].append((prev_task, max(mem)))
+                self.task_results['memory'].append((prev_task, mem / 1024 / 1024))
             except ValueError:
                 pass
         if cpu is not None:
             try:
-                self.task_results['cpu'].append((prev_task, max(cpu)))
+                self.task_results['cpu'].append((prev_task, cpu))
             except ValueError:
                 pass
 
