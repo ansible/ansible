@@ -58,6 +58,64 @@ EXAMPLES = '''
 
 RETURN = '''
 cdnprofiles:
+    description: List of CDN profiles.
+    returned: always
+    type: complex
+    contains:
+        resource_group:
+            description:
+                - Name of a resource group where the CDN profile exists.
+            returned: always
+            type: str
+            sample: testGroup
+        name:
+            description:
+                - Name of the CDN profile.
+            returned: always
+            type: str
+            sample: Testing
+        state:
+            description:
+                - The state of the CDN profile.
+            type: str
+            sample: present
+        location:
+            description:
+                - Location of the CDN profile.
+            type: str
+            sample: WestUS
+        id:
+            description
+                - ID of the CDN profile.
+            type: str
+            sample: /subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourcegroups/cdntest/providers/Microsoft.Cdn/profiles/cdntest
+        provisioning_state:
+            description:
+                - Provisioning status of the profile.
+            type: str
+            sample: Succeeded
+        resource_state:
+            description:
+                - Resource status of the profile.
+            type: str
+            sample: Active
+        sku:
+            description:
+                - The pricing tier (defines a CDN provider, feature list and rate) of the CDN profile.
+            type: str
+            sample: Standard_Verizon
+        type:
+            description:
+                - The type of the CDN profile.
+            type: str
+            sample: Microsoft.Cdn/profiles
+        tags:
+            description:
+                - The tags of the CDN profile.
+            type: list
+            sample: [
+                {"foo": "bar"}
+            ]
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
