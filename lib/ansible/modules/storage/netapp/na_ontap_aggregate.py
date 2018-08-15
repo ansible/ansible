@@ -46,6 +46,7 @@ options:
   from_name:
     description:
     - Name of the aggregate to be renamed.
+    version_added: '2.7'
 
   nodes:
     description:
@@ -56,6 +57,7 @@ options:
     description:
     - Type of disk to use to build aggregate
     choices: ['ATA', 'BSAS', 'FCAL', 'FSAS', 'LUN', 'MSATA', 'SAS', 'SSD', 'VMDISK']
+    version_added: '2.7'
 
   disk_count:
     description:
@@ -68,15 +70,18 @@ options:
   disk_size:
     description:
     - Disk size to use in 4K block size.  Disks within 10% of specified size will be used.
+    version_added: '2.7'
 
   raid_size:
     description:
     - Sets the maximum number of drives per raid group.
+    version_added: '2.7'
 
   raid_type:
     description:
     - Specifies the type of RAID groups to use in the new aggregate.
     - The default value is raid4 on most platforms.
+    version_added: '2.7'
 
   unmount_volumes:
     type: bool
