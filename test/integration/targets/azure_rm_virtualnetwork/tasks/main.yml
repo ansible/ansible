@@ -93,6 +93,7 @@
       testing: 'no'
       delete: never
       foo: bar
+    append_tags: True
     resource_group: "{{ resource_group }}"
   register: output
 

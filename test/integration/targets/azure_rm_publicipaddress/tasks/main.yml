@@ -46,9 +46,9 @@
       resource_group: "{{ resource_group }}"
       name: "pip{{ rpfx }}"
       tags:
-          testing: testing
           delete: never
           foo: bar
+      append_tags: True
   register: output
 
 - assert:

@@ -137,7 +137,7 @@ class AzureRMDNSZone(AzureRMModuleBase):
 
         # create a new zone variable in case the 'try' doesn't find a zone
         zone = None
-        for key in list(self.module_arg_spec.keys()) + ['tags']:
+        for key in list(self.module_arg_spec.keys()) + ['tags', 'append_tags']:
             setattr(self, key, kwargs[key])
 
         self.results['check_mode'] = self.check_mode

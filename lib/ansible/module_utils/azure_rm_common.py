@@ -80,7 +80,7 @@ AZURE_API_PROFILES = {
 
 AZURE_TAG_ARGS = dict(
     tags=dict(type='dict'),
-    append_tags=dict(type='bool', default=True),
+    append_tags=dict(type='bool', default=False),
 )
 
 AZURE_COMMON_REQUIRED_IF = [
@@ -470,7 +470,7 @@ class AzureRMModuleBase(object):
                 if not new_tags.get(key) or new_tags[key] != value:
                     changed = True
                     new_tags[key] = value
-            if isinstance(tags, dict):
+            if not self.append_tags and isinstance(tags, dict):
                 for key, value in tags.items():
                     if not self.module.params['tags'].get(key):
                         new_tags.pop(key)

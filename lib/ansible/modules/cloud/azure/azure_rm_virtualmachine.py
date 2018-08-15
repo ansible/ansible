@@ -723,7 +723,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
     def exec_module(self, **kwargs):
 
-        for key in list(self.module_arg_spec.keys()) + ['tags']:
+        for key in list(self.module_arg_spec.keys()) + ['tags', 'append_tags']:
             setattr(self, key, kwargs[key])
 
         # make sure options are lower case

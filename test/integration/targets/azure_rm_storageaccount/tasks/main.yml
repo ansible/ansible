@@ -76,14 +76,15 @@
            testing: testing
            delete: never
            galaxy: 'no'
+       append_tags: True
    register: output
 
  - assert:
        that:
-           - "output.state.tags | length == 3"
+           - "output.state.tags | length == 4"
            - "output.state.tags.galaxy == 'no'"
 
- - name: Update account tags
+ - name: Purge account tags
    azure_rm_storageaccount:
        resource_group: "{{ resource_group }}"
        name: "{{ storage_account }}"

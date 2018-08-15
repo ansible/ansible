@@ -91,14 +91,14 @@
       resource_group: "{{ resource_group }}"
       name: "{{ secgroupname }}"
       tags:
-          testing: testing
           delete: never
           baz: bar
+      append_tags: True
   register: output
 
 - assert:
       that:
-          - output.state.tags | length == 3
+          - output.state.tags | length == 4
           - output.state.tags.delete == 'never'
 
 - name: Purge tags
