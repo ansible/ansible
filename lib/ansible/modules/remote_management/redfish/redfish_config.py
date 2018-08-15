@@ -140,6 +140,7 @@ result:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.redfish_utils import RedfishUtils
+from ansible.module_utils._text import to_native
 
 # More will be added as module features are expanded
 CATEGORY_COMMANDS_ALL = {
@@ -186,20 +187,20 @@ def main():
 
     # Check that Category is valid
     if category not in CATEGORY_COMMANDS_ALL:
-        module.fail_json(msg="Invalid Category: %s" % category)
+        module.fail_json(msg=to_native("Invalid Category: %s" % category))
 
     # Check that all commands are valid
     for cmd in command_list:
         # Fail if even one command given is invalid
         if cmd not in CATEGORY_COMMANDS_ALL[category]:
-            module.fail_json(msg="Invalid Command: %s" % cmd)
+            module.fail_json(msg=to_native("Invalid Command: %s" % cmd))
 
     # Organize by Categories / Commands
     if category == "Systems":
         # execute only if we find a System resource
         result = rf_utils._find_systems_resource(rf_uri)
         if result['ret'] is False:
-            module.fail_json(msg=result['msg'])
+            module.fail_json(msg=to_native(result['msg']))
 
         for command in command_list:
             if command == "SetBiosDefaultSettings":
@@ -211,7 +212,7 @@ def main():
         # execute only if we find a Manager service resource
         result = rf_utils._find_managers_resource(rf_uri)
         if result['ret'] is False:
-            module.fail_json(msg=result['msg'])
+            module.fail_json(msg=to_native(result['msg']))
 
         for command in command_list:
             if command == "SetManagerAttributes":
@@ -222,7 +223,7 @@ def main():
         del result['ret']
         module.exit_json(result=result)
     else:
-        module.fail_json(msg=result['msg'])
+        module.fail_json(msg=to_native(result['msg']))
 
 if __name__ == '__main__':
     main()
