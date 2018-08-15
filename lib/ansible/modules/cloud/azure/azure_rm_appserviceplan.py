@@ -191,6 +191,8 @@ class AzureRMAppServicePlans(AzureRMModuleBase):
         self.is_linux = None
         self.number_of_workers = 1
 
+        self.tags = None
+
         self.results = dict(
             changed=False,
             ansible_facts=dict(azure_appserviceplan=None)
