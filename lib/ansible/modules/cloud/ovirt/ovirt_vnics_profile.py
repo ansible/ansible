@@ -14,7 +14,7 @@ module: ovirt_vnics
 short_description: Module to manage network interfaces of Virtual Machines in oVirt/RHV
 version_added: "2.7"
 author:
-- Ondra Machacek
+- Ondra Machacek (@machacekondra)
 - Martin Necas (@mnecas)
 description:
     - Module to manage network interfaces of Virtual Machines in oVirt/RHV.
@@ -66,45 +66,59 @@ class EntityVnicPorfileModule(BaseModule):
 
     def __init__(self, *args, **kwargs):
         super(EntityVnicPorfileModule, self).__init__(*args, **kwargs)
-        self.vnic_id = None
+
+    def __get_network_id(self):
+        dcs_service = self._connection.system_service().data_centers_service()
+        dc_id = get_id_by_name(dcs_service, self.param('data_center'))
+        networks_service = dcs_service.service(dc_id).networks_service()
+        return get_id_by_name(networks_service, self.param('network'))
+
+    def __get_qos_id(self):
+        dcs_service = self._connection.system_service().data_centers_service()
+        dc_id = get_id_by_name(dcs_service, self.param('data_center'))
+        qoss_service = dcs_service.service(dc_id).qoss_service()
+        return get_id_by_name(qoss_service, self.param('qos'))
+
+    def __get_network_filter_id(self):
+        nf_service = self._connection.system_service().network_filters_service()
+        return get_id_by_name(nf_service, self.param('network_filter'))
 
     def build_entity(self):
-        dcs_service = self._connection.system_service().data_centers_service()
-        dc = dcs_service.list(search='name=%s' % self._module.params.get('data_center'))[0]
-        networks_service = dcs_service.service(dc.id).networks_service()
-        network = next(
-            (n for n in networks_service.list()
-                if n.name == self._module.params['network']),
-            None
-        )
-        if network is None:
-            raise Exception(
-                "Network '%s' was not found in datacenter '%s'." % (
-                    self._module.params['network'],
-                    dc.name
-                )
-            )
-
         return otypes.VnicProfile(
-            name=self._module.params.get('name'),
-            network=network,
-            description=self._module.params.get('description')
-            if self._module.params.get('description') else None,
-            port_mirroring=self._module.params.get('port_mirroring')
-            if self._module.params.get('port_mirroring') else None,
-            pass_through=otypes.VnicPassThrough(mode=otypes.VnicPassThroughMode(self._module.params.get('pass_through')))
-            if self._module.params.get('pass_through') else None,
-            migratable=self._module.params.get('migratable')
-            if self._module.params.get('migratable') else None
+            name=self.param('name'),
+            network=otypes.Network(id=self.__get_network_id()),
+            description=self.param('description')
+            if self.param('description') else None,
+            port_mirroring=self.param('port_mirroring')
+            if self.param('port_mirroring') is not None else None,
+            pass_through=otypes.VnicPassThrough(mode=otypes.VnicPassThroughMode(self.param('pass_through')))
+            if self.param('pass_through') else None,
+            migratable=self.param('migratable')
+            if self.param('migratable') is not None else None,
+            custom_properties=[
+                otypes.CustomProperty(
+                    name=cp.get('name'),
+                    regexp=cp.get('regexp'),
+                    value=str(cp.get('value')),
+                ) for cp in self.param('custom_properties') if cp
+            ] if self.param('custom_properties') is not None else None,
+            qos=otypes.Qos(id=self.__get_qos_id())
+            if self.param('qos') else None,
+            network_filter=otypes.NetworkFilter(id=self.__get_network_filter_id())
+            if self.param('network_filter') else None
+
         )
 
     def update_check(self, entity):
         return (
-            equal(self._module.params.get('migratable'), getattr(entity, 'migratable', None)) and
-            equal(self._module.params.get('pass_through'), entity.pass_through.mode) and
-            equal(self._module.params.get('description'), entity.description) and
-            # equal(self._module.params.get('network_filter'), entity.network_filter) and
-            equal(self._module.params.get('port_mirroring'), getattr(entity, 'port_mirroring', None))
+            equal(self.param('migratable'), getattr(entity, 'migratable', None)) and
+            equal(self.param('pass_through'), entity.pass_through.mode) and
+            equal(self.param('description'), entity.description) and
+            equal(self.param('network_filter'), entity.network_filter) and
+            equal(self.param('qos'), entity.qos) and
+            equal(self.param('custom_properties'), entity.custom_properties) and
+            equal(self.param('port_mirroring'), getattr(entity, 'port_mirroring', None))
+
         )
 
 
@@ -115,9 +129,9 @@ def main():
         data_center=dict(type='str'),
         description=dict(type='str'),
         name=dict(type='str', required=True),
-        # network_filter=dict(type='str'),
-        # custom_properties=dict(type='dict'),
-        # qos=dict(type='str'),
+        network_filter=dict(type='str'),
+        custom_properties=dict(type='list'),
+        qos=dict(type='str'),
         pass_through=dict(type='str'),
         port_mirroring=dict(type='bool'),
         migratable=dict(type='bool'),
@@ -140,7 +154,6 @@ def main():
             module=module,
             service=vnic_services,
         )
-        # custom_properties=[ otypes.CustomProperty(name=prop.get('name'),value=prop.get('value'),regexp=prop.get('regexp')) for prop in module.params['custom_properties']] if self.param('custom_properties') is not None else None
         state = module.params['state']
         if state == 'present':
             ret = entitynics_module.create()
