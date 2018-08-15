@@ -43,7 +43,8 @@ class TerminalModule(TerminalBase):
         re.compile(br"Bad mask", re.I),
         re.compile(br"% ?(\S+) ?overlaps with ?(\S+)", re.I),
         re.compile(br"[%\S] ?Error: ?[\s]+", re.I),
-        re.compile(br"[%\S] ?Informational: ?[\s]+", re.I)
+        re.compile(br"[%\S] ?Informational: ?[\s]+", re.I),
+        re.compile(br"%% Invalid .* at '\^' marker.", re.I),
     ]
 
     def on_open_shell(self):
