@@ -129,7 +129,6 @@ class AzureRMRoute(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.state = None
-        self.location = None
         self.address_prefix = None
         self.next_hop_type = None
         self.next_hop_ip_address = None
@@ -202,9 +201,14 @@ class AzureRMRoute(AzureRMModuleBase):
     def get_route(self):
         try:
             return self.network_client.routes.get(self.resource_group, self.route_table_name, self.name)
+        except CloudError as cloud_err:
+            # Return None iff the resource is not found
+            if cloud_err.status_code == 404:
+                self.log('{0}'.format(str(cloud_err)))
+                return None
+            self.fail('Error: failed to get resource {0} - {1}'.format(self.name, str(cloud_err)))
         except Exception as exc:
-            self.log('Error getting route {0} - {1}'.format(self.name, str(exc)))
-            return None
+            self.fail('Error: failed to get resource {0} - {1}'.format(self.name, str(exc)))
 
 
 def main():

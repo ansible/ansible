@@ -65,6 +65,14 @@ EXAMPLES = '''
         tags:
           purpose: testing
 
+    - name: Update the subnet (idempotent)
+      azure_rm_subnet:
+        name: subnet
+        virtual_network_name: virtualnetwork
+        resource_group: Testing
+        address_prefix_cidr: "10.1.0.0/16"
+        route_table: foobar
+
     - name: Delete a route table
       azure_rm_routetable:
         name: foobar
@@ -174,9 +182,14 @@ class AzureRMRouteTable(AzureRMModuleBase):
     def get_table(self):
         try:
             return self.network_client.route_tables.get(self.resource_group, self.name)
+        except CloudError as cloud_err:
+            # Return None iff the resource is not found
+            if cloud_err.status_code == 404:
+                self.log('{0}'.format(str(cloud_err)))
+                return None
+            self.fail('Error: failed to get resource {0} - {1}'.format(self.name, str(cloud_err)))
         except Exception as exc:
-            self.log('Error getting route {0} - {1}'.format(self.name, str(exc)))
-            return None
+            self.fail('Error: failed to get resource {0} - {1}'.format(self.name, str(exc)))
 
 
 def main():

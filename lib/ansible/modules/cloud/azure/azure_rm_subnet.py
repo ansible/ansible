@@ -256,7 +256,7 @@ class AzureRMSubnet(AzureRMModuleBase):
                 if self.route_table != results['route_table'].get('id'):
                     changed = True
                     results['route_table']['id'] = self.route_table
-                    self.log("CHANGED: subnet {0} route_table".format(self.name))
+                    self.log("CHANGED: subnet {0} route_table to {1}".format(self.name, route_table['name']))
             elif self.state == 'absent':
                 changed = True
         except CloudError:
