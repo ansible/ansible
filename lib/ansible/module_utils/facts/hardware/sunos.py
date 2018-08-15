@@ -185,7 +185,7 @@ class SunOSHardware(Hardware):
                 "Sun Microsystems",
                 "VMware, Inc.",
             ]
-            vendor_regexp = "|".join(map(lambda s: re.escape(s), vendors))
+            vendor_regexp = "|".join(map(re.escape, vendors))
             system_conf_regexp = (r'System Configuration:\s+'
                                   + r'(' + vendor_regexp + r')\s+'
                                   + r'(?:sun\w+\s+)?'
