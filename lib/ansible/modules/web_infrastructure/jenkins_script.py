@@ -157,7 +157,7 @@ def main():
 
     headers = {}
     crumb = get_crumb(module)
-    if crumb != None:
+    if crumb is not None:
         headers = {crumb['crumbRequestField']: crumb['crumb']}
 
     resp, info = fetch_url(module,
