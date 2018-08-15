@@ -111,13 +111,10 @@ options:
         suboptions:
             data:
                 description:
-                    - Base-64 encoded pfx certificate. Only applicable in PUT Request.
+                    - Base-64 encoded pfx certificate.
             password:
                 description:
-                    - Password for the pfx file specified in I(data). Only applicable in PUT request.
-            public_cert_data:
-                description:
-                    - Base-64 encoded Public cert I(data) corresponding to pfx specified in I(data). Only applicable in GET request.
+                    - Password for the pfx file specified in I(data).
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
@@ -602,7 +599,6 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                     self.parameters['sku']['capacity'] != old_response['sku']['capacity'] or
                     not compare_arrays(old_response, self.parameters, 'authentication_certificates') or
                     not compare_arrays(old_response, self.parameters, 'gateway_ip_configurations') or
-                    not compare_arrays(old_response, self.parameters, 'ssl_certificates') or
                     not compare_arrays(old_response, self.parameters, 'frontend_ip_configurations') or
                     not compare_arrays(old_response, self.parameters, 'frontend_ports') or
                     not compare_arrays(old_response, self.parameters, 'backend_address_pools') or
