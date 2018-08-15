@@ -109,10 +109,10 @@ azure_webapps:
         app_settings:
           testkey: testvalue
         frameworks:
-        - name: net_framework
-          version: v4.0
-        - name: node
-          version: '6.6'
+          - name: net_framework
+            version: v4.0
+          - name: node
+            version: '6.6'
         id: /subscriptions/xxxx/resourceGroups/ansiblewebapp1/providers/Microsoft.Web/sites/ansiblewindows
         location: East US
         name: ansiblewindows
@@ -310,7 +310,7 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
                                 'java_container_version': configuration['java_container_version']
                             }
                             fx['settings'] = settings
-                    
+
                     curated_output['frameworks'].append(fx)
 
             # linux_fx_version
@@ -337,4 +337,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
