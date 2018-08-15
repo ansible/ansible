@@ -98,6 +98,8 @@ class NetconfBase(AnsiblePlugin):
             conn.load_configuration(config=[''set system ntp server 1.1.1.1''], action='set', format='text')
     """
 
+    __rpc__ = ['get_config', 'edit_config', 'get_capabilities', 'get']
+
     def __init__(self, connection):
         self._connection = connection
         self.m = self._connection._manager
@@ -306,7 +308,7 @@ class NetconfBase(AnsiblePlugin):
         Returns list of base rpc method supported by remote device
         :return: List of RPC supported
         """
-        return ['get_config', 'edit_config', 'get_capabilities', 'get']
+        return self.__rpc__
 
     def put_file(self, source, destination):
         """
