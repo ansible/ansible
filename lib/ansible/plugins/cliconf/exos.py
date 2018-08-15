@@ -90,9 +90,34 @@ class Cliconf(CliconfBase):
     def get(self, command, prompt=None, answer=None, sendonly=False):
         return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
 
+    def get_device_operations(self):
+        return {
+            'supports_diff_replace': True,
+            'supports_commit': False,
+            'supports_rollback': False,
+            'supports_defaults': True,
+            'supports_onbox_diff': False,
+            'supports_commit_comment': False,
+            'supports_multiline_delimiter': False,
+            'supports_diff_match': True,
+            'supports_diff_ignore_lines': True,
+            'supports_generate_diff': True,
+            'supports_replace': True
+        }
+
+    def get_option_values(self):
+        return {
+            'format': ['text'],
+            'diff_match': ['line', 'strict', 'exact', 'none'],
+            'diff_replace': ['line', 'block'],
+            'output': ['text']
+        }
+
     def get_capabilities(self):
         result = {}
         result['rpc'] = self.get_base_rpc()
         result['network_api'] = 'cliconf'
         result['device_info'] = self.get_device_info()
+        result['device_operations'] = self.get_device_operations()
+        result.update(self.get_option_values())
         return json.dumps(result)
