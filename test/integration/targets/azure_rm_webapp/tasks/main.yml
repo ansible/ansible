@@ -15,6 +15,15 @@
       is_linux: false
       sku: S1
 
+- name: get web app with resource group and tag
+  azure_rm_webapp_facts:
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+    that:
+      - output.ansible_facts.azure_webapps | length == 1
+
 - name: Create a windows web app with existing app service plan
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
@@ -45,6 +54,18 @@
     app_settings:
       testkey: "testvalue"
   register: output
+
+- name: get web app with name
+  azure_rm_webapp_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}4"
+  register: output
+
+- assert:
+    that:
+      - output.ansible_facts.azure_webapps | length == 1
+      - output.ansible_facts.azure_webapps[0].app_settings.length == 1
+      - output.ansible_facts.azure_webapps[0].frameworks.length == 2 # net_framework is default
 
 - name: assert the function was created
   assert:

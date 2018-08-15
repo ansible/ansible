@@ -63,16 +63,56 @@ RETURN = '''
 azure_webapps:
     description: List of web apps.
     returned: always
-    type: list
+    type: complex
+    contains:
+        id:
+            description:
+                - Id of the web app.
+            returned: always
+            type: str
+            sample: /subscriptions/xxxx/resourceGroups/xxx/providers/Microsoft.Web/sites/xx
+        name:
+            description:
+                - Name of the web app.
+            returned: always
+            type: str
+        resource_group:
+            description:
+                - Resource group of the web app.
+            returned: always
+            type: str
+        location:
+            description:
+                - Location of the web app.
+            returned: always
+            type: str
+        plan:
+            description:
+                - Id of app service plan used by the web app.
+            returned: always
+            type: str
+            sample: /subscriptions/xxxx/resourceGroups/xxx/providers/Microsoft.Web/serverfarms/xxx
+        app_settings:
+            description:
+                - App settings of the application. Only returned when web app has app settings.
+            type: complex
+        frameworks:
+            description:
+                - Frameworks of the application. Only returned when web app has frameworks.
+            type: complex
+        properties:
+            description:
+                - Other useful properties of the web app, which is not curated to module input.
+            return: always
+            type: complex
     example: [{
-      azure_webapps:
-      - app_settings:
+        app_settings:
           testkey: testvalue
         frameworks:
         - name: net_framework
           version: v4.0
         - name: node
-          versoin: '6.6'
+          version: '6.6'
         id: /subscriptions/xxxx/resourceGroups/ansiblewebapp1/providers/Microsoft.Web/sites/ansiblewindows
         location: East US
         name: ansiblewindows
@@ -169,15 +209,11 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
 
         try:
             item = self.web_client.web_apps.get(self.resource_group, self.name)
-            site_config = self.list_webapp_configuration(self.resource_group, self.name)
-            app_settings =  self.list_webapp_appsettings(self.resource_group, self.name)
         except CloudError:
             pass
 
         if item and self.has_tags(item.tags, self.tags):
-            pip = self.serialize_obj(item, AZURE_OBJECT_CLASS)
-
-            curated_result = self.construct_curated_webapp(pip, site_config, app_settings)
+            curated_result = self.get_curated_webapp(self.resource_group, self.name, item)
             result = [curated_result]
 
         return result
@@ -192,10 +228,7 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
         results = []
         for item in response:
             if self.has_tags(item.tags, self.tags):
-                pip = self.serialize_obj(item, AZURE_OBJECT_CLASS)
-                site_config = self.list_webapp_configuration(self.resource_group, item.name)
-                app_settings =  self.list_webapp_appsettings(self.resource_group, item.name)
-                curated_output = self.construct_curated_webapp(pip, site_config, app_settings)
+                curated_output = self.get_curated_webapp(self.resource_group, item.name, item)
                 results.append(curated_output)
         return results
 
@@ -209,10 +242,7 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
         results = []
         for item in response:
             if self.has_tags(item.tags, self.tags):
-                pip = self.serialize_obj(item, AZURE_OBJECT_CLASS)
-                site_config = self.list_webapp_configuration(pip['properties']['resourceGroup'], item.name)
-                app_settings =  self.list_webapp_appsettings(pip['properties']['resourceGroup'], item.name)
-                curated_output = self.construct_curated_webapp(pip, site_config, app_settings)
+                curated_output = self.get_curated_webapp(item.resource_group, item.name, item)
                 results.append(curated_output)
         return results
 
@@ -240,6 +270,16 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
 
         return response.as_dict()
 
+    def get_curated_webapp(self, resource_group, name, webapp):
+        pip = self.serialize_obj(webapp, AZURE_OBJECT_CLASS)
+
+        try:
+            site_config = self.list_webapp_configuration(resource_group, name)
+            app_settings = self.list_webapp_appsettings(resource_group, name)
+        except CloudError as ex:
+            pass
+        return self.construct_curated_webapp(pip, site_config, app_settings)
+
     def construct_curated_webapp(self, webapp, configuration=None, app_settings=None, deployment_slot=None):
         curated_output = dict()
         curated_output['id'] = webapp['id']
@@ -262,22 +302,29 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
                         'name': fx_name,
                         'version': fx_version
                     }
+                    # java container setting
+                    if fx_name == 'java':
+                        if configuration['java_container'] and configuration['java_container_version']:
+                            settings = {
+                                'java_container': configuration['java_container'].lower(),
+                                'java_container_version': configuration['java_container_version']
+                            }
+                            fx['settings'] = settings
+                    
                     curated_output['frameworks'].append(fx)
-
-            # java container setting
 
             # linux_fx_version
             if configuration.get('linux_fx_version', None):
                 tmp = configuration.get('linux_fx_version').split("|")
                 if len(tmp) == 2:
-                    curated_output['frameworks'].append({ 'name': tmp[0].lower(), 'version': tmp[1] })
+                    curated_output['frameworks'].append({'name': tmp[0].lower(), 'version': tmp[1]})
 
         # curated app_settings
         if app_settings and app_settings.get('properties', None):
             curated_output['app_settings'] = dict()
             for item in app_settings['properties']:
                 curated_output['app_settings'][item] = app_settings['properties'][item]
-        
+
         # curated deploymenet_slot
         if deployment_slot:
             curated_output['deployment_slot'] = deployment_slot
@@ -290,3 +337,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
