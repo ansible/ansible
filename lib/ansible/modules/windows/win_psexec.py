@@ -65,6 +65,10 @@ options:
     - Run the program so that it interacts with the desktop on the remote system.
     type: bool
     default: 'no'
+  session:
+    description:
+    - In conjunction with interactive, specify a session for psexec to attach to. Has no effect if interactive is 'no'.
+    type: int
   limited:
     description:
     - Run the command as limited user (strips the Administrators group and allows only privileges assigned to the Users group).

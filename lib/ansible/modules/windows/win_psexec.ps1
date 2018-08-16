@@ -24,6 +24,7 @@ $elevated = Get-AnsibleParam -obj $params -name "elevated" -type "bool" -default
 $limited = Get-AnsibleParam -obj $params -name "limited" -type "bool" -default $false
 $system = Get-AnsibleParam -obj $params -name "system" -type "bool" -default $false
 $interactive = Get-AnsibleParam -obj $params -name "interactive" -type "bool" -default $false
+$session = Get-AnsibleParam -obj $params -name "session" -type "int"
 $priority = Get-AnsibleParam -obj $params -name "priority" -type "str" -validateset "background","low","belownormal","abovenormal","high","realtime"
 $timeout = Get-AnsibleParam -obj $params -name "timeout" -type "int"
 $extra_opts = Get-AnsibleParam -obj $params -name "extra_opts" -type "list"
@@ -83,6 +84,9 @@ If ($system -eq $true) {
 
 If ($interactive -eq $true) {
     $arguments += "-i"
+    If ($session -ne $null) {
+        $arguments += $session
+    }
 }
 
 If ($limited -eq $true) {
