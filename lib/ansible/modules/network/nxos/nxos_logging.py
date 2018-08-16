@@ -225,7 +225,7 @@ def map_obj_to_commands(updates):
 
 
 def split_interface(interface):
-    match = re.search(r'(\D+)(\d*([/]?\d+))', interface, re.M)
+    match = re.search(r'(\D+)(\S*)', interface, re.M)
     if match:
         return match.group(1), match.group(2)
 
