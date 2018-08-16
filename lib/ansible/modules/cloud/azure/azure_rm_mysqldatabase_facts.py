@@ -68,18 +68,24 @@ databases:
             type: str
             sample: "/subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforMySQL/servers/testser
                     ver/databases/db1"
+        resource_group:
+            description:
+                - Resource group name.
+            returned: always
+            type: str
+            sample: testrg
+        server_name:
+            description:
+                - Server name.
+            returned: always
+            type: str
+            sample: testserver
         name:
             description:
                 - Resource name.
             returned: always
             type: str
             sample: db1
-        type:
-            description:
-                - Resource type.
-            returned: always
-            type: str
-            sample: Microsoft.DBforMySQL/servers/databases
         charset:
             description:
                 - The charset of the database.
