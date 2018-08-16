@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - To resolve the issue of handling exception for Nios lookup gracefully.
+    (https://github.com/ansible/ansible/pull/44078)
