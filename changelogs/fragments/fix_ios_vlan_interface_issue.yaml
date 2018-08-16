@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - ios_vlan - fix unable to work on certain interface types issue (https://github.com/ansible/ansible/pull/43819)
