@@ -1,0 +1,2 @@
+bugfixes:
+- nxos_interface port-channel idempotence fix for mode (https://github.com/ansible/ansible/pull/44248).
