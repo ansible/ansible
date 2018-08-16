@@ -100,7 +100,7 @@
 
 - name: Get scaleset body
   set_fact:
-    body: "{{ output_scaleset.ansible_facts.azure_vmss[0] }}"
+    body: "{{ output_scaleset.vmss[0] }}"
 
 - name: Try to update VMSS using output as input
   azure_rm_virtualmachine_scaleset:
