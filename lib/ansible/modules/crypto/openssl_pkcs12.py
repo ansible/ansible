@@ -37,7 +37,7 @@ options:
         default: False
         type: bool
         description:
-            - Should the file be regenerated even it it already exists.
+            - Should the file be regenerated even if it already exists.
     friendly_name:
         aliases: ['name']
         description:
@@ -72,7 +72,7 @@ options:
         choices: ['present', 'absent']
         description:
             - Whether the file should exist or not.
-              All parameters except C(path) are ignored when state is absent.
+              All parameters except C(path) are ignored when state is C(absent).
     src:
         description:
             - PKCS#12 file path to parse.
@@ -179,7 +179,7 @@ class Pkcs(crypto_utils.OpenSSLObject):
         self.src = module.params['src']
         self.mode = module.params['mode']
         if not self.mode:
-            self.mode = int('0400', 8)
+            self.mode = 0o400
 
     def check(self, module, perms_required=True):
         """Ensure the resource is in its desired state."""
@@ -191,7 +191,6 @@ class Pkcs(crypto_utils.OpenSSLObject):
                 try:
                     crypto_utils.load_privatekey(self.path,
                                                  self.privatekey_passphrase)
-                    return True
                 except crypto.Error:
                     return False
             return True
