@@ -1,0 +1,2 @@
+bugfixes:
+- Fix check_mode in nxos_static_route module (https://github.com/ansible/ansible/pull/44252).
