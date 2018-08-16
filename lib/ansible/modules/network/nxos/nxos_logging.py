@@ -213,9 +213,8 @@ def map_obj_to_commands(updates):
                                                                  w['facility_level']))
 
             if w['interface']:
-                int_type, int_number = split_interface(w['interface'])
-                commands.append('logging source-interface {0} {1}'.format(int_type,
-                                                                          int_number))
+                commands.append('logging source-interface {0} {1}'.format(*split_interface(w['interface'])))
+
     return commands
 
 
