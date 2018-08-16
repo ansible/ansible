@@ -61,41 +61,31 @@ databases:
     returned: always
     type: complex
     contains:
-        postgresqldatabase_name:
-            description: The key is the name of the server that the values relate to.
-            type: complex
-            contains:
-                id:
-                    description:
-                        - Resource ID
-                    returned: always
-                    type: str
-                    sample: "/subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforPostgreSQL/servers/testser
-                            ver/databases/db1"
-                name:
-                    description:
-                        - Resource name.
-                    returned: always
-                    type: str
-                    sample: db1
-                type:
-                    description:
-                        - Resource type.
-                    returned: always
-                    type: str
-                    sample: Microsoft.DBforPostgreSQL/servers/databases
-                charset:
-                    description:
-                        - The charset of the database.
-                    returned: always
-                    type: str
-                    sample: UTF8
-                collation:
-                    description:
-                        - The collation of the database.
-                    returned: always
-                    type: str
-                    sample: English_United States.1252
+        id:
+            description:
+                - Resource ID
+            returned: always
+            type: str
+            sample: "/subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforPostgreSQL/servers/testser
+                    ver/databases/db1"
+        name:
+            description:
+                - Resource name.
+            returned: always
+            type: str
+            sample: db1
+        charset:
+            description:
+                - The charset of the database.
+            returned: always
+            type: str
+            sample: UTF8
+        collation:
+            description:
+                - The collation of the database.
+            returned: always
+            type: str
+            sample: English_United States.1252
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -131,7 +121,6 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
             changed=False,
             ansible_facts=dict()
         )
-        self.mgmt_client = None
         self.resource_group = None
         self.server_name = None
         self.name = None
@@ -140,8 +129,6 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
-        self.mgmt_client = self.get_mgmt_svc_client(PostgreSQLManagementClient,
-                                                    base_url=self._cloud_environment.endpoints.resource_manager)
 
         if (self.resource_group is not None and
                 self.server_name is not None and
@@ -156,9 +143,9 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.mgmt_client.databases.get(resource_group_name=self.resource_group,
-                                                      server_name=self.server_name,
-                                                      database_name=self.name)
+            response = self.postgresql_client.databases.get(resource_group_name=self.resource_group,
+                                                            server_name=self.server_name,
+                                                            database_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Databases.')
@@ -172,11 +159,11 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.mgmt_client.databases.list_by_server(resource_group_name=self.resource_group,
-                                                                 server_name=self.server_name)
+            response = self.postgresql_client.databases.list_by_server(resource_group_name=self.resource_group,
+                                                                       server_name=self.server_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for Databases.')
+            self.fail("Error listing for server {0} - {1}".format(self.server_name, str(e))) 
 
         if response is not None:
             for item in response:
