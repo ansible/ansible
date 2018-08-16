@@ -31,6 +31,18 @@ options:
     description:
       - Set the user's password..
     type: str
+  plugin:
+    description:
+      - Set the user's plugin used to authenticate C(CREATE USER user IDENTIFIED WITH plugin).
+    version_added: "2.8"
+  plugin_hash_string:
+    description:
+      - Set the user's plugin hash string C(CREATE USER user IDENTIFIED WITH plugin AS plugin_hash_string).
+    version_added: "2.8"
+  plugin_auth_string:
+    description:
+      - Set the user's plugin auth_string C(CREATE USER user IDENTIFIED WITH plugin BY plugin_auth_string).
+    version_added: "2.8"
   encrypted:
     description:
       - Indicate that the 'password' field is a `mysql_native_password` hash.
@@ -101,11 +113,9 @@ notes:
      without providing any login_user/login_password details. The second must drop a ~/.my.cnf file containing
      the new root credentials. Subsequent runs of the playbook will then succeed by reading the new credentials from
      the file."
-   - Currently, there is only support for the `mysql_native_password` encrypted password hash module.
 
-author:
-- Jonathan Mainguy (@Jmainguy)
-- Benjamin Malynovytch (@bmalynovytch)
+author: "Jonathan Mainguy (@Jmainguy), Lukasz Tomaszkiewicz (@tomaszkiewicz)"
+
 extends_documentation_fragment: mysql
 '''
 
@@ -115,20 +125,24 @@ EXAMPLES = r'''
     name: ''
     host: localhost
     state: absent
-
 - name: Removes all anonymous user accounts
   mysql_user:
     name: ''
     host_all: yes
     state: absent
-
 - name: Create database user with name 'bob' and password '12345' with all database privileges
   mysql_user:
     name: bob
     password: 12345
     priv: '*.*:ALL'
     state: present
-
+# Create database user with name 'bob' authenticated with 'AWSAuthenticationPlugin' (with proper hash_string) with all database privileges
+- mysql_user:
+    name: bob
+    plugin: AWSAuthenticationPlugin
+    plugin_hash_string: RDS
+    priv: '*.*:ALL'
+    state: present
 - name: Create database user using hashed password with all database privileges
   mysql_user:
     name: bob
@@ -136,14 +150,12 @@ EXAMPLES = r'''
     encrypted: yes
     priv: '*.*:ALL'
     state: present
-
 - name: Create database user with password and all database privileges and 'WITH GRANT OPTION'
   mysql_user:
     name: bob
     password: 12345
     priv: '*.*:ALL,GRANT'
     state: present
-
 # Note that REQUIRESSL is a special privilege that should only apply to *.* by itself.
 - name: Modify user to require SSL connections.
   mysql_user:
@@ -151,43 +163,36 @@ EXAMPLES = r'''
     append_privs: yes
     priv: '*.*:REQUIRESSL'
     state: present
-
 - name: Ensure no user named 'sally'@'localhost' exists, also passing in the auth credentials.
   mysql_user:
     login_user: root
     login_password: 123456
     name: sally
     state: absent
-
 - name: Ensure no user named 'sally' exists at all
   mysql_user:
     name: sally
     host_all: yes
     state: absent
-
 - name: Specify grants composed of more than one word
   mysql_user:
     name: replication
     password: 12345
     priv: "*.*:REPLICATION CLIENT"
     state: present
-
 - name: Revoke all privileges for user 'bob' and password '12345'
   mysql_user:
     name: bob
     password: 12345
     priv: "*.*:USAGE"
     state: present
-
 # Example privileges string format
 # mydb.*:INSERT,UPDATE/anotherdb.*:SELECT/yetanotherdb.*:ALL
-
 - name: Example using login_unix_socket to connect to server
   mysql_user:
     name: root
     password: abc123
     login_unix_socket: /var/run/mysqld/mysqld.sock
-
 - name: Example of skipping binary logging while adding user 'bob'
   mysql_user:
     name: bob
@@ -195,7 +200,6 @@ EXAMPLES = r'''
     priv: "*.*:USAGE"
     state: present
     sql_log_bin: no
-
 # Example .my.cnf file for setting the root password
 # [client]
 # user=root
@@ -282,7 +286,7 @@ def user_exists(cursor, user, host, host_all):
     return count[0] > 0
 
 
-def user_add(cursor, user, host, host_all, password, encrypted, new_priv, check_mode):
+def user_add(cursor, user, host, host_all, password, encrypted, plugin, plugin_hash_string, plugin_auth_string, new_priv, check_mode):
     # we cannot create users without a proper hostname
     if host_all:
         return False
@@ -294,6 +298,12 @@ def user_add(cursor, user, host, host_all, password, encrypted, new_priv, check_
         cursor.execute("CREATE USER %s@%s IDENTIFIED BY PASSWORD %s", (user, host, password))
     elif password and not encrypted:
         cursor.execute("CREATE USER %s@%s IDENTIFIED BY %s", (user, host, password))
+    elif plugin and plugin_hash_string:
+        cursor.execute("CREATE USER %s@%s IDENTIFIED WITH %s AS %s", (user, host, plugin, plugin_hash_string))
+    elif plugin and plugin_auth_string:
+        cursor.execute("CREATE USER %s@%s IDENTIFIED WITH %s BY %s", (user, host, plugin, plugin_auth_string))
+    elif plugin:
+        cursor.execute("CREATE USER %s@%s IDENTIFIED WITH %s", (user, host, plugin_auth_string))
     else:
         cursor.execute("CREATE USER %s@%s", (user, host))
     if new_priv is not None:
@@ -310,7 +320,7 @@ def is_hash(password):
     return ishash
 
 
-def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append_privs, module):
+def user_mod(cursor, user, host, host_all, password, encrypted, plugin, plugin_hash_string, plugin_auth_string, new_priv, append_privs, module):
     changed = False
     msg = "User unchanged"
     grant_option = False
@@ -385,6 +395,34 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                             msg = "Password forced update"
                         else:
                             raise e
+                changed = True
+
+        # Handle plugin authentication
+
+        if plugin:
+            cursor.execute("SELECT plugin, authentication_string FROM user WHERE user = %s AND host = %s", (user, host))
+            current_plugin = cursor.fetchone()
+
+            update = False
+
+            if current_plugin[0] != plugin:
+                update = True
+
+            if plugin_hash_string and current_plugin[1] != plugin_hash_string:
+                update = True
+
+            if plugin_auth_string and current_plugin[1] != plugin_auth_string:
+                # this case can cause more updates than expected, as plugin can hash auth_string in any way it wants and there's no way to figure it out for
+                # a check, so I prefer to update more often than never
+                update = True
+
+            if update:
+                if plugin_hash_string:
+                    cursor.execute("ALTER USER %s@%s IDENTIFIED WITH %s AS %s", (user, host, plugin, plugin_hash_string))
+                elif plugin_auth_string:
+                    cursor.execute("ALTER USER %s@%s IDENTIFIED WITH %s BY %s", (user, host, plugin, plugin_auth_string))
+                else:
+                    cursor.execute("ALTER USER %s@%s IDENTIFIED WITH %s", (user, host, plugin))
                 changed = True
 
         # Handle privileges
@@ -462,9 +500,7 @@ def privileges_get(cursor, user, host):
     """ MySQL doesn't have a better method of getting privileges aside from the
     SHOW GRANTS query syntax, which requires us to then parse the returned string.
     Here's an example of the string that is returned from MySQL:
-
      GRANT USAGE ON *.* TO 'user'@'localhost' IDENTIFIED BY 'pass';
-
     This function makes the query and returns a dictionary containing the results.
     The dictionary format is the same as that returned by privileges_unpack() below.
     """
@@ -498,9 +534,7 @@ def privileges_unpack(priv, mode):
     it into a dictionary, the same format as privileges_get() above. We have this
     custom format to avoid using YAML/JSON strings inside YAML playbooks. Example
     of a privileges string:
-
      mydb.*:INSERT,UPDATE/anotherdb.*:SELECT/yetanother.*:ALL
-
     The privilege USAGE stands for no privileges, so we add that in on *.* if it's
     not specified in the string, as MySQL will always provide this by default.
     """
@@ -594,6 +628,9 @@ def main():
             login_unix_socket=dict(type='str'),
             user=dict(type='str', required=True, aliases=['name']),
             password=dict(type='str', no_log=True),
+            plugin=dict(default=None, type='str'),
+            plugin_hash_string=dict(default=None, type='str'),
+            plugin_auth_string=dict(default=None, type='str'),
             encrypted=dict(type='bool', default=False),
             host=dict(type='str', default='localhost'),
             host_all=dict(type="bool", default=False),
@@ -615,6 +652,9 @@ def main():
     login_password = module.params["login_password"]
     user = module.params["user"]
     password = module.params["password"]
+    plugin = module.params["plugin"]
+    plugin_hash_string = module.params["plugin_hash_string"]
+    plugin_auth_string = module.params["plugin_auth_string"]
     encrypted = module.boolean(module.params["encrypted"])
     host = module.params["host"].lower()
     host_all = module.params["host_all"]
@@ -667,17 +707,20 @@ def main():
         if user_exists(cursor, user, host, host_all):
             try:
                 if update_password == 'always':
-                    changed, msg = user_mod(cursor, user, host, host_all, password, encrypted, priv, append_privs, module)
+                    changed = user_mod(cursor, user, host, host_all, password, encrypted, plugin, plugin_hash_string, plugin_auth_string,
+                                       priv, append_privs, module)
                 else:
-                    changed, msg = user_mod(cursor, user, host, host_all, None, encrypted, priv, append_privs, module)
+                    changed = user_mod(cursor, user, host, host_all, None, encrypted, plugin, plugin_hash_string, plugin_auth_string,
+                                       priv, append_privs, module)
 
             except (SQLParseError, InvalidPrivsError, mysql_driver.Error) as e:
                 module.fail_json(msg=to_native(e))
         else:
             if host_all:
                 module.fail_json(msg="host_all parameter cannot be used when adding a user")
+
             try:
-                changed = user_add(cursor, user, host, host_all, password, encrypted, priv, module.check_mode)
+                changed = user_add(cursor, user, host, host_all, password, encrypted, plugin, plugin_hash_string, plugin_auth_string, priv, module.check_mode)
                 if changed:
                     msg = "User added"
 
