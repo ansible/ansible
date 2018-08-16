@@ -1,0 +1,101 @@
+{
+    "agge": {
+        "address_family": "inet",
+        "down": [],
+        "method": "manual",
+        "post-up": [],
+        "pre-up": [],
+        "up": []
+    },
+    "aggi": {
+        "address": "10.44.15.196",
+        "address_family": "inet",
+        "bond_downdelay": "200",
+        "bond_lacp_rate": "slow",
+        "bond_miimon": "100",
+        "bond_mode": "4",
+        "bond_updelay": "200",
+        "bond_xmit_hash_policy": "layer3+4",
+        "down": [],
+        "hwaddress": "ether 22:44:77:88:D5:96",
+        "method": "static",
+        "mtu": "1500",
+        "netmask": "255.255.255.248",
+        "post-up": [
+            "/sbin/ethtool -K aggi tx off tso off"
+        ],
+        "pre-up": [],
+        "slaves": "int1 int2",
+        "up": []
+    },
+    "br0": {
+        "address": "188.44.133.76",
+        "address_family": "inet",
+        "bond_downdelay": "200",
+        "bond_lacp_rate": "slow",
+        "bond_miimon": "100",
+        "bond_mode": "4",
+        "bond_updelay": "200",
+        "bond_xmit_hash_policy": "layer3+4",
+        "bridge_ports": "agge",
+        "down": [],
+        "gateway": "188.44.133.75",
+        "hwaddress": "ether 22:44:77:88:D5:98",
+        "method": "static",
+        "netmask": "255.255.255.248",
+        "post-up": [
+            "/sbin/ethtool -K agge tx off tso off"
+        ],
+        "pre-up": [],
+        "slaves": "ext1 ext2",
+        "up": [
+            "route add -net 10.0.0.0/8 gw 10.44.15.117 dev aggi",
+            "route add -net 192.168.0.0/16 gw 10.44.15.117 dev aggi",
+            "route add -net 188.44.208.0/21 gw 10.44.15.117 dev aggi"
+        ]
+    },
+    "ext1": {
+        "address_family": "inet",
+        "bond-master": "agge",
+        "down": [],
+        "method": "manual",
+        "post-up": [],
+        "pre-up": [],
+        "up": []
+    },
+    "ext2": {
+        "address_family": "inet",
+        "bond-master": "agge",
+        "down": [],
+        "method": "manual",
+        "post-up": [],
+        "pre-up": [],
+        "up": []
+    },
+    "int1": {
+        "address_family": "inet",
+        "bond-master": "aggi",
+        "down": [],
+        "method": "manual",
+        "post-up": [],
+        "pre-up": [],
+        "up": []
+    },
+    "int2": {
+        "address_family": "inet",
+        "bond-master": "aggi",
+        "down": [],
+        "method": "manual",
+        "post-up": [],
+        "pre-up": [],
+        "up": []
+    },
+    "lo": {
+        "address_family": "inet",
+        "down": [],
+        "method": "loopback",
+        "post-up": [],
+        "pre-up": [],
+        "up": []
+    }
+}
