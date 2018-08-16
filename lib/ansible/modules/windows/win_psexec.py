@@ -69,6 +69,7 @@ options:
     description:
     - In conjunction with interactive, specify a session for psexec to attach to. Has no effect if interactive is 'no'.
     type: int
+    version_added: '2.7'
   limited:
     description:
     - Run the command as limited user (strips the Administrators group and allows only privileges assigned to the Users group).
