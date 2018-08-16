@@ -68,6 +68,18 @@ databases:
             type: str
             sample: "/subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforPostgreSQL/servers/testser
                     ver/databases/db1"
+        resource_group:
+            description:
+                - Resource group name.
+            returned: always
+            type: str
+            sample: testrg
+        server_name:
+            description:
+                - Server name.
+            returned: always
+            type: str
+            sample: testserver
         name:
             description:
                 - Resource name.
