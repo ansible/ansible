@@ -1088,6 +1088,7 @@ class AzureRMModuleBase(object):
                                                           base_url=self._cloud_environment.endpoints.resource_manager)
         return self._mysql_client
 
+    @property
     def cdn_management_client(self):
         self.log('Getting cdn management client')
         if not self._cdn_management_client:
