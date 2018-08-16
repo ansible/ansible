@@ -86,7 +86,7 @@ state:
             sku: Standard_Akamai
             tags: {
                 Environment: Test
-            },
+            }
             type: Microsoft.Cdn/profiles
 '''
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -109,6 +109,7 @@ def cdnprofile_to_dict(cdnprofile):
         provisioning_state=cdnprofile.provisioning_state,
         tags=cdnprofile.tags
     )
+
 
 class AzureRMCdnprofile(AzureRMModuleBase):
 
@@ -147,13 +148,12 @@ class AzureRMCdnprofile(AzureRMModuleBase):
             ('state', 'present', ['sku'])
         ]
 
-
         self.results = dict(changed=False)
 
         super(AzureRMCdnprofile, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                    supports_check_mode=True,
-                                                    supports_tags=True,
-                                                    required_if=required_if)
+                                                supports_check_mode=True,
+                                                supports_tags=True,
+                                                required_if=required_if)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -173,7 +173,7 @@ class AzureRMCdnprofile(AzureRMModuleBase):
 
             if not response:
                 self.log("Need to create the CDN profile")
-                
+
                 if not self.check_mode:
                     self.results = self.create_cdnprofile()
                     self.log("Creation done")

@@ -85,7 +85,7 @@ cdnprofiles:
             type: str
             sample: WestUS
         id:
-            description
+            description:
                 - ID of the CDN profile.
             type: str
             sample: /subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourcegroups/cdntest/providers/Microsoft.Cdn/profiles/cdntest
