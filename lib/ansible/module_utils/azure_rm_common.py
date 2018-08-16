@@ -464,17 +464,20 @@ class AzureRMModuleBase(object):
         :return: bool, dict
         '''
         new_tags = copy.copy(tags) if isinstance(tags, dict) else dict()
+        param_tags = self.module.params.get('tags') if isinstance(self.module.params.get('tags'), dict) else dict()
+        append_tags = self.module.params.get('append_tags') if self.module.params.get('append_tags') is not None else True
         changed = False
-        if isinstance(self.module.params.get('tags'), dict):
-            for key, value in self.module.params['tags'].items():
-                if not new_tags.get(key) or new_tags[key] != value:
+        # check add or update
+        for key, value in param_tags.items():
+            if not new_tags.get(key) or new_tags[key] != value:
+                changed = True
+                new_tags[key] = value
+        # check remove
+        if not append_tags:
+            for key, value in tags.items():
+                if not param_tags.get(key):
+                    new_tags.pop(key)
                     changed = True
-                    new_tags[key] = value
-            if isinstance(tags, dict):
-                for key, value in tags.items():
-                    if not self.module.params['tags'].get(key):
-                        new_tags.pop(key)
-                        changed = True
         return changed, new_tags
 
     def has_tags(self, obj_tags, tag_list):
