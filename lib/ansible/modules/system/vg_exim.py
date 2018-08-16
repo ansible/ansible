@@ -79,7 +79,7 @@ def main():
         rc, vg_state, err = module.run_command(
             "%s --noheadings -o vg_exported %s"
             % (vgs_cmd, vg)
-            )
+        )
         if rc != 0:
             module.fail_json(
                 msg="Failed executing vgs command.", rc=rc, err=err
@@ -88,7 +88,7 @@ def main():
             vgimport_cmd = module.get_bin_path('vgimport', True)
             rc, vgimport_out, err = module.run_command(
                 "%s -v %s" % (vgimport_cmd, vg)
-                )
+            )
             if rc != 0:
                 module.fail_json(
                     msg="Failed executing vgimport command.", rc=rc, err=err
