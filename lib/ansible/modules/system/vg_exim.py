@@ -63,7 +63,6 @@ def main():
             state=dict(
                 type='str',
                 required=True,
-                default=None,
                 choices=['imported', 'exported']
             ),
         ),
