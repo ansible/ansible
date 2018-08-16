@@ -68,7 +68,7 @@ EXAMPLES = '''
 
 RETURN = '''
 ovirt_permissions:
-    description: "List of dictionaries describing the permissions. Permission attribues are mapped to dictionary keys,
+    description: "List of dictionaries describing the permissions. Permission attributes are mapped to dictionary keys,
                   all permissions attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/permission."
     returned: On success.
     type: list

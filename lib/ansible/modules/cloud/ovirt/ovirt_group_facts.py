@@ -56,7 +56,7 @@ EXAMPLES = '''
 
 RETURN = '''
 ovirt_groups:
-    description: "List of dictionaries describing the groups. Group attribues are mapped to dictionary keys,
+    description: "List of dictionaries describing the groups. Group attributes are mapped to dictionary keys,
                   all groups attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/group."
     returned: On success.
     type: list

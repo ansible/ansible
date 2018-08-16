@@ -58,7 +58,7 @@ EXAMPLES = '''
 
 RETURN = '''
 ovirt_storage_templates:
-    description: "List of dictionaries describing the Templates. Template attribues are mapped to dictionary keys,
+    description: "List of dictionaries describing the Templates. Template attributes are mapped to dictionary keys,
                   all Templates attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/template."
     returned: On success.
     type: list

@@ -68,7 +68,7 @@ EXAMPLES = '''
 
 RETURN = '''
 ovirt_vms:
-    description: "List of dictionaries describing the VMs. VM attribues are mapped to dictionary keys,
+    description: "List of dictionaries describing the VMs. VM attributes are mapped to dictionary keys,
                   all VMs attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/vm."
     returned: On success.
     type: list
