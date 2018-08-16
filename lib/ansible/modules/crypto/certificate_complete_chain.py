@@ -148,6 +148,8 @@ class Certificate(object):
     Stores PEM with parsed certificate.
     '''
     def __init__(self, pem, cert):
+        if not (pem.endswith('\n') or pem.endswith('\r')):
+            pem = pem + '\n'
         self.pem = pem
         self.cert = cert
 

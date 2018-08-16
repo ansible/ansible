@@ -65,7 +65,8 @@
   # Intermediate: signed by ISRG root
   - name: Find alternate rootchain for cert 2
     certificate_complete_chain:
-      input_chain: "{{ lookup('file', 'cert2.pem', rstrip=False) }}"
+      # Remove line ending, make sure it is re-added by code
+      input_chain: "{{ lookup('file', 'cert2.pem', rstrip=True) }}"
       intermediate_certificates:
       - "{{ role_path }}/files/cert2-altchain.pem"
       root_certificates:
