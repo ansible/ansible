@@ -34,22 +34,19 @@ options:
     syncIntervalMinutes:
         description:
             - The synchronization interval in minutes
-        required: no
         default: 10
     manualSync:
         description:
             - Setting this to true will cause other synchronization values to be ignored
-        required: no
-        default: no
+        type: bool
+        default: 'no'
     recoveryWarnThresholdMinutes:
         description:
             - Recovery point warning threshold (minutes). The user will be warned when the age of the last good failures point exceeds this value
-        required: no
         default: 20
     repoUtilizationWarnThreshold:
         description:
             - Recovery point warning threshold
-        required: no
         default: 80
     interfaceType:
         description:
@@ -57,17 +54,15 @@ options:
         choices:
             - iscsi
             - fibre
-        required: no
-        default: null
     syncWarnThresholdMinutes:
         description:
             - The threshold (in minutes) for notifying the user that periodic synchronization has taken too long to complete.
-        required: no
         default: 10
     state:
         description:
             - A C(state) of present will either create or update the async mirror group.
             - A C(state) of absent will remove the async mirror group.
+        choices: [ absent, present ]
         required: yes
 """
 
@@ -98,12 +93,6 @@ EXAMPLES = """
 """
 
 RETURN = """
-msg:
-    description: Successful removal
-    returned: success
-    type: string
-    sample: "Async mirror group removed."
-
 msg:
     description: Successful creation
     returned: success
@@ -168,7 +157,7 @@ def create_async(module, ssid, api_url, api_pwd, api_usr, body):
         rc, data = request(url, data=post_data, method='POST', url_username=api_usr, url_password=api_pwd,
                            headers=HEADERS)
     except Exception as e:
-        module.exit_json(msg="Exception while creating aysnc mirror group. Message: %s" %  to_native(e),
+        module.exit_json(msg="Exception while creating aysnc mirror group. Message: %s" % to_native(e),
                          exception=traceback.format_exc())
     return data
 

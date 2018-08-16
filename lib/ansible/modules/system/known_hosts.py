@@ -28,29 +28,28 @@ options:
     description:
       - The host to add or remove (must match a host specified in key). It will be converted to lowercase so that ssh-keygen can find it.
     required: true
-    default: null
   key:
     description:
       - The SSH public host key, as a string (required if state=present, optional when state=absent, in which case all keys for the host are removed).
-        The key must be in the right format for ssh (see sshd(1), section "SSH_KNOWN_HOSTS FILE FORMAT")
-    required: false
-    default: null
+        The key must be in the right format for ssh (see sshd(8), section "SSH_KNOWN_HOSTS FILE FORMAT").
+
+        Specifically, the key should not match the format that is found in an SSH pubkey file, but should rather have the hostname prepended to a
+        line that includes the pubkey, the same way that it would appear in the known_hosts file. The value prepended to the line must also match
+        the value of the name parameter.
   path:
     description:
       - The known_hosts file to edit
-    required: no
     default: "(homedir)+/.ssh/known_hosts"
   hash_host:
     description:
       - Hash the hostname in the known_hosts file
-    required: no
-    default: no
+    type: bool
+    default: 'no'
     version_added: "2.3"
   state:
     description:
       - I(present) to add the host key, I(absent) to remove it.
     choices: [ "present", "absent" ]
-    required: no
     default: present
 requirements: [ ]
 author: "Matthew Vernon (@mcv21)"
@@ -81,7 +80,7 @@ import tempfile
 import errno
 import re
 
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -132,8 +131,7 @@ def enforce_state(module, params):
     if replace_or_add or found != (state == "present"):
         try:
             inf = open(path, "r")
-        except IOError:
-            e = get_exception()
+        except IOError as e:
             if e.errno == errno.ENOENT:
                 inf = None
             else:
@@ -150,9 +148,8 @@ def enforce_state(module, params):
                 outf.write(key)
             outf.flush()
             module.atomic_move(outf.name, path)
-        except (IOError, OSError):
-            e = get_exception()
-            module.fail_json(msg="Failed to write to file %s: %s" % (path, str(e)))
+        except (IOError, OSError) as e:
+            module.fail_json(msg="Failed to write to file %s: %s" % (path, to_native(e)))
 
         try:
             outf.close()
@@ -181,17 +178,21 @@ def sanity_check(module, host, key, sshkeygen):
 
     # The approach is to write the key to a temporary file,
     # and then attempt to look up the specified host in that file.
+
+    if re.search(r'\S+(\s+)?,(\s+)?', host):
+        module.fail_json(msg="Comma separated list of names is not supported. "
+                             "Please pass a single name to lookup in the known_hosts file.")
+
     try:
         outf = tempfile.NamedTemporaryFile(mode='w+')
         outf.write(key)
         outf.flush()
-    except IOError:
-        e = get_exception()
+    except IOError as e:
         module.fail_json(msg="Failed to write to temporary file %s: %s" %
-                             (outf.name, str(e)))
+                             (outf.name, to_native(e)))
 
     sshkeygen_command = [sshkeygen, '-F', host, '-f', outf.name]
-    rc, stdout, stderr = module.run_command(sshkeygen_command, check_rc=True)
+    rc, stdout, stderr = module.run_command(sshkeygen_command)
     try:
         outf.close()
     except:
@@ -299,8 +300,7 @@ def compute_diff(path, found_line, replace_or_add, state, key):
     }
     try:
         inf = open(path, "r")
-    except IOError:
-        e = get_exception()
+    except IOError as e:
         if e.errno == errno.ENOENT:
             diff['before_header'] = '/dev/null'
     else:
@@ -330,6 +330,7 @@ def main():
 
     results = enforce_state(module, module.params)
     module.exit_json(**results)
+
 
 if __name__ == '__main__':
     main()

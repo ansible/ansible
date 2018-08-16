@@ -45,37 +45,26 @@ options:
   description:
     description:
       - Description of the NVE interface.
-    required: false
-    default: null
   host_reachability:
     description:
       - Specify mechanism for host reachability advertisement.
-    required: false
-    choices: ['true', 'false']
-    default: null
+    type: bool
   shutdown:
     description:
       - Administratively shutdown the NVE interface.
-    required: false
-    choices: ['true','false']
-    default: false
+    type: bool
   source_interface:
     description:
       - Specify the loopback interface whose IP address should be
         used for the NVE interface.
-    required: false
-    default: null
   source_interface_hold_down_time:
     description:
       - Suppresses advertisement of the NVE loopback address until
         the overlay has converged.
-    required: false
-    default: null
   state:
     description:
       - Determines whether the config should be present or not
         on the device.
-    required: false
     default: present
     choices: ['present','absent']
 '''
@@ -100,10 +89,11 @@ commands:
 '''
 
 import re
-from ansible.module_utils.nxos import get_config, load_config
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+
+from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
+from ansible.module_utils.network.common.config import CustomNetworkConfig
 
 BOOL_PARAMS = [
     'shutdown',
@@ -120,6 +110,7 @@ PARAM_TO_COMMAND_KEYMAP = {
 PARAM_TO_DEFAULT_KEYMAP = {
     'description': False,
     'shutdown': True,
+    'source_interface_hold_down_time': '180',
 }
 
 
@@ -270,7 +261,6 @@ def main():
         shutdown=dict(required=False, type='bool'),
         source_interface=dict(required=False, type='str'),
         source_interface_hold_down_time=dict(required=False, type='str'),
-        m_facts=dict(required=False, default=False, type='bool'),
         state=dict(choices=['present', 'absent'], default='present', required=False),
     )
 

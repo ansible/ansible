@@ -29,7 +29,7 @@ options:
       required: True
     fail_if_not_running:
       description:
-        - Fail loudly if the job_id does not reference a running job.
+        - Fail loudly if the I(job_id) does not reference a running job.
       default: False
 extends_documentation_fragment: tower
 '''
@@ -54,38 +54,27 @@ status:
 '''
 
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode
 
 try:
     import tower_cli
     import tower_cli.utils.exceptions as exc
 
     from tower_cli.conf import settings
-    from ansible.module_utils.ansible_tower import (
-        tower_auth_config,
-        tower_check_mode,
-        tower_argument_spec,
-    )
-
-    HAS_TOWER_CLI = True
 except ImportError:
-    HAS_TOWER_CLI = False
+    pass
 
 
 def main():
-    argument_spec = tower_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         job_id=dict(type='int', required=True),
         fail_if_not_running=dict(type='bool', default=False),
-    ))
+    )
 
-    module = AnsibleModule(
+    module = TowerModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
-
-    if not HAS_TOWER_CLI:
-        module.fail_json(msg='ansible-tower-cli required for this module')
 
     job_id = module.params.get('job_id')
     json_output = {}

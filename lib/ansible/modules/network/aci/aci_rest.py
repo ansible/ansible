@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -16,17 +17,24 @@ module: aci_rest
 short_description: Direct access to the Cisco APIC REST API
 description:
 - Enables the management of the Cisco ACI fabric through direct access to the Cisco APIC REST API.
-- More information regarding the Cisco APIC REST API is available from
-  U(http://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/2-x/rest_cfg/2_1_x/b_Cisco_APIC_REST_API_Configuration_Guide.html).
+- Thanks to the idempotent nature of the APIC, this module is idempotent and reports changes.
+notes:
+- Certain payloads are known not to be idempotent, so be careful when constructing payloads,
+  e.g. using C(status="created") will cause idempotency issues, use C(status="modified") instead.
+  More information in :ref:`the ACI documentation <aci_guide_known_issues>`.
+- Certain payloads (and used paths) are known to report no changes happened when changes did happen.
+  This is a known APIC problem and has been reported to the vendor. A workaround for this issue exists.
+  More information in :ref:`the ACI documentation <aci_guide_known_issues>`.
+- XML payloads require the C(lxml) and C(xmljson) python libraries. For JSON payloads nothing special is needed.
+- More information regarding the APIC REST API is available from
+  L(the Cisco APIC REST API Configuration Guide,http://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/2-x/rest_cfg/2_1_x/b_Cisco_APIC_REST_API_Configuration_Guide.html).  # NOQA
 author:
 - Dag Wieers (@dagwieers)
-- Swetha Chunduri (@schunduri)
 version_added: '2.4'
 requirements:
-- lxml (when using XML content)
-- xmljson >= 0.1.8 (when using XML content)
+- lxml (when using XML payload)
+- xmljson >= 0.1.8 (when using XML payload)
 - python 2.7+ (when using xmljson)
-extends_documentation_fragment: aci
 options:
   method:
     description:
@@ -34,7 +42,6 @@ options:
     - Using C(delete) is typically used for deleting objects.
     - Using C(get) is typically used for querying objects.
     - Using C(post) is typically used for modifying objects.
-    required: yes
     default: get
     choices: [ delete, get, post ]
     aliases: [ action ]
@@ -46,37 +53,49 @@ options:
     aliases: [ uri ]
   content:
     description:
-    - When used instead of C(src), sets the content of the API request directly.
-    - This may be convenient to template simple requests, for anything complex use the M(template) module.
+    - When used instead of C(src), sets the payload of the API request directly.
+    - This may be convenient to template simple requests.
+    - For anything complex use the C(template) lookup plugin (see examples)
+      or the M(template) module with parameter C(src).
   src:
     description:
     - Name of the absolute path of the filname that includes the body
-      of the http request being sent to the ACI fabric.
+      of the HTTP request being sent to the ACI fabric.
+    - If you require a templated payload, use the C(content) parameter
+      together with the C(template) lookup plugin, or use M(template).
+    type: path
     aliases: [ config_file ]
-notes:
-- When using inline-JSON (using C(content)), YAML requires to start with a blank line.
-  Otherwise the JSON statement will be parsed as a YAML mapping (dictionary) and translated into invalid JSON as a result.
-- XML payloads require the C(lxml) and C(xmljson) python libraries. For JSON payloads nothing special is needed.
+extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
-- name: Add a tenant
+- name: Add a tenant using certifcate authentication
   aci_rest:
-    hostname: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    host: apic
+    username: admin
+    private_key: pki/admin.key
     method: post
     path: /api/mo/uni.xml
     src: /home/cisco/ansible/aci/configs/aci_config.xml
   delegate_to: localhost
 
+- name: Add a tenant from a templated payload file from templates/
+  aci_rest:
+    host: apic
+    username: admin
+    private_key: pki/admin.key
+    method: post
+    path: /api/mo/uni.xml
+    content: "{{ lookup('template', 'aci/tenant.xml.j2') }}"
+  delegate_to: localhost
+
 - name: Add a tenant using inline YAML
   aci_rest:
-    hostname: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    host: apic
+    username: admin
+    private_key: pki/admin.key
     validate_certs: no
-    path: /api/mo/uni/tn-[Sales].json
+    path: /api/mo/uni.json
     method: post
     content:
       fvTenant:
@@ -87,13 +106,13 @@ EXAMPLES = r'''
 
 - name: Add a tenant using a JSON string
   aci_rest:
-    hostname: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    host: apic
+    username: admin
+    private_key: pki/admin.key
     validate_certs: no
-    path: /api/mo/uni/tn-[Sales].json
+    path: /api/mo/uni.json
     method: post
-    content: |
+    content:
       {
         "fvTenant": {
           "attributes": {
@@ -106,30 +125,30 @@ EXAMPLES = r'''
 
 - name: Add a tenant using an XML string
   aci_rest:
-    hostname: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    host: apic
+    username: admin
+    private_key: pki/{{ aci_username}}.key
     validate_certs: no
-    path: /api/mo/uni/tn-[Sales].xml
+    path: /api/mo/uni.xml
     method: post
-    content: |
-      <fvTenant name="Sales" descr="Sales departement"/>
+    content: '<fvTenant name="Sales" descr="Sales departement"/>'
   delegate_to: localhost
 
-- name: Get tenants
+- name: Get tenants using password authentication
   aci_rest:
-    hostname: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     method: get
     path: /api/node/class/fvTenant.json
   delegate_to: localhost
+  register: query_result
 
 - name: Configure contracts
   aci_rest:
-    hostname: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    host: apic
+    username: admin
+    private_key: pki/admin.key
     method: post
     path: /api/mo/uni.xml
     src: /home/cisco/ansible/aci/configs/contract_config.xml
@@ -137,9 +156,9 @@ EXAMPLES = r'''
 
 - name: Register leaves and spines
   aci_rest:
-    hostname: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    host: apic
+    username: admin
+    private_key: pki/admin.key
     validate_certs: no
     method: post
     path: /api/mo/uni/controller/nodeidentpol.xml
@@ -153,9 +172,9 @@ EXAMPLES = r'''
 
 - name: Wait for all controllers to become ready
   aci_rest:
-    hostname: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    host: apic
+    username: admin
+    private_key: pki/admin.key
     validate_certs: no
     path: /api/node/class/topSystem.json?query-target-filter=eq(topSystem.role,"controller")
   register: apics
@@ -225,16 +244,14 @@ except:
 
 # Optional, only used for XML payload
 try:
-    import lxml.etree
-    assert lxml.etree  # silence pyflakes
+    import lxml.etree  # noqa
     HAS_LXML_ETREE = True
 except ImportError:
     HAS_LXML_ETREE = False
 
 # Optional, only used for XML payload
 try:
-    from xmljson import cobra
-    assert cobra  # silence pyflakes
+    from xmljson import cobra  # noqa
     HAS_XMLJSON_COBRA = True
 except ImportError:
     HAS_XMLJSON_COBRA = False
@@ -246,8 +263,8 @@ try:
 except:
     HAS_YAML = False
 
-from ansible.module_utils.aci import ACIModule, aci_argument_spec, aci_response_json, aci_response_xml
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_text
 
@@ -267,38 +284,39 @@ def update_qsl(url, params):
         return url + '?' + '&'.join(['%s=%s' % (k, v) for k, v in params.items()])
 
 
-def aci_changed(d):
-    ''' Check ACI response for changes '''
+class ACIRESTModule(ACIModule):
 
-    if isinstance(d, dict):
-        for k, v in d.items():
-            if k == 'status' and v in ('created', 'modified', 'deleted'):
-                return True
-            elif aci_changed(v) is True:
-                return True
-    elif isinstance(d, list):
-        for i in d:
-            if aci_changed(i) is True:
-                return True
+    def changed(self, d):
+        ''' Check ACI response for changes '''
 
-    return False
+        if isinstance(d, dict):
+            for k, v in d.items():
+                if k == 'status' and v in ('created', 'modified', 'deleted'):
+                    return True
+                elif self.changed(v) is True:
+                    return True
+        elif isinstance(d, list):
+            for i in d:
+                if self.changed(i) is True:
+                    return True
 
+        return False
 
-def aci_response(result, rawoutput, rest_type='xml'):
-    ''' Handle APIC response output '''
+    def response_type(self, rawoutput, rest_type='xml'):
+        ''' Handle APIC response output '''
 
-    if rest_type == 'json':
-        aci_response_json(result, rawoutput)
-    else:
-        aci_response_xml(result, rawoutput)
+        if rest_type == 'json':
+            self.response_json(rawoutput)
+        else:
+            self.response_xml(rawoutput)
 
-    # Use APICs built-in idempotency
-    if HAS_URLPARSE:
-        result['changed'] = aci_changed(result)
+        # Use APICs built-in idempotency
+        if HAS_URLPARSE:
+            self.result['changed'] = self.changed(self.imdata)
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         path=dict(type='str', required=True, aliases=['uri']),
         method=dict(type='str', default='get', choices=['delete', 'get', 'post'], aliases=['action']),
@@ -311,12 +329,9 @@ def main():
         mutually_exclusive=[['content', 'src']],
     )
 
-    path = module.params['path']
     content = module.params['content']
+    path = module.params['path']
     src = module.params['src']
-
-    method = module.params['method']
-    timeout = module.params['timeout']
 
     # Report missing file
     file_exists = False
@@ -336,9 +351,10 @@ def main():
     elif path.find('.json') != -1:
         rest_type = 'json'
     else:
-        module.fail_json(msg='Failed to find REST API content type (neither .xml nor .json).')
+        module.fail_json(msg='Failed to find REST API payload type (neither .xml nor .json).')
 
-    aci = ACIModule(module)
+    aci = ACIRESTModule(module)
+    aci.result['status'] = -1  # Ensure we always return a status
 
     # We include the payload as it may be templated
     payload = content
@@ -347,7 +363,7 @@ def main():
             # TODO: Would be nice to template this, requires action-plugin
             payload = config_object.read()
 
-    # Validate content
+    # Validate payload
     if rest_type == 'json':
         if content and isinstance(content, dict):
             # Validate inline YAML/JSON
@@ -355,9 +371,9 @@ def main():
         elif payload and isinstance(payload, str) and HAS_YAML:
             try:
                 # Validate YAML/JSON string
-                payload = json.dumps(yaml.load(payload))
+                payload = json.dumps(yaml.safe_load(payload))
             except Exception as e:
-                module.fail_json(msg='Failed to parse provided JSON/YAML content: %s' % to_text(e), exception=to_text(e), payload=payload)
+                module.fail_json(msg='Failed to parse provided JSON/YAML payload: %s' % to_text(e), exception=to_text(e), payload=payload)
     elif rest_type == 'xml' and HAS_LXML_ETREE:
         if content and isinstance(content, dict) and HAS_XMLJSON_COBRA:
             # Validate inline YAML/JSON
@@ -369,30 +385,48 @@ def main():
                 # Validate XML string
                 payload = lxml.etree.tostring(lxml.etree.fromstring(payload))
             except Exception as e:
-                module.fail_json(msg='Failed to parse provided XML content: %s' % to_text(e), payload=payload)
+                module.fail_json(msg='Failed to parse provided XML payload: %s' % to_text(e), payload=payload)
 
-    # Perform actual request using auth cookie (Same as aci_request,but also supports XML)
-    url = '%(protocol)s://%(hostname)s/' % aci.params + path.lstrip('/')
-    if method != 'get':
-        url = update_qsl(url, {'rsp-subtree': 'modified'})
-    aci.result['url'] = url
+    # Perform actual request using auth cookie (Same as aci_request, but also supports XML)
+    aci.url = '%(protocol)s://%(host)s/' % aci.params + path.lstrip('/')
+    if aci.params['method'] != 'get':
+        path += '?rsp-subtree=modified'
+        aci.url = update_qsl(aci.url, {'rsp-subtree': 'modified'})
 
-    resp, info = fetch_url(module, url, data=payload, method=method.upper(), timeout=timeout, headers=aci.headers)
-    aci.result['response'] = info['msg']
-    aci.result['status'] = info['status']
+    # Sign and encode request as to APIC's wishes
+    if aci.params['private_key'] is not None:
+        aci.cert_auth(path=path, payload=payload)
+
+    aci.method = aci.params['method'].upper()
+
+    # Perform request
+    resp, info = fetch_url(module, aci.url,
+                           data=payload,
+                           headers=aci.headers,
+                           method=aci.method,
+                           timeout=aci.params['timeout'],
+                           use_proxy=aci.params['use_proxy'])
+
+    aci.response = info['msg']
+    aci.status = info['status']
 
     # Report failure
     if info['status'] != 200:
         try:
-            aci_response(aci.result, info['body'], rest_type)
-            module.fail_json(msg='Request failed: %(error_code)s %(error_text)s' % aci.result, payload=payload, **aci.result)
+            # APIC error
+            aci.response_type(info['body'], rest_type)
+            aci.fail_json(msg='APIC Error %(code)s: %(text)s' % aci.error)
         except KeyError:
-            module.fail_json(msg='Request failed for %(url)s. %(msg)s' % info, payload=payload, **aci.result)
+            # Connection error
+            aci.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)
 
-    aci_response(aci.result, resp.read(), rest_type)
+    aci.response_type(resp.read(), rest_type)
+
+    aci.result['imdata'] = aci.imdata
+    aci.result['totalCount'] = aci.totalCount
 
     # Report success
-    module.exit_json(**aci.result)
+    aci.exit_json(**aci.result)
 
 
 if __name__ == '__main__':

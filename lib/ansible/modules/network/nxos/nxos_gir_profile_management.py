@@ -35,14 +35,11 @@ author:
     - Gabriele Gerbino (@GGabriele)
 notes:
     - Tested against NXOSv 7.3.(0)D1(1) on VIRL
-    - This module is not idempotent when C(state=present).
     - C(state=absent) removes the whole profile.
 options:
     commands:
         description:
             - List of commands to be included into the profile.
-        required: false
-        default: null
     mode:
         description:
             - Configure the profile as Maintenance or Normal mode.
@@ -51,40 +48,22 @@ options:
     state:
         description:
             - Specify desired state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
-    include_defaults:
-        description:
-            - Specify to retrieve or not the complete running configuration
-              for module operations.
-        required: false
-        default: false
-        choices: ['true','false']
-    config:
-        description:
-            - Specify the configuration string to be used for module operations.
-        required: false
-        default: null
 '''
 
 EXAMPLES = '''
 # Create a maintenance-mode profile
-- nxos_gir_profile:
+- nxos_gir_profile_management:
     mode: maintenance
     commands:
       - router eigrp 11
       - isolate
-    host: "{{ inventory_hostname }}"
-    username: "{{ un }}"
-    password: "{{ pwd }}"
+
 # Remove the maintenance-mode profile
-- nxos_gir_profile:
+- nxos_gir_profile_management:
     mode: maintenance
     state: absent
-    host: "{{ inventory_hostname }}"
-    username: "{{ un }}"
-    password: "{{ pwd }}"
 '''
 
 RETURN = '''
@@ -120,10 +99,10 @@ changed:
 
 
 import re
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
+from ansible.module_utils.network.common.config import CustomNetworkConfig
 
 
 def get_existing(module):
@@ -146,6 +125,9 @@ def get_existing(module):
 
 def state_present(module, existing, commands):
     cmds = list()
+    if existing == commands:
+        # Idempotent case
+        return cmds
     cmds.extend(commands)
     if module.params['mode'] == 'maintenance':
         cmds.insert(0, 'configure maintenance profile maintenance-mode')
@@ -173,20 +155,15 @@ def main():
     argument_spec = dict(
         commands=dict(required=False, type='list'),
         mode=dict(required=True, choices=['maintenance', 'normal']),
-        state=dict(choices=['absent', 'present'],
-                       default='present'),
-        include_defaults=dict(default=False),
-        config=dict()
+        state=dict(choices=['absent', 'present'], default='present')
     )
 
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+                           supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
-
 
     state = module.params['state']
     commands = module.params['commands'] or []
@@ -206,9 +183,10 @@ def main():
         if module.check_mode:
             module.exit_json(changed=True, commands=cmds)
         else:
-            load_config(module, cmds)
-            changed = True
-            end_state = invoke('get_existing', module)
+            if cmds:
+                load_config(module, cmds)
+                changed = True
+                end_state = invoke('get_existing', module)
 
     result['changed'] = changed
     if module._verbosity > 0:
@@ -225,4 +203,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

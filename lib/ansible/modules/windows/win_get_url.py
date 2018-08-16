@@ -1,22 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2014, Paul Durivage <paul.durivage@rackspace.com>, and others
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2014, Paul Durivage <paul.durivage@rackspace.com>, and others
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
@@ -29,13 +15,14 @@ DOCUMENTATION = r'''
 ---
 module: win_get_url
 version_added: "1.7"
-short_description: Fetches a file from a given URL
+short_description: Downloads file from HTTP, HTTPS, or FTP to node
 description:
-- Fetches a file from a URL and saves it locally.
+- Downloads files from HTTP, HTTPS, or FTP to the remote server. The remote
+  server I(must) have direct access to the remote resource.
 - For non-Windows targets, use the M(get_url) module instead.
 author:
 - Paul Durivage (@angstwad)
-- Takeshi Kuramochi (tksarah)
+- Takeshi Kuramochi (@tksarah)
 options:
   url:
     description:
@@ -46,6 +33,7 @@ options:
     - The location to save the file at the URL.
     - Be sure to include a filename and extension as appropriate.
     required: yes
+    type: path
   force:
     description:
     - If C(yes), will always download the file. If C(no), will only
@@ -60,6 +48,7 @@ options:
   headers:
     description:
     - Add custom HTTP headers to a request (as a dictionary).
+    type: dict
     version_added: '2.4'
   url_username:
     description:
@@ -69,6 +58,13 @@ options:
     description:
     - Basic authentication password.
     aliases: [ password ]
+  force_basic_auth:
+    description:
+    - If C(yes), will add a Basic authentication header on the initial request.
+    - If C(no), will use Microsoft's WebClient to handle authentication.
+    type: bool
+    default: 'no'
+    version_added: "2.5"
   skip_certificate_validation:
     description:
     - This option is deprecated since v2.4, please use C(validate_certs) instead.
@@ -106,10 +102,9 @@ options:
   timeout:
     description:
     - Timeout in seconds for URL request.
+    type: int
     default: 10
     version_added : '2.4'
-notes:
- - For non-Windows targets, use the M(get_url) module instead.
 '''
 
 EXAMPLES = r'''
@@ -131,6 +126,13 @@ EXAMPLES = r'''
     proxy_url: http://10.0.0.1:8080
     proxy_username: username
     proxy_password: password
+
+- name: Download file from FTP with authentication
+  win_get_url:
+    url: ftp://server/file.txt
+    dest: '%TEMP%\ftp-file.txt'
+    url_username: ftp-user
+    url_password: ftp-password
 '''
 
 RETURN = r'''

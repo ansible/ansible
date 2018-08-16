@@ -20,11 +20,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.ovs import openvswitch_bridge
-from .ovs_module import TestOpenVSwitchModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .ovs_module import TestOpenVSwitchModule, load_fixture
 
 test_name_side_effect_matrix = {
     'test_openvswitch_bridge_absent_idempotent': [
@@ -86,6 +85,8 @@ class TestOpenVSwitchBridgeModule(TestOpenVSwitchModule):
     module = openvswitch_bridge
 
     def setUp(self):
+        super(TestOpenVSwitchBridgeModule, self).setUp()
+
         self.mock_run_command = (
             patch('ansible.module_utils.basic.AnsibleModule.run_command'))
         self.run_command = self.mock_run_command.start()
@@ -94,6 +95,8 @@ class TestOpenVSwitchBridgeModule(TestOpenVSwitchModule):
         self.get_bin_path = self.mock_get_bin_path.start()
 
     def tearDown(self):
+        super(TestOpenVSwitchBridgeModule, self).tearDown()
+
         self.mock_run_command.stop()
         self.mock_get_bin_path.stop()
 

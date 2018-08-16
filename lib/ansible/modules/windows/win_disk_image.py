@@ -1,32 +1,17 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Red Hat, Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, Red Hat, Inc.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
-
 DOCUMENTATION = '''
 module: win_disk_image
 short_description: Manage ISO/VHD/VHDX mounts on Windows hosts
-version_added: 2.3
+version_added: '2.3'
 description:
      - Manages mount behavior for a specified ISO, VHD, or VHDX image on a Windows host. When C(state) is C(present),
        the image will be mounted under a system-assigned drive letter, which will be returned in the C(mount_path) value
@@ -34,14 +19,12 @@ description:
 options:
   image_path:
     description:
-      - path to an ISO, VHD, or VHDX image on the target Windows host (the file cannot reside on a network share)
-    required: true
+      - Path to an ISO, VHD, or VHDX image on the target Windows host (the file cannot reside on a network share)
+    required: yes
   state:
     description:
-      - whether the image should be present as a drive-letter mount or not.
-    choices:
-      - present
-      - absent
+      - Whether the image should be present as a drive-letter mount or not.
+    choices: [ absent, present ]
     default: present
 author:
     - Matt Davis (@nitzmahone)
@@ -56,21 +39,21 @@ mount_path:
 '''
 
 EXAMPLES = r'''
-# ensure an iso is mounted
-- win_disk_image:
+# Run installer from mounted ISO, then unmount
+- name: Ensure an ISO is mounted
+  win_disk_image:
     image_path: C:\install.iso
     state: present
   register: disk_image_out
 
-# run installer from mounted iso
-- win_package:
+- name: Run installer from mounted iso
+  win_package:
     path: '{{ disk_image_out.mount_path }}setup\setup.exe'
-    product_id: '35a4e767-0161-46b0-979f-e61f282fee21'
+    product_id: 35a4e767-0161-46b0-979f-e61f282fee21
     state: present
 
-# unmount iso
-- win_disk_image:
+- name: Unmount iso
+  win_disk_image:
     image_path: C:\install.iso
     state: absent
-
 '''

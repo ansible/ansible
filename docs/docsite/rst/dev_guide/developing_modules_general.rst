@@ -23,7 +23,17 @@ What's covered in this section:
 
 Environment setup
 =================
+Prerequisites Via Apt (Ubuntu)
+``````````````````````````````
+Due to dependencies (for example ansible -> paramiko -> pynacl -> libffi):
 
+.. code:: bash
+
+    sudo apt update
+    sudo apt install build-essential libssl-dev libffi-dev python-dev
+
+Common Environment setup
+````````````````````````
 1. Clone the Ansible repository:
    ``$ git clone https://github.com/ansible/ansible.git``
 2. Change directory into the repository root dir: ``$ cd ansible``
@@ -281,15 +291,15 @@ test/units/modules/.../test/my_new_test_module.py``
 Going Further
 =============
 
-If you are starting new development or fixing a bug, create a new branch:
+If you would like to contribute to the main Ansible repository
+by adding a new feature or fixing a bug, `create a fork <https://help.github.com/articles/fork-a-repo/>`_
+of the Ansible repository and develop against a new feature
+branch using the ``devel`` branch as a starting point.
 
-``$ git checkout -b my-new-branch``.
-
-If you are planning on contributing
-back to the main Ansible repository, fork the Ansible repository into
-your own GitHub account and develop against the new non-devel branch
-in your fork. When you believe you have a good working code change,
-submit a pull request to the Ansible repository.
+When you you have a good working code change,
+submit a pull request to the Ansible repository by selecting
+your feature branch as a source and the Ansible devel branch as
+a target.
 
 If you want to submit a new module to the upstream Ansible repo, be sure
 to run through sanity checks first. For example:
@@ -312,5 +322,5 @@ use the ``#ansible`` channel.
 Credit
 ======
 
-Thank you to Thomas Stringer (`@tstring <https://github.com/tstringer>`_) for contributing source
+Thank you to Thomas Stringer (`@tstringer <https://github.com/tstringer>`_) for contributing source
 material for this topic.

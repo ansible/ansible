@@ -52,14 +52,14 @@ options:
 '''
 
 EXAMPLES = '''
-name: Set 'maxbw' to 100M on e1000g1
-dladm_linkprop: name=e1000g1 property=maxbw value=100M state=present
+- name: Set 'maxbw' to 100M on e1000g1
+  dladm_linkprop: name=e1000g1 property=maxbw value=100M state=present
 
-name: Set 'mtu' to 9000 on e1000g1
-dladm_linkprop: name=e1000g1 property=mtu value=9000
+- name: Set 'mtu' to 9000 on e1000g1
+  dladm_linkprop: name=e1000g1 property=mtu value=9000
 
-name: Reset 'mtu' property on e1000g1
-dladm_linkprop: name=e1000g1 property=mtu state=reset
+- name: Reset 'mtu' property on e1000g1
+  dladm_linkprop: name=e1000g1 property=mtu state=reset
 '''
 
 RETURN = '''
@@ -230,7 +230,6 @@ def main():
 
         supports_check_mode=True
     )
-
 
     linkprop = LinkProp(module)
 

@@ -155,10 +155,7 @@ import ConfigParser
 
 from six import iteritems
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 try:
     import pyrax
@@ -185,11 +182,10 @@ def load_config_file():
         return None
     else:
         return p
-p = load_config_file()
 
 
 def rax_slugify(value):
-    return 'rax_%s' % (re.sub('[^\w-]', '_', value).lower().lstrip('_'))
+    return 'rax_%s' % (re.sub(r'[^\w-]', '_', value).lower().lstrip('_'))
 
 
 def to_dict(obj):
@@ -233,13 +229,17 @@ def _list_into_cache(regions):
                               'RAX_ACCESS_NETWORK', 'public', value_type='list')
     except TypeError:
         # Ansible 2.2.x and below
+        # pylint: disable=unexpected-keyword-arg
         networks = get_config(p, 'rax', 'access_network',
                               'RAX_ACCESS_NETWORK', 'public', islist=True)
     try:
         try:
+            # Ansible 2.3+
             ip_versions = map(int, get_config(p, 'rax', 'access_ip_version',
                                               'RAX_ACCESS_IP_VERSION', 4, value_type='list'))
         except TypeError:
+            # Ansible 2.2.x and below
+            # pylint: disable=unexpected-keyword-arg
             ip_versions = map(int, get_config(p, 'rax', 'access_ip_version',
                                               'RAX_ACCESS_IP_VERSION', 4, islist=True))
     except:
@@ -438,6 +438,7 @@ def setup():
                                      value_type='list')
         except TypeError:
             # Ansible 2.2.x and below
+            # pylint: disable=unexpected-keyword-arg
             region_list = get_config(p, 'rax', 'regions', 'RAX_REGION', 'all',
                                      islist=True)
 
@@ -464,5 +465,6 @@ def main():
     sys.exit(0)
 
 
+p = load_config_file()
 if __name__ == '__main__':
     main()

@@ -27,7 +27,7 @@ DOCUMENTATION = """
 ---
 module: nxos_banner
 version_added: "2.4"
-author: "Trishna Guha (@trishnag)"
+author: "Trishna Guha (@trishnaguha)"
 short_description: Manage multiline banners on Cisco NXOS devices
 description:
   - This will configure both exec and motd banners on remote devices
@@ -39,20 +39,19 @@ options:
       - Specifies which banner that should be
         configured on the remote device.
     required: true
-    default: null
     choices: ['exec', 'motd']
   text:
     description:
       - The banner text that should be
         present in the remote device running configuration. This argument
         accepts a multiline string, with no empty lines. Requires I(state=present).
-    default: null
   state:
     description:
       - Specifies whether or not the configuration is present in the current
         devices active running configuration.
     default: present
     choices: ['present', 'absent']
+extends_documentation_fragment: nxos
 """
 
 EXAMPLES = """
@@ -88,16 +87,36 @@ commands:
 """
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.nxos import load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+import re
+
+
+def execute_show_command(module, command):
+    format = 'json'
+    cmds = [{
+        'command': command,
+        'output': format,
+    }]
+    output = run_commands(module, cmds, False)
+    if len(output) == 0 or len(output[0]) == 0:
+        # If we get here the platform does not
+        # support structured output.  Resend as
+        # text.
+        cmds[0]['output'] = 'text'
+        output = run_commands(module, cmds, False)
+
+    return output
 
 
 def map_obj_to_commands(want, have, module):
     commands = list()
     state = module.params['state']
+    platform_regex = 'Nexus.*Switch'
 
-    if state == 'absent' and have.get('text'):
-        commands.append('no banner %s' % module.params['banner'])
+    if state == 'absent':
+        if (have.get('text') and not ((have.get('text') == 'User Access Verification') or re.match(platform_regex, have.get('text')))):
+            commands.append('no banner %s' % module.params['banner'])
 
     elif state == 'present' and want.get('text') != have.get('text'):
         banner_cmd = 'banner %s @\n%s\n@' % (module.params['banner'], want['text'].strip())
@@ -107,9 +126,26 @@ def map_obj_to_commands(want, have, module):
 
 
 def map_config_to_obj(module):
-    output = run_commands(module, ['show banner %s' % module.params['banner']])[0]
+    command = 'show banner %s' % module.params['banner']
+    output = execute_show_command(module, command)[0]
+
+    if "Invalid command" in output:
+        module.fail_json(msg="banner: exec may not be supported on this platform.  Possible values are : exec | motd")
+
     if isinstance(output, dict):
-        output = list(output.values())[0]
+        output = list(output.values())
+        if output != []:
+            output = output[0]
+        else:
+            output = ''
+        if isinstance(output, dict):
+            output = list(output.values())
+            if output != []:
+                output = output[0]
+            else:
+                output = ''
+    else:
+        output = output.rstrip()
 
     obj = {'banner': module.params['banner'], 'state': 'absent'}
     if output:
@@ -148,6 +184,7 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
+
     check_args(module, warnings)
 
     result = {'changed': False}
@@ -155,13 +192,22 @@ def main():
         result['warnings'] = warnings
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
-
     commands = map_obj_to_commands(want, have, module)
     result['commands'] = commands
 
     if commands:
         if not module.check_mode:
-            load_config(module, commands)
+            msgs = load_config(module, commands, True)
+            if msgs:
+                for item in msgs:
+                    if item:
+                        if isinstance(item, dict):
+                            err_str = item['clierror']
+                        else:
+                            err_str = item
+                        if 'more than 40 lines' in err_str or 'buffer overflowed' in err_str:
+                            load_config(module, commands)
+
         result['changed'] = True
 
     module.exit_json(**result)

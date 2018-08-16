@@ -103,35 +103,12 @@ def main():
         logger.debug('Remote interpreter: %s', config.remote_interpreter)
         logger.debug('Coverage file: %s', config.coverage_file)
 
-        require_cwd = False
-
         if os.path.basename(__file__) == 'injector.py':
-            if config.coverage_file:
-                args, env, require_cwd = cover()
-            else:
-                args, env = runner()
+            args, env = runner()  # code coverage collection is baked into the AnsiballZ wrapper when needed
         else:
             args, env = injector()
 
         logger.debug('Run command: %s', ' '.join(pipes.quote(c) for c in args))
-
-        altered_cwd = False
-
-        try:
-            cwd = os.getcwd()
-        except OSError as ex:
-            # some platforms, such as OS X, may not allow querying the working directory when using become to drop privileges
-            if ex.errno != errno.EACCES:
-                raise
-            if require_cwd:
-                # make sure the program we execute can determine the working directory if it's required
-                cwd = '/'
-                os.chdir(cwd)
-                altered_cwd = True
-            else:
-                cwd = None
-
-        logger.debug('Working directory: %s%s', cwd or '?', ' (altered)' if altered_cwd else '')
 
         for key in sorted(env.keys()):
             logger.debug('%s=%s', key, env[key])
@@ -181,29 +158,6 @@ def runner():
     args += config.arguments[1:]
 
     return args, env
-
-
-def cover():
-    """
-    :rtype: list[str], dict[str, str], bool
-    """
-    if len(config.arguments) > 1:
-        executable = config.arguments[1]
-    else:
-        executable = ''
-
-    require_cwd = False
-
-    if os.path.basename(executable).startswith('ansible_module_'):
-        args, env = coverage_command()
-        # coverage requires knowing the working directory
-        require_cwd = True
-    else:
-        args, env = [config.python_interpreter], os.environ.copy()
-
-    args += config.arguments[1:]
-
-    return args, env, require_cwd
 
 
 def coverage_command():

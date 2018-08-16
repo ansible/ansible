@@ -20,74 +20,70 @@ description:
     - Sets and retrieves file ACL information.
 options:
   path:
-    required: true
-    default: null
     description:
       - The full path of the file or object.
-    aliases: ['name']
+    aliases: [ name ]
+    required: true
 
   state:
-    required: false
-    default: query
-    choices: [ 'query', 'present', 'absent' ]
     description:
       - defines whether the ACL should be present or not.  The C(query) state gets the current acl without changing it, for use in 'register' operations.
+    choices: [ absent, present, query ]
+    default: query
 
   follow:
-    required: false
-    default: yes
-    choices: [ 'yes', 'no' ]
     description:
       - whether to follow symlinks on the path if a symlink is encountered.
+    type: bool
+    default: 'yes'
 
   default:
-    version_added: "1.5"
-    required: false
-    default: no
-    choices: [ 'yes', 'no' ]
     description:
       - if the target is a directory, setting this to yes will make it the default acl for entities created inside the directory. It causes an error if
         path is a file.
+    type: bool
+    default: 'no'
+    version_added: "1.5"
 
   entity:
-    version_added: "1.5"
-    required: false
     description:
       - actual user or group that the ACL applies to when matching entity types user or group are selected.
+    version_added: "1.5"
 
   etype:
-    version_added: "1.5"
-    required: false
-    default: null
-    choices: [ 'user', 'group', 'mask', 'other' ]
     description:
       - the entity type of the ACL to apply, see setfacl documentation for more info.
+    choices: [ group, mask, other, user ]
+    version_added: "1.5"
 
   permissions:
-    version_added: "1.5"
-    required: false
-    default: null
     description:
       - Permissions to apply/remove can be any combination of r, w and  x (read, write and execute respectively)
+    version_added: "1.5"
 
   entry:
-    required: false
-    default: null
     description:
       - DEPRECATED. The acl to set or remove.  This must always be quoted in the form of '<etype>:<qualifier>:<perms>'.  The qualifier may be empty for
         some types, but the type and perms are always required. '-' can be used as placeholder when you do not care about permissions. This is now
         superseded by entity, type and permissions fields.
 
   recursive:
-    version_added: "2.0"
-    required: false
-    default: no
-    choices: [ 'yes', 'no' ]
     description:
       - Recursively sets the specified ACL (added in Ansible 2.0). Incompatible with C(state=query).
+    type: bool
+    default: 'no'
+    version_added: "2.0"
+
+  recalculate_mask:
+    description:
+      - Select if and when to recalculate the effective right masks of the files, see setfacl documentation for more info. Incompatible with C(state=query).
+    choices: [ default, mask, no_mask ]
+    default: 'default'
+    version_added: "2.7"
+
 author:
-    - "Brian Coca (@bcoca)"
-    - "Jérémie Astori (@astorije)"
+    - Brian Coca (@bcoca)
+    - Jérémie Astori (@astorije)
 notes:
     - The "acl" module requires that acls are enabled on the target filesystem and that the setfacl and getfacl binaries are installed.
     - As of Ansible 2.0, this module only supports Linux distributions.
@@ -95,23 +91,23 @@ notes:
 '''
 
 EXAMPLES = '''
-# Grant user Joe read access to a file
-- acl:
+- name: Grant user Joe read access to a file
+  acl:
     path: /etc/foo.conf
     entity: joe
     etype: user
     permissions: r
     state: present
 
-# Removes the acl for Joe on a specific file
-- acl:
+- name: Removes the acl for Joe on a specific file
+  acl:
     path: /etc/foo.conf
     entity: joe
     etype: user
     state: absent
 
-# Sets default acl for joe on foo.d
-- acl:
+- name: Sets default acl for joe on foo.d
+  acl:
     path: /etc/foo.d
     entity: joe
     etype: user
@@ -119,14 +115,14 @@ EXAMPLES = '''
     default: yes
     state: present
 
-# Same as previous but using entry shorthand
-- acl:
+- name: Same as previous but using entry shorthand
+  acl:
     path: /etc/foo.d
     entry: "default:user:joe:rw-"
     state: present
 
-# Obtain the acl for a specific file
-- acl:
+- name: Obtain the acl for a specific file
+  acl:
     path: /etc/foo.conf
   register: acl_info
 '''
@@ -140,8 +136,9 @@ acl:
 '''
 
 import os
+
 from ansible.module_utils.basic import AnsibleModule, get_platform
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 
 
 def split_entry(entry):
@@ -178,13 +175,14 @@ def build_entry(etype, entity, permissions=None, use_nfsv4_acls=False):
     '''Builds and returns an entry string. Does not include the permissions bit if they are not provided.'''
     if use_nfsv4_acls:
         return ':'.join([etype, entity, permissions, 'allow'])
+
     if permissions:
         return etype + ':' + entity + ':' + permissions
-    else:
-        return etype + ':' + entity
+
+    return etype + ':' + entity
 
 
-def build_command(module, mode, path, follow, default, recursive, entry=''):
+def build_command(module, mode, path, follow, default, recursive, recalculate_mask, entry=''):
     '''Builds and returns a getfacl/setfacl command.'''
     if mode == 'set':
         cmd = [module.get_bin_path('setfacl', True)]
@@ -202,6 +200,11 @@ def build_command(module, mode, path, follow, default, recursive, entry=''):
     if recursive:
         cmd.append('--recursive')
 
+    if recalculate_mask == 'mask' and mode in ['set', 'rm']:
+        cmd.append('--mask')
+    elif recalculate_mask == 'no_mask' and mode in ['set', 'rm']:
+        cmd.append('--no-mask')
+
     if not follow:
         if get_platform().lower() == 'linux':
             cmd.append('--physical')
@@ -209,10 +212,7 @@ def build_command(module, mode, path, follow, default, recursive, entry=''):
             cmd.append('-h')
 
     if default:
-        if mode == 'rm':
-            cmd.insert(1, '-k')
-        else:  # mode == 'set' or mode == 'get'
-            cmd.insert(1, '-d')
+        cmd.insert(1, '-d')
 
     cmd.append(path)
     return cmd
@@ -238,9 +238,8 @@ def run_acl(module, cmd, check_rc=True):
 
     try:
         (rc, out, err) = module.run_command(' '.join(cmd), check_rc=check_rc)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg=e.strerror)
+    except Exception as e:
+        module.fail_json(msg=to_native(e))
 
     lines = []
     for l in out.splitlines():
@@ -250,8 +249,8 @@ def run_acl(module, cmd, check_rc=True):
     if lines and not lines[-1].split():
         # trim last line only when it is empty
         return lines[:-1]
-    else:
-        return lines
+
+    return lines
 
 
 def main():
@@ -275,6 +274,12 @@ def main():
             follow=dict(required=False, type='bool', default=True),
             default=dict(required=False, type='bool', default=False),
             recursive=dict(required=False, type='bool', default=False),
+            recalculate_mask=dict(
+                required=False,
+                default='default',
+                choices=['default', 'mask', 'no_mask'],
+                type='str'
+            ),
             use_nfsv4_acls=dict(required=False, type='bool', default=False)
         ),
         supports_check_mode=True,
@@ -292,13 +297,18 @@ def main():
     follow = module.params.get('follow')
     default = module.params.get('default')
     recursive = module.params.get('recursive')
+    recalculate_mask = module.params.get('recalculate_mask')
     use_nfsv4_acls = module.params.get('use_nfsv4_acls')
 
     if not os.path.exists(path):
         module.fail_json(msg="Path not found or not accessible.")
 
-    if state == 'query' and recursive:
-        module.fail_json(msg="'recursive' MUST NOT be set when 'state=query'.")
+    if state == 'query':
+        if recursive:
+            module.fail_json(msg="'recursive' MUST NOT be set when 'state=query'.")
+
+        if recalculate_mask in ['mask', 'no_mask']:
+            module.fail_json(msg="'recalculate_mask' MUST NOT be set to 'mask' or 'no_mask' when 'state=query'.")
 
     if not entry:
         if state == 'absent' and permissions:
@@ -338,7 +348,7 @@ def main():
         entry = build_entry(etype, entity, permissions, use_nfsv4_acls)
         command = build_command(
             module, 'set', path, follow,
-            default, recursive, entry
+            default, recursive, recalculate_mask, entry
         )
         changed = acl_changed(module, command)
 
@@ -350,7 +360,7 @@ def main():
         entry = build_entry(etype, entity, use_nfsv4_acls)
         command = build_command(
             module, 'rm', path, follow,
-            default, recursive, entry
+            default, recursive, recalculate_mask, entry
         )
         changed = acl_changed(module, command)
 
@@ -363,10 +373,11 @@ def main():
 
     acl = run_acl(
         module,
-        build_command(module, 'get', path, follow, default, recursive)
+        build_command(module, 'get', path, follow, default, recursive, recalculate_mask)
     )
 
     module.exit_json(changed=changed, msg=msg, acl=acl)
+
 
 if __name__ == '__main__':
     main()

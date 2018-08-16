@@ -47,12 +47,9 @@ options:
     vtp_password:
         description:
             - VTP password
-        required: false
-        default: null
     state:
         description:
             - Manage the state of the resource
-        required: false
         default: present
         choices: ['present','absent']
 '''
@@ -60,7 +57,6 @@ options:
 EXAMPLES = '''
 # ENSURE VTP PASSWORD IS SET
 - nxos_vtp_password:
-    password: ntc
     state: present
     host: "{{ inventory_hostname }}"
     username: "{{ un }}"
@@ -68,7 +64,6 @@ EXAMPLES = '''
 
 # ENSURE VTP PASSWORD IS REMOVED
 - nxos_vtp_password:
-    password: ntc
     state: absent
     host: "{{ inventory_hostname }}"
     username: "{{ un }}"
@@ -104,8 +99,8 @@ changed:
     sample: true
 '''
 
-from ansible.module_utils.nxos import load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 import re
 
@@ -154,8 +149,8 @@ def get_vtp_config(module):
     vtp_parsed = {}
 
     if body:
-        version_regex = '.*VTP version running\s+:\s+(?P<version>\d).*'
-        domain_regex = '.*VTP Domain Name\s+:\s+(?P<domain>\S+).*'
+        version_regex = r'.*VTP version running\s+:\s+(?P<version>\d).*'
+        domain_regex = r'.*VTP Domain Name\s+:\s+(?P<domain>\S+).*'
 
         try:
             match_version = re.match(version_regex, body, re.DOTALL)
@@ -180,10 +175,13 @@ def get_vtp_config(module):
 def get_vtp_password(module):
     command = 'show vtp password'
     body = execute_show_command(command, module)[0]
-    password = body['passwd']
-    if password:
-        return str(password)
-    else:
+    try:
+        password = body['passwd']
+        if password:
+            return str(password)
+        else:
+            return ""
+    except TypeError:
         return ""
 
 
@@ -191,13 +189,13 @@ def main():
     argument_spec = dict(
         vtp_password=dict(type='str', no_log=True),
         state=dict(choices=['absent', 'present'],
-                       default='present'),
+                   default='present'),
     )
 
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)

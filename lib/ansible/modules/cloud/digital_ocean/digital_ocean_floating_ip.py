@@ -19,7 +19,7 @@ short_description: Manage DigitalOcean Floating IPs
 description:
      - Create/delete/assign a floating IP.
 version_added: "2.4"
-author: "Patrick Marques (@patrickfmarques)"
+author: "Patrick Marques (@pmarques)"
 options:
   state:
     description:
@@ -29,18 +29,12 @@ options:
   ip:
     description:
      - Public IP address of the Floating IP. Used to remove an IP
-    required: false
-    default: None
   region:
     description:
      - The region that the Floating IP is reserved to.
-    required: false
-    default: None
   droplet_id:
     description:
      - The Droplet that the Floating IP has been assigned to.
-    required: false
-    default: None
   oauth_token:
     description:
      - DigitalOcean OAuth token.
@@ -308,12 +302,12 @@ def main():
             validate_certs=dict(type='bool', default=True),
             timeout=dict(type='int', default=30),
         ),
-        required_if=([
+        required_if=[
             ('state', 'delete', ['ip'])
-        ]),
-        mutually_exclusive=(
+        ],
+        mutually_exclusive=[
             ['region', 'droplet_id']
-        ),
+        ],
     )
 
     core(module)

@@ -1,0 +1,41 @@
+---
+- debug: msg="START junos netconf/net_user.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+
+- name: setup - remove user
+  net_user:
+    name: test_user
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Create user with platform agnostic module
+  net_user:
+    name: test_user
+    state: present
+    full_name: test_user
+    role: operator
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>test_user</name>' in config.xml"
+      - "'<full-name>test_user</full-name>' in config.xml"
+      - "'<class>operator</class>' in config.xml"
+
+- name: teardown - remove user
+  net_user:
+    name: test_user
+    state: absent
+    provider: "{{ netconf }}"
+
+- debug: msg="END junos netconf/net_user.yaml on connection={{ ansible_connection }}"

@@ -26,33 +26,30 @@ description:
 options:
   free_form:
     description:
-      - path to the local script file followed by optional arguments. There is no parameter actually named 'free form'; see the examples!
+      - Path to the local script file followed by optional arguments. There is no parameter actually named 'free form'; see the examples!
     required: true
-    default: null
-    aliases: []
   creates:
     description:
       - a filename, when it already exists, this step will B(not) be run.
-    required: no
-    default: null
     version_added: "1.5"
   removes:
     description:
       - a filename, when it does not exist, this step will B(not) be run.
-    required: no
-    default: null
     version_added: "1.5"
   chdir:
     description:
       - cd into this directory on the remote node before running the script
     version_added: "2.4"
-    required: false
-    default: null
+  executable:
+    description:
+      - Name or path of a executable to invoke the script with
+    version_added: "2.6"
 notes:
   - It is usually preferable to write Ansible modules than pushing scripts. Convert your script to an Ansible module for bonus points!
   - The ssh connection plugin will force pseudo-tty allocation via -tt when scripts are executed. pseudo-ttys do not have a stderr channel and all
     stderr is sent to stdout. If you depend on separated stdout and stderr result keys, please switch to a copy+command set of tasks instead of using script.
   - This module is also supported for Windows targets.
+  - If the path to the local script contains spaces, it needs to be quoted.
 author:
     - Ansible Core Team
     - Michael DeHaan
@@ -73,4 +70,14 @@ EXAMPLES = '''
 - script: /some/local/remove_file.sh --some-arguments 1234
   args:
     removes: /the/removed/file.txt
+
+# Run a script using a executable in a non-system path
+- script: /some/local/script
+  args:
+    executable: /some/remote/executable
+
+# Run a script using a executable in a system path
+- script: /some/local/script.py
+  args:
+    executable: python3
 '''

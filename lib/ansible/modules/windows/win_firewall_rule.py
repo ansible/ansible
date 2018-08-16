@@ -1,12 +1,13 @@
-#!/usr/bin/env python
-# Copyright (c) 2017 Artem Zinenko <zinenkoartem@gmail.com>
-# Copyright (c) 2014 Timothy Vandenbrande <timothy.vandenbrande@gmail.com>
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2014, Timothy Vandenbrande <timothy.vandenbrande@gmail.com>
+# Copyright: (c) 2017, Artem Zinenko <zinenkoartem@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = r'''
 ---
@@ -24,37 +25,37 @@ options:
       - Is this firewall rule enabled or disabled.
     type: bool
     default: 'yes'
-    aliases: [ 'enable' ]
+    aliases: [ enable ]
   state:
     description:
       - Should this rule be added or removed.
-    default: "present"
-    choices: ['present', 'absent']
+    choices: [ absent, present ]
+    default: present
   name:
     description:
       - The rules name
-    required: true
+    required: yes
   direction:
     description:
       - Is this rule for inbound or outbound traffic.
-    required: true
-    choices: ['in', 'out']
+    required: yes
+    choices: [ in, out ]
   action:
     description:
       - What to do with the items this rule is for.
-    required: true
-    choices: ['allow', 'block', 'bypass']
+    required: yes
+    choices: [ allow, block, bypass ]
   description:
     description:
       - Description for the firewall rule.
   localip:
     description:
       - The local ip address this rule applies to.
-    default: 'any'
+    default: any
   remoteip:
     description:
       - The remote ip address/range this rule applies to.
-    default: 'any'
+    default: any
   localport:
     description:
       - The local port this rule applies to.
@@ -70,12 +71,20 @@ options:
   protocol:
     description:
       - The protocol this rule applies to.
-    default: 'any'
+    default: any
   profiles:
     description:
       - The profile this rule applies to.
-    default: 'domain,private,public'
-    aliases: [ 'profile' ]
+    type: list
+    default: domain,private,public
+    aliases: [ profile ]
+  force:
+    description:
+    - Replace any existing rule by removing it first.
+    - This is no longer required in 2.4 as rules no longer need replacing when being modified.
+    - DEPRECATED in 2.4 and will be removed in 2.9.
+    type: bool
+    default: 'no'
 '''
 
 EXAMPLES = r'''

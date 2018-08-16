@@ -23,10 +23,12 @@ import sys
 import copy
 
 from ansible import constants as C
+from ansible.module_utils._text import to_text
+from ansible.module_utils.connection import Connection
 from ansible.plugins.action.normal import ActionModule as _ActionModule
-from ansible.module_utils.six import iteritems
-from ansible.module_utils.ce import ce_argument_spec
-from ansible.module_utils.basic import AnsibleFallbackNotFound
+from ansible.module_utils.network.cloudengine.ce import ce_provider_spec
+from ansible.module_utils.network.common.utils import load_provider
+
 
 try:
     from __main__ import display
@@ -34,87 +36,77 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+CLI_SUPPORTED_MODULES = ['ce_config', 'ce_command']
+
 
 class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
-        if self._play_context.connection != 'local':
-            return dict(
-                failed=True,
-                msg='invalid connection specified, expected connection=local, '
-                    'got %s' % self._play_context.connection
-            )
+        del tmp  # tmp no longer has any effect
 
-        provider = self.load_provider()
-        transport = provider['transport'] or 'cli'
+        socket_path = None
 
-        display.vvvv('connection transport is %s' % transport, self._play_context.remote_addr)
+        if self._play_context.connection == 'local':
+            provider = load_provider(ce_provider_spec, self._task.args)
+            transport = provider['transport'] or 'cli'
 
-        if transport == 'cli':
-            pc = copy.deepcopy(self._play_context)
-            pc.connection = 'network_cli'
-            pc.network_os = 'ce'
-            pc.remote_addr = provider['host'] or self._play_context.remote_addr
-            pc.port = int(provider['port'] or self._play_context.port or 22)
-            pc.remote_user = provider['username'] or self._play_context.connection_user
-            pc.password = provider['password'] or self._play_context.password
-            pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
-            self._task.args['provider'] = provider.update(
-                host=pc.remote_addr,
-                port=pc.port,
-                username=pc.remote_user,
-                password=pc.password,
-                ssh_keyfile=pc.private_key_file
-            )
-            display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
-            connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
+            display.vvvv('connection transport is %s' % transport, self._play_context.remote_addr)
 
-            socket_path = connection.run()
-            display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
-            if not socket_path:
-                return {'failed': True,
-                        'msg': 'unable to open shell. Please see: ' +
-                               'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
+            if transport == 'cli':
+                pc = copy.deepcopy(self._play_context)
+                pc.connection = 'network_cli'
+                pc.network_os = 'ce'
+                pc.remote_addr = provider['host'] or self._play_context.remote_addr
+                pc.port = int(provider['port'] or self._play_context.port or 22)
+                pc.remote_user = provider['username'] or self._play_context.connection_user
+                pc.password = provider['password'] or self._play_context.password
+                command_timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
+                self._task.args['provider'] = provider.update(
+                    host=pc.remote_addr,
+                    port=pc.port,
+                    username=pc.remote_user,
+                    password=pc.password
+                )
+                if self._task.action in ['ce_netconf'] or self._task.action not in CLI_SUPPORTED_MODULES:
+                    pc.connection = 'netconf'
+                display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
+                connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
+                connection.set_options(direct={'persistent_command_timeout': command_timeout})
 
-            # make sure we are in the right cli context which should be
+                socket_path = connection.run()
+                display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
+                if not socket_path:
+                    return {'failed': True,
+                            'msg': 'unable to open shell. Please see: ' +
+                                   'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
+
+                task_vars['ansible_socket'] = socket_path
+                # make sure a transport value is set in args
+                self._task.args['transport'] = transport
+                self._task.args['provider'] = provider
+        elif self._play_context.connection in ('netconf', 'network_cli'):
+            provider = self._task.args.get('provider', {})
+            if any(provider.values()):
+                display.warning('provider is unnessary whene using %s and will be ignored' % self._play_context.connection)
+                del self._task.args['provider']
+
+            if (self._play_context.connection == 'network_cli' and self._task.action not in CLI_SUPPORTED_MODULES) or \
+                    (self._play_context.connection == 'netconf' and self._task.action in CLI_SUPPORTED_MODULES):
+                return {'failed': True, 'msg': "Connection type '%s' is not valid for '%s' module."
+                        % (self._play_context.connection, self._task.action)}
+
+        if (self._play_context.connection == 'local' and transport == 'cli' and self._task.action in CLI_SUPPORTED_MODULES) \
+                or self._play_context.connection == 'network_cli':
+            # make sure we are in the right cli context whitch should be
             # enable mode and not config module
-            rc, out, err = connection.exec_command('prompt()')
-            while str(out).strip().endswith(']'):
+            if socket_path is None:
+                socket_path = self._connection.socket_path
+            conn = Connection(socket_path)
+            out = conn.get_prompt()
+            while to_text(out, errors='surrogate_then_replace').strip().endswith(']'):
                 display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
-                connection.exec_command('return')
-                rc, out, err = connection.exec_command('prompt()')
+                conn.send_command('exit')
+                out = conn.get_prompt()
 
-            task_vars['ansible_socket'] = socket_path
-
-        # make sure a transport value is set in args
-        self._task.args['transport'] = transport
-
-        result = super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(task_vars=task_vars)
         return result
-
-    def load_provider(self):
-        provider = self._task.args.get('provider', {})
-        for key, value in iteritems(ce_argument_spec):
-            if key != 'provider' and key not in provider:
-                if key in self._task.args:
-                    provider[key] = self._task.args[key]
-                elif 'fallback' in value:
-                    provider[key] = self._fallback(value['fallback'])
-                elif key not in provider:
-                    provider[key] = None
-        return provider
-
-    def _fallback(self, fallback):
-        strategy = fallback[0]
-        args = []
-        kwargs = {}
-
-        for item in fallback[1:]:
-            if isinstance(item, dict):
-                kwargs = item
-            else:
-                args = item
-        try:
-            return strategy(*args, **kwargs)
-        except AnsibleFallbackNotFound:
-            pass

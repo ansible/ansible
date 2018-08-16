@@ -120,7 +120,7 @@ except ImportError as e:
     PYTHON_SDK_IMPORTED = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netscaler import get_nitro_client, log, loglines, netscaler_common_arguments
+from ansible.module_utils.network.netscaler.netscaler import get_nitro_client, log, loglines, netscaler_common_arguments
 
 
 def main():

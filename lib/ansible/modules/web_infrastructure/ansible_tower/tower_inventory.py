@@ -30,62 +30,29 @@ options:
     description:
       description:
         - The description to use for the inventory.
-      required: False
-      default: null
     organization:
       description:
         - Organization the inventory belongs to.
       required: True
     variables:
       description:
-        - Inventory variables. Use '@' to get from file.
-      required: False
-      default: null
+        - Inventory variables. Use C(@) to get from file.
+    kind:
+      description:
+        - The kind field. Cannot be modified after created.
+      default: ""
+      choices: ["", "smart"]
+      version_added: "2.7"
+    host_filter:
+      description:
+        -  The host_filter field. Only useful when C(kind=smart).
+      version_added: "2.7"
     state:
       description:
         - Desired state of the resource.
-      required: False
       default: "present"
       choices: ["present", "absent"]
-    tower_host:
-      description:
-        - URL to your Tower instance.
-      required: False
-      default: null
-    tower_username:
-        description:
-          - Username for your Tower instance.
-        required: False
-        default: null
-    tower_password:
-        description:
-          - Password for your Tower instance.
-        required: False
-        default: null
-    tower_verify_ssl:
-        description:
-          - Dis/allow insecure connections to Tower. If C(no), SSL certificates will not be validated.
-            This should only be used on personally controlled sites using self-signed certificates.
-        required: False
-        default: True
-    tower_config_file:
-      description:
-        - Path to the Tower config file. See notes.
-      required: False
-      default: null
-
-
-requirements:
-  - "python >= 2.6"
-  - "ansible-tower-cli >= 3.0.3"
-
-notes:
-  - If no I(config_file) is provided we will attempt to use the tower-cli library
-    defaults to find your Tower host information.
-  - I(config_file) should contain Tower configuration in the following format
-      host=hostname
-      username=username
-      password=password
+extends_documentation_fragment: tower
 '''
 
 
@@ -100,43 +67,37 @@ EXAMPLES = '''
 '''
 
 
+from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode
+
 try:
     import tower_cli
     import tower_cli.utils.exceptions as exc
 
     from tower_cli.conf import settings
-    from ansible.module_utils.ansible_tower import tower_auth_config, tower_check_mode
-
-    HAS_TOWER_CLI = True
 except ImportError:
-    HAS_TOWER_CLI = False
+    pass
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            name=dict(required=True),
-            description=dict(),
-            organization=dict(required=True),
-            variables=dict(),
-            tower_host=dict(),
-            tower_username=dict(),
-            tower_password=dict(no_log=True),
-            tower_verify_ssl=dict(type='bool', default=True),
-            tower_config_file=dict(type='path'),
-            state=dict(choices=['present', 'absent'], default='present'),
-        ),
-        supports_check_mode=True
+    argument_spec = dict(
+        name=dict(required=True),
+        description=dict(),
+        organization=dict(required=True),
+        variables=dict(),
+        kind=dict(choices=['', 'smart'], default=''),
+        host_filter=dict(),
+        state=dict(choices=['present', 'absent'], default='present'),
     )
 
-    if not HAS_TOWER_CLI:
-        module.fail_json(msg='ansible-tower-cli required for this module')
+    module = TowerModule(argument_spec=argument_spec, supports_check_mode=True)
 
     name = module.params.get('name')
     description = module.params.get('description')
     organization = module.params.get('organization')
     variables = module.params.get('variables')
     state = module.params.get('state')
+    kind = module.params.get('kind')
+    host_filter = module.params.get('host_filter')
 
     json_output = {'inventory': name, 'state': state}
 
@@ -151,7 +112,8 @@ def main():
 
             if state == 'present':
                 result = inventory.modify(name=name, organization=org['id'], variables=variables,
-                                          description=description, create_on_missing=True)
+                                          description=description, kind=kind, host_filter=host_filter,
+                                          create_on_missing=True)
                 json_output['id'] = result['id']
             elif state == 'absent':
                 result = inventory.delete(name=name, organization=org['id'])
@@ -164,6 +126,5 @@ def main():
     module.exit_json(**json_output)
 
 
-from ansible.module_utils.basic import AnsibleModule
 if __name__ == '__main__':
     main()

@@ -1,0 +1,54 @@
+---
+- debug: msg="START iosxr cli/net_interface.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+
+- name: Setup interface
+  net_interface:
+    name: GigabitEthernet0/0/0/2
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+
+- name: Confgure interface using platform agnostic module
+  net_interface:
+    name: GigabitEthernet0/0/0/2
+    description: test-interface-initial
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface GigabitEthernet0/0/0/2 description test-interface-initial" in result.commands'
+
+- name: Confgure interface parameters using platform agnostic module
+  net_interface:
+    name: GigabitEthernet0/0/0/2
+    description: test-interface
+    speed: 100
+    duplex: half
+    mtu: 512
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface GigabitEthernet0/0/0/2 description test-interface" in result.commands'
+      - '"interface GigabitEthernet0/0/0/2 speed 100" in result.commands'
+      - '"interface GigabitEthernet0/0/0/2 duplex half" in result.commands'
+      - '"interface GigabitEthernet0/0/0/2 mtu 512" in result.commands'
+
+- name: Teardown interface
+  net_interface:
+    name: GigabitEthernet0/0/0/2
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- debug: msg="END iosxr cli/net_interface.yaml on connection={{ ansible_connection }}"

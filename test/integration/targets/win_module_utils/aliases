@@ -1,1 +1,2 @@
-windows/ci/smoketest
+shippable/windows/group1
+shippable/windows/smoketest

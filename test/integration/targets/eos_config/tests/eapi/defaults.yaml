@@ -9,13 +9,13 @@
     parents:
       - interface Ethernet2
     match: none
-    provider: "{{ eapi }}"
+  become: yes
 
 - name: configure device with defaults included
   eos_config:
     src: defaults/config.j2
     defaults: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - debug: var=result
@@ -29,7 +29,7 @@
   eos_config:
     src: defaults/config.j2
     defaults: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - debug: var=result

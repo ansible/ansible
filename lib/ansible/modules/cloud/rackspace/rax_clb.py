@@ -32,11 +32,9 @@ options:
   meta:
     description:
       - A hash of metadata to associate with the instance
-    default: null
   name:
     description:
       - Name to give the load balancer
-    default: null
   port:
     description:
       - Port for the balancer being created
@@ -90,10 +88,8 @@ options:
   wait:
     description:
       - wait for the balancer to be in state 'running' before returning
-    default: "no"
-    choices:
-      - "yes"
-      - "no"
+    type: bool
+    default: 'no'
   wait_timeout:
     description:
       - how long before wait gives up, in seconds
@@ -101,7 +97,9 @@ options:
 author:
     - "Christopher H. Laco (@claco)"
     - "Matt Martz (@sivel)"
-extends_documentation_fragment: rackspace
+extends_documentation_fragment:
+  - rackspace
+  - rackspace.openstack
 '''
 
 EXAMPLES = '''
@@ -141,7 +139,7 @@ from ansible.module_utils.rax import (CLB_ALGORITHMS,
                                       rax_required_together,
                                       rax_to_dict,
                                       setup_rax_module,
-                                     )
+                                      )
 
 
 def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,

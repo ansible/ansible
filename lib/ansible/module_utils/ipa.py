@@ -27,15 +27,14 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
+import re
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves.urllib.parse import quote
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.basic import env_fallback
 
 
 class IPAClient(object):
@@ -78,11 +77,32 @@ class IPAClient(object):
             err_string = e
         self.module.fail_json(msg='%s: %s' % (msg, err_string))
 
+    def get_ipa_version(self):
+        response = self.ping()['summary']
+        ipa_ver_regex = re.compile(r'IPA server version (\d\.\d\.\d).*')
+        version_match = ipa_ver_regex.match(response)
+        ipa_version = None
+        if version_match:
+            ipa_version = version_match.groups()[0]
+        return ipa_version
+
+    def ping(self):
+        return self._post_json(method='ping', name=None)
+
     def _post_json(self, method, name, item=None):
         if item is None:
             item = {}
         url = '%s/session/json' % self.get_base_url()
-        data = {'method': method, 'params': [[name], item]}
+        data = dict(method=method)
+
+        # TODO: We should probably handle this a little better.
+        if method in ('ping', 'config_show'):
+            data['params'] = [[], {}]
+        elif method == 'config_mod':
+            data['params'] = [[], item]
+        else:
+            data['params'] = [[name], item]
+
         try:
             resp, info = fetch_url(module=self.module, url=url, data=to_bytes(json.dumps(data)), headers=self.headers)
             status_code = info['status']
@@ -155,3 +175,14 @@ class IPAClient(object):
                     add_method(name=name, item=diff)
 
         return changed
+
+
+def ipa_argument_spec():
+    return dict(
+        ipa_prot=dict(type='str', default='https', choices=['http', 'https'], fallback=(env_fallback, ['IPA_PROT'])),
+        ipa_host=dict(type='str', default='ipa.example.com', fallback=(env_fallback, ['IPA_HOST'])),
+        ipa_port=dict(type='int', default=443, fallback=(env_fallback, ['IPA_PORT'])),
+        ipa_user=dict(type='str', default='admin', fallback=(env_fallback, ['IPA_USER'])),
+        ipa_pass=dict(type='str', required=True, no_log=True, fallback=(env_fallback, ['IPA_PASS'])),
+        validate_certs=dict(type='bool', default=True),
+    )

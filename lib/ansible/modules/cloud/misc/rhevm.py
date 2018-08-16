@@ -28,117 +28,95 @@ options:
         description:
             - The user to authenticate with.
         default: "admin@internal"
-        required: false
     server:
         description:
             - The name/ip of your RHEV-m/oVirt instance.
         default: "127.0.0.1"
-        required: false
     port:
         description:
             - The port on which the API is reacheable.
         default: "443"
-        required: false
     insecure_api:
         description:
             - A boolean switch to make a secure or insecure connection to the server.
-        default: false
-        required: false
+        type: bool
+        default: 'no'
     name:
         description:
             - The name of the VM.
     cluster:
         description:
             - The rhev/ovirt cluster in which you want you VM to start.
-        required: false
     datacenter:
         description:
             - The rhev/ovirt datacenter in which you want you VM to start.
-        required: false
         default: "Default"
     state:
         description:
             - This serves to create/remove/update or powermanage your VM.
         default: "present"
-        required: false
         choices: ['ping', 'present', 'absent', 'up', 'down', 'restarted', 'cd', 'info']
     image:
         description:
             - The template to use for the VM.
-        default: null
-        required: false
     type:
         description:
             - To define if the VM is a server or desktop.
         default: server
-        required: false
         choices: [ 'server', 'desktop', 'host' ]
     vmhost:
         description:
             - The host you wish your VM to run on.
-        required: false
     vmcpu:
         description:
             - The number of CPUs you want in your VM.
         default: "2"
-        required: false
     cpu_share:
         description:
             - This parameter is used to configure the cpu share.
         default: "0"
-        required: false
     vmmem:
         description:
             - The amount of memory you want your VM to use (in GB).
         default: "1"
-        required: false
     osver:
         description:
             - The operationsystem option in RHEV/oVirt.
         default: "rhel_6x64"
-        required: false
     mempol:
         description:
             - The minimum amount of memory you wish to reserve for this system.
         default: "1"
-        required: false
     vm_ha:
         description:
             - To make your VM High Available.
-        default: true
-        required: false
+        type: bool
+        default: 'yes'
     disks:
         description:
             - This option uses complex arguments and is a list of disks with the options name, size and domain.
-        required: false
     ifaces:
         description:
             - This option uses complex arguments and is a list of interfaces with the options name and vlan.
         aliases: ['nics', 'interfaces']
-        required: false
     boot_order:
         description:
             - This option uses complex arguments and is a list of items that specify the bootorder.
         default: ["network","hd"]
-        required: false
     del_prot:
         description:
             - This option sets the delete protection checkbox.
-        default: true
-        required: false
+        type: bool
+        default: yes
     cd_drive:
         description:
             - The CD you wish to have mounted on the VM when I(state = 'CD').
-        default: null
-        required: false
     timeout:
         description:
             - The timeout you wish to define for power actions.
             - When I(state = 'up')
             - When I(state = 'down')
             - When I(state = 'restarted')
-        default: null
-        required: false
 '''
 
 RETURN = '''
@@ -235,7 +213,6 @@ EXAMPLES = '''
       cluster: "RH"
       state: "down"
       image: "centos7_x64"
-      cluster: "centos"
 
 # multi disk, multi nic create example
   - rhevm:
@@ -347,6 +324,7 @@ failed = False
 
 class RHEVConn(object):
     'Connection to RHEV-M'
+
     def __init__(self, module):
         self.module = module
 
@@ -726,11 +704,11 @@ class RHEVConn(object):
                                     bond.append(ifacelist[slave])
                                 try:
                                     tmpiface = params.Bonding(
-                                        slaves = params.Slaves(host_nic = bond),
-                                        options = params.Options(
-                                            option = [
-                                                params.Option(name = 'miimon', value = '100'),
-                                                params.Option(name = 'mode', value = '4')
+                                        slaves=params.Slaves(host_nic=bond),
+                                        options=params.Options(
+                                            option=[
+                                                params.Option(name='miimon', value='100'),
+                                                params.Option(name='mode', value='4')
                                             ]
                                         )
                                     )
@@ -741,16 +719,16 @@ class RHEVConn(object):
                                     return False
                                 try:
                                     tmpnetwork = params.HostNIC(
-                                        network = params.Network(name = iface['network']),
-                                        name = iface['name'],
-                                        boot_protocol = iface['boot_protocol'],
-                                        ip = params.IP(
-                                            address = iface['ip'],
-                                            netmask = iface['netmask'],
-                                            gateway = iface['gateway']
+                                        network=params.Network(name=iface['network']),
+                                        name=iface['name'],
+                                        boot_protocol=iface['boot_protocol'],
+                                        ip=params.IP(
+                                            address=iface['ip'],
+                                            netmask=iface['netmask'],
+                                            gateway=iface['gateway']
                                         ),
-                                        override_configuration = True,
-                                        bonding = tmpiface)
+                                        override_configuration=True,
+                                        bonding=tmpiface)
                                     networklist.append(tmpnetwork)
                                     setMsg('Applying network ' + iface['name'])
                                 except Exception as e:
@@ -760,13 +738,13 @@ class RHEVConn(object):
                                     return False
                             else:
                                 tmpnetwork = params.HostNIC(
-                                    network = params.Network(name = iface['network']),
-                                    name = iface['name'],
-                                    boot_protocol = iface['boot_protocol'],
-                                    ip = params.IP(
-                                        address = iface['ip'],
-                                        netmask = iface['netmask'],
-                                        gateway = iface['gateway']
+                                    network=params.Network(name=iface['network']),
+                                    name=iface['name'],
+                                    boot_protocol=iface['boot_protocol'],
+                                    ip=params.IP(
+                                        address=iface['ip'],
+                                        netmask=iface['netmask'],
+                                        gateway=iface['gateway']
                                     ))
                                 networklist.append(tmpnetwork)
                                 setMsg('Applying network ' + iface['name'])
@@ -828,8 +806,8 @@ class RHEVConn(object):
                     try:
                         HOST.nics.setupnetworks(params.Action(
                             force=True,
-                            check_connectivity = False,
-                            host_nics = params.HostNics(host_nic = networklist)
+                            check_connectivity=False,
+                            host_nics=params.HostNics(host_nic=networklist)
                         ))
                         setMsg('nics are set')
                     except Exception as e:
@@ -1008,24 +986,24 @@ class RHEV(object):
         VM = self.conn.get_VM(name)
         if VM:
             vminfo = dict()
-            vminfo['uuid']          = VM.id
-            vminfo['name']        = VM.name
-            vminfo['status']      = VM.status.state
-            vminfo['cpu_cores']   = VM.cpu.topology.cores
+            vminfo['uuid'] = VM.id
+            vminfo['name'] = VM.name
+            vminfo['status'] = VM.status.state
+            vminfo['cpu_cores'] = VM.cpu.topology.cores
             vminfo['cpu_sockets'] = VM.cpu.topology.sockets
-            vminfo['cpu_shares']  = VM.cpu_shares
-            vminfo['memory']      = (int(VM.memory) // 1024 // 1024 // 1024)
-            vminfo['mem_pol']     = (int(VM.memory_policy.guaranteed) // 1024 // 1024 // 1024)
-            vminfo['os']          = VM.get_os().type_
-            vminfo['del_prot']    = VM.delete_protected
+            vminfo['cpu_shares'] = VM.cpu_shares
+            vminfo['memory'] = (int(VM.memory) // 1024 // 1024 // 1024)
+            vminfo['mem_pol'] = (int(VM.memory_policy.guaranteed) // 1024 // 1024 // 1024)
+            vminfo['os'] = VM.get_os().type_
+            vminfo['del_prot'] = VM.delete_protected
             try:
-                vminfo['host']    = str(self.conn.get_Host_byid(str(VM.host.id)).name)
+                vminfo['host'] = str(self.conn.get_Host_byid(str(VM.host.id)).name)
             except Exception:
-                vminfo['host']    = None
-            vminfo['boot_order']  = []
+                vminfo['host'] = None
+            vminfo['boot_order'] = []
             for boot_dev in VM.os.get_boot():
                 vminfo['boot_order'].append(str(boot_dev.dev))
-            vminfo['disks']       = []
+            vminfo['disks'] = []
             for DISK in VM.disks.list():
                 disk = dict()
                 disk['name'] = DISK.name
@@ -1033,7 +1011,7 @@ class RHEV(object):
                 disk['domain'] = str((self.conn.get_domain_byid(DISK.get_storage_domains().get_storage_domain()[0].id)).name)
                 disk['interface'] = DISK.interface
                 vminfo['disks'].append(disk)
-            vminfo['ifaces']      = []
+            vminfo['ifaces'] = []
             for NIC in VM.nics.list():
                 iface = dict()
                 iface['name'] = str(NIC.name)
@@ -1083,17 +1061,17 @@ class RHEV(object):
                     bootselect = True
 
         for disk in disks:
-            diskname           = name + "_Disk" + str(counter) + "_" + disk.get('name', '').replace('/', '_')
-            disksize           = disk.get('size', 1)
-            diskdomain         = disk.get('domain', None)
+            diskname = name + "_Disk" + str(counter) + "_" + disk.get('name', '').replace('/', '_')
+            disksize = disk.get('size', 1)
+            diskdomain = disk.get('domain', None)
             if diskdomain is None:
                 setMsg("`domain` is a required disk key.")
                 setFailed()
                 return False
-            diskinterface      = disk.get('interface', 'virtio')
-            diskformat         = disk.get('format', 'raw')
+            diskinterface = disk.get('interface', 'virtio')
+            diskformat = disk.get('format', 'raw')
             diskallocationtype = disk.get('thin', False)
-            diskboot           = disk.get('bootable', False)
+            diskboot = disk.get('bootable', False)
 
             if bootselect is False and counter == 0:
                 diskboot = True
@@ -1175,7 +1153,7 @@ class RHEV(object):
     def setBootOrder(self, vmname, boot_order):
         self.__get_conn()
         VM = self.conn.get_VM(vmname)
-        bootorder  = []
+        bootorder = []
         for boot_dev in VM.os.get_boot():
             bootorder.append(str(boot_dev.dev))
 
@@ -1229,6 +1207,7 @@ class RHEV(object):
         self.__get_conn()
         return self.conn.set_VM_Host(vmname, vmhost)
 
+        # pylint: disable=unreachable
         VM = self.conn.get_VM(vmname)
         HOST = self.conn.get_Host(vmhost)
 
@@ -1468,31 +1447,31 @@ def core(module):
 def main():
     global module
     module = AnsibleModule(
-        argument_spec = dict(
-            state      = dict(default='present', choices=['ping', 'present', 'absent', 'up', 'down', 'restarted', 'cd', 'info']),
-            user       = dict(default="admin@internal"),
-            password   = dict(required=True, no_log=True),
-            server     = dict(default="127.0.0.1"),
-            port       = dict(default="443"),
-            insecure_api = dict(default=False, type='bool'),
-            name       = dict(),
-            image      = dict(default=False),
-            datacenter = dict(default="Default"),
-            type       = dict(default="server", choices=['server', 'desktop', 'host']),
-            cluster    = dict(default=''),
-            vmhost     = dict(default=False),
-            vmcpu      = dict(default="2"),
-            vmmem      = dict(default="1"),
-            disks      = dict(),
-            osver      = dict(default="rhel_6x64"),
-            ifaces     = dict(aliases=['nics', 'interfaces']),
-            timeout    = dict(default=False),
-            mempol     = dict(default="1"),
-            vm_ha      = dict(default=True),
-            cpu_share  = dict(default="0"),
-            boot_order = dict(default=["network", "hd"]),
-            del_prot   = dict(default=True, type="bool"),
-            cd_drive   = dict(default=False)
+        argument_spec=dict(
+            state=dict(default='present', choices=['ping', 'present', 'absent', 'up', 'down', 'restarted', 'cd', 'info']),
+            user=dict(default="admin@internal"),
+            password=dict(required=True, no_log=True),
+            server=dict(default="127.0.0.1"),
+            port=dict(default="443"),
+            insecure_api=dict(default=False, type='bool'),
+            name=dict(),
+            image=dict(default=False),
+            datacenter=dict(default="Default"),
+            type=dict(default="server", choices=['server', 'desktop', 'host']),
+            cluster=dict(default=''),
+            vmhost=dict(default=False),
+            vmcpu=dict(default="2"),
+            vmmem=dict(default="1"),
+            disks=dict(),
+            osver=dict(default="rhel_6x64"),
+            ifaces=dict(aliases=['nics', 'interfaces']),
+            timeout=dict(default=False),
+            mempol=dict(default="1"),
+            vm_ha=dict(default=True),
+            cpu_share=dict(default="0"),
+            boot_order=dict(default=["network", "hd"]),
+            del_prot=dict(default=True, type="bool"),
+            cd_drive=dict(default=False)
         ),
     )
 

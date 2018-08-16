@@ -35,7 +35,7 @@
 - name: assert create group with defaults checl
   assert:
     that:
-    - create_default_check|changed
+    - create_default_check is changed
     - create_default_actual_check.rc == 1
 
 - name: create group with defaults
@@ -52,7 +52,7 @@
 - name: assert create group with defaults
   assert:
     that:
-    - create_default|changed
+    - create_default is changed
     - create_default.category == 'Security'
     - create_default.description == None
     - create_default.display_name == None
@@ -75,7 +75,7 @@
 - name: assert create group with defaults again
   assert:
     that:
-    - not create_default_again|changed
+    - create_default_again is not changed
 
 - name: remove group check
   win_domain_group:
@@ -91,7 +91,7 @@
 - name: assert remove group check
   assert:
     that:
-    - remove_group_check|changed
+    - remove_group_check is changed
     - remove_group_actual_check.rc == 0
 
 - name: remove group
@@ -108,7 +108,7 @@
 - name: assert remove group
   assert:
     that:
-    - remove_group|changed
+    - remove_group is changed
     - remove_group_actual.rc == 1
 
 - name: remove group again
@@ -120,7 +120,7 @@
 - name: assert remove group again
   assert:
     that:
-    - not remove_group_again|changed
+    - remove_group_again is not changed
 
 - name: create non default group check
   win_domain_group:
@@ -147,7 +147,7 @@
 - name: assert create non default group check
   assert:
     that:
-    - create_non_default_check|changed
+    - create_non_default_check is changed
     - create_non_default_actual_check.rc == 1
 
 - name: create non default group
@@ -174,7 +174,7 @@
 - name: assert create non default group
   assert:
     that:
-    - create_non_default|changed
+    - create_non_default is changed
     - create_non_default.category == 'Distribution'
     - create_non_default.description == 'Group Description'
     - create_non_default.display_name == 'Group Display Name'
@@ -207,7 +207,7 @@
 - name: assert create non default group again
   assert:
     that:
-    - not create_non_default_again|changed
+    - create_non_default_again is not changed
 
 - name: try and move group with protection mode on
   win_domain_group:
@@ -240,7 +240,7 @@
 - name: assert modify existing group check
   assert:
     that:
-    - modify_existing_check|changed
+    - modify_existing_check is changed
     - modify_existing_actual_check.stdout == 'CN=' + test_win_domain_group_name + ',' + test_win_domain_group_ou_path + '\r\n'
 
 - name: modify existing group
@@ -266,7 +266,7 @@
 - name: assert modify existing group
   assert:
     that:
-    - modify_existing|changed
+    - modify_existing is changed
     - modify_existing.category == 'Security'
     - modify_existing.description == 'New Description'
     - modify_existing.display_name == 'New Display Name'
@@ -299,7 +299,7 @@
 - name: assert modify existing group again
   assert:
     that:
-    - not modify_existing_again|changed
+    - modify_existing_again is not changed
 
 - name: fail change managed_by to invalid user
   win_domain_group:
@@ -332,7 +332,7 @@
 - name: assert delete group with protection mode on
   assert:
     that:
-    - delete_with_force|changed
+    - delete_with_force is changed
     - delete_with_force_actual.rc == 1
 
 - name: ensure the test group is deleted after the test

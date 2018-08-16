@@ -60,7 +60,7 @@ EXAMPLES = '''
     key_filename: "/tmp/ssh.key"
     newpassword: "badpassword"
   register: result
-  until: not result|failed
+  until: result is not failed
   retries: 10
   delay: 30
 '''
@@ -84,9 +84,9 @@ import sys
 
 try:
     import paramiko
-    HAS_LIB=True
+    HAS_LIB = True
 except ImportError:
-    HAS_LIB=False
+    HAS_LIB = False
 
 _PROMPTBUFF = 4096
 
@@ -101,7 +101,7 @@ def wait_with_timeout(module, shell, prompt, timeout=60):
             if len(endresult) != 0 and endresult[-1] == prompt:
                 break
 
-        if time.time()-now > timeout:
+        if time.time() - now > timeout:
             module.fail_json(msg="Timeout waiting for prompt")
 
     return result
@@ -143,14 +143,14 @@ def set_panwfw_password(module, ip_address, key_filename, newpassword, username)
     stdout += buff
 
     # enter password for the first time
-    shell.send(newpassword+'\n')
+    shell.send(newpassword + '\n')
 
     # wait for the password prompt
     buff = wait_with_timeout(module, shell, ":")
     stdout += buff
 
     # enter password for the second time
-    shell.send(newpassword+'\n')
+    shell.send(newpassword + '\n')
 
     # wait for the config mode prompt
     buff = wait_with_timeout(module, shell, "#")
@@ -202,6 +202,7 @@ def main():
     except Exception:
         x = sys.exc_info()[1]
         module.fail_json(msg=x)
+
 
 if __name__ == '__main__':
     main()

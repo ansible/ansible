@@ -9,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'core'}
 
 
 DOCUMENTATION = '''
@@ -418,10 +418,11 @@ ansible_facts:
 import json
 import re
 import socket
+import time
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
-from ansible.module_utils.urls import fetch_url, url_argument_spec
+from ansible.module_utils.urls import fetch_url
 
 
 socket.setdefaulttimeout(5)
@@ -443,18 +444,29 @@ class Ec2Metadata(object):
         self._prefix = 'ansible_ec2_%s'
 
     def _fetch(self, url):
-        (response, info) = fetch_url(self.module, url, force=True)
+        response, info = fetch_url(self.module, url, force=True)
+
+        if info.get('status') not in (200, 404):
+            time.sleep(3)
+            # request went bad, retry once then raise
+            self.module.warn('Retrying query to metadata service. First attempt failed: {0}'.format(info['msg']))
+            response, info = fetch_url(self.module, url, force=True)
+            if info.get('status') not in (200, 404):
+                # fail out now
+                self.module.fail_json(msg='Failed to retrieve metadata from AWS: {0}'.format(info['msg']), response=info)
         if response:
             data = response.read()
         else:
             data = None
         return to_text(data)
 
-    def _mangle_fields(self, fields, uri, filter_patterns=['public-keys-0']):
+    def _mangle_fields(self, fields, uri, filter_patterns=None):
+        filter_patterns = ['public-keys-0'] if filter_patterns is None else filter_patterns
+
         new_fields = {}
         for key, value in fields.items():
             split_fields = key[len(uri):].split('/')
-            if len(split_fields) == 3 and split_fields[0:2] == ['iam', 'security-credentials'] and '_' not in split_fields[2]:
+            if len(split_fields) == 3 and split_fields[0:2] == ['iam', 'security-credentials']:
                 new_fields[self._prefix % "iam-instance-profile-role"] = split_fields[2]
             if len(split_fields) > 1 and split_fields[1]:
                 new_key = "-".join(split_fields)
@@ -524,10 +536,8 @@ class Ec2Metadata(object):
 
 
 def main():
-    argument_spec = url_argument_spec()
-
     module = AnsibleModule(
-        argument_spec=argument_spec,
+        argument_spec={},
         supports_check_mode=True,
     )
 

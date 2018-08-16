@@ -1,28 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016, Ansible, inc
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: (c) 2016, Ansible, inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = r'''
 module: win_region
@@ -61,9 +45,10 @@ options:
               C(location), C(format) or C(unicode_language) has resulted in a
               change. If this process runs then it will always result in a
               change.
-        default: false
-        choices: ['true', 'false']
-author: "Jordan Borean (@jborean93)"
+        type: bool
+        default: 'no'
+author:
+- Jordan Borean (@jborean93)
 '''
 
 EXAMPLES = r'''
@@ -74,7 +59,7 @@ EXAMPLES = r'''
 # Set the region format to English Australia and copy settings to new profiles
 - win_region:
     format: en-AU
-    copy_settings: True
+    copy_settings: yes
 
 # Set the unicode language to English Great Britain, reboot if required
 - win_region:
@@ -100,11 +85,6 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-changed:
-    description: Whether anything was changed
-    returned: always
-    type: boolean
-    sample: True
 restart_required:
     description: Whether a reboot is required for the change to take effect
     returned: success

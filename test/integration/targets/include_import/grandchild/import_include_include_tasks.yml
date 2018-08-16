@@ -1,0 +1,2 @@
+- command: "true"
+  register: import_include_include_result

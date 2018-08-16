@@ -194,7 +194,7 @@ class TestFailure(TestResult):
         :type test: str
         :type python_version: str | None
         :type messages: list[TestMessage] | None
-        :type summary: str | None
+        :type summary: unicode | None
         """
         super(TestFailure, self).__init__(command, test, python_version)
 
@@ -339,16 +339,16 @@ class TestFailure(TestResult):
         command = self.format_command()
 
         if self.summary:
-            reason = 'error'
+            reason = 'the error'
         else:
-            reason = 'error' if len(self.messages) == 1 else 'errors'
+            reason = '1 error' if len(self.messages) == 1 else '%d errors' % len(self.messages)
 
         if help_link:
-            help_link_markup = ' [[?](%s)]' % help_link
+            help_link_markup = ' [[explain](%s)]' % help_link
         else:
             help_link_markup = ''
 
-        title = 'The test `%s`%s failed with the following %s:' % (command, help_link_markup, reason)
+        title = 'The test `%s`%s failed with %s:' % (command, help_link_markup, reason)
 
         return title
 
@@ -359,7 +359,7 @@ class TestFailure(TestResult):
         if self.summary:
             block = self.summary
         else:
-            block = '\n'.join(str(m) for m in self.messages)
+            block = '\n'.join(m.format() for m in self.messages)
 
         message = block.strip()
 

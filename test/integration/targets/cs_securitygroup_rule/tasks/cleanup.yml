@@ -4,4 +4,4 @@
 - name: verify setup
   assert:
     that:
-    - sg|success
+    - sg is successful

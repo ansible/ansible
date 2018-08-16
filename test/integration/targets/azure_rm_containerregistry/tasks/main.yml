@@ -1,0 +1,55 @@
+ - name: Create an container registry
+   azure_rm_containerregistry:
+     name: "acr{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+     resource_group: "{{ resource_group }}"
+     location: eastus2
+     state: present
+     admin_user_enabled: true
+     sku: Premium
+     tags:
+         Release: beta1
+         Environment: Production
+   register: output
+
+ - name: Assert the container registry instance is well created
+   assert:
+     that:
+       - output.changed
+       - output.admin_user_enabled
+       - output.location == 'eastus2'
+       - output.sku == 'Premium'
+       - output.tags['Environment'] == 'Production'
+       - output.tags['Release'] == 'beta1'
+       - output.provisioning_state == 'Succeeded'
+       - output.credentials['password'] is defined
+       - output.credentials['password2'] is defined
+
+ - name: Update the ACS instance sku, tags and admin_user_enabled
+   azure_rm_containerregistry:
+     name: "acr{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+     resource_group: "{{ resource_group }}"
+     location: eastus2
+     admin_user_enabled: false
+     sku: Standard
+     tags:
+         NewTag: newtag
+         Release: beta1
+         Environment: Production
+   register: output
+
+ - name: Assert the ACS instance is well updated
+   assert:
+     that:
+       - output.changed == True
+       - output.admin_user_enabled == False
+       - output.sku == 'Standard'
+       - output.tags['NewTag'] == 'newtag'
+       - output.credentials | length == 0
+       - output.credentials['password'] is not defined
+       - output.credentials['password2'] is not defined
+
+ - name: Delete an container registry
+   azure_rm_containerregistry:
+     name: "acr{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+     resource_group: "{{ resource_group }}"
+     state: absent

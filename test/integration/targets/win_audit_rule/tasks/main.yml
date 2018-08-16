@@ -1,0 +1,33 @@
+- name: create temporary folder to test with
+  win_file:
+    path: "{{ test_audit_rule_folder }}"
+    state: directory
+
+- name: create temporary file to test with
+  win_file:
+    path: "{{ test_audit_rule_file }}"
+    state: touch
+
+- name: create temporary registry key to test with
+  win_regedit:
+    path: "{{ test_audit_rule_registry }}"
+
+- block:
+    - include_tasks: add.yml
+    - include_tasks: modify.yml
+    - include_tasks: remove.yml
+  always:
+  - name: remove testing folder
+    win_file:
+      path: "{{ test_audit_rule_folder }}"
+      state: absent
+
+  - name: remove testing file
+    win_file:
+      path: "{{ test_audit_rule_file }}"
+      state: absent
+
+  - name: remove registry key
+    win_regedit:
+      path: "{{ test_audit_rule_registry }}"
+      state: absent

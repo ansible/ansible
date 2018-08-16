@@ -1,0 +1,8 @@
+---
+minor_changes:
+- "The acme_account and acme_certificate modules now support two backends:
+   the Python cryptograpy module or the OpenSSL binary. By default, the
+   modules detect if a new enough cryptography module is available and
+   use it, with the OpenSSL binary being a fallback. If the detection
+   fails for some reason, the OpenSSL binary backend can be explicitly
+   selected by setting select_crypto_backend to openssl."

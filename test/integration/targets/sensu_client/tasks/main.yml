@@ -30,8 +30,8 @@
 - name: Assert that client data was set successfully and properly
   assert:
     that:
-      - "client | success"
-      - "client | changed"
+      - "client is successful"
+      - "client is changed"
       - "client_stat.stat.exists == true"
       - "client['config']['name'] == 'client'"
       - "'default' in client['config']['subscriptions']"
@@ -65,10 +65,10 @@
 - name: Assert that client deletion was successful
   assert:
     that:
-      - "client_delete | success"
-      - "client_delete | changed"
-      - "client_delete_twice | success"
-      - "not client_delete_twice | changed"
+      - "client_delete is successful"
+      - "client_delete is changed"
+      - "client_delete_twice is successful"
+      - "client_delete_twice is not changed"
       - "client_stat.stat.exists == false"
 
 - name: Configuring a client without subscriptions should fail
@@ -80,7 +80,7 @@
 - name: Assert failure to create client
   assert:
     that:
-      - failure | failed
+      - failure is failed
       - "'the following are missing: subscriptions' in failure['msg']"
 
 - name: Configure a new client from scratch with custom parameters
@@ -137,10 +137,10 @@
 - name: Assert that client data was set successfully and properly
   assert:
     that:
-      - "client | success"
-      - "client | changed"
-      - "client_twice | success"
-      - "not client_twice | changed"
+      - "client is successful"
+      - "client is changed"
+      - "client_twice is successful"
+      - "client_twice is not changed"
       - "client_stat.stat.exists == true"
       - "client['config']['name'] == 'custom'"
       - "client['config']['address'] == 'host.fqdn'"

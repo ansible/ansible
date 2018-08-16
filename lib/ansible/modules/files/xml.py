@@ -21,7 +21,7 @@ module: xml
 short_description: Manage bits and pieces of XML files or strings
 description:
 - A CRUD-like interface to managing bits of XML files.
-- You might also be interested in a brief tutorial from U(http://www.w3schools.com/xpath/)
+- You might also be interested in a brief tutorial from U(https://www.w3schools.com/xml/xpath_intro.asp)
   and U(https://developer.mozilla.org/en-US/docs/Web/XPath).
 version_added: '2.4'
 options:
@@ -40,7 +40,6 @@ options:
     description:
     - A valid XPath expression describing the item(s) you want to manipulate.
     - Operates on the document root, C(/), by default.
-    default: /
   namespaces:
     description:
     - The namespace C(prefix:uri) mapping for the XPath expression.
@@ -107,6 +106,13 @@ options:
         the original file back if you somehow clobbered it incorrectly.
     type: bool
     default: 'no'
+  strip_cdata_tags:
+    description:
+      - Remove CDATA tags surrounding text values.
+      - Note that this might break your XML file if text values contain characters that could be interpreted as XML.
+    type: bool
+    default: 'no'
+    version_added: '2.7'
 requirements:
 - lxml >= 2.3.0
 notes:
@@ -178,7 +184,7 @@ EXAMPLES = r'''
     attribute: validatedon
     value: 1976-08-05
 
-# How to read an attrribute value and access it in Ansible
+# How to read an attribute value and access it in Ansible
 - name: Read attribute value
   xml:
     path: /foo/bar.xml
@@ -274,7 +280,7 @@ from ansible.module_utils.basic import AnsibleModule, json_dict_bytes_to_unicode
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_bytes, to_native
 
-_IDENT = "[a-zA-Z-][a-zA-Z0-9_\-\.]*"
+_IDENT = r"[a-zA-Z-][a-zA-Z0-9_\-\.]*"
 _NSIDENT = _IDENT + "|" + _IDENT + ":" + _IDENT
 # Note: we can't reasonably support the 'if you need to put both ' and " in a string, concatenate
 # strings wrapped by the other delimiter' XPath trick, especially as simple XPath.
@@ -456,9 +462,9 @@ def nsnameToClark(name, namespaces):
         (nsname, rawname) = name.split(":")
         # return "{{%s}}%s" % (namespaces[nsname], rawname)
         return "{{{0}}}{1}".format(namespaces[nsname], rawname)
-    else:
-        # no namespace name here
-        return name
+
+    # no namespace name here
+    return name
 
 
 def check_or_make_target(module, tree, xpath, namespaces):
@@ -545,8 +551,13 @@ def set_target_inner(module, tree, xpath, namespaces, attribute, value):
         if not is_node(tree, xpath, namespaces):
             changed = check_or_make_target(module, tree, xpath, namespaces)
     except Exception as e:
-        module.fail_json(msg="Xpath %s causes a failure: %s\n  -- tree is %s" %
-                             (xpath, e, etree.tostring(tree, pretty_print=True)), exception=traceback.format_exc(e))
+        missing_namespace = ""
+        # NOTE: This checks only the namespaces defined in root element!
+        # TODO: Implement a more robust check to check for child namespaces' existance
+        if tree.getroot().nsmap and ":" not in xpath:
+            missing_namespace = "XML document has namespace(s) defined, but no namespace prefix(es) used in xpath!\n"
+        module.fail_json(msg="%sXpath %s causes a failure: %s\n  -- tree is %s" %
+                             (missing_namespace, xpath, e, etree.tostring(tree, pretty_print=True)), exception=traceback.format_exc())
 
     if not is_node(tree, xpath, namespaces):
         module.fail_json(msg="Xpath %s does not reference a node! tree is %s" %
@@ -639,8 +650,10 @@ def child_to_element(module, child, in_type):
         module.fail_json(msg="Invalid child input type: %s. Type must be either xml or yaml." % in_type)
 
 
-def children_to_nodes(module=None, children=[], type='yaml'):
+def children_to_nodes(module=None, children=None, type='yaml'):
     """turn a str/hash/list of str&hash into a list of elements"""
+    children = [] if children is None else children
+
     return [child_to_element(module, child, type) for child in children]
 
 
@@ -726,6 +739,7 @@ def main():
             content=dict(type='str', choices=['attribute', 'text']),
             input_type=dict(type='str', default='yaml', choices=['xml', 'yaml']),
             backup=dict(type='bool', default=False),
+            strip_cdata_tags=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
         # TODO: Implement this as soon as #28662 (required_by functionality) is merged
@@ -766,6 +780,7 @@ def main():
     print_match = module.params['print_match']
     count = module.params['count']
     backup = module.params['backup']
+    strip_cdata_tags = module.params['strip_cdata_tags']
 
     # Check if we have lxml 2.3.0 or newer installed
     if not HAS_LXML:
@@ -794,7 +809,7 @@ def main():
 
     # Try to parse in the target XML file
     try:
-        parser = etree.XMLParser(remove_blank_text=pretty_print)
+        parser = etree.XMLParser(remove_blank_text=pretty_print, strip_cdata=strip_cdata_tags)
         doc = etree.parse(infile, parser)
     except etree.XMLSyntaxError as e:
         module.fail_json(msg="Error while parsing document: %s (%s)" % (xml_file or 'xml_string', e))

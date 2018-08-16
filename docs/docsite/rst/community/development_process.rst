@@ -1,3 +1,5 @@
+.. _community_development_process:
+
 The Ansible Development Process
 ===============================
 
@@ -8,7 +10,13 @@ This section discusses how the Ansible development and triage process works.
 Road Maps
 =========
 
-The Ansible Core team provides a road map for each upcoming release. These road maps can be found `here <http://docs.ansible.com/ansible/latest/roadmap/>`_.
+The Ansible Core team provides a road map for each upcoming release. These road maps can be found :ref:`here <roadmaps>`.
+
+.. Roadmaps are User-oriented.  We should also list the Roadmap Projects and the Blocker Bug
+   Projects here
+
+.. How the actual release schedule, slipping, etc relates to (release_and_maintenance.rst) probably
+   also belongs here somewhere
 
 Pull Requests
 =============
@@ -16,6 +24,71 @@ Pull Requests
 Ansible accepts code via **pull requests** ("PRs" for short). GitHub provides a great overview of `how the pull request process works <https://help.github.com/articles/about-pull-requests/>`_ in general.
 
 Because Ansible receives many pull requests, we use an automated process to help us through the process of reviewing and merging pull requests. That process is managed by **Ansibullbot**.
+
+Backport Pull Request Process
+-----------------------------
+
+After the pull request submitted to Ansible for the ``devel`` branch is
+accepted and merged, the following instructions will help you create a
+pull request to backport the change to a previous stable branch.
+
+.. note::
+
+    These instructions assume that ``stable-2.5`` is the targeted release
+    branch for the backport.
+
+.. note::
+
+    These instructions assume that ``https://github.com/ansible/ansible.git``
+    is configured as a ``git remote`` named ``upstream``. If you do not use
+    a ``git remote`` named ``upstream``, adjust the instructions accordingly.
+
+.. note::
+
+   These instructions assume that ``https://github.com/<yourgithubaccount>/ansible.git``
+   is configured as a ``git remote`` named ``origin``. If you do not use
+   a ``git remote`` named ``origin``, adjust the instructions accordingly.
+
+#. Prepare your devel, stable, and feature branches:
+
+   ::
+
+       git fetch upstream
+       git checkout -b backport/2.5/[PR_NUMBER_FROM_DEVEL] upstream/stable-2.5
+
+#. Cherry pick the relevant commit SHA from the devel branch into your feature
+   branch, handling merge conflicts as necessary:
+
+   ::
+
+       git cherry-pick -x [SHA_FROM_DEVEL]
+
+#. Add a changelog entry for the change, and commit it.
+
+#. Push your feature branch to your fork on GitHub:
+
+   ::
+
+       git push origin backport/2.5/[PR_NUMBER_FROM_DEVEL]
+
+#. Submit the pull request for ``backport/2.5/[PR_NUMBER_FROM_DEVEL]``
+   against the ``stable-2.5`` branch
+
+.. note::
+
+    The choice to use ``backport/2.5/[PR_NUMBER_FROM_DEVEL]`` as the
+    name for the feature branch is somewhat arbitrary, but conveys meaning
+    about the purpose of that branch. It is not required to use this format,
+    but it can be helpful, especially when making multiple backport PRs for
+    multiple stable branches.
+
+.. note::
+
+    If you prefer, you can use CPython's cherry-picker tool to backport commits
+    from devel to stable branches in Ansible. Take a look at the `cherry-picker
+    documentation <https://pypi.org/p/cherry-picker#cherry-picking>`_ for
+    details on installing, configuring, and using it.
+
 
 Ansibullbot
 ===========
@@ -41,9 +114,9 @@ Each module has at least one assigned maintainer, listed in a `maintainer's file
 .. _Ansibullbot: https://github.com/ansible/ansibullbot/blob/master/ISSUE_HELP.md
 .. _maintainer's file: https://github.com/ansible/ansible/blob/devel/.github/BOTMETA.yml
 
-Some modules have no community maintainers assigned. In this case, the maintainer is listed as ``$team_ansible``. Ultimately, it’s our goal to have at least one community maintainer for every module.
+Some modules have no community maintainers assigned. In this case, the maintainer is listed as ``$team_ansible``. Ultimately, it's our goal to have at least one community maintainer for every module.
 
-The maintainer’s job is to review PRs and decide whether that PR should be merged (``shipit``) or revised (``needs_revision``).
+The maintainer's job is to review PRs and decide whether that PR should be merged (``shipit``) or revised (``needs_revision``).
 
 The ultimate goal of any pull request is to reach **shipit** status, where the Core team then decides whether the PR is ready to be merged. Not every PR that reaches the **shipit** label is actually ready to be merged, but the better our reviewers are, and the better our guidelines are, the more likely it will be that a PR that reaches **shipit** will be mergeable.
 
@@ -54,7 +127,7 @@ Workflow
 
 Ansibullbot runs continuously. You can generally expect to see changes to your issue or pull request within thirty minutes. Ansibullbot examines every open pull request in the repositories, and enforces state roughly according to the following workflow:
 
--  If a pull request has no workflow labels, it’s considered **new**. Files in the pull request are identified, and the maintainers of those files are pinged by the bot, along with instructions on how to review the pull request. (Note: sometimes we strip labels from a pull request to “reboot” this process.)
+-  If a pull request has no workflow labels, it's considered **new**. Files in the pull request are identified, and the maintainers of those files are pinged by the bot, along with instructions on how to review the pull request. (Note: sometimes we strip labels from a pull request to "reboot" this process.)
 -  If the module maintainer is not ``$team_ansible``, the pull request then goes into the **community_review** state.
 -  If the module maintainer is ``$team_ansible``, the pull request then goes into the **core_review** state (and probably sits for a while).
 -  If the pull request is in **community_review** and has received comments from the maintainer:
@@ -87,7 +160,7 @@ Workflow Labels
 -  **community_review**: Pull requests for modules that are currently awaiting review by their maintainers in the Ansible community.
 -  **core_review**: Pull requests for modules that are currently awaiting review by their maintainers on the Ansible Core team.
 -  **needs_info**: Waiting on info from the submitter.
--  **needs_rebase**: Waiting on the submitter to rebase. (Note: no longer used by the bot.)
+-  **needs_rebase**: Waiting on the submitter to rebase.
 -  **needs_revision**: Waiting on the submitter to make changes.
 -  **shipit**: Waiting for final review by the core team for potential merge.
 
@@ -110,4 +183,4 @@ Special Labels
 
 -  **new_plugin**: this is for new modules or plugins that are not yet in Ansible.
 
-   **Note:** `new_plugin` kicks off a completely separate process, and frankly it doesn’t work very well at present. We’re working our best to improve this process.
+   **Note:** `new_plugin` kicks off a completely separate process, and frankly it doesn't work very well at present. We're working our best to improve this process.

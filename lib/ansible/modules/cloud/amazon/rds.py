@@ -1,18 +1,10 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -37,42 +29,28 @@ options:
   instance_name:
     description:
       - Database instance identifier. Required except when using command=facts or command=delete on just a snapshot
-    required: false
-    default: null
   source_instance:
     description:
       - Name of the database to replicate. Used only when command=replicate.
-    required: false
-    default: null
   db_engine:
     description:
       - The type of database.  Used only when command=create.
       - mariadb was added in version 2.2
-    required: false
-    default: null
     choices: ['mariadb', 'MySQL', 'oracle-se1', 'oracle-se2', 'oracle-se', 'oracle-ee',
               'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres', 'aurora']
   size:
     description:
       - Size in gigabytes of the initial storage for the DB instance. Used only when command=create or command=modify.
-    required: false
-    default: null
   instance_type:
     description:
       - The instance type of the database.  Must be specified when command=create. Optional when command=replicate, command=modify or command=restore.
         If not specified then the replica inherits the same instance type as the source instance.
-    required: false
-    default: null
   username:
     description:
       - Master database username. Used only when command=create.
-    required: false
-    default: null
   password:
     description:
       - Password for the master database username. Used only when command=create or command=modify.
-    required: false
-    default: null
   region:
     description:
       - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
@@ -81,119 +59,83 @@ options:
   db_name:
     description:
       - Name of a database to create within the instance.  If not specified then no database is created. Used only when command=create.
-    required: false
-    default: null
   engine_version:
     description:
       - Version number of the database engine to use. Used only when command=create. If not specified then the current Amazon RDS default engine version is used
-    required: false
-    default: null
   parameter_group:
     description:
       - Name of the DB parameter group to associate with this instance.  If omitted then the RDS default DBParameterGroup will be used. Used only
         when command=create or command=modify.
-    required: false
-    default: null
   license_model:
     description:
       - The license model for this DB instance. Used only when command=create or command=restore.
-    required: false
-    default: null
     choices:  [ 'license-included', 'bring-your-own-license', 'general-public-license', 'postgresql-license' ]
   multi_zone:
     description:
       - Specifies if this is a Multi-availability-zone deployment. Can not be used in conjunction with zone parameter. Used only when command=create or
         command=modify.
-    choices: [ "yes", "no" ]
-    required: false
-    default: null
+    type: bool
   iops:
     description:
       - Specifies the number of IOPS for the instance.  Used only when command=create or command=modify. Must be an integer greater than 1000.
-    required: false
-    default: null
   security_groups:
     description:
       - Comma separated list of one or more security groups.  Used only when command=create or command=modify.
-    required: false
-    default: null
   vpc_security_groups:
     description:
       - Comma separated list of one or more vpc security group ids. Also requires `subnet` to be specified. Used only when command=create or command=modify.
-    required: false
-    default: null
   port:
     description:
       - Port number that the DB instance uses for connections. Used only when command=create or command=replicate.
       - Prior to 2.0 it always defaults to null and the API would use 3306, it had to be set to other DB default values when not using MySql.
         Starting at 2.0 it automatically defaults to what is expected for each C(db_engine).
-    required: false
     default: 3306 for mysql, 1521 for Oracle, 1433 for SQL Server, 5432 for PostgreSQL.
   upgrade:
     description:
       - Indicates that minor version upgrades should be applied automatically. Used only when command=create or command=replicate.
-    required: false
-    default: no
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   option_group:
     description:
       - The name of the option group to use.  If not specified then the default option group is used. Used only when command=create.
-    required: false
-    default: null
   maint_window:
     description:
       - >
         Maintenance window in format of ddd:hh24:mi-ddd:hh24:mi.  (Example: Mon:22:00-Mon:23:15) If not specified then a random maintenance window is
         assigned. Used only when command=create or command=modify.
-    required: false
-    default: null
   backup_window:
     description:
       - Backup window in format of hh24:mi-hh24:mi.  If not specified then a random backup window is assigned. Used only when command=create or command=modify.
-    required: false
-    default: null
   backup_retention:
     description:
       - >
         Number of days backups are retained.  Set to 0 to disable backups.  Default is 1 day.  Valid range: 0-35. Used only when command=create or
         command=modify.
-    required: false
-    default: null
   zone:
     description:
       - availability zone in which to launch the instance. Used only when command=create, command=replicate or command=restore.
-    required: false
-    default: null
     aliases: ['aws_zone', 'ec2_zone']
   subnet:
     description:
       - VPC subnet group.  If specified then a VPC instance is created. Used only when command=create.
-    required: false
-    default: null
   snapshot:
     description:
       - Name of snapshot to take. When command=delete, if no snapshot name is provided then no snapshot is taken. If used with command=delete with
         no instance_name, the snapshot is deleted. Used with command=facts, command=delete or command=snapshot.
-    required: false
-    default: null
   aws_secret_key:
     description:
       - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
-    required: false
     aliases: [ 'ec2_secret_key', 'secret_key' ]
   aws_access_key:
     description:
       - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
-    required: false
-    default: null
     aliases: [ 'ec2_access_key', 'access_key' ]
   wait:
     description:
       - When command=create, replicate, modify or restore then wait for the database to enter the 'available' state.  When command=delete wait for
         the database to be terminated.
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   wait_timeout:
     description:
       - how long before wait gives up, in seconds
@@ -202,38 +144,29 @@ options:
     description:
       - Used only when command=modify.  If enabled, the modifications will be applied as soon as possible rather than waiting for the next
         preferred maintenance window.
-    default: no
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   force_failover:
     description:
       - Used only when command=reboot.  If enabled, the reboot is done using a MultiAZ failover.
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
     version_added: "2.0"
   new_instance_name:
     description:
       - Name to rename an instance to. Used only when command=modify.
-    required: false
-    default: null
     version_added: "1.5"
   character_set_name:
     description:
       - Associate the DB instance with a specified character set. Used with command=create.
-    required: false
-    default: null
     version_added: "1.9"
   publicly_accessible:
     description:
       - explicitly set whether the resource should be publicly accessible or not. Used with command=create, command=replicate. Requires boto >= 2.26.0
-    required: false
-    default: null
     version_added: "1.9"
   tags:
     description:
       - tags dict to apply to a resource. Used with command=create, command=replicate, command=restore. Requires boto >= 2.26.0
-    required: false
-    default: null
     version_added: "1.9"
 requirements:
     - "python >= 2.6"
@@ -517,22 +450,25 @@ db_subnet_groups:
                     sample: "active"
 '''
 
-import sys
 import time
-
-from ansible.module_utils.ec2 import AWSRetry
 
 try:
     import boto.rds
-    HAS_BOTO = True
+    import boto.exception
 except ImportError:
-    HAS_BOTO = False
+    pass  # Taken care of by ec2.HAS_BOTO
 
 try:
     import boto.rds2
-    has_rds2 = True
+    import boto.rds2.exceptions
+    HAS_RDS2 = True
 except ImportError:
-    has_rds2 = False
+    HAS_RDS2 = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import AWSRetry
+from ansible.module_utils.ec2 import HAS_BOTO, connect_to_aws, ec2_argument_spec, get_aws_connection_info
+
 
 DEFAULT_PORTS = {
     'aurora': 3306,
@@ -567,13 +503,13 @@ class RDSConnection:
     def get_db_instance(self, instancename):
         try:
             return RDSDBInstance(self.connection.get_all_dbinstances(instancename)[0])
-        except boto.exception.BotoServerError as e:
+        except boto.exception.BotoServerError:
             return None
 
     def get_db_snapshot(self, snapshotid):
         try:
             return RDSSnapshot(self.connection.get_all_dbsnapshots(snapshot_id=snapshotid)[0])
-        except boto.exception.BotoServerError as e:
+        except boto.exception.BotoServerError:
             return None
 
     def create_db_instance(self, instance_name, size, instance_class, db_engine,
@@ -670,7 +606,7 @@ class RDS2Connection:
             )['DescribeDBSnapshotsResponse']['DescribeDBSnapshotsResult']['DBSnapshots']
             result = RDS2Snapshot(snapshots[0])
             return result
-        except boto.rds2.exceptions.DBSnapshotNotFound as e:
+        except boto.rds2.exceptions.DBSnapshotNotFound:
             return None
 
     def create_db_instance(self, instance_name, size, instance_class, db_engine,
@@ -785,7 +721,7 @@ class RDSDBInstance:
         # ReadReplicaSourceDBInstanceIdentifier may or may not exist
         try:
             d["replication_source"] = self.instance.ReadReplicaSourceDBInstanceIdentifier
-        except Exception as e:
+        except Exception:
             d["replication_source"] = None
         return d
 
@@ -955,7 +891,6 @@ def await_resource(conn, resource, status, module):
 
 
 def create_db_instance(module, conn):
-    subnet = module.params.get('subnet')
     required_vars = ['instance_name', 'db_engine', 'size', 'instance_type', 'username', 'password']
     valid_vars = ['backup_retention', 'backup_window',
                   'character_set_name', 'db_name', 'engine_version',
@@ -966,7 +901,7 @@ def create_db_instance(module, conn):
         valid_vars.append('vpc_security_groups')
     else:
         valid_vars.append('security_groups')
-    if has_rds2:
+    if HAS_RDS2:
         valid_vars.extend(['publicly_accessible', 'tags'])
     params = validate_parameters(required_vars, valid_vars, module)
     instance_name = module.params.get('instance_name')
@@ -994,7 +929,7 @@ def create_db_instance(module, conn):
 def replicate_db_instance(module, conn):
     required_vars = ['instance_name', 'source_instance']
     valid_vars = ['instance_type', 'port', 'upgrade', 'zone']
-    if has_rds2:
+    if HAS_RDS2:
         valid_vars.extend(['iops', 'option_group', 'publicly_accessible', 'tags'])
     params = validate_parameters(required_vars, valid_vars, module)
     instance_name = module.params.get('instance_name')
@@ -1037,7 +972,7 @@ def delete_db_instance_or_snapshot(module, conn):
         if instance_name:
             if snapshot:
                 params["skip_final_snapshot"] = False
-                if has_rds2:
+                if HAS_RDS2:
                     params["final_db_snapshot_identifier"] = snapshot
                 else:
                     params["final_snapshot_id"] = snapshot
@@ -1054,7 +989,7 @@ def delete_db_instance_or_snapshot(module, conn):
     if not module.params.get('wait'):
         module.exit_json(changed=True)
     try:
-        resource = await_resource(conn, result, 'deleted', module)
+        await_resource(conn, result, 'deleted', module)
         module.exit_json(changed=True)
     except RDSException as e:
         if e.code == 'DBInstanceNotFound':
@@ -1066,9 +1001,6 @@ def delete_db_instance_or_snapshot(module, conn):
 
 
 def facts_db_instance_or_snapshot(module, conn):
-    required_vars = []
-    valid_vars = ['instance_name', 'snapshot']
-    params = validate_parameters(required_vars, valid_vars, module)
     instance_name = module.params.get('instance_name')
     snapshot = module.params.get('snapshot')
 
@@ -1177,7 +1109,7 @@ def reboot_db_instance(module, conn):
     required_vars = ['instance_name']
     valid_vars = []
 
-    if has_rds2:
+    if HAS_RDS2:
         valid_vars.append('force_failover')
 
     params = validate_parameters(required_vars, valid_vars, module)
@@ -1203,7 +1135,7 @@ def restore_db_instance(module, conn):
     valid_vars = ['db_name', 'iops', 'license_model', 'multi_zone',
                   'option_group', 'port', 'publicly_accessible',
                   'subnet', 'tags', 'upgrade', 'zone']
-    if has_rds2:
+    if HAS_RDS2:
         valid_vars.append('instance_type')
     else:
         required_vars.append('instance_type')
@@ -1272,7 +1204,7 @@ def validate_parameters(required_vars, valid_vars, module):
         'new_instance_name': 'new_db_instance_identifier',
         'force_failover': 'force_failover',
     }
-    if has_rds2:
+    if HAS_RDS2:
         optional_params.update(optional_params_rds2)
         sec_group = 'db_security_groups'
     else:
@@ -1299,7 +1231,7 @@ def validate_parameters(required_vars, valid_vars, module):
 
     vpc_groups = module.params.get('vpc_security_groups')
     if vpc_groups:
-        if has_rds2:
+        if HAS_RDS2:
             params['vpc_security_group_ids'] = vpc_groups
         else:
             groups_list = []
@@ -1385,16 +1317,13 @@ def main():
         module.params['port'] = DEFAULT_PORTS[engine.lower()]
 
     # connect to the rds endpoint
-    if has_rds2:
+    if HAS_RDS2:
         conn = RDS2Connection(module, region, **aws_connect_params)
     else:
         conn = RDSConnection(module, region, **aws_connect_params)
 
     invocations[module.params.get('command')](module, conn)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

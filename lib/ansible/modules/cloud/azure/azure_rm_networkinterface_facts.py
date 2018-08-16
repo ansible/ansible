@@ -29,18 +29,12 @@ options:
     name:
         description:
             - Only show results for a specific network interface.
-        required: false
-        default: null
     resource_group:
         description:
             - Name of the resource group containing the network interface(s). Required when searching by name.
-        required: false
-        default: null
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
-        required: false
-        default: null
 
 extends_documentation_fragment:
     - azure
@@ -211,6 +205,7 @@ class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
 
 def main():
     AzureRMNetworkInterfaceFacts()
+
 
 if __name__ == '__main__':
     main()

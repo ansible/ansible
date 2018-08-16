@@ -30,7 +30,6 @@ options:
   connected:
     description:
       - List of container names or container IDs to connect to a network.
-    default: null
     aliases:
       - containers
 
@@ -42,7 +41,6 @@ options:
   driver_options:
     description:
       - Dictionary of network settings. Consult docker docs for valid options and values.
-    default: null
 
   force:
     description:
@@ -52,25 +50,25 @@ options:
         network.  This option is required if you have changed the IPAM or
         driver options and want an existing network to be updated to use the
         new options.
-    default: false
+    type: bool
+    default: 'no'
 
   appends:
     description:
       - By default the connected list is canonical, meaning containers not on the list are removed from the network.
         Use C(appends) to leave existing containers connected.
-    default: false
+    type: bool
+    default: 'no'
     aliases:
       - incremental
 
   ipam_driver:
     description:
       - Specify an IPAM driver.
-    default: null
 
   ipam_options:
     description:
       - Dictionary of IPAM options.
-    default: null
 
   state:
     description:
@@ -98,6 +96,12 @@ author:
 requirements:
     - "python >= 2.6"
     - "docker-py >= 1.7.0"
+    - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
+       module has been superseded by L(docker,https://pypi.org/project/docker/)
+       (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
+       For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
+       install the C(docker) Python module. Note that both modules should I(not)
+       be installed at the same time."
     - "The docker server >= 1.9.0"
 '''
 
@@ -151,14 +155,14 @@ facts:
     sample: {}
 '''
 
-from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass, HAS_DOCKER_PY_2
+from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass, HAS_DOCKER_PY_2, HAS_DOCKER_PY_3
 
 try:
     from docker import utils
-    if HAS_DOCKER_PY_2:
+    if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
         from docker.types import IPAMPool, IPAMConfig
 except:
-    # missing docker-py handled in ansible.module_utils.docker
+    # missing docker-py handled in ansible.module_utils.docker_common
     pass
 
 
@@ -183,6 +187,7 @@ class TaskParameters(DockerBaseClass):
 
 def container_names_in_network(network):
     return [c['Name'] for c in network['Containers'].values()] if network['Containers'] else []
+
 
 class DockerNetworkManager(object):
 
@@ -268,12 +273,12 @@ class DockerNetworkManager(object):
         if not self.existing_network:
             ipam_pools = []
             if self.parameters.ipam_options:
-                if HAS_DOCKER_PY_2:
+                if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
                     ipam_pools.append(IPAMPool(**self.parameters.ipam_options))
                 else:
                     ipam_pools.append(utils.create_ipam_pool(**self.parameters.ipam_options))
 
-            if HAS_DOCKER_PY_2:
+            if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
                 ipam_config = IPAMConfig(driver=self.parameters.ipam_driver,
                                          pool_configs=ipam_pools)
             else:
@@ -362,16 +367,16 @@ class DockerNetworkManager(object):
 
 def main():
     argument_spec = dict(
-        network_name       = dict(type='str', required=True, aliases=['name']),
-        connected          = dict(type='list', default=[], aliases=['containers']),
-        state              = dict(type='str', default='present', choices=['present', 'absent']),
-        driver             = dict(type='str', default='bridge'),
-        driver_options     = dict(type='dict', default={}),
-        force              = dict(type='bool', default=False),
-        appends            = dict(type='bool', default=False, aliases=['incremental']),
-        ipam_driver        = dict(type='str', default=None),
-        ipam_options       = dict(type='dict', default={}),
-        debug              = dict(type='bool', default=False)
+        network_name=dict(type='str', required=True, aliases=['name']),
+        connected=dict(type='list', default=[], aliases=['containers']),
+        state=dict(type='str', default='present', choices=['present', 'absent']),
+        driver=dict(type='str', default='bridge'),
+        driver_options=dict(type='dict', default={}),
+        force=dict(type='bool', default=False),
+        appends=dict(type='bool', default=False, aliases=['incremental']),
+        ipam_driver=dict(type='str', default=None),
+        ipam_options=dict(type='dict', default={}),
+        debug=dict(type='bool', default=False)
     )
 
     client = AnsibleDockerClient(

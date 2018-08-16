@@ -1,5 +1,5 @@
 ---
-- debug: msg="START iosxr_interface cli/basic.yaml"
+- debug: msg="START iosxr_interface cli/basic.yaml on connection={{ ansible_connection }}"
 
 - name: Setup interface
   iosxr_interface:
@@ -129,6 +129,7 @@
     - name: GigabitEthernet0/0/0/3
     - name: GigabitEthernet0/0/0/2
     state: absent
+    provider: "{{ cli }}"
 
 - name: Add interface aggregate
   iosxr_interface:
@@ -255,4 +256,4 @@
     that:
       - 'result.changed == false'
 
-- debug: msg="END iosxr_interface cli/basic.yaml"
+- debug: msg="END iosxr_interface cli/basic.yaml on connection={{ ansible_connection }}"

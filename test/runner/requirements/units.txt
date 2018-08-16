@@ -23,8 +23,11 @@ f5-sdk ; python_version >= '2.7'
 f5-icontrol-rest ; python_version >= '2.7'
 deepdiff
 
-# requirement for modules using Netconf protocol
-ncclient
+# requirement for Fortinet specific modules
+pyfmg
 
 # requirement for aci_rest module
 xmljson
+
+# requirement for winrm connection plugin tests
+pexpect

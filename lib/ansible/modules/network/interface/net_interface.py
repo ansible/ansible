@@ -46,15 +46,20 @@ options:
     choices: ['full', 'half', 'auto']
   tx_rate:
     description:
-      - Transmit rate.
+      - Transmit rate in bits per second (bps).
+      - This is state check parameter only.
+      - Supports conditionals, see L(Conditionals in Networking Modules,../network/user_guide/network_working_with_command_output.html)
   rx_rate:
     description:
-      - Receiver rate.
+      - Receiver rate in bits per second (bps).
+      - This is state check parameter only.
+      - Supports conditionals, see L(Conditionals in Networking Modules,../network/user_guide/network_working_with_command_output.html)
   delay:
     description:
       - Time in seconds to wait before checking for the operational state on remote
         device. This wait is applicable for operational state argument which are
         I(state) with values C(up)/C(down), I(tx_rate) and I(rx_rate).
+    default: 10
   aggregate:
     description: List of Interfaces definitions.
   purge:

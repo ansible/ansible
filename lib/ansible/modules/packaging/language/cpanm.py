@@ -24,63 +24,57 @@ options:
   name:
     description:
       - The name of the Perl library to install. You may use the "full distribution path", e.g.  MIYAGAWA/Plack-0.99_05.tar.gz
-    required: false
-    default: null
     aliases: ["pkg"]
   from_path:
     description:
       - The local directory from where to install
-    required: false
-    default: null
   notest:
     description:
       - Do not run unit tests
-    required: false
-    default: false
+    type: bool
+    default: 'no'
   locallib:
     description:
       - Specify the install base to install modules
-    required: false
-    default: false
+    type: bool
+    default: 'no'
   mirror:
     description:
       - Specifies the base URL for the CPAN mirror to use
-    required: false
-    default: false
+    type: bool
+    default: 'no'
   mirror_only:
     description:
       - Use the mirror's index file instead of the CPAN Meta DB
-    required: false
-    default: false
+    type: bool
+    default: 'no'
   installdeps:
     description:
       - Only install dependencies
-    required: false
-    default: false
+    type: bool
+    default: 'no'
     version_added: "2.0"
   version:
     description:
       - minimum version of perl module to consider acceptable
-    required: false
-    default: false
+    type: bool
+    default: 'no'
     version_added: "2.1"
   system_lib:
     description:
      -  Use this if you want to install modules to the system perl include path. You must be root or have "passwordless" sudo for this to work.
      -  This uses the cpanm commandline option '--sudo', which has nothing to do with ansible privilege escalation.
-    required: false
-    default: false
+    type: bool
+    default: 'no'
     version_added: "2.0"
     aliases: ['use_sudo']
   executable:
     description:
       - Override the path to the cpanm executable
-    required: false
-    default: null
     version_added: "2.1"
 notes:
    - Please note that U(http://search.cpan.org/dist/App-cpanminus/bin/cpanm, cpanm) must be installed on the remote host.
-author: "Franck Cuny (@franckcuny)"
+author: "Franck Cuny (@fcuny)"
 '''
 
 EXAMPLES = '''
@@ -139,10 +133,8 @@ def _is_package_installed(module, name, locallib, cpanm, version):
     else:
         cmd = "%s;'" % cmd
     res, stdout, stderr = module.run_command(cmd, check_rc=False)
-    if res == 0:
-        return True
-    else:
-        return False
+    return res == 0
+
 
 def _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only, installdeps, cpanm, use_sudo):
     # this code should use "%s" like everything else and just return early but not fixing all of it now.
@@ -175,9 +167,10 @@ def _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only, inst
 
 def _get_cpanm_path(module):
     if module.params['executable']:
-        return module.params['executable']
+        result = module.params['executable']
     else:
-        return module.get_bin_path('cpanm', True)
+        result = module.get_bin_path('cpanm', True)
+    return result
 
 
 def main():
@@ -199,23 +192,23 @@ def main():
         required_one_of=[['name', 'from_path']],
     )
 
-    cpanm       = _get_cpanm_path(module)
-    name        = module.params['name']
-    from_path   = module.params['from_path']
-    notest      = module.boolean(module.params.get('notest', False))
-    locallib    = module.params['locallib']
-    mirror      = module.params['mirror']
+    cpanm = _get_cpanm_path(module)
+    name = module.params['name']
+    from_path = module.params['from_path']
+    notest = module.boolean(module.params.get('notest', False))
+    locallib = module.params['locallib']
+    mirror = module.params['mirror']
     mirror_only = module.params['mirror_only']
     installdeps = module.params['installdeps']
-    use_sudo    = module.params['system_lib']
-    version     = module.params['version']
+    use_sudo = module.params['system_lib']
+    version = module.params['version']
 
-    changed   = False
+    changed = False
 
     installed = _is_package_installed(module, name, locallib, cpanm, version)
 
     if not installed:
-        cmd       = _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only, installdeps, cpanm, use_sudo)
+        cmd = _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only, installdeps, cpanm, use_sudo)
 
         rc_cpanm, out_cpanm, err_cpanm = module.run_command(cmd, check_rc=False)
 

@@ -30,113 +30,54 @@ options:
     description:
       description:
         - The description to use for the group.
-      required: False
-      default: null
     inventory:
       description:
         - Inventory the group should be made a member of.
       required: True
     variables:
       description:
-        - Variables to use for the group, use '@' for a file.
-      required: False
-      default: null
+        - Variables to use for the group, use C(@) for a file.
     credential:
       description:
         - Credential to use for the group.
-      required: False
-      default: null
     source:
       description:
         - The source to use for this group.
-      required: False
-      default: null,
       choices: ["manual", "file", "ec2", "rax", "vmware", "gce", "azure", "azure_rm", "openstack", "satellite6" , "cloudforms", "custom"]
     source_regions:
       description:
         - Regions for cloud provider.
-      required: False
-      default: null
     source_vars:
       description:
         - Override variables from source with variables from this field.
-      required: False
-      default: null
     instance_filters:
       description:
         - Comma-separated list of filter expressions for matching hosts.
-      required: False
-      default: null
     group_by:
       description:
         - Limit groups automatically created from inventory source.
-      required: False
-      default: null
     source_script:
       description:
-        - Inventory script to be used when group type is "custom".
-      required: False
-      default: null
+        - Inventory script to be used when group type is C(custom).
     overwrite:
       description:
-        - Delete child roups and hosts not found in source.
-      required: False
-      default: False
+        - Delete child groups and hosts not found in source.
+      type: bool
+      default: 'no'
     overwrite_vars:
       description:
         - Override vars in child groups and hosts with those from external source.
-      required: False
-      default: null
     update_on_launch:
       description:
         - Refresh inventory data from its source each time a job is run.
-      required: False
-      default: False
+      type: bool
+      default: 'no'
     state:
       description:
         - Desired state of the resource.
-      required: False
       default: "present"
       choices: ["present", "absent"]
-    tower_host:
-      description:
-        - URL to your Tower instance.
-      required: False
-      default: null
-    tower_username:
-        description:
-          - Username for your Tower instance.
-        required: False
-        default: null
-    tower_password:
-        description:
-          - Password for your Tower instance.
-        required: False
-        default: null
-    tower_verify_ssl:
-        description:
-          - Dis/allow insecure connections to Tower. If C(no), SSL certificates will not be validated.
-            This should only be used on personally controlled sites using self-signed certificates.
-        required: False
-        default: True
-    tower_config_file:
-      description:
-        - Path to the Tower config file. See notes.
-      required: False
-      default: null
-
-
-requirements:
-  - "python >= 2.6"
-  - "ansible-tower-cli >= 3.0.2"
-
-notes:
-  - If no I(config_file) is provided we will attempt to use the tower-cli library
-    defaults to find your Tower host information.
-  - I(config_file) should contain Tower configuration in the following format
-      host=hostname
-      username=username
-      password=password
+extends_documentation_fragment: tower
 '''
 
 
@@ -150,62 +91,53 @@ EXAMPLES = '''
     tower_config_file: "~/tower_cli.cfg"
 '''
 
+import os
+
+from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode
 
 try:
-    import os
     import tower_cli
     import tower_cli.utils.exceptions as exc
 
     from tower_cli.conf import settings
-    from ansible.module_utils.ansible_tower import tower_auth_config, tower_check_mode
-
-    HAS_TOWER_CLI = True
 except ImportError:
-    HAS_TOWER_CLI = False
+    pass
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            name=dict(required=True),
-            description=dict(),
-            inventory=dict(required=True),
-            variables=dict(),
-            credential=dict(),
-            source=dict(choices=["manual", "file", "ec2", "rax", "vmware",
-                                 "gce", "azure", "azure_rm", "openstack",
-                                 "satellite6", "cloudforms", "custom"], default="manual"),
-            source_regions=dict(),
-            source_vars=dict(),
-            instance_filters=dict(),
-            group_by=dict(),
-            source_script=dict(),
-            overwrite=dict(type='bool', default=False),
-            overwrite_vars=dict(),
-            update_on_launch=dict(type='bool', default=False),
-            tower_host=dict(),
-            tower_username=dict(),
-            tower_password=dict(no_log=True),
-            tower_verify_ssl=dict(type='bool', default=True),
-            tower_config_file=dict(type='path'),
-            state=dict(choices=['present', 'absent'], default='present'),
-        ),
-        supports_check_mode=True
+    argument_spec = dict(
+        name=dict(required=True),
+        description=dict(),
+        inventory=dict(required=True),
+        variables=dict(),
+        credential=dict(),
+        source=dict(choices=["manual", "file", "ec2", "rax", "vmware",
+                             "gce", "azure", "azure_rm", "openstack",
+                             "satellite6", "cloudforms", "custom"], default="manual"),
+        source_regions=dict(),
+        source_vars=dict(),
+        instance_filters=dict(),
+        group_by=dict(),
+        source_script=dict(),
+        overwrite=dict(type='bool', default=False),
+        overwrite_vars=dict(),
+        update_on_launch=dict(type='bool', default=False),
+        state=dict(choices=['present', 'absent'], default='present'),
     )
 
-    if not HAS_TOWER_CLI:
-        module.fail_json(msg='ansible-tower-cli required for this module')
+    module = TowerModule(argument_spec=argument_spec, supports_check_mode=True)
 
     name = module.params.get('name')
     inventory = module.params.get('inventory')
     credential = module.params.get('credential')
-    state = module.params.get('state')
+    state = module.params.pop('state')
 
     variables = module.params.get('variables')
     if variables:
         if variables.startswith('@'):
             filename = os.path.expanduser(variables[1:])
-            variables = module.contents_from_file(filename)
+            with open(filename, 'r') as f:
+                variables = f.read()
 
     json_output = {'group': name, 'state': state}
 
@@ -241,6 +173,5 @@ def main():
     module.exit_json(**json_output)
 
 
-from ansible.module_utils.basic import AnsibleModule
 if __name__ == '__main__':
     main()

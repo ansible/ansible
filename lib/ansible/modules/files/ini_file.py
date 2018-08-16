@@ -14,7 +14,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: ini_file
@@ -33,9 +32,8 @@ options:
     description:
       - Path to the INI-style file; this file is created if required.
       - Before 2.3 this option was only usable as I(dest).
+    aliases: [ dest ]
     required: true
-    default: null
-    aliases: ['dest']
   section:
     description:
       - Section name in INI file. This is added if C(state=present) automatically when
@@ -43,57 +41,55 @@ options:
       - If left empty or set to `null`, the I(option) will be placed before the first I(section).
         Using `null` is also required if the config format does not support sections.
     required: true
-    default: null
   option:
     description:
       - If set (required for changing a I(value)), this is the name of the option.
       - May be omitted if adding/removing a whole I(section).
-    required: false
-    default: null
   value:
     description:
      - The string value to be associated with an I(option). May be omitted when removing an I(option).
-    required: false
-    default: null
   backup:
     description:
       - Create a backup file including the timestamp information so you can get
         the original file back if you somehow clobbered it incorrectly.
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   others:
      description:
        - All arguments accepted by the M(file) module also work here
-     required: false
   state:
      description:
        - If set to C(absent) the option or section will be removed if present instead of created.
-     required: false
-     default: "present"
-     choices: [ "present", "absent" ]
+     choices: [ absent, present ]
+     default: present
   no_extra_spaces:
      description:
        - Do not insert spaces before and after '=' symbol
-     required: false
-     default: false
+     type: bool
+     default: 'no'
      version_added: "2.1"
   create:
-     required: false
-     choices: [ "yes", "no" ]
-     default: "yes"
      description:
        - If set to 'no', the module will fail if the file does not already exist.
          By default it will create the file if it is missing.
+     type: bool
+     default: 'yes'
      version_added: "2.2"
+  allow_no_value:
+     description:
+       - allow option without value and without '=' symbol
+     type: bool
+     required: false
+     default: false
+     version_added: "2.6"
 notes:
    - While it is possible to add an I(option) without specifying a I(value), this makes
      no sense.
    - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but
      I(dest) still works as well.
 author:
-    - "Jan-Piet Mens (@jpmens)"
-    - "Ales Nosek (@noseka1)"
+    - Jan-Piet Mens (@jpmens)
+    - Ales Nosek (@noseka1)
 '''
 
 EXAMPLES = '''
@@ -107,7 +103,8 @@ EXAMPLES = '''
     mode: 0600
     backup: yes
 
-- ini_file:
+- name: Ensure "temperature=cold is in section "[drinks]" in specified file
+  ini_file:
     path: /etc/anotherconf
     section: drinks
     option: temperature
@@ -117,36 +114,34 @@ EXAMPLES = '''
 
 import os
 import re
+import tempfile
+import traceback
 
-# import module snippets
 from ansible.module_utils.basic import AnsibleModule
 
-# ==============================================================
-# match_opt
 
 def match_opt(option, line):
     option = re.escape(option)
-    return re.match('( |\t)*%s( |\t)*=' % option, line) \
-      or re.match('#( |\t)*%s( |\t)*=' % option, line) \
-      or re.match(';( |\t)*%s( |\t)*=' % option, line)
+    return re.match('( |\t)*%s( |\t)*(=|$)' % option, line) \
+        or re.match('#( |\t)*%s( |\t)*(=|$)' % option, line) \
+        or re.match(';( |\t)*%s( |\t)*(=|$)' % option, line)
 
-# ==============================================================
-# match_active_opt
 
 def match_active_opt(option, line):
     option = re.escape(option)
-    return re.match('( |\t)*%s( |\t)*=' % option, line)
+    return re.match('( |\t)*%s( |\t)*(=|$)' % option, line)
 
-# ==============================================================
-# do_ini
 
 def do_ini(module, filename, section=None, option=None, value=None,
-        state='present', backup=False, no_extra_spaces=False, create=True):
+           state='present', backup=False, no_extra_spaces=False, create=True,
+           allow_no_value=False):
 
-    diff = {'before': '',
-            'after': '',
-            'before_header': '%s (content)' % filename,
-            'after_header': '%s (content)' % filename}
+    diff = dict(
+        before='',
+        after='',
+        before_header='%s (content)' % filename,
+        after_header='%s (content)' % filename,
+    )
 
     if not os.path.exists(filename):
         if not create:
@@ -198,7 +193,10 @@ def do_ini(module, filename, section=None, option=None, value=None,
                     for i in range(index, 0, -1):
                         # search backwards for previous non-blank or non-comment line
                         if not re.match(r'^[ \t]*([#;].*)?$', ini_lines[i - 1]):
-                            ini_lines.insert(i, assignment_format % (option, value))
+                            if not value and allow_no_value:
+                                ini_lines.insert(i, '%s\n' % option)
+                            else:
+                                ini_lines.insert(i, assignment_format % (option, value))
                             msg = 'option added'
                             changed = True
                             break
@@ -213,7 +211,10 @@ def do_ini(module, filename, section=None, option=None, value=None,
                 if state == 'present':
                     # change the existing option line
                     if match_opt(option, line):
-                        newline = assignment_format % (option, value)
+                        if not value and allow_no_value:
+                            newline = '%s\n' % option
+                        else:
+                            newline = assignment_format % (option, value)
                         option_changed = ini_lines[index] != newline
                         changed = changed or option_changed
                         if option_changed:
@@ -244,7 +245,10 @@ def do_ini(module, filename, section=None, option=None, value=None,
 
     if not within_section and option and state == 'present':
         ini_lines.append('[%s]\n' % section)
-        ini_lines.append(assignment_format % (option, value))
+        if not value and allow_no_value:
+            ini_lines.append('%s\n' % option)
+        else:
+            ini_lines.append(assignment_format % (option, value))
         changed = True
         msg = 'section and option added'
 
@@ -255,32 +259,40 @@ def do_ini(module, filename, section=None, option=None, value=None,
     if changed and not module.check_mode:
         if backup:
             backup_file = module.backup_local(filename)
-        ini_file = open(filename, 'w')
+
         try:
-            ini_file.writelines(ini_lines)
-        finally:
-            ini_file.close()
+            tmpfd, tmpfile = tempfile.mkstemp(dir=module.tmpdir)
+            f = os.fdopen(tmpfd, 'w')
+            f.writelines(ini_lines)
+            f.close()
+        except IOError:
+            module.fail_json(msg="Unable to create temporary file %s", traceback=traceback.format_exc())
+
+        try:
+            module.atomic_move(tmpfile, filename)
+        except IOError:
+            module.ansible.fail_json(msg='Unable to move temporary \
+                                   file %s to %s, IOError' % (tmpfile, filename), traceback=traceback.format_exc())
 
     return (changed, backup_file, diff, msg)
 
-# ==============================================================
-# main
 
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            path = dict(required=True, aliases=['dest'], type='path'),
-            section = dict(required=True),
-            option = dict(required=False),
-            value = dict(required=False),
-            backup = dict(default='no', type='bool'),
-            state = dict(default='present', choices=['present', 'absent']),
-            no_extra_spaces = dict(required=False, default=False, type='bool'),
-            create=dict(default=True, type='bool')
+        argument_spec=dict(
+            path=dict(type='path', required=True, aliases=['dest']),
+            section=dict(type='str', required=True),
+            option=dict(type='str'),
+            value=dict(type='str'),
+            backup=dict(type='bool', default=False),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            no_extra_spaces=dict(type='bool', default=False),
+            allow_no_value=dict(type='bool', default=False, required=False),
+            create=dict(type='bool', default=True)
         ),
-        add_file_common_args = True,
-        supports_check_mode = True
+        add_file_common_args=True,
+        supports_check_mode=True,
     )
 
     path = module.params['path']
@@ -290,20 +302,27 @@ def main():
     state = module.params['state']
     backup = module.params['backup']
     no_extra_spaces = module.params['no_extra_spaces']
+    allow_no_value = module.params['allow_no_value']
     create = module.params['create']
 
-    (changed,backup_file,diff,msg) = do_ini(module, path, section, option, value, state, backup, no_extra_spaces, create)
+    (changed, backup_file, diff, msg) = do_ini(module, path, section, option, value, state, backup, no_extra_spaces, create, allow_no_value)
 
     if not module.check_mode and os.path.exists(path):
         file_args = module.load_file_common_arguments(module.params)
         changed = module.set_fs_attributes_if_different(file_args, changed)
 
-    results = { 'changed': changed, 'msg': msg, 'path': path, 'diff': diff }
+    results = dict(
+        changed=changed,
+        diff=diff,
+        msg=msg,
+        path=path,
+    )
     if backup_file is not None:
         results['backup_file'] = backup_file
 
     # Mission complete
     module.exit_json(**results)
+
 
 if __name__ == '__main__':
     main()

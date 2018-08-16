@@ -1,5 +1,5 @@
 ---
-- debug: msg="START netconf_json/output.yaml"
+- debug: msg="START netconf_json/output.yaml on connection={{ ansible_connection }}"
 
 - name: get output for single command
   junos_command:
@@ -29,4 +29,35 @@
       - "result.stdout is defined"
       - "result.stdout_lines is defined"
 
-- debug: msg="END netconf_json/output.yaml"
+- name: get output for single command with cli transport
+  junos_command:
+    commands: ['show version | display json']
+    provider:
+      transport: cli
+  register: result
+  connection: network_cli
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.stdout is defined"
+      - "result.stdout_lines is defined"
+
+- name: get output for multiple commands with cli transport
+  junos_command:
+    commands:
+      - show version
+      - show route
+    format: json
+    provider:
+      transport: cli
+  register: result
+  connection: network_cli
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.stdout is defined"
+      - "result.stdout_lines is defined"
+
+- debug: msg="END netconf_json/output.yaml on connection={{ ansible_connection }}"

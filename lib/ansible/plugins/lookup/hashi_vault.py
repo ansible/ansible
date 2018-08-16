@@ -1,47 +1,89 @@
-# (c) 2015, Jonathan Davila <jdavila(at)ansible.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-# USAGE: {{ lookup('hashi_vault', 'secret=secret/hello:value token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200')}}
-#
-# To authenticate with a username/password against the LDAP auth backend in Vault:
-#
-# USAGE: {{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=ldap mount_point=ldap username=myuser password=mypassword url=http://myvault:8200')}}
-#
-# The mount_point param defaults to ldap, so is only required if you have a custom mount point.
-#
-# To use a ssl Vault add verify param:
-#
-# USAGE: {{ lookup('hashi_vault', 'secret=secret/hello:value token=c975b780-d1be-8016-866b-01d0f9b688a5 url=https://myvault:8200 validate_certs=False')}}
-#
-# The validate_certs param posible values are: True or False. By default it's in True. If False no verify of ssl will be done.
-# To use ca certificate file you can specify the path as parameter cacert
-#
-# USAGE: {{ lookup('hashi_vault', 'secret=secret/hello:value token=xxxx-xxx-xxx url=https://myvault:8200 validate_certs=True cacert=/cacert/path/ca.pem')}}
-#
-# You can skip setting the url if you set the VAULT_ADDR environment variable
-# or if you want it to default to localhost:8200
-#
-# NOTE: Due to a current limitation in the HVAC library there won't
-# necessarily be an error if a bad endpoint is specified.
-#
-# Requires hvac library. Install with pip.
+# (c) 2015, Jonathan Davila <jonathan(at)davila.io>
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = """
+  lookup: hashi_vault
+  author: Jonathan Davila <jdavila(at)ansible.com>
+  version_added: "2.0"
+  short_description: retrieve secrets from HashiCorp's vault
+  requirements:
+    - hvac (python library)
+  description:
+    - retrieve secrets from HashiCorp's vault
+  notes:
+    - Due to a current limitation in the HVAC library there won't necessarily be an error if a bad endpoint is specified.
+  options:
+    secret:
+      description: query you are making
+      required: True
+    token:
+      description: vault token
+      env:
+        - name: VAULT_TOKEN
+    url:
+      description: url to vault service
+      env:
+        - name: VAULT_ADDR
+      default: 'http://127.0.0.1:8200'
+    username:
+      description: authentication user name
+    password:
+      description: authentication password
+    role_id:
+      description: Role id for a vault AppRole auth
+      env:
+        - name: VAULT_ROLE_ID
+    secret_id:
+      description: Secret id for a vault AppRole auth
+      env:
+        - name: VAULT_SECRET_ID
+    auth_method:
+      description: authentication method used
+    mount_point:
+      description: vault mount point, only required if you have a custom mount point
+      default: ldap
+    cacert:
+      description: path to certificate to use for authentication
+    validate_certs:
+      description: controls verification and validation of SSL certificates, mostly you only want to turn off with self signed ones.
+      type: boolean
+      default: True
+"""
+
+EXAMPLES = """
+- debug:
+    msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200')}}"
+
+- name: Return all secrets from a path
+  debug:
+    msg: "{{ lookup('hashi_vault', 'secret=secret/hello token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200')}}"
+
+- name: Vault that requires authentication via LDAP
+  debug:
+      msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=ldap mount_point=ldap username=myuser password=mypas url=http://myvault:8200')}}"
+
+- name: Using an ssl vault
+  debug:
+      msg: "{{ lookup('hashi_vault', 'secret=secret/hola:value token=c975b780-d1be-8016-866b-01d0f9b688a5 url=https://myvault:8200 validate_certs=False')}}"
+
+- name: using certificate auth
+  debug:
+      msg: "{{ lookup('hashi_vault', 'secret=secret/hi:value token=xxxx-xxx-xxx url=https://myvault:8200 validate_certs=True cacert=/cacert/path/ca.pem')}}"
+
+- name: authenticate with a Vault app role
+  debug:
+      msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=approle role_id=myroleid secret_id=mysecretid url=http://myvault:8200')}}"
+"""
+
+RETURN = """
+_raw:
+  description:
+    - secrets(s) requested
+"""
 
 import os
 
@@ -73,23 +115,25 @@ class HashiVault:
         if s is None:
             raise AnsibleError("No secret specified for hashi_vault lookup")
 
-        s_f = s.split(':')
+        s_f = s.rsplit(':', 1)
         self.secret = s_f[0]
         if len(s_f) >= 2:
             self.secret_field = s_f[1]
         else:
-            self.secret_field = 'value'
+            self.secret_field = ''
 
-        # if a particular backend is asked for (and its method exists) we call it, otherwise drop through to using
-        # token auth.   this means if a particular auth backend is requested and a token is also given, then we
+        self.verify = self.boolean_or_cacert(kwargs.get('validate_certs', True), kwargs.get('cacert', ''))
+
+        # If a particular backend is asked for (and its method exists) we call it, otherwise drop through to using
+        # token auth. This means if a particular auth backend is requested and a token is also given, then we
         # ignore the token and attempt authentication against the specified backend.
         #
         # to enable a new auth backend, simply add a new 'def auth_<type>' method below.
         #
         self.auth_method = kwargs.get('auth_method')
-        if self.auth_method:
+        if self.auth_method and self.auth_method != 'token':
             try:
-                self.client = hvac.Client(url=self.url)
+                self.client = hvac.Client(url=self.url, verify=self.verify)
                 # prefixing with auth_ to limit which methods can be accessed
                 getattr(self, 'auth_' + self.auth_method)(**kwargs)
             except AttributeError:
@@ -108,8 +152,6 @@ class HashiVault:
             if self.token is None:
                 raise AnsibleError("No Vault Token specified")
 
-            self.verify = self.boolean_or_cacert(kwargs.get('validate_certs', True), kwargs.get('cacert', ''))
-
             self.client = hvac.Client(url=self.url, token=self.token, verify=self.verify)
 
         if not self.client.is_authenticated():
@@ -121,7 +163,7 @@ class HashiVault:
         if data is None:
             raise AnsibleError("The secret %s doesn't seem to exist for hashi_vault lookup" % self.secret)
 
-        if self.secret_field == '':  # secret was specified with trailing ':'
+        if self.secret_field == '':
             return data['data']
 
         if self.secret_field not in data['data']:
@@ -154,6 +196,17 @@ class HashiVault:
                 return True
         else:
             return False
+
+    def auth_approle(self, **kwargs):
+        role_id = kwargs.get('role_id', os.environ.get('VAULT_ROLE_ID', None))
+        if role_id is None:
+            raise AnsibleError("Authentication method app role requires a role_id")
+
+        secret_id = kwargs.get('secret_id', os.environ.get('VAULT_SECRET_ID', None))
+        if secret_id is None:
+            raise AnsibleError("Authentication method app role requires a secret_id")
+
+        self.client.auth_approle(role_id, secret_id)
 
 
 class LookupModule(LookupBase):

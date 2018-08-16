@@ -1,0 +1,5 @@
+- name: Set variable inside tasks3.yml
+  set_fact:
+    set_in_tasks3: yes
+  tags:
+    - tasks3

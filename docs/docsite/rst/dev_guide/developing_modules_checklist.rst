@@ -23,7 +23,7 @@ The following  checklist items are important guidelines for people who want to c
 
 * The shebang must always be ``#!/usr/bin/python``.  This allows ``ansible_python_interpreter`` to work
 * Modules must be written to support Python 2.6. If this is not possible, required minimum Python version and rationale should be explained in the requirements section in ``DOCUMENTATION``.  In Ansible-2.3 the minimum requirement for modules was Python-2.4.
-* Modules must be written to use proper Python-3 syntax.  At some point in the future we'll come up with rules for running on Python-3 but we're not there yet.  See :doc:`developing_python3` for help on how to do this.
+* Modules must be written to use proper Python-3 syntax.  At some point in the future we'll come up with rules for running on Python-3 but we're not there yet.  See :doc:`developing_python_3` for help on how to do this.
 * Modules must have a metadata section.  For the vast majority of new modules,
   the metadata should look exactly like this:
 
@@ -33,7 +33,7 @@ The following  checklist items are important guidelines for people who want to c
                         'supported_by': 'community',
                         'metadata_version': '1.1'}
 
-The complete module metadata specification is here: `Ansible metadata block <https://docs.ansible.com/ansible/dev_guide/developing_modules_documenting.html#ansible-metadata-block>`_
+Read the complete :ref:`module metadata specification <ansible_metadata_block>` for more information.
 
 * Documentation: Make sure it exists
     * Module documentation should briefly and accurately define what each module and option does, and how it works with others in the underlying system. Documentation should be written for broad audience--readable both by experts and non-experts. This documentation is not meant to teach a total novice, but it also should not be reserved for the Illuminati (hard balance).
@@ -55,7 +55,7 @@ The complete module metadata specification is here: `Ansible metadata block <htt
     * Examples--include them whenever possible and make sure they are reproducible.
     * Document the return structure of the module. Refer to :ref:`common_return_values` and :ref:`module_documenting` for additional information.
 * Predictable user interface: This is a particularly important section as it is also an area where we need significant improvements.
-    * Name consistency across modules (we’ve gotten better at this, but we still have many deviations).
+    * Name consistency across modules (we've gotten better at this, but we still have many deviations).
     * Declarative operation (not CRUD)--this makes it easy for a user not to care what the existing state is, just about the final state. ``started/stopped``, ``present/absent``--don't overload options too much. It is preferable to add a new, simple option than to add choices/states that don't fit with existing ones.
     * Keep options small, having them take large data structures might save us a few tasks, but adds a complex requirement that we cannot easily validate before passing on to the module.
     * Allow an "expert mode". This may sound like the absolute opposite of the previous one, but it is always best to let expert users deal with complex data. This requires different modules in some cases, so that you end up having one (1) expert module and several 'piecemeal' ones (ec2_vpc_net?). The reason for this is not, as many users express, because it allows a single task and keeps plays small (which just moves the data complexity into vars files, leaving you with a slightly different structure in another YAML file). It does, however, allow for a more 'atomic' operation against the underlying APIs and services.
@@ -100,7 +100,7 @@ The complete module metadata specification is here: `Ansible metadata block <htt
 * Do not use wildcards for importing other python modules (ex: ``from ansible.module_utils.basic import *``).  This used to be required for code imported from ``ansible.module_utils`` but, from Ansible-2.1 onwards, it's just an outdated and bad practice.
 * The module must have a `main` function that wraps the normal execution.
 * Call your :func:`main` from a conditional so that it would be possible to
-  import them into unittests in the future example
+  import them into unit tests in the future example
 
 .. code-block:: python
 
@@ -119,8 +119,8 @@ The complete module metadata specification is here: `Ansible metadata block <htt
   fields of a dictionary and return the dictionary.
 * When fetching URLs, please use either fetch_url or open_url from ansible.module_utils.urls 
   rather than urllib2; urllib2 does not natively verify TLS certificates and so is insecure for https. 
-* facts modules must return facts in the ansible_facts field of the result
-  dictionary. :ref:`module_provided_facts`
+* facts modules must return facts in the ansible_facts field of the :ref:`result
+  dictionary<common_return_values>`.
 * modules that are purely about fact gathering need to implement check_mode.
   they should not cause any changes anyway so it should be as simple as adding
   check_mode=True when instantiating AnsibleModule.  (The reason is that
@@ -131,8 +131,8 @@ The complete module metadata specification is here: `Ansible metadata block <htt
   module_utils.urls.fetch_url().  If you use those you may find you also want
   to fallback on environment variables for default values.  If you do that,
   be sure to use non-generic environment variables (like
-  :envvar:`API_<MODULENAME>_USERNAME`).  Using generic environment variables
-  like :envvar:`API_USERNAME` would conflict between modules.
+  :code:`API_<MODULENAME>_USERNAME`).  Using generic environment variables
+  like :code:`API_USERNAME` would conflict between modules.
 
 Windows modules checklist
 =========================

@@ -47,9 +47,6 @@ options:
 EXAMPLES = '''
 - nxos_reboot:
     confirm: true
-    host: "{{ inventory_hostname }}"
-    username: "{{ username }}"
-    password: "{{ password }}"
 '''
 
 RETURN = '''
@@ -60,21 +57,23 @@ rebooted:
     sample: true
 '''
 
-from ansible.module_utils.nxos import run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
 def reboot(module):
     cmds = [
-        {'command': 'terminal-dont-ask'},
+        {'command': 'terminal dont-ask', 'output': 'text'},
         {'command': 'reload', 'output': 'text'}
     ]
     run_commands(module, cmds)
 
 
 def main():
-    argument_spec = {}
+    argument_spec = dict(
+        confirm=dict(default=False, type='bool')
+    )
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
@@ -83,11 +82,13 @@ def main():
     check_args(module, warnings)
     results = dict(changed=False, warnings=warnings)
 
-    if not module.check_mode:
-        reboot(module)
-    results['changed'] = True
+    if module.params['confirm']:
+        if not module.check_mode:
+            reboot(module)
+        results['changed'] = True
 
     module.exit_json(**results)
+
 
 if __name__ == '__main__':
     main()

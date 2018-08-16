@@ -45,7 +45,7 @@ options:
   virtualenv:
     description:
       - An optional path to a I(virtualenv) installation to use while running the manage application.
-    required: false
+    aliases: [virtualenv]
   apps:
     description:
       - A list of space-delimited apps to target. Used by the 'test' command.
@@ -63,7 +63,7 @@ options:
       - Fail the command immediately if a test fails. Used by the 'test' command.
     required: false
     default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
   fixtures:
     description:
       - A space-delimited list of fixture file names to load in the database. B(Required) by the 'loaddata' command.
@@ -148,7 +148,7 @@ def _ensure_virtualenv(module):
     if venv_param is None:
         return
 
-    vbin = os.path.join(os.path.expanduser(venv_param), 'bin')
+    vbin = os.path.join(venv_param, 'bin')
     activate = os.path.join(vbin, 'activate')
 
     if not os.path.exists(activate):
@@ -224,10 +224,10 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             command=dict(default=None, required=True),
-            app_path=dict(default=None, required=True),
+            app_path=dict(default=None, required=True, type='path'),
             settings=dict(default=None, required=False),
             pythonpath=dict(default=None, required=False, aliases=['python_path']),
-            virtualenv=dict(default=None, required=False, aliases=['virtual_env']),
+            virtualenv=dict(default=None, required=False, type='path', aliases=['virtual_env']),
 
             apps=dict(default=None, required=False),
             cache_table=dict(default=None, required=False),
@@ -244,7 +244,7 @@ def main():
     )
 
     command = module.params['command']
-    app_path = os.path.expanduser(module.params['app_path'])
+    app_path = module.params['app_path']
     virtualenv = module.params['virtualenv']
 
     for param in specific_params:
@@ -278,7 +278,7 @@ def main():
         if module.params[param]:
             cmd = '%s %s' % (cmd, module.params[param])
 
-    rc, out, err = module.run_command(cmd, cwd=os.path.expanduser(app_path))
+    rc, out, err = module.run_command(cmd, cwd=app_path)
     if rc != 0:
         if command == 'createcachetable' and 'table' in err and 'already exists' in err:
             out = 'Already exists.'

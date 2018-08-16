@@ -26,29 +26,23 @@ options:
   host:
     description:
       - Tiller's server host
-    required: false
     default: "localhost"
   port:
     description:
       - Tiller's server port
-    required: false
     default: 44134
   namespace:
     description:
       - Kubernetes namespace where the chart should be installed
-    required: false
     default: "default"
   name:
     description:
       - Release name to manage
-    required: false
-    default: null
   state:
     description:
       - Whether to install C(present), remove C(absent), or purge C(purged) a package.
-    required: false
     choices: ['absent', 'purged', 'present']
-    default: "installed"
+    default: "present"
   chart:
     description: |
       A map describing the chart to install. For example:
@@ -58,18 +52,16 @@ options:
         source:
           type: repo
           location: https://kubernetes-charts.storage.googleapis.com
-    required: false
     default: {}
   values:
     description:
       - A map of value options for the chart.
-    required: false
     default: {}
   disable_hooks:
     description:
       - Whether to disable hooks during the uninstall process
-    required: false
-    default: false
+    type: bool
+    default: 'no'
 '''
 
 RETURN = ''' # '''
@@ -84,7 +76,7 @@ EXAMPLES = '''
       source:
         type: repo
         location: https://kubernetes-charts.storage.googleapis.com
-    state: installed
+    state: present
     name: my-memcached
     namespace: default
 
@@ -115,14 +107,19 @@ def install(module, tserver):
     namespace = module.params['namespace']
 
     chartb = chartbuilder.ChartBuilder(chart)
-    try:
+    r_matches = (x for x in tserver.list_releases()
+                 if x.name == name and x.namespace == namespace)
+    installed_release = next(r_matches, None)
+    if installed_release:
+        if installed_release.chart.metadata.version != chart['version']:
+            tserver.update_release(chartb.get_helm_chart(), False,
+                                   namespace, name=name, values=values)
+            changed = True
+    else:
         tserver.install_release(chartb.get_helm_chart(), namespace,
                                 dry_run=False, name=name,
                                 values=values)
         changed = True
-    except grpc._channel._Rendezvous as exc:
-        if "already exists" not in str(exc):
-            raise exc
 
     return dict(changed=changed)
 

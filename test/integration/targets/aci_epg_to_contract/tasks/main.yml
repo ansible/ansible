@@ -1,0 +1,254 @@
+# Test code for the ACI modules
+# Copyright: (c) 2017, Jacob McGill (@jmcgill298)
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI APIC host, ACI username and ACI password
+  fail:
+    msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
+  when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
+
+- name: Ensure contract binding does not exist prior to testing
+  aci_epg_to_contract:
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    tenant: anstest
+    ap: anstest
+    epg: anstest
+    contract_type: provider
+    contract: "anstest_http"
+    state: absent
+
+- name: ensure tenant exists for tests to kick off
+  aci_tenant: &aci_tenant_present
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    tenant: anstest
+    state: present
+  register: tenant_present
+
+- name: ensure contracts exist for tests to kick off
+  aci_contract:
+    <<: *aci_tenant_present
+    contract: "{{ item }}"
+  with_items: ["anstest_http", "anstest_https", "anstest_db"]
+
+- name: ensure ap exists
+  aci_ap: &aci_ap_present
+    <<: *aci_tenant_present
+    ap: anstest
+  register: ap_present
+
+- name: ensure epg exists
+  aci_epg: &aci_epg_present
+    <<: *aci_ap_present
+    epg: anstest
+  register: epg_present
+
+- name: bind contract to epg - check mode works
+  aci_epg_to_contract: &aci_epg_provide_present
+    <<: *aci_epg_present
+    contract_type: provider
+    contract: anstest_http
+  check_mode: yes
+  register: provide_present_check_mode
+
+- name: bind contract to epg - provide works
+  aci_epg_to_contract:
+    <<: *aci_epg_provide_present
+  register: provide_present
+
+- name: bind contract to epg - consume works
+  aci_epg_to_contract: &aci_epg_consume_present
+    <<: *aci_epg_provide_present
+    contract_type: consumer
+    contract: anstest_db
+  register: consume_present
+
+- name: bind contract to epg - add additional contract
+  aci_epg_to_contract: &aci_epg_provide_present2
+    <<: *aci_epg_provide_present
+    contract: anstest_https
+    provider_match: at_most_one
+  register: provide_present2
+
+- name: bind contract to epg - idempotency works
+  aci_epg_to_contract:
+    <<: *aci_epg_provide_present
+  register: idempotent_present
+
+- name: missing param - failure message works
+  aci_epg_to_contract:
+    <<: *aci_tenant_present
+    contract_type: provider
+  ignore_errors: yes
+  register: missing_param_present
+
+- name: missing required param - failure message works
+  aci_epg_to_contract:
+    <<: *aci_tenant_present
+  ignore_errors: yes
+  register: missing_required_present
+
+- name: incompatible param - failure message works
+  aci_epg_to_contract:
+    <<: *aci_epg_consume_present
+    provider_match: all
+  ignore_errors: yes
+  register: incompatible_present
+
+- name: present assertions
+  assert:
+    that:
+      - provide_present_check_mode is changed
+      - 'provide_present_check_mode.sent == {"fvRsProv": {"attributes": {"tnVzBrCPName": "anstest_http"}}}'
+      - provide_present is changed
+      - provide_present.sent == provide_present_check_mode.sent
+      - provide_present.previous == []
+      - consume_present is changed
+      - consume_present.previous == []
+      - 'consume_present.sent == {"fvRsCons": {"attributes": {"tnVzBrCPName": "anstest_db"}}}'
+      - provide_present2 is changed
+      - provide_present2.previous == []
+      - missing_param_present is failed
+      - 'missing_param_present.msg == "state is present but all of the following are missing: ap, contract, epg"'
+      - missing_required_present is failed
+      - 'missing_required_present.msg == "missing required arguments: contract_type"'
+      - incompatible_present is failed
+      - incompatible_present.msg == "the 'provider_match' is only configurable for Provided Contracts"
+
+- name: get binding
+  aci_epg_to_contract:
+    <<: *aci_epg_provide_present2
+    state: query
+  register: query_provide_contract
+
+- name: get binding
+  aci_epg_to_contract:
+    <<: *aci_epg_consume_present
+    state: query
+  register: query_consume_contract
+
+- name: get all bindings
+  aci_epg_to_contract:
+    <<: *aci_tenant_present
+    state: query
+    tenant: "{{ fakevar | default(omit) }}"
+    contract_type: provider
+  register: query_all
+
+- name: missing required param - failure message works
+  aci_epg_to_contract:
+    <<: *aci_tenant_present
+    state: query
+  ignore_errors: yes
+  register: missing_required_query
+
+- name: query assertions
+  assert:
+    that:
+      - query_provide_contract is not changed
+      - query_provide_contract.current != []
+      - '"uni/tn-anstest/ap-anstest/epg-anstest/rsprov-anstest_https.json" in query_provide_contract.url'
+      - query_consume_contract is not changed
+      - query_consume_contract.current != []
+      - '"uni/tn-anstest/ap-anstest/epg-anstest/rscons-anstest_db.json" in query_consume_contract.url'
+      - query_all is not changed
+      - '"class/fvRsProv.json" in query_all.url'
+      - missing_required_query is failed
+      - 'missing_required_query.msg == "missing required arguments: contract_type"'
+
+- name: delete consume binding - check mode works
+  aci_epg_to_contract: &aci_epg_consume_absent
+    <<: *aci_epg_consume_present
+    state: absent
+  check_mode: yes
+  register: consume_absent_check_mode
+
+- name: delete consume binding - deletion works
+  aci_epg_to_contract:
+    <<: *aci_epg_consume_absent
+  register: consume_absent
+
+- name: delete provide binding - deletion works
+  aci_epg_to_contract:
+    <<: *aci_epg_provide_present
+    state: absent
+  register: provide_absent
+
+- name: delete provide binding - deletion works
+  aci_epg_to_contract:
+    <<: *aci_epg_provide_present2
+    state: absent
+  register: provide_absent2
+
+- name: delete consume binding - idempotency works
+  aci_epg_to_contract:
+    <<: *aci_epg_consume_absent
+  register: consume_absent_idempotent
+
+- name: missing param - failure message works
+  aci_epg_to_contract:
+    <<: *aci_epg_consume_absent
+    contract: "{{ fakevar | default(omit) }}"
+  ignore_errors: yes
+  register: missing_param_absent
+
+- name: missing required param - failure message works
+  aci_epg_to_contract:
+    <<: *aci_epg_consume_absent
+    contract_type: "{{ fakevar | default(omit) }}"
+  ignore_errors: yes
+  register: missing_required_absent
+
+- name: absent assertions
+  assert:
+    that:
+      - consume_absent_check_mode is changed
+      - consume_absent_check_mode.previous.0.fvRsCons is defined
+      - consume_absent is changed
+      - consume_absent.previous == consume_absent_check_mode.previous
+      - provide_absent is changed
+      - provide_absent.previous.0.fvRsProv is defined
+      - provide_absent2 is changed
+      - consume_absent_idempotent is not changed
+      - consume_absent_idempotent.previous == []
+      - missing_param_absent is failed
+      - 'missing_param_absent.msg == "state is absent but all of the following are missing: contract"'
+      - missing_required_absent is failed
+      - 'missing_required_absent.msg == "missing required arguments: contract_type"'
+
+- name: cleanup contracts
+  aci_contract:
+    <<: *aci_tenant_present
+    state: absent
+    contract: "{{ item }}"
+  with_items: ["anstest_http", "anstest_https", "anstest_db"]
+
+- name: cleanup epg
+  aci_epg:
+    <<: *aci_epg_present
+    state: absent
+  when: epg_present is changed
+
+- name: cleanup ap
+  aci_ap:
+    <<: *aci_ap_present
+    state: absent
+  when: ap_present is changed
+
+- name: cleanup tenant
+  aci_tenant:
+    <<: *aci_tenant_present
+    state: absent
+  when: tenant_present is changed

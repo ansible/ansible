@@ -18,7 +18,8 @@
 #
 
 from ansible.compat.tests.mock import patch, Mock, MagicMock, call
-from .netscaler_module import TestModule, nitro_base_patcher, set_module_args
+from units.modules.utils import set_module_args
+from .netscaler_module import TestModule, nitro_base_patcher
 
 import sys
 
@@ -42,16 +43,18 @@ class TestNetscalerSaveConfigModule(TestModule):
         cls.nitro_base_patcher.stop()
 
     def setUp(self):
+        super(TestNetscalerSaveConfigModule, self).setUp()
         self.nitro_base_patcher.start()
 
     def tearDown(self):
+        super(TestNetscalerSaveConfigModule, self).tearDown()
         self.nitro_base_patcher.stop()
 
     def test_graceful_nitro_error_on_login(self):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
         ))
         from ansible.modules.network.netscaler import netscaler_save_config
 
@@ -76,7 +79,7 @@ class TestNetscalerSaveConfigModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
         ))
         from ansible.modules.network.netscaler import netscaler_save_config
 
@@ -99,7 +102,7 @@ class TestNetscalerSaveConfigModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
         ))
         from ansible.modules.network.netscaler import netscaler_save_config
 
@@ -125,7 +128,7 @@ class TestNetscalerSaveConfigModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
         ))
 
         class MockException(Exception):

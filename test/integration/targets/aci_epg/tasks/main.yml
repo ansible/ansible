@@ -1,0 +1,171 @@
+# Test code for the ACI modules
+# Copyright: (c) 2017, Jacob McGill (@jmcgill298)
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI APIC host, ACI username and ACI password
+  fail:
+    msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
+  when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
+
+- name: ensure tenant exists for tests to kick off
+  aci_tenant: &aci_tenant_present
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    state: present
+    tenant: anstest
+  register: tenant_present
+
+- name: ensure bd exists for tests to kick off
+  aci_bd: &aci_bd_present
+    <<: *aci_tenant_present
+    bd: anstest
+  register: bd_present
+
+- name: ensure ap exists for tests to kick off
+  aci_ap: &aci_ap_present
+    <<: *aci_tenant_present
+    ap: anstest
+  register: ap_present
+
+- name: create epg - check mode works
+  aci_epg: &aci_epg_present
+    <<: *aci_ap_present
+    epg: anstest
+    bd: anstest
+    description: Ansible Test
+  check_mode: yes
+  register: epg_present_check_mode
+
+- name: create epg - creation works
+  aci_epg:
+    <<: *aci_epg_present
+  register: epg_present
+
+- name: create epg - idempotency works
+  aci_epg:
+    <<: *aci_epg_present
+  register: epg_present_idempotent
+
+- name: update epg - update works
+  aci_epg:
+    <<: *aci_epg_present
+    description: Ansible Test Update
+  register: epg_present_update
+
+- name: create epg - missing param
+  aci_epg:
+    <<: *aci_epg_present
+    ap: "{{ fakevar | default(omit) }}"
+  ignore_errors: yes
+  register: epg_present_missing_param
+
+- name: create epg - used for query
+  aci_epg:
+    <<: *aci_epg_present
+    epg: anstest2
+
+- name: present assertions
+  assert:
+    that:
+      - epg_present_check_mode is changed
+      - epg_present_check_mode.previous == []
+      - epg_present_check_mode.sent.fvAEPg.attributes != {}
+      - epg_present_check_mode.sent.fvAEPg.children.0.fvRsBd.attributes.tnFvBDName == "anstest"
+      - epg_present is changed
+      - epg_present.sent == epg_present_check_mode.sent
+      - epg_present_idempotent is not changed
+      - epg_present_idempotent.sent == {}
+      - epg_present_update is changed
+      - 'epg_present_update.sent == {"fvAEPg": {"attributes": {"descr": "Ansible Test Update"}}}'
+      - epg_present_missing_param is failed
+      - 'epg_present_missing_param.msg == "state is present but all of the following are missing: ap"'
+
+- name: get specific epg
+  aci_epg:
+    <<: *aci_epg_present
+    state: query
+  register: epg_query
+
+- name: get all epgs
+  aci_epg:
+    <<: *aci_tenant_present
+    state: query
+    tenant: "{{ fakevar | default(omit) }}"
+  register: epg_query_all
+
+- name: query assertions
+  assert:
+    that:
+      - epg_query is not changed
+      - epg_query.current | length == 1
+      - epg_query.current.0.fvAEPg.attributes.name == "anstest"
+      - '"tn-anstest/ap-anstest/epg-anstest.json" in epg_query.url'
+      - epg_query_all is not changed
+      - epg_query_all.current | length > 1
+      - '"rsp-subtree-class=fvRsBd" in epg_query_all.filter_string'
+      - '"class/fvAEPg.json" in epg_query_all.url'
+
+- name: delete epg - check mode works
+  aci_epg: &aci_epg_absent
+    <<: *aci_epg_present
+    state: absent
+  check_mode: yes
+  register: delete_epg_check_mode
+
+- name: delete epg - delete works
+  aci_epg:
+    <<: *aci_epg_absent
+  register: delete_epg
+
+- name: delete epg - idempotency works
+  aci_epg:
+    <<: *aci_epg_absent
+  register: delete_epg_idempotent
+
+- name: delete epg - cleanup extra epg
+  aci_epg:
+    <<: *aci_epg_absent
+    epg: anstest2
+
+- name: delete epg - missing param fails
+  aci_epg:
+    <<: *aci_epg_absent
+    tenant: "{{ fakevar | default(omit) }}"
+  ignore_errors: yes
+  register: delete_epg_missing_param
+
+- name: query assertions
+  assert:
+    that:
+      - delete_epg_check_mode is changed
+      - delete_epg_check_mode.previous != []
+      - delete_epg is changed
+      - delete_epg.previous == delete_epg_check_mode.previous
+      - delete_epg_idempotent is not changed
+      - delete_epg_idempotent.previous == []
+      - delete_epg_missing_param is failed
+      - 'delete_epg_missing_param.msg == "state is absent but all of the following are missing: tenant"'
+
+- name: cleanup bd
+  aci_bd:
+    <<: *aci_bd_present
+    state: absent
+  when: bd_present.previous == []
+
+- name: cleanup ap
+  aci_ap:
+    <<: *aci_ap_present
+    state: absent
+  when: ap_present.previous == []
+
+- name: cleanup tenant
+  aci_tenant:
+    <<: *aci_tenant_present
+    state: absent
+  when: tenant_present.previous == []

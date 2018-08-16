@@ -1,24 +1,9 @@
 #!powershell
 
-# (c) 2017, Red Hat, Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, Red Hat, Inc.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# WANT_JSON
-# POWERSHELL_COMMON
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 Set-StrictMode -Version 2
 
@@ -125,7 +110,11 @@ Function Join-Domain {
     }
     $argstr = $add_args | Out-String
     Write-DebugLog "calling Add-Computer with args: $argstr"
-    $add_result = Add-Computer @add_args
+    try {
+        $add_result = Add-Computer @add_args
+    } catch {
+        Fail-Json -obj $result -message "failed to join domain: $($_.Exception.Message)"
+    }
 
     Write-DebugLog ("Add-Computer result was \n{0}" -f $add_result | Out-String)
 }
@@ -140,8 +129,16 @@ Function Set-Workgroup {
     )
 
     Write-DebugLog ("Calling JoinDomainOrWorkgroup with workgroup {0}" -f $workgroup_name)
+    try {
+        $swg_result = (Get-WmiObject -ClassName Win32_ComputerSystem).JoinDomainOrWorkgroup($workgroup_name)
+    } catch {
+        Fail-Json -obj $result -message "failed to call Win32_ComputerSystem.JoinDomainOrWorkgroup($workgroup_name): $($_.Exception.Message)"
+    }
 
-    return (Get-WmiObject Win32_ComputerSystem).JoinDomainOrWorkgroup($workgroup_name)
+    if ($swg_result.ReturnValue -ne 0) {
+        Fail-Json -obj $result -message "failed to set workgroup through WMI, return value: $($swg_result.ReturnValue)"
+    
+    return $swg_result}
 }
 
 Function Join-Workgroup {
@@ -155,7 +152,11 @@ Function Join-Workgroup {
         $domain_cred = Create-Credential $domain_admin_user $domain_admin_password
 
         # 2012+ call the Workgroup arg WorkgroupName, but seem to accept
-        $rc_result = Remove-Computer -Workgroup $workgroup_name -Credential $domain_cred -Force
+        try {
+            $rc_result = Remove-Computer -Workgroup $workgroup_name -Credential $domain_cred -Force
+        } catch {
+            Fail-Json -obj $result -message "failed to remove computer from domain: $($_.Exception.Message)"
+        }
     }
 
     # we're already on a workgroup- change it.

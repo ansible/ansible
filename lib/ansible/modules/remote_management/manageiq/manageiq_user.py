@@ -41,7 +41,6 @@ options:
   state:
     description:
       - absent - user should not exist, present - user should be.
-    required: False
     choices: ['absent', 'present']
     default: 'present'
   userid:
@@ -51,23 +50,21 @@ options:
   name:
     description:
       - The users' full name.
-    required: false
-    default: null
   password:
     description:
       - The users' password.
-    required: false
-    default: null
   group:
     description:
       - The name of the group to which the user belongs.
-    required: false
-    default: null
   email:
     description:
       - The users' E-mail address.
-    required: false
-    default: null
+  update_password:
+    default: always
+    choices: ['always', 'on_create']
+    description:
+      - C(always) will update passwords unconditionally.  C(on_create) will only set the password for a newly created user.
+    version_added: '2.5'
 '''
 
 EXAMPLES = '''
@@ -185,7 +182,7 @@ class ManageIQUser(object):
             (name and user['name'] != name) or
             (password is not None) or
             (email and user['email'] != email) or
-            (group_id and user['group']['id'] != group_id)
+            (group_id and user['current_group_id'] != group_id)
         )
 
         return not found_difference
@@ -219,10 +216,15 @@ class ManageIQUser(object):
             resource['group'] = dict(id=group_id)
         if name is not None:
             resource['name'] = name
-        if password is not None:
-            resource['password'] = password
         if email is not None:
             resource['email'] = email
+
+        # if there is a password param, but 'update_password' is 'on_create'
+        # then discard the password (since we're editing an existing user)
+        if self.module.params['update_password'] == 'on_create':
+            password = None
+        if password is not None:
+            resource['password'] = password
 
         # check if we need to update ( compare_user is true is no difference found )
         if self.compare_user(user, name, group_id, password, email):
@@ -271,17 +273,21 @@ class ManageIQUser(object):
 
 
 def main():
+    argument_spec = dict(
+        userid=dict(required=True, type='str'),
+        name=dict(),
+        password=dict(no_log=True),
+        group=dict(),
+        email=dict(),
+        state=dict(choices=['absent', 'present'], default='present'),
+        update_password=dict(choices=['always', 'on_create'],
+                             default='always'),
+    )
+    # add the manageiq connection arguments to the arguments
+    argument_spec.update(manageiq_argument_spec())
+
     module = AnsibleModule(
-        argument_spec=dict(
-            manageiq_connection=dict(required=True, type='dict',
-                                     options=manageiq_argument_spec()),
-            userid=dict(required=True, type='str'),
-            name=dict(),
-            password=dict(no_log=True),
-            group=dict(),
-            email=dict(),
-            state=dict(choices=['absent', 'present'], default='present')
-        ),
+        argument_spec=argument_spec,
     )
 
     userid = module.params['userid']

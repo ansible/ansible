@@ -10,19 +10,16 @@ cd ~/
 
 if [ "${platform}" = "freebsd" ]; then
     while true; do
+        env ASSUME_ALWAYS_YES=YES pkg bootstrap && \
         pkg install -y \
             bash \
             curl \
-            devel/ruby-gems \
-            git \
             gtar \
-            mercurial \
             python \
-            rsync \
-            ruby \
-            subversion \
+            py27-Jinja2 \
+            py27-virtualenv \
+            py27-cryptography \
             sudo \
-            zip \
          && break
          echo "Failed to install packages. Sleeping before trying again..."
          sleep 10
@@ -33,15 +30,10 @@ elif [ "${platform}" = "rhel" ]; then
     while true; do
         yum install -y \
             gcc \
-            git \
-            mercurial \
             python-devel \
             python-jinja2 \
             python-virtualenv \
             python2-cryptography \
-            rubygems \
-            subversion \
-            unzip \
          && break
          echo "Failed to install packages. Sleeping before trying again..."
          sleep 10

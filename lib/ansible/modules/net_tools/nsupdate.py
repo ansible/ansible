@@ -39,6 +39,11 @@ options:
         description:
             - Apply DNS modification on this server.
         required: true
+    port:
+        description:
+            - Use this TCP port when connecting to C(server).
+        default: 53
+        version_added: 2.5
     key_name:
         description:
             - Use TSIG key name to authenticate against DNS C(server)
@@ -48,16 +53,17 @@ options:
     key_algorithm:
         description:
             - Specify key algorithm used by C(key_secret).
-        choices: ['HMAC-MD5.SIG-ALG.REG.INT', 'hmac-md5', 'hmac-sha1', 'hmac-sha224', 'hmac-sha256', 'hamc-sha384',
+        choices: ['HMAC-MD5.SIG-ALG.REG.INT', 'hmac-md5', 'hmac-sha1', 'hmac-sha224', 'hmac-sha256', 'hmac-sha384',
                   'hmac-sha512']
         default: 'hmac-md5'
     zone:
         description:
             - DNS record will be modified on this C(zone).
-        required: true
+            - When omitted DNS will be queried to attempt finding the correct zone.
+            - Starting with Ansible 2.7 this parameter is optional.
     record:
         description:
-            - Sets the DNS record to modify.
+            - Sets the DNS record to modify. When zone is omitted this has to be absolute (ending with a dot).
         required: true
     type:
         description:
@@ -70,7 +76,6 @@ options:
     value:
         description:
             - Sets the record value.
-        default: None
 
 '''
 
@@ -83,6 +88,15 @@ EXAMPLES = '''
     zone: "example.org"
     record: "ansible"
     value: "192.168.1.1"
+
+- name: Add or modify ansible.example.org A to 192.168.1.1, 192.168.1.2 and 192.168.1.3"
+  nsupdate:
+    key_name: "nsupdate"
+    key_secret: "+bFQtBCta7j2vWkjPkAFtgA=="
+    server: "10.1.1.1"
+    zone: "example.org"
+    record: "ansible"
+    value: ["192.168.1.1", "192.168.1.2", "192.168.1.3"]
 
 - name: Remove puppet.example.org CNAME
   nsupdate:
@@ -116,9 +130,9 @@ type:
     type: string
     sample: 'CNAME'
 value:
-    description: DNS record value
+    description: DNS record value(s)
     returned: success
-    type: string
+    type: list
     sample: '192.168.1.1'
 zone:
     description: DNS record zone
@@ -159,10 +173,27 @@ class RecordManager(object):
     def __init__(self, module):
         self.module = module
 
-        if module.params['zone'][-1] != '.':
-            self.zone = module.params['zone'] + '.'
+        if module.params['zone'] is None:
+            if module.params['record'][-1] != '.':
+                self.module.fail_json(msg='record must be absolute when omitting zone parameter')
+
+            try:
+                self.zone = dns.resolver.zone_for_name(self.module.params['record']).to_text()
+            except (dns.exception.Timeout, dns.resolver.NoNameservers, dns.resolver.NoRootSOA) as e:
+                self.module.fail_json(msg='Zone resolver error (%s): %s' % (e.__class__.__name__, to_native(e)))
+
+            if self.zone is None:
+                self.module.fail_json(msg='Unable to find zone, dnspython returned None')
         else:
             self.zone = module.params['zone']
+
+            if self.zone[-1] != '.':
+                self.zone += '.'
+
+        if module.params['record'][-1] != '.':
+            self.fqdn = module.params['record'] + '.' + self.zone
+        else:
+            self.fqdn = module.params['record']
 
         if module.params['key_name']:
             try:
@@ -186,7 +217,7 @@ class RecordManager(object):
     def __do_update(self, update):
         response = None
         try:
-            response = dns.query.tcp(update, self.module.params['server'], timeout=10)
+            response = dns.query.tcp(update, self.module.params['server'], timeout=10, port=self.module.params['port'])
         except (dns.tsig.PeerBadKey, dns.tsig.PeerBadSignature) as e:
             self.module.fail_json(msg='TSIG update error (%s): %s' % (e.__class__.__name__, to_native(e)))
         except (socket_error, dns.exception.Timeout) as e:
@@ -223,27 +254,35 @@ class RecordManager(object):
 
     def create_record(self):
         update = dns.update.Update(self.zone, keyring=self.keyring, keyalgorithm=self.algorithm)
-        try:
-            update.add(self.module.params['record'],
-                       self.module.params['ttl'],
-                       self.module.params['type'],
-                       self.module.params['value'])
-        except AttributeError:
-            self.module.fail_json(msg='value needed when state=present')
-        except dns.exception.SyntaxError:
-            self.module.fail_json(msg='Invalid/malformed value')
+        for entry in self.module.params['value']:
+            try:
+                update.add(self.module.params['record'],
+                           self.module.params['ttl'],
+                           self.module.params['type'],
+                           entry)
+            except AttributeError:
+                self.module.fail_json(msg='value needed when state=present')
+            except dns.exception.SyntaxError:
+                self.module.fail_json(msg='Invalid/malformed value')
 
         response = self.__do_update(update)
         return dns.message.Message.rcode(response)
 
     def modify_record(self):
         update = dns.update.Update(self.zone, keyring=self.keyring, keyalgorithm=self.algorithm)
-        update.replace(self.module.params['record'],
-                       self.module.params['ttl'],
-                       self.module.params['type'],
-                       self.module.params['value'])
-
+        update.delete(self.module.params['record'], self.module.params['type'])
+        for entry in self.module.params['value']:
+            try:
+                update.add(self.module.params['record'],
+                           self.module.params['ttl'],
+                           self.module.params['type'],
+                           entry)
+            except AttributeError:
+                self.module.fail_json(msg='value needed when state=present')
+            except dns.exception.SyntaxError:
+                self.module.fail_json(msg='Invalid/malformed value')
         response = self.__do_update(update)
+
         return dns.message.Message.rcode(response)
 
     def remove_record(self):
@@ -282,38 +321,54 @@ class RecordManager(object):
         if self.dns_rc == 0:
             if self.module.params['state'] == 'absent':
                 return 1
-            try:
-                update.present(self.module.params['record'], self.module.params['type'], self.module.params['value'])
-            except AttributeError:
-                self.module.fail_json(msg='value needed when state=present')
-            except dns.exception.SyntaxError:
-                self.module.fail_json(msg='Invalid/malformed value')
+            for entry in self.module.params['value']:
+                try:
+                    update.present(self.module.params['record'], self.module.params['type'], entry)
+                except AttributeError:
+                    self.module.fail_json(msg='value needed when state=present')
+                except dns.exception.SyntaxError:
+                    self.module.fail_json(msg='Invalid/malformed value')
             response = self.__do_update(update)
             self.dns_rc = dns.message.Message.rcode(response)
             if self.dns_rc == 0:
-                return 1
+                if self.ttl_changed():
+                    return 2
+                else:
+                    return 1
             else:
                 return 2
         else:
             return 0
 
+    def ttl_changed(self):
+        query = dns.message.make_query(self.fqdn, self.module.params['type'])
+
+        try:
+            lookup = dns.query.tcp(query, self.module.params['server'], timeout=10, port=self.module.params['port'])
+        except (socket_error, dns.exception.Timeout) as e:
+            self.module.fail_json(msg='DNS server error: (%s): %s' % (e.__class__.__name__, to_native(e)))
+
+        current_ttl = lookup.answer[0].ttl
+        return current_ttl != self.module.params['ttl']
+
 
 def main():
     tsig_algs = ['HMAC-MD5.SIG-ALG.REG.INT', 'hmac-md5', 'hmac-sha1', 'hmac-sha224',
-                 'hmac-sha256', 'hamc-sha384', 'hmac-sha512']
+                 'hmac-sha256', 'hmac-sha384', 'hmac-sha512']
 
     module = AnsibleModule(
         argument_spec=dict(
             state=dict(required=False, default='present', choices=['present', 'absent'], type='str'),
             server=dict(required=True, type='str'),
+            port=dict(required=False, default=53, type='int'),
             key_name=dict(required=False, type='str'),
             key_secret=dict(required=False, type='str', no_log=True),
             key_algorithm=dict(required=False, default='hmac-md5', choices=tsig_algs, type='str'),
-            zone=dict(required=True, type='str'),
+            zone=dict(required=False, default=None, type='str'),
             record=dict(required=True, type='str'),
             type=dict(required=False, default='A', type='str'),
             ttl=dict(required=False, default=3600, type='int'),
-            value=dict(required=False, default=None, type='str')
+            value=dict(required=False, default=None, type='list')
         ),
         supports_check_mode=True
     )

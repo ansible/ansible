@@ -7,9 +7,11 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['stableinterface'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['stableinterface'],
+    'supported_by': 'community'
+}
 
 
 DOCUMENTATION = '''
@@ -34,115 +36,104 @@ version_added: "0.6"
 options:
   name:
     description:
-      - name of the user (role) to add or remove
+      - Name of the user (role) to add or remove.
     required: true
-    default: null
   password:
     description:
-      - set the user's password, before 1.4 this was required.
-      - >
-        When passing an encrypted password, the encrypted parameter must also be true, and it must be generated with the format
-        C('str[\\"md5\\"] + md5[ password + username ]'), resulting in a total of 35 characters.  An easy way to do this is:
-        C(echo \\"md5`echo -n \\"verysecretpasswordJOE\\" | md5`\\"). Note that if the provided password string is already in
-        MD5-hashed format, then it is used as-is, regardless of encrypted parameter.
-    required: false
-    default: null
+      - Set the user's password, before 1.4 this was required.
+      - Password can be passed unhashed or hashed (MD5-hashed).
+      - Unhashed password will automatically be hashed when saved into the
+        database if C(encrypted) parameter is set, otherwise it will be save in
+        plain text format.
+      - When passing a hashed password it must be generated with the format
+        C('str["md5"] + md5[ password + username ]'), resulting in a total of
+        35 characters. An easy way to do this is C(echo "md5$(echo -n
+        'verysecretpasswordJOE' | md5sum)").
+      - Note that if the provided password string is already in MD5-hashed
+        format, then it is used as-is, regardless of C(encrypted) parameter.
   db:
     description:
-      - name of database where permissions will be granted
-    required: false
-    default: null
+      - Name of database where permissions will be granted.
   fail_on_user:
     description:
-      - if C(yes), fail when user can't be removed. Otherwise just log and continue
-    required: false
+      - If C(yes), fail when user can't be removed. Otherwise just log and
+        continue.
     default: 'yes'
-    choices: [ "yes", "no" ]
+    type: bool
   port:
     description:
       - Database port to connect to.
-    required: false
     default: 5432
   login_user:
     description:
-      - User (role) used to authenticate with PostgreSQL
-    required: false
+      - User (role) used to authenticate with PostgreSQL.
     default: postgres
   login_password:
     description:
-      - Password used to authenticate with PostgreSQL
-    required: false
-    default: null
+      - Password used to authenticate with PostgreSQL.
   login_host:
     description:
       - Host running PostgreSQL.
-    required: false
     default: localhost
   login_unix_socket:
     description:
-      - Path to a Unix domain socket for local connections
-    required: false
-    default: null
+      - Path to a Unix domain socket for local connections.
   priv:
     description:
-      - "PostgreSQL privileges string in the format: C(table:priv1,priv2)"
-    required: false
-    default: null
+      - "PostgreSQL privileges string in the format: C(table:priv1,priv2)."
   role_attr_flags:
     description:
-      - "PostgreSQL role attributes string in the format: CREATEDB,CREATEROLE,SUPERUSER"
-    required: false
-    default: ""
-    choices: [ "[NO]SUPERUSER","[NO]CREATEROLE", "[NO]CREATEUSER", "[NO]CREATEDB",
-                    "[NO]INHERIT", "[NO]LOGIN", "[NO]REPLICATION", "[NO]BYPASSRLS" ]
+      - "PostgreSQL role attributes string in the format: CREATEDB,CREATEROLE,SUPERUSER."
+      - Note that '[NO]CREATEUSER' is deprecated.
+    choices: ["[NO]SUPERUSER", "[NO]CREATEROLE", "[NO]CREATEDB", "[NO]INHERIT", "[NO]LOGIN", "[NO]REPLICATION", "[NO]BYPASSRLS"]
   state:
     description:
-      - The user (role) state
-    required: false
+      - The user (role) state.
     default: present
-    choices: [ "present", "absent" ]
+    choices: ["present", "absent"]
   encrypted:
     description:
-      - whether the password is stored hashed in the database. boolean. Passwords can be passed already hashed or unhashed, and postgresql ensures the
-        stored password is hashed when encrypted is set.
-    required: false
-    default: false
+      - Whether the password is stored hashed in the database. Passwords can be
+        passed already hashed or unhashed, and postgresql ensures the stored
+        password is hashed when C(encrypted) is set.
+      - "Note: Postgresql 10 and newer doesn't support unhashed passwords."
+      - Previous to Ansible 2.6, this was C(no) by default.
+    default: 'yes'
+    type: bool
     version_added: '1.4'
   expires:
     description:
-      - sets the user's password expiration.
-    required: false
-    default: null
+      - The date at which the user's password is to expire.
+      - If set to C('infinity'), user's password never expire.
+      - Note that this value should be a valid SQL date and time type.
     version_added: '1.4'
   no_password_changes:
     description:
-      - if C(yes), don't inspect database for password changes. Effective when C(pg_authid) is not accessible (such as AWS RDS). Otherwise, make
+      - If C(yes), don't inspect database for password changes. Effective when
+        C(pg_authid) is not accessible (such as AWS RDS). Otherwise, make
         password changes as necessary.
-    required: false
     default: 'no'
-    choices: [ "yes", "no" ]
+    type: bool
     version_added: '2.0'
   ssl_mode:
     description:
-      - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
-      - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+      - Determines whether or with what priority a secure SSL TCP/IP connection
+        will be negotiated with the server.
+      - See U(https://www.postgresql.org/docs/current/static/libpq-ssl.html) for
+        more information on the modes.
       - Default of C(prefer) matches libpq default.
-    required: false
     default: prefer
-    choices: [disable, allow, prefer, require, verify-ca, verify-full]
+    choices: ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"]
     version_added: '2.3'
   ssl_rootcert:
     description:
-      - Specifies the name of a file containing SSL certificate authority (CA) certificate(s). If the file exists, the server's certificate will be
+      - Specifies the name of a file containing SSL certificate authority (CA)
+        certificate(s). If the file exists, the server's certificate will be
         verified to be signed by one of these authorities.
-    required: false
-    default: null
     version_added: '2.3'
   conn_limit:
     description:
       - Specifies the user connection limit.
-    required: false
-    default: null
     version_added: '2.4'
 notes:
    - The default authentication assumes that you are either logging in as or
@@ -153,14 +144,11 @@ notes:
      PostgreSQL must also be installed on the remote host. For Ubuntu-based
      systems, install the postgresql, libpq-dev, and python-psycopg2 packages
      on the remote host before using this module.
-   - If the passlib library is installed, then passwords that are encrypted
-     in the DB but not encrypted when passed as arguments can be checked for
-     changes. If the passlib library is not installed, unencrypted passwords
-     stored in the DB encrypted will be assumed to have changed.
    - If you specify PUBLIC as the user, then the privilege changes will apply
      to all users. You may not specify password or role_attr_flags when the
      PUBLIC user is specified.
-   - The ssl_rootcert parameter requires at least Postgres version 8.4 and I(psycopg2) version 2.4.3.
+   - The ssl_rootcert parameter requires at least Postgres version 8.4 and
+     I(psycopg2) version 2.4.3.
 requirements: [ psycopg2 ]
 author: "Ansible Core Team"
 '''
@@ -173,10 +161,11 @@ EXAMPLES = '''
     password: ceec4eif7ya
     priv: "CONNECT/products:ALL"
 
-# Create rails user, grant privilege to create other databases and demote rails from super user status
+# Create rails user, set its password (MD5-hashed) and grant privilege to create other
+# databases and demote rails from super user status
 - postgresql_user:
     name: rails
-    password: secret
+    password: md59543f1d82624df2b31672ec0f7050460
     role_attr_flags: CREATEDB,NOSUPERUSER
 
 # Remove test user privileges from acme
@@ -194,6 +183,14 @@ EXAMPLES = '''
     priv: ALL
     state: absent
 
+# Set user's password with no expire date
+- postgresql_user:
+    db: acme
+    name: django
+    password: mysupersecretword
+    priv: "CONNECT/products:ALL"
+    expire: infinity
+
 # Example privileges string format
 # INSERT,UPDATE/table:SELECT/anothertable:ALL
 
@@ -201,13 +198,12 @@ EXAMPLES = '''
 - postgresql_user:
     db: test
     user: test
-    password: NULL
+    password: ""
 '''
 
 import itertools
 import re
 import traceback
-from distutils.version import StrictVersion
 from hashlib import md5
 
 try:
@@ -224,8 +220,8 @@ from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.six import iteritems
 
 
-FLAGS = ('SUPERUSER', 'CREATEROLE', 'CREATEUSER', 'CREATEDB', 'INHERIT', 'LOGIN', 'REPLICATION')
-FLAGS_BY_VERSION = {'BYPASSRLS': '9.5.0'}
+FLAGS = ('SUPERUSER', 'CREATEROLE', 'CREATEDB', 'INHERIT', 'LOGIN', 'REPLICATION')
+FLAGS_BY_VERSION = {'BYPASSRLS': 90500}
 
 VALID_PRIVS = dict(table=frozenset(('SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER', 'ALL')),
                    database=frozenset(
@@ -234,8 +230,7 @@ VALID_PRIVS = dict(table=frozenset(('SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRU
 
 # map to cope with idiosyncracies of SUPERUSER and LOGIN
 PRIV_TO_AUTHID_COLUMN = dict(SUPERUSER='rolsuper', CREATEROLE='rolcreaterole',
-                             CREATEUSER='rolcreateuser', CREATEDB='rolcreatedb',
-                             INHERIT='rolinherit', LOGIN='rolcanlogin',
+                             CREATEDB='rolcreatedb', INHERIT='rolinherit', LOGIN='rolcanlogin',
                              REPLICATION='rolreplication', BYPASSRLS='rolbypassrls')
 
 
@@ -267,7 +262,7 @@ def user_add(cursor, user, password, role_attr_flags, encrypted, expires, conn_l
     query_password_data = dict(password=password, expires=expires)
     query = ['CREATE USER %(user)s' %
              {"user": pg_quote_identifier(user, 'role')}]
-    if password is not None:
+    if password is not None and password != '':
         query.append("WITH %(crypt)s" % {"crypt": encrypted})
         query.append("PASSWORD %(password)s")
     if expires is not None:
@@ -296,11 +291,16 @@ def user_should_we_change_password(current_role_attrs, user, password, encrypted
     # Do we actually need to do anything?
     pwchanging = False
     if password is not None:
+        # Empty password means that the role shouldn't have a password, which
+        # means we need to check if the current password is None.
+        if password == '':
+            if current_role_attrs['rolpassword'] is not None:
+                pwchanging = True
         # 32: MD5 hashes are represented as a sequence of 32 hexadecimal digits
         #  3: The size of the 'md5' prefix
         # When the provided password looks like a MD5-hash, value of
         # 'encrypted' is ignored.
-        if ((password.startswith('md5') and len(password) == 32 + 3) or encrypted == 'UNENCRYPTED'):
+        elif (password.startswith('md5') and len(password) == 32 + 3) or encrypted == 'UNENCRYPTED':
             if password != current_role_attrs['rolpassword']:
                 pwchanging = True
         elif encrypted == 'ENCRYPTED':
@@ -340,6 +340,18 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
 
         pwchanging = user_should_we_change_password(current_role_attrs, user, password, encrypted)
 
+        if current_role_attrs is None:
+            try:
+                # AWS RDS instances does not allow user to access pg_authid
+                # so try to get current_role_attrs from pg_roles tables
+                select = "SELECT * FROM pg_roles where rolname=%(user)s"
+                cursor.execute(select, {"user": user})
+                # Grab current role attributes from pg_roles
+                current_role_attrs = cursor.fetchone()
+            except psycopg2.ProgrammingError as e:
+                db_connection.rollback()
+                module.fail_json(msg="Failed to get role details for current user %s: %s" % (user, e))
+
         role_attr_flags_changing = False
         if role_attr_flags:
             role_attr_flags_dict = {}
@@ -367,8 +379,11 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
 
         alter = ['ALTER USER %(user)s' % {"user": pg_quote_identifier(user, 'role')}]
         if pwchanging:
-            alter.append("WITH %(crypt)s" % {"crypt": encrypted})
-            alter.append("PASSWORD %(password)s")
+            if password != '':
+                alter.append("WITH %(crypt)s" % {"crypt": encrypted})
+                alter.append("PASSWORD %(password)s")
+            else:
+                alter.append("WITH PASSWORD NULL")
             alter.append(role_attr_flags)
         elif role_attr_flags:
             alter.append('WITH %s' % role_attr_flags)
@@ -511,7 +526,7 @@ def get_database_privileges(cursor, user, db):
     datacl = cursor.fetchone()[0]
     if datacl is None:
         return set()
-    r = re.search('%s\\\\?\"?=(C?T?c?)/[^,]+\,?' % user, datacl)
+    r = re.search(r'%s\\?"?=(C?T?c?)/[^,]+,?' % user, datacl)
     if r is None:
         return set()
     o = set()
@@ -615,11 +630,12 @@ def parse_role_attrs(cursor, role_attr_flags):
     Where:
 
         attributes := CREATEDB,CREATEROLE,NOSUPERUSER,...
-        [ "[NO]SUPERUSER","[NO]CREATEROLE", "[NO]CREATEUSER", "[NO]CREATEDB",
+        [ "[NO]SUPERUSER","[NO]CREATEROLE", "[NO]CREATEDB",
                             "[NO]INHERIT", "[NO]LOGIN", "[NO]REPLICATION",
                             "[NO]BYPASSRLS" ]
 
     Note: "[NO]BYPASSRLS" role attribute introduced in 9.5
+    Note: "[NO]CREATEUSER" role attribute is deprecated.
 
     """
     flags = frozenset(role.upper() for role in role_attr_flags.split(',') if role)
@@ -687,33 +703,17 @@ def parse_privs(privs, db):
     return o_privs
 
 
-def get_pg_server_version(cursor):
-    """
-    Queries Postgres for its server version.
-
-    server_version should be just the server version itself:
-
-    postgres=# SHOW SERVER_VERSION;
-    server_version
-    ----------------
-     9.6.2
-    (1 row)
-    """
-    cursor.execute("SHOW SERVER_VERSION")
-    return cursor.fetchone()['server_version']
-
-
 def get_valid_flags_by_version(cursor):
     """
     Some role attributes were introduced after certain versions. We want to
     compile a list of valid flags against the current Postgres version.
     """
-    current_version = StrictVersion(get_pg_server_version(cursor))
+    current_version = cursor.connection.server_version
 
     return [
         flag
         for flag, version_introduced in FLAGS_BY_VERSION.items()
-        if current_version >= StrictVersion(version_introduced)
+        if current_version >= version_introduced
     ]
 
 
@@ -737,7 +737,7 @@ def main():
             port=dict(default='5432'),
             fail_on_user=dict(type='bool', default='yes'),
             role_attr_flags=dict(default=''),
-            encrypted=dict(type='bool', default='no'),
+            encrypted=dict(type='bool', default='yes'),
             no_password_changes=dict(type='bool', default='no'),
             expires=dict(default=None),
             ssl_mode=dict(default='prefer', choices=[
@@ -826,6 +826,10 @@ def main():
             try:
                 changed = user_add(cursor, user, password,
                                    role_attr_flags, encrypted, expires, conn_limit)
+            except psycopg2.ProgrammingError as e:
+                module.fail_json(msg="Unable to add user with given requirement "
+                                     "due to : %s" % to_native(e),
+                                 exception=traceback.format_exc())
             except SQLParseError as e:
                 module.fail_json(msg=to_native(e), exception=traceback.format_exc())
         try:

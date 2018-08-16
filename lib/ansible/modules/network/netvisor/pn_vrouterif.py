@@ -161,6 +161,9 @@ changed:
 
 import shlex
 
+# Ansible boiler-plate
+from ansible.module_utils.basic import AnsibleModule
+
 VROUTER_EXISTS = None
 INTERFACE_EXISTS = None
 NIC_EXISTS = None
@@ -347,8 +350,8 @@ def main():
             pn_cliusername=dict(required=False, type='str'),
             pn_clipassword=dict(required=False, type='str', no_log=True),
             pn_cliswitch=dict(required=False, type='str', default='local'),
-            state =dict(required=True, type='str',
-                        choices=['present', 'absent']),
+            state=dict(required=True, type='str',
+                       choices=['present', 'absent']),
             pn_vrouter_name=dict(required=True, type='str'),
             pn_vlan=dict(type='int'),
             pn_interface_ip=dict(required=True, type='str'),
@@ -476,8 +479,7 @@ def main():
         cli += ' %s vrouter-name %s nic %s ' % (command, vrouter_name, nic_str)
 
     run_cli(module, cli)
-# Ansible boiler-plate
-from ansible.module_utils.basic import AnsibleModule
+
 
 if __name__ == '__main__':
     main()

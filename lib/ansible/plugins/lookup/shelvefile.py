@@ -1,25 +1,39 @@
 # (c) 2015, Alejandro Guirao <lekumberri@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2012-17 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+    lookup: shelvefile
+    author: Alejandro Guirao <lekumberri@gmail.com>
+    version_added: "2.0"
+    short_description: read keys from Python shelve file
+    description:
+      - Read keys from Python shelve file.
+    options:
+      _terms:
+        description: sets of key value pairs of parameters
+      key:
+        description: key to query
+        required: True
+      file:
+        description: path to shelve file
+        required: True
+"""
+
+EXAMPLES = """
+- name: retrieve a string value corresponding to a key inside a Python shelve file
+  debug: msg="{{ lookup('shelvefile', 'file=path_to_some_shelve_file.db key=key_to_retrieve') }}
+"""
+
+RETURN = """
+_list:
+  description: value(s) of key(s) in shelve file(s)
+"""
 import shelve
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.plugins.lookup import LookupBase
 from ansible.module_utils._text import to_bytes, to_text
 
@@ -49,7 +63,8 @@ class LookupModule(LookupBase):
             try:
                 for param in params:
                     name, value = param.split('=')
-                    assert(name in paramvals)
+                    if name not in paramvals:
+                        raise AnsibleAssertionError('%s not in paramvals' % name)
                     paramvals[name] = value
 
             except (ValueError, AssertionError) as e:

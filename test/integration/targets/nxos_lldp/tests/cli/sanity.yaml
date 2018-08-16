@@ -1,0 +1,49 @@
+---
+- debug: msg="START TRANSPORT:CLI nxos_lldp sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- name: Make sure LLDP is not running before tests
+  nxos_feature:
+    feature: lldp
+    state: disabled
+
+- name: Enable LLDP service
+  nxos_lldp:
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"feature lldp" in result.commands'
+
+- name: Enable LLDP service again (idempotent)
+  nxos_lldp:
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Disable LLDP service
+  nxos_lldp:
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"no feature lldp" in result.commands'
+
+- name: Disable LLDP service (idempotent)
+  nxos_lldp:
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- debug: msg="END TRANSPORT:CLI nxos_lldp sanity test"

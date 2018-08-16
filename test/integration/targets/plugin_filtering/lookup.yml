@@ -1,0 +1,14 @@
+---
+- hosts: testhost
+  gather_facts: False
+  vars:
+    data:
+      - one
+      - two
+  tasks:
+  - debug:
+      msg: '{{ lookup("list", data) }}'
+
+  - debug:
+      msg: '{{ item }}'
+    with_list: '{{ data }}'

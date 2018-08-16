@@ -78,7 +78,7 @@ Use to describes where to place options for a command, but not where to type the
 Daylight saving time (DST)
 +++++++++++++++++++++++++++++++
 
-Correct. Do not use daylight savings time. Daylight Saving Time (DST) is often misspelled “Daylight Savings”, with an “s” at the end. Other common variations are “Summer Time”and “Daylight-Saving Time”. (http://www.timeanddate.com/time/dst/daylight-savings-time.html)
+Correct. Do not use daylight savings time. Daylight Saving Time (DST) is often misspelled "Daylight Savings", with an "s" at the end. Other common variations are "Summer Time"and "Daylight-Saving Time". (https://www.timeanddate.com/time/dst/daylight-savings-time.html)
 
 
 Download
@@ -99,7 +99,7 @@ When used as a verb, fail over is two words since there can be different tenses 
 
 Fewer
 +++++++++++++++++++
-Fewer is used with plural nouns. Think things you could count.  Time, money, distance, and weight are often listed as exceptions to the traditional “can you count it” rule, often thought of a singular amounts (the work will take less than 5 hours, for example).
+Fewer is used with plural nouns. Think things you could count.  Time, money, distance, and weight are often listed as exceptions to the traditional "can you count it" rule, often thought of a singular amounts (the work will take less than 5 hours, for example).
 
 File name
 +++++++++++++
@@ -150,6 +150,7 @@ i.e.
 Spell it out: "That is."
 
 Installer
+++++++++++++++
 Avoid. Use "installation program" instead.
 
 It's and its
@@ -250,7 +251,7 @@ Correct. Do not use "trouble shoot" or "trouble-shoot." To isolate the source of
 
 UK
 ++++++++++++++
-Correst as is, no periods.
+Correct as is, no periods.
 
 UNIX®
 ++++++++++++++
@@ -262,7 +263,7 @@ Don't use. Use Clear.
 
 US
 ++++++++++++++
-Correst as is, no periods.
+Correct as is, no periods.
 
 User
 ++++++++++++++

@@ -17,7 +17,7 @@ those pieces work together.
        Learn about the Python API for task execution
    :doc:`developing_plugins`
        Learn about developing plugins
-   `Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `Mailing List <https://groups.google.com/group/ansible-devel>`_
        The development mailing list
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible-devel IRC chat channel

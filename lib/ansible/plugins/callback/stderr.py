@@ -1,23 +1,28 @@
 # (c) 2017, Frederic Van Espen <github@freh.be>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = '''
+    callback: stderr
+    callback_type: stdout
+    requirements:
+      - set as main display callback
+    short_description: Splits output, sending failed tasks to stderr
+    version_added: "2.4"
+    deprecated:
+        why: The 'default' callback plugin now supports this functionality
+        removed_in: '2.11'
+        alternative: "'default' callback plugin with 'display_failed_stderr = yes' option"
+    extends_documentation_fragment:
+      - default_callback
+    description:
+        - This is the stderr callback plugin, it behaves like the default callback plugin but sends error output to stderr.
+        - Also it does not output skipped host/task/item status
+'''
 
 from ansible import constants as C
 from ansible.plugins.callback.default import CallbackModule as CallbackModule_default
@@ -47,7 +52,7 @@ class CallbackModule(CallbackModule_default):
         if self._play.strategy == 'free' and self._last_task_banner != result._task._uuid:
             self._print_task_banner(result._task)
 
-        self._handle_exception(result._result, errors_to_stderr=True)
+        self._handle_exception(result._result, use_stderr=True)
         self._handle_warnings(result._result)
 
         if result._task.loop and 'results' in result._result:
@@ -64,17 +69,3 @@ class CallbackModule(CallbackModule_default):
 
         if ignore_errors:
             self._display.display("...ignoring", color=C.COLOR_SKIP)
-
-    def _handle_exception(self, result, errors_to_stderr=False):
-
-        if 'exception' in result:
-            msg = "An exception occurred during task execution. "
-            if self._display.verbosity < 3:
-                # extract just the actual error message from the exception text
-                error = result['exception'].strip().split('\n')[-1]
-                msg += "To see the full traceback, use -vvv. The error was: %s" % error
-            else:
-                msg = "The full traceback is:\n" + result['exception']
-                del result['exception']
-
-            self._display.display(msg, color=C.COLOR_ERROR, stderr=errors_to_stderr)

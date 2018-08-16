@@ -25,6 +25,9 @@ description:
     module will always collect a base set of facts from the device
     and can enable or disable collection of additional facts.
 extends_documentation_fragment: iosxr
+notes:
+  - Tested against IOS XRv 6.1.2
+  - This module does not support netconf connection
 options:
   gather_subset:
     description:
@@ -115,7 +118,7 @@ ansible_net_neighbors:
 import re
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.iosxr import iosxr_argument_spec, check_args, run_commands
+from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, run_commands
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import zip
 
@@ -133,12 +136,12 @@ class FactsBase(object):
 class Default(FactsBase):
 
     def commands(self):
-        return(['show version brief'])
+        return(['show version | utility head -n 20'])
 
     def populate(self, results):
-        self.facts['version'] = self.parse_version(results['show version brief'])
-        self.facts['image'] = self.parse_image(results['show version brief'])
-        self.facts['hostname'] = self.parse_hostname(results['show version brief'])
+        self.facts['version'] = self.parse_version(results['show version | utility head -n 20'])
+        self.facts['image'] = self.parse_image(results['show version | utility head -n 20'])
+        self.facts['hostname'] = self.parse_hostname(results['show version | utility head -n 20'])
 
     def parse_version(self, data):
         match = re.search(r'Version (\S+)$', data, re.M)
@@ -166,7 +169,7 @@ class Hardware(FactsBase):
             results['dir /all'])
 
         match = re.search(r'Physical Memory: (\d+)M total \((\d+)',
-            results['show memory summary'])
+                          results['show memory summary'])
         if match:
             self.facts['memtotal_mb'] = match.group(1)
             self.facts['memfree_mb'] = match.group(2)
@@ -188,7 +191,7 @@ class Interfaces(FactsBase):
 
     def commands(self):
         return(['show interfaces', 'show ipv6 interface',
-            'show lldp', 'show lldp neighbors detail'])
+                'show lldp', 'show lldp neighbors detail'])
 
     def populate(self, results):
         self.facts['all_ipv4_addresses'] = list()
@@ -304,7 +307,7 @@ class Interfaces(FactsBase):
             return int(match.group(1))
 
     def parse_duplex(self, data):
-        match = re.search(r'(\w+) Duplex', data, re.M)
+        match = re.search(r'(\w+)(?: D|-d)uplex', data, re.M)
         if match:
             return match.group(1)
 
@@ -360,7 +363,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     gather_subset = module.params['gather_subset']
 

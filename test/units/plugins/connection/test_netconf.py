@@ -43,12 +43,15 @@ def import_mock(name, *args):
         return mock_ncclient
     return builtin_import(name, *args)
 
+
 if PY3:
     with patch('builtins.__import__', side_effect=import_mock):
         from ansible.plugins.connection import netconf
+        from ansible.plugins.loader import connection_loader
 else:
     with patch('__builtin__.__import__', side_effect=import_mock):
         from ansible.plugins.connection import netconf
+        from ansible.plugins.loader import connection_loader
 
 
 class TestNetconfConnectionClass(unittest.TestCase):
@@ -63,15 +66,16 @@ class TestNetconfConnectionClass(unittest.TestCase):
         self.assertIsNone(conn._manager)
         self.assertFalse(conn._connected)
 
-    def test_netconf__connect(self):
+    @patch("ansible.plugins.connection.netconf.netconf_loader")
+    def test_netconf__connect(self, mock_netconf_loader):
         pc = PlayContext()
         new_stdin = StringIO()
 
-        conn = netconf.Connection(pc, new_stdin)
+        conn = connection_loader.get('netconf', pc, new_stdin)
 
-        mock_manager = MagicMock(name='self._manager.connect')
-        type(mock_manager).session_id = PropertyMock(return_value='123456789')
-        netconf.manager.connect.return_value = mock_manager
+        mock_manager = MagicMock()
+        mock_manager.session_id = '123456789'
+        netconf.manager.connect = MagicMock(return_value=mock_manager)
         conn._play_context.network_os = 'default'
 
         rc, out, err = conn._connect()
@@ -88,22 +92,16 @@ class TestNetconfConnectionClass(unittest.TestCase):
         conn = netconf.Connection(pc, new_stdin)
         conn._connected = True
 
-        mock_manager = MagicMock(name='self._manager')
-
         mock_reply = MagicMock(name='reply')
         type(mock_reply).data_xml = PropertyMock(return_value='<test/>')
 
+        mock_manager = MagicMock(name='self._manager')
         mock_manager.rpc.return_value = mock_reply
-
         conn._manager = mock_manager
 
-        rc, out, err = conn.exec_command('<test/>')
+        out = conn.exec_command('<test/>')
 
-        netconf.to_ele.assert_called_with('<test/>')
-
-        self.assertEqual(0, rc)
-        self.assertEqual(b'<test/>', out)
-        self.assertEqual(b'', err)
+        self.assertEqual('<test/>', out)
 
     def test_netconf_exec_command_invalid_request(self):
         pc = PlayContext()
@@ -112,10 +110,11 @@ class TestNetconfConnectionClass(unittest.TestCase):
         conn = netconf.Connection(pc, new_stdin)
         conn._connected = True
 
+        mock_manager = MagicMock(name='self._manager')
+        conn._manager = mock_manager
+
         netconf.to_ele.return_value = None
 
-        rc, out, err = conn.exec_command('test string')
+        out = conn.exec_command('test string')
 
-        self.assertEqual(1, rc)
-        self.assertEqual(b'', out)
-        self.assertEqual(b'unable to parse request', err)
+        self.assertEqual('unable to parse request', out)

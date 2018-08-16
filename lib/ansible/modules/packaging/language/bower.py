@@ -25,19 +25,16 @@ options:
   name:
     description:
       - The name of a bower package to install
-    required: false
   offline:
     description:
       - Install packages from local cache, if the packages were installed before
-    required: false
-    default: no
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   production:
     description:
       - Install with --production flag
-    required: false
-    default: no
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
     version_added: "2.0"
   path:
     description:
@@ -46,19 +43,15 @@ options:
   relative_execpath:
     description:
       - Relative path to bower executable from install path
-    default: null
-    required: false
     version_added: "2.1"
   state:
     description:
       - The state of the bower package
-    required: false
     default: present
     choices: [ "present", "absent", "latest" ]
   version:
     description:
       - The version to be installed
-    required: false
 '''
 
 EXAMPLES = '''
@@ -217,12 +210,12 @@ def main():
     changed = False
     if state == 'present':
         installed, missing, outdated = bower.list()
-        if len(missing):
+        if missing:
             changed = True
             bower.install()
     elif state == 'latest':
         installed, missing, outdated = bower.list()
-        if len(missing) or len(outdated):
+        if missing or outdated:
             changed = True
             bower.update()
     else:  # Absent

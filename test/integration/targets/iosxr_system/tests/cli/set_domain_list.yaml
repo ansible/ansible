@@ -1,11 +1,11 @@
 ---
-- debug: msg="START cli/set_domain_search.yaml"
+- debug: msg="START cli/set_domain_search.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   iosxr_config:
     lines:
-      - no ip domain-list ansible.com
-      - no ip domain-list redhat.com
+      - no domain list ansible.com
+      - no domain list redhat.com
     match: none
     provider: "{{ cli }}"
 
@@ -114,9 +114,8 @@
   iosxr_config:
     lines:
       - no domain list ansible.com
-      - no domain list redhat.com
       - no domain list eng.ansible.com
     match: none
     provider: "{{ cli }}"
 
-- debug: msg="END cli/set_domain_search.yaml"
+- debug: msg="END cli/set_domain_search.yaml on connection={{ ansible_connection }}"

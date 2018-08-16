@@ -95,11 +95,7 @@ EXAMPLES = '''
 RETURN = '''
 '''
 
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
@@ -264,7 +260,7 @@ def main():
             check=dict(required=False),
             creator=dict(required=False),
             expire=dict(required=False),
-            expire_on_resolve=dict(type=bool, required=False),
+            expire_on_resolve=dict(type='bool', required=False),
             reason=dict(required=False),
             state=dict(default='present', choices=['present', 'absent']),
             subscription=dict(required=True),

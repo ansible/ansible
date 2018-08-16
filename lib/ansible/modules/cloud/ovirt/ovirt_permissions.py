@@ -1,92 +1,75 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
-# Copyright (c) 2016 Red Hat, Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: ovirt_permissions
-short_description: "Module to manage permissions of users/groups in oVirt/RHV"
+short_description: Module to manage permissions of users/groups in oVirt/RHV
 version_added: "2.3"
-author: "Ondra Machacek (@machacekondra)"
+author:
+- Ondra Machacek (@machacekondra)
 description:
-    - "Module to manage permissions of users/groups in oVirt/RHV"
+    - Module to manage permissions of users/groups in oVirt/RHV.
 options:
     role:
         description:
-            - "Name of the role to be assigned to user/group on specific object."
+            - Name of the role to be assigned to user/group on specific object.
         default: UserRole
     state:
         description:
-            - "Should the permission be present/absent."
-        choices: ['present', 'absent']
+            - Should the permission be present/absent.
+        choices: [ absent, present ]
         default: present
     object_id:
         description:
-            - "ID of the object where the permissions should be managed."
+            - ID of the object where the permissions should be managed.
     object_name:
         description:
-            - "Name of the object where the permissions should be managed."
+            - Name of the object where the permissions should be managed.
     object_type:
         description:
-            - "The object where the permissions should be managed."
-        default: 'vm'
-        choices: [
-            'data_center',
-            'cluster',
-            'host',
-            'storage_domain',
-            'network',
-            'disk',
-            'vm',
-            'vm_pool',
-            'template',
-            'cpu_profile',
-            'disk_profile',
-            'vnic_profile',
-            'system',
-        ]
+            - The object where the permissions should be managed.
+        choices:
+        - cluster
+        - cpu_profile
+        - data_center
+        - disk
+        - disk_profile
+        - host
+        - network
+        - storage_domain
+        - system
+        - template
+        - vm
+        - vm_pool
+        - vnic_profile
+        default: vm
     user_name:
         description:
-            - "Username of the user to manage. In most LDAPs it's I(uid) of the user,
-               but in Active Directory you must specify I(UPN) of the user."
-            - "Note that if user don't exist in the system this module will fail,
-               you should ensure the user exists by using M(ovirt_users) module."
+            - Username of the user to manage. In most LDAPs it's I(uid) of the user,
+              but in Active Directory you must specify I(UPN) of the user.
+            - Note that if user does not exist in the system this module will fail,
+              you should ensure the user exists by using M(ovirt_users) module.
     group_name:
         description:
-            - "Name of the group to manage."
-            - "Note that if group don't exist in the system this module will fail,
-               you should ensure the group exists by using M(ovirt_groups) module."
+            - Name of the group to manage.
+            - Note that if group does not exist in the system this module will fail,
+               you should ensure the group exists by using M(ovirt_groups) module.
     authz_name:
         description:
-            - "Authorization provider of the user/group. In previous versions of oVirt/RHV known as domain."
+            - Authorization provider of the user/group.
         required: true
-        aliases: ['domain']
+        aliases: [ domain ]
     namespace:
         description:
-            - "Namespace of the authorization provider, where user/group resides."
-        required: false
+            - Namespace of the authorization provider, where user/group resides.
 extends_documentation_fragment: ovirt
 '''
 
@@ -94,16 +77,16 @@ EXAMPLES = '''
 # Examples don't contain auth parameter for simplicity,
 # look at ovirt_auth module to see how to reuse authentication:
 
-# Add user user1 from authorization provider example.com-authz
-- ovirt_permissions:
+- name: Add user user1 from authorization provider example.com-authz
+  ovirt_permissions:
     user_name: user1
     authz_name: example.com-authz
     object_type: vm
     object_name: myvm
     role: UserVmManager
 
-# Remove permission from user
-- ovirt_permissions:
+- name: Remove permission from user
+  ovirt_permissions:
     state: absent
     user_name: user1
     authz_name: example.com-authz
@@ -241,35 +224,30 @@ class PermissionsModule(BaseModule):
 
 def main():
     argument_spec = ovirt_full_argument_spec(
-        state=dict(
-            choices=['present', 'absent'],
-            default='present',
-        ),
-        role=dict(default='UserRole'),
-        object_type=dict(
-            default='vm',
-            choices=[
-                'data_center',
-                'cluster',
-                'host',
-                'storage_domain',
-                'network',
-                'disk',
-                'vm',
-                'vm_pool',
-                'template',
-                'cpu_profile',
-                'disk_profile',
-                'vnic_profile',
-                'system',
-            ]
-        ),
-        authz_name=dict(required=True, aliases=['domain']),
-        object_id=dict(default=None),
-        object_name=dict(default=None),
-        user_name=dict(rdefault=None),
-        group_name=dict(default=None),
-        namespace=dict(default=None),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
+        role=dict(type='str', default='UserRole'),
+        object_type=dict(type='str', default='vm',
+                         choices=[
+                             'cluster',
+                             'cpu_profile',
+                             'data_center',
+                             'disk',
+                             'disk_profile',
+                             'host',
+                             'network',
+                             'storage_domain',
+                             'system',
+                             'template',
+                             'vm',
+                             'vm_pool',
+                             'vnic_profile',
+                         ]),
+        authz_name=dict(type='str', required=True, aliases=['domain']),
+        object_id=dict(type='str'),
+        object_name=dict(type='str'),
+        user_name=dict(type='str'),
+        group_name=dict(type='str'),
+        namespace=dict(type='str'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -277,10 +255,7 @@ def main():
     )
     check_sdk(module)
 
-    if (
-        (module.params['object_name'] is None and module.params['object_id'] is None)
-        and module.params['object_type'] != 'system'
-    ):
+    if (module.params['object_name'] is None and module.params['object_id'] is None) and module.params['object_type'] != 'system':
         module.fail_json(msg='"object_name" or "object_id" is required')
 
     if module.params['user_name'] is None and module.params['group_name'] is None:

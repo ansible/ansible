@@ -1,13 +1,12 @@
-- debug: msg="START cli/vrf.yaml"
+---
+- debug: msg="START cli/vrf.yaml on connection={{ ansible_connection }}"
 
-
-#----
 - name: Set invalid VRF
   eos_eapi:
     vrf: foobar
     provider: "{{ cli }}"
+  become: yes
   register: eos_eapi_output
-  connection: local
   ignore_errors: true
 
 - name: Ensure that setting VRF failed
@@ -22,8 +21,8 @@
   eos_eapi:
     vrf: default
     provider: "{{ cli }}"
+  become: yes
   register: eos_eapi_output
-  connection: local
   ignore_errors: true
 
 
@@ -31,8 +30,8 @@
   eos_eapi:
     vrf: default
     provider: "{{ cli }}"
+  become: yes
   register: eos_eapi_output
-  connection: local
 
 - name: Ensure idempotent
   assert:
@@ -48,10 +47,9 @@
     commands: show vrf
     provider: "{{ cli }}"
   register: eos_eapi_output
-  connection: local
   when: false
 
 #- debug:
 #    msg: "{{ eos_eapi_output }}"
 
-- debug: msg="END cli/vrf.yaml"
+- debug: msg="END cli/vrf.yaml on connection={{ ansible_connection }}"

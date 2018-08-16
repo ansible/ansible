@@ -25,34 +25,27 @@ options:
     description:
       - Account API Key.
     required: true
-    default: null
 
   account_secret:
     description:
       - Account Secret Key.
     required: true
-    default: null
 
   domain:
     description:
       - Domain to work with. Can be the domain name (e.g. "mydomain.com") or the numeric ID of the domain in DNS Made Easy (e.g. "839989") for faster
         resolution
     required: true
-    default: null
 
   record_name:
     description:
       - Record name to get/create/delete/update. If record_name is not specified; all records for the domain will be returned in "result" regardless
         of the state argument.
-    required: false
-    default: null
 
   record_type:
     description:
       - Record type.
-    required: false
     choices: [ 'A', 'AAAA', 'CNAME', 'ANAME', 'HTTPRED', 'MX', 'NS', 'PTR', 'SRV', 'TXT' ]
-    default: null
 
   record_value:
     description:
@@ -62,13 +55,10 @@ options:
       - >
         If record_value is not specified; no changes will be made and the record will be returned in 'result'
         (in other words, this module can be used to fetch a record's current id, type, and ttl)
-    required: false
-    default: null
 
   record_ttl:
     description:
       - record's "Time to live".  Number of seconds the record remains cached in DNS servers.
-    required: false
     default: 1800
 
   state:
@@ -76,23 +66,20 @@ options:
       - whether the record should exist or not
     required: true
     choices: [ 'present', 'absent' ]
-    default: null
 
   validate_certs:
     description:
       - If C(no), SSL certificates will not be validated. This should only be used
         on personally controlled sites using self-signed certificates.
-    required: false
+    type: bool
     default: 'yes'
-    choices: ['yes', 'no']
     version_added: 1.5.1
 
   monitor:
     description:
       - If C(yes), add or change the monitor.  This is applicable only for A records.
-    required: true
+    type: bool
     default: 'no'
-    choices: ['yes', 'no']
     version_added: 2.4
 
   systemDescription:
@@ -143,68 +130,58 @@ options:
   httpFqdn:
     description:
       - The fully qualified domain name used by the monitor.
-    required: false
     version_added: 2.4
 
   httpFile:
     description:
       - The file at the Fqdn that the monitor queries for HTTP or HTTPS.
-    required: false
     version_added: 2.4
 
   httpQueryString:
     description:
       - The string in the httpFile that the monitor queries for HTTP or HTTPS.
-    required: False
     version_added: 2.4
 
   failover:
     description:
       - If C(yes), add or change the failover.  This is applicable only for A records.
-    required: true
+    type: bool
     default: 'no'
-    choices: ['yes', 'no']
     version_added: 2.4
 
   autoFailover:
     description:
       - If true, fallback to the primary IP address is manual after a failover.
       - If false, fallback to the primary IP address is automatic after a failover.
-    required: true
+    type: bool
     default: 'no'
-    choices: ['yes', 'no']
     version_added: 2.4
 
   ip1:
     description:
       - Primary IP address for the failover.
       - Required if adding or changing the monitor or failover.
-    required: false
     version_added: 2.4
 
   ip2:
     description:
       - Secondary IP address for the failover.
       - Required if adding or changing the failover.
-    required: false
     version_added: 2.4
 
   ip3:
     description:
       - Tertiary IP address for the failover.
-    required: false
     version_added: 2.4
 
   ip4:
     description:
       - Quaternary IP address for the failover.
-    required: false
     version_added: 2.4
 
   ip5:
     description:
       - Quinary IP address for the failover.
-    required: false
     version_added: 2.4
 
 notes:
@@ -263,6 +240,7 @@ EXAMPLES = '''
     account_key: key
     account_secret: secret
     domain: my.com
+    record_type: A
     state: absent
     record_name: test
 
@@ -401,7 +379,7 @@ class DME2(object):
         self.record_map = None      # ["record_name"] => ID
         self.records = None         # ["record_ID"] => <record>
         self.all_records = None
-        self.contactList_map = None # ["contactList_name"] => ID
+        self.contactList_map = None  # ["contactList_name"] => ID
 
         # Lookup the domain ID if passed as a domain name vs. ID
         if not self.domain.isdigit():
@@ -494,7 +472,7 @@ class DME2(object):
         return self.query(self.record_url, 'GET')['data']
 
     def _instMap(self, type):
-        #@TODO cache this call so it's executed only once per ansible execution
+        # @TODO cache this call so it's executed only once per ansible execution
         map = {}
         results = {}
 
@@ -512,15 +490,15 @@ class DME2(object):
         return json.dumps(data, separators=(',', ':'))
 
     def createRecord(self, data):
-        #@TODO update the cache w/ resultant record + id when impleneted
+        # @TODO update the cache w/ resultant record + id when impleneted
         return self.query(self.record_url, 'POST', data)
 
     def updateRecord(self, record_id, data):
-        #@TODO update the cache w/ resultant record + id when impleneted
+        # @TODO update the cache w/ resultant record + id when impleneted
         return self.query(self.record_url + '/' + str(record_id), 'PUT', data)
 
     def deleteRecord(self, record_id):
-        #@TODO remove record from the cache when impleneted
+        # @TODO remove record from the cache when impleneted
         return self.query(self.record_url + '/' + str(record_id), 'DELETE')
 
     def getMonitor(self, record_id):
@@ -550,6 +528,7 @@ class DME2(object):
 # ===========================================
 # Module execution.
 #
+
 
 def main():
 
@@ -581,11 +560,11 @@ def main():
             ip3=dict(required=False),
             ip4=dict(required=False),
             ip5=dict(required=False),
-            validate_certs = dict(default='yes', type='bool'),
+            validate_certs=dict(default='yes', type='bool'),
         ),
-        required_together=(
+        required_together=[
             ['record_value', 'record_ttl', 'record_type']
-        ),
+        ],
         required_if=[
             ['failover', True, ['autoFailover', 'port', 'protocol', 'ip1', 'ip2']],
             ['monitor', True, ['port', 'protocol', 'maxEmails', 'systemDescription', 'ip1']]
@@ -675,7 +654,7 @@ def main():
     # Follow Keyword Controlled Behavior
     if state == 'present':
         # return the record if no value is specified
-        if not "value" in new_record:
+        if "value" not in new_record:
             if not current_record:
                 module.fail_json(
                     msg="A record with name '%s' does not exist for domain '%s.'" % (record_name, module.params['domain']))

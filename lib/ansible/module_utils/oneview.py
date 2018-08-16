@@ -67,7 +67,7 @@ def transform_list_to_dict(list_):
     return ret
 
 
-def merge_list_by_key(original_list, updated_list, key, ignore_when_null=[]):
+def merge_list_by_key(original_list, updated_list, key, ignore_when_null=None):
     """
     Merge two lists by the key. It basically:
 
@@ -84,6 +84,8 @@ def merge_list_by_key(original_list, updated_list, key, ignore_when_null=[]):
         if its values are null.
     :return: list: Lists merged.
     """
+    ignore_when_null = [] if ignore_when_null is None else ignore_when_null
+
     if not original_list:
         return updated_list
 
@@ -205,7 +207,7 @@ class OneViewModuleBase(object):
         config=dict(type='path'),
         hostname=dict(type='str'),
         username=dict(type='str'),
-        password=dict(type='str'),
+        password=dict(type='str', no_log=True),
         api_version=dict(type='int'),
         image_streamer_hostname=dict(type='str')
     )

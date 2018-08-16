@@ -1,62 +1,62 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# (c) 2016, Eric D Helms <ericdhelms@gmail.com>
+
+# Copyright: (c) 2016, Eric D Helms <ericdhelms@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
 module: foreman
 short_description: Manage Foreman Resources
 description:
-    - Allows the management of Foreman resources inside your Foreman server
+    - Allows the management of Foreman resources inside your Foreman server.
 version_added: "2.3"
-author: "Eric D Helms (@ehelms)"
+author:
+- Eric D Helms (@ehelms)
 requirements:
-    - "nailgun >= 0.28.0"
-    - "python >= 2.6"
+    - nailgun >= 0.28.0
+    - python >= 2.6
     - datetime
 options:
     server_url:
         description:
-            - URL of Foreman server
+            - URL of Foreman server.
         required: true
     username:
         description:
-            - Username on Foreman server
+            - Username on Foreman server.
         required: true
     password:
         description:
-            - Password for user accessing Foreman server
+            - Password for user accessing Foreman server.
         required: true
     entity:
         description:
-            - The Foreman resource that the action will be performed on (e.g. organization, host)
+            - The Foreman resource that the action will be performed on (e.g. organization, host).
         required: true
     params:
         description:
-            - Parameters associated to the entity resource to set or edit in dictionary format (e.g. name, description)
+            - Parameters associated to the entity resource to set or edit in dictionary format (e.g. name, description).
         required: true
 '''
 
 EXAMPLES = '''
-- name: "Create CI Organization"
-  local_action:
-      module: foreman
-      username: "admin"
-      password: "admin"
-      server_url: "https://fakeserver.com"
-      entity: "organization"
-      params:
-        name: "My Cool New Organization"
+- name: Create CI Organization
+  foreman:
+    username: admin
+    password: admin
+    server_url: https://fakeserver.com
+    entity: organization
+    params:
+      name: My Cool New Organization
+  delegate_to: localhost
 '''
 
 RETURN = '''# '''
@@ -86,8 +86,8 @@ class NailGun(object):
 
         if len(response) == 1:
             return response[0]
-        else:
-            return None
+
+        return None
 
     def organization(self, params):
         name = params['name']
@@ -103,17 +103,18 @@ class NailGun(object):
 
         return True
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            server_url=dict(required=True),
-            username=dict(required=True, no_log=True),
-            password=dict(required=True, no_log=True),
-            entity=dict(required=True, no_log=False),
-            verify_ssl=dict(required=False, type='bool', default=False),
-            params=dict(required=True, no_log=True, type='dict'),
+            server_url=dict(type='str', required=True),
+            username=dict(type='str', required=True, no_log=True),
+            password=dict(type='str', required=True, no_log=True),
+            entity=dict(type='str', required=True),
+            verify_ssl=dict(type='bool', default=False),
+            params=dict(type='dict', required=True, no_log=True),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     if not HAS_NAILGUN_PACKAGE:

@@ -466,35 +466,30 @@ class AosInventory(object):
         except:
             if 'AOS_SERVER' in os.environ.keys():
                 self.aos_server = os.environ['AOS_SERVER']
-            pass
 
         try:
             self.aos_server_port = config.get('aos', 'port')
         except:
             if 'AOS_PORT' in os.environ.keys():
                 self.aos_server_port = os.environ['AOS_PORT']
-            pass
 
         try:
             self.aos_username = config.get('aos', 'username')
         except:
             if 'AOS_USERNAME' in os.environ.keys():
                 self.aos_username = os.environ['AOS_USERNAME']
-            pass
 
         try:
             self.aos_password = config.get('aos', 'password')
         except:
             if 'AOS_PASSWORD' in os.environ.keys():
                 self.aos_password = os.environ['AOS_PASSWORD']
-            pass
 
         try:
             self.aos_blueprint = config.get('aos', 'blueprint')
         except:
             if 'AOS_BLUEPRINT' in os.environ.keys():
                 self.aos_blueprint = os.environ['AOS_BLUEPRINT']
-            pass
 
         try:
             if config.get('aos', 'blueprint_interface') in ['false', 'no']:
@@ -577,7 +572,7 @@ class AosInventory(object):
           - Converting to lowercase
         """
 
-        rx = re.compile('\W+')
+        rx = re.compile(r'\W+')
         clean_group = rx.sub('_', group_name).lower()
 
         return clean_group
@@ -587,6 +582,7 @@ class AosInventory(object):
         if 'status' in device.value.keys():
             for key, value in device.value['status'].items():
                 self.add_var_to_host(device.name, key, value)
+
 
 # Run the script
 if __name__ == '__main__':

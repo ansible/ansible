@@ -18,7 +18,44 @@
 
 # Note: We install the yum package onto Fedora so that this will work on dnf systems
 # We want to test that for people who don't want to upgrade their systems.
-- include: 'yum.yml'
+
+- block:
+  - include: 'yum.yml'
+  always:
+    - name: remove installed packages
+      yum:
+        name:
+          - bc
+          - sos
+        state: absent
+
+    # On CentOS 6 'yum groupremove "Development Tools"' fails when groupremove_leaf_only
+    # isn't enabled, that's why a package belonging to "Development Tools" (autoconf)
+    # is removed instead of the whole group.
+    - name: remove installed group
+      yum:
+        name: "@Development tools"
+        state: absent
+      when:
+        - (ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux'] and ansible_distribution_major_version|int > 6) or ansible_distribution in ['Fedora']
+    - name: remove a package from a group
+      yum:
+        name: 'autoconf'
+        state: absent
+      when:
+        - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux'] and ansible_distribution_major_version|int <= 6
+  when:
+    - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora']
+    - ansible_python.version.major == 2
+
+- block:
+    - include: 'repo.yml'
+  always:
+    - yum_repository:
+        name: "{{ item }}"
+        state: absent
+      with_items: "{{ repos }}"
+    - command: yum clean metadata
   when:
     - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora']
     - ansible_python.version.major == 2

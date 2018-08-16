@@ -1,17 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Joseph Callen <jcallen () csc.com>
+# Copyright: (c) 2015, Joseph Callen <jcallen () csc.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -20,9 +18,10 @@ short_description: Create or remove a distributed vSwitch
 description:
     - Create or remove a distributed vSwitch
 version_added: 2.0
-author: "Joseph Callen (@jcpowermac)"
+author:
+- Joseph Callen (@jcpowermac)
 notes:
-    - Tested on vSphere 5.5
+    - Tested on vSphere 6.5
 requirements:
     - "python >= 2.6"
     - PyVmomi
@@ -35,6 +34,12 @@ options:
         description:
             - The name of the switch to create or remove
         required: True
+    switch_version:
+        description:
+            - The version of the switch to create. Can be 6.5.0, 6.0.0, 5.5.0, 5.1.0, 5.0.0 with a vcenter running vSphere 6.5
+            - Needed if you have a vcenter version > ESXi version to join DVS. If not specified version=version of vcenter
+        required: False
+        version_added: 2.5
     mtu:
         description:
             - The switch maximum transmission unit
@@ -70,18 +75,19 @@ extends_documentation_fragment: vmware.documentation
 '''
 EXAMPLES = '''
 - name: Create dvswitch
-  local_action:
-    module: vmware_dvswitch
-    hostname: vcenter_ip_or_hostname
-    username: vcenter_username
-    password: vcenter_password
+  vmware_dvswitch:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
     datacenter_name: datacenter
     switch_name: dvSwitch
+    switch_version: 6.0.0
     mtu: 9000
     uplink_quantity: 2
     discovery_proto: lldp
     discovery_operation: both
     state: present
+  delegate_to: localhost
 '''
 
 try:
@@ -97,14 +103,16 @@ from ansible.module_utils.vmware import (HAS_PYVMOMI,
                                          find_dvs_by_name,
                                          vmware_argument_spec,
                                          wait_for_task
-                                        )
+                                         )
 
 
 class VMwareDVSwitch(object):
+
     def __init__(self, module):
         self.module = module
         self.dvs = None
         self.switch_name = self.module.params['switch_name']
+        self.switch_version = self.module.params['switch_version']
         self.datacenter_name = self.module.params['datacenter_name']
         self.mtu = self.module.params['mtu']
         self.uplink_quantity = self.module.params['uplink_quantity']
@@ -134,7 +142,6 @@ class VMwareDVSwitch(object):
         except Exception as e:
             self.module.fail_json(msg=str(e))
 
-
     def create_dvswitch(self, network_folder):
         result = None
         changed = False
@@ -151,8 +158,9 @@ class VMwareDVSwitch(object):
         spec.productInfo = vim.dvs.ProductSpec()
         spec.productInfo.name = "DVS"
         spec.productInfo.vendor = "VMware"
+        spec.productInfo.version = self.switch_version
 
-        for count in range(1, self.uplink_quantity+1):
+        for count in range(1, self.uplink_quantity + 1):
             spec.configSpec.uplinkPortPolicy.uplinkPortName.append("uplink%d" % count)
 
         task = network_folder.CreateDVS_Task(spec)
@@ -193,6 +201,7 @@ def main():
     argument_spec.update(dict(datacenter_name=dict(required=True, type='str'),
                               switch_name=dict(required=True, type='str'),
                               mtu=dict(required=True, type='int'),
+                              switch_version=dict(type='str'),
                               uplink_quantity=dict(required=True, type='int'),
                               discovery_proto=dict(required=True, choices=['cdp', 'lldp'], type='str'),
                               discovery_operation=dict(required=True, choices=['both', 'none', 'advertise', 'listen'], type='str'),

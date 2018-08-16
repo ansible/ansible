@@ -16,14 +16,13 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from ansible.compat.tests import unittest
-import ansible.module_utils.basic
 from ansible.modules.system import interfaces_file
 import os
 import json
-import sys
 import io
 import inspect
-import json
+from shutil import copyfile, move
+import difflib
 
 
 class AnsibleFailJson(Exception):
@@ -31,9 +30,16 @@ class AnsibleFailJson(Exception):
 
 
 class ModuleMocked():
+    def atomic_move(self, src, dst):
+        move(src, dst)
+
+    def backup_local(self, path):
+        backupp = os.path.join("/tmp", os.path.basename(path) + ".bak")
+        copyfile(path, backupp)
+        return backupp
+
     def fail_json(self, msg):
         raise AnsibleFailJson(msg)
-        pass
 
 
 module = ModuleMocked()
@@ -44,6 +50,18 @@ golden_output_path = os.path.join(os.path.dirname(__file__), 'fixtures', 'golden
 class TestInterfacesFileModule(unittest.TestCase):
     def getTestFiles(self):
         return next(os.walk(fixture_path))[2]
+
+    def compareFileToBackup(self, path, backup):
+        with open(path) as f1:
+            with open(backup) as f2:
+                diffs = difflib.context_diff(f1.readlines(),
+                                             f2.readlines(),
+                                             fromfile=os.path.basename(path),
+                                             tofile=os.path.basename(backup))
+        # Restore backup
+        move(backup, path)
+        deltas = [d for d in diffs]
+        self.assertTrue(len(deltas) == 0)
 
     def compareInterfacesLinesToFile(self, interfaces_lines, path, testname=None):
         if not testname:
@@ -138,3 +156,67 @@ class TestInterfacesFileModule(unittest.TestCase):
 
                 self.compareInterfacesLinesToFile(lines, testfile, "%s_%s" % (testfile, testname))
                 self.compareInterfacesToFile(ifaces, testfile, "%s_%s.json" % (testfile, testname))
+
+    def test_revert(self):
+        testcases = {
+            "revert": [
+                {
+                    'iface': 'eth0',
+                    'option': 'mtu',
+                    'value': '1350',
+                }
+            ],
+        }
+        for testname, options_list in testcases.items():
+            for testfile in self.getTestFiles():
+                path = os.path.join(fixture_path, testfile)
+                lines, ifaces = interfaces_file.read_interfaces_file(module, path)
+                backupp = module.backup_local(path)
+                options = options_list[0]
+                for state in ['present', 'absent']:
+                    fail_json_iterations = []
+                    options['state'] = state
+                    try:
+                        _, lines = interfaces_file.setInterfaceOption(module, lines, options['iface'], options['option'], options['value'], options['state'])
+                    except AnsibleFailJson as e:
+                        fail_json_iterations.append("fail_json message: %s\noptions:\n%s" %
+                                                    (str(e), json.dumps(options, sort_keys=True, indent=4, separators=(',', ': '))))
+                    interfaces_file.write_changes(module, [d['line'] for d in lines if 'line' in d], path)
+
+                self.compareStringWithFile("\n=====\n".join(fail_json_iterations), "%s_%s.exceptions.txt" % (testfile, testname))
+
+                self.compareInterfacesLinesToFile(lines, testfile, "%s_%s" % (testfile, testname))
+                self.compareInterfacesToFile(ifaces, testfile, "%s_%s.json" % (testfile, testname))
+                self.compareFileToBackup(path, backupp)
+
+    def test_change_method(self):
+        testcases = {
+            "change_method": [
+                {
+                    'iface': 'eth0',
+                    'option': 'method',
+                    'value': 'manual',
+                    'state': 'present',
+                }
+            ],
+        }
+        for testname, options_list in testcases.items():
+            for testfile in self.getTestFiles():
+                path = os.path.join(fixture_path, testfile)
+                lines, ifaces = interfaces_file.read_interfaces_file(module, path)
+                backupp = module.backup_local(path)
+                options = options_list[0]
+                fail_json_iterations = []
+                try:
+                    _, lines = interfaces_file.setInterfaceOption(module, lines, options['iface'], options['option'], options['value'], options['state'])
+                except AnsibleFailJson as e:
+                    fail_json_iterations.append("fail_json message: %s\noptions:\n%s" %
+                                                (str(e), json.dumps(options, sort_keys=True, indent=4, separators=(',', ': '))))
+                interfaces_file.write_changes(module, [d['line'] for d in lines if 'line' in d], path)
+
+                self.compareStringWithFile("\n=====\n".join(fail_json_iterations), "%s_%s.exceptions.txt" % (testfile, testname))
+
+                self.compareInterfacesLinesToFile(lines, testfile, "%s_%s" % (testfile, testname))
+                self.compareInterfacesToFile(ifaces, testfile, "%s_%s.json" % (testfile, testname))
+                # Restore backup
+                move(backupp, path)

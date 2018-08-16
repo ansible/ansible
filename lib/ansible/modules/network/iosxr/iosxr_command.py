@@ -27,6 +27,7 @@ description:
     Please use M(iosxr_config) to configure iosxr devices.
 extends_documentation_fragment: iosxr
 notes:
+  - This module does not support netconf connection
   - Tested against IOS XR 6.1.2
 options:
   commands:
@@ -44,8 +45,6 @@ options:
         before moving forward. If the conditional is not true
         within the configured number of retries, the task fails.
         See examples.
-    required: false
-    default: null
     aliases: ['waitfor']
     version_added: "2.2"
   match:
@@ -56,7 +55,6 @@ options:
         then all conditionals in the wait_for must be satisfied.  If
         the value is set to C(any) then only one of the values must be
         satisfied.
-    required: false
     default: all
     choices: ['any', 'all']
     version_added: "2.2"
@@ -66,7 +64,6 @@ options:
         before it is considered failed. The command is run on the
         target device every retry and evaluated against the
         I(wait_for) conditions.
-    required: false
     default: 10
   interval:
     description:
@@ -74,7 +71,6 @@ options:
         of the command. If the command does not pass the specified
         conditions, the interval indicates how long to wait before
         trying the command again.
-    required: false
     default: 1
 """
 
@@ -94,6 +90,7 @@ tasks:
       commands:
         - show version
         - show interfaces
+        - { command: example command that prompts, prompt: expected prompt, answer: yes}
 
   - name: run multiple commands and evaluate the output
     iosxr_command:
@@ -125,9 +122,9 @@ failed_conditions:
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.iosxr import run_commands, iosxr_argument_spec, check_args
-from ansible.module_utils.netcli import Conditional
-from ansible.module_utils.network_common import ComplexList
+from ansible.module_utils.network.iosxr.iosxr import run_commands, iosxr_argument_spec
+from ansible.module_utils.network.iosxr.iosxr import command_spec
+from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
 
@@ -140,26 +137,26 @@ def to_lines(stdout):
 
 
 def parse_commands(module, warnings):
-    command = ComplexList(dict(
-        command=dict(key=True),
-        prompt=dict(),
-        answer=dict()
-    ), module)
-    commands = command(module.params['commands'])
-
+    commands = module.params['commands']
     for item in list(commands):
-        if module.check_mode and not item['command'].startswith('show'):
+        try:
+            command = item['command']
+        except Exception:
+            command = item
+        if module.check_mode and not command.startswith('show'):
             warnings.append(
                 'only show commands are supported when using check mode, not '
-                'executing `%s`' % item['command']
+                'executing `%s`' % command
             )
             commands.remove(item)
-        elif item['command'].startswith('conf'):
+        elif command.startswith('conf'):
             module.fail_json(
                 msg='iosxr_command does not support running config mode '
                     'commands.  Please use iosxr_config instead'
             )
+
     return commands
+
 
 def main():
     spec = dict(
@@ -174,11 +171,12 @@ def main():
 
     spec.update(iosxr_argument_spec)
 
+    spec.update(command_spec)
+
     module = AnsibleModule(argument_spec=spec,
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     commands = parse_commands(module, warnings)
 
@@ -207,9 +205,8 @@ def main():
 
     if conditionals:
         failed_conditions = [item.raw for item in conditionals]
-        msg = 'One or more conditional statements have not be satisfied'
+        msg = 'One or more conditional statements have not been satisfied'
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
-
 
     result = {
         'changed': False,
@@ -219,6 +216,7 @@ def main():
     }
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

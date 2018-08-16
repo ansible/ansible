@@ -3,34 +3,36 @@
     "data": {
         "Stacks": [
             {
-                "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-basic-yaml/b5ca09e0-0f1b-11e7-8ebb-503aca41a035",
+                "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-basic-yaml/04023cd0-b5d0-11e7-86b8-503ac93168c5",
+                "EnableTerminationProtection": false,
                 "Description": "Basic template that creates an S3 bucket",
                 "Tags": [],
                 "StackStatusReason": "User Initiated",
                 "CreationTime": {
-                    "hour": 16,
+                    "hour": 19,
                     "__class__": "datetime",
-                    "month": 3,
-                    "second": 14,
-                    "microsecond": 662000,
+                    "month": 10,
+                    "second": 8,
+                    "microsecond": 324000,
                     "year": 2017,
-                    "day": 22,
-                    "minute": 22
+                    "day": 20,
+                    "minute": 51
                 },
                 "StackName": "ansible-test-basic-yaml",
                 "NotificationARNs": [],
                 "StackStatus": "CREATE_IN_PROGRESS",
-                "DisableRollback": false
+                "DisableRollback": false,
+                "RollbackConfiguration": {}
             }
         ],
         "ResponseMetadata": {
             "RetryAttempts": 0,
             "HTTPStatusCode": 200,
-            "RequestId": "b5f14113-0f1b-11e7-8ccd-097b5e15ba0c",
+            "RequestId": "042974db-b5d0-11e7-ae09-550cfe4b2358",
             "HTTPHeaders": {
-                "x-amzn-requestid": "b5f14113-0f1b-11e7-8ccd-097b5e15ba0c",
-                "date": "Wed, 22 Mar 2017 16:22:14 GMT",
-                "content-length": "869",
+                "x-amzn-requestid": "042974db-b5d0-11e7-ae09-550cfe4b2358",
+                "date": "Fri, 20 Oct 2017 19:51:08 GMT",
+                "content-length": "975",
                 "content-type": "text/xml"
             }
         }

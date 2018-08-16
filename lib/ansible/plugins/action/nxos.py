@@ -23,10 +23,11 @@ import sys
 import copy
 
 from ansible import constants as C
+from ansible.module_utils._text import to_text
+from ansible.module_utils.connection import Connection
 from ansible.plugins.action.normal import ActionModule as _ActionModule
-from ansible.module_utils.basic import AnsibleFallbackNotFound
-from ansible.module_utils.nxos import nxos_argument_spec
-from ansible.module_utils.six import iteritems
+from ansible.module_utils.network.common.utils import load_provider
+from ansible.module_utils.network.nxos.nxos import nxos_provider_spec
 
 try:
     from __main__ import display
@@ -38,112 +39,118 @@ except ImportError:
 class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
-        if self._play_context.connection != 'local':
-            return dict(
-                failed=True,
-                msg='invalid connection specified, expected connection=local, '
-                    'got %s' % self._play_context.connection
-            )
+        del tmp  # tmp no longer has any effect
 
-        provider = self.load_provider()
-        transport = provider['transport'] or 'cli'
+        socket_path = None
 
-        display.vvvv('connection transport is %s' % transport, self._play_context.remote_addr)
+        if (self._play_context.connection == 'httpapi' or self._task.args.get('provider', {}).get('transport') == 'nxapi') \
+                and self._task.action in ('nxos_file_copy', 'nxos_nxapi'):
+            return {'failed': True, 'msg': "Transport type 'nxapi' is not valid for '%s' module." % (self._task.action)}
 
-        if transport == 'cli':
-            pc = copy.deepcopy(self._play_context)
-            pc.connection = 'network_cli'
-            pc.network_os = 'nxos'
-            pc.remote_addr = provider['host'] or self._play_context.remote_addr
-            pc.port = int(provider['port'] or self._play_context.port or 22)
-            pc.remote_user = provider['username'] or self._play_context.connection_user
-            pc.password = provider['password'] or self._play_context.password
-            pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
-            pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
-            self._task.args['provider'] = provider.update(
-                host=pc.remote_addr,
-                port=pc.port,
-                username=pc.remote_user,
-                password=pc.password,
-                ssh_keyfile=pc.private_key_file
-            )
-            display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
-            connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
+        if self._task.action == 'nxos_file_copy':
+            self._task.args['host'] = self._play_context.remote_addr
+            self._task.args['password'] = self._play_context.password
+            if self._play_context.connection == 'network_cli':
+                self._task.args['username'] = self._play_context.remote_user
+            elif self._play_context.connection == 'local':
+                self._task.args['username'] = self._play_context.connection_user
 
-            socket_path = connection.run()
-            display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
-            if not socket_path:
-                return {'failed': True,
-                        'msg': 'unable to open shell. Please see: ' +
-                               'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
+        if self._task.action == 'nxos_install_os':
+            if C.PERSISTENT_COMMAND_TIMEOUT < 600 or C.PERSISTENT_CONNECT_TIMEOUT < 600:
+                msg = 'PERSISTENT_COMMAND_TIMEOUT and PERSISTENT_CONNECT_TIMEOUT'
+                msg += ' must be set to 600 seconds or higher when using nxos_install_os module'
+                return {'failed': True, 'msg': msg}
 
+        if self._play_context.connection in ('network_cli', 'httpapi'):
+            provider = self._task.args.get('provider', {})
+            if any(provider.values()):
+                display.warning('provider is unnecessary when using %s and will be ignored' % self._play_context.connection)
+                del self._task.args['provider']
+            if self._task.args.get('transport'):
+                display.warning('transport is unnecessary when using %s and will be ignored' % self._play_context.connection)
+                del self._task.args['transport']
+
+        elif self._play_context.connection == 'local':
+            provider = load_provider(nxos_provider_spec, self._task.args)
+            transport = provider['transport'] or 'cli'
+
+            display.vvvv('connection transport is %s' % transport, self._play_context.remote_addr)
+
+            if transport == 'cli':
+                pc = copy.deepcopy(self._play_context)
+                pc.connection = 'network_cli'
+                pc.network_os = 'nxos'
+                pc.remote_addr = provider['host'] or self._play_context.remote_addr
+                pc.port = int(provider['port'] or self._play_context.port or 22)
+                pc.remote_user = provider['username'] or self._play_context.connection_user
+                pc.password = provider['password'] or self._play_context.password
+                pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
+                pc.become = provider['authorize'] or False
+                if pc.become:
+                    pc.become_method = 'enable'
+                pc.become_pass = provider['auth_pass']
+
+                display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
+                connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
+
+                command_timeout = int(provider['timeout']) if provider['timeout'] else connection.get_option('persistent_command_timeout')
+                connection.set_options(direct={'persistent_command_timeout': command_timeout})
+
+                socket_path = connection.run()
+                display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
+                if not socket_path:
+                    return {'failed': True,
+                            'msg': 'unable to open shell. Please see: ' +
+                                   'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
+
+                task_vars['ansible_socket'] = socket_path
+
+            else:
+                self._task.args['provider'] = ActionModule.nxapi_implementation(provider, self._play_context)
+        else:
+            return {'failed': True, 'msg': 'Connection type %s is not valid for this module' % self._play_context.connection}
+
+        if (self._play_context.connection == 'local' and transport == 'cli') or self._play_context.connection == 'network_cli':
             # make sure we are in the right cli context which should be
             # enable mode and not config module
-            rc, out, err = connection.exec_command('prompt()')
-            while str(out).strip().endswith(')#'):
+            if socket_path is None:
+                socket_path = self._connection.socket_path
+
+            conn = Connection(socket_path)
+            out = conn.get_prompt()
+            while to_text(out, errors='surrogate_then_replace').strip().endswith(')#'):
                 display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
-                connection.exec_command('exit')
-                rc, out, err = connection.exec_command('prompt()')
+                conn.send_command('exit')
+                out = conn.get_prompt()
 
-            task_vars['ansible_socket'] = socket_path
-
-        else:
-            provider['transport'] = 'nxapi'
-            if provider.get('host') is None:
-                provider['host'] = self._play_context.remote_addr
-
-            if provider.get('port') is None:
-                if provider.get('use_ssl'):
-                    provider['port'] = 443
-                else:
-                    provider['port'] = 80
-
-            if provider.get('timeout') is None:
-                provider['timeout'] = C.PERSISTENT_COMMAND_TIMEOUT
-
-            if provider.get('username') is None:
-                provider['username'] = self._play_context.connection_user
-
-            if provider.get('password') is None:
-                provider['password'] = self._play_context.password
-
-            if provider.get('use_ssl') is None:
-                provider['use_ssl'] = False
-
-            if provider.get('validate_certs') is None:
-                provider['validate_certs'] = True
-
-            self._task.args['provider'] = provider
-
-        # make sure a transport value is set in args
-        self._task.args['transport'] = transport
-
-        result = super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(task_vars=task_vars)
         return result
 
-    def load_provider(self):
-        provider = self._task.args.get('provider', {})
-        for key, value in iteritems(nxos_argument_spec):
-            if key != 'provider' and key not in provider:
-                if key in self._task.args:
-                    provider[key] = self._task.args[key]
-                elif 'fallback' in value:
-                    provider[key] = self._fallback(value['fallback'])
-                elif key not in provider:
-                    provider[key] = None
-        return provider
+    @staticmethod
+    def nxapi_implementation(provider, play_context):
+        provider['transport'] = 'nxapi'
+        if provider.get('host') is None:
+            provider['host'] = play_context.remote_addr
 
-    def _fallback(self, fallback):
-        strategy = fallback[0]
-        args = []
-        kwargs = {}
-
-        for item in fallback[1:]:
-            if isinstance(item, dict):
-                kwargs = item
+        if provider.get('port') is None:
+            if provider.get('use_ssl'):
+                provider['port'] = 443
             else:
-                args = item
-        try:
-            return strategy(*args, **kwargs)
-        except AnsibleFallbackNotFound:
-            pass
+                provider['port'] = 80
+
+        if provider.get('timeout') is None:
+            provider['timeout'] = C.PERSISTENT_COMMAND_TIMEOUT
+
+        if provider.get('username') is None:
+            provider['username'] = play_context.connection_user
+
+        if provider.get('password') is None:
+            provider['password'] = play_context.password
+
+        if provider.get('use_ssl') is None:
+            provider['use_ssl'] = False
+
+        if provider.get('validate_certs') is None:
+            provider['validate_certs'] = True
+
+        return provider

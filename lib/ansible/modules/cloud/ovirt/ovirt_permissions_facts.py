@@ -68,7 +68,7 @@ EXAMPLES = '''
 
 RETURN = '''
 ovirt_permissions:
-    description: "List of dictionaries describing the permissions. Permission attribues are mapped to dictionary keys,
+    description: "List of dictionaries describing the permissions. Permission attributes are mapped to dictionary keys,
                   all permissions attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/permission."
     returned: On success.
     type: list
@@ -94,7 +94,16 @@ from ansible.module_utils.ovirt import (
 def _permissions_service(connection, module):
     if module.params['user_name']:
         service = connection.system_service().users_service()
-        entity = search_by_name(service, module.params['user_name'])
+        entity = next(
+            iter(
+                service.list(
+                    search='usrname={0}'.format(
+                        '{0}@{1}'.format(module.params['user_name'], module.params['authz_name'])
+                    )
+                )
+            ),
+            None
+        )
     else:
         service = connection.system_service().groups_service()
         entity = search_by_name(service, module.params['group_name'])
@@ -125,6 +134,7 @@ def main():
             for key, value in p.__dict__.items():
                 if value and isinstance(value, sdk.Struct):
                     newperm[key[1:]] = get_link_name(connection, value)
+                    newperm['%s_id' % key[1:]] = value.id
             permissions.append(newperm)
 
         module.exit_json(

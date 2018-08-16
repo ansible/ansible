@@ -1,0 +1,41 @@
+---
+- debug: msg="START eos cli/net_vrf.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+
+- name: setup - remove vrf
+  net_vrf:
+    name: test
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+
+- name: Create vrf using platform agnostic vrf module
+  net_vrf:
+    name: test
+    rd: 1:200
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'vrf definition test' in result.commands"
+      - "'rd 1:200' in result.commands"
+      # Ensure sessions contains epoc. Will fail after 18th May 2033
+      - "'ansible_1' in result.session_name"
+
+- name: teardown - remove vrf
+  net_vrf:
+    name: test
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+
+- debug: msg="END eos cli/net_vrf.yaml on connection={{ ansible_connection }}"

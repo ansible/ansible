@@ -29,6 +29,8 @@ class TestNxosIPInterfaceModule(TestNxosModule):
     module = nxos_pim_interface
 
     def setUp(self):
+        super(TestNxosIPInterfaceModule, self).setUp()
+
         self.mock_get_config = patch('ansible.modules.network.nxos.nxos_pim_interface.get_config')
         self.get_config = self.mock_get_config.start()
 
@@ -39,6 +41,7 @@ class TestNxosIPInterfaceModule(TestNxosModule):
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
+        super(TestNxosIPInterfaceModule, self).tearDown()
         self.mock_get_config.stop()
         self.mock_load_config.stop()
         self.mock_run_commands.stop()
@@ -62,12 +65,12 @@ class TestNxosIPInterfaceModule(TestNxosModule):
         self.run_commands.side_effect = load_from_file
 
     def test_nxos_pim_interface_present(self):
-        set_module_args(dict(interface='eth2/1', dr_prio=10, hello_interval=40, sparse=True, border=True))
+        set_module_args(dict(interface='eth2/1', dr_prio=10, hello_interval=40, sparse=True, border=False))
         self.execute_module(
             changed=True,
             commands=[
                 'interface eth2/1', 'ip pim dr-priority 10', 'ip pim hello-interval 40000',
-                'ip pim sparse-mode', 'ip pim border']
+                'ip pim sparse-mode']
         )
 
     def test_nxos_pim_interface_jp(self):
@@ -78,14 +81,14 @@ class TestNxosIPInterfaceModule(TestNxosModule):
         self.execute_module(
             changed=True,
             commands=['interface eth2/1', 'ip pim jp-policy JPOUT out',
-                      'ip pim jp-policy JPIN in', 'ip pim sparse-mode']
+                      'ip pim jp-policy JPIN in']
         )
 
     def test_nxos_pim_interface_default(self):
         set_module_args(dict(interface='eth2/1', state='default'))
         self.execute_module(
-            changed=True,
-            commands=['interface eth2/1', 'ip pim dr-priority 1', 'ip pim hello-interval 30000', 'no ip pim border']
+            changed=False,
+            commands=[]
         )
 
     def test_nxos_pim_interface_ip_absent(self):

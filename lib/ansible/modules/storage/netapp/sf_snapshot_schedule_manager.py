@@ -312,11 +312,11 @@ class SolidFireSnapShotSchedule(object):
             elif self.state == 'present':
                 # Check if we need to update the account
 
-                if self.retention is not None and schedule_detail.schedule_info.retention !=self.retention:
+                if self.retention is not None and schedule_detail.schedule_info.retention != self.retention:
                     update_schedule = True
                     changed = True
 
-                elif schedule_detail.name !=self.name:
+                elif schedule_detail.name != self.name:
                     update_schedule = True
                     changed = True
 
@@ -380,6 +380,7 @@ class SolidFireSnapShotSchedule(object):
 def main():
     v = SolidFireSnapShotSchedule()
     v.apply()
+
 
 if __name__ == '__main__':
     main()

@@ -1,0 +1,75 @@
+---
+# These two tests are close to documentation example
+
+- name: Create a new host or update an existing host's info
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost1
+    visible_name: ExampleName
+    description: My ExampleHost Description
+    host_groups:
+      - Linux servers
+      - Zabbix servers
+    link_templates:
+      - Template App IMAP Service
+      - Template App NTP Service
+    status: enabled
+    state: present
+    inventory_mode: manual
+    inventory_zabbix:
+      tag: test-tag
+      alias: test-alias
+      notes: "Special Informations: test-info"
+      location: test-location
+      site_rack: test-rack
+      os: test-os
+      hardware: test-hw
+    ipmi_authtype: 2
+    ipmi_privilege: 4
+    ipmi_username: username
+    ipmi_password: password
+    interfaces:
+      - type: 1
+        main: 1
+        useip: 1
+        ip: 10.1.1.1
+        dns: ""
+        port: 10050
+      - type: 4
+        main: 1
+        useip: 1
+        ip: 10.1.1.1
+        dns: ""
+        port: 12345
+  register: zabbix_host1
+
+- name: Update an existing host's tls settings
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost2
+    visible_name: ExampleName2
+    interfaces:
+      - type: 1
+        main: 1
+        useip: 1
+        ip: 10.1.1.2
+        dns: ""
+        port: 10050
+    host_groups:
+      - Linux servers
+    tls_psk_identity: test
+    tls_connect: 2
+    tls_psk: 123456789abcdef123456789abcdef12
+  register: zabbix_host2
+
+- name: expect both to succeed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+          - "zabbix_host2 is changed"

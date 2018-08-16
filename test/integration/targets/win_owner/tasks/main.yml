@@ -45,7 +45,7 @@
     path: "{{test_win_owner_path}}"
     user: invalid-user
   register: invalid_user
-  failed_when: invalid_user.msg != 'invalid-user is not a valid user or group on the host machine or domain'
+  failed_when: invalid_user.msg is not search("account_name invalid-user is not a valid account, cannot get SID.*")
 
 - name: set owner defaults check
   win_owner:
@@ -61,7 +61,7 @@
 - name: assert set owner defaults check
   assert:
     that:
-    - defaults_check|changed
+    - defaults_check is changed
     - actual_defaults_check.stdout_lines[0] == 'BUILTIN\Administrators'
 
 - name: set owner defaults
@@ -77,7 +77,7 @@
 - name: assert set owner defaults
   assert:
     that:
-    - defaults|changed
+    - defaults is changed
     - actual_defaults.stdout_lines[0] == 'NT AUTHORITY\SYSTEM'
 
 - name: set owner defaults again
@@ -93,7 +93,7 @@
 - name: assert set owner defaults again
   assert:
     that:
-    - not defaults_again|changed
+    - defaults_again is not changed
     - actual_defaults_again.stdout_lines[0] == 'NT AUTHORITY\SYSTEM'
 
 - name: set owner recurse check
@@ -119,7 +119,7 @@
 - name: assert set owner recurse check
   assert:
     that:
-    - recurse_check|changed
+    - recurse_check is changed
 
 - name: set owner recurse
   win_owner:
@@ -143,7 +143,7 @@
 - name: assert set owner recurse
   assert:
     that:
-    - recurse|changed
+    - recurse is changed
 
 - name: set owner recurse again
   win_owner:
@@ -167,12 +167,12 @@
 - name: assert set owner recurse again
   assert:
     that:
-    - not recurse_again|changed
+    - recurse_again is not changed
 
 - name: create test user
   win_user:
     name: test win owner
-    password: TtPp!@#$%^ + {{ lookup('password', '/dev/null length=15') }}
+    password: E1K0-O8b1-c8M9-c6D5
 
 - name: set owner with space recurse
   win_owner:
@@ -184,7 +184,7 @@
 - name: get owner of folder of set owner with space recurse
   win_command: powershell.exe "(Get-Acl -Path '{{test_win_owner_path}}\\{{item}}').Owner"
   register: actual_recurse_space
-  failed_when: actual_recurse_space.stdout_lines[0]|upper != ansible_hostname + '\\TEST WIN OWNER'
+  failed_when: actual_recurse_space.stdout_lines[0]|upper != ansible_hostname|upper + '\\TEST WIN OWNER'
   with_items:
   - folder with space
   - folder with space\file.txt
@@ -196,7 +196,7 @@
 - name: assert set owner with space recurse
   assert:
     that:
-    - recurse_space|changed
+    - recurse_space is changed
 
 - name: set owner with space recurse again
   win_owner:
@@ -208,7 +208,7 @@
 - name: get owner of folder of set owner with space recurse again
   win_command: powershell.exe "(Get-Acl -Path '{{test_win_owner_path}}\\{{item}}').Owner"
   register: actual_recurse_space_again
-  failed_when: actual_recurse_space_again.stdout_lines[0]|upper != ansible_hostname + '\\TEST WIN OWNER'
+  failed_when: actual_recurse_space_again.stdout_lines[0]|upper != ansible_hostname|upper + '\\TEST WIN OWNER'
   with_items:
   - folder with space
   - folder with space\file.txt
@@ -220,7 +220,7 @@
 - name: assert set owner with space recurse again
   assert:
     that:
-    - not recurse_space_again|changed
+    - recurse_space_again is not changed
 
 # Run cleanup after tests
 - name: delete test path

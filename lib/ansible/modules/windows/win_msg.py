@@ -1,22 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Jon Hawkesworth (@jhawkesworth) <figs@unity.demon.co.uk>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, Jon Hawkesworth (@jhawkesworth) <figs@unity.demon.co.uk>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
@@ -29,7 +15,7 @@ DOCUMENTATION = r'''
 ---
 module: win_msg
 version_added: "2.3"
-short_description: Sends a message to logged in users on Windows hosts.
+short_description: Sends a message to logged in users on Windows hosts
 description:
     - Wraps the msg.exe command in order to send messages to Windows hosts.
 options:
@@ -40,17 +26,19 @@ options:
   display_seconds:
     description:
       - How long to wait for receiver to acknowledge message, in seconds.
+    type: int
     default: 10
   wait:
     description:
       - Whether to wait for users to respond.  Module will only wait for the number of seconds specified in display_seconds or 10 seconds if not specified.
-        However, if I(wait) is true, the message is sent to each logged on user in turn, waiting for the user to either press 'ok' or for
+        However, if I(wait) is C(yes), the message is sent to each logged on user in turn, waiting for the user to either press 'ok' or for
         the timeout to elapse before moving on to the next user.
     type: bool
     default: 'no'
   msg:
     description:
       - The text of the message to be displayed.
+      - The message must be less than 256 characters.
     default: Hello world!
 author:
 - Jon Hawkesworth (@jhawkesworth)
@@ -59,7 +47,7 @@ notes:
      hosts, or delegates to a windows host.
    - Messages are only sent to the local host where the module is run.
    - The module does not support sending to users listed in a file.
-   - Setting wait to true can result in long run times on systems with many logged in users.
+   - Setting wait to C(yes) can result in long run times on systems with many logged in users.
 '''
 
 EXAMPLES = r'''

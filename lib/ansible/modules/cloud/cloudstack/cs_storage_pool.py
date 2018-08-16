@@ -82,7 +82,7 @@ options:
   allocation_state:
     description:
       - Allocation state of the storage pool.
-    choices: [ enabled, disabled ]
+    choices: [ enabled, disabled, maintenance ]
   state:
     description:
       - State of the storage pool.
@@ -111,7 +111,6 @@ EXAMPLES = '''
     pod: pod01
     storage_url: rbd://admin:SECRET@ceph-the-mons.domain/poolname
     provider: DefaultPrimary
-    name: Ceph RBD
     scope: cluster
     allocation_state: disabled
 
@@ -124,7 +123,6 @@ EXAMPLES = '''
     pod: pod01
     storage_url: rbd://admin:SECRET@ceph-the-mons.domain/poolname
     provider: DefaultPrimary
-    name: Ceph RBD
     scope: cluster
     allocation_state: maintenance
 

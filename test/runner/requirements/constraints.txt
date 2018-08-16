@@ -1,9 +1,19 @@
 coverage >= 4.2, != 4.3.2 # features in 4.2+ required, avoid known bug in 4.3.2 on python 2.6
-pywinrm >= 0.2.1 # 0.1.1 required, but 0.2.1 provides better performance
-pylint >= 1.5.3, < 1.7.0 # 1.4.1 adds JSON output, but 1.5.3 fixes bugs related to JSON output
+cryptography < 2.2 ; python_version < '2.7' # cryptography 2.2 drops support for python 2.6
+pywinrm >= 0.3.0 # message encryption support
+astroid == 1.5.3 ; python_version >= '3.5' # newer versions of astroid require newer versions of pylint to avoid bugs
+pylint == 1.7.4 ; python_version >= '3.5' # versions before 1.7.1 hang or fail to install on python 3.x
+pylint == 1.6.5 ; python_version <= '2.7' # versions after 1.6.5 hang or fail during test on python 2.x
 sphinx < 1.6 ; python_version < '2.7' # sphinx 1.6 and later require python 2.7 or later
+wheel < 0.30.0 ; python_version < '2.7' # wheel 0.30.0 and later require python 2.7 or later
 yamllint != 1.8.0 ; python_version < '2.7' # yamllint 1.8.0 requires python 2.7+ while earlier/later versions do not
 isort < 4.2.8 # 4.2.8 changes import sort order requirements which breaks previously passing pylint tests
 pycrypto >= 2.6 # Need features found in 2.6 and greater
 ncclient >= 0.5.2 # Need features added in 0.5.2 and greater
 idna < 2.6 # requests requires idna < 2.6, but cryptography will cause the latest version to be installed instead
+paramiko < 2.4.0 ; python_version < '2.7' # paramiko 2.4.0 drops support for python 2.6
+pytest < 3.3.0 ; python_version < '2.7' # pytest 3.3.0 drops support for python 2.6
+ntlm-auth >= 1.0.6 # message encryption support
+requests-ntlm >= 1.1.0 # message encryption support
+requests-credssp >= 0.1.0 # message encryption support
+voluptuous >= 0.11.0 # Schema recursion via Self

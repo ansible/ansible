@@ -22,10 +22,15 @@ and guidelines:
 
 * In the event of failure, a key of 'failed' should be included, along with a string explanation in 'msg'.  Modules that raise tracebacks (stacktraces) are generally considered 'poor' modules, though Ansible can deal with these returns and will automatically convert anything unparseable into a failed result.  If you are using the AnsibleModule common Python code, the 'failed' element will be included for you automatically when you call 'fail_json'.
 
-* Return codes from modules are actually not significant, but continue on with 0=success and non-zero=failure for reasons of future proofing.
+* Return codes from modules are used if 'failed' is missing, 0=success and non-zero=failure.
 
 * As results from many hosts will be aggregated at once, modules should return only relevant output.  Returning the entire contents of a log file is generally bad form.
 
+* Modules should have a concise and well defined functionality. Basically, follow the UNIX philosophy of doing one thing well.
+
+* Modules should not require that a user know all the underlying options of an api/tool to be used. For instance, if the legal values for a required module parameter cannot be documented, that's a sign that the module would be rejected.
+
+* Modules should typically encompass much of the logic for interacting with a resource. A lightweight wrapper around an API that does not contain much logic would likely cause users to offload too much logic into a playbook, and for this reason the module would be rejected. Instead try creating multiple modules for interacting with smaller individual pieces of the API.
 
 .. _debugging_ansiblemodule_based_modules:
 
@@ -189,5 +194,4 @@ Avoid creating a module that does the work of other modules; this leads to code 
 
 Avoid creating 'caches'. Ansible is designed without a central server or authority, so you cannot guarantee it will not run with different permissions, options or locations. If you need a central authority, have it on top of Ansible (for example, using bastion/cm/ci server or tower); do not try to build it into modules.
 
-Always use the hacking/test-module script when developing modules and it will warn
-you about these kind of things.
+Always use the hacking/test-module script when developing modules and it will warn you about these kind of things.

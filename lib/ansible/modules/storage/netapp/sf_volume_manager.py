@@ -46,17 +46,12 @@ options:
         description:
         - Should the volume provide 512-byte sector emulation?
         - Required when C(state=present)
-        required: false
 
     qos:
-        description: Initial quality of service settings for this volume.
-        required: false
-        default: None
+        description: Initial quality of service settings for this volume. Configure as dict in playbooks.
 
     attributes:
         description: A YAML dictionary of attributes that you would like to apply on this volume.
-        required: false
-        default: None
 
     volume_id:
         description:
@@ -64,25 +59,19 @@ options:
         - In order to create multiple volumes with the same name, but different volume_ids, please declare the I(volume_id)
           parameter with an arbitrary value. However, the specified volume_id will not be assigned to the newly created
           volume (since it's an auto-generated property).
-        required: false
-        default: None
 
     size:
         description:
         - The size of the volume in (size_unit).
         - Required when C(state = present).
-        required: false
 
     size_unit:
         description:
         - The unit used to interpret the size parameter.
-        required: false
         choices: ['bytes', 'b', 'kb', 'mb', 'gb', 'tb', 'pb', 'eb', 'zb', 'yb']
         default: 'gb'
 
     access:
-        required: false
-        choices: ['readOnly', 'readWrite', 'locked', 'replicationTarget']
         description:
         - "Access allowed for the volume."
         - "readOnly: Only read operations are allowed."
@@ -90,7 +79,7 @@ options:
         - "locked: No reads or writes are allowed."
         - "replicationTarget: Identify a volume as the target volume for a paired set of volumes. If the volume is not paired, the access status is locked."
         - "If unspecified, the access settings of the clone will be the same as the source."
-        default: None
+        choices: ['readOnly', 'readWrite', 'locked', 'replicationTarget']
 
 '''
 
@@ -102,6 +91,7 @@ EXAMPLES = """
        password: "{{ solidfire_password }}"
        state: present
        name: AnsibleVol
+       qos: {minIOPS: 1000, maxIOPS: 20000, burstIOPS: 50000}
        account_id: 3
        enable512e: False
        size: 1
@@ -137,7 +127,7 @@ msg:
 """
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 import ansible.module_utils.netapp as netapp_utils
 
 HAS_SF_SDK = netapp_utils.has_sf_sdk()
@@ -156,7 +146,7 @@ class SolidFireVolume(object):
             account_id=dict(required=True, type='int'),
 
             enable512e=dict(type='bool', aliases=['512emulation']),
-            qos=dict(required=False, type='str', default=None),
+            qos=dict(required=False, type='dict', default=None),
             attributes=dict(required=False, type='dict', default=None),
 
             volume_id=dict(type='int', default=None),
@@ -229,19 +219,17 @@ class SolidFireVolume(object):
                                    qos=self.qos,
                                    attributes=self.attributes)
 
-        except:
-            err = get_exception()
+        except Exception as err:
             self.module.fail_json(msg="Error provisioning volume %s of size %s" % (self.name, self.size),
-                                  exception=str(err))
+                                  exception=to_native(err))
 
     def delete_volume(self):
         try:
             self.sfe.delete_volume(volume_id=self.volume_id)
 
-        except:
-            err = get_exception()
+        except Exception as err:
             self.module.fail_json(msg="Error deleting volume %s" % self.volume_id,
-                                  exception=str(err))
+                                  exception=to_native(err))
 
     def update_volume(self):
         try:
@@ -252,10 +240,9 @@ class SolidFireVolume(object):
                                    total_size=self.size,
                                    attributes=self.attributes)
 
-        except:
-            err = get_exception()
+        except Exception as err:
             self.module.fail_json(msg="Error updating volume %s" % self.name,
-                                  exception=str(err))
+                                  exception=to_native(err))
 
     def apply(self):
         changed = False
@@ -288,7 +275,7 @@ class SolidFireVolume(object):
                 elif volume_detail.total_size is not None and volume_detail.total_size != self.size:
                     size_difference = abs(float(volume_detail.total_size - self.size))
                     # Change size only if difference is bigger than 0.001
-                    if size_difference/self.size > 0.001:
+                    if size_difference / self.size > 0.001:
                         update_volume = True
                         changed = True
 
@@ -305,15 +292,14 @@ class SolidFireVolume(object):
         if changed:
             if self.module.check_mode:
                 result_message = "Check mode, skipping changes"
-                pass
             else:
                 if self.state == 'present':
                     if not volume_exists:
                         self.create_volume()
                         result_message = "Volume created"
                     elif update_volume:
-                            self.update_volume()
-                            result_message = "Volume updated"
+                        self.update_volume()
+                        result_message = "Volume updated"
 
                 elif self.state == 'absent':
                     self.delete_volume()
@@ -326,6 +312,6 @@ def main():
     v = SolidFireVolume()
     v.apply()
 
+
 if __name__ == '__main__':
     main()
-

@@ -232,7 +232,7 @@ def main():
         nfs_timeout=dict(default=None, type='int'),
         nfs_retrans=dict(default=None, type='int'),
         mount_options=dict(default=None),
-        password=dict(default=None),
+        password=dict(default=None, no_log=True),
         username=dict(default=None),
         port=dict(default=None, type='int'),
         target=dict(default=None),

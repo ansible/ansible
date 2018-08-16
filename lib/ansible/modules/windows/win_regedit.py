@@ -1,22 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Adam Keech <akeech@chathamfinancial.com>, Josh Ludwig <jludwig@chathamfinancial.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2015, Adam Keech <akeech@chathamfinancial.com>
+# Copyright: (c) 2015, Josh Ludwig <jludwig@chathamfinancial.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
@@ -41,7 +28,7 @@ options:
     - Name of the registry path.
     - 'Should be in one of the following registry hives: HKCC, HKCR, HKCU,
       HKLM, HKU.'
-    required: true
+    required: yes
     aliases: [ key ]
   name:
     description:
@@ -73,20 +60,32 @@ options:
   state:
     description:
     - The state of the registry entry.
-    choices: [ present, absent ]
+    choices: [ absent, present ]
     default: present
   delete_key:
     description:
     - When C(state) is 'absent' then this will delete the entire key.
-    - If this is False then it will only clear out the '(Default)' property for
+    - If C(no) then it will only clear out the '(Default)' property for
       that key.
     type: bool
     default: 'yes'
     version_added: '2.4'
+  hive:
+    description:
+    - A path to a hive key like C:\Users\Default\NTUSER.DAT to load in the
+      registry.
+    - This hive is loaded under the HKLM:\ANSIBLE key which can then be used
+      in I(name) like any other path.
+    - This can be used to load the default user profile registry hive or any
+      other hive saved as a file.
+    - Using this function requires the user to have the C(SeRestorePrivilege)
+      and C(SeBackupPrivilege) privileges enabled.
+    type: path
+    version_added: '2.5'
 notes:
 - Check-mode C(-C/--check) and diff output C(-D/--diff) are supported, so that you can test every change against the active configuration before
   applying changes.
-- Beware that some registry hives (C(HKEY_USERS) in particular) do not allow to create new registry paths.
+- Beware that some registry hives (C(HKEY_USERS) in particular) do not allow to create new registry paths in the root folder.
 - Since ansible 2.4, when checking if a string registry value has changed, a case-sensitive test is used. Previously the test was case-insensitive.
 author:
 - Adam Keech (@smadam813)
@@ -178,6 +177,15 @@ EXAMPLES = r'''
     path: HKCU:\Software\MyCompany
     name: hello
     state: absent
+
+- name: Change default mouse trailing settings for new users
+  win_regedit:
+    path: HKLM:\ANSIBLE\Control Panel\Mouse
+    name: MouseTrails
+    data: 10
+    type: string
+    state: present
+    hive: C:\Users\Default\NTUSER.dat
 '''
 
 RETURN = r'''

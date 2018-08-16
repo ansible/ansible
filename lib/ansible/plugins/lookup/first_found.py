@@ -1,123 +1,86 @@
 # (c) 2013, seth vidal <skvidal@fedoraproject.org> red hat, inc
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-# take a list of files and (optionally) a list of paths
-# return the first existing file found in the paths
-# [file1, file2, file3], [path1, path2, path3]
-# search order is:
-# path1/file1
-# path1/file2
-# path1/file3
-# path2/file1
-# path2/file2
-# path2/file3
-# path3/file1
-# path3/file2
-# path3/file3
+DOCUMENTATION = """
+    lookup: first_found
+    author: Seth Vidal <skvidal@fedoraproject.org>
+    version_added: historical
+    short_description: return first file found from list
+    description:
+      - this lookup checks a list of files and paths and returns the full path to the first combination found.
+      - As all lookups, when fed relative paths it will try use the current task's location first and go up the chain
+        to the containing role/play/include/etc's location.
+      - The list of files has precedence over the paths searched.
+        i.e, A task in a  role has a 'file1' in the play's relative path, this will be used, 'file2' in role's relative path will not.
+    options:
+      _terms:
+        description: list of file names
+        required: True
+      paths:
+        description: list of paths in which to look for the files
+"""
 
-# first file found with os.path.exists() is returned
-# no file matches raises ansibleerror
-# EXAMPLES
-# - name: copy first existing file found to /some/file
-#   action: copy src=$item dest=/some/file
-#   with_first_found:
-#    - files: foo ${inventory_hostname} bar
-#      paths: /tmp/production /tmp/staging
+EXAMPLES = """
+- name: show first existing file
+  debug: msg={{lookup('first_found', findme)}}
+  vars:
+    findme:
+      - "/path/to/foo.txt"
+      - "bar.txt"  # will be looked in files/ dir relative to role and/or play
+      - "/path/to/biz.txt"
 
-# that will look for files in this order:
-# /tmp/production/foo
-#                 ${inventory_hostname}
-#                 bar
-# /tmp/staging/foo
-#              ${inventory_hostname}
-#              bar
+- name: |
+        copy first existing file found to /some/file,
+        looking in relative directories from where the task is defined and
+        including any play objects that contain it
+  copy: src={{lookup('first_found', findme)}} dest=/some/file
+  vars:
+    findme:
+      - foo
+      - "{{inventory_hostname}}"
+      - bar
 
-# - name: copy first existing file found to /some/file
-#   action: copy src=$item dest=/some/file
-#   with_first_found:
-#    - files: /some/place/foo ${inventory_hostname} /some/place/else
+- name: same copy but specific paths
+  copy: src={{lookup('first_found', params)}} dest=/some/file
+  vars:
+    params:
+      files:
+        - foo
+        - "{{inventory_hostname}}"
+        - bar
+      paths:
+        - /tmp/production
+        - /tmp/staging
 
-#  that will look for files in this order:
-#  /some/place/foo
-#  $relative_path/${inventory_hostname}
-#  /some/place/else
+- name: INTERFACES | Create Ansible header for /etc/network/interfaces
+  template:
+    src: "{{ lookup('first_found', findme)}}"
+    dest: "/etc/foo.conf"
+  vars:
+    findme:
+      - "{{ ansible_virtualization_type }}_foo.conf"
+      - "default_foo.conf"
 
-# example - including tasks:
-# tasks:
-# - include: $item
-#   with_first_found:
-#    - files: generic
-#      paths: tasks/staging tasks/production
-# this will include the tasks in the file generic where it is found first (staging or production)
+- name: read vars from first file found, use 'vars/' relative subdir
+  include_vars: "{{lookup('first_found', params)}}"
+  vars:
+    params:
+      files:
+        - '{{ansible_os_distribution}}.yml'
+        - '{{ansible_os_family}}.yml'
+        - default.yml
+      paths:
+        - 'vars'
+"""
 
-# example simple file lists
-# tasks:
-# - name: first found file
-#   action: copy src=$item dest=/etc/file.cfg
-#   with_first_found:
-#   - files: foo.${inventory_hostname} foo
-
-
-# example skipping if no matched files
-# First_found also offers the ability to control whether or not failing
-# to find a file returns an error or not
-#
-# - name: first found file - or skip
-#   action: copy src=$item dest=/etc/file.cfg
-#   with_first_found:
-#   - files: foo.${inventory_hostname}
-#     skip: true
-
-# example a role with default configuration and configuration per host
-# you can set multiple terms with their own files and paths to look through.
-# consider a role that sets some configuration per host falling back on a default config.
-#
-# - name: some configuration template
-#   template: src={{ item }} dest=/etc/file.cfg mode=0444 owner=root group=root
-#   with_first_found:
-#    - files:
-#       - ${inventory_hostname}/etc/file.cfg
-#      paths:
-#       - ../../../templates.overwrites
-#       - ../../../templates
-#    - files:
-#       - etc/file.cfg
-#      paths:
-#       - templates
-
-# the above will return an empty list if the files cannot be found at all
-# if skip is unspecificed or if it is set to false then it will return a list
-# error which can be caught bye ignore_errors: true for that action.
-
-# finally - if you want you can use it, in place to replace first_available_file:
-# you simply cannot use the - files, path or skip options. simply replace
-# first_available_file with with_first_found and leave the file listing in place
-#
-#
-# - name: with_first_found like first_available_file
-#   action: copy src=$item dest=/tmp/faftest
-#   with_first_found:
-#    - ../files/foo
-#    - ../files/bar
-#    - ../files/baz
-#   ignore_errors: true
-
+RETURN = """
+  _raw:
+    description:
+      - path to file found
+"""
 import os
 
 from jinja2.exceptions import UndefinedError
@@ -185,9 +148,7 @@ class LookupModule(LookupBase):
             path = self.find_file_in_search_path(variables, subdir, fn, ignore_missing=True)
             if path is not None:
                 return [path]
-        else:
-            if skip:
-                return []
-            else:
-                raise AnsibleLookupError("No file was found when using with_first_found. Use the 'skip: true' option to allow this task to be skipped if no "
-                                         "files are found")
+        if skip:
+            return []
+        raise AnsibleLookupError("No file was found when using with_first_found. Use the 'skip: true' option to allow this task to be skipped if no "
+                                 "files are found")

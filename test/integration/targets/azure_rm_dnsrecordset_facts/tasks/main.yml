@@ -21,12 +21,10 @@
     relative_name: www
     zone_name: "{{ domain_name }}.com"
     record_type: A
-    record_set_state: present
-    record_state: present
     records:
-      - 192.168.100.101
-      - 192.168.100.102
-      - 192.168.100.103
+      - entry: 192.168.100.101
+      - entry: 192.168.100.102
+      - entry: 192.168.100.103
   register: results
 
 - name: Retrieve DNS Record Set Facts for single Record Set

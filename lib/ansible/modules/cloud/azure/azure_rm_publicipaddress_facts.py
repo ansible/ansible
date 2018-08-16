@@ -29,18 +29,12 @@ options:
     name:
         description:
             - Only show results for a specific Public IP.
-        required: false
-        default: null
     resource_group:
         description:
             - Limit results by resource group. Required when using name parameter.
-        required: false
-        default: null
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
-        required: false
-        default: null
 
 extends_documentation_fragment:
     - azure
@@ -52,12 +46,12 @@ author:
 
 EXAMPLES = '''
     - name: Get facts for one Public IP
-      azure_rm_publicip_facts:
+      azure_rm_publicipaddress_facts:
         resource_group: Testing
         name: publicip001
 
     - name: Get facts for all Public IPs within a resource groups
-      azure_rm_publicip_facts:
+      azure_rm_publicipaddress_facts:
         resource_group: Testing
 '''
 
@@ -181,7 +175,6 @@ class AzureRMPublicIPFacts(AzureRMModuleBase):
                 pip['type'] = item.type
                 results.append(pip)
         return results
-
 
 
 def main():

@@ -57,6 +57,24 @@ options:
       - Interface link status.
     default: auto
     choices: ['full', 'half', 'auto']
+  delay:
+    description:
+      - Time in seconds to wait before checking for the operational state on remote
+        device. This wait is applicable for operational state argument which are
+        I(state) with values C(up)/C(down) and I(neighbors).
+    default: 10
+  neighbors:
+    description:
+      - Check the operational state of given interface C(name) for LLDP neighbor.
+      - The following suboptions are available.
+    suboptions:
+        host:
+          description:
+            - "LLDP neighbor host for given interface C(name)."
+        port:
+          description:
+            - "LLDP neighbor port to which given interface C(name) is connected."
+    version_added: 2.5
   aggregate:
     description: List of Interfaces definitions.
   state:
@@ -65,6 +83,7 @@ options:
         operationally up and C(down) means present and operationally C(down)
     default: present
     choices: ['present', 'absent', 'up', 'down']
+extends_documentation_fragment: vyos
 """
 
 EXAMPLES = """
@@ -115,6 +134,19 @@ EXAMPLES = """
       - name: eth1
       - name: eth2
     state: absent
+
+- name: Check lldp neighbors intent arguments
+  vyos_interface:
+    name: eth0
+    neighbors:
+    - port: eth0
+      host: netdev
+
+- name: Config + intent
+  vyos_interface:
+    name: eth1
+    enabled: False
+    state: down
 """
 
 RETURN = """
@@ -136,9 +168,9 @@ from time import sleep
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.network_common import conditional, remove_default_spec
-from ansible.module_utils.vyos import load_config, get_config
-from ansible.module_utils.vyos import vyos_argument_spec, check_args
+from ansible.module_utils.network.common.utils import conditional, remove_default_spec
+from ansible.module_utils.network.vyos.vyos import load_config, get_config
+from ansible.module_utils.network.vyos.vyos import vyos_argument_spec
 
 
 def search_obj_in_list(name, lst):
@@ -256,7 +288,8 @@ def map_params_to_obj(module):
             'mtu': module.params['mtu'],
             'duplex': module.params['duplex'],
             'delay': module.params['delay'],
-            'state': module.params['state']
+            'state': module.params['state'],
+            'neighbors': module.params['neighbors']
         }
 
         if module.params['enabled']:
@@ -270,12 +303,12 @@ def map_params_to_obj(module):
 
 def check_declarative_intent_params(module, want, result):
     failed_conditions = []
-
+    have_neighbors = None
     for w in want:
         want_state = w.get('state')
-        want_tx_rate = w.get('tx_rate')
-        want_rx_rate = w.get('rx_rate')
-        if want_state not in ('up', 'down') and not want_tx_rate and not want_rx_rate:
+        want_neighbors = w.get('neighbors')
+
+        if want_state not in ('up', 'down') and not want_neighbors:
             continue
 
         if result['changed']:
@@ -294,12 +327,43 @@ def check_declarative_intent_params(module, want, result):
             if have_state is None or not conditional(want_state, have_state.strip().lower()):
                 failed_conditions.append('state ' + 'eq(%s)' % want_state)
 
+        if want_neighbors:
+            have_host = []
+            have_port = []
+            if have_neighbors is None:
+                rc, have_neighbors, err = exec_command(module, 'show lldp neighbors detail')
+                if rc != 0:
+                    module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), command=command, rc=rc)
+
+            if have_neighbors:
+                lines = have_neighbors.strip().split('Interface: ')
+                for line in lines:
+                    field = line.split('\n')
+                    if field[0].split(',')[0].strip() == w['name']:
+                        for item in field:
+                            if item.strip().startswith('SysName:'):
+                                have_host.append(item.split(':')[1].strip())
+                            if item.strip().startswith('PortDescr:'):
+                                have_port.append(item.split(':')[1].strip())
+            for item in want_neighbors:
+                host = item.get('host')
+                port = item.get('port')
+                if host and host not in have_host:
+                    failed_conditions.append('host ' + host)
+                if port and port not in have_port:
+                    failed_conditions.append('port ' + port)
+
     return failed_conditions
 
 
 def main():
     """ main entry point for module execution
     """
+    neighbors_spec = dict(
+        host=dict(),
+        port=dict()
+    )
+
     element_spec = dict(
         name=dict(),
         description=dict(),
@@ -307,6 +371,7 @@ def main():
         mtu=dict(type='int'),
         duplex=dict(choices=['full', 'half', 'auto']),
         enabled=dict(default=True, type='bool'),
+        neighbors=dict(type='list', elements='dict', options=neighbors_spec),
         delay=dict(default=10, type='int'),
         state=dict(default='present',
                    choices=['present', 'absent', 'up', 'down'])
@@ -328,7 +393,7 @@ def main():
     required_one_of = [['name', 'aggregate']]
     mutually_exclusive = [['name', 'aggregate']]
 
-    required_together = (['speed', 'duplex'])
+    required_together = [['speed', 'duplex']]
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,
                            mutually_exclusive=mutually_exclusive,
@@ -336,7 +401,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     result = {'changed': False}
 
@@ -363,6 +427,7 @@ def main():
         msg = 'One or more conditional statements have not been satisfied'
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

@@ -32,7 +32,7 @@ from ansible.module_utils.facts.system.distribution import DistributionFactColle
 from ansible.module_utils.facts.system.dns import DnsFactCollector
 from ansible.module_utils.facts.system.env import EnvFactCollector
 from ansible.module_utils.facts.system.fips import FipsFactCollector
-from ansible.module_utils.facts.system.pkg_mgr import PkgMgrFactCollector
+from ansible.module_utils.facts.system.pkg_mgr import PkgMgrFactCollector, OpenBSDPkgMgrFactCollector
 from ansible.module_utils.facts.system.platform import PlatformFactCollector
 from ansible.module_utils.facts.system.python import PythonFactCollector
 from ansible.module_utils.facts.system.selinux import SelinuxFactCollector
@@ -224,6 +224,63 @@ class TestPkgMgrFacts(BaseFactsTest):
     valid_subsets = ['pkg_mgr']
     fact_namespace = 'ansible_pkgmgr'
     collector_class = PkgMgrFactCollector
+    collected_facts = {
+        "ansible_distribution": "Fedora",
+        "ansible_distribution_major_version": "28",
+        "ansible_os_family": "RedHat"
+    }
+
+    def test_collect(self):
+        module = self._mock_module()
+        fact_collector = self.collector_class()
+        facts_dict = fact_collector.collect(module=module, collected_facts=self.collected_facts)
+        self.assertIsInstance(facts_dict, dict)
+        self.assertIn('pkg_mgr', facts_dict)
+
+
+def _sanitize_os_path_apt_get(path):
+    if path == '/usr/bin/apt-get':
+        return True
+    else:
+        return False
+
+
+class TestPkgMgrFactsAptFedora(BaseFactsTest):
+    __test__ = True
+    gather_subset = ['!all', 'pkg_mgr']
+    valid_subsets = ['pkg_mgr']
+    fact_namespace = 'ansible_pkgmgr'
+    collector_class = PkgMgrFactCollector
+    collected_facts = {
+        "ansible_distribution": "Fedora",
+        "ansible_distribution_major_version": "28",
+        "ansible_os_family": "RedHat",
+        "ansible_pkg_mgr": "apt"
+    }
+
+    @patch('ansible.module_utils.facts.system.pkg_mgr.os.path.exists', side_effect=_sanitize_os_path_apt_get)
+    def test_collect(self, mock_os_path_exists):
+        module = self._mock_module()
+        fact_collector = self.collector_class()
+        facts_dict = fact_collector.collect(module=module, collected_facts=self.collected_facts)
+        self.assertIsInstance(facts_dict, dict)
+        self.assertIn('pkg_mgr', facts_dict)
+
+
+class TestOpenBSDPkgMgrFacts(BaseFactsTest):
+    __test__ = True
+    gather_subset = ['!all', 'pkg_mgr']
+    valid_subsets = ['pkg_mgr']
+    fact_namespace = 'ansible_pkgmgr'
+    collector_class = OpenBSDPkgMgrFactCollector
+
+    def test_collect(self):
+        module = self._mock_module()
+        fact_collector = self.collector_class()
+        facts_dict = fact_collector.collect(module=module, collected_facts=self.collected_facts)
+        self.assertIsInstance(facts_dict, dict)
+        self.assertIn('pkg_mgr', facts_dict)
+        self.assertEqual(facts_dict['pkg_mgr'], 'openbsd_pkg')
 
 
 class TestPlatformFactCollector(BaseFactsTest):
@@ -255,7 +312,7 @@ class TestSelinuxFacts(BaseFactsTest):
             fact_collector = self.collector_class()
             facts_dict = fact_collector.collect(module=module)
             self.assertIsInstance(facts_dict, dict)
-            self.assertFalse(facts_dict['selinux'])
+            self.assertEqual(facts_dict['selinux']['status'], 'Missing selinux Python library')
             return facts_dict
 
 

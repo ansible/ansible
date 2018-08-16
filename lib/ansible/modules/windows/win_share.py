@@ -1,30 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright 2015, Hans-Joachim Kliemeck <git@kliemeck.de>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
-# this is a windows documentation stub.  actual code lives in the .ps1
-# file of the same name
+# Copyright: (c) 2015, Hans-Joachim Kliemeck <git@kliemeck.de>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
-
 
 DOCUMENTATION = r'''
 ---
@@ -43,21 +25,20 @@ options:
   name:
     description:
       - Share name.
-    required: True
+    required: yes
   path:
     description:
       - Share directory.
-    required: True
+    required: yes
+    type: path
   state:
     description:
       - Specify whether to add C(present) or remove C(absent) the specified share.
-    choices:
-      - present
-      - absent
+    choices: [ absent, present ]
     default: present
   description:
     description:
-      - Share description
+      - Share description.
   list:
     description:
       - Specify whether to allow or deny file listing, in case user got no permission on share.
@@ -85,7 +66,7 @@ options:
       - None
       - Programs
       - Unknown
-    default: "Manual"
+    default: Manual
     version_added: "2.3"
   encrypt:
     description: Sets whether to encrypt the traffic to the share or not.

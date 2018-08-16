@@ -1,43 +1,31 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright 2017 F5 Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 F5 Networks Inc.
+# GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: bigip_ucs
-short_description: Manage upload, installation and removal of UCS files.
+short_description: Manage upload, installation and removal of UCS files
 description:
    - Manage upload, installation and removal of UCS files.
-version_added: "2.4"
+version_added: 2.4
 options:
   include_chassis_level_config:
     description:
       - During restore of the UCS file, include chassis level configuration
         that is shared among boot volume sets. For example, cluster default
         configuration.
-    choices:
-      - yes
-      - no
+    type: bool
   ucs:
     description:
       - The path to the UCS file to install. The parameter must be
@@ -52,38 +40,29 @@ options:
         device. If C(no), the file will only be uploaded if it does not already
         exist. Generally should be C(yes) only in cases where you have reason
         to believe that the image was corrupted during upload.
-    choices:
-      - yes
-      - no
+    type: bool
+    default: no
   no_license:
     description:
       - Performs a full restore of the UCS file and all the files it contains,
         with the exception of the license file. The option must be used to
         restore a UCS on RMA devices (Returned Materials Authorization).
-    choices:
-      - yes
-      - no
+    type: bool
   no_platform_check:
     description:
       - Bypasses the platform check and allows a UCS that was created using a
         different platform to be installed. By default (without this option),
         a UCS created from a different platform is not allowed to be installed.
-    choices:
-      - yes
-      - no
+    type: bool
   passphrase:
     description:
       - Specifies the passphrase that is necessary to load the specified UCS file.
-    choices:
-      - yes
-      - no
+    type: bool
   reset_trust:
     description:
       - When specified, the device and trust domain certs and keys are not
         loaded from the UCS. Instead, a new set is regenerated.
-    choices:
-      - yes
-      - no
+    type: bool
   state:
     description:
       - When C(installed), ensures that the UCS is uploaded and installed,
@@ -97,8 +76,6 @@ options:
       - installed
       - present
 notes:
-   - Requires the f5-sdk Python package on the host. This is as easy as
-     pip install f5-sdk.
    - Only the most basic checks are performed by this module. Other checks and
      considerations need to be taken into account. See the following URL.
      https://support.f5.com/kb/en-us/solutions/public/11000/300/sol11318.html
@@ -120,73 +97,71 @@ notes:
    - This module does not support restoring encrypted archives on replacement
      RMA units.
 extends_documentation_fragment: f5
-requirements:
-  - f5-sdk
 author:
   - Tim Rupp (@caphrim007)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Upload UCS
   bigip_ucs:
-      server: "lb.mydomain.com"
-      user: "admin"
-      password: "secret"
-      ucs: "/root/bigip.localhost.localdomain.ucs"
-      state: "present"
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    ucs: /root/bigip.localhost.localdomain.ucs
+    state: present
   delegate_to: localhost
 
 - name: Install (upload, install) UCS.
   bigip_ucs:
-      server: "lb.mydomain.com"
-      user: "admin"
-      password: "secret"
-      ucs: "/root/bigip.localhost.localdomain.ucs"
-      state: "installed"
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    ucs: /root/bigip.localhost.localdomain.ucs
+    state: installed
   delegate_to: localhost
 
 - name: Install (upload, install) UCS without installing the license portion
   bigip_ucs:
-      server: "lb.mydomain.com"
-      user: "admin"
-      password: "secret"
-      ucs: "/root/bigip.localhost.localdomain.ucs"
-      state: "installed"
-      no_license: "yes"
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    ucs: /root/bigip.localhost.localdomain.ucs
+    state: installed
+    no_license: yes
   delegate_to: localhost
 
 - name: Install (upload, install) UCS except the license, and bypassing the platform check
   bigip_ucs:
-      server: "lb.mydomain.com"
-      user: "admin"
-      password: "secret"
-      ucs: "/root/bigip.localhost.localdomain.ucs"
-      state: "installed"
-      no_license: "yes"
-      no_platform_check: "yes"
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    ucs: /root/bigip.localhost.localdomain.ucs
+    state: installed
+    no_license: yes
+    no_platform_check: yes
   delegate_to: localhost
 
 - name: Install (upload, install) UCS using a passphrase necessary to load the UCS
   bigip_ucs:
-      server: "lb.mydomain.com"
-      user: "admin"
-      password: "secret"
-      ucs: "/root/bigip.localhost.localdomain.ucs"
-      state: "installed"
-      passphrase: "MyPassphrase1234"
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    ucs: /root/bigip.localhost.localdomain.ucs
+    state: installed
+    passphrase: MyPassphrase1234
   delegate_to: localhost
 
 - name: Remove uploaded UCS file
   bigip_ucs:
-      server: "lb.mydomain.com"
-      user: "admin"
-      password: "secret"
-      ucs: "bigip.localhost.localdomain.ucs"
-      state: "absent"
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    ucs: bigip.localhost.localdomain.ucs
+    state: absent
   delegate_to: localhost
 '''
 
-RETURN = '''
+RETURN = r'''
 # only common fields returned
 '''
 
@@ -194,16 +169,40 @@ import os
 import re
 import time
 
-from collections import OrderedDict
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import iteritems
 from distutils.version import LooseVersion
-from ansible.module_utils.f5_utils import (
-    AnsibleF5Client,
-    AnsibleF5Parameters,
-    HAS_F5SDK,
-    F5ModuleError,
-    iControlUnexpectedHTTPError,
-    iteritems
-)
+
+try:
+    from library.module_utils.network.f5.bigip import HAS_F5SDK
+    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
+except ImportError:
+    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
+    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
+
+try:
+    from collections import OrderedDict
+except ImportError:
+    try:
+        from ordereddict import OrderedDict
+    except ImportError:
+        pass
 
 
 class Parameters(AnsibleF5Parameters):
@@ -264,7 +263,6 @@ class Parameters(AnsibleF5Parameters):
         cmd = 'tmsh load sys ucs /var/local/ucs/{0}'.format(self.basename)
         # Append any options that might be specified
         options = OrderedDict(sorted(self.options.items(), key=lambda t: t[0]))
-        print(options)
         for k, v in iteritems(options):
             if v is False or v is None:
                 continue
@@ -293,14 +291,15 @@ class Parameters(AnsibleF5Parameters):
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, *args, **kwargs):
+        self.client = kwargs.get('client', None)
+        self.kwargs = kwargs
 
     def exec_module(self):
         if self.is_version_v1():
-            manager = V1Manager(self.client)
+            manager = V1Manager(**self.kwargs)
         else:
-            manager = V2Manager(self.client)
+            manager = V2Manager(**self.kwargs)
 
         return manager.exec_module()
 
@@ -322,10 +321,10 @@ class ModuleManager(object):
 
 
 class BaseManager(object):
-    def __init__(self, client):
-        self.client = client
-        self.have = None
-        self.want = Parameters(self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        self.want = Parameters(params=self.module.params)
         self.changes = Parameters()
 
     def exec_module(self):
@@ -353,7 +352,7 @@ class BaseManager(object):
             return self.create()
 
     def update(self):
-        if self.client.check_mode:
+        if self.module.check_mode:
             if self.want.force:
                 return True
             return False
@@ -366,7 +365,7 @@ class BaseManager(object):
             return False
 
     def create(self):
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.create_on_device()
         if not self.exists():
@@ -387,7 +386,7 @@ class BaseManager(object):
         return False
 
     def remove(self):
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.remove_from_device()
         if self.exists():
@@ -563,7 +562,7 @@ class V2Manager(V1Manager):
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
             force=dict(
                 type='bool',
                 default='no'
@@ -585,27 +584,30 @@ class ArgumentSpec(object):
             ),
             ucs=dict(required=True)
         )
-        self.f5_product_name = 'bigip'
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
 
 
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
-
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name
+        supports_check_mode=spec.supports_check_mode
     )
+    if not HAS_F5SDK:
+        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        mm = ModuleManager(client)
+        client = F5Client(**module.params)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        client.module.exit_json(**results)
-    except F5ModuleError as e:
-        client.module.fail_json(msg=str(e))
+        cleanup_tokens(client)
+        module.exit_json(**results)
+    except F5ModuleError as ex:
+        cleanup_tokens(client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

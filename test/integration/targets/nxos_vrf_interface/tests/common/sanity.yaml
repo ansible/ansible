@@ -1,5 +1,7 @@
 ---
-- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_vrf_interface sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_vrf_interface sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 # Select interface for test
 - set_fact: intname="{{ nxos_int1 }}"
@@ -18,8 +20,8 @@
     nxos_vrf_interface: &configure
       vrf: ntc
       interface: "{{ intname }}"
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: &true
@@ -38,8 +40,8 @@
     nxos_vrf_interface: &remove
       vrf: ntc
       interface: "{{ intname }}"
-      state: absent
       provider: "{{ connection }}"
+      state: absent
     register: result
 
   - assert: *true
@@ -54,8 +56,8 @@
   - name: put interface in default mode
     nxos_config:
       lines: "default interface {{ intname }}"
-      provider: "{{ connection }}"
       match: none
+      provider: "{{ connection }}"
     ignore_errors: yes
 
-- debug: msg="END TRANSPORT:{{ connection.transport }} nxos_vrf_interface sanity test"
+- debug: msg="END connection={{ ansible_connection }} nxos_vrf_interface sanity test"

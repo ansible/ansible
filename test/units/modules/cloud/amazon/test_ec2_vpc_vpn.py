@@ -17,7 +17,7 @@
 
 import pytest
 import os
-from . placebo_fixtures import placeboify, maybe_sleep
+from units.utils.amazon_placebo_fixtures import placeboify, maybe_sleep
 from ansible.modules.cloud.amazon import ec2_vpc_vpn
 from ansible.module_utils._text import to_text
 from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn, boto3_tag_list_to_ansible_dict
@@ -84,7 +84,11 @@ def setup_mod_conn(placeboify, params):
     return m, conn
 
 
-def make_params(cgw, vgw, tags={}, filters={}, routes=[]):
+def make_params(cgw, vgw, tags=None, filters=None, routes=None):
+    tags = {} if tags is None else tags
+    filters = {} if filters is None else filters
+    routes = [] if routes is None else routes
+
     return {'customer_gateway_id': cgw,
             'static_only': True,
             'vpn_gateway_id': vgw,

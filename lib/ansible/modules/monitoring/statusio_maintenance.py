@@ -30,17 +30,14 @@ options:
     title:
         description:
             - A descriptive title for the maintenance window
-        required: false
         default: "A new maintenance window"
     desc:
         description:
             - Message describing the maintenance window
-        required: false
         default: "Created by Ansible"
     state:
         description:
             - Desired state of the package.
-        required: false
         default: "present"
         choices: ["present", "absent"]
     api_id:
@@ -58,73 +55,61 @@ options:
     url:
         description:
             - Status.io API URL. A private apiary can be used instead.
-        required: false
         default: "https://api.status.io"
     components:
         description:
             - The given name of your component (server name)
-        required: false
         aliases: ['component']
-        default: None
     containers:
         description:
             - The given name of your container (data center)
-        required: false
         aliases: ['container']
-        default: None
     all_infrastructure_affected:
         description:
             - If it affects all components and containers
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     automation:
         description:
             - Automatically start and end the maintenance window
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     maintenance_notify_now:
         description:
             - Notify subscribers now
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     maintenance_notify_72_hr:
         description:
             - Notify subscribers 72 hours before maintenance start time
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     maintenance_notify_24_hr:
         description:
             - Notify subscribers 24 hours before maintenance start time
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     maintenance_notify_1_hr:
         description:
             - Notify subscribers 1 hour before maintenance start time
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     maintenance_id:
         description:
             - The maintenance id number when deleting a maintenance window
-        required: false
-        default: None
     minutes:
         description:
             - The length of time in UTC that the maintenance will run \
             (starting from playbook runtime)
-        required: false
         default: 10
     start_date:
         description:
             - Date maintenance is expected to start (Month/Day/Year) (UTC)
             - End Date is worked out from start_date + minutes
-        required: false
-        default: None
     start_time:
         description:
             - Time maintenance is expected to start (Hour:Minutes) (UTC)
             - End Time is worked out from start_time + minutes
-        required: false
-        default: None
 '''
 
 EXAMPLES = '''

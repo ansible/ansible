@@ -88,7 +88,7 @@ options:
   disabled:
     description:
     - If "yes", ensure the check is created, but don't actually use it yet.
-    choices: [ "yes", "no" ]
+    type: bool
   metadata:
     description:
     - Hash of arbitrary key-value pairs to accompany this check if it fires.
@@ -255,6 +255,7 @@ def cloud_check(module, state, entity_id, label, check_type,
         module.exit_json(changed=changed, check=check_dict)
     else:
         module.exit_json(changed=changed)
+
 
 def main():
     argument_spec = rax_argument_spec()

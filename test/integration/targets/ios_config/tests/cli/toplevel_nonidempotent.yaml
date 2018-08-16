@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/toplevel_nonidempotent.yaml"
+- debug: msg="START cli/toplevel_nonidempotent.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   ios_config:
@@ -32,4 +32,4 @@
     lines: ['hostname {{ shorter_hostname }}']
     match: none
 
-- debug: msg="END cli/toplevel_nonidempotent.yaml"
+- debug: msg="END cli/toplevel_nonidempotent.yaml on connection={{ ansible_connection }}"

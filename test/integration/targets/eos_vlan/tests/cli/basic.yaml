@@ -8,6 +8,7 @@
       - no vlan 4002
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
 
 - name: setup - remove switchport settings on interface Ethernet1 used in test
   eos_config:
@@ -17,6 +18,7 @@
     parents: interface Ethernet1
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
 
 - name: setup - remove switchport settings on interface Ethernet2 used in test
   eos_config:
@@ -26,6 +28,7 @@
     parents: interface Ethernet2
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
 
 - name: Create vlan
   eos_vlan:
@@ -34,6 +37,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -51,6 +55,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -67,6 +72,7 @@
     state: suspend
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -85,6 +91,7 @@
     state: suspend
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -100,6 +107,7 @@
     state: active
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -110,15 +118,19 @@
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "'ansible_1' in result.session_name"
 
-- name: Add interfaces to vlan
+- name: Add interfaces to vlan and check state
   eos_vlan:
     vlan_id: 4000
     state: present
     interfaces:
       - Ethernet1
       - Ethernet2
+    associated_interfaces:
+      - Ethernet1
+      - Ethernet2
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -137,10 +149,11 @@
     vlan_id: 4000
     state: present
     interfaces:
-      - Ethernet1
-      - Ethernet2
+      - Ethernet 1   # interface name space scenario
+      - Ethernet 2   # interface name space scenario
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -150,6 +163,22 @@
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "result.session_name is not defined"
 
+- name: vlan interface intent fail
+  eos_vlan:
+    vlan_id: 4000
+    state: present
+    associated_interfaces:
+      - test
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed == True"
+
 - name: Remove interface from vlan
   eos_vlan:
     vlan_id: 4000
@@ -158,6 +187,7 @@
       - Ethernet1
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -174,9 +204,10 @@
     vlan_id: 4000
     state: present
     interfaces:
-      - Ethernet1
+      - Ethernet 1 # space scenario
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -194,6 +225,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -213,6 +245,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -231,6 +264,7 @@
     purge: yes
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -251,6 +285,7 @@
     purge: yes
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:

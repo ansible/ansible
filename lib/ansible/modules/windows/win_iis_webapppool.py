@@ -1,40 +1,25 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Henrik Wallström <henrik@wallstroms.nu>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2015, Henrik Wallström <henrik@wallstroms.nu>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = r'''
 ---
 module: win_iis_webapppool
 version_added: "2.0"
-short_description: configures an IIS Web Application Pool
+short_description: Configure IIS Web Application Pools
 description:
   - Creates, removes and configures an IIS Web Application Pool.
 options:
   attributes:
     description:
-      - As of Ansible 2.4, this field can take in dict entries to set the
-        application pool attributes.
+      - This field is a free form dictionary value for the application pool
+        attributes.
       - These attributes are based on the naming standard at
         U(https://www.iis.net/configreference/system.applicationhost/applicationpools/add#005),
         see the examples section for more details on how to set this.
@@ -51,34 +36,24 @@ options:
         keystore. Please follow
         U(http://structuredsight.com/2014/10/26/im-out-of-range-youre-out-of-range/)
         to help fix your host.
-      - DEPRECATED As of Ansible 2.4 this field should be set using a dict
-        form, in older versions of Ansible this field used to be a string.
-      - This string has attributes that are separated by a pipe '|' and
-        attribute name/values by colon ':'
-        Ex. "startMode:OnDemand|managedPipelineMode:Classic".
   name:
     description:
       - Name of the application pool.
-    required: true
+    required: yes
   state:
-    choices:
-      - present
-      - absent
-      - stopped
-      - started
-      - restarted
+    choices: [ absent, present, restarted, started, stopped ]
     default: present
     description:
       - The state of the application pool.
-      - If C(present) will ensure the app pool is configured and exists.
       - If C(absent) will ensure the app pool is removed.
-      - If C(stopped) will ensure the app pool exists and is stopped.
-      - If C(started) will ensure the app pool exists and is started.
+      - If C(present) will ensure the app pool is configured and exists.
       - If C(restarted) will ensure the app pool exists and will restart, this
         is never idempotent.
+      - If C(started) will ensure the app pool exists and is started.
+      - If C(stopped) will ensure the app pool exists and is stopped.
 author:
-  - "Henrik Wallström (@henrikwallstrom)"
-  - "Jordan Borean (@jborean93)"
+- Henrik Wallström (@henrikwallstrom)
+- Jordan Borean (@jborean93)
 '''
 
 EXAMPLES = r'''
@@ -107,22 +82,15 @@ EXAMPLES = r'''
     name: AppPool
     attributes:
       managedRuntimeVersion: v4.0
-      autoStart: false
+      autoStart: no
 
-# Note this format style has been deprecated, please use the newer dict style instead
-- name: change application pool attributes using older string style
-  win_iis_webapppool:
-    name: AppPool
-    attributes: 'managedRuntimeVersion:v4.0|autoStart:false'
-
-# This is the preferred style to use when setting attributes
 - name: creates an application pool, sets attributes and starts it
   win_iis_webapppool:
     name: AnotherAppPool
     state: started
     attributes:
       managedRuntimeVersion: v4.0
-      autoStart: false
+      autoStart: no
 
 # In the below example we are setting attributes in child element processModel
 # https://www.iis.net/configreference/system.applicationhost/applicationpools/add/processmodel
@@ -133,7 +101,7 @@ EXAMPLES = r'''
     attributes:
       managedPipelineMode: Classic
       processModel.identityType: SpecificUser
-      processModel.username: '{{ansible_user}}'
+      processModel.userName: '{{ansible_user}}'
       processModel.password: '{{ansible_password}}'
       processModel.loadUserProfile: True
 
@@ -144,6 +112,7 @@ EXAMPLES = r'''
     attributes:
       # Timespan with full string "day:hour:minute:second.millisecond"
       recycling.periodicRestart.time: "00:00:05:00.000000"
+      recycling.periodicRestart.schedule: ["00:10:00", "05:30:00"]
       # Shortened timespan "hour:minute:second"
       processModel.pingResponseTime: "00:03:00"
 '''

@@ -52,27 +52,8 @@ options:
                  config file.
     choices: [ "MEMORY", "DISK", "RUNTIME", "CONFIG" ]
     required: True
-  login_user:
-    description:
-      - The username used to authenticate to ProxySQL admin interface.
-    default: None
-  login_password:
-    description:
-      - The password used to authenticate to ProxySQL admin interface.
-    default: None
-  login_host:
-    description:
-      - The host used to connect to ProxySQL admin interface.
-    default: '127.0.0.1'
-  login_port:
-    description:
-      - The port used to connect to ProxySQL admin interface.
-    default: 6032
-  config_file:
-    description:
-      - Specify a config file from which login_user and login_password are to
-        be read.
-    default: ''
+extends_documentation_fragment:
+  - proxysql.connectivity
 '''
 
 EXAMPLES = '''
@@ -239,6 +220,7 @@ def main():
         )
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

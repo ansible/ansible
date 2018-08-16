@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/save.yaml"
+- debug: msg="START cli/save.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   ios_config:
@@ -15,26 +15,40 @@
   ios_config:
     save: true
   register: result
-# FIXME https://github.com/ansible/ansible-modules-core/issues/5008
-  ignore_errors: true
 
 - assert:
     that:
       - "result.changed == true"
-# FIXME https://github.com/ansible/ansible-modules-core/issues/5008
-  ignore_errors: true
 
 - name: save should always run
   ios_config:
     save: true
   register: result
-# FIXME https://github.com/ansible/ansible-modules-core/issues/5008
-  ignore_errors: true
+
+- name: delete config (setup)
+  ios_config:
+    replace: line
+    lines:
+      - "no ip http server"
+    save_when: modified
+  register: result
+
+- name: save should always run
+  ios_config:
+    replace: line
+    lines:
+      - "ip http server"
+    save_when: modified
+  register: result
 
 - assert:
     that:
       - "result.changed == true"
-# FIXME https://github.com/ansible/ansible-modules-core/issues/5008
-  ignore_errors: true
 
-- debug: msg="END cli/save.yaml"
+- name: teardown
+  ios_config:
+    lines:
+      - "no ip http server"
+  register: result
+
+- debug: msg="END cli/save.yaml on connection={{ ansible_connection }}"

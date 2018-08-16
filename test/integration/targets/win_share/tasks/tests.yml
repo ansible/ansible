@@ -14,7 +14,7 @@
 - name: assert create share check
   assert:
     that:
-    - create_share_check|changed
+    - create_share_check is changed
     - create_share_actual_check.stdout_lines == []
 
 - name: create share
@@ -31,7 +31,7 @@
 - name: assert create share
   assert:
     that:
-    - create_share|changed
+    - create_share is changed
     - create_share_actual.stdout_lines != []
 
 - name: create share again
@@ -48,7 +48,7 @@
 - name: assert create share again
   assert:
     that:
-    - not create_share_again|changed
+    - create_share_again is not changed
     - create_share_actual_again.stdout_lines == create_share_actual.stdout_lines
 
 - name: set caching mode to Programs check
@@ -67,7 +67,7 @@
 - name: assert caching mode to Programs check
   assert:
     that:
-    - caching_mode_programs_check|changed
+    - caching_mode_programs_check is changed
     - caching_mode_programs_actual_check.stdout == "Manual\r\n"
 
 - name: set caching mode to Programs
@@ -85,7 +85,7 @@
 - name: assert caching mode to Programs
   assert:
     that:
-    - caching_mode_programs|changed
+    - caching_mode_programs is changed
     - caching_mode_programs_actual.stdout == "Programs\r\n"
 
 - name: set caching mode to Programs again
@@ -103,7 +103,7 @@
 - name: assert caching mode to Programs again
   assert:
     that:
-    - not caching_mode_programs_again|changed
+    - caching_mode_programs_again is not changed
     - caching_mode_programs_actual_again.stdout == "Programs\r\n"
 
 - name: set encryption on share check
@@ -122,7 +122,7 @@
 - name: assert set encryption on check
   assert:
     that:
-    - encrypt_on_check|changed
+    - encrypt_on_check is changed
     - encrypt_on_actual_check.stdout == "False\r\n"
 
 - name: set encryption on share
@@ -140,7 +140,7 @@
 - name: assert set encryption on
   assert:
     that:
-    - encrypt_on|changed
+    - encrypt_on is changed
     - encrypt_on_actual.stdout == "True\r\n"
 
 - name: set encryption on share again
@@ -158,7 +158,7 @@
 - name: assert set encryption on again
   assert:
     that:
-    - not encrypt_on_again|changed
+    - encrypt_on_again is not changed
     - encrypt_on_actual.stdout == "True\r\n"
 
 - name: set description check
@@ -177,7 +177,7 @@
 - name: assert change description check
   assert:
     that:
-    - change_decription_check|changed
+    - change_decription_check is changed
     - change_description_actual_check.stdout == "\r\n"
 
 - name: set description
@@ -195,7 +195,7 @@
 - name: assert change description
   assert:
     that:
-    - change_decription|changed
+    - change_decription is changed
     - change_description_actual.stdout == "description\r\n"
 
 - name: set description again
@@ -213,7 +213,7 @@
 - name: assert change description again
   assert:
     that:
-    - not change_decription_again|changed
+    - change_decription_again is not changed
     - change_description_actual_again.stdout == "description\r\n"
 
 - name: set allow list check
@@ -232,7 +232,7 @@
 - name: assert allow list check
   assert:
     that:
-    - allow_list_check|changed
+    - allow_list_check is changed
     - allow_list_actual_check.stdout == "AccessBased\r\n"
 
 - name: set allow list
@@ -250,7 +250,7 @@
 - name: assert allow list
   assert:
     that:
-    - allow_list|changed
+    - allow_list is changed
     - allow_list_actual.stdout == "Unrestricted\r\n"
 
 - name: set allow list again
@@ -268,7 +268,7 @@
 - name: assert allow list check again
   assert:
     that:
-    - not allow_list_again|changed
+    - allow_list_again is not changed
     - allow_list_actual_again.stdout == "Unrestricted\r\n"
 
 - name: set deny list check
@@ -287,7 +287,7 @@
 - name: assert deny list check
   assert:
     that:
-    - deny_list_check|changed
+    - deny_list_check is changed
     - deny_list_actual_check.stdout == "Unrestricted\r\n"
 
 - name: set deny list
@@ -305,7 +305,7 @@
 - name: assert deny list
   assert:
     that:
-    - deny_list|changed
+    - deny_list is changed
     - deny_list_actual.stdout == "AccessBased\r\n"
 
 - name: set deny list again
@@ -323,7 +323,7 @@
 - name: assert deny list again
   assert:
     that:
-    - not deny_list_again|changed
+    - deny_list_again is not changed
     - deny_list_actual_again.stdout == "AccessBased\r\n"
 
 - name: set ACLs on share check
@@ -345,7 +345,7 @@
 - name: assert set ACLs on share check
   assert:
     that:
-    - set_acl_check|changed
+    - set_acl_check is changed
     - set_acl_actual_check.stdout == "Full|Deny|Everyone\n"
 
 - name: set ACLs on share
@@ -366,7 +366,7 @@
 - name: assert set ACLs on share
   assert:
     that:
-    - set_acl|changed
+    - set_acl is changed
     - set_acl_actual.stdout_lines|length == 4
     - set_acl_actual.stdout_lines[0] == 'Full|Deny|BUILTIN\\Remote Desktop Users'
     - set_acl_actual.stdout_lines[1] == 'Read|Allow|BUILTIN\\Guests'
@@ -391,7 +391,7 @@
 - name: assert set ACLs on share again
   assert:
     that:
-    - not set_acl_again|changed
+    - set_acl_again is not changed
     - set_acl_actual_again.stdout_lines|length == 4
     - set_acl_actual_again.stdout_lines[0] == 'Full|Deny|BUILTIN\\Remote Desktop Users'
     - set_acl_actual_again.stdout_lines[1] == 'Read|Allow|BUILTIN\\Guests'
@@ -412,7 +412,7 @@
 - name: assert remove share check
   assert:
     that:
-    - remove_share_check|changed
+    - remove_share_check is changed
     - remove_share_actual_check.stdout_lines != []
 
 - name: remove share
@@ -428,7 +428,7 @@
 - name: assert remove share
   assert:
     that:
-    - remove_share|changed
+    - remove_share is changed
     - remove_share_actual.stdout_lines == []
 
 - name: remove share again
@@ -444,5 +444,5 @@
 - name: assert remove share again
   assert:
     that:
-    - not remove_share_again|changed
+    - remove_share_again is not changed
     - remove_share_actual_again.stdout_lines == []

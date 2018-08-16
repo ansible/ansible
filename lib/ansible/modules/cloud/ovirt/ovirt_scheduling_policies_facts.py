@@ -60,7 +60,7 @@ EXAMPLES = '''
 RETURN = '''
 ovirt_scheduling_policies:
     description: "List of dictionaries describing the scheduling policies.
-                  Scheduling policies attribues are mapped to dictionary keys,
+                  Scheduling policies attributes are mapped to dictionary keys,
                   all scheduling policies attributes can be found at following
                   url: https://ovirt.example.com/ovirt-engine/api/model#types/scheduling_policy."
     returned: On success.

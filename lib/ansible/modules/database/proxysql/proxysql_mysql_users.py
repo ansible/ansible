@@ -47,8 +47,8 @@ options:
          to ProxySQL (thus a "frontend" user), transactions started within a
          hostgroup will remain within that hostgroup regardless of any other
          rules.
-         If omitted the proxysql database default for I(transaction_persistent) is
-         C(False).
+         If omitted the proxysql database default for I(transaction_persistent)
+         is C(False).
   fast_forward:
     description:
       - If I(fast_forward) is set to C(True), I(fast_forward) will bypass the
@@ -75,36 +75,9 @@ options:
       - When C(present) - adds the user, when C(absent) - removes the user.
     choices: [ "present", "absent" ]
     default: present
-  save_to_disk:
-    description:
-      - Save mysql host config to sqlite db on disk to persist the
-        configuration.
-    default: True
-  load_to_runtime:
-    description:
-      - Dynamically load mysql host config to runtime memory.
-    default: True
-  login_user:
-    description:
-      - The username used to authenticate to ProxySQL admin interface.
-    default: None
-  login_password:
-    description:
-      - The password used to authenticate to ProxySQL admin interface.
-    default: None
-  login_host:
-    description:
-      - The host used to connect to ProxySQL admin interface.
-    default: '127.0.0.1'
-  login_port:
-    description:
-      - The port used to connect to ProxySQL admin interface.
-    default: 6032
-  config_file:
-    description:
-      - Specify a config file from which login_user and login_password are to
-        be read.
-    default: ''
+extends_documentation_fragment:
+  - proxysql.managing_config
+  - proxysql.connectivity
 '''
 
 EXAMPLES = '''
@@ -502,6 +475,7 @@ def main():
             )
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

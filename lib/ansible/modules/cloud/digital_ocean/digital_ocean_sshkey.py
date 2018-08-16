@@ -30,19 +30,14 @@ options:
   fingerprint:
     description:
      - This is a unique identifier for the SSH key used to delete a key
-    required: false
-    default: None
     version_added: 2.4
+    aliases: ['id']
   name:
     description:
      - The name for the SSH key
-    required: false
-    default: None
   ssh_pub_key:
     description:
      - The Public SSH key to add.
-    required: false
-    default: None
   oauth_token:
     description:
      - DigitalOcean OAuth token.
@@ -59,12 +54,15 @@ requirements:
 EXAMPLES = '''
 - name: "Create ssh key"
   digital_ocean_sshkey:
+    oauth_token: "{{ oauth_token }}"
     name: "My SSH Public Key"
-    public_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAQQDDHr/jh2Jy4yALcK4JyWbVkPRaWmhck3IgCoeOO3z1e2dBowLh64QAM+Qb72pxekALga2oi4GvT+TlWNhzPH4V example"
+    ssh_pub_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAQQDDHr/jh2Jy4yALcK4JyWbVkPRaWmhck3IgCoeOO3z1e2dBowLh64QAM+Qb72pxekALga2oi4GvT+TlWNhzPH4V example"
+    state: present
   register: result
 
 - name: "Delete ssh key"
   digital_ocean_sshkey:
+    oauth_token: "{{ oauth_token }}"
     state: "absent"
     fingerprint: "3b:16:bf:e4:8b:00:8b:b8:59:8c:a9:d3:f0:19:45:fa"
 '''
@@ -87,7 +85,6 @@ data:
 '''
 
 import json
-import os
 import hashlib
 import base64
 
@@ -236,7 +233,7 @@ def core(module):
 
 def ssh_key_fingerprint(ssh_pub_key):
     key = ssh_pub_key.split(None, 2)[1]
-    fingerprint = hashlib.md5(base64.decodestring(key)).hexdigest()
+    fingerprint = hashlib.md5(base64.b64decode(key)).hexdigest()
     return ':'.join(a + b for a, b in zip(fingerprint[::2], fingerprint[1::2]))
 
 

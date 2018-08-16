@@ -3,13 +3,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-__metaclass__ = type
 
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -26,52 +25,38 @@ options:
     description:
       - image string to use for the instance (default will follow latest
         stable debian image)
-    required: false
     default: "debian-8"
   image_family:
     description:
       - image family from which to select the image.  The most recent
         non-deprecated image in the family will be used.
-    required: false
-    default: null
     version_added: "2.4"
   external_projects:
     description:
       - A list of other projects (accessible with the provisioning credentials)
         to be searched for the image.
-    required: false
-    default: null
     version_added: "2.4"
   instance_names:
     description:
       - a comma-separated list of instance names to create or destroy
-    required: false
-    default: null
   machine_type:
     description:
       - machine type to use for the instance, use 'n1-standard-1' by default
-    required: false
     default: "n1-standard-1"
   metadata:
     description:
       - a hash/dictionary of custom data for the instance;
         '{"key":"value", ...}'
-    required: false
-    default: null
   service_account_email:
     version_added: "1.5.1"
     description:
       - service account email
-    required: false
-    default: null
   service_account_permissions:
     version_added: "2.0"
     description:
       - service account permissions (see
         U(https://cloud.google.com/sdk/gcloud/reference/compute/instances/create),
         --scopes section for detailed information)
-    required: false
-    default: null
     choices: [
       "bigquery", "cloud-platform", "compute-ro", "compute-rw",
       "useraccounts-ro", "useraccounts-rw", "datastore", "logging-write",
@@ -83,69 +68,53 @@ options:
     description:
       - path to the pem file associated with the service account email
         This option is deprecated. Use 'credentials_file'.
-    required: false
-    default: null
   credentials_file:
     version_added: "2.1.0"
     description:
       - path to the JSON file associated with the service account email
-    default: null
-    required: false
   project_id:
     version_added: "1.5.1"
     description:
       - your GCE project ID
-    required: false
-    default: null
   name:
     description:
       - either a name of a single instance or when used with 'num_instances',
         the base name of a cluster of nodes
-    required: false
     aliases: ['base_name']
   num_instances:
     description:
       - can be used with 'name', specifies
         the number of nodes to provision using 'name'
         as a base name
-    required: false
     version_added: "2.3"
   network:
     description:
       - name of the network, 'default' will be used if not specified
-    required: false
     default: "default"
   subnetwork:
     description:
       - name of the subnetwork in which the instance should be created
-    required: false
-    default: null
     version_added: "2.2"
   persistent_boot_disk:
     description:
       - if set, create the instance with a persistent boot disk
-    required: false
-    default: "false"
+    type: bool
+    default: 'no'
   disks:
     description:
       - a list of persistent disks to attach to the instance; a string value
         gives the name of the disk; alternatively, a dictionary value can
         define 'name' and 'mode' ('READ_ONLY' or 'READ_WRITE'). The first entry
         will be the boot disk (which must be READ_WRITE).
-    required: false
-    default: null
     version_added: "1.7"
   state:
     description:
       - desired state of the resource
-    required: false
     default: "present"
     choices: ["active", "present", "absent", "deleted", "started", "stopped", "terminated"]
   tags:
     description:
       - a comma-separated list of tags to associate with the instance
-    required: false
-    default: null
   zone:
     description:
       - the GCE zone to use. The list of available zones is at U(https://cloud.google.com/compute/docs/regions-zones/regions-zones#available).
@@ -154,33 +123,31 @@ options:
   ip_forward:
     version_added: "1.9"
     description:
-      - set to true if the instance can forward ip packets (useful for
+      - set to C(yes) if the instance can forward ip packets (useful for
         gateways)
-    required: false
-    default: "false"
+    type: bool
+    default: 'no'
   external_ip:
     version_added: "1.9"
     description:
       - type of external ip, ephemeral by default; alternatively, a fixed gce ip or ip name can be given. Specify 'none' if no external ip is desired.
-    required: false
     default: "ephemeral"
   disk_auto_delete:
     version_added: "1.9"
     description:
       - if set boot disk will be removed after instance destruction
-    required: false
-    default: "true"
+    type: bool
+    default: 'yes'
   preemptible:
     version_added: "2.1"
     description:
-      - if set to true, instances will be preemptible and time-limited.
+      - if set to C(yes), instances will be preemptible and time-limited.
         (requires libcloud >= 0.20.0)
-    required: false
-    default: "false"
+    type: bool
+    default: 'no'
   disk_size:
     description:
       - The size of the boot disk created for this instance (in GB)
-    required: false
     default: 10
     version_added: "2.3"
 
@@ -200,7 +167,7 @@ EXAMPLES = '''
 # Create multiple instances by specifying multiple names, separated by
 # commas in the instance_names field
 # (e.g. my-test-instance1,my-test-instance2)
-    gce:
+  - gce:
       instance_names: my-test-instance1
       zone: us-central1-a
       machine_type: n1-standard-1
@@ -214,7 +181,7 @@ EXAMPLES = '''
 # Create a single instance of an image from the "my-base-image" image family
 # in the us-central1-a Zone of the n1-standard-1 machine type.
 # This image family is in the "my-other-project" GCP project.
-    gce:
+  - gce:
       instance_names: my-test-instance1
       zone: us-central1-a
       machine_type: n1-standard-1
@@ -230,7 +197,7 @@ EXAMPLES = '''
 # Create a single Debian 8 instance in the us-central1-a Zone
 # Use existing disks, custom network/subnetwork, set service account permissions
 # add tags and metadata.
-    gce:
+  - gce:
       instance_names: my-test-instance
       zone: us-central1-a
       machine_type: n1-standard-1
@@ -325,6 +292,7 @@ import logging
 
 try:
     from ast import literal_eval
+
     HAS_PYTHON26 = True
 except ImportError:
     HAS_PYTHON26 = False
@@ -336,6 +304,7 @@ try:
     from libcloud.common.google import GoogleBaseError, QuotaExceededError, \
         ResourceExistsError, ResourceInUseError, ResourceNotFoundError
     from libcloud.compute.drivers.gce import GCEAddress
+
     _ = Provider.GCE
     HAS_LIBCLOUD = True
 except ImportError:
@@ -378,7 +347,7 @@ def get_instance_info(inst):
     else:
         public_ip = inst.public_ips[0]
 
-    return({
+    return ({
         'image': inst.image is not None and inst.image.split('/')[-1] or None,
         'disks': disk_names,
         'machine_type': inst.size,
@@ -553,7 +522,7 @@ def create_instances(module, gce, instance_names, number, lc_zone):
                 changed = True
             except GoogleBaseError as e:
                 module.fail_json(msg='Unexpected error attempting to create ' +
-                                 'instance %s, error: %s' % (instance, e.value))
+                                     'instance %s, error: %s' % (instance, e.value))
             if inst:
                 new_instances.append(inst)
 
@@ -576,7 +545,7 @@ def create_instances(module, gce, instance_names, number, lc_zone):
             # Work around libcloud bug: attached volumes don't get added
             # to the instance metadata. get_instance_info() only cares about
             # source and index.
-            if len(inst.extra['disks']) != i+1:
+            if len(inst.extra['disks']) != i + 1:
                 inst.extra['disks'].append(
                     {'source': lc_disk.extra['selfLink'], 'index': i})
 
@@ -588,6 +557,7 @@ def create_instances(module, gce, instance_names, number, lc_zone):
         instance_json_data.append(d)
 
     return (changed, instance_json_data, instance_names)
+
 
 def change_instance_state(module, gce, instance_names, number, zone, state):
     """Changes the state of a list of instances. For example,
@@ -633,47 +603,46 @@ def change_instance_state(module, gce, instance_names, number, zone, state):
             if state in ['absent', 'deleted']:
                 gce.destroy_node(node)
                 changed = True
-            elif state == 'started' and \
-                      node.state == libcloud.compute.types.NodeState.STOPPED:
+            elif state == 'started' and node.state == libcloud.compute.types.NodeState.STOPPED:
                 gce.ex_start_node(node)
                 changed = True
-            elif state in ['stopped', 'terminated'] and \
-                      node.state == libcloud.compute.types.NodeState.RUNNING:
+            elif state in ['stopped', 'terminated'] and node.state == libcloud.compute.types.NodeState.RUNNING:
                 gce.ex_stop_node(node)
                 changed = True
 
     return (changed, state_instance_names)
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            image = dict(default='debian-8'),
-            image_family = dict(),
-            external_projects = dict(type='list'),
-            instance_names = dict(),
-            machine_type = dict(default='n1-standard-1'),
-            metadata = dict(),
-            name = dict(aliases=['base_name']),
-            num_instances = dict(type='int'),
-            network = dict(default='default'),
-            subnetwork = dict(),
-            persistent_boot_disk = dict(type='bool', default=False),
-            disks = dict(type='list'),
-            state = dict(choices=['active', 'present', 'absent', 'deleted',
-                                  'started', 'stopped', 'terminated'],
-                         default='present'),
-            tags = dict(type='list'),
-            zone = dict(default='us-central1-a'),
-            service_account_email = dict(),
-            service_account_permissions = dict(type='list'),
-            pem_file = dict(type='path'),
-            credentials_file = dict(type='path'),
-            project_id = dict(),
-            ip_forward = dict(type='bool', default=False),
+        argument_spec=dict(
+            image=dict(default='debian-8'),
+            image_family=dict(),
+            external_projects=dict(type='list'),
+            instance_names=dict(),
+            machine_type=dict(default='n1-standard-1'),
+            metadata=dict(),
+            name=dict(aliases=['base_name']),
+            num_instances=dict(type='int'),
+            network=dict(default='default'),
+            subnetwork=dict(),
+            persistent_boot_disk=dict(type='bool', default=False),
+            disks=dict(type='list'),
+            state=dict(choices=['active', 'present', 'absent', 'deleted',
+                                'started', 'stopped', 'terminated'],
+                       default='present'),
+            tags=dict(type='list'),
+            zone=dict(default='us-central1-a'),
+            service_account_email=dict(),
+            service_account_permissions=dict(type='list'),
+            pem_file=dict(type='path'),
+            credentials_file=dict(type='path'),
+            project_id=dict(),
+            ip_forward=dict(type='bool', default=False),
             external_ip=dict(default='ephemeral'),
-            disk_auto_delete = dict(type='bool', default=True),
-            disk_size = dict(type='int', default=10),
-            preemptible = dict(type='bool', default=None),
+            disk_auto_delete=dict(type='bool', default=True),
+            disk_size=dict(type='int', default=10),
+            preemptible=dict(type='bool', default=None),
         ),
         mutually_exclusive=[('instance_names', 'name')]
     )
@@ -751,6 +720,7 @@ class LazyDiskImage:
     Object for lazy instantiation of disk image
     gce.ex_get_image is a very expensive call, so we want to avoid calling it as much as possible.
     """
+
     def __init__(self, module, gce, name, has_pd, family=None, projects=None):
         self.image = None
         self.was_called = False

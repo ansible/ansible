@@ -51,6 +51,7 @@ class TestCallback(unittest.TestCase):
 
 
 class TestCallbackResults(unittest.TestCase):
+
     def test_get_item(self):
         cb = CallbackBase()
         results = {'item': 'some_item'}
@@ -67,15 +68,69 @@ class TestCallbackResults(unittest.TestCase):
         res = cb._get_item(results)
         self.assertEquals(res, "some_item")
 
+    def test_get_item_label(self):
+        cb = CallbackBase()
+        results = {'item': 'some_item'}
+        res = cb._get_item_label(results)
+        self.assertEquals(res, 'some_item')
+
+    def test_get_item_label_no_log(self):
+        cb = CallbackBase()
+        results = {'item': 'some_item', '_ansible_no_log': True}
+        res = cb._get_item_label(results)
+        self.assertEquals(res, "(censored due to no_log)")
+
+        results = {'item': 'some_item', '_ansible_no_log': False}
+        res = cb._get_item_label(results)
+        self.assertEquals(res, "some_item")
+
+    def test_clean_results_debug_task(self):
+        cb = CallbackBase()
+        result = {'item': 'some_item',
+                  'invocation': 'foo --bar whatever [some_json]',
+                  'a': 'a single a in result note letter a is in invocation',
+                  'b': 'a single b in result note letter b is not in invocation',
+                  'changed': True}
+
+        cb._clean_results(result, 'debug')
+
+        # See https://github.com/ansible/ansible/issues/33723
+        self.assertTrue('a' in result)
+        self.assertTrue('b' in result)
+        self.assertFalse('invocation' in result)
+        self.assertFalse('changed' in result)
+
+    def test_clean_results_debug_task_no_invocation(self):
+        cb = CallbackBase()
+        result = {'item': 'some_item',
+                  'a': 'a single a in result note letter a is in invocation',
+                  'b': 'a single b in result note letter b is not in invocation',
+                  'changed': True}
+
+        cb._clean_results(result, 'debug')
+        self.assertTrue('a' in result)
+        self.assertTrue('b' in result)
+        self.assertFalse('changed' in result)
+        self.assertFalse('invocation' in result)
+
+    def test_clean_results_debug_task_empty_results(self):
+        cb = CallbackBase()
+        result = {}
+        cb._clean_results(result, 'debug')
+        self.assertFalse('invocation' in result)
+        self.assertEqual(len(result), 0)
+
     def test_clean_results(self):
         cb = CallbackBase()
         result = {'item': 'some_item',
                   'invocation': 'foo --bar whatever [some_json]',
+                  'a': 'a single a in result note letter a is in invocation',
+                  'b': 'a single b in result note letter b is not in invocation',
                   'changed': True}
 
-        self.assertTrue('changed' in result)
-        self.assertTrue('invocation' in result)
-        cb._clean_results(result, 'debug')
+        expected_result = result.copy()
+        cb._clean_results(result, 'ebug')
+        self.assertEqual(result, expected_result)
 
 
 class TestCallbackDumpResults(unittest.TestCase):
@@ -92,16 +147,6 @@ class TestCallbackDumpResults(unittest.TestCase):
         self.assertFalse('"_ansible_' in json_out)
         self.assertFalse('SENTINEL' in json_out)
         self.assertTrue('LEFTIN' in json_out)
-
-    def test_no_log(self):
-        cb = CallbackBase()
-        result = {'item': 'some_item',
-                  '_ansible_no_log': True,
-                  'some_secrets': 'SENTINEL'}
-        json_out = cb._dump_results(result)
-        self.assertFalse('SENTINEL' in json_out)
-        self.assertTrue('no_log' in json_out)
-        self.assertTrue('output has been hidden' in json_out)
 
     def test_exception(self):
         cb = CallbackBase()

@@ -48,45 +48,46 @@ options:
     description:
       - "The email address for the registry account. NOTE: private registries may not require this,
         but Docker Hub requires it."
-    default: None
   reauthorize:
-    required: False
     description:
       - Refresh exiting authentication found in the configuration file.
-    default: no
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
     aliases:
       - reauth
   config_path:
     description:
       - Custom path to the Docker CLI configuration file.
     default: ~/.docker/config.json
-    required: False
     aliases:
       - self.config_path
       - dockercfg_path
   state:
     version_added: '2.3'
     description:
-      - This controls the current state of the user. C(present) will login in a user, C(absent) will log him out.
+      - This controls the current state of the user. C(present) will login in a user, C(absent) will log them out.
       - To logout you only need the registry server, which defaults to DockerHub.
       - Before 2.1 you could ONLY log in.
       - docker does not support 'logout' with a custom config file.
     choices: ['present', 'absent']
     default: 'present'
-    required: False
 
 extends_documentation_fragment:
     - docker
 requirements:
     - "python >= 2.6"
     - "docker-py >= 1.7.0"
+    - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
+       module has been superseded by L(docker,https://pypi.org/project/docker/)
+       (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
+       For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
+       install the C(docker) Python module. Note that both modules should I(not)
+       be installed at the same time."
     - "Docker API >= 1.20"
     - 'Only to be able to logout (state=absent): the docker command line utility'
 author:
     - "Olaf Kilian <olaf.kilian@symanex.com>"
     - "Chris Houseknecht (@chouseknecht)"
-    - "James Tanner (@jctanner)"
 '''
 
 EXAMPLES = '''
@@ -124,7 +125,6 @@ login_results:
     type: dict
     sample: {
         "email": "testuer@yahoo.com",
-        "password": "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER",
         "serveraddress": "localhost:5000",
         "username": "testuser"
     }
@@ -190,6 +190,11 @@ class LoginManager(DockerBaseClass):
             )
         except Exception as exc:
             self.fail("Logging into %s for user %s failed - %s" % (self.registry_url, self.username, str(exc)))
+
+        # If user is already logged in, then response contains password for user
+        # This returns correct password if user is logged in and wrong password is given.
+        if 'password' in response:
+            del response['password']
         self.results['login_result'] = response
 
         if not self.check_mode:
@@ -204,9 +209,9 @@ class LoginManager(DockerBaseClass):
         '''
 
         cmd = "%s logout " % self.client.module.get_bin_path('docker', True)
-        #TODO: docker does not support config file in logout, restore this when they do
-        #if self.config_path and self.config_file_exists(self.config_path):
-        #    cmd += "--config '%s' " % self.config_path
+        # TODO: docker does not support config file in logout, restore this when they do
+        # if self.config_path and self.config_file_exists(self.config_path):
+        #     cmd += "--config '%s' " % self.config_path
         cmd += "'%s'" % self.registry_url
 
         (rc, out, err) = self.client.module.run_command(cmd)
@@ -250,7 +255,7 @@ class LoginManager(DockerBaseClass):
         :return: None
         '''
 
-        path = os.path.expanduser(self.config_path)
+        path = self.config_path
         if not self.config_file_exists(path):
             self.create_config_file(path)
 
@@ -291,14 +296,14 @@ class LoginManager(DockerBaseClass):
 
 def main():
 
-    argument_spec=dict(
+    argument_spec = dict(
         registry_url=dict(type='str', required=False, default=DEFAULT_DOCKER_REGISTRY, aliases=['registry', 'url']),
         username=dict(type='str', required=False),
         password=dict(type='str', required=False, no_log=True),
         email=dict(type='str'),
         reauthorize=dict(type='bool', default=False, aliases=['reauth']),
         state=dict(type='str', default='present', choices=['present', 'absent']),
-        config_path=dict(type='str', default='~/.docker/config.json', aliases=['self.config_path', 'dockercfg_path']),
+        config_path=dict(type='path', default='~/.docker/config.json', aliases=['self.config_path', 'dockercfg_path']),
     )
 
     required_if = [

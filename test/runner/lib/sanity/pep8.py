@@ -35,7 +35,7 @@ class Pep8Test(SanitySingleVersion):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
-        :rtype: SanityResult
+        :rtype: TestResult
         """
         with open(PEP8_SKIP_PATH, 'r') as skip_fd:
             skip_paths = skip_fd.read().splitlines()
@@ -55,7 +55,8 @@ class Pep8Test(SanitySingleVersion):
         paths = sorted(i.path for i in targets.include if (os.path.splitext(i.path)[1] == '.py' or i.path.startswith('bin/')) and i.path not in skip_paths_set)
 
         cmd = [
-            'pycodestyle',
+            args.python_executable,
+            '-m', 'pycodestyle',
             '--max-line-length', '160',
             '--config', '/dev/null',
             '--ignore', ','.join(sorted(current_ignore)),

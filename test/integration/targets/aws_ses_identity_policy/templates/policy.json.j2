@@ -1,0 +1,13 @@
+{
+  "Id": "SampleAuthorizationPolicy",
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DenyAll",
+      "Effect": "Deny",
+      "Resource": "{{ identity_info.identity_arn }}",
+      "Principal": "*",
+      "Action": "*"
+    }
+  ]
+}

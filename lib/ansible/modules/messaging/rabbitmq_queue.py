@@ -33,76 +33,67 @@ options:
             - Whether the queue should be present or absent
             - Only present implemented atm
         choices: [ "present", "absent" ]
-        required: false
         default: present
     login_user:
         description:
             - rabbitMQ user for connection
-        required: false
         default: guest
     login_password:
         description:
             - rabbitMQ password for connection
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     login_host:
         description:
             - rabbitMQ host for connection
-        required: false
         default: localhost
     login_port:
         description:
             - rabbitMQ management api port
-        required: false
         default: 15672
     vhost:
         description:
             - rabbitMQ virtual host
-        required: false
         default: "/"
     durable:
         description:
             - whether queue is durable or not
-        required: false
-        choices: [ "yes", "no" ]
-        default: yes
+        type: bool
+        default: 'yes'
     auto_delete:
         description:
             - if the queue should delete itself after all queues/queues unbound from it
-        required: false
-        choices: [ "yes", "no" ]
-        default: no
+        type: bool
+        default: 'no'
     message_ttl:
         description:
             - How long a message can live in queue before it is discarded (milliseconds)
-        required: False
         default: forever
     auto_expires:
         description:
             - How long a queue can be unused before it is automatically deleted (milliseconds)
-        required: false
         default: forever
     max_length:
         description:
             - How many messages can the queue contain before it starts rejecting
-        required: false
         default: no limit
     dead_letter_exchange:
         description:
             - Optional name of an exchange to which messages will be republished if they
             - are rejected or expire
-        required: false
-        default: None
     dead_letter_routing_key:
         description:
             - Optional replacement routing key to use when a message is dead-lettered.
             - Original routing key will be used if unset
-        required: false
-        default: None
+    max_priority:
+        description:
+            - Maximum number of priority levels for the queue to support.
+            - If not set, the queue will not support message priorities.
+            - Larger numbers indicate higher priority.
+        version_added: "2.4"
     arguments:
         description:
             - extra arguments for queue. If defined this argument is a key/value dictionary
-        required: false
         default: {}
 '''
 
@@ -148,7 +139,8 @@ def main():
             max_length=dict(default=None, type='int'),
             dead_letter_exchange=dict(default=None, type='str'),
             dead_letter_routing_key=dict(default=None, type='str'),
-            arguments=dict(default=dict(), type='dict')
+            arguments=dict(default=dict(), type='dict'),
+            max_priority=dict(default=None, type='int')
         ),
         supports_check_mode=True
     )
@@ -211,6 +203,11 @@ def main():
                 ('x-dead-letter-routing-key' in response['arguments'] and
                  response['arguments']['x-dead-letter-routing-key'] == module.params['dead_letter_routing_key']) or
                 ('x-dead-letter-routing-key' not in response['arguments'] and module.params['dead_letter_routing_key'] is None)
+            ) and
+            (
+                ('x-max-priority' in response['arguments'] and
+                 response['arguments']['x-max-priority'] == module.params['max_priority']) or
+                ('x-max-priority' not in response['arguments'] and module.params['max_priority'] is None)
             )
         ):
             module.fail_json(
@@ -223,7 +220,8 @@ def main():
         'auto_expires': 'x-expires',
         'max_length': 'x-max-length',
         'dead_letter_exchange': 'x-dead-letter-exchange',
-        'dead_letter_routing_key': 'x-dead-letter-routing-key'
+        'dead_letter_routing_key': 'x-dead-letter-routing-key',
+        'max_priority': 'x-max-priority'
     }.items():
         if module.params[k] is not None:
             module.params['arguments'][v] = module.params[k]
@@ -265,6 +263,7 @@ def main():
     else:
         result['changed'] = False
         module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

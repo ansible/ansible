@@ -56,6 +56,18 @@ options:
         run to send them out. This is mostly useful for generating artifacts to be stored/deployed elsewhere.
     required: false
     default: true
+  force:
+    description:
+      - Whether or not to force full deployment, equivalent to serverless `--force` option.
+    required: false
+    default: false
+    version_added: "2.7"
+  verbose:
+    description:
+      - Shows all stack events during deployment, and display any Stack Output.
+    required: false
+    default: false
+    version_added: "2.7"
 notes:
    - Currently, the `serverless` command must be in the path of the node executing the task. In the future this may be a flag.
 requirements: [ "serverless", "yaml" ]
@@ -100,7 +112,7 @@ EXAMPLES = """
 RETURN = """
 service_name:
   type: string
-  description: Most
+  description: The service name specified in the serverless.yml that was just deployed.
   returned: always
   sample: my-fancy-service-dev
 state:
@@ -154,13 +166,15 @@ def get_service_name(module, stage):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            service_path = dict(required=True, type='path'),
-            state        = dict(default='present', choices=['present', 'absent'], required=False),
-            functions    = dict(type='list', required=False),
-            region       = dict(default='', required=False),
-            stage        = dict(default='', required=False),
-            deploy       = dict(default=True, type='bool', required=False),
-            serverless_bin_path = dict(required=False, type='path')
+            service_path=dict(required=True, type='path'),
+            state=dict(default='present', choices=['present', 'absent'], required=False),
+            functions=dict(type='list', required=False),
+            region=dict(default='', required=False),
+            stage=dict(default='', required=False),
+            deploy=dict(default=True, type='bool', required=False),
+            serverless_bin_path=dict(required=False, type='path'),
+            force=dict(default=False, required=False),
+            verbose=dict(default=False, required=False)
         ),
     )
 
@@ -173,6 +187,8 @@ def main():
     region = module.params.get('region')
     stage = module.params.get('stage')
     deploy = module.params.get('deploy', True)
+    force = module.params.get('force', False)
+    verbose = module.params.get('verbose', False)
     serverless_bin_path = module.params.get('serverless_bin_path')
 
     if serverless_bin_path is not None:
@@ -187,24 +203,30 @@ def main():
     else:
         module.fail_json(msg="State must either be 'present' or 'absent'. Received: {}".format(state))
 
-    if not deploy and state == 'present':
-        command += '--noDeploy '
+    if state == 'present':
+        if not deploy:
+            command += '--noDeploy '
+        elif force:
+            command += '--force '
+
     if region:
         command += '--region {} '.format(region)
     if stage:
         command += '--stage {} '.format(stage)
+    if verbose:
+        command += '--verbose '
 
     rc, out, err = module.run_command(command, cwd=service_path)
     if rc != 0:
         if state == 'absent' and "-{}' does not exist".format(stage) in out:
             module.exit_json(changed=False, state='absent', command=command,
-                    out=out, service_name=get_service_name(module, stage))
+                             out=out, service_name=get_service_name(module, stage))
 
         module.fail_json(msg="Failure when executing Serverless command. Exited {}.\nstdout: {}\nstderr: {}".format(rc, out, err))
 
     # gather some facts about the deployment
     module.exit_json(changed=True, state='present', out=out, command=command,
-            service_name=get_service_name(module, stage))
+                     service_name=get_service_name(module, stage))
 
 
 if __name__ == '__main__':

@@ -27,7 +27,7 @@ description:
        absent on the filesystem.
      - In 1.8 and later, this module can also be used to wait for active connections to be closed before continuing, useful if a node
        is being rotated out of a load balancer pool.
-     - This module is also supported for Windows targets.
+     - For Windows targets, use the M(win_wait_for) module instead.
 version_added: "0.7"
 options:
   host:
@@ -83,12 +83,16 @@ options:
       - Number of seconds to sleep between checks, before 2.3 this was hardcoded to 1 second.
   msg:
     version_added: "2.4"
-    required: false
-    default: null
     description:
       - This overrides the normal error message from a failure to meet the required conditions.
 notes:
   - The ability to use search_regex with a port connection was added in 1.7.
+  - Prior to 2.4, testing for the absense of a directory or UNIX socket did not work correctly.
+  - Prior to 2.4, testing for the presence of a file did not work correctly if the remote user did not have read access to that file.
+  - Under some circumstances when using mandatory access control, a path may always be treated as being absent even if it exists, but
+    can't be modified or created by the remote user either.
+  - When waiting for a path, symbolic links will be followed.  Many other modules that manipulate files do not follow symbolic links,
+    so operations on the path using other modules may not work exactly as expected.
   - This module is also supported for Windows targets.
   - See also M(wait_for_connection)
 author:
@@ -102,19 +106,19 @@ EXAMPLES = r'''
   wait_for: timeout=300
   delegate_to: localhost
 
-- name: Wait 300 seconds for port 8000 to become open on the host, don't start checking for 10 seconds
+- name: Wait for port 8000 to become open on the host, don't start checking for 10 seconds
   wait_for:
     port: 8000
     delay: 10
 
-- name: Wait 300 seconds for port 8000 of any IP to close active connections, don't start checking for 10 seconds
+- name: Waits for port 8000 of any IP to close active connections, don't start checking for 10 seconds
   wait_for:
     host: 0.0.0.0
     port: 8000
     delay: 10
     state: drained
 
-- name: Wait 300 seconds for port 8000 of any IP to close active connections, ignoring connections for specified hosts
+- name: Wait for port 8000 of any IP to close active connections, ignoring connections for specified hosts
   wait_for:
     host: 0.0.0.0
     port: 8000
@@ -168,6 +172,7 @@ EXAMPLES = r'''
 
 import binascii
 import datetime
+import errno
 import math
 import os
 import re
@@ -481,8 +486,8 @@ def main():
         while datetime.datetime.utcnow() < end:
             if path:
                 try:
-                    f = open(path)
-                    f.close()
+                    if not os.access(path, os.F_OK):
+                        break
                 except IOError:
                     break
             elif port:
@@ -558,15 +563,27 @@ def main():
                                 break
 
                         # Shutdown the client socket
-                        s.shutdown(socket.SHUT_RDWR)
-                        s.close()
+                        try:
+                            s.shutdown(socket.SHUT_RDWR)
+                        except socket.error as e:
+                            if e.errno != errno.ENOTCONN:
+                                raise
+                        # else, the server broke the connection on its end, assume it's not ready
+                        else:
+                            s.close()
                         if matched:
                             # Found our string, success!
                             break
                     else:
                         # Connection established, success!
-                        s.shutdown(socket.SHUT_RDWR)
-                        s.close()
+                        try:
+                            s.shutdown(socket.SHUT_RDWR)
+                        except socket.error as e:
+                            if e.errno != errno.ENOTCONN:
+                                raise
+                        # else, the server broke the connection on its end, assume it's not ready
+                        else:
+                            s.close()
                         break
 
             # Conditions not yet met, wait and try again

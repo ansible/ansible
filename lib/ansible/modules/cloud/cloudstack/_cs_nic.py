@@ -1,111 +1,88 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
-# (c) 2016, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+
+# Copyright: (c) 2016, René Moser <mail@renemoser.net>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['deprecated'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: cs_nic
-short_description: Manages NICs and secondary IPs of an instance on Apache CloudStack based clouds.
+short_description: Manages NICs and secondary IPs of an instance on Apache CloudStack based clouds
 description:
     - Add and remove secondary IPs to and from a NIC.
 version_added: "2.3"
-author: "René Moser (@resmo)"
-deprecated: Deprecated in 2.4. Use M(cs_instance_nic_secondaryip) instead.
+author:
+- René Moser (@resmo)
+deprecated:
+  removed_in: "2.8"
+  why: New module created.
+  alternative: Use M(cs_instance_nic_secondaryip) instead.
 options:
   vm:
     description:
       - Name of instance.
     required: true
-    aliases: ['name']
+    aliases: [ name ]
   network:
     description:
       - Name of the network.
       - Required to find the NIC if instance has multiple networks assigned.
-    required: false
-    default: null
   vm_guest_ip:
     description:
       - Secondary IP address to be added to the instance nic.
       - If not set, the API always returns a new IP address and idempotency is not given.
-    required: false
-    default: null
-    aliases: ['secondary_ip']
+    aliases: [ secondary_ip ]
   vpc:
     description:
       - Name of the VPC the C(vm) is related to.
-    required: false
-    default: null
   domain:
     description:
       - Domain the instance is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the instance is related to.
-    required: false
-    default: null
   project:
     description:
       - Name of the project the instance is deployed in.
-    required: false
-    default: null
   zone:
     description:
       - Name of the zone in which the instance is deployed in.
       - If not set, default zone is used.
-    required: false
-    default: null
   state:
     description:
       - State of the ipaddress.
-    required: false
-    default: "present"
-    choices: [ 'present', 'absent' ]
+    choices: [ absent, present ]
+    default: present
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    required: false
-    default: true
+    type: bool
+    default: 'yes'
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Assign a specific IP to the default NIC of the VM
-- local_action:
+- name: Assign a specific IP to the default NIC of the VM
+  local_action:
     module: cs_nic
     vm: customer_xy
     vm_guest_ip: 10.10.10.10
 
-# Assign an IP to the default NIC of the VM
 # Note: If vm_guest_ip is not set, you will get a new IP address on every run.
-- local_action:
+- name: Assign an IP to the default NIC of the VM
+  local_action:
     module: cs_nic
     vm: customer_xy
 
-# Remove a specific IP from the default NIC
-- local_action:
+- name: Remove a specific IP from the default NIC
+  local_action:
     module: cs_nic
     vm: customer_xy
     vm_guest_ip: 10.10.10.10
@@ -165,9 +142,13 @@ project:
   type: string
   sample: Production
 '''
+try:
+    from cs import CloudStackException
+except ImportError:
+    pass  # Handled in AnsibleCloudStack.__init__
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.cloudstack import AnsibleCloudStack, cs_argument_spec, cs_required_together
 
 
 class AnsibleCloudStackNic(AnsibleCloudStack):
@@ -193,7 +174,7 @@ class AnsibleCloudStackNic(AnsibleCloudStack):
         if nics:
             self.nic = nics['nic'][0]
             return self.nic
-        self.module.fail_json(msg="NIC for VM %s in network %s not found" %(self.get_vm(key='name'), self.get_network(key='name')))
+        self.module.fail_json(msg="NIC for VM %s in network %s not found" % (self.get_vm(key='name'), self.get_network(key='name')))
 
     def get_secondary_ip(self):
         nic = self.get_nic()
@@ -248,7 +229,7 @@ class AnsibleCloudStackNic(AnsibleCloudStack):
         self.result['network'] = self.get_network(key='name')
         self.result['vm'] = self.get_vm(key='name')
         self.result['vm_guest_ip'] = self.vm_guest_ip
-        self.result['domain'] =  self.get_domain(key='path')
+        self.result['domain'] = self.get_domain(key='path')
         self.result['account'] = self.get_account(key='name')
         self.result['project'] = self.get_project(key='name')
         return self.result
@@ -257,15 +238,15 @@ class AnsibleCloudStackNic(AnsibleCloudStack):
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        vm=dict(required=True, aliases=['name']),
-        vm_guest_ip=dict(default=None, aliases=['secondary_ip']),
-        network=dict(default=None),
-        vpc=dict(default=None),
-        state=dict(choices=['present', 'absent'], default='present'),
-        domain=dict(default=None),
-        account=dict(default=None),
-        project=dict(default=None),
-        zone=dict(default=None),
+        vm=dict(type='str', required=True, aliases=['name']),
+        vm_guest_ip=dict(type='str', aliases=['secondary_ip']),
+        network=dict(type='str',),
+        vpc=dict(type='str'),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
+        domain=dict(type='str'),
+        account=dict(type='str'),
+        project=dict(type='str'),
+        zone=dict(type='str'),
         poll_async=dict(type='bool', default=True),
     ))
 
@@ -294,6 +275,7 @@ def main():
         module.fail_json(msg='CloudStackException: %s' % str(e))
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

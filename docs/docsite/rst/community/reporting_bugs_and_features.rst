@@ -1,3 +1,5 @@
+.. _reporting_bugs_and_features:
+
 **************************************
 Reporting Bugs And Requesting Features
 **************************************
@@ -25,11 +27,11 @@ For multiple-file content, we encourage use of gist.github.com.  Online pastebin
 
 If you are not sure if something is a bug yet, you are welcome to ask about something on the mailing list or IRC first.
 
-As we are a very high volume project, if you determine that you do have a bug, please be sure to open the issue yourself to ensure we have a record of it. Don’t rely on someone else in the community to file the bug report for you.
+As we are a very high volume project, if you determine that you do have a bug, please be sure to open the issue yourself to ensure we have a record of it. Don't rely on someone else in the community to file the bug report for you.
 
 Requesting a feature
 ====================
 
 The best way to get a feature into Ansible is to submit a pull request.
 
-The next best way of getting a feature into Ansible is to submit a proposal through the `Ansible proposal process  <https://github.com/ansible/proposals>` .
+The next best way of getting a feature into Ansible is to submit a proposal through the `Ansible proposal process  <https://github.com/ansible/proposals>`_.

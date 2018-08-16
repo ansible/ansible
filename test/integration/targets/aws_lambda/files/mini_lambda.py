@@ -1,5 +1,6 @@
 from __future__ import print_function
 import json
+import os
 
 
 def handler(event, context):
@@ -17,7 +18,16 @@ def handler(event, context):
 
     name = event["name"]
 
-    return {"message": "hello " + name}
+    # we can use environment variables as part of the configuration of the lambda
+    # which can change the behaviour of the lambda without needing a new upload
+
+    extra = os.environ.get("EXTRA_MESSAGE")
+    if extra is not None and len(extra) > 0:
+        greeting = "hello {0}. {1}".format(name, extra)
+    else:
+        greeting = "hello " + name
+
+    return {"message": greeting}
 
 
 def main():

@@ -39,18 +39,18 @@ options:
         required: true
         aliases:
             - address_prefix
-    security_group_name:
+    security_group:
         description:
-            - Name of an existing security group with which to associate the subnet.
-        required: false
-        default: null
+            - Existing security group with which to associate the subnet.
+            - It can be the security group name which is in the same resource group.
+            - It can be the resource Id.
+            - It can be a dict which contains C(name) and C(resource_group) of the security group.
         aliases:
-            - security_group
+            - security_group_name
     state:
         description:
             - Assert the state of the subnet. Use 'present' to create or update a subnet and
               'absent' to delete a subnet.
-        required: false
         default: present
         choices:
             - absent
@@ -64,6 +64,7 @@ options:
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Chris Houseknecht (@chouseknecht)"
@@ -78,6 +79,16 @@ EXAMPLES = '''
         virtual_network_name: My_Virtual_Network
         resource_group: Testing
         address_prefix_cidr: "10.1.0.0/24"
+
+    - name: Create a subnet refer nsg from other resource group
+      azure_rm_subnet:
+        name: foobar
+        virtual_network_name: My_Virtual_Network
+        resource_group: Testing
+        address_prefix_cidr: "10.1.0.0/16"
+        security_group:
+          name: secgroupfoo
+          resource_group: Testing1
 
     - name: Delete a subnet
       azure_rm_subnet:
@@ -122,15 +133,13 @@ state:
           example: "Succeeded"
 '''  # NOQA
 
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase, CIDR_PATTERN, azure_id_to_dict
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, CIDR_PATTERN, azure_id_to_dict, format_resource_id
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.network.models import Subnet, NetworkSecurityGroup
 except ImportError:
     # This is handled in azure_rm_common
     pass
-
 
 
 def subnet_to_dict(subnet):
@@ -158,7 +167,7 @@ class AzureRMSubnet(AzureRMModuleBase):
             state=dict(type='str', default='present', choices=['present', 'absent']),
             virtual_network_name=dict(type='str', required=True, aliases=['virtual_network']),
             address_prefix_cidr=dict(type='str', aliases=['address_prefix']),
-            security_group_name=dict(type='str', aliases=['security_group']),
+            security_group=dict(type='raw', aliases=['security_group_name'])
         )
 
         required_if = [
@@ -173,9 +182,9 @@ class AzureRMSubnet(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.state = None
-        self.virtual_etwork_name = None
+        self.virtual_network_name = None
         self.address_prefix_cidr = None
-        self.security_group_name = None
+        self.security_group = None
 
         super(AzureRMSubnet, self).__init__(self.module_arg_spec,
                                             supports_check_mode=True,
@@ -192,8 +201,8 @@ class AzureRMSubnet(AzureRMModuleBase):
         if self.state == 'present' and not CIDR_PATTERN.match(self.address_prefix_cidr):
             self.fail("Invalid address_prefix_cidr value {0}".format(self.address_prefix_cidr))
 
-        if self.security_group_name:
-            nsg = self.get_security_group(self.security_group_name)
+        if self.security_group:
+            nsg = self.parse_nsg()
 
         results = dict()
         changed = False
@@ -213,12 +222,12 @@ class AzureRMSubnet(AzureRMModuleBase):
                         changed = True
                         results['address_prefix'] = self.address_prefix_cidr
 
-                if self.security_group_name:
-                    if results['network_security_group'].get('id') != nsg.id:
+                if nsg:
+                    if results['network_security_group'].get('id') != nsg.get('id'):
                         self.log("CHANGED: subnet {0} network security group".format(self.name))
                         changed = True
-                        results['network_security_group']['id'] = nsg.id
-                        results['network_security_group']['name'] = nsg.name
+                        results['network_security_group']['id'] = nsg.get('id')
+                        results['network_security_group']['name'] = nsg.get('name')
             elif self.state == 'absent':
                 changed = True
         except CloudError:
@@ -235,28 +244,23 @@ class AzureRMSubnet(AzureRMModuleBase):
                 if not subnet:
                     # create new subnet
                     self.log('Creating subnet {0}'.format(self.name))
-                    subnet = Subnet(
+                    subnet = self.network_models.Subnet(
                         address_prefix=self.address_prefix_cidr
                     )
                     if nsg:
-                        subnet.network_security_group = NetworkSecurityGroup(id=nsg.id,
-                                                                             location=nsg.location,
-                                                                             resource_guid=nsg.resource_guid)
+                        subnet.network_security_group = self.network_models.NetworkSecurityGroup(id=nsg.get('id'))
 
                 else:
                     # update subnet
                     self.log('Updating subnet {0}'.format(self.name))
-                    subnet = Subnet(
+                    subnet = self.network_models.Subnet(
                         address_prefix=results['address_prefix']
                     )
                     if results['network_security_group'].get('id'):
-                        nsg = self.get_security_group(results['network_security_group']['name'])
-                        subnet.network_security_group = NetworkSecurityGroup(id=nsg.id,
-                                                                             location=nsg.location,
-                                                                             resource_guid=nsg.resource_guid)
+                        subnet.network_security_group = self.network_models.NetworkSecurityGroup(results['network_security_group'].get('id'))
 
                 self.results['state'] = self.create_or_update_subnet(subnet)
-            elif self.state == 'absent':
+            elif self.state == 'absent' and changed:
                 # delete subnet
                 self.delete_subnet()
                 # the delete does not actually return anything. if no exception, then we'll assume
@@ -289,18 +293,24 @@ class AzureRMSubnet(AzureRMModuleBase):
 
         return result
 
-    def get_security_group(self, name):
-        self.log("Fetching security group {0}".format(name))
-        nsg = None
-        try:
-            nsg = self.network_client.network_security_groups.get(self.resource_group, name)
-        except Exception as exc:
-            self.fail("Error: fetching network security group {0} - {1}.".format(name, str(exc)))
-        return nsg
+    def parse_nsg(self):
+        nsg = self.security_group
+        resource_group = self.resource_group
+        if isinstance(self.security_group, dict):
+            nsg = self.security_group.get('name')
+            resource_group = self.security_group.get('resource_group', self.resource_group)
+        id = format_resource_id(val=nsg,
+                                subscription_id=self.subscription_id,
+                                namespace='Microsoft.Network',
+                                types='networkSecurityGroups',
+                                resource_group=resource_group)
+        name = azure_id_to_dict(id).get('name')
+        return dict(id=id, name=name)
 
 
 def main():
     AzureRMSubnet()
+
 
 if __name__ == '__main__':
     main()

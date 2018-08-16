@@ -1,16 +1,14 @@
 #!/usr/bin/python
 
-# Copyright (c) 2015 VMware, Inc. All Rights Reserved.
+# Copyright: (c) 2015, VMware, Inc. All Rights Reserved.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -19,7 +17,8 @@ short_description: add remove firewall rules in a gateway  in a vca
 description:
   - Adds or removes firewall rules from a gateway in a vca environment
 version_added: "2.0"
-author: Peter Sprygada (@privateip)
+author:
+- Peter Sprygada (@privateip)
 options:
     fw_rules:
       description:
@@ -82,6 +81,7 @@ def protocol_to_tuple(protocol):
             protocol.get_Other(),
             protocol.get_Any())
 
+
 def protocol_to_string(protocol):
     protocol = protocol_to_tuple(protocol)
     if protocol[0] is True:
@@ -95,6 +95,7 @@ def protocol_to_string(protocol):
     elif protocol[4] is True:
         return 'Any'
 
+
 def protocol_to_type(protocol):
     try:
         protocols = ProtocolsType()
@@ -102,6 +103,7 @@ def protocol_to_type(protocol):
         return protocols
     except AttributeError:
         raise VcaError("The value in protocol is not valid")
+
 
 def validate_fw_rules(fw_rules):
     for rule in fw_rules:
@@ -122,6 +124,7 @@ def validate_fw_rules(fw_rules):
 
     return fw_rules
 
+
 def fw_rules_to_dict(rules):
     fw_rules = list()
     for rule in rules:
@@ -140,6 +143,7 @@ def fw_rules_to_dict(rules):
         )
     return fw_rules
 
+
 def create_fw_rule(is_enable, description, policy, protocol, dest_port,
                    dest_ip, source_port, source_ip, enable_logging):
 
@@ -153,13 +157,14 @@ def create_fw_rule(is_enable, description, policy, protocol, dest_port,
                             SourceIp=source_ip,
                             EnableLogging=enable_logging)
 
+
 def main():
     argument_spec = vca_argument_spec()
     argument_spec.update(
         dict(
-            fw_rules = dict(required=True, type='list'),
-            gateway_name = dict(default='gateway'),
-            state = dict(default='present', choices=['present', 'absent'])
+            fw_rules=dict(required=True, type='list'),
+            gateway_name=dict(default='gateway'),
+            state=dict(default='present', choices=['present', 'absent'])
         )
     )
 

@@ -1,6 +1,6 @@
-============================
-Ansible by Red Hat, Core 2.3
-============================
+===========
+Ansible 2.3
+===========
 **Target: Mid April 2017**
 
 .. contents:: Topics
@@ -46,7 +46,7 @@ Lead by nitzmahone
   - Become support **(done/experimental)**
   - Integrated kerberos ticket management (via ansible_user/ansible_password) **(done)**
   - Switch PS input encoding to BOM-less UTF8 **(done)**
-  - Server 2016 support/testing (now RTM’d) **(partial)**
+  - Server 2016 support/testing (now RTM'd) **(partial)**
   - Modularize Windows module_utils (allow N files) **(partial)**
   - Declarative argspec for PS / .NET **(bumped to 2.4)**
   - Kerberos encryption (via notting, pywinrm/requests_kerberos/pykerberos) **(in progress, available in pywinrm post 2.3 release)**
@@ -98,8 +98,8 @@ Python3
 
   - If users report bugs on python3, these should be fixed and will prioritize our work on porting other modules.
 
-- Still have to solve the python3-only and python2-only modules.  Thinking of doing this via metadata.  Will mean we have to use metadata at the module_common level.  Will also mean we don’t support py2-only or py3-only old style python modules.
-- Note: Most of the currently tested ansible features now run.  But there’s still a lot of code that’s untested.
+- Still have to solve the python3-only and python2-only modules.  Thinking of doing this via metadata.  Will mean we have to use metadata at the module_common level.  Will also mean we don't support py2-only or py3-only old style python modules.
+- Note: Most of the currently tested ansible features now run.  But there's still a lot of code that's untested.
 
 Testing and CI
 --------------
@@ -118,9 +118,9 @@ Lead by mattclay
 
   Some new issues have also appeared, which are currently being worked on.
 
-- *Enable Remaining Tests:* Implement fixes for OS X, FreeBSD and Python 3 to enable the remaining blacklisted tests for CI.
+- *Enable Remaining Tests:* Implement fixes for macOS, FreeBSD and Python 3 to enable the remaining blacklisted tests for CI.
 
-  **Ongoing:** More tests have been enabled for OS X, FreeBSD and Python 3. However, work still remains to enable more tests.
+  **Ongoing:** More tests have been enabled for macOS, FreeBSD and Python 3. However, work still remains to enable more tests.
 
 - *Windows Server 2016:* Add Windows Server 2016 to CI when official AMIs become available.
 
@@ -145,7 +145,7 @@ Amazon
 Lead by ryansb
 
 - Improve ec2.py integration tests **(partial, more to do in 2.4)**
-- ELB version 2 **(pushed - needs_revision [PR](https://github.com/ansible/ansible/pull/19491))**
+- ELB version 2 **(pushed - needs_revision)** `PR <https://github.com/ansible/ansible/pull/19491>`_
 - CloudFormation YAML, cross-stack reference, and roles support **(done)**
 - ECS module refactor **(done)**
 - AWS module unit testing w/ placebo (boto3 only) **(pushed 2.4)**
@@ -157,10 +157,10 @@ Plugin Loader
 
 ansible-ssh
 -----------
-- Add a ‘ansible-ssh’ convenience and debugging tool (will slip to 2.4)
+- Add a 'ansible-ssh' convenience and debugging tool (will slip to 2.4)
 - Tool to invoke an interactive ssh to a host with the same args/env/config that ansible would.
 - There are at least three external versions
 
   - https://github.com/2ndQuadrant/ansible-ssh
   - https://github.com/haad/ansible-ssh
-  - https://github.com/mlvnd/ansible-ssh
+  - https://github.com/mlvnd/ansible-tools

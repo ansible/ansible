@@ -216,7 +216,7 @@ EXAMPLES = '''
         flat: true
 '''
 
-RETURN='''
+RETURN = '''
 addresses:
   description: Mapping from the network device name to a list of IPv4 addresses in the container
   returned: when state is started or restarted
@@ -328,7 +328,7 @@ class LXDContainerManagement(object):
         return ANSIBLE_LXD_STATES[resp_json['metadata']['status']]
 
     def _change_state(self, action, force_stop=False):
-        body_json={'action': action, 'timeout': self.timeout}
+        body_json = {'action': action, 'timeout': self.timeout}
         if force_stop:
             body_json['force'] = True
         return self.client.do('PUT', '/1.0/containers/{0}/state'.format(self.name), body_json=body_json)
@@ -363,7 +363,9 @@ class LXDContainerManagement(object):
         self._change_state('unfreeze')
         self.actions.append('unfreez')
 
-    def _container_ipv4_addresses(self, ignore_devices=['lo']):
+    def _container_ipv4_addresses(self, ignore_devices=None):
+        ignore_devices = ['lo'] if ignore_devices is None else ignore_devices
+
         resp_json = self._get_container_state_json()
         network = resp_json['metadata']['network'] or {}
         network = dict((k, v) for k, v in network.items() if k not in ignore_devices) or {}
@@ -455,9 +457,13 @@ class LXDContainerManagement(object):
             return False
         if key == 'config':
             old_configs = dict((k, v) for k, v in self.old_container_json['metadata'][key].items() if not k.startswith('volatile.'))
+            for k, v in self.config['config'].items():
+                if old_configs[k] != v:
+                    return True
+            return False
         else:
             old_configs = self.old_container_json['metadata'][key]
-        return self.config[key] != old_configs
+            return self.config[key] != old_configs
 
     def _needs_to_apply_container_configs(self):
         return (
@@ -525,6 +531,7 @@ class LXDContainerManagement(object):
                 fail_params['logs'] = e.kwargs['logs']
             self.module.fail_json(**fail_params)
 
+
 def main():
     """Ansible Main module."""
 
@@ -583,7 +590,7 @@ def main():
                 type='str',
                 default='{}/.config/lxc/client.crt'.format(os.environ['HOME'])
             ),
-            trust_password=dict( type='str', no_log=True )
+            trust_password=dict(type='str', no_log=True)
         ),
         supports_check_mode=False,
     )

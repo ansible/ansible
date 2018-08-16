@@ -40,7 +40,7 @@ options:
       - Install the node.js library globally
     required: false
     default: no
-    choices: [ "yes", "no" ]
+    type: bool
   executable:
     description:
       - The executable location for npm.
@@ -48,16 +48,16 @@ options:
     required: false
   ignore_scripts:
     description:
-      - Use the --ignore-scripts flag when installing.
+      - Use the C(--ignore-scripts) flag when installing.
     required: false
-    choices: [ "yes", "no" ]
+    type: bool
     default: no
     version_added: "1.8"
   production:
     description:
       - Install dependencies in production mode, excluding devDependencies
     required: false
-    choices: [ "yes", "no" ]
+    type: bool
     default: no
   registry:
     description:
@@ -70,6 +70,8 @@ options:
     required: false
     default: present
     choices: [ "present", "absent", "latest" ]
+requirements:
+    - npm installed in bin path (recommended /usr/local/bin)
 '''
 
 EXAMPLES = '''
@@ -121,14 +123,7 @@ import re
 
 from ansible.module_utils.basic import AnsibleModule
 
-try:
-    import json
-except ImportError:
-    try:
-        import simplejson as json
-    except ImportError:
-        # Let snippet from module_utils/basic.py return a proper error in this case
-        pass
+import json
 
 
 class Npm(object):
@@ -183,7 +178,7 @@ class Npm(object):
         return ''
 
     def list(self):
-        cmd = ['list', '--json']
+        cmd = ['list', '--json', '--long']
 
         installed = list()
         missing = list()
@@ -220,7 +215,7 @@ class Npm(object):
             if dep:
                 # node.js v0.10.22 changed the `npm outdated` module separator
                 # from "@" to " ". Split on both for backwards compatibility.
-                pkg, other = re.split('\s|@', dep, 1)
+                pkg, other = re.split(r'\s|@', dep, 1)
                 outdated.append(pkg)
 
         return outdated
@@ -264,16 +259,16 @@ def main():
     changed = False
     if state == 'present':
         installed, missing = npm.list()
-        if len(missing):
+        if missing:
             changed = True
             npm.install()
     elif state == 'latest':
         installed, missing = npm.list()
         outdated = npm.list_outdated()
-        if len(missing):
+        if missing:
             changed = True
             npm.install()
-        if len(outdated):
+        if outdated:
             changed = True
             npm.update()
     else:  # absent

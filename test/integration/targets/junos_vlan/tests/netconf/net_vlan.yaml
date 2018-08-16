@@ -1,0 +1,30 @@
+---
+- debug: msg="START junos netconf/net_vlan.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+
+- name: setup - remove vlan
+  net_vlan:
+    name: test-vlan
+    description: test vlan
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Create vlan using platform agnostic vlan module
+  net_vlan:
+    vlan_id: 100
+    name: test-vlan
+    state: present
+    description: test vlan
+    provider: "{{ netconf }}"
+  register: result
+
+- name: teardown - remove vlan
+  net_vlan:
+    name: test-vlan
+    description: test vlan
+    state: absent
+    provider: "{{ netconf }}"
+
+- debug: msg="END junos netconf/net_vlan.yaml on connection={{ ansible_connection }}"

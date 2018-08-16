@@ -1,27 +1,13 @@
 #!powershell
-# This file is part of Ansible
-#
-# Copyright 2015, George Frank <george@georgefrank.net>
-# Copyright 2015, Adam Keech <akeech@chathamfinancial.com>
-# Copyright 2015, Hans-Joachim Kliemeck <git@kliemeck.de>
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# Copyright: (c) 2015, George Frank <george@georgefrank.net>
+# Copyright: (c) 2015, Adam Keech <akeech@chathamfinancial.com>
+# Copyright: (c) 2015, Hans-Joachim Kliemeck <git@kliemeck.de>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 $ErrorActionPreference = "Stop"
-
-# WANT_JSON
-# POWERSHELL_COMMON
 
 $params = Parse-Args $args
 
@@ -35,7 +21,7 @@ $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "prese
 $application = Get-AnsibleParam -obj $params -name "application" -type "str"
 $appParameters = Get-AnsibleParam -obj $params -name "app_parameters" -type "str"
 $appParametersFree  = Get-AnsibleParam -obj $params -name "app_parameters_free_form" -type "str"
-$startMode = Get-AnsibleParam -obj $params -name "start_mode" -type "str" -default "auto" -validateset "auto","manual","disabled" -resultobj $result
+$startMode = Get-AnsibleParam -obj $params -name "start_mode" -type "str" -default "auto" -validateset "auto","delayed","manual","disabled" -resultobj $result
 
 $stdoutFile = Get-AnsibleParam -obj $params -name "stdout_file" -type "str"
 $stderrFile = Get-AnsibleParam -obj $params -name "stderr_file" -type "str"
@@ -502,7 +488,7 @@ Function Nssm-Update-StartMode
         Throw "Error updating start mode for service ""$name"""
     }
 
-    $modes=@{"auto" = "SERVICE_AUTO_START"; "manual" = "SERVICE_DEMAND_START"; "disabled" = "SERVICE_DISABLED"}
+    $modes=@{"auto" = "SERVICE_AUTO_START"; "delayed" = "SERVICE_DELAYED_AUTO_START"; "manual" = "SERVICE_DEMAND_START"; "disabled" = "SERVICE_DISABLED"}
     $mappedMode = $modes.$mode
     if ($results -cnotlike $mappedMode) {
         $cmd = "set ""$name"" Start $mappedMode"

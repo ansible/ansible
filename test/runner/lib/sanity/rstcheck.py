@@ -15,10 +15,16 @@ from lib.util import (
     SubprocessError,
     run_command,
     parse_to_dict,
+    display,
+    find_executable,
 )
 
 from lib.config import (
     SanityConfig,
+)
+
+UNSUPPORTED_PYTHON_VERSIONS = (
+    '2.6',
 )
 
 
@@ -28,8 +34,12 @@ class RstcheckTest(SanitySingleVersion):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
-        :rtype: SanityResult
+        :rtype: TestResult
         """
+        if args.python_version in UNSUPPORTED_PYTHON_VERSIONS:
+            display.warning('Skipping rstcheck on unsupported Python version %s.' % args.python_version)
+            return SanitySkipped(self.name)
+
         with open('test/sanity/rstcheck/ignore-substitutions.txt', 'r') as ignore_fd:
             ignore_substitutions = sorted(set(ignore_fd.read().splitlines()))
 
@@ -39,7 +49,8 @@ class RstcheckTest(SanitySingleVersion):
             return SanitySkipped(self.name)
 
         cmd = [
-            'rstcheck',
+            args.python_executable,
+            '-m', 'rstcheck',
             '--report', 'warning',
             '--ignore-substitutions', ','.join(ignore_substitutions),
         ] + paths

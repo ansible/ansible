@@ -47,14 +47,30 @@ options:
   tx_rate:
     description:
       - Transmit rate in bits per second (bps).
+      - This is state check parameter only.
+      - Supports conditionals, see L(Conditionals in Networking Modules,../network/user_guide/network_working_with_command_output.html)
   rx_rate:
     description:
       - Receiver rate in bits per second (bps).
+      - This is state check parameter only.
+      - Supports conditionals, see L(Conditionals in Networking Modules,../network/user_guide/network_working_with_command_output.html)
+  neighbors:
+    description:
+      - Check the operational state of given interface C(name) for LLDP neighbor.
+      - The following suboptions are available.
+    suboptions:
+        host:
+          description:
+            - "LLDP neighbor host for given interface C(name)."
+        port:
+          description:
+            - "LLDP neighbor port to which given interface C(name) is connected."
   delay:
     description:
       - Time in seconds to wait before checking for the operational state on remote
         device. This wait is applicable for operational state argument which are
         I(state) with values C(up)/C(down), I(tx_rate) and I(rx_rate).
+    default: 10
   aggregate:
     description: List of Interfaces definitions.
   state:
@@ -67,13 +83,16 @@ options:
     description:
       - Specifies whether or not the configuration is active or deactivated
     default: True
-    choices: [True, False]
+    type: bool
 requirements:
   - ncclient (>=v0.5.2)
 notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
   - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
+  - Recommended connection is C(netconf). See L(the Junos OS Platform Options,../network/user_guide/platform_junos.html).
+  - This module also works with C(local) connections for legacy playbooks.
+extends_documentation_fragment: junos
 """
 
 EXAMPLES = """
@@ -142,6 +161,13 @@ EXAMPLES = """
     tx_rate: ge(0)
     rx_rate: le(0)
 
+- name: Check neighbor intent
+  junos_interface:
+    name: xe-0/1/1
+    neighbors:
+    - port: Ethernet1/0/1
+      host: netdev
+
 - name: Config + intent
   junos_interface:
     name: "{{ name }}"
@@ -166,17 +192,17 @@ from copy import deepcopy
 from time import sleep
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netconf import send_request
-from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.network_common import conditional
-from ansible.module_utils.junos import junos_argument_spec, check_args
-from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele
-from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config, to_param_list
+from ansible.module_utils.network.common.netconf import exec_rpc
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.common.utils import conditional
+from ansible.module_utils.network.junos.junos import junos_argument_spec, tostring
+from ansible.module_utils.network.junos.junos import load_config, map_params_to_obj, map_obj_to_ele
+from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes, locked_config, to_param_list
 
 try:
-    from lxml.etree import Element, SubElement, tostring
+    from lxml.etree import Element, SubElement
 except ImportError:
-    from xml.etree.ElementTree import Element, SubElement, tostring
+    from xml.etree.ElementTree import Element, SubElement
 
 USE_PERSISTENT_CONNECTION = True
 
@@ -199,6 +225,11 @@ def validate_param_values(module, obj, param=None):
 def main():
     """ main entry point for module execution
     """
+    neighbors_spec = dict(
+        host=dict(),
+        port=dict()
+    )
+
     element_spec = dict(
         name=dict(),
         description=dict(),
@@ -208,6 +239,7 @@ def main():
         duplex=dict(choices=['full', 'half', 'auto']),
         tx_rate=dict(),
         rx_rate=dict(),
+        neighbors=dict(type='list', elements='dict', options=neighbors_spec),
         delay=dict(default=10, type='int'),
         state=dict(default='present', choices=['present', 'absent', 'up', 'down']),
         active=dict(default=True, type='bool')
@@ -235,8 +267,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
-
     result = {'changed': False}
 
     if warnings:
@@ -296,12 +326,14 @@ def main():
                 result['diff'] = {'prepared': diff}
 
     failed_conditions = []
+    neighbors = None
     for item in params:
         state = item.get('state')
         tx_rate = item.get('tx_rate')
         rx_rate = item.get('rx_rate')
+        want_neighbors = item.get('neighbors')
 
-        if state not in ('up', 'down') and tx_rate is None and rx_rate is None:
+        if state not in ('up', 'down') and tx_rate is None and rx_rate is None and want_neighbors is None:
             continue
 
         element = Element('get-interface-information')
@@ -311,8 +343,7 @@ def main():
         if result['changed']:
             sleep(item.get('delay'))
 
-        reply = send_request(module, element, ignore_warning=False)
-
+        reply = exec_rpc(module, tostring(element), ignore_warning=False)
         if state in ('up', 'down'):
             admin_status = reply.xpath('interface-information/physical-interface/admin-status')
             if not admin_status or not conditional(state, admin_status[0].text.strip()):
@@ -328,11 +359,29 @@ def main():
             if not input_bps or not conditional(rx_rate, input_bps[0].text.strip(), cast=int):
                 failed_conditions.append('rx_rate ' + rx_rate)
 
+        if want_neighbors:
+            if neighbors is None:
+                element = Element('get-lldp-interface-neighbors')
+                intf_name = SubElement(element, 'interface-device')
+                intf_name.text = item.get('name')
+
+                reply = exec_rpc(module, tostring(element), ignore_warning=False)
+                have_host = [item.text for item in reply.xpath('lldp-neighbors-information/lldp-neighbor-information/lldp-remote-system-name')]
+                have_port = [item.text for item in reply.xpath('lldp-neighbors-information/lldp-neighbor-information/lldp-remote-port-id')]
+
+            for neighbor in want_neighbors:
+                host = neighbor.get('host')
+                port = neighbor.get('port')
+                if host and host not in have_host:
+                    failed_conditions.append('host ' + host)
+                if port and port not in have_port:
+                    failed_conditions.append('port ' + port)
     if failed_conditions:
-        msg = 'One or more conditional statements have not be satisfied'
+        msg = 'One or more conditional statements have not been satisfied'
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
     module.exit_json(**result)
+
 
 if __name__ == "__main__":
     main()

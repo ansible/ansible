@@ -36,23 +36,9 @@ version_added: "2.3"
 requirements:
     - pan-python
 options:
-    ip_address:
-        description:
-            - IP address (or hostname) of PAN-OS device
-        required: true
-    password:
-        description:
-            - password for authentication
-        required: true
-    username:
-        description:
-            - username for authentication
-        required: false
-        default: "admin"
     admin_username:
         description:
             - username for admin user
-        required: false
         default: "admin"
     admin_password:
         description:
@@ -61,13 +47,12 @@ options:
     role:
         description:
             - role for admin user
-        required: false
-        default: null
     commit:
         description:
             - commit if changed
-        required: false
-        default: true
+        type: bool
+        default: 'yes'
+extends_documentation_fragment: panos
 '''
 
 EXAMPLES = '''
@@ -137,7 +122,7 @@ def admin_set(xapi, module, admin_username, admin_password, role):
                              element='<%s>%s</%s>' % (role, rbval, role))
 
         if admin_password is not None:
-            xapi.edit(xpath=_ADMIN_XPATH % admin_username+'/phash',
+            xapi.edit(xpath=_ADMIN_XPATH % admin_username + '/phash',
                       element='<phash>%s</phash>' % phash)
             changed = True
 
@@ -200,6 +185,7 @@ def main():
         xapi.commit(cmd="<commit></commit>", sync=True, interval=1)
 
     module.exit_json(changed=changed, msg="okey dokey")
+
 
 if __name__ == '__main__':
     main()

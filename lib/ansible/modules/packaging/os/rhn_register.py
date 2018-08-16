@@ -30,57 +30,48 @@ options:
     state:
         description:
           - whether to register (C(present)), or unregister (C(absent)) a system
-        required: false
         choices: [ "present", "absent" ]
         default: "present"
     username:
         description:
             - Red Hat Network username
-        required: False
-        default: null
     password:
         description:
             - Red Hat Network password
-        required: False
-        default: null
     server_url:
         description:
             - Specify an alternative Red Hat Network server URL
-        required: False
         default: Current value of I(serverURL) from C(/etc/sysconfig/rhn/up2date) is the default
     activationkey:
         description:
             - supply an activation key for use with registration
-        required: False
-        default: null
     profilename:
         description:
             - supply an profilename for use with registration
-        required: False
-        default: null
         version_added: "2.0"
     sslcacert:
         description:
             - supply a custom ssl CA certificate file for use with registration
-        required: False
-        default: None
         version_added: "2.1"
     systemorgid:
         description:
             - supply an organizational id for use with registration
-        required: False
-        default: None
         version_added: "2.1"
     channels:
         description:
             - Optionally specify a list of comma-separated channels to subscribe to upon successful registration.
-        required: false
         default: []
     enable_eus:
         description:
-            - If true, extended update support will be requested.
-        required: false
-        default: false
+            - If C(no), extended update support will be requested.
+        type: bool
+        default: 'no'
+    nopackages:
+        description:
+            - If C(yes), the registered node will not upload its installed packages information to Satellite server
+        type: bool
+        default: 'no'
+        version_added: "2.5"
 '''
 
 EXAMPLES = '''
@@ -250,7 +241,7 @@ class Rhn(redhat.RegistrationBase):
         self.update_plugin_conf('rhnplugin', True)
         self.update_plugin_conf('subscription-manager', False)
 
-    def register(self, enable_eus=False, activationkey=None, profilename=None, sslcacert=None, systemorgid=None):
+    def register(self, enable_eus=False, activationkey=None, profilename=None, sslcacert=None, systemorgid=None, nopackages=False):
         '''
             Register system to RHN.  If enable_eus=True, extended update
             support will be requested.
@@ -262,6 +253,8 @@ class Rhn(redhat.RegistrationBase):
             register_cmd.extend(['--serverUrl', self.server_url])
         if enable_eus:
             register_cmd.append('--use-eus-channel')
+        if nopackages:
+            register_cmd.append('--nopackages')
         if activationkey is not None:
             register_cmd.extend(['--activationkey', activationkey])
         if profilename is not None:
@@ -346,6 +339,7 @@ def main():
             sslcacert=dict(default=None, required=False, type='path'),
             systemorgid=dict(default=None, required=False),
             enable_eus=dict(default=False, type='bool'),
+            nopackages=dict(default=False, type='bool'),
             channels=dict(default=[], type='list'),
         )
     )
@@ -364,6 +358,7 @@ def main():
     systemorgid = module.params['systemorgid']
     channels = module.params['channels']
     enable_eus = module.params['enable_eus']
+    nopackages = module.params['nopackages']
 
     rhn = Rhn(module=module, username=username, password=password)
 
@@ -392,7 +387,7 @@ def main():
 
         try:
             rhn.enable()
-            rhn.register(enable_eus, activationkey, profilename, sslcacert, systemorgid)
+            rhn.register(enable_eus, activationkey, profilename, sslcacert, systemorgid, nopackages)
             rhn.subscribe(channels)
         except Exception as exc:
             module.fail_json(msg="Failed to register with '%s': %s" % (rhn.hostname, exc))

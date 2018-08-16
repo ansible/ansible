@@ -45,8 +45,6 @@ options:
             - The remote file system of the device. If omitted,
               devices that support a file_system parameter will use
               their default values.
-        required: false
-        default: null
 '''
 
 EXAMPLES = '''
@@ -69,8 +67,8 @@ import collections
 import re
 import time
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -115,8 +113,7 @@ def get_commands(module, pkg, file_system):
         commands.append('install activate {0}{1} force'.format(
             file_system, pkg))
     command = 'show install committed'
-    install_body = execute_show_command(command, module,
-                                                command_type='cli_show_ascii')
+    install_body = execute_show_command(command, module)
     if fixed_pkg not in install_body[0]:
         commands.append('install commit {0}{1}'.format(file_system, pkg))
 
@@ -132,12 +129,11 @@ def main():
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
     results = {'changed': False, 'commands': [], 'warnings': warnings}
-
 
     pkg = module.params['pkg']
     file_system = module.params['file_system']

@@ -1,48 +1,33 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright 2016 F5 Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 F5 Networks Inc.
+# GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: bigip_device_ntp
 short_description: Manage NTP servers on a BIG-IP
 description:
-  - Manage NTP servers on a BIG-IP
-version_added: "2.2"
+  - Manage NTP servers on a BIG-IP.
+version_added: 2.2
 options:
   ntp_servers:
     description:
       - A list of NTP servers to set on the device. At least one of C(ntp_servers)
         or C(timezone) is required.
-    required: false
-    default: []
   state:
     description:
       - The state of the NTP servers on the system. When C(present), guarantees
         that the NTP servers are set on the system. When C(absent), removes the
         specified NTP servers from the device configuration.
-    required: false
     default: present
     choices:
       - absent
@@ -51,214 +36,242 @@ options:
     description:
       - The timezone to set for NTP lookups. At least one of C(ntp_servers) or
         C(timezone) is required.
-    default: UTC
-    required: false
-notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as pip
-    install f5-sdk.
 extends_documentation_fragment: f5
-requirements:
-  - f5-sdk
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Set NTP server
   bigip_device_ntp:
-      ntp_servers:
-          - "192.0.2.23"
-      password: "secret"
-      server: "lb.mydomain.com"
-      user: "admin"
-      validate_certs: "no"
+    ntp_servers:
+      - 192.0.2.23
+    password: secret
+    server: lb.mydomain.com
+    user: admin
+    validate_certs: no
   delegate_to: localhost
 
 - name: Set timezone
   bigip_device_ntp:
-      password: "secret"
-      server: "lb.mydomain.com"
-      timezone: "America/Los_Angeles"
-      user: "admin"
-      validate_certs: "no"
+    password: secret
+    server: lb.mydomain.com
+    timezone: America/Los_Angeles
+    user: admin
+    validate_certs: no
   delegate_to: localhost
 '''
 
-RETURN = '''
+RETURN = r'''
 ntp_servers:
-    description: The NTP servers that were set on the device
-    returned: changed
-    type: list
-    sample: ["192.0.2.23", "192.0.2.42"]
+  description: The NTP servers that were set on the device
+  returned: changed
+  type: list
+  sample: ["192.0.2.23", "192.0.2.42"]
 timezone:
-    description: The timezone that was set on the device
-    returned: changed
-    type: string
-    sample: "true"
+  description: The timezone that was set on the device
+  returned: changed
+  type: string
+  sample: true
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+
 try:
-    from f5.bigip import ManagementRoot
-    from icontrol.session import iControlUnexpectedHTTPError
-    HAS_F5SDK = True
+    from library.module_utils.network.f5.bigip import HAS_F5SDK
+    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 except ImportError:
-    HAS_F5SDK = False
+    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
+    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 
 
-class BigIpDeviceNtp(object):
+class Parameters(AnsibleF5Parameters):
+    api_map = {
+        'servers': 'ntp_servers'
+    }
+
+    api_attributes = [
+        'servers', 'timezone',
+    ]
+
+    updatables = [
+        'ntp_servers', 'timezone'
+    ]
+
+    returnables = [
+        'ntp_servers', 'timezone'
+    ]
+
+    absentables = [
+        'ntp_servers'
+    ]
+
+    def to_return(self):
+        result = {}
+        for returnable in self.returnables:
+            result[returnable] = getattr(self, returnable)
+        result = self._filter_params(result)
+        return result
+
+
+class ModuleManager(object):
     def __init__(self, *args, **kwargs):
-        if not HAS_F5SDK:
-            raise F5ModuleError("The python f5-sdk module is required")
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        self.have = None
+        self.want = Parameters(params=self.module.params)
+        self.changes = Parameters()
 
-        # The params that change in the module
-        self.cparams = dict()
+    def _update_changed_options(self):
+        changed = {}
+        for key in Parameters.updatables:
+            if getattr(self.want, key) is not None:
+                attr1 = getattr(self.want, key)
+                attr2 = getattr(self.have, key)
+                if attr1 != attr2:
+                    changed[key] = attr1
+        if changed:
+            self.changes = Parameters(params=changed)
+            return True
+        return False
 
-        # Stores the params that are sent to the module
-        self.params = kwargs
-        self.api = ManagementRoot(kwargs['server'],
-                                  kwargs['user'],
-                                  kwargs['password'],
-                                  port=kwargs['server_port'])
+    def _absent_changed_options(self):
+        changed = {}
+        for key in Parameters.absentables:
+            if getattr(self.want, key) is not None:
+                set_want = set(getattr(self.want, key))
+                set_have = set(getattr(self.have, key))
+                if set_want != set_have:
+                    changed[key] = list(set_want)
+        if changed:
+            self.changes = Parameters(params=changed)
+            return True
+        return False
 
-    def flush(self):
-        result = dict()
+    def exec_module(self):
         changed = False
-        state = self.params['state']
+        result = dict()
+        state = self.want.state
 
         try:
             if state == "present":
-                changed = self.present()
+                changed = self.update()
             elif state == "absent":
                 changed = self.absent()
         except iControlUnexpectedHTTPError as e:
             raise F5ModuleError(str(e))
 
-        if 'servers' in self.cparams:
-            self.cparams['ntp_servers'] = self.cparams.pop('servers')
-
-        result.update(**self.cparams)
+        changes = self.changes.to_return()
+        result.update(**changes)
         result.update(dict(changed=changed))
         return result
 
-    def read(self):
-        """Read information and transform it
+    def update(self):
+        self.have = self.read_current_from_device()
+        if not self.should_update():
+            return False
+        if self.module.check_mode:
+            return True
+        self.update_on_device()
+        return True
 
-        The values that are returned by BIG-IP in the f5-sdk can have encoding
-        attached to them as well as be completely missing in some cases.
+    def should_update(self):
+        result = self._update_changed_options()
+        if result:
+            return True
+        return False
 
-        Therefore, this method will transform the data from the BIG-IP into a
-        format that is more easily consumable by the rest of the class and the
-        parameters that are supported by the module.
-        """
-        p = dict()
-        r = self.api.tm.sys.ntp.load()
-
-        if hasattr(r, 'servers'):
-            # Deliberately using sets to suppress duplicates
-            p['servers'] = set([str(x) for x in r.servers])
-        if hasattr(r, 'timezone'):
-            p['timezone'] = str(r.timezone)
-        return p
-
-    def present(self):
-        changed = False
-        params = dict()
-        current = self.read()
-
-        check_mode = self.params['check_mode']
-        ntp_servers = self.params['ntp_servers']
-        timezone = self.params['timezone']
-
-        # NTP servers can be set independently
-        if ntp_servers is not None:
-            if 'servers' in current:
-                items = set(ntp_servers)
-                if items != current['servers']:
-                    params['servers'] = list(ntp_servers)
-            else:
-                params['servers'] = ntp_servers
-
-        # Timezone can be set independently
-        if timezone is not None:
-            if 'timezone' in current and current['timezone'] != timezone:
-                params['timezone'] = timezone
-
-        if params:
-            changed = True
-            self.cparams = camel_dict_to_snake_dict(params)
-            if check_mode:
-                return changed
-        else:
-            return changed
-
-        r = self.api.tm.sys.ntp.load()
-        r.update(**params)
-        r.refresh()
-
-        return changed
+    def should_absent(self):
+        result = self._absent_changed_options()
+        if result:
+            return True
+        return False
 
     def absent(self):
-        changed = False
-        params = dict()
-        current = self.read()
+        self.have = self.read_current_from_device()
+        if not self.should_absent():
+            return False
+        if self.module.check_mode:
+            return True
+        self.absent_on_device()
+        return True
 
-        check_mode = self.params['check_mode']
-        ntp_servers = self.params['ntp_servers']
+    def update_on_device(self):
+        params = self.want.api_params()
+        resource = self.client.api.tm.sys.ntp.load()
+        resource.update(**params)
 
-        if not ntp_servers:
-            raise F5ModuleError(
-                "Absent can only be used when removing NTP servers"
-            )
+    def read_current_from_device(self):
+        resource = self.client.api.tm.sys.ntp.load()
+        result = resource.attrs
+        return Parameters(params=result)
 
-        if ntp_servers and 'servers' in current:
-            servers = current['servers']
-            new_servers = [x for x in servers if x not in ntp_servers]
+    def absent_on_device(self):
+        params = self.changes.api_params()
+        resource = self.client.api.tm.sys.ntp.load()
+        resource.update(**params)
 
-            if servers != new_servers:
-                params['servers'] = new_servers
 
-        if params:
-            changed = True
-            self.cparams = camel_dict_to_snake_dict(params)
-            if check_mode:
-                return changed
-        else:
-            return changed
+class ArgumentSpec(object):
+    def __init__(self):
+        self.supports_check_mode = True
+        argument_spec = dict(
+            ntp_servers=dict(
+                type='list',
+            ),
+            timezone=dict(),
+            state=dict(
+                default='present',
+                choices=['present', 'absent']
+            ),
+        )
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
 
-        r = self.api.tm.sys.ntp.load()
-        r.update(**params)
-        r.refresh()
-        return changed
+        self.required_one_of = [
+            ['ntp_servers', 'timezone']
+        ]
 
 
 def main():
-    argument_spec = f5_argument_spec()
-
-    meta_args = dict(
-        ntp_servers=dict(required=False, type='list', default=None),
-        timezone=dict(default=None, required=False)
-    )
-    argument_spec.update(meta_args)
+    spec = ArgumentSpec()
 
     module = AnsibleModule(
-        argument_spec=argument_spec,
-        required_one_of=[
-            ['ntp_servers', 'timezone']
-        ],
-        supports_check_mode=True
+        argument_spec=spec.argument_spec,
+        supports_check_mode=spec.supports_check_mode,
+        required_one_of=spec.required_one_of
     )
+    if not HAS_F5SDK:
+        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        obj = BigIpDeviceNtp(check_mode=module.check_mode, **module.params)
-        result = obj.flush()
+        client = F5Client(**module.params)
+        mm = ModuleManager(module=module, client=client)
+        results = mm.exec_module()
+        cleanup_tokens(client)
+        module.exit_json(**results)
+    except F5ModuleError as ex:
+        cleanup_tokens(client)
+        module.fail_json(msg=str(ex))
 
-        module.exit_json(**result)
-    except F5ModuleError as e:
-        module.fail_json(msg=str(e))
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-from ansible.module_utils.f5_utils import *
 
 if __name__ == '__main__':
     main()

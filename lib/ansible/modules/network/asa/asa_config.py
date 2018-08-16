@@ -32,43 +32,33 @@ options:
         in the device running-config.  Be sure to note the configuration
         command syntax as some commands are automatically modified by the
         device config parser.
-    required: false
-    default: null
     aliases: ['commands']
   parents:
     description:
-      - The ordered set of parents that uniquely identify the section
+      - The ordered set of parents that uniquely identify the section or hierarchy
         the commands should be checked against.  If the parents argument
         is omitted, the commands are checked against the set of top
         level or global commands.
-    required: false
-    default: null
   src:
     description:
       - Specifies the source path to the file that contains the configuration
         or configuration template to load.  The path to the source file can
         either be the full path on the Ansible control host or a relative
         path from the playbook or role root directory.  This argument is mutually
-        exclusive with I(lines).
-    required: false
-    default: null
+        exclusive with I(lines), I(parents).
   before:
     description:
       - The ordered set of commands to push on to the command stack if
         a change needs to be made.  This allows the playbook designer
         the opportunity to perform configuration commands prior to pushing
         any changes without affecting how the set of commands are matched
-        against the system
-    required: false
-    default: null
+        against the system.
   after:
     description:
       - The ordered set of commands to append to the end of the command
         stack if a change needs to be made.  Just like with I(before) this
         allows the playbook designer to append a set of commands to be
         executed after the command set.
-    required: false
-    default: null
   match:
     description:
       - Instructs the module on the way to perform the matching of
@@ -79,7 +69,6 @@ options:
         must be an equal match.  Finally, if match is set to I(none), the
         module will not attempt to compare the source configuration with
         the running configuration on the remote device.
-    required: false
     default: line
     choices: ['line', 'strict', 'exact', 'none']
   replace:
@@ -90,31 +79,8 @@ options:
         mode.  If the replace argument is set to I(block) then the entire
         command block is pushed to the device in configuration mode if any
         line is not correct
-    required: false
     default: line
     choices: ['line', 'block']
-  update:
-    description:
-      - The I(update) argument controls how the configuration statements
-        are processed on the remote device.  Valid choices for the I(update)
-        argument are I(merge) and I(check).  When the argument is set to
-        I(merge), the configuration changes are merged with the current
-        device running configuration.  When the argument is set to I(check)
-        the configuration updates are determined but not actually configured
-        on the remote device.
-    required: false
-    default: merge
-    choices: ['merge', 'check']
-  commit:
-    description:
-      - This argument specifies the update method to use when applying the
-        configuration changes to the remote node.  If the value is set to
-        I(merge) the configuration updates are merged with the running-
-        config.  If the value is set to I(check), no changes are made to
-        the remote host.
-    required: false
-    default: merge
-    choices: ['merge', 'check']
   backup:
     description:
       - This argument will cause the module to create a full backup of
@@ -122,43 +88,37 @@ options:
         changes are made.  The backup file is written to the C(backup)
         folder in the playbook root directory.  If the directory does not
         exist, it is created.
-    required: false
-    default: no
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
   config:
     description:
       - The C(config) argument allows the playbook designer to supply
         the base configuration to be used to validate configuration
         changes necessary.  If this argument is provided, the module
         will not download the running-config from the remote node.
-    required: false
-    default: null
   defaults:
     description:
       - This argument specifies whether or not to collect all defaults
         when getting the remote device running config.  When enabled,
         the module will get the current config by issuing the command
         C(show running-config all).
-    required: false
-    default: no
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
   passwords:
     description:
       - This argument specifies to include passwords in the config
         when retrieving the running-config from the remote device.  This
         includes passwords related to VPN endpoints.  This argument is
         mutually exclusive with I(defaults).
-    required: false
-    default: no
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
   save:
     description:
       - The C(save) argument instructs the module to save the running-
         config to the startup-config at the conclusion of the module
         running.  If check mode is specified, this argument is ignored.
-    required: false
-    default: no
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
 """
 
 EXAMPLES = """
@@ -202,6 +162,12 @@ vars:
     passwords: yes
     provider: "{{ cli }}"
 
+- name: attach ASA acl on interface vlan13/nameif cloud13
+  asa_config:
+    lines:
+      - access-group cloud-acl_access_in in interface cloud13
+    provider: "{{ cli }}"
+
 """
 
 RETURN = """
@@ -217,11 +183,10 @@ backup_path:
   sample: /playbooks/ansible/backup/asa_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.asa import asa_argument_spec, check_args
-from ansible.module_utils.asa import get_config, load_config, run_commands
-from ansible.module_utils.netcfg import NetworkConfig, dumps
+from ansible.module_utils.network.asa.asa import asa_argument_spec, check_args
+from ansible.module_utils.network.asa.asa import get_config, load_config, run_commands
+from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils._text import to_native
-
 
 
 def get_candidate(module):
@@ -232,6 +197,7 @@ def get_candidate(module):
         parents = module.params['parents'] or list()
         candidate.add(module.params['lines'], parents=parents)
     return candidate
+
 
 def run(module, result):
     match = module.params['match']
@@ -270,8 +236,9 @@ def run(module, result):
 
     if module.params['save']:
         if not module.check_mode:
-            module.config.save_config()
+            run_commands(module, 'write mem')
         result['changed'] = True
+
 
 def main():
     """ main entry point for module execution
@@ -298,7 +265,9 @@ def main():
 
     argument_spec.update(asa_argument_spec)
 
-    mutually_exclusive = [('lines', 'src'), ('defaults', 'passwords')]
+    mutually_exclusive = [('lines', 'src'),
+                          ('parents', 'src'),
+                          ('defaults', 'passwords')]
 
     required_if = [('match', 'strict', ['lines']),
                    ('match', 'exact', ['lines']),
@@ -314,7 +283,6 @@ def main():
     check_args(module)
 
     config = None
-
 
     if module.params['backup']:
         result['__backup__'] = get_config(module)

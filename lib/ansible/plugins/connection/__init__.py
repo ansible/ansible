@@ -1,21 +1,7 @@
+# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
 # (c) 2015 Toshio Kuratomi <tkuratomi@ansible.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
-# Make coding more python3-ish
+# (c) 2017, Peter Sprygada <psprygad@redhat.com>
+# (c) 2017 Ansible Project
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -31,7 +17,8 @@ from ansible.errors import AnsibleError
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins import AnsiblePlugin
-from ansible.plugins.loader import shell_loader
+from ansible.plugins.loader import shell_loader, connection_loader
+from ansible.utils.path import unfrackpath
 
 try:
     from __main__ import display
@@ -69,7 +56,17 @@ class ConnectionBase(AnsiblePlugin):
     module_implementation_preferences = ('',)
     allow_executable = True
 
-    def __init__(self, play_context, new_stdin, *args, **kwargs):
+    # the following control whether or not the connection supports the
+    # persistent connection framework or not
+    supports_persistence = False
+    force_persistence = False
+
+    default_user = None
+
+    def __init__(self, play_context, new_stdin, shell=None, *args, **kwargs):
+
+        super(ConnectionBase, self).__init__()
+
         # All these hasattrs allow subclasses to override these parameters
         if not hasattr(self, '_play_context'):
             self._play_context = play_context
@@ -84,6 +81,10 @@ class ConnectionBase(AnsiblePlugin):
         self.success_key = None
         self.prompt = None
         self._connected = False
+        self._socket_path = None
+
+        if shell is not None:
+            self._shell = shell
 
         # load the shell plugin for this action/connection
         if play_context.shell:
@@ -93,10 +94,15 @@ class ConnectionBase(AnsiblePlugin):
         else:
             shell_type = 'sh'
             shell_filename = os.path.basename(self._play_context.executable)
-            for shell in shell_loader.all():
-                if shell_filename in shell.COMPATIBLE_SHELLS:
-                    shell_type = shell.SHELL_FAMILY
-                    break
+            try:
+                shell = shell_loader.get(shell_filename)
+            except Exception:
+                shell = None
+            if shell is None:
+                for shell in shell_loader.all():
+                    if shell_filename in shell.COMPATIBLE_SHELLS:
+                        break
+            shell_type = shell.SHELL_FAMILY
 
         self._shell = shell_loader.get(shell_type)
         if not self._shell:
@@ -107,6 +113,11 @@ class ConnectionBase(AnsiblePlugin):
         '''Read-only property holding whether the connection to the remote host is active or closed.'''
         return self._connected
 
+    @property
+    def socket_path(self):
+        '''Read-only property holding the connection socket path for this remote host'''
+        return self._socket_path
+
     def _become_method_supported(self):
         ''' Checks if the current class supports this privilege escalation method '''
 
@@ -114,17 +125,6 @@ class ConnectionBase(AnsiblePlugin):
             return True
 
         raise AnsibleError("Internal Error: this connection module does not support running commands via %s" % self._play_context.become_method)
-
-    def set_host_overrides(self, host, hostvars=None):
-        '''
-        An optional method, which can be used to set connection plugin parameters
-        from variables set on the host (or groups to which the host belongs)
-
-        Any connection plugin using this should first initialize its attributes in
-        an overridden `def __init__(self):`, and then use `host.get_vars()` to find
-        variables which may be used to set those attributes in this method.
-        '''
-        pass
 
     @staticmethod
     def _split_ssh_args(argstring):
@@ -281,3 +281,97 @@ class ConnectionBase(AnsiblePlugin):
 
     def reset(self):
         display.warning("Reset is not implemented for this connection")
+
+
+class NetworkConnectionBase(ConnectionBase):
+    """
+    A base class for network-style connections.
+    """
+
+    force_persistence = True
+    # Do not use _remote_is_local in other connections
+    _remote_is_local = True
+
+    def __init__(self, play_context, new_stdin, *args, **kwargs):
+        super(NetworkConnectionBase, self).__init__(play_context, new_stdin, *args, **kwargs)
+
+        self._network_os = self._play_context.network_os
+
+        self._local = connection_loader.get('local', play_context, '/dev/null')
+        self._local.set_options()
+
+        self._implementation_plugins = []
+
+        # reconstruct the socket_path and set instance values accordingly
+        self._ansible_playbook_pid = kwargs.get('ansible_playbook_pid')
+        self._update_connection_state()
+
+    def __getattr__(self, name):
+        try:
+            return self.__dict__[name]
+        except KeyError:
+            if not name.startswith('_'):
+                for plugin in self._implementation_plugins:
+                    method = getattr(plugin, name, None)
+                    if method is not None:
+                        return method
+            raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
+
+    def exec_command(self, cmd, in_data=None, sudoable=True):
+        return self._local.exec_command(cmd, in_data, sudoable)
+
+    def put_file(self, in_path, out_path):
+        """Transfer a file from local to remote"""
+        return self._local.put_file(in_path, out_path)
+
+    def fetch_file(self, in_path, out_path):
+        """Fetch a file from remote to local"""
+        return self._local.fetch_file(in_path, out_path)
+
+    def reset(self):
+        '''
+        Reset the connection
+        '''
+        if self._socket_path:
+            display.vvvv('resetting persistent connection for socket_path %s' % self._socket_path, host=self._play_context.remote_addr)
+            self.close()
+        display.vvvv('reset call on connection instance', host=self._play_context.remote_addr)
+
+    def close(self):
+        if self._connected:
+            self._connected = False
+        self._implementation_plugins = []
+
+    def set_options(self, task_keys=None, var_options=None, direct=None):
+        super(NetworkConnectionBase, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+        self.set_implementation_plugin_options(task_keys=task_keys, var_options=var_options, direct=direct)
+
+    def set_implementation_plugin_options(self, task_keys=None, var_options=None, direct=None):
+        '''
+        initialize implementation plugin options
+        '''
+        for plugin in self._implementation_plugins:
+            plugin.set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+
+    def _update_connection_state(self):
+        '''
+        Reconstruct the connection socket_path and check if it exists
+
+        If the socket path exists then the connection is active and set
+        both the _socket_path value to the path and the _connected value
+        to True.  If the socket path doesn't exist, leave the socket path
+        value to None and the _connected value to False
+        '''
+        ssh = connection_loader.get('ssh', class_only=True)
+        control_path = ssh._create_control_path(
+            self._play_context.remote_addr, self._play_context.port,
+            self._play_context.remote_user, self._play_context.connection,
+            self._ansible_playbook_pid
+        )
+
+        tmp_path = unfrackpath(C.PERSISTENT_CONTROL_PATH_DIR)
+        socket_path = unfrackpath(control_path % dict(directory=tmp_path))
+
+        if os.path.exists(socket_path):
+            self._connected = True
+            self._socket_path = socket_path

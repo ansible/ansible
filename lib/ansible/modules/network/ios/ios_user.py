@@ -43,7 +43,8 @@ options:
       - The set of username objects to be configured on the remote
         Cisco IOS device. The list entries can either be the username
         or a hash of username and properties. This argument is mutually
-        exclusive with the C(name) argument. alias C(users).
+        exclusive with the C(name) argument.
+    aliases: ['users', 'collection']
   name:
     description:
       - The username to be configured on the Cisco IOS device.
@@ -76,6 +77,12 @@ options:
         device running configuration. The argument accepts a string value
         defining the view name. This argument does not check if the view
         has been configured on the device.
+    aliases: ['role']
+  sshkey:
+    description:
+      - Specifies the SSH public key to configure
+        for the given username.  This argument accepts a valid SSH key value.
+    version_added: "2.6"
   nopassword:
     description:
       - Defines the username without assigning
@@ -99,6 +106,7 @@ options:
         in the device active configuration
     default: present
     choices: ['present', 'absent']
+extends_documentation_fragment: ios
 """
 
 EXAMPLES = """
@@ -106,10 +114,19 @@ EXAMPLES = """
   ios_user:
     name: ansible
     nopassword: True
+    sshkey: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
     state: present
 
 - name: remove all users except admin
   ios_user:
+    purge: yes
+
+- name: remove all users except admin and these listed users
+  ios_user:
+    aggregate:
+      - name: testuser1
+      - name: testuser2
+      - name: testuser3
     purge: yes
 
 - name: set multiple users to privilege level 15
@@ -162,14 +179,16 @@ from copy import deepcopy
 
 import re
 import json
+import base64
+import hashlib
 
 from functools import partial
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.ios import get_config, load_config
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.ios.ios import get_config, load_config
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 
 
 def validate_privilege(value, module):
@@ -178,11 +197,28 @@ def validate_privilege(value, module):
 
 
 def user_del_cmd(username):
-    return json.dumps({
+    return {
         'command': 'no username %s' % username,
         'prompt': 'This operation will remove all username related configurations with same name',
-        'answer': 'y'
-    })
+        'answer': 'y',
+        'newline': False,
+    }
+
+
+def sshkey_fingerprint(sshkey):
+    # IOS will accept a MD5 fingerprint of the public key
+    # and is easier to configure in a single line
+    # we calculate this fingerprint here
+    if not sshkey:
+        return None
+    if ' ' in sshkey:
+        # ssh-rsa AAA...== comment
+        keyparts = sshkey.split(' ')
+        keyparts[1] = hashlib.md5(base64.b64decode(keyparts[1])).hexdigest().upper()
+        return ' '.join(keyparts)
+    else:
+        # just the key, assume rsa type
+        return 'ssh-rsa %s' % hashlib.md5(base64.b64decode(sshkey)).hexdigest().upper()
 
 
 def map_obj_to_commands(updates, module):
@@ -196,11 +232,21 @@ def map_obj_to_commands(updates, module):
     def add(command, want, x):
         command.append('username %s %s' % (want['name'], x))
 
+    def add_ssh(command, want, x=None):
+        command.append('ip ssh pubkey-chain')
+        command.append(' no username %s' % want['name'])
+        if x:
+            command.append(' username %s' % want['name'])
+            command.append('  key-hash %s' % x)
+            command.append('  exit')
+        command.append(' exit')
+
     for update in updates:
         want, have = update
 
         if want['state'] == 'absent':
             commands.append(user_del_cmd(want['name']))
+            add_ssh(commands, want)
             continue
 
         if needs_update(want, have, 'view'):
@@ -208,6 +254,9 @@ def map_obj_to_commands(updates, module):
 
         if needs_update(want, have, 'privilege'):
             add(commands, want, 'privilege %s' % want['privilege'])
+
+        if needs_update(want, have, 'sshkey'):
+            add_ssh(commands, want, want['sshkey'])
 
         if needs_update(want, have, 'configured_password'):
             if update_password == 'always' or not have:
@@ -224,6 +273,12 @@ def map_obj_to_commands(updates, module):
 
 def parse_view(data):
     match = re.search(r'view (\S+)', data, re.M)
+    if match:
+        return match.group(1)
+
+
+def parse_sshkey(data):
+    match = re.search(r'key-hash (\S+ \S+(?: .+)?)$', data, re.M)
     if match:
         return match.group(1)
 
@@ -247,11 +302,15 @@ def map_config_to_obj(module):
         regex = r'username %s .+$' % user
         cfg = re.findall(regex, data, re.M)
         cfg = '\n'.join(cfg)
+        sshregex = r'username %s\n\s+key-hash .+$' % user
+        sshcfg = re.findall(sshregex, data, re.M)
+        sshcfg = '\n'.join(sshcfg)
         obj = {
             'name': user,
             'state': 'present',
             'nopassword': 'nopassword' in cfg,
             'configured_password': None,
+            'sshkey': parse_sshkey(sshcfg),
             'privilege': parse_privilege(cfg),
             'view': parse_view(cfg)
         }
@@ -307,6 +366,7 @@ def map_params_to_obj(module):
         item['nopassword'] = get_value('nopassword')
         item['privilege'] = get_value('privilege')
         item['view'] = get_value('view')
+        item['sshkey'] = sshkey_fingerprint(get_value('sshkey'))
         item['state'] = get_value('state')
         objects.append(item)
 
@@ -338,6 +398,8 @@ def main():
 
         privilege=dict(type='int'),
         view=dict(aliases=['role']),
+
+        sshkey=dict(),
 
         state=dict(default='present', choices=['present', 'absent'])
     )
@@ -400,6 +462,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

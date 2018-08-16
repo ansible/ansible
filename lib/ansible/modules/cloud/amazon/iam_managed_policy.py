@@ -36,15 +36,17 @@ options:
   only_version:
     description:
       - Remove all other non default revisions, if this is used with C(make_default) it will result in all other versions of this policy being deleted.
-    required: False
-    default: False
+    type: bool
+    default: 'no'
   state:
     description:
       - Should this managed policy be present or absent. Set to absent to detach all entities from this policy and remove it if found.
-    required: True
-    default: null
+    default: present
     choices: [ "present", "absent" ]
 author: "Dan Kozlowski (@dkhenry)"
+extends_documentation_fragment:
+  - aws
+  - ec2
 requirements:
     - boto3
     - botocore
@@ -117,7 +119,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (boto3_conn, get_aws_connection_info, ec2_argument_spec, AWSRetry,
-                                      sort_json_policy_dict, camel_dict_to_snake_dict, HAS_BOTO3)
+                                      camel_dict_to_snake_dict, HAS_BOTO3, compare_policies)
 from ansible.module_utils._text import to_native
 
 
@@ -174,8 +176,8 @@ def get_or_create_policy_version(module, iam, policy, policy_document):
             module.fail_json(msg="Couldn't get policy version %s: %s" % (v['VersionId'], str(e)),
                              exception=traceback.format_exc(),
                              **camel_dict_to_snake_dict(e.response))
-        if sort_json_policy_dict(document) == sort_json_policy_dict(
-                json.loads(policy_document)):
+        # If the current policy matches the existing one
+        if not compare_policies(document, json.loads(to_native(policy_document))):
             return v, False
 
     # No existing version so create one
@@ -188,7 +190,7 @@ def get_or_create_policy_version(module, iam, policy, policy_document):
         version = iam.create_policy_version(PolicyArn=policy['Arn'], PolicyDocument=policy_document)['PolicyVersion']
         return version, True
     except botocore.exceptions.ClientError as e:
-        if e['Error']['Code'] == 'LimitExceeded':
+        if e.response['Error']['Code'] == 'LimitExceeded':
             delete_oldest_non_default_version(module, iam, policy)
             try:
                 version = iam.create_policy_version(PolicyArn=policy['Arn'], PolicyDocument=policy_document)['PolicyVersion']
@@ -276,7 +278,7 @@ def main():
         make_default=dict(type='bool', default=True),
         only_version=dict(type='bool', default=False),
         fail_on_delete=dict(type='bool', default=True),
-        state=dict(required=True, choices=['present', 'absent']),
+        state=dict(default='present', choices=['present', 'absent']),
     ))
 
     module = AnsibleModule(

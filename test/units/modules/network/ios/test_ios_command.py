@@ -23,7 +23,8 @@ import json
 
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.ios import ios_command
-from .ios_module import TestIosModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .ios_module import TestIosModule, load_fixture
 
 
 class TestIosCommandModule(TestIosModule):
@@ -31,10 +32,13 @@ class TestIosCommandModule(TestIosModule):
     module = ios_command
 
     def setUp(self):
+        super(TestIosCommandModule, self).setUp()
+
         self.mock_run_commands = patch('ansible.modules.network.ios.ios_command.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
+        super(TestIosCommandModule, self).tearDown()
         self.mock_run_commands.stop()
 
     def load_fixtures(self, commands=None):
@@ -102,3 +106,20 @@ class TestIosCommandModule(TestIosModule):
         commands = ['show version', 'show version']
         set_module_args(dict(commands=commands, wait_for=wait_for, match='all'))
         self.execute_module(failed=True)
+
+    def test_ios_command_configure_error(self):
+        commands = ['configure terminal']
+        set_module_args({
+            'commands': commands,
+            '_ansible_check_mode': True,
+        })
+        result = self.execute_module(failed=True)
+        self.assertEqual(
+            result['msg'],
+            'ios_command does not support running config mode commands.  Please use ios_config instead'
+        )
+
+    def test_ios_command_configure_not_error(self):
+        commands = ['configure revert now']
+        set_module_args(dict(commands=commands))
+        self.execute_module()

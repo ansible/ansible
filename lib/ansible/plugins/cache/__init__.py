@@ -79,12 +79,24 @@ class BaseFileCacheModule(BaseCacheModule):
         self.plugin_name = self.__module__.split('.')[-1]
         self._timeout = float(C.CACHE_PLUGIN_TIMEOUT)
         self._cache = {}
-        self._cache_dir = None
+        self._cache_dir = self._get_cache_connection(C.CACHE_PLUGIN_CONNECTION)
+        self._set_inventory_cache_override(**kwargs)
+        self.validate_cache_connection()
 
-        if C.CACHE_PLUGIN_CONNECTION:
-            # expects a dir path
-            self._cache_dir = os.path.expanduser(os.path.expandvars(C.CACHE_PLUGIN_CONNECTION))
+    def _get_cache_connection(self, source):
+        if source:
+            try:
+                return os.path.expanduser(os.path.expandvars(source))
+            except TypeError:
+                pass
 
+    def _set_inventory_cache_override(self, **kwargs):
+        if kwargs.get('cache_timeout'):
+            self._timeout = kwargs.get('cache_timeout')
+        if kwargs.get('cache_connection'):
+            self._cache_dir = self._get_cache_connection(kwargs.get('cache_connection'))
+
+    def validate_cache_connection(self):
         if not self._cache_dir:
             raise AnsibleError("error, '%s' cache plugin requires the 'fact_caching_connection' config option "
                                "to be set (to a writeable directory path)" % self.plugin_name)
@@ -105,29 +117,28 @@ class BaseFileCacheModule(BaseCacheModule):
         and it would be problematic if the key did expire after some long running tasks and
         user gets 'undefined' error in the same play """
 
-        if key in self._cache:
-            return self._cache.get(key)
+        if key not in self._cache:
 
-        if self.has_expired(key) or key == "":
-            raise KeyError
+            if self.has_expired(key) or key == "":
+                raise KeyError
 
-        cachefile = "%s/%s" % (self._cache_dir, key)
-        try:
+            cachefile = "%s/%s" % (self._cache_dir, key)
             try:
                 value = self._load(cachefile)
                 self._cache[key] = value
-                return value
             except ValueError as e:
                 display.warning("error in '%s' cache plugin while trying to read %s : %s. "
                                 "Most likely a corrupt file, so erasing and failing." % (self.plugin_name, cachefile, to_bytes(e)))
                 self.delete(key)
                 raise AnsibleError("The cache file %s was corrupt, or did not otherwise contain valid data. "
                                    "It has been removed, so you can re-run your command now." % cachefile)
-        except (OSError, IOError) as e:
-            display.warning("error in '%s' cache plugin while trying to read %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
-            raise KeyError
-        except Exception as e:
-            raise AnsibleError("Error while decoding the cache file %s: %s" % (cachefile, to_bytes(e)))
+            except (OSError, IOError) as e:
+                display.warning("error in '%s' cache plugin while trying to read %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
+                raise KeyError
+            except Exception as e:
+                raise AnsibleError("Error while decoding the cache file %s: %s" % (cachefile, to_bytes(e)))
+
+        return self._cache.get(key)
 
     def set(self, key, value):
 
@@ -184,7 +195,6 @@ class BaseFileCacheModule(BaseCacheModule):
                 return False
             else:
                 display.warning("error in '%s' cache plugin while trying to stat %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
-                pass
 
     def delete(self, key):
         try:
@@ -248,6 +258,9 @@ class FactCache(MutableMapping):
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
 
+        # in memory cache so plugins don't expire keys mid run
+        self._cache = {}
+
     def __getitem__(self, key):
         if not self._plugin.contains(key):
             raise KeyError
@@ -283,3 +296,52 @@ class FactCache(MutableMapping):
         host_cache = self._plugin.get(key)
         host_cache.update(value)
         self._plugin.set(key, host_cache)
+
+
+class InventoryFileCacheModule(BaseFileCacheModule):
+    """
+    A caching module backed by file based storage.
+    """
+    def __init__(self, plugin_name, timeout, cache_dir):
+
+        self.plugin_name = plugin_name
+        self._timeout = timeout
+        self._cache = {}
+        self._cache_dir = self._get_cache_connection(cache_dir)
+        self.validate_cache_connection()
+        self._plugin = self.get_plugin(plugin_name)
+
+    def validate_cache_connection(self):
+        try:
+            super(InventoryFileCacheModule, self).validate_cache_connection()
+        except AnsibleError as e:
+            cache_connection_set = False
+        else:
+            cache_connection_set = True
+
+        if not cache_connection_set:
+            raise AnsibleError("error, '%s' inventory cache plugin requires the one of the following to be set:\n"
+                               "ansible.cfg:\n[default]: fact_caching_connection,\n[inventory]: cache_connection;\n"
+                               "Environment:\nANSIBLE_INVENTORY_CACHE_CONNECTION,\nANSIBLE_CACHE_PLUGIN_CONNECTION."
+                               "to be set to a writeable directory path" % self.plugin_name)
+
+    def get(self, cache_key):
+
+        if not self.contains(cache_key):
+            # Check if cache file exists
+            raise KeyError
+
+        return super(InventoryFileCacheModule, self).get(cache_key)
+
+    def get_plugin(self, plugin_name):
+        plugin = cache_loader.get(plugin_name, cache_connection=self._cache_dir, cache_timeout=self._timeout)
+        if not plugin:
+            raise AnsibleError('Unable to load the facts cache plugin (%s).' % (plugin_name))
+        self._cache = {}
+        return plugin
+
+    def _load(self, path):
+        return self._plugin._load(path)
+
+    def _dump(self, value, path):
+        return self._plugin._dump(value, path)

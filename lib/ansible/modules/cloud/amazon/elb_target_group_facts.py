@@ -17,6 +17,7 @@ short_description: Gather facts about ELB target groups in AWS
 description:
     - Gather facts about ELB target groups in AWS
 version_added: "2.4"
+requirements: [ boto3 ]
 author: Rob White (@wimnat)
 options:
   load_balancer_arn:
@@ -184,11 +185,8 @@ def get_target_group_attributes(connection, module, target_group_arn):
         module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     # Replace '.' with '_' in attribute key names to make it more Ansibley
-    for k, v in target_group_attributes.items():
-        target_group_attributes[k.replace('.', '_')] = v
-        del target_group_attributes[k]
-
-    return target_group_attributes
+    return dict((k.replace('.', '_'), v)
+                for (k, v) in target_group_attributes.items())
 
 
 def get_target_group_tags(connection, module, target_group_arn):
@@ -249,7 +247,7 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
-                           mutually_exclusive=['load_balancer_arn', 'target_group_arns', 'names'],
+                           mutually_exclusive=[['load_balancer_arn', 'target_group_arns', 'names']],
                            supports_check_mode=True
                            )
 

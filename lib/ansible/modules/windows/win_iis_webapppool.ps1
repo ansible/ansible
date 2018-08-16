@@ -1,24 +1,10 @@
 #!powershell
 
-# (c) 2015, Henrik Wallström <henrik@wallstroms.nu>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2015, Henrik Wallström <henrik@wallstroms.nu>
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# WANT_JSON
-# POWERSHELL_COMMON
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 $ErrorActionPreference = 'Stop'
 
@@ -51,12 +37,7 @@ if ($input_attributes) {
         # Uses dict style parameters, newer and recommended style
         $attributes = $input_attributes
     } else {
-        # Uses older style of separating with | per key pair and : for key:value (paramA:valueA|paramB:valueB)
-        Add-DeprecationWarning -obj $result -message "Using a string for the attributes parameter is deprecated, please use a dict instead" -version 2.6
-        $input_attributes -split '\|' | ForEach-Object {
-            $key, $value = $_ -split "\:"
-            $attributes.$key = $value
-        }
+        Fail-Json -obj $result -message "Using a string for the attributes parameter is not longer supported, please use a dict instead"
     }
 }
 $result.attributes = $attributes
@@ -72,6 +53,54 @@ Function Get-DotNetClassForAttribute($attribute_parent) {
     }
 }
 
+Function Convert-CollectionToList($collection) {
+    $list = @()
+
+    if ($collection -is [String]) {
+        $raw_list = $collection -split ","
+        foreach ($entry in $raw_list) {
+            $list += $entry.Trim()
+        }
+    } elseif ($collection -is [Microsoft.IIs.PowerShell.Framework.ConfigurationElement]) {
+        # the collection is the value from IIS itself, we need to conver accordingly
+        foreach ($entry in $collection.Collection) {
+            $list += $entry.Value.ToString()
+        }
+    } elseif ($collection -isnot [Array]) {
+        $list += $collection
+    } else {
+        $list = $collection
+    }
+
+    return ,$list
+}
+
+Function Compare-Values($current, $new) {
+    if ($current -eq $null) {
+        return $true
+    }
+
+    if ($current -is [Array]) {
+        if ($new -isnot [Array]) {
+            return $true
+        }
+
+        if ($current.Count -ne $new.Count) {
+            return $true
+        }
+        for ($i = 0; $i -lt $current.Count; $i++) {
+            if ($current[$i] -ne $new[$i]) {
+                return $true
+            }
+        }
+    } else {
+        if ($current -ne $new) {
+            return $true
+        }
+    }
+    return $false
+}
+
 Function Convert-ToPropertyValue($pool, $attribute_key, $attribute_value) {
     # Will convert the new value to the enum value expected and cast accordingly to the type
     if ([bool]($attribute_value.PSobject.Properties -match "Value")) {
@@ -82,13 +111,25 @@ Function Convert-ToPropertyValue($pool, $attribute_key, $attribute_value) {
         $attribute_parent = "attributes"
         $attribute_child = $attribute_key
         $attribute_meta = $pool.Attributes | Where-Object { $_.Name -eq $attribute_child }
-    } elseif ($attribute_key_split.Length -eq 2) {
+    } elseif ($attribute_key_split.Length -gt 1) {
         $attribute_parent = $attribute_key_split[0]
-        $attribute_child = $attribute_key_split[1]
-        $attribute_meta = $pool.$attribute_parent.Attributes | Where-Object { $_.Name -eq $attribute_child }
+        $attribute_key_split = $attribute_key_split[1..$($attribute_key_split.Length - 1)]
+        $parent = $pool.$attribute_parent
+
+        foreach ($key in $attribute_key_split) {
+            $attribute_meta = $parent.Attributes | Where-Object { $_.Name -eq $key }
+            $parent = $parent.$key
+            if ($attribute_meta -eq $null) {
+                $attribute_meta = $parent
+            }
+        }
+        $attribute_child = $attribute_key_split[-1]
     }
 
     if ($attribute_meta) {
+        if (($attribute_meta.PSObject.Properties.Name -eq "Collection").Count -gt 0) {
+            return ,(Convert-CollectionToList -collection $attribute_value)
+        }
         $type = $attribute_meta.Schema.Type
         $value = $attribute_value
         if ($type -eq "enum") {
@@ -148,7 +189,7 @@ if ($state -eq "absent") {
     if (-not $pool) {
         if (-not $check_mode) {
             try {
-                New-WebAppPool -Name $name
+                New-WebAppPool -Name $name > $null
             } catch {
                 Fail-Json $result "Failed to create new Web App Pool $($name): $($_.Exception.Message)"
             }
@@ -169,35 +210,38 @@ if ($state -eq "absent") {
         $current_raw_value = Get-ItemProperty -Path IIS:\AppPools\$name -Name $attribute_key -ErrorAction SilentlyContinue
         $current_value = Convert-ToPropertyValue -pool $pool -attribute_key $attribute_key -attribute_value $current_raw_value
 
-        # Cannot use ($current_value -or (..)) as that will fire if $current_value is 0/$null/"" when we only want $null
-        if (($current_value -eq $null) -or ($current_value -ne $new_value)) {
-            try {
-                Set-ItemProperty -Path IIS:\AppPools\$name -Name $attribute_key -Value $new_value -WhatIf:$check_mode
-            } catch {
-                Fail-Json $result "Failed to set attribute to Web App Pool $name. Attribute: $attribute_key, Value: $new_value, Exception: $($_.Exception.Message)"
+        $changed = Compare-Values -current $current_value -new $new_value
+        if ($changed -eq $true) {
+            if ($new_value -is [Array]) {
+                try {
+                    Clear-ItemProperty -Path IIS:\AppPools\$name -Name $attribute_key -WhatIf:$check_mode
+                } catch {
+                    Fail-Json -obj $result -message "Failed to clear attribute to Web App Pool $name. Attribute: $attribute_key, Exception: $($_.Exception.Message)"
+                }
+                foreach ($value in $new_value) {
+                    try {
+                        New-ItemProperty -Path IIS:\AppPools\$name -Name $attribute_key -Value @{value=$value} -WhatIf:$check_mode > $null
+                    } catch {
+                        Fail-Json -obj $result -message "Failed to add new attribute to Web App Pool $name. Attribute: $attribute_key, Value: $value, Exception: $($_.Exception.Message)"
+                    }
+                }
+            } else {
+                try {
+                    Set-ItemProperty -Path IIS:\AppPools\$name -Name $attribute_key -Value $new_value -WhatIf:$check_mode
+                } catch {
+                    Fail-Json $result "Failed to set attribute to Web App Pool $name. Attribute: $attribute_key, Value: $new_value, Exception: $($_.Exception.Message)"
+                }
             }
             $result.changed = $true
         }
     }
 
     # Set the state of the pool
-    if (($state -eq "stopped") -and ($pool.State -eq "Started")) {
-        if (-not $check_mode) {
-            try {
-                Stop-WebAppPool -Name $name
-            } catch {
-                Fail-Json $result "Failed to stop Web App Pool $($name): $($_.Exception.Message)"
-            }
-        }
-        $result.changed = $true
-    }
-
-    
     if ($pool.State -eq "Stopped") {
         if ($state -eq "started" -or $state -eq "restarted") {
             if (-not $check_mode) {
                 try {
-                    Start-WebAppPool -Name $name
+                    Start-WebAppPool -Name $name > $null
                 } catch {
                     Fail-Json $result "Failed to start Web App Pool $($name): $($_.Exception.Message)"
                 }
@@ -208,7 +252,7 @@ if ($state -eq "absent") {
         if ($state -eq "stopped") {
             if (-not $check_mode) {
                 try {
-                    Stop-WebAppPool -Name $name
+                    Stop-WebAppPool -Name $name > $null
                 } catch {
                     Fail-Json $result "Failed to stop Web App Pool $($name): $($_.Exception.Message)"
                 }
@@ -217,7 +261,7 @@ if ($state -eq "absent") {
         } elseif ($state -eq "restarted") {
             if (-not $check_mode) {
                 try {
-                    Restart-WebAppPool -Name $name
+                    Restart-WebAppPool -Name $name > $null
                 } catch {
                     Fail-Json $result "Failed to restart Web App Pool $($name): $($_.Exception.Message)"
                 }
@@ -242,9 +286,11 @@ foreach ($element in $elements)  {
 
     foreach ($attribute in $attribute_collection) {
         $attribute_name = $attribute.Name
-        $attribute_value = $attribute_parent.$attribute_name
+        if ($attribute_name -notlike "*password*") {
+            $attribute_value = $attribute_parent.$attribute_name
 
-        $result.info.$element.Add($attribute_name, $attribute_value)
+            $result.info.$element.Add($attribute_name, $attribute_value)
+        }
     }
 }
 

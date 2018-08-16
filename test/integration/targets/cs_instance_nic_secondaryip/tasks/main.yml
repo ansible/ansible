@@ -14,7 +14,7 @@
 - name: verify setup network
   assert:
     that:
-    - net|success
+    - net is successful
     - net.name == "net_nic"
 
 - name: setup instance
@@ -29,7 +29,7 @@
 - name: verify setup instance
   assert:
     that:
-    - instance|success
+    - instance is successful
     - instance.name == "instance-nic-vm"
     - instance.state == "Stopped"
 
@@ -48,7 +48,7 @@
 - name: verify setup network 2
   assert:
     that:
-    - net|success
+    - net is successful
     - net.name == "net_nic2"
 
 - name: setup nic
@@ -61,7 +61,7 @@
 - name: verify test create nic
   assert:
     that:
-    - nic|success
+    - nic is successful
     - nic.ip_address == "10.100.124.42"
     - nic.netmask == "255.255.255.0"
     - nic.network == "net_nic2"
@@ -80,7 +80,7 @@
 - name: verify setup remove secondary ip
   assert:
     that:
-    - sip|success
+    - sip is successful
 
 - name: test add secondary ip in check mode
   cs_instance_nic_secondaryip:
@@ -93,8 +93,8 @@
 - name: verify test add secondary ip in check mode
   assert:
     that:
-    - sip|success
-    - sip|changed
+    - sip is successful
+    - sip is changed
     - sip.network == "net_nic2"
     - sip.vm == "instance-nic-vm"
     - sip.zone == "{{ cs_common_zone_adv }}"
@@ -109,8 +109,8 @@
 - name: verify test add secondary ip
   assert:
     that:
-    - sip|success
-    - sip|changed
+    - sip is successful
+    - sip is changed
     - sip.vm_guest_ip == "10.100.124.43"
     - sip.network == "net_nic2"
     - sip.vm == "instance-nic-vm"
@@ -126,8 +126,8 @@
 - name: verify test add secondary ip idempotence
   assert:
     that:
-    - sip|success
-    - not sip|changed
+    - sip is successful
+    - sip is not changed
     - sip.vm_guest_ip == "10.100.124.43"
     - sip.network == "net_nic2"
     - sip.vm == "instance-nic-vm"
@@ -145,8 +145,8 @@
 - name: verify test remove secondary ip in check mode
   assert:
     that:
-    - sip|success
-    - sip|changed
+    - sip is successful
+    - sip is changed
     - sip.vm_guest_ip == "10.100.124.43"
     - sip.network == "net_nic2"
     - sip.vm == "instance-nic-vm"
@@ -163,8 +163,8 @@
 - name: verify test remove secondary ip
   assert:
     that:
-    - sip|success
-    - sip|changed
+    - sip is successful
+    - sip is changed
     - sip.vm_guest_ip == "10.100.124.43"
     - sip.network == "net_nic2"
     - sip.vm == "instance-nic-vm"
@@ -181,8 +181,8 @@
 - name: verify test remove secondary ip idempotence
   assert:
     that:
-    - sip|success
-    - not sip|changed
+    - sip is successful
+    - sip is not changed
     - sip.network == "net_nic2"
     - sip.vm == "instance-nic-vm"
     - sip.zone == "{{ cs_common_zone_adv }}"
@@ -195,7 +195,7 @@
 - name: verify cleanup instance
   assert:
     that:
-    - instance|success
+    - instance is successful
 
 - name: cleanup network
   cs_network:
@@ -206,7 +206,7 @@
 - name: verify cleanup network
   assert:
     that:
-    - net|success
+    - net is successful
 
 - name: cleanup network 2
   cs_network:
@@ -217,4 +217,4 @@
 - name: verify cleanup network 2
   assert:
     that:
-    - net|success
+    - net is successful

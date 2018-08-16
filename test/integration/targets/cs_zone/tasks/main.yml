@@ -7,7 +7,7 @@
 - name: verify setup zone absent
   assert:
     that:
-      - zone|success
+      - zone is successful
 
 - name: test fail missing param
   cs_zone:
@@ -17,7 +17,7 @@
 - name: verify test fail missing param
   assert:
     that:
-      - zone|failed
+      - zone is failed
       - "zone.msg == 'missing required arguments: dns1'"
 
 - name: test create zone in check mode
@@ -31,8 +31,8 @@
 - name: verify test create zone in check mode
   assert:
     that:
-      - zone|success
-      - zone|changed
+      - zone is successful
+      - zone is changed
 
 - name: test create zone
   cs_zone:
@@ -44,8 +44,8 @@
 - name: verify test create zone
   assert:
     that:
-      - zone|success
-      - zone|changed
+      - zone is successful
+      - zone is changed
       - zone.dns1 == "8.8.8.8"
       - zone.dns2 == "8.8.4.4"
       - zone.internal_dns1 == "8.8.8.8"
@@ -66,8 +66,8 @@
 - name: verify test create zone idempotency
   assert:
     that:
-      - zone|success
-      - not zone|changed
+      - zone is successful
+      - zone is not changed
       - zone.dns1 == "8.8.8.8"
       - zone.dns2 == "8.8.4.4"
       - zone.internal_dns1 == "8.8.8.8"
@@ -92,8 +92,8 @@
 - name: verify test update zone in check mode
   assert:
     that:
-      - zone|success
-      - zone|changed
+      - zone is successful
+      - zone is changed
       - zone.dns1 == "8.8.8.8"
       - zone.dns2 == "8.8.4.4"
       - zone.internal_dns1 == "8.8.8.8"
@@ -117,8 +117,8 @@
 - name: verify test update zone
   assert:
     that:
-      - zone|success
-      - zone|changed
+      - zone is successful
+      - zone is changed
       - zone.dns1 == "8.8.8.8"
       - zone.dns2 == "8.8.4.4"
       - zone.internal_dns1 == "10.10.1.100"
@@ -142,8 +142,8 @@
 - name: verify test update zone idempotency
   assert:
     that:
-      - zone|success
-      - not zone|changed
+      - zone is successful
+      - zone is not changed
       - zone.dns1 == "8.8.8.8"
       - zone.dns2 == "8.8.4.4"
       - zone.internal_dns1 == "10.10.1.100"
@@ -163,8 +163,8 @@
 - name: verify test absent zone in check mode
   assert:
     that:
-      - zone|success
-      - zone|changed
+      - zone is successful
+      - zone is changed
       - zone.dns1 == "8.8.8.8"
       - zone.dns2 == "8.8.4.4"
       - zone.internal_dns1 == "10.10.1.100"
@@ -182,8 +182,8 @@
 - name: verify test absent zone
   assert:
     that:
-      - zone|success
-      - zone|changed
+      - zone is successful
+      - zone is changed
       - zone.dns1 == "8.8.8.8"
       - zone.dns2 == "8.8.4.4"
       - zone.internal_dns1 == "10.10.1.100"
@@ -201,5 +201,5 @@
 - name: verify test absent zone idempotency
   assert:
     that:
-      - zone|success
-      - not zone|changed
+      - zone is successful
+      - zone is not changed

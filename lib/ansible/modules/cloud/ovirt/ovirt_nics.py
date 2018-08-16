@@ -1,71 +1,56 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
-# Copyright (c) 2016 Red Hat, Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
 module: ovirt_nics
 short_description: Module to manage network interfaces of Virtual Machines in oVirt/RHV
 version_added: "2.3"
-author: "Ondra Machacek (@machacekondra)"
+author:
+- Ondra Machacek (@machacekondra)
 description:
-    - "Module to manage network interfaces of Virtual Machines in oVirt/RHV."
+    - Module to manage network interfaces of Virtual Machines in oVirt/RHV.
 options:
     name:
         description:
-            - "Name of the network interface to manage."
+            - Name of the network interface to manage.
         required: true
     vm:
         description:
-            - "Name of the Virtual Machine to manage."
-            - "You must provide either C(vm) parameter or C(template) parameter."
+            - Name of the Virtual Machine to manage.
+            - You must provide either C(vm) parameter or C(template) parameter.
     template:
         description:
-            - "Name of the template to manage."
-            - "You must provide either C(vm) parameter or C(template) parameter."
+            - Name of the template to manage.
+            - You must provide either C(vm) parameter or C(template) parameter.
         version_added: "2.4"
     state:
         description:
-            - "Should the Virtual Machine NIC be present/absent/plugged/unplugged."
-        choices: ['present', 'absent', 'plugged', 'unplugged']
+            - Should the Virtual Machine NIC be present/absent/plugged/unplugged.
+        choices: [ absent, plugged, present, unplugged ]
         default: present
     network:
         description:
-            - "Logical network to which the VM network interface should use,
-               by default Empty network is used if network is not specified."
+            - Logical network to which the VM network interface should use,
+              by default Empty network is used if network is not specified.
     profile:
         description:
-            - "Virtual network interface profile to be attached to VM network interface."
+            - Virtual network interface profile to be attached to VM network interface.
     interface:
         description:
             - "Type of the network interface."
-        choices: ['virtio', 'e1000', 'rtl8139', 'pci_passthrough', 'rtl8139_virtio', 'spapr_vlan']
-        default: 'virtio'
+            - "It's required parameter when creating the new NIC."
+        choices: [ e1000, pci_passthrough, rtl8139, rtl8139_virtio, spapr_vlan, virtio ]
     mac_address:
         description:
-            - "Custom MAC address of the network interface, by default it's obtained from MAC pool."
+            - Custom MAC address of the network interface, by default it's obtained from MAC pool.
 extends_documentation_fragment: ovirt
 '''
 
@@ -73,8 +58,8 @@ EXAMPLES = '''
 # Examples don't contain auth parameter for simplicity,
 # look at ovirt_auth module to see how to reuse authentication:
 
-# Add NIC to VM
-- ovirt_nics:
+- name: Add NIC to VM
+  ovirt_nics:
     state: present
     vm: myvm
     name: mynic
@@ -83,21 +68,20 @@ EXAMPLES = '''
     profile: ovirtmgmt
     network: ovirtmgmt
 
-# Plug NIC to VM
-- ovirt_nics:
+- name: Plug NIC to VM
+  ovirt_nics:
     state: plugged
     vm: myvm
     name: mynic
 
-# Unplug NIC from VM
-- ovirt_nics:
+- name: Unplug NIC from VM
+  ovirt_nics:
     state: unplugged
     vm: myvm
     name: mynic
 
-
-# add NIC to template
-- ovirt_nics:
+- name: Add NIC to template
+  ovirt_nics:
     auth: "{{ ovirt_auth }}"
     state: present
     template: my_template
@@ -106,13 +90,11 @@ EXAMPLES = '''
     profile: ovirtmgmt
     network: ovirtmgmt
 
-
-# Remove NIC from VM
-- ovirt_nics:
+- name: Remove NIC from VM
+  ovirt_nics:
     state: absent
     vm: myvm
     name: mynic
-
 '''
 
 RETURN = '''
@@ -191,22 +173,19 @@ class EntityNicsModule(BaseModule):
 
 def main():
     argument_spec = ovirt_full_argument_spec(
-        state=dict(
-            choices=['present', 'absent', 'plugged', 'unplugged'],
-            default='present'
-        ),
-        vm=dict(required=False),
-        template=dict(required=False),
-        name=dict(required=True),
-        interface=dict(default=None),
-        profile=dict(default=None),
-        network=dict(default=None),
-        mac_address=dict(default=None),
+        state=dict(type='str', default='present', choices=['absent', 'plugged', 'present', 'unplugged']),
+        vm=dict(type='str'),
+        template=dict(type='str'),
+        name=dict(type='str', required=True),
+        interface=dict(type='str'),
+        profile=dict(type='str'),
+        network=dict(type='str'),
+        mac_address=dict(type='str'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        required_one_of=[['vm', 'template']]
+        required_one_of=[['vm', 'template']],
     )
     check_sdk(module)
 
@@ -249,7 +228,7 @@ def main():
             networks_service = dcs_service.service(dc.id).networks_service()
             network = next(
                 (n for n in networks_service.list()
-                if n.name == module.params['network']),
+                 if n.name == module.params['network']),
                 None
             )
             if network is None:
@@ -289,6 +268,7 @@ def main():
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
         connection.close(logout=auth.get('token') is None)
+
 
 if __name__ == "__main__":
     main()

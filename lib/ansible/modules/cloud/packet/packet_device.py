@@ -98,12 +98,6 @@ options:
     description:
       - Userdata blob made available to the machine
 
-  wait:
-    description:
-      - Whether to wait for the instance to be assigned IP address before returning.
-      - This option has been deprecated in favor of C(wait_for_public_IPv).
-    default: false
-
   wait_for_public_IPv:
     description:
       - Whether to wait for the instance to be assigned a public IPv4/IPv6 address.
@@ -271,8 +265,8 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule
 
 
-NAME_RE = '({0}|{0}{1}*{0})'.format('[a-zA-Z0-9]', '[a-zA-Z0-9\-]')
-HOSTNAME_RE = '({0}\.)*{0}$'.format(NAME_RE)
+NAME_RE = r'({0}|{0}{1}*{0})'.format(r'[a-zA-Z0-9]', r'[a-zA-Z0-9\-]')
+HOSTNAME_RE = r'({0}\.)*{0}$'.format(NAME_RE)
 MAX_DEVICES = 100
 
 PACKET_DEVICE_STATES = (
@@ -403,7 +397,7 @@ def get_hostname_list(module):
     if (len(hostnames) == 1) and (count > 0):
         hostname_spec = hostnames[0]
         count_range = range(count_offset, count_offset + count)
-        if re.search("%\d{0,2}d", hostname_spec):
+        if re.search(r"%\d{0,2}d", hostname_spec):
             hostnames = [hostname_spec % i for i in count_range]
         elif count > 1:
             hostname_spec = '%s%%02d' % hostname_spec
@@ -641,6 +635,7 @@ def main():
     except Exception as e:
         module.fail_json(msg='failed to set device state %s, error: %s' %
                          (state, to_native(e)), exception=traceback.format_exc())
+
 
 if __name__ == '__main__':
     main()

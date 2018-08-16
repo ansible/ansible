@@ -31,28 +31,29 @@ from ansible.compat.tests.mock import patch, MagicMock
 from ansible.errors import AnsibleConnectionFailure
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import network_cli
+from ansible.plugins.loader import connection_loader
 
 
 class TestConnectionClass(unittest.TestCase):
 
-    @patch("ansible.plugins.connection.network_cli._Connection._connect")
+    @patch("ansible.plugins.connection.paramiko_ssh.Connection._connect")
     def test_network_cli__connect_error(self, mocked_super):
         pc = PlayContext()
         new_stdin = StringIO()
 
-        conn = network_cli.Connection(pc, new_stdin)
+        conn = connection_loader.get('network_cli', pc, '/dev/null')
         conn.ssh = MagicMock()
         conn.receive = MagicMock()
         conn._terminal = MagicMock()
         pc.network_os = None
         self.assertRaises(AnsibleConnectionFailure, conn._connect)
 
-    @patch("ansible.plugins.connection.network_cli._Connection._connect")
+    @patch("ansible.plugins.connection.paramiko_ssh.Connection._connect")
     def test_network_cli__invalid_os(self, mocked_super):
         pc = PlayContext()
         new_stdin = StringIO()
 
-        conn = network_cli.Connection(pc, new_stdin)
+        conn = connection_loader.get('network_cli', pc, '/dev/null')
         conn.ssh = MagicMock()
         conn.receive = MagicMock()
         conn._terminal = MagicMock()
@@ -60,32 +61,31 @@ class TestConnectionClass(unittest.TestCase):
         self.assertRaises(AnsibleConnectionFailure, conn._connect)
 
     @patch("ansible.plugins.connection.network_cli.terminal_loader")
-    @patch("ansible.plugins.connection.network_cli._Connection._connect")
+    @patch("ansible.plugins.connection.paramiko_ssh.Connection._connect")
     def test_network_cli__connect(self, mocked_super, mocked_terminal_loader):
         pc = PlayContext()
+        pc.network_os = 'ios'
         new_stdin = StringIO()
 
-        conn = network_cli.Connection(pc, new_stdin)
-        pc.network_os = 'ios'
+        conn = connection_loader.get('network_cli', pc, '/dev/null')
 
         conn.ssh = MagicMock()
         conn.receive = MagicMock()
-
-        mock_terminal = MagicMock()
-        conn._terminal = mock_terminal
+        conn._terminal = MagicMock()
 
         conn._connect()
         self.assertTrue(conn._terminal.on_open_shell.called)
-        self.assertFalse(conn._terminal.on_authorize.called)
+        self.assertFalse(conn._terminal.on_become.called)
 
         conn._play_context.become = True
+        conn._play_context.become_method = 'enable'
         conn._play_context.become_pass = 'password'
+        conn._connected = False
 
         conn._connect()
+        conn._terminal.on_become.assert_called_with(passwd='password')
 
-        conn._terminal.on_authorize.assert_called_with(passwd='password')
-
-    @patch("ansible.plugins.connection.network_cli._Connection.close")
+    @patch("ansible.plugins.connection.paramiko_ssh.Connection.close")
     def test_network_cli_close(self, mocked_super):
         pc = PlayContext()
         new_stdin = StringIO()
@@ -93,20 +93,16 @@ class TestConnectionClass(unittest.TestCase):
 
         terminal = MagicMock(supports_multiplexing=False)
         conn._terminal = terminal
-
-        conn.close()
-
-        conn._shell = MagicMock()
+        conn._ssh_shell = MagicMock()
+        conn.paramiko_conn = MagicMock()
+        conn._connected = True
 
         conn.close()
         self.assertTrue(terminal.on_close_shell.called)
+        self.assertIsNone(conn._ssh_shell)
+        self.assertIsNone(conn.paramiko_conn)
 
-        terminal.supports_multiplexing = True
-
-        conn.close()
-        self.assertIsNone(conn._shell)
-
-    @patch("ansible.plugins.connection.network_cli._Connection._connect")
+    @patch("ansible.plugins.connection.paramiko_ssh.Connection._connect")
     def test_network_cli_exec_command(self, mocked_super):
         pc = PlayContext()
         new_stdin = StringIO()
@@ -114,23 +110,17 @@ class TestConnectionClass(unittest.TestCase):
 
         mock_send = MagicMock(return_value=b'command response')
         conn.send = mock_send
+        conn._ssh_shell = MagicMock()
 
         # test sending a single command and converting to dict
-        rc, out, err = conn.exec_command('command')
+        out = conn.exec_command('command')
         self.assertEqual(out, b'command response')
-        mock_send.assert_called_with(b'command', None, None, None)
+        mock_send.assert_called_with(command=b'command')
 
         # test sending a json string
-        rc, out, err = conn.exec_command(json.dumps({'command': 'command'}))
+        out = conn.exec_command(json.dumps({'command': 'command'}))
         self.assertEqual(out, b'command response')
-        mock_send.assert_called_with(b'command', None, None, None)
-
-        conn._shell = MagicMock()
-
-        # test _shell already open
-        rc, out, err = conn.exec_command('command')
-        self.assertEqual(out, b'command response')
-        mock_send.assert_called_with(b'command', None, None, None)
+        mock_send.assert_called_with(command=b'command')
 
     def test_network_cli_send(self):
         pc = PlayContext()
@@ -142,7 +132,7 @@ class TestConnectionClass(unittest.TestCase):
         conn._terminal = mock__terminal
 
         mock__shell = MagicMock()
-        conn._shell = mock__shell
+        conn._ssh_shell = mock__shell
 
         response = b"""device#command
         command response
@@ -155,7 +145,7 @@ class TestConnectionClass(unittest.TestCase):
         output = conn.send(b'command', None, None, None)
 
         mock__shell.sendall.assert_called_with(b'command\r')
-        self.assertEqual(output, b'command response')
+        self.assertEqual(output, 'command response')
 
         mock__shell.reset_mock()
         mock__shell.recv.return_value = b"ERROR: error message device#"

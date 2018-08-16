@@ -39,7 +39,11 @@ class VcenterProvider(CloudProvider):
         """
         super(VcenterProvider, self).__init__(args, config_extension='.ini')
 
-        self.image = 'ansible/ansible:vcenter-simulator'
+        # The simulator must be pinned to a specific version to guarantee CI passes with the version used.
+        if os.environ.get('ANSIBLE_VCSIM_CONTAINER'):
+            self.image = os.environ.get('ANSIBLE_VCSIM_CONTAINER')
+        else:
+            self.image = 'quay.io/ansible/vcenter-test-container:1.3.0'
         self.container_name = ''
 
     def filter(self, targets, exclude):
@@ -47,15 +51,18 @@ class VcenterProvider(CloudProvider):
         :type targets: tuple[TestTarget]
         :type exclude: list[str]
         """
-        if os.path.isfile(self.config_static_path):
-            return
-
-        docker = find_executable('docker')
+        docker = find_executable('docker', required=False)
 
         if docker:
             return
 
-        super(VcenterProvider, self).filter(targets, exclude)
+        skip = 'cloud/%s/' % self.platform
+        skipped = [target.name for target in targets if skip in target.aliases]
+
+        if skipped:
+            exclude.append(skip)
+            display.warning('Excluding tests marked "%s" which require the "docker" command: %s'
+                            % (skip.rstrip('/'), ', '.join(skipped)))
 
     def setup(self):
         """Setup the cloud resource before delegation and register a cleanup callback."""
@@ -114,7 +121,9 @@ class VcenterProvider(CloudProvider):
             else:
                 publish_ports = []
 
-            docker_pull(self.args, self.image)
+            if not os.environ.get('ANSIBLE_VCSIM_CONTAINER'):
+                docker_pull(self.args, self.image)
+
             docker_run(
                 self.args,
                 self.image,

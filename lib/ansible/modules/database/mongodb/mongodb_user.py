@@ -26,35 +26,25 @@ options:
     login_user:
         description:
             - The username used to authenticate with
-        required: false
-        default: null
     login_password:
         description:
             - The password used to authenticate with
-        required: false
-        default: null
     login_host:
         description:
             - The host running the database
-        required: false
         default: localhost
     login_port:
         description:
             - The port to connect to
-        required: false
         default: 27017
     login_database:
         version_added: "2.0"
         description:
             - The database where login credentials are stored
-        required: false
-        default: null
     replica_set:
         version_added: "1.6"
         description:
             - Replica set to connect to (automatically connects to primary for writes)
-        required: false
-        default: null
     database:
         description:
             - The name of the database to add/remove the user from
@@ -63,23 +53,18 @@ options:
         description:
             - The name of the user to add or remove
         required: true
-        default: null
         aliases: [ 'user' ]
     password:
         description:
             - The password to use for the user
-        required: false
-        default: null
     ssl:
         version_added: "1.8"
         description:
             - Whether to use an SSL connection when connecting to the database
-        default: False
     ssl_cert_reqs:
         version_added: "2.2"
         description:
             - Specifies whether a certificate is required from the other side of the connection, and whether it will be validated if provided.
-        required: false
         default: "CERT_REQUIRED"
         choices: ["CERT_REQUIRED", "CERT_OPTIONAL", "CERT_NONE"]
     roles:
@@ -91,16 +76,13 @@ options:
               'dbAdminAnyDatabase'
             - "Or the following dictionary '{ db: DATABASE_NAME, role: ROLE_NAME }'."
             - "This param requires pymongo 2.5+. If it is a string, mongodb 2.4+ is also required. If it is a dictionary, mongo 2.6+  is required."
-        required: false
         default: "readWrite"
     state:
         description:
             - The database user state
-        required: false
         default: present
         choices: [ "present", "absent" ]
     update_password:
-        required: false
         default: always
         choices: ['always', 'on_create']
         version_added: "2.1"
@@ -270,14 +252,15 @@ def user_find(client, user, db_name):
 
 
 def user_add(module, client, db_name, user, password, roles):
-    #pymongo's user_add is a _create_or_update_user so we won't know if it was changed or updated
-    #without reproducing a lot of the logic in database.py of pymongo
+    # pymongo's user_add is a _create_or_update_user so we won't know if it was changed or updated
+    # without reproducing a lot of the logic in database.py of pymongo
     db = client[db_name]
 
     if roles is None:
         db.add_user(user, password, False)
     else:
         db.add_user(user, password, None, roles=roles)
+
 
 def user_remove(module, client, db_name, user):
     exists = user_find(client, user, db_name)
@@ -288,6 +271,7 @@ def user_remove(module, client, db_name, user):
         db.remove_user(user)
     else:
         module.exit_json(changed=False, user=user)
+
 
 def load_mongocnf():
     config = configparser.RawConfigParser()
@@ -303,7 +287,6 @@ def load_mongocnf():
         return False
 
     return creds
-
 
 
 def check_if_roles_changed(uinfo, roles, db_name):
@@ -327,7 +310,7 @@ def check_if_roles_changed(uinfo, roles, db_name):
         output = list()
         for role in roles:
             if isinstance(role, (binary_type, text_type)):
-                new_role = { "role": role, "db": db_name }
+                new_role = {"role": role, "db": db_name}
                 output.append(new_role)
             else:
                 output.append(role)
@@ -341,14 +324,13 @@ def check_if_roles_changed(uinfo, roles, db_name):
     return True
 
 
-
 # =========================================
 # Module execution.
 #
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             login_user=dict(default=None),
             login_password=dict(default=None, no_log=True),
             login_host=dict(default='localhost'),
@@ -417,7 +399,7 @@ def main():
         elif LooseVersion(PyMongoVersion) >= LooseVersion('3.0'):
             if db_name != "admin":
                 module.fail_json(msg='The localhost login exception only allows the first admin account to be created')
-            #else: this has to be the first admin user added
+            # else: this has to be the first admin user added
 
     except Exception as e:
         module.fail_json(msg='unable to connect to database: %s' % to_native(e), exception=traceback.format_exc())
@@ -442,8 +424,8 @@ def main():
             module.fail_json(msg='Unable to add or update user: %s' % to_native(e), exception=traceback.format_exc())
 
             # Here we can  check password change if mongo provide a query for that : https://jira.mongodb.org/browse/SERVER-22848
-            #newuinfo = user_find(client, user, db_name)
-            #if uinfo['role'] == newuinfo['role'] and CheckPasswordHere:
+            # newuinfo = user_find(client, user, db_name)
+            # if uinfo['role'] == newuinfo['role'] and CheckPasswordHere:
             #    module.exit_json(changed=False, user=user)
 
     elif state == 'absent':

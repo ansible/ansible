@@ -1,20 +1,24 @@
 ---
+- debug: msg="START connection={{ ansible_connection }} nxos_user basic test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
 - name: Remove old entries of user
   nxos_user:
     aggregate:
-      - name: ansibletest1
-      - name: ansibletest2
-      - name: ansibletest3
-    state: absent
+      - { name: ansibletest1 }
+      - { name: ansibletest2 }
+      - { name: ansibletest3 }
     provider: "{{ connection }}"
+    state: absent
 
 # Start tests
 - name: Create user
   nxos_user:
     name: ansibletest1
     roles: network-operator
-    state: present
     provider: "{{ connection }}"
+    state: present
   register: result
 
 - assert:
@@ -26,11 +30,11 @@
 - name: Collection of users
   nxos_user:
     aggregate:
-      - name: ansibletest2
-      - name: ansibletest3
+      - { name: ansibletest2 }
+      - { name: ansibletest3 }
+    provider: "{{ connection }}"
     state: present
     roles: network-admin
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -40,14 +44,16 @@
 - name: tearDown
   nxos_user:
     aggregate:
-      - name: ansibletest1
-      - name: ansibletest2
-      - name: ansibletest3
-    state: absent
+      - { name: ansibletest1 }
+      - { name: ansibletest2 }
+      - { name: ansibletest3 }
     provider: "{{ connection }}"
+    state: absent
   register: result
 
 - assert:
     that:
       - 'result.changed == true'
       - '"no username" in result.commands[0]'
+
+- debug: msg="END connection={{ ansible_connection }} nxos_user basic test"

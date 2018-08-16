@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/src_basic.yaml"
+- debug: msg="START cli/src_basic.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   ios_config:
@@ -37,4 +37,4 @@
 # FIXME Bug https://github.com/ansible/ansible/issues/19382
 #      - "result.updates is not defined"
 
-- debug: msg="END cli/src_basic.yaml"
+- debug: msg="END cli/src_basic.yaml on connection={{ ansible_connection }}"

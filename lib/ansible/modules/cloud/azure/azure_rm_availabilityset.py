@@ -45,7 +45,6 @@ options:
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
-        default: resource_group location
         required: false
     platform_update_domain_count:
         description:
@@ -112,9 +111,6 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.compute.models import (
-        AvailabilitySet, Sku
-    )
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -203,10 +199,7 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
         response = None
         to_be_updated = False
 
-        try:
-            resource_group = self.get_resource_group(self.resource_group)
-        except CloudError:
-            self.fail('resource group {} not found'.format(self.resource_group))
+        resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
             self.location = resource_group.location
 
@@ -263,10 +256,10 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
         '''
         self.log("Creating availabilityset {0}".format(self.name))
         try:
-            params_sku = Sku(
+            params_sku = self.compute_models.Sku(
                 name=self.sku
             )
-            params = AvailabilitySet(
+            params = self.compute_models.AvailabilitySet(
                 location=self.location,
                 tags=self.tags,
                 platform_update_domain_count=self.platform_update_domain_count,
@@ -315,6 +308,7 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
 def main():
     """Main execution"""
     AzureRMAvailabilitySet()
+
 
 if __name__ == '__main__':
     main()

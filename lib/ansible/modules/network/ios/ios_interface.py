@@ -49,9 +49,24 @@ options:
   tx_rate:
     description:
       - Transmit rate in bits per second (bps).
+      - This is state check parameter only.
+      - Supports conditionals, see L(Conditionals in Networking Modules,../network/user_guide/network_working_with_command_output.html)
   rx_rate:
     description:
       - Receiver rate in bits per second (bps).
+      - This is state check parameter only.
+      - Supports conditionals, see L(Conditionals in Networking Modules,../network/user_guide/network_working_with_command_output.html)
+  neighbors:
+    description:
+      - Check the operational state of given interface C(name) for CDP/LLDP neighbor.
+      - The following suboptions are available.
+    suboptions:
+        host:
+          description:
+            - "CDP/LLDP neighbor host for given interface C(name)."
+        port:
+          description:
+            - "CDP/LLDP neighbor port to which given interface C(name) is connected."
   aggregate:
     description: List of Interfaces definitions.
   delay:
@@ -59,12 +74,14 @@ options:
       - Time in seconds to wait before checking for the operational state on remote
         device. This wait is applicable for operational state argument which are
         I(state) with values C(up)/C(down), I(tx_rate) and I(rx_rate).
+    default: 10
   state:
     description:
       - State of the Interface configuration, C(up) means present and
         operationally up and C(down) means present and operationally C(down)
     default: present
     choices: ['present', 'absent', 'up', 'down']
+extends_documentation_fragment: ios
 """
 
 EXAMPLES = """
@@ -97,6 +114,13 @@ EXAMPLES = """
     state: up
     tx_rate: ge(0)
     rx_rate: le(0)
+
+- name: Check neighbors intent arguments
+  ios_interface:
+    name: Gi0/0
+    neighbors:
+    - port: eth0
+      host: netdev
 
 - name: Config + intent
   ios_interface:
@@ -140,10 +164,10 @@ from time import sleep
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.ios import get_config, load_config
-from ansible.module_utils.ios import ios_argument_spec, check_args
-from ansible.module_utils.netcfg import NetworkConfig
-from ansible.module_utils.network_common import conditional, remove_default_spec
+from ansible.module_utils.network.ios.ios import get_config, load_config
+from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.common.config import NetworkConfig
+from ansible.module_utils.network.common.utils import conditional, remove_default_spec
 
 
 def validate_mtu(value, module):
@@ -164,7 +188,7 @@ def validate_param_values(module, obj, param=None):
 def parse_shutdown(configobj, name):
     cfg = configobj['interface %s' % name]
     cfg = '\n'.join(cfg.children)
-    match = re.search(r'shutdown', cfg, re.M)
+    match = re.search(r'^shutdown', cfg, re.M)
     if match:
         return True
     else:
@@ -246,7 +270,8 @@ def map_params_to_obj(module):
             'state': module.params['state'],
             'delay': module.params['delay'],
             'tx_rate': module.params['tx_rate'],
-            'rx_rate': module.params['rx_rate']
+            'rx_rate': module.params['rx_rate'],
+            'neighbors': module.params['neighbors']
         }
 
         validate_param_values(module, params)
@@ -303,12 +328,15 @@ def map_obj_to_commands(updates):
 
 def check_declarative_intent_params(module, want, result):
     failed_conditions = []
-
+    have_neighbors_lldp = None
+    have_neighbors_cdp = None
     for w in want:
         want_state = w.get('state')
         want_tx_rate = w.get('tx_rate')
         want_rx_rate = w.get('rx_rate')
-        if want_state not in ('up', 'down') and not want_tx_rate and not want_rx_rate:
+        want_neighbors = w.get('neighbors')
+
+        if want_state not in ('up', 'down') and not want_tx_rate and not want_rx_rate and not want_neighbors:
             continue
 
         if result['changed']:
@@ -345,12 +373,58 @@ def check_declarative_intent_params(module, want, result):
             if have_rx_rate is None or not conditional(want_rx_rate, have_rx_rate.strip(), cast=int):
                 failed_conditions.append('rx_rate ' + want_rx_rate)
 
+        if want_neighbors:
+            have_host = []
+            have_port = []
+
+            # Process LLDP neighbors
+            if have_neighbors_lldp is None:
+                rc, have_neighbors_lldp, err = exec_command(module, 'show lldp neighbors detail')
+                if rc != 0:
+                    module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), command=command, rc=rc)
+
+            if have_neighbors_lldp:
+                lines = have_neighbors_lldp.strip().split('Local Intf: ')
+                for line in lines:
+                    field = line.split('\n')
+                    if field[0].strip() == w['name']:
+                        for item in field:
+                            if item.startswith('System Name:'):
+                                have_host.append(item.split(':')[1].strip())
+                            if item.startswith('Port Description:'):
+                                have_port.append(item.split(':')[1].strip())
+
+            # Process CDP neighbors
+            if have_neighbors_cdp is None:
+                rc, have_neighbors_cdp, err = exec_command(module, 'show cdp neighbors detail')
+                if rc != 0:
+                    module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), command=command, rc=rc)
+
+            if have_neighbors_cdp:
+                neighbors_cdp = re.findall('Device ID: (.*?)\n.*?Interface: (.*?),  Port ID .outgoing port.: (.*?)\n', have_neighbors_cdp, re.S)
+                for host, localif, remoteif in neighbors_cdp:
+                    if localif == w['name']:
+                        have_host.append(host)
+                        have_port.append(remoteif)
+
+            for item in want_neighbors:
+                host = item.get('host')
+                port = item.get('port')
+                if host and host not in have_host:
+                    failed_conditions.append('host ' + host)
+                if port and port not in have_port:
+                    failed_conditions.append('port ' + port)
     return failed_conditions
 
 
 def main():
     """ main entry point for module execution
     """
+    neighbors_spec = dict(
+        host=dict(),
+        port=dict()
+    )
+
     element_spec = dict(
         name=dict(),
         description=dict(),
@@ -360,6 +434,7 @@ def main():
         enabled=dict(default=True, type='bool'),
         tx_rate=dict(),
         rx_rate=dict(),
+        neighbors=dict(type='list', elements='dict', options=neighbors_spec),
         delay=dict(default=10, type='int'),
         state=dict(default='present',
                    choices=['present', 'absent', 'up', 'down'])
@@ -410,6 +485,7 @@ def main():
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

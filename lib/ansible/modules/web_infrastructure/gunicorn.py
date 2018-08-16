@@ -50,7 +50,7 @@ options:
   worker:
     choices: ['sync', 'eventlet', 'gevent', 'tornado ', 'gthread', 'gaiohttp']
     description:
-      - 'The type of workers to use. The default class (sync) should handle most “normal” types of workloads.'
+      - 'The type of workers to use. The default class (sync) should handle most "normal" types of workloads.'
   user:
     description:
       -  'Switch worker processes to run as this user.'
@@ -130,14 +130,6 @@ def main():
         'user': '-u',
     }
 
-    # temporary files in case no option provided
-    tmp_error_log = '/tmp/gunicorn.temp.error.log'
-    tmp_pid_file = '/tmp/gunicorn.temp.pid'
-
-    # remove temp file if exists
-    remove_tmp_file(tmp_pid_file)
-    remove_tmp_file(tmp_error_log)
-
     module = AnsibleModule(
         argument_spec=dict(
             app=dict(required=True, type='str', aliases=['name']),
@@ -152,6 +144,14 @@ def main():
                         ),
         )
     )
+
+    # temporary files in case no option provided
+    tmp_error_log = os.path.join(module.tmpdir, 'gunicorn.temp.error.log')
+    tmp_pid_file = os.path.join(module.tmpdir, 'gunicorn.temp.pid')
+
+    # remove temp file if exists
+    remove_tmp_file(tmp_pid_file)
+    remove_tmp_file(tmp_error_log)
 
     # obtain app name and venv
     params = module.params
@@ -222,6 +222,7 @@ def main():
 
     else:
         module.fail_json(msg='Failed to start gunicorn {0}'.format(err), error=err)
+
 
 if __name__ == '__main__':
     main()

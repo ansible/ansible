@@ -1,19 +1,11 @@
 #!/usr/bin/python
 
 # Copyright (c) 2015 Hewlett-Packard Development Company, L.P.
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -38,35 +30,24 @@ options:
    name:
      description:
         - Name that has to be given to the port.
-     required: false
-     default: None
    fixed_ips:
      description:
         - Desired IP and/or subnet for this port.  Subnet is referenced by
           subnet_id and IP is referenced by ip_address.
-     required: false
-     default: None
    admin_state_up:
      description:
         - Sets admin state.
-     required: false
-     default: None
    mac_address:
      description:
         - MAC address of this port.
-     required: false
-     default: None
    security_groups:
      description:
         - Security group(s) ID(s) or name(s) associated with the port (comma
           separated string or YAML list)
-     required: false
-     default: None
    no_security_groups:
      description:
         - Do not associate a security group with this port.
-     required: false
-     default: False
+     default: 'no'
    allowed_address_pairs:
      description:
         - "Allowed address pairs list.  Allowed address pairs are supported with
@@ -75,8 +56,6 @@ options:
                   - ip_address: 10.1.0.12
                     mac_address: ab:cd:ef:12:34:56
                   - ip_address: ..."
-     required: false
-     default: None
    extra_dhcp_opts:
      description:
         - "Extra dhcp options to be assigned to this port.  Extra options are
@@ -85,18 +64,12 @@ options:
                   - opt_name: opt name1
                     opt_value: value1
                   - opt_name: ..."
-     required: false
-     default: None
    device_owner:
      description:
         - The ID of the entity that uses this port.
-     required: false
-     default: None
    device_id:
      description:
         - Device ID of device using this port.
-     required: false
-     default: None
    state:
      description:
        - Should the resource be present or absent.
@@ -105,7 +78,6 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 '''
 
 EXAMPLES = '''
@@ -113,7 +85,7 @@ EXAMPLES = '''
 - os_port:
     state: present
     auth:
-      auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
+      auth_url: https://identity.example.com
       username: admin
       password: admin
       project_name: admin
@@ -124,7 +96,7 @@ EXAMPLES = '''
 - os_port:
     state: present
     auth:
-      auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
+      auth_url: https://identity.example.com
       username: admin
       password: admin
       project_name: admin
@@ -137,7 +109,7 @@ EXAMPLES = '''
 - os_port:
     state: present
     auth:
-      auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
+      auth_url: https://identity.example.com
       username: admin
       password: admin
       project_name: admin
@@ -149,7 +121,7 @@ EXAMPLES = '''
 - os_port:
     state: present
     auth:
-      auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/d
+      auth_url: https://identity.example.com
       username: admin
       password: admin
       project_name: admin
@@ -160,7 +132,7 @@ EXAMPLES = '''
 - os_port:
     state: present
     auth:
-      auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/d
+      auth_url: https://identity.example.com
       username: admin
       password: admin
       project_name: admin
@@ -209,11 +181,8 @@ admin_state_up:
     type: bool
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _needs_update(module, port, cloud):
@@ -334,13 +303,11 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
     name = module.params['name']
     state = module.params['state']
 
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.openstack_cloud(**module.params)
         if module.params['security_groups']:
             # translate security_groups to UUID's if names where provided
             module.params['security_groups'] = [
@@ -389,11 +356,9 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
+
 if __name__ == '__main__':
     main()

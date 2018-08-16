@@ -50,7 +50,7 @@ class SunOSNetwork(GenericBsdIfconfigNetwork):
             if line:
                 words = line.split()
 
-                if re.match('^\S', line) and len(words) > 3:
+                if re.match(r'^\S', line) and len(words) > 3:
                     current_if = self.parse_interface_line(words, current_if, interfaces)
                     interfaces[current_if['device']] = current_if
                 elif words[0].startswith('options='):

@@ -24,33 +24,23 @@ options:
     description:
       - name of the database to add or remove
     required: true
-    default: null
+    aliases: [ db ]
   owner:
     description:
       - Name of the role to set as owner of the database
-    required: false
-    default: null
   template:
     description:
       - Template used to create the database
-    required: false
-    default: null
   encoding:
     description:
       - Encoding of the database
-    required: false
-    default: null
   lc_collate:
     description:
       - Collation order (LC_COLLATE) to use in the database. Must match collation order of template database unless C(template0) is used as template.
-    required: false
-    default: null
   lc_ctype:
     description:
       - Character classification (LC_CTYPE) to use in the database (e.g. lower, upper, ...) Must match LC_CTYPE of template database unless C(template0)
         is used as template.
-    required: false
-    default: null
   state:
     description: |
         The database state. present implies that the database should be created if necessary.
@@ -60,7 +50,6 @@ options:
         (Added in 2.4) The format of the backup will be detected based on the target name.
         Supported compression formats for dump and restore are: .bz2, .gz, and .xz
         Supported formats for dump and restore are: .sql and .tar
-    required: false
     default: present
     choices: [ "present", "absent", "dump", "restore" ]
   target:
@@ -71,6 +60,11 @@ options:
     version_added: "2.4"
     description:
       - Further arguments for pg_dump or pg_restore. Used when state is "dump" or "restore"
+  maintenance_db:
+    version_added: "2.5"
+    description:
+      - The value specifies the initial database (which is also called as maintenance DB) that Ansible connects to.
+    default: postgres
 author: "Ansible Core Team"
 extends_documentation_fragment:
 - postgres
@@ -111,18 +105,16 @@ EXAMPLES = '''
     target_opts: "-n public"
 '''
 
+import os
+import pipes
+import subprocess
 import traceback
 
-HAS_PSYCOPG2 = False
 try:
     import psycopg2
     import psycopg2.extras
-    import pipes
-    import subprocess
-    import os
-
 except ImportError:
-    pass
+    HAS_PSYCOPG2 = False
 else:
     HAS_PSYCOPG2 = True
 
@@ -148,10 +140,12 @@ def set_owner(cursor, db, owner):
     cursor.execute(query)
     return True
 
+
 def get_encoding_id(cursor, encoding):
     query = "SELECT pg_char_to_encoding(%(encoding)s) AS encoding_id;"
     cursor.execute(query, {'encoding': encoding})
     return cursor.fetchone()['encoding_id']
+
 
 def get_db_info(cursor, db):
     query = """
@@ -164,10 +158,12 @@ def get_db_info(cursor, db):
     cursor.execute(query, {'db': db})
     return cursor.fetchone()
 
+
 def db_exists(cursor, db):
     query = "SELECT * FROM pg_database WHERE datname=%(db)s"
     cursor.execute(query, {'db': db})
     return cursor.rowcount == 1
+
 
 def db_delete(cursor, db):
     if db_exists(cursor, db):
@@ -176,6 +172,7 @@ def db_delete(cursor, db):
         return True
     else:
         return False
+
 
 def db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
     params = dict(enc=encoding, collate=lc_collate, ctype=lc_ctype)
@@ -217,6 +214,7 @@ def db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
         else:
             return False
 
+
 def db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
     if not db_exists(cursor, db):
         return False
@@ -233,6 +231,7 @@ def db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
             return False
         else:
             return True
+
 
 def db_dump(module, target, target_opts="",
             db=None,
@@ -269,13 +268,14 @@ def db_dump(module, target, target_opts="",
 
     return do_with_password(module, cmd, password)
 
+
 def db_restore(module, target, target_opts="",
-            db=None,
-            user=None,
-            password=None,
-            host=None,
-            port=None,
-            **kw):
+               db=None,
+               user=None,
+               password=None,
+               host=None,
+               port=None,
+               **kw):
 
     flags = login_flags(db, host, port, user)
     comp_prog_path = None
@@ -320,6 +320,7 @@ def db_restore(module, target, target_opts="",
 
     return do_with_password(module, cmd, password)
 
+
 def login_flags(db, host, port, user, db_prefix=True):
     """
     returns a list of connection argument strings each prefixed
@@ -343,6 +344,7 @@ def login_flags(db, host, port, user, db_prefix=True):
         flags.append(' --username={0}'.format(user))
     return flags
 
+
 def do_with_password(module, cmd, password):
     env = {}
     if password:
@@ -354,6 +356,7 @@ def do_with_password(module, cmd, password):
 # Module execution.
 #
 
+
 def main():
     argument_spec = pgutils.postgres_common_argument_spec()
     argument_spec.update(dict(
@@ -364,14 +367,14 @@ def main():
         lc_collate=dict(default=""),
         lc_ctype=dict(default=""),
         state=dict(default="present", choices=["absent", "present", "dump", "restore"]),
-        target=dict(default=""),
+        target=dict(default="", type="path"),
         target_opts=dict(default=""),
+        maintenance_db=dict(default="postgres"),
     ))
-
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        supports_check_mode = True
+        supports_check_mode=True
     )
 
     if not HAS_PSYCOPG2:
@@ -387,19 +390,20 @@ def main():
     target_opts = module.params["target_opts"]
     state = module.params["state"]
     changed = False
+    maintenance_db = module.params['maintenance_db']
 
     # To use defaults values, keyword arguments must be absent, so
     # check which values are empty and don't include in the **kw
     # dictionary
     params_map = {
-        "login_host":"host",
-        "login_user":"user",
-        "login_password":"password",
-        "port":"port",
-        "ssl_mode":"sslmode",
-        "ssl_rootcert":"sslrootcert"
+        "login_host": "host",
+        "login_user": "user",
+        "login_password": "password",
+        "port": "port",
+        "ssl_mode": "sslmode",
+        "ssl_rootcert": "sslrootcert"
     }
-    kw = dict( (params_map[k], v) for (k, v) in iteritems(module.params)
+    kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
               if k in params_map and v != '' and v is not None)
 
     # If a login_unix_socket is specified, incorporate it here.
@@ -411,12 +415,10 @@ def main():
     if target == "":
         target = "{0}/{1}.sql".format(os.getcwd(), db)
         target = os.path.expanduser(target)
-    else:
-        target = os.path.expanduser(target)
 
     try:
         pgutils.ensure_libs(sslrootcert=module.params.get('ssl_rootcert'))
-        db_connection = psycopg2.connect(database="postgres", **kw)
+        db_connection = psycopg2.connect(database=maintenance_db, **kw)
 
         # Enable autocommit so we can create databases
         if psycopg2.__version__ >= '2.4.2':
@@ -477,6 +479,7 @@ def main():
         module.fail_json(msg="Database query failed: %s" % to_native(e), exception=traceback.format_exc())
 
     module.exit_json(changed=changed, db=db)
+
 
 if __name__ == '__main__':
     main()

@@ -1,10 +1,9 @@
 ---
-- debug: msg="START cli/invalid_subset.yaml"
+- debug: msg="START cli/invalid_subset.yaml on connection={{ ansible_connection }}"
 
 
 - name: test invalid subset (foobar)
   eos_facts:
-    provider: "{{ cli }}"
     gather_subset:
       - "foobar"
   register: result
@@ -26,7 +25,6 @@
 
 - name: test subset specified multiple times
   eos_facts:
-    provider: "{{ cli }}"
     gather_subset:
       - "!hardware"
       - "hardware"
@@ -45,4 +43,4 @@
 
 
 
-- debug: msg="END cli/invalid_subset.yaml"
+- debug: msg="END cli/invalid_subset.yaml on connection={{ ansible_connection }}"

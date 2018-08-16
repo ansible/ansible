@@ -33,31 +33,23 @@ options:
             - Netstream timeout interval.
               If is active type the interval is 1-60.
               If is inactive ,the interval is 5-600.
-        required: false
         default: 30
     type:
         description:
             - Specifies the packet type of netstream timeout active interval.
-        required: false
         choices: ['ip', 'vxlan']
-        default: null
     state:
         description:
             - Specify desired state of the resource.
-        required: false
         choices: ['present', 'absent']
         default: present
     timeout_type:
         description:
             - Netstream timeout type.
-        required: false
         choices: ['active', 'inactive', 'tcp-session', 'manual']
-        default: null
     manual_slot:
         description:
             -  Specifies the slot number of netstream manual timeout.
-        required: false
-        default: null
 """
 
 EXAMPLES = '''
@@ -200,8 +192,8 @@ changed:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_config, load_config
-from ansible.module_utils.ce import ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_config, load_config
+from ansible.module_utils.network.cloudengine.ce import ce_argument_spec
 
 
 class NetStreamAging(object):

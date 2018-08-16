@@ -24,36 +24,27 @@ options:
     description:
       - name of the extension to add or remove
     required: true
-    default: null
   db:
     description:
       - name of the database to add or remove the extension to/from
     required: true
-    default: null
   login_user:
     description:
       - The username used to authenticate with
-    required: false
-    default: null
   login_password:
     description:
       - The password used to authenticate with
-    required: false
-    default: null
   login_host:
     description:
       - Host running the database
-    required: false
     default: localhost
   port:
     description:
       - Database port to connect to.
-    required: false
     default: 5432
   state:
     description:
       - The database extension state
-    required: false
     default: present
     choices: [ "present", "absent" ]
 notes:
@@ -99,6 +90,7 @@ def ext_exists(cursor, ext):
     cursor.execute(query, {'ext': ext})
     return cursor.rowcount == 1
 
+
 def ext_delete(cursor, ext):
     if ext_exists(cursor, ext):
         query = "DROP EXTENSION \"%s\"" % ext
@@ -106,6 +98,7 @@ def ext_delete(cursor, ext):
         return True
     else:
         return False
+
 
 def ext_create(cursor, ext):
     if not ext_exists(cursor, ext):
@@ -119,6 +112,7 @@ def ext_create(cursor, ext):
 # Module execution.
 #
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -130,7 +124,7 @@ def main():
             ext=dict(required=True, aliases=['name']),
             state=dict(default="present", choices=["absent", "present"]),
         ),
-        supports_check_mode = True
+        supports_check_mode=True
     )
 
     if not postgresqldb_found:
@@ -145,13 +139,13 @@ def main():
     # check which values are empty and don't include in the **kw
     # dictionary
     params_map = {
-        "login_host":"host",
-        "login_user":"user",
-        "login_password":"password",
-        "port":"port"
+        "login_host": "host",
+        "login_user": "user",
+        "login_password": "password",
+        "port": "port"
     }
-    kw = dict( (params_map[k], v) for (k, v) in module.params.items()
-              if k in params_map and v != '' )
+    kw = dict((params_map[k], v) for (k, v) in module.params.items()
+              if k in params_map and v != '')
     try:
         db_connection = psycopg2.connect(database=db, **kw)
         # Enable autocommit so we can create databases

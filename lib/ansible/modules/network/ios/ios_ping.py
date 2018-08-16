@@ -13,9 +13,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: ios_ping
-short_description: Tests reachability using ping from IOS switch
+short_description: Tests reachability using ping from Cisco IOS network devices
 description:
 - Tests reachability using ping from switch to a remote destination.
+- For a general purpose network module, see the M(net_ping) module.
+- For Windows targets, use the M(win_ping) module instead.
+- For targets running Python, use the M(ping) module instead.
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
@@ -24,7 +27,6 @@ options:
   count:
     description:
     - Number of packets to send.
-    required: false
     default: 5
   dest:
     description:
@@ -33,8 +35,6 @@ options:
   source:
     description:
     - The source IP Address.
-    required: false
-    default: null
   state:
     description:
     - Determines if the expected result is success or fail.
@@ -43,36 +43,30 @@ options:
   vrf:
     description:
     - The VRF to use for forwarding.
-    required: false
     default: default
+notes:
+  - For a general purpose network module, see the M(net_ping) module.
+  - For Windows targets, use the M(win_ping) module instead.
+  - For targets running Python, use the M(ping) module instead.
 '''
 
 EXAMPLES = r'''
-- provider:
-    host: "{{ ansible_host }}"
-    username: "{{ username }}"
-    password: "{{ password }}"
-
 - name: Test reachability to 10.10.10.10 using default vrf
   ios_ping:
-    provider: "{{ provider }}"
     dest: 10.10.10.10
 
 - name: Test reachability to 10.20.20.20 using prod vrf
   ios_ping:
-    provider: "{{ provider }}"
     dest: 10.20.20.20
     vrf: prod
 
 - name: Test unreachability to 10.30.30.30 using default vrf
   ios_ping:
-    provider: "{{ provider }}"
     dest: 10.30.30.30
     state: absent
 
 - name: Test reachability to 10.40.40.40 using prod vrf and setting count and source
   ios_ping:
-    provider: "{{ provider }}"
     dest: 10.40.40.40
     source: loopback0
     vrf: prod
@@ -108,8 +102,8 @@ rtt:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ios import run_commands
-from ansible.module_utils.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.ios.ios import run_commands
+from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 import re
 
 
@@ -145,7 +139,12 @@ def main():
     ping_results = run_commands(module, commands=results["commands"])
     ping_results_list = ping_results[0].split("\n")
 
-    success, rx, tx, rtt = parse_ping(ping_results_list[3])
+    stats = ""
+    for line in ping_results_list:
+        if line.startswith('Success'):
+            stats = line
+
+    success, rx, tx, rtt = parse_ping(stats)
     loss = abs(100 - int(success))
     results["packet_loss"] = str(loss) + "%"
     results["packets_rx"] = int(rx)
@@ -169,7 +168,7 @@ def build_ping(dest, count=None, source=None, vrf=None):
     to execute. All args come from the module's unique params.
     """
     if vrf is not None:
-        cmd = "ping {0} {1}".format(vrf, dest)
+        cmd = "ping vrf {0} {1}".format(vrf, dest)
     else:
         cmd = "ping {0}".format(dest)
 
@@ -188,8 +187,8 @@ def parse_ping(ping_stats):
     Example: "Success rate is 100 percent (5/5), round-trip min/avg/max = 1/2/8 ms"
     Returns the percent of packet loss, recieved packets, transmitted packets, and RTT dict.
     """
-    rate_re = re.compile("^\w+\s+\w+\s+\w+\s+(?P<pct>\d+)\s+\w+\s+\((?P<rx>\d+)\/(?P<tx>\d+)\)")
-    rtt_re = re.compile(".*,\s+\S+\s+\S+\s+=\s+(?P<min>\d+)\/(?P<avg>\d+)\/(?P<max>\d+)\s+\w+\s*$|.*\s*$")
+    rate_re = re.compile(r"^\w+\s+\w+\s+\w+\s+(?P<pct>\d+)\s+\w+\s+\((?P<rx>\d+)/(?P<tx>\d+)\)")
+    rtt_re = re.compile(r".*,\s+\S+\s+\S+\s+=\s+(?P<min>\d+)/(?P<avg>\d+)/(?P<max>\d+)\s+\w+\s*$|.*\s*$")
 
     rate = rate_re.match(ping_stats)
     rtt = rtt_re.match(ping_stats)

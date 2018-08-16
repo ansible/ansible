@@ -7,7 +7,7 @@
 - name: verify setup
   assert:
     that:
-    - role|success
+    - role is successful
 
 - name: test fail if missing params
   cs_role:
@@ -16,7 +16,7 @@
 - name: verifytest fail if missing params
   assert:
     that:
-    - role|failed
+    - role is failed
     - "role.msg.startswith('missing required arguments: ')"
 
 - name: test create role in check mode
@@ -28,7 +28,7 @@
 - name: verify test create role in check mode
   assert:
     that:
-    - role|changed
+    - role is changed
 
 - name: test create role
   cs_role:
@@ -38,7 +38,7 @@
 - name: verify test create role
   assert:
     that:
-    - role|changed
+    - role is changed
     - role.name == '{{ cs_resource_prefix }}-role'
     - role.role_type == 'DomainAdmin'
 
@@ -50,7 +50,7 @@
 - name: verify test create role idempotence
   assert:
     that:
-    - not role|changed
+    - role is not changed
     - role.name == '{{ cs_resource_prefix }}-role'
     - role.role_type == 'DomainAdmin'
 
@@ -64,7 +64,7 @@
 - name: verify test update role in check mode
   assert:
     that:
-    - role|changed
+    - role is changed
     - role.name == '{{ cs_resource_prefix }}-role'
     - "role.description is not defined"
     - role.role_type == 'DomainAdmin'
@@ -78,7 +78,7 @@
 - name: verify test update role
   assert:
     that:
-    - role|changed
+    - role is changed
     - role.name == '{{ cs_resource_prefix }}-role'
     - role.description == '{{ cs_resource_prefix }}-role-description'
     - role.role_type == 'DomainAdmin'
@@ -91,7 +91,7 @@
 - name: verify test update role idempotence
   assert:
     that:
-    - not role|changed
+    - role is not changed
     - role.name == '{{ cs_resource_prefix }}-role'
     - role.description == '{{ cs_resource_prefix }}-role-description'
     - role.role_type == 'DomainAdmin'
@@ -105,7 +105,7 @@
 - name: verify test remove role in check mode
   assert:
     that:
-    - role|changed
+    - role is changed
     - role.name == '{{ cs_resource_prefix }}-role'
     - role.role_type == 'DomainAdmin'
 
@@ -117,7 +117,7 @@
 - name: verify test remove role
   assert:
     that:
-    - role|changed
+    - role is changed
 
 - name: test remove role idempotence
   cs_role:
@@ -127,4 +127,4 @@
 - name: verify test remove role idempotence
   assert:
     that:
-    - not role|changed
+    - role is not changed

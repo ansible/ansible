@@ -1,0 +1,5 @@
+---
+# defaults file for aws_elasticbeanstalk_app
+app_name: '{{ resource_prefix }}_eb_ansible_test'
+description: 'eb_ansible_test app description'
+alternate_description: 'eb_ansible_test app alternate_description'

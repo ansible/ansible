@@ -1,25 +1,19 @@
-# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
 
-# Make coding more python3-ish
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from copy import deepcopy
+
+from ansible import constants as C
 from ansible.parsing.dataloader import DataLoader
+from ansible.vars.clean import strip_internal_keys
+
+_IGNORE = ('failed', 'skipped')
+_PRESERVE = ('attempts', 'changed', 'retries')
+_SUB_PRESERVE = {'_ansible_delegated_vars': ('ansible_host', 'ansible_port', 'ansible_user', 'ansible_connection')}
 
 
 class TaskResult:
@@ -72,8 +66,29 @@ class TaskResult:
     def is_unreachable(self):
         return self._check_key('unreachable')
 
+    def needs_debugger(self, globally_enabled=False):
+        _debugger = self._task_fields.get('debugger')
+        _ignore_errors = C.TASK_DEBUGGER_IGNORE_ERRORS and self._task_fields.get('ignore_errors')
+
+        ret = False
+        if globally_enabled and ((self.is_failed() and not _ignore_errors) or self.is_unreachable()):
+            ret = True
+
+        if _debugger in ('always',):
+            ret = True
+        elif _debugger in ('never',):
+            ret = False
+        elif _debugger in ('on_failed',) and self.is_failed() and not _ignore_errors:
+            ret = True
+        elif _debugger in ('on_unreachable',) and self.is_unreachable():
+            ret = True
+        elif _debugger in('on_skipped',) and self.is_skipped():
+            ret = True
+
+        return ret
+
     def _check_key(self, key):
-        '''get a specific key from the result or it's items'''
+        '''get a specific key from the result or its items'''
 
         if isinstance(self._result, dict) and key in self._result:
             return self._result.get(key, False)
@@ -83,3 +98,47 @@ class TaskResult:
                 if isinstance(res, dict):
                     flag |= res.get(key, False)
             return flag
+
+    def clean_copy(self):
+
+        ''' returns 'clean' taskresult object '''
+
+        # FIXME: clean task_fields, _task and _host copies
+        result = TaskResult(self._host, self._task, {}, self._task_fields)
+
+        # statuses are already reflected on the event type
+        if result._task and result._task.action in ['debug']:
+            # debug is verbose by default to display vars, no need to add invocation
+            ignore = _IGNORE + ('invocation',)
+        else:
+            ignore = _IGNORE
+
+        if self._task.no_log or self._result.get('_ansible_no_log', False):
+            x = {"censored": "the output has been hidden due to the fact that 'no_log: true' was specified for this result"}
+
+            # preserve full
+            for preserve in _PRESERVE:
+                if preserve in self._result:
+                    x[preserve] = self._result[preserve]
+
+            # preserve subset
+            for sub in _SUB_PRESERVE:
+                if sub in self._result:
+                    x[sub] = {}
+                    for key in _SUB_PRESERVE[sub]:
+                        if key in self._result[sub]:
+                            x[sub][key] = self._result[sub][key]
+
+            result._result = x
+        elif self._result:
+            result._result = deepcopy(self._result)
+
+            # actualy remove
+            for remove_key in ignore:
+                if remove_key in result._result:
+                    del result._result[remove_key]
+
+            # remove almost ALL internal keys, keep ones relevant to callback
+            strip_internal_keys(result._result, exceptions=('_ansible_verbose_always', '_ansible_item_label', '_ansible_no_log'))
+
+        return result

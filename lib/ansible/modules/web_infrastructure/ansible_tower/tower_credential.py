@@ -33,150 +33,85 @@ options:
     user:
       description:
         - User that should own this credential.
-      required: False
-      default: null
     team:
       description:
         - Team that should own this credential.
-      required: False
-      default: null
     project:
       description:
         - Project that should for this credential.
-      required: False
-      default: null
     organization:
       description:
         - Organization that should own the credential.
-      required: False
-      default: null
     kind:
       description:
         - Type of credential being added.
       required: True
-      choices: ["ssh", "net", "scm", "aws", "rax", "vmware", "satellite6", "cloudforms", "gce", "azure", "azure_rm", "openstack"]
+      choices: ["ssh", "vault", "net", "scm", "aws", "vmware", "satellite6", "cloudforms", "gce", "azure_rm", "openstack", "rhv", "insights", "tower"]
     host:
       description:
         - Host for this credential.
-      required: False
-      default: null
     username:
       description:
         - Username for this credential. access_key for AWS.
-      required: False
-      default: null
     password:
       description:
         - Password for this credential. Use ASK for prompting. secret_key for AWS. api_key for RAX.
-      required: False
-      default: null
     ssh_key_data:
       description:
         - Path to SSH private key.
-      required: False
-      default: null
     ssh_key_unlock:
       description:
         - Unlock password for ssh_key. Use ASK for prompting.
     authorize:
       description:
-        - Should use authroize for net type.
-      required: False
-      default: False
+        - Should use authorize for net type.
+      type: bool
+      default: 'no'
     authorize_password:
       description:
-        - Password for net credentials that require authroize.
-      required: False
-      default: null
+        - Password for net credentials that require authorize.
     client:
       description:
         - Client or application ID for azure_rm type.
       required: False
       default: null
+    security_token:
+      description:
+        - STS token for aws type.
+      required: False
+      default: null
+      version_added: "2.6"
     secret:
       description:
         - Secret token for azure_rm type.
-      required: False
-      default: null
     subscription:
       description:
         - Subscription ID for azure_rm type.
-      required: False
-      default: null
     tenant:
       description:
         - Tenant ID for azure_rm type.
-      required: False
-      default: null
     domain:
       description:
         - Domain for openstack type.
-      required: False
-      default: null
     become_method:
       description:
         - Become method to Use for privledge escalation.
-      required: False
       choices: ["None", "sudo", "su", "pbrun", "pfexec", "pmrun"]
-      default: "None"
     become_username:
       description:
         - Become username. Use ASK for prompting.
-      required: False
-      default: null
     become_password:
       description:
         - Become password. Use ASK for prompting.
-      required: False
-      default: null
     vault_password:
       description:
-        - Valut password. Use ASK for prompting.
+        - Vault password. Use ASK for prompting.
     state:
       description:
         - Desired state of the resource.
-      required: False
-      default: "present"
       choices: ["present", "absent"]
-    tower_host:
-      description:
-        - URL to your Tower instance.
-      required: False
-      default: null
-    tower_username:
-        description:
-          - Username for your Tower instance.
-        required: False
-        default: null
-    tower_password:
-        description:
-          - Password for your Tower instance.
-        required: False
-        default: null
-    tower_verify_ssl:
-        description:
-          - Dis/allow insecure connections to Tower. If C(no), SSL certificates will not be validated.
-            This should only be used on personally controlled sites using self-signed certificates.
-        required: False
-        default: True
-    tower_config_file:
-      description:
-        - Path to the Tower config file. See notes.
-      required: False
-      default: null
-
-
-requirements:
-  - "python >= 2.6"
-  - "ansible-tower-cli >= 3.0.2"
-
-notes:
-  - If no I(config_file) is provided we will attempt to use the tower-cli library
-    defaults to find your Tower host information.
-  - I(config_file) should contain Tower configuration in the following format
-      host=hostname
-      username=username
-      password=password
+      default: "present"
+extends_documentation_fragment: tower
 '''
 
 
@@ -190,59 +125,89 @@ EXAMPLES = '''
     tower_config_file: "~/tower_cli.cfg"
 '''
 
+import os
+
+from ansible.module_utils._text import to_text
+from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode
+
 try:
-    import os
     import tower_cli
     import tower_cli.utils.exceptions as exc
 
     from tower_cli.conf import settings
-    from ansible.module_utils.ansible_tower import tower_auth_config, tower_check_mode
-
-    HAS_TOWER_CLI = True
 except ImportError:
-    HAS_TOWER_CLI = False
+    pass
+
+
+KIND_CHOICES = {
+    'ssh': 'Machine',
+    'vault': 'Ansible Vault',
+    'net': 'Network',
+    'scm': 'Source Control',
+    'aws': 'Amazon Web Services',
+    'vmware': 'VMware vCenter',
+    'satellite6': 'Red Hat Satellite 6',
+    'cloudforms': 'Red Hat CloudForms',
+    'gce': 'Google Compute Engine',
+    'azure_rm': 'Microsoft Azure Resource Manager',
+    'openstack': 'OpenStack',
+    'rhv': 'Red Hat Virtualization',
+    'insights': 'Insights',
+    'tower': 'Ansible Tower',
+}
+
+
+def credential_type_for_v1_kind(params, module):
+    credential_type_res = tower_cli.get_resource('credential_type')
+    kind = params.pop('kind')
+    arguments = {'managed_by_tower': True}
+    if kind == 'ssh':
+        if params.get('vault_password'):
+            arguments['kind'] = 'vault'
+        else:
+            arguments['kind'] = 'ssh'
+    elif kind in ('net', 'scm', 'insights', 'vault'):
+        arguments['kind'] = kind
+    elif kind in KIND_CHOICES:
+        arguments.update(dict(
+            kind='cloud',
+            name=KIND_CHOICES[kind]
+        ))
+    return credential_type_res.get(**arguments)
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            name=dict(required=True),
-            user=dict(),
-            team=dict(),
-            kind=dict(required=True,
-                      choices=["ssh", "net", "scm", "aws", "rax", "vmware", "satellite6",
-                               "cloudforms", "gce", "azure", "azure_rm", "openstack"]),
-            host=dict(),
-            username=dict(),
-            password=dict(no_log=True),
-            ssh_key_data=dict(no_log=True),
-            ssh_key_unlock=dict(no_log=True),
-            authorize=dict(type='bool', default=False),
-            authorize_password=dict(no_log=True),
-            client=dict(),
-            secret=dict(),
-            tenant=dict(),
-            subscription=dict(),
-            domain=dict(),
-            become_method=dict(),
-            become_username=dict(),
-            become_password=dict(no_log=True),
-            vault_password=dict(no_log=True),
-            description=dict(),
-            organization=dict(required=True),
-            project=dict(),
-            tower_host=dict(),
-            tower_username=dict(),
-            tower_password=dict(no_log=True),
-            tower_verify_ssl=dict(type='bool', default=True),
-            tower_config_file=dict(type='path'),
-            state=dict(choices=['present', 'absent'], default='present'),
-        ),
-        supports_check_mode=True
+
+    argument_spec = dict(
+        name=dict(required=True),
+        user=dict(),
+        team=dict(),
+        kind=dict(required=True,
+                  choices=KIND_CHOICES.keys()),
+        host=dict(),
+        username=dict(),
+        password=dict(no_log=True),
+        ssh_key_data=dict(no_log=True, type='path'),
+        ssh_key_unlock=dict(no_log=True),
+        authorize=dict(type='bool', default=False),
+        authorize_password=dict(no_log=True),
+        client=dict(),
+        security_token=dict(),
+        secret=dict(),
+        tenant=dict(),
+        subscription=dict(),
+        domain=dict(),
+        become_method=dict(),
+        become_username=dict(),
+        become_password=dict(no_log=True),
+        vault_password=dict(no_log=True),
+        description=dict(),
+        organization=dict(required=True),
+        project=dict(),
+        state=dict(choices=['present', 'absent'], default='present'),
     )
 
-    if not HAS_TOWER_CLI:
-        module.fail_json(msg='ansible-tower-cli required for this module')
+    module = TowerModule(argument_spec=argument_spec, supports_check_mode=True)
 
     name = module.params.get('name')
     organization = module.params.get('organization')
@@ -255,23 +220,58 @@ def main():
         tower_check_mode(module)
         credential = tower_cli.get_resource('credential')
         try:
-            params = module.params.copy()
+            params = {}
             params['create_on_missing'] = True
+            params['name'] = name
 
             if organization:
                 org_res = tower_cli.get_resource('organization')
                 org = org_res.get(name=organization)
                 params['organization'] = org['id']
 
-            if params['ssh_key_data']:
-                filename = params['ssh_key_data']
-                filename = os.path.expanduser(filename)
+            try:
+                tower_cli.get_resource('credential_type')
+            except (ImportError, AttributeError):
+                # /api/v1/ backwards compat
+                # older versions of tower-cli don't *have* a credential_type
+                # resource
+                params['kind'] = module.params['kind']
+            else:
+                credential_type = credential_type_for_v1_kind(module.params, module)
+                params['credential_type'] = credential_type['id']
+
+            if module.params.get('description'):
+                params['description'] = module.params.get('description')
+
+            if module.params.get('user'):
+                user_res = tower_cli.get_resource('user')
+                user = user_res.get(username=module.params.get('user'))
+                params['user'] = user['id']
+
+            if module.params.get('team'):
+                team_res = tower_cli.get_resource('team')
+                team = team_res.get(name=module.params.get('team'))
+                params['team'] = team['id']
+
+            if module.params.get('ssh_key_data'):
+                filename = module.params.get('ssh_key_data')
                 if not os.path.exists(filename):
                     module.fail_json(msg='file not found: %s' % filename)
                 if os.path.isdir(filename):
                     module.fail_json(msg='attempted to read contents of directory: %s' % filename)
                 with open(filename, 'rb') as f:
-                    params['ssh_key_data'] = f.read()
+                    module.params['ssh_key_data'] = to_text(f.read())
+
+            for key in ('authorize', 'authorize_password', 'client',
+                        'security_token', 'secret', 'tenant', 'subscription',
+                        'domain', 'become_method', 'become_username',
+                        'become_password', 'vault_password', 'project', 'host',
+                        'username', 'password', 'ssh_key_data',
+                        'ssh_key_unlock'):
+                if 'kind' in params:
+                    params[key] = module.params.get(key)
+                elif module.params.get(key):
+                    params.setdefault('inputs', {})[key] = module.params.get(key)
 
             if state == 'present':
                 result = credential.modify(**params)
@@ -287,6 +287,5 @@ def main():
     module.exit_json(**json_output)
 
 
-from ansible.module_utils.basic import AnsibleModule
 if __name__ == '__main__':
     main()

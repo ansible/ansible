@@ -24,18 +24,14 @@ options:
     description:
       - The VPC ID for the VPC in which to manage the Internet Gateway.
     required: true
-    default: null
   tags:
     description:
       - "A dict of tags to apply to the internet gateway. Any tags currently applied to the internet gateway and not present here will be removed."
-    required: false
-    default: null
     aliases: [ 'resource_tags' ]
     version_added: "2.4"
   state:
     description:
       - Create or terminate the IGW
-    required: false
     default: present
     choices: [ 'present', 'absent' ]
 extends_documentation_fragment:
@@ -90,8 +86,6 @@ try:
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
-    if __name__ != '__main__':
-        raise
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import AnsibleAWSError, connect_to_aws, ec2_argument_spec, get_aws_connection_info

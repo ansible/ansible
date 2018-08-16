@@ -1,18 +1,10 @@
 Resources
 ````````````````
-Internal resources
--------------------------
-- http://docs.ansible.com/
-- https://sites.google.com/a/ansibleworks.com/ansible-intranet/
-- ??? intranet Engineering doc???
+* Follow the style of the :ref:`Ansible Documentation<ansible_documentation>`
+* Ask for advice on IRC, on the ``#ansible-devel`` Freenode channel
+* Review these online style guides:
 
+  * `AP Stylebook <https://www.apstylebook.com>`_
+  * `Chicago Manual of Style <https://www.chicagomanualofstyle.org/home.html>`_
+  * `Strunk and White's Elements of Style <https://www.crockford.com/wrrrld/style.html>`_
 
-External Resources
--------------------------
-- www.apstylebook.com
-- www.chicagomanualofstyle.org—home.html
-- www.crockford.com—style.html
-- orwell.ru—index.htm
-- www.sun.com—sun_tech_pub.xml
-- webopedia.internet.com
-- www.computeruser.com—index.html

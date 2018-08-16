@@ -24,14 +24,11 @@ extends_documentation_fragment:
     - aws
     - ec2
 description:
-    - Create and manage AWS Datapipelines. Creation is not idempotent in AWS,
-      so the uniqueId is created by hashing the options (minus objects) given to the datapipeline.
-
-      The pipeline definition must be in the format given here
+    - Create and manage AWS Datapipelines. Creation is not idempotent in AWS, so the I(uniqueId) is created by hashing the options (minus objects)
+      given to the datapipeline.
+    - The pipeline definition must be in the format given here
       U(http://docs.aws.amazon.com/datapipeline/latest/APIReference/API_PutPipelineDefinition.html#API_PutPipelineDefinition_RequestSyntax).
-
-      Also operations will wait for a configurable amount
-      of time to ensure the pipeline is in the requested state.
+    - Also operations will wait for a configurable amount of time to ensure the pipeline is in the requested state.
 options:
   name:
     description:
@@ -83,7 +80,6 @@ options:
   tags:
     description:
       - A dict of key:value pair(s) to add to the pipeline.
-    default: null
 '''
 
 EXAMPLES = '''
@@ -200,8 +196,7 @@ def pipeline_id(client, name):
     for dp in pipelines['pipelineIdList']:
         if dp['name'] == name:
             return dp['id']
-    else:
-        raise DataPipelineNotFound
+    raise DataPipelineNotFound
 
 
 def pipeline_description(client, dp_id):
@@ -233,8 +228,7 @@ def pipeline_field(client, dp_id, field):
     for field_key in dp_description['pipelineDescriptionList'][0]['fields']:
         if field_key['key'] == field:
             return field_key['stringValue']
-    else:
-        raise KeyError("Field key {0} not found!".format(field))
+    raise KeyError("Field key {0} not found!".format(field))
 
 
 def run_with_timeout(timeout, func, *func_args, **func_kwargs):
@@ -287,7 +281,8 @@ def check_dp_status(client, dp_id, status):
     :returns: True or False
 
     """
-    assert isinstance(status, list)
+    if not isinstance(status, list):
+        raise AssertionError()
     if pipeline_field(client, dp_id, field="@pipelineState") in status:
         return True
     else:
@@ -333,7 +328,7 @@ def activate_pipeline(client, module):
                 pass
             else:
                 module.fail_json(msg=('Data Pipeline {0} failed to activate '
-                                 'within timeout {1} seconds').format(dp_name, timeout))
+                                      'within timeout {1} seconds').format(dp_name, timeout))
         changed = True
 
     data_pipeline = get_result(client, dp_id)
@@ -478,7 +473,7 @@ def diff_pipeline(client, module, objects, unique_id, dp_name):
             result = {'data_pipeline': data_pipeline,
                       'msg': msg}
     except DataPipelineNotFound:
-            create_dp = True
+        create_dp = True
 
     return create_dp, changed, result
 
@@ -571,7 +566,8 @@ def main():
             timeout=dict(required=False, type='int', default=300),
             state=dict(default='present', choices=['present', 'absent',
                                                    'active', 'inactive']),
-            tags=dict(required=False, type='dict')
+            tags=dict(required=False, type='dict', default={}),
+            values=dict(required=False, type='list', default=[])
         )
     )
     module = AnsibleModule(argument_spec, supports_check_mode=False)

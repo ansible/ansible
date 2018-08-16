@@ -1,21 +1,24 @@
-# NOTE: The win_scheduled_task module only works on Win2012+
+---
+- name: remove test tasks before test
+  include_tasks: clean.yml
 
-- name: Test Windows capabilities
-  raw: Get-Command New-ScheduledTask -ErrorAction SilentlyContinue; return $?
-  failed_when: no
-  register: new_scheduledtask
+- block:
+  - name: Test failure scenarios
+    include_tasks: failures.yml
 
-- name: Only run tests when Windows is capable
-  when: new_scheduledtask.rc == 0
-  block:
+  - name: Test normal scenarios
+    include_tasks: new_tests.yml
 
-  - name: Test in normal mode
-    include: tests.yml
-    vars:
-      in_check_mode: no
+  - include_tasks: clean.yml
+  
+  - name: Test principals
+    include_tasks: principals.yml
 
-  - name: Test in check-mode
-    include: tests.yml
-    vars:
-      in_check_mode: yes
-    check_mode: yes
+  - include_tasks: clean.yml
+
+  - name: Test triggers
+    include_tasks: triggers.yml
+  
+  always:
+  - name: remove test tasks after test
+    include_tasks: clean.yml

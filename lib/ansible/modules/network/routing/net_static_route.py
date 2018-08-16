@@ -18,10 +18,10 @@ DOCUMENTATION = """
 module: net_static_route
 version_added: "2.4"
 author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
-short_description: Manage static IP routes on network devices
+short_description: Manage static IP routes on network appliances (routers, switches et. al.)
 description:
   - This module provides declarative management of static
-    IP routes on network devices.
+    IP routes on network appliances (routers, switches et. al.).
 options:
   prefix:
     description:
@@ -42,7 +42,7 @@ options:
     description: List of static route definitions
   purge:
     description:
-      - Purge static routes not defined in the aggregates parameter.
+      - Purge static routes not defined in the I(aggregate) parameter.
     default: no
   state:
     description:

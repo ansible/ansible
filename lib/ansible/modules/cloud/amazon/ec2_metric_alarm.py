@@ -1,18 +1,10 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -149,11 +141,14 @@ EXAMPLES = '''
 
 try:
     import boto.ec2.cloudwatch
-    from boto.ec2.cloudwatch import CloudWatchConnection, MetricAlarm
-    from boto.exception import BotoServerError
-    HAS_BOTO = True
+    from boto.ec2.cloudwatch import MetricAlarm
+    from boto.exception import BotoServerError, NoAuthHandlerFound
 except ImportError:
-    HAS_BOTO = False
+    pass  # Taken care of by ec2.HAS_BOTO
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (AnsibleAWSError, HAS_BOTO, connect_to_aws, ec2_argument_spec,
+                                      get_aws_connection_info)
 
 
 def create_metric_alarm(connection, module):
@@ -204,13 +199,13 @@ def create_metric_alarm(connection, module):
         alarm = alarms[0]
         changed = False
 
-        for attr in ('comparison','metric','namespace','statistic','threshold','period','evaluation_periods','unit','description'):
+        for attr in ('comparison', 'metric', 'namespace', 'statistic', 'threshold', 'period', 'evaluation_periods', 'unit', 'description'):
             if getattr(alarm, attr) != module.params.get(attr):
                 changed = True
                 setattr(alarm, attr, module.params.get(attr))
-        #this is to deal with a current bug where you cannot assign '<=>' to the comparator when modifying an existing alarm
+        # this is to deal with a current bug where you cannot assign '<=>' to the comparator when modifying an existing alarm
         comparison = alarm.comparison
-        comparisons = {'<=' : 'LessThanOrEqualToThreshold', '<' : 'LessThanThreshold', '>=' : 'GreaterThanOrEqualToThreshold', '>' : 'GreaterThanThreshold'}
+        comparisons = {'<=': 'LessThanOrEqualToThreshold', '<': 'LessThanThreshold', '>=': 'GreaterThanOrEqualToThreshold', '>': 'GreaterThanThreshold'}
         alarm.comparison = comparisons[comparison]
 
         dim1 = module.params.get('dimensions')
@@ -220,10 +215,10 @@ def create_metric_alarm(connection, module):
             if not isinstance(dim1[keys], list):
                 dim1[keys] = [dim1[keys]]
             if keys not in dim2 or dim1[keys] != dim2[keys]:
-                changed=True
+                changed = True
                 setattr(alarm, 'dimensions', dim1)
 
-        for attr in ('alarm_actions','insufficient_data_actions','ok_actions'):
+        for attr in ('alarm_actions', 'insufficient_data_actions', 'ok_actions'):
             action = module.params.get(attr) or []
             # Boto and/or ansible may provide same elements in lists but in different order.
             # Compare on sets since they do not need any order.
@@ -238,24 +233,25 @@ def create_metric_alarm(connection, module):
             module.fail_json(msg=str(e))
     result = alarms[0]
     module.exit_json(changed=changed, name=result.name,
-        actions_enabled=result.actions_enabled,
-        alarm_actions=result.alarm_actions,
-        alarm_arn=result.alarm_arn,
-        comparison=result.comparison,
-        description=result.description,
-        dimensions=result.dimensions,
-        evaluation_periods=result.evaluation_periods,
-        insufficient_data_actions=result.insufficient_data_actions,
-        last_updated=result.last_updated,
-        metric=result.metric,
-        namespace=result.namespace,
-        ok_actions=result.ok_actions,
-        period=result.period,
-        state_reason=result.state_reason,
-        state_value=result.state_value,
-        statistic=result.statistic,
-        threshold=result.threshold,
-        unit=result.unit)
+                     actions_enabled=result.actions_enabled,
+                     alarm_actions=result.alarm_actions,
+                     alarm_arn=result.alarm_arn,
+                     comparison=result.comparison,
+                     description=result.description,
+                     dimensions=result.dimensions,
+                     evaluation_periods=result.evaluation_periods,
+                     insufficient_data_actions=result.insufficient_data_actions,
+                     last_updated=result.last_updated,
+                     metric=result.metric,
+                     namespace=result.namespace,
+                     ok_actions=result.ok_actions,
+                     period=result.period,
+                     state_reason=result.state_reason,
+                     state_value=result.state_value,
+                     statistic=result.statistic,
+                     threshold=result.threshold,
+                     unit=result.unit)
+
 
 def delete_metric_alarm(connection, module):
     name = module.params.get('name')
@@ -294,7 +290,7 @@ def main():
             insufficient_data_actions=dict(type='list'),
             ok_actions=dict(type='list'),
             state=dict(default='present', choices=['present', 'absent']),
-            )
+        )
     )
 
     module = AnsibleModule(argument_spec=argument_spec)
@@ -309,7 +305,7 @@ def main():
     if region:
         try:
             connection = connect_to_aws(boto.ec2.cloudwatch, region, **aws_connect_params)
-        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
+        except (NoAuthHandlerFound, AnsibleAWSError) as e:
             module.fail_json(msg=str(e))
     else:
         module.fail_json(msg="region must be specified")
@@ -319,9 +315,6 @@ def main():
     elif state == 'absent':
         delete_metric_alarm(connection, module)
 
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

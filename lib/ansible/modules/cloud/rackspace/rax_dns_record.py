@@ -87,7 +87,9 @@ notes:
   - As of version 1.7, the C(type) field is required and no longer defaults to an C(A) record.
   - C(PTR) record support was added in version 1.7
 author: "Matt Martz (@sivel)"
-extends_documentation_fragment: rackspace
+extends_documentation_fragment:
+  - rackspace
+  - rackspace.openstack
 '''
 
 EXAMPLES = '''
@@ -128,7 +130,7 @@ from ansible.module_utils.rax import (rax_argument_spec,
                                       rax_required_together,
                                       rax_to_dict,
                                       setup_rax_module,
-                                     )
+                                      )
 
 
 def rax_dns_record_ptr(module, data=None, comment=None, loadbalancer=None,
@@ -270,7 +272,6 @@ def rax_dns_record(module, comment=None, data=None, domain=None, name=None,
             record = domain.find_record(record_type, name=name, data=data)
         except pyrax.exceptions.DomainRecordNotFound as e:
             record = {}
-            pass
         except pyrax.exceptions.DomainRecordNotUnique as e:
             module.fail_json(msg='%s' % e.message)
 

@@ -31,7 +31,7 @@ from ansible.module_utils.basic import bytes_to_human
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
 from ansible.module_utils.facts.utils import get_file_content, get_file_lines, get_mount_size
 
-# import this as a module to ensure we get the same module isntance
+# import this as a module to ensure we get the same module instance
 from ansible.module_utils.facts import timeout
 
 
@@ -78,6 +78,7 @@ class LinuxHardware(Hardware):
 
     def populate(self, collected_facts=None):
         hardware_facts = {}
+        self.module.run_command_environ_update = {'LANG': 'C', 'LC_ALL': 'C', 'LC_NUMERIC': 'C'}
 
         cpu_facts = self.get_cpu_facts(collected_facts=collected_facts)
         memory_facts = self.get_memory_facts()
@@ -193,6 +194,7 @@ class LinuxHardware(Hardware):
 
             # model name is for Intel arch, Processor (mind the uppercase P)
             # works for some ARM devices, like the Sheevaplug.
+            # 'ncpus active' is SPARC attribute
             if key in ['model name', 'Processor', 'vendor_id', 'cpu', 'Vendor', 'processor']:
                 if 'processor' not in cpu_facts:
                     cpu_facts['processor'] = []
@@ -216,6 +218,8 @@ class LinuxHardware(Hardware):
                 cores[coreid] = int(data[1].strip())
             elif key == '# processors':
                 cpu_facts['processor_cores'] = int(data[1].strip())
+            elif key == 'ncpus active':
+                i = int(data[1].strip())
 
         # Skip for platforms without vendor_id/model_name in cpuinfo (e.g ppc64le)
         if vendor_id_occurrence > 0:
@@ -369,6 +373,31 @@ class LinuxHardware(Hardware):
 
         return uuids
 
+    def _udevadm_uuid(self, device):
+        # fallback for versions of lsblk <= 2.23 that don't have --paths, see _run_lsblk() above
+        uuid = 'N/A'
+
+        udevadm_path = self.module.get_bin_path('udevadm')
+        if not udevadm_path:
+            return uuid
+
+        cmd = [udevadm_path, 'info', '--query', 'property', '--name', device]
+        rc, out, err = self.module.run_command(cmd)
+        if rc != 0:
+            return uuid
+
+        # a snippet of the output of the udevadm command below will be:
+        # ...
+        # ID_FS_TYPE=ext4
+        # ID_FS_USAGE=filesystem
+        # ID_FS_UUID=57b1a3e7-9019-4747-9809-7ec52bba9179
+        # ...
+        m = re.search('ID_FS_UUID=(.*)\n', out)
+        if m:
+            uuid = m.group(1)
+
+        return uuid
+
     def _run_findmnt(self, findmnt_path):
         args = ['--list', '--noheadings', '--notruncate']
         cmd = [findmnt_path] + args
@@ -439,11 +468,16 @@ class LinuxHardware(Hardware):
                 if not self.MTAB_BIND_MOUNT_RE.match(options):
                     options += ",bind"
 
+            # _udevadm_uuid is a fallback for versions of lsblk <= 2.23 that don't have --paths
+            # see _run_lsblk() above
+            # https://github.com/ansible/ansible/issues/36077
+            uuid = uuids.get(device, self._udevadm_uuid(device))
+
             mount_info = {'mount': mount,
                           'device': device,
                           'fstype': fstype,
                           'options': options,
-                          'uuid': uuids.get(device, 'N/A')}
+                          'uuid': uuid}
 
             mount_info.update(mount_statvfs_info)
 
@@ -565,12 +599,9 @@ class LinuxHardware(Hardware):
                 device = "/dev/%s" % (block)
                 rc, drivedata, err = self.module.run_command([sg_inq, device])
                 if rc == 0:
-                    serial = re.search("Unit serial number:\s+(\w+)", drivedata)
+                    serial = re.search(r"Unit serial number:\s+(\w+)", drivedata)
                     if serial:
                         d['serial'] = serial.group(1)
-
-            for key in ['vendor', 'model']:
-                d[key] = get_file_content(sysdir + "/device/" + key)
 
             for key, test in [('removable', '/removable'),
                               ('support_discard', '/queue/discard_granularity'),
@@ -582,7 +613,7 @@ class LinuxHardware(Hardware):
 
             d['partitions'] = {}
             for folder in os.listdir(sysdir):
-                m = re.search("(" + diskname + "\d+)", folder)
+                m = re.search("(" + diskname + r"[p]?\d+)", folder)
                 if m:
                     part = {}
                     partname = m.group(1)
@@ -598,7 +629,7 @@ class LinuxHardware(Hardware):
                     part['sectorsize'] = get_file_content(part_sysdir + "/queue/logical_block_size")
                     if not part['sectorsize']:
                         part['sectorsize'] = get_file_content(part_sysdir + "/queue/hw_sector_size", 512)
-                    part['size'] = bytes_to_human((float(part['sectors']) * float(part['sectorsize'])))
+                    part['size'] = bytes_to_human((float(part['sectors']) * 512.0))
                     part['uuid'] = get_partition_uuid(partname)
                     self.get_holders(part, part_sysdir)
 
@@ -608,7 +639,7 @@ class LinuxHardware(Hardware):
             d['scheduler_mode'] = ""
             scheduler = get_file_content(sysdir + "/queue/scheduler")
             if scheduler is not None:
-                m = re.match(".*?(\[(.*)\])", scheduler)
+                m = re.match(r".*?(\[(.*)\])", scheduler)
                 if m:
                     d['scheduler_mode'] = m.group(2)
 
@@ -618,16 +649,16 @@ class LinuxHardware(Hardware):
             d['sectorsize'] = get_file_content(sysdir + "/queue/logical_block_size")
             if not d['sectorsize']:
                 d['sectorsize'] = get_file_content(sysdir + "/queue/hw_sector_size", 512)
-            d['size'] = bytes_to_human(float(d['sectors']) * float(d['sectorsize']))
+            d['size'] = bytes_to_human(float(d['sectors']) * 512.0)
 
             d['host'] = ""
 
             # domains are numbered (0 to ffff), bus (0 to ff), slot (0 to 1f), and function (0 to 7).
-            m = re.match(".+/([a-f0-9]{4}:[a-f0-9]{2}:[0|1][a-f0-9]\.[0-7])/", sysdir)
+            m = re.match(r".+/([a-f0-9]{4}:[a-f0-9]{2}:[0|1][a-f0-9]\.[0-7])/", sysdir)
             if m and pcidata:
                 pciid = m.group(1)
                 did = re.escape(pciid)
-                m = re.search("^" + did + "\s(.*)$", pcidata, re.MULTILINE)
+                m = re.search("^" + did + r"\s(.*)$", pcidata, re.MULTILINE)
                 if m:
                     d['host'] = m.group(1)
 
@@ -671,7 +702,7 @@ class LinuxHardware(Hardware):
             if vgs_path:
                 rc, vg_lines, err = self.module.run_command('%s %s' % (vgs_path, lvm_util_options))
                 for vg_line in vg_lines.splitlines():
-                    items = vg_line.split(',')
+                    items = vg_line.strip().split(',')
                     vgs[items[0]] = {'size_g': items[-2],
                                      'free_g': items[-1],
                                      'num_lvs': items[2],
@@ -684,7 +715,7 @@ class LinuxHardware(Hardware):
             if lvs_path:
                 rc, lv_lines, err = self.module.run_command('%s %s' % (lvs_path, lvm_util_options))
                 for lv_line in lv_lines.splitlines():
-                    items = lv_line.split(',')
+                    items = lv_line.strip().split(',')
                     lvs[items[0]] = {'size_g': items[3], 'vg': items[1]}
 
             pvs_path = self.module.get_bin_path('pvs')
@@ -693,7 +724,7 @@ class LinuxHardware(Hardware):
             if pvs_path:
                 rc, pv_lines, err = self.module.run_command('%s %s' % (pvs_path, lvm_util_options))
                 for pv_line in pv_lines.splitlines():
-                    items = pv_line.split(',')
+                    items = pv_line.strip().split(',')
                     pvs[self._find_mapper_device_name(items[0])] = {
                         'size_g': items[4],
                         'free_g': items[5],
@@ -707,3 +738,5 @@ class LinuxHardware(Hardware):
 class LinuxHardwareCollector(HardwareCollector):
     _platform = 'Linux'
     _fact_class = LinuxHardware
+
+    required_facts = set(['platform'])

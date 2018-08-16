@@ -26,11 +26,17 @@ from distutils.version import LooseVersion, StrictVersion
 
 from ansible import errors
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 def failed(result):
     ''' Test if task result yields failed '''
     if not isinstance(result, MutableMapping):
-        raise errors.AnsibleFilterError("|failed expects a dictionary")
+        raise errors.AnsibleFilterError("The 'failed' test expects a dictionary")
     return result.get('failed', False)
 
 
@@ -42,7 +48,7 @@ def success(result):
 def changed(result):
     ''' Test if task result yields changed '''
     if not isinstance(result, MutableMapping):
-        raise errors.AnsibleFilterError("|changed expects a dictionary")
+        raise errors.AnsibleFilterError("The 'changed' test expects a dictionary")
     if 'changed' not in result:
         changed = False
         if (
@@ -62,8 +68,22 @@ def changed(result):
 def skipped(result):
     ''' Test if task result yields skipped '''
     if not isinstance(result, MutableMapping):
-        raise errors.AnsibleFilterError("|skipped expects a dictionary")
+        raise errors.AnsibleFilterError("The 'skipped' test expects a dictionary")
     return result.get('skipped', False)
+
+
+def finished(result):
+    ''' Test if async task has finished '''
+    if not isinstance(result, MutableMapping):
+        raise errors.AnsibleFilterError("The 'finished' test expects a dictionary")
+    if 'finished' in result:
+        # For async tasks return status
+        # NOTE: The value of finished it 0 or 1, not False or True :-/
+        return result.get('finished', 0) == 1
+    else:
+        # For non-async tasks warn user, but return as finished
+        display.warning("The 'finished' test expects an async task, but a non-async task was tested")
+        return True
 
 
 def regex(value='', pattern='', ignorecase=False, multiline=False, match_type='search'):
@@ -129,6 +149,7 @@ class TestModule(object):
             'failure': failed,
             'succeeded': success,
             'success': success,
+            'successful': success,
 
             # changed testing
             'changed': changed,
@@ -138,6 +159,9 @@ class TestModule(object):
             'skipped': skipped,
             'skip': skipped,
 
+            # async testing
+            'finished': finished,
+
             # regex
             'match': match,
             'search': search,
@@ -145,6 +169,7 @@ class TestModule(object):
 
             # version comparison
             'version_compare': version_compare,
+            'version': version_compare,
 
             # lists
             'any': any,

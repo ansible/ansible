@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/sublevel.yaml"
+- debug: msg="START cli/sublevel.yaml on connection={{ ansible_connection }}"
 
 - name: setup test
   ios_config:
@@ -36,4 +36,4 @@
       - 'no ip access-list extended test'
     match: none
 
-- debug: msg="END cli/sublevel.yaml"
+- debug: msg="END cli/sublevel.yaml on connection={{ ansible_connection }}"

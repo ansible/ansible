@@ -52,7 +52,7 @@ options:
         on personally controlled devices using self-signed certificates.
     required: false
     default: true
-    choices: [true, false]
+    type: bool
   access_token:
     description:
      - Big Cloud Fabric access token. If this isn't set then the environment variable C(BIGSWITCH_ACCESS_TOKEN) is used.
@@ -78,7 +78,7 @@ import os
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.bigswitch_utils import Rest
+from ansible.module_utils.network.bigswitch.bigswitch import Rest
 from ansible.module_utils._text import to_native
 
 

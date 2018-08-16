@@ -3,11 +3,19 @@
 set -o pipefail
 
 declare -a args
-IFS='/:' read -ra args <<< "${TEST}"
+IFS='/:' read -ra args <<< "$1"
 
 script="${args[0]}"
 
+test="$1"
+
 docker images ansible/ansible
+docker ps
+
+for container in $(docker ps --format '{{.Image}} {{.ID}}' | grep -v '^drydock/' | sed 's/^.* //'); do
+    docker rm -f "${container}"
+done
+
 docker ps
 
 if [ -d /home/shippable/cache/ ]; then
@@ -51,6 +59,14 @@ else
     export CHANGED="--changed"
 fi
 
+if [ "${IS_PULL_REQUEST:-}" == "true" ]; then
+    # run unstable tests which are targeted by focused changes on PRs
+    export UNSTABLE="--allow-unstable-changed"
+else
+    # do not run unstable tests outside PRs
+    export UNSTABLE=""
+fi
+
 # remove empty core/extras module directories from PRs created prior to the repo-merge
 find lib/ansible/modules -type d -empty -print -delete
 
@@ -58,7 +74,7 @@ function cleanup
 {
     if find test/results/coverage/ -mindepth 1 -name '.*' -prune -o -print -quit | grep -q .; then
         # for complete on-demand coverage generate a report for all files with no coverage on the "other" job so we only have one copy
-        if [ "${COVERAGE}" ] && [ "${CHANGED}" == "" ] && [ "${TEST}" == "other" ]; then
+        if [ "${COVERAGE}" ] && [ "${CHANGED}" == "" ] && [ "${test}" == "other" ]; then
             stub="--stub"
         else
             stub=""
@@ -79,7 +95,7 @@ function cleanup
                 bash <(curl -s https://codecov.io/bash) \
                     -f "${file}" \
                     -F "${flags}" \
-                    -n "${TEST}" \
+                    -n "${test}" \
                     -t 83cd8957-dc76-488c-9ada-210dcea51633 \
                     -X coveragepy \
                     -X gcov \
@@ -93,9 +109,10 @@ function cleanup
 
     rmdir shippable/testresults/
     cp -a test/results/junit/ shippable/testresults/
+    cp -a test/results/data/ shippable/testresults/
     cp -aT test/results/bot/ shippable/testresults/
 }
 
 trap cleanup EXIT
 
-"test/utils/shippable/${script}.sh"
+"test/utils/shippable/${script}.sh" "${test}"

@@ -29,23 +29,21 @@ options:
               manifest and 'published_date', 'published', 'source', 'clones',
               and 'size'. More informaton can be found at U(https://smartos.org/man/1m/imgadm)
               under 'imgadm list'.
-        required: false
-        default: None
 '''
 
 EXAMPLES = '''
 # Return facts about all installed images.
-smartos_image_facts:
+- smartos_image_facts:
 
 # Return all private active Linux images.
-smartos_image_facts: filters="os=linux state=active public=false"
+- smartos_image_facts: filters="os=linux state=active public=false"
 
 # Show, how many clones does every image have.
-smartos_image_facts:
+- smartos_image_facts:
 
-debug: msg="{{ smartos_images[item]['name'] }}-{{smartos_images[item]['version'] }}
+- debug: msg="{{ smartos_images[item]['name'] }}-{{smartos_images[item]['version'] }}
             has {{ smartos_images[item]['clones'] }} VM(s)"
-with_items: "{{ smartos_images.keys() }}"
+  with_items: "{{ smartos_images.keys() }}"
 '''
 
 RETURN = '''
@@ -103,6 +101,7 @@ def main():
     data = dict(smartos_images=image_facts.return_all_installed_images())
 
     module.exit_json(ansible_facts=data)
+
 
 if __name__ == '__main__':
     main()

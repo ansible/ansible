@@ -34,11 +34,9 @@ options:
         description:
             - Location information.
         required: true
-        default: null
     state:
         description:
             - Manage the state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''
@@ -103,7 +101,7 @@ updates:
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_config, load_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_config, load_config, ce_argument_spec
 
 
 class SnmpLocation(object):

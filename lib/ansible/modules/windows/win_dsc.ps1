@@ -1,75 +1,168 @@
 #!powershell
-# (c) 2015, Trond Hindenes <trond@hindenes.com>, and others
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# WANT_JSON
-# POWERSHELL_COMMON
+# Copyright: (c) 2015, Trond Hindenes <trond@hindenes.com>, and others
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-#Temporary fix
-#Set-StrictMode -Off
+#Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Version 5
+
+$ErrorActionPreference = "Stop"
 
 $params = Parse-Args $args -supports_check_mode $true
 $result = @{
     changed = $false
 }
 
-#Check that we're on at least Powershell version 5
-if ($PSVersionTable.PSVersion.Major -lt 5)
+Function ConvertTo-HashtableFromPsCustomObject($psObject)
 {
-    Fail-Json -obj $Result -message "This module only runs on Powershell version 5 or higher"
+    $hashtable = @{}
+    $psObject | Get-Member -MemberType *Property | ForEach-Object {
+        $value = $psObject.($_.Name)
+        if ($value -is [PSObject])
+        {
+            $value = ConvertTo-HashtableFromPsCustomObject -myPsObject $value
+        }
+        $hashtable.($_.Name) = $value
+    }
+
+    return ,$hashtable
 }
+
+Function Cast-ToCimInstance($name, $value, $className)
+{
+    # this converts a hashtable to a CimInstance
+    if ($value -is [PSObject])
+    {
+        # convert to hashtable
+        $value = ConvertTo-HashtableFromPsCustomObject -psObject $value
+    }
+
+    $valueType = $value.GetType()
+    if ($valueType -ne [hashtable])
+    {
+        Fail-Json -obj $result -message "CimInstance value for property $name must be a hashtable, was $($valueType.FullName)"
+    }
+
+    try
+    {
+        $cim = New-CimInstance -ClassName $className -Property $value -ClientOnly        
+    }
+    catch
+    {
+        Fail-Json -obj $result -message "Failed to convert hashtable to CimInstance of $($className): $($_.Exception.Message)"
+    }
+
+    return ,$cim
+}
+
+Function Cast-Value($value, $type, $typeString, $name)
+{
+    if ($type -eq [CimInstance])
+    {
+        $newValue = Cast-ToCimInstance -name $name -value $value -className $typeString
+    }
+    ElseIf ($type -eq [CimInstance[]])
+    {
+        if ($value -isnot [array])
+        {
+            $value = @($value)
+        }
+        [CimInstance[]]$newValue = @()
+        $baseTypeString = $typeString.Substring(0, $typeString.Length - 2)
+        foreach ($cim in $value)
+        {
+            $newValue += Cast-ToCimInstance -name $name -value $cim -className $baseTypeString
+        }
+    }
+    Else
+    {
+        $originalType = $value.GetType()
+        if ($originalType -eq $type)
+        {
+            $newValue = $value
+        }
+        Else
+        {
+            $newValue = $value -as $type   
+            if ($newValue -eq $null)
+            {
+                Add-Warning -obj $result -message "failed to cast property $name from '$value' of type $($originalType.FullName) to type $($type.FullName), the DSC engine may ignore this property with an invalid cast"
+                $newValue = $value
+            }
+        }
+    }
+
+    return ,$newValue
+}
+
+Function Parse-DscProperty($name, $value, $resourceProp)
+{
+    $propertyTypeString = $resourceProp.PropertyType
+    if ($propertyTypeString.StartsWith("["))
+    {
+        $propertyTypeString = $propertyTypeString.Substring(1, $propertyTypeString.Length - 2)
+    }
+    $propertyType = $propertyTypeString -as [type]
+
+    # CimInstance and CimInstance[] are reperesented as the actual Cim
+    # ClassName and the above returns a $null. We need to manually set the
+    # type in these cases
+    if ($propertyType -eq $null)
+    {
+        if ($propertyTypeString.EndsWith("[]"))
+        {
+            $propertyType = [CimInstance[]]
+        }
+        Else
+        {
+            $propertyType = [CimInstance]
+        }
+    }
+
+    if ($propertyType.IsArray)
+    {
+        # convert the value to a list for later conversion
+        if ($value -is [string])
+        {
+            $value = $value.Split(",").Trim()
+        }
+        ElseIf ($value -isnot [array])
+        {
+            $value = @($value)
+        }
+    }
+    $newValue = Cast-Value -value $value -type $propertyType -typeString $propertyTypeString -name $name
+
+    return ,$newValue
+}
+
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
-$resourcename = Get-AnsibleParam -obj $params -name "resource_name" -type "str" -failifempty $true -resultobj $result
+$resourcename = Get-AnsibleParam -obj $params -name "resource_name" -type "str" -failifempty $true
 $module_version = Get-AnsibleParam -obj $params -name "module_version" -type "str" -default "latest"
 
 #From Ansible 2.3 onwards, params is now a Hash Array
-$Attributes = $params.GetEnumerator() | 
-    Where-Object {
-        $_.key -ne "resource_name" -and
-        $_.key -ne "module_version" -and
-        $_.key -notlike "_ansible_*"
+$Attributes = @{}
+foreach ($param in $params.GetEnumerator())
+{
+    if ($param.Name -notin @("resource_name", "module_version") -and $param.Name -notlike "_ansible_*")
+    {
+        $Attributes[$param.Name] = $param.Value
     }
+}
 
-if (!($Attributes))
+if ($Attributes.Count -eq 0)
 {
     Fail-Json -obj $result -message "No attributes specified"
 }
 
 #Always return some basic info
-$result["resource_name"] = $resourcename
-$result["attributes"] = $Attributes
-$result["reboot_required"] = $null
-
-
-# Build Attributes Hashtable for DSC Resource Propertys
-$Attrib = @{}
-foreach ($key in $Attributes)
-{
-    $result[$key.name] = $key.value
-    $Attrib.Add($Key.Key,$Key.Value)
-}
-
-$result["dsc_attributes"] = $attrib
+$result["reboot_required"] = $false
 
 $Config = @{
    Name = ($resourcename)
-   Property = @{
-        }
-    }
+   Property = @{}
+}
 
 #Get the latest version of the module
 if ($module_version -eq "latest")
@@ -115,24 +208,24 @@ try {
 }
 catch {}
 
-
 #Convert params to correct datatype and inject
-$attrib.Keys | foreach-object {
-    $Key = $_.replace("item_name", "name")
-    $prop = $resource.Properties | where {$_.Name -eq $key}
+foreach ($attribute in $Attributes.GetEnumerator())
+{
+    $key = $attribute.Name.Replace("item_name", "name")
+    $value = $attribute.Value
+    $prop = $resource.Properties | Where-Object {$_.Name -eq $key}
     if (!$prop)
     {
         #If its a credential specified as "credential", Ansible will support credential_username and credential_password. Need to check for that
-        $prop = $resource.Properties | where {$_.Name -eq $key.Replace("_username","")}
+        $prop = $resource.Properties | Where-Object {$_.Name -eq $key.Replace("_username","")}
         if ($prop)
         {
             #We need to construct a cred object. At this point keyvalue is the username, so grab the password
-            $PropUserNameValue = $attrib.Item($_)
+            $PropUserNameValue = $value
             $PropPassword = $key.Replace("_username","_password")
-            $PropPasswordValue = $attrib.$PropPassword
+            $PropPasswordValue = $Attributes.$PropPassword
 
-            $cred = New-Object System.Management.Automation.PSCredential ($PropUserNameValue, ($PropPasswordValue | ConvertTo-SecureString -AsPlainText -Force))
-            [System.Management.Automation.PSCredential]$KeyValue = $cred
+            $KeyValue = New-Object System.Management.Automation.PSCredential ($PropUserNameValue, ($PropPasswordValue | ConvertTo-SecureString -AsPlainText -Force))
             $config.Property.Add($key.Replace("_username",""),$KeyValue)
         }
         ElseIf ($key.Contains("_password"))
@@ -143,91 +236,21 @@ $attrib.Keys | foreach-object {
         {
             Fail-Json -obj $result -message "Property $key in resource $resourcename is not a valid property"
         }
-
     }
-    ElseIf ($prop.PropertyType -eq "[string]")
+    Else
     {
-        [String]$KeyValue = $attrib.Item($_)
-        $config.Property.Add($key,$KeyValue)
-    }
-    ElseIf ($prop.PropertyType -eq "[string[]]")
-    {
-        #KeyValue is an array of strings
-        [String]$TempKeyValue = $attrib.Item($_)
-        [String[]]$KeyValue = $TempKeyValue.Split(",").Trim()
-
-        $config.Property.Add($key,$KeyValue)
-    }
-    ElseIf ($prop.PropertyType -eq "[UInt32[]]")
-    {
-        #KeyValue is an array of integers
-        [String]$TempKeyValue = $attrib.Item($_)
-        [UInt32[]]$KeyValue = $attrib.Item($_.split(",").Trim())
-        $config.Property.Add($key,$KeyValue)
-    }
-    ElseIf ($prop.PropertyType -eq "[bool]")
-    {
-        if ($attrib.Item($_) -like "true")
+        if ($value -eq $null)
         {
-            [bool]$KeyValue = $true
+            $keyValue = $null
         }
-        ElseIf ($attrib.Item($_) -like "false")
+        Else
         {
-            [bool]$KeyValue = $false
+            $keyValue = Parse-DscProperty -name $key -value $value -resourceProp $prop
         }
-        $config.Property.Add($key,$KeyValue)
+        
+        $config.Property.Add($key, $keyValue)
     }
-    ElseIf ($prop.PropertyType -eq "[int]")
-    {
-        [int]$KeyValue = $attrib.Item($_)
-        $config.Property.Add($key,$KeyValue)
-    }
-    ElseIf ($prop.PropertyType -eq "[CimInstance[]]")
-    {
-      #KeyValue is an array of CimInstance
-      [CimInstance[]]$KeyVal = @()
-      [String]$TempKeyValue = $attrib.Item($_)
-      #Need to split on the string }, because some property values have commas in them
-      [String[]]$KeyValueStr = $TempKeyValue -split("},")
-      #Go through each string of properties and create a hash of them
-      foreach($str in $KeyValueStr)
-      {
-        [string[]]$properties = $str.Split("{")[1].Replace("}","").Trim().Split([environment]::NewLine).Trim()
-        $prph = @{}
-        foreach($p in $properties)
-        {
-          $pArr = $p -split "="
-          #if the value can be an int we must convert it to an int
-          if([bool]($pArr[1] -as [int] -is [int]))
-          {
-              $prph.Add($pArr[0].Trim(),$pArr[1].Trim() -as [int])
-          }
-          else
-          {
-              $prph.Add($pArr[0].Trim(),$pArr[1].Trim())
-          }
-        }
-        #create the new CimInstance
-        $cim = New-CimInstance -ClassName $str.Split("{")[0].Trim() -Property $prph -ClientOnly
-        #add the new CimInstance to the array
-        $KeyVal += $cim
-      }
-      $config.Property.Add($key,$KeyVal)
-    }
-    ElseIf ($prop.PropertyType -eq "[Int32]")
-    {
-        # Add Supoort for Int32
-        [int]$KeyValue = $attrib.Item($_)
-        $config.Property.Add($key,$KeyValue)
-    }
-    ElseIf ($prop.PropertyType -eq "[UInt32]")
-    {
-        # Add Support for [UInt32]
-        [UInt32]$KeyValue = $attrib.Item($_)
-        $config.Property.Add($key,$KeyValue)
-    }
-
-  }
+}
 
 try
 {
@@ -262,6 +285,4 @@ Catch
     Fail-Json -obj $result -message $_[0].Exception.Message
 }
 
-
-#set-attr -obj $result -name "property" -value $property
 Exit-Json -obj $result

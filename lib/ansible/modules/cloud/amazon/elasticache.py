@@ -16,6 +16,7 @@ description:
   - Manage cache clusters in Amazon Elasticache.
   - Returns information about the specified cache cluster.
 version_added: "1.4"
+requirements: [ boto3 ]
 author: "Jim Dalton (@jsdalton)"
 options:
   state:
@@ -31,70 +32,51 @@ options:
   engine:
     description:
       - Name of the cache engine to be used.
-    required: false
     default: memcached
     choices: ['redis', 'memcached']
   cache_engine_version:
     description:
       - The version number of the cache engine
-    required: false
-    default: None
   node_type:
     description:
       - The compute and memory capacity of the nodes in the cache cluster
-    required: false
     default: cache.m1.small
   num_nodes:
     description:
       - The initial number of cache nodes that the cache cluster will have. Required when state=present.
-    required: false
   cache_port:
     description:
       - The port number on which each of the cache nodes will accept connections
-    required: false
-    default: None
   cache_parameter_group:
     description:
       - The name of the cache parameter group to associate with this cache cluster. If this argument is omitted, the default cache parameter group
         for the specified engine will be used.
-    required: false
-    default: None
     version_added: "2.0"
     aliases: [ 'parameter_group' ]
   cache_subnet_group:
     description:
       - The subnet group name to associate with. Only use if inside a vpc. Required if inside a vpc
-    required: false
-    default: None
     version_added: "2.0"
   security_group_ids:
     description:
       - A list of vpc security group names to associate with this cache cluster. Only use if inside a vpc
-    required: false
-    default: None
     version_added: "1.6"
   cache_security_groups:
     description:
       - A list of cache security group names to associate with this cache cluster. Must be an empty list if inside a vpc
-    required: false
-    default: None
   zone:
     description:
       - The EC2 Availability Zone in which the cache cluster will be created
-    required: false
-    default: None
   wait:
     description:
       - Wait for cache cluster result before returning
-    required: false
-    default: yes
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'yes'
   hard_modify:
     description:
       - Whether to destroy and recreate an existing cache cluster if necessary in order to modify its state
-    required: false
-    default: no
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
 extends_documentation_fragment:
     - aws
     - ec2
@@ -217,10 +199,11 @@ class ElastiCacheManager(object):
                       CacheSecurityGroupNames=self.cache_security_groups,
                       SecurityGroupIds=self.security_group_ids,
                       CacheParameterGroupName=self.cache_parameter_group,
-                      CacheSubnetGroupName=self.cache_subnet_group,
-                      PreferredAvailabilityZone=self.zone)
+                      CacheSubnetGroupName=self.cache_subnet_group)
         if self.cache_port is not None:
             kwargs['Port'] = self.cache_port
+        if self.zone is not None:
+            kwargs['PreferredAvailabilityZone'] = self.zone
 
         try:
             self.conn.create_cache_cluster(**kwargs)
@@ -386,7 +369,7 @@ class ElastiCacheManager(object):
             'EngineVersion': self.cache_engine_version
         }
         for key, value in modifiable_data.items():
-            if value is not None and self.data[key] != value:
+            if value is not None and value and self.data[key] != value:
                 return True
 
         # Check cache security groups
@@ -496,7 +479,7 @@ def main():
         cache_subnet_group=dict(default=""),
         cache_security_groups=dict(default=[], type='list'),
         security_group_ids=dict(default=[], type='list'),
-        zone=dict(default=""),
+        zone=dict(),
         wait=dict(default=True, type='bool'),
         hard_modify=dict(type='bool')
     ))
@@ -551,6 +534,7 @@ def main():
                         elasticache=elasticache_manager.get_info())
 
     module.exit_json(**facts_result)
+
 
 if __name__ == '__main__':
     main()

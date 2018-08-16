@@ -51,63 +51,47 @@ options:
   sparse:
     description:
       - Enable/disable sparse-mode on the interface.
-    required: false
-    default: true
-    choices: ['true', 'false']
+    type: bool
+    default: 'no'
+  dr_prio:
+    description:
+      - Configures priority for PIM DR election on interface.
   hello_auth_key:
     description:
       - Authentication for hellos on this interface.
-    required: false
-    default: null
   hello_interval:
     description:
       - Hello interval in milliseconds for this interface.
-    required: false
-    default: null
-    choices: ['true', 'false']
+    type: bool
   jp_policy_out:
     description:
       - Policy for join-prune messages (outbound).
-    required: true
-    default: null
   jp_policy_in:
     description:
       - Policy for join-prune messages (inbound).
-    required: false
-    default: null
   jp_type_out:
     description:
       - Type of policy mapped to C(jp_policy_out).
-    required: false
-    default: null
     choices: ['prefix', 'routemap']
   jp_type_in:
     description:
       - Type of policy mapped to C(jp_policy_in).
-    required: false
-    default: null
     choices: ['prefix', 'routemap']
   border:
     description:
       - Configures interface to be a boundary of a PIM domain.
-    required: false
-    default: null
-    choices: ['true', 'false']
+    type: bool
+    default: 'no'
   neighbor_policy:
     description:
       - Configures a neighbor policy for filtering adjacencies.
-    required: false
-    default: null
   neighbor_type:
     description:
       - Type of policy mapped to neighbor_policy.
-    required: false
-    default: null
     choices: ['prefix', 'routemap']
   state:
     description:
       - Manages desired state of the resource.
-    required: false
     default: present
     choices: ['present', 'default']
 '''
@@ -147,10 +131,11 @@ commands:
             "ip pim neighbor-policy test"]
 '''
 
-
+import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_interface_type
 from ansible.module_utils.six import string_types
 
 
@@ -167,6 +152,14 @@ PARAM_TO_COMMAND_KEYMAP = {
     'jp_type_out': '',
     'neighbor_policy': 'ip pim neighbor-policy prefix-list {0}',
     'neighbor_type': '',
+}
+
+PARAM_TO_DEFAULT_KEYMAP = {
+    'dr_prio': '1',
+    'hello_interval': '30000',
+    'sparse': False,
+    'border': False,
+    'hello_auth_key': False,
 }
 
 
@@ -208,23 +201,6 @@ def local_existing(gexisting):
     return gexisting, jp_bidir, isauth
 
 
-def get_interface_type(interface):
-    if interface.upper().startswith('ET'):
-        return 'ethernet'
-    elif interface.upper().startswith('VL'):
-        return 'svi'
-    elif interface.upper().startswith('LO'):
-        return 'loopback'
-    elif interface.upper().startswith('MG'):
-        return 'management'
-    elif interface.upper().startswith('MA'):
-        return 'management'
-    elif interface.upper().startswith('PO'):
-        return 'portchannel'
-    else:
-        return 'unknown'
-
-
 def get_interface_mode(interface, intf_type, module):
     mode = 'unknown'
     command = 'show interface {0}'.format(interface)
@@ -248,132 +224,66 @@ def get_interface_mode(interface, intf_type, module):
 
 def get_pim_interface(module, interface):
     pim_interface = {}
-    command = 'show ip pim interface {0}'.format(interface)
-    body = execute_show_command(command, module, text=True)
-
-    if body:
-        if 'not running' not in body[0]:
-            body = execute_show_command(command, module)
-
-    try:
-        get_data = body[0]['TABLE_vrf']['ROW_vrf']['TABLE_iod']['ROW_iod']
-
-        if isinstance(get_data.get('dr-priority'), list):
-            pim_interface['dr_prio'] = get_data.get('dr-priority')[0]
-        else:
-            pim_interface['dr_prio'] = str(get_data.get('dr-priority'))
-
-        hello_interval = get_data.get('hello-interval-sec')
-        if hello_interval:
-            hello_interval_msec = int(get_data.get('hello-interval-sec')) * 1000
-        pim_interface['hello_interval'] = str(hello_interval_msec)
-
-        border = get_data.get('is-border')
-        if border == 'true':
-            pim_interface['border'] = True
-        elif border == 'false':
-            pim_interface['border'] = False
-
-        isauth = get_data.get('isauth-config')
-        if isauth == 'true':
-            pim_interface['isauth'] = True
-        elif isauth == 'false':
-            pim_interface['isauth'] = False
-
-        pim_interface['neighbor_policy'] = get_data.get('nbr-policy-name')
-        if pim_interface['neighbor_policy'] == 'none configured':
-            pim_interface['neighbor_policy'] = None
-
-        jp_in_policy = get_data.get('jp-in-policy-name')
-        pim_interface['jp_policy_in'] = jp_in_policy
-        if jp_in_policy == 'none configured':
-            pim_interface['jp_policy_in'] = None
-
-        if isinstance(get_data.get('jp-out-policy-name'), string_types):
-            pim_interface['jp_policy_out'] = get_data.get('jp-out-policy-name')
-        else:
-            pim_interface['jp_policy_out'] = get_data.get('jp-out-policy-name')[0]
-
-        if pim_interface['jp_policy_out'] == 'none configured':
-            pim_interface['jp_policy_out'] = None
-
-    except (KeyError, AttributeError, TypeError, IndexError):
-        return {}
-
     body = get_config(module, flags=['interface {0}'.format(interface)])
 
-    jp_configs = []
-    neigh = None
+    pim_interface['neighbor_type'] = None
+    pim_interface['neighbor_policy'] = None
+    pim_interface['jp_policy_in'] = None
+    pim_interface['jp_policy_out'] = None
+    pim_interface['jp_type_in'] = None
+    pim_interface['jp_type_out'] = None
+    pim_interface['jp_bidir'] = False
+    pim_interface['isauth'] = False
+
     if body:
         all_lines = body.splitlines()
 
         for each in all_lines:
             if 'jp-policy' in each:
-                jp_configs.append(str(each.strip()))
+                policy_name = \
+                    re.search(r'ip pim jp-policy(?: prefix-list)? (\S+)(?: \S+)?', each).group(1)
+                if 'prefix-list' in each:
+                    ptype = 'prefix'
+                else:
+                    ptype = 'routemap'
+                if 'out' in each:
+                    pim_interface['jp_policy_out'] = policy_name
+                    pim_interface['jp_type_out'] = ptype
+                elif 'in' in each:
+                    pim_interface['jp_policy_in'] = policy_name
+                    pim_interface['jp_type_in'] = ptype
+                else:
+                    pim_interface['jp_policy_in'] = policy_name
+                    pim_interface['jp_policy_out'] = policy_name
+                    pim_interface['jp_bidir'] = True
             elif 'neighbor-policy' in each:
-                neigh = str(each)
+                pim_interface['neighbor_policy'] = \
+                    re.search(r'ip pim neighbor-policy(?: prefix-list)? (\S+)', each).group(1)
+                if 'prefix-list' in each:
+                    pim_interface['neighbor_type'] = 'prefix'
+                else:
+                    pim_interface['neighbor_type'] = 'routemap'
+            elif 'ah-md5' in each:
+                pim_interface['isauth'] = True
             elif 'sparse-mode' in each:
                 pim_interface['sparse'] = True
-
-    pim_interface['neighbor_type'] = None
-    neigh_type = None
-    if neigh:
-        if 'prefix-list' in neigh:
-            neigh_type = 'prefix'
-        else:
-            neigh_type = 'routemap'
-    pim_interface['neighbor_type'] = neigh_type
-
-    len_existing = len(jp_configs)
-    list_of_prefix_type = len([x for x in jp_configs if 'prefix-list' in x])
-    jp_type_in = None
-    jp_type_out = None
-    jp_bidir = False
-    if len_existing == 1:
-        # determine type
-        last_word = jp_configs[0].split(' ')[-1]
-        if last_word == 'in':
-            if list_of_prefix_type:
-                jp_type_in = 'prefix'
-            else:
-                jp_type_in = 'routemap'
-        elif last_word == 'out':
-            if list_of_prefix_type:
-                jp_type_out = 'prefix'
-            else:
-                jp_type_out = 'routemap'
-        else:
-            jp_bidir = True
-            if list_of_prefix_type:
-                jp_type_in = 'prefix'
-                jp_type_out = 'routemap'
-            else:
-                jp_type_in = 'routemap'
-                jp_type_out = 'routemap'
-    else:
-        for each in jp_configs:
-            last_word = each.split(' ')[-1]
-            if last_word == 'in':
-                if 'prefix-list' in each:
-                    jp_type_in = 'prefix'
-                else:
-                    jp_type_in = 'routemap'
-            elif last_word == 'out':
-                if 'prefix-list' in each:
-                    jp_type_out = 'prefix'
-                else:
-                    jp_type_out = 'routemap'
-
-    pim_interface['jp_type_in'] = jp_type_in
-    pim_interface['jp_type_out'] = jp_type_out
-    pim_interface['jp_bidir'] = jp_bidir
+            elif 'border' in each:
+                pim_interface['border'] = True
+            elif 'hello-interval' in each:
+                pim_interface['hello_interval'] = \
+                    re.search(r'ip pim hello-interval (\d+)', body).group(1)
+            elif 'dr-priority' in each:
+                pim_interface['dr_prio'] = \
+                    re.search(r'ip pim dr-priority (\d+)', body).group(1)
 
     return pim_interface
 
 
 def fix_delta(delta, existing):
-    if delta.get('sparse') is False and existing.get('sparse') is None:
-        delta.pop('sparse')
+    for key in list(delta):
+        if key in ['dr_prio', 'hello_interval', 'sparse', 'border']:
+            if delta.get(key) == PARAM_TO_DEFAULT_KEYMAP.get(key) and existing.get(key) is None:
+                delta.pop(key)
     return delta
 
 
@@ -448,14 +358,12 @@ def config_pim_interface(delta, existing, jp_bidir, isauth):
 
 
 def get_pim_interface_defaults():
-    dr_prio = '1'
-    border = False
-    hello_interval = '30000'
-    hello_auth_key = False
 
-    args = dict(dr_prio=dr_prio, border=border,
-                hello_interval=hello_interval,
-                hello_auth_key=hello_auth_key)
+    args = dict(dr_prio=PARAM_TO_DEFAULT_KEYMAP.get('dr_prio'),
+                border=PARAM_TO_DEFAULT_KEYMAP.get('border'),
+                sparse=PARAM_TO_DEFAULT_KEYMAP.get('sparse'),
+                hello_interval=PARAM_TO_DEFAULT_KEYMAP.get('hello_interval'),
+                hello_auth_key=PARAM_TO_DEFAULT_KEYMAP.get('hello_auth_key'))
 
     default = dict((param, value) for (param, value) in args.items()
                    if value is not None)
@@ -529,7 +437,7 @@ def config_pim_interface_defaults(existing, jp_bidir, isauth):
 def main():
     argument_spec = dict(
         interface=dict(required=True),
-        sparse=dict(type='bool', default=True),
+        sparse=dict(type='bool', default=False),
         dr_prio=dict(type='str'),
         hello_auth_key=dict(type='str'),
         hello_interval=dict(type='int'),
@@ -537,7 +445,7 @@ def main():
         jp_policy_in=dict(type='str'),
         jp_type_out=dict(choices=['prefix', 'routemap']),
         jp_type_in=dict(choices=['prefix', 'routemap']),
-        border=dict(type='bool'),
+        border=dict(type='bool', default=False),
         neighbor_policy=dict(type='str'),
         neighbor_type=dict(choices=['prefix', 'routemap']),
         state=dict(choices=['present', 'absent', 'default'], default='present'),
@@ -592,21 +500,10 @@ def main():
             command = config_pim_interface(delta, existing, jp_bidir, isauth)
             if command:
                 commands.append(command)
-    elif state == 'default':
+    elif state == 'default' or state == 'absent':
         defaults = config_pim_interface_defaults(existing, jp_bidir, isauth)
         if defaults:
             commands.append(defaults)
-
-    elif state == 'absent':
-        if existing.get('sparse') is True:
-            delta['sparse'] = False
-            # defaults is a list of commands
-            defaults = config_pim_interface_defaults(existing, jp_bidir, isauth)
-            if defaults:
-                commands.append(defaults)
-
-            command = config_pim_interface(delta, existing, jp_bidir, isauth)
-            commands.append(command)
 
     if commands:
         commands.insert(0, ['interface {0}'.format(interface)])

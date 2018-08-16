@@ -25,24 +25,21 @@ description:
 options:
   name:
     description:
-      - >
-        Package name, or package specifier with version, like C(name-1.0). When using state=latest, this can be '*' which means run: dnf -y update.
-        You can also pass a url or a local path to a rpm file.
+      - "A list of package names, or package specifier with version, like C(name-1.0)
+        When using state=latest, this can be '*' which means run: dnf -y update.
+        You can also pass a url or a local path to a rpm file."
     required: true
-    default: null
-    aliases: []
+    aliases:
+        - pkg
 
   list:
     description:
       - Various (non-idempotent) commands for usage with C(/usr/bin/ansible) and I(not) playbooks. See examples.
-    required: false
-    default: null
 
   state:
     description:
       - Whether to install (C(present), C(latest)), or remove (C(absent)) a package.
-    required: false
-    choices: [ "present", "latest", "absent" ]
+    choices: ['absent', 'present', 'installed', 'removed', 'latest']
     default: "present"
 
   enablerepo:
@@ -50,57 +47,53 @@ options:
       - I(Repoid) of repositories to enable for the install/update operation.
         These repos will not persist beyond the transaction.
         When specifying multiple repos, separate them with a ",".
-    required: false
-    default: null
-    aliases: []
 
   disablerepo:
     description:
       - I(Repoid) of repositories to disable for the install/update operation.
         These repos will not persist beyond the transaction.
         When specifying multiple repos, separate them with a ",".
-    required: false
-    default: null
-    aliases: []
 
   conf_file:
     description:
       - The remote dnf configuration file to use for the transaction.
-    required: false
-    default: null
-    aliases: []
 
   disable_gpg_check:
     description:
       - Whether to disable the GPG checking of signatures of packages being
         installed. Has an effect only if state is I(present) or I(latest).
-    required: false
-    default: "no"
-    choices: ["yes", "no"]
-    aliases: []
+    type: bool
+    default: 'no'
 
   installroot:
     description:
       - Specifies an alternative installroot, relative to which all packages
         will be installed.
-    required: false
     version_added: "2.3"
     default: "/"
+
+  releasever:
+    description:
+      - Specifies an alternative release from which all packages will be
+        installed.
+    required: false
+    version_added: "2.6"
+    default: null
 
   autoremove:
     description:
       - If C(yes), removes all "leaf" packages from the system that were originally
         installed as dependencies of user-installed packages but which are no longer
         required by any such package. Should be used alone or when state is I(absent)
-    required: false
-    choices: [ "yes", "no" ]
+    type: bool
+    default: false
     version_added: "2.4"
-
-notes: ["autoremove requires dnf >= 2.0.1"]
-# informational: requirements for nodes
+notes:
+  - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
 requirements:
   - "python >= 2.6"
   - python-dnf
+  - for the autoremove option you need dnf >= 2.0.1"
 author:
   - '"Igor Gnatenko (@ignatenkobrain)" <i.gnatenko.brain@gmail.com>'
   - '"Cristian van Ee (@DJMuggs)" <cristian at cvee.org>'
@@ -168,6 +161,7 @@ except ImportError:
     HAS_DNF = False
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 from ansible.module_utils.six import PY2
 from distutils.version import LooseVersion
 
@@ -197,7 +191,7 @@ def _ensure_dnf(module):
                                  "Please install `{0}` package.".format(package))
 
 
-def _configure_base(module, base, conf_file, disable_gpg_check, installroot='/'):
+def _configure_base(module, base, conf_file, disable_gpg_check, installroot='/', releasever=None):
     """Configure the dnf Base object."""
     conf = base.conf
 
@@ -212,6 +206,10 @@ def _configure_base(module, base, conf_file, disable_gpg_check, installroot='/')
 
     # Set installroot
     conf.installroot = installroot
+
+    # Set releasever
+    if releasever is not None:
+        conf.substitutions['releasever'] = releasever
 
     # Change the configuration file path if provided
     if conf_file:
@@ -242,10 +240,10 @@ def _specify_repositories(base, disablerepo, enablerepo):
             repo.enable()
 
 
-def _base(module, conf_file, disable_gpg_check, disablerepo, enablerepo, installroot):
+def _base(module, conf_file, disable_gpg_check, disablerepo, enablerepo, installroot, releasever):
     """Return a fully configured dnf Base object."""
     base = dnf.Base()
-    _configure_base(module, base, conf_file, disable_gpg_check, installroot)
+    _configure_base(module, base, conf_file, disable_gpg_check, installroot, releasever)
     _specify_repositories(base, disablerepo, enablerepo)
     base.fill_sack(load_system_repo='auto')
     return base
@@ -331,7 +329,7 @@ def ensure(module, base, state, names, autoremove):
 
     # Autoremove is called alone
     # Jump to remove path where base.autoremove() is run
-    if not names and autoremove is not None:
+    if not names and autoremove:
         names = []
         state = 'absent'
 
@@ -349,7 +347,7 @@ def ensure(module, base, state, names, autoremove):
         for group_spec in (g.strip() for g in group_specs):
             group = base.comps.group_by_pattern(group_spec)
             if group:
-                groups.append(group)
+                groups.append(group.id)
             else:
                 environment = base.comps.environment_by_pattern(group_spec)
                 if environment:
@@ -365,18 +363,18 @@ def ensure(module, base, state, names, autoremove):
             # Install groups.
             for group in groups:
                 try:
-                    base.group_install(group.id, dnf.const.GROUP_PACKAGE_TYPES)
+                    base.group_install(group, dnf.const.GROUP_PACKAGE_TYPES)
                 except dnf.exceptions.Error as e:
                     # In dnf 2.0 if all the mandatory packages in a group do
                     # not install, an error is raised.  We want to capture
                     # this but still install as much as possible.
-                    failures.append((group, e))
+                    failures.append((group, to_native(e)))
 
             for environment in environments:
                 try:
                     base.environment_install(environment, dnf.const.GROUP_PACKAGE_TYPES)
                 except dnf.exceptions.Error as e:
-                    failures.append((group, e))
+                    failures.append((environment, to_native(e)))
 
             # Install packages.
             for pkg_spec in pkg_specs:
@@ -389,12 +387,12 @@ def ensure(module, base, state, names, autoremove):
             for group in groups:
                 try:
                     try:
-                        base.group_upgrade(group.id)
+                        base.group_upgrade(group)
                     except dnf.exceptions.CompsError:
                         # If not already installed, try to install.
-                        base.group_install(group.id, dnf.const.GROUP_PACKAGE_TYPES)
+                        base.group_install(group, dnf.const.GROUP_PACKAGE_TYPES)
                 except dnf.exceptions.Error as e:
-                    failures.append((group, e))
+                    failures.append((group, to_native(e)))
 
             for environment in environments:
                 try:
@@ -402,19 +400,22 @@ def ensure(module, base, state, names, autoremove):
                         base.environment_upgrade(environment)
                     except dnf.exceptions.CompsError:
                         # If not already installed, try to install.
-                        base.environment_install(group, dnf.const.GROUP_PACKAGE_TYPES)
+                        base.environment_install(environment, dnf.const.GROUP_PACKAGE_TYPES)
                 except dnf.exceptions.Error as e:
-                    failures.append((group, e))
+                    failures.append((environment, to_native(e)))
 
             for pkg_spec in pkg_specs:
                 # best effort causes to install the latest package
                 # even if not previously installed
                 base.conf.best = True
-                base.install(pkg_spec)
+                try:
+                    base.install(pkg_spec)
+                except dnf.exceptions.MarkingError as e:
+                    failures.append((pkg_spec, to_native(e)))
 
         else:
             # state == absent
-            if autoremove is not None:
+            if autoremove:
                 base.conf.clean_requirements_on_remove = autoremove
 
             if filenames:
@@ -423,7 +424,7 @@ def ensure(module, base, state, names, autoremove):
 
             for group in groups:
                 try:
-                    base.group_remove(group.id)
+                    base.group_remove(group)
                 except dnf.exceptions.CompsError:
                     # Group is already uninstalled.
                     pass
@@ -482,15 +483,17 @@ def main():
         argument_spec=dict(
             name=dict(aliases=['pkg'], type='list'),
             state=dict(
-                choices=[
-                    'absent', 'present', 'installed', 'removed', 'latest']),
+                choices=['absent', 'present', 'installed', 'removed', 'latest'],
+                default='present',
+            ),
             enablerepo=dict(type='list', default=[]),
             disablerepo=dict(type='list', default=[]),
             list=dict(),
             conf_file=dict(default=None, type='path'),
             disable_gpg_check=dict(default=False, type='bool'),
             installroot=dict(default='/', type='path'),
-            autoremove=dict(type='bool'),
+            autoremove=dict(type='bool', default=False),
+            releasever=dict(default=None),
         ),
         required_one_of=[['name', 'list', 'autoremove']],
         mutually_exclusive=[['name', 'list'], ['autoremove', 'list']],
@@ -500,7 +503,7 @@ def main():
     _ensure_dnf(module)
 
     # Check if autoremove is called correctly
-    if params['autoremove'] is not None:
+    if params['autoremove']:
         if LooseVersion(dnf.__version__) < LooseVersion('2.0.1'):
             module.fail_json(msg="Autoremove requires dnf>=2.0.1. Current dnf version is %s" % dnf.__version__)
         if params['state'] not in ["absent", None]:
@@ -515,7 +518,8 @@ def main():
     if params['list']:
         base = _base(
             module, params['conf_file'], params['disable_gpg_check'],
-            params['disablerepo'], params['enablerepo'], params['installroot'])
+            params['disablerepo'], params['enablerepo'], params['installroot'],
+            params['releasever'])
         list_items(module, base, params['list'])
     else:
         # Note: base takes a long time to run so we want to check for failure
@@ -524,7 +528,8 @@ def main():
             module.fail_json(msg="This command has to be run under the root user.")
         base = _base(
             module, params['conf_file'], params['disable_gpg_check'],
-            params['disablerepo'], params['enablerepo'], params['installroot'])
+            params['disablerepo'], params['enablerepo'], params['installroot'],
+            params['releasever'])
 
         ensure(module, base, params['state'], params['name'], params['autoremove'])
 

@@ -24,6 +24,15 @@ from io import BytesIO, TextIOWrapper
 import yaml
 import yaml.reader
 
+from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.parsing.convert_bool import boolean
+
+
+class AnsibleTextIOWrapper(TextIOWrapper):
+    def write(self, s):
+        super(AnsibleTextIOWrapper, self).write(to_text(s, self.encoding, errors='replace'))
+
 
 def find_globals(g, tree):
     """Uses AST to find globals in an ast tree"""
@@ -54,8 +63,8 @@ class CaptureStd():
     def __enter__(self):
         self.sys_stdout = sys.stdout
         self.sys_stderr = sys.stderr
-        sys.stdout = self.stdout = TextIOWrapper(BytesIO(), encoding=self.sys_stdout.encoding)
-        sys.stderr = self.stderr = TextIOWrapper(BytesIO(), encoding=self.sys_stderr.encoding)
+        sys.stdout = self.stdout = AnsibleTextIOWrapper(BytesIO(), encoding=self.sys_stdout.encoding)
+        sys.stderr = self.stderr = AnsibleTextIOWrapper(BytesIO(), encoding=self.sys_stderr.encoding)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -65,7 +74,7 @@ class CaptureStd():
     def get(self):
         """Return ``(stdout, stderr)``"""
 
-        return self.stdout.getvalue(), self.stderr.getvalue()
+        return self.stdout.buffer.getvalue(), self.stderr.buffer.getvalue()
 
 
 def parse_yaml(value, lineno, module, name, load_all=False):
@@ -107,3 +116,28 @@ def parse_yaml(value, lineno, module, name, load_all=False):
         })
 
     return data, errors, traces
+
+
+def is_empty(value):
+    """Evaluate null like values excluding False"""
+    if value is False:
+        return False
+    return not bool(value)
+
+
+def compare_unordered_lists(a, b):
+    """Safe list comparisons
+
+    Supports:
+      - unordered lists
+      - unhashable elements
+    """
+    return len(a) == len(b) and all(x in b for x in a)
+
+
+class NoArgsAnsibleModule(AnsibleModule):
+    """AnsibleModule that does not actually load params. This is used to get access to the
+    methods within AnsibleModule without having to fake a bunch of data
+    """
+    def _load_params(self):
+        self.params = {'_ansible_selinux_special_fs': [], '_ansible_remote_tmp': '/tmp', '_ansible_keep_remote_files': False, '_ansible_check_mode': False}

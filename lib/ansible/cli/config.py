@@ -1,20 +1,5 @@
-# (c) 2017, Ansible by Red Hat, Inc.
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-# ansible-vault is a script that encrypts/decrypts YAML files. See
-# http://docs.ansible.com/playbooks_vault.html for more details.
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -28,7 +13,7 @@ import yaml
 from ansible.cli import CLI
 from ansible.config.manager import ConfigManager, Setting, find_ini_config_file
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.module_utils._text import to_native, to_text, to_bytes
+from ansible.module_utils._text import to_native, to_text
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.color import stringc
 from ansible.utils.path import unfrackpath
@@ -44,7 +29,7 @@ except ImportError:
 class ConfigCLI(CLI):
     """ Config command line class """
 
-    VALID_ACTIONS = ("view", "edit", "update", "dump", "list")
+    VALID_ACTIONS = ("view", "dump", "list")  # TODO: edit, update, search
 
     def __init__(self, args, callback=None):
 
@@ -55,10 +40,10 @@ class ConfigCLI(CLI):
     def parse(self):
 
         self.parser = CLI.base_parser(
-            usage = "usage: %%prog [%s] [--help] [options] [ansible.cfg]" % "|".join(self.VALID_ACTIONS),
-            epilog = "\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
+            usage="usage: %%prog [%s] [--help] [options] [ansible.cfg]" % "|".join(self.VALID_ACTIONS),
+            epilog="\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0]),
+            desc="View, edit, and manage ansible configuration.",
         )
-
         self.parser.add_option('-c', '--config', dest='config_file', help="path to configuration file, defaults to first file found in precedence.")
 
         self.set_action()
@@ -69,14 +54,11 @@ class ConfigCLI(CLI):
         if self.action == "dump":
             self.parser.add_option('--only-changed', dest='only_changed', action='store_true',
                                    help="Only show configurations that have changed from the default")
-            self.parser.set_usage("usage: %prog dump [options] [-c ansible.cfg]")
-        elif self.action == "view":
-            self.parser.set_usage("usage: %prog view [options] [-c ansible.cfg] ")
-        elif self.action == "edit":
-            self.parser.set_usage("usage: %prog edit [options] [-c ansible.cfg]")
         elif self.action == "update":
             self.parser.add_option('-s', '--setting', dest='setting', help="config setting, the section defaults to 'defaults'")
             self.parser.set_usage("usage: %prog update [options] [-c ansible.cfg] -s '[section.]setting=value'")
+        elif self.action == "search":
+            self.parser.set_usage("usage: %prog update [options] [-c ansible.cfg] <search term>")
 
         self.options, self.args = self.parser.parse_args()
         display.verbosity = self.options.verbosity
@@ -86,23 +68,28 @@ class ConfigCLI(CLI):
         super(ConfigCLI, self).run()
 
         if self.options.config_file:
-            self.config_file = to_bytes(unfrackpath(self.options.config_file, follow=False))
+            self.config_file = unfrackpath(self.options.config_file, follow=False)
             self.config = ConfigManager(self.config_file)
         else:
             self.config = ConfigManager()
-            self.config_file = to_bytes(find_ini_config_file())
-        try:
-            if not os.path.exists(self.config_file):
-                raise AnsibleOptionsError("%s does not exist or is not accessible" % (self.config_file))
-            elif not os.path.isfile(self.config_file):
-                raise AnsibleOptionsError("%s is not a valid file" % (self.config_file))
+            self.config_file = find_ini_config_file()
 
-            os.environ['ANSIBLE_CONFIG'] = to_native(self.config_file)
-        except:
-            if self.action in ['view']:
-                raise
-            elif self.action in ['edit', 'update']:
-                display.warning("File does not exist, used empty file: %s" % self.config_file)
+        if self.config_file:
+            try:
+                if not os.path.exists(self.config_file):
+                    raise AnsibleOptionsError("%s does not exist or is not accessible" % (self.config_file))
+                elif not os.path.isfile(self.config_file):
+                    raise AnsibleOptionsError("%s is not a valid file" % (self.config_file))
+
+                os.environ['ANSIBLE_CONFIG'] = to_native(self.config_file)
+            except:
+                if self.action in ['view']:
+                    raise
+                elif self.action in ['edit', 'update']:
+                    display.warning("File does not exist, used empty file: %s" % self.config_file)
+
+        elif self.action == 'view':
+            raise AnsibleError('Invalid or no config file was supplied')
 
         self.execute()
 
@@ -112,6 +99,7 @@ class ConfigCLI(CLI):
         '''
         raise AnsibleError("Option not implemented yet")
 
+        # pylint: disable=unreachable
         if self.options.setting is None:
             raise AnsibleOptionsError("update option requries a setting to update")
 
@@ -123,10 +111,10 @@ class ConfigCLI(CLI):
             option = entry
         subprocess.call([
             'ansible',
-            '-m','ini_file',
+            '-m', 'ini_file',
             'localhost',
-            '-c','local',
-            '-a','"dest=%s section=%s option=%s value=%s backup=yes"' % (self.config_file, section, option, value)
+            '-c', 'local',
+            '-a', '"dest=%s section=%s option=%s value=%s backup=yes"' % (self.config_file, section, option, value)
         ])
 
     def execute_view(self):
@@ -144,8 +132,10 @@ class ConfigCLI(CLI):
         Opens ansible.cfg in the default EDITOR
         '''
         raise AnsibleError("Option not implemented yet")
+
+        # pylint: disable=unreachable
         try:
-            editor = shlex.split(os.environ.get('EDITOR','vi'))
+            editor = shlex.split(os.environ.get('EDITOR', 'vi'))
             editor.append(self.config_file)
             subprocess.call(editor)
         except Exception as e:

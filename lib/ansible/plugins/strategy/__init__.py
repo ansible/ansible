@@ -19,7 +19,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import cmd
+import functools
 import os
+import pprint
+import sys
 import threading
 import time
 
@@ -34,8 +38,9 @@ from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
 from ansible.module_utils.six.moves import queue as Queue
-from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils.six import iteritems, itervalues, string_types
 from ansible.module_utils._text import to_text
+from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task_include import TaskInclude
@@ -43,7 +48,7 @@ from ansible.playbook.role_include import IncludeRole
 from ansible.plugins.loader import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
 from ansible.template import Templar
 from ansible.utils.vars import combine_vars
-from ansible.vars.manager import strip_internal_keys
+from ansible.vars.clean import strip_internal_keys
 
 
 try:
@@ -75,6 +80,7 @@ class SharedPluginLoaderObj:
         self.lookup_loader = lookup_loader
         self.module_loader = module_loader
 
+
 _sentinel = StrategySentinel()
 
 
@@ -92,6 +98,67 @@ def results_thread_main(strategy):
             break
         except Queue.Empty:
             pass
+
+
+def debug_closure(func):
+    """Closure to wrap ``StrategyBase._process_pending_results`` and invoke the task debugger"""
+    @functools.wraps(func)
+    def inner(self, iterator, one_pass=False, max_passes=None):
+        status_to_stats_map = (
+            ('is_failed', 'failures'),
+            ('is_unreachable', 'dark'),
+            ('is_changed', 'changed'),
+            ('is_skipped', 'skipped'),
+        )
+
+        # We don't know the host yet, copy the previous states, for lookup after we process new results
+        prev_host_states = iterator._host_states.copy()
+
+        results = func(self, iterator, one_pass=one_pass, max_passes=max_passes)
+        _processed_results = []
+
+        for result in results:
+            task = result._task
+            host = result._host
+            _queued_task_args = self._queued_task_cache.pop((host.name, task._uuid), None)
+            task_vars = _queued_task_args['task_vars']
+            play_context = _queued_task_args['play_context']
+            # Try to grab the previous host state, if it doesn't exist use get_host_state to generate an empty state
+            try:
+                prev_host_state = prev_host_states[host.name]
+            except KeyError:
+                prev_host_state = iterator.get_host_state(host)
+
+            while result.needs_debugger(globally_enabled=self.debugger_active):
+                next_action = NextAction()
+                dbg = Debugger(task, host, task_vars, play_context, result, next_action)
+                dbg.cmdloop()
+
+                if next_action.result == NextAction.REDO:
+                    # rollback host state
+                    self._tqm.clear_failed_hosts()
+                    iterator._host_states[host.name] = prev_host_state
+                    for method, what in status_to_stats_map:
+                        if getattr(result, method)():
+                            self._tqm._stats.decrement(what, host.name)
+                    self._tqm._stats.decrement('ok', host.name)
+
+                    # redo
+                    self._queue_task(host, task, task_vars, play_context)
+
+                    _processed_results.extend(debug_closure(func)(self, iterator, one_pass))
+                    break
+                elif next_action.result == NextAction.CONTINUE:
+                    _processed_results.append(result)
+                    break
+                elif next_action.result == NextAction.EXIT:
+                    # Matches KeyboardInterrupt from bin/ansible
+                    sys.exit(99)
+            else:
+                _processed_results.append(result)
+
+        return _processed_results
+    return inner
 
 
 class StrategyBase:
@@ -112,6 +179,12 @@ class StrategyBase:
         self._final_q = tqm._final_q
         self._step = getattr(tqm._options, 'step', False)
         self._diff = getattr(tqm._options, 'diff', False)
+        self.flush_cache = getattr(tqm._options, 'flush_cache', False)
+
+        # the task cache is a dictionary of tuples of (host.name, task._uuid)
+        # used to find the original task object of in-flight tasks and to store
+        # the task args/vars and play context info used to queue the task.
+        self._queued_task_cache = {}
 
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
@@ -132,7 +205,21 @@ class StrategyBase:
         self._results_thread.daemon = True
         self._results_thread.start()
 
+        # holds the list of active (persistent) connections to be shutdown at
+        # play completion
+        self._active_connections = dict()
+
+        self.debugger_active = C.ENABLE_TASK_DEBUGGER
+
     def cleanup(self):
+        # close active persistent connections
+        for sock in itervalues(self._active_connections):
+            try:
+                conn = Connection(sock)
+                conn.reset()
+            except ConnectionError as e:
+                # most likely socket is already closed
+                display.debug("got an error while closing persistent connection: %s" % e)
         self._final_q.put(_sentinel)
         self._results_thread.join()
 
@@ -215,10 +302,17 @@ class StrategyBase:
             queued = False
             starting_worker = self._cur_worker
             while True:
-                (worker_prc, rslt_q) = self._workers[self._cur_worker]
+                worker_prc = self._workers[self._cur_worker]
                 if worker_prc is None or not worker_prc.is_alive():
+                    self._queued_task_cache[(host.name, task._uuid)] = {
+                        'host': host,
+                        'task': task,
+                        'task_vars': task_vars,
+                        'play_context': play_context
+                    }
+
                     worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, shared_loader_obj)
-                    self._workers[self._cur_worker][0] = worker_prc
+                    self._workers[self._cur_worker] = worker_prc
                     worker_prc.start()
                     display.debug("worker is %d (out of %d available)" % (self._cur_worker + 1, len(self._workers)))
                     queued = True
@@ -255,6 +349,7 @@ class StrategyBase:
 
         return [actual_host]
 
+    @debug_closure
     def _process_pending_results(self, iterator, one_pass=False, max_passes=None):
         '''
         Reads results off the final queue and takes appropriate action
@@ -335,19 +430,14 @@ class StrategyBase:
 
             # get the original host and task. We then assign them to the TaskResult for use in callbacks/etc.
             original_host = get_original_host(task_result._host)
-            found_task = iterator.get_original_task(original_host, task_result._task)
+            queue_cache_entry = (original_host.name, task_result._task)
+            found_task = self._queued_task_cache.get(queue_cache_entry)['task']
             original_task = found_task.copy(exclude_parent=True, exclude_tasks=True)
             original_task._parent = found_task._parent
             original_task.from_attrs(task_result._task_fields)
 
             task_result._host = original_host
             task_result._task = original_task
-
-            # get the correct loop var for use later
-            if original_task.loop_control:
-                loop_var = original_task.loop_control.loop_var or 'item'
-            else:
-                loop_var = 'item'
 
             # send callbacks for 'non final' results
             if '_ansible_retry' in task_result._result:
@@ -360,7 +450,7 @@ class StrategyBase:
                     self._tqm.send_callback('v2_runner_item_on_skipped', task_result)
                 else:
                     if 'diff' in task_result._result:
-                        if self._diff:
+                        if self._diff or getattr(original_task, 'diff', False):
                             self._tqm.send_callback('v2_on_file_diff', task_result)
                     self._tqm.send_callback('v2_runner_item_on_ok', task_result)
                 continue
@@ -403,7 +493,7 @@ class StrategyBase:
                     if iterator.is_failed(original_host) and state and state.run_state == iterator.ITERATING_COMPLETE:
                         self._tqm._failed_hosts[original_host.name] = True
 
-                    if state and state.run_state == iterator.ITERATING_RESCUE:
+                    if state and iterator.get_active_state(state).run_state == iterator.ITERATING_RESCUE:
                         self._variable_manager.set_nonpersistent_facts(
                             original_host,
                             dict(
@@ -454,8 +544,7 @@ class StrategyBase:
                                         self._notified_handlers[target_handler._uuid] = []
                                     if original_host not in self._notified_handlers[target_handler._uuid]:
                                         self._notified_handlers[target_handler._uuid].append(original_host)
-                                        # FIXME: should this be a callback?
-                                        display.vv("NOTIFIED HANDLER %s" % (handler_name,))
+                                        self._tqm.send_callback('v2_playbook_on_notify', target_handler, original_host)
                                 else:
                                     # As there may be more than one handler with the notified name as the
                                     # parent, so we just keep track of whether or not we found one at all
@@ -465,7 +554,7 @@ class StrategyBase:
                                             found = True
                                             if original_host not in self._notified_handlers[target_handler._uuid]:
                                                 self._notified_handlers[target_handler._uuid].append(original_host)
-                                                display.vv("NOTIFIED HANDLER %s" % (target_handler.get_name(),))
+                                                self._tqm.send_callback('v2_playbook_on_notify', target_handler, original_host)
 
                                 if handler_name in self._listening_handlers:
                                     for listening_handler_uuid in self._listening_handlers[handler_name]:
@@ -476,7 +565,7 @@ class StrategyBase:
                                             continue
                                         if original_host not in self._notified_handlers[listening_handler._uuid]:
                                             self._notified_handlers[listening_handler._uuid].append(original_host)
-                                            display.vv("NOTIFIED HANDLER %s" % (listening_handler.get_name(),))
+                                            self._tqm.send_callback('v2_playbook_on_notify', listening_handler, original_host)
 
                                 # and if none were found, then we raise an error
                                 if not found:
@@ -511,13 +600,12 @@ class StrategyBase:
                                 for target_host in host_list:
                                     self._variable_manager.set_host_variable(target_host, var_name, var_value)
                         else:
-                            cacheable = result_item.pop('ansible_facts_cacheable', True)
+                            cacheable = result_item.pop('_ansible_facts_cacheable', False)
                             for target_host in host_list:
-                                if cacheable:
+                                if not original_task.action == 'set_fact' or cacheable:
                                     self._variable_manager.set_host_facts(target_host, result_item['ansible_facts'].copy())
-
-                                # If we are setting a fact, it should populate non_persistent_facts as well
-                                self._variable_manager.set_nonpersistent_facts(target_host, result_item['ansible_facts'].copy())
+                                if original_task.action == 'set_fact':
+                                    self._variable_manager.set_nonpersistent_facts(target_host, result_item['ansible_facts'].copy())
 
                     if 'ansible_stats' in result_item and 'data' in result_item['ansible_stats'] and result_item['ansible_stats']['data']:
 
@@ -536,7 +624,7 @@ class StrategyBase:
                                     self._tqm._stats.set_custom_stats(k, data[k], myhost)
 
                 if 'diff' in task_result._result:
-                    if self._diff:
+                    if self._diff or getattr(original_task, 'diff', False):
                         self._tqm.send_callback('v2_on_file_diff', task_result)
 
                 if not isinstance(original_task, TaskInclude):
@@ -615,9 +703,6 @@ class StrategyBase:
                 new_group = self._inventory.groups[group_name]
                 new_group.add_host(self._inventory.hosts[host_name])
 
-            # clear pattern caching completely since it's unpredictable what patterns may have referenced the group
-            self._inventory.clear_pattern_cache()
-
             # reconcile inventory, ensures inventory rules are followed
             self._inventory.reconcile_inventory()
 
@@ -632,7 +717,12 @@ class StrategyBase:
         # the host here is from the executor side, which means it was a
         # serialized/cloned copy and we'll need to look up the proper
         # host object from the master inventory
-        real_host = self._inventory.hosts[host.name]
+        real_host = self._inventory.hosts.get(host.name)
+        if real_host is None:
+            if host.name == self._inventory.localhost.name:
+                real_host = self._inventory.localhost
+            else:
+                raise AnsibleError('%s cannot be matched in inventory' % host.name)
         group_name = result_item.get('add_group')
         parent_group_names = result_item.get('parent_groups', [])
 
@@ -655,10 +745,23 @@ class StrategyBase:
             changed = True
 
         if changed:
-            self._inventory.clear_pattern_cache()
             self._inventory.reconcile_inventory()
 
         return changed
+
+    def _copy_included_file(self, included_file):
+        '''
+        A proven safe and performant way to create a copy of an included file
+        '''
+        ti_copy = included_file._task.copy(exclude_parent=True)
+        ti_copy._parent = included_file._task._parent
+
+        temp_vars = ti_copy.vars.copy()
+        temp_vars.update(included_file._args)
+
+        ti_copy.vars = temp_vars
+
+        return ti_copy
 
     def _load_included_file(self, included_file, iterator, is_handler=False):
         '''
@@ -673,9 +776,7 @@ class StrategyBase:
             elif not isinstance(data, list):
                 raise AnsibleError("included task files must contain a list of tasks")
 
-            ti_copy = included_file._task.copy()
-            temp_vars = ti_copy.vars.copy()
-            temp_vars.update(included_file._args)
+            ti_copy = self._copy_included_file(included_file)
             # pop tags out of the include args, if they were specified there, and assign
             # them to the include. If the include already had tags specified, we raise an
             # error so that users know not to specify them both ways
@@ -689,8 +790,6 @@ class StrategyBase:
                                              obj=included_file._task._ds)
                 display.deprecated("You should not specify tags in the include parameters. All tags should be specified using the task-level option")
                 included_file._task.tags = tags
-
-            ti_copy.vars = temp_vars
 
             block_list = load_list_of_blocks(
                 data,
@@ -737,7 +836,14 @@ class StrategyBase:
             #        we consider the ability of meta tasks to flush handlers
             for handler in handler_block.block:
                 if handler._uuid in self._notified_handlers and len(self._notified_handlers[handler._uuid]):
-                    result = self._do_handler_run(handler, handler.get_name(), iterator=iterator, play_context=play_context)
+                    handler_vars = self._variable_manager.get_vars(play=iterator._play, task=handler)
+                    templar = Templar(loader=self._loader, variables=handler_vars)
+                    handler_name = handler.get_name()
+                    try:
+                        handler_name = templar.template(handler_name)
+                    except (UndefinedError, AnsibleUndefinedVariable):
+                        pass
+                    result = self._do_handler_run(handler, handler_name, iterator=iterator, play_context=play_context)
                     if not result:
                         break
         return result
@@ -770,8 +876,6 @@ class StrategyBase:
         host_results = []
         for host in notified_hosts:
             if not handler.has_triggered(host) and (not iterator.is_failed(host) or play_context.force_handlers):
-                if handler._uuid not in iterator._task_uuid_cache:
-                    iterator._task_uuid_cache[handler._uuid] = handler
                 task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=handler)
                 self.add_tqm_variables(task_vars, play=iterator._play)
                 self._queue_task(host, handler, task_vars, play_context)
@@ -784,9 +888,7 @@ class StrategyBase:
         try:
             included_files = IncludedFile.process_include_results(
                 host_results,
-                self._tqm,
                 iterator=iterator,
-                inventory=self._inventory,
                 loader=self._loader,
                 variable_manager=self._variable_manager
             )
@@ -806,7 +908,7 @@ class StrategyBase:
                         for task in block.block:
                             result = self._do_handler_run(
                                 handler=task,
-                                handler_name=None,
+                                handler_name=task.get_name(),
                                 iterator=iterator,
                                 play_context=play_context,
                                 notified_hosts=included_file._hosts[:],
@@ -848,15 +950,14 @@ class StrategyBase:
 
         return ret
 
+    def _cond_not_supported_warn(self, task_name):
+        display.warning("%s task does not support when conditional" % task_name)
+
     def _execute_meta(self, task, play_context, iterator, target_host):
 
         # meta tasks store their args in the _raw_params field of args,
         # since they do not use k=v pairs, so get that
         meta_action = task.args.get('_raw_params')
-
-        # FIXME(s):
-        # * raise an error or show a warning when a conditional is used
-        #   on a meta task that doesn't support them
 
         def _evaluate_conditional(h):
             all_vars = self._variable_manager.get_vars(play=iterator._play, host=h, task=task)
@@ -867,11 +968,17 @@ class StrategyBase:
         msg = ''
         if meta_action == 'noop':
             # FIXME: issue a callback for the noop here?
+            if task.when:
+                self._cond_not_supported_warn(meta_action)
             msg = "noop"
         elif meta_action == 'flush_handlers':
+            if task.when:
+                self._cond_not_supported_warn(meta_action)
             self.run_handlers(iterator, play_context)
             msg = "ran handlers"
-        elif meta_action == 'refresh_inventory':
+        elif meta_action == 'refresh_inventory' or self.flush_cache:
+            if task.when:
+                self._cond_not_supported_warn(meta_action)
             self._inventory.refresh_inventory()
             msg = "inventory successfully refreshed"
         elif meta_action == 'clear_facts':
@@ -898,11 +1005,44 @@ class StrategyBase:
                         iterator._host_states[host.name].run_state = iterator.ITERATING_COMPLETE
                 msg = "ending play"
         elif meta_action == 'reset_connection':
-            connection = connection_loader.get(play_context.connection, play_context, os.devnull)
-            play_context.set_options_from_plugin(connection)
+            all_vars = self._variable_manager.get_vars(play=iterator._play, host=target_host, task=task)
+            templar = Templar(loader=self._loader, variables=all_vars)
+
+            # apply the given task's information to the connection info,
+            # which may override some fields already set by the play or
+            # the options specified on the command line
+            play_context = play_context.set_task_and_variable_override(task=task, variables=all_vars, templar=templar)
+
+            # fields set from the play/task may be based on variables, so we have to
+            # do the same kind of post validation step on it here before we use it.
+            play_context.post_validate(templar=templar)
+
+            # now that the play context is finalized, if the remote_addr is not set
+            # default to using the host's address field as the remote address
+            if not play_context.remote_addr:
+                play_context.remote_addr = target_host.address
+
+            # We also add "magic" variables back into the variables dict to make sure
+            # a certain subset of variables exist.
+            play_context.update_vars(all_vars)
+
+            if task.when:
+                self._cond_not_supported_warn(meta_action)
+
+            if target_host in self._active_connections:
+                connection = Connection(self._active_connections[target_host])
+                del self._active_connections[target_host]
+            else:
+                connection = connection_loader.get(play_context.connection, play_context, os.devnull)
+                play_context.set_options_from_plugin(connection)
+
             if connection:
-                connection.reset()
-                msg = 'reset connection'
+                try:
+                    connection.reset()
+                    msg = 'reset connection'
+                except ConnectionError as e:
+                    # most likely socket is already closed
+                    display.debug("got an error while closing persistent connection: %s" % e)
             else:
                 msg = 'no connection, nothing to reset'
         else:
@@ -926,3 +1066,115 @@ class StrategyBase:
             if host.name not in self._tqm._unreachable_hosts:
                 hosts_left.append(host)
         return hosts_left
+
+    def update_active_connections(self, results):
+        ''' updates the current active persistent connections '''
+        for r in results:
+            if 'args' in r._task_fields:
+                socket_path = r._task_fields['args'].get('_ansible_socket')
+                if socket_path:
+                    if r._host not in self._active_connections:
+                        self._active_connections[r._host] = socket_path
+
+
+class NextAction(object):
+    """ The next action after an interpreter's exit. """
+    REDO = 1
+    CONTINUE = 2
+    EXIT = 3
+
+    def __init__(self, result=EXIT):
+        self.result = result
+
+
+class Debugger(cmd.Cmd):
+    prompt_continuous = '> '  # multiple lines
+
+    def __init__(self, task, host, task_vars, play_context, result, next_action):
+        # cmd.Cmd is old-style class
+        cmd.Cmd.__init__(self)
+
+        self.prompt = '[%s] %s (debug)> ' % (host, task)
+        self.intro = None
+        self.scope = {}
+        self.scope['task'] = task
+        self.scope['task_vars'] = task_vars
+        self.scope['host'] = host
+        self.scope['play_context'] = play_context
+        self.scope['result'] = result
+        self.next_action = next_action
+
+    def cmdloop(self):
+        try:
+            cmd.Cmd.cmdloop(self)
+        except KeyboardInterrupt:
+            pass
+
+    do_h = cmd.Cmd.do_help
+
+    def do_EOF(self, args):
+        """Quit"""
+        return self.do_quit(args)
+
+    def do_quit(self, args):
+        """Quit"""
+        display.display('User interrupted execution')
+        self.next_action.result = NextAction.EXIT
+        return True
+
+    do_q = do_quit
+
+    def do_continue(self, args):
+        """Continue to next result"""
+        self.next_action.result = NextAction.CONTINUE
+        return True
+
+    do_c = do_continue
+
+    def do_redo(self, args):
+        """Schedule task for re-execution. The re-execution may not be the next result"""
+        self.next_action.result = NextAction.REDO
+        return True
+
+    do_r = do_redo
+
+    def evaluate(self, args):
+        try:
+            return eval(args, globals(), self.scope)
+        except Exception:
+            t, v = sys.exc_info()[:2]
+            if isinstance(t, str):
+                exc_type_name = t
+            else:
+                exc_type_name = t.__name__
+            display.display('***%s:%s' % (exc_type_name, repr(v)))
+            raise
+
+    def do_pprint(self, args):
+        """Pretty Print"""
+        try:
+            result = self.evaluate(args)
+            display.display(pprint.pformat(result))
+        except Exception:
+            pass
+
+    do_p = do_pprint
+
+    def execute(self, args):
+        try:
+            code = compile(args + '\n', '<stdin>', 'single')
+            exec(code, globals(), self.scope)
+        except Exception:
+            t, v = sys.exc_info()[:2]
+            if isinstance(t, str):
+                exc_type_name = t
+            else:
+                exc_type_name = t.__name__
+            display.display('***%s:%s' % (exc_type_name, repr(v)))
+            raise
+
+    def default(self, line):
+        try:
+            self.execute(line)
+        except Exception:
+            pass

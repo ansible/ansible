@@ -40,14 +40,12 @@ options:
       - Specifies which banner that should be
         configured on the remote device.
     required: true
-    default: null
     choices: ['login', 'motd']
   text:
     description:
       - The banner text that should be
         present in the remote device running configuration.  This argument
         accepts a multiline string. Requires I(state=present).
-    default: null
   state:
     description:
       - Specifies whether or not the configuration is
@@ -90,9 +88,11 @@ session_name:
   sample: ansible_1479315771
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.eos import load_config, run_commands
-from ansible.module_utils.eos import eos_argument_spec, check_args
+from ansible.module_utils.network.eos.eos import load_config, run_commands
+from ansible.module_utils.network.eos.eos import eos_argument_spec, check_args
+from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
+
 
 def map_obj_to_commands(updates, module):
     commands = list()
@@ -100,13 +100,13 @@ def map_obj_to_commands(updates, module):
     state = module.params['state']
 
     if state == 'absent' and have.get('text'):
-        if isinstance(have['text'], str):
+        if isinstance(have['text'], string_types):
             commands.append('no banner %s' % module.params['banner'])
         elif have['text'].get('loginBanner') or have['text'].get('motd'):
             commands.append({'cmd': 'no banner %s' % module.params['banner']})
 
     elif state == 'present':
-        if isinstance(have['text'], str):
+        if isinstance(have['text'], string_types):
             if want['text'] != have['text']:
                 commands.append('banner %s' % module.params['banner'])
                 commands.extend(want['text'].strip().split('\n'))
@@ -122,16 +122,14 @@ def map_obj_to_commands(updates, module):
                 commands.append({'cmd': 'banner %s' % module.params['banner'],
                                  'input': want['text'].strip('\n')})
 
-
     return commands
+
 
 def map_config_to_obj(module):
     output = run_commands(module, ['show banner %s' % module.params['banner']])
     obj = {'banner': module.params['banner'], 'state': 'absent'}
     if output:
-        if module.params['transport'] == 'cli':
-            obj['text'] = output[0]
-        else:
+        if module.params['transport'] == 'eapi':
             # On EAPI we need to extract the banner text from dict key
             # 'loginBanner'
             if module.params['banner'] == 'login':
@@ -139,20 +137,24 @@ def map_config_to_obj(module):
             else:
                 banner_response_key = 'motd'
             if isinstance(output[0], dict) and banner_response_key in output[0].keys():
-                obj['text'] = output[0][banner_response_key].strip('\n')
+                obj['text'] = output[0]
+        else:
+            obj['text'] = output[0]
         obj['state'] = 'present'
     return obj
+
 
 def map_params_to_obj(module):
     text = module.params['text']
     if text:
-        text = str(text).strip()
+        text = to_text(text).strip()
 
     return {
         'banner': module.params['banner'],
         'text': text,
         'state': module.params['state']
     }
+
 
 def main():
     """ main entry point for module execution
@@ -192,6 +194,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

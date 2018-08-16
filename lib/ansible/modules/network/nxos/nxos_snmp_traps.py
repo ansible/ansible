@@ -16,7 +16,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
@@ -43,9 +42,10 @@ options:
         description:
             - Case sensitive group.
         required: true
-        choices: ['aaa', 'bridge', 'callhome', 'cfs', 'config', 'entity',
-          'feature-control', 'hsrp', 'license', 'link', 'lldp', 'ospf', 'pim',
-          'rf', 'rmon', 'snmp', 'storm-control', 'stpx', 'sysmgr', 'system',
+        choices: ['aaa', 'bfd', 'bgp', 'bridge', 'callhome', 'cfs', 'config',
+          'eigrp', 'entity', 'feature-control', 'generic', 'hsrp', 'license',
+          'link', 'lldp', 'mmode', 'ospf', 'pim', 'rf', 'rmon', 'snmp',
+          'storm-control', 'stpx', 'switchfabric', 'syslog', 'sysmgr', 'system',
           'upgrade', 'vtp', 'all']
     state:
         description:
@@ -55,88 +55,39 @@ options:
         choices: ['enabled','disabled']
 '''
 
-EXAMPLES =  '''
+EXAMPLES = '''
 # ensure lldp trap configured
 - nxos_snmp_traps:
     group: lldp
     state: enabled
-    host: "{{ inventory_hostname }}"
-    username: "{{ un }}"
-    password: "{{ pwd }}"
 
 # ensure lldp trap is not configured
 - nxos_snmp_traps:
     group: lldp
     state: disabled
-    host: "{{ inventory_hostname }}"
-    username: "{{ un }}"
-    password: "{{ pwd }}"
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: always
-    type: dict
-    sample: {"group": "lldp"}
-existing:
-    description: k/v pairs of existing trap status
-    returned: always
-    type: dict
-    sample: {"lldp": [{"enabled": "No",
-            "trap": "lldpRemTablesChange"}]}
-end_state:
-    description: k/v pairs of trap info after module execution
-    returned: always
-    type: dict
-    sample: {"lldp": [{"enabled": "Yes",
-            "trap": "lldpRemTablesChange"}]}
-updates:
+commands:
     description: command sent to the device
     returned: always
     type: list
     sample: "snmp-server enable traps lldp ;"
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
 
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
-import re
-import re
+def execute_show_command(command, module):
+    command = {
+        'command': command,
+        'output': 'text',
+    }
 
-
-def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        if 'show run' not in command:
-            command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
-
-    return body
-
-
-def apply_key_map(key_map, table):
-    new_dict = {}
-    for key, value in table.items():
-        new_key = key_map.get(key)
-        if new_key:
-            value = table.get(key)
-            if value:
-                new_dict[new_key] = str(value)
-            else:
-                new_dict[new_key] = value
-    return new_dict
+    return run_commands(module, command)
 
 
 def flatten_list(command_lists):
@@ -149,45 +100,45 @@ def flatten_list(command_lists):
     return flat_command_list
 
 
-
 def get_snmp_traps(group, module):
-    command = 'show snmp trap'
-    body = execute_show_command(command, module)
-
-    trap_key = {
-        'description': 'trap',
-        'isEnabled': 'enabled'
-    }
+    body = execute_show_command('show run snmp all', module)[0].split('\n')
 
     resource = {}
+    feature_list = ['aaa', 'bfd', 'bgp', 'bridge', 'callhome', 'cfs', 'config',
+                    'eigrp', 'entity', 'feature-control', 'generic', 'hsrp',
+                    'license', 'link', 'lldp', 'mmode', 'ospf', 'pim',
+                    'rf', 'rmon', 'snmp', 'storm-control', 'stpx',
+                    'switchfabric', 'syslog', 'sysmgr', 'system', 'upgrade',
+                    'vtp']
+    for each in feature_list:
+        for line in body:
+            if each == 'ospf':
+                # ospf behaves differently when routers are present
+                if 'snmp-server enable traps ospf' == line:
+                    resource[each] = True
+                    break
+            else:
+                if 'enable traps {0}'.format(each) in line:
+                    if 'no ' in line:
+                        resource[each] = False
+                        break
+                    else:
+                        resource[each] = True
 
-    try:
-        resource_table = body[0]['TABLE_snmp_trap']['ROW_snmp_trap']
-
-        for each_feature in ['aaa', 'bridge', 'callhome', 'cfs', 'config',
-                             'entity', 'feature-control', 'hsrp', 'license',
-                             'link', 'lldp', 'ospf', 'pim', 'rf', 'rmon',
-                             'snmp', 'storm-control', 'stpx', 'sysmgr',
-                             'system', 'upgrade', 'vtp']:
-
-            resource[each_feature] = []
-
-        for each_resource in resource_table:
-            key = str(each_resource['trap_type'])
-            mapped_trap = apply_key_map(trap_key, each_resource)
-
-            if key != 'Generic':
-                resource[key].append(mapped_trap)
-
-    except (KeyError, AttributeError):
-        return resource
+    for each in feature_list:
+        if resource.get(each) is None:
+            # on some platforms, the 'no' cmd does not
+            # show up and so check if the feature is enabled
+            body = execute_show_command('show run | inc feature', module)[0]
+            if 'feature {0}'.format(each) in body:
+                resource[each] = False
 
     find = resource.get(group, None)
 
     if group == 'all'.lower():
         return resource
-    elif find:
-        trap_resource = {group: resource[group]}
+    elif find is not None:
+        trap_resource = {group: find}
         return trap_resource
     else:
         # if 'find' is None, it means that 'group' is a
@@ -203,26 +154,22 @@ def get_trap_commands(group, state, existing, module):
     if group == 'all':
         if state == 'disabled':
             for feature in existing:
-                trap_commands = ['no snmp-server enable traps {0}'.format(feature) for
-                                    trap in existing[feature] if trap['enabled'] == 'Yes']
-                trap_commands = list(set(trap_commands))
-                commands.append(trap_commands)
+                if existing[feature]:
+                    trap_command = 'no snmp-server enable traps {0}'.format(feature)
+                    commands.append(trap_command)
 
         elif state == 'enabled':
             for feature in existing:
-                trap_commands = ['snmp-server enable traps {0}'.format(feature) for
-                                    trap in existing[feature] if trap['enabled'] == 'No']
-                trap_commands = list(set(trap_commands))
-                commands.append(trap_commands)
+                if existing[feature] is False:
+                    trap_command = 'snmp-server enable traps {0}'.format(feature)
+                    commands.append(trap_command)
 
     else:
         if group in existing:
-            for each_trap in existing[group]:
-                check = each_trap['enabled']
-                if check.lower() == 'yes':
-                    enabled = True
-                if check.lower() == 'no':
-                    disabled = True
+            if existing[group]:
+                enabled = True
+            else:
+                disabled = True
 
             if state == 'disabled' and enabled:
                 commands.append(['no snmp-server enable traps {0}'.format(group)])
@@ -238,55 +185,41 @@ def get_trap_commands(group, state, existing, module):
 def main():
     argument_spec = dict(
         state=dict(choices=['enabled', 'disabled'], default='enabled'),
-        group=dict(choices=['aaa', 'bridge', 'callhome', 'cfs', 'config',
-                                'entity', 'feature-control', 'hsrp',
-                                'license', 'link', 'lldp', 'ospf', 'pim', 'rf',
-                                'rmon', 'snmp', 'storm-control', 'stpx',
-                                'sysmgr', 'system', 'upgrade', 'vtp', 'all'],
-                       required=True),
+        group=dict(choices=['aaa', 'bfd', 'bgp', 'bridge', 'callhome', 'cfs', 'config',
+                            'eigrp', 'entity', 'feature-control', 'generic', 'hsrp',
+                            'license', 'link', 'lldp', 'mmode', 'ospf', 'pim',
+                            'rf', 'rmon', 'snmp', 'storm-control', 'stpx',
+                            'switchfabric', 'syslog', 'sysmgr', 'system', 'upgrade',
+                            'vtp', 'all'],
+                   required=True),
     )
 
     argument_spec.update(nxos_argument_spec)
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
-
+    results = {'changed': False, 'commands': [], 'warnings': warnings}
 
     group = module.params['group'].lower()
     state = module.params['state']
 
     existing = get_snmp_traps(group, module)
-    proposed = {'group': group}
 
-    changed = False
-    end_state = existing
     commands = get_trap_commands(group, state, existing, module)
-
     cmds = flatten_list(commands)
     if cmds:
-        if module.check_mode:
-            module.exit_json(changed=True, commands=cmds)
-        else:
-            changed = True
+        results['changed'] = True
+        if not module.check_mode:
             load_config(module, cmds)
-            end_state = get_snmp_traps(group, module)
-            if 'configure' in cmds:
-                cmds.pop(0)
 
-    results = {}
-    results['proposed'] = proposed
-    results['existing'] = existing
-    results['end_state'] = end_state
-    results['updates'] = cmds
-    results['changed'] = changed
-    results['warnings'] = warnings
+        if 'configure' in cmds:
+            cmds.pop(0)
+        results['commands'] = cmds
 
     module.exit_json(**results)
 
 
 if __name__ == '__main__':
     main()
-

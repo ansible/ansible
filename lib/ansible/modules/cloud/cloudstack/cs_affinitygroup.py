@@ -36,42 +36,32 @@ options:
     description:
       - Name of the affinity group.
     required: true
-  affinty_type:
+  affinity_type:
     description:
       - Type of the affinity group. If not specified, first found affinity type is used.
-    required: false
-    default: null
+    aliases: [ affinty_type ]
   description:
     description:
       - Description of the affinity group.
-    required: false
-    default: null
   state:
     description:
       - State of the affinity group.
-    required: false
     default: 'present'
     choices: [ 'present', 'absent' ]
   domain:
     description:
       - Domain the affinity group is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the affinity group is related to.
-    required: false
-    default: null
   project:
     description:
       - Name of the project the affinity group is related to.
-    required: false
-    default: null
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    required: false
-    default: true
+    type: bool
+    default: 'yes'
 extends_documentation_fragment: cloudstack
 '''
 
@@ -80,7 +70,7 @@ EXAMPLES = '''
 - local_action:
     module: cs_affinitygroup
     name: haproxy
-    affinty_type: host anti-affinity
+    affinity_type: host anti-affinity
 
 # Remove a affinity group
 - local_action:
@@ -160,7 +150,7 @@ class AnsibleCloudStackAffinityGroup(AnsibleCloudStack):
         return self.affinity_group
 
     def get_affinity_type(self):
-        affinity_type = self.module.params.get('affinty_type')
+        affinity_type = self.module.params.get('affinity_type') or self.module.params.get('affinty_type')
 
         affinity_types = self.query_api('listAffinityGroupTypes', )
         if affinity_types:
@@ -217,7 +207,8 @@ def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
         name=dict(required=True),
-        affinty_type=dict(),
+        affinty_type=dict(removed_in_version='2.9'),
+        affinity_type=dict(),
         description=dict(),
         state=dict(choices=['present', 'absent'], default='present'),
         domain=dict(),
@@ -229,6 +220,9 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         required_together=cs_required_together(),
+        mutually_exclusive=(
+            ['affinity_type', 'affinty_type'],
+        ),
         supports_check_mode=True
     )
 

@@ -16,7 +16,7 @@ DOCUMENTATION = """
 ---
 module: net_user
 version_added: "2.4"
-author: "Trishna Guha (@trishnag)"
+author: "Trishna Guha (@trishnaguha)"
 short_description: Manage the aggregate of local users on network device
 description:
   - This module provides declarative management of the local usernames
