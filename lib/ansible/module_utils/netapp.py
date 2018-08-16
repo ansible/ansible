@@ -27,7 +27,10 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import json
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.urls import open_url
@@ -137,7 +140,7 @@ def setup_na_ontap_zapi(module, vserver=None):
                 port = 443
             transport_type = 'HTTPS'
             # HACK to bypass certificate verification
-            if validate_certs is True:
+            if validate_certs is False:
                 if not os.environ.get('PYTHONHTTPSVERIFY', '') and getattr(ssl, '_create_unverified_context', None):
                     ssl._create_default_https_context = ssl._create_unverified_context
         else:
@@ -226,7 +229,7 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
         return resp_code, data
 
 
-def ems_log_event(source, server, name="Ansible", id="12345", version="1.1",
+def ems_log_event(source, server, name="Ansible", id="12345", version="2.7",
                   category="Information", event="setup", autosupport="false"):
     ems_log = zapi.NaElement('ems-autosupport-log')
     # Host name invoking the API.
