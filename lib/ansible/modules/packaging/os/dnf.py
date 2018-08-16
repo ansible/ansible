@@ -96,7 +96,7 @@ options:
     type: bool
     default: "no"
     choices: [ "yes", "no" ]
-    version_added: "2.6"
+    version_added: "2.7"
 notes:
   - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
 requirements:
