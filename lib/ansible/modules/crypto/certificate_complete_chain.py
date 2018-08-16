@@ -33,14 +33,9 @@ requirements:
     - "cryptography >= 1.5"
 options:
     input_chain:
-        required: no
+        required: yes
         description:
             - A concatenated set of certificates in PEM format forming a chain.
-            - The module will try to complete this chain.
-    input_chain_src:
-        required: no
-        description:
-            - Path to a concatenated set of certificates in PEM format forming a chain.
             - The module will try to complete this chain.
     root_certificates:
         required: yes
@@ -75,7 +70,7 @@ EXAMPLES = '''
 # certificates, finds the associated root certificate.
 - name: Find root certificate
   certificate_complete_chain:
-    input_chain_src: /etc/ssl/csr/www.ansible.com-fullchain.pem
+    input_chain: "{{ lookup('file', '/etc/ssl/csr/www.ansible.com-fullchain.pem') }}"
     root_certificates:
     - /etc/ca-certificates/
   register: www_ansible_com
@@ -88,7 +83,7 @@ EXAMPLES = '''
 # certificates, finds the associated root certificate.
 - name: Find root certificate
   certificate_complete_chain:
-    input_chain_src: /etc/ssl/csr/www.ansible.com.pem
+    input_chain: "{{ lookup('file', '/etc/ssl/csr/www.ansible.com.pem') }}"
     intermediate_certificates:
     - /etc/ssl/csr/www.ansible.com-chain.pem
     root_certificates:
@@ -283,16 +278,9 @@ def format_cert(cert):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            input_chain=dict(required=False, type='str'),
-            input_chain_src=dict(required=False, type='path'),
+            input_chain=dict(required=True, type='str'),
             root_certificates=dict(required=True, type='list'),
             intermediate_certificates=dict(required=False, type='list', default=[]),
-        ),
-        required_one_of=(
-            ['input_chain', 'input_chain_src'],
-        ),
-        mutually_exclusive=(
-            ['input_chain', 'input_chain_src'],
         ),
         supports_check_mode=True,
     )
@@ -301,11 +289,7 @@ def main():
         module.fail_json(msg='cryptography >= 1.5 is required for this module.')
 
     # Load chain
-    if module.params.get('input_chain_src') is not None:
-        chain = load_PEM_list(module, module.params.get('input_chain_src'))
-    else:
-        chain = parse_PEM_list(module, module.params.get('input_chain'), source='input chain')
-
+    chain = parse_PEM_list(module, module.params['input_chain'], source='input chain')
     if len(chain) == 0:
         module.fail_json(msg='Input chain must contain at least one certificate')
 
