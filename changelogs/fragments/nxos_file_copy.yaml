@@ -1,0 +1,2 @@
+bugfixes:
+- Add md5sum check in nxos_file_copy module (https://github.com/ansible/ansible/pull/43423).
